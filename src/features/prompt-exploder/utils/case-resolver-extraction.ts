@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type {
   PromptExploderCaseResolverMetadata,

@@ -66,8 +66,11 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   FocusModeTogglePortal: () => <div data-testid='focus-toggle-portal'>Focus Toggle</div>,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: mocks.toast,
   }),

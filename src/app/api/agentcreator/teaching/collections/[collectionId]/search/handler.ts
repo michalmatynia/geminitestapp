@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getEmbeddingCollectionById } from '@/features/ai/agentcreator/server';
@@ -19,9 +19,9 @@ const searchSchema = z.object({
   maxDocsPerCollection: z.number().int().min(10).max(2000).optional().default(400),
 });
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const collectionId = ctx.params?.['collectionId'];
-  if (typeof collectionId !== 'string' || !collectionId.trim()) {
+  if (typeof collectionId !== 'string' || collectionId.trim().length === 0) {
     throw badRequestError('Missing collectionId.');
   }
 

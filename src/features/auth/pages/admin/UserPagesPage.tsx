@@ -58,57 +58,63 @@ function AuthUserPagesForm(): React.JSX.Element {
 
   return (
     <div className='space-y-6'>
-      <FormSection
-        title='User Pages'
-        description='Configure which authentication flows are available in the public UI.'
-        className='p-6'
-      >
-        <div className='mt-4 text-sm text-gray-400'>
-          Control which auth flows are visible to end users.
-        </div>
-      </FormSection>
-
-      <FormSection
-        title='Authentication Flows'
-        description='Toggle each flow on/off. Password strength rules live in Auth Settings.'
-        className='p-6'
-      >
-        <div className='space-y-3 mt-4'>
-          {(
-            [
-              ['allowSignup', 'Allow sign-up', 'Enable self-service user registration.'],
-              ['allowPasswordReset', 'Allow password reset', 'Enable forgot-password flow.'],
-              ['allowSocialLogin', 'Allow social login', 'Show OAuth providers on login.'],
-              [
-                'requireEmailVerification',
-                'Require email verification',
-                'Block access until email is verified.',
-              ],
-            ] as const
-          ).map(
-            ([key, title, description]: readonly [keyof AuthUserPageSettings, string, string]) => (
-              <ToggleRow
-                key={key}
-                label={title}
-                description={description}
-                checked={settings[key]}
-                onCheckedChange={() => handleToggle(key)}
-                variant='switch'
-              />
-            )
-          )}
-        </div>
-      </FormSection>
-
+      <UserPagesHeader />
+      <AuthFlowsSection settings={settings} onToggle={handleToggle} />
       <FormActions
-        onSave={() => {
-          void handleSave();
-        }}
+        onSave={() => void handleSave()}
         saveText='Save user page settings'
         isDisabled={!dirty || updateSetting.isPending}
         isSaving={updateSetting.isPending}
         className='mt-6'
       />
     </div>
+  );
+}
+
+function UserPagesHeader() {
+  return (
+    <FormSection
+      title='User Pages'
+      description='Configure which authentication flows are available in the public UI.'
+      className='p-6'
+    >
+      <div className='mt-4 text-sm text-gray-400'>
+        Control which auth flows are visible to end users.
+      </div>
+    </FormSection>
+  );
+}
+
+function AuthFlowsSection({
+  settings,
+  onToggle,
+}: {
+  settings: AuthUserPageSettings;
+  onToggle: (key: keyof AuthUserPageSettings) => void;
+}) {
+  return (
+    <FormSection
+      title='Authentication Flows'
+      description='Toggle each flow on/off. Password strength rules live in Auth Settings.'
+      className='p-6'
+    >
+      <div className='space-y-3 mt-4'>
+        {[
+          ['allowSignup', 'Allow sign-up', 'Enable self-service user registration.'],
+          ['allowPasswordReset', 'Allow password reset', 'Enable forgot-password flow.'],
+          ['allowSocialLogin', 'Allow social login', 'Show OAuth providers on login.'],
+          ['requireEmailVerification', 'Require email verification', 'Block access until email is verified.'],
+        ].map(([key, title, description]) => (
+          <ToggleRow
+            key={key}
+            label={title}
+            description={description}
+            checked={settings[key as keyof AuthUserPageSettings]}
+            onCheckedChange={() => onToggle(key as keyof AuthUserPageSettings)}
+            variant='switch'
+          />
+        ))}
+      </div>
+    </FormSection>
   );
 }

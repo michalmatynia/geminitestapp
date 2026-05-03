@@ -33,6 +33,17 @@ vi.mock('next/navigation', async (importOriginal) => {
   };
 });
 
+vi.mock('nextjs-toploader/app', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next/navigation')>();
+
+  return {
+    ...actual,
+    redirect: redirectMock,
+    permanentRedirect: permanentRedirectMock,
+    notFound: notFoundMock,
+  };
+});
+
 vi.mock('@/features/auth/server', () => ({
   auth: authMock,
   readOptionalServerAuthSession: authMock,

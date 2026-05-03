@@ -3,8 +3,12 @@
 import { useCallback, useState } from 'react';
 
 import {
+  is1688IntegrationSlug,
+  isJobSearchPlatformIntegrationSlug,
+  isVintedIntegrationSlug,
   isLinkedInIntegrationSlug,
-  isTraderaApiIntegrationSlug,
+  isPracujPlIntegrationSlug,
+  isScrapedSourceIntegrationSlug,
   isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
@@ -17,24 +21,21 @@ import {
   useBaseApiRequest,
   useAllegroApiRequest,
 } from '@/features/integrations/hooks/useIntegrationMutations';
-import { toPlaywrightConnectionPayload } from '@/features/integrations/utils/playwright-connection-payload';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
 import type { IntegrationConnectionTestType } from '@/shared/contracts/integrations/session-testing';
-import { Integration } from '@/shared/contracts/integrations/base';
-import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
-import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
-import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
+import { type Integration } from '@/shared/contracts/integrations/base';
+import { type IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import { type TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
-import { buildPlaywrightSettings } from '@/shared/lib/playwright/personas';
 import { useToast } from '@/shared/ui/primitives.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  IntegrationDefinition,
-  SaveConnectionOptions,
-  StepWithResult,
+  type IntegrationDefinition,
+  type SaveConnectionOptions,
+  type StepWithResult,
 } from '../integrations-context-types';
 
 export function useIntegrationsActionsImpl(args: {
@@ -62,11 +63,6 @@ export function useIntegrationsActionsImpl(args: {
   ) => void;
   setShowTestSuccessModal: (show: boolean) => void;
   setTestSuccessMessage: (msg: string | null) => void;
-  playwrightPersonas: PlaywrightPersona[];
-  setPlaywrightPersonaId: (id: string | null) => void;
-  setPlaywrightSettings: (s: PlaywrightSettings) => void;
-  playwrightPersonaId: string | null;
-  playwrightSettings: PlaywrightSettings;
   setShowSessionModal: (show: boolean) => void;
   baseApiMethod: string;
   baseApiParams: string;
@@ -144,9 +140,16 @@ export function useIntegrationsActionsImpl(args: {
 
     const formData = options.formData;
     const isTraderaIntegration = isTraderaIntegrationSlug(args.activeIntegration.slug);
-    const isTraderaApiIntegration = isTraderaApiIntegrationSlug(args.activeIntegration.slug);
-    const isTraderaBrowserIntegration =
-      isTraderaIntegration && !isTraderaApiIntegration;
+    const isTraderaBrowserIntegration = isTraderaIntegration;
+    const isVintedIntegration = isVintedIntegrationSlug(args.activeIntegration.slug);
+    const is1688Integration = is1688IntegrationSlug(args.activeIntegration.slug);
+    const isPracujIntegration = isPracujPlIntegrationSlug(args.activeIntegration.slug);
+    const isScrapedSourceIntegration = isScrapedSourceIntegrationSlug(
+      args.activeIntegration.slug
+    );
+    const isJobSearchPlatformIntegration = isJobSearchPlatformIntegrationSlug(
+      args.activeIntegration.slug
+    );
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
     const isLinkedInIntegration = isLinkedInIntegrationSlug(args.activeIntegration.slug);
     const requestedConnectionId = options.connectionId?.trim() || null;
@@ -155,12 +158,19 @@ export function useIntegrationsActionsImpl(args: {
       options.mode === 'create' || (options.mode !== 'update' && !resolvedConnectionId);
     const normalizedName = formData.name.trim();
     const normalizedUsername = formData.username.trim();
-
     if (!normalizedName) {
       toast('Connection name is required.', { variant: 'error' });
       return null;
     }
-    if (!isBaselinkerIntegration && !isLinkedInIntegration && !normalizedUsername) {
+    if (
+      !isBaselinkerIntegration &&
+      !isLinkedInIntegration &&
+      !isVintedIntegration &&
+      !is1688Integration &&
+      !isPracujIntegration &&
+      !isScrapedSourceIntegration &&
+      !normalizedUsername
+    ) {
       toast('Username is required for this integration.', { variant: 'error' });
       return null;
     }
@@ -168,19 +178,79 @@ export function useIntegrationsActionsImpl(args: {
       toast('Connection id is required for update.', { variant: 'error' });
       return null;
     }
-    if (isCreateMode && !isLinkedInIntegration && !formData.password.trim()) {
+    if (
+      isCreateMode &&
+      !isLinkedInIntegration &&
+      !isVintedIntegration &&
+      !is1688Integration &&
+      !isPracujIntegration &&
+      !isScrapedSourceIntegration &&
+      !formData.password.trim()
+    ) {
       toast('Password/Token is required.', { variant: 'error' });
       return null;
     }
+    const normalizedJobApplicationPersonId = formData.jobApplicationPersonId.trim();
+    const normalizedJobApplicationPersonName = formData.jobApplicationPersonName.trim();
     const payload: Record<string, unknown> = {
       name: normalizedName,
-      username: normalizedUsername,
+      ...(normalizedUsername ||
+      !isCreateMode ||
+      (!isVintedIntegration &&
+        !is1688Integration &&
+        !isPracujIntegration &&
+        !isScrapedSourceIntegration)
+        ? { username: normalizedUsername }
+        : {}),
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
+      ...(isJobSearchPlatformIntegration
+        ? {
+            jobApplicationPersonId:
+              normalizedJobApplicationPersonId.length > 0 ? normalizedJobApplicationPersonId : null,
+            jobApplicationPersonName:
+              normalizedJobApplicationPersonId.length > 0 &&
+              normalizedJobApplicationPersonName.length > 0
+                ? normalizedJobApplicationPersonName
+                : null,
+          }
+        : {}),
+      ...(isPracujIntegration
+        ? {
+            pracujLoginMode: formData.pracujLoginMode,
+            pracujAuthMode: formData.pracujAuthMode,
+            pracujSalaryExpectation:
+              formData.pracujSalaryExpectation.trim().length > 0
+                ? parseInt(formData.pracujSalaryExpectation.trim(), 10) || null
+                : null,
+            pracujCooperationForm: formData.pracujCooperationForm,
+          }
+        : {}),
+      ...(is1688Integration
+        ? {
+            scanner1688StartUrl: formData.scanner1688StartUrl.trim() || null,
+            scanner1688LoginMode: formData.scanner1688LoginMode,
+            scanner1688DefaultSearchMode: formData.scanner1688DefaultSearchMode,
+            scanner1688CandidateResultLimit:
+              formData.scanner1688CandidateResultLimit.trim().length > 0
+                ? Math.max(1, Math.floor(Number(formData.scanner1688CandidateResultLimit) || 1))
+                : null,
+            scanner1688MinimumCandidateScore:
+              formData.scanner1688MinimumCandidateScore.trim().length > 0
+                ? Math.max(1, Math.floor(Number(formData.scanner1688MinimumCandidateScore) || 1))
+                : null,
+            scanner1688MaxExtractedImages:
+              formData.scanner1688MaxExtractedImages.trim().length > 0
+                ? Math.max(1, Math.floor(Number(formData.scanner1688MaxExtractedImages) || 1))
+                : null,
+            scanner1688AllowUrlImageSearchFallback: formData.scanner1688AllowUrlImageSearchFallback,
+          }
+        : {}),
       ...(isTraderaIntegration
         ? {
           ...(isTraderaBrowserIntegration
             ? {
               traderaBrowserMode: formData.traderaBrowserMode,
+              traderaCategoryStrategy: formData.traderaCategoryStrategy,
               playwrightListingScript: formData.playwrightListingScript.trim() || null,
             }
             : {}),
@@ -194,16 +264,6 @@ export function useIntegrationsActionsImpl(args: {
             0,
             Math.min(10080, Math.floor(formData.traderaAutoRelistLeadMinutes))
           ),
-        }
-        : {}),
-      ...(isTraderaApiIntegration
-        ? {
-          traderaApiAppId: Number.parseInt(formData.traderaApiAppId, 10),
-          traderaApiAppKey: formData.traderaApiAppKey.trim(),
-          traderaApiPublicKey: formData.traderaApiPublicKey.trim() || null,
-          traderaApiUserId: Number.parseInt(formData.traderaApiUserId, 10),
-          traderaApiToken: formData.traderaApiToken.trim(),
-          traderaApiSandbox: formData.traderaApiSandbox,
         }
         : {}),
     };
@@ -396,45 +456,21 @@ export function useIntegrationsActionsImpl(args: {
       body: { mode: 'manual', manualTimeoutMs: 240000 },
       timeoutMs: 300000,
     });
-
-  const handleSelectPlaywrightPersona = async (personaId: string | null): Promise<void> => {
-    if (!personaId) {
-      args.setPlaywrightPersonaId(null);
-      return;
-    }
-    const persona = args.playwrightPersonas.find((p: PlaywrightPersona) => p.id === personaId);
-    if (!persona) return;
-    args.setPlaywrightPersonaId(persona.id);
-    args.setPlaywrightSettings(buildPlaywrightSettings(persona.settings));
-    toast(`Applied persona "${persona.name}".`, { variant: 'success' });
-  };
-
-  const handleSavePlaywrightSettings = async (): Promise<void> => {
-    const connection = activeConnection;
-    if (!connection) return;
-    try {
-      await upsertConnectionMutation.mutateAsync({
-        integrationId: args.activeIntegration?.id ?? connection.integrationId,
-        connectionId: connection.id,
-        payload: {
-          name: connection.name,
-          username: connection.username,
-          playwrightPersonaId: args.playwrightPersonaId,
-          ...toPlaywrightConnectionPayload(args.playwrightSettings),
-        },
-      });
-      toast('Playwright settings saved.', { variant: 'success' });
-    } catch (error: unknown) {
-      logClientCatch(error, {
-        source: 'IntegrationsContext',
-        action: 'handleSavePlaywrightSettings',
-        connectionId: connection.id,
-      });
-      toast((error as Error)?.message ?? 'Failed to save Playwright settings.', {
-        variant: 'error',
-      });
-    }
-  };
+  const handleVintedManualLogin = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'test', 'Vinted manual login test', {
+      body: { mode: 'manual', manualTimeoutMs: 240000 },
+      timeoutMs: 300000,
+    });
+  const handle1688ManualLogin = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'test', '1688 manual login test', {
+      body: { mode: 'manual', manualTimeoutMs: 300000 },
+      timeoutMs: 360000,
+    });
+  const handlePracujManualLogin = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'test', 'Pracuj.pl manual login test', {
+      body: { mode: 'manual', manualTimeoutMs: 240000 },
+      timeoutMs: 300000,
+    });
 
   const handleAllegroAuthorize = (): void => {
     if (!args.activeIntegration || !activeConnection) {
@@ -675,8 +711,9 @@ export function useIntegrationsActionsImpl(args: {
     handleAllegroTest,
     handleTestConnection,
     handleTraderaManualLogin,
-    handleSelectPlaywrightPersona,
-    handleSavePlaywrightSettings,
+    handleVintedManualLogin,
+    handle1688ManualLogin,
+    handlePracujManualLogin,
     handleAllegroAuthorize,
     handleAllegroDisconnect,
     handleAllegroSandboxToggle,

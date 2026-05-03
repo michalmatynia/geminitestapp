@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { z } from 'zod';
+import { type z } from 'zod';
 import {
   DOCS_MANIFEST_PATH,
   BUILTIN_FALLBACK_MANIFEST,
@@ -11,7 +11,7 @@ import {
 } from '../docs-registry-adapter.helpers';
 import {
   docsManifestSchema,
-  docsManifestSourceSchema,
+  type docsManifestSourceSchema,
   type AiPathsDocsManifest,
   type AiPathsDocsManifestSource,
 } from '../docs-registry-adapter.types';

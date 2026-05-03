@@ -1,50 +1,47 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { readAgentPersonaAvatarThumbnailByRef } from '@/features/ai/agentcreator/server/persona-avatar-thumbnails';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
+import { notFoundError } from '@/shared/errors/app-error';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
+import {
+  resolvePersonaVisualsPersonaId,
+  resolveStoredAgentPersonas,
+} from './handler.helpers';
+
 type AgentPersonaMood = NonNullable<AgentPersona['moods']>[number];
 
-const resolveMoodVisuals = async (
+const getMoodWithBackfill = async (
   mood: AgentPersonaMood
 ): Promise<{ mood: AgentPersonaMood; didBackfill: boolean }> => {
-  const inlineThumbnailDataUrl =
-    typeof mood.avatarThumbnailDataUrl === 'string' ? mood.avatarThumbnailDataUrl.trim() : '';
+  const thumbnailDataUrl = typeof mood.avatarThumbnailDataUrl === 'string' ? mood.avatarThumbnailDataUrl.trim() : '';
 
-  if (inlineThumbnailDataUrl) {
+  if (thumbnailDataUrl !== '') {
     return {
-      mood: {
-        ...mood,
-        avatarThumbnailDataUrl: inlineThumbnailDataUrl,
-      },
+      mood: { ...mood, avatarThumbnailDataUrl: thumbnailDataUrl },
       didBackfill: false,
     };
   }
 
-  if (!(mood.useEmbeddedThumbnail && mood.avatarThumbnailRef)) {
+  const useEmbedded = mood.useEmbeddedThumbnail ?? false;
+  const thumbnailRef = mood.avatarThumbnailRef ?? '';
+  
+  if (!useEmbedded || thumbnailRef === '') {
     return {
-      mood: {
-        ...mood,
-        avatarThumbnailDataUrl: null,
-      },
+      mood: { ...mood, avatarThumbnailDataUrl: null },
       didBackfill: false,
     };
   }
 
-  const thumbnail = await readAgentPersonaAvatarThumbnailByRef(mood.avatarThumbnailRef);
-  if (!thumbnail) {
+  const thumbnail = await readAgentPersonaAvatarThumbnailByRef(thumbnailRef);
+  if (thumbnail === null) {
     return {
-      mood: {
-        ...mood,
-        avatarThumbnailDataUrl: null,
-      },
+      mood: { ...mood, avatarThumbnailDataUrl: null },
       didBackfill: false,
     };
   }
@@ -62,28 +59,25 @@ const resolveMoodVisuals = async (
   };
 };
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { personaId: string }
 ): Promise<Response> {
-  const personaId = params.personaId?.trim();
-  if (!personaId) {
-    throw badRequestError('Persona id is required.');
-  }
+  const personaId = resolvePersonaVisualsPersonaId(params.personaId);
 
   const raw = await readStoredSettingValue(AGENT_PERSONA_SETTINGS_KEY);
-  const personas = normalizeAgentPersonas(raw?.trim() ? JSON.parse(raw) : []);
+  const personas = resolveStoredAgentPersonas(raw);
   const persona = personas.find((candidate) => candidate.id === personaId) ?? null;
-  if (!persona) {
+  if (persona === null) {
     throw notFoundError('Agent persona not found.');
   }
 
-  const moodResults = await Promise.all((persona.moods ?? []).map(resolveMoodVisuals));
-  const moods = moodResults.map(({ mood }) => mood);
-  const didBackfill = moodResults.some(({ didBackfill }) => didBackfill);
+  const moodResults = await Promise.all((persona.moods ?? []).map(getMoodWithBackfill));
+  const moods = moodResults.map((result) => result.mood);
+  const hasBackfilled = moodResults.some((result) => result.didBackfill);
 
-  if (didBackfill) {
+  if (hasBackfilled) {
     const nextPersonas = personas.map((candidate) =>
       candidate.id === persona.id ? { ...candidate, moods } : candidate
     );
@@ -91,9 +85,7 @@ export async function GET_handler(
     try {
       await upsertStoredSettingValue(AGENT_PERSONA_SETTINGS_KEY, JSON.stringify(nextPersonas));
     } catch (error) {
-      void ErrorSystem.captureException(error);
-    
-      // Keep the visuals response available even if the lazy backfill write fails.
+      await ErrorSystem.captureException(error);
     }
   }
 
@@ -108,3 +100,4 @@ export async function GET_handler(
     },
   });
 }
+

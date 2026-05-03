@@ -16,7 +16,7 @@ describe('toRuntimeNodeStatus', () => {
 
   it('rejects non-node run statuses', () => {
     expect(toRuntimeNodeStatus('paused')).toBeNull();
-    expect(toRuntimeNodeStatus('dead_lettered')).toBeNull();
+    expect(toRuntimeNodeStatus('legacy_server_status')).toBeNull();
   });
 
   it('returns null for unsupported values', () => {
@@ -129,7 +129,7 @@ describe('shouldCaptureRuntimeProfileHighlight', () => {
 });
 
 describe('toRuntimeProfileHighlight', () => {
-  it('keeps compatibility runtime strategy labels on public highlights', () => {
+  it('drops non-canonical runtime strategy labels from public highlights', () => {
     expect(
       toRuntimeProfileHighlight({
         type: 'node',
@@ -140,13 +140,12 @@ describe('toRuntimeProfileHighlight', () => {
         iteration: 1,
         status: 'executed',
         durationMs: 4,
-        runtimeStrategy: 'compatibility',
+        runtimeStrategy: 'legacy_mode' as never,
         runtimeResolutionSource: 'registry',
         runtimeCodeObjectId: null,
       })
     ).toMatchObject({
       type: 'node',
-      runtimeStrategy: 'compatibility',
       runtimeResolutionSource: 'registry',
       runtimeCodeObjectId: undefined,
     });

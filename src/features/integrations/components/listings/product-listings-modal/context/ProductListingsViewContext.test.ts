@@ -15,8 +15,8 @@ describe('createProductListingsViewContextValue', () => {
           integration: { slug: 'tradera' },
         } as never,
         {
-          id: 'listing-tradera-2',
-          integration: { slug: 'tradera-api' },
+          id: 'listing-playwright-1',
+          integration: { slug: 'playwright-programmable' },
         } as never,
       ],
       filterIntegrationSlug: 'tradera',
@@ -24,7 +24,7 @@ describe('createProductListingsViewContextValue', () => {
 
     expect(value.filteredListings.map((listing) => listing.id)).toEqual([
       'listing-tradera-1',
-      'listing-tradera-2',
+      'listing-playwright-1',
     ]);
     expect(value.integrationScopeLabel).toBe('Tradera');
     expect(value.statusTargetLabel).toBe('Tradera');

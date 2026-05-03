@@ -76,7 +76,11 @@ vi.mock('@/shared/ui/FocusModeTogglePortal', () => ({
 }));
 
 vi.mock('@/shared/ui/pagination', () => ({
-  Pagination: () => <div>Pagination</div>,
+  Pagination: ({ showPageJump }: { showPageJump?: boolean }) => (
+    <div data-testid='pagination' data-show-page-jump={String(showPageJump)}>
+      Pagination
+    </div>
+  ),
 }));
 
 vi.mock('@/shared/ui/select-simple', () => ({
@@ -210,7 +214,10 @@ describe('ProductListHeader', () => {
     expect(
       within(desktopControlsRow).getByRole('button', { name: 'Create new product' })
     ).toBeInTheDocument();
-    expect(within(desktopControlsRow).getByText('Pagination')).toBeInTheDocument();
+    expect(within(desktopControlsRow).getByTestId('pagination')).toHaveAttribute(
+      'data-show-page-jump',
+      'true'
+    );
   });
 
   it('renders desktop filters on a dedicated row below the pagination and selectors', () => {
@@ -238,7 +245,10 @@ describe('ProductListHeader', () => {
       'mt-1'
     );
     expect(within(desktopControlsRow).getByRole('button', { name: 'Create new product' })).toBeInTheDocument();
-    expect(within(desktopControlsRow).getByText('Pagination')).toBeInTheDocument();
+    expect(within(desktopControlsRow).getByTestId('pagination')).toHaveAttribute(
+      'data-show-page-jump',
+      'true'
+    );
     expect(
       within(desktopControlsRow).getByLabelText('Select product name language')
     ).toBeInTheDocument();
@@ -250,15 +260,16 @@ describe('ProductListHeader', () => {
     );
     expect(within(desktopControlsRow).queryByTestId('filters-content')).toBeNull();
 
-    const desktopFiltersRow = desktopSection.lastElementChild;
-    expect(desktopFiltersRow).not.toBeNull();
-    expect(desktopFiltersRow).toHaveClass('w-full');
-    expect(within(desktopFiltersRow as HTMLElement).getByTestId('filters-content')).toHaveTextContent(
+    const headerContent = findDivByExactClassName(container, 'space-y-3');
+    const sharedFiltersRow = headerContent.lastElementChild;
+    expect(sharedFiltersRow).not.toBeNull();
+    expect(sharedFiltersRow).toHaveClass('w-full');
+    expect(within(sharedFiltersRow as HTMLElement).getByTestId('filters-content')).toHaveTextContent(
       'Filters content'
     );
   });
 
-  it('provides stable layout instance ids to non-DOM filter components', () => {
+  it('provides a stable shared instance id to non-DOM filter components', () => {
     function FiltersProbe({
       instanceId,
     }: {
@@ -269,7 +280,8 @@ describe('ProductListHeader', () => {
 
     render(<ProductListHeader filtersContent={<FiltersProbe />} />);
 
-    expect(screen.getByTestId('filters-probe-mobile')).toBeInTheDocument();
-    expect(screen.getByTestId('filters-probe-desktop')).toBeInTheDocument();
+    expect(screen.getByTestId('filters-probe-header')).toBeInTheDocument();
+    expect(screen.queryByTestId('filters-probe-mobile')).toBeNull();
+    expect(screen.queryByTestId('filters-probe-desktop')).toBeNull();
   });
 });

@@ -1,4 +1,4 @@
-import { QueryClient, type QueryKey } from '@tanstack/react-query';
+import { type QueryClient, type QueryKey } from '@tanstack/react-query';
 
 import {
   AI_PATH_RUN_ENQUEUED_EVENT_NAME,
@@ -289,6 +289,30 @@ export const invalidateProductMetadata = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.all });
 };
 
+export const invalidateProductCustomFields = async (
+  queryClient: QueryClient
+): Promise<void> => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.customFields() }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.customFields() }),
+  ]);
+};
+
+export const invalidateProductTitleTerms = async (
+  queryClient: QueryClient,
+  catalogId?: string | null
+): Promise<void> => {
+  if (catalogId !== undefined) {
+    await queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.metadata.titleTermsAll(catalogId),
+    });
+    return;
+  }
+  await queryClient.invalidateQueries({
+    queryKey: [...QUERY_KEYS.products.metadata.all, 'title-terms'],
+  });
+};
+
 export const invalidateProductValidatorLatestSource = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({
     queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
@@ -319,6 +343,20 @@ export const invalidateProductsAndDetail = async (
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detailEdit(productId) }),
     invalidateProductValidatorLatestSource(queryClient),
+  ]);
+};
+
+export const invalidateProductScans = async (
+  queryClient: QueryClient,
+  productId: string
+): Promise<void> => {
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.scans(productId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.scansLatestAll(),
+    }),
   ]);
 };
 
@@ -361,29 +399,35 @@ export const invalidateCatalogScopedData = async (
   queryClient: QueryClient,
   catalogId: string | null
 ): Promise<void> => {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.categories(catalogId) }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.metadata.shippingGroups(catalogId),
-    }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.tags(catalogId) }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.parameters(catalogId) }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.metadata.simpleParameters(catalogId),
-    }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categories(catalogId) }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.settings.shippingGroups(catalogId),
-    }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.tags(catalogId) }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.parameters(catalogId) }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.settings.simpleParameters(catalogId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.settings.categoryTree(catalogId),
-    }),
-  ]);
+  const catalogIds = catalogId === null ? [null] : [catalogId, null];
+  await Promise.all(
+    catalogIds.flatMap((id) => [
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.categories(id) }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.metadata.shippingGroups(id),
+      }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.tags(id) }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.parameters(id) }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.metadata.simpleParameters(id),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.metadata.titleTermsAll(id),
+      }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categories(id) }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.settings.shippingGroups(id),
+      }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.tags(id) }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.parameters(id) }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.settings.simpleParameters(id),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.settings.categoryTree(id),
+      }),
+    ])
+  );
 };
 
 export const invalidatePriceGroups = async (queryClient: QueryClient): Promise<void> => {

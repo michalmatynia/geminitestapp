@@ -16,9 +16,9 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 }));
 
 import {
-  GET_products_metadata_id_handler,
-  DELETE_products_metadata_id_handler,
-  PUT_products_metadata_id_handler,
+  getProductsMetadataIdHandler,
+  deleteProductsMetadataIdHandler,
+  putProductsMetadataIdHandler,
 } from './handler';
 
 describe('product metadata by-type and id handler', () => {
@@ -98,7 +98,7 @@ describe('product metadata by-type and id handler', () => {
       },
     });
 
-    const response = await PUT_products_metadata_id_handler(
+    const response = await putProductsMetadataIdHandler(
       new NextRequest('http://localhost/api/v2/products/metadata/price-groups/pg-1', {
         method: 'PUT',
         body: JSON.stringify({
@@ -190,7 +190,7 @@ describe('product metadata by-type and id handler', () => {
       },
     });
 
-    const response = await GET_products_metadata_id_handler(
+    const response = await getProductsMetadataIdHandler(
       new NextRequest('http://localhost/api/v2/products/metadata/price-groups/pg-eur'),
       {} as never,
       { type: 'price-groups', id: 'pg-eur' }
@@ -259,7 +259,7 @@ describe('product metadata by-type and id handler', () => {
       },
     });
 
-    const response = await PUT_products_metadata_id_handler(
+    const response = await putProductsMetadataIdHandler(
       new NextRequest('http://localhost/api/v2/products/metadata/price-groups/pg-1', {
         method: 'PUT',
         body: JSON.stringify({
@@ -333,7 +333,7 @@ describe('product metadata by-type and id handler', () => {
     });
 
     await expect(
-      PUT_products_metadata_id_handler(
+      putProductsMetadataIdHandler(
         new NextRequest('http://localhost/api/v2/products/metadata/price-groups/pg-1', {
           method: 'PUT',
           body: JSON.stringify({
@@ -392,7 +392,7 @@ describe('product metadata by-type and id handler', () => {
     });
 
     await expect(
-      PUT_products_metadata_id_handler(
+      putProductsMetadataIdHandler(
         new NextRequest('http://localhost/api/v2/products/metadata/price-groups/pg-1', {
           method: 'PUT',
           body: JSON.stringify({
@@ -447,7 +447,7 @@ describe('product metadata by-type and id handler', () => {
       },
     });
 
-    const response = await DELETE_products_metadata_id_handler(
+    const response = await deleteProductsMetadataIdHandler(
       new NextRequest('http://localhost/api/v2/products/metadata/price-groups/pg-1', {
         method: 'DELETE',
       }),

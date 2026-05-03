@@ -74,7 +74,7 @@ const resolveFocusedSuiteId = (
   suites: KangurMobileTestSuiteItem[],
 ): string | null => {
   const normalized = focusToken.trim().toLowerCase();
-  if (!normalized) {
+  if (normalized === '') {
     return null;
   }
 
@@ -114,7 +114,7 @@ export const useKangurMobileTests = (
 ): UseKangurMobileTestsResult => {
   const { apiBaseUrl } = useKangurMobileRuntime();
   const { copy } = useKangurMobileI18n();
-  const focusToken = rawFocusToken?.trim().toLowerCase() || null;
+  const focusToken = (rawFocusToken?.trim().toLowerCase()) ?? null;
 
   const settingsQuery = useQuery({
     queryKey: ['kangur-mobile', 'tests', 'lite-settings', apiBaseUrl],
@@ -189,7 +189,7 @@ export const useKangurMobileTests = (
         : null,
     focusToken,
     focusedSuiteId:
-      focusToken && suites.length > 0
+      focusToken !== null && suites.length > 0
         ? resolveFocusedSuiteId(focusToken, suites)
         : null,
     isLoading: settingsQuery.isLoading,

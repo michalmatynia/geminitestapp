@@ -12,7 +12,9 @@ import type {
 import {
   AI_PATHS_CONFIG_KEY_PREFIX,
   AI_PATHS_INDEX_KEY,
+  AI_PATHS_TRIGGER_BUTTONS_KEY,
 } from '@/features/ai/ai-paths/server/settings-store.constants';
+import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 
@@ -255,7 +257,7 @@ const buildStarterRefreshRecords = (): AiPathsSettingRecord[] => [
   },
 ];
 
-const buildBrokenBlwoStarterRefreshRecords = (): AiPathsSettingRecord[] => [
+const buildDeprecatedBlwoStarterRecords = (): AiPathsSettingRecord[] => [
   {
     key: AI_PATHS_INDEX_KEY,
     value: JSON.stringify([
@@ -275,6 +277,56 @@ const buildBrokenBlwoStarterRefreshRecords = (): AiPathsSettingRecord[] => [
       nodes: [{ id: 'node-broken-trigger', type: 'trigger' }],
       edges: [],
     }),
+  },
+  {
+    key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+    value: serializeAiTriggerButtonsRaw([
+      {
+        id: '5f36f340-3d89-4f6f-a08f-2387f380b90b',
+        name: 'BLWo',
+        iconId: null,
+        pathId: 'path_base_export_blwo_v1',
+        enabled: true,
+        locations: ['product_row'],
+        mode: 'click',
+        display: {
+          label: 'BLWo',
+          showLabel: true,
+        },
+        createdAt: '2026-03-03T10:00:00.000Z',
+        updatedAt: '2026-03-03T10:00:00.000Z',
+        sortIndex: 40,
+      },
+    ]),
+  },
+];
+
+const buildBrokenTranslationDefaultPathRecords = (): AiPathsSettingRecord[] => [
+  {
+    key: AI_PATHS_INDEX_KEY,
+    value: JSON.stringify([
+      {
+        id: 'path_96708d',
+        name: 'Translation EN->PL Description + Parameters',
+        createdAt: '2026-03-03T10:00:00.000Z',
+        updatedAt: '2026-03-03T10:00:00.000Z',
+      },
+    ]),
+  },
+  {
+    key: `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`,
+    value: '{"broken":',
+  },
+];
+
+const buildEmptyStarterRecords = (): AiPathsSettingRecord[] => [
+  {
+    key: AI_PATHS_INDEX_KEY,
+    value: '[]',
+  },
+  {
+    key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+    value: '[]',
   },
 ];
 
@@ -319,7 +371,58 @@ describe('AI Paths maintenance forward-only action ids', () => {
     );
   });
 
-  it('refreshes outdated starter-derived translation configs to the current runnable starter graph', () => {
+  it('surfaces canonical starter seeding when canonical workflows are missing from settings', () => {
+    const report = buildAiPathsMaintenanceReport(buildEmptyStarterRecords());
+
+    expect(report.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'seed_canonical_starter_workflows',
+          status: 'pending',
+        }),
+      ])
+    );
+    expect(report.actions.some((action) => action.id === 'ensure_starter_workflow_defaults')).toBe(
+      false
+    );
+  });
+
+  it('seeds canonical AI Paths and trigger buttons from semantic starter assets', () => {
+    const result = runMaintenanceAction({
+      actionId: 'seed_canonical_starter_workflows',
+      records: buildEmptyStarterRecords(),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.affectedCount).toBeGreaterThan(0);
+    expect(
+      result.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_descv3lite`
+      )
+    ).toBe(true);
+    expect(
+      result.nextRecords.some((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`)
+    ).toBe(true);
+    expect(
+      result.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_marketplace_copy_debrand_v1`
+      )
+    ).toBe(true);
+
+    const triggerButtonsRecord = result.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    expect(
+      triggerButtons.some((button) => button['id'] === '4c07d35b-ea92-4d1f-b86b-c586359f68de')
+    ).toBe(true);
+    expect(
+      triggerButtons.some((button) => button['id'] === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4')
+    ).toBe(true);
+  });
+
+  it('refreshes outdated starter-derived translation configs through canonical graph replacement', () => {
     const result = runMaintenanceAction({
       actionId: 'refresh_starter_workflow_configs',
       records: buildStarterRefreshRecords(),
@@ -342,11 +445,10 @@ describe('AI Paths maintenance forward-only action ids', () => {
       mode: 'full',
     });
 
-    expect(parsed.nodes.some((node) => node.type === 'trigger')).toBe(true);
     expect(parsed.extensions?.['aiPathsStarter']).toEqual(
       expect.objectContaining({
         templateId: 'starter_translation_en_pl',
-        templateVersion: 6,
+        templateVersion: 7,
       })
     );
     const databaseNode = parsed.nodes.find(
@@ -355,7 +457,15 @@ describe('AI Paths maintenance forward-only action ids', () => {
     expect(databaseNode?.config?.database).toEqual(
       expect.objectContaining({
         updatePayloadMode: 'custom',
-        updateTemplate: expect.stringContaining('{{result.parameters}}'),
+        updateTemplate: expect.stringContaining('{{value.description_pl}}'),
+        skipEmpty: true,
+        trimStrings: true,
+        localizedParameterMerge: expect.objectContaining({
+          enabled: true,
+          targetPath: 'parameters',
+          languageCode: 'pl',
+          requireFullCoverage: false,
+        }),
         mappings: expect.arrayContaining([
           expect.objectContaining({
             targetPath: 'description_pl',
@@ -371,43 +481,60 @@ describe('AI Paths maintenance forward-only action ids', () => {
       })
     );
     expect(report.shouldBlock).toBe(false);
-    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+    expect(report.blockReason).toBeNull();
+    expect(report.compileReport.errors).toBe(0);
   });
 
-  it('repairs broken seeded BLWo starter configs through the generic refresh action', () => {
-    const report = buildAiPathsMaintenanceReport(buildBrokenBlwoStarterRefreshRecords());
+  it('surfaces deprecated BLWo starter artifacts for pruning and removes them through maintenance', () => {
+    const report = buildAiPathsMaintenanceReport(buildDeprecatedBlwoStarterRecords());
 
     expect(report.actions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'refresh_starter_workflow_configs',
+          id: 'prune_deprecated_starter_workflows',
           status: 'pending',
-          affectedRecords: 1,
+          affectedRecords: 3,
         }),
       ])
     );
 
     const result = runMaintenanceAction({
-      actionId: 'refresh_starter_workflow_configs',
-      records: buildBrokenBlwoStarterRefreshRecords(),
+      actionId: 'prune_deprecated_starter_workflows',
+      records: buildDeprecatedBlwoStarterRecords(),
     });
 
     expect(result.success).toBe(true);
-    expect(result.affectedCount).toBe(1);
+    expect(result.affectedCount).toBe(3);
+    expect(result.deletedKeys).toEqual([
+      `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`,
+    ]);
+    expect(
+      result.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`
+      )
+    ).toBe(false);
+    const indexRecord = result.nextRecords.find((record) => record.key === AI_PATHS_INDEX_KEY);
+    if (!indexRecord) throw new Error('Expected index record');
+    expect(indexRecord.value).toBe('[]');
+    const triggerButtonsRecord = result.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    expect(triggerButtonsRecord.value).toBe('[]');
+  });
+
+  it('does not repair broken translation default-path configs through the generic refresh action', () => {
+    const result = runMaintenanceAction({
+      actionId: 'refresh_starter_workflow_configs',
+      records: buildBrokenTranslationDefaultPathRecords(),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.affectedCount).toBe(0);
 
     const configRecord = result.nextRecords.find(
-      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`
     );
-    if (!configRecord) throw new Error('Expected refreshed BLWo config record');
-
-    const parsed = JSON.parse(configRecord.value) as PathConfig;
-    expect(parsed.id).toBe('path_base_export_blwo_v1');
-    expect(parsed.name).toBe('Base Export Workflow (BLWo)');
-    expect(parsed.nodes.some((node) => node.type === 'trigger')).toBe(true);
-    expect(parsed.extensions?.['aiPathsStarter']).toEqual(
-      expect.objectContaining({
-        templateId: 'starter_base_export_blwo',
-      })
-    );
+    expect(configRecord?.value).toBe('{"broken":');
   });
 });

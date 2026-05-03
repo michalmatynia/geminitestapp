@@ -20,6 +20,7 @@ import {
 
 import type { Metadata } from 'next';
 import type { JSX } from 'react';
+import type { FilemakerEmailCampaignSuppressionEntry } from '@/features/filemaker/public';
 
 type FilemakerPreferencesRouteOptions = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -41,10 +42,16 @@ const readSearchParamValue = (
   return null;
 };
 
-export const generateFilemakerPreferencesMetadata = async (): Promise<Metadata> => ({
+export const generateFilemakerPreferencesMetadata = (): Metadata => ({
   title: 'Manage Filemaker campaign email preferences',
   description: 'Review and update recipient delivery preferences for Filemaker campaigns.',
 });
+
+function resolveInitialStatus(suppressionEntry: FilemakerEmailCampaignSuppressionEntry | null): 'subscribed' | 'unsubscribed' | 'blocked' {
+  if (suppressionEntry === null) return 'subscribed';
+  if (suppressionEntry.reason === 'unsubscribed') return 'unsubscribed';
+  return 'blocked';
+}
 
 export const renderFilemakerPreferencesRoute = async ({
   searchParams,
@@ -52,7 +59,7 @@ export const renderFilemakerPreferencesRoute = async ({
   const token = readSearchParamValue(searchParams, 'token');
   const tokenPayload = parseFilemakerCampaignUnsubscribeToken(token);
 
-  if (!tokenPayload) {
+  if (tokenPayload === null) {
     return (
       <FilemakerCampaignPreferencesPage
         initialEmailAddress={readSearchParamValue(searchParams, 'email')}
@@ -78,11 +85,8 @@ export const renderFilemakerPreferencesRoute = async ({
     suppressionRegistry,
     tokenPayload.emailAddress
   );
-  const initialStatus = !suppressionEntry
-    ? 'subscribed'
-    : suppressionEntry.reason === 'unsubscribed'
-      ? 'unsubscribed'
-      : 'blocked';
+  
+  const initialStatus = resolveInitialStatus(suppressionEntry);
 
   return (
     <FilemakerCampaignPreferencesPage

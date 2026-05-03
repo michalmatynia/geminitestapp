@@ -85,7 +85,7 @@ const applyDefinedLessonFormOverrides = (
 ): LessonFormData => {
   const nextFormData = { ...formData };
   for (const field of LESSON_TEMPLATE_FORM_FIELDS) {
-    const value = overrides[field] as LessonFormData[typeof field] | undefined;
+    const value = overrides[field];
     if (value !== undefined) {
       setLessonTemplateFormField(nextFormData, field, value);
     }

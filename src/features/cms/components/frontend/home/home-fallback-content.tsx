@@ -26,6 +26,24 @@ export type HomeFallbackContentProps = {
   appearanceTone?: CmsAppearanceTone;
 };
 
+import { createContext, useContext } from 'react';
+
+type HomeFallbackContextValue = {
+  products: ProductWithImages[];
+  themeSettings: SocialThemeSettings;
+  appearanceTone?: CmsAppearanceTone;
+};
+
+const HomeFallbackContext = createContext<HomeFallbackContextValue | null>(null);
+
+export function useHomeFallback(): HomeFallbackContextValue {
+  const context = useContext(HomeFallbackContext);
+  if (!context) {
+    throw new Error('useHomeFallback must be used within HomeFallbackContent');
+  }
+  return context;
+}
+
 export function HomeFallbackContent({
   showFallbackHeader,
   products,
@@ -35,29 +53,31 @@ export function HomeFallbackContent({
   const dividerTranslations = useTranslations('FallbackHome.Dividers');
 
   return (
-    <div className='flex min-h-screen flex-col'>
-      {showFallbackHeader ? <HomeFallbackHeader appearanceTone={appearanceTone} /> : null}
+    <HomeFallbackContext.Provider value={{ products, themeSettings, appearanceTone }}>
+      <div className='flex min-h-screen flex-col'>
+        {showFallbackHeader ? <HomeFallbackHeader /> : null}
 
-      <div className='flex-1'>
-        <HomeFallbackHero appearanceTone={appearanceTone} collectionCount={5} />
+        <div className='flex-1'>
+          <HomeFallbackHero collectionCount={5} />
 
-        <SectionDivider label={dividerTranslations('editorial')} />
-        <HomeFallbackSignature products={products} />
+          <SectionDivider label={dividerTranslations('editorial')} />
+          <HomeFallbackSignature />
 
-        <SectionDivider label={dividerTranslations('highlights')} />
-        <HomeFallbackHighlights />
+          <SectionDivider label={dividerTranslations('highlights')} />
+          <HomeFallbackHighlights />
 
-        <SectionDivider label={dividerTranslations('collections')} />
-        <HomeFallbackCollections />
+          <SectionDivider label={dividerTranslations('collections')} />
+          <HomeFallbackCollections />
 
-        <SectionDivider label={dividerTranslations('catalog')} />
-        <HomeFallbackProducts products={products} />
+          <SectionDivider label={dividerTranslations('catalog')} />
+          <HomeFallbackProducts />
 
-        <HomeFallbackNextSteps />
+          <HomeFallbackNextSteps />
+        </div>
+
+        {showFallbackHeader ? <HomeFallbackFooterWithTheme /> : null}
       </div>
-
-      {showFallbackHeader ? <HomeFallbackFooterWithTheme themeSettings={themeSettings} /> : null}
-    </div>
+    </HomeFallbackContext.Provider>
   );
 }
 

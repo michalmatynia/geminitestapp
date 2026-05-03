@@ -25,7 +25,7 @@ vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   getSystemLogById: getSystemLogByIdMock,
 }));
 
-vi.mock('@/features/observability/entry-server', () => ({
+vi.mock('@/shared/lib/observability/entry-server', () => ({
   hydrateSystemLogRecordRuntimeContext: hydrateSystemLogRecordRuntimeContextMock,
 }));
 
@@ -48,7 +48,7 @@ describe('system logs interpret handler', () => {
   });
 
   it('hydrates registry runtime context before generating the log interpretation', async () => {
-    const { POST_handler } = await import('./handler');
+    const { postHandler } = await import('./handler');
 
     resolveObservabilityContextRegistryEnvelopeMock.mockResolvedValue({
       refs: [{ id: 'page:system-logs', kind: 'static_node' }],
@@ -156,7 +156,7 @@ describe('system logs interpret handler', () => {
       }),
     });
 
-    const response = await POST_handler(req, {} as never);
+    const response = await postHandler(req, {} as never);
     const data = await response.json();
 
     expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);

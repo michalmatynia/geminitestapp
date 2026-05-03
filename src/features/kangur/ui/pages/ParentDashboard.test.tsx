@@ -65,6 +65,19 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => authState.value,
+  useKangurAuthSessionState: () => ({
+    user: null,
+    isAuthenticated: false,
+    hasResolvedAuth: authState.value.hasResolvedAuth,
+    canAccessParentAssignments: false,
+  }),
+  useKangurAuthStatusState: () => ({
+    isLoadingAuth: authState.value.isLoadingAuth,
+    isLoadingPublicSettings: false,
+    isLoggingOut: false,
+    authError: null,
+    appPublicSettings: null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
@@ -76,6 +89,9 @@ vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: () => ({
+    openLoginModal: vi.fn(),
+  }),
+  useKangurLoginModalActions: () => ({
     openLoginModal: vi.fn(),
   }),
 }));

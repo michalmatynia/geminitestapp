@@ -21,7 +21,7 @@ vi.mock('../JobQueueContext', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/templates.public', () => ({
   FilterPanel: (props: Record<string, unknown>) => {
     mockState.filterPanelProps = props;
     return <div data-testid='filter-panel' />;
@@ -78,11 +78,9 @@ describe('JobQueueFilterPanel', () => {
           { value: 'all', label: 'All' },
           { value: 'queued', label: 'Queued' },
           { value: 'running', label: 'Running' },
-          { value: 'paused', label: 'Paused' },
           { value: 'completed', label: 'Completed' },
           { value: 'failed', label: 'Failed' },
           { value: 'canceled', label: 'Canceled' },
-          { value: 'dead_lettered', label: 'Dead-lettered' },
         ],
         width: '14rem',
       },

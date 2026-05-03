@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { ChevronsLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -53,6 +54,8 @@ type ActiveLessonRenderSnapshot = {
   progress: ReturnType<typeof useLessons>['progress'];
 };
 
+// STUDIQ_PRINT_BRAND_LABEL is the brand name shown in the print header when
+// a learner prints a lesson document.
 const STUDIQ_PRINT_BRAND_LABEL = 'StudiQ';
 
 type ActiveLessonFallbackCopy = {
@@ -70,6 +73,9 @@ type ActiveLessonFallbackCopy = {
   secretUnlockedLabel: string;
 };
 
+// getActiveLessonFallbackCopy returns locale-specific copy for the active
+// lesson panel when i18n messages are not yet loaded. Covers the most common
+// locales (pl, en, uk, de) with a Polish default.
 const getActiveLessonFallbackCopy = (
   locale: ReturnType<typeof normalizeSiteLocale>
 ): ActiveLessonFallbackCopy => {
@@ -145,16 +151,44 @@ const getActiveLessonFallbackCopy = (
   };
 };
 
+// ActiveLessonView is the entry point for the active lesson panel. It reads
+// the active lesson from either the provided snapshot (used by the print
+// view and test harnesses) or the live LessonsContext. Returns null when no
+// lesson is active so the panel unmounts cleanly.
 export function ActiveLessonView({
   snapshot,
 }: {
+  snapshot?: ActiveLessonRenderSnapshot;
+}) {
+  const lessons = useLessons();
+  const activeLesson = snapshot?.activeLesson ?? lessons.activeLesson;
+
+  if (!activeLesson) {
+    return null;
+  }
+
+  return (
+    <ResolvedActiveLessonView
+      activeLesson={activeLesson}
+      lessons={lessons}
+      snapshot={snapshot}
+    />
+  );
+}
+
+function ResolvedActiveLessonView({
+  activeLesson,
+  lessons,
+  snapshot,
+}: {
+  activeLesson: NonNullable<ReturnType<typeof useLessons>['activeLesson']>;
+  lessons: ReturnType<typeof useLessons>;
   snapshot?: ActiveLessonRenderSnapshot;
 }) {
   const locale = useLocale();
   const normalizedLocale = normalizeSiteLocale(locale);
   const fallbackCopy = getActiveLessonFallbackCopy(normalizedLocale);
   const translations = useTranslations('KangurLessonsPage');
-  const lessons = useLessons();
   const {
     handleSelectLesson,
     setIsActiveLessonComponentReady,
@@ -163,7 +197,6 @@ export function ActiveLessonView({
     activeLessonContentRef,
     lessonTemplateMap,
   } = lessons;
-  const activeLesson = snapshot?.activeLesson ?? lessons.activeLesson;
   const lessonAssignmentsByComponent =
     snapshot?.lessonAssignmentsByComponent ?? lessons.lessonAssignmentsByComponent;
   const completedLessonAssignmentsByComponent =
@@ -406,9 +439,9 @@ export function ActiveLessonView({
 
     const handleWindowFocus = (): void => {
       if (focusCleanupTimer !== null) {
-        window.clearTimeout(focusCleanupTimer);
+        safeClearTimeout(focusCleanupTimer);
       }
-      focusCleanupTimer = window.setTimeout(() => {
+      focusCleanupTimer = safeSetTimeout(() => {
         cleanup();
       }, 0);
     };
@@ -461,10 +494,6 @@ export function ActiveLessonView({
     isActiveLessonDocumentLoading,
     setIsActiveLessonComponentReady,
   ]);
-
-  if (!activeLesson) {
-    return null;
-  }
 
   const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLesson.id);
   const prev = activeIdx > 0 ? orderedLessons[activeIdx - 1] : null;

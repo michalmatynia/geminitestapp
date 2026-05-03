@@ -93,6 +93,14 @@ const getMinuteHand = (container: HTMLElement): Element => {
   return hand;
 };
 
+const getSingleHandFaceHitArea = (container: HTMLElement): Element => {
+  const hitArea = container.querySelector('[data-testid="clock-single-hand-face-hit-area"]');
+  if (hitArea?.tagName.toLowerCase() !== 'circle') {
+    throw new Error('Single-hand clock face hit area not found.');
+  }
+  return hitArea;
+};
+
 const dragHandToAngle = (hand: Element, angleDeg: number): void => {
   const point = getClockPoint(angleDeg);
   act(() => {
@@ -346,6 +354,7 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(getLiveTaskLabel('Ustaw pełną godzinę')).toBeInTheDocument();
     expect(screen.queryByTestId('clock-snap-mode-switch')).toBeNull();
     expect(screen.queryByTestId('clock-interaction-hint')).toBeNull();
+    expect(minuteHand).toHaveStyle({ pointerEvents: 'none' });
     const face = container.querySelector('circle[r="95"]');
     expect(face).not.toBeNull();
     expect(face?.getAttribute('fill')).toContain('var(--kangur-clock-face-fill');
@@ -359,6 +368,27 @@ describe('ClockTrainingGame drag interactions', () => {
     await waitFor(() => {
       expect(getClockDisplay()).toHaveTextContent('3:00');
     });
+  });
+
+  it('lets the lesson hours clock start dragging from the clock face when only the hour hand is interactive', async () => {
+    const { container } = render(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        section='hours'
+        showMinuteHand={false}
+        showTimeDisplay={false}
+      />
+    );
+    const faceHitArea = getSingleHandFaceHitArea(container);
+
+    dragHandToAngle(faceHitArea, 150);
+
+    await waitFor(() => {
+      expect(getHourHand(container)).toHaveAttribute('x2', expect.any(String));
+    });
+
+    const movedHourX = Number.parseFloat(getHourHand(container).getAttribute('x2') ?? '0');
+    expect(movedHourX).toBeGreaterThan(120);
   });
 
   it('locks the hour hand in the minutes section and keeps minute controls visible', async () => {
@@ -584,8 +614,10 @@ describe('ClockTrainingGame drag interactions', () => {
       kind: 'correct',
     });
     expect(screen.getByTestId('clock-submit-feedback')).toHaveTextContent(
-      'Brawo! To dobra godzina!'
+      'Ustawiłeś/aś poprawną pełną godzinę: 3:00.'
     );
+    expect(screen.queryByTestId('clock-task-prompt')).toBeNull();
+    expect(screen.getByTestId('clock-submit-button').nextElementSibling).toBeNull();
 
     act(() => {
       vi.advanceTimersByTime(1200);
@@ -627,8 +659,10 @@ describe('ClockTrainingGame drag interactions', () => {
       kind: 'wrong',
     });
     expect(screen.getByTestId('clock-submit-feedback')).toHaveTextContent(
-      'Prawie! To sąsiednia godzina.'
+      'Twoja odpowiedź: 4:00. Poprawna: 3:00. Pomyłka o 1 godz. Sprawdź pozycję krótkiej wskazówki i wybierz pełną godzinę.'
     );
+    expect(screen.queryByTestId('clock-task-prompt')).toBeNull();
+    expect(screen.getByTestId('clock-submit-button').nextElementSibling).toBeNull();
 
     act(() => {
       vi.advanceTimersByTime(2100);

@@ -29,7 +29,7 @@ export function TagMultiSelectField(props: TagMultiSelectFieldProps): React.JSX.
       contextLoadingKey='tagsLoading'
       contextOnChangeKey='onTagsChange'
       formContextToggleName='toggleTag'
-      placeholder={placeholder || 'Select tags'}
+      placeholder={placeholder ?? 'Select tags'}
       searchPlaceholder='Search tags...'
     />
   );

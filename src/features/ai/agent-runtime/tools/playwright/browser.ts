@@ -7,6 +7,7 @@ import {
   getAgentAuditLogDelegate,
   getAgentBrowserSnapshotDelegate,
 } from '@/features/ai/agent-runtime/store-delegates';
+import { getPlaywrightRuntime } from '@/shared/lib/playwright/runtime';
 
 import { toDataUrl } from '../utils';
 
@@ -43,7 +44,7 @@ const isPlaywrightModule = (value: unknown): value is PlaywrightModule => {
 };
 
 const getPlaywright = async (): Promise<PlaywrightModule> => {
-  const playwrightModule = await import('playwright');
+  const playwrightModule = getPlaywrightRuntime();
   if (!isPlaywrightModule(playwrightModule)) {
     throw new Error('Playwright runtime is unavailable.');
   }
@@ -74,15 +75,20 @@ export const createBrowserContext = async (
   });
 };
 
+export type CaptureOptions = {
+  runId: string;
+  label: string;
+  log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>;
+  activeStepId?: string | null;
+};
+
 export const captureSessionContext = async (
   page: Page,
   context: BrowserContext,
-  runId: string,
-  label: string,
-  log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
-  activeStepId?: string | null
+  options: CaptureOptions
 ): Promise<void> => {
   if (!page || !context) return;
+  const { runId, label, log, activeStepId } = options;
   const agentAuditLog = getAgentAuditLogDelegate();
   try {
     const cookies = await context.cookies();
@@ -149,15 +155,13 @@ export const captureSessionContext = async (
 
 export const captureSnapshot = async (
   page: Page,
-  runId: string,
   runDir: string,
-  label: string,
-  log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
-  activeStepId?: string | null
+  options: CaptureOptions
 ): Promise<{ id: string; domText: string; domHtml: string; url: string }> => {
   if (!page) {
     return { id: '', domText: '', domHtml: '', url: '' };
   }
+  const { runId, label, log, activeStepId } = options;
   const agentBrowserSnapshot = getAgentBrowserSnapshotDelegate();
   const domHtml = await page.content();
   const domText = await page.evaluate(

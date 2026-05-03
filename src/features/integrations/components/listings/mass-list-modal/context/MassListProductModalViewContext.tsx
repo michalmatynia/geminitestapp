@@ -1,9 +1,12 @@
 'use client';
 
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+
 import { createStrictViewContext } from '../../createStrictViewContext';
 
 type MassListProductModalViewContextValue = {
   productIds: string[];
+  products: ProductWithImages[];
   integrationId: string;
   connectionId: string;
   onClose: () => void;

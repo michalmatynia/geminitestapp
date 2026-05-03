@@ -167,6 +167,17 @@ export async function executeDatabaseUpdate({
       toast(outcomeMessage, { variant: 'error' });
       throw new Error(outcomeMessage);
     }
+    reportAiPathsError(new Error(outcomeMessage), {
+      action: 'dbWriteOutcome',
+      nodeId,
+      errorCode: 'AI_PATHS_DB_WRITE_ZERO_AFFECTED',
+      errorCategory: 'database',
+      errorScope: 'node',
+      errorSeverity: 'warning',
+      policy: zeroAffectedPolicy,
+      ...context,
+      writeOutcome: outcome.writeOutcome,
+    });
     toast(outcomeMessage, { variant: 'warning' });
   };
 

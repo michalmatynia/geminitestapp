@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-05'
+last_reviewed: '2026-04-12'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -10,7 +10,7 @@ canonical: true
 
 This guide tracks node-by-node migration from compatibility runtime handlers to semantic portable code objects (`v3`).
 
-Generated at: 2026-04-05T14:57:58.017Z
+Generated at: 2026-04-12T04:59:57.716Z
 
 ## Inputs
 
@@ -38,7 +38,7 @@ Generated at: 2026-04-05T14:57:58.017Z
 - Total node types: 34
 - `compatibility`: 0
 - `code_object_v3`: 34
-- v3 contracts hash: `51d0c2bdcdac8bed3c46a0b31de530847c93cb37cfaaa933cf5fdc73ca1a5139`
+- v3 contracts hash: `415cc8468120486077ce1454e8471b324b537f97252f09c0e617f1c7fb23aea4`
 
 ## Readiness Scorecard
 
@@ -72,7 +72,7 @@ Generated at: 2026-04-05T14:57:58.017Z
 
 - Source file: `docs/ai-paths/node-code-objects-v3/rollout-eligibility.json`
 - Schema version: `ai-paths.node-migration-rollout-eligibility.v2`
-- Generated at: `2026-04-05T14:57:58.017Z`
+- Generated at: `2026-04-12T04:59:57.716Z`
 - Eligibility criteria: `runtime_strategy=code_object_v3`, `has_semantic_contract_hash`, `has_v2_object_contract`, `has_v3_scaffold`, `has_v3_object_artifacts`, `dual_run_parity_validated`
 - Eligible node types: `agent`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
 
@@ -94,40 +94,40 @@ No migration blockers detected.
 
 | Node Type | Family | Runtime Strategy | Ports (in/out) | Scaffold | Sheet | Semantic Hash | v3 Object Hash |
 | --- | --- | --- | ---: | --- | --- | --- | --- |
-| `agent` | ai-generation | `code_object_v3` | 4/2 | `yes` | [sheet](./nodes/agent.md) | `ed2953a2fed7...` | `d9321e2c67f8...` |
-| `api_advanced` | integration | `code_object_v3` | 5/8 | `yes` | [sheet](./nodes/api_advanced.md) | `37b85ffa5772...` | `430bf2f99da4...` |
-| `audio_oscillator` | audio | `code_object_v3` | 5/5 | `yes` | [sheet](./nodes/audio_oscillator.md) | `7baab1b01ab3...` | `1838c122b757...` |
-| `audio_speaker` | audio | `code_object_v3` | 6/2 | `yes` | [sheet](./nodes/audio_speaker.md) | `37a4b7541ec6...` | `be2a5953928b...` |
-| `bundle` | transform | `code_object_v3` | 5/1 | `yes` | [sheet](./nodes/bundle.md) | `f02021c0cfff...` | `7f919a4f68b0...` |
-| `compare` | orchestration | `code_object_v3` | 1/3 | `yes` | [sheet](./nodes/compare.md) | `08b496fef266...` | `02f0b6734820...` |
-| `constant` | transform | `code_object_v3` | 0/1 | `yes` | [sheet](./nodes/constant.md) | `ae37de0024fb...` | `7ab1331fe618...` |
-| `context` | transform | `code_object_v3` | 1/4 | `yes` | [sheet](./nodes/context.md) | `8fec17546b68...` | `7ead38ff035c...` |
-| `database` | integration | `code_object_v3` | 12/4 | `yes` | [sheet](./nodes/database.md) | `a17f4531e80e...` | `68bdd970676e...` |
-| `db_schema` | integration | `code_object_v3` | 0/2 | `yes` | [sheet](./nodes/db_schema.md) | `a872b63af24b...` | `5be73667a0e5...` |
-| `delay` | orchestration | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/delay.md) | `fa631c84b720...` | `2d35e8bcc20d...` |
-| `fetcher` | orchestration | `code_object_v3` | 5/4 | `yes` | [sheet](./nodes/fetcher.md) | `b75a94276b7a...` | `0f2c8d16e14c...` |
-| `gate` | orchestration | `code_object_v3` | 3/3 | `yes` | [sheet](./nodes/gate.md) | `c49aeec3b3e8...` | `2e0a122c81e4...` |
-| `http` | integration | `code_object_v3` | 4/2 | `yes` | [sheet](./nodes/http.md) | `19960ba99dd5...` | `48fb48117ad5...` |
-| `iterator` | orchestration | `code_object_v3` | 2/5 | `yes` | [sheet](./nodes/iterator.md) | `80ba1661cabb...` | `0afea5d6e82e...` |
-| `learner_agent` | ai-generation | `code_object_v3` | 2/3 | `yes` | [sheet](./nodes/learner_agent.md) | `5009d070f150...` | `6a6d5dc4af1c...` |
-| `mapper` | transform | `code_object_v3` | 4/2 | `yes` | [sheet](./nodes/mapper.md) | `4fe386d977d5...` | `13de83e46c70...` |
-| `math` | transform | `code_object_v3` | 1/1 | `yes` | [sheet](./nodes/math.md) | `d5cf086af127...` | `38dbe06f1e13...` |
-| `model` | ai-generation | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/model.md) | `694291717483...` | `a4c6ab4e9232...` |
-| `mutator` | transform | `code_object_v3` | 1/1 | `yes` | [sheet](./nodes/mutator.md) | `86dc18244f71...` | `74d37752bca1...` |
-| `notification` | integration | `code_object_v3` | 3/0 | `yes` | [sheet](./nodes/notification.md) | `171fd2da0826...` | `f350d714d27b...` |
-| `parser` | transform | `code_object_v3` | 2/4 | `yes` | [sheet](./nodes/parser.md) | `f4efe5d4248e...` | `bc9807ef13bf...` |
-| `playwright` | integration | `code_object_v3` | 4/3 | `yes` | [sheet](./nodes/playwright.md) | `7fe5f58cbada...` | `2a20d91e30ac...` |
-| `poll` | orchestration | `code_object_v3` | 6/4 | `yes` | [sheet](./nodes/poll.md) | `bb7015cd0766...` | `87c66145015d...` |
-| `prompt` | ai-generation | `code_object_v3` | 5/2 | `yes` | [sheet](./nodes/prompt.md) | `98e6f0ffd5cb...` | `f4661d199bf1...` |
-| `regex` | transform | `code_object_v3` | 3/4 | `yes` | [sheet](./nodes/regex.md) | `119b8b6056ec...` | `169830833bb9...` |
-| `router` | orchestration | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/router.md) | `82e9ef3cc91b...` | `790f1d79bbc6...` |
-| `simulation` | orchestration | `code_object_v3` | 1/4 | `yes` | [sheet](./nodes/simulation.md) | `cce9b04665f1...` | `2027d90bccd1...` |
-| `string_mutator` | transform | `code_object_v3` | 3/1 | `yes` | [sheet](./nodes/string_mutator.md) | `b4a7a5bd6daf...` | `80cb1ef198b2...` |
-| `template` | transform | `code_object_v3` | 3/1 | `yes` | [sheet](./nodes/template.md) | `349143bb99ff...` | `e6b05a3de450...` |
-| `trigger` | orchestration | `code_object_v3` | 0/2 | `yes` | [sheet](./nodes/trigger.md) | `fb32646a0464...` | `32cc8751bee3...` |
-| `validation_pattern` | transform | `code_object_v3` | 4/6 | `yes` | [sheet](./nodes/validation_pattern.md) | `e64e35e2fd11...` | `71bb929485b1...` |
-| `validator` | transform | `code_object_v3` | 1/3 | `yes` | [sheet](./nodes/validator.md) | `626a3f87a561...` | `55eb6c5bbce4...` |
-| `viewer` | integration | `code_object_v3` | 35/0 | `yes` | [sheet](./nodes/viewer.md) | `4a4c8d08ad55...` | `7f986a5e22c6...` |
+| `agent` | ai-generation | `code_object_v3` | 4/2 | `yes` | [sheet](./nodes/agent.md) | `ed2953a2fed7...` | `4080315e118c...` |
+| `api_advanced` | integration | `code_object_v3` | 5/8 | `yes` | [sheet](./nodes/api_advanced.md) | `37b85ffa5772...` | `71e64155e723...` |
+| `audio_oscillator` | audio | `code_object_v3` | 5/5 | `yes` | [sheet](./nodes/audio_oscillator.md) | `7baab1b01ab3...` | `6772c9f700fa...` |
+| `audio_speaker` | audio | `code_object_v3` | 6/2 | `yes` | [sheet](./nodes/audio_speaker.md) | `37a4b7541ec6...` | `c50c838b379f...` |
+| `bundle` | transform | `code_object_v3` | 5/1 | `yes` | [sheet](./nodes/bundle.md) | `f02021c0cfff...` | `a89a9e94d04e...` |
+| `compare` | orchestration | `code_object_v3` | 1/3 | `yes` | [sheet](./nodes/compare.md) | `08b496fef266...` | `ae58f64e2a99...` |
+| `constant` | transform | `code_object_v3` | 0/1 | `yes` | [sheet](./nodes/constant.md) | `ae37de0024fb...` | `813abe832689...` |
+| `context` | transform | `code_object_v3` | 1/4 | `yes` | [sheet](./nodes/context.md) | `8fec17546b68...` | `6c451c804577...` |
+| `database` | integration | `code_object_v3` | 12/4 | `yes` | [sheet](./nodes/database.md) | `a17f4531e80e...` | `06a42ab299a6...` |
+| `db_schema` | integration | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/db_schema.md) | `bcf4fb4c3f33...` | `3af6f68c46a0...` |
+| `delay` | orchestration | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/delay.md) | `fa631c84b720...` | `7dac8f2c5bd8...` |
+| `fetcher` | orchestration | `code_object_v3` | 5/4 | `yes` | [sheet](./nodes/fetcher.md) | `b75a94276b7a...` | `17c7323bfe37...` |
+| `gate` | orchestration | `code_object_v3` | 3/3 | `yes` | [sheet](./nodes/gate.md) | `c49aeec3b3e8...` | `a5b887b8d2b8...` |
+| `http` | integration | `code_object_v3` | 4/2 | `yes` | [sheet](./nodes/http.md) | `19960ba99dd5...` | `29646ea4e2b8...` |
+| `iterator` | orchestration | `code_object_v3` | 2/5 | `yes` | [sheet](./nodes/iterator.md) | `80ba1661cabb...` | `ec6c493b52fd...` |
+| `learner_agent` | ai-generation | `code_object_v3` | 2/3 | `yes` | [sheet](./nodes/learner_agent.md) | `5009d070f150...` | `37ae40417a0e...` |
+| `mapper` | transform | `code_object_v3` | 4/2 | `yes` | [sheet](./nodes/mapper.md) | `4fe386d977d5...` | `0f55e25b0dcc...` |
+| `math` | transform | `code_object_v3` | 1/1 | `yes` | [sheet](./nodes/math.md) | `d5cf086af127...` | `4c1f6de8711e...` |
+| `model` | ai-generation | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/model.md) | `694291717483...` | `b5da0ff3be19...` |
+| `mutator` | transform | `code_object_v3` | 1/1 | `yes` | [sheet](./nodes/mutator.md) | `86dc18244f71...` | `6f4a2a26cc3b...` |
+| `notification` | integration | `code_object_v3` | 3/0 | `yes` | [sheet](./nodes/notification.md) | `171fd2da0826...` | `c7fd499d4640...` |
+| `parser` | transform | `code_object_v3` | 2/4 | `yes` | [sheet](./nodes/parser.md) | `f4efe5d4248e...` | `58a260a1462e...` |
+| `playwright` | integration | `code_object_v3` | 4/3 | `yes` | [sheet](./nodes/playwright.md) | `33b228c66c07...` | `9a08cdf963e9...` |
+| `poll` | orchestration | `code_object_v3` | 6/4 | `yes` | [sheet](./nodes/poll.md) | `bb7015cd0766...` | `28b51be3cb4b...` |
+| `prompt` | ai-generation | `code_object_v3` | 5/2 | `yes` | [sheet](./nodes/prompt.md) | `98e6f0ffd5cb...` | `0bdf06481693...` |
+| `regex` | transform | `code_object_v3` | 3/4 | `yes` | [sheet](./nodes/regex.md) | `119b8b6056ec...` | `025da6c8d32c...` |
+| `router` | orchestration | `code_object_v3` | 2/2 | `yes` | [sheet](./nodes/router.md) | `82e9ef3cc91b...` | `947a26495980...` |
+| `simulation` | orchestration | `code_object_v3` | 1/4 | `yes` | [sheet](./nodes/simulation.md) | `cce9b04665f1...` | `b01c54f62ec4...` |
+| `string_mutator` | transform | `code_object_v3` | 3/1 | `yes` | [sheet](./nodes/string_mutator.md) | `b4a7a5bd6daf...` | `670eda5c07b1...` |
+| `template` | transform | `code_object_v3` | 5/1 | `yes` | [sheet](./nodes/template.md) | `a61e6756bfbc...` | `4c05d105432f...` |
+| `trigger` | orchestration | `code_object_v3` | 0/2 | `yes` | [sheet](./nodes/trigger.md) | `fb32646a0464...` | `de665504ba1f...` |
+| `validation_pattern` | transform | `code_object_v3` | 4/6 | `yes` | [sheet](./nodes/validation_pattern.md) | `e64e35e2fd11...` | `fed45a004d18...` |
+| `validator` | transform | `code_object_v3` | 1/3 | `yes` | [sheet](./nodes/validator.md) | `626a3f87a561...` | `71783da70ccd...` |
+| `viewer` | integration | `code_object_v3` | 35/0 | `yes` | [sheet](./nodes/viewer.md) | `4a4c8d08ad55...` | `a00c4b042aa5...` |
 
 ## Per-Node Sheets
 

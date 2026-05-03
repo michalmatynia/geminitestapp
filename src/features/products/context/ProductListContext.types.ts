@@ -4,10 +4,16 @@ import type { PriceGroupWithDetails, ProductWithImages } from '@/shared/contract
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductAiRunFeedback } from '@/features/products/lib/product-ai-run-feedback';
+import type { ProductScanRunFeedback } from '@/features/products/lib/product-scan-run-feedback';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ReactNode, ProfilerOnRenderCallback } from 'react';
+
+export type {
+  ProductListModalsContextType,
+  ProductListRowRuntimeContextType,
+} from './ProductListContext.modal-types';
 
 export interface ProductListContextType {
   onCreateProduct: () => void;
@@ -60,6 +66,11 @@ export interface ProductListContextType {
   setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
+  includeArchived: boolean;
+  setIncludeArchived: (value: boolean) => void;
+  parsedMatchProductIds: string[];
+  setParsedMatchProductIds: (ids: string[]) => void;
+  clearParsedMatchProductIds: () => void;
   data: ProductWithImages[];
   isLoading: boolean;
   loadError: string | null;
@@ -98,8 +109,15 @@ export interface ProductListContextType {
   traderaBadgeStatuses: Map<string, string>;
   playwrightProgrammableBadgeIds: Set<string>;
   playwrightProgrammableBadgeStatuses: Map<string, string>;
+  vintedBadgeIds: Set<string>;
+  vintedBadgeStatuses: Map<string, string>;
+  scrapedSourceBadgeIds: Set<string>;
+  scrapedSourceBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
   productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
+  productScanRunStatusByProductId?:
+    | ReadonlyMap<string, ProductScanRunFeedback>
+    | undefined;
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
   showTriggerRunFeedback: boolean;
@@ -194,6 +212,11 @@ export interface ProductListFiltersContextType {
   setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
+  includeArchived: boolean;
+  setIncludeArchived: (value: boolean) => void;
+  parsedMatchProductIds: string[];
+  setParsedMatchProductIds: (ids: string[]) => void;
+  clearParsedMatchProductIds: () => void;
 }
 
 export interface ProductListSelectionContextType {
@@ -282,56 +305,4 @@ export interface ProductListRowVisualsContextType {
   showTriggerRunFeedback: boolean;
   triggerButtonsReady: boolean;
   imageExternalBaseUrl: string | null;
-}
-
-export interface ProductListRowRuntimeContextType {
-  showMarketplaceBadge: boolean;
-  integrationStatus: string;
-  showTraderaBadge: boolean;
-  traderaStatus: string;
-  showPlaywrightProgrammableBadge: boolean;
-  playwrightProgrammableStatus: string;
-  productAiRunFeedback: ProductAiRunFeedback | null;
-}
-
-export interface ProductListModalsContextType {
-  isCreateOpen: boolean;
-  isPromptOpen: boolean;
-  setIsPromptOpen: (open: boolean) => void;
-  handleConfirmSku: (sku: string) => Promise<void>;
-  initialSku: string;
-  createDraft: ProductDraft | null;
-  initialCatalogId: string | null;
-  onCloseCreate: () => void;
-  onCreateSuccess: (info?: { queued?: boolean }) => void;
-  editingProduct: ProductWithImages | null;
-  isEditHydrating: boolean;
-  onCloseEdit: () => void;
-  onEditSuccess: (info?: { queued?: boolean }) => void;
-  onEditSave: (saved: ProductWithImages) => void;
-  integrationsProduct: ProductWithImages | null;
-  integrationsRecoveryContext: ProductListingsRecoveryContext | null;
-  integrationsFilterIntegrationSlug: string | null;
-  onCloseIntegrations: () => void;
-  onStartListing: (
-    integrationId: string,
-    connectionId: string,
-    options?: { autoSubmit?: boolean }
-  ) => void;
-  showListProductModal: boolean;
-  onCloseListProduct: () => void;
-  onListProductSuccess: () => void;
-  listProductPreset:
-    | { integrationId: string; connectionId: string; autoSubmit?: boolean }
-    | null;
-  exportSettingsProduct: ProductWithImages | null;
-  onCloseExportSettings: () => void;
-  onListingsUpdated: () => void;
-  massListIntegration: { integrationId: string; connectionId: string } | null;
-  massListProductIds: string[];
-  onCloseMassList: () => void;
-  onMassListSuccess: () => void;
-  showIntegrationModal: boolean;
-  onCloseIntegrationModal: () => void;
-  onSelectIntegrationFromModal: (integrationId: string, connectionId: string) => void;
 }

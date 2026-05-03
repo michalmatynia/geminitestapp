@@ -52,6 +52,19 @@ describe('integration-selector-options', () => {
     ).toEqual([{ value: 'integration-tradera-1', label: 'Tradera' }]);
   });
 
+  it('normalizes Vinted integration options to Vinted.pl', () => {
+    expect(
+      resolveIntegrationOptions([
+        {
+          id: 'integration-vinted-1',
+          name: 'Vinted',
+          slug: 'vinted',
+          connections: [{ id: 'conn-vinted-1', name: 'Vinted Browser' }],
+        },
+      ] as never)
+    ).toEqual([{ value: 'integration-vinted-1', label: 'Vinted.pl' }]);
+  });
+
   it('maps only valid connection ids into labeled options', () => {
     expect(
       resolveConnectionOptions([

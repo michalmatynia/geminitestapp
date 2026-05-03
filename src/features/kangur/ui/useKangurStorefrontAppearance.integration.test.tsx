@@ -44,6 +44,12 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => '/',
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+}));
+
 vi.mock('@/shared/hooks/use-settings', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/hooks/use-settings')>();
   return {
@@ -154,5 +160,58 @@ describe('useKangurStorefrontAppearance integration', () => {
       expect(screen.getByTestId('mode')).toHaveTextContent('dark');
     });
     expect(screen.getByTestId('background')).toHaveTextContent(KANGUR_DEFAULT_THEME.backgroundColor);
+  });
+
+  it('switches from initial fallback theme settings to Mongo-backed slot settings when they arrive later', async () => {
+    settingsMapRef.current = new Map([
+      [KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY, 'default'],
+    ]);
+
+    const { rerender } = render(
+      <SettingsStoreProvider mode='lite'>
+        <KangurStorefrontAppearanceProvider
+          initialThemeSettings={{
+            default: serializeSetting({
+              backgroundColor: '#fef3c7',
+              primaryColor: '#f59e0b',
+            }),
+          }}
+        >
+          <AppearanceProbe />
+        </KangurStorefrontAppearanceProvider>
+      </SettingsStoreProvider>
+    );
+
+    expect(screen.getByTestId('background')).toHaveTextContent('#fef3c7');
+
+    settingsMapRef.current = new Map([
+      [KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY, 'default'],
+      [
+        KANGUR_DAILY_THEME_SETTINGS_KEY,
+        serializeSetting({
+          backgroundColor: '#123456',
+          primaryColor: '#4f46e5',
+        }),
+      ],
+    ]);
+
+    rerender(
+      <SettingsStoreProvider mode='lite'>
+        <KangurStorefrontAppearanceProvider
+          initialThemeSettings={{
+            default: serializeSetting({
+              backgroundColor: '#fef3c7',
+              primaryColor: '#f59e0b',
+            }),
+          }}
+        >
+          <AppearanceProbe />
+        </KangurStorefrontAppearanceProvider>
+      </SettingsStoreProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('background')).toHaveTextContent('#123456');
+    });
   });
 });

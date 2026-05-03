@@ -208,7 +208,7 @@ export function useAddingSynthesisGameState() {
     nextPerfectHits: number,
     nextBestStreak: number
   ): void => {
-    noteAdvanceRef.current = window.setTimeout(() => {
+    noteAdvanceRef.current = safeSetTimeout(() => {
       setFeedback(null);
       setNoteElapsedMs(0);
       noteStartedAtRef.current = null;
@@ -277,7 +277,7 @@ export function useAddingSynthesisGameState() {
     if (phase !== 'playing' || !currentNote || feedback) return;
     noteStartedAtRef.current = Date.now();
     setNoteElapsedMs(0);
-    noteDeadlineRef.current = window.setTimeout(() => resolveChoice(null), ADDING_SYNTHESIS_NOTE_DURATION_MS);
+    noteDeadlineRef.current = safeSetTimeout(() => resolveChoice(null), ADDING_SYNTHESIS_NOTE_DURATION_MS);
     return () => stopCurrentNoteTimers();
   }, [currentIndex, currentNote, feedback, phase, resolveChoice, stopCurrentNoteTimers]);
 

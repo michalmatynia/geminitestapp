@@ -92,13 +92,20 @@ const renderSelectModal = <T,>({
           <span className='text-sm text-muted-foreground italic'>No options available</span>
         </div>
       ) : (
-        <div className='space-y-1 max-h-96 overflow-y-auto pr-1'>
+        <div
+          className='space-y-1 max-h-96 overflow-y-auto pr-1'
+          role='listbox'
+          aria-label={title}
+          aria-multiselectable={multiple || undefined}
+        >
           {filteredOptions.map((option) => (
             <button
               key={option.id}
               type='button'
               onClick={() => handleSelect(option)}
               disabled={option.disabled || loading}
+              role='option'
+              aria-selected={selectedIds.has(option.id)}
               aria-label={option.label}
               className={cn(
                 'w-full rounded-md border p-3 text-left transition-all duration-200',

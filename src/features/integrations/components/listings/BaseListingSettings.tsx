@@ -29,7 +29,7 @@ export function BaseListingSettings(): React.JSX.Element {
   const inventoryOptions = React.useMemo(
     (): Array<LabeledOptionDto<string>> =>
       inventories
-        .filter((inventory: BaseInventory): boolean => !!inventory.id)
+        .filter((inventory: BaseInventory): boolean => Boolean(inventory.id))
         .map((inventory: BaseInventory) => ({
           value: inventory.id,
           label: inventory.name,
@@ -40,7 +40,7 @@ export function BaseListingSettings(): React.JSX.Element {
     (): Array<LabeledOptionDto<string>> => [
       NO_TEMPLATE_OPTION,
       ...templates
-        .filter((template: Template): boolean => !!template.id)
+        .filter((template: Template): boolean => Boolean(template.id))
         .map((template: Template) => ({
           value: template.id,
           label: template.name,

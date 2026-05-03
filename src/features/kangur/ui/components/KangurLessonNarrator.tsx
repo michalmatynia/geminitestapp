@@ -28,6 +28,7 @@ import {
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { cn } from '@/features/kangur/shared/utils';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { useKangurElevatedSession } from '@/features/kangur/ui/hooks/useKangurElevatedSession';
 
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
@@ -162,9 +163,9 @@ const useObservedNarrationText = ({
 
     const observer = new MutationObserver(() => {
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
-      timeoutId = window.setTimeout(updateText, 120);
+      timeoutId = safeSetTimeout(updateText, 120);
     });
 
     observer.observe(root, {
@@ -176,7 +177,7 @@ const useObservedNarrationText = ({
     return () => {
       observer.disconnect();
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
     };
   }, [lessonContentMode, lessonId, lessonContentRef, lessonDocument, shouldObserveText]);

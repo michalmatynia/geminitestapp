@@ -68,7 +68,7 @@ export const normalizeCountryName = (value: string): string => {
 export const isCountryLine = (line: string): boolean => {
   const normalized = normalizeText(line);
   if (!normalized || /\d/.test(normalized)) return false;
-  return !!COUNTRY_NORMALIZATION_MAP[normalized.toLowerCase()];
+  return Boolean(COUNTRY_NORMALIZATION_MAP[normalized.toLowerCase()]);
 };
 
 export const isLikelyPersonNameLine = (line: string): boolean => {

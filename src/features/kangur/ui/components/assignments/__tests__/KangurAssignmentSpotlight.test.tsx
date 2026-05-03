@@ -5,11 +5,14 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 
-const { useKangurAssignmentsMock, useKangurSubjectFocusMock } = vi.hoisted(() => ({
+const { useKangurAssignmentsMock, useKangurIdleReadyMock, useKangurSubjectFocusMock } =
+  vi.hoisted(() => ({
   useKangurAssignmentsMock: vi.fn(),
+  useKangurIdleReadyMock: vi.fn(),
   useKangurSubjectFocusMock: vi.fn(),
-}));
+  }));
 
 vi.mock('next-intl', () => ({
   useLocale: () => 'pl',
@@ -21,6 +24,10 @@ vi.mock('next-intl', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurIdleReady', () => ({
+  useKangurIdleReady: useKangurIdleReadyMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
@@ -64,6 +71,7 @@ import { KangurAssignmentSpotlight } from '../KangurAssignmentSpotlight';
 describe('KangurAssignmentSpotlight', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurIdleReadyMock.mockReturnValue(true);
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'english',
       setSubject: vi.fn(),
@@ -131,5 +139,28 @@ describe('KangurAssignmentSpotlight', () => {
     fireEvent.click(action);
 
     expect(setSubject).toHaveBeenCalledWith('maths');
+  });
+
+  it('does not enable the assignments query before idle time', () => {
+    useKangurIdleReadyMock.mockReturnValue(false);
+
+    const { container } = render(
+      <KangurAssignmentSpotlight
+        basePath='/kangur'
+        enabled
+      />
+    );
+
+    expect(useKangurIdleReadyMock).toHaveBeenCalledWith({
+      minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+    });
+
+    expect(useKangurAssignmentsMock).toHaveBeenCalledWith({
+      enabled: false,
+      query: {
+        includeArchived: false,
+      },
+    });
+    expect(container).toBeEmptyDOMElement();
   });
 });

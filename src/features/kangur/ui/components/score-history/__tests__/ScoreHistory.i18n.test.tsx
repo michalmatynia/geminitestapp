@@ -33,7 +33,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   reportKangurClientError: vi.fn(),
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),

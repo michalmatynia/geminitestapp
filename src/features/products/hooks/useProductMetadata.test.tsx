@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   usePriceGroups: vi.fn(),
   useProducers: vi.fn(),
   useCategories: vi.fn(),
+  useCategoriesForCatalogs: vi.fn(),
   useShippingGroups: vi.fn(),
   useTags: vi.fn(),
   useParameters: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock('./useProductMetadataQueries', () => ({
   usePriceGroups: () => mocks.usePriceGroups(),
   useProducers: () => mocks.useProducers(),
   useCategories: (...args: unknown[]) => mocks.useCategories(...args),
+  useCategoriesForCatalogs: (...args: unknown[]) => mocks.useCategoriesForCatalogs(...args),
   useShippingGroups: (...args: unknown[]) => mocks.useShippingGroups(...args),
   useTags: (...args: unknown[]) => mocks.useTags(...args),
   useParameters: (...args: unknown[]) => mocks.useParameters(...args),
@@ -51,8 +53,15 @@ describe('useProductMetadata', () => {
           languageIds: [],
           priceGroupIds: ['PLN_STANDARD'],
         },
+        {
+          id: 'catalog-mentios',
+          name: 'Mentios',
+          languageIds: [],
+          priceGroupIds: [],
+        },
       ],
       isSuccess: true,
+      isLoading: false,
     });
     mocks.useLanguages.mockReturnValue({
       data: [],
@@ -94,6 +103,10 @@ describe('useProductMetadata', () => {
       data: [],
       isLoading: false,
     });
+    mocks.useCategoriesForCatalogs.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
     mocks.useShippingGroups.mockReturnValue({
       data: [],
       isLoading: false,
@@ -117,5 +130,74 @@ describe('useProductMetadata', () => {
     );
 
     expect(result.current.filteredPriceGroups.map((group) => group.id)).toEqual(['group-pln']);
+  });
+
+  it('seeds edit-product catalog selection from product catalog links', () => {
+    const { result } = renderHook(() =>
+      useProductMetadata({
+        product: {
+          id: 'product-1',
+          categoryId: null,
+          catalogId: null,
+          catalogs: [{ catalogId: 'catalog-1' }],
+        } as never,
+      })
+    );
+
+    expect(result.current.selectedCatalogIds).toEqual(['catalog-1']);
+    expect(mocks.useParameters).toHaveBeenCalledWith('catalog-1');
+  });
+
+  it('falls back to product.catalogId when edit-product catalog links are missing', () => {
+    const { result } = renderHook(() =>
+      useProductMetadata({
+        product: {
+          id: 'product-1',
+          categoryId: null,
+          catalogId: ' catalog-1 ',
+          catalogs: [],
+        } as never,
+      })
+    );
+
+    expect(result.current.selectedCatalogIds).toEqual(['catalog-1']);
+    expect(mocks.useParameters).toHaveBeenCalledWith('catalog-1');
+  });
+
+  it('loads category options from the Mentios tree regardless of selected product catalogs', () => {
+    renderHook(() =>
+      useProductMetadata({
+        initialCatalogIds: ['catalog-1', 'catalog-2'],
+      })
+    );
+
+    expect(mocks.useCategoriesForCatalogs).toHaveBeenCalledWith(['catalog-mentios']);
+  });
+
+  it('does not promote the chosen category catalog into the product catalog selection', () => {
+    mocks.useCategoriesForCatalogs.mockReturnValue({
+      data: [
+        {
+          id: 'category-foam-hammer',
+          name: 'Foam Hammer',
+          catalogId: 'catalog-mentios',
+          parentId: null,
+        },
+      ],
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() =>
+      useProductMetadata({
+        initialCatalogIds: ['catalog-1', 'catalog-2'],
+      })
+    );
+
+    act(() => {
+      result.current.setCategoryId('category-foam-hammer');
+    });
+
+    expect(result.current.selectedCategoryId).toBe('category-foam-hammer');
+    expect(result.current.selectedCatalogIds).toEqual(['catalog-1', 'catalog-2']);
   });
 });

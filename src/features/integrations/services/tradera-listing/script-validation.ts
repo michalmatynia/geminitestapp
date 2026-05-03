@@ -1,12 +1,6 @@
-import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/playwright-node-runner.parser';
-import {
-  isTraderaApiIntegrationSlug,
-  isTraderaIntegrationSlug,
-} from '@/features/integrations/constants/slugs';
+import { validatePlaywrightEngineScript } from '@/features/playwright/server';
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { badRequestError } from '@/shared/errors/app-error';
-
-const isTraderaBrowserIntegrationSlug = (slug: string | null | undefined): boolean =>
-  isTraderaIntegrationSlug(slug) && !isTraderaApiIntegrationSlug(slug);
 
 export const assertValidTraderaPlaywrightListingScript = ({
   integrationSlug,
@@ -17,7 +11,7 @@ export const assertValidTraderaPlaywrightListingScript = ({
   traderaBrowserMode: 'builtin' | 'scripted' | null | undefined;
   playwrightListingScript: string | null | undefined;
 }): void => {
-  if (!isTraderaBrowserIntegrationSlug(integrationSlug)) {
+  if (!isTraderaIntegrationSlug(integrationSlug)) {
     return;
   }
 
@@ -31,7 +25,7 @@ export const assertValidTraderaPlaywrightListingScript = ({
     return;
   }
 
-  const validation = validatePlaywrightNodeScript(normalizedScript);
+  const validation = validatePlaywrightEngineScript(normalizedScript);
   if (validation.ok) {
     return;
   }

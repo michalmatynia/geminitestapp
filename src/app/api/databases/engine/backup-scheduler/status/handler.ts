@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { getDatabaseBackupSchedulerStatus } from '@/shared/lib/db/services/database-backup-scheduler';
@@ -9,7 +9,7 @@ import {
   startDatabaseBackupSchedulerQueue,
 } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   startDatabaseBackupSchedulerQueue();
 

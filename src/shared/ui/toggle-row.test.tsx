@@ -106,4 +106,23 @@ describe('ToggleRow', () => {
 
     expect(onCheckedChange).not.toHaveBeenCalled();
   });
+
+  it('toggles from the row container when row click mode is enabled', () => {
+    const onCheckedChange = vi.fn();
+
+    render(
+      <ToggleRow
+        label='Enable row click'
+        checked={false}
+        toggleOnRowClick
+        onCheckedChange={onCheckedChange}
+      >
+        <span>Extra row content</span>
+      </ToggleRow>
+    );
+
+    fireEvent.click(screen.getByText('Extra row content'));
+
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
 });

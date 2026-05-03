@@ -161,7 +161,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
   const requestedTemplateId = toTrimmedString(data.templateId);
   const hasImageOverrides = Boolean(data.imageBase64Mode || data.imageTransform);
   let exportImagesAsBase64 = imagesOnly ? true : (data.exportImagesAsBase64 ?? hasImageOverrides);
-  let imageBase64Mode: ImageBase64Mode = data.imageBase64Mode ?? 'base-only';
+  const imageBase64Mode: ImageBase64Mode = data.imageBase64Mode ?? 'base-only';
   let imageTransform: ImageTransformOptions | null = null;
 
   if (data.imageTransform) {

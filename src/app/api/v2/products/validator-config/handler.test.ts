@@ -16,7 +16,7 @@ vi.mock('@/shared/lib/products/services/validation-pattern-runtime-cache', () =>
   listValidationPatternsCached: (...args: unknown[]) => listValidationPatternsCachedMock(...args),
 }));
 
-import { GET_handler, querySchema } from './handler';
+import { getHandler, querySchema } from './handler';
 
 describe('product validator-config handler module', () => {
   beforeEach(() => {
@@ -35,12 +35,12 @@ describe('product validator-config handler module', () => {
   });
 
   it('exports the supported handler and query schema', () => {
-    expect(typeof GET_handler).toBe('function');
+    expect(typeof getHandler).toBe('function');
     expect(typeof querySchema.safeParse).toBe('function');
   });
 
   it('filters disabled patterns by default', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/validator-config'),
       { query: {} } as ApiHandlerContext
     );
@@ -56,7 +56,7 @@ describe('product validator-config handler module', () => {
   });
 
   it('returns disabled patterns when includeDisabled is true', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/validator-config?includeDisabled=true'),
       {
         query: { includeDisabled: true },

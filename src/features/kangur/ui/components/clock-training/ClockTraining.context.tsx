@@ -287,7 +287,7 @@ export function ClockTrainingProvider({ children, ...props }: ClockTrainingProps
 
       const delayMs = correct ? 1200 : gameMode === 'challenge' ? 1400 : 2100;
       
-      advanceTimeoutRef.current = window.setTimeout(() => {
+      advanceTimeoutRef.current = safeSetTimeout(() => {
         if (isLastTask) {
           if (gameMode === 'challenge') {
             setFeedback(null);
@@ -350,12 +350,12 @@ export function ClockTrainingProvider({ children, ...props }: ClockTrainingProps
       return;
     }
 
-    const timerId = window.setTimeout(() => {
+    const timerId = safeSetTimeout(() => {
       setChallengeTimeLeft((value) => Math.max(0, value - 1));
     }, 1000);
 
     return () => {
-      window.clearTimeout(timerId);
+      safeClearTimeout(timerId);
     };
   }, [challengeTimeLeft, done, feedback, gameMode, resolveAttempt, task, section, translations]);
 

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
@@ -18,7 +18,7 @@ export const payloadSchema = z.object({
   token: z.string().trim().min(4),
 });
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {

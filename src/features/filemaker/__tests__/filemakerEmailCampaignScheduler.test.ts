@@ -2,8 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   createFilemakerEmailCampaign,
+  createFilemakerEmailCampaignDelivery,
+  createFilemakerEmailCampaignDeliveryAttempt,
+  createFilemakerEmailCampaignRun,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
   parseFilemakerEmailCampaignRegistry,
@@ -15,6 +20,7 @@ import {
   createFilemakerEmailCampaignSchedulerService,
   resolveDueFilemakerEmailCampaigns,
 } from '@/features/filemaker/server/filemakerEmailCampaignScheduler';
+import { resolveDueFilemakerEmailCampaignRetryRuns } from '@/features/filemaker/server/campaign-retry-scheduler';
 import { createDatabase } from './campaigns.test-support';
 
 import type { FilemakerEmailCampaign } from '@/features/filemaker/types';
@@ -281,6 +287,7 @@ describe('filemakerEmailCampaignScheduler', () => {
         message: 'launch failed',
       },
     ]);
+    expect(result.dueRetryRuns).toEqual([]);
     expect(
       parseFilemakerEmailCampaignRegistry(store.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY)).campaigns.map(
         (campaign) => ({
@@ -294,5 +301,163 @@ describe('filemakerEmailCampaignScheduler', () => {
         { id: 'campaign-scheduled', lastEvaluatedAt: '2026-04-03T09:00:00.000Z' },
       ])
     );
+  });
+
+  it('resolves due retry runs from failed deliveries whose retry time has arrived', () => {
+    const run = createFilemakerEmailCampaignRun({
+      id: 'run-retry',
+      campaignId: 'campaign-1',
+      mode: 'live',
+      status: 'queued',
+    });
+    const dueDelivery = createFilemakerEmailCampaignDelivery({
+      id: 'delivery-due',
+      campaignId: 'campaign-1',
+      runId: run.id,
+      emailAddress: 'due@example.com',
+      partyKind: 'person',
+      partyId: 'person-due',
+      status: 'failed',
+      failureCategory: 'rate_limited',
+      nextRetryAt: '2026-04-03T08:55:00.000Z',
+    });
+    const futureDelivery = createFilemakerEmailCampaignDelivery({
+      id: 'delivery-future',
+      campaignId: 'campaign-1',
+      runId: run.id,
+      emailAddress: 'future@example.com',
+      partyKind: 'person',
+      partyId: 'person-future',
+      status: 'failed',
+      failureCategory: 'rate_limited',
+      nextRetryAt: '2026-04-03T09:30:00.000Z',
+    });
+
+    const dueRetryRuns = resolveDueFilemakerEmailCampaignRetryRuns({
+      runsRaw: JSON.stringify({ version: 1, runs: [run] }),
+      deliveriesRaw: JSON.stringify({
+        version: 1,
+        deliveries: [dueDelivery, futureDelivery],
+      }),
+      attemptsRaw: JSON.stringify({
+        version: 1,
+        attempts: [
+          createFilemakerEmailCampaignDeliveryAttempt({
+            id: 'attempt-due',
+            campaignId: dueDelivery.campaignId,
+            runId: dueDelivery.runId,
+            deliveryId: dueDelivery.id,
+            emailAddress: dueDelivery.emailAddress,
+            partyKind: dueDelivery.partyKind,
+            partyId: dueDelivery.partyId,
+            attemptNumber: 1,
+            status: 'failed',
+            failureCategory: 'rate_limited',
+          }),
+          createFilemakerEmailCampaignDeliveryAttempt({
+            id: 'attempt-future',
+            campaignId: futureDelivery.campaignId,
+            runId: futureDelivery.runId,
+            deliveryId: futureDelivery.id,
+            emailAddress: futureDelivery.emailAddress,
+            partyKind: futureDelivery.partyKind,
+            partyId: futureDelivery.partyId,
+            attemptNumber: 1,
+            status: 'failed',
+            failureCategory: 'rate_limited',
+          }),
+        ],
+      }),
+      now: new Date('2026-04-03T09:00:00.000Z'),
+    });
+
+    expect(dueRetryRuns).toEqual([
+      {
+        campaignId: 'campaign-1',
+        runId: 'run-retry',
+        retryableDeliveryCount: 1,
+        nextRetryAt: '2026-04-03T08:55:00.000Z',
+      },
+    ]);
+  });
+
+  it('includes due retry runs in scheduler tick results without relaunching campaigns', async () => {
+    const campaign = createCampaign({
+      lastLaunchedAt: '2026-04-02T08:30:00.000Z',
+    });
+    const run = createFilemakerEmailCampaignRun({
+      id: 'run-retry',
+      campaignId: campaign.id,
+      mode: 'live',
+      status: 'queued',
+    });
+    const delivery = createFilemakerEmailCampaignDelivery({
+      id: 'delivery-due',
+      campaignId: campaign.id,
+      runId: run.id,
+      emailAddress: 'due@example.com',
+      partyKind: 'person',
+      partyId: 'person-due',
+      status: 'failed',
+      failureCategory: 'timeout',
+      nextRetryAt: '2026-04-03T08:55:00.000Z',
+    });
+    const store = new Map<string, string>([
+      [
+        FILEMAKER_DATABASE_KEY,
+        JSON.stringify(toPersistedFilemakerDatabase(createDatabase())),
+      ],
+      [FILEMAKER_EMAIL_CAMPAIGNS_KEY, JSON.stringify({ version: 1, campaigns: [campaign] })],
+      [FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY, JSON.stringify({ version: 1, runs: [run] })],
+      [
+        FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+        JSON.stringify({ version: 1, deliveries: [delivery] }),
+      ],
+      [
+        FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
+        JSON.stringify({
+          version: 1,
+          attempts: [
+            createFilemakerEmailCampaignDeliveryAttempt({
+              id: 'attempt-due',
+              campaignId: delivery.campaignId,
+              runId: delivery.runId,
+              deliveryId: delivery.id,
+              emailAddress: delivery.emailAddress,
+              partyKind: delivery.partyKind,
+              partyId: delivery.partyId,
+              attemptNumber: 1,
+              status: 'failed',
+              failureCategory: 'timeout',
+            }),
+          ],
+        }),
+      ],
+      [FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY, JSON.stringify({ version: 1, entries: [] })],
+    ]);
+    const launchRunMock = vi.fn();
+
+    const service = createFilemakerEmailCampaignSchedulerService({
+      now: () => new Date('2026-04-03T09:00:00.000Z'),
+      readSettingValue: async (key: string) => store.get(key) ?? null,
+      upsertSettingValue: async (key: string, value: string) => {
+        store.set(key, value);
+        return true;
+      },
+      launchRun: launchRunMock,
+    });
+
+    const result = await service.runTick();
+
+    expect(launchRunMock).not.toHaveBeenCalled();
+    expect(result.launchedRuns).toEqual([]);
+    expect(result.dueRetryRuns).toEqual([
+      {
+        campaignId: campaign.id,
+        runId: run.id,
+        retryableDeliveryCount: 1,
+        nextRetryAt: '2026-04-03T08:55:00.000Z',
+      },
+    ]);
   });
 });

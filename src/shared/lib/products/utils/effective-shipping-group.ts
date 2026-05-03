@@ -149,15 +149,9 @@ export const resolveEffectiveShippingGroup = ({
     };
   }
 
-  const productCatalogId = resolveProductPrimaryCatalogId(product);
   const categoryParentMap = buildCategoryParentMap(categories ?? []);
   const candidates = shippingGroups
     .map((shippingGroup) => {
-      const shippingGroupCatalogId = toTrimmedString(shippingGroup.catalogId);
-      if (productCatalogId && shippingGroupCatalogId && shippingGroupCatalogId !== productCatalogId) {
-        return null;
-      }
-
       const matchedCategoryRuleIds = toUniqueTrimmedStringArray(
         Array.isArray(shippingGroup.autoAssignCategoryIds)
           ? shippingGroup.autoAssignCategoryIds.filter((categoryId) =>

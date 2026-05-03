@@ -21,6 +21,8 @@ import {
   clearProductAiJobs,
   deleteChatbotJob,
   deleteProductAiJob,
+  getBaseImportRuns,
+  getBaseImportQueueHealth,
   getChatbotJobs,
   getIntegrationJobs,
   getJobStatus,
@@ -52,6 +54,8 @@ describe('jobs api', () => {
     await getChatbotJobs('running');
     await getJobStatus();
     await getJobStatusDetail('job-2');
+    await getBaseImportRuns(50, signal);
+    await getBaseImportQueueHealth();
     await getTraderaQueueHealth();
 
     expect(getMock).toHaveBeenNthCalledWith(1, '/api/v2/integrations/jobs', { signal });
@@ -70,7 +74,13 @@ describe('jobs api', () => {
     });
     expect(getMock).toHaveBeenNthCalledWith(7, '/api/jobs/status');
     expect(getMock).toHaveBeenNthCalledWith(8, '/api/jobs/job-2/status');
-    expect(getMock).toHaveBeenNthCalledWith(9, '/api/v2/integrations/queues/tradera');
+    expect(getMock).toHaveBeenNthCalledWith(9, '/api/v2/integrations/imports/base/runs', {
+      params: { limit: 50 },
+      cache: 'no-store',
+      signal,
+    });
+    expect(getMock).toHaveBeenNthCalledWith(10, '/api/v2/integrations/queues/base-import');
+    expect(getMock).toHaveBeenNthCalledWith(11, '/api/v2/integrations/queues/tradera');
   });
 
   it('calls the expected endpoints for mutations and delete helpers', async () => {

@@ -9,6 +9,7 @@ describe('product integrations adapter', () => {
     expect(adapter.ProductListingsModal).toBeDefined();
     expect(adapter.fetchIntegrationsWithConnections).toBeTypeOf('function');
     expect(adapter.fetchPreferredBaseConnection).toBeTypeOf('function');
+    expect(adapter.fetchPreferredVintedConnection).toBeTypeOf('function');
     expect(adapter.fetchProductListings).toBeTypeOf('function');
     expect(adapter.productListingsQueryKey).toBeTypeOf('function');
     expect(adapter.integrationSelectionQueryKeys).toBeDefined();

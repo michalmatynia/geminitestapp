@@ -4,11 +4,11 @@ import { z } from 'zod';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const requestSchema = z.object({}).passthrough();
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, {
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(postHandler, {
   source: 'v2.integrations.[id].connections.[connectionId].allegro.test.POST',
   requireCsrf: false,
   requireAuth: true,

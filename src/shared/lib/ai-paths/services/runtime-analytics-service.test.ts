@@ -11,9 +11,12 @@ const {
   emptySummaryMock,
   loadRuntimeTraceAnalyticsMock,
   withTimeoutMock,
+  toPipelineCountMock,
+  toPipelineStringsMock,
   parseDurationMemberMock,
   clampRateMock,
   captureExceptionMock,
+  logWarningMock,
 } = vi.hoisted(() => ({
   getRedisConnectionMock: vi.fn(),
   getRuntimeAnalyticsAvailabilityMock: vi.fn(),
@@ -25,9 +28,12 @@ const {
   emptySummaryMock: vi.fn(),
   loadRuntimeTraceAnalyticsMock: vi.fn(),
   withTimeoutMock: vi.fn(),
+  toPipelineCountMock: vi.fn(),
+  toPipelineStringsMock: vi.fn(),
   parseDurationMemberMock: vi.fn(),
   clampRateMock: vi.fn(),
   captureExceptionMock: vi.fn(),
+  logWarningMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/queue', () => ({
@@ -51,6 +57,7 @@ vi.mock('@/shared/lib/ai-paths/services/runtime-analytics/config', () => ({
   keyDurations: () => 'durations',
   keyNodes: (status: string) => `nodes:${status}`,
   keyBrain: (status: string) => `brain:${status}`,
+  DURATION_SAMPLE_LIMIT: 200,
   SUMMARY_QUERY_TIMEOUT_MS: 5000,
 }));
 
@@ -61,6 +68,8 @@ vi.mock('@/shared/lib/ai-paths/services/runtime-analytics/trace', () => ({
 
 vi.mock('@/shared/lib/ai-paths/services/runtime-analytics/utils', () => ({
   withTimeout: withTimeoutMock,
+  toPipelineCount: toPipelineCountMock,
+  toPipelineStrings: toPipelineStringsMock,
   parseDurationMember: parseDurationMemberMock,
   clampRate: clampRateMock,
 }));
@@ -68,6 +77,7 @@ vi.mock('@/shared/lib/ai-paths/services/runtime-analytics/utils', () => ({
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: captureExceptionMock,
+    logWarning: logWarningMock,
   },
 }));
 
@@ -88,14 +98,23 @@ describe('getRuntimeAnalyticsSummary', () => {
     emptySummaryMock.mockReset();
     loadRuntimeTraceAnalyticsMock.mockReset();
     withTimeoutMock.mockReset();
+    toPipelineCountMock.mockReset();
+    toPipelineStringsMock.mockReset();
     parseDurationMemberMock.mockReset();
     clampRateMock.mockReset();
     captureExceptionMock.mockReset();
+    logWarningMock.mockReset();
 
     buildSummaryCacheKeyMock.mockReturnValue('cache-key');
     readCachedSummaryMock.mockReturnValue(null);
     readStaleSummaryMock.mockReturnValue(null);
     withTimeoutMock.mockImplementation(async (promise: Promise<unknown>) => await promise);
+    toPipelineCountMock.mockImplementation((value: unknown) =>
+      typeof value === 'number' ? value : Number.parseInt(String(value ?? 0), 10) || 0
+    );
+    toPipelineStringsMock.mockImplementation((value: unknown) =>
+      Array.isArray(value) ? (value as string[]) : []
+    );
     parseDurationMemberMock.mockImplementation((member: string) => Number(member));
     clampRateMock.mockImplementation((value: number) => Number(value.toFixed(1)));
     loadRuntimeTraceAnalyticsMock.mockResolvedValue({
@@ -104,18 +123,25 @@ describe('getRuntimeAnalyticsSummary', () => {
     });
   });
 
-  it('returns cached summaries before hitting availability or redis', async () => {
+  it('returns cached summaries once analytics storage is available', async () => {
     const cached = {
       from: from.toISOString(),
       to: to.toISOString(),
       range: '24h',
       storage: 'redis',
     };
+    getRuntimeAnalyticsAvailabilityMock.mockResolvedValue({
+      enabled: true,
+      storage: 'redis',
+    });
+    getRedisConnectionMock.mockReturnValue({
+      pipeline: vi.fn(),
+    });
     readCachedSummaryMock.mockReturnValue(cached);
 
     await expect(getRuntimeAnalyticsSummary({ from, to }, '24h')).resolves.toBe(cached as never);
-    expect(getRuntimeAnalyticsAvailabilityMock).not.toHaveBeenCalled();
-    expect(getRedisConnectionMock).not.toHaveBeenCalled();
+    expect(getRuntimeAnalyticsAvailabilityMock).toHaveBeenCalledTimes(1);
+    expect(getRedisConnectionMock).toHaveBeenCalledTimes(1);
   });
 
   it('returns an empty summary when runtime analytics are disabled', async () => {
@@ -144,34 +170,35 @@ describe('getRuntimeAnalyticsSummary', () => {
       storage: 'redis',
     });
 
-    const redis = {
-      zcount: vi
-        .fn()
-        .mockResolvedValueOnce(10)
-        .mockResolvedValueOnce(2)
-        .mockResolvedValueOnce(9)
-        .mockResolvedValueOnce(8)
-        .mockResolvedValueOnce(1)
-        .mockResolvedValueOnce(0)
-        .mockResolvedValueOnce(1)
-        .mockResolvedValueOnce(2)
-        .mockResolvedValueOnce(3)
-        .mockResolvedValueOnce(11)
-        .mockResolvedValueOnce(10)
-        .mockResolvedValueOnce(1)
-        .mockResolvedValueOnce(4)
-        .mockResolvedValueOnce(5)
-        .mockResolvedValueOnce(6)
-        .mockResolvedValueOnce(7)
-        .mockResolvedValueOnce(8)
-        .mockResolvedValueOnce(9)
-        .mockResolvedValueOnce(12)
-        .mockResolvedValueOnce(13)
-        .mockResolvedValueOnce(14)
-        .mockResolvedValueOnce(15),
-      zrangebyscore: vi.fn().mockResolvedValue(['150', '50']),
+    const pipeline = {
+      zcount: vi.fn().mockReturnThis(),
+      zrangebyscore: vi.fn().mockReturnThis(),
+      exec: vi.fn().mockResolvedValue([
+        [null, 10],
+        [null, 2],
+        [null, 9],
+        [null, 8],
+        [null, 1],
+        [null, 0],
+        [null, 1],
+        [null, 2],
+        [null, 3],
+        [null, 11],
+        [null, 10],
+        [null, 1],
+        [null, 4],
+        [null, 5],
+        [null, 6],
+        [null, 7],
+        [null, 8],
+        [null, 9],
+        [null, 12],
+        [null, ['150', '50']],
+      ]),
     };
-    getRedisConnectionMock.mockReturnValue(redis);
+    getRedisConnectionMock.mockReturnValue({
+      pipeline: vi.fn(() => pipeline),
+    });
 
     const summary = await getRuntimeAnalyticsSummary({ from, to }, 'custom');
 
@@ -187,31 +214,27 @@ describe('getRuntimeAnalyticsSummary', () => {
         completed: 8,
         failed: 1,
         canceled: 0,
-        deadLettered: 1,
-        blockedOnLease: 2,
-        handoffReady: 3,
-        successRate: 80,
-        failureRate: 10,
-        deadLetterRate: 10,
+        successRate: 88.9,
+        failureRate: 11.1,
         avgDurationMs: 100,
         p95DurationMs: 150,
       },
       nodes: {
-        started: 11,
-        completed: 10,
-        failed: 1,
-        queued: 4,
-        running: 5,
-        polling: 6,
-        cached: 7,
-        waitingCallback: 8,
+        started: 1,
+        completed: 2,
+        failed: 3,
+        queued: 11,
+        running: 10,
+        polling: 1,
+        cached: 4,
+        waitingCallback: 5,
       },
       brain: {
-        analyticsReports: 9,
-        logReports: 12,
-        totalReports: 21,
-        warningReports: 13,
-        errorReports: 14,
+        analyticsReports: 6,
+        logReports: 7,
+        totalReports: 8,
+        warningReports: 9,
+        errorReports: 12,
       },
       traces: {
         slowestRuns: [],
@@ -219,6 +242,6 @@ describe('getRuntimeAnalyticsSummary', () => {
       },
       generatedAt: expect.any(String),
     });
-    expect(setCachedSummaryMock).toHaveBeenCalledWith('cache-key', summary, 123456789);
+    expect(setCachedSummaryMock).toHaveBeenCalledWith('cache-key', summary, expect.any(Number));
   });
 });

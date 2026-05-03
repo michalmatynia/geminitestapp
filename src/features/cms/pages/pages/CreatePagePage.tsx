@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useMemo, useState, startTransition } from 'react';
 
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
@@ -57,7 +57,7 @@ export default function CreatePagePage(): React.JSX.Element {
         slugIds: validation.data.slugIds ?? [],
       };
       await createPage.mutateAsync(input);
-      router.push('/admin/cms/pages');
+      startTransition(() => { router.push('/admin/cms/pages'); });
     } catch (submitError: unknown) {
       logClientCatch(submitError, {
         source: 'CreatePagePage',

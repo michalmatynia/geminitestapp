@@ -3,7 +3,8 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
+import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 import { Alert, Textarea, CollapsibleSection } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
@@ -29,8 +30,15 @@ import {
 } from './job-queue-panel-utils';
 import { RunningIndicator } from './job-queue-running-indicator';
 import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
-import { extractPlaywrightArtifactsFromNode } from './playwright-artifacts';
-import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
+import {
+  extractPlaywrightArtifactsFromNode,
+  extractPlaywrightRuntimePostureFromNode,
+  formatPlaywrightRuntimePostureBrowser,
+  formatPlaywrightRuntimePostureIdentity,
+  formatPlaywrightRuntimePostureProxy,
+  formatPlaywrightRuntimePostureStickyState,
+  resolvePlaywrightArtifactDisplayName,
+} from './playwright-artifacts';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { AiPathsPillButton } from './AiPathsPillButton';
 import { RunHistoryEntries } from './RunHistoryEntries';
@@ -44,13 +52,6 @@ type HistoryOption = {
 type JobQueueRunCardProps = {
   runId: string;
   run: AiPathRunRecord;
-};
-
-type RunCoordinationNotice = {
-  variant: 'warning' | 'info';
-  title: string;
-  description: string;
-  detail?: string | null;
 };
 
 type JobQueueDetailFieldProps = {
@@ -73,64 +74,6 @@ type JobQueueJsonFieldProps = JobQueueJsonTextareaProps & {
 
 const jobQueueJsonTextareaClassName =
   'mt-1 w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200';
-
-const asRecord = (value: unknown): Record<string, unknown> | null =>
-  typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
-
-const resolveRunCoordinationNotice = (
-  run: AiPathRunRecord
-): RunCoordinationNotice | null => {
-  const meta = asRecord(run.meta);
-
-  if (run.status === 'blocked_on_lease') {
-    const executionLease = asRecord(meta?.['executionLease']);
-    const ownerAgentId =
-      typeof executionLease?.['ownerAgentId'] === 'string'
-        ? executionLease['ownerAgentId'].trim()
-        : '';
-    const ownerRunId =
-      typeof executionLease?.['ownerRunId'] === 'string'
-        ? executionLease['ownerRunId'].trim()
-        : '';
-    const ownerSummary =
-      ownerAgentId.length > 0
-        ? `Current owner: ${ownerAgentId}${ownerRunId.length > 0 ? ` (${ownerRunId})` : ''}.`
-        : 'Wait for the active owner to release the execution lease or hand the run off.';
-
-    return {
-      variant: 'warning',
-      title: 'Execution lease blocked',
-      description:
-        'This run cannot continue until its execution lease is released or another operator takes over.',
-      detail: ownerSummary,
-    };
-  }
-
-  if (run.status === 'handoff_ready') {
-    const handoff = asRecord(meta?.['handoff']);
-    const reason =
-      typeof handoff?.['reason'] === 'string' ? handoff['reason'].trim() : '';
-    const checkpointLineageId =
-      typeof handoff?.['checkpointLineageId'] === 'string'
-        ? handoff['checkpointLineageId'].trim()
-        : '';
-
-    return {
-      variant: 'info',
-      title: 'Ready for delegated continuation',
-      description:
-        reason.length > 0
-          ? reason
-          : 'This run was prepared for another agent or operator to continue from the recorded checkpoint lineage.',
-      detail:
-        checkpointLineageId.length > 0
-          ? `Checkpoint lineage: ${checkpointLineageId}`
-          : 'Resume this run when the next owner is ready to continue.',
-    };
-  }
-
-  return null;
-};
 
 const renderJobQueueDetailField = ({
   label,
@@ -192,15 +135,10 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
     toggleRun,
     toggleStream,
     loadRunDetail,
-    handleResumeRun,
-    handleHandoffRun,
-    handleRetryRunNode,
     handleCancelRun,
     setRunToDelete,
     setHistorySelection,
   } = useJobQueueActions();
-  const [isMarkingHandoff, setIsMarkingHandoff] = React.useState(false);
-  const [handoffRequested, setHandoffRequested] = React.useState(false);
 
   const isExpanded = expandedRunIds.has(runId);
   const detail = normalizeRunDetail(runDetails[runId]);
@@ -212,7 +150,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
   const streamStatus: StreamConnectionStatus = pausedStreams.has(runId)
     ? 'paused'
     : (streamStatuses[runId] ?? 'stopped');
-  const canCancel = ['queued', 'running', 'paused'].includes(detailRun.status);
+  const canCancel = ['queued', 'running'].includes(detailRun.status);
 
   const nodes = normalizeRunNodes(detail?.nodes);
   const events = normalizeRunEvents(detail?.events);
@@ -243,17 +181,6 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
   const onToggleRun = () => toggleRun(runId);
   const onToggleStream = () => toggleStream(runId);
   const onRefreshDetail = () => void loadRunDetail(runId);
-  const onHandoffRun = () => {
-    setIsMarkingHandoff(true);
-    setHandoffRequested(false);
-    void handleHandoffRun(detailRun.id)
-      .then((ok: boolean) => {
-        setHandoffRequested(ok);
-      })
-      .finally(() => {
-        setIsMarkingHandoff(false);
-      });
-  };
   const onCancelRun = () => void handleCancelRun(runId);
   const onDeleteRun = () => setRunToDelete(detailRun);
   const onSelectHistoryNode = (val: string) => setHistorySelection(runId, val);
@@ -273,10 +200,6 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
   const isCancellingThisRun = isCancelingRun(runId);
   const isDeletingThisRun = isDeletingRun(runId);
   const paused = pausedStreams.has(runId);
-  const coordinationNotice = React.useMemo(
-    (): RunCoordinationNotice | null => resolveRunCoordinationNotice(detailRun),
-    [detailRun]
-  );
 
   return (
     <div className='rounded-md border border-border/60 bg-card/70 p-3 text-xs text-gray-300'>
@@ -296,25 +219,25 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
           ) : null}
           <div className='mt-1 flex flex-wrap items-center gap-1'>
             <StatusBadge
-              status={'Origin: ' + getOriginLabel(runOrigin)}
+              status={`Origin: ${  getOriginLabel(runOrigin)}`}
               variant={getOriginVariant(runOrigin)}
               size='sm'
               className='font-medium'
             />
             <StatusBadge
-              status={'Run: ' + getExecutionLabel(runExecution)}
+              status={`Run: ${  getExecutionLabel(runExecution)}`}
               variant={getExecutionVariant(runExecution)}
               size='sm'
               className='font-medium'
             />
             <StatusBadge
-              status={'Source: ' + runSource}
+              status={`Source: ${  runSource}`}
               variant='neutral'
               size='sm'
               className='font-medium'
             />
             <StatusBadge
-              status={'Debug: ' + runSourceDebug}
+              status={`Debug: ${  runSourceDebug}`}
               variant='info'
               size='sm'
               title={runSourceDebug}
@@ -339,20 +262,6 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
               Error: {detailRun.errorMessage}
             </Alert>
           )}
-          {coordinationNotice ? (
-            <Alert variant={coordinationNotice.variant} className='mt-2 px-2 py-1 text-[11px]'>
-              <div className='font-semibold text-white'>{coordinationNotice.title}</div>
-              <div>{coordinationNotice.description}</div>
-              {coordinationNotice.detail ? (
-                <div className='mt-1 text-[10px] text-current/80'>{coordinationNotice.detail}</div>
-              ) : null}
-              {detailRun.status === 'blocked_on_lease' && handoffRequested ? (
-                <div className='mt-1 text-[10px] text-current/80'>
-                  Handoff requested. Refreshing status...
-                </div>
-              ) : null}
-            </Alert>
-          ) : null}
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <AiPathsPillButton
@@ -366,7 +275,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
             onClick={onToggleStream}
             disabled={!isExpanded}
           >
-            {paused ? 'Resume stream' : 'Pause stream'}
+            {paused ? 'Reconnect stream' : 'Pause stream'}
           </AiPathsPillButton>
           <AiPathsPillButton
             className='text-gray-200 hover:bg-muted/60'
@@ -375,16 +284,6 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
           >
             {detailLoading ? 'Loading...' : 'Refresh detail'}
           </AiPathsPillButton>
-          {detailRun.status === 'blocked_on_lease' ? (
-            <AiPathsPillButton
-              variant='outline'
-              inactiveClassName='text-blue-200 hover:bg-blue-500/10'
-              onClick={onHandoffRun}
-              disabled={isMarkingHandoff}
-            >
-              {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
-            </AiPathsPillButton>
-          ) : null}
           <AiPathsPillButton
             variant='outline'
             inactiveClassName='text-amber-200 hover:bg-amber-500/10'
@@ -455,18 +354,6 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                   value: formatDate(detailRun.finishedAt),
                 })}
                 {renderJobQueueDetailField({
-                  label: 'Dead-lettered',
-                  value: formatDate(detailRun.deadLetteredAt),
-                })}
-                {renderJobQueueDetailField({
-                  label: 'Retry',
-                  value: `${detailRun.retryCount ?? 0}/${detailRun.maxAttempts ?? '-'}`,
-                })}
-                {renderJobQueueDetailField({
-                  label: 'Next retry',
-                  value: formatDate(detailRun.nextRetryAt),
-                })}
-                {renderJobQueueDetailField({
                   label: 'Trigger node',
                   value: detailRun.triggerNodeId ?? '-',
                 })}
@@ -500,16 +387,6 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                     entries={historyEntries}
                     emptyMessage='No history recorded for this run.'
                     showNodeLabel
-                    onReplayFromEntry={(entry): void => {
-                      const action = resolveRunHistoryEntryAction(entry);
-                      if (action.kind === 'retry_node') {
-                        void handleRetryRunNode(detailRun.id, entry.nodeId).catch(() => {});
-                        return;
-                      }
-                      void handleResumeRun(detailRun.id, action.resumeMode ?? 'replay').catch(
-                        () => {}
-                      );
-                    }}
                   />
                 </div>
               </CollapsibleSection>
@@ -533,6 +410,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                   <div className='mt-1 space-y-2'>
                     {nodes.map((node: AiPathRunNodeRecord) => {
                       const artifactLinks = extractPlaywrightArtifactsFromNode(node);
+                      const runtimePosture = extractPlaywrightRuntimePostureFromNode(node);
                       return (
                         <CollapsibleSection
                           key={node.id}
@@ -592,10 +470,54 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                                     className='rounded border border-sky-400/40 bg-sky-500/10 px-2 py-1 text-[11px] text-sky-100 hover:bg-sky-500/20 hover:underline'
                                     title={artifact.path}
                                   >
-                                    {artifact.name}
+                                    {resolvePlaywrightArtifactDisplayName(artifact)}
                                     {artifact.kind ? ` (${artifact.kind})` : ''}
                                   </a>
                                 ))}
+                              </div>
+                            </div>
+                          ) : null}
+                          {runtimePosture ? (
+                            <div className='mt-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2'>
+                              <div className='text-[10px] uppercase tracking-wide text-emerald-200'>
+                                Runtime posture
+                              </div>
+                              <div className='mt-2 grid gap-2 sm:grid-cols-2'>
+                                {[
+                                  {
+                                    label: 'Browser',
+                                    value: formatPlaywrightRuntimePostureBrowser(runtimePosture),
+                                  },
+                                  {
+                                    label: 'Identity',
+                                    value: formatPlaywrightRuntimePostureIdentity(runtimePosture),
+                                  },
+                                  {
+                                    label: 'Proxy',
+                                    value: formatPlaywrightRuntimePostureProxy(runtimePosture),
+                                  },
+                                  {
+                                    label: 'Sticky state',
+                                    value: formatPlaywrightRuntimePostureStickyState(runtimePosture),
+                                  },
+                                ]
+                                  .filter(
+                                    (entry): entry is { label: string; value: string } =>
+                                      typeof entry.value === 'string' && entry.value.trim().length > 0
+                                  )
+                                  .map((entry) => (
+                                    <div
+                                      key={entry.label}
+                                      className='rounded-md border border-emerald-500/20 bg-black/20 p-2'
+                                    >
+                                      <div className='text-[10px] uppercase tracking-wide text-emerald-200/80'>
+                                        {entry.label}
+                                      </div>
+                                      <div className='mt-1 text-[11px] text-emerald-50'>
+                                        {entry.value}
+                                      </div>
+                                    </div>
+                                  ))}
                               </div>
                             </div>
                           ) : null}

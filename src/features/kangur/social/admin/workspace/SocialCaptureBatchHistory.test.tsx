@@ -21,10 +21,12 @@ describe('SocialCaptureBatchHistory', () => {
   it('renders the empty state when there are no jobs', () => {
     render(
       <SocialCaptureBatchHistory
-        title='Recent preset capture runs'
-        description='Durable history.'
+        config={{
+          title: 'Recent preset capture runs',
+          description: 'Durable history.',
+          emptyMessage: 'No recent preset capture runs yet.',
+        }}
         jobs={[]}
-        emptyMessage='No recent preset capture runs yet.'
       />
     );
 
@@ -37,8 +39,12 @@ describe('SocialCaptureBatchHistory', () => {
 
     render(
       <SocialCaptureBatchHistory
-        title='Recent programmable runs'
-        description='Durable programmable history.'
+        config={{
+          title: 'Recent programmable runs',
+          description: 'Durable programmable history.',
+          emptyMessage: 'No recent programmable capture runs yet.',
+          retryKind: 'programmable',
+        }}
         jobs={[
           {
             id: 'job-1',
@@ -97,9 +103,7 @@ describe('SocialCaptureBatchHistory', () => {
             waitForSelectorMs: 10000,
           },
         ]}
-        emptyMessage='No recent programmable capture runs yet.'
-        retryKind='programmable'
-        onRetryFailed={onRetryFailed}
+        actions={{ onRetryFailed }}
       />
     );
 
@@ -120,8 +124,11 @@ describe('SocialCaptureBatchHistory', () => {
   it('renders stored target diagnostics from capture results', () => {
     render(
       <SocialCaptureBatchHistory
-        title='Recent preset capture runs'
-        description='Durable capture history.'
+        config={{
+          title: 'Recent preset capture runs',
+          description: 'Durable capture history.',
+          emptyMessage: 'No recent preset capture runs yet.',
+        }}
         jobs={[
           {
             id: 'job-2',
@@ -173,7 +180,6 @@ describe('SocialCaptureBatchHistory', () => {
             updatedAt: '2026-03-30T11:05:00.000Z',
           },
         ]}
-        emptyMessage='No recent preset capture runs yet.'
       />
     );
 

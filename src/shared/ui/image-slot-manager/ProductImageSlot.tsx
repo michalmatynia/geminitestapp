@@ -66,10 +66,10 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
 
   const mode = slotViewModes[index];
   const showBase64 =
-    (mode === 'base64' && !!base64Value.trim()) ||
-    (!hasUpload && !linkValue.trim() && !!base64Value.trim());
+    (mode === 'base64' && Boolean(base64Value.trim())) ||
+    (!hasUpload && !linkValue.trim() && Boolean(base64Value.trim()));
   const showLink =
-    (mode === 'link' && !!linkValue.trim()) || (!hasUpload && !!linkValue.trim() && !showBase64);
+    (mode === 'link' && Boolean(linkValue.trim())) || (!hasUpload && Boolean(linkValue.trim()) && !showBase64);
   const displayUrl = showBase64 ? base64Value : showLink ? linkValue : uploadUrl;
 
   const canReorder = !minimalUi && imageSlots.length > 1;
@@ -103,13 +103,13 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          disabled={(!slot && !linkValue.trim()) || !!base64LoadingSlots[index]}
+          disabled={(!slot && !linkValue.trim()) || Boolean(base64LoadingSlots[index])}
           onClick={() => void convertSlotToBase64(index)}
         >
           {base64LoadingSlots[index] ? 'Converting...' : 'Convert to Base64'}
         </DropdownMenuItem>
         <DropdownMenuItem
-          disabled={!linkValue.trim() || imageLocked || !!linkToFileLoadingSlots[index]}
+          disabled={!linkValue.trim() || imageLocked || Boolean(linkToFileLoadingSlots[index])}
           onClick={() => void convertLinkToFile(index)}
         >
           {linkToFileLoadingSlots[index] ? 'Converting link...' : 'Convert link to file'}
@@ -313,7 +313,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
             <div className='flex items-center gap-1 text-[10px] text-gray-400'>
               {(['U', 'L', 'B'] as const).map((label, i) => {
                 const hasVal =
-                  i === 0 ? hasUpload : i === 1 ? !!linkValue.trim() : !!base64Value.trim();
+                  i === 0 ? hasUpload : i === 1 ? Boolean(linkValue.trim()) : Boolean(base64Value.trim());
                 const colorClass =
                   i === 0
                     ? 'border-emerald-400 text-emerald-300'
@@ -358,7 +358,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
         </>
       )}
 
-      {(minimalUi || mode === 'link' || (!!linkValue.trim() && !hasUpload)) && (
+      {(minimalUi || mode === 'link' || (Boolean(linkValue.trim()) && !hasUpload)) && (
         <Input
           type='url'
           value={linkValue}
@@ -372,7 +372,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
           }
          title='Paste image link'/>
       )}
-      {!!base64Value.trim() && (
+      {Boolean(base64Value.trim()) && (
         <div
           className={
             minimalUi

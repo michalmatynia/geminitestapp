@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
 import {
@@ -20,7 +20,7 @@ import { badRequestError, operationFailedError } from '@/shared/errors/app-error
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = imageStudioRunRequestSchema.safeParse(body);
   if (!parsed.success) {

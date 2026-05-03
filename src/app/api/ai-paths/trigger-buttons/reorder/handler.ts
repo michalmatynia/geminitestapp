@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   getAiPathsSetting,
@@ -54,7 +54,7 @@ const applyReorder = (
   );
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
   const parsed = await parseJsonBody(req, aiTriggerButtonReorderSchema, {
     logPrefix: 'ai-paths.trigger-buttons.reorder.POST',

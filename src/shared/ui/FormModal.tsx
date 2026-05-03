@@ -3,7 +3,7 @@ import { type VariantProps } from 'class-variance-authority';
 import type { ModalStateProps } from '@/shared/contracts/ui/base';
 
 import { AppModal } from './app-modal';
-import { buttonVariants } from './button';
+import { type buttonVariants } from './button';
 import { FormActions } from './FormActions';
 
 import type { ReactNode } from 'react';

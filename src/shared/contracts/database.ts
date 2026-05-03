@@ -162,6 +162,9 @@ export type DatabaseEngineProvider = z.infer<typeof databaseEngineProviderSchema
 export const databaseEnginePrimaryProviderSchema = z.literal('mongodb');
 export type DatabaseEnginePrimaryProvider = z.infer<typeof databaseEnginePrimaryProviderSchema>;
 
+export const mongoSourceSchema = z.enum(['local', 'cloud']);
+export type MongoSource = z.infer<typeof mongoSourceSchema>;
+
 export const databaseEngineServiceSchema = z.enum([
   'app',
   'auth',
@@ -425,6 +428,161 @@ export const databaseEngineProviderPreviewSchema = z.object({
 
 export type DatabaseEngineProviderPreview = z.infer<typeof databaseEngineProviderPreviewSchema>;
 
+export const databaseEngineMongoSourceEntrySchema = z.object({
+  source: mongoSourceSchema,
+  configured: z.boolean(),
+  dbName: z.string().nullable(),
+  maskedUri: z.string().nullable(),
+  isActive: z.boolean(),
+  usesLegacyEnv: z.boolean(),
+  reachable: z.boolean().nullable(),
+  healthError: z.string().nullable(),
+});
+
+export type DatabaseEngineMongoSourceEntry = z.infer<
+  typeof databaseEngineMongoSourceEntrySchema
+>;
+
+export const databaseEngineMongoSyncDirectionSchema = z.enum([
+  'cloud_to_local',
+  'local_to_cloud',
+]);
+
+export type DatabaseEngineMongoSyncDirection = z.infer<
+  typeof databaseEngineMongoSyncDirectionSchema
+>;
+
+export const databaseEngineMongoSyncBackupRoleSchema = z.enum(['source', 'target']);
+
+export type DatabaseEngineMongoSyncBackupRole = z.infer<
+  typeof databaseEngineMongoSyncBackupRoleSchema
+>;
+
+export const databaseEngineMongoSyncBackupSchema = z.object({
+  role: databaseEngineMongoSyncBackupRoleSchema,
+  source: mongoSourceSchema,
+  backupName: z.string(),
+  backupPath: z.string(),
+  logPath: z.string(),
+  createdAt: z.string(),
+  warning: z.string().nullable().default(null),
+});
+
+export type DatabaseEngineMongoSyncBackup = z.infer<
+  typeof databaseEngineMongoSyncBackupSchema
+>;
+
+export const databaseEngineMongoSyncVerificationCollectionSchema = z.object({
+  name: z.string(),
+  sourceExists: z.boolean(),
+  targetExists: z.boolean(),
+  typeMatches: z.boolean(),
+  optionsMatch: z.boolean(),
+  indexesMatch: z.boolean(),
+  documentsMatch: z.boolean(),
+  sourceType: z.string().nullable(),
+  targetType: z.string().nullable(),
+  sourceCount: z.number().nullable(),
+  targetCount: z.number().nullable(),
+  sourceHash: z.string().nullable(),
+  targetHash: z.string().nullable(),
+  sourceIndexesHash: z.string().nullable(),
+  targetIndexesHash: z.string().nullable(),
+  sourceOptionsHash: z.string().nullable(),
+  targetOptionsHash: z.string().nullable(),
+});
+
+export type DatabaseEngineMongoSyncVerificationCollection = z.infer<
+  typeof databaseEngineMongoSyncVerificationCollectionSchema
+>;
+
+export const databaseEngineMongoSyncVerificationSchema = z.object({
+  status: z.enum(['passed', 'failed']),
+  verifiedAt: z.string(),
+  source: mongoSourceSchema,
+  target: mongoSourceSchema,
+  sourceDbName: z.string(),
+  targetDbName: z.string(),
+  sourceCollections: z.number(),
+  targetCollections: z.number(),
+  collectionsCompared: z.number(),
+  mismatches: z.array(z.string()),
+  collections: z.array(databaseEngineMongoSyncVerificationCollectionSchema),
+});
+
+export type DatabaseEngineMongoSyncVerification = z.infer<
+  typeof databaseEngineMongoSyncVerificationSchema
+>;
+
+export const databaseEngineMongoLastSyncSchema = z.object({
+  direction: databaseEngineMongoSyncDirectionSchema,
+  source: mongoSourceSchema,
+  target: mongoSourceSchema,
+  syncedAt: z.string(),
+  preSyncBackups: z.array(databaseEngineMongoSyncBackupSchema).default([]),
+  archivePath: z.string().nullable(),
+  logPath: z.string().nullable(),
+  verification: databaseEngineMongoSyncVerificationSchema.nullable().optional(),
+});
+
+export type DatabaseEngineMongoLastSync = z.infer<
+  typeof databaseEngineMongoLastSyncSchema
+>;
+
+export const databaseEngineMongoSyncInProgressSchema = z.object({
+  direction: databaseEngineMongoSyncDirectionSchema,
+  source: mongoSourceSchema,
+  target: mongoSourceSchema,
+  acquiredAt: z.string(),
+  pid: z.number().int().nonnegative(),
+});
+
+export type DatabaseEngineMongoSyncInProgress = z.infer<
+  typeof databaseEngineMongoSyncInProgressSchema
+>;
+
+export const databaseEngineMongoSourceStateSchema = z.object({
+  timestamp: z.string(),
+  activeSource: mongoSourceSchema.nullable(),
+  defaultSource: mongoSourceSchema.nullable(),
+  lastSync: databaseEngineMongoLastSyncSchema.nullable(),
+  syncInProgress: databaseEngineMongoSyncInProgressSchema.nullable().optional(),
+  local: databaseEngineMongoSourceEntrySchema,
+  cloud: databaseEngineMongoSourceEntrySchema,
+  canSwitch: z.boolean(),
+  canSync: z.boolean(),
+  syncIssue: z.string().nullable(),
+});
+
+export type DatabaseEngineMongoSourceState = z.infer<
+  typeof databaseEngineMongoSourceStateSchema
+>;
+
+export const databaseEngineMongoSyncRequestSchema = z.object({
+  direction: databaseEngineMongoSyncDirectionSchema,
+});
+
+export type DatabaseEngineMongoSyncRequest = z.infer<
+  typeof databaseEngineMongoSyncRequestSchema
+>;
+
+export const databaseEngineMongoSyncResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  direction: databaseEngineMongoSyncDirectionSchema,
+  source: mongoSourceSchema,
+  target: mongoSourceSchema,
+  syncedAt: z.string(),
+  preSyncBackups: z.array(databaseEngineMongoSyncBackupSchema).default([]),
+  archivePath: z.string().nullable(),
+  logPath: z.string().nullable(),
+  verification: databaseEngineMongoSyncVerificationSchema.nullable().optional(),
+});
+
+export type DatabaseEngineMongoSyncResponse = z.infer<
+  typeof databaseEngineMongoSyncResponseSchema
+>;
+
 export type CollectionCopyResult = DatabaseSyncCollectionResult;
 
 export const databaseEngineBackupRunNowRequestSchema = z.object({
@@ -542,6 +700,7 @@ export const databaseEngineStatusSchema = z.object({
     mongodbConfigured: z.boolean(),
     redisConfigured: z.boolean(),
   }),
+  mongoSource: databaseEngineMongoSourceStateSchema,
   serviceRouteMap: z.record(z.string(), z.string()),
   collectionRouteMap: z.record(z.string(), z.string()),
   services: z.array(databaseEngineServiceStatusSchema),

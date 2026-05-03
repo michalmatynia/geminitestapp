@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import type {
   FilemakerEmail,
   FilemakerPartyKind,
@@ -9,6 +10,7 @@ import type {
   FilemakerEmailCampaignDeliveryProvider,
   FilemakerEmailCampaignDeliveryFailureCategory,
   FilemakerEmailCampaignDeliveryAttemptStatus,
+  FilemakerEmailCampaignSuppressionReason,
 } from '../types';
 
 export type FilemakerEmailCampaignAudienceRecipient = {
@@ -75,14 +77,23 @@ export type FilemakerEmailCampaignAnalytics = {
   resubscribeRatePercent: number;
   netUnsubscribeCount: number;
   netUnsubscribeRatePercent: number;
+  replyCount: number;
+  replyRatePercent: number;
   latestRunStatus: FilemakerEmailCampaignRunStatus | null;
   latestRunAt: string | null;
   latestActivityAt: string | null;
   latestOpenAt: string | null;
   latestClickAt: string | null;
+  latestReplyAt: string | null;
   latestUnsubscribeAt: string | null;
   latestResubscribeAt: string | null;
   topClickedLinks: FilemakerEmailCampaignLinkPerformance[];
+  languageSummaries: FilemakerEmailCampaignSegmentAnalytics[];
+  contentVariantSummaries: FilemakerEmailCampaignSegmentAnalytics[];
+  countrySummaries: FilemakerEmailCampaignSegmentAnalytics[];
+  domainSummaries: FilemakerEmailCampaignSegmentAnalytics[];
+  fallbackContentCount: number;
+  fallbackContentRatePercent: number;
   eventCount: number;
 };
 
@@ -92,6 +103,32 @@ export type FilemakerEmailCampaignLinkPerformance = {
   uniqueDeliveryCount: number;
   clickRatePercent: number;
   latestClickAt: string | null;
+};
+
+export type FilemakerEmailCampaignSegmentAnalytics = {
+  key: string;
+  label: string;
+  totalRecipients: number;
+  sentCount: number;
+  failedCount: number;
+  bouncedCount: number;
+  skippedCount: number;
+  queuedCount: number;
+  deliveryRatePercent: number;
+  failureRatePercent: number;
+  bounceRatePercent: number;
+  openCount: number;
+  uniqueOpenCount: number;
+  uniqueOpenRatePercent: number;
+  clickCount: number;
+  uniqueClickCount: number;
+  uniqueClickRatePercent: number;
+  replyCount: number;
+  replyRatePercent: number;
+  unsubscribeCount: number;
+  unsubscribeRatePercent: number;
+  fallbackContentCount: number;
+  latestActivityAt: string | null;
 };
 
 export type FilemakerEmailCampaignDeliverabilityHealthLevel =
@@ -105,7 +142,9 @@ export type FilemakerEmailCampaignDeliverabilityAlert = {
   code:
     | 'global_bounce_rate'
     | 'global_failure_rate'
+    | 'complaint_pressure'
     | 'queue_backlog'
+    | 'rate_limited_retries'
     | 'retry_backlog'
     | 'suppression_pressure'
     | 'campaign_health'
@@ -128,6 +167,7 @@ export type FilemakerEmailCampaignDomainDeliverability = {
   skippedCount: number;
   pendingRetryCount: number;
   overdueRetryCount: number;
+  rateLimitedRetryCount: number;
   suppressionCount: number;
   deliveryRatePercent: number;
   failureRatePercent: number;
@@ -152,6 +192,7 @@ export type FilemakerEmailCampaignDeliverabilityCampaignHealth = {
   skippedCount: number;
   pendingRetryCount: number;
   overdueRetryCount: number;
+  rateLimitedRetryCount: number;
   deliveryRatePercent: number;
   failureRatePercent: number;
   bounceRatePercent: number;
@@ -204,6 +245,13 @@ export type FilemakerEmailCampaignDeliveryProviderSummary = {
   bouncedCount: number;
 };
 
+export type FilemakerEmailCampaignSuppressionReasonSummary = {
+  reason: FilemakerEmailCampaignSuppressionReason;
+  count: number;
+  ratePercent: number;
+  latestSuppressedAt: string | null;
+};
+
 export type FilemakerEmailCampaignScheduledRetryItem = {
   deliveryId: string;
   campaignId: string;
@@ -226,6 +274,7 @@ export type FilemakerEmailCampaignDeliverabilityOverview = {
   retryExhaustedCount: number;
   pendingRetryCount: number;
   overdueRetryCount: number;
+  rateLimitedRetryCount: number;
   processedCount: number;
   acceptedCount: number;
   failedCount: number;
@@ -239,6 +288,7 @@ export type FilemakerEmailCampaignDeliverabilityOverview = {
   bounceRatePercent: number;
   suppressionCount: number;
   suppressionRatePercent: number;
+  suppressionReasonBreakdown: FilemakerEmailCampaignSuppressionReasonSummary[];
   latestDeliveryAt: string | null;
   oldestQueuedAt: string | null;
   oldestQueuedAgeMinutes: number | null;
@@ -262,6 +312,7 @@ export type FilemakerEmailCampaignRecipientActivityType =
   | 'delivery_bounced'
   | 'opened'
   | 'clicked'
+  | 'reply_received'
   | 'unsubscribed'
   | 'resubscribed';
 
@@ -272,6 +323,8 @@ export type FilemakerEmailCampaignRecipientActivityItem = {
   campaignName: string | null;
   runId: string | null;
   deliveryId: string | null;
+  mailThreadId?: string | null;
+  mailMessageId?: string | null;
   timestamp: string;
   details: string | null;
 };
@@ -287,11 +340,13 @@ export type FilemakerEmailCampaignRecipientActivitySummary = {
   skippedCount: number;
   openCount: number;
   clickCount: number;
+  replyCount: number;
   unsubscribeCount: number;
   resubscribeCount: number;
   latestSentAt: string | null;
   latestOpenAt: string | null;
   latestClickAt: string | null;
+  latestReplyAt: string | null;
   latestUnsubscribeAt: string | null;
   latestResubscribeAt: string | null;
   recentActivity: FilemakerEmailCampaignRecipientActivityItem[];

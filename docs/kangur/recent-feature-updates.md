@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-11'
 status: 'active'
 doc_type: 'overview'
 scope: 'feature:kangur'
@@ -17,7 +17,7 @@ creation, release summaries, and AI agent prompts.
 
 ## Window
 
-This summary covers changes merged between 2026-03-13 and 2026-03-26 (inclusive).
+This summary covers changes merged between 2026-03-29 and 2026-04-11 (inclusive).
 Update this section whenever the reporting window changes.
 
 ## Refresh cadence
@@ -261,30 +261,31 @@ into AI prompts.
 ## Change inventory (auto)
 
 <!-- AUTO-GENERATED:RECENT_FEATURES_START -->
-Generated at 2026-03-26T10:43:50.233Z UTC.
+Generated at 2026-04-11T13:54:13.578Z UTC.
 
-Window (UTC): 2026-03-13 to 2026-03-26.
-Commits scanned: 252.
-Files touched: 1999.
+Window (UTC): 2026-03-29 to 2026-04-11.
+Commits scanned: 84.
+Files touched: 2222.
 
 Top paths:
-- Top path: `src/features/kangur/ui` (1181 files)
-- Top path: `src/features/kangur/admin` (189 files)
-- Top path: `src/features/kangur/services` (99 files)
-- Top path: `src/features/kangur/server` (85 files)
-- Top path: `src/app/api/kangur/ai-tutor` (43 files)
-- Top path: `src/features/kangur/shared` (36 files)
-- Top path: `src/app/api/kangur/auth` (32 files)
-- Top path: `src/features/kangur/cms-builder` (31 files)
+- Top path: `src/features/kangur/ui` (1450 files)
+- Top path: `src/features/kangur/admin` (144 files)
+- Top path: `src/features/kangur/social` (122 files)
+- Top path: `src/features/kangur/services` (84 files)
+- Top path: `src/features/kangur/server` (55 files)
+- Top path: `src/features/kangur/appearance` (42 files)
+- Top path: `src/app/api/kangur/ai-tutor` (25 files)
+- Top path: `src/app/api/kangur/auth` (24 files)
 
 Latest commits:
-- Commit: `d8d8d8390` (2026-03-26) SD
-- Commit: `92313d67e` (2026-03-26) SDS
-- Commit: `776b655c5` (2026-03-26) ibui
-- Commit: `599b770ca` (2026-03-26) SD
-- Commit: `88ca0038b` (2026-03-26) SD
-- Commit: `c164e5b9c` (2026-03-25) Add single-touch pointer drag engine for mobile AddingBallGame
-- Commit: `bc34fcd6d` (2026-03-25) Warm domain-zoning cache, add game catalog facets, fix e2e selectors
-- Commit: `54b17c1ee` (2026-03-25) S
+- Commit: `8a44e5270` (2026-04-11) SD
+- Commit: `46d8de79a` (2026-04-10) S
+- Commit: `d41660456` (2026-04-10) SD
+- Commit: `74b105fe4` (2026-04-10) DS
+- Commit: `d0ba134b1` (2026-04-10) D
+- Commit: `30622ab3e` (2026-04-09) DS
+- Commit: `4e806bae4` (2026-04-09) SD
+- Commit: `2fb6dd1a3` (2026-04-09) SD
 
 <!-- AUTO-GENERATED:RECENT_FEATURES_END -->
+

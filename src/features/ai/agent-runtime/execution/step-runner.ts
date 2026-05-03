@@ -17,9 +17,9 @@ import { buildBranchStepsFromAlternatives } from '@/features/ai/agent-runtime/pl
 import type { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 
 import { evaluateApproval } from './step-runner/approval-logic';
-import { maybeUpdateCheckpointBrief, CheckpointContext } from './step-runner/checkpoint-logic';
+import { maybeUpdateCheckpointBrief, type CheckpointContext } from './step-runner/checkpoint-logic';
 import { executeTool } from './step-runner/tool-logic';
-import { StepLoopInput, StepLoopResult } from './step-runner/types';
+import { type StepLoopInput, type StepLoopResult } from './step-runner/types';
 
 export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopResult> {
   const { context, sharedBrowser, sharedContext } = input;
@@ -64,23 +64,26 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
     url: string | null;
   }> = [];
 
-  const logBranchAlternatives = async (
-    meta: PlannerMeta | null | undefined,
-    reason: string
-  ): Promise<void> => {
-    const branchAlternatives = buildBranchStepsFromAlternatives(
-      meta?.alternatives ?? undefined,
-      settings.maxStepAttempts,
-      Math.min(6, settings.maxSteps)
-    );
-    if (branchAlternatives.length === 0) return;
-    await logAgentAudit(run.id, 'info', 'Plan branch created.', {
-      type: 'plan-branch',
-      branchSteps: branchAlternatives,
-      reason,
-      plannerMeta: meta ?? null,
-    });
-  };
+async function logBranchAlternatives(
+  runId: string,
+  meta: PlannerMeta | null | undefined,
+  reason: string,
+  maxStepAttempts: number,
+  maxSteps: number
+): Promise<void> {
+  const branchAlternatives = buildBranchStepsFromAlternatives(
+    meta?.alternatives ?? undefined,
+    maxStepAttempts,
+    Math.min(6, maxSteps)
+  );
+  if (branchAlternatives.length === 0) return;
+  await logAgentAudit(runId, 'info', 'Plan branch created.', {
+    type: 'plan-branch',
+    branchSteps: branchAlternatives,
+    reason,
+    plannerMeta: meta ?? null,
+  });
+}
 
   while (stepIndex < planSteps.length) {
     const step = planSteps[stepIndex];
@@ -93,31 +96,20 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
       continue;
     }
 
-    const approvalResult = await evaluateApproval({
+    const approvalResult = await handleApprovalGating(
       step,
       context,
-      runId: run.id,
+      run.id,
       approvalGrantedStepId,
       planSteps,
       lastError,
       taskType,
       approvalRequestedStepId,
-      summaryCheckpoint,
-    });
-
+      summaryCheckpoint
+    );
     approvalRequestedStepId = approvalResult.updatedApprovalRequestedStepId;
-
-    if (approvalResult.requiresHuman) {
-      return {
-        planSteps,
-        stepIndex,
-        taskType,
-        memoryContext,
-        summaryCheckpoint,
-        overallOk,
-        lastError,
-        requiresHuman: true,
-      };
+    if (approvalResult.requiresHuman && approvalResult.stepLoopResult) {
+      return approvalResult.stepLoopResult;
     }
 
     const attempts = (step.attempts ?? 0) + 1;
@@ -158,69 +150,54 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
       ).length;
 
       const currentStepId = step.id;
-      void (async () => {
-        const tasks: Promise<unknown>[] = [];
 
-        tasks.push(
-          (async () => {
-            checkpointContext = await maybeUpdateCheckpointBrief({
-              activeStepIdForBrief: currentStepId,
-              checkpointContext,
-              lastError,
-              context,
-              runId: run.id,
-              memoryContext,
-              planSteps,
-              summaryCheckpoint,
-              taskType,
-              approvalRequestedStepId,
-              approvalGrantedStepId,
-            });
-          })()
-        );
+      checkpointContext = await maybeUpdateCheckpointBrief({
+        activeStepIdForBrief: currentStepId,
+        checkpointContext,
+        lastError,
+        context,
+        runId: run.id,
+        memoryContext,
+        planSteps,
+        summaryCheckpoint,
+        taskType,
+        approvalRequestedStepId,
+        approvalGrantedStepId,
+      });
 
-        if (
-          completedCount >= summaryInterval &&
-          completedCount % summaryInterval === 0 &&
-          completedCount !== summaryCheckpoint
-        ) {
-          tasks.push(
-            (async () => {
-              const summaryContext = await getBrowserContextSummary(run.id);
-              const summary = await summarizePlannerMemoryWithLLM({
-                prompt: run.prompt,
-                model: memorySummarizationModel,
-                memory: memoryContext,
-                steps: planSteps,
-                browserContext: summaryContext,
-                runId: run.id,
-              });
-              if (summary) {
-                await addAgentMemory({
-                  runId: run.id,
-                  scope: 'session',
-                  content: summary,
-                  metadata: { type: 'planner-summary', completedCount },
-                });
-                memoryContext = applyAgentRuntimeContextMemory(
-                  [...memoryContext, summary],
-                  contextRegistryPrompt
-                );
-                summaryCheckpoint = completedCount;
-                await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
-                  type: 'planner-summary',
-                  completedCount,
-                  summary,
-                });
-              }
-            })()
+      if (
+        completedCount >= summaryInterval &&
+        completedCount % summaryInterval === 0 &&
+        completedCount !== summaryCheckpoint
+      ) {
+        const summaryContext = await getBrowserContextSummary(run.id);
+        const summary = await summarizePlannerMemoryWithLLM({
+          prompt: run.prompt,
+          model: memorySummarizationModel,
+          memory: memoryContext,
+          steps: planSteps,
+          browserContext: summaryContext,
+          runId: run.id,
+        });
+        if (summary) {
+          await addAgentMemory({
+            runId: run.id,
+            scope: 'session',
+            content: summary,
+            metadata: { type: 'planner-summary', completedCount },
+          });
+          memoryContext = applyAgentRuntimeContextMemory(
+            [...memoryContext, summary],
+            contextRegistryPrompt
           );
+          summaryCheckpoint = completedCount;
+          await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
+            type: 'planner-summary',
+            completedCount,
+            summary,
+          });
         }
-
-        if (tasks.length > 0) {
-          await Promise.allSettled(tasks);
-        }
-      })();
+      }
 
       stepIndex += 1;
       continue;
@@ -440,7 +417,7 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(loopReview.meta, 'loop-guard');
+        await logBranchAlternatives(run.id, loopReview.meta, 'loop-guard', settings.maxStepAttempts, settings.maxSteps);
         await persistCheckpoint({
           runId: run.id,
           steps: planSteps,
@@ -506,7 +483,7 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(stepReview.meta, 'step-complete');
+        await logBranchAlternatives(run.id, stepReview.meta, 'step-complete', settings.maxStepAttempts, settings.maxSteps);
         await persistCheckpoint({
           runId: run.id,
           steps: planSteps,

@@ -1,6 +1,6 @@
-import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/shared/lib/ai-paths';
+import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/shared/contracts/ai-paths-runtime';
 import { formatDurationMs } from '@/shared/lib/ai-paths/format-duration';
-import { formatRuntimeValue } from '@/shared/lib/ai-paths';
+import { formatRuntimeValue } from '@/shared/lib/ai-paths/core/utils';
 import type { StatusVariant } from '@/shared/contracts/ui/base';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { CompactEmptyState, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
@@ -64,11 +64,6 @@ const buildExecutionMetadataChips = (entry: RuntimeHistoryEntry): string[] =>
     entry.effectSourceSpanId ? `sourceSpan=${entry.effectSourceSpanId}` : null,
     entry.activationHash ? `activation=${entry.activationHash}` : null,
     entry.idempotencyKey ? `idempotency=${entry.idempotencyKey}` : null,
-    entry.resumeDecision ? `resume=${entry.resumeDecision}` : null,
-    entry.resumeMode ? `resumeMode=${entry.resumeMode}` : null,
-    entry.resumeReason ? `resumeReason=${entry.resumeReason}` : null,
-    entry.resumeSourceSpanId ? `resumeSource=${entry.resumeSourceSpanId}` : null,
-    entry.resumeSourceStatus ? `resumeStatus=${entry.resumeSourceStatus}` : null,
   ].filter((value): value is string => Boolean(value));
 
 function RunHistoryDataPanel({
@@ -187,19 +182,20 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
                   entry.delayMs > 0 && (
                   <span className='text-[10px] text-amber-300/80'>+{entry.delayMs}ms delay</span>
                 )}
-                <Button
-                  type='button'
-                  size='xs'
-                  variant='outline'
-                  className='h-6 px-2 text-[10px]'
-                  disabled={!onReplayFromEntry}
-                  onClick={(): void => {
-                    onReplayFromEntry?.(entry);
-                  }}
-                  title={runHistoryEntryActionTitle(entry, Boolean(onReplayFromEntry))}
-                >
-                  {entryAction.label}
-                </Button>
+                {onReplayFromEntry ? (
+                  <Button
+                    type='button'
+                    size='xs'
+                    variant='outline'
+                    className='h-6 px-2 text-[10px]'
+                    onClick={(): void => {
+                      onReplayFromEntry(entry);
+                    }}
+                    title={runHistoryEntryActionTitle(entry, true)}
+                  >
+                    {entryAction.label}
+                  </Button>
+                ) : null}
               </div>
             </div>
             {onReplayFromEntry ? (

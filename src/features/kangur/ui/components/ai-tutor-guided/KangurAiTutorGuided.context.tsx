@@ -142,10 +142,12 @@ export function GuidedCalloutProvider({ children }: { children: React.ReactNode 
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useGuidedCalloutContext() {
   const context = useContext(GuidedCalloutContext);
   if (!context) {
-    throw new Error('useGuidedCalloutContext must be used within a GuidedCalloutProvider');
+    throw internalError('useGuidedCalloutContext must be used within a GuidedCalloutProvider');
   }
   return context;
 }

@@ -17,16 +17,16 @@ import {
 } from '@/shared/lib/observability/tanstack-telemetry';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
-import { TanstackFactoryMeta } from '../tanstack-factory-v2.types';
+import { type TanstackFactoryMeta } from '../tanstack-factory-v2.types';
 import { invokeQueryFactoryFn } from './executors';
 import { applyQueryRuntimeGuards, applySuspenseQueryRuntimeGuards } from './guards';
 import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
 import {
-  BaseQueryFactoryV2Config,
-  QueryDescriptorV2,
-  QueryOptionsWithoutCore,
-  SuspenseQueryOptionsWithoutCore,
-  SuspenseQueryDescriptorV2,
+  type BaseQueryFactoryV2Config,
+  type QueryDescriptorV2,
+  type QueryOptionsWithoutCore,
+  type SuspenseQueryOptionsWithoutCore,
+  type SuspenseQueryDescriptorV2,
 } from './types';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

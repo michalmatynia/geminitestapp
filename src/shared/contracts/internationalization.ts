@@ -1,16 +1,17 @@
 import { z } from 'zod';
 
+import { countryCodeOptions } from '../constants/countries';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 
 /**
  * Internationalization DTOs
  */
 
-export const countryCodes = ['PL', 'DE', 'GB', 'SE'] as const;
+export const countryCodes = countryCodeOptions.map((country) => country.code);
 export const currencyCodes = ['USD', 'EUR', 'PLN', 'GBP', 'SEK'] as const;
 export const languageCodes = ['EN', 'PL', 'DE', 'SV'] as const;
 
-export type CountryCode = (typeof countryCodes)[number];
+export type { CountryCode } from '../constants/countries';
 export type CurrencyCode = (typeof currencyCodes)[number];
 export type LanguageCode = (typeof languageCodes)[number];
 

@@ -38,7 +38,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { useKangurLobbyChat } from '@/features/kangur/ui/hooks/useKangurLobbyChat';
 
@@ -125,7 +126,7 @@ describe('useKangurLobbyChat', () => {
     );
 
     await waitFor(() => {
-      expect(eventSourceCtor).toHaveBeenCalledWith('/api/kangur/duels/lobby-chat/stream?limit=40');
+      expect(eventSourceCtor).toHaveBeenCalledWith('/kangur-api/duels/lobby-chat/stream?limit=40');
     });
 
     act(() => {

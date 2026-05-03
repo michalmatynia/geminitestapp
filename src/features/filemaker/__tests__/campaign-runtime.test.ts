@@ -2,8 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createFilemakerEmailCampaign,
+  createFilemakerEmailCampaignContentGroup,
+  createFilemakerEmailCampaignContentVariant,
+  createFilemakerEmailCampaignDelivery,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
@@ -24,7 +28,9 @@ import { createFilemakerCampaignRuntimeService } from '@/features/filemaker/serv
 import type {
   FilemakerDatabase,
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignContentGroupRegistry,
   FilemakerEmailCampaignSuppressionRegistry,
+  FilemakerMailAccount,
 } from '@/features/filemaker/types';
 
 const iso = '2026-03-27T10:00:00.000Z';
@@ -72,8 +78,50 @@ const createDatabase = (): FilemakerDatabase => ({
     },
   ],
   events: [],
-  addresses: [],
-  addressLinks: [],
+  addresses: [
+    {
+      id: 'address-person-1',
+      street: '',
+      streetNumber: '',
+      city: 'Warsaw',
+      postalCode: '',
+      country: 'Poland',
+      countryId: 'PL',
+      createdAt: iso,
+      updatedAt: iso,
+    },
+    {
+      id: 'address-organization-1',
+      street: '',
+      streetNumber: '',
+      city: 'Berlin',
+      postalCode: '',
+      country: 'Germany',
+      countryId: 'DE',
+      createdAt: iso,
+      updatedAt: iso,
+    },
+  ],
+  addressLinks: [
+    {
+      id: 'address-link-person-1',
+      ownerKind: 'person',
+      ownerId: 'person-1',
+      addressId: 'address-person-1',
+      isDefault: true,
+      createdAt: iso,
+      updatedAt: iso,
+    },
+    {
+      id: 'address-link-organization-1',
+      ownerKind: 'organization',
+      ownerId: 'organization-1',
+      addressId: 'address-organization-1',
+      isDefault: true,
+      createdAt: iso,
+      updatedAt: iso,
+    },
+  ],
   phoneNumbers: [],
   phoneNumberLinks: [],
   emails: [
@@ -111,6 +159,11 @@ const createDatabase = (): FilemakerDatabase => ({
     },
   ],
   eventOrganizationLinks: [],
+  values: [],
+  valueParameters: [],
+  valueParameterLinks: [],
+  organizationLegacyDemands: [],
+  jobListings: [],
 });
 
 const createCampaign = (overrides?: Partial<FilemakerEmailCampaign>): FilemakerEmailCampaign =>
@@ -119,6 +172,7 @@ const createCampaign = (overrides?: Partial<FilemakerEmailCampaign>): FilemakerE
     name: 'Expo outreach',
     status: 'active',
     subject: 'Hello from Filemaker',
+    mailAccountId: 'mail-account-sales',
     bodyText: 'We would like to invite you.',
     audience: {
       partyKinds: ['person', 'organization'],
@@ -149,10 +203,45 @@ const createCampaign = (overrides?: Partial<FilemakerEmailCampaign>): FilemakerE
     ...overrides,
   });
 
+const createMailAccount = (overrides?: Partial<FilemakerMailAccount>): FilemakerMailAccount => ({
+  id: 'mail-account-sales',
+  name: 'Sales Mailbox',
+  emailAddress: 'sales@example.com',
+  provider: 'imap_smtp',
+  status: 'active',
+  imapHost: 'imap.example.com',
+  imapPort: 993,
+  imapSecure: true,
+  imapUser: 'sales@example.com',
+  imapPasswordSettingKey: 'filemaker_mail_account_mail-account-sales_imap_password',
+  smtpHost: 'smtp.example.com',
+  smtpPort: 587,
+  smtpSecure: true,
+  smtpUser: 'sales@example.com',
+  smtpPasswordSettingKey: 'filemaker_mail_account_mail-account-sales_smtp_password',
+  fromName: 'Sales',
+  replyToEmail: 'reply@example.com',
+  folderAllowlist: [],
+  initialSyncLookbackDays: 30,
+  maxMessagesPerSync: 100,
+  pushEnabled: true,
+  lastSyncedAt: null,
+  lastSyncError: null,
+  dkimDomain: null,
+  dkimKeySelector: null,
+  dkimPrivateKeySettingKey: null,
+  createdAt: iso,
+  updatedAt: iso,
+  ...overrides,
+});
+
 const createRuntimeHarness = (input?: {
   campaign?: FilemakerEmailCampaign;
+  contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry;
+  mailAccounts?: FilemakerMailAccount[];
   sendCampaignEmail?: ReturnType<typeof vi.fn>;
   suppressions?: FilemakerEmailCampaignSuppressionRegistry;
+  now?: () => Date;
 }) => {
   const store = new Map<string, string>([
     [
@@ -165,6 +254,10 @@ const createRuntimeHarness = (input?: {
         version: 1,
         campaigns: [input?.campaign ?? createCampaign()],
       }),
+    ],
+    [
+      FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY,
+      JSON.stringify(input?.contentGroupRegistry ?? { version: 1, groups: [] }),
     ],
     [FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY, JSON.stringify({ version: 1, runs: [] })],
     [
@@ -197,7 +290,10 @@ const createRuntimeHarness = (input?: {
       return true;
     },
     sendCampaignEmail,
-    now: () => new Date(iso),
+    now: input?.now ?? (() => new Date(iso)),
+    listMailAccounts: async () => input?.mailAccounts ?? [createMailAccount()],
+    throttleBeforeSend: async () => {},
+    reserveWarmupSlot: async () => ({ ok: true }),
   });
 
   return {
@@ -261,6 +357,30 @@ describe('filemaker campaign runtime service', () => {
         runStatus: 'queued',
       })
     );
+  });
+
+  it('blocks live runs until a campaign has an active assigned email account', async () => {
+    const missingAssignment = createRuntimeHarness({
+      campaign: createCampaign({ mailAccountId: null }),
+    });
+
+    await expect(
+      missingAssignment.service.launchRun({
+        campaignId: 'campaign-1',
+        mode: 'live',
+      })
+    ).rejects.toThrow('Campaign must have an email account assigned before it can launch.');
+
+    const pausedAccount = createRuntimeHarness({
+      mailAccounts: [createMailAccount({ status: 'paused' })],
+    });
+
+    await expect(
+      pausedAccount.service.launchRun({
+        campaignId: 'campaign-1',
+        mode: 'live',
+      })
+    ).rejects.toThrow('Assigned email account Sales Mailbox <sales@example.com> is paused.');
   });
 
   it('cancels queued runs and marks queued deliveries as skipped', async () => {
@@ -348,6 +468,152 @@ describe('filemaker campaign runtime service', () => {
       storedEvents.events.filter((event) => event.type === 'delivery_sent')
     ).toHaveLength(2);
     expect(storedEvents.events.some((event) => event.type === 'completed')).toBe(true);
+  });
+
+  it('routes translated campaign content by organization country', async () => {
+    const group = createFilemakerEmailCampaignContentGroup({
+      id: 'content-group-1',
+      name: 'Market invite',
+      defaultLanguageCode: 'en',
+      defaultVariantId: 'variant-en',
+      variants: [
+        createFilemakerEmailCampaignContentVariant({
+          id: 'variant-en',
+          groupId: 'content-group-1',
+          languageCode: 'en',
+          label: 'English',
+          subject: 'Hello',
+          bodyText: 'English body',
+          countryIds: ['US', 'GB'],
+        }),
+        createFilemakerEmailCampaignContentVariant({
+          id: 'variant-de',
+          groupId: 'content-group-1',
+          languageCode: 'de',
+          label: 'German',
+          subject: 'Hallo',
+          bodyText: 'German body',
+          countryIds: ['DE', 'AT', 'CH'],
+        }),
+      ],
+    });
+    const campaign = createCampaign({
+      subject: 'Legacy subject',
+      bodyText: 'Legacy body',
+      contentGroupId: group.id,
+      defaultContentVariantId: 'variant-en',
+      translatedSendingEnabled: true,
+      audience: {
+        partyKinds: ['organization'],
+        emailStatuses: ['active'],
+        includePartyReferences: [],
+        excludePartyReferences: [],
+        organizationIds: [],
+        eventIds: [],
+        countries: [],
+        cities: [],
+        dedupeByEmail: true,
+        limit: null,
+      },
+    });
+    const { service, store, sendCampaignEmail } = createRuntimeHarness({
+      campaign,
+      contentGroupRegistry: { version: 1, groups: [group] },
+    });
+
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+    await service.processRun({
+      runId: launched.run.id,
+    });
+
+    expect(sendCampaignEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'hello@acme.test',
+        subject: 'Hallo',
+        text: expect.stringContaining('German body'),
+      })
+    );
+
+    const storedDeliveries = parseFilemakerEmailCampaignDeliveryRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
+    );
+    expect(storedDeliveries.deliveries[0]).toEqual(
+      expect.objectContaining({
+        contentGroupId: 'content-group-1',
+        contentVariantId: 'variant-de',
+        languageCode: 'de',
+        resolvedCountryId: 'DE',
+        usedFallbackContent: false,
+      })
+    );
+  });
+
+  it('carries mail filing links from campaign sends into delivery events', async () => {
+    const sendCampaignEmail = vi.fn(async (input: { deliveryId: string }) => ({
+      provider: 'smtp' as const,
+      providerMessage: 'Sent through SMTP.',
+      sentAt: iso,
+      mailFilingStatus: 'filed' as const,
+      mailThreadId: `thread-${input.deliveryId}`,
+      mailMessageId: `message-${input.deliveryId}`,
+    }));
+    const { service, store } = createRuntimeHarness({ sendCampaignEmail });
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+
+    await service.processRun({
+      runId: launched.run.id,
+    });
+
+    const storedEvents = parseFilemakerEmailCampaignEventRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY)
+    );
+    const deliverySentEvents = storedEvents.events.filter(
+      (event) => event.type === 'delivery_sent'
+    );
+
+    expect(deliverySentEvents).toHaveLength(2);
+    expect(deliverySentEvents[0]?.mailThreadId).toEqual(expect.stringContaining('thread-'));
+    expect(deliverySentEvents[0]?.mailMessageId).toEqual(expect.stringContaining('message-'));
+  });
+
+  it('records a non-blocking event when campaign send mail filing fails', async () => {
+    const sendCampaignEmail = vi.fn(async () => ({
+      provider: 'smtp' as const,
+      providerMessage: 'Sent through SMTP.',
+      sentAt: iso,
+      mailFilingStatus: 'failed' as const,
+      mailThreadId: null,
+      mailMessageId: null,
+      mailFilingError: 'Mongo unavailable',
+    }));
+    const { service, store } = createRuntimeHarness({ sendCampaignEmail });
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+
+    const processed = await service.processRun({
+      runId: launched.run.id,
+    });
+
+    const storedEvents = parseFilemakerEmailCampaignEventRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY)
+    );
+
+    expect(processed.progress.sentCount).toBe(2);
+    expect(
+      storedEvents.events.some(
+        (event) =>
+          event.type === 'status_changed' &&
+          event.message.includes('filing into the mail client failed')
+      )
+    ).toBe(true);
   });
 
   it('passes the selected mail account id into campaign delivery processing', async () => {
@@ -571,8 +837,10 @@ describe('filemaker campaign runtime service', () => {
         providerMessage: 'Sent after retry.',
         sentAt: iso,
       });
+    let currentNow = new Date(iso);
     const { service, store } = createRuntimeHarness({
       sendCampaignEmail,
+      now: () => currentNow,
     });
     const launched = await service.launchRun({
       campaignId: 'campaign-1',
@@ -597,6 +865,16 @@ describe('filemaker campaign runtime service', () => {
       )?.nextRetryAt
     ).toBe('2026-03-27T10:01:00.000Z');
 
+    const earlyRetry = await service.processRun({
+      runId: launched.run.id,
+      reason: 'retry',
+    });
+
+    expect(sendCampaignEmail).toHaveBeenCalledTimes(2);
+    expect(earlyRetry.retryableDeliveryCount).toBe(1);
+    expect(earlyRetry.suggestedRetryDelayMs).toBe(60_000);
+
+    currentNow = new Date('2026-03-27T10:01:00.000Z');
     const retriedProcessed = await service.processRun({
       runId: launched.run.id,
       reason: 'retry',
@@ -758,5 +1036,160 @@ describe('filemaker campaign runtime service', () => {
         reason: 'bounced',
       })
     );
+  });
+
+  it('does not auto-suppress on a soft bounce (transient failure)', async () => {
+    const sendCampaignEmail = vi.fn().mockRejectedValue(
+      new FilemakerCampaignEmailDeliveryError({
+        message: 'Temporary failure try again later (greylist).',
+        provider: 'smtp',
+        failureCategory: 'soft_bounce',
+      })
+    );
+    const { service, store } = createRuntimeHarness({ sendCampaignEmail });
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+    await service.processRun({ runId: launched.run.id });
+
+    const storedSuppressions = parseFilemakerEmailCampaignSuppressionRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY)
+    );
+    expect(storedSuppressions.entries).toHaveLength(0);
+  });
+
+  it('skips a queued delivery when the recipient gets suppressed between launch and processing', async () => {
+    const sendCampaignEmail = vi.fn().mockResolvedValue({
+      provider: 'smtp',
+      providerMessage: 'Sent through SMTP.',
+      sentAt: iso,
+    });
+    const { service, store } = createRuntimeHarness({ sendCampaignEmail });
+
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+
+    // Simulate a suppression entry landing after launch (e.g., inbound DSN,
+    // manual unsubscribe, or a hard-bounce from another run).
+    store.set(
+      FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            id: 'suppression-post-launch-1',
+            createdAt: iso,
+            updatedAt: iso,
+            emailAddress: 'jan@example.com',
+            reason: 'bounced',
+            actor: 'system',
+            campaignId: null,
+            runId: null,
+            deliveryId: null,
+            notes: 'Inbound DSN 5.1.1',
+          },
+        ],
+      })
+    );
+
+    await service.processRun({ runId: launched.run.id });
+
+    const sentTos = sendCampaignEmail.mock.calls.map((call) => call[0]?.to);
+    expect(sentTos).not.toContain('jan@example.com');
+
+    const storedDeliveries = parseFilemakerEmailCampaignDeliveryRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
+    );
+    const suppressedDelivery = storedDeliveries.deliveries.find(
+      (delivery) => delivery.emailAddress === 'jan@example.com'
+    );
+    expect(suppressedDelivery?.status).toBe('skipped');
+    expect(suppressedDelivery?.providerMessage).toContain('suppression list');
+  });
+
+  it('defers a queued recipient domain when the same run is already failing that domain', async () => {
+    const { service, store, sendCampaignEmail } = createRuntimeHarness();
+
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+    const seededDeliveries = [
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-1',
+        runId: launched.run.id,
+        emailAddress: 'sent@example.com',
+        partyKind: 'person',
+        partyId: 'person-domain-sent',
+        status: 'sent',
+        sentAt: iso,
+      }),
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-1',
+        runId: launched.run.id,
+        emailAddress: 'bounce-1@example.com',
+        partyKind: 'person',
+        partyId: 'person-domain-bounce-1',
+        status: 'bounced',
+        failureCategory: 'soft_bounce',
+      }),
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-1',
+        runId: launched.run.id,
+        emailAddress: 'bounce-2@example.com',
+        partyKind: 'person',
+        partyId: 'person-domain-bounce-2',
+        status: 'bounced',
+        failureCategory: 'soft_bounce',
+      }),
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-1',
+        runId: launched.run.id,
+        emailAddress: 'next@example.com',
+        partyKind: 'person',
+        partyId: 'person-domain-next',
+        status: 'queued',
+      }),
+    ];
+    store.set(
+      FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+      JSON.stringify({ version: 1, deliveries: seededDeliveries })
+    );
+
+    const processed = await service.processRun({
+      runId: launched.run.id,
+    });
+
+    expect(sendCampaignEmail).not.toHaveBeenCalled();
+    expect(processed.retryableDeliveryCount).toBe(3);
+
+    const storedDeliveries = parseFilemakerEmailCampaignDeliveryRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
+    );
+    const deferredDelivery = storedDeliveries.deliveries.find(
+      (delivery) => delivery.emailAddress === 'next@example.com'
+    );
+    expect(deferredDelivery).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        failureCategory: 'rate_limited',
+        nextRetryAt: '2026-03-27T10:15:00.000Z',
+      })
+    );
+    expect(deferredDelivery?.lastError).toContain('recipient domain example.com');
+
+    const storedEvents = parseFilemakerEmailCampaignEventRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY)
+    );
+    expect(
+      storedEvents.events.some(
+        (event) =>
+          event.type === 'status_changed' &&
+          event.message.includes('recipient domain example.com is already failing')
+      )
+    ).toBe(true);
   });
 });

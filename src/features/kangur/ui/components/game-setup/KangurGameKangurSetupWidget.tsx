@@ -22,6 +22,13 @@ type KangurSetupFallbackCopy = {
   wordmarkLabel: string;
 };
 
+type KangurSetupRecommendationPayload = {
+  description: string;
+  label: string;
+  source: 'kangur_setup';
+  title: string;
+} | null;
+
 type KangurTranslation = ReturnType<typeof useTranslations>;
 
 const resolveKangurSetupFallbackCopy = (normalizedLocale: string): KangurSetupFallbackCopy => {
@@ -59,7 +66,7 @@ const resolveKangurSetupFallbackCopy = (normalizedLocale: string): KangurSetupFa
 const buildRecommendedModePayload = (
   mode: string,
   recommendedMode: ReturnType<typeof getRecommendedKangurMode>
-) =>
+): KangurSetupRecommendationPayload =>
   mode === recommendedMode.mode
     ? {
         description: recommendedMode.description,

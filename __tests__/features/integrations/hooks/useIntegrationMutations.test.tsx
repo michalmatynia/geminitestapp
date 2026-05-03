@@ -216,8 +216,11 @@ describe('useIntegrationMutations invalidation', () => {
         integrationId: 'int-1',
         connectionId: 'conn-1',
         type: 'allegro/test',
-        body: { mode: 'manual', manualTimeoutMs: 240000 },
-        timeoutMs: 300000,
+        mode: 'manual',
+        manualTimeoutMs: 240000,
+      },
+      {
+        timeout: 300000,
       }
     );
   });

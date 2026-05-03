@@ -4,7 +4,7 @@ vi.mock('@/features/auth/server', () => ({
   auth: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
+vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn(),
 }));
 
@@ -35,7 +35,6 @@ const buildRun = (userId: string | null): AiPathRunRecord =>
     retryCount: 0,
     maxAttempts: 3,
     nextRetryAt: null,
-    deadLetteredAt: null,
     startedAt: null,
     finishedAt: null,
     createdAt: new Date().toISOString(),

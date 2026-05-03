@@ -1,4 +1,4 @@
-import { createKangurApiClient } from '@kangur/api-client';
+import { type createKangurApiClient } from '@kangur/api-client';
 import type { KangurProgressStore } from '@kangur/core';
 import type { KangurClientStorageAdapter } from '@kangur/platform';
 

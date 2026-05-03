@@ -21,7 +21,7 @@ export function BrainSettingsHeader(): React.JSX.Element {
           <Button variant='outline' size='sm' onClick={handleReset}>
             Reset
           </Button>
-          <Button size='sm' onClick={() => void handleSave()} disabled={saving}>
+          <Button size='sm' onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save'}
           </Button>
         </>

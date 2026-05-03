@@ -1,7 +1,7 @@
 'use client';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { GateConfig } from '@/shared/lib/ai-paths';
+import type { GateConfig } from '@/shared/contracts/ai-paths';
 import { Input } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 

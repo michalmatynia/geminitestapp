@@ -61,6 +61,10 @@ const { useKangurCoarsePointerMock } = vi.hoisted(() => ({
   useKangurCoarsePointerMock: vi.fn(),
 }));
 
+const { useKangurIdleReadyMock } = vi.hoisted(() => ({
+  useKangurIdleReadyMock: vi.fn(),
+}));
+
 const { translationMessages } = vi.hoisted(() => ({
   translationMessages: {
     pl: {
@@ -268,6 +272,16 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    back: vi.fn(),
+    prefetch: prefetchMock,
+    push: pushMock,
+    refresh: vi.fn(),
+    replace: replaceMock,
+  }),
+}));
+
 vi.mock('next-auth/react', () => ({
   useSession: (): unknown => sessionMock() as unknown,
 }));
@@ -371,6 +385,31 @@ vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: (): unknown => optionalAuthMock() as unknown,
+  useOptionalKangurAuthSessionState: (): unknown => {
+    const auth = optionalAuthMock() as Record<string, unknown> | null;
+    if (!auth) {
+      return null;
+    }
+    return {
+      canAccessParentAssignments: auth['canAccessParentAssignments'],
+      hasResolvedAuth: auth['hasResolvedAuth'],
+      isAuthenticated: auth['isAuthenticated'],
+      user: auth['user'],
+    };
+  },
+  useOptionalKangurAuthStatusState: (): unknown => {
+    const auth = optionalAuthMock() as Record<string, unknown> | null;
+    if (!auth) {
+      return null;
+    }
+    return {
+      appPublicSettings: auth['appPublicSettings'],
+      authError: auth['authError'],
+      isLoadingAuth: auth['isLoadingAuth'],
+      isLoadingPublicSettings: auth['isLoadingPublicSettings'],
+      isLoggingOut: auth['isLoggingOut'],
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
@@ -385,12 +424,18 @@ vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorRuntimeScope: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useOptionalKangurAiTutor: (): unknown => optionalTutorMock() as unknown,
+  useOptionalKangurAiTutorController: (): unknown => optionalTutorMock() as unknown,
   useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: (): boolean => useKangurCoarsePointerMock() as boolean,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurIdleReady', () => ({
+  useKangurIdleReady: (): boolean => useKangurIdleReadyMock() as boolean,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -511,6 +556,7 @@ export const setupKangurPrimaryNavigationTest = () => {
     frontendPublicOwnerMock.mockReturnValue(null);
     localeMock.mockReturnValue('pl');
     useKangurCoarsePointerMock.mockReturnValue(true);
+    useKangurIdleReadyMock.mockReturnValue(true);
     setViewport({ width: 1024, matches: false });
     pathnameMock.mockReturnValue('/kangur');
     searchParamsMock.mockReturnValue(new URLSearchParams());
@@ -600,6 +646,7 @@ export {
   translationMessages,
   updateSettingMutateAsyncMock,
   useKangurCoarsePointerMock,
+  useKangurIdleReadyMock,
   useKangurPageContentEntryMock,
   useKangurSubjectFocusMock,
 };

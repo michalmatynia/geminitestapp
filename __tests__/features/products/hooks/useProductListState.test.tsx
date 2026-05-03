@@ -22,12 +22,24 @@ vi.mock('@tanstack/react-query', () => ({
     prefetchQuery: vi.fn(),
     getQueryState: vi.fn(() => undefined),
     getQueryData: vi.fn(() => undefined),
+    setQueryData: vi.fn(),
     refetchQueries: vi.fn(),
   }),
   useQuery: () => ({ data: undefined }),
 }));
 
 vi.mock('next/navigation', () => ({
+  useSearchParams: () => ({ get: () => null }),
+  usePathname: () => '/',
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   useSearchParams: () => ({ get: () => null }),
   usePathname: () => '/',
   useRouter: () => ({

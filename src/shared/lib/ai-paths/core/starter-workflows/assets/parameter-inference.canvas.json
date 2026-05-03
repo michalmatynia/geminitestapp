@@ -717,12 +717,7 @@
           "useMongoActions": true,
           "actionCategory": "update",
           "action": "findOneAndUpdate",
-          "mappings": [
-            {
-              "targetPath": "parameters",
-              "sourcePort": "value"
-            }
-          ],
+            "mappings": [],
           "updatePayloadMode": "custom",
           "query": {
             "provider": "auto",
@@ -741,7 +736,7 @@
           "writeSourcePath": "",
           "dryRun": false,
           "distinctField": "",
-          "updateTemplate": "{\n  \"$set\": {\n    \"parameters\": {{value}}\n  }\n}",
+            "updateTemplate": "{\n  \"$set\": {\n    \"parameters\": {{value}}\n  },\n  \"$unset\": {\n    \"__noop__\": \"\"\n  }\n}",
           "skipEmpty": true,
           "trimStrings": false,
           "aiPrompt": "",
@@ -861,12 +856,7 @@
           "useMongoActions": true,
           "actionCategory": "update",
           "action": "updateOne",
-          "mappings": [
-            {
-              "targetPath": "parameters",
-              "sourcePort": "value"
-            }
-          ],
+            "mappings": [],
           "updatePayloadMode": "custom",
           "query": {
             "provider": "auto",
@@ -885,7 +875,7 @@
           "writeSourcePath": "",
           "dryRun": false,
           "distinctField": "",
-          "updateTemplate": "{\n  \"$set\": {\n    \"parameters\": {{value}}\n  }\n}",
+            "updateTemplate": "{\n  \"$set\": {\n    \"parameters\": {{value}}\n  },\n  \"$unset\": {\n    \"__noop__\": \"\"\n  }\n}",
           "skipEmpty": true,
           "trimStrings": false,
           "aiPrompt": "",

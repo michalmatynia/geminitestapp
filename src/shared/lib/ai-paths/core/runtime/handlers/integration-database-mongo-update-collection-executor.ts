@@ -52,7 +52,7 @@ export async function executeMongoCollectionUpdate({
   updateDoc,
   aiPrompt,
 }: ExecuteMongoCollectionUpdateInput): Promise<RuntimePortValues> {
-  let nextResolvedFilter: Record<string, unknown> = resolvedFilter;
+  const nextResolvedFilter: Record<string, unknown> = resolvedFilter;
 
   if (action === 'updateOne') {
     if (!nextResolvedFilter || Object.keys(nextResolvedFilter).length === 0) {
@@ -83,7 +83,9 @@ export async function executeMongoCollectionUpdate({
     filter: nextResolvedFilter,
     update: updateDoc,
     ...(idType !== undefined ? { idType: idType as string } : {}),
+    ...(dbConfig.upsert !== undefined ? { upsert: dbConfig.upsert } : {}),
     ...(action === 'findOneAndUpdate' ? { returnDocument: 'after' as const } : {}),
+    ...(dbConfig.returnDocument !== undefined ? { returnDocument: dbConfig.returnDocument } : {}),
   });
   executed.updater.add(node.id);
   if (!updateResult.ok) {
@@ -129,6 +131,18 @@ export async function executeMongoCollectionUpdate({
       toast(message, { variant: 'error' });
       throw new Error(message);
     }
+    reportAiPathsError(new Error(message), {
+      action: 'dbWriteOutcome',
+      collection,
+      nodeId: node.id,
+      nodeType: node.type,
+      nodeTitle: node.title,
+      errorCode: 'AI_PATHS_DB_WRITE_ZERO_AFFECTED',
+      errorCategory: 'database',
+      errorScope: 'node',
+      errorSeverity: 'warning',
+      writeOutcome,
+    });
     toast(message, { variant: 'warning' });
   }
 
@@ -136,6 +150,9 @@ export async function executeMongoCollectionUpdate({
     typeof (updateResult.data as Record<string, unknown> | null)?.['modifiedCount'] === 'number'
       ? ((updateResult.data as Record<string, unknown>)['modifiedCount'] as number)
       : 1;
+  const upsertedId = (updateResult.data as Record<string, unknown> | null)?.['upsertedId'];
+  const displayAffectedCount =
+    modifiedCount > 0 || upsertedId === null || upsertedId === undefined ? modifiedCount : 1;
   if (
     debugPayload['parameterInferenceGuard'] &&
     typeof debugPayload['parameterInferenceGuard'] === 'object'
@@ -143,12 +160,12 @@ export async function executeMongoCollectionUpdate({
     (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['written'] = {
       targetPath: parameterTargetPath,
       count: coerceArrayLike(updates[parameterTargetPath]).length,
-      modifiedCount,
+      modifiedCount: displayAffectedCount,
     };
   }
   if (writeOutcome.status !== 'warning') {
     toast(
-      `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
+      `Entity updated in ${collection} (${displayAffectedCount} row${displayAffectedCount === 1 ? '' : 's'}).`,
       { variant: 'success' }
     );
   }

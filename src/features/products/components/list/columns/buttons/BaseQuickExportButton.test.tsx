@@ -105,11 +105,19 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
 }));
 
 vi.mock('@/features/integrations/utils/product-listings-recovery', () => ({
-  createBaseRecoveryContext: ({ status, runId, requestId, integrationId, connectionId }: any) => ({
+  createBaseRecoveryContext: ({
+    status,
+    runId,
+    failureReason,
+    requestId,
+    integrationId,
+    connectionId,
+  }: any) => ({
     source: 'base_quick_export_failed',
     integrationSlug: 'baselinker',
     status,
     runId,
+    failureReason: failureReason ?? null,
     ...(requestId != null ? { requestId } : {}),
     ...(integrationId != null ? { integrationId } : {}),
     ...(connectionId != null ? { connectionId } : {}),
@@ -349,6 +357,28 @@ describe('BaseQuickExportButton', () => {
       });
     });
 
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks one-click export when the product has no internal category assigned', async () => {
+    renderButton({
+      product: {
+        ...product,
+        categoryId: null,
+      } satisfies ProductWithImages,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith(
+        'Product has no internal category assigned. Assign a category before exporting with category mapping.',
+        { variant: 'error' }
+      );
+    });
+
+    expect(apiGetMock).not.toHaveBeenCalled();
+    expect(apiPostMock).not.toHaveBeenCalled();
     expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
@@ -742,6 +772,44 @@ describe('BaseQuickExportButton', () => {
     );
   });
 
+  it('retries export from a stale pending Base row instead of opening listing management', async () => {
+    const onOpenIntegrations = vi.fn();
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton({
+      status: 'pending',
+      showMarketplaceBadge: true,
+      onOpenIntegrations,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          connectionId: 'conn-base-1',
+          inventoryId: 'inv-main',
+        })
+      );
+    });
+    expect(onOpenIntegrations).not.toHaveBeenCalled();
+  });
+
   it('opens integration options instead of re-exporting when the Base row state is failed', () => {
     const onOpenIntegrations = vi.fn();
 
@@ -758,6 +826,7 @@ describe('BaseQuickExportButton', () => {
       integrationSlug: 'baselinker',
       status: 'failed',
       runId: null,
+      failureReason: null,
     });
     expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
@@ -772,6 +841,8 @@ describe('BaseQuickExportButton', () => {
           productId: 'product-1',
           runId: 'run-failed-retry',
           status: 'failed',
+          errorMessage:
+            'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
           expiresAt: Date.now() + 60_000,
         },
       })
@@ -796,8 +867,73 @@ describe('BaseQuickExportButton', () => {
       integrationSlug: 'baselinker',
       status: 'failed',
       runId: 'run-failed-retry',
+      failureReason:
+        'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
     });
     expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('passes the tracked run failure message into Base recovery options after an async export failure', async () => {
+    const onOpenIntegrations = vi.fn();
+    mutateAsyncMock.mockResolvedValue({
+      success: true,
+      status: 'queued',
+      runId: 'run-export-failed-1',
+    });
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton({ onOpenIntegrations });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Base.com export queued.' })).toBeInTheDocument();
+    });
+
+    act(() => {
+      trackedRunListeners.get('run-export-failed-1')?.({
+        runId: 'run-export-failed-1',
+        status: 'failed',
+        trackingState: 'stopped',
+        updatedAt: '2026-03-23T12:00:10.000Z',
+        finishedAt: '2026-03-23T12:00:10.000Z',
+        errorMessage:
+          'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
+        entityId: product.id,
+        entityType: 'product',
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Open Base.com recovery options (failed).' })
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Base.com recovery options (failed).' }));
+
+    expect(onOpenIntegrations).toHaveBeenCalledWith({
+      source: 'base_quick_export_failed',
+      integrationSlug: 'baselinker',
+      status: 'failed',
+      runId: 'run-export-failed-1',
+      failureReason:
+        'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
+    });
   });
 
   it('prefers authoritative exported row state over stale failed quick-export feedback', async () => {
@@ -957,6 +1093,53 @@ describe('BaseQuickExportButton', () => {
 
     expect(onOpenIntegrations).toHaveBeenCalledTimes(1);
     expect(onOpenIntegrations).toHaveBeenCalledWith();
+  });
+
+  it('reverts button to normal state when tracking stops with a non-terminal status', async () => {
+    mutateAsyncMock.mockResolvedValue({
+      success: true,
+      status: 'queued',
+      runId: 'run-export-stalled',
+    });
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({ sku: 'SKU-001', exists: false, existingProductId: null });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton({ status: 'not_started' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Base.com export queued.' })).toBeDisabled();
+    });
+
+    // Simulate tracker timing out or poll failures: stopped but still queued
+    act(() => {
+      trackedRunListeners.get('run-export-stalled')?.({
+        runId: 'run-export-stalled',
+        status: 'queued',
+        trackingState: 'stopped',
+        updatedAt: '2026-03-23T12:00:00.000Z',
+        finishedAt: null,
+        errorMessage: 'Run tracking timed out.',
+        entityId: product.id,
+        entityType: 'product',
+      });
+    });
+
+    // Button should revert to the server-backed status ('not_started') rather than hanging yellow
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'One-click export to Base.com' })).not.toBeDisabled();
+    });
+    expect(screen.queryByRole('button', { name: 'Base.com export queued.' })).not.toBeInTheDocument();
   });
 
   it('rehydrates the most recent export run after the button remounts', async () => {

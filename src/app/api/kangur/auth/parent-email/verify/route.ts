@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { kangurParentEmailVerifySchema } from '@/shared/contracts/kangur-auth';

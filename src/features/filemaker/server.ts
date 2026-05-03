@@ -1,6 +1,35 @@
 export * from './server/filemaker-mail-service';
 export * from './server/filemaker-mail-access';
+export * from './server/filemaker-email-repository';
+export * from './server/filemaker-email-person-upsert';
+export * from './server/filemaker-website-repository';
+export * from './server/filemaker-anyparam-repository';
+export * from './server/filemaker-anytext-repository';
+export * from './server/filemaker-bank-account-repository';
+export * from './server/filemaker-contract-repository';
+export * from './server/filemaker-cv-repository';
+export * from './server/filemaker-cv-pdf';
+export * from './server/filemaker-job-application-repository';
+export * from './server/filemaker-job-application-manual';
+export * from './server/filemaker-job-application-apply-run-repository';
+export * from './server/filemaker-job-application-pdf';
+export * from './server/filemaker-document-repository';
+export * from './server/filemaker-person-occupation-repository';
+export * from './server/filemaker-contact-log-repository';
+export * from './server/filemaker-values-repository';
+export * from './server/filemaker-organizations-repository';
+export * from './server/filemaker-persons-repository';
+export * from './server/filemaker-events-repository';
+export * from './server/filemaker-invoices-repository';
+export * from './server/filemaker-invoice-pdf';
+export * from './server/filemaker-party-snapshot-repository';
+export {
+  listMongoFilemakerAddressesForOrganization,
+  listMongoFilemakerAddressesForOwner,
+  updateMongoFilemakerAddressesForOwner,
+} from './server/filemaker-organizations-mongo';
 export * from './server/campaign-runtime';
+export * from './server/campaign-mail-filing-repair';
 export {
   createFilemakerEmailCampaignSchedulerService,
   resolveDueFilemakerEmailCampaigns,
@@ -8,6 +37,10 @@ export {
   type FilemakerEmailCampaignSchedulerDueCampaign,
   type FilemakerEmailCampaignSchedulerTickResult,
 } from './server/filemakerEmailCampaignScheduler';
+export {
+  resolveDueFilemakerEmailCampaignRetryRuns,
+  type FilemakerEmailCampaignSchedulerDueRetryRun,
+} from './server/campaign-retry-scheduler';
 export * from './server/filemaker-email-campaign-test-send';
 export {
   readFilemakerCampaignSettingValue,
@@ -17,10 +50,25 @@ export {
   createFilemakerCampaignUnsubscribeToken,
   parseFilemakerCampaignUnsubscribeToken,
   buildFilemakerCampaignUnsubscribeUrl,
+  buildFilemakerCampaignOneClickUnsubscribeUrl,
   buildFilemakerCampaignPreferencesUrl,
   buildFilemakerCampaignManageAllPreferencesUrl,
   buildFilemakerCampaignOpenTrackingUrl,
   buildFilemakerCampaignClickTrackingUrl,
 } from './server/campaign-unsubscribe-token';
+export {
+  filterFilemakerMailSuppressionEntries,
+  findFilemakerMailSuppressionEntry,
+  isFilemakerMailAddressSuppressed,
+  loadFilemakerMailSuppressionEntries,
+  recordFilemakerMailBounceSuppressions,
+  recordFilemakerMailComplaintSuppressions,
+  removeFilemakerMailSuppressionEntry,
+} from './server/campaign-suppression';
+export {
+  findFilemakerCampaignColdRecipients,
+  pruneFilemakerCampaignColdRecipients,
+  type FilemakerCampaignColdRecipient,
+} from './server/campaign-engagement-pruning';
 export * from './settings';
 export * from './types';

@@ -1,15 +1,31 @@
 'use client';
+'use no memo';
+// ProductListTableSurface: layout wrapper for the products table. Handles
+// responsive breakpoints, dynamic max-height calculation, virtualization
+// and ties into table context for render profiling.
 
 import dynamic from 'next/dynamic';
-import { Profiler, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Profiler,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type JSX,
+  type RefObject,
+} from 'react';
 
+import { ProductFilters } from '@/features/products/components/list/ProductFilters';
 import { ProductListHeader } from '@/features/products/components/list/ProductListHeader';
 import {
   useProductListAlertsContext,
   useProductListTableContext,
 } from '@/features/products/context/ProductListContext';
-import { useProductsTableProps } from '@/features/products/hooks/useProductsTableProps';
-import { logProductListDebug } from '@/features/products/lib/product-list-observability';
+import {
+  useProductsTableProps,
+  type UseProductsTablePropsReturn,
+} from '@/features/products/hooks/useProductsTableProps';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { Alert } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
@@ -22,110 +38,104 @@ import type { Row } from '@tanstack/react-table';
 
 const PRODUCT_LIST_BOTTOM_GAP = 24;
 
-const ProductFilters = dynamic(
-  () =>
-    import('@/features/products/components/list/ProductFilters').then(
-      (mod: typeof import('@/features/products/components/list/ProductFilters')) =>
-        mod.ProductFilters
-    ),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
+const renderDynamicFallback = (): null => null;
 
 const ProductSelectionActions = dynamic(
   () =>
     import('@/features/products/components/list/ProductSelectionActions').then(
-      (mod: typeof import('@/features/products/components/list/ProductSelectionActions')) =>
-        mod.ProductSelectionActions
+      (mod) => mod.ProductSelectionActions
     ),
   {
     ssr: false,
-    loading: () => null,
+    loading: renderDynamicFallback,
   }
 );
 
 const ProductListMobileCards = dynamic(
   () =>
     import('@/features/products/components/list/ProductListMobileCards').then(
-      (mod: typeof import('@/features/products/components/list/ProductListMobileCards')) =>
-        mod.ProductListMobileCards
+      (mod) => mod.ProductListMobileCards
     ),
   {
     ssr: false,
-    loading: () => null,
+    loading: renderDynamicFallback,
   }
 );
 
-const ProductListAlerts = memo(function ProductListAlerts() {
+const hasDisplayText = (value: string | null): value is string => value !== null && value !== '';
+
+const resolveAppContentBottom = (): number | null => {
+  const appContentBottom = document.getElementById('app-content')?.getBoundingClientRect().bottom;
+  if (typeof appContentBottom === 'number' && Number.isFinite(appContentBottom)) {
+    return appContentBottom;
+  }
+  return null;
+};
+
+const calculateTableMaxHeight = (tableElement: HTMLDivElement): number => {
+  const tableRect = tableElement.getBoundingClientRect();
+  const appContentBottom = resolveAppContentBottom();
+  const layoutBottom =
+    appContentBottom === null ? window.innerHeight : Math.min(window.innerHeight, appContentBottom);
+  const availableHeight = Math.floor(layoutBottom - tableRect.top - PRODUCT_LIST_BOTTOM_GAP);
+  return Math.max(0, availableHeight);
+};
+
+const shouldPreserveTableMaxHeight = (
+  currentValue: number | string | undefined,
+  nextMaxHeight: number
+): boolean =>
+  currentValue === nextMaxHeight ||
+  (typeof currentValue === 'number' &&
+    Number.isFinite(currentValue) &&
+    Math.abs(currentValue - nextMaxHeight) <= 1);
+
+const noopCleanup = (): void => {};
+
+function ProductListAlerts(): JSX.Element | null {
   const { loadError, actionError, onDismissActionError } = useProductListAlertsContext();
-
-  const alerts = useMemo(() => {
-    if (!loadError && !actionError) return null;
-    return (
-      <div className='flex flex-col gap-2'>
-        {loadError && <Alert variant='error'>{loadError}</Alert>}
-        {actionError && (
-          <Alert variant='error'>
-            <div className='flex items-center justify-between'>
-              <span>{actionError}</span>
-              <Button
-                variant='ghost'
-                onClick={onDismissActionError}
-                className='h-auto bg-transparent p-0 text-red-200 hover:bg-transparent hover:text-white'
-              >
-                Dismiss
-              </Button>
-            </div>
-          </Alert>
-        )}
+  const loadErrorAlert = hasDisplayText(loadError) ? (
+    <Alert variant='error'>{loadError}</Alert>
+  ) : null;
+  const actionErrorAlert = hasDisplayText(actionError) ? (
+    <Alert variant='error'>
+      <div className='flex items-center justify-between'>
+        <span>{actionError}</span>
+        <Button
+          variant='ghost'
+          onClick={onDismissActionError}
+          className='h-auto bg-transparent p-0 text-red-200 hover:bg-transparent hover:text-white'
+        >
+          Dismiss
+        </Button>
       </div>
-    );
-  }, [actionError, loadError, onDismissActionError]);
+    </Alert>
+  ) : null;
 
-  return alerts;
-});
+  if (loadErrorAlert === null && actionErrorAlert === null) return null;
 
-export const ProductListTableSurface = memo(function ProductListTableSurface() {
-  const { handleProductsTableRender } = useProductListTableContext();
-  const tableProps = useProductsTableProps();
+  return <div className='flex flex-col gap-2'>{[loadErrorAlert, actionErrorAlert]}</div>;
+}
+
+const MemoizedProductListAlerts = memo(ProductListAlerts);
+
+function useResolvedTableMaxHeight(initialMaxHeight: number | string | undefined): {
+  desktopTableRef: RefObject<HTMLDivElement | null>;
+  resolvedTableMaxHeight: number | string | undefined;
+} {
   const desktopTableRef = useRef<HTMLDivElement>(null);
   const [resolvedTableMaxHeight, setResolvedTableMaxHeight] = useState<
     number | string | undefined
-  >(tableProps.maxHeight);
-  const actionsContent = useMemo(() => <ProductSelectionActions />, []);
-  const alertsContent = useMemo(() => <ProductListAlerts />, []);
+  >(initialMaxHeight);
 
-  const updateTableMaxHeight = useCallback(() => {
+  const updateTableMaxHeight = useCallback((): void => {
     try {
-      const mainElement = document.getElementById('app-content');
       const tableElement = desktopTableRef.current;
-      if (!mainElement || !tableElement) return;
+      if (tableElement === null) return;
 
-      const availableHeight = Math.floor(
-        mainElement.getBoundingClientRect().bottom -
-          tableElement.getBoundingClientRect().top -
-          PRODUCT_LIST_BOTTOM_GAP
-      );
-      const nextMaxHeight = Math.max(0, availableHeight);
+      const nextMaxHeight = calculateTableMaxHeight(tableElement);
       setResolvedTableMaxHeight((currentValue) => {
-        if (currentValue === nextMaxHeight) return currentValue;
-
-        logProductListDebug(
-          'table-max-height-change',
-          {
-            previous: currentValue ?? null,
-            next: nextMaxHeight,
-            availableHeight,
-            dataCount: tableProps.data.length,
-            isLoading: tableProps.isLoading,
-          },
-          {
-            dedupeKey: 'table-max-height-change',
-            throttleMs: 250,
-          }
-        );
+        if (shouldPreserveTableMaxHeight(currentValue, nextMaxHeight)) return currentValue;
         return nextMaxHeight;
       });
     } catch (error) {
@@ -135,126 +145,136 @@ export const ProductListTableSurface = memo(function ProductListTableSurface() {
         level: 'warn',
       });
     }
-  }, [tableProps.data.length, tableProps.isLoading]);
+  }, []);
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     const mainElement = document.getElementById('app-content');
-    if (!mainElement || typeof ResizeObserver === 'undefined') return;
+    if (mainElement === null || typeof ResizeObserver === 'undefined') return noopCleanup;
 
-    const resizeObserver = new ResizeObserver(() => {
-      try {
+    let throttleTimer: number | null = null;
+    const throttledUpdate = (): void => {
+      if (throttleTimer !== null) return;
+      throttleTimer = window.setTimeout(() => {
         updateTableMaxHeight();
-      } catch (error) {
-        logClientCatch(error, {
-          source: 'ProductListTableSurface',
-          action: 'resizeObserverUpdateTableMaxHeight',
-          level: 'warn',
-        });
-      }
-    });
-    resizeObserver.observe(mainElement);
-    if (desktopTableRef.current) {
-      resizeObserver.observe(desktopTableRef.current);
-    }
+        throttleTimer = null;
+      }, 100);
+    };
 
-    window.addEventListener('resize', updateTableMaxHeight);
+    const resizeObserver = new ResizeObserver(throttledUpdate);
+    resizeObserver.observe(mainElement);
+
+    window.addEventListener('resize', throttledUpdate);
     updateTableMaxHeight();
 
     return (): void => {
+      if (throttleTimer !== null) window.clearTimeout(throttleTimer);
       resizeObserver.disconnect();
-      window.removeEventListener('resize', updateTableMaxHeight);
+      window.removeEventListener('resize', throttledUpdate);
     };
   }, [updateTableMaxHeight]);
 
   useEffect(() => {
-    logProductListDebug(
-      'table-layout-raf-scheduled',
-      {
-        dataCount: tableProps.data.length,
-        isLoading: tableProps.isLoading,
-        resolvedTableMaxHeight:
-          typeof resolvedTableMaxHeight === 'number' ? resolvedTableMaxHeight : null,
-      },
-      {
-        dedupeKey: 'table-layout-raf-scheduled',
-        throttleMs: 500,
-      }
-    );
-    const frameId = window.requestAnimationFrame(() => {
-      try {
-        updateTableMaxHeight();
-      } catch (error) {
-        logClientCatch(error, {
-          source: 'ProductListTableSurface',
-          action: 'animationFrameUpdateTableMaxHeight',
-          level: 'warn',
-        });
-      }
-    });
-
+    const frameId = window.requestAnimationFrame(updateTableMaxHeight);
     return (): void => {
       window.cancelAnimationFrame(frameId);
     };
   }, [updateTableMaxHeight]);
 
-  const headerContent = useMemo(() => {
-    return <ProductListHeader filtersContent={<ProductFilters />} />;
-  }, []);
-  const isEmpty = !tableProps.isLoading && tableProps.data.length === 0;
+  return { desktopTableRef, resolvedTableMaxHeight };
+}
 
+const getProductRowClassName = (
+  tableProps: UseProductsTablePropsReturn
+): ((row: Row<ProductWithImages>) => string | undefined) | undefined => tableProps.getRowClassName;
+
+function ProductListMobileSurface({ isEmpty }: { isEmpty: boolean }): JSX.Element {
   return (
-    <Profiler id='ProductsTable' onRender={handleProductsTableRender}>
-      <StandardDataTablePanel
-        variant='flat'
-        className='[&>div:first-child]:mb-3'
-        header={headerContent}
-        alerts={alertsContent}
-        actions={actionsContent}
+    <div className='lg:hidden'>
+      {isEmpty ? (
+        <EmptyState
+          title='No results'
+          description="Try adjusting your filters to find what you're looking for."
+          className='border-none p-0'
+        />
+      ) : (
+        <ProductListMobileCards />
+      )}
+    </div>
+  );
+}
+
+function ProductListDesktopTable({
+  desktopTableRef,
+  resolvedTableMaxHeight,
+  tableProps,
+}: {
+  desktopTableRef: RefObject<HTMLDivElement | null>;
+  resolvedTableMaxHeight: number | string | undefined;
+  tableProps: UseProductsTablePropsReturn;
+}): JSX.Element {
+  return (
+    <div ref={desktopTableRef} className='hidden lg:block'>
+      <DataTable
         columns={tableProps.columns}
         data={tableProps.data}
         isLoading={tableProps.isLoading}
         getRowId={tableProps.getRowId}
-        getRowClassName={
-          tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined
-        }
+        getRowClassName={getProductRowClassName(tableProps)}
         rowSelection={tableProps.rowSelection}
         onRowSelectionChange={tableProps.onRowSelectionChange}
         skeletonRows={tableProps.skeletonRows}
+        maxHeight={resolvedTableMaxHeight}
         stickyHeader={tableProps.stickyHeader}
         enableVirtualization={true}
-        maxHeight={resolvedTableMaxHeight}
-        showTable={false}
-      >
-        <div className='lg:hidden'>
-          {isEmpty ? (
-            <EmptyState
-              title='No results'
-              description="Try adjusting your filters to find what you're looking for."
-              className='border-none p-0'
-            />
-          ) : (
-            <ProductListMobileCards />
-          )}
-        </div>
-        <div ref={desktopTableRef} className='hidden lg:block'>
-          <DataTable
-            columns={tableProps.columns}
-            data={tableProps.data}
-            isLoading={tableProps.isLoading}
-            getRowId={tableProps.getRowId}
-            getRowClassName={
-              tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined
-            }
-            rowSelection={tableProps.rowSelection}
-            onRowSelectionChange={tableProps.onRowSelectionChange}
-            skeletonRows={tableProps.skeletonRows}
-            maxHeight={resolvedTableMaxHeight}
-            stickyHeader={tableProps.stickyHeader}
-            enableVirtualization={true}
-            tableLayout='fixed'
-          />
-        </div>
-      </StandardDataTablePanel>
+        tableLayout='fixed'
+      />
+    </div>
+  );
+}
+
+function ProductListTableContent(): JSX.Element {
+  const tableProps = useProductsTableProps();
+  const { desktopTableRef, resolvedTableMaxHeight } = useResolvedTableMaxHeight(
+    tableProps.maxHeight
+  );
+  const isEmpty = tableProps.isLoading === false && tableProps.data.length === 0;
+
+  return (
+    <StandardDataTablePanel
+      variant='flat'
+      className='[&>div:first-child]:mb-3'
+      header={<ProductListHeader filtersContent={<ProductFilters instanceId='header' />} />}
+      alerts={<MemoizedProductListAlerts />}
+      actions={<ProductSelectionActions />}
+      columns={tableProps.columns}
+      data={tableProps.data}
+      isLoading={tableProps.isLoading}
+      getRowId={tableProps.getRowId}
+      getRowClassName={getProductRowClassName(tableProps)}
+      rowSelection={tableProps.rowSelection}
+      onRowSelectionChange={tableProps.onRowSelectionChange}
+      skeletonRows={tableProps.skeletonRows}
+      stickyHeader={tableProps.stickyHeader}
+      enableVirtualization={true}
+      maxHeight={resolvedTableMaxHeight}
+      showTable={false}
+    >
+      <ProductListMobileSurface isEmpty={isEmpty} />
+      <ProductListDesktopTable
+        desktopTableRef={desktopTableRef}
+        resolvedTableMaxHeight={resolvedTableMaxHeight}
+        tableProps={tableProps}
+      />
+    </StandardDataTablePanel>
+  );
+}
+
+export const ProductListTableSurface = memo((): JSX.Element => {
+  const { handleProductsTableRender } = useProductListTableContext();
+
+  return (
+    <Profiler id='ProductsTable' onRender={handleProductsTableRender}>
+      <ProductListTableContent />
     </Profiler>
   );
 });

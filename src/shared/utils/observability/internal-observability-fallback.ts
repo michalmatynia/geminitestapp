@@ -1,4 +1,4 @@
-import { type ClientErrorContext, logClientCatch } from './client-error-logger';
+import { dispatchClientCatch, type ClientErrorContext } from './client-error-dispatch';
 
 export type InternalObservabilityErrorContext = ClientErrorContext & {
   source: string;
@@ -13,28 +13,29 @@ const serializeFallbackPayload = (value: unknown): string => {
   }
 };
 
+const writeServerFallback = (prefix: string, value: unknown): void => {
+  try {
+    // eslint-disable-next-line no-console
+    console.error(prefix, value);
+  } catch {
+    try {
+      // eslint-disable-next-line no-console
+      console.error(`${prefix} ${serializeFallbackPayload(value)}`);
+    } catch {
+      // No-op fallback.
+    }
+  }
+};
+
 export const reportObservabilityInternalError = (
   error: unknown,
   context: InternalObservabilityErrorContext
 ): void => {
   if (typeof window !== 'undefined') {
-    logClientCatch(error, context);
+    dispatchClientCatch(error, context);
     return;
   }
 
   const prefix = `[${context.source}] ${context.action} failed`;
-  try {
-    process.stderr.write(
-      `${prefix} ${serializeFallbackPayload({
-        error,
-        context,
-      })}\n`
-    );
-  } catch {
-    try {
-      process.stderr.write(`${prefix} ${serializeFallbackPayload(error)}\n`);
-    } catch {
-      // No-op fallback.
-    }
-  }
+  writeServerFallback(prefix, { error, context });
 };

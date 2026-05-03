@@ -4,7 +4,7 @@ import { telemetryErrorStage } from '@/shared/lib/observability/tanstack-telemet
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
-import { EnsureQueryDataV2Config, ManualQueryExecutorInput, QueryFactoryFn } from './types';
+import { type EnsureQueryDataV2Config, type ManualQueryExecutorInput, type QueryFactoryFn } from './types';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 

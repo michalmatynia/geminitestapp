@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { POST_handler as linkExistingHandler } from '@/app/api/v2/integrations/products/[id]/base/link-existing/handler';
-import { POST_handler as skuCheckHandler } from '@/app/api/v2/integrations/products/[id]/base/sku-check/handler';
+import { postHandler as linkExistingHandler } from '@/app/api/v2/integrations/products/[id]/base/link-existing/handler';
+import { postHandler as skuCheckHandler } from '@/app/api/v2/integrations/products/[id]/base/sku-check/handler';
 import type {
   BaseProductLinkExistingResponse,
   BaseProductSkuCheckResponse,

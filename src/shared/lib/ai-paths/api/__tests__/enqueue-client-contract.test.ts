@@ -48,7 +48,6 @@ describe('enqueueAiPathRun response contract boundary', () => {
           id: 'run-client-contract-1',
           status: 'queued',
         },
-        runId: 'run-client-contract-1',
       },
     });
 
@@ -61,12 +60,11 @@ describe('enqueueAiPathRun response contract boundary', () => {
           id: 'run-client-contract-1',
           status: 'queued',
         },
-        runId: 'run-client-contract-1',
       },
     });
   });
 
-  it('accepts legacy-compatible enqueue responses exposing run._id only', async () => {
+  it('rejects legacy-compatible enqueue responses exposing run._id only', async () => {
     apiPostMock.mockResolvedValueOnce({
       ok: true,
       data: {
@@ -80,13 +78,8 @@ describe('enqueueAiPathRun response contract boundary', () => {
     const response = await enqueueAiPathRun(enqueuePayload);
 
     expect(response).toEqual({
-      ok: true,
-      data: {
-        run: {
-          _id: 'run-client-contract-legacy',
-          status: 'queued',
-        },
-      },
+      ok: false,
+      error: 'invalid run identifier from API.',
     });
   });
 
@@ -164,7 +157,7 @@ describe('enqueueAiPathRun response contract boundary', () => {
     );
   });
 
-  it('extracts legacy wrapper run ids before non-run wrapper ids', () => {
+  it('does not extract run ids from legacy wrapper payloads', () => {
     expect(
       extractAiPathRunIdFromEnqueueResponseData({
         data: {
@@ -175,7 +168,7 @@ describe('enqueueAiPathRun response contract boundary', () => {
           },
         },
       })
-    ).toBe('run-client-contract-wrapper');
+    ).toBeNull();
   });
 
   it('includes optional list filters when provided', async () => {

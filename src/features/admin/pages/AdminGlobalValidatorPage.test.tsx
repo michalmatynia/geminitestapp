@@ -14,26 +14,7 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-type ListPanelMockProps = {
-  header?: React.ReactNode;
-  filters?: React.ReactNode;
-  actions?: React.ReactNode;
-  alerts?: React.ReactNode;
-  children?: React.ReactNode;
-};
-
-function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
-  const { header, filters, actions, alerts, children } = props;
-  return (
-    <div data-testid='list-panel'>
-      {header}
-      {filters}
-      {actions}
-      {alerts}
-      {children}
-    </div>
-  );
-}
+import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
 vi.mock('next/link', () => ({
   default: ({
@@ -49,6 +30,12 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
+  usePathname: mocks.usePathnameMock,
+  useRouter: mocks.useRouterMock,
+  useSearchParams: mocks.useSearchParamsMock,
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   usePathname: mocks.usePathnameMock,
   useRouter: mocks.useRouterMock,
   useSearchParams: mocks.useSearchParamsMock,
@@ -74,22 +61,43 @@ vi.mock('@/features/admin/components/AdminValidatorSettings', () => ({
   ValidatorSettings: () => <div data-testid='validator-settings'>validator-settings</div>,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/admin.public', () => ({
   AdminSectionBreadcrumbs: ({
     current,
   }: {
     current: string;
   }) => <div data-testid='validator-breadcrumbs'>{current}</div>,
+  formatAdminAiEyebrow: (value: string) => value,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   Badge: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Button: ({
     children,
+    asChild,
   }: {
     children?: React.ReactNode;
-  }) => <div>{children}</div>,
+    asChild?: boolean;
+  }) => asChild ? <>{children}</> : <button type='button'>{children}</button>,
   ClientOnly: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormSection: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  formatAdminAiEyebrow: (value: string) => value,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   ListPanel: MockListPanel,
+}));
+
+vi.mock('@/shared/ui/admin-title-breadcrumb-header', () => ({
+  AdminTitleBreadcrumbHeader: ({ title, breadcrumb, actions }: { title: React.ReactNode, breadcrumb: React.ReactNode, actions?: React.ReactNode }) => (
+    <div>
+      {title}
+      {breadcrumb}
+      {actions}
+    </div>
+  ),
 }));
 
 import { AdminGlobalValidatorPage } from './AdminGlobalValidatorPage';

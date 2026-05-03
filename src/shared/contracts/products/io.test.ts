@@ -11,10 +11,12 @@ describe('product io schemas', () => {
   it('normalizes numeric form fields on create payloads', () => {
     const parsed = productCreateInputSchema.parse({
       sku: 'SKU-1',
+      sourcePrice: ' 9.5 ',
       price: ' 12.5 ',
       stock: '7',
     });
 
+    expect(parsed.sourcePrice).toBe(9.5);
     expect(parsed.price).toBe(12.5);
     expect(parsed.stock).toBe(7);
   });
@@ -36,6 +38,88 @@ describe('product io schemas', () => {
     });
 
     expect(parsed.sku).toBeNull();
+  });
+
+  it('parses archived booleans from form-style update payloads', () => {
+    expect(productUpdateInputSchema.parse({ archived: 'true' }).archived).toBe(true);
+    expect(productUpdateInputSchema.parse({ archived: 'false' }).archived).toBe(false);
+  });
+
+  it('parses marketplace content overrides from JSON form fields', () => {
+    const parsed = productCreateInputSchema.parse({
+      sku: 'SKU-1',
+      marketplaceContentOverrides: JSON.stringify([
+        {
+          integrationIds: [' integration-tradera ', 'integration-vinted'],
+          title: ' Alternate title ',
+          description: ' Alternate description ',
+        },
+      ]),
+    });
+
+    expect(parsed.marketplaceContentOverrides).toEqual([
+      {
+        integrationIds: ['integration-tradera', 'integration-vinted'],
+        title: 'Alternate title',
+        description: 'Alternate description',
+      },
+    ]);
+  });
+
+  it('parses product notes from JSON form fields', () => {
+    const parsed = productCreateInputSchema.parse({
+      sku: 'SKU-1',
+      notes: JSON.stringify({
+        text: '  Check packaging insert before export.  ',
+        color: '  #fde68a ',
+      }),
+    });
+
+    expect(parsed.notes).toEqual({
+      text: 'Check packaging insert before export.',
+      color: '#fde68a',
+    });
+  });
+
+  it('allows marketplace content overrides with integrations selected and blank copy fields', () => {
+    const parsed = productCreateInputSchema.parse({
+      sku: 'SKU-1',
+      marketplaceContentOverrides: JSON.stringify([
+        {
+          integrationIds: [' integration-tradera '],
+          title: '   ',
+          description: '',
+        },
+      ]),
+    });
+
+    expect(parsed.marketplaceContentOverrides).toEqual([
+      {
+        integrationIds: ['integration-tradera'],
+        title: null,
+        description: null,
+      },
+    ]);
+  });
+
+  it('rejects duplicate marketplace integration assignments across overrides', () => {
+    expect(() =>
+      productCreateInputSchema.parse({
+        sku: 'SKU-1',
+        marketplaceContentOverrides: [
+          {
+            integrationIds: ['integration-tradera'],
+            title: 'First title',
+            description: null,
+          },
+          {
+            integrationIds: ['integration-tradera'],
+            title: null,
+            description: 'Second description',
+          },
+        ],
+      })
+    ).toThrow(/Each marketplace integration can only belong to one alternate copy rule\./);
   });
 
   it('keeps read-only shipping group metadata out of create DTOs', () => {

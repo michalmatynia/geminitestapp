@@ -1,5 +1,7 @@
 import React from 'react';
 
+import type { AiNode } from '@/shared/contracts/ai-paths';
+
 import { useAiPathSelection } from './AiPathConfigContext';
 import { ContextNodeConfigSection } from './node-config/ContextNodeConfigSection';
 import { DatabaseNodeConfigSection } from './node-config/DatabaseNodeConfigSection';
@@ -44,52 +46,59 @@ import { ValidatorNodeConfigSection } from './node-config/dialog/ValidatorNodeCo
 import { ViewerNodeConfigSection } from './node-config/dialog/ViewerNodeConfigSection';
 import { ParserNodeConfigSection } from './node-config/ParserNodeConfigSection';
 
+const NODE_CONFIG_SECTION_BY_TYPE: Partial<
+  Record<AiNode['type'], () => React.JSX.Element | null>
+> = {
+  agent: AgentNodeConfigSection,
+  api_advanced: ApiAdvancedNodeConfigSection,
+  audio_oscillator: AudioOscillatorNodeConfigSection,
+  audio_speaker: AudioSpeakerNodeConfigSection,
+  bounds_normalizer: BoundsNormalizerNodeConfigSection,
+  bundle: BundleNodeConfigSection,
+  canvas_output: CanvasOutputNodeConfigSection,
+  compare: CompareNodeConfigSection,
+  constant: ConstantNodeConfigSection,
+  context: ContextNodeConfigSection,
+  database: DatabaseNodeConfigSection,
+  db_schema: DbSchemaNodeConfigSection,
+  delay: DelayNodeConfigSection,
+  fetcher: FetcherNodeConfigSection,
+  function: FunctionNodeConfigSection,
+  gate: GateNodeConfigSection,
+  http: HttpNodeConfigSection,
+  iterator: IteratorNodeConfigSection,
+  learner_agent: LearnerAgentNodeConfigSection,
+  logical_condition: LogicalConditionNodeConfigSection,
+  mapper: MapperNodeConfigSection,
+  math: MathNodeConfigSection,
+  model: ModelNodeConfigSection,
+  mutator: MutatorNodeConfigSection,
+  parser: ParserNodeConfigSection,
+  playwright: PlaywrightNodeConfigSection,
+  poll: PollNodeConfigSection,
+  prompt: PromptNodeConfigSection,
+  regex: RegexNodeConfigSection,
+  router: RouterNodeConfigSection,
+  simulation: SimulationNodeConfigSection,
+  state: StateNodeConfigSection,
+  string_mutator: StringMutatorNodeConfigSection,
+  subgraph: SubgraphNodeConfigSection,
+  switch: SwitchNodeConfigSection,
+  template: TemplateNodeConfigSection,
+  trigger: TriggerNodeConfigSection,
+  validation_pattern: ValidationPatternNodeConfigSection,
+  validator: ValidatorNodeConfigSection,
+  viewer: ViewerNodeConfigSection,
+};
+
 export function NodeConfigurationSections(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
   if (!selectedNode) return null;
+  const ActiveNodeConfigSection = NODE_CONFIG_SECTION_BY_TYPE[selectedNode.type];
 
   return (
     <div className='space-y-6'>
-      <TriggerNodeConfigSection />
-      <FetcherNodeConfigSection />
-      <SimulationNodeConfigSection />
-      <AudioOscillatorNodeConfigSection />
-      <AudioSpeakerNodeConfigSection />
-      <ContextNodeConfigSection />
-      <ParserNodeConfigSection />
-      <RegexNodeConfigSection />
-      <IteratorNodeConfigSection />
-      <MapperNodeConfigSection />
-      <BoundsNormalizerNodeConfigSection />
-      <CanvasOutputNodeConfigSection />
-      <MutatorNodeConfigSection />
-      <StringMutatorNodeConfigSection />
-      <ValidatorNodeConfigSection />
-      <ValidationPatternNodeConfigSection />
-      <ConstantNodeConfigSection />
-      <MathNodeConfigSection />
-      <FunctionNodeConfigSection />
-      <StateNodeConfigSection />
-      <SwitchNodeConfigSection />
-      <SubgraphNodeConfigSection />
-      <TemplateNodeConfigSection />
-      <BundleNodeConfigSection />
-      <GateNodeConfigSection />
-      <CompareNodeConfigSection />
-      <LogicalConditionNodeConfigSection />
-      <RouterNodeConfigSection />
-      <DelayNodeConfigSection />
-      <PollNodeConfigSection />
-      <PlaywrightNodeConfigSection />
-      <HttpNodeConfigSection />
-      <ApiAdvancedNodeConfigSection />
-      <PromptNodeConfigSection />
-      <ModelNodeConfigSection />
-      <AgentNodeConfigSection />
-      <LearnerAgentNodeConfigSection />
-      <DatabaseNodeConfigSection />
-      <DbSchemaNodeConfigSection />
-      <ViewerNodeConfigSection />
+      {ActiveNodeConfigSection ? <ActiveNodeConfigSection /> : null}
       <RuntimeNodeConfigSection />
       <UnsupportedNodeConfigNotice selectedNode={selectedNode} />
     </div>

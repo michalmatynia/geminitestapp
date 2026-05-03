@@ -12,9 +12,15 @@ import {
   useRunProductSyncProfileMutation,
   useUpdateProductSyncProfileMutation,
 } from '@/features/product-sync/hooks/useProductSyncSettings';
+import { usePriceGroups } from '@/features/products/hooks/useProductSettingsQueries';
 import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type { BaseInventory, BaseWarehouse } from '@/shared/contracts/integrations/base-com';
+import type { PriceGroup } from '@/shared/contracts/products/catalogs';
 import {
+  findDuplicateProductSyncAppField,
+  getProductSyncBaseFieldOptions,
   PRODUCT_SYNC_APP_FIELDS,
+  PRODUCT_SYNC_BASE_FIELD_PATTERN_HINTS_BY_APP_FIELD,
   PRODUCT_SYNC_DIRECTION_OPTIONS,
 } from '@/shared/contracts/product-sync';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -29,19 +35,29 @@ import type {
 } from '@/shared/contracts/product-sync';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
+  useBaseInventories,
+  useBaseWarehouses,
   useDefaultExportConnection,
   useDefaultExportInventory,
   useIntegrationsWithConnections,
 } from '@/shared/hooks/useIntegrationQueries';
 import { api } from '@/shared/lib/api-client';
 import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
-import { SelectSimple, FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui/forms-and-actions.public';
+import {
+  SelectSimple,
+  FormSection,
+  FormField,
+  ToggleRow,
+  FormActions,
+} from '@/shared/ui/forms-and-actions.public';
+import type { SelectSimpleOption } from '@/shared/ui/forms-and-actions.public';
 import { SimpleSettingsList } from '@/shared/ui/templates.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 type ProductSyncProfileDraft = {
   name: string;
+  isDefault: boolean;
   enabled: boolean;
   connectionId: string;
   inventoryId: string;
@@ -52,6 +68,8 @@ type ProductSyncProfileDraft = {
 };
 
 type ProductSyncDraftDefaults = {
+  name?: string;
+  isDefault?: boolean;
   connectionId?: string;
   inventoryId?: string;
 };
@@ -63,6 +81,8 @@ const BASE_CONNECTION_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
   label: 'Select connection...',
 };
 
+const CUSTOM_BASE_FIELD_OPTION_VALUE = '__custom__';
+
 const makeRuleId = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -71,10 +91,13 @@ const makeRuleId = (): string => {
 };
 
 const defaultDraft = ({
+  name = 'Base Product Sync',
+  isDefault = false,
   connectionId = '',
   inventoryId = '',
 }: ProductSyncDraftDefaults = {}): ProductSyncProfileDraft => ({
-  name: 'Base Product Sync',
+  name,
+  isDefault,
   enabled: true,
   connectionId,
   inventoryId,
@@ -105,6 +128,7 @@ const defaultDraft = ({
 
 const profileToDraft = (profile: ProductSyncProfile): ProductSyncProfileDraft => ({
   name: profile.name,
+  isDefault: profile.isDefault,
   enabled: profile.enabled,
   connectionId: profile.connectionId,
   inventoryId: profile.inventoryId,
@@ -119,6 +143,29 @@ const profileToDraft = (profile: ProductSyncProfile): ProductSyncProfileDraft =>
   })),
 });
 
+const buildProfileSavePayload = (
+  draft: ProductSyncProfileDraft,
+  normalizedFieldRules: ProductSyncFieldRule[],
+  connectionId: string
+): ProductSyncProfileCreatePayload => {
+  const inventoryId = draft.inventoryId.trim();
+  const profileName = draft.name.trim();
+  const catalogId = draft.catalogId.trim();
+
+  return {
+    name: profileName.length > 0 ? profileName : 'Base Product Sync',
+    isDefault: draft.isDefault,
+    enabled: draft.enabled,
+    connectionId,
+    ...(inventoryId.length > 0 ? { inventoryId } : {}),
+    catalogId: catalogId.length > 0 ? catalogId : null,
+    scheduleIntervalMinutes: draft.scheduleIntervalMinutes,
+    batchSize: draft.batchSize,
+    fieldRules: normalizedFieldRules,
+    conflictPolicy: 'skip',
+  };
+};
+
 const appFieldLabel = (value: ProductSyncAppField): string => {
   if (value === 'name_en') return 'Name (EN)';
   if (value === 'description_en') return 'Description (EN)';
@@ -126,6 +173,7 @@ const appFieldLabel = (value: ProductSyncAppField): string => {
   if (value === 'price') return 'Price';
   if (value === 'sku') return 'SKU';
   if (value === 'ean') return 'EAN';
+  if (value === 'asin') return 'ASIN';
   if (value === 'weight') return 'Weight';
   return value;
 };
@@ -134,6 +182,132 @@ const directionLabel = (value: ProductSyncDirection): string => {
   if (value === 'base_to_app') return 'Base -> App';
   if (value === 'app_to_base') return 'App -> Base';
   return 'Disabled';
+};
+
+const areStringSetsEqual = (left: Set<string>, right: Set<string>): boolean => {
+  if (left.size !== right.size) return false;
+  for (const value of left) {
+    if (!right.has(value)) return false;
+  }
+  return true;
+};
+
+const buildWarehouseStockBaseFieldOptions = (
+  warehouses: BaseWarehouse[]
+): SelectSimpleOption[] => {
+  const seen = new Set<string>();
+  const options: SelectSimpleOption[] = [];
+
+  warehouses.forEach((warehouse: BaseWarehouse) => {
+    const warehouseId = warehouse.id.trim();
+    if (!warehouseId) return;
+    const typedId = warehouse.typedId?.trim() ?? '';
+    const inInventorySuffix = warehouse.is_default ? ' · default' : '';
+    const addOption = (value: string, label: string, description: string): void => {
+      const normalizedValue = value.trim();
+      if (!normalizedValue || seen.has(normalizedValue)) return;
+      seen.add(normalizedValue);
+      options.push({
+        value: normalizedValue,
+        label,
+        description,
+        group: 'Inventory warehouses',
+      });
+    };
+
+    addOption(
+      `stock.${warehouseId}`,
+      `${warehouse.name} (${warehouseId})`,
+      `Warehouse-specific stock path.${inInventorySuffix}`
+    );
+
+    if (typedId && typedId !== warehouseId) {
+      addOption(
+        `stock.${typedId}`,
+        `${warehouse.name} (${typedId})`,
+        `Typed warehouse stock path.${inInventorySuffix}`
+      );
+    }
+  });
+
+  return options;
+};
+
+const buildPriceGroupBaseFieldOptions = (priceGroups: PriceGroup[]): SelectSimpleOption[] => {
+  const seen = new Set<string>();
+  const options: SelectSimpleOption[] = [];
+
+  priceGroups.forEach((priceGroup: PriceGroup) => {
+    const groupKey = (priceGroup.groupId || priceGroup.id || '').trim();
+    if (!groupKey) return;
+    const value = `prices.${groupKey}`;
+    if (seen.has(value)) return;
+    seen.add(value);
+    options.push({
+      value,
+      label: `${priceGroup.name} (${groupKey})`,
+      description: `${priceGroup.currencyCode} price group${priceGroup.isDefault ? ' · default' : ''}`,
+      group: 'Catalog price groups',
+    });
+  });
+
+  return options;
+};
+
+const buildBaseFieldOptions = (
+  input: {
+    knownOptions: SelectSimpleOption[];
+    customHints: Array<{ value: string }>;
+    currentValue: string;
+    isCustomMode: boolean;
+  }
+): SelectSimpleOption[] => {
+  const trimmedBaseField = input.currentValue.trim();
+  const customDescriptionParts: string[] = [];
+
+  if (input.isCustomMode && trimmedBaseField) {
+    customDescriptionParts.push(`Current: ${trimmedBaseField}`);
+  }
+  if (input.customHints.length > 0) {
+    customDescriptionParts.push(
+      `Patterns: ${input.customHints.map((hint) => hint.value).join(', ')}`
+    );
+  }
+
+  return [
+    ...input.knownOptions,
+    {
+      value: CUSTOM_BASE_FIELD_OPTION_VALUE,
+      label: 'Custom path',
+      group: 'Custom',
+      description:
+        customDescriptionParts.join(' · ') || 'Use a custom Base.com field path.',
+    },
+  ];
+};
+
+const resolveFallbackInventoryId = (inventories: BaseInventory[]): string => {
+  const fallbackInventory =
+    inventories.find((inventory: BaseInventory): boolean => inventory.is_default) ??
+    inventories[0] ??
+    null;
+  return fallbackInventory?.id.trim() ?? '';
+};
+
+const resolvePreferredInventoryId = ({
+  configuredInventoryId,
+  connectionInventoryId,
+  inventories,
+}: {
+  configuredInventoryId: string | null | undefined;
+  connectionInventoryId: string | null | undefined;
+  inventories: BaseInventory[];
+}): string => {
+  const normalizedConfiguredInventoryId = (configuredInventoryId ?? '').trim();
+  if (normalizedConfiguredInventoryId.length > 0) return normalizedConfiguredInventoryId;
+  const normalizedConnectionInventoryId = (connectionInventoryId ?? '').trim();
+  if (normalizedConnectionInventoryId.length > 0) return normalizedConnectionInventoryId;
+  return resolveFallbackInventoryId(inventories);
 };
 
 export function ProductSyncSettings(): React.JSX.Element {
@@ -152,11 +326,47 @@ export function ProductSyncSettings(): React.JSX.Element {
 
   const profiles = profilesQuery.data ?? EMPTY_PROFILES;
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  const [isCreatingNewProfile, setIsCreatingNewProfile] = useState(false);
   const [draft, setDraft] = useState<ProductSyncProfileDraft>(defaultDraft());
+  const [customBaseFieldRuleIds, setCustomBaseFieldRuleIds] = useState<Set<string>>(
+    () => new Set<string>()
+  );
   const [applyingConnectionDefaults, setApplyingConnectionDefaults] = useState(false);
 
   const runsQuery = useProductSyncRuns(selectedProfileId || null, 50);
   const runs = runsQuery.data ?? [];
+  const priceGroupsQuery = usePriceGroups({ enabled: true });
+  const priceGroupBaseFieldOptions = useMemo(
+    (): SelectSimpleOption[] => buildPriceGroupBaseFieldOptions(priceGroupsQuery.data ?? []),
+    [priceGroupsQuery.data]
+  );
+  const draftConnectionId = draft.connectionId.trim();
+  const draftInventoryId = draft.inventoryId.trim();
+  const baseInventoriesQuery = useBaseInventories(
+    draftConnectionId,
+    draftConnectionId.length > 0
+  );
+  const warehousesQuery = useBaseWarehouses(
+    draftConnectionId,
+    draftInventoryId,
+    true,
+    draftConnectionId.length > 0 && draftInventoryId.length > 0
+  );
+  const warehouseBaseFieldOptions = useMemo((): SelectSimpleOption[] => {
+    const response = warehousesQuery.data;
+    const records = [
+      ...(Array.isArray(response?.warehouses) ? response.warehouses : []),
+      ...(Array.isArray(response?.allWarehouses) ? response.allWarehouses : []),
+    ];
+    const seenWarehouseIds = new Set<string>();
+    const mergedWarehouses = records.filter((warehouse: BaseWarehouse) => {
+      const key = `${warehouse.id.trim()}::${warehouse.typedId?.trim() ?? ''}`;
+      if (!warehouse.id.trim() || seenWarehouseIds.has(key)) return false;
+      seenWarehouseIds.add(key);
+      return true;
+    });
+    return buildWarehouseStockBaseFieldOptions(mergedWarehouses);
+  }, [warehousesQuery.data]);
 
   const baseConnections = useMemo(() => {
     const integrations = integrationsQuery.data ?? [];
@@ -176,14 +386,6 @@ export function ProductSyncSettings(): React.JSX.Element {
     ],
     [baseConnections]
   );
-  const appFieldOptions = useMemo(
-    (): Array<LabeledOptionDto<ProductSyncAppField>> =>
-      PRODUCT_SYNC_APP_FIELDS.map((field: ProductSyncAppField) => ({
-        value: field,
-        label: appFieldLabel(field),
-      })),
-    []
-  );
   const directionOptions = useMemo(
     (): Array<LabeledOptionDto<ProductSyncDirection>> =>
       PRODUCT_SYNC_DIRECTION_OPTIONS.map((direction: ProductSyncDirection) => ({
@@ -192,11 +394,49 @@ export function ProductSyncSettings(): React.JSX.Element {
       })),
     []
   );
+  const getKnownBaseFieldOptions = (appField: ProductSyncAppField): SelectSimpleOption[] => {
+    if (appField === 'stock' && warehouseBaseFieldOptions.length > 0) {
+      return [...getProductSyncBaseFieldOptions(appField), ...warehouseBaseFieldOptions];
+    }
+    if (appField === 'price' && priceGroupBaseFieldOptions.length > 0) {
+      return [...getProductSyncBaseFieldOptions(appField), ...priceGroupBaseFieldOptions];
+    }
+    return getProductSyncBaseFieldOptions(appField);
+  };
+  const isKnownBaseFieldForRule = (rule: ProductSyncFieldRule): boolean => {
+    const normalizedValue = rule.baseField.trim();
+    if (!normalizedValue) return false;
+    return getKnownBaseFieldOptions(rule.appField).some(
+      (option) => option.value === normalizedValue
+    );
+  };
+  const getDefaultBaseFieldForAppField = (appField: ProductSyncAppField): string => {
+    return getKnownBaseFieldOptions(appField)[0]?.value ?? '';
+  };
+  const getAppFieldOptionsForRule = (
+    currentRuleId: string,
+    currentAppField: ProductSyncAppField
+  ): Array<LabeledOptionDto<ProductSyncAppField>> =>
+    PRODUCT_SYNC_APP_FIELDS.map((field: ProductSyncAppField) => ({
+      value: field,
+      label: appFieldLabel(field),
+      disabled:
+        field !== currentAppField &&
+        draft.fieldRules.some(
+          (rule: ProductSyncFieldRule) => rule.id !== currentRuleId && rule.appField === field
+        ),
+    }));
+  const getUnusedAppField = (): ProductSyncAppField | null =>
+    PRODUCT_SYNC_APP_FIELDS.find(
+      (field: ProductSyncAppField) =>
+        !draft.fieldRules.some((rule: ProductSyncFieldRule) => rule.appField === field)
+    ) ?? null;
+  const hasUnusedAppField = getUnusedAppField() !== null;
 
   const preferredConnectionId = useMemo(() => {
     const preferredConnection = (defaultExportConnectionQuery.data?.connectionId ?? '').trim();
     if (
-      preferredConnection &&
+      preferredConnection.length > 0 &&
       baseConnections.some((connection) => connection.id === preferredConnection)
     ) {
       return preferredConnection;
@@ -204,19 +444,72 @@ export function ProductSyncSettings(): React.JSX.Element {
     return baseConnections[0]?.id ?? '';
   }, [defaultExportConnectionQuery.data?.connectionId, baseConnections]);
 
-  const preferredInventoryId = useMemo(() => {
-    return (defaultExportInventoryQuery.data?.inventoryId ?? '').trim();
-  }, [defaultExportInventoryQuery.data?.inventoryId]);
+  const connectionInventoryFallbackId = useMemo((): string => {
+    const targetConnectionId =
+      draftConnectionId.length > 0 ? draftConnectionId : preferredConnectionId;
+    if (targetConnectionId.length === 0) return '';
+    const connection = baseConnections.find((candidate) => candidate.id === targetConnectionId);
+    return connection?.baseLastInventoryId?.trim() ?? '';
+  }, [baseConnections, draftConnectionId, preferredConnectionId]);
+
+  const preferredInventoryId = useMemo((): string => {
+    return resolvePreferredInventoryId({
+      configuredInventoryId: defaultExportInventoryQuery.data?.inventoryId,
+      connectionInventoryId: connectionInventoryFallbackId,
+      inventories: baseInventoriesQuery.data ?? [],
+    });
+  }, [
+    baseInventoriesQuery.data,
+    connectionInventoryFallbackId,
+    defaultExportInventoryQuery.data?.inventoryId,
+  ]);
 
   const newProfileDefaults = useMemo<ProductSyncDraftDefaults>(
     () => ({
+      isDefault: profiles.length === 0,
       connectionId: preferredConnectionId,
       inventoryId: preferredInventoryId,
     }),
-    [preferredConnectionId, preferredInventoryId]
+    [preferredConnectionId, preferredInventoryId, profiles.length]
   );
 
   useEffect(() => {
+    if (draft.connectionId.trim().length === 0) return;
+    if (draft.inventoryId.trim().length > 0) return;
+    if (preferredInventoryId.length === 0) return;
+
+    setDraft((prev: ProductSyncProfileDraft) => {
+      if (prev.inventoryId.trim().length > 0) return prev;
+      return {
+        ...prev,
+        inventoryId: preferredInventoryId,
+      };
+    });
+  }, [draft.connectionId, draft.inventoryId, preferredInventoryId]);
+
+  useEffect(() => {
+    if (!isCreatingNewProfile) return;
+    if (preferredConnectionId.length === 0 && preferredInventoryId.length === 0) return;
+
+    setDraft((prev: ProductSyncProfileDraft) => {
+      const nextConnectionId =
+        prev.connectionId.trim().length > 0 ? prev.connectionId : preferredConnectionId;
+      const nextInventoryId =
+        prev.inventoryId.trim().length > 0 ? prev.inventoryId : preferredInventoryId;
+      if (nextConnectionId === prev.connectionId && nextInventoryId === prev.inventoryId) {
+        return prev;
+      }
+      return {
+        ...prev,
+        connectionId: nextConnectionId,
+        inventoryId: nextInventoryId,
+      };
+    });
+  }, [isCreatingNewProfile, preferredConnectionId, preferredInventoryId]);
+
+  useEffect(() => {
+    if (isCreatingNewProfile) return;
+
     if (profiles.length === 0) {
       setSelectedProfileId('');
       setDraft(defaultDraft(newProfileDefaults));
@@ -239,39 +532,61 @@ export function ProductSyncSettings(): React.JSX.Element {
     }
     setSelectedProfileId(first.id);
     setDraft(profileToDraft(first));
-  }, [profiles, selectedProfileId, newProfileDefaults]);
+  }, [profiles, selectedProfileId, newProfileDefaults, isCreatingNewProfile]);
+
+  useEffect(() => {
+    setCustomBaseFieldRuleIds((previous) => {
+      const next = new Set<string>();
+      draft.fieldRules.forEach((rule: ProductSyncFieldRule) => {
+        if (previous.has(rule.id) || !isKnownBaseFieldForRule(rule)) {
+          next.add(rule.id);
+        }
+      });
+      return areStringSetsEqual(previous, next) ? previous : next;
+    });
+  }, [draft.fieldRules]);
 
   const isSaving = createProfileMutation.isPending || updateProfileMutation.isPending;
+  const draftProfileLabel = draft.name.trim() || 'New sync profile';
 
   const handleNewProfile = (): void => {
     setSelectedProfileId('');
-    setDraft(defaultDraft(newProfileDefaults));
+    setIsCreatingNewProfile(true);
+    setDraft(defaultDraft({ ...newProfileDefaults, name: '' }));
   };
 
   const handleSave = async (): Promise<void> => {
-    if (!draft.connectionId.trim()) {
+    const connectionId = draft.connectionId.trim();
+    if (connectionId.length === 0) {
       toast('Select a Base connection.', { variant: 'error' });
       return;
     }
-    if (!draft.inventoryId.trim()) {
-      toast('Inventory ID is required.', { variant: 'error' });
+
+    const normalizedFieldRules = draft.fieldRules.map((rule: ProductSyncFieldRule) => ({
+      ...rule,
+      baseField: rule.baseField.trim(),
+    }));
+    const invalidRule = normalizedFieldRules.find(
+      (rule: ProductSyncFieldRule) => rule.baseField.length === 0
+    );
+    if (invalidRule) {
+      toast(`Base field is required for ${appFieldLabel(invalidRule.appField)}.`, {
+        variant: 'error',
+      });
+      return;
+    }
+    const duplicateAppField = findDuplicateProductSyncAppField(normalizedFieldRules);
+    if (duplicateAppField !== null) {
+      toast(`Only one sync rule is allowed for ${appFieldLabel(duplicateAppField)}.`, {
+        variant: 'error',
+      });
       return;
     }
 
-    const payload: ProductSyncProfileCreatePayload = {
-      name: draft.name.trim() || 'Base Product Sync',
-      enabled: draft.enabled,
-      connectionId: draft.connectionId.trim(),
-      inventoryId: draft.inventoryId.trim(),
-      catalogId: draft.catalogId.trim() || null,
-      scheduleIntervalMinutes: draft.scheduleIntervalMinutes,
-      batchSize: draft.batchSize,
-      fieldRules: draft.fieldRules,
-      conflictPolicy: 'skip',
-    };
+    const payload = buildProfileSavePayload(draft, normalizedFieldRules, connectionId);
 
     try {
-      if (selectedProfileId) {
+      if (selectedProfileId.length > 0) {
         const updated = await updateProfileMutation.mutateAsync({
           id: selectedProfileId,
           data: payload satisfies ProductSyncProfileUpdatePayload,
@@ -283,6 +598,7 @@ export function ProductSyncSettings(): React.JSX.Element {
       }
 
       const created = await createProfileMutation.mutateAsync(payload);
+      setIsCreatingNewProfile(false);
       setSelectedProfileId(created.id);
       setDraft(profileToDraft(created));
       toast('Sync profile created.', { variant: 'success' });
@@ -306,6 +622,7 @@ export function ProductSyncSettings(): React.JSX.Element {
         try {
           await deleteProfileMutation.mutateAsync(selectedProfileId);
           toast('Sync profile deleted.', { variant: 'success' });
+          setIsCreatingNewProfile(false);
           setSelectedProfileId('');
           setDraft(defaultDraft(newProfileDefaults));
         } catch (error) {
@@ -412,15 +729,61 @@ export function ProductSyncSettings(): React.JSX.Element {
     }));
   };
 
+  const setCustomBaseFieldMode = (id: string, enabled: boolean): void => {
+    setCustomBaseFieldRuleIds((previous) => {
+      const next = new Set(previous);
+      if (enabled) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return areStringSetsEqual(previous, next) ? previous : next;
+    });
+  };
+
+  const handleAppFieldChange = (rule: ProductSyncFieldRule, value: string): void => {
+    const nextAppField = value as ProductSyncAppField;
+    if (
+      draft.fieldRules.some(
+        (candidate: ProductSyncFieldRule) =>
+          candidate.id !== rule.id && candidate.appField === nextAppField
+      )
+    ) {
+      toast(`Only one sync rule is allowed for ${appFieldLabel(nextAppField)}.`, {
+        variant: 'error',
+      });
+      return;
+    }
+    setCustomBaseFieldMode(rule.id, false);
+    updateRule(rule.id, {
+      appField: nextAppField,
+      baseField: getDefaultBaseFieldForAppField(nextAppField),
+    });
+  };
+
+  const handleBaseFieldSelectChange = (rule: ProductSyncFieldRule, value: string): void => {
+    if (value === CUSTOM_BASE_FIELD_OPTION_VALUE) {
+      setCustomBaseFieldMode(rule.id, true);
+      return;
+    }
+    setCustomBaseFieldMode(rule.id, false);
+    updateRule(rule.id, { baseField: value });
+  };
+
   const addRule = (): void => {
+    const nextAppField = getUnusedAppField();
+    if (!nextAppField) {
+      toast('All app fields already have synchronization rules.', { variant: 'info' });
+      return;
+    }
     setDraft((prev: ProductSyncProfileDraft) => ({
       ...prev,
       fieldRules: [
         ...prev.fieldRules,
         {
           id: makeRuleId(),
-          appField: 'stock',
-          baseField: 'stock',
+          appField: nextAppField,
+          baseField: getDefaultBaseFieldForAppField(nextAppField),
           direction: 'disabled',
         },
       ],
@@ -428,6 +791,12 @@ export function ProductSyncSettings(): React.JSX.Element {
   };
 
   const removeRule = (id: string): void => {
+    setCustomBaseFieldRuleIds((previous) => {
+      if (!previous.has(id)) return previous;
+      const next = new Set(previous);
+      next.delete(id);
+      return next;
+    });
     setDraft((prev: ProductSyncProfileDraft) => ({
       ...prev,
       fieldRules:
@@ -453,16 +822,41 @@ export function ProductSyncSettings(): React.JSX.Element {
                 key={profile.id}
                 type='button'
                 variant='ghost'
-                onClick={(): void => setSelectedProfileId(profile.id)}
+                onClick={(): void => {
+                  setIsCreatingNewProfile(false);
+                  setSelectedProfileId(profile.id);
+                }}
                 className={`w-full justify-start text-xs ${
                   selectedProfileId === profile.id
                     ? 'bg-gray-800 text-white hover:bg-gray-800'
                     : 'text-gray-300 hover:bg-muted/40'
                 }`}
               >
-                {profile.name}
+                <span className='truncate'>{profile.name}</span>
+                {profile.isDefault && (
+                  <Badge variant='outline' className='ml-auto text-[9px] uppercase h-4 px-1'>
+                    BL modal
+                  </Badge>
+                )}
               </Button>
             ))}
+            {isCreatingNewProfile && (
+              <Button
+                size='xs'
+                type='button'
+                variant='ghost'
+                onClick={(): void => {
+                  setSelectedProfileId('');
+                  setIsCreatingNewProfile(true);
+                }}
+                className='w-full justify-start text-xs bg-gray-800 text-white hover:bg-gray-800'
+              >
+                <span className='truncate'>{draftProfileLabel}</span>
+                <Badge variant='outline' className='ml-auto text-[9px] uppercase h-4 px-1'>
+                  Draft
+                </Badge>
+              </Button>
+            )}
             <Button
               size='xs'
               type='button'
@@ -586,6 +980,18 @@ export function ProductSyncSettings(): React.JSX.Element {
             </div>
 
             <ToggleRow
+              label='Use this profile in the BL modal and manual Base.com sync'
+              checked={draft.isDefault}
+              onCheckedChange={(value: boolean) =>
+                setDraft((prev: ProductSyncProfileDraft) => ({
+                  ...prev,
+                  isDefault: value,
+                }))
+              }
+              className='border-none bg-transparent hover:bg-transparent p-0'
+            />
+
+            <ToggleRow
               label='Enable scheduled synchronization'
               checked={draft.enabled}
               onCheckedChange={(value: boolean) =>
@@ -649,61 +1055,140 @@ export function ProductSyncSettings(): React.JSX.Element {
         variant='subtle'
         className='p-4'
         actions={
-          <Button size='sm' type='button' variant='outline' onClick={addRule}>
+          <Button
+            size='sm'
+            type='button'
+            variant='outline'
+            onClick={addRule}
+            disabled={!hasUnusedAppField}
+          >
             <Plus className='mr-2 size-3.5' />
             Add Rule
           </Button>
         }
       >
         <div className='mt-3 space-y-2'>
+          {(warehousesQuery.isLoading ||
+            warehouseBaseFieldOptions.length > 0 ||
+            priceGroupsQuery.isLoading ||
+            priceGroupBaseFieldOptions.length > 0) && (
+            <p className='text-[11px] text-gray-500'>
+              {warehousesQuery.isLoading
+                ? 'Loading inventory warehouse stock targets...'
+                : priceGroupsQuery.isLoading
+                  ? 'Loading catalog price-group targets...'
+                  : `${[
+                      warehouseBaseFieldOptions.length > 0
+                        ? `${warehouseBaseFieldOptions.length} warehouse stock target${
+                            warehouseBaseFieldOptions.length === 1 ? '' : 's'
+                          }`
+                        : null,
+                      priceGroupBaseFieldOptions.length > 0
+                        ? `${priceGroupBaseFieldOptions.length} price-group target${
+                            priceGroupBaseFieldOptions.length === 1 ? '' : 's'
+                          }`
+                        : null,
+                    ]
+                      .filter((value): value is string => Boolean(value))
+                      .join(' loaded, ')  } loaded.`}
+            </p>
+          )}
           {draft.fieldRules.map((rule: ProductSyncFieldRule) => (
-            <div
-              key={rule.id}
-              className='grid gap-2 rounded-md border border-border/60 bg-card/40 p-2 md:grid-cols-[180px_1fr_180px_auto]'
-            >
-              <SelectSimple
-                variant='subtle'
-                size='sm'
-                value={rule.appField}
-                onValueChange={(value: string): void =>
-                  updateRule(rule.id, { appField: value as ProductSyncAppField })
-                }
-                options={appFieldOptions}
-                triggerClassName='w-full'
-               ariaLabel='Select option' title='Select option'/>
+            <div key={rule.id} className='space-y-2 rounded-md border border-border/60 bg-card/40 p-2'>
+              <div className='grid gap-2 md:grid-cols-[180px_1fr_180px_auto]'>
+                <SelectSimple
+                  variant='subtle'
+                  size='sm'
+                  value={rule.appField}
+                  onValueChange={(value: string): void => handleAppFieldChange(rule, value)}
+                  options={getAppFieldOptionsForRule(rule.id, rule.appField)}
+                  triggerClassName='w-full'
+                  ariaLabel={`App field for sync rule ${rule.id}`}
+                  title={`App field for ${appFieldLabel(rule.appField)}`}
+                />
 
-              <Input
-                variant='subtle'
-                size='sm'
-                value={rule.baseField}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateRule(rule.id, { baseField: event.target.value })
-                }
-                placeholder='Base field path (e.g. text_fields.name)'
-               aria-label='Base field path (e.g. text_fields.name)' title='Base field path (e.g. text_fields.name)'/>
+                <SelectSimple
+                  variant='subtle'
+                  size='sm'
+                  value={
+                    customBaseFieldRuleIds.has(rule.id) ||
+                    !isKnownBaseFieldForRule(rule)
+                      ? CUSTOM_BASE_FIELD_OPTION_VALUE
+                      : rule.baseField
+                  }
+                  onValueChange={(value: string): void => handleBaseFieldSelectChange(rule, value)}
+                  options={buildBaseFieldOptions({
+                    knownOptions: getKnownBaseFieldOptions(rule.appField),
+                    customHints: PRODUCT_SYNC_BASE_FIELD_PATTERN_HINTS_BY_APP_FIELD[rule.appField],
+                    currentValue: rule.baseField,
+                    isCustomMode:
+                      customBaseFieldRuleIds.has(rule.id) || !isKnownBaseFieldForRule(rule),
+                  })}
+                  triggerClassName='w-full'
+                  ariaLabel={`Base field for ${appFieldLabel(rule.appField)}`}
+                  title={`Base field for ${appFieldLabel(rule.appField)}`}
+                />
 
-              <SelectSimple
-                variant='subtle'
-                size='sm'
-                value={rule.direction}
-                onValueChange={(value: string): void =>
-                  updateRule(rule.id, { direction: value as ProductSyncDirection })
-                }
-                options={directionOptions}
-                triggerClassName='w-full'
-               ariaLabel='Select option' title='Select option'/>
+                <SelectSimple
+                  variant='subtle'
+                  size='sm'
+                  value={rule.direction}
+                  onValueChange={(value: string): void =>
+                    updateRule(rule.id, { direction: value as ProductSyncDirection })
+                  }
+                  options={directionOptions}
+                  triggerClassName='w-full'
+                  ariaLabel={`Direction for ${appFieldLabel(rule.appField)}`}
+                  title={`Direction for ${appFieldLabel(rule.appField)}`}
+                />
 
-              <Button
-                type='button'
-                size='icon'
-                variant='ghost'
-                onClick={(): void => removeRule(rule.id)}
-                disabled={draft.fieldRules.length <= 1}
-                aria-label='Remove synchronization rule'
-                title='Remove synchronization rule'
-              >
-                <Trash2 className='size-4' />
-              </Button>
+                <Button
+                  type='button'
+                  size='icon'
+                  variant='ghost'
+                  onClick={(): void => removeRule(rule.id)}
+                  disabled={draft.fieldRules.length <= 1}
+                  aria-label='Remove synchronization rule'
+                  title='Remove synchronization rule'
+                >
+                  <Trash2 className='size-4' />
+                </Button>
+              </div>
+
+              {(customBaseFieldRuleIds.has(rule.id) ||
+                !isKnownBaseFieldForRule(rule)) && (
+                <div className='grid gap-2 md:grid-cols-[180px_1fr_180px_auto]'>
+                  <div className='hidden md:block' />
+                  <div className='space-y-1 md:col-span-2'>
+                    <Input
+                      variant='subtle'
+                      size='sm'
+                      value={rule.baseField}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateRule(rule.id, { baseField: event.target.value })
+                      }
+                      placeholder='Custom Base field path'
+                      aria-label={`Custom Base field path for ${appFieldLabel(rule.appField)}`}
+                      title={`Custom Base field path for ${appFieldLabel(rule.appField)}`}
+                    />
+                    {PRODUCT_SYNC_BASE_FIELD_PATTERN_HINTS_BY_APP_FIELD[rule.appField].length > 0 && (
+                      <p className='px-1 text-[11px] text-gray-500'>
+                        Common patterns:{' '}
+                        {PRODUCT_SYNC_BASE_FIELD_PATTERN_HINTS_BY_APP_FIELD[rule.appField].map(
+                          (hint, index) => (
+                            <span key={hint.value}>
+                              {index > 0 ? ', ' : ''}
+                              <code className='rounded bg-black/20 px-1 py-0.5 text-[10px]'>
+                                {hint.value}
+                              </code>
+                            </span>
+                          )
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

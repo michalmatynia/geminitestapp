@@ -4,7 +4,7 @@ const removedLegacyDatabaseHandler: ProxyHandler<Record<string, never>> = {
       process.env['NODE_ENV'] === 'test' &&
       (prop === '$disconnect' || prop === '$connect' || prop === '$resetAll')
     ) {
-      return async (): Promise<void> => undefined;
+      return (): Promise<void> => Promise.resolve();
     }
     throw new Error('The legacy SQL client has been removed. The application is MongoDB-only.');
   },

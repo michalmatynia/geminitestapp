@@ -9,15 +9,20 @@ import { useAdminFilemakerMailPageState, type MailPageState } from './AdminFilem
 const {
   Context: MailPageContext,
   useStrictContext: useMailPageContext,
+  useOptionalContext: useOptionalMailPageContext,
 } = createStrictContext<MailPageState>({
   hookName: 'useMailPageContext',
   providerName: 'a MailPageProvider',
   displayName: 'MailPageContext',
 });
 
-export { useMailPageContext };
+export { useMailPageContext, useOptionalMailPageContext };
 
-export function MailPageProvider({ children }: { children: React.ReactNode }) {
+export function MailPageProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const state = useAdminFilemakerMailPageState();
   return (
     <MailPageContext.Provider value={state}>

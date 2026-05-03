@@ -1,3 +1,10 @@
+// ProductListRowRuntimeStore: external, lightweight snapshot store used by
+// row-level consumers. It composes badge ID sets, badge-status maps, queued
+// product IDs and run-status maps into per-row snapshots. Snapshots are cached
+// and shallow-compared using specialized equality helpers so that
+// useSyncExternalStore consumers only re-render when a meaningful change
+// occurs. The store exposes subscribe/getSnapshot/setState for external use by
+// the ProductListProvider.
 import type { ProductListContextType, ProductListRowRuntimeContextType } from '../ProductListContext.types';
 import { resolveProductAiRunFeedbackForList } from '@/features/products/lib/product-ai-run-feedback';
 
@@ -9,8 +16,13 @@ export type ProductListRowRuntimeStoreState = Pick<
   | 'traderaBadgeStatuses'
   | 'playwrightProgrammableBadgeIds'
   | 'playwrightProgrammableBadgeStatuses'
+  | 'vintedBadgeIds'
+  | 'vintedBadgeStatuses'
+  | 'scrapedSourceBadgeIds'
+  | 'scrapedSourceBadgeStatuses'
   | 'queuedProductIds'
   | 'productAiRunStatusByProductId'
+  | 'productScanRunStatusByProductId'
 >;
 
 export type ProductListRowRuntimeStore = {
@@ -27,9 +39,14 @@ export const EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT: ProductListRowRuntimeConte
   integrationStatus: 'not_started',
   showTraderaBadge: false,
   traderaStatus: 'not_started',
+  showVintedBadge: false,
+  vintedStatus: 'not_started',
+  showScrapedSourceBadge: false,
+  scrapedSourceStatus: 'not_started',
   showPlaywrightProgrammableBadge: false,
   playwrightProgrammableStatus: 'not_started',
   productAiRunFeedback: null,
+  productScanRunFeedback: null,
 });
 
 const areProductAiRunFeedbacksEqual = (
@@ -37,42 +54,111 @@ const areProductAiRunFeedbacksEqual = (
   right: ProductListRowRuntimeContextType['productAiRunFeedback']
 ): boolean => {
   if (left === right) return true;
-  if (!left || !right) return false;
+  if (left === null) return false;
+  if (right === null) return false;
 
-  return (
-    left.runId === right.runId &&
-    left.status === right.status &&
-    left.updatedAt === right.updatedAt &&
-    left.label === right.label &&
-    left.variant === right.variant &&
-    left.badgeClassName === right.badgeClassName
-  );
+  return [
+    left.runId === right.runId,
+    left.status === right.status,
+    left.updatedAt === right.updatedAt,
+    left.label === right.label,
+    left.variant === right.variant,
+    left.badgeClassName === right.badgeClassName,
+  ].every((isEqual) => isEqual);
+};
+
+const areProductScanRunFeedbacksEqual = (
+  left: ProductListRowRuntimeContextType['productScanRunFeedback'],
+  right: ProductListRowRuntimeContextType['productScanRunFeedback']
+): boolean => {
+  if (left === right) return true;
+  if (left === null) return false;
+  if (right === null) return false;
+
+  return [
+    left.scanId === right.scanId,
+    left.status === right.status,
+    left.updatedAt === right.updatedAt,
+    left.label === right.label,
+    left.variant === right.variant,
+    left.badgeClassName === right.badgeClassName,
+  ].every((isEqual) => isEqual);
 };
 
 const areProductListRowRuntimeSnapshotsEqual = (
   left: ProductListRowRuntimeContextType,
   right: ProductListRowRuntimeContextType
 ): boolean =>
-  left.showMarketplaceBadge === right.showMarketplaceBadge &&
-  left.integrationStatus === right.integrationStatus &&
-  left.showTraderaBadge === right.showTraderaBadge &&
-  left.traderaStatus === right.traderaStatus &&
-  left.showPlaywrightProgrammableBadge === right.showPlaywrightProgrammableBadge &&
-  left.playwrightProgrammableStatus === right.playwrightProgrammableStatus &&
-  areProductAiRunFeedbacksEqual(left.productAiRunFeedback, right.productAiRunFeedback);
+  [
+    left.showMarketplaceBadge === right.showMarketplaceBadge,
+    left.integrationStatus === right.integrationStatus,
+    left.showTraderaBadge === right.showTraderaBadge,
+    left.traderaStatus === right.traderaStatus,
+    left.showVintedBadge === right.showVintedBadge,
+    left.vintedStatus === right.vintedStatus,
+    left.showScrapedSourceBadge === right.showScrapedSourceBadge,
+    left.scrapedSourceStatus === right.scrapedSourceStatus,
+    left.showPlaywrightProgrammableBadge === right.showPlaywrightProgrammableBadge,
+    left.playwrightProgrammableStatus === right.playwrightProgrammableStatus,
+    areProductAiRunFeedbacksEqual(left.productAiRunFeedback, right.productAiRunFeedback),
+    areProductScanRunFeedbacksEqual(left.productScanRunFeedback, right.productScanRunFeedback),
+  ].every((isEqual) => isEqual);
 
 const areProductListRowRuntimeStoreStatesEqual = (
   left: ProductListRowRuntimeStoreState,
   right: ProductListRowRuntimeStoreState
 ): boolean =>
-  left.integrationBadgeIds === right.integrationBadgeIds &&
-  left.integrationBadgeStatuses === right.integrationBadgeStatuses &&
-  left.traderaBadgeIds === right.traderaBadgeIds &&
-  left.traderaBadgeStatuses === right.traderaBadgeStatuses &&
-  left.playwrightProgrammableBadgeIds === right.playwrightProgrammableBadgeIds &&
-  left.playwrightProgrammableBadgeStatuses === right.playwrightProgrammableBadgeStatuses &&
-  left.queuedProductIds === right.queuedProductIds &&
-  left.productAiRunStatusByProductId === right.productAiRunStatusByProductId;
+  [
+    left.integrationBadgeIds === right.integrationBadgeIds,
+    left.integrationBadgeStatuses === right.integrationBadgeStatuses,
+    left.traderaBadgeIds === right.traderaBadgeIds,
+    left.traderaBadgeStatuses === right.traderaBadgeStatuses,
+    left.vintedBadgeIds === right.vintedBadgeIds,
+    left.vintedBadgeStatuses === right.vintedBadgeStatuses,
+    left.scrapedSourceBadgeIds === right.scrapedSourceBadgeIds,
+    left.scrapedSourceBadgeStatuses === right.scrapedSourceBadgeStatuses,
+    left.playwrightProgrammableBadgeIds === right.playwrightProgrammableBadgeIds,
+    left.playwrightProgrammableBadgeStatuses === right.playwrightProgrammableBadgeStatuses,
+    left.queuedProductIds === right.queuedProductIds,
+    left.productAiRunStatusByProductId === right.productAiRunStatusByProductId,
+    left.productScanRunStatusByProductId === right.productScanRunStatusByProductId,
+  ].every((isEqual) => isEqual);
+
+const resolveRowRuntimeStatus = (
+  statuses: ReadonlyMap<string, string>,
+  productId: string
+): string => statuses.get(productId) ?? 'not_started';
+
+const resolveProductScanRunFeedback = (
+  state: ProductListRowRuntimeStoreState,
+  productId: string
+): ProductListRowRuntimeContextType['productScanRunFeedback'] =>
+  state.productScanRunStatusByProductId?.get(productId) ?? null;
+
+const createProductListRowRuntimeSnapshot = (
+  state: ProductListRowRuntimeStoreState,
+  productId: string
+): ProductListRowRuntimeContextType => ({
+  showMarketplaceBadge: state.integrationBadgeIds.has(productId),
+  integrationStatus: resolveRowRuntimeStatus(state.integrationBadgeStatuses, productId),
+  showTraderaBadge: state.traderaBadgeIds.has(productId),
+  traderaStatus: resolveRowRuntimeStatus(state.traderaBadgeStatuses, productId),
+  showVintedBadge: state.vintedBadgeIds.has(productId),
+  vintedStatus: resolveRowRuntimeStatus(state.vintedBadgeStatuses, productId),
+  showScrapedSourceBadge: state.scrapedSourceBadgeIds.has(productId),
+  scrapedSourceStatus: resolveRowRuntimeStatus(state.scrapedSourceBadgeStatuses, productId),
+  showPlaywrightProgrammableBadge: state.playwrightProgrammableBadgeIds.has(productId),
+  playwrightProgrammableStatus: resolveRowRuntimeStatus(
+    state.playwrightProgrammableBadgeStatuses,
+    productId
+  ),
+  productAiRunFeedback: resolveProductAiRunFeedbackForList({
+    productId,
+    queuedProductIds: state.queuedProductIds,
+    productAiRunStatusByProductId: state.productAiRunStatusByProductId,
+  }),
+  productScanRunFeedback: resolveProductScanRunFeedback(state, productId),
+});
 
 export const createProductListRowRuntimeStore = (
   initialState: ProductListRowRuntimeStoreState
@@ -90,33 +176,13 @@ export const createProductListRowRuntimeStore = (
     },
     getSnapshot: (
       productId: string,
-      baseProductId: string | null | undefined
+      _baseProductId: string | null | undefined
     ): ProductListRowRuntimeContextType => {
-      if (!productId) return EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT;
+      if (productId.length === 0) return EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT;
 
-      const normalizedBaseProductId =
-        typeof baseProductId === 'string' && baseProductId.trim().length > 0
-          ? baseProductId.trim()
-          : '';
-      const cacheKey = `${productId}::${normalizedBaseProductId}`;
+      const cacheKey = productId;
 
-      const nextSnapshot: ProductListRowRuntimeContextType = {
-        showMarketplaceBadge:
-          state.integrationBadgeIds.has(productId) || normalizedBaseProductId.length > 0,
-        integrationStatus:
-          state.integrationBadgeStatuses.get(productId) ??
-          (normalizedBaseProductId.length > 0 ? 'active' : 'not_started'),
-        showTraderaBadge: state.traderaBadgeIds.has(productId),
-        traderaStatus: state.traderaBadgeStatuses.get(productId) ?? 'not_started',
-        showPlaywrightProgrammableBadge: state.playwrightProgrammableBadgeIds.has(productId),
-        playwrightProgrammableStatus:
-          state.playwrightProgrammableBadgeStatuses.get(productId) ?? 'not_started',
-        productAiRunFeedback: resolveProductAiRunFeedbackForList({
-          productId,
-          queuedProductIds: state.queuedProductIds,
-          productAiRunStatusByProductId: state.productAiRunStatusByProductId,
-        }),
-      };
+      const nextSnapshot = createProductListRowRuntimeSnapshot(state, productId);
 
       const cachedSnapshot = snapshotCache.get(cacheKey);
       if (cachedSnapshot && areProductListRowRuntimeSnapshotsEqual(cachedSnapshot, nextSnapshot)) {

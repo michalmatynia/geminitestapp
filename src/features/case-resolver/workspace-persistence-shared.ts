@@ -27,7 +27,7 @@ export const readWorkspaceFromSettingRecord = (
   fallback: string
 ): CaseResolverWorkspace => {
   const rawValue = typeof record?.value === 'string' ? record.value : fallback;
-  if (!rawValue.trim()) {
+  if (rawValue.trim().length === 0) {
     return safeParseCaseResolverWorkspace(fallback);
   }
   return safeParseCaseResolverWorkspace(rawValue);

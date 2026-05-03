@@ -40,7 +40,7 @@ vi.mock('@/features/ai/insights/server', () => ({
   listAiInsights: listAiInsightsMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('brain operations overview handler', () => {
   beforeEach(() => {
@@ -124,11 +124,11 @@ describe('brain operations overview handler', () => {
   });
 
   it('returns a payload that matches the operations overview contract', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new Request('http://localhost/api/brain/operations/overview') as Parameters<
-        typeof GET_handler
+        typeof getHandler
       >[0],
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -146,11 +146,11 @@ describe('brain operations overview handler', () => {
   it('returns partial success with unknown domain when one collector fails', async () => {
     chatbotFindAllMock.mockRejectedValue(new Error('chatbot collector failed'));
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new Request('http://localhost/api/brain/operations/overview') as Parameters<
-        typeof GET_handler
+        typeof getHandler
       >[0],
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -195,11 +195,11 @@ describe('brain operations overview handler', () => {
       },
     });
 
-    const warningResponse = await GET_handler(
+    const warningResponse = await getHandler(
       new Request('http://localhost/api/brain/operations/overview') as Parameters<
-        typeof GET_handler
+        typeof getHandler
       >[0],
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
     const warningPayload = (await warningResponse.json()) as {
       domains: { ai_paths: { state: string } };
@@ -229,11 +229,11 @@ describe('brain operations overview handler', () => {
       },
     });
 
-    const criticalResponse = await GET_handler(
+    const criticalResponse = await getHandler(
       new Request('http://localhost/api/brain/operations/overview') as Parameters<
-        typeof GET_handler
+        typeof getHandler
       >[0],
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
     const criticalPayload = (await criticalResponse.json()) as {
       domains: { ai_paths: { state: string } };
@@ -265,11 +265,11 @@ describe('brain operations overview handler', () => {
       },
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new Request('http://localhost/api/brain/operations/overview') as Parameters<
-        typeof GET_handler
+        typeof getHandler
       >[0],
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -313,11 +313,11 @@ describe('brain operations overview handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new Request('http://localhost/api/brain/operations/overview') as Parameters<
-        typeof GET_handler
+        typeof getHandler
       >[0],
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -392,11 +392,11 @@ describe('brain operations overview handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new Request('http://localhost/api/brain/operations/overview?range=15m') as Parameters<
-        typeof GET_handler
+        typeof getHandler
       >[0],
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -455,11 +455,11 @@ describe('brain operations overview handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new Request('http://localhost/api/brain/operations/overview?range=15m') as Parameters<
-        typeof GET_handler
+        typeof getHandler
       >[0],
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   assertAiPathRunAccess,
@@ -27,7 +27,7 @@ const parseRunId = (params: { runId: string }): string => {
   return parsed.data.runId;
 };
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
@@ -36,9 +36,9 @@ export async function GET_handler(
   const runId = parseRunId(params);
   const repoSelection = await resolvePathRunRepository();
   const repo = repoSelection.repo;
-  let readProvider = repoSelection.provider;
+  const readProvider = repoSelection.provider;
   const readMode = 'selected' as const;
-  let run = await repo.findRunById(runId);
+  const run = await repo.findRunById(runId);
   if (run === null) {
     throw notFoundError('Run not found', { runId });
   }
@@ -96,7 +96,7 @@ export async function GET_handler(
   );
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }

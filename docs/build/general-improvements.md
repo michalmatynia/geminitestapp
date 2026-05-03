@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-10'
 status: 'active'
 doc_type: 'runbook'
 scope: 'repository'
@@ -14,6 +14,9 @@ This repository now exposes one repo-owned orchestration layer for broad improve
 ## Purpose
 
 Use these commands when the goal is not one narrow repair, but a structured improvement sweep across:
+- UI consolidation
+- application performance baselines
+- testing-system health
 - product data integrity
 - repo quality baselines
 - recovery planning
@@ -31,7 +34,9 @@ The initial orchestration is intentionally conservative:
 - `npm run improvements:dry-run`
 - `npm run improvements:apply`
 - `npm run improvements:read-only`
+- `npm run improvements:application`
 - `npm run improvements:products`
+- `npm run improvements:refresh-docs`
 
 All commands are backed by:
 - [run-general-improvement-operations.ts](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/scripts/db/run-general-improvement-operations.ts)
@@ -41,6 +46,9 @@ All commands are backed by:
 ## Tracks
 
 Current tracks:
+- `ui-consolidation`
+- `application-performance`
+- `testing-quality-baseline`
 - `products-parameter-integrity`
 - `products-category-schema-normalization`
 - `repo-quality-baseline`
@@ -56,6 +64,7 @@ npm run improvements:audit -- --track products-parameter-integrity
 npm run improvements:classify -- --track repo-quality-baseline
 npm run improvements:plan -- --track products-parameter-integrity,repo-quality-baseline
 npm run improvements:read-only
+npm run improvements:application
 npm run improvements:products
 ```
 
@@ -66,16 +75,36 @@ npm run improvements:products
   - `audit`
   - `classify`
   - `plan`
+- defaults to the manifest-selected broad portfolio:
+  - `ui-consolidation`
+  - `application-performance`
+  - `products-parameter-integrity`
+  - `products-category-schema-normalization`
+  - `repo-quality-baseline`
 - writes `artifacts/improvements/read-only-batch-report.json`
+- continues through all read-only phases even if an earlier phase fails, then
+  exits non-cleanly after writing the full batch report
+
+`improvements:application`
+- runs the same read-only sequence
+- scopes to:
+  - `ui-consolidation`
+  - `application-performance`
+  - `testing-quality-baseline`
+  - `repo-quality-baseline`
+- this is the default non-data application operations bundle
+- like `improvements:read-only`, it keeps collecting later read-only phases even
+  when audit or classify surfaces failures
 
 `improvements:products`
 - runs the same read-only sequence
 - scopes to:
   - `products-parameter-integrity`
   - `products-category-schema-normalization`
-- this is the default broad entrypoint for product integrity and recovery planning work
+- this is the product integrity and recovery planning bundle
 
-Both batch entrypoints accept `--report <path>` if you need to write the batch summary somewhere other than `artifacts/improvements/read-only-batch-report.json`.
+The batch entrypoints accept `--report <path>` if you need to write the batch
+summary somewhere other than `artifacts/improvements/read-only-batch-report.json`.
 
 ## Phase semantics
 
@@ -109,6 +138,10 @@ Each phase writes a machine-readable report under:
 - `artifacts/improvements/dry-run-report.json`
 - `artifacts/improvements/apply-report.json`
 
+The runners also refresh the canonical docs hub under:
+- [`docs/build/improvements/README.md`](./improvements/README.md)
+- [`docs/build/improvements/scan-latest.md`](./improvements/scan-latest.md)
+
 Each report records:
 - selected tracks
 - phase
@@ -124,6 +157,38 @@ Status values today are:
 - `failed`
 - `manual`
 - `blocked-by-write-policy`
+
+## Improvement docs hub
+
+The improvement portfolio now has the same stable instruction-plus-scan shape as
+`docs/ui-consolidation`, but in a canonical shared location:
+
+- top-level hub:
+  [`docs/build/improvements/README.md`](./improvements/README.md)
+- generated portfolio scan:
+  [`docs/build/improvements/scan-latest.md`](./improvements/scan-latest.md)
+- per-track instruction and scan directories under:
+  [`docs/build/improvements/`](./improvements/README.md)
+
+Use `npm run improvements:refresh-docs` if you need to regenerate the hub from
+the latest improvement reports without running a new phase.
+
+## UI and application tracks
+
+`ui-consolidation` adds the existing cross-feature UI convergence guardrail to
+the shared improvement manifest. Its authoritative scan surface stays under
+[`docs/ui-consolidation/README.md`](../ui-consolidation/README.md) while the
+improvement hub mirrors the latest track-level view.
+
+`application-performance` adds the app performance operations lane so broad
+improvement passes include:
+- fast regression gates
+- baseline performance snapshots
+- route hotspot follow-up surfaces
+
+`testing-quality-baseline` is available as an application-focused optional track
+when you want the same portfolio workflow to include testing inventory and
+quality drift.
 
 ## Current product-integrity flow
 

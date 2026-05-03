@@ -1,4 +1,6 @@
-const productFormImport = (): Promise<typeof import('./ProductForm')> => import('./ProductForm');
+import type * as ProductFormModule from './ProductForm';
+
+const productFormImport = (): Promise<typeof ProductFormModule> => import('./ProductForm');
 
 let productFormPreloaded = false;
 

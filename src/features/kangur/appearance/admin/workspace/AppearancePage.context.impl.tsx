@@ -30,7 +30,7 @@ import {
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 import {
-  AppearanceSlot,
+  type AppearanceSlot,
   BUILTIN_DAILY_ID,
   BUILTIN_DAWN_ID,
   BUILTIN_SUNSET_ID,
@@ -43,7 +43,7 @@ import {
   PRESET_NIGHTLY_CRYSTAL_ID,
   KANGUR_SLOT_ASSIGNMENTS_KEY,
   parseSlotAssignments,
-  ThemeSelectionId,
+  type ThemeSelectionId,
 } from './AppearancePage.constants';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import { withKangurClientError } from '@/features/kangur/observability/client';

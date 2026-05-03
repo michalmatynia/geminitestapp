@@ -5,14 +5,14 @@ const {
   getConnectionByIdMock,
   getIntegrationByIdMock,
   getProductByIdMock,
-  runPlaywrightListingScriptMock,
+  runPlaywrightProgrammableListingForConnectionMock,
   captureExceptionMock,
 } = vi.hoisted(() => ({
   findProductListingByIdAcrossProvidersMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
   getProductByIdMock: vi.fn(),
-  runPlaywrightListingScriptMock: vi.fn(),
+  runPlaywrightProgrammableListingForConnectionMock: vi.fn(),
   captureExceptionMock: vi.fn(),
 }));
 
@@ -31,10 +31,17 @@ vi.mock('@/shared/lib/products/services/product-repository', () => ({
   }),
 }));
 
-vi.mock('./playwright-listing/runner', () => ({
-  runPlaywrightListingScript: (...args: unknown[]) =>
-    runPlaywrightListingScriptMock(...args) as Promise<unknown>,
-}));
+vi.mock('@/features/playwright/server', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/features/playwright/server')>(
+      '@/features/playwright/server'
+    );
+  return {
+    ...actual,
+    runPlaywrightProgrammableListingForConnection: (...args: unknown[]) =>
+      runPlaywrightProgrammableListingForConnectionMock(...args) as Promise<unknown>,
+  };
+});
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
@@ -43,6 +50,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
 }));
 
 import {
+  buildPlaywrightListingInput,
   processPlaywrightListingJob,
   runPlaywrightListing,
 } from './playwright-listing-service';
@@ -70,6 +78,44 @@ describe('playwright-listing-service', () => {
     });
   });
 
+  it('applies marketplace-specific alternate copy when building Playwright listing input', () => {
+    const input = buildPlaywrightListingInput({
+      product: {
+        id: 'product-1',
+        sku: 'SKU-1',
+        name_en: 'Example product',
+        description_en: 'Example description',
+        marketplaceContentOverrides: [
+          {
+            integrationIds: ['integration-1'],
+            title: 'Marketplace title',
+            description: 'Marketplace description',
+          },
+        ],
+        imageLinks: [],
+        images: [],
+      } as never,
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        username: null,
+        password: null,
+      } as never,
+    });
+
+    expect(input).toEqual(
+      expect.objectContaining({
+        title: 'Marketplace title',
+        description: 'Marketplace description',
+      })
+    );
+  });
+
   it('passes headed relist overrides into the Playwright runner', async () => {
     findProductListingByIdAcrossProvidersMock.mockResolvedValue({
       listing: {
@@ -79,7 +125,7 @@ describe('playwright-listing-service', () => {
         integrationId: 'integration-1',
       },
     });
-    runPlaywrightListingScriptMock.mockResolvedValue({
+    runPlaywrightProgrammableListingForConnectionMock.mockResolvedValue({
       runId: 'run-1',
       externalListingId: 'external-1',
       listingUrl: 'https://example.com/listing/1',
@@ -97,7 +143,7 @@ describe('playwright-listing-service', () => {
       browserMode: 'headed',
     });
 
-    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+    expect(runPlaywrightProgrammableListingForConnectionMock).toHaveBeenCalledWith(
       expect.objectContaining({
         connection: expect.objectContaining({ id: 'connection-1' }),
         browserMode: 'headed',
@@ -138,7 +184,7 @@ describe('playwright-listing-service', () => {
         appendExportHistory: (...args: unknown[]) => appendExportHistoryMock(...args),
       },
     });
-    runPlaywrightListingScriptMock.mockResolvedValue({
+    runPlaywrightProgrammableListingForConnectionMock.mockResolvedValue({
       runId: 'run-1',
       externalListingId: 'external-1',
       listingUrl: 'https://example.com/listing/1',
@@ -221,7 +267,7 @@ describe('playwright-listing-service', () => {
         appendExportHistory: (...args: unknown[]) => appendExportHistoryMock(...args),
       },
     });
-    runPlaywrightListingScriptMock.mockRejectedValue(new Error('selector missing'));
+    runPlaywrightProgrammableListingForConnectionMock.mockRejectedValue(new Error('selector missing'));
 
     await expect(
       processPlaywrightListingJob({

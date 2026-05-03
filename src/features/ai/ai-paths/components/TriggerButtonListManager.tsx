@@ -240,6 +240,25 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         ),
       },
       {
+        id: 'metadata',
+        header: 'Metadata',
+        cell: ({ row }) => {
+          const contextTemplate = row.original.contextTemplate;
+          const artifactKind =
+            contextTemplate &&
+            typeof contextTemplate === 'object' &&
+            !Array.isArray(contextTemplate) &&
+            typeof contextTemplate['jobApplicationArtifactKind'] === 'string'
+              ? contextTemplate['jobApplicationArtifactKind']
+              : null;
+          return artifactKind ? (
+            <StatusBadge status={artifactKind} variant='success' size='sm' />
+          ) : (
+            <span className='text-xs text-muted-foreground'>None</span>
+          );
+        },
+      },
+      {
         id: 'visibility',
         header: 'Visibility',
         cell: ({ row }) => (

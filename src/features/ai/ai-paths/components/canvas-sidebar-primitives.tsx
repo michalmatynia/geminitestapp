@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { formatRuntimeValue } from '@/shared/lib/ai-paths';
+import { formatRuntimeValue } from '@/shared/lib/ai-paths/core/utils';
 import { Card } from '@/shared/ui/primitives.public';
 import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { cn } from '@/shared/utils/ui-utils';
@@ -18,12 +18,16 @@ type CanvasSelectedWireMetaLineProps = {
   valueClassName: string;
 };
 
-type CanvasSelectedWireEndpointCardProps = {
-  title: string;
+type CanvasSelectedWireEndpointConfig = {
   nodeLabel: string;
   nodeType: string;
   portLabel: string;
   accentClassName: string;
+};
+
+type CanvasSelectedWireEndpointCardProps = {
+  title: string;
+  config: CanvasSelectedWireEndpointConfig;
 };
 
 type CanvasSelectedWireDataPaneProps = {
@@ -73,11 +77,10 @@ function CanvasSelectedWireMetaLine({
 
 export function CanvasSelectedWireEndpointCard({
   title,
-  nodeLabel,
-  nodeType,
-  portLabel,
-  accentClassName,
+  config,
 }: CanvasSelectedWireEndpointCardProps): React.JSX.Element {
+  const { nodeLabel, nodeType, portLabel, accentClassName } = config;
+
   return (
     <Card
       variant='subtle-compact'

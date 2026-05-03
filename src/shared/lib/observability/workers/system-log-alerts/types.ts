@@ -1,4 +1,9 @@
 import type {
+  AlertEvidenceContext,
+  AlertEvidenceContextRegistry,
+  AlertEvidenceSample,
+} from '@/shared/contracts/observability';
+import type {
   SchedulerQueueState,
   TypedSchedulerTickJobData,
 } from '@/shared/lib/queue/scheduler-queue-types';
@@ -6,36 +11,7 @@ import type { MongoSystemLogDoc } from '@/shared/lib/observability/system-log-ty
 
 export type SystemLogAlertsJobData = TypedSchedulerTickJobData<'alert-tick'>;
 
-export type { MongoSystemLogDoc };
-
-export type AlertEvidenceContextRegistry = {
-  refs: Array<{
-    id: string;
-    kind: string;
-    providerId?: string;
-    entityType?: string;
-  }>;
-  engineVersion: string | null;
-};
-
-export type AlertEvidenceSample = {
-  logId: string;
-  createdAt: string;
-  level: string;
-  source: string | null;
-  message: string;
-  fingerprint: string | null;
-  contextRegistry: AlertEvidenceContextRegistry | null;
-};
-
-export type AlertEvidenceContext = {
-  windowStart: string | null;
-  windowEnd: string;
-  matchedCount: number;
-  sampleSize: number;
-  samples: AlertEvidenceSample[];
-  lastObservedLog?: AlertEvidenceSample | null;
-};
+export type { MongoSystemLogDoc, AlertEvidenceContext, AlertEvidenceContextRegistry, AlertEvidenceSample };
 
 export type AlertEvidenceQuery = {
   level?: 'info' | 'warn' | 'error';

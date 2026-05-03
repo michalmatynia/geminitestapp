@@ -4,6 +4,7 @@ export { CanvasProvider } from './CanvasContext';
 export { PresetsProvider } from './PresetsContext';
 export { RunHistoryProvider } from './RunHistoryContext';
 export { GraphProvider } from './GraphContext';
+export { PathConfigProvider } from './PathConfigContext';
 export { RuntimeProvider } from './RuntimeContext';
 export { PersistenceProvider } from './PersistenceContext';
 export { AiPathsProvider } from './AiPathsProvider';
@@ -22,6 +23,9 @@ export { useRunHistoryState, useRunHistoryActions } from './RunHistoryContext';
 
 // Consumer Hooks - Graph
 export {
+  useGraphDataState,
+  useGraphActionsBase,
+  usePathMetadataState,
   useGraphState,
   useGraphActions,
 } from './GraphContext';
@@ -32,8 +36,18 @@ export {
   useActivePathConfig,
 } from './GraphContext.selectors';
 
+// Consumer Hooks - PathConfig
+export { usePathConfigState, usePathConfigActions } from './PathConfigContext';
+
 // Consumer Hooks - Runtime
-export { useRuntimeState, useRuntimeActions, useNodeRuntime } from './RuntimeContext';
+export {
+  useRuntimeState,
+  useRuntimeStatusState,
+  useRuntimeDataState,
+  useRuntimeUiState,
+  useRuntimeActions,
+  useNodeRuntime,
+} from './RuntimeContext';
 
 // Consumer Hooks - Persistence
 export { usePersistenceState, usePersistenceActions } from './PersistenceContext';
@@ -73,20 +87,32 @@ export type {
 // Types - Graph
 export type {
   GraphActions,
+  GraphDataState,
   GraphMutationMeta,
   GraphMutationReason,
   GraphMutationRecord,
+  PathMetadataState,
   GraphState,
 } from './GraphContext';
 
+// Types - PathConfig
+export type {
+  PathConfigState,
+  PathConfigActions,
+  PathConfigPatch,
+} from './PathConfigContext';
+
 // Types - Runtime
 export type {
+  RuntimeDataState,
   RuntimeStateData,
   RuntimeActions,
   LastErrorInfo,
+  RuntimeStatusState,
   RuntimeRunStatus,
   RuntimeControlHandlers,
   RuntimeNodeConfigHandlers,
+  RuntimeUiState,
 } from './RuntimeContext';
 
 // Types - Persistence

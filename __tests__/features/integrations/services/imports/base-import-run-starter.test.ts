@@ -10,7 +10,7 @@ import type { BaseImportRunRecord, BaseImportStartResponse } from '@/shared/cont
 const prepareBaseImportRunMock = vi.hoisted(() => vi.fn());
 const updateBaseImportRunQueueJobMock = vi.hoisted(() => vi.fn());
 const toStartResponseMock = vi.hoisted(() => vi.fn());
-const enqueueBaseImportRunJobMock = vi.hoisted(() => vi.fn());
+const dispatchBaseImportRunJobMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/integrations/services/imports/base-import-service', () => ({
   prepareBaseImportRun: prepareBaseImportRunMock,
@@ -19,7 +19,7 @@ vi.mock('@/features/integrations/services/imports/base-import-service', () => ({
 }));
 
 vi.mock('@/features/integrations/workers/baseImportQueue', () => ({
-  enqueueBaseImportRunJob: enqueueBaseImportRunJobMock,
+  dispatchBaseImportRunJob: dispatchBaseImportRunJobMock,
 }));
 
 const input = {
@@ -56,6 +56,7 @@ const buildRun = (overrides: Partial<BaseImportRunRecord> = {}): BaseImportRunRe
   },
   idempotencyKey: 'idem-1',
   queueJobId: null,
+  dispatchMode: null,
   preflight: {
     ok: true,
     issues: [],
@@ -87,36 +88,62 @@ describe('base-import-run-starter', () => {
         status: run.status,
         preflight: run.preflight,
         queueJobId: run.queueJobId ?? null,
+        dispatchMode: run.dispatchMode ?? null,
         summaryMessage: run.summaryMessage ?? null,
       })
     );
   });
 
-  it('enqueues queued runs with pending items and stores queue job id', async () => {
+  it('dispatches queued runs with pending items and stores queue job id and dispatchMode', async () => {
     const preparedRun = buildRun({ id: 'run-queued', status: 'queued' });
     const queuedRun = buildRun({
       id: 'run-queued',
       status: 'queued',
       queueJobId: 'queue-42',
+      dispatchMode: 'queued',
     });
 
     prepareBaseImportRunMock.mockResolvedValue(preparedRun);
-    enqueueBaseImportRunJobMock.mockResolvedValue('queue-42');
+    dispatchBaseImportRunJobMock.mockResolvedValue({ dispatchMode: 'queued', queueJobId: 'queue-42' });
     updateBaseImportRunQueueJobMock.mockResolvedValue(queuedRun);
 
     const result = await startBaseImportRun(input);
 
     expect(prepareBaseImportRunMock).toHaveBeenCalledWith(input);
-    expect(enqueueBaseImportRunJobMock).toHaveBeenCalledWith({
+    expect(dispatchBaseImportRunJobMock).toHaveBeenCalledWith({
       runId: 'run-queued',
       reason: 'start',
       statuses: ['pending'],
     });
-    expect(updateBaseImportRunQueueJobMock).toHaveBeenCalledWith('run-queued', 'queue-42');
+    expect(updateBaseImportRunQueueJobMock).toHaveBeenCalledWith('run-queued', 'queue-42', 'queued');
     expect(result).toEqual(queuedRun);
   });
 
-  it('does not enqueue runs when there is nothing to process', async () => {
+  it('dispatches inline when Redis is unavailable and records inline dispatchMode', async () => {
+    const preparedRun = buildRun({ id: 'run-inline', status: 'queued' });
+    const inlineRun = buildRun({
+      id: 'run-inline',
+      status: 'queued',
+      queueJobId: 'inline-1234567890',
+      dispatchMode: 'inline',
+    });
+
+    prepareBaseImportRunMock.mockResolvedValue(preparedRun);
+    dispatchBaseImportRunJobMock.mockResolvedValue({ dispatchMode: 'inline', queueJobId: 'inline-1234567890' });
+    updateBaseImportRunQueueJobMock.mockResolvedValue(inlineRun);
+
+    const result = await startBaseImportRun(input);
+
+    expect(dispatchBaseImportRunJobMock).toHaveBeenCalledWith({
+      runId: 'run-inline',
+      reason: 'start',
+      statuses: ['pending'],
+    });
+    expect(updateBaseImportRunQueueJobMock).toHaveBeenCalledWith('run-inline', 'inline-1234567890', 'inline');
+    expect(result).toEqual(inlineRun);
+  });
+
+  it('does not dispatch runs when there is nothing to process', async () => {
     const preparedRun = buildRun({
       id: 'run-empty',
       status: 'queued',
@@ -135,27 +162,29 @@ describe('base-import-run-starter', () => {
 
     const result = await startBaseImportRun(input);
 
-    expect(enqueueBaseImportRunJobMock).not.toHaveBeenCalled();
+    expect(dispatchBaseImportRunJobMock).not.toHaveBeenCalled();
     expect(updateBaseImportRunQueueJobMock).not.toHaveBeenCalled();
     expect(result).toEqual(preparedRun);
   });
 
-  it('builds API response from queued run result', async () => {
+  it('builds API response including dispatchMode from queued run', async () => {
     const preparedRun = buildRun({ id: 'run-for-response', status: 'queued' });
     const queuedRun = buildRun({
       id: 'run-for-response',
       status: 'queued',
       queueJobId: 'queue-99',
+      dispatchMode: 'queued',
     });
 
     prepareBaseImportRunMock.mockResolvedValue(preparedRun);
-    enqueueBaseImportRunJobMock.mockResolvedValue('queue-99');
+    dispatchBaseImportRunJobMock.mockResolvedValue({ dispatchMode: 'queued', queueJobId: 'queue-99' });
     updateBaseImportRunQueueJobMock.mockResolvedValue(queuedRun);
     toStartResponseMock.mockReturnValue({
       runId: 'run-for-response',
       status: 'queued',
       preflight: queuedRun.preflight,
       queueJobId: 'queue-99',
+      dispatchMode: 'queued',
       summaryMessage: null,
     });
 
@@ -167,7 +196,35 @@ describe('base-import-run-starter', () => {
       status: 'queued',
       preflight: queuedRun.preflight,
       queueJobId: 'queue-99',
+      dispatchMode: 'queued',
       summaryMessage: null,
     });
+  });
+
+  it('builds API response with inline dispatchMode when Redis unavailable', async () => {
+    const preparedRun = buildRun({ id: 'run-inline-response', status: 'queued' });
+    const inlineRun = buildRun({
+      id: 'run-inline-response',
+      status: 'queued',
+      queueJobId: 'inline-111',
+      dispatchMode: 'inline',
+    });
+
+    prepareBaseImportRunMock.mockResolvedValue(preparedRun);
+    dispatchBaseImportRunJobMock.mockResolvedValue({ dispatchMode: 'inline', queueJobId: 'inline-111' });
+    updateBaseImportRunQueueJobMock.mockResolvedValue(inlineRun);
+    toStartResponseMock.mockReturnValue({
+      runId: 'run-inline-response',
+      status: 'queued',
+      preflight: inlineRun.preflight,
+      queueJobId: 'inline-111',
+      dispatchMode: 'inline',
+      summaryMessage: null,
+    });
+
+    const response = await startBaseImportRunResponse(input);
+
+    expect(toStartResponseMock).toHaveBeenCalledWith(inlineRun);
+    expect(response.dispatchMode).toBe('inline');
   });
 });

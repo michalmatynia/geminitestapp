@@ -31,7 +31,7 @@ function Asset3DPreviewModalContent(): React.JSX.Element {
   const [modelError, setModelError] = useState<string | null>(null);
 
   // Validate asset exists and has valid file path
-  const isValidAsset = !!asset?.filepath && !!asset?.id;
+  const isValidAsset = Boolean(asset?.filepath) && Boolean(asset?.id);
   const modelUrl = isValidAsset ? `/api/assets3d/${asset.id}/file` : null;
 
   return (

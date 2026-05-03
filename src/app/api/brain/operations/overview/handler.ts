@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
@@ -65,7 +65,6 @@ const DOMAIN_CONFIG: Record<BrainOperationsDomainKey, DomainConfig> = {
     links: [
       { label: 'Queue', href: '/admin/ai-paths/queue' },
       { label: 'Canvas', href: '/admin/ai-paths' },
-      { label: 'Dead Letter', href: '/admin/ai-paths/dead-letter' },
     ],
   },
   chatbot: {
@@ -694,7 +693,7 @@ const collectImageStudioDomain = async (
   };
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const range = parseRangeFromRequest(req);
   const nowMs = Date.now();
   const windowBounds = resolveWindowBounds(range, nowMs);

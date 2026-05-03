@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-30'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,17 +8,17 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-30T15:09:28.917Z
+Generated at: 2026-04-15T09:38:15.453Z
 
 ## Summary
 
 - Status: PASSED
-- Total features: 27
-- Features with tests: 27
+- Total features: 24
+- Features with tests: 24
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 0
-- Total test files: 2961
+- Total test files: 3584
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -27,33 +27,30 @@ Generated at: 2026-03-30T15:09:28.917Z
 
 | Feature | Test Files | Fast | E2E | Negative |
 | --- | ---: | ---: | ---: | ---: |
-| kangur | 971 | 951 | 20 | 177 |
-| ai | 317 | 317 | 0 | 110 |
-| products | 119 | 111 | 8 | 32 |
-| case-resolver | 81 | 80 | 1 | 34 |
-| cms | 77 | 76 | 1 | 16 |
-| integrations | 57 | 56 | 1 | 18 |
-| prompt-exploder | 46 | 46 | 0 | 23 |
-| foldertree | 28 | 26 | 2 | 7 |
-| observability | 27 | 26 | 1 | 4 |
-| filemaker | 21 | 21 | 0 | 6 |
-| admin | 20 | 17 | 3 | 4 |
-| database | 14 | 13 | 1 | 8 |
-| auth | 13 | 13 | 0 | 7 |
-| notesapp | 13 | 11 | 2 | 4 |
-| viewer3d | 9 | 8 | 1 | 3 |
+| kangur | 948 | 928 | 20 | 181 |
+| ai | 405 | 405 | 0 | 171 |
+| products | 204 | 196 | 8 | 76 |
+| integrations | 186 | 185 | 1 | 72 |
+| case-resolver | 94 | 93 | 1 | 42 |
+| cms | 85 | 84 | 1 | 21 |
+| prompt-exploder | 54 | 54 | 0 | 29 |
+| filemaker | 41 | 41 | 0 | 15 |
+| playwright | 35 | 35 | 0 | 18 |
+| admin | 26 | 23 | 3 | 4 |
+| database | 24 | 23 | 1 | 14 |
+| data-import-export | 18 | 17 | 1 | 4 |
+| notesapp | 18 | 16 | 2 | 6 |
+| auth | 17 | 17 | 0 | 8 |
+| files | 12 | 11 | 1 | 6 |
+| viewer3d | 12 | 11 | 1 | 5 |
+| prompt-engine | 9 | 9 | 0 | 3 |
+| drafter | 8 | 7 | 1 | 3 |
+| internationalization | 8 | 8 | 0 | 5 |
 | jobs | 7 | 7 | 0 | 3 |
-| data-import-export | 5 | 4 | 1 | 1 |
-| files | 5 | 4 | 1 | 2 |
-| internationalization | 5 | 5 | 0 | 4 |
-| prompt-engine | 5 | 5 | 0 | 1 |
-| document-editor | 4 | 4 | 0 | 1 |
-| drafter | 4 | 3 | 1 | 1 |
-| playwright | 3 | 3 | 0 | 3 |
-| app-embeds | 2 | 2 | 0 | 1 |
-| gsap | 2 | 2 | 0 | 1 |
-| product-sync | 2 | 2 | 0 | 2 |
-| tooltip-engine | 2 | 2 | 0 | 2 |
+| product-sync | 5 | 5 | 0 | 3 |
+| app-embeds | 3 | 3 | 0 | 1 |
+| gsap | 3 | 3 | 0 | 1 |
+| tooltip-engine | 3 | 3 | 0 | 2 |
 
 ## Rule Breakdown
 

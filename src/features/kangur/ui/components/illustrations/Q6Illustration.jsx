@@ -1,3 +1,4 @@
+ 
 export function Q6Illustration() {
   const cakes = [
     { emoji: '🍰', price: '1 zł', color: '#fde68a' },

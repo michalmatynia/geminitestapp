@@ -338,7 +338,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       const guidanceDelayMs = prefersReducedMotion
         ? 0
         : Math.max(220, Math.round(motionProfile.guidedAvatarTransition.duration * 1000));
-      selectionExplainTimeoutRef.current = window.setTimeout(() => {
+      selectionExplainTimeoutRef.current = safeSetTimeout(() => {
         selectionExplainTimeoutRef.current = null;
         setGuidedTutorTarget((current) => (isSectionGuidedTutorTarget(current) ? null : current));
         handleOpenChat('section_explain', {
@@ -398,11 +398,11 @@ export function useKangurAiTutorGuidedFlow(input: {
   const startGuidedSelectionExplanation = useCallback(
     (selectionText: string): void => {
       if (selectionExplainTimeoutRef.current !== null) {
-        window.clearTimeout(selectionExplainTimeoutRef.current);
+        safeClearTimeout(selectionExplainTimeoutRef.current);
         selectionExplainTimeoutRef.current = null;
       }
       if (selectionGuidanceRevealTimeoutRef.current !== null) {
-        window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+        safeClearTimeout(selectionGuidanceRevealTimeoutRef.current);
         selectionGuidanceRevealTimeoutRef.current = null;
       }
 
@@ -464,7 +464,7 @@ export function useKangurAiTutorGuidedFlow(input: {
       const revealDelayMs = prefersReducedMotion
         ? 0
         : Math.max(220, Math.round(motionProfile.guidedAvatarTransition.duration * 1000));
-      selectionGuidanceRevealTimeoutRef.current = window.setTimeout(() => {
+      selectionGuidanceRevealTimeoutRef.current = safeSetTimeout(() => {
         selectionGuidanceRevealTimeoutRef.current = null;
         setSelectionGuidanceCalloutVisibleText(selectionText);
       }, revealDelayMs);

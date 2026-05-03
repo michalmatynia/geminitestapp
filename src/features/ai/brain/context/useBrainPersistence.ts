@@ -198,10 +198,13 @@ export function useBrainPersistence({
         ai_paths: Boolean(parsedBrain.assignments.ai_paths),
         chatbot: Boolean(parsedBrain.assignments.chatbot),
         kangur_ai_tutor: Boolean(parsedBrain.assignments.kangur_ai_tutor),
+        kangur_social: Boolean(parsedBrain.assignments.kangur_social),
+        job_board: Boolean(parsedBrain.assignments.job_board),
         products: Boolean(parsedBrain.assignments.products),
         case_resolver: Boolean(parsedBrain.assignments.case_resolver),
         agent_runtime: Boolean(parsedBrain.assignments.agent_runtime),
         agent_teaching: Boolean(parsedBrain.assignments.agent_teaching),
+        playwright: Boolean(parsedBrain.assignments.playwright),
       });
 
       setOpenaiApiKey(map.get('openai_api_key') ?? '');

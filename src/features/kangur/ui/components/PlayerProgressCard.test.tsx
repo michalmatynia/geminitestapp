@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -142,7 +142,7 @@ describe('PlayerProgressCard', () => {
     expect(screen.queryByTestId('player-progress-badge-ten_games')).toBeNull();
   });
 
-  it('renders Mongo-backed progress copy when page-content is available', () => {
+  it('renders Mongo-backed progress copy when page-content is available', async () => {
     useKangurPageContentEntryMock.mockImplementation(() => ({
       entry: {
         id: 'game-home-progress',
@@ -157,7 +157,9 @@ describe('PlayerProgressCard', () => {
 
     render(<PlayerProgressCard progress={progress} />);
 
-    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Mongo postęp');
+    await waitFor(() => {
+      expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Mongo postęp');
+    });
     expect(screen.getByTestId('player-progress-copy')).toHaveTextContent(
       'Mongo opis sekcji postępu.'
     );

@@ -11,6 +11,7 @@ import { countryCodeOptions } from '@/shared/constants/internationalization';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useCountryForm } from './hooks/useCountryForm';
+import type { CodeNameDto } from '@/shared/contracts/base';
 import {
   buildCountryModalFields,
   buildCountryModalTitle,
@@ -18,7 +19,6 @@ import {
   resolveCountryModalDefaults,
   toggleSelectedCountryCurrencyIds,
 } from './CountryModal.helpers';
-import type { CountryFormState } from './CountryModal.helpers';
 
 export function CountryModal(): React.JSX.Element | null {
   const { isCountryModalOpen, activeCountry } = useInternationalizationUi();
@@ -52,7 +52,7 @@ export function CountryModal(): React.JSX.Element | null {
     onToggleCurrency: toggleCurrency,
   });
 
-  const handleChange = (values: Partial<CountryFormState>) => {
+  const handleChange = (values: Partial<CodeNameDto>): void => {
     setForm((prev) => resolveCountryFormChange(prev, values, countryCodeOptions));
   };
 

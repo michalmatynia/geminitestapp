@@ -1,0 +1,497 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "path_job_application_match_analysis_v1",
+    "version": 1,
+    "name": "Analyze Application Match",
+    "description": "Analyze how well the selected Person profile, CV records, and education match the prepared job application.",
+    "trigger": "Prepared Application Modal - Analyze Match",
+    "updatedAt": "2026-04-30T00:00:00.000Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": true,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-trigger-job-application-match-analysis",
+      "type": "trigger",
+      "title": "Trigger: Analyze Match",
+      "description": "Fire a prepared application match analysis from the Prepared application modal.",
+      "position": {
+        "x": 24,
+        "y": 240
+      },
+      "inputs": [],
+      "outputs": [
+        "trigger",
+        "triggerName"
+      ],
+      "config": {
+        "trigger": {
+          "event": "d0d04f1b-4514-4cc0-a8d6-75e8f26fd765",
+          "contextMode": "trigger_only"
+        }
+      }
+    },
+    {
+      "id": "node-fetcher-job-application-match-analysis",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve the job application context embedded by the modal.",
+      "position": {
+        "x": 240,
+        "y": 240
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "custom",
+          "entityId": ""
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-parser-job-application-match-analysis",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract prepared application, person, CV, education, job, organisation, and platform contexts.",
+      "position": {
+        "x": 500,
+        "y": 240
+      },
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
+      "outputs": [
+        "bundle",
+        "applicationRecord",
+        "personContext",
+        "jobContext",
+        "organizationContext",
+        "platformContext",
+        "analysisRequest",
+        "outputContract"
+      ],
+      "config": {
+        "parser": {
+          "mappings": {
+            "applicationRecord": "$.applicationContext.applicationRecord",
+            "personContext": "$.applicationContext.personContext",
+            "jobContext": "$.applicationContext.jobContext",
+            "organizationContext": "$.applicationContext.organizationContext",
+            "platformContext": "$.applicationContext.platformContext",
+            "analysisRequest": "$.applicationContext.analysisRequest",
+            "outputContract": "$.applicationContext.outputContract"
+          },
+          "outputMode": "bundle",
+          "presetId": "custom"
+        }
+      }
+    },
+    {
+      "id": "node-prompt-job-application-match-analysis",
+      "type": "prompt",
+      "title": "Application Match Analysis Prompt",
+      "description": "Build a grounded candidate-job match analysis prompt.",
+      "position": {
+        "x": 880,
+        "y": 240
+      },
+      "inputs": [
+        "bundle",
+        "context"
+      ],
+      "outputs": [
+        "prompt",
+        "images"
+      ],
+      "config": {
+        "prompt": {
+          "template": "You are an expert hiring-fit analyst. Analyze how well the current candidate matches the current job posting.\n\nUse ONLY the data provided in the bundle below. This workflow is analysis-only: do not rewrite the CV, cover letter, application email, job listing, person profile, or education data.\n\nPrepared application record JSON: {{bundle.applicationRecord}}\nNote: applicationRecord.updatedAt is the prepared-application timestamp being analyzed. previousMatchAnalysis and previousMatchAnalysisHistory, when present, describe earlier saved analyses for comparison.\nPerson profile, CV, education, and linked records JSON: {{bundle.personContext}}\nJob listing context JSON: {{bundle.jobContext}}\nOrganisation context JSON: {{bundle.organizationContext}}\nPlatform context JSON: {{bundle.platformContext}}\nAnalysis request JSON: {{bundle.analysisRequest}}\nOutput contract JSON: {{bundle.outputContract}}\n\nReturn ONLY valid JSON with this exact schema. No markdown fences and no commentary:\n{\"matchAnalysis\":{\"score\":0,\"scoreLabel\":\"\",\"summary\":\"\",\"changeSincePrevious\":\"\",\"recommendedDecision\":\"\",\"recommendedDecisionReason\":\"\",\"strongMatches\":[\"\"],\"gaps\":[\"\"],\"attentionAreas\":[{\"area\":\"\",\"whyItMatters\":\"\",\"recommendedAction\":\"\",\"evidence\":\"\"}],\"cvEvidence\":[\"\"],\"jobEvidence\":[\"\"],\"riskFlags\":[\"\"],\"interviewTalkingPoints\":[\"\"],\"learningPlan\":[\"\"]}}\n\nAnalysis rules:\n1. Score must be a number from 0 to 100, where 100 means an exceptionally strong evidence-backed match.\n2. scoreLabel must be one of: \"weak\", \"partial\", \"solid\", \"strong\", \"excellent\".\nScore calibration: 0-39 weak, 40-59 partial, 60-74 solid, 75-89 strong, 90-100 excellent. Penalize missing must-have requirements more than nice-to-have gaps.\n3. recommendedDecision must be one of: \"Apply now\", \"Prepare before applying\", \"Deprioritise or rebuild evidence\". recommendedDecisionReason must explain the decision in practical terms.\n4. Compare the whole job posting: title, responsibilities, requirements, technologies, salary/seniority/location/work mode, lexicon terms, and scraped free-text fields.\n5. Compare the whole candidate context: current person profile, professional summary, job experience, education, languages, linked records, and all CV records included in personContext.cvs.\n6. Ground every claim in the provided context. Never invent missing experience, education, technologies, languages, certifications, years, employers, achievements, or job requirements.\n7. strongMatches should list the best evidence-backed alignment points.\n8. gaps should list concrete mismatches or weakly evidenced requirements.\n9. attentionAreas should explain what the candidate should improve, rewrite, learn, prepare, or clarify to increase their chance of getting the job.\n10. cvEvidence should quote or paraphrase the candidate-side evidence you used.\n11. jobEvidence should quote or paraphrase the job-side evidence you used.\n12. riskFlags should identify risks such as missing must-have technology, unclear seniority, missing cloud/data proof, location/work-mode mismatch, or weak domain evidence.\n13. interviewTalkingPoints should be practical points the candidate can use in screening/interviews.\n14. learningPlan should be a concise, prioritized preparation plan.\n15. Return at least one item in strongMatches, gaps, attentionAreas, cvEvidence, jobEvidence, riskFlags, interviewTalkingPoints, and learningPlan. If no real issue exists, use a short grounded note saying so.\n16. Treat education as first-class evidence. Consider field of study, degree level, country/institution, and whether the education supports the role requirements.\n17. Keep the output diagnostic and practical. The result should tell the candidate how good the match is and what needs attention before applying or interviewing.\n18. Keep reruns comparable. Use the same scoring calibration and evidence standard each time, so score changes reflect changed context or stronger/weaker evidence rather than style drift.\n19. If applicationRecord.previousMatchAnalysis is present, changeSincePrevious should explain the most important score/evidence/action difference from the previous saved analysis. If there is no previous analysis, set changeSincePrevious to \"Initial analysis\".\n20. When comparing with previous analysis, consider applicationRecord.updatedAt and previousMatchAnalysisUpdatedAt only as traceability metadata. Do not penalize the candidate for timestamp changes alone."
+        }
+      }
+    },
+    {
+      "id": "node-model-job-application-match-analysis",
+      "type": "model",
+      "title": "Match Analysis Model",
+      "description": "Analyze candidate fit against the prepared application.",
+      "position": {
+        "x": 1280,
+        "y": 240
+      },
+      "inputs": [
+        "prompt",
+        "images",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "config": {
+        "model": {
+          "temperature": 0.15,
+          "maxTokens": 2600,
+          "vision": false,
+          "waitForResult": true,
+          "modelId": ""
+        }
+      }
+    },
+    {
+      "id": "node-regex-job-application-match-analysis",
+      "type": "regex",
+      "title": "Regex JSON Extract",
+      "description": "Parse the application package JSON response.",
+      "position": {
+        "x": 1660,
+        "y": 240
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "config": {
+        "regex": {
+          "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      }
+    },
+    {
+      "id": "node-db-insert-application-job-application-match-analysis",
+      "type": "database",
+      "title": "Persist Application Match Analysis",
+      "description": "Save the generated candidate-job match analysis on the prepared application.",
+      "position": {
+        "x": 2040,
+        "y": 392
+      },
+      "inputs": [
+        "value",
+        "context",
+        "entityId"
+      ],
+      "outputs": [
+        "result",
+        "bundle"
+      ],
+      "config": {
+        "database": {
+          "operation": "update",
+          "entityType": "filemaker_job_application",
+          "mode": "replace",
+          "useMongoActions": true,
+          "actionCategory": "update",
+          "action": "updateOne",
+          "query": {
+            "provider": "mongodb",
+            "collection": "filemaker_job_applications",
+            "mode": "custom",
+            "preset": "by_id",
+            "field": "id",
+            "idType": "string",
+            "queryTemplate": "{\"$or\":[{\"canonicalApplicationKey\":\"{{context.entityJson.applicationContext.applicationRecord.canonicalApplicationKey}}\"},{\"id\":\"{{context.entityJson.applicationContext.applicationRecord.id}}\"},{\"_id\":\"{{context.entityJson.applicationContext.applicationRecord.id}}\"}]}",
+            "limit": 1,
+            "sort": "",
+            "projection": "",
+            "single": true
+          },
+          "writeOutcomePolicy": {
+            "onZeroAffected": "fail"
+          },
+          "upsert": false,
+          "updatePayloadMode": "custom",
+          "updateTemplate": "{\"$set\":{\"matchAnalysis\":{{value.matchAnalysis}},\"matchAnalysisUpdatedAt\":\"{{context.timestamp}}\",\"matchAnalysisSourceEntityId\":\"{{context.entityId}}\",\"matchAnalysisModelId\":\"{{context.entityJson.applicationContext.analysisRequest.modelId}}\",\"matchAnalysisStatus\":\"completed\",\"source\":\"ai-path-job-application-match-analysis\",\"sourceEntityId\":\"{{context.entityId}}\",\"updatedAt\":\"{{context.timestamp}}\"},\"$push\":{\"matchAnalysisHistory\":{\"id\":\"ai-job-application-match-analysis-{{context.entityId}}-{{context.timestamp}}\",\"payload\":{{value.matchAnalysis}},\"sourceRunId\":\"{{context.runId}}\",\"modelId\":\"{{context.entityJson.applicationContext.analysisRequest.modelId}}\",\"applicationId\":\"{{context.entityJson.applicationContext.applicationRecord.id}}\",\"canonicalApplicationKeySnapshot\":\"{{context.entityJson.applicationContext.applicationRecord.canonicalApplicationKey}}\",\"applicationUpdatedAtSnapshot\":\"{{context.entityJson.applicationContext.applicationRecord.updatedAt}}\",\"createdAt\":\"{{context.timestamp}}\"}}}"
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "value": {
+              "required": true
+            },
+            "context": {
+              "required": true
+            },
+            "entityId": {
+              "required": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-view-job-application-match-analysis",
+      "type": "viewer",
+      "title": "Application Match Analysis",
+      "description": "Inspect the generated candidate-job match analysis.",
+      "position": {
+        "x": 2440,
+        "y": 240
+      },
+      "inputs": [
+        "bundle",
+        "applicationPersistence",
+        "context",
+        "prompt",
+        "entityId",
+        "entityType",
+        "meta"
+      ],
+      "outputs": [],
+      "config": {
+        "viewer": {
+          "outputs": {
+            "bundle": "",
+            "applicationPersistence": "",
+            "context": "",
+            "prompt": "",
+            "entityId": "",
+            "entityType": "",
+            "meta": ""
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-trigger-fetcher-job-application-match-analysis",
+      "fromNodeId": "node-trigger-job-application-match-analysis",
+      "toNodeId": "node-fetcher-job-application-match-analysis",
+      "fromPort": "trigger",
+      "toPort": "trigger",
+      "from": "node-trigger-job-application-match-analysis",
+      "to": "node-fetcher-job-application-match-analysis"
+    },
+    {
+      "id": "edge-fetcher-parser-job-application-match-analysis",
+      "fromNodeId": "node-fetcher-job-application-match-analysis",
+      "toNodeId": "node-parser-job-application-match-analysis",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-match-analysis",
+      "to": "node-parser-job-application-match-analysis"
+    },
+    {
+      "id": "edge-parser-prompt-job-application-match-analysis",
+      "fromNodeId": "node-parser-job-application-match-analysis",
+      "toNodeId": "node-prompt-job-application-match-analysis",
+      "fromPort": "bundle",
+      "toPort": "bundle",
+      "from": "node-parser-job-application-match-analysis",
+      "to": "node-prompt-job-application-match-analysis"
+    },
+    {
+      "id": "edge-fetcher-prompt-context-job-application-match-analysis",
+      "fromNodeId": "node-fetcher-job-application-match-analysis",
+      "toNodeId": "node-prompt-job-application-match-analysis",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-match-analysis",
+      "to": "node-prompt-job-application-match-analysis"
+    },
+    {
+      "id": "edge-prompt-model-job-application-match-analysis",
+      "fromNodeId": "node-prompt-job-application-match-analysis",
+      "toNodeId": "node-model-job-application-match-analysis",
+      "fromPort": "prompt",
+      "toPort": "prompt",
+      "from": "node-prompt-job-application-match-analysis",
+      "to": "node-model-job-application-match-analysis"
+    },
+    {
+      "id": "edge-prompt-images-model-job-application-match-analysis",
+      "fromNodeId": "node-prompt-job-application-match-analysis",
+      "toNodeId": "node-model-job-application-match-analysis",
+      "fromPort": "images",
+      "toPort": "images",
+      "from": "node-prompt-job-application-match-analysis",
+      "to": "node-model-job-application-match-analysis"
+    },
+    {
+      "id": "edge-fetcher-model-context-job-application-match-analysis",
+      "fromNodeId": "node-fetcher-job-application-match-analysis",
+      "toNodeId": "node-model-job-application-match-analysis",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-match-analysis",
+      "to": "node-model-job-application-match-analysis"
+    },
+    {
+      "id": "edge-model-regex-job-application-match-analysis",
+      "fromNodeId": "node-model-job-application-match-analysis",
+      "toNodeId": "node-regex-job-application-match-analysis",
+      "fromPort": "result",
+      "toPort": "value",
+      "from": "node-model-job-application-match-analysis",
+      "to": "node-regex-job-application-match-analysis"
+    },
+    {
+      "id": "edge-regex-application-db-job-application-match-analysis",
+      "fromNodeId": "node-regex-job-application-match-analysis",
+      "toNodeId": "node-db-insert-application-job-application-match-analysis",
+      "fromPort": "value",
+      "toPort": "value",
+      "from": "node-regex-job-application-match-analysis",
+      "to": "node-db-insert-application-job-application-match-analysis"
+    },
+    {
+      "id": "edge-fetcher-application-db-context-job-application-match-analysis",
+      "fromNodeId": "node-fetcher-job-application-match-analysis",
+      "toNodeId": "node-db-insert-application-job-application-match-analysis",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-match-analysis",
+      "to": "node-db-insert-application-job-application-match-analysis"
+    },
+    {
+      "id": "edge-regex-viewer-job-application-match-analysis",
+      "fromNodeId": "node-regex-job-application-match-analysis",
+      "toNodeId": "node-view-job-application-match-analysis",
+      "fromPort": "value",
+      "toPort": "bundle",
+      "from": "node-regex-job-application-match-analysis",
+      "to": "node-view-job-application-match-analysis"
+    },
+    {
+      "id": "edge-application-db-viewer-job-application-match-analysis",
+      "fromNodeId": "node-db-insert-application-job-application-match-analysis",
+      "toNodeId": "node-view-job-application-match-analysis",
+      "fromPort": "bundle",
+      "toPort": "applicationPersistence",
+      "from": "node-db-insert-application-job-application-match-analysis",
+      "to": "node-view-job-application-match-analysis"
+    },
+    {
+      "id": "edge-fetcher-viewer-context-job-application-match-analysis",
+      "fromNodeId": "node-fetcher-job-application-match-analysis",
+      "toNodeId": "node-view-job-application-match-analysis",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-match-analysis",
+      "to": "node-view-job-application-match-analysis"
+    },
+    {
+      "id": "edge-prompt-viewer-job-application-match-analysis",
+      "fromNodeId": "node-prompt-job-application-match-analysis",
+      "toNodeId": "node-view-job-application-match-analysis",
+      "fromPort": "prompt",
+      "toPort": "prompt",
+      "from": "node-prompt-job-application-match-analysis",
+      "to": "node-view-job-application-match-analysis"
+    },
+    {
+      "id": "edge-fetcher-entity-id-viewer-job-application-match-analysis",
+      "fromNodeId": "node-fetcher-job-application-match-analysis",
+      "toNodeId": "node-view-job-application-match-analysis",
+      "fromPort": "entityId",
+      "toPort": "entityId",
+      "from": "node-fetcher-job-application-match-analysis",
+      "to": "node-view-job-application-match-analysis"
+    },
+    {
+      "id": "edge-fetcher-entity-type-viewer-job-application-match-analysis",
+      "fromNodeId": "node-fetcher-job-application-match-analysis",
+      "toNodeId": "node-view-job-application-match-analysis",
+      "fromPort": "entityType",
+      "toPort": "entityType",
+      "from": "node-fetcher-job-application-match-analysis",
+      "to": "node-view-job-application-match-analysis"
+    },
+    {
+      "id": "edge-fetcher-meta-viewer-job-application-match-analysis",
+      "fromNodeId": "node-fetcher-job-application-match-analysis",
+      "toNodeId": "node-view-job-application-match-analysis",
+      "fromPort": "meta",
+      "toPort": "meta",
+      "from": "node-fetcher-job-application-match-analysis",
+      "to": "node-view-job-application-match-analysis"
+    },
+    {
+      "id": "edge-fetcher-insert-application-job-application-match-analysis-entity-id",
+      "fromNodeId": "node-fetcher-job-application-match-analysis",
+      "toNodeId": "node-db-insert-application-job-application-match-analysis",
+      "fromPort": "entityId",
+      "toPort": "entityId",
+      "from": "node-fetcher-job-application-match-analysis",
+      "to": "node-db-insert-application-job-application-match-analysis"
+    }
+  ],
+  "execution": {
+    "parserSamples": {},
+    "updaterSamples": {},
+    "runtimeState": {
+      "inputs": {},
+      "outputs": {}
+    },
+    "lastRunAt": null,
+    "runCount": 0
+  },
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-04-30T00:00:00.000Z",
+    "pathId": "path_job_application_match_analysis_v1"
+  }
+}

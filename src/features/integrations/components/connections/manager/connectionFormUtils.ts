@@ -5,7 +5,34 @@ export const toConnectionFormState = (connection: IntegrationConnection): Connec
   name: connection.name,
   username: connection.username ?? '',
   password: '',
+  scanner1688StartUrl: connection.scanner1688StartUrl ?? 'https://www.1688.com/',
+  scanner1688LoginMode: connection.scanner1688LoginMode ?? 'session_required',
+  scanner1688DefaultSearchMode: connection.scanner1688DefaultSearchMode ?? 'local_image',
+  scanner1688CandidateResultLimit:
+    typeof connection.scanner1688CandidateResultLimit === 'number'
+      ? String(connection.scanner1688CandidateResultLimit)
+      : '',
+  scanner1688MinimumCandidateScore:
+    typeof connection.scanner1688MinimumCandidateScore === 'number'
+      ? String(connection.scanner1688MinimumCandidateScore)
+      : '',
+  scanner1688MaxExtractedImages:
+    typeof connection.scanner1688MaxExtractedImages === 'number'
+      ? String(connection.scanner1688MaxExtractedImages)
+      : '',
+  scanner1688AllowUrlImageSearchFallback:
+    connection.scanner1688AllowUrlImageSearchFallback ?? false,
+  jobApplicationPersonId: connection.jobApplicationPersonId ?? '',
+  jobApplicationPersonName: connection.jobApplicationPersonName ?? '',
+  pracujLoginMode: connection.pracujLoginMode ?? 'password',
+  pracujAuthMode: connection.pracujAuthMode ?? 'auto',
+  pracujSalaryExpectation:
+    typeof connection.pracujSalaryExpectation === 'number'
+      ? String(connection.pracujSalaryExpectation)
+      : '18000',
+  pracujCooperationForm: connection.pracujCooperationForm ?? 'uop',
   traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
+  traderaCategoryStrategy: connection.traderaCategoryStrategy ?? 'mapper',
   playwrightListingScript: connection.playwrightListingScript ?? '',
   traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? '',
   traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,

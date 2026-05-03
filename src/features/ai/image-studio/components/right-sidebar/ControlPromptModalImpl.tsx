@@ -1,8 +1,8 @@
 'use client';
 
 import { Play, Sparkles, Workflow } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React, { useState, useCallback } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { useState, useCallback, startTransition } from 'react';
 
 import {
   serializeImageStudioProjectSession,
@@ -244,7 +244,7 @@ export function ControlPromptModal(): React.JSX.Element {
       return;
     }
     savePromptExploderDraftPrompt(promptText);
-    router.push('/admin/prompt-exploder?source=image-studio&returnTo=%2Fadmin%2Fimage-studio');
+    startTransition(() => { router.push('/admin/prompt-exploder?source=image-studio&returnTo=%2Fadmin%2Fimage-studio'); });
   };
 
   const handlePromptExploderClick = React.useCallback((): void => {

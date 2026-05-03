@@ -4,15 +4,17 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurContextRegistryPageBoundary } from './KangurContextRegistryPageBoundary';
 
 const {
   contextRegistryPageProviderMock,
+  deferredHomeTutorContextReadyMock,
   routingState,
 } = vi.hoisted(() => ({
   contextRegistryPageProviderMock: vi.fn(),
+  deferredHomeTutorContextReadyMock: vi.fn(() => true),
   routingState: {
     value: {
       pageKey: 'Game',
@@ -22,6 +24,10 @@ const {
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => routingState.value,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurDeferredHomeTutorContextReady', () => ({
+  useKangurDeferredHomeTutorContextReady: () => deferredHomeTutorContextReadyMock(),
 }));
 
 vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
@@ -40,6 +46,14 @@ vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
 }));
 
 describe('KangurContextRegistryPageBoundary', () => {
+  beforeEach(() => {
+    contextRegistryPageProviderMock.mockReset();
+    deferredHomeTutorContextReadyMock.mockReturnValue(true);
+    routingState.value = {
+      pageKey: 'Game',
+    };
+  });
+
   it('falls back to the main page context for unsupported route keys', () => {
     routingState.value = {
       pageKey: 'Duels',
@@ -79,5 +93,22 @@ describe('KangurContextRegistryPageBoundary', () => {
         rootNodeIds: expect.arrayContaining(['page:kangur-games-library']),
       })
     );
+  });
+
+  it('keeps the page context provider dormant on the initial standalone home route until the idle gate opens', () => {
+    deferredHomeTutorContextReadyMock.mockReturnValue(false);
+    routingState.value = {
+      pageKey: 'Game',
+    };
+
+    render(
+      <KangurContextRegistryPageBoundary>
+        <div>child</div>
+      </KangurContextRegistryPageBoundary>
+    );
+
+    expect(screen.queryByTestId('context-registry-page-provider')).toBeNull();
+    expect(screen.getByText('child')).toBeInTheDocument();
+    expect(contextRegistryPageProviderMock).not.toHaveBeenCalled();
   });
 });

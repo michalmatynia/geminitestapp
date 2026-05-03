@@ -9,9 +9,14 @@ import {
   clearSystemLogs,
 } from '@/shared/lib/observability/system-log-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/db/mongo-sync-lock', () => ({
+  readMongoSyncLock: vi.fn(),
 }));
 
 describe('system-log-repository', () => {
@@ -36,6 +41,7 @@ describe('system-log-repository', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getMongoDb).mockResolvedValue(mockMongoDb as unknown as Db);
+    vi.mocked(readMongoSyncLock).mockResolvedValue(null);
   });
 
   it('creates a system log in MongoDB', async () => {
@@ -83,6 +89,31 @@ describe('system-log-repository', () => {
         spanId: 'span-from-context',
         parentSpanId: 'parent-span-from-context',
         createdAt: '2026-03-27T15:00:00.000Z',
+      })
+    );
+  });
+
+  it('skips MongoDB persistence while a Mongo source sync lock is active', async () => {
+    vi.mocked(readMongoSyncLock).mockResolvedValue({
+      direction: 'local_to_cloud',
+      source: 'local',
+      target: 'cloud',
+      acquiredAt: '2026-04-18T00:00:00.000Z',
+      pid: 123,
+    });
+
+    const result = await createSystemLog({
+      message: 'sync in progress',
+      level: 'warn',
+      createdAt: new Date('2026-04-18T00:00:00.000Z'),
+    });
+
+    expect(mockMongoCollection.insertOne).not.toHaveBeenCalled();
+    expect(result).toEqual(
+      expect.objectContaining({
+        level: 'warn',
+        message: 'sync in progress',
+        createdAt: '2026-04-18T00:00:00.000Z',
       })
     );
   });

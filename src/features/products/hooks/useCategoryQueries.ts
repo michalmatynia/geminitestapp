@@ -5,6 +5,7 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 
 import {
+  useCategoriesForCatalogs as useMetadataCategoriesForCatalogs,
   type ProductMetadataQueryOptions,
   useCategories as useMetadataCategories,
 } from './useProductMetadataQueries';
@@ -20,6 +21,16 @@ export function useProductCategories(
 }
 
 /**
+ * Hook to fetch product categories for multiple catalogs.
+ */
+export function useProductCategoriesForCatalogs(
+  catalogIds: string[],
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductCategory> {
+  return useMetadataCategoriesForCatalogs(catalogIds, options);
+}
+
+/**
  * Hook to fetch product category tree for a catalog
  */
 export function useProductCategoryTree(catalogId?: string): ListQuery<ProductCategoryWithChildren> {
@@ -27,13 +38,13 @@ export function useProductCategoryTree(catalogId?: string): ListQuery<ProductCat
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductCategoryWithChildren[]> => {
-      if (!catalogId) return [];
+      if (typeof catalogId !== 'string' || catalogId === '') return [];
       return await api.get<ProductCategoryWithChildren[]>(
         `/api/v2/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}`,
         { cache: 'no-store' }
       );
     },
-    enabled: !!catalogId,
+    enabled: typeof catalogId === 'string' && catalogId !== '',
     meta: {
       source: 'products.hooks.useProductCategoryTree',
       operation: 'list',

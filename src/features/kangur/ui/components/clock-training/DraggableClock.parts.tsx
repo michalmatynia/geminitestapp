@@ -1,8 +1,8 @@
 'use client';
 
-import type * as React from 'react';
+import * as React from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { useTranslations } from 'next-intl';
+import { type useTranslations } from 'next-intl';
 
 import {
   KangurAccentDot,
@@ -23,6 +23,52 @@ import { translateClockTrainingWithFallback } from './clock-training-i18n';
 export type DraggableClockSubmitNextStep = 'next-stage' | 'next-task' | 'summary' | null;
 type DraggableClockTranslations = ReturnType<typeof useTranslations>;
 type DraggableClockPointerDownHandler = (event: ReactPointerEvent<SVGElement>) => void;
+
+export type DraggableClockContextValue = {
+  activeHand: Hand | null;
+  challengeRingCircumference: number;
+  challengeRingColor: string;
+  challengeRingOffset: number;
+  displayHour: number;
+  displayMinutes: number;
+  hourHandEnabled: boolean;
+  hourHandX: number;
+  hourHandY: number;
+  isCoarsePointer: boolean;
+  minuteHandEnabled: boolean;
+  minuteHandX: number;
+  minuteHandY: number;
+  minuteSnapMode: MinuteSnapMode;
+  onSingleHandFacePointerDown: DraggableClockPointerDownHandler | null;
+  onHourPointerDown: DraggableClockPointerDownHandler;
+  onMinutePointerDown: DraggableClockPointerDownHandler;
+  onSubmitClick: () => void;
+  section: ClockTrainingTaskPoolId;
+  setMinuteSnapMode: React.Dispatch<React.SetStateAction<MinuteSnapMode>>;
+  showChallengeRing: boolean;
+  showHourHand: boolean;
+  showMinuteHand: boolean;
+  showTimeDisplay: boolean;
+  submitButtonLabel: string;
+  submitFeedback: Feedback;
+  submitFeedbackDetails: string | null;
+  submitFeedbackTitle: string | null;
+  submitLocked: boolean;
+  submitNextStep: DraggableClockSubmitNextStep;
+  svgRef: React.RefObject<SVGSVGElement | null>;
+  translations: DraggableClockTranslations;
+};
+
+export const DraggableClockContext =
+  React.createContext<DraggableClockContextValue | null>(null);
+
+function useDraggableClock(): DraggableClockContextValue {
+  const context = React.useContext(DraggableClockContext);
+  if (!context) {
+    throw new Error('useDraggableClock must be used within DraggableClockContext.Provider.');
+  }
+  return context;
+}
 
 export const resolveDraggableClockChallengeRingColor = (
   challengeProgress: number
@@ -46,11 +92,19 @@ const resolveDraggableClockHandInteractionStyle = ({
   activeHand: Hand | null;
   enabled: boolean;
   hand: Hand;
-}): React.CSSProperties => ({
-  cursor: enabled ? (activeHand === hand ? 'grabbing' : 'grab') : 'not-allowed',
-  opacity: enabled ? 1 : 0.45,
-  touchAction: 'none',
-});
+}): React.CSSProperties => {
+  let cursor: React.CSSProperties['cursor'] = 'not-allowed';
+  if (enabled) {
+    cursor = activeHand === hand ? 'grabbing' : 'grab';
+  }
+
+  return {
+    cursor,
+    opacity: enabled ? 1 : 0.45,
+    pointerEvents: enabled ? 'auto' : 'none',
+    touchAction: 'none',
+  };
+};
 
 export const resolveDraggableClockSubmitButtonLabel = ({
   submitFeedback,
@@ -105,26 +159,6 @@ const resolveDraggableClockSubmitButtonStyle = (
 
   return undefined;
 };
-
-const resolveDraggableClockFeedbackClassName = (): string =>
-  'max-w-md rounded-3xl border px-4 py-3 text-center shadow-sm';
-
-const resolveDraggableClockFeedbackStyle = (
-  submitFeedback: Feedback
-): React.CSSProperties => ({
-  backgroundColor:
-    submitFeedback === 'correct'
-      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectSoftBackground
-      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongSoftBackground,
-  borderColor:
-    submitFeedback === 'correct'
-      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectBorder
-      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongBorder,
-  color:
-    submitFeedback === 'correct'
-      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectText
-      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongText,
-});
 
 const resolveDraggableClockCorrectInteractionHint = ({
   submitNextStep,
@@ -220,15 +254,8 @@ const resolveDraggableClockInteractionHint = ({
   );
 };
 
-export function DraggableClockTimeDisplay({
-  displayHour,
-  displayMinutes,
-  showTimeDisplay,
-}: {
-  displayHour: number;
-  displayMinutes: number;
-  showTimeDisplay: boolean;
-}): React.JSX.Element | null {
+export function DraggableClockTimeDisplay(): React.JSX.Element | null {
+  const { displayHour, displayMinutes, showTimeDisplay } = useDraggableClock();
   if (!showTimeDisplay) {
     return null;
   }
@@ -244,21 +271,16 @@ export function DraggableClockTimeDisplay({
   );
 }
 
-export function DraggableClockSnapModeSwitch({
-  isCoarsePointer,
-  minuteHandEnabled,
-  minuteSnapMode,
-  setMinuteSnapMode,
-  showMinuteHand,
-  translations,
-}: {
-  isCoarsePointer: boolean;
-  minuteHandEnabled: boolean;
-  minuteSnapMode: MinuteSnapMode;
-  setMinuteSnapMode: React.Dispatch<React.SetStateAction<MinuteSnapMode>>;
-  showMinuteHand: boolean;
-  translations: DraggableClockTranslations;
-}): React.JSX.Element | null {
+export function DraggableClockSnapModeSwitch(): React.JSX.Element | null {
+  const {
+    isCoarsePointer,
+    minuteHandEnabled,
+    minuteSnapMode,
+    setMinuteSnapMode,
+    showMinuteHand,
+    translations,
+  } = useDraggableClock();
+
   if (!showMinuteHand || !minuteHandEnabled) {
     return null;
   }
@@ -309,21 +331,16 @@ export function DraggableClockSnapModeSwitch({
   );
 }
 
-export function DraggableClockInteractionHint({
-  section,
-  showHourHand,
-  showMinuteHand,
-  submitFeedback,
-  submitNextStep,
-  translations,
-}: {
-  section: ClockTrainingTaskPoolId;
-  showHourHand: boolean;
-  showMinuteHand: boolean;
-  submitFeedback: Feedback;
-  submitNextStep: DraggableClockSubmitNextStep;
-  translations: DraggableClockTranslations;
-}): React.JSX.Element | null {
+export function DraggableClockInteractionHint(): React.JSX.Element | null {
+  const {
+    section,
+    showHourHand,
+    showMinuteHand,
+    submitFeedback,
+    submitNextStep,
+    translations,
+  } = useDraggableClock();
+
   const interactionHint = resolveDraggableClockInteractionHint({
     section,
     showHourHand,
@@ -333,7 +350,7 @@ export function DraggableClockInteractionHint({
     translations,
   });
 
-  if (!interactionHint) {
+  if (interactionHint === null || interactionHint === '') {
     return null;
   }
 
@@ -347,15 +364,13 @@ export function DraggableClockInteractionHint({
   );
 }
 
-function DraggableClockChallengeRing({
-  challengeRingCircumference,
-  challengeRingColor,
-  challengeRingOffset,
-}: {
-  challengeRingCircumference: number;
-  challengeRingColor: string;
-  challengeRingOffset: number;
-}): React.JSX.Element {
+function DraggableClockChallengeRing(): React.JSX.Element {
+  const {
+    challengeRingCircumference,
+    challengeRingColor,
+    challengeRingOffset,
+  } = useDraggableClock();
+
   return (
     <>
       <circle
@@ -433,30 +448,42 @@ function DraggableClockFaceNumbers(): React.JSX.Element {
 }
 
 function DraggableClockHand({
-  activeHand,
   color,
   dataTestId,
-  enabled,
   hand,
-  onPointerDown,
   x,
   y,
 }: {
-  activeHand: Hand | null;
   color: string;
   dataTestId: string;
-  enabled: boolean;
   hand: Hand;
-  onPointerDown: DraggableClockPointerDownHandler;
   x: number;
   y: number;
 }): React.JSX.Element {
+  const {
+    activeHand,
+    hourHandEnabled,
+    minuteHandEnabled,
+    onHourPointerDown,
+    onMinutePointerDown,
+  } = useDraggableClock();
+
+  const enabled = hand === 'hour' ? hourHandEnabled : minuteHandEnabled;
+  const onPointerDown = hand === 'hour' ? onHourPointerDown : onMinutePointerDown;
+
   const interactionStyle = resolveDraggableClockHandInteractionStyle({
     activeHand,
     enabled,
     hand,
   });
   const isActive = activeHand === hand;
+  const strokeWidth = (() => {
+    if (hand === 'hour') {
+      return isActive ? '9' : '7';
+    }
+
+    return isActive ? '7' : '5';
+  })();
 
   return (
     <>
@@ -470,7 +497,7 @@ function DraggableClockHand({
         stroke='transparent'
         strokeWidth={hand === 'hour' ? '24' : '20'}
         strokeLinecap='round'
-        pointerEvents='stroke'
+        pointerEvents={enabled ? 'stroke' : 'none'}
         style={interactionStyle}
         onPointerDown={onPointerDown}
       />
@@ -481,7 +508,7 @@ function DraggableClockHand({
         x2={x}
         y2={y}
         stroke={color}
-        strokeWidth={hand === 'hour' ? (isActive ? '9' : '7') : isActive ? '7' : '5'}
+        strokeWidth={strokeWidth}
         strokeLinecap='round'
         style={interactionStyle}
         onPointerDown={onPointerDown}
@@ -499,41 +526,19 @@ function DraggableClockHand({
   );
 }
 
-export function DraggableClockFace({
-  activeHand,
-  challengeRingCircumference,
-  challengeRingColor,
-  challengeRingOffset,
-  hourHandEnabled,
-  hourHandX,
-  hourHandY,
-  minuteHandEnabled,
-  minuteHandX,
-  minuteHandY,
-  onHourPointerDown,
-  onMinutePointerDown,
-  showChallengeRing,
-  showHourHand,
-  showMinuteHand,
-  svgRef,
-}: {
-  activeHand: Hand | null;
-  challengeRingCircumference: number;
-  challengeRingColor: string;
-  challengeRingOffset: number;
-  hourHandEnabled: boolean;
-  hourHandX: number;
-  hourHandY: number;
-  minuteHandEnabled: boolean;
-  minuteHandX: number;
-  minuteHandY: number;
-  onHourPointerDown: DraggableClockPointerDownHandler;
-  onMinutePointerDown: DraggableClockPointerDownHandler;
-  showChallengeRing: boolean;
-  showHourHand: boolean;
-  showMinuteHand: boolean;
-  svgRef: React.RefObject<SVGSVGElement | null>;
-}): React.JSX.Element {
+export function DraggableClockFace(): React.JSX.Element {
+  const {
+    hourHandX,
+    hourHandY,
+    minuteHandX,
+    minuteHandY,
+    onSingleHandFacePointerDown,
+    showChallengeRing,
+    showHourHand,
+    showMinuteHand,
+    svgRef,
+  } = useDraggableClock();
+
   return (
     <svg
       ref={svgRef}
@@ -544,12 +549,9 @@ export function DraggableClockFace({
       style={{ cursor: 'crosshair', touchAction: 'none' }}
     >
       {showChallengeRing ? (
-        <DraggableClockChallengeRing
-          challengeRingCircumference={challengeRingCircumference}
-          challengeRingColor={challengeRingColor}
-          challengeRingOffset={challengeRingOffset}
-        />
+        <DraggableClockChallengeRing />
       ) : null}
+
       <circle
         cx='100'
         cy='100'
@@ -558,28 +560,35 @@ export function DraggableClockFace({
         stroke={KANGUR_CLOCK_THEME_COLORS.faceStroke}
         strokeWidth='4'
       />
+      {onSingleHandFacePointerDown ? (
+        <circle
+          aria-hidden='true'
+          cx='100'
+          cy='100'
+          r='88'
+          data-testid='clock-single-hand-face-hit-area'
+          fill='transparent'
+          pointerEvents='all'
+          style={{ touchAction: 'none' }}
+          onPointerDown={onSingleHandFacePointerDown}
+        />
+      ) : null}
       <DraggableClockFaceTicks />
       <DraggableClockFaceNumbers />
       {showHourHand ? (
         <DraggableClockHand
-          activeHand={activeHand}
           color={KANGUR_CLOCK_THEME_COLORS.interactiveHourHand}
           dataTestId='clock-hour-hand'
-          enabled={hourHandEnabled}
           hand='hour'
-          onPointerDown={onHourPointerDown}
           x={hourHandX}
           y={hourHandY}
         />
       ) : null}
       {showMinuteHand ? (
         <DraggableClockHand
-          activeHand={activeHand}
           color={KANGUR_CLOCK_THEME_COLORS.interactiveMinuteHand}
           dataTestId='clock-minute-hand'
-          enabled={minuteHandEnabled}
           hand='minute'
-          onPointerDown={onMinutePointerDown}
           x={minuteHandX}
           y={minuteHandY}
         />
@@ -589,15 +598,9 @@ export function DraggableClockFace({
   );
 }
 
-export function DraggableClockLegend({
-  showHourHand,
-  showMinuteHand,
-  translations,
-}: {
-  showHourHand: boolean;
-  showMinuteHand: boolean;
-  translations: DraggableClockTranslations;
-}): React.JSX.Element {
+export function DraggableClockLegend(): React.JSX.Element {
+  const { showHourHand, showMinuteHand, translations } = useDraggableClock();
+
   return (
     <div
       className={`${KANGUR_WRAP_ROW_SPACED_CLASSNAME} justify-center text-sm [color:var(--kangur-page-muted-text)]`}
@@ -638,49 +641,25 @@ export function DraggableClockLegend({
   );
 }
 
-export function DraggableClockSubmitArea({
-  onSubmitClick,
-  submitButtonLabel,
-  submitFeedback,
-  submitFeedbackDetails,
-  submitFeedbackTitle,
-  submitLocked,
-}: {
-  onSubmitClick: () => void;
-  submitButtonLabel: string;
-  submitFeedback: Feedback;
-  submitFeedbackDetails: string | null;
-  submitFeedbackTitle: string | null;
-  submitLocked: boolean;
-}): React.JSX.Element {
+export function DraggableClockSubmitArea(): React.JSX.Element {
+  const {
+    onSubmitClick,
+    submitButtonLabel,
+    submitFeedback,
+    submitLocked,
+  } = useDraggableClock();
+
   return (
-    <>
-      <KangurButton
-        className={resolveDraggableClockSubmitButtonClassName()}
-        data-testid='clock-submit-button'
-        disabled={submitLocked}
-        onClick={onSubmitClick}
-        size='xl'
-        style={resolveDraggableClockSubmitButtonStyle(submitFeedback)}
-        variant='primary'
-      >
-        {submitButtonLabel}
-      </KangurButton>
-      {submitFeedbackTitle ? (
-        <div
-          aria-live='polite'
-          role='status'
-          aria-atomic='true'
-          className={resolveDraggableClockFeedbackClassName()}
-          data-testid='clock-submit-feedback'
-          style={resolveDraggableClockFeedbackStyle(submitFeedback)}
-        >
-          <p className='text-sm font-extrabold'>{submitFeedbackTitle}</p>
-          {submitFeedbackDetails ? (
-            <p className='mt-1 text-xs font-medium leading-relaxed'>{submitFeedbackDetails}</p>
-          ) : null}
-        </div>
-      ) : null}
-    </>
+    <KangurButton
+      className={resolveDraggableClockSubmitButtonClassName()}
+      data-testid='clock-submit-button'
+      disabled={submitLocked}
+      onClick={onSubmitClick}
+      size='xl'
+      style={resolveDraggableClockSubmitButtonStyle(submitFeedback)}
+      variant='primary'
+    >
+      {submitButtonLabel}
+    </KangurButton>
   );
 }

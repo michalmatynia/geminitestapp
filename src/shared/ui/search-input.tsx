@@ -37,6 +37,29 @@ type SearchInputResolvedProps = {
   rest: SearchInputNativeProps;
 };
 
+const isNonEmptyString = (value: string | undefined): value is string =>
+  value !== undefined && value !== '';
+
+const resolveSearchInputAriaLabel = ({
+  ariaLabel,
+  ariaLabelledBy,
+  id,
+  placeholder,
+}: {
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
+  id?: string;
+  placeholder?: string;
+}): string | undefined => {
+  if (ariaLabel !== undefined) {
+    return ariaLabel;
+  }
+  if (isNonEmptyString(ariaLabelledBy) || isNonEmptyString(id)) {
+    return undefined;
+  }
+  return placeholder ?? 'Search';
+};
+
 const renderSearchInput = ({
   ref,
   value,
@@ -55,7 +78,7 @@ const renderSearchInput = ({
   <div
     className={cn('relative flex items-center', containerClassName)}
     role='search'
-    {...(ariaLabelledBy ? { 'aria-labelledby': ariaLabelledBy } : {})}
+    {...(isNonEmptyString(ariaLabelledBy) ? { 'aria-labelledby': ariaLabelledBy } : {})}
   >
     <Search className='absolute left-3 size-4 text-gray-500' aria-hidden='true' />
     <Input
@@ -63,7 +86,7 @@ const renderSearchInput = ({
       value={value}
       variant={variant}
       size={size}
-      className={cn('pl-9 pr-9', className)}
+      className={cn('app-search-input pl-9 pr-9', className)}
       id={id}
       type={type ?? 'search'}
       placeholder={placeholder}
@@ -72,7 +95,7 @@ const renderSearchInput = ({
       {...rest}
       title={placeholder}
     />
-    {value && onClear ? (
+    {value !== '' && onClear !== undefined ? (
       <Button
         type='button'
         variant='ghost'
@@ -109,8 +132,12 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
       type,
       ...rest
     } = props as SearchInputNativeProps;
-    const resolvedAriaLabel =
-      ariaLabel ?? (ariaLabelledBy || id ? undefined : placeholder ?? 'Search');
+    const resolvedAriaLabel = resolveSearchInputAriaLabel({
+      ariaLabel,
+      ariaLabelledBy,
+      id,
+      placeholder,
+    });
     return renderSearchInput({
       ref,
       value,

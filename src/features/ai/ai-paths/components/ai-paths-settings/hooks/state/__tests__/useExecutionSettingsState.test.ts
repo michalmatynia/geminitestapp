@@ -32,10 +32,11 @@ const mockState = vi.hoisted(() => ({
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
   useGraphActions: () => mockState.graphActions,
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/validation-engine', () => ({
   normalizeAiPathsValidationConfig: (...args: unknown[]) =>
     mockState.normalizeAiPathsValidationConfig(...args),
 }));

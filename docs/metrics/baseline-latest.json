@@ -1,263 +1,288 @@
 {
-  "generatedAt": "2026-04-05T19:03:36.164Z",
+  "generatedAt": "2026-04-29T20:23:52.701Z",
   "source": {
-    "totalFiles": 9809,
-    "totalLines": 1598758,
-    "useClientFiles": 1722,
-    "hooksWithoutUseClient": 2,
-    "filesOver800": 95,
-    "filesOver1000": 3,
-    "filesOver1500": 0,
+    "totalFiles": 11991,
+    "totalLines": 2020401,
+    "useClientFiles": 2126,
+    "hooksWithoutUseClient": 59,
+    "filesOver800": 135,
+    "filesOver1000": 49,
+    "filesOver1500": 14,
     "largestFile": {
-      "path": "src/features/integrations/services/tradera-listing/category-scrape-script.ts",
-      "lines": 1304
+      "path": "src/features/products/server/product-scan-ai-evaluator.ts",
+      "lines": 2751
     }
   },
   "api": {
-    "totalRoutes": 30,
-    "routesWithApiHandler": 126,
-    "delegatedServerRoutes": 177,
-    "routesWithoutApiHandler": 0,
-    "forceDynamicRoutes": 39,
-    "revalidateRoutes": 12,
+    "totalRoutes": 31,
+    "routesWithApiHandler": 132,
+    "delegatedServerRoutes": 251,
+    "routesWithoutApiHandler": 2,
+    "forceDynamicRoutes": 0,
+    "revalidateRoutes": 0,
     "routesWithCacheHeader": 1,
     "routesWithCacheOption": 8,
-    "routesWithExplicitCachePolicy": 303,
-    "routesWithoutExplicitCachePolicy": 0,
+    "routesWithExplicitCachePolicy": 383,
+    "routesWithoutExplicitCachePolicy": 2,
     "topRouteHotspots": [
       {
         "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
-        "lines": 235
-      },
-      {
-        "path": "src/app/api/ai-paths/[[...path]]/route.ts",
-        "lines": 205
-      },
-      {
-        "path": "src/app/api/databases/[[...path]]/route.ts",
-        "lines": 203
-      },
-      {
-        "path": "src/app/api/agentcreator/[[...path]]/route.ts",
-        "lines": 188
+        "lines": 148
       },
       {
         "path": "src/app/api/v2/products/[[...path]]/route.ts",
-        "lines": 171
-      },
-      {
-        "path": "src/app/api/chatbot/[[...path]]/route.ts",
-        "lines": 168
+        "lines": 125
       },
       {
         "path": "src/app/api/image-studio/[[...path]]/route.ts",
-        "lines": 126
+        "lines": 124
+      },
+      {
+        "path": "src/app/api/agentcreator/[[...path]]/route.ts",
+        "lines": 115
+      },
+      {
+        "path": "src/app/api/ai-paths/[[...path]]/route.ts",
+        "lines": 104
+      },
+      {
+        "path": "src/app/api/databases/[[...path]]/route.ts",
+        "lines": 100
+      },
+      {
+        "path": "src/app/api/chatbot/[[...path]]/route.ts",
+        "lines": 80
       },
       {
         "path": "src/app/api/kangur/[[...path]]/route.ts",
-        "lines": 62
+        "lines": 60
       },
       {
         "path": "src/app/api/marketplace/[resource]/route.ts",
-        "lines": 38
+        "lines": 37
       },
       {
         "path": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
-        "lines": 32
+        "lines": 30
       },
       {
         "path": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
-        "lines": 32
+        "lines": 30
+      },
+      {
+        "path": "src/app/api/user/preferences/route.ts",
+        "lines": 26
       },
       {
         "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
-        "lines": 25
-      },
-      {
-        "path": "src/app/api/cms/slugs/[id]/route.ts",
         "lines": 24
       },
       {
-        "path": "src/app/api/auth/roles/route.ts",
-        "lines": 23
-      },
-      {
-        "path": "src/app/api/auth/users/[id]/route.ts",
-        "lines": 23
-      },
-      {
-        "path": "src/app/api/drafts/[id]/route.ts",
-        "lines": 23
-      },
-      {
-        "path": "src/app/api/kangur/auth/me/route.ts",
-        "lines": 23
+        "path": "src/app/api/v2/metadata/[type]/route.ts",
+        "lines": 24
       },
       {
         "path": "src/app/api/ai/schema/[entity]/route.ts",
+        "lines": 23
+      },
+      {
+        "path": "src/app/api/cms/slugs/[id]/route.ts",
+        "lines": 23
+      },
+      {
+        "path": "src/app/api/ai-insights/generate/session/route.ts",
         "lines": 22
       },
       {
-        "path": "src/app/api/assets3d/[id]/route.ts",
+        "path": "src/app/api/auth/users/[id]/route.ts",
         "lines": 22
       },
       {
-        "path": "src/app/api/cms/pages/[id]/route.ts",
-        "lines": 22
+        "path": "src/app/api/ai/context/related/[id]/route.ts",
+        "lines": 21
+      },
+      {
+        "path": "src/app/api/auth/roles/route.ts",
+        "lines": 21
       }
     ]
   },
   "imports": {
-    "appFeatureBarrelImports": 0,
+    "appFeatureBarrelImports": 1,
     "appFeatureDeepImports": 3,
-    "featureToSharedTotalImports": 25,
+    "featureToSharedTotalImports": 26,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesTotalImports": 0
   },
   "architecture": {
-    "crossFeatureEdgePairs": 0,
-    "topCrossFeatureEdges": [],
+    "crossFeatureEdgePairs": 3,
+    "topCrossFeatureEdges": [
+      {
+        "edge": "filemaker -> kangur",
+        "references": 4
+      },
+      {
+        "edge": "playwright -> integrations",
+        "references": 2
+      },
+      {
+        "edge": "products -> playwright",
+        "references": 1
+      }
+    ],
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2467,
-        "lines": 528250
+        "files": 2619,
+        "lines": 533978
       },
       {
         "feature": "ai",
-        "files": 1259,
-        "lines": 243314
+        "files": 1354,
+        "lines": 252458
       },
       {
         "feature": "products",
-        "files": 358,
-        "lines": 73816
+        "files": 626,
+        "lines": 163798
+      },
+      {
+        "feature": "filemaker",
+        "files": 544,
+        "lines": 138043
       },
       {
         "feature": "integrations",
-        "files": 379,
-        "lines": 67907
+        "files": 561,
+        "lines": 137762
       },
       {
         "feature": "case-resolver",
         "files": 327,
-        "lines": 67313
+        "lines": 67407
+      },
+      {
+        "feature": "playwright",
+        "files": 290,
+        "lines": 58995
       },
       {
         "feature": "cms",
-        "files": 358,
-        "lines": 53409
-      },
-      {
-        "feature": "filemaker",
-        "files": 159,
-        "lines": 38018
+        "files": 383,
+        "lines": 52729
       },
       {
         "feature": "prompt-exploder",
         "files": 135,
-        "lines": 26802
+        "lines": 26839
       },
       {
         "feature": "notesapp",
-        "files": 94,
-        "lines": 13515
+        "files": 99,
+        "lines": 13281
       },
       {
         "feature": "admin",
-        "files": 58,
-        "lines": 9881
-      },
-      {
-        "feature": "auth",
-        "files": 58,
-        "lines": 7437
-      },
-      {
-        "feature": "database",
-        "files": 44,
-        "lines": 7102
+        "files": 127,
+        "lines": 13095
       },
       {
         "feature": "data-import-export",
-        "files": 36,
-        "lines": 6839
+        "files": 49,
+        "lines": 11993
       },
       {
-        "feature": "observability",
-        "files": 30,
-        "lines": 5935
+        "feature": "job-board",
+        "files": 25,
+        "lines": 10040
+      },
+      {
+        "feature": "database",
+        "files": 75,
+        "lines": 8425
+      },
+      {
+        "feature": "product-sync",
+        "files": 19,
+        "lines": 7395
+      },
+      {
+        "feature": "auth",
+        "files": 76,
+        "lines": 6575
       },
       {
         "feature": "viewer3d",
-        "files": 38,
-        "lines": 5262
+        "files": 55,
+        "lines": 5619
       },
       {
         "feature": "prompt-engine",
         "files": 32,
-        "lines": 4374
-      },
-      {
-        "feature": "drafter",
-        "files": 19,
-        "lines": 3019
-      },
-      {
-        "feature": "product-sync",
-        "files": 11,
-        "lines": 2930
+        "lines": 4375
       },
       {
         "feature": "files",
-        "files": 36,
-        "lines": 2773
+        "files": 39,
+        "lines": 2880
+      },
+      {
+        "feature": "drafter",
+        "files": 22,
+        "lines": 2768
       },
       {
         "feature": "internationalization",
         "files": 29,
-        "lines": 2284
-      },
-      {
-        "feature": "playwright",
-        "files": 26,
-        "lines": 600
+        "lines": 2345
       },
       {
         "feature": "jobs",
         "files": 5,
-        "lines": 571
+        "lines": 777
       },
       {
         "feature": "gsap",
         "files": 8,
-        "lines": 430
+        "lines": 360
       },
       {
         "feature": "tooltip-engine",
         "files": 9,
-        "lines": 173
+        "lines": 165
       },
       {
         "feature": "app-embeds",
         "files": 9,
         "lines": 135
+      },
+      {
+        "feature": "pdf-export",
+        "files": 2,
+        "lines": 104
       }
     ]
   },
   "runtime": {
-    "setIntervalOccurrences": 0
+    "setIntervalOccurrences": 5
   },
   "codeHealth": {
-    "deepRelativeImportCount": 0,
+    "deepRelativeImportCount": 6,
     "circularFeatureDeps": [],
     "hookComplexity": [
       {
+        "path": "src/features/playwright/hooks/usePlaywrightStepSequencerState.ts",
+        "useEffectCount": 2,
+        "useCallbackCount": 39,
+        "useMemoCount": 11,
+        "total": 52
+      },
+      {
         "path": "src/features/ai/ai-paths/hooks/useAdminAiPathsValidationState.ts",
-        "useEffectCount": 4,
+        "useEffectCount": 3,
         "useCallbackCount": 16,
         "useMemoCount": 20,
-        "total": 40
+        "total": 39
       },
       {
         "path": "src/features/ai/image-studio/context/useVersionGraphRuntime.ts",
@@ -274,9 +299,16 @@
         "total": 31
       },
       {
+        "path": "src/features/products/hooks/useProductData.ts",
+        "useEffectCount": 5,
+        "useCallbackCount": 22,
+        "useMemoCount": 4,
+        "total": 31
+      },
+      {
         "path": "src/features/products/hooks/useProductListState.tsx",
-        "useEffectCount": 7,
-        "useCallbackCount": 17,
+        "useEffectCount": 6,
+        "useCallbackCount": 18,
         "useMemoCount": 7,
         "total": 31
       },
@@ -288,17 +320,10 @@
         "total": 28
       },
       {
-        "path": "src/features/products/hooks/useProductData.ts",
-        "useEffectCount": 5,
-        "useCallbackCount": 19,
-        "useMemoCount": 3,
-        "total": 27
-      },
-      {
-        "path": "src/features/ai/ai-paths/components/useJobQueueRuntime.ts",
-        "useEffectCount": 7,
-        "useCallbackCount": 15,
-        "useMemoCount": 2,
+        "path": "src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts",
+        "useEffectCount": 1,
+        "useCallbackCount": 8,
+        "useMemoCount": 15,
         "total": 24
       },
       {
@@ -307,13 +332,6 @@
         "useCallbackCount": 7,
         "useMemoCount": 12,
         "total": 24
-      },
-      {
-        "path": "src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts",
-        "useEffectCount": 1,
-        "useCallbackCount": 8,
-        "useMemoCount": 14,
-        "total": 23
       },
       {
         "path": "src/features/ai/image-studio/components/studio-modals/useStudioInlineEditRuntimeState.ts",
@@ -330,10 +348,17 @@
         "total": 22
       },
       {
-        "path": "src/features/admin/context/useAdminMenuSettingsDerivedState.ts",
-        "useEffectCount": 1,
-        "useCallbackCount": 0,
-        "useMemoCount": 19,
+        "path": "src/features/ai/ai-paths/components/useJobQueueRuntime.ts",
+        "useEffectCount": 7,
+        "useCallbackCount": 12,
+        "useMemoCount": 2,
+        "total": 21
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts",
+        "useEffectCount": 8,
+        "useCallbackCount": 8,
+        "useMemoCount": 4,
         "total": 20
       },
       {
@@ -344,11 +369,18 @@
         "total": 20
       },
       {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts",
-        "useEffectCount": 8,
-        "useCallbackCount": 8,
-        "useMemoCount": 3,
-        "total": 19
+        "path": "src/features/ai/ai-paths/context/hooks/useCanvasInteractions.navigation.ts",
+        "useEffectCount": 1,
+        "useCallbackCount": 16,
+        "useMemoCount": 1,
+        "total": 18
+      },
+      {
+        "path": "src/features/filemaker/hooks/useAdminFilemakerOrganizationsListState.tsx",
+        "useEffectCount": 2,
+        "useCallbackCount": 12,
+        "useMemoCount": 4,
+        "total": 18
       },
       {
         "path": "src/features/kangur/social/admin/workspace/hooks/useSocialCaptureFlows.ts",
@@ -372,10 +404,10 @@
         "total": 18
       },
       {
-        "path": "src/features/ai/ai-paths/context/hooks/useCanvasInteractions.navigation.ts",
+        "path": "src/features/integrations/context/useProductListingsActionsImpl.ts",
         "useEffectCount": 0,
-        "useCallbackCount": 16,
-        "useMemoCount": 1,
+        "useCallbackCount": 17,
+        "useMemoCount": 0,
         "total": 17
       },
       {
@@ -412,145 +444,131 @@
         "useCallbackCount": 11,
         "useMemoCount": 1,
         "total": 16
-      },
-      {
-        "path": "src/features/kangur/ui/pages/duels/useDuelsLobby.ts",
-        "useEffectCount": 1,
-        "useCallbackCount": 15,
-        "useMemoCount": 0,
-        "total": 16
-      },
-      {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRunHistory.ts",
-        "useEffectCount": 7,
-        "useCallbackCount": 6,
-        "useMemoCount": 2,
-        "total": 15
       }
     ],
-    "highComplexityHooksCount": 168
+    "highComplexityHooksCount": 185
   },
   "hotspots": {
     "topFilesByLines": [
       {
-        "path": "src/features/integrations/services/tradera-listing/browser.test.ts",
-        "lines": 2786
+        "path": "src/features/products/components/list/ProductScanModal.test.tsx",
+        "lines": 4631
       },
       {
-        "path": "src/features/integrations/services/tradera-listing/category-scrape-script.ts",
-        "lines": 1304
+        "path": "src/features/playwright/server/ai-step-service.test.ts",
+        "lines": 3242
       },
       {
-        "path": "src/features/integrations/services/tradera-listing/script-partials/part-4b.ts",
-        "lines": 1047
+        "path": "src/features/filemaker/server/filemaker-job-board-scrape.test.ts",
+        "lines": 3189
       },
       {
-        "path": "src/features/products/components/list/ProductColumns.test.tsx",
-        "lines": 1038
+        "path": "src/features/playwright/pages/AdminPlaywrightProgrammableIntegrationPage.test.tsx",
+        "lines": 3129
       },
       {
-        "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
-        "lines": 1015
+        "path": "src/features/products/components/form/ProductFormScans.test.tsx",
+        "lines": 2832
       },
       {
-        "path": "src/features/products/components/settings/ShippingGroupsSettings.tsx",
-        "lines": 1006
+        "path": "src/shared/lib/browser-execution/__tests__/product-scan-sequencers.test.ts",
+        "lines": 2825
       },
       {
-        "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
-        "lines": 999
+        "path": "src/features/products/server/product-scan-ai-evaluator.ts",
+        "lines": 2751
+      },
+      {
+        "path": "src/features/playwright/server/ai-step-service.ts",
+        "lines": 2650
+      },
+      {
+        "path": "src/features/products/components/list/ProductScanModal.tsx",
+        "lines": 2578
+      },
+      {
+        "path": "src/features/filemaker/components/page/FilemakerJobBoardScrapeModal.tsx",
+        "lines": 2513
+      },
+      {
+        "path": "src/features/filemaker/server/filemaker-job-board-scrape.ts",
+        "lines": 2492
+      },
+      {
+        "path": "src/features/filemaker/__tests__/AdminFilemakerMailPages.routing.test.tsx",
+        "lines": 2451
+      },
+      {
+        "path": "src/features/products/server/product-scans-service.amazon.test.ts",
+        "lines": 2255
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing-service.test.ts",
+        "lines": 2217
       },
       {
         "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
-        "lines": 992
+        "lines": 2112
       },
       {
-        "path": "src/shared/lib/products/services/product-ai-graph-model-payload.test.ts",
-        "lines": 991
+        "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx",
+        "lines": 2018
       },
       {
-        "path": "src/app/api/kangur/ai-tutor/chat/handler.ts",
-        "lines": 989
+        "path": "src/features/integrations/services/tradera-listing/OtherOperations.test.ts",
+        "lines": 2016
       },
       {
-        "path": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-        "lines": 987
+        "path": "src/features/filemaker/server/job-board-scrape/offer-from-evaluation.ts",
+        "lines": 1977
       },
       {
-        "path": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts",
-        "lines": 982
+        "path": "src/features/filemaker/components/page/OrganizationJobListingsSection.tsx",
+        "lines": 1948
       },
       {
-        "path": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx",
-        "lines": 982
+        "path": "src/features/product-sync/services/product-sync-processor.ts",
+        "lines": 1925
       },
       {
-        "path": "src/features/kangur/ui/services/geometry-drawing.ts",
-        "lines": 981
+        "path": "src/features/products/components/ProductModals.test.tsx",
+        "lines": 1920
       },
       {
-        "path": "src/app/api/settings/handler.ts",
-        "lines": 978
+        "path": "src/features/filemaker/server/filemaker-mail-service.ts",
+        "lines": 1896
       },
       {
-        "path": "src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx",
-        "lines": 977
+        "path": "src/features/filemaker/components/page/FilemakerJobBoardScrapeModal.test.tsx",
+        "lines": 1889
       },
       {
-        "path": "src/features/kangur/admin/KangurQuestionsManagerPanel.test.tsx",
-        "lines": 976
+        "path": "src/features/filemaker/__tests__/AdminFilemakerMailClientPage.test.tsx",
+        "lines": 1781
       },
       {
-        "path": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
-        "lines": 974
+        "path": "src/features/job-board/server/email-finder.ts",
+        "lines": 1721
       },
       {
-        "path": "src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx",
-        "lines": 970
+        "path": "src/shared/lib/browser-execution/selectors/tradera.ts",
+        "lines": 1680
       },
       {
-        "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
-        "lines": 970
+        "path": "src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts",
+        "lines": 1667
       },
       {
-        "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts",
-        "lines": 969
+        "path": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts",
+        "lines": 1636
       },
       {
-        "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx",
-        "lines": 968
+        "path": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts",
+        "lines": 1617
       },
       {
-        "path": "src/features/kangur/ui/components/game-setup/__tests__/KangurGameOperationSelectorWidget.test.tsx",
-        "lines": 968
-      },
-      {
-        "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
-        "lines": 967
-      },
-      {
-        "path": "src/features/kangur/ui/components/GeometryBasicsWorkshopGame.tsx",
-        "lines": 964
-      },
-      {
-        "path": "src/shared/contracts/cms-theme.ts",
-        "lines": 964
-      },
-      {
-        "path": "src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.ts",
-        "lines": 962
-      },
-      {
-        "path": "src/features/kangur/admin/components/kangur-theme-settings.copy.ts",
-        "lines": 960
-      },
-      {
-        "path": "src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts",
-        "lines": 958
-      },
-      {
-        "path": "src/features/products/hooks/useProductListState.tsx",
-        "lines": 956
+        "path": "src/features/playwright/components/step-sequencer/ActionConstructorEngine.tsx",
+        "lines": 1613
       }
     ],
     "topPagesByLines": [
@@ -564,15 +582,15 @@
       },
       {
         "path": "src/app/(frontend)/preview/[id]/page.tsx",
-        "lines": 40
+        "lines": 38
       },
       {
         "path": "src/app/[locale]/(frontend)/[...slug]/page.tsx",
-        "lines": 35
+        "lines": 33
       },
       {
         "path": "src/app/(frontend)/[...slug]/page.tsx",
-        "lines": 32
+        "lines": 30
       },
       {
         "path": "src/app/(admin)/admin/products/settings/page.tsx",
@@ -580,7 +598,11 @@
       },
       {
         "path": "src/app/[locale]/(frontend)/login/page.tsx",
-        "lines": 29
+        "lines": 26
+      },
+      {
+        "path": "src/app/(admin)/admin/kangur/[...slug]/page.tsx",
+        "lines": 25
       },
       {
         "path": "src/app/(admin)/admin/filemaker/campaigns/preferences/page.tsx",
@@ -591,54 +613,50 @@
         "lines": 24
       },
       {
-        "path": "src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx",
-        "lines": 21
+        "path": "src/app/(admin)/admin/kangur/builder/page.tsx",
+        "lines": 19
       },
       {
-        "path": "src/app/[locale]/(frontend)/kangur/login/page.tsx",
-        "lines": 20
+        "path": "src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx",
+        "lines": 19
       },
       {
         "path": "src/app/(admin)/admin/integrations/aggregators/base-com/synchronization-engine/page.tsx",
         "lines": 17
       },
       {
-        "path": "src/app/[locale]/(frontend)/page.tsx",
+        "path": "src/app/(admin)/admin/kangur/content-manager/page.tsx",
         "lines": 17
       },
       {
-        "path": "src/app/[locale]/(frontend)/products/[id]/page.tsx",
+        "path": "src/app/(admin)/admin/kangur/observability/page.tsx",
         "lines": 17
       },
       {
-        "path": "src/app/(admin)/admin/kangur/[...slug]/page.tsx",
+        "path": "src/app/(admin)/admin/kangur/page.tsx",
+        "lines": 17
+      },
+      {
+        "path": "src/app/(admin)/admin/kangur/settings/ai-tutor-content/page.tsx",
+        "lines": 17
+      },
+      {
+        "path": "src/app/(admin)/admin/kangur/appearance/page.tsx",
         "lines": 16
       },
       {
-        "path": "src/app/(frontend)/kangur/login/page.tsx",
+        "path": "src/app/(admin)/admin/kangur/documentation/page.tsx",
         "lines": 16
       },
       {
-        "path": "src/app/(frontend)/login/page.tsx",
+        "path": "src/app/(admin)/admin/kangur/lessons-manager/page.tsx",
         "lines": 16
-      },
-      {
-        "path": "src/app/(admin)/admin/ai-paths/queue/page.tsx",
-        "lines": 15
-      },
-      {
-        "path": "src/app/(admin)/admin/chatbot/context/page.tsx",
-        "lines": 15
-      },
-      {
-        "path": "src/app/(admin)/admin/chatbot/page.tsx",
-        "lines": 15
       }
     ]
   },
   "propDrilling": {
-    "candidateChains": 230,
-    "depthGte4Chains": 66,
+    "candidateChains": 1250,
+    "depthGte4Chains": 409,
     "forwardingComponents": 120
   }
 }

@@ -5,14 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { DOCS_MANIFEST_PATH } from './docs-registry-adapter.constants';
 
-const resolveRepoRootUrl = (): URL => {
-  const candidate = new URL('../../../../../../', import.meta.url);
-  if (candidate.protocol === 'file:') {
-    return candidate;
-  }
-
-  return pathToFileURL(`${process.cwd()}/`);
-};
+const resolveRepoRootUrl = (): URL => pathToFileURL(`${process.cwd()}/`);
 
 const REPO_ROOT_URL = resolveRepoRootUrl();
 

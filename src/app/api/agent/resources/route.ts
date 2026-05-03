@@ -1,8 +1,8 @@
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, querySchema } from './handler';
+import { getResourcesHandler, querySchema } from './handler';
 
-export const GET = apiHandler(GET_handler, {
+export const GET = apiHandler(getResourcesHandler, {
   source: 'agent.resources.GET',
   querySchema,
   requireAuth: true,

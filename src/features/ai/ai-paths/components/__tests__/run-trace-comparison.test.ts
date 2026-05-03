@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildRunTraceComparison,
-  runTraceComparisonRowHasResumeChange,
 } from '../run-trace-comparison';
 
 const buildHistoryEntry = (overrides: Record<string, unknown>) => ({
@@ -83,26 +82,8 @@ const buildRun = ({
   }) as never;
 
 describe('run-trace-comparison', () => {
-  it('returns null for incomplete comparisons and detects resume metadata changes', () => {
+  it('returns null for incomplete comparisons', () => {
     expect(buildRunTraceComparison(null, null)).toBeNull();
-
-    expect(
-      runTraceComparisonRowHasResumeChange({
-        leftResumeMode: 'resume',
-        rightResumeMode: 'resume',
-        leftResumeDecision: 'reused',
-        rightResumeDecision: 'reexecuted',
-      })
-    ).toBe(true);
-
-    expect(
-      runTraceComparisonRowHasResumeChange({
-        leftResumeMode: null,
-        rightResumeMode: null,
-        leftResumeDecision: null,
-        rightResumeDecision: null,
-      })
-    ).toBe(false);
   });
 
   it('builds regressed trace rows with structured payload diffs', () => {
@@ -254,7 +235,7 @@ describe('run-trace-comparison', () => {
     expect(comparison?.rows[0]?.outputDiff?.lines.join('\n')).toContain('~ payload:');
   });
 
-  it('summarizes resume changes and sorts resume-impact rows first', () => {
+  it('sorts changed rows by classification and duration delta', () => {
     const comparison = buildRunTraceComparison(
       buildRun({
         id: 'run-left-order',
@@ -295,11 +276,6 @@ describe('run-trace-comparison', () => {
             nodeTitle: 'Parser',
             startedAt: '2026-03-06T13:00:01.200Z',
             finishedAt: '2026-03-06T13:00:01.300Z',
-            resume: {
-              mode: 'resume',
-              decision: 'reused',
-              reason: 'completed_upstream',
-            },
           }),
         ],
       }),
@@ -325,8 +301,6 @@ describe('run-trace-comparison', () => {
               nodeTitle: 'Parser',
               spanId: 'node-b:2:1',
               outputs: { value: 'b2' },
-              resumeMode: 'resume',
-              resumeDecision: 'reexecuted',
             }),
           ],
         },
@@ -345,25 +319,12 @@ describe('run-trace-comparison', () => {
             nodeType: 'parser',
             nodeTitle: 'Parser',
             startedAt: '2026-03-06T13:05:01.200Z',
-            finishedAt: '2026-03-06T13:05:01.300Z',
-            resume: {
-              mode: 'resume',
-              decision: 'reexecuted',
-              reason: 'failed_node',
-            },
+            finishedAt: '2026-03-06T13:05:01.900Z',
           }),
         ],
       })
     );
 
-    expect(comparison?.resumeModeChangeCount).toBe(0);
-    expect(comparison?.resumeDecisionChangeCount).toBe(1);
-    expect(comparison?.resumedNodeDelta).toBe(0);
-    expect(comparison?.reusedNodeDelta).toBe(-1);
-    expect(comparison?.reexecutedNodeDelta).toBe(1);
-    expect(comparison?.rows.filter((row) => runTraceComparisonRowHasResumeChange(row))).toHaveLength(
-      1
-    );
     expect(comparison?.rows[0]?.nodeId).toBe('node-b');
     expect(comparison?.rows[1]?.nodeId).toBe('node-a');
   });

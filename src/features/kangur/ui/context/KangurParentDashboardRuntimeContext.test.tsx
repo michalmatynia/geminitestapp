@@ -85,6 +85,18 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => authState.value,
+  useKangurAuthSessionState: () => ({
+    user: authState.value.user,
+    isAuthenticated: authState.value.isAuthenticated,
+    hasResolvedAuth: true,
+    canAccessParentAssignments: authState.value.canAccessParentAssignments ?? false,
+  }),
+  useKangurAuthActions: () => ({
+    navigateToLogin: authState.value.navigateToLogin,
+    logout: authState.value.logout,
+    selectLearner: authState.value.selectLearner,
+    checkAppState: authState.value.checkAppState,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({

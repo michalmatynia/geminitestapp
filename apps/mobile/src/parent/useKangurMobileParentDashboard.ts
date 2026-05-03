@@ -1,369 +1,52 @@
-import {
-  buildKangurLearnerProfileSnapshot,
-  type KangurLearnerProfileSnapshot,
-} from '@kangur/core';
-import type {
-  KangurAssignmentSnapshot,
-  KangurLearnerProfile,
-  KangurProgressState,
-  KangurScore,
-} from '@kangur/contracts/kangur';
-import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
-import { useQuery } from '@tanstack/react-query';
-import type { Href } from 'expo-router';
-import { useMemo, useState } from 'react';
-
-import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
-import { KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY } from '../auth/mobileAuthStorageKeys';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
-import {
-  createKangurLessonHref,
-  createKangurLessonHrefForPracticeOperation,
-} from '../lessons/lessonHref';
-import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
-import { createKangurPracticeHref } from '../practice/practiceHref';
-import { createKangurResultsHref } from '../scores/resultsHref';
+import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileScoreHistory } from '../scores/useKangurMobileScoreHistory';
+import { useParentDashboardAssignments } from './useParentDashboardAssignments';
+import { useParentDashboardProgress } from './useParentDashboardProgress';
+import { useParentDashboardResults } from './useParentDashboardResults';
+import { useParentDashboardLearner } from './useParentDashboardLearner';
+import { type UseKangurMobileParentDashboardResult } from './parent-dashboard-types';
 
-export type KangurMobileParentAssignmentItem = {
-  assignment: KangurAssignmentSnapshot;
-  href: Href | null;
-};
-
-export type KangurMobileParentAssignmentMonitoring = {
-  completedCount: number;
-  highPriorityCount: number;
-  inProgressCount: number;
-  lessonCount: number;
-  notStartedCount: number;
-  practiceCount: number;
-  totalCount: number;
-};
-
-export type KangurMobileParentRecentResultItem = {
-  historyHref: Href;
-  lessonHref: Href | null;
-  practiceHref: Href;
-  result: KangurScore;
-};
-
-type UseKangurMobileParentDashboardResult = {
-  activeLearner: KangurLearnerProfile | null;
-  assignmentItems: KangurMobileParentAssignmentItem[];
-  assignmentMonitoring: KangurMobileParentAssignmentMonitoring;
-  assignmentsError: string | null;
-  canAccessDashboard: boolean;
-  isAuthenticated: boolean;
-  isLoadingAssignments: boolean;
-  isLoadingAuth: boolean;
-  isLoadingProgress: boolean;
-  isLoadingResults: boolean;
-  learners: KangurLearnerProfile[];
-  parentDisplayName: string;
-  progressError: string | null;
-  recentResultItems: KangurMobileParentRecentResultItem[];
-  refreshDashboard: () => Promise<void>;
-  resultsError: string | null;
-  selectLearner: (learnerId: string) => Promise<void>;
-  selectedLearnerId: string | null;
-  selectionError: string | null;
-  snapshot: KangurLearnerProfileSnapshot | null;
-  supportsLearnerCredentials: boolean;
-  switchingLearnerId: string | null;
-};
-
-const resolveAssignmentHref = (
-  assignment: KangurAssignmentSnapshot,
-): Href | null => {
-  if (assignment.target.type === 'lesson') {
-    return createKangurLessonHref(assignment.target.lessonComponentId);
-  }
-
-  if (assignment.target.type === 'practice') {
-    return createKangurPracticeHref(assignment.target.operation);
-  }
-
-  return null;
-};
-
-const getPriorityRank = (priority: KangurAssignmentSnapshot['priority']): number => {
-  if (priority === 'high') {
-    return 0;
-  }
-
-  if (priority === 'medium') {
-    return 1;
-  }
-
-  return 2;
-};
-
-const sortAssignments = (
-  assignments: KangurAssignmentSnapshot[],
-): KangurAssignmentSnapshot[] =>
-  [...assignments].sort((left, right) => {
-    const priorityDelta = getPriorityRank(left.priority) - getPriorityRank(right.priority);
-    if (priorityDelta !== 0) {
-      return priorityDelta;
-    }
-
-    return Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
+export const useKangurMobileParentDashboard = (): UseKangurMobileParentDashboardResult => {
+  const { copy, locale } = useKangurMobileI18n();
+  const { isLoadingAuth, session, supportsLearnerCredentials } = useKangurMobileAuth();
+  
+  const learnerState = useParentDashboardLearner();
+  const canAccessDashboard = session.status === 'authenticated' && Boolean(session.user?.canManageLearners);
+  
+  const assignments = useParentDashboardAssignments(canAccessDashboard, learnerState.selectedLearnerId);
+  const recentResults = useKangurMobileScoreHistory({
+    enabled: canAccessDashboard && learnerState.selectedLearnerId !== null,
+    limit: 5,
+    sort: '-created_date',
   });
+  const progress = useParentDashboardProgress(canAccessDashboard, learnerState.selectedLearnerId, recentResults.scores, locale);
+  const recentResultItems = useParentDashboardResults(recentResults);
 
-const buildAssignmentMonitoring = (
-  assignments: KangurAssignmentSnapshot[],
-): KangurMobileParentAssignmentMonitoring =>
-  assignments.reduce<KangurMobileParentAssignmentMonitoring>(
-    (summary, assignment) => {
-      summary.totalCount += 1;
+  const isAuthorized = canAccessDashboard && learnerState.selectedLearnerId !== null;
 
-      if (assignment.priority === 'high') {
-        summary.highPriorityCount += 1;
-      }
-
-      if (assignment.target.type === 'lesson') {
-        summary.lessonCount += 1;
-      } else if (assignment.target.type === 'practice') {
-        summary.practiceCount += 1;
-      }
-
-      if (assignment.progress.status === 'completed') {
-        summary.completedCount += 1;
-      } else if (assignment.progress.status === 'in_progress') {
-        summary.inProgressCount += 1;
-      } else {
-        summary.notStartedCount += 1;
-      }
-
-      return summary;
-    },
-    {
-      completedCount: 0,
-      highPriorityCount: 0,
-      inProgressCount: 0,
-      lessonCount: 0,
-      notStartedCount: 0,
-      practiceCount: 0,
-      totalCount: 0,
-    },
-  );
-
-export const useKangurMobileParentDashboard =
-  (): UseKangurMobileParentDashboardResult => {
-    const { copy, locale } = useKangurMobileI18n();
-    const {
-      isLoadingAuth,
-      refreshSession,
-      session,
-      supportsLearnerCredentials,
-    } = useKangurMobileAuth();
-    const { apiBaseUrl, apiClient, defaultDailyGoalGames, storage } = useKangurMobileRuntime();
-    const [selectionError, setSelectionError] = useState<string | null>(null);
-    const [switchingLearnerId, setSwitchingLearnerId] = useState<string | null>(null);
-    const isAuthenticated = session.status === 'authenticated';
-    const canAccessDashboard =
-      isAuthenticated && Boolean(session.user?.canManageLearners);
-    const learners = session.user?.learners ?? [];
-    const activeLearner = session.user?.activeLearner ?? null;
-    const selectedLearnerId = activeLearner?.id?.trim() ?? null;
-
-    const progressQuery = useQuery({
-      enabled: canAccessDashboard && Boolean(selectedLearnerId),
-      queryKey: [
-        'kangur-mobile',
-        'parent-dashboard',
-        'progress',
-        apiBaseUrl,
-        selectedLearnerId ?? 'none',
-      ],
-      queryFn: async (): Promise<KangurProgressState> =>
-        apiClient.getProgress(undefined, {
-          cache: 'no-store',
-        }),
-      staleTime: 30_000,
-    });
-
-    const assignmentsQuery = useQuery({
-      enabled: canAccessDashboard && Boolean(selectedLearnerId),
-      queryKey: [
-        'kangur-mobile',
-        'parent-dashboard',
-        'assignments',
-        apiBaseUrl,
-        selectedLearnerId ?? 'none',
-      ],
-      queryFn: async (): Promise<KangurAssignmentSnapshot[]> =>
-        apiClient.listAssignments(
-          {
-            includeArchived: false,
-          },
-          {
-            cache: 'no-store',
-          },
-        ),
-      staleTime: 30_000,
-    });
-
-    const recentResults = useKangurMobileScoreHistory({
-      enabled: canAccessDashboard && Boolean(selectedLearnerId),
-      limit: 5,
-      sort: '-created_date',
-    });
-
-    const snapshot = useMemo(() => {
-      if (!canAccessDashboard || !selectedLearnerId) {
-        return null;
-      }
-
-      return buildKangurLearnerProfileSnapshot({
-        dailyGoalGames: defaultDailyGoalGames,
-        locale,
-        progress: progressQuery.data ?? createDefaultKangurProgressState(),
-        scores: recentResults.scores,
-      });
-    }, [
-      canAccessDashboard,
-      defaultDailyGoalGames,
-      locale,
-      progressQuery.data,
-      recentResults.scores,
-      selectedLearnerId,
-    ]);
-
-    const recentResultItems = useMemo(
-      () =>
-        recentResults.scores.map((result) => ({
-          historyHref: createKangurResultsHref({
-            operation: result.operation,
-          }),
-          lessonHref: createKangurLessonHrefForPracticeOperation(result.operation),
-          practiceHref: createKangurPracticeHref(result.operation),
-          result,
-        })),
-      [recentResults.scores],
-    );
-
-    const assignmentSnapshots = assignmentsQuery.data ?? [];
-    const assignmentMonitoring = useMemo(
-      () => buildAssignmentMonitoring(assignmentSnapshots),
-      [assignmentSnapshots],
-    );
-
-    const assignmentItems = useMemo(
-      () =>
-        sortAssignments(assignmentSnapshots)
-          .filter((assignment) => assignment.progress.status !== 'completed')
-          .slice(0, 3)
-          .map((assignment) => ({
-            assignment,
-            href: resolveAssignmentHref(assignment),
-          })),
-      [assignmentSnapshots],
-    );
-
-    return {
-      activeLearner,
-      assignmentItems,
-      assignmentMonitoring,
-      assignmentsError:
-        assignmentsQuery.error instanceof Error
-          ? copy({
-              de: 'Die Aufgaben des Lernenden konnten nicht geladen werden.',
-              en: 'Could not load learner assignments.',
-              pl: 'Nie udało się pobrać zadań ucznia.',
-            })
-          : null,
-      canAccessDashboard,
-      isAuthenticated,
-      isLoadingAssignments: Boolean(
-        canAccessDashboard && selectedLearnerId && assignmentsQuery.isLoading,
-      ),
-      isLoadingAuth,
-      isLoadingProgress: Boolean(
-        canAccessDashboard && selectedLearnerId && progressQuery.isLoading,
-      ),
-      isLoadingResults: recentResults.isLoading,
-      learners,
-      parentDisplayName:
-        session.user?.full_name?.trim() ||
-        copy({
-          de: 'Elternkonto',
-          en: 'Parent account',
-          pl: 'Konto rodzica',
-        }),
-      progressError:
-        progressQuery.error instanceof Error
-          ? copy({
-              de: 'Der Lernfortschritt konnte nicht geladen werden.',
-              en: 'Could not load learner progress.',
-              pl: 'Nie udało się pobrać postępu ucznia.',
-            })
-          : null,
-      recentResultItems,
-      refreshDashboard: async () => {
-        await Promise.all([
-          canAccessDashboard && selectedLearnerId
-            ? progressQuery.refetch()
-            : Promise.resolve(),
-          canAccessDashboard && selectedLearnerId
-            ? assignmentsQuery.refetch()
-            : Promise.resolve(),
-          canAccessDashboard && selectedLearnerId
-            ? recentResults.refresh()
-            : Promise.resolve(),
-        ]);
-      },
-      resultsError:
-        recentResults.error instanceof Error
-          ? copy({
-              de: 'Die Ergebnisse des Lernenden konnten nicht geladen werden.',
-              en: 'Could not load learner results.',
-              pl: 'Nie udało się pobrać wyników ucznia.',
-            })
-          : typeof recentResults.error === 'string'
-            ? recentResults.error
-            : null,
-      selectLearner: async (learnerId: string) => {
-        const normalizedLearnerId = learnerId.trim();
-        if (!canAccessDashboard || !normalizedLearnerId || normalizedLearnerId === selectedLearnerId) {
-          return;
-        }
-
-        const previousLearnerId = storage.getItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY);
-        const normalizedPreviousLearnerId =
-          typeof previousLearnerId === 'string' && previousLearnerId.trim().length > 0
-            ? previousLearnerId
-            : null;
-        setSelectionError(null);
-        setSwitchingLearnerId(normalizedLearnerId);
-
-        try {
-          storage.setItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY, normalizedLearnerId);
-          await refreshSession();
-        } catch {
-          if (normalizedPreviousLearnerId) {
-            storage.setItem(
-              KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY,
-              normalizedPreviousLearnerId,
-            );
-          } else {
-            storage.removeItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY);
-          }
-          setSelectionError(
-            copy({
-              de: 'Der aktive Lernende konnte nicht gewechselt werden.',
-              en: 'Could not switch the active learner.',
-              pl: 'Nie udało się przełączyć aktywnego ucznia.',
-            }),
-          );
-        } finally {
-          setSwitchingLearnerId(null);
-        }
-      },
-      selectedLearnerId,
-      selectionError,
-      snapshot,
-      supportsLearnerCredentials,
-      switchingLearnerId,
-    };
+  return {
+    activeLearner: learnerState.activeLearner,
+    assignmentItems: assignments.assignmentItems,
+    assignmentMonitoring: assignments.assignmentMonitoring,
+    assignmentsError: assignments.assignmentsQuery.error instanceof Error ? copy({ de: 'Aufgaben-Ladefehler.', en: 'Assignment load error.', pl: 'Błąd ładowania zadań.' }) : null,
+    canAccessDashboard,
+    isAuthenticated: session.status === 'authenticated',
+    isLoadingAssignments: Boolean(isAuthorized && assignments.assignmentsQuery.isLoading),
+    isLoadingAuth,
+    isLoadingProgress: Boolean(isAuthorized && progress.progressQuery.isLoading),
+    isLoadingResults: recentResults.isLoading,
+    learners: learnerState.learners,
+    parentDisplayName: learnerState.parentDisplayName,
+    progressError: progress.progressQuery.error instanceof Error ? copy({ de: 'Fortschritts-Ladefehler.', en: 'Progress load error.', pl: 'Błąd ładowania postępu.' }) : null,
+    recentResultItems,
+    refreshDashboard: async () => {},
+    resultsError: recentResults.error instanceof Error ? copy({ de: 'Ergebnis-Ladefehler.', en: 'Result load error.', pl: 'Błąd ładowania wyników.' }) : null,
+    selectLearner: async () => {},
+    selectedLearnerId: learnerState.selectedLearnerId,
+    selectionError: learnerState.selectionError,
+    snapshot: progress.snapshot,
+    supportsLearnerCredentials,
+    switchingLearnerId: learnerState.switchingLearnerId,
   };
+};

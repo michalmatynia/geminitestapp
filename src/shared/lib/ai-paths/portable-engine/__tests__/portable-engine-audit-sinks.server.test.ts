@@ -42,27 +42,6 @@ import {
   createPortablePathEnvelopeVerificationLogForwardingSink,
   createPortablePathEnvelopeVerificationMongoSink,
   resolvePortablePathAuditSinkFailureAlertLevelFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayEndpointAllowlistFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment,
@@ -413,16 +392,6 @@ describe('portable-engine envelope verification sink factories', () => {
     expect(result.healthPolicy).toBe('warn');
     expect(result.healthTimeoutMs).toBe(2000);
     expect(result.startupHealthSummary?.status).toBe('healthy');
-    expect(result.autoRemediation).toEqual(
-      expect.objectContaining({
-        enabled: true,
-        strategy: 'degrade_to_log_only',
-        cooldownSeconds: 300,
-        rateLimitWindowSeconds: 3600,
-        rateLimitMaxActions: 3,
-        triggered: false,
-      })
-    );
     expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([
       'portable-envelope-verification-log-forwarding',
       'portable-envelope-verification-mongo',
@@ -442,7 +411,6 @@ describe('portable-engine envelope verification sink factories', () => {
     expect(result.enabled).toBe(false);
     expect(result.profile).toBe('prod');
     expect(result.startupHealthSummary).toBeNull();
-    expect(result.autoRemediation).toBeNull();
     expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([]);
   });
 
@@ -463,127 +431,6 @@ describe('portable-engine envelope verification sink factories', () => {
     expect(
       resolvePortablePathSigningPolicyTrendPersistenceMaxSnapshotsFromEnvironment('invalid')
     ).toBeNull();
-    expect(resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment('true')).toBe(true);
-    expect(resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment('')).toBeNull();
-    expect(resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('none')).toBe('none');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('unregister-all')
-    ).toBe('unregister_all');
-    expect(resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('log_only')).toBe(
-      'degrade_to_log_only'
-    );
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('  DISABLED  ')
-    ).toBe('none');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('Degrade-To-Log-Only')
-    ).toBe('degrade_to_log_only');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('invalid')
-    ).toBeNull();
-    expect(resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment('120')).toBe(
-      120
-    );
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment('900')
-    ).toBe(900);
-    expect(resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment('2')).toBe(
-      2
-    );
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment('false')
-    ).toBe(false);
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment(
-        'https://example.test/remediation'
-      )
-    ).toBe('https://example.test/remediation');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment(
-        'https://example.test/email'
-      )
-    ).toBe('https://example.test/email');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment(
-        'ops@example.test,dev@example.test'
-      )
-    ).toEqual(['ops@example.test', 'dev@example.test']);
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment('6500')
-    ).toBe(6500);
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment(' signing-secret ')
-    ).toBe('signing-secret');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment('kid-v2')
-    ).toBe('kid-v2');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment('email-secret')
-    ).toBe('email-secret');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment(
-        'email-kid-v1'
-      )
-    ).toBe('email-kid-v1');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment('333')
-    ).toBe(333);
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment('invalid')
-    ).toBeNull();
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment(
-        '7200'
-      )
-    ).toBe(7200);
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment(
-        'invalid'
-      )
-    ).toBeNull();
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayEndpointAllowlistFromEnvironment(
-        'https://example.test/a, https://example.test/b, not-a-url'
-      )
-    ).toEqual(['https://example.test/a', 'https://example.test/b']);
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayEndpointAllowlistFromEnvironment(
-        'invalid'
-      )
-    ).toBeNull();
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment(
-        ' replay-export-secret '
-      )
-    ).toBe('replay-export-secret');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment('')
-    ).toBeNull();
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment(
-        'replay-export-key-v1'
-      )
-    ).toBe('replay-export-key-v1');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment('')
-    ).toBeNull();
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment(
-        'lower-trust'
-      )
-    ).toBe('sensitive');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment(
-        'off'
-      )
-    ).toBe('off');
-    expect(
-      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment(
-        ''
-      )
-    ).toBeNull();
-    expect(resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment('5')).toBe(5);
-    expect(resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment('oops')).toBeNull();
   });
 
   it('emits trend and drift alerts for disallowed signing-policy profile usage', async () => {

@@ -89,7 +89,7 @@ describe('AI Paths Runtime Engine', () => {
     expect(result.outputs['node-2']).toEqual({ out: 'mapped' });
   });
 
-  it('should respect maxIterations and stop on circular dependencies', async () => {
+  it('rejects unsupported circular dependencies before maxIterations handling', async () => {
     const nodes: AiNode[] = [
       {
         id: 'node-1',
@@ -120,7 +120,7 @@ describe('AI Paths Runtime Engine', () => {
         edges,
         seedOutputs: { 'node-1': { value: 1 } },
       })
-    ).rejects.toThrow('Graph execution exceeded maximum iterations (10).');
+    ).rejects.toThrow('Unsupported circular dependency detected.');
   });
 
   it('should skip nodes provided in skipNodeIds', async () => {

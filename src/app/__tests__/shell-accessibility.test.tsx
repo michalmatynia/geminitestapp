@@ -3,6 +3,7 @@
  */
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import React from 'react';
 
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
@@ -39,12 +40,19 @@ describe('app shell accessibility', () => {
     vi.resetModules();
   });
 
-  it('renders a focusable main landmark in the frontend shell', async () => {
+  const renderFrontendLayoutFallback = async (children: React.ReactNode) => {
     const { default: FrontendLayout } = await import('@/app/(frontend)/layout');
-    const layout = await FrontendLayout({
-      children: <div>Frontend content</div>,
-    });
-    const { container } = render(layout);
+    const layout = FrontendLayout({ children });
+
+    expect(React.isValidElement(layout)).toBe(true);
+
+    return render(layout.props.fallback as React.ReactElement);
+  };
+
+  it('renders a focusable main landmark in the frontend shell', async () => {
+    const { container } = await renderFrontendLayoutFallback(
+      <div>Frontend content</div>
+    );
 
     const main = screen.getByRole('main');
     expect(main).toHaveAttribute('id', 'kangur-main-content');

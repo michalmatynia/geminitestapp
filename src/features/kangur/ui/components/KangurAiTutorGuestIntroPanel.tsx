@@ -1,8 +1,11 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { useState } from 'react';
 
+import {
+  LazyMotionButton,
+  LazyMotionDiv,
+} from '@/features/kangur/ui/components/LazyAnimatePresence';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -28,11 +31,15 @@ type Props = {
   prefersReducedMotion: boolean;
 };
 
+type GuestIntroProposalActions = {
+  onAccept: () => void;
+  onDismiss: () => void;
+};
+
 type GuestIntroProposalProps = {
   guestTutorLabel: string;
   isCoarsePointer: boolean;
-  onAccept: () => void;
-  onDismiss: () => void;
+  actions: GuestIntroProposalActions;
 };
 
 type GuestIntroProposalActionButtonProps = {
@@ -95,9 +102,9 @@ function GuestIntroProposalActionButton({
 function GuestIntroProposal({
   guestTutorLabel,
   isCoarsePointer,
-  onAccept,
-  onDismiss,
+  actions,
 }: GuestIntroProposalProps): JSX.Element {
+  const { onAccept, onDismiss } = actions;
   const actionClassName = resolveGuestIntroActionClassName(isCoarsePointer);
 
   return (
@@ -149,8 +156,7 @@ function KangurAiTutorGuestIntroContent(props: {
       <GuestIntroProposal
         guestTutorLabel={guestTutorLabel}
         isCoarsePointer={isCoarsePointer}
-        onAccept={onAccept}
-        onDismiss={onDismiss}
+        actions={{ onAccept, onDismiss }}
       />
     );
   }
@@ -188,7 +194,7 @@ export function KangurAiTutorGuestIntroPanel({
 
   return (
     <>
-      <motion.button
+      <LazyMotionButton
         key='guest-intro-backdrop'
         data-testid='kangur-ai-tutor-guest-intro-backdrop'
         type='button'
@@ -200,7 +206,7 @@ export function KangurAiTutorGuestIntroPanel({
         onClick={onClose}
         className='fixed inset-0 z-[74] cursor-pointer border-0 bg-transparent p-0 touch-manipulation active:opacity-95'
       />
-      <motion.div
+      <LazyMotionDiv
         data-kangur-ai-tutor-root='true'
         key='guest-intro'
         data-modal-card='warm-glow-soft'
@@ -237,7 +243,7 @@ export function KangurAiTutorGuestIntroPanel({
             onDismiss={handleDismiss}
           />
         </KangurAiTutorWarmOverlayPanel>
-      </motion.div>
+      </LazyMotionDiv>
     </>
   );
 }

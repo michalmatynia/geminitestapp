@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-03'
+last_reviewed: '2026-05-02'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,699 +8,690 @@ canonical: true
 ---
 # Prop Drilling Scan
 
-Generated at: 2026-04-03T11:32:41.995Z
+Generated at: 2026-05-02T20:57:20.029Z
 
 ## Snapshot
 
-- Scanned source files: 6693
-- JSX files scanned: 2486
-- Components detected: 4333
+- Scanned source files: 9462
+- JSX files scanned: 3168
+- Components detected: 5926
 - Components forwarding parent props (hotspot threshold): 120
-- Components forwarding parent props (any): 301
-- Resolved forwarded transitions: 1320
-- Candidate chains (depth >= 2): 1320
-- Candidate chains (depth >= 3): 266
-- High-priority chains (depth >= 4): 76
-- Unknown spread forwarding edges: 12
+- Components forwarding parent props (any): 1252
+- Resolved forwarded transitions: 5413
+- Candidate chains (depth >= 2): 5413
+- Candidate chains (depth >= 3): 1937
+- High-priority chains (depth >= 4): 611
+- Unknown spread forwarding edges: 104
 - Hotspot forwarding components backlog size: 120
 
 ## Hot Features
 
 | Feature Scope | Forwarding Components |
 | --- | ---: |
-| `feature:kangur` | 256 |
-| `shared-ui` | 9 |
-| `feature:filemaker` | 6 |
-| `feature:integrations` | 6 |
-| `feature:admin` | 4 |
-| `feature:products` | 4 |
-| `feature:cms` | 4 |
-| `feature:case-resolver` | 4 |
-| `feature:ai` | 3 |
-| `feature:playwright` | 2 |
-| `shared-lib` | 1 |
-| `feature:notesapp` | 1 |
-| `feature:observability` | 1 |
+| `feature:products` | 408 |
+| `feature:filemaker` | 299 |
+| `feature:kangur` | 168 |
+| `feature:playwright` | 99 |
+| `feature:admin` | 61 |
+| `feature:ai` | 50 |
+| `feature:integrations` | 44 |
+| `feature:database` | 22 |
+| `feature:viewer3d` | 22 |
+| `shared-ui` | 17 |
+| `feature:cms` | 12 |
+| `feature:drafter` | 11 |
+| `feature:auth` | 10 |
+| `feature:case-resolver` | 9 |
+| `feature:files` | 5 |
+| `feature:internationalization` | 4 |
+| `feature:jobs` | 3 |
+| `shared` | 3 |
+| `shared-lib` | 2 |
+| `app` | 1 |
 
 ## Top Prop-Drilling Components
 
 | Rank | Component | File | Forwarded Props | Outgoing Transitions | Unknown Spread Forwarding | Hotspot |
 | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | `KangurAiTutorGuidedCalloutBody` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx` | 17 | 51 | no | yes |
-| 2 | `LaunchSchedulingSection` | `src/features/filemaker/pages/campaign-edit-sections/LaunchSchedulingSection.tsx` | 16 | 16 | no | yes |
-| 3 | `KangurAiTutorGuidedSelectionResolvedContent` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx` | 13 | 17 | no | yes |
-| 4 | `ParentVerificationCard` | `src/features/kangur/ui/KangurLoginPage.components.tsx` | 12 | 12 | no | yes |
-| 5 | `DraggableClockFace` | `src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx` | 12 | 12 | no | yes |
-| 6 | `FilemakerMailSidebar` | `src/features/filemaker/components/FilemakerMailSidebar.tsx` | 11 | 28 | no | yes |
-| 7 | `IntegrationSelectorFields` | `src/features/integrations/components/listings/IntegrationSelectorFields.tsx` | 11 | 15 | no | yes |
-| 8 | `KangurGameOperationSelectorTrainingSection` | `src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorTrainingSection.tsx` | 11 | 11 | no | yes |
-| 9 | `NavTreeNode` | `src/features/admin/components/menu/NavTree.tsx` | 10 | 17 | no | yes |
-| 10 | `MailAccountSettingsSection` | `src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx` | 10 | 15 | no | yes |
-| 11 | `KangurParentDashboardManagedCard` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx` | 10 | 14 | no | yes |
-| 12 | `MultiplicationArrayRoundView` | `src/features/kangur/ui/components/MultiplicationArrayGame.tsx` | 10 | 11 | no | yes |
-| 13 | `LessonActivityShellBody` | `src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx` | 10 | 11 | no | yes |
-| 14 | `KangurGameOperationSelectorQuickPracticeSection` | `src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorQuickPracticeSection.tsx` | 9 | 14 | no | yes |
-| 15 | `KangurGameHomeQuestPanel` | `src/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget.tsx` | 9 | 11 | no | yes |
-| 16 | `KangurParentDashboardMonitoringHistorySection` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAssignmentsMonitoringWidget.tsx` | 9 | 10 | no | yes |
-| 17 | `NumberBalanceRushBoardSide` | `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 9 | 9 | no | yes |
-| 18 | `KangurAssignmentSpotlightContent` | `src/features/kangur/ui/components/assignments/KangurAssignmentSpotlight.tsx` | 9 | 9 | no | yes |
-| 19 | `StructureTab` | `src/features/kangur/ui/pages/games-library-tabs/StructureTab.tsx` | 8 | 24 | no | yes |
-| 20 | `KangurGameOperationSelectorQuickPracticeOptionCard` | `src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorQuickPracticeOptionCard.tsx` | 8 | 17 | no | yes |
-| 21 | `DivisionGroupsBoard` | `src/features/kangur/ui/components/DivisionGroupsGame.tsx` | 8 | 16 | no | yes |
-| 22 | `DivisionGameRoundView` | `src/features/kangur/ui/components/DivisionGame.tsx` | 8 | 15 | no | yes |
-| 23 | `SubtractingGameRoundView` | `src/features/kangur/ui/components/SubtractingGame.tsx` | 8 | 15 | no | yes |
-| 24 | `KangurLearnerAssignmentsMetrics` | `src/features/kangur/ui/components/assignments/KangurLearnerAssignmentsPanel.tsx` | 8 | 11 | no | yes |
-| 25 | `DivisionGameSummaryView` | `src/features/kangur/ui/components/DivisionGame.tsx` | 8 | 10 | no | yes |
-| 26 | `DivisionGroupsSummaryView` | `src/features/kangur/ui/components/DivisionGroupsGame.tsx` | 8 | 10 | no | yes |
-| 27 | `MultiplicationArraySummaryView` | `src/features/kangur/ui/components/MultiplicationArrayGame.tsx` | 8 | 10 | no | yes |
-| 28 | `SubtractingGameSummaryView` | `src/features/kangur/ui/components/SubtractingGame.tsx` | 8 | 10 | no | yes |
-| 29 | `HierarchyDraggableItem` | `src/features/kangur/ui/components/AgenticDocsHierarchyGame.tsx` | 8 | 9 | no | yes |
-| 30 | `KangurAssignmentManagerTimeLimitModal` | `src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.modals.tsx` | 8 | 9 | no | yes |
-| 31 | `AgenticSortBinsGrid` | `src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx` | 8 | 8 | no | yes |
-| 32 | `HierarchyList` | `src/features/kangur/ui/components/AgenticDocsHierarchyGame.tsx` | 8 | 8 | no | yes |
-| 33 | `GameHeader` | `src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx` | 8 | 8 | no | yes |
-| 34 | `DivisionGroupsPool` | `src/features/kangur/ui/components/DivisionGroupsGame.tsx` | 7 | 9 | no | yes |
-| 35 | `AgenticSortBin` | `src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx` | 7 | 8 | no | yes |
-| 36 | `ShapeRecognitionRoundView` | `src/features/kangur/ui/components/ShapeRecognitionGame.tsx` | 7 | 8 | no | yes |
-| 37 | `NavTree` | `src/features/admin/components/menu/NavTree.tsx` | 7 | 7 | no | yes |
-| 38 | `NumberBalanceRushTray` | `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 7 | 7 | no | yes |
-| 39 | `AiTutorGuardrailsSection` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx` | 6 | 14 | no | yes |
-| 40 | `DivisionGroupsGroupGrid` | `src/features/kangur/ui/components/DivisionGroupsGame.tsx` | 6 | 8 | no | yes |
-| 41 | `AgenticSortPool` | `src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx` | 6 | 7 | no | yes |
-| 42 | `AgenticSortActionsPanel` | `src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx` | 6 | 6 | no | yes |
-| 43 | `AgenticTrimActionsPanel` | `src/features/kangur/ui/components/AgenticCodingMiniGames.trim.tsx` | 6 | 6 | no | yes |
-| 44 | `KangurAiTutorGuidedCalloutActions` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx` | 6 | 6 | no | yes |
-| 45 | `DailyQuestCard` | `src/features/kangur/ui/components/learner-profile/KangurLearnerProfileQuestSummaryWidget.tsx` | 5 | 15 | no | yes |
-| 46 | `CatalogTab` | `src/features/kangur/ui/pages/games-library-tabs/CatalogTab.tsx` | 5 | 11 | no | yes |
-| 47 | `MultiplicationArrayGroupCard` | `src/features/kangur/ui/components/MultiplicationArrayGame.tsx` | 5 | 10 | no | yes |
-| 48 | `KangurGameResultFollowupSection` | `src/features/kangur/ui/components/game-runtime/KangurGameResultWidget.tsx` | 5 | 10 | no | yes |
-| 49 | `KangurLearnerProfileOverviewMetrics` | `src/features/kangur/ui/components/learner-profile/KangurLearnerProfileOverviewWidget.tsx` | 5 | 10 | no | yes |
-| 50 | `InstanceSettingsPanel` | `src/shared/lib/text-editor-engine/pages/AdminTextEditorSettingsPage.tsx` | 5 | 9 | no | yes |
-| 51 | `CalendarInteractiveGameSummaryView` | `src/features/kangur/ui/components/CalendarInteractiveGame.tsx` | 5 | 8 | no | yes |
-| 52 | `AdminKangurSocialSettingsModal` | `src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx` | 5 | 7 | no | yes |
-| 53 | `MailSearchSection` | `src/features/filemaker/pages/mail-page-sections/MailSearchSection.tsx` | 5 | 6 | no | yes |
-| 54 | `DivisionGroupsDropZone` | `src/features/kangur/ui/components/DivisionGroupsGame.tsx` | 5 | 6 | no | yes |
-| 55 | `KangurAssignmentsListPrimaryAction` | `src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx` | 5 | 6 | no | yes |
-| 56 | `KangurPrimaryNavigationGuestPlayerNameAction` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.sections.tsx` | 5 | 6 | no | yes |
-| 57 | `OrderDetails` | `src/features/products/pages/AdminProductOrdersImportPage.OrderDetails.tsx` | 5 | 6 | no | yes |
-| 58 | `KangurAiTutorGuidedSelectionSketchCard` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx` | 5 | 5 | no | yes |
-| 59 | `MultiplicationArrayGroups` | `src/features/kangur/ui/components/MultiplicationArrayGame.tsx` | 5 | 5 | no | yes |
-| 60 | `SignupForm` | `src/features/kangur/ui/login-page/signup-forms.tsx` | 5 | 5 | no | yes |
-| 61 | `KangurLearnerProfileOperationCard` | `src/features/kangur/ui/components/learner-profile/KangurLearnerProfilePerformanceWidget.tsx` | 4 | 10 | no | yes |
-| 62 | `LessonsCatalogResolvedContent` | `src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx` | 4 | 9 | no | yes |
-| 63 | `KangurLaunchableGameInstanceRuntime` | `src/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime.tsx` | 4 | 8 | no | yes |
-| 64 | `NumberBalanceRushSummaryView` | `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 4 | 7 | no | yes |
-| 65 | `SocialCaptureSectionSelector` | `src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx` | 4 | 6 | no | yes |
-| 66 | `ClockHands` | `src/features/kangur/ui/components/ClockLesson.visuals.tsx` | 4 | 6 | no | yes |
-| 67 | `AiTutorUiModeSection` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx` | 4 | 6 | no | yes |
-| 68 | `KangurParentDashboardGuestCard` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx` | 4 | 6 | no | yes |
-| 69 | `KangurParentDashboardRestrictedCard` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx` | 4 | 6 | no | yes |
-| 70 | `NumberBalanceRushTileZone` | `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 4 | 5 | no | yes |
-| 71 | `KangurAssignmentsListTimeLimitAction` | `src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx` | 4 | 5 | no | yes |
-| 72 | `KangurLearnerProfileAiTutorMoodStats` | `src/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget.tsx` | 4 | 5 | no | yes |
-| 73 | `KangurLessonActivityPrintButton` | `src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx` | 4 | 5 | no | yes |
-| 74 | `GamesLibraryGameDialog` | `src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx` | 4 | 5 | no | yes |
-| 75 | `LessonsCatalogIntroCardWithPageContent` | `src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx` | 4 | 5 | no | yes |
-| 76 | `KangurAiTutorGuidedSelectionHintCard` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx` | 4 | 4 | no | yes |
-| 77 | `KangurAssignmentsListReassignAction` | `src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx` | 4 | 4 | no | yes |
-| 78 | `KangurAssignmentsList` | `src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx` | 4 | 4 | no | yes |
-| 79 | `ClockTrainingModeSwitchSlot` | `src/features/kangur/ui/components/clock-training/ClockTrainingGame.views.tsx` | 4 | 4 | no | yes |
-| 80 | `KangurLessonActivityRuntimeState` | `src/features/kangur/ui/components/lesson-runtime/KangurLessonActivityBlock.tsx` | 4 | 4 | no | yes |
-| 81 | `LessonActivityShellPillsRow` | `src/features/kangur/ui/components/lesson-runtime/LessonActivityShell.tsx` | 4 | 4 | no | yes |
-| 82 | `AiTutorSelectFieldRow` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx` | 4 | 4 | no | yes |
-| 83 | `AiTutorAvailabilityRow` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx` | 4 | 4 | no | yes |
-| 84 | `AiTutorSaveAction` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx` | 4 | 4 | no | yes |
-| 85 | `KangurLessonVisual` | `src/features/kangur/ui/design/lesson-primitives.tsx` | 4 | 4 | no | yes |
-| 86 | `GameStats` | `src/features/kangur/ui/pages/GamesLibraryGameModal.components.tsx` | 4 | 4 | no | yes |
-| 87 | `GenericPickerDropdownMenu` | `src/shared/ui/templates/pickers/GenericPickerDropdown.core.tsx` | 4 | 4 | no | yes |
-| 88 | `ScoreHistoryRecentSessionEntry` | `src/features/kangur/ui/components/ScoreHistory.tsx` | 3 | 10 | no | yes |
-| 89 | `KangurLearnerProfileOverviewDailyQuestMetric` | `src/features/kangur/ui/components/learner-profile/KangurLearnerProfileOverviewWidget.tsx` | 3 | 8 | no | yes |
-| 90 | `PlaywrightCaptureRoutesEditor` | `src/shared/ui/playwright/PlaywrightCaptureRoutesEditor.tsx` | 3 | 7 | no | yes |
-| 91 | `AddingSynthesisLaneChoiceCard` | `src/features/kangur/ui/components/adding-synthesis/AddingSynthesisGame.sections.tsx` | 3 | 6 | no | yes |
-| 92 | `HomeFallbackContent` | `src/features/cms/components/frontend/home/home-fallback-content.tsx` | 3 | 5 | no | yes |
-| 93 | `KangurGameResultRecommendationSection` | `src/features/kangur/ui/components/game-runtime/KangurGameResultWidget.tsx` | 3 | 5 | no | yes |
-| 94 | `KangurLearnerProfileActivityPanel` | `src/features/kangur/ui/components/learner-profile/KangurLearnerProfilePerformanceWidget.tsx` | 3 | 5 | no | yes |
-| 95 | `KangurLearnerProfileOperationsPanel` | `src/features/kangur/ui/components/learner-profile/KangurLearnerProfilePerformanceWidget.tsx` | 3 | 5 | no | yes |
-| 96 | `NavTreeItem` | `src/features/admin/components/menu/NavTree.tsx` | 3 | 4 | no | yes |
-| 97 | `DivisionGameChoicesGrid` | `src/features/kangur/ui/components/DivisionGame.tsx` | 3 | 4 | no | yes |
-| 98 | `ShapeRecognitionFinishedView` | `src/features/kangur/ui/components/ShapeRecognitionGame.tsx` | 3 | 4 | no | yes |
-| 99 | `SubtractingGameChoicesGrid` | `src/features/kangur/ui/components/SubtractingGame.tsx` | 3 | 4 | no | yes |
-| 100 | `KangurGameOperationRecommendationCard` | `src/features/kangur/ui/components/game-setup/KangurGameOperationRecommendationCard.tsx` | 3 | 4 | no | yes |
-| 101 | `KangurGameOperationSelectorOperationSection` | `src/features/kangur/ui/components/game-setup/KangurGameOperationSelectorOperationSection.tsx` | 3 | 4 | no | yes |
-| 102 | `LoginForm` | `src/features/kangur/ui/login-page/login-forms.tsx` | 3 | 4 | no | yes |
-| 103 | `CanvasSelectedWireEndpointCard` | `src/features/ai/ai-paths/components/canvas-sidebar-primitives.tsx` | 3 | 3 | no | yes |
-| 104 | `ThemeSettingsFieldsSection` | `src/features/cms/components/page-builder/theme/ThemeSettingsFieldsSection.tsx` | 3 | 3 | no | yes |
-| 105 | `ExportLogsPanel` | `src/features/integrations/components/listings/ExportLogsPanel.tsx` | 3 | 3 | no | yes |
-| 106 | `KangurThemeSettingsPanel` | `src/features/kangur/admin/components/KangurThemeSettingsPanel.tsx` | 3 | 3 | no | yes |
-| 107 | `SocialCaptureBatchHistory` | `src/features/kangur/social/admin/workspace/SocialCaptureBatchHistory.tsx` | 3 | 3 | no | yes |
-| 108 | `SocialJobStatusPill` | `src/features/kangur/social/admin/workspace/SocialJobStatusPill.tsx` | 3 | 3 | no | yes |
-| 109 | `AgenticTrimTokenPanel` | `src/features/kangur/ui/components/AgenticCodingMiniGames.trim.tsx` | 3 | 3 | no | yes |
-| 110 | `DivisionGroupsCheckAction` | `src/features/kangur/ui/components/DivisionGroupsGame.tsx` | 3 | 3 | no | yes |
-| 111 | `DivisionGroupsRoundView` | `src/features/kangur/ui/components/DivisionGroupsGame.tsx` | 3 | 3 | no | yes |
-| 112 | `EnglishPartsOfSpeechGame` | `src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx` | 3 | 3 | no | yes |
-| 113 | `GuestIntroProposal` | `src/features/kangur/ui/components/KangurAiTutorGuestIntroPanel.tsx` | 3 | 3 | no | yes |
-| 114 | `MultiplicationArrayCounters` | `src/features/kangur/ui/components/MultiplicationArrayGame.tsx` | 3 | 3 | no | yes |
-| 115 | `KangurAssignmentsListArchiveAction` | `src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx` | 3 | 3 | no | yes |
-| 116 | `KangurAssignmentsListShell` | `src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx` | 3 | 3 | no | yes |
-| 117 | `ClockTrainingModeSwitch` | `src/features/kangur/ui/components/clock-training/ClockTrainingGame.views.tsx` | 3 | 3 | no | yes |
-| 118 | `DraggableClockSnapModeSwitch` | `src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx` | 3 | 3 | no | yes |
-| 119 | `DraggableClockSubmitArea` | `src/features/kangur/ui/components/clock-training/DraggableClock.parts.tsx` | 3 | 3 | no | yes |
-| 120 | `KangurGameOperationPracticeAssignmentBanner` | `src/features/kangur/ui/components/game-setup/KangurGameOperationPracticeAssignmentBanner.tsx` | 3 | 3 | no | yes |
+| 1 | `ProductScanModalView` | `src/features/products/components/list/ProductScanModal.view.tsx` | 22 | 25 | yes | yes |
+| 2 | `MenuBuilderContent` | `src/features/admin/pages/menu-settings/MenuBuilderSection.tsx` | 22 | 24 | no | yes |
+| 3 | `ProductFormScansHistory` | `src/features/products/components/form/ProductFormScansHistory.tsx` | 22 | 23 | no | yes |
+| 4 | `CategoryMapperTablePanel` | `src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperTablePanel.tsx` | 20 | 39 | yes | yes |
+| 5 | `ProductScanHistoryRow` | `src/features/products/components/form/ProductScanHistoryRow.tsx` | 18 | 29 | no | yes |
+| 6 | `FilemakerOrganizationMasterTreeNode` | `src/features/filemaker/components/shared/FilemakerOrganizationMasterTreeNode.tsx` | 18 | 21 | yes | yes |
+| 7 | `ProductFormScansHistoryList` | `src/features/products/components/form/ProductFormScansHistoryList.tsx` | 18 | 18 | no | yes |
+| 8 | `MailClientDashboardOverview` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.dashboard-overview.tsx` | 17 | 25 | no | yes |
+| 9 | `MailClientWorkspaceBlocks` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.dashboard.tsx` | 17 | 24 | no | yes |
+| 10 | `FilemakerLexiconPageView` | `src/features/filemaker/pages/AdminFilemakerLexiconPage.components.tsx` | 16 | 35 | no | yes |
+| 11 | `ShippingGroupFormModalBody` | `src/features/products/components/settings/ShippingGroupsSettings.modal.tsx` | 15 | 20 | no | yes |
+| 12 | `ShippingGroupsSettingsView` | `src/features/products/components/settings/ShippingGroupsSettings.view.tsx` | 15 | 18 | no | yes |
+| 13 | `OrganizationAddressFormControls` | `src/features/filemaker/components/page/OrganizationAddressControls.tsx` | 15 | 16 | no | yes |
+| 14 | `MailClientReaderEditor` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.workspace-reader.tsx` | 15 | 16 | no | yes |
+| 15 | `PlaywrightProgrammableConnectionControlsSection` | `src/features/playwright/components/programmable-integration/PlaywrightProgrammableConnectionControlsSection.tsx` | 15 | 16 | no | yes |
+| 16 | `KangurPrimaryNavigationDeferredUtilityRuntime` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.deferred-utility-runtime.tsx` | 14 | 18 | no | yes |
+| 17 | `ImportConfigurationCard` | `src/features/playwright/components/programmable-integration/PlaywrightProgrammableEditorsSection.tsx` | 14 | 16 | no | yes |
+| 18 | `LiveScripterUrlBar` | `src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx` | 14 | 15 | no | yes |
+| 19 | `MailClientDashboardFilters` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.filters.tsx` | 14 | 14 | no | yes |
+| 20 | `EventListHeader` | `src/features/filemaker/components/page/FilemakerEventsListPanel.tsx` | 13 | 15 | no | yes |
+| 21 | `InvoiceListHeader` | `src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx` | 13 | 15 | no | yes |
+| 22 | `KangurRenderedRouteContent` | `src/features/kangur/ui/KangurFeatureApp.tsx` | 13 | 15 | no | yes |
+| 23 | `MailClientAttentionBlock` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.dashboard.tsx` | 13 | 13 | no | yes |
+| 24 | `LiveScripterStepDetailFields` | `src/features/playwright/components/live-scripter/LiveScripterStepDetailFields.tsx` | 13 | 13 | no | yes |
+| 25 | `AvailableListsSection` | `src/features/admin/pages/validator-lists/ValidatorListsSections.tsx` | 12 | 22 | no | yes |
+| 26 | `ShippingGroupsSettingsList` | `src/features/products/components/settings/ShippingGroupsSettings.list.tsx` | 12 | 12 | no | yes |
+| 27 | `GroupEditorHeader` | `src/features/filemaker/pages/campaign-edit-sections/AudienceConditionBuilder.group-header.tsx` | 11 | 15 | no | yes |
+| 28 | `CampaignEditActions` | `src/features/filemaker/pages/AdminFilemakerCampaignEditPage.actions.tsx` | 11 | 13 | no | yes |
+| 29 | `ClusterSection` | `src/features/integrations/components/selector-registry-probe-sessions/ClusterSection.tsx` | 11 | 12 | no | yes |
+| 30 | `LiveScripterRegistryBindingFields` | `src/features/playwright/components/live-scripter/LiveScripterRegistryBindingFields.tsx` | 11 | 12 | no | yes |
+| 31 | `SyncScheduleSection` | `src/features/admin/pages/admin-sync-settings-sections.tsx` | 11 | 11 | no | yes |
+| 32 | `WorkspaceMain` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.workspace.tsx` | 10 | 27 | no | yes |
+| 33 | `MailAccountSettingsForm` | `src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.form.tsx` | 10 | 22 | no | yes |
+| 34 | `NavTreePrimaryRow` | `src/features/admin/components/menu/nav-tree-node-content.tsx` | 10 | 19 | no | yes |
+| 35 | `TableBrowserSection` | `src/features/database/pages/database-preview/TableBrowserSection.tsx` | 10 | 19 | no | yes |
+| 36 | `DraftStructuredInputControl` | `src/features/drafter/components/DraftStructuredProductNameInput.parts.tsx` | 10 | 17 | no | yes |
+| 37 | `MailClientMailboxContent` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.mailboxes.tsx` | 10 | 17 | no | yes |
+| 38 | `FilemakerOrganizationsSelectionActions` | `src/features/filemaker/components/page/FilemakerOrganizationsSelectionActions.tsx` | 10 | 15 | yes | yes |
+| 39 | `AdminFilemakerCampaignsPageView` | `src/features/filemaker/pages/AdminFilemakerCampaignsPage.view.tsx` | 10 | 14 | no | yes |
+| 40 | `ProductScanRow` | `src/features/products/components/list/ProductScanModal.row.tsx` | 10 | 14 | no | yes |
+| 41 | `CatalogLanguagesContent` | `src/features/products/components/settings/modals/catalog-modal/CatalogLanguagesSection.tsx` | 10 | 14 | no | yes |
+| 42 | `MailClientAttentionAccountCard` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.attention-accounts.tsx` | 10 | 13 | no | yes |
+| 43 | `ConnectionSelectorCard` | `src/features/playwright/components/programmable-integration/PlaywrightProgrammableConnectionControlsSection.tsx` | 10 | 13 | no | yes |
+| 44 | `MailClientFocusedAccountControls` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.focused.tsx` | 10 | 12 | no | yes |
+| 45 | `MailClientRecentThreadsSection` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.recent.tsx` | 10 | 12 | no | yes |
+| 46 | `SessionCard` | `src/features/integrations/components/selector-registry-probe-sessions/SessionCard.tsx` | 10 | 12 | no | yes |
+| 47 | `Switch` | `src/shared/ui/switch.tsx` | 10 | 12 | yes | yes |
+| 48 | `AudienceGroupEditor` | `src/features/filemaker/pages/campaign-edit-sections/AudienceConditionBuilder.editor.tsx` | 10 | 11 | no | yes |
+| 49 | `LessonsTreePanel` | `src/features/kangur/admin/components/lessons-manager/LessonsTreePanel.tsx` | 10 | 11 | no | yes |
+| 50 | `LayoutColumn` | `src/features/admin/pages/menu-settings/MenuBuilderSection.tsx` | 10 | 10 | no | yes |
+| 51 | `KangurPrimaryNavigationDeferredUtilityMount` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.deferred-utility-mount.tsx` | 10 | 10 | no | yes |
+| 52 | `ProductListSelectorsAndTriggers` | `src/features/products/components/list/ProductListHeader.selectors.tsx` | 10 | 10 | no | yes |
+| 53 | `GlobalValidatorPanelLayout` | `src/features/admin/pages/admin-global-validator-layout.tsx` | 9 | 25 | no | yes |
+| 54 | `DraftStructuredInputElement` | `src/features/drafter/components/DraftStructuredProductNameInput.parts.tsx` | 9 | 20 | no | yes |
+| 55 | `SuggestionRow` | `src/features/integrations/components/selector-registry-probe-sessions/SuggestionRow.tsx` | 9 | 17 | no | yes |
+| 56 | `MailClientAttentionAccountActions` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.attention-accounts.tsx` | 9 | 14 | no | yes |
+| 57 | `MailClientMailboxCard` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.mailboxes.tsx` | 9 | 13 | no | yes |
+| 58 | `ClusterSectionActions` | `src/features/integrations/components/selector-registry-probe-sessions/ClusterSection.tsx` | 9 | 11 | no | yes |
+| 59 | `LiveScripterNavigationRow` | `src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx` | 9 | 11 | no | yes |
+| 60 | `MultiSelectDropdownPanel` | `src/shared/ui/multi-select.helpers.tsx` | 9 | 10 | no | yes |
+| 61 | `PreparedApplicationVersionHistory` | `src/features/filemaker/components/page/OrganizationJobListingsSection.tsx` | 9 | 9 | no | yes |
+| 62 | `MailClientAttentionAccountsGrid` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.attention.tsx` | 9 | 9 | no | yes |
+| 63 | `LessonsManagerFilters` | `src/features/kangur/admin/components/lessons-manager/LessonsManagerFilters.tsx` | 9 | 9 | no | yes |
+| 64 | `LiveScripterScopeControls` | `src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx` | 9 | 9 | no | yes |
+| 65 | `PlaywrightProgrammableConnectionRuntimeSettingsCard` | `src/features/playwright/components/programmable-integration/PlaywrightProgrammableConnectionRuntimeSettingsCard.tsx` | 9 | 9 | no | yes |
+| 66 | `ProductTableFooterConfirmModals` | `src/features/products/components/list/ProductTableFooter.tsx` | 9 | 9 | no | yes |
+| 67 | `ValidatorPatternModalSimulatorControls` | `src/features/products/components/settings/validator-settings/modal/ValidatorPatternModalSimulatorControls.tsx` | 9 | 9 | no | yes |
+| 68 | `ParameterRowValueEditor` | `src/features/products/components/form/ProductFormParameters.row.tsx` | 8 | 24 | no | yes |
+| 69 | `ModalSlot` | `src/features/products/components/settings/ShippingGroupsSettings.view.tsx` | 8 | 19 | no | yes |
+| 70 | `ProductListHeaderView` | `src/features/products/components/list/ProductListHeader.tsx` | 8 | 18 | no | yes |
+| 71 | `ProductListMobileCardView` | `src/features/products/components/list/ProductListMobileCard.view.tsx` | 8 | 15 | no | yes |
+| 72 | `TransientRecoveryPageContent` | `src/features/admin/pages/admin-transient-recovery-sections.tsx` | 8 | 14 | no | yes |
+| 73 | `DataTable` | `src/features/database/components/CrudPanel.tsx` | 8 | 14 | no | yes |
+| 74 | `QuestionsManagerHeader` | `src/features/kangur/admin/questions-manager/QuestionsManagerHeader.tsx` | 8 | 14 | no | yes |
+| 75 | `ProductFormParameterRow` | `src/features/products/components/form/ProductFormParameters.row.tsx` | 8 | 14 | no | yes |
+| 76 | `ParametersFormModal` | `src/features/products/components/settings/parameters/ParametersFormModal.tsx` | 8 | 14 | no | yes |
+| 77 | `ValidatedFieldControl` | `src/features/products/components/form/ValidatedField.tsx` | 8 | 13 | no | yes |
+| 78 | `MailClientMailboxActions` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.mailbox-actions.tsx` | 8 | 12 | no | yes |
+| 79 | `ConditionRow` | `src/features/filemaker/pages/campaign-edit-sections/AudienceConditionBuilder.condition-row.tsx` | 8 | 12 | no | yes |
+| 80 | `PatternNodeItem` | `src/features/products/components/settings/validator-settings/pattern-tree/PatternNodeItem.tsx` | 8 | 12 | no | yes |
+| 81 | `ProductFormMarketplaceCopyRows` | `src/features/products/components/form/ProductFormMarketplaceCopy.tsx` | 8 | 11 | no | yes |
+| 82 | `ParserMappingRow` | `src/features/ai/ai-paths/components/node-config/dialog/parser/ParserMappingList.tsx` | 8 | 10 | no | yes |
+| 83 | `FilemakerLexiconValidationPatternsModal` | `src/features/filemaker/pages/AdminFilemakerLexiconPage.components.tsx` | 8 | 10 | no | yes |
+| 84 | `MailClientThreadList` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.workspace-list.tsx` | 8 | 10 | no | yes |
+| 85 | `ProductParseActionsFooter` | `src/features/products/components/list/ProductParseActionsModal.parts.tsx` | 8 | 10 | no | yes |
+| 86 | `Asset3DListFilters` | `src/features/viewer3d/components/Asset3DListSubcomponents.tsx` | 8 | 10 | no | yes |
+| 87 | `MailClientQuickActionCard` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.sections-actions.tsx` | 8 | 9 | no | yes |
+| 88 | `PlaywrightProgrammableLegacyMigrationAlert` | `src/features/playwright/components/programmable-integration/PlaywrightProgrammableLegacyMigrationAlert.tsx` | 8 | 9 | no | yes |
+| 89 | `DefaultRoleSettings` | `src/features/auth/pages/admin/settings/DefaultRoleSettings.tsx` | 8 | 8 | no | yes |
+| 90 | `PreviewToolbar` | `src/features/cms/components/page-builder/preview-panel/PreviewToolbar.tsx` | 8 | 8 | no | yes |
+| 91 | `MailClientMailboxGrid` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.mailboxes.tsx` | 8 | 8 | no | yes |
+| 92 | `IntegrationModalDialogs` | `src/features/integrations/components/connections/IntegrationModal.tsx` | 8 | 8 | no | yes |
+| 93 | `KangurRenderedRouteSkeletonOverlay` | `src/features/kangur/ui/KangurFeatureApp.tsx` | 8 | 8 | no | yes |
+| 94 | `LiveScripterStepSpecificFields` | `src/features/playwright/components/live-scripter/LiveScripterStepDetailFields.tsx` | 8 | 8 | no | yes |
+| 95 | `DraftMapperRulesPanel` | `src/features/playwright/components/programmable-integration/PlaywrightProgrammableFieldMapperCard.tsx` | 8 | 8 | no | yes |
+| 96 | `ProductFormRecommendedSummaries` | `src/features/products/components/form/ProductFormRecommendedSummaries.tsx` | 8 | 8 | no | yes |
+| 97 | `TitleTermEditorModal` | `src/features/products/pages/title-terms/TitleTermEditorModal.tsx` | 8 | 8 | no | yes |
+| 98 | `TitleTermsToolbar` | `src/features/products/pages/title-terms/TitleTermsToolbar.tsx` | 8 | 8 | no | yes |
+| 99 | `MailClientFocusedAccountRelatedContent` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.focused.tsx` | 7 | 12 | no | yes |
+| 100 | `FeatureRoutingCard` | `src/features/ai/brain/components/RoutingFallbackSettings.tsx` | 7 | 11 | no | yes |
+| 101 | `StepFormSelectorRegistry` | `src/features/playwright/components/step-sequencer/StepFormSelectorRegistry.tsx` | 7 | 11 | no | yes |
+| 102 | `SelectionActionsMenu` | `src/shared/ui/selection-bar.tsx` | 7 | 10 | no | yes |
+| 103 | `NotificationsSettingsForm` | `src/features/admin/pages/notifications/NotificationsSettingsForm.tsx` | 7 | 9 | no | yes |
+| 104 | `TraderaRecoveryActions` | `src/features/integrations/components/listings/product-listings-modal/TraderaQuickExportRecoveryBanner.tsx` | 7 | 9 | no | yes |
+| 105 | `QuestionsManagerFilters` | `src/features/kangur/admin/questions-manager/QuestionsManagerFilters.tsx` | 7 | 9 | no | yes |
+| 106 | `EditableCellInput` | `src/features/products/components/EditableCell.tsx` | 7 | 9 | no | yes |
+| 107 | `Admin3DAssetsFilters` | `src/features/viewer3d/pages/admin-3d-assets/Admin3DAssetsSubcomponents.tsx` | 7 | 9 | no | yes |
+| 108 | `AuthenticatedUserNav` | `src/features/admin/components/UserNav.tsx` | 7 | 8 | no | yes |
+| 109 | `FrontManageSelectionForm` | `src/features/admin/pages/front-page/FrontManageSelectionForm.tsx` | 7 | 8 | no | yes |
+| 110 | `ReplyEditor` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.workspace-reply.tsx` | 7 | 8 | no | yes |
+| 111 | `CircleIconButton` | `src/features/products/components/list/columns/cells/IntegrationsCell.tsx` | 7 | 8 | no | yes |
+| 112 | `ParametersBulkActions` | `src/features/products/components/settings/parameters/ParametersListSection.tsx` | 7 | 8 | no | yes |
+| 113 | `AssetFormFields` | `src/features/viewer3d/components/Asset3DUploaderFormFields.tsx` | 7 | 8 | no | yes |
+| 114 | `UserMenuContent` | `src/features/admin/components/UserNav.tsx` | 7 | 7 | no | yes |
+| 115 | `ValidatorListsMainContent` | `src/features/admin/pages/validator-lists/ValidatorListsMainContent.tsx` | 7 | 7 | yes | yes |
+| 116 | `AddValidatorListForm` | `src/features/admin/pages/validator-lists/components.tsx` | 7 | 7 | no | yes |
+| 117 | `AiPathsCanvasMain` | `src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx` | 7 | 7 | no | yes |
+| 118 | `UsersListTable` | `src/features/auth/pages/admin/users/UsersListTable.tsx` | 7 | 7 | no | yes |
+| 119 | `MailClientFocusedAccountBlock` | `src/features/filemaker/pages/AdminFilemakerMailClientPage.dashboard.tsx` | 7 | 7 | no | yes |
+| 120 | `IntegrationModalFrame` | `src/features/integrations/components/connections/IntegrationModal.tsx` | 7 | 7 | no | yes |
 
 ## Prioritized Transition Backlog (Depth = 2)
 
 | Rank | Score | From | To | Fanout | Features | Prop Mapping | Location |
 | ---: | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | 262 | `AiTutorConfiguredPanel` | `AiTutorPanelHeader` | 22 | 1 | `state -> sectionSummary` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:515` |
-| 2 | 262 | `AiTutorConfiguredPanel` | `AiTutorPanelHeader` | 22 | 1 | `state -> sectionTitle` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:515` |
-| 3 | 262 | `AiTutorConfiguredPanel` | `AiTutorPanelHeader` | 22 | 1 | `state -> title` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:515` |
-| 4 | 262 | `AiTutorConfiguredPanel` | `AiTutorMoodSection` | 22 | 1 | `state -> presentation` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:520` |
-| 5 | 262 | `AiTutorConfiguredPanel` | `AiTutorUsageSection` | 22 | 1 | `state -> presentation` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:524` |
-| 6 | 262 | `AiTutorConfiguredPanel` | `AiTutorAvailabilityRow` | 22 | 1 | `state -> compactActionClassName` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:528` |
-| 7 | 262 | `AiTutorConfiguredPanel` | `AiTutorAvailabilityRow` | 22 | 1 | `state -> enabled` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:528` |
-| 8 | 262 | `AiTutorConfiguredPanel` | `AiTutorAvailabilityRow` | 22 | 1 | `state -> isTemporarilyDisabled` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:528` |
-| 9 | 262 | `AiTutorConfiguredPanel` | `AiTutorAvailabilityRow` | 22 | 1 | `state -> onToggleEnabled` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:528` |
-| 10 | 262 | `AiTutorConfiguredPanel` | `AiTutorGuardrailsSection` | 22 | 1 | `state -> controlsDisabled` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535` |
-| 11 | 262 | `AiTutorConfiguredPanel` | `AiTutorGuardrailsSection` | 22 | 1 | `state -> formBindings` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535` |
-| 12 | 262 | `AiTutorConfiguredPanel` | `AiTutorGuardrailsSection` | 22 | 1 | `state -> hintDepthFieldId` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535` |
-| 13 | 262 | `AiTutorConfiguredPanel` | `AiTutorGuardrailsSection` | 22 | 1 | `state -> proactiveNudgesFieldId` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535` |
-| 14 | 262 | `AiTutorConfiguredPanel` | `AiTutorGuardrailsSection` | 22 | 1 | `state -> testAccessModeFieldId` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535` |
-| 15 | 262 | `AiTutorConfiguredPanel` | `AiTutorUiModeSection` | 22 | 1 | `state -> controlsDisabled` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:543` |
-| 16 | 262 | `AiTutorConfiguredPanel` | `AiTutorUiModeSection` | 22 | 1 | `state -> formBindings` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:543` |
-| 17 | 262 | `AiTutorConfiguredPanel` | `AiTutorUiModeSection` | 22 | 1 | `state -> uiModeFieldId` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:543` |
-| 18 | 262 | `AiTutorConfiguredPanel` | `AiTutorSaveAction` | 22 | 1 | `state -> feedback` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:549` |
-| 19 | 262 | `AiTutorConfiguredPanel` | `AiTutorSaveAction` | 22 | 1 | `state -> fullWidthActionClassName` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:549` |
-| 20 | 262 | `AiTutorConfiguredPanel` | `AiTutorSaveAction` | 22 | 1 | `state -> isSaving` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:549` |
-| 21 | 262 | `AiTutorConfiguredPanel` | `AiTutorSaveAction` | 22 | 1 | `state -> isTemporarilyDisabled` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:549` |
-| 22 | 262 | `AiTutorConfiguredPanel` | `AiTutorSaveAction` | 22 | 1 | `state -> onSave` | `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:549` |
-| 23 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedCalloutHeader` | 14 | 1 | `selectionDisplayState -> showCloseButton` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1045` |
-| 24 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedCalloutIntro` | 14 | 1 | `selectionDisplayState -> detail` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1057` |
-| 25 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedCalloutIntro` | 14 | 1 | `selectionDisplayState -> shouldShowDetail` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1057` |
-| 26 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedCalloutIntro` | 14 | 1 | `selectionDisplayState -> shouldShowIntro` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1057` |
-| 27 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedSelectionSourceCard` | 14 | 1 | `selectionDisplayState -> selectedKnowledgeSummary` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1069` |
-| 28 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedSelectionSourceCard` | 14 | 1 | `selectionDisplayState -> selectedKnowledgeTitle` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1069` |
-| 29 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedSelectionSourceCard` | 14 | 1 | `selectionDisplayState -> shouldShow` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1069` |
-| 30 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedSelectionResolvedContent` | 14 | 1 | `selectionDisplayState -> shouldHideResolvedSelectionAnswer` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1077` |
-| 31 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedSelectionResolvedContent` | 14 | 1 | `selectionDisplayState -> shouldShowHintFollowUp` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1077` |
-| 32 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedSelectionResolvedContent` | 14 | 1 | `selectionDisplayState -> shouldShowSelectionPageContentBadge` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1077` |
-| 33 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedSelectionResolvedContent` | 14 | 1 | `selectionDisplayState -> shouldShowSketchCta` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1077` |
-| 34 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedCalloutActions` | 14 | 1 | `selectionDisplayState -> isResolvedSelectionCallout` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1102` |
-| 35 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedCalloutActions` | 14 | 1 | `selectionDisplayState -> shouldHideResolvedSelectionAnswer` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1102` |
-| 36 | 182 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedCalloutActions` | 14 | 1 | `selectionDisplayState -> shouldShowSelectionPreparingBadge` | `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1102` |
-| 37 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> closeAriaLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 38 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> contentId` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 39 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> currentChoiceLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 40 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> defaultChoiceLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 41 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> doneAriaLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 42 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> doneLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 43 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> groupAriaLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 44 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> header` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 45 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> onOpenChange` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 46 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> open` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 47 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> options` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 48 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `subjectDialog -> title` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:357` |
-| 49 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurDialogMeta` | 14 | 1 | `subjectDialog -> description` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:366` |
-| 50 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurDialogMeta` | 14 | 1 | `subjectDialog -> title` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:366` |
-| 51 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> closeAriaLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 52 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> contentId` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 53 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> currentChoiceLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 54 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> defaultChoiceLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 55 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> doneAriaLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 56 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> doneLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 57 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> groupAriaLabel` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 58 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> header` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 59 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> onOpenChange` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 60 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> open` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 61 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> options` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 62 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurChoiceDialog` | 14 | 1 | `ageGroupDialog -> title` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:378` |
-| 63 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurDialogMeta` | 14 | 1 | `ageGroupDialog -> description` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:387` |
-| 64 | 182 | `KangurPrimaryNavigationChoiceDialogs` | `KangurDialogMeta` | 14 | 1 | `ageGroupDialog -> title` | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.overlays.tsx:387` |
-| 65 | 142 | `KangurPriorityAssignmentsContent` | `KangurPriorityAssignmentsLoading` | 10 | 1 | `state -> loadingLabel` | `src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:244` |
-| 66 | 142 | `KangurPriorityAssignmentsContent` | `KangurPriorityAssignmentsError` | 10 | 1 | `state -> error` | `src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:248` |
-| 67 | 142 | `KangurPriorityAssignmentsContent` | `KangurPriorityAssignmentsEmpty` | 10 | 1 | `state -> emptyDescription` | `src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:253` |
-| 68 | 142 | `KangurPriorityAssignmentsContent` | `KangurPriorityAssignmentsEmpty` | 10 | 1 | `state -> summary` | `src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:253` |
-| 69 | 142 | `KangurPriorityAssignmentsContent` | `KangurPriorityAssignmentsEmpty` | 10 | 1 | `state -> title` | `src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:253` |
-| 70 | 142 | `KangurPriorityAssignmentsContent` | `KangurPriorityAssignmentsEmpty` | 10 | 1 | `state -> zeroCountLabel` | `src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:253` |
-| 71 | 142 | `KangurPriorityAssignmentsContent` | `KangurAssignmentsList` | 10 | 1 | `state -> items` | `src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:263` |
-| 72 | 142 | `KangurPriorityAssignmentsContent` | `KangurAssignmentsList` | 10 | 1 | `state -> title` | `src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:263` |
-| 73 | 142 | `KangurPriorityAssignmentsContent` | `KangurAssignmentsList` | 10 | 1 | `state -> summary` | `src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:263` |
-| 74 | 142 | `KangurPriorityAssignmentsContent` | `KangurAssignmentsList` | 10 | 1 | `state -> onItemActionClick` | `src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:263` |
-| 75 | 132 | `KangurLessonActivityRuntime` | `CalendarInteractiveGame` | 9 | 1 | `rendererProps -> calendarSection` | `src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx:73` |
-| 76 | 132 | `KangurLessonActivityRuntime` | `ClockTrainingGame` | 9 | 1 | `rendererProps -> hideModeSwitch` | `src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx:82` |
-| 77 | 132 | `KangurLessonActivityRuntime` | `ClockTrainingGame` | 9 | 1 | `rendererProps -> initialMode` | `src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx:82` |
-| 78 | 132 | `KangurLessonActivityRuntime` | `ClockTrainingGame` | 9 | 1 | `rendererProps -> section` | `src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx:82` |
-| 79 | 132 | `KangurLessonActivityRuntime` | `ClockTrainingGame` | 9 | 1 | `rendererProps -> showHourHand` | `src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx:82` |
-| 80 | 132 | `KangurLessonActivityRuntime` | `ClockTrainingGame` | 9 | 1 | `rendererProps -> showMinuteHand` | `src/features/kangur/ui/components/KangurLessonActivityRuntime.tsx:82` |
+| 1 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepIdentityFields` | 38 | 1 | `model -> stepName` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:82` |
+| 2 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepIdentityFields` | 38 | 1 | `model -> setStepName` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:82` |
+| 3 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepIdentityFields` | 38 | 1 | `model -> stepType` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:82` |
+| 4 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepIdentityFields` | 38 | 1 | `model -> setStepType` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:82` |
+| 5 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> needsSelector` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 6 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> selectorCandidates` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 7 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> selectedSelectorKey` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 8 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> setSelectedSelectorKey` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 9 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> selectedSelector` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 10 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> selectorBindingMode` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 11 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> setSelectorBindingMode` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 12 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> registryNamespace` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 13 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> setRegistryNamespace` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 14 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> registryProfiles` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 15 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> effectiveRegistryProfile` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 16 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> setRegistryProfile` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 17 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> entriesForProfile` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 18 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> registryEntryKey` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 19 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> setRegistryEntryKey` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 20 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> saveToRegistry` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 21 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> setSaveToRegistry` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 22 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> selectedRegistryEntry` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 23 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> selectedRegistryEntryCompatible` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 24 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterSelectorBindingFields` | 38 | 1 | `model -> stepType` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89` |
+| 25 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> stepType` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 26 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> needsValue` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 27 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> value` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 28 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> setValue` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 29 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> url` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 30 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> setUrl` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 31 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> keyValue` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 32 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> setKeyValue` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 33 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> timeoutValue` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 34 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> setTimeoutValue` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 35 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> script` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 36 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> setScript` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 37 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> description` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 38 | 422 | `LiveScripterAssignDrawerFields` | `LiveScripterStepDetailFields` | 38 | 1 | `model -> setDescription` | `src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:112` |
+| 39 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> url` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 40 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> onUrlChange` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 41 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> currentUrl` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 42 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> status` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 43 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> mode` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 44 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> onModeChange` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 45 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> onStartOrNavigate` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 46 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> onBack` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 47 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> onForward` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 48 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> onReload` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 49 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> onDispose` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 50 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> typingValue` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 51 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> onTypingValueChange` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 52 | 272 | `LiveScripterPanelControls` | `LiveScripterUrlBar` | 23 | 1 | `model -> onDriveType` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89` |
+| 53 | 272 | `LiveScripterPanelControls` | `LiveScripterScopeControls` | 23 | 1 | `model -> websites` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105` |
+| 54 | 272 | `LiveScripterPanelControls` | `LiveScripterScopeControls` | 23 | 1 | `model -> flows` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105` |
+| 55 | 272 | `LiveScripterPanelControls` | `LiveScripterScopeControls` | 23 | 1 | `model -> personas` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105` |
+| 56 | 272 | `LiveScripterPanelControls` | `LiveScripterScopeControls` | 23 | 1 | `model -> websiteId` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105` |
+| 57 | 272 | `LiveScripterPanelControls` | `LiveScripterScopeControls` | 23 | 1 | `model -> flowId` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105` |
+| 58 | 272 | `LiveScripterPanelControls` | `LiveScripterScopeControls` | 23 | 1 | `model -> personaId` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105` |
+| 59 | 272 | `LiveScripterPanelControls` | `LiveScripterScopeControls` | 23 | 1 | `model -> onWebsiteChange` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105` |
+| 60 | 272 | `LiveScripterPanelControls` | `LiveScripterScopeControls` | 23 | 1 | `model -> onFlowChange` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105` |
+| 61 | 272 | `LiveScripterPanelControls` | `LiveScripterScopeControls` | 23 | 1 | `model -> onPersonaChange` | `src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105` |
+| 62 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> id` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 63 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> name` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 64 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> value` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 65 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> onChange` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 66 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> onFocus` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 67 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> onClick` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 68 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> onKeyUp` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 69 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> onKeyDown` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 70 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> onBlur` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 71 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> placeholder` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 72 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> aria-controls` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 73 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> aria-activedescendant` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 74 | 238 | `StructuredProductNameInput` | `Input` | 19 | 2 | `controller -> className` | `src/features/products/components/form/StructuredProductNameField.tsx:65` |
+| 75 | 232 | `StructuredProductNameInput` | `ProductTitleSuggestionPanel` | 19 | 1 | `controller -> listboxId` | `src/features/products/components/form/StructuredProductNameField.tsx:87` |
+| 76 | 232 | `StructuredProductNameInput` | `ProductTitleSuggestionPanel` | 19 | 1 | `controller -> listboxLabel` | `src/features/products/components/form/StructuredProductNameField.tsx:87` |
+| 77 | 232 | `StructuredProductNameInput` | `ProductTitleSuggestionPanel` | 19 | 1 | `controller -> suggestions` | `src/features/products/components/form/StructuredProductNameField.tsx:87` |
+| 78 | 232 | `StructuredProductNameInput` | `ProductTitleSuggestionPanel` | 19 | 1 | `controller -> highlightedIndex` | `src/features/products/components/form/StructuredProductNameField.tsx:87` |
+| 79 | 232 | `StructuredProductNameInput` | `ProductTitleSuggestionPanel` | 19 | 1 | `controller -> onApply` | `src/features/products/components/form/StructuredProductNameField.tsx:87` |
+| 80 | 232 | `StructuredProductNameInput` | `ProductTitleSuggestionPanel` | 19 | 1 | `controller -> onHighlight` | `src/features/products/components/form/StructuredProductNameField.tsx:87` |
 
 ## Ranked Chain Backlog (Depth >= 3)
 
 | Rank | Score | Depth | Root | Sink | Root Fanout | Features | Prop Path |
 | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
-| 1 | 236 | 4 | `KangurPriorityAssignmentsContent` | `KangurPanelIntro` | 10 | 1 | `state -> summary -> summary -> description` |
-| 2 | 236 | 4 | `KangurPriorityAssignmentsContent` | `KangurPanelIntro` | 10 | 1 | `state -> title -> title -> title` |
-| 3 | 213 | 3 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedSelectionSketchCard` | 14 | 1 | `selectionDisplayState -> shouldShowSketchCta -> shouldShow` |
-| 4 | 213 | 3 | `KangurAiTutorGuidedCalloutBody` | `KangurAiTutorGuidedSelectionHintCard` | 14 | 1 | `selectionDisplayState -> shouldShowHintFollowUp -> shouldShow` |
-| 5 | 196 | 4 | `KangurAiTutorGuidedCalloutBody` | `KangurButton` | 6 | 1 | `layoutState -> compactActionClassName -> compactActionClassName -> className` |
-| 6 | 195 | 5 | `AiTutorConfigPanel` | `KangurSelectField` | 2 | 1 | `state -> state -> uiModeFieldId -> id -> id` |
-| 7 | 195 | 5 | `AiTutorConfigPanel` | `KangurSelectField` | 2 | 1 | `state -> state -> formBindings -> onChange -> onChange` |
-| 8 | 195 | 5 | `AiTutorConfigPanel` | `KangurSelectField` | 2 | 1 | `state -> state -> formBindings -> value -> value` |
-| 9 | 195 | 5 | `AiTutorConfigPanel` | `KangurSelectField` | 2 | 1 | `state -> state -> controlsDisabled -> disabled -> disabled` |
-| 10 | 195 | 5 | `AiTutorConfigPanel` | `KangurSelectField` | 2 | 1 | `state -> state -> testAccessModeFieldId -> id -> id` |
-| 11 | 195 | 5 | `AiTutorConfigPanel` | `KangurSelectField` | 2 | 1 | `state -> state -> proactiveNudgesFieldId -> id -> id` |
-| 12 | 195 | 5 | `AiTutorConfigPanel` | `KangurSelectField` | 2 | 1 | `state -> state -> hintDepthFieldId -> id -> id` |
-| 13 | 195 | 5 | `AiTutorConfigPanel` | `KangurSelectField` | 2 | 1 | `state -> state -> formBindings -> onChange -> onChange` |
-| 14 | 195 | 5 | `AiTutorConfigPanel` | `KangurSelectField` | 2 | 1 | `state -> state -> formBindings -> value -> value` |
-| 15 | 195 | 5 | `AiTutorConfigPanel` | `KangurSelectField` | 2 | 1 | `state -> state -> controlsDisabled -> disabled -> disabled` |
-| 16 | 176 | 4 | `DivisionGroupsBoard` | `DraggableToken` | 4 | 1 | `translations -> translations -> translations -> ariaLabel` |
-| 17 | 176 | 4 | `KangurAiTutorGuidedCalloutBody` | `KangurButton` | 4 | 1 | `selectionState -> hintQuickAction -> onSelectHint -> onClick` |
-| 18 | 173 | 3 | `KangurPriorityAssignmentsContent` | `KangurAssignmentsListShell` | 10 | 1 | `state -> summary -> summary` |
-| 19 | 173 | 3 | `KangurPriorityAssignmentsContent` | `KangurAssignmentsListShell` | 10 | 1 | `state -> title -> title` |
-| 20 | 173 | 3 | `KangurPriorityAssignmentsContent` | `KangurAssignmentsListShell` | 10 | 1 | `state -> items -> items` |
-| 21 | 173 | 3 | `KangurPriorityAssignmentsContent` | `KangurEmptyState` | 10 | 1 | `state -> emptyDescription -> description` |
-| 22 | 173 | 3 | `KangurPriorityAssignmentsContent` | `KangurSummaryPanel` | 10 | 1 | `state -> error -> description` |
-| 23 | 173 | 3 | `KangurPriorityAssignmentsContent` | `KangurEmptyState` | 10 | 1 | `state -> loadingLabel -> description` |
-| 24 | 166 | 4 | `KangurAiTutorGuidedCalloutBody` | `KangurButton` | 3 | 1 | `sketchState -> onSketchRequest -> onSketchRequest -> onClick` |
-| 25 | 166 | 4 | `KangurAiTutorGuidedCalloutBody` | `KangurButton` | 3 | 1 | `sketchState -> canOpenDrawingPanel -> canOpenDrawingPanel -> disabled` |
-| 26 | 156 | 4 | `AgenticDocsHierarchyGame` | `HierarchyItemButton` | 2 | 1 | `accent -> accent -> accent -> accent` |
-| 27 | 156 | 4 | `DivisionGroupsBoard` | `DraggableToken` | 2 | 1 | `isCoarsePointer -> isCoarsePointer -> isCoarsePointer -> isCoarsePointer` |
-| 28 | 156 | 4 | `DivisionGroupsBoard` | `DraggableToken` | 2 | 1 | `isLocked -> isLocked -> isLocked -> isDragDisabled` |
-| 29 | 156 | 4 | `DivisionGroupsBoard` | `DraggableToken` | 2 | 1 | `onSelectToken -> onSelectToken -> onSelectToken -> onClick` |
-| 30 | 156 | 4 | `DivisionGroupsBoard` | `DraggableToken` | 2 | 1 | `onSelectToken -> onSelectToken -> onSelectToken -> onSelect` |
-| 31 | 156 | 4 | `DivisionGroupsBoard` | `DraggableToken` | 2 | 1 | `selectedTokenId -> selectedTokenId -> selectedTokenId -> isSelected` |
-| 32 | 156 | 4 | `GroupSum` | `KangurButton` | 2 | 1 | `onResult -> onResult -> onCheck -> onClick` |
-| 33 | 156 | 4 | `GroupSum` | `KangurButton` | 2 | 1 | `onResult -> onResult -> onCheck -> onClick` |
-| 34 | 156 | 4 | `AiTutorConfigPanel` | `KangurButton` | 2 | 1 | `state -> state -> onSave -> onClick` |
-| 35 | 156 | 4 | `AiTutorConfigPanel` | `KangurButton` | 2 | 1 | `state -> state -> isTemporarilyDisabled -> disabled` |
-| 36 | 156 | 4 | `AiTutorConfigPanel` | `KangurButton` | 2 | 1 | `state -> state -> isSaving -> disabled` |
-| 37 | 156 | 4 | `AiTutorConfigPanel` | `KangurButton` | 2 | 1 | `state -> state -> fullWidthActionClassName -> className` |
-| 38 | 156 | 4 | `AiTutorConfigPanel` | `AiTutorSelectFieldRow` | 2 | 1 | `state -> state -> uiModeFieldId -> id` |
-| 39 | 156 | 4 | `AiTutorConfigPanel` | `AiTutorSelectFieldRow` | 2 | 1 | `state -> state -> formBindings -> value` |
-| 40 | 156 | 4 | `AiTutorConfigPanel` | `AiTutorSelectFieldRow` | 2 | 1 | `state -> state -> formBindings -> onChange` |
-| 41 | 156 | 4 | `AiTutorConfigPanel` | `AiTutorSelectFieldRow` | 2 | 1 | `state -> state -> controlsDisabled -> disabled` |
-| 42 | 156 | 4 | `AiTutorConfigPanel` | `AiTutorSelectFieldRow` | 2 | 1 | `state -> state -> testAccessModeFieldId -> id` |
-| 43 | 156 | 4 | `AiTutorConfigPanel` | `AiTutorSelectFieldRow` | 2 | 1 | `state -> state -> proactiveNudgesFieldId -> id` |
-| 44 | 156 | 4 | `AiTutorConfigPanel` | `AiTutorSelectFieldRow` | 2 | 1 | `state -> state -> hintDepthFieldId -> id` |
-| 45 | 156 | 4 | `AiTutorConfigPanel` | `TutorToggleField` | 2 | 1 | `state -> state -> formBindings -> checked` |
-| 46 | 156 | 4 | `AiTutorConfigPanel` | `TutorToggleField` | 2 | 1 | `state -> state -> formBindings -> onChange` |
-| 47 | 156 | 4 | `AiTutorConfigPanel` | `AiTutorSelectFieldRow` | 2 | 1 | `state -> state -> formBindings -> value` |
-| 48 | 156 | 4 | `AiTutorConfigPanel` | `AiTutorSelectFieldRow` | 2 | 1 | `state -> state -> formBindings -> onChange` |
-| 49 | 156 | 4 | `AiTutorConfigPanel` | `TutorToggleField` | 2 | 1 | `state -> state -> formBindings -> disabled` |
-| 50 | 156 | 4 | `AiTutorConfigPanel` | `TutorToggleField` | 2 | 1 | `state -> state -> controlsDisabled -> disabled` |
-| 51 | 156 | 4 | `AiTutorConfigPanel` | `AiTutorSelectFieldRow` | 2 | 1 | `state -> state -> controlsDisabled -> disabled` |
-| 52 | 156 | 4 | `AiTutorConfigPanel` | `KangurButton` | 2 | 1 | `state -> state -> onToggleEnabled -> onClick` |
-| 53 | 156 | 4 | `AiTutorConfigPanel` | `KangurButton` | 2 | 1 | `state -> state -> isTemporarilyDisabled -> disabled` |
-| 54 | 156 | 4 | `AiTutorConfigPanel` | `KangurButton` | 2 | 1 | `state -> state -> enabled -> variant` |
-| 55 | 156 | 4 | `AiTutorConfigPanel` | `KangurButton` | 2 | 1 | `state -> state -> compactActionClassName -> className` |
-| 56 | 156 | 4 | `AiTutorConfigPanel` | `KangurStatusChip` | 2 | 1 | `state -> state -> presentation -> accent` |
-| 57 | 156 | 4 | `AiTutorConfigPanel` | `KangurStatusChip` | 2 | 1 | `state -> state -> presentation -> data-mood-id` |
-| 58 | 156 | 4 | `AiTutorConfigPanel` | `KangurLabeledValueSummary` | 2 | 1 | `state -> state -> presentation -> value` |
-| 59 | 156 | 4 | `AiTutorConfigPanel` | `KangurPanelIntro` | 2 | 1 | `state -> state -> title -> title` |
-| 60 | 156 | 4 | `AiTutorConfigPanel` | `KangurPanelIntro` | 2 | 1 | `state -> state -> sectionTitle -> eyebrow` |
-| 61 | 156 | 4 | `AiTutorConfigPanel` | `KangurPanelIntro` | 2 | 1 | `state -> state -> sectionSummary -> description` |
-| 62 | 156 | 4 | `AiTutorConfigPanel` | `KangurPanelIntro` | 2 | 1 | `state -> state -> title -> title` |
-| 63 | 156 | 4 | `AiTutorConfigPanel` | `KangurPanelIntro` | 2 | 1 | `state -> state -> sectionTitle -> eyebrow` |
-| 64 | 156 | 4 | `AiTutorConfigPanel` | `KangurPanelIntro` | 2 | 1 | `state -> state -> sectionSummary -> description` |
-| 65 | 146 | 4 | `KangurAiTutorGuidedCalloutBody` | `KangurButton` | 1 | 1 | `canSendMessages -> canSendMessages -> canSendMessages -> disabled` |
-| 66 | 146 | 4 | `KangurAiTutorGuidedCalloutBody` | `KangurButton` | 1 | 1 | `canSendMessages -> canSendMessages -> canSendMessages -> disabled` |
-| 67 | 146 | 4 | `KangurAiTutorGuidedCalloutBody` | `KangurButton` | 1 | 1 | `drawingPanelOpen -> drawingPanelOpen -> drawingPanelOpen -> disabled` |
-| 68 | 146 | 4 | `KangurAiTutorGuidedCalloutBody` | `KangurButton` | 1 | 1 | `handleQuickAction -> handleQuickAction -> onSelectHint -> onClick` |
-| 69 | 146 | 4 | `KangurAiTutorGuidedCalloutBody` | `KangurButton` | 1 | 1 | `isLoading -> isLoading -> isLoading -> disabled` |
-| 70 | 146 | 4 | `KangurAiTutorGuidedCalloutBody` | `KangurButton` | 1 | 1 | `isLoading -> isLoading -> isLoading -> disabled` |
-| 71 | 146 | 4 | `MultiplicationArrayRoundView` | `KangurAnswerChoiceCard` | 1 | 1 | `celebrating -> celebrating -> celebrating -> buttonClassName` |
-| 72 | 146 | 4 | `MultiplicationArrayRoundView` | `KangurAnswerChoiceCard` | 1 | 1 | `celebrating -> celebrating -> celebrating -> interactive` |
-| 73 | 146 | 4 | `MultiplicationArrayRoundView` | `KangurAnswerChoiceCard` | 1 | 1 | `collected -> collected -> isCollected -> aria-pressed` |
-| 74 | 146 | 4 | `MultiplicationArrayRoundView` | `KangurAnswerChoiceCard` | 1 | 1 | `collected -> collected -> isCollected -> buttonClassName` |
-| 75 | 146 | 4 | `MultiplicationArrayRoundView` | `KangurAnswerChoiceCard` | 1 | 1 | `collected -> collected -> isCollected -> emphasis` |
-| 76 | 146 | 4 | `MultiplicationArrayRoundView` | `KangurAnswerChoiceCard` | 1 | 1 | `collected -> collected -> isCollected -> interactive` |
-| 77 | 146 | 4 | `MultiplicationArrayRoundView` | `KangurAnswerChoiceCard` | 1 | 1 | `isCoarsePointer -> isCoarsePointer -> isCoarsePointer -> buttonClassName` |
-| 78 | 146 | 4 | `MultiplicationArrayRoundView` | `KangurAnswerChoiceCard` | 1 | 1 | `onTapGroup -> onTap -> onTap -> onClick` |
-| 79 | 146 | 4 | `KangurLessonActivityRuntimeState` | `CalendarInteractiveGameContent` | 1 | 1 | `onFinish -> onFinish -> onFinish -> onFinish` |
-| 80 | 146 | 4 | `KangurParentDashboardManagedCard` | `KangurSummaryPanel` | 1 | 1 | `learnerLiveState -> learnerLiveState -> learnerLiveState -> accent` |
+| 1 | 372 | 4 | `LiveScripterPanelControls` | `Select` | 23 | 2 | `model -> onPersonaChange -> onValueChange -> onValueChange` |
+| 2 | 372 | 4 | `LiveScripterPanelControls` | `Select` | 23 | 2 | `model -> onFlowChange -> onValueChange -> onValueChange` |
+| 3 | 372 | 4 | `LiveScripterPanelControls` | `Select` | 23 | 2 | `model -> onWebsiteChange -> onValueChange -> onValueChange` |
+| 4 | 372 | 4 | `LiveScripterPanelControls` | `Select` | 23 | 2 | `model -> personaId -> value -> value` |
+| 5 | 372 | 4 | `LiveScripterPanelControls` | `Select` | 23 | 2 | `model -> flowId -> value -> value` |
+| 6 | 372 | 4 | `LiveScripterPanelControls` | `Select` | 23 | 2 | `model -> websiteId -> value -> value` |
+| 7 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> onDriveType -> onDriveType -> onClick` |
+| 8 | 372 | 4 | `LiveScripterPanelControls` | `Input` | 23 | 2 | `model -> onTypingValueChange -> onTypingValueChange -> onChange` |
+| 9 | 372 | 4 | `LiveScripterPanelControls` | `Input` | 23 | 2 | `model -> typingValue -> typingValue -> value` |
+| 10 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> typingValue -> typingValue -> disabled` |
+| 11 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> onDispose -> onDispose -> onClick` |
+| 12 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> onReload -> onReload -> onClick` |
+| 13 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> onForward -> onForward -> onClick` |
+| 14 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> onBack -> onBack -> onClick` |
+| 15 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> onStartOrNavigate -> onStartOrNavigate -> onClick` |
+| 16 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> onModeChange -> onModeChange -> onClick` |
+| 17 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> mode -> mode -> variant` |
+| 18 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> status -> status -> disabled` |
+| 19 | 372 | 4 | `LiveScripterPanelControls` | `Input` | 23 | 2 | `model -> onUrlChange -> onUrlChange -> onChange` |
+| 20 | 372 | 4 | `LiveScripterPanelControls` | `Input` | 23 | 2 | `model -> url -> url -> value` |
+| 21 | 372 | 4 | `LiveScripterPanelControls` | `Button` | 23 | 2 | `model -> url -> url -> disabled` |
+| 22 | 364 | 6 | `WorkspaceLayout` | `ThreadRow` | 15 | 1 | `viewModel -> onSelectThread -> onSelectThread -> onSelectThread -> onSelectThread -> onSelectThread` |
+| 23 | 364 | 6 | `WorkspaceLayout` | `ThreadRow` | 15 | 1 | `viewModel -> selection -> selectedThreadId -> selectedThreadId -> selectedThreadId -> isSelected` |
+| 24 | 331 | 5 | `WorkspaceLayout` | `Button` | 15 | 2 | `viewModel -> onRefreshThreads -> onRefresh -> onRefresh -> onClick` |
+| 25 | 325 | 5 | `WorkspaceLayout` | `ThreadRows` | 15 | 1 | `viewModel -> onSelectThread -> onSelectThread -> onSelectThread -> onSelectThread` |
+| 26 | 325 | 5 | `WorkspaceLayout` | `ThreadRows` | 15 | 1 | `viewModel -> threadsState -> threads -> threads -> threads` |
+| 27 | 325 | 5 | `WorkspaceLayout` | `ThreadRows` | 15 | 1 | `viewModel -> selection -> selectedThreadId -> selectedThreadId -> selectedThreadId` |
+| 28 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterScopeSelect` | 23 | 1 | `model -> onPersonaChange -> onValueChange` |
+| 29 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterScopeSelect` | 23 | 1 | `model -> onFlowChange -> onValueChange` |
+| 30 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterScopeSelect` | 23 | 1 | `model -> onWebsiteChange -> onValueChange` |
+| 31 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterScopeSelect` | 23 | 1 | `model -> personaId -> value` |
+| 32 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterScopeSelect` | 23 | 1 | `model -> flowId -> value` |
+| 33 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterScopeSelect` | 23 | 1 | `model -> websiteId -> value` |
+| 34 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterScopeSelect` | 23 | 1 | `model -> personas -> options` |
+| 35 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterScopeSelect` | 23 | 1 | `model -> flows -> options` |
+| 36 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterScopeSelect` | 23 | 1 | `model -> websites -> options` |
+| 37 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterTypingRow` | 23 | 1 | `model -> onDriveType -> onDriveType` |
+| 38 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterTypingRow` | 23 | 1 | `model -> onTypingValueChange -> onTypingValueChange` |
+| 39 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterTypingRow` | 23 | 1 | `model -> typingValue -> typingValue` |
+| 40 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterNavigationRow` | 23 | 1 | `model -> onDispose -> onDispose` |
+| 41 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterNavigationRow` | 23 | 1 | `model -> onReload -> onReload` |
+| 42 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterNavigationRow` | 23 | 1 | `model -> onForward -> onForward` |
+| 43 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterNavigationRow` | 23 | 1 | `model -> onBack -> onBack` |
+| 44 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterNavigationRow` | 23 | 1 | `model -> onStartOrNavigate -> onStartOrNavigate` |
+| 45 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterModeRow` | 23 | 1 | `model -> onModeChange -> onModeChange` |
+| 46 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterModeRow` | 23 | 1 | `model -> mode -> mode` |
+| 47 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterNavigationRow` | 23 | 1 | `model -> status -> status` |
+| 48 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterModeRow` | 23 | 1 | `model -> status -> status` |
+| 49 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterModeRow` | 23 | 1 | `model -> currentUrl -> currentUrl` |
+| 50 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterNavigationRow` | 23 | 1 | `model -> onUrlChange -> onUrlChange` |
+| 51 | 303 | 3 | `LiveScripterPanelControls` | `LiveScripterNavigationRow` | 23 | 1 | `model -> url -> url` |
+| 52 | 292 | 4 | `WorkspaceLayout` | `Button` | 15 | 2 | `viewModel -> onOpenPrimaryFolder -> onOpenPrimaryFolder -> onClick` |
+| 53 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> onSendReply -> onSendReply -> onSendReply` |
+| 54 | 286 | 4 | `WorkspaceLayout` | `ThreadListContent` | 15 | 1 | `viewModel -> onSelectThread -> onSelectThread -> onSelectThread` |
+| 55 | 286 | 4 | `WorkspaceLayout` | `ThreadListHeader` | 15 | 1 | `viewModel -> onRefreshThreads -> onRefresh -> onRefresh` |
+| 56 | 286 | 4 | `WorkspaceLayout` | `ThreadListHeader` | 15 | 1 | `viewModel -> threadsState -> threads -> threadCount` |
+| 57 | 286 | 4 | `WorkspaceLayout` | `ThreadListContent` | 15 | 1 | `viewModel -> threadsState -> threads -> threads` |
+| 58 | 286 | 4 | `WorkspaceLayout` | `ThreadListContent` | 15 | 1 | `viewModel -> threadsState -> isLoading -> isLoading` |
+| 59 | 286 | 4 | `WorkspaceLayout` | `ThreadListContent` | 15 | 1 | `viewModel -> threadsState -> error -> error` |
+| 60 | 286 | 4 | `WorkspaceLayout` | `ThreadListContent` | 15 | 1 | `viewModel -> selection -> selectedThreadId -> selectedThreadId` |
+| 61 | 286 | 4 | `WorkspaceLayout` | `ThreadListHeader` | 15 | 1 | `viewModel -> selection -> mailboxPath -> mailboxPath` |
+| 62 | 286 | 4 | `WorkspaceLayout` | `ThreadListHeader` | 15 | 1 | `viewModel -> selectedAccount -> account -> account` |
+| 63 | 286 | 4 | `WorkspaceLayout` | `ThreadListContent` | 15 | 1 | `viewModel -> selectedAccount -> account -> account` |
+| 64 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> isSending -> isSending -> isSending` |
+| 65 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> detailState -> onReplyToChange -> onReplyToChange` |
+| 66 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> detailState -> onReplySubjectChange -> onReplySubjectChange` |
+| 67 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> detailState -> onReplyHtmlChange -> onReplyHtmlChange` |
+| 68 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> detailState -> onReplyCcChange -> onReplyCcChange` |
+| 69 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> detailState -> onReplyBccChange -> onReplyBccChange` |
+| 70 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> detailState -> replyTo -> replyTo` |
+| 71 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> detailState -> replySubject -> replySubject` |
+| 72 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> detailState -> replyHtml -> replyHtml` |
+| 73 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> detailState -> replyCc -> replyCc` |
+| 74 | 286 | 4 | `WorkspaceLayout` | `ReplyPanel` | 15 | 1 | `viewModel -> detailState -> replyBcc -> replyBcc` |
+| 75 | 286 | 4 | `WorkspaceLayout` | `ReaderBody` | 15 | 1 | `viewModel -> detailState -> isLoading -> isLoading` |
+| 76 | 286 | 4 | `WorkspaceLayout` | `ReaderBody` | 15 | 1 | `viewModel -> detailState -> error -> error` |
+| 77 | 286 | 4 | `WorkspaceLayout` | `ReaderHeader` | 15 | 1 | `viewModel -> detailState -> detail -> detail` |
+| 78 | 286 | 4 | `WorkspaceLayout` | `ReaderBody` | 15 | 1 | `viewModel -> detailState -> detail -> detail` |
+| 79 | 269 | 7 | `ProductListMobileCard` | `AppModal` | 1 | 2 | `product -> product -> product -> product -> productName -> productName -> description` |
+| 80 | 269 | 7 | `ProductListMobileCard` | `AppModal` | 1 | 2 | `product -> product -> product -> product -> productName -> productName -> header` |
 
 ## Top Chain Details (Depth >= 3)
 
-### 1. KangurPriorityAssignmentsContent -> KangurPanelIntro
+### 1. LiveScripterPanelControls -> Select
 
-- Score: 236
+- Score: 372
 - Depth: 4
-- Root fanout: 10
-- Prop path: state -> summary -> summary -> description
+- Root fanout: 23
+- Prop path: model -> onPersonaChange -> onValueChange -> onValueChange
 - Component path:
-  - `KangurPriorityAssignmentsContent` (src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx)
-  - `KangurAssignmentsList` (src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx)
-  - `KangurAssignmentsListShell` (src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx)
-  - `KangurPanelIntro` (src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterScopeControls` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `LiveScripterScopeSelect` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `Select` (src/shared/ui/select.tsx)
 - Transition lines:
-  - `KangurPriorityAssignmentsContent` -> `KangurAssignmentsList`: `state` -> `summary` at src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:263
-  - `KangurAssignmentsList` -> `KangurAssignmentsListShell`: `summary` -> `summary` at src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx:640
-  - `KangurAssignmentsListShell` -> `KangurPanelIntro`: `summary` -> `description` at src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx:371
+  - `LiveScripterPanelControls` -> `LiveScripterScopeControls`: `model` -> `onPersonaChange` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105
+  - `LiveScripterScopeControls` -> `LiveScripterScopeSelect`: `onPersonaChange` -> `onValueChange` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:98
+  - `LiveScripterScopeSelect` -> `Select`: `onValueChange` -> `onValueChange` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:48
 
-### 2. KangurPriorityAssignmentsContent -> KangurPanelIntro
+### 2. LiveScripterPanelControls -> Select
 
-- Score: 236
+- Score: 372
 - Depth: 4
-- Root fanout: 10
-- Prop path: state -> title -> title -> title
+- Root fanout: 23
+- Prop path: model -> onFlowChange -> onValueChange -> onValueChange
 - Component path:
-  - `KangurPriorityAssignmentsContent` (src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx)
-  - `KangurAssignmentsList` (src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx)
-  - `KangurAssignmentsListShell` (src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx)
-  - `KangurPanelIntro` (src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterScopeControls` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `LiveScripterScopeSelect` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `Select` (src/shared/ui/select.tsx)
 - Transition lines:
-  - `KangurPriorityAssignmentsContent` -> `KangurAssignmentsList`: `state` -> `title` at src/features/kangur/ui/components/assignments/KangurPriorityAssignments.tsx:263
-  - `KangurAssignmentsList` -> `KangurAssignmentsListShell`: `title` -> `title` at src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx:640
-  - `KangurAssignmentsListShell` -> `KangurPanelIntro`: `title` -> `title` at src/features/kangur/ui/components/assignments/KangurAssignmentsList.tsx:371
+  - `LiveScripterPanelControls` -> `LiveScripterScopeControls`: `model` -> `onFlowChange` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105
+  - `LiveScripterScopeControls` -> `LiveScripterScopeSelect`: `onFlowChange` -> `onValueChange` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:88
+  - `LiveScripterScopeSelect` -> `Select`: `onValueChange` -> `onValueChange` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:48
 
-### 3. KangurAiTutorGuidedCalloutBody -> KangurAiTutorGuidedSelectionSketchCard
+### 3. LiveScripterPanelControls -> Select
 
-- Score: 213
-- Depth: 3
-- Root fanout: 14
-- Prop path: selectionDisplayState -> shouldShowSketchCta -> shouldShow
-- Component path:
-  - `KangurAiTutorGuidedCalloutBody` (src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx)
-  - `KangurAiTutorGuidedSelectionResolvedContent` (src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx)
-  - `KangurAiTutorGuidedSelectionSketchCard` (src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx)
-- Transition lines:
-  - `KangurAiTutorGuidedCalloutBody` -> `KangurAiTutorGuidedSelectionResolvedContent`: `selectionDisplayState` -> `shouldShowSketchCta` at src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1077
-  - `KangurAiTutorGuidedSelectionResolvedContent` -> `KangurAiTutorGuidedSelectionSketchCard`: `shouldShowSketchCta` -> `shouldShow` at src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:872
-
-### 4. KangurAiTutorGuidedCalloutBody -> KangurAiTutorGuidedSelectionHintCard
-
-- Score: 213
-- Depth: 3
-- Root fanout: 14
-- Prop path: selectionDisplayState -> shouldShowHintFollowUp -> shouldShow
-- Component path:
-  - `KangurAiTutorGuidedCalloutBody` (src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx)
-  - `KangurAiTutorGuidedSelectionResolvedContent` (src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx)
-  - `KangurAiTutorGuidedSelectionHintCard` (src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx)
-- Transition lines:
-  - `KangurAiTutorGuidedCalloutBody` -> `KangurAiTutorGuidedSelectionResolvedContent`: `selectionDisplayState` -> `shouldShowHintFollowUp` at src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1077
-  - `KangurAiTutorGuidedSelectionResolvedContent` -> `KangurAiTutorGuidedSelectionHintCard`: `shouldShowHintFollowUp` -> `shouldShow` at src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:883
-
-### 5. KangurAiTutorGuidedCalloutBody -> KangurButton
-
-- Score: 196
+- Score: 372
 - Depth: 4
-- Root fanout: 6
-- Prop path: layoutState -> compactActionClassName -> compactActionClassName -> className
+- Root fanout: 23
+- Prop path: model -> onWebsiteChange -> onValueChange -> onValueChange
 - Component path:
-  - `KangurAiTutorGuidedCalloutBody` (src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx)
-  - `KangurAiTutorGuidedSelectionResolvedContent` (src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx)
-  - `KangurAiTutorGuidedSelectionHintCard` (src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx)
-  - `KangurButton` (src/features/kangur/ui/design/primitives/KangurButton.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterScopeControls` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `LiveScripterScopeSelect` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `Select` (src/shared/ui/select.tsx)
 - Transition lines:
-  - `KangurAiTutorGuidedCalloutBody` -> `KangurAiTutorGuidedSelectionResolvedContent`: `layoutState` -> `compactActionClassName` at src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:1077
-  - `KangurAiTutorGuidedSelectionResolvedContent` -> `KangurAiTutorGuidedSelectionHintCard`: `compactActionClassName` -> `compactActionClassName` at src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:883
-  - `KangurAiTutorGuidedSelectionHintCard` -> `KangurButton`: `compactActionClassName` -> `className` at src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx:800
+  - `LiveScripterPanelControls` -> `LiveScripterScopeControls`: `model` -> `onWebsiteChange` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105
+  - `LiveScripterScopeControls` -> `LiveScripterScopeSelect`: `onWebsiteChange` -> `onValueChange` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:78
+  - `LiveScripterScopeSelect` -> `Select`: `onValueChange` -> `onValueChange` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:48
 
-### 6. AiTutorConfigPanel -> KangurSelectField
+### 4. LiveScripterPanelControls -> Select
 
-- Score: 195
-- Depth: 5
-- Root fanout: 2
-- Prop path: state -> state -> uiModeFieldId -> id -> id
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> personaId -> value -> value
 - Component path:
-  - `AiTutorConfigPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorConfiguredPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorUiModeSection` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorSelectFieldRow` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `KangurSelectField` (src/features/kangur/ui/design/primitives/KangurTextField.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterScopeControls` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `LiveScripterScopeSelect` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `Select` (src/shared/ui/select.tsx)
 - Transition lines:
-  - `AiTutorConfigPanel` -> `AiTutorConfiguredPanel`: `state` -> `state` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:577
-  - `AiTutorConfiguredPanel` -> `AiTutorUiModeSection`: `state` -> `uiModeFieldId` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:543
-  - `AiTutorUiModeSection` -> `AiTutorSelectFieldRow`: `uiModeFieldId` -> `id` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:445
-  - `AiTutorSelectFieldRow` -> `KangurSelectField`: `id` -> `id` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:120
+  - `LiveScripterPanelControls` -> `LiveScripterScopeControls`: `model` -> `personaId` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105
+  - `LiveScripterScopeControls` -> `LiveScripterScopeSelect`: `personaId` -> `value` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:98
+  - `LiveScripterScopeSelect` -> `Select`: `value` -> `value` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:48
 
-### 7. AiTutorConfigPanel -> KangurSelectField
+### 5. LiveScripterPanelControls -> Select
 
-- Score: 195
-- Depth: 5
-- Root fanout: 2
-- Prop path: state -> state -> formBindings -> onChange -> onChange
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> flowId -> value -> value
 - Component path:
-  - `AiTutorConfigPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorConfiguredPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorUiModeSection` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorSelectFieldRow` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `KangurSelectField` (src/features/kangur/ui/design/primitives/KangurTextField.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterScopeControls` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `LiveScripterScopeSelect` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `Select` (src/shared/ui/select.tsx)
 - Transition lines:
-  - `AiTutorConfigPanel` -> `AiTutorConfiguredPanel`: `state` -> `state` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:577
-  - `AiTutorConfiguredPanel` -> `AiTutorUiModeSection`: `state` -> `formBindings` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:543
-  - `AiTutorUiModeSection` -> `AiTutorSelectFieldRow`: `formBindings` -> `onChange` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:445
-  - `AiTutorSelectFieldRow` -> `KangurSelectField`: `onChange` -> `onChange` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:120
+  - `LiveScripterPanelControls` -> `LiveScripterScopeControls`: `model` -> `flowId` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105
+  - `LiveScripterScopeControls` -> `LiveScripterScopeSelect`: `flowId` -> `value` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:88
+  - `LiveScripterScopeSelect` -> `Select`: `value` -> `value` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:48
 
-### 8. AiTutorConfigPanel -> KangurSelectField
+### 6. LiveScripterPanelControls -> Select
 
-- Score: 195
-- Depth: 5
-- Root fanout: 2
-- Prop path: state -> state -> formBindings -> value -> value
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> websiteId -> value -> value
 - Component path:
-  - `AiTutorConfigPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorConfiguredPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorUiModeSection` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorSelectFieldRow` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `KangurSelectField` (src/features/kangur/ui/design/primitives/KangurTextField.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterScopeControls` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `LiveScripterScopeSelect` (src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx)
+  - `Select` (src/shared/ui/select.tsx)
 - Transition lines:
-  - `AiTutorConfigPanel` -> `AiTutorConfiguredPanel`: `state` -> `state` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:577
-  - `AiTutorConfiguredPanel` -> `AiTutorUiModeSection`: `state` -> `formBindings` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:543
-  - `AiTutorUiModeSection` -> `AiTutorSelectFieldRow`: `formBindings` -> `value` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:445
-  - `AiTutorSelectFieldRow` -> `KangurSelectField`: `value` -> `value` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:120
+  - `LiveScripterPanelControls` -> `LiveScripterScopeControls`: `model` -> `websiteId` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:105
+  - `LiveScripterScopeControls` -> `LiveScripterScopeSelect`: `websiteId` -> `value` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:78
+  - `LiveScripterScopeSelect` -> `Select`: `value` -> `value` at src/features/playwright/components/live-scripter/LiveScripterScopeControls.tsx:48
 
-### 9. AiTutorConfigPanel -> KangurSelectField
+### 7. LiveScripterPanelControls -> Button
 
-- Score: 195
-- Depth: 5
-- Root fanout: 2
-- Prop path: state -> state -> controlsDisabled -> disabled -> disabled
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> onDriveType -> onDriveType -> onClick
 - Component path:
-  - `AiTutorConfigPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorConfiguredPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorUiModeSection` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorSelectFieldRow` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `KangurSelectField` (src/features/kangur/ui/design/primitives/KangurTextField.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterUrlBar` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `LiveScripterTypingRow` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `Button` (src/shared/ui/button.tsx)
 - Transition lines:
-  - `AiTutorConfigPanel` -> `AiTutorConfiguredPanel`: `state` -> `state` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:577
-  - `AiTutorConfiguredPanel` -> `AiTutorUiModeSection`: `state` -> `controlsDisabled` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:543
-  - `AiTutorUiModeSection` -> `AiTutorSelectFieldRow`: `controlsDisabled` -> `disabled` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:445
-  - `AiTutorSelectFieldRow` -> `KangurSelectField`: `disabled` -> `disabled` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:120
+  - `LiveScripterPanelControls` -> `LiveScripterUrlBar`: `model` -> `onDriveType` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89
+  - `LiveScripterUrlBar` -> `LiveScripterTypingRow`: `onDriveType` -> `onDriveType` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:212
+  - `LiveScripterTypingRow` -> `Button`: `onDriveType` -> `onClick` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:162
 
-### 10. AiTutorConfigPanel -> KangurSelectField
+### 8. LiveScripterPanelControls -> Input
 
-- Score: 195
-- Depth: 5
-- Root fanout: 2
-- Prop path: state -> state -> testAccessModeFieldId -> id -> id
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> onTypingValueChange -> onTypingValueChange -> onChange
 - Component path:
-  - `AiTutorConfigPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorConfiguredPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorGuardrailsSection` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorSelectFieldRow` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `KangurSelectField` (src/features/kangur/ui/design/primitives/KangurTextField.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterUrlBar` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `LiveScripterTypingRow` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `Input` (src/shared/ui/input.tsx)
 - Transition lines:
-  - `AiTutorConfigPanel` -> `AiTutorConfiguredPanel`: `state` -> `state` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:577
-  - `AiTutorConfiguredPanel` -> `AiTutorGuardrailsSection`: `state` -> `testAccessModeFieldId` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
-  - `AiTutorGuardrailsSection` -> `AiTutorSelectFieldRow`: `testAccessModeFieldId` -> `id` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:354
-  - `AiTutorSelectFieldRow` -> `KangurSelectField`: `id` -> `id` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:120
+  - `LiveScripterPanelControls` -> `LiveScripterUrlBar`: `model` -> `onTypingValueChange` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89
+  - `LiveScripterUrlBar` -> `LiveScripterTypingRow`: `onTypingValueChange` -> `onTypingValueChange` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:212
+  - `LiveScripterTypingRow` -> `Input`: `onTypingValueChange` -> `onChange` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:156
 
-### 11. AiTutorConfigPanel -> KangurSelectField
+### 9. LiveScripterPanelControls -> Input
 
-- Score: 195
-- Depth: 5
-- Root fanout: 2
-- Prop path: state -> state -> proactiveNudgesFieldId -> id -> id
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> typingValue -> typingValue -> value
 - Component path:
-  - `AiTutorConfigPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorConfiguredPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorGuardrailsSection` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorSelectFieldRow` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `KangurSelectField` (src/features/kangur/ui/design/primitives/KangurTextField.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterUrlBar` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `LiveScripterTypingRow` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `Input` (src/shared/ui/input.tsx)
 - Transition lines:
-  - `AiTutorConfigPanel` -> `AiTutorConfiguredPanel`: `state` -> `state` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:577
-  - `AiTutorConfiguredPanel` -> `AiTutorGuardrailsSection`: `state` -> `proactiveNudgesFieldId` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
-  - `AiTutorGuardrailsSection` -> `AiTutorSelectFieldRow`: `proactiveNudgesFieldId` -> `id` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:385
-  - `AiTutorSelectFieldRow` -> `KangurSelectField`: `id` -> `id` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:120
+  - `LiveScripterPanelControls` -> `LiveScripterUrlBar`: `model` -> `typingValue` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89
+  - `LiveScripterUrlBar` -> `LiveScripterTypingRow`: `typingValue` -> `typingValue` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:212
+  - `LiveScripterTypingRow` -> `Input`: `typingValue` -> `value` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:156
 
-### 12. AiTutorConfigPanel -> KangurSelectField
+### 10. LiveScripterPanelControls -> Button
 
-- Score: 195
-- Depth: 5
-- Root fanout: 2
-- Prop path: state -> state -> hintDepthFieldId -> id -> id
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> typingValue -> typingValue -> disabled
 - Component path:
-  - `AiTutorConfigPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorConfiguredPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorGuardrailsSection` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorSelectFieldRow` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `KangurSelectField` (src/features/kangur/ui/design/primitives/KangurTextField.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterUrlBar` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `LiveScripterTypingRow` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `Button` (src/shared/ui/button.tsx)
 - Transition lines:
-  - `AiTutorConfigPanel` -> `AiTutorConfiguredPanel`: `state` -> `state` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:577
-  - `AiTutorConfiguredPanel` -> `AiTutorGuardrailsSection`: `state` -> `hintDepthFieldId` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
-  - `AiTutorGuardrailsSection` -> `AiTutorSelectFieldRow`: `hintDepthFieldId` -> `id` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:370
-  - `AiTutorSelectFieldRow` -> `KangurSelectField`: `id` -> `id` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:120
+  - `LiveScripterPanelControls` -> `LiveScripterUrlBar`: `model` -> `typingValue` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89
+  - `LiveScripterUrlBar` -> `LiveScripterTypingRow`: `typingValue` -> `typingValue` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:212
+  - `LiveScripterTypingRow` -> `Button`: `typingValue` -> `disabled` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:162
 
-### 13. AiTutorConfigPanel -> KangurSelectField
+### 11. LiveScripterPanelControls -> Button
 
-- Score: 195
-- Depth: 5
-- Root fanout: 2
-- Prop path: state -> state -> formBindings -> onChange -> onChange
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> onDispose -> onDispose -> onClick
 - Component path:
-  - `AiTutorConfigPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorConfiguredPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorGuardrailsSection` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorSelectFieldRow` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `KangurSelectField` (src/features/kangur/ui/design/primitives/KangurTextField.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterUrlBar` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `LiveScripterNavigationRow` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `Button` (src/shared/ui/button.tsx)
 - Transition lines:
-  - `AiTutorConfigPanel` -> `AiTutorConfiguredPanel`: `state` -> `state` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:577
-  - `AiTutorConfiguredPanel` -> `AiTutorGuardrailsSection`: `state` -> `formBindings` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
-  - `AiTutorGuardrailsSection` -> `AiTutorSelectFieldRow`: `formBindings` -> `onChange` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:354
-  - `AiTutorSelectFieldRow` -> `KangurSelectField`: `onChange` -> `onChange` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:120
+  - `LiveScripterPanelControls` -> `LiveScripterUrlBar`: `model` -> `onDispose` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89
+  - `LiveScripterUrlBar` -> `LiveScripterNavigationRow`: `onDispose` -> `onDispose` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:195
+  - `LiveScripterNavigationRow` -> `Button`: `onDispose` -> `onClick` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:95
 
-### 14. AiTutorConfigPanel -> KangurSelectField
+### 12. LiveScripterPanelControls -> Button
 
-- Score: 195
-- Depth: 5
-- Root fanout: 2
-- Prop path: state -> state -> formBindings -> value -> value
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> onReload -> onReload -> onClick
 - Component path:
-  - `AiTutorConfigPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorConfiguredPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorGuardrailsSection` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorSelectFieldRow` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `KangurSelectField` (src/features/kangur/ui/design/primitives/KangurTextField.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterUrlBar` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `LiveScripterNavigationRow` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `Button` (src/shared/ui/button.tsx)
 - Transition lines:
-  - `AiTutorConfigPanel` -> `AiTutorConfiguredPanel`: `state` -> `state` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:577
-  - `AiTutorConfiguredPanel` -> `AiTutorGuardrailsSection`: `state` -> `formBindings` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
-  - `AiTutorGuardrailsSection` -> `AiTutorSelectFieldRow`: `formBindings` -> `value` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:354
-  - `AiTutorSelectFieldRow` -> `KangurSelectField`: `value` -> `value` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:120
+  - `LiveScripterPanelControls` -> `LiveScripterUrlBar`: `model` -> `onReload` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89
+  - `LiveScripterUrlBar` -> `LiveScripterNavigationRow`: `onReload` -> `onReload` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:195
+  - `LiveScripterNavigationRow` -> `Button`: `onReload` -> `onClick` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:79
 
-### 15. AiTutorConfigPanel -> KangurSelectField
+### 13. LiveScripterPanelControls -> Button
 
-- Score: 195
-- Depth: 5
-- Root fanout: 2
-- Prop path: state -> state -> controlsDisabled -> disabled -> disabled
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> onForward -> onForward -> onClick
 - Component path:
-  - `AiTutorConfigPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorConfiguredPanel` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorGuardrailsSection` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `AiTutorSelectFieldRow` (src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx)
-  - `KangurSelectField` (src/features/kangur/ui/design/primitives/KangurTextField.tsx)
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterUrlBar` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `LiveScripterNavigationRow` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `Button` (src/shared/ui/button.tsx)
 - Transition lines:
-  - `AiTutorConfigPanel` -> `AiTutorConfiguredPanel`: `state` -> `state` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:577
-  - `AiTutorConfiguredPanel` -> `AiTutorGuardrailsSection`: `state` -> `controlsDisabled` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
-  - `AiTutorGuardrailsSection` -> `AiTutorSelectFieldRow`: `controlsDisabled` -> `disabled` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:354
-  - `AiTutorSelectFieldRow` -> `KangurSelectField`: `disabled` -> `disabled` at src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:120
+  - `LiveScripterPanelControls` -> `LiveScripterUrlBar`: `model` -> `onForward` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89
+  - `LiveScripterUrlBar` -> `LiveScripterNavigationRow`: `onForward` -> `onForward` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:195
+  - `LiveScripterNavigationRow` -> `Button`: `onForward` -> `onClick` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:76
+
+### 14. LiveScripterPanelControls -> Button
+
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> onBack -> onBack -> onClick
+- Component path:
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterUrlBar` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `LiveScripterNavigationRow` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `Button` (src/shared/ui/button.tsx)
+- Transition lines:
+  - `LiveScripterPanelControls` -> `LiveScripterUrlBar`: `model` -> `onBack` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89
+  - `LiveScripterUrlBar` -> `LiveScripterNavigationRow`: `onBack` -> `onBack` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:195
+  - `LiveScripterNavigationRow` -> `Button`: `onBack` -> `onClick` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:73
+
+### 15. LiveScripterPanelControls -> Button
+
+- Score: 372
+- Depth: 4
+- Root fanout: 23
+- Prop path: model -> onStartOrNavigate -> onStartOrNavigate -> onClick
+- Component path:
+  - `LiveScripterPanelControls` (src/features/playwright/components/live-scripter/LiveScripterPanel.tsx)
+  - `LiveScripterUrlBar` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `LiveScripterNavigationRow` (src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx)
+  - `Button` (src/shared/ui/button.tsx)
+- Transition lines:
+  - `LiveScripterPanelControls` -> `LiveScripterUrlBar`: `model` -> `onStartOrNavigate` at src/features/playwright/components/live-scripter/LiveScripterPanel.tsx:89
+  - `LiveScripterUrlBar` -> `LiveScripterNavigationRow`: `onStartOrNavigate` -> `onStartOrNavigate` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:195
+  - `LiveScripterNavigationRow` -> `Button`: `onStartOrNavigate` -> `onClick` at src/features/playwright/components/live-scripter/LiveScripterUrlBar.tsx:88
 
 ## Top Transition Details (Depth = 2)
 
-### 1. AiTutorConfiguredPanel -> AiTutorPanelHeader
+### 1. LiveScripterAssignDrawerFields -> LiveScripterStepIdentityFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> sectionSummary
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:515
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> stepName
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:82
 
-### 2. AiTutorConfiguredPanel -> AiTutorPanelHeader
+### 2. LiveScripterAssignDrawerFields -> LiveScripterStepIdentityFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> sectionTitle
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:515
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> setStepName
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:82
 
-### 3. AiTutorConfiguredPanel -> AiTutorPanelHeader
+### 3. LiveScripterAssignDrawerFields -> LiveScripterStepIdentityFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> title
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:515
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> stepType
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:82
 
-### 4. AiTutorConfiguredPanel -> AiTutorMoodSection
+### 4. LiveScripterAssignDrawerFields -> LiveScripterStepIdentityFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> presentation
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:520
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> setStepType
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:82
 
-### 5. AiTutorConfiguredPanel -> AiTutorUsageSection
+### 5. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> presentation
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:524
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> needsSelector
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
-### 6. AiTutorConfiguredPanel -> AiTutorAvailabilityRow
+### 6. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> compactActionClassName
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:528
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> selectorCandidates
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
-### 7. AiTutorConfiguredPanel -> AiTutorAvailabilityRow
+### 7. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> enabled
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:528
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> selectedSelectorKey
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
-### 8. AiTutorConfiguredPanel -> AiTutorAvailabilityRow
+### 8. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> isTemporarilyDisabled
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:528
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> setSelectedSelectorKey
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
-### 9. AiTutorConfiguredPanel -> AiTutorAvailabilityRow
+### 9. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> onToggleEnabled
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:528
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> selectedSelector
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
-### 10. AiTutorConfiguredPanel -> AiTutorGuardrailsSection
+### 10. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> controlsDisabled
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> selectorBindingMode
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
-### 11. AiTutorConfiguredPanel -> AiTutorGuardrailsSection
+### 11. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> formBindings
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> setSelectorBindingMode
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
-### 12. AiTutorConfiguredPanel -> AiTutorGuardrailsSection
+### 12. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> hintDepthFieldId
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> registryNamespace
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
-### 13. AiTutorConfiguredPanel -> AiTutorGuardrailsSection
+### 13. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> proactiveNudgesFieldId
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> setRegistryNamespace
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
-### 14. AiTutorConfiguredPanel -> AiTutorGuardrailsSection
+### 14. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> testAccessModeFieldId
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:535
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> registryProfiles
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
-### 15. AiTutorConfiguredPanel -> AiTutorUiModeSection
+### 15. LiveScripterAssignDrawerFields -> LiveScripterSelectorBindingFields
 
-- Score: 262
-- Root fanout: 22
-- Prop mapping: state -> controlsDisabled
-- Location: src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx:543
+- Score: 422
+- Root fanout: 38
+- Prop mapping: model -> effectiveRegistryProfile
+- Location: src/features/playwright/components/live-scripter/LiveScripterAssignDrawerForm.tsx:89
 
 ## Execution Notes
 

@@ -4,7 +4,7 @@ export const resolveKangurPracticeDebugAutoComplete = (
   value: string | string[] | null | undefined,
 ): KangurPracticeDebugAutoCompleteMode | null => {
   const rawValue = Array.isArray(value) ? value[0] : value;
-  if (!rawValue) {
+  if (rawValue === null || rawValue === undefined || rawValue === '') {
     return null;
   }
 

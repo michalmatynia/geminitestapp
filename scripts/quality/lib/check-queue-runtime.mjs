@@ -99,7 +99,9 @@ const listSourceFiles = (absoluteDir, acc = []) => {
       listSourceFiles(absolutePath, acc);
       continue;
     }
-    if (entry.isFile() && TARGET_EXTENSIONS.includes(path.extname(entry.name))) {
+    if (!entry.isFile()) continue;
+    if (/\.test\.(ts|tsx|js|jsx|mjs|cjs)$/.test(entry.name)) continue;
+    if (TARGET_EXTENSIONS.includes(path.extname(entry.name))) {
       acc.push(absolutePath);
     }
   }

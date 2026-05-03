@@ -2,6 +2,7 @@ import {
   useKangurFeedbackManagedDrawingActions,
   type UseKangurFeedbackManagedDrawingActionsOptions,
 } from '@/features/kangur/ui/components/drawing-engine/useKangurFeedbackManagedDrawingActions';
+import type { UseKangurManagedDrawingActionsResult } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import {
   useKangurStoredPointCanvasDrawing,
   type UseKangurStoredPointCanvasDrawingOptions,
@@ -30,7 +31,8 @@ type UseKangurManagedStoredPointDrawingOptions = {
 export const useKangurManagedStoredPointDrawing = ({
   actions,
   drawing: drawingOptions,
-}: UseKangurManagedStoredPointDrawingOptions) => {
+}: UseKangurManagedStoredPointDrawingOptions): UseKangurStoredPointCanvasDrawingResult &
+  UseKangurManagedDrawingActionsResult<HTMLCanvasElement> => {
   const drawing = useKangurStoredPointCanvasDrawing(drawingOptions);
   const {
     resolveCanExport = (current) => current.hasDrawableContent,

@@ -28,7 +28,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-import { GET_intl_handler, POST_intl_handler } from './handler';
+import { getIntlHandler, postIntlHandler } from './handler';
 
 describe('v2 metadata handler canonical contract', () => {
   beforeEach(() => {
@@ -60,7 +60,7 @@ describe('v2 metadata handler canonical contract', () => {
       }),
     });
 
-    await POST_intl_handler(request, {} as Parameters<typeof POST_intl_handler>[1], {
+    await postIntlHandler(request, {} as Parameters<typeof postIntlHandler>[1], {
       type: 'currencies',
     });
 
@@ -110,7 +110,7 @@ describe('v2 metadata handler canonical contract', () => {
       }),
     });
 
-    await POST_intl_handler(request, {} as Parameters<typeof POST_intl_handler>[1], {
+    await postIntlHandler(request, {} as Parameters<typeof postIntlHandler>[1], {
       type: 'languages',
     });
 
@@ -138,7 +138,7 @@ describe('v2 metadata handler canonical contract', () => {
     });
 
     await expect(
-      POST_intl_handler(request, {} as Parameters<typeof POST_intl_handler>[1], {
+      postIntlHandler(request, {} as Parameters<typeof postIntlHandler>[1], {
         type: 'currencies',
       })
     ).rejects.toThrow('Code and name are required');
@@ -188,9 +188,9 @@ describe('v2 metadata handler canonical contract', () => {
       }),
     });
 
-    const response = await GET_intl_handler(
+    const response = await getIntlHandler(
       new NextRequest('http://localhost/api/v2/metadata/languages'),
-      {} as Parameters<typeof GET_intl_handler>[1],
+      {} as Parameters<typeof getIntlHandler>[1],
       { type: 'languages' }
     );
     const payload = (await response.json()) as Array<Record<string, unknown>>;

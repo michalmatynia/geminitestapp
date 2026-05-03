@@ -1,10 +1,10 @@
 import type { AiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
-import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { safeJsonStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { buildAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import type { StatusVariant } from '@/shared/contracts/ui/base';
 
-import { safeJsonStringify } from './AiPathsSettingsUtils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -83,7 +83,7 @@ export type QueueStatus = {
         sampleSize: number;
         message: string;
       };
-      deadLetterRate24h: {
+      failureRate24h: {
         level: 'ok' | 'warning' | 'critical';
         valuePct: number;
         sampleSize: number;
@@ -406,3 +406,14 @@ export const getExecutionVariant = (execution: RunExecutionKind): StatusVariant 
 
 export const isRunningStatus = (status: unknown): boolean =>
   typeof status === 'string' && status.trim().toLowerCase() === 'running';
+
+export const isTerminalRunStatus = (status: unknown): boolean => {
+  if (typeof status !== 'string') return false;
+  const normalized = status.trim().toLowerCase();
+  return (
+    normalized === 'completed' ||
+    normalized === 'failed' ||
+    normalized === 'canceled' ||
+    normalized === 'cancelled'
+  );
+};

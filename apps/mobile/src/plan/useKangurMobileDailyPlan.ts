@@ -8,7 +8,7 @@ import { useKangurMobileLearnerProfile } from '../profile/useKangurMobileLearner
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import { createKangurResultsHref } from '../scores/resultsHref';
 
-type KangurMobileDailyPlanFocus = {
+export type KangurMobileDailyPlanFocus = {
   historyHref: Href;
   lessonHref: Href | null;
   operation: NonNullable<
@@ -17,14 +17,14 @@ type KangurMobileDailyPlanFocus = {
   practiceHref: Href;
 };
 
-type KangurMobileDailyPlanRecentResultItem = {
+export type KangurMobileDailyPlanRecentResultItem = {
   historyHref: Href;
   lessonHref: Href | null;
   practiceHref: Href;
   result: KangurScore;
 };
 
-type UseKangurMobileDailyPlanResult = {
+export type UseKangurMobileDailyPlanResult = {
   authError: string | null;
   authMode: 'development' | 'learner-session';
   displayName: string;
@@ -44,7 +44,7 @@ const createDailyPlanFocus = (
   operation: ReturnType<typeof useKangurMobileTrainingFocus>['strongestOperation'],
   lessonFocus: string | null,
 ): KangurMobileDailyPlanFocus | null => {
-  if (!operation) {
+  if (operation === null) {
     return null;
   }
 
@@ -52,7 +52,7 @@ const createDailyPlanFocus = (
     historyHref: createKangurResultsHref({
       operation: operation.operation,
     }),
-    lessonHref: lessonFocus ? createKangurLessonHref(lessonFocus) : null,
+    lessonHref: lessonFocus !== null ? createKangurLessonHref(lessonFocus) : null,
     operation,
     practiceHref: createKangurPracticeHref(operation.operation),
   };

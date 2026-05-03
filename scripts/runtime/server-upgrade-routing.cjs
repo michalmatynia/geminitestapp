@@ -14,13 +14,21 @@ function parseUpgradeRequestPathname(req) {
   }
 }
 
-function resolveWebSocketUpgradeTarget(req, duelsLobbyPath) {
+function resolveWebSocketUpgradeTarget(req, duelsLobbyPath, liveScripterPath) {
   const pathname = parseUpgradeRequestPathname(req);
   if (!pathname) {
     return 'reject';
   }
 
-  return pathname === duelsLobbyPath ? 'duels-lobby' : 'next';
+  if (pathname === duelsLobbyPath) {
+    return 'duels-lobby';
+  }
+
+  if (pathname === liveScripterPath) {
+    return 'playwright-live-scripter';
+  }
+
+  return 'next';
 }
 
 module.exports = {

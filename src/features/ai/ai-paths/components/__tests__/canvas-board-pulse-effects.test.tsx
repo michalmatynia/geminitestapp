@@ -1,7 +1,8 @@
 import { renderHook, act } from '@testing-library/react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, AiPathRuntimeEvent, Edge } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeEvent } from '@/shared/contracts/ai-paths-runtime';
 
 import { useCanvasPulseEffects } from '../canvas-board-pulse-effects';
 

@@ -53,6 +53,17 @@ export const safeClearTimeout = (id: SafeTimerId | undefined | null): void => {
   method(id);
 };
 
+export const safeRequestAnimationFrame = (callback: FrameRequestCallback): number => {
+  if (typeof window === 'undefined') return -1;
+  return window.requestAnimationFrame(callback);
+};
+
+export const safeCancelAnimationFrame = (id: number | null | undefined): void => {
+  if (id === null || id === undefined || id === -1) return;
+  if (typeof window === 'undefined') return;
+  window.cancelAnimationFrame(id);
+};
+
 /**
  * Starts an interval and returns a handle that can cancel it.
  */

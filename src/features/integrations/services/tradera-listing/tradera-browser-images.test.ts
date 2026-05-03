@@ -57,8 +57,13 @@ describe('tradera-browser-images', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resolveAppBaseUrlMock.mockReturnValue('http://localhost:3000');
+    accessMock.mockResolvedValue(undefined);
     mkdtempMock.mockResolvedValue('/tmp/tradera-upload-order-test');
     copyFileMock.mockResolvedValue(undefined);
+    statMock.mockResolvedValue({
+      isFile: () => true,
+      size: MIN_TRADERA_IMAGE_BYTES,
+    });
     getPublicPathFromStoredPathMock.mockImplementation((value: string) => {
       const filename = value.trim().split('/').pop() ?? 'image.jpg';
       return `/uploads/${filename}`;
@@ -90,6 +95,70 @@ describe('tradera-browser-images', () => {
       '/images/one.jpg',
       '/images/two.jpg',
       '/images/extra.jpg',
+    ]);
+  });
+
+  it('deduplicates repeated canonical product images before appending extra imageLinks', () => {
+    const product = createProduct({
+      imageLinks: [
+        '/images/one.jpg',
+        '/images/extra.jpg',
+        'https://localhost:3000/uploads/one-local.jpg',
+      ],
+      images: [
+        {
+          imageFile: {
+            publicUrl: '/images/one.jpg',
+            filepath: '/uploads/one-local.jpg',
+          },
+        },
+        {
+          imageFile: {
+            publicUrl: ' /images/one.jpg ',
+            filepath: ' /uploads/one-local.jpg ',
+          },
+        },
+        {
+          imageFile: {
+            publicUrl: '/images/two.jpg',
+            filepath: '/uploads/two-local.jpg',
+          },
+        },
+      ],
+    });
+
+    expect(resolveProductImageUrls(product)).toEqual([
+      '/images/one.jpg',
+      '/images/two.jpg',
+      '/images/extra.jpg',
+    ]);
+  });
+
+  it('merges same-slot remote imageLinks into local-only canonical images before appending extras', () => {
+    const product = createProduct({
+      imageLinks: [
+        'https://cdn.example.com/source/one.jpg',
+        ' https://cdn.example.com/source/two.jpg ',
+        'https://cdn.example.com/source/extra.jpg',
+      ],
+      images: [
+        {
+          imageFile: {
+            filepath: '/uploads/local/one.jpg',
+          },
+        },
+        {
+          imageFile: {
+            filepath: '/uploads/local/two.jpg',
+          },
+        },
+      ],
+    });
+
+    expect(resolveProductImageUrls(product)).toEqual([
+      'https://cdn.example.com/source/one.jpg',
+      'https://cdn.example.com/source/two.jpg',
+      'https://cdn.example.com/source/extra.jpg',
     ]);
   });
 
@@ -185,6 +254,41 @@ describe('tradera-browser-images', () => {
       localImagePaths: [],
       imageCount: 2,
       localImageCoverageCount: 1,
+      imageOrderStrategy: 'download-ordered',
+    });
+    expect(copyFileMock).not.toHaveBeenCalled();
+  });
+
+  it('uses same-slot remote imageLinks as download URLs when local canonical files are unavailable', async () => {
+    accessMock.mockRejectedValue(new Error('missing'));
+
+    const product = createProduct({
+      imageLinks: [
+        'https://cdn.example.com/source/one.jpg',
+        'https://cdn.example.com/source/two.jpg',
+      ],
+      images: [
+        {
+          imageFile: {
+            filepath: '/uploads/local/one.jpg',
+          },
+        },
+        {
+          imageFile: {
+            filepath: '/uploads/local/two.jpg',
+          },
+        },
+      ],
+    });
+
+    await expect(resolveTraderaProductImageUploadPlan(product)).resolves.toEqual({
+      imageUrls: [
+        'https://cdn.example.com/source/one.jpg',
+        'https://cdn.example.com/source/two.jpg',
+      ],
+      localImagePaths: [],
+      imageCount: 2,
+      localImageCoverageCount: 0,
       imageOrderStrategy: 'download-ordered',
     });
     expect(copyFileMock).not.toHaveBeenCalled();

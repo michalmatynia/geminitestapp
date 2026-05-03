@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   buildContextRegistryConsumerEnvelope,
@@ -15,7 +15,7 @@ import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observability/runtime-context/server';
-import { hydrateSystemLogRecordRuntimeContext } from '@/features/observability/entry-server';
+import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/entry-server';
 import { getSystemLogById } from '@/shared/lib/observability/system-log-repository';;
 
 const readContextRegistryEnvelope = (
@@ -29,7 +29,7 @@ const readContextRegistryEnvelope = (
   return Array.isArray(record['refs']) ? (value as ContextRegistryConsumerEnvelope) : null;
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   startAiInsightsQueue();
   const parsed = await parseJsonBody(req, systemLogsInterpretRequestSchema, {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
@@ -39,7 +39,7 @@ const createSchema = z.object({
   slots: z.array(slotSchema).optional(),
 });
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }
@@ -52,7 +52,7 @@ export async function GET_handler(
   return NextResponse.json(studioSlotsResponseSchema.parse({ slots }));
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }

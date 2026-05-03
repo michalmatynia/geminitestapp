@@ -43,7 +43,7 @@ export function NodeFilePanel(): React.JSX.Element | null {
       {file ? (
         <div className='flex flex-col gap-1'>
           <p className='text-[10px] uppercase tracking-wide text-gray-500'>Content preview</p>
-          {preview ? (
+          {preview !== '' ? (
             <Card
               variant='subtle-compact'
               padding='sm'

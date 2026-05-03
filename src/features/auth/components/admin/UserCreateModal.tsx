@@ -47,10 +47,10 @@ export function UserCreateModal(): React.JSX.Element | null {
   const { createOpen: isOpen, setCreateOpen, createForm, setCreateForm } = useUsersDialogs();
 
   const isSaving = mutations.register.isPending;
-  const onClose = () => setCreateOpen(false);
+  const onClose = (): void => setCreateOpen(false);
 
-  const onSave = async () => {
-    if (!createForm.email || !createForm.password) {
+  const onSave = async (): Promise<void> => {
+    if (createForm.email.trim().length === 0 || createForm.password.trim().length === 0) {
       toast('Email and password required', { variant: 'error' });
       return;
     }
@@ -70,11 +70,8 @@ export function UserCreateModal(): React.JSX.Element | null {
     }
   };
 
-  const handleChange = (values: Partial<UserCreateFormState>) => {
-    setCreateForm((prev) => {
-      if (!prev) return prev;
-      return { ...prev, ...values };
-    });
+  const handleChange = (values: Partial<UserCreateFormState>): void => {
+    setCreateForm((prev) => ({ ...prev, ...values }));
   };
 
   return (
@@ -84,9 +81,9 @@ export function UserCreateModal(): React.JSX.Element | null {
       title='Provision New Account'
       subtitle='New users will be created with the Default Access Policy. You can adjust their specific roles after creation.'
       fields={FIELDS}
-      values={createForm || ({} as UserCreateFormState)}
+      values={createForm}
       onChange={handleChange}
-      onSave={async () => onSave()}
+      onSave={onSave}
       isSaving={isSaving}
       size='sm'
     />

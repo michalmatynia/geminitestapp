@@ -48,7 +48,7 @@ function ComponentSettingsPanelInner(): React.JSX.Element {
   const showCustomCssTab = Boolean(
     isGridSection || isBlockSection || selectedColumn || selectedBlock
   );
-  const hasSelection = !!(selectedSection || selectedBlock || selectedColumn);
+  const hasSelection = Boolean(selectedSection || selectedBlock || selectedColumn);
   const showConnectionsTab = state.inspectorEnabled;
   const showEventsTab = Boolean(selectedBlock || selectedSection);
 

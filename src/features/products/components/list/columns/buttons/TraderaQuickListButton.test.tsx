@@ -1,5 +1,6 @@
+/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/consistent-type-imports */
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, type RenderResult } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -24,6 +25,7 @@ const {
   invalidateProductListingsAndBadgesMock,
   invalidateProductsMock,
   logClientCatchMock,
+  useCustomFieldsMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   apiGetMock: vi.fn(),
@@ -37,6 +39,7 @@ const {
   invalidateProductListingsAndBadgesMock: vi.fn(),
   invalidateProductsMock: vi.fn(),
   logClientCatchMock: vi.fn(),
+  useCustomFieldsMock: vi.fn(),
 }));
 
 vi.mock('@/shared/ui/button', () => ({
@@ -137,11 +140,15 @@ vi.mock('@/shared/lib/query-invalidation', () => ({
     invalidateProductsMock(...args) as Promise<void>,
 }));
 
+vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
+  useCustomFields: (...args: unknown[]) => useCustomFieldsMock(...args),
+}));
+
 import { TraderaQuickListButton } from './TraderaQuickListButton';
 
 const renderButton = (
   overrides?: Partial<React.ComponentProps<typeof TraderaQuickListButton>>
-) => {
+): RenderResult => {
   const queryClient = createBaseQuickExportTestQueryClient();
   const props: React.ComponentProps<typeof TraderaQuickListButton> = {
     product: product as ProductWithImages,
@@ -164,6 +171,22 @@ describe('TraderaQuickListButton', () => {
     vi.clearAllMocks();
     vi.useRealTimers();
     window.sessionStorage.clear();
+    useCustomFieldsMock.mockReturnValue({
+      data: [
+        {
+          id: 'market-exclusion',
+          name: 'Market Exclusion',
+          type: 'checkbox_set',
+          options: [
+            { id: 'opt-allegro', label: 'Allegro' },
+            { id: 'opt-tradera', label: 'Tradera' },
+          ],
+          createdAt: '2026-04-01T00:00:00.000Z',
+          updatedAt: '2026-04-01T00:00:00.000Z',
+        },
+      ],
+      isLoading: false,
+    });
     fetchPreferredTraderaConnectionMock.mockResolvedValue({ connectionId: null });
     preflightTraderaQuickListSessionMock.mockResolvedValue({
       response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
@@ -232,6 +255,67 @@ describe('TraderaQuickListButton', () => {
     const button = screen.getByRole('button', { name: 'One-click export to Tradera' });
     expect(button.className).toContain('border-gray-500/50');
     expect(button.className).not.toContain('border-cyan-400/70');
+  });
+
+  it('hides one-click export when a closed Tradera status badge is visible', () => {
+    renderButton({ showTraderaBadge: true, traderaStatus: 'closed' });
+
+    expect(screen.queryByRole('button', { name: 'One-click export to Tradera' })).toBeNull();
+  });
+
+  it('ignores stale queued quick-list feedback after a Tradera listing is marked closed', async () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'queued',
+          requestId: 'job-tradera-stale',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    renderButton({ showTraderaBadge: true, traderaStatus: 'closed' });
+
+    expect(screen.queryByRole('button', { name: 'One-click export to Tradera' })).toBeNull();
+
+    await waitFor(() => {
+      expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toBeNull();
+    });
+  });
+
+  it('disables one-click export when Market Exclusion includes Tradera', () => {
+    const prefetchListings = vi.fn();
+    renderButton({
+      prefetchListings,
+      product: {
+        ...(product as ProductWithImages),
+        customFields: [
+          {
+            fieldId: 'market-exclusion',
+            selectedOptionIds: ['opt-tradera'],
+          },
+        ],
+      },
+    });
+
+    const button = screen.getByRole('button', {
+      name: 'Tradera quick export disabled by Market Exclusion',
+    });
+    expect(button).toBeDisabled();
+    expect(button.className).toContain('disabled:opacity-40');
+    expect(button.className).toContain('disabled:border-slate-700/35');
+    expect(button.className).toContain('bg-slate-950/40');
+    expect(button.className).toContain('text-slate-500');
+
+    fireEvent.mouseEnter(button);
+    fireEvent.focus(button);
+
+    fireEvent.click(button);
+
+    expect(prefetchListings).not.toHaveBeenCalled();
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
   it('shows queued feedback after the listing is queued and invalidates listing badges', async () => {
@@ -792,6 +876,38 @@ describe('TraderaQuickListButton', () => {
     });
   });
 
+  it('prefers completed local Tradera feedback over a stale server auth_required status', () => {
+    const onOpenIntegrations = vi.fn();
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'completed',
+          expiresAt: Date.now() + 60_000,
+          runId: 'run-tradera-1',
+          requestId: 'job-tradera-1',
+          duplicateMatchStrategy: 'exact-title-single-candidate',
+        },
+      })
+    );
+
+    renderButton({
+      onOpenIntegrations,
+      showTraderaBadge: false,
+      traderaStatus: 'auth_required',
+    });
+
+    const button = screen.getByRole('button', {
+      name: 'One-click export to Tradera',
+    });
+    expect(button.className).toContain('border-emerald-400/70');
+
+    fireEvent.click(button);
+
+    expect(onOpenIntegrations).not.toHaveBeenCalled();
+  });
+
   it('opens recovery options instead of retrying when local quick-list feedback is failed', () => {
     const onOpenIntegrations = vi.fn();
     window.sessionStorage.setItem(
@@ -825,6 +941,45 @@ describe('TraderaQuickListButton', () => {
     expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
+  it('opens recovery options when local failed feedback overrides a stale queued server badge', () => {
+    const onOpenIntegrations = vi.fn();
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'failed',
+          expiresAt: Date.now() + 30 * 60 * 1000,
+          runId: 'run-tradera-stale',
+          requestId: 'job-tradera-stale',
+          integrationId: 'integration-tradera-1',
+          connectionId: 'conn-tradera-1',
+        },
+      })
+    );
+
+    renderButton({ onOpenIntegrations, traderaStatus: 'queued' });
+
+    const button = screen.getByRole('button', {
+      name: 'Open Tradera recovery options (failed).',
+    });
+    expect(button).toBeEnabled();
+
+    fireEvent.click(button);
+
+    expect(onOpenIntegrations).toHaveBeenCalledWith({
+      source: 'tradera_quick_export_failed',
+      integrationSlug: 'tradera',
+      status: 'failed',
+      runId: 'run-tradera-stale',
+      failureReason: null,
+      requestId: 'job-tradera-stale',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+
   it('opens integrations instead of persisting failed feedback when the listing already exists', async () => {
     const onOpenIntegrations = vi.fn();
     mutateAsyncMock.mockRejectedValue(
@@ -843,6 +998,40 @@ describe('TraderaQuickListButton', () => {
     expect(toastMock).toHaveBeenCalledWith('Product is already listed on this account', {
       variant: 'error',
     });
+  });
+
+  it('passes recovery context when preflight returns a 409 ApiError with auth_required message', async () => {
+    const onOpenIntegrations = vi.fn();
+    preflightTraderaQuickListSessionMock.mockRejectedValue(
+      new ApiError(
+        'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.',
+        409
+      )
+    );
+
+    renderButton({ onOpenIntegrations });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Tradera' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith(
+        'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.',
+        { variant: 'error' }
+      );
+    });
+
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+    expect(onOpenIntegrations).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationSlug: 'tradera',
+        status: 'auth_required',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+      })
+    );
+    expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
+      '"auth_required"'
+    );
   });
 
   it('shows error toast but does not open integrations modal for non-auth setup errors', async () => {

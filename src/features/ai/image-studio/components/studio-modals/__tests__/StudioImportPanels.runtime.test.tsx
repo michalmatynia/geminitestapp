@@ -21,7 +21,7 @@ const mocks = vi.hoisted(() => ({
   triggerLocalUpload: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/ui/primitives.public', async () => {
   const mocks = await import('./studioInlineEditRuntimeMockComponents');
   return {
     Button: mocks.MockButton,

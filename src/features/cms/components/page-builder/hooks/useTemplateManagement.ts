@@ -17,7 +17,11 @@ import {
   type SectionTemplateRecord,
 } from '../section-template-store';
 
-export function useTemplateManagement() {
+export function useTemplateManagement(): {
+  savedGridTemplates: GridTemplateRecord[];
+  savedSectionTemplates: SectionTemplateRecord[];
+  handleDeleteSectionTemplate: (templateId: string) => void;
+} {
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
 

@@ -12,13 +12,16 @@ const I18N_METADATA_BASE = '/api/v2/metadata';
 const CURRENCIES_ENDPOINT = `${I18N_METADATA_BASE}/currencies`;
 const COUNTRIES_ENDPOINT = `${I18N_METADATA_BASE}/countries`;
 const LANGUAGES_ENDPOINT = `${I18N_METADATA_BASE}/languages`;
+const FULL_COUNTRY_LIST_PAGE_SIZE = 500;
 
 export async function getCurrencies(): Promise<CurrencyOption[]> {
   return api.get<CurrencyOption[]>(CURRENCIES_ENDPOINT);
 }
 
 export async function getCountries(): Promise<CountryOption[]> {
-  return api.get<CountryOption[]>(COUNTRIES_ENDPOINT);
+  return api.get<CountryOption[]>(COUNTRIES_ENDPOINT, {
+    params: { pageSize: FULL_COUNTRY_LIST_PAGE_SIZE },
+  });
 }
 
 export async function getLanguages(): Promise<Language[]> {
@@ -41,7 +44,7 @@ export async function saveCurrency(
   id: string | undefined,
   data: SaveCurrencyInput
 ): Promise<CurrencyOption> {
-  if (id) {
+  if (id !== undefined && id !== '') {
     return api.put<CurrencyOption>(`${CURRENCIES_ENDPOINT}/${id}`, data);
   }
   return api.post<CurrencyOption>(CURRENCIES_ENDPOINT, data);
@@ -51,7 +54,7 @@ export async function saveCountry(
   id: string | undefined,
   data: SaveCountryInput
 ): Promise<CountryOption> {
-  if (id) {
+  if (id !== undefined && id !== '') {
     return api.put<CountryOption>(`${COUNTRIES_ENDPOINT}/${id}`, data);
   }
   return api.post<CountryOption>(COUNTRIES_ENDPOINT, data);
@@ -61,7 +64,7 @@ export async function saveLanguage(
   id: string | undefined,
   data: SaveLanguageInput
 ): Promise<Language> {
-  if (id) {
+  if (id !== undefined && id !== '') {
     return api.put<Language>(`${LANGUAGES_ENDPOINT}/${id}`, data);
   }
   return api.post<Language>(LANGUAGES_ENDPOINT, data);

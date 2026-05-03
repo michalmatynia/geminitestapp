@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import type React from 'react';
 
 import type { FolderTreeViewportV2Props } from '@/shared/lib/foldertree/public';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';

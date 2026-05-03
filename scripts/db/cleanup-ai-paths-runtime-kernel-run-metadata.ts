@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import { pathToFileURL } from 'node:url';
 
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
   AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS,
   normalizeAiPathRunRuntimeKernelMetadataForCleanup,

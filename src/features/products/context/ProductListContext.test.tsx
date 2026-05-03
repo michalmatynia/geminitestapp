@@ -37,6 +37,10 @@ type BadgeState = {
   traderaBadgeStatuses: Map<string, string>;
   playwrightProgrammableBadgeIds: Set<string>;
   playwrightProgrammableBadgeStatuses: Map<string, string>;
+  vintedBadgeIds: Set<string>;
+  vintedBadgeStatuses: Map<string, string>;
+  scrapedSourceBadgeIds: Set<string>;
+  scrapedSourceBadgeStatuses: Map<string, string>;
 };
 
 const createBadgeState = (overrides: Partial<BadgeState> = {}): BadgeState => ({
@@ -46,6 +50,10 @@ const createBadgeState = (overrides: Partial<BadgeState> = {}): BadgeState => ({
   traderaBadgeStatuses: new Map<string, string>(),
   playwrightProgrammableBadgeIds: new Set<string>(),
   playwrightProgrammableBadgeStatuses: new Map<string, string>(),
+  vintedBadgeIds: new Set<string>(),
+  vintedBadgeStatuses: new Map<string, string>(),
+  scrapedSourceBadgeIds: new Set<string>(),
+  scrapedSourceBadgeStatuses: new Map<string, string>(),
   ...overrides,
 });
 
@@ -161,6 +169,8 @@ const createProviderValue = (
     setAdvancedFilterState: vi.fn(),
     baseExported: '',
     setBaseExported: vi.fn(),
+    includeArchived: false,
+    setIncludeArchived: vi.fn(),
     data: [createProduct()],
     isLoading: false,
     loadError: null,
@@ -195,8 +205,13 @@ const createProviderValue = (
     traderaBadgeStatuses: new Map<string, string>(),
     playwrightProgrammableBadgeIds: new Set<string>(),
     playwrightProgrammableBadgeStatuses: new Map<string, string>(),
+    vintedBadgeIds: new Set<string>(),
+    vintedBadgeStatuses: new Map<string, string>(),
+    scrapedSourceBadgeIds: new Set<string>(),
+    scrapedSourceBadgeStatuses: new Map<string, string>(),
     queuedProductIds: new Set<string>(),
     productAiRunStatusByProductId: new Map(),
+    productScanRunStatusByProductId: new Map(),
     categoryNameById: new Map<string, string>(),
     thumbnailSource: 'file',
     showTriggerRunFeedback: true,
@@ -306,6 +321,25 @@ describe('ProductListProvider runtime bridge', () => {
     expect(rowRuntimeRenderCount).toBeGreaterThan(1);
   });
 
+  it('does not treat a Base product id alone as an active Base listing badge', () => {
+    function RowRuntimeProbe(): React.JSX.Element {
+      const runtime = useProductListRowRuntime('product-1', 'base-123');
+      return (
+        <div data-testid='row-runtime-base'>
+          {String(runtime.showMarketplaceBadge)}:{runtime.integrationStatus}
+        </div>
+      );
+    }
+
+    render(
+      <ProductListProvider value={createProviderValue()}>
+        <RowRuntimeProbe />
+      </ProductListProvider>
+    );
+
+    expect(screen.getByTestId('row-runtime-base').textContent).toBe('false:not_started');
+  });
+
   it('keeps provider-side badge polling disabled until row runtime is ready', () => {
     render(
       <ProductListProvider value={createProviderValue({ rowRuntimeReady: false })}>
@@ -348,5 +382,42 @@ describe('ProductListProvider runtime bridge', () => {
     await waitFor(() => {
       expect(screen.getByTestId('row-runtime-playwright').textContent).toBe('true:queued');
     });
+  });
+
+  it('surfaces product scan feedback through the row runtime bridge', () => {
+    function RowRuntimeProbe(): React.JSX.Element {
+      const runtime = useProductListRowRuntime('product-1', null);
+      return (
+        <div data-testid='row-runtime-scan'>
+          {runtime.productScanRunFeedback?.status ?? 'none'}:
+          {runtime.productScanRunFeedback?.scanId ?? 'none'}
+        </div>
+      );
+    }
+
+    render(
+      <ProductListProvider
+        value={createProviderValue({
+          productScanRunStatusByProductId: new Map([
+            [
+              'product-1',
+              {
+                scanId: 'scan-1',
+                status: 'running',
+                updatedAt: '2026-04-11T12:00:00.000Z',
+                label: 'Running',
+                variant: 'processing',
+                badgeClassName:
+                  'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
+              },
+            ],
+          ]),
+        })}
+      >
+        <RowRuntimeProbe />
+      </ProductListProvider>
+    );
+
+    expect(screen.getByTestId('row-runtime-scan').textContent).toBe('running:scan-1');
   });
 });

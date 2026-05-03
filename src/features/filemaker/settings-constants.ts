@@ -1,5 +1,7 @@
 export const FILEMAKER_DATABASE_KEY = 'filemaker_database_v1';
 export const FILEMAKER_EMAIL_CAMPAIGNS_KEY = 'filemaker_email_campaigns_v1';
+export const FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY =
+  'filemaker_email_campaign_content_groups_v1';
 export const FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY = 'filemaker_email_campaign_runs_v1';
 export const FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY = 'filemaker_email_campaign_deliveries_v1';
 export const FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY =

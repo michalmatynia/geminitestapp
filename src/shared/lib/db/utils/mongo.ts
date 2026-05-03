@@ -13,16 +13,16 @@ export const ensureBackupsDir = async (): Promise<void> => {
 };
 
 export const getMongoConnectionUrl = (): string => {
-  const mongoUri = process.env['MONGODB_URI'];
-  if (!mongoUri) {
+  const mongoUri = process.env['MONGODB_URI']?.trim();
+  if (typeof mongoUri !== 'string' || mongoUri.length === 0) {
     throw configurationError('MONGODB_URI is not set.');
   }
   return mongoUri;
 };
 
 export const getMongoDatabaseName = (): string => {
-  const dbName = process.env['MONGODB_DB'];
-  if (!dbName) {
+  const dbName = process.env['MONGODB_DB']?.trim();
+  if (typeof dbName !== 'string' || dbName.length === 0) {
     throw configurationError('MONGODB_DB is not set.');
   }
   return dbName;
@@ -33,24 +33,39 @@ export const getMongoDumpCommand = (): string => process.env['MONGODUMP_PATH'] ?
 export const getMongoRestoreCommand = (): string =>
   process.env['MONGORESTORE_PATH'] ?? 'mongorestore';
 
+const DEFAULT_MONGO_TOOL_MAX_BUFFER_BYTES = 128 * 1024 * 1024;
+
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+};
+
+const TRANSIENT_MONGO_ERROR_CONSTRUCTORS = new Set([
+  'MongoServerSelectionError',
+  'MongoNetworkError',
+  'MongoTopologyClosedError',
+  'MongoServerClosedError',
+]);
+
+const TRANSIENT_MONGO_ERROR_FRAGMENTS = [
+  'server selection',
+  'topology closed',
+  'econn',
+  'connection refused',
+  'connection closed',
+];
+
 export const isTransientMongoConnectionError = (error: unknown): boolean => {
   if (!(error instanceof Error)) {
     return false;
   }
 
-  const constructorName = error.constructor?.name ?? '';
+  const constructorName = error.constructor.name;
   const normalized = `${constructorName} ${error.name} ${error.message}`.toLowerCase();
 
   return (
-    constructorName === 'MongoServerSelectionError' ||
-    constructorName === 'MongoNetworkError' ||
-    constructorName === 'MongoTopologyClosedError' ||
-    constructorName === 'MongoServerClosedError' ||
-    normalized.includes('server selection') ||
-    normalized.includes('topology closed') ||
-    normalized.includes('econn') ||
-    normalized.includes('connection refused') ||
-    normalized.includes('connection closed') ||
+    TRANSIENT_MONGO_ERROR_CONSTRUCTORS.has(constructorName) ||
+    TRANSIENT_MONGO_ERROR_FRAGMENTS.some((fragment) => normalized.includes(fragment)) ||
     (normalized.includes('connection') && normalized.includes('timed out'))
   );
 };
@@ -64,18 +79,28 @@ export const execFileAsync = (
       resolve: (value: { stdout: string; stderr: string }) => void,
       reject: (reason?: unknown) => void
     ) => {
-      execFile(command, args, (error: Error | null, stdout: string, stderr: string) => {
-        if (error) {
-          const wrapped = new Error(error.message);
-          (wrapped as { cause?: { stdout: string; stderr: string } }).cause = {
-            stdout,
-            stderr,
-          };
-          reject(wrapped);
-          return;
+      execFile(
+        command,
+        args,
+        {
+          maxBuffer: parsePositiveInt(
+            process.env['MONGO_TOOL_MAX_BUFFER_BYTES'],
+            DEFAULT_MONGO_TOOL_MAX_BUFFER_BYTES
+          ),
+        },
+        (error: Error | null, stdout: string, stderr: string) => {
+          if (error) {
+            const wrapped = new Error(error.message);
+            (wrapped as { cause?: { stdout: string; stderr: string } }).cause = {
+              stdout,
+              stderr,
+            };
+            reject(wrapped);
+            return;
+          }
+          resolve({ stdout, stderr });
         }
-        resolve({ stdout, stderr });
-      });
+      );
     }
   );
 

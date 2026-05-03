@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 
 import {
@@ -38,6 +38,7 @@ import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { studioRoot } from '@/shared/lib/files/server-constants';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 
 const uploadsRoot = path.join(studioRoot, 'crops');
@@ -207,7 +208,7 @@ async function loadSourceBuffer(
 
   if (/^https?:\/\//i.test(normalizedPath)) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), SOURCE_FETCH_TIMEOUT_MS);
+    const timeoutId = safeSetTimeout(() => controller.abort(), SOURCE_FETCH_TIMEOUT_MS);
     try {
       const response = await fetch(normalizedPath, { signal: controller.signal });
       if (!response.ok) {
@@ -224,7 +225,7 @@ async function loadSourceBuffer(
         mimeHint: contentType ? contentType.toLowerCase() : null,
       };
     } finally {
-      clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     }
   }
 

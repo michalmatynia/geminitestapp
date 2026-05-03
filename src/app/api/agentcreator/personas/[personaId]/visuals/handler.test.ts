@@ -23,7 +23,7 @@ vi.mock('@/features/ai/agentcreator/server/persona-avatar-thumbnails', () => ({
   readAgentPersonaAvatarThumbnailByRef: readAgentPersonaAvatarThumbnailByRefMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -79,7 +79,7 @@ describe('agent persona visuals handler', () => {
       updatedAt: '2026-03-09T10:00:00.000Z',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/agentcreator/personas/persona-1/visuals'),
       createRequestContext(),
       { personaId: 'persona-1' },
@@ -138,7 +138,7 @@ describe('agent persona visuals handler', () => {
       ])
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/agentcreator/personas/persona-1/visuals'),
       createRequestContext(),
       { personaId: 'persona-1' }
@@ -186,7 +186,7 @@ describe('agent persona visuals handler', () => {
       ]),
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/agentcreator/personas/persona-1/visuals'),
       createRequestContext(),
       { personaId: 'persona-1' },
@@ -214,7 +214,7 @@ describe('agent persona visuals handler', () => {
     readStoredSettingValueMock.mockResolvedValue(JSON.stringify([]));
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/agentcreator/personas/missing/visuals'),
         createRequestContext(),
         { personaId: 'missing' },

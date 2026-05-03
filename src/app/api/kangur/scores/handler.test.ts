@@ -199,6 +199,25 @@ describe('kangur scores handler', () => {
     });
   });
 
+  it('returns a degraded empty response when score reads time out', async () => {
+    vi.useFakeTimers();
+    listScoresMock.mockReturnValue(new Promise(() => undefined));
+
+    const responsePromise = getKangurScoresHandler(
+      new NextRequest('http://localhost/api/kangur/scores?limit=10'),
+      createRequestContext()
+    );
+
+    await vi.advanceTimersByTimeAsync(2_501);
+
+    const response = await responsePromise;
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-Cache')).toBe('degraded');
+    expect(response.headers.get('X-Kangur-Scores-Degraded')).toBe('timeout');
+    await expect(response.json()).resolves.toEqual([]);
+    vi.useRealTimers();
+  });
+
   it('creates score and stamps created_by from session email', async () => {
     const created = createScoreRow();
     createScoreMock.mockResolvedValue(created);

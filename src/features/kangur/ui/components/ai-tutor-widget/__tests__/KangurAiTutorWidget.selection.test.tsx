@@ -177,6 +177,7 @@ vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorRuntimeScope: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useKangurAiTutor: useKangurAiTutorMock,
   useOptionalKangurAiTutor: useKangurAiTutorMock,
   useKangurAiTutorDeferredActivationBridge: vi.fn(),
@@ -198,10 +199,37 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorRuntime.hook', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: useOptionalKangurAuthMock,
+  useOptionalKangurAuthSessionState: () => {
+    const auth = useOptionalKangurAuthMock();
+    if (!auth) {
+      return null;
+    }
+    return {
+      canAccessParentAssignments: auth.canAccessParentAssignments,
+      hasResolvedAuth: auth.hasResolvedAuth,
+      isAuthenticated: auth.isAuthenticated,
+      user: auth.user,
+    };
+  },
+  useOptionalKangurAuthStatusState: () => {
+    const auth = useOptionalKangurAuthMock();
+    if (!auth) {
+      return null;
+    }
+    return {
+      appPublicSettings: auth.appPublicSettings,
+      authError: auth.authError,
+      isLoadingAuth: auth.isLoadingAuth,
+      isLoadingPublicSettings: auth.isLoadingPublicSettings,
+      isLoggingOut: auth.isLoggingOut,
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: useKangurLoginModalMock,
+  useKangurLoginModalState: useKangurLoginModalMock,
+  useKangurLoginModalActions: useKangurLoginModalMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTextHighlight', () => ({
@@ -258,7 +286,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { KangurAiTutorWidget } from '../KangurAiTutorWidget';
 

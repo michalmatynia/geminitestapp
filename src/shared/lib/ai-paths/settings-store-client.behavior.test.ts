@@ -141,6 +141,56 @@ describe('ai-paths settings-store client behavior', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it('serves selective key requests from the fresh full cache without refetching', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      jsonResponse([
+        { key: 'ai_paths_alpha', value: '1' },
+        { key: 'ai_paths_beta', value: '2' },
+        { key: 'ai_paths_gamma', value: '3' },
+      ])
+    );
+
+    await expect(fetchAiPathsSettingsCached()).resolves.toEqual([
+      { key: 'ai_paths_alpha', value: '1' },
+      { key: 'ai_paths_beta', value: '2' },
+      { key: 'ai_paths_gamma', value: '3' },
+    ]);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    fetchSpy.mockClear();
+
+    await expect(fetchAiPathsSettingsByKeysCached(['ai_paths_gamma', 'ai_paths_alpha'])).resolves.toEqual([
+      { key: 'ai_paths_alpha', value: '1' },
+      { key: 'ai_paths_gamma', value: '3' },
+    ]);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('reuses an inflight full settings request for selective key loads', async () => {
+    let resolveFetch: ((response: Response) => void) | null = null;
+    const fetchPromise = new Promise<Response>((resolve) => {
+      resolveFetch = resolve;
+    });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockReturnValue(fetchPromise as Promise<Response>);
+
+    const fullRequest = fetchAiPathsSettingsCached();
+    const selectiveRequest = fetchAiPathsSettingsByKeysCached(['ai_paths_beta']);
+
+    resolveFetch?.(
+      jsonResponse([
+        { key: 'ai_paths_alpha', value: '1' },
+        { key: 'ai_paths_beta', value: '2' },
+      ])
+    );
+
+    await expect(fullRequest).resolves.toEqual([
+      { key: 'ai_paths_alpha', value: '1' },
+      { key: 'ai_paths_beta', value: '2' },
+    ]);
+    await expect(selectiveRequest).resolves.toEqual([{ key: 'ai_paths_beta', value: '2' }]);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to the full cache subset when selective fetch fails', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     fetchSpy.mockResolvedValueOnce(

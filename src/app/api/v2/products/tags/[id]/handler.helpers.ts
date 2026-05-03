@@ -1,34 +1,21 @@
-import { z } from 'zod';
-
 import type { ProductTag, ProductTagUpdateInput } from '@/shared/contracts/products/tags';
-import { conflictError, validationError } from '@/shared/errors/app-error';
-
-const paramsSchema = z.object({
-  id: z.string().trim().min(1, 'Tag id is required'),
-});
-
-type ProductTagSnapshot = Pick<ProductTag, 'id' | 'catalogId'>;
-
-export type ProductTagNameLookupInput = {
-  catalogId: string;
-  name: string;
-};
+import { badRequestError, conflictError } from '@/shared/errors/app-error';
+import type { CatalogNameLookupDto } from '@/shared/contracts/base';
 
 export const parseTagId = (params: { id: string }): string => {
-  const parsed = paramsSchema.safeParse(params);
-  if (!parsed.success) {
-    throw validationError('Invalid route parameters', {
-      issues: parsed.error.flatten(),
-    });
+  const direct = params.id.trim();
+  if (!direct) {
+    throw badRequestError('Invalid route parameters: id is required');
   }
-
-  return parsed.data.id;
+  return direct;
 };
+
+type ProductTagSnapshot = Pick<ProductTag, 'id' | 'catalogId'>;
 
 export const buildProductTagNameLookupInput = (
   current: ProductTagSnapshot,
   data: ProductTagUpdateInput
-): ProductTagNameLookupInput | null => {
+): CatalogNameLookupDto | null => {
   if (data.name === undefined) return null;
 
   return {
@@ -40,7 +27,7 @@ export const buildProductTagNameLookupInput = (
 export const assertAvailableProductTagName = (
   existing: Pick<ProductTag, 'id'> | null,
   tagId: string,
-  lookup: ProductTagNameLookupInput
+  lookup: CatalogNameLookupDto
 ): void => {
   if (!existing || existing.id === tagId) return;
 

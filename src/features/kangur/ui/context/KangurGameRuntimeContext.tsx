@@ -9,12 +9,18 @@ import {
 } from 'react';
 import { useTranslations } from 'next-intl';
 import { DIFFICULTY_CONFIG } from '@kangur/core';
+import type { KangurUser } from '@kangur/platform';
 
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+  useKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
   filterKangurAssignmentsBySubject,
@@ -35,19 +41,29 @@ import type {
 import { useKangurGameCore } from './hooks/useKangurGameCore';
 import { useKangurGameRuntimeActions as useKangurGameRuntimeActionHandlers } from './hooks/useKangurGameRuntimeActions';
 
+// Split into two contexts so game UI components that only read state don't
+// re-render when action callbacks are recreated.
 const KangurGameRuntimeStateContext = createContext<KangurGameRuntimeStateContextValue | null>(
   null
 );
 const KangurGameRuntimeActionsContext =
   createContext<KangurGameRuntimeActionsContextValue | null>(null);
 
-const resolveCanAccessParentAssignments = ({
-  canAccessParentAssignments,
-  isAuthenticated,
-  user,
-}: ReturnType<typeof useKangurAuth>): boolean =>
-  canAccessParentAssignments ?? (isAuthenticated && Boolean(user?.activeLearner?.id));
+const hasKangurActiveLearner = (user: KangurUser | null): boolean =>
+  typeof user?.activeLearner?.id === 'string' && user.activeLearner.id.length > 0;
 
+// KangurGameRuntimeProvider is the central state container for the StudiQ
+// game experience. It owns:
+//
+//  - Core game loop state (screen, operation, difficulty, questions, score,
+//    timing) via useKangurGameCore
+//  - All game action handlers (start, answer, restart, home, etc.) via
+//    useKangurGameRuntimeActions
+//  - Parent-delegated assignment resolution filtered by the active subject
+//  - Quick-start intent handling (deep-link or embed query params) via
+//    useKangurGameQuickStart
+//  - Derived values: current question, time limit, practice assignment
+//    selection for the active screen
 export function KangurGameRuntimeProvider({
   children,
 }: {
@@ -56,11 +72,15 @@ export function KangurGameRuntimeProvider({
   const progressTranslations = useTranslations('KangurProgressRuntime');
   const resultTranslations = useTranslations('KangurGameResult');
   const { basePath } = useKangurRouting();
-  const auth = useKangurAuth();
+  const { logout, navigateToLogin } = useKangurAuthActions();
+  const { canAccessParentAssignments, isAuthenticated, user } = useKangurAuthSessionState();
+  const { isLoadingAuth } = useKangurAuthStatusState();
   const { subject, subjectKey } = useKangurSubjectFocus();
-  const { isAuthenticated, isLoadingAuth, logout, navigateToLogin, user } = auth;
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const canAccessParentAssignments = resolveCanAccessParentAssignments(auth);
+  const isStandaloneHomeDeferredReady = useKangurDeferredStandaloneHomeReady();
+  const hasParentAssignmentAccess = canAccessParentAssignments || (
+    isAuthenticated && hasKangurActiveLearner(user)
+  );
   const progress = useKangurProgressState();
 
   const {
@@ -98,17 +118,24 @@ export function KangurGameRuntimeProvider({
     runGameLoopTimer,
   } = useKangurGameCore();
 
+  // Only fetch assignments when the user has a parent account with delegated
+  // assignment access. Avoids unnecessary API calls for guest/learner-only
+  // sessions.
   const { assignments: delegatedAssignments, refresh: refreshAssignments } = useKangurAssignments({
-    enabled: canAccessParentAssignments,
+    enabled: hasParentAssignmentAccess && isStandaloneHomeDeferredReady,
     query: {
       includeArchived: false,
     },
   });
 
+  // Filter assignments to the active subject so the game only surfaces
+  // operations and recommendations relevant to what the learner is studying.
   const subjectAssignments = useMemo(
     () => filterKangurAssignmentsBySubject(delegatedAssignments, subject),
     [delegatedAssignments, subject]
   );
+  // Use the actual question count from the generated set when available,
+  // otherwise fall back to the default TOTAL_QUESTIONS constant.
   const totalQuestions = questions.length > 0 ? questions.length : TOTAL_QUESTIONS;
   const {
     playerName,
@@ -123,7 +150,7 @@ export function KangurGameRuntimeProvider({
   } = useKangurGameRuntimeActionHandlers({
     activeSessionRecommendation,
     advanceQuestion,
-    canAccessParentAssignments,
+    canAccessParentAssignments: hasParentAssignmentAccess,
     completeSession,
     currentQuestionIndex,
     difficulty,
@@ -175,19 +202,27 @@ export function KangurGameRuntimeProvider({
   });
 
   const currentQuestion = questions[currentQuestionIndex] ?? null;
-  const questionTimeLimit = DIFFICULTY_CONFIG[difficulty]?.timeLimit ?? 15;
+  // Per-difficulty time limit (seconds) for answering each question. Drives
+  // the countdown timer shown in the game UI.
+  const questionTimeLimit = DIFFICULTY_CONFIG[difficulty].timeLimit;
 
+  // Map assignments by operation so the game setup screen can show which
+  // operations have active parent-delegated practice assignments.
   const practiceAssignmentsByOperation = useMemo(
     () => mapKangurPracticeAssignmentsByOperation(subjectAssignments),
     [subjectAssignments]
   );
+  // The single active practice assignment for the current screen + operation
+  // combination. Shown as a banner/chip during gameplay.
   const activePracticeAssignment = useMemo(
     () => selectKangurPracticeAssignmentForScreen(subjectAssignments, screen, operation),
     [operation, screen, subjectAssignments]
   );
+  // The practice assignment shown on the result screen. Only resolved when the
+  // game has ended and an operation is active.
   const resultPracticeAssignment = useMemo(
     () =>
-      screen === 'result' && operation
+      screen === 'result' && operation !== null
         ? selectKangurResultPracticeAssignment(subjectAssignments, operation)
         : null,
     [operation, screen, subjectAssignments]
@@ -199,7 +234,7 @@ export function KangurGameRuntimeProvider({
       basePath,
       user,
       isAuthenticated,
-      canAccessParentAssignments,
+      canAccessParentAssignments: hasParentAssignmentAccess,
       isLoadingAuth,
       progress,
       screen,
@@ -224,7 +259,7 @@ export function KangurGameRuntimeProvider({
     [
       activePracticeAssignment,
       basePath,
-      canAccessParentAssignments,
+      hasParentAssignmentAccess,
       canStartFromHome,
       currentQuestion,
       currentQuestionIndex,
@@ -286,6 +321,9 @@ export function KangurGameRuntimeProvider({
   );
 }
 
+// KangurGameRuntimeBoundary conditionally mounts the provider. If a provider
+// is already present in the tree (e.g. from a parent route), the boundary
+// passes children through unchanged to avoid double-mounting game state.
 export function KangurGameRuntimeBoundary({
   enabled,
   children,
@@ -330,8 +368,10 @@ export const useOptionalKangurGameRuntime = (): KangurGameRuntimeContextValue | 
   const state = useContext(KangurGameRuntimeStateContext);
   const actions = useContext(KangurGameRuntimeActionsContext);
   return useMemo(() => {
-    if (!state && !actions) return null;
-    return { ...(state ?? {}), ...(actions ?? {}) } as KangurGameRuntimeContextValue;
+    if (!state || !actions) {
+      return null;
+    }
+    return { ...state, ...actions };
   }, [state, actions]);
 };
 

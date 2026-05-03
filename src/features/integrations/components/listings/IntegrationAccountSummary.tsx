@@ -2,6 +2,7 @@ import React from 'react';
 
 import { useOptionalListingSelection } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
+import { resolveIntegrationDisplayName } from './product-listings-labels';
 
 interface IntegrationAccountSummaryProps {
   integrationName?: string;
@@ -17,7 +18,12 @@ export function IntegrationAccountSummary({
     (connection: IntegrationConnectionBasic) =>
       connection.id === listingSelection?.selectedConnectionId
   );
-  const resolvedIntegrationName = integrationName ?? listingSelection?.selectedIntegration?.name;
+  const resolvedIntegrationName =
+    integrationName ??
+    resolveIntegrationDisplayName(
+      listingSelection?.selectedIntegration?.name,
+      listingSelection?.selectedIntegration?.slug
+    );
   const resolvedConnectionName = connectionName ?? selectedConnection?.name;
 
   return (

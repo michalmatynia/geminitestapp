@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import {
@@ -10,7 +10,7 @@ import { filemakerEmailCampaignTestSendRequestSchema } from '@/shared/contracts/
 import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const result: JsonParseResult<FilemakerEmailCampaignTestSendRequest> = await parseJsonBody(
     req,

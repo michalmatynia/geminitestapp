@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
-import { CANVAS_HEIGHT, CANVAS_WIDTH, clampScale, VIEW_MARGIN, NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, VIEW_MARGIN } from '@/shared/lib/ai-paths/core/constants';
+import { clampScale } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import {
   ZOOM_ANIMATION_DURATION_MS,
@@ -14,11 +15,23 @@ import {
   TOUCH_PAN_INERTIA_STOP_SPEED,
 } from './useCanvasInteractions.helpers';
 
+const VIEW_POSITION_EPSILON = 0.01;
+const VIEW_SCALE_EPSILON = 0.000001;
+const WHEEL_ZOOM_MAX_FRAMES = 24;
+
+const areViewsNearlyEqual = (
+  a: { x: number; y: number; scale: number },
+  b: { x: number; y: number; scale: number }
+): boolean =>
+  Math.abs(a.x - b.x) <= VIEW_POSITION_EPSILON &&
+  Math.abs(a.y - b.y) <= VIEW_POSITION_EPSILON &&
+  Math.abs(a.scale - b.scale) <= VIEW_SCALE_EPSILON;
+
 export interface UseCanvasInteractionsNavigationValue {
   stopViewAnimation: () => void;
   stopPanInertia: () => void;
   stopProgrammaticViewAnimation: () => void;
-  setViewClamped: (view: { x: number; y: number; scale: number }) => void;
+  setViewClamped: (view: { x: number; y: number; scale: number }) => boolean;
   startPanInertia: (vx: number, vy: number) => void;
   getZoomTargetView: (
     targetScale: number,
@@ -35,11 +48,13 @@ export interface UseCanvasInteractionsNavigationValue {
     deltaY: number,
     clientX: number,
     clientY: number,
-    deltaMode?: number,
-    ctrlKey?: boolean,
-    metaKey?: boolean,
-    deltaX?: number,
-    options?: { immediate?: boolean }
+    options?: {
+      deltaMode?: number;
+      ctrlKey?: boolean;
+      metaKey?: boolean;
+      deltaX?: number;
+      immediate?: boolean;
+    }
   ) => void;
   wheelZoomRafRef: React.MutableRefObject<number | null>;
   viewAnimationRafRef: React.MutableRefObject<number | null>;
@@ -73,6 +88,7 @@ export function useCanvasInteractionsNavigation({
     scale: number;
     anchorClientPos: { x: number; y: number } | null;
   } | null>(null);
+  const wheelZoomFrameCountRef = useRef(0);
   const panInertiaRafRef = useRef<number | null>(null);
   const panInertiaVelocityRef = useRef<{
     vx: number;
@@ -140,13 +156,17 @@ export function useCanvasInteractionsNavigation({
   }, []);
 
   const setViewClamped = useCallback(
-    (next: { x: number; y: number; scale: number }): void => {
+    (next: { x: number; y: number; scale: number }): boolean => {
       const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
       const clampedScale = clampScale(next.scale);
       const clamped = clampTranslateToContent(next.x, next.y, clampedScale, viewport);
       const resolved = { x: clamped.x, y: clamped.y, scale: clampedScale };
+      if (areViewsNearlyEqual(latestViewRef.current, resolved)) {
+        return false;
+      }
       latestViewRef.current = resolved;
       updateView(resolved);
+      return true;
     },
     [clampTranslateToContent, viewportRef, updateView, latestViewRef]
   );
@@ -158,6 +178,7 @@ export function useCanvasInteractionsNavigation({
       wheelZoomRafRef.current = null;
     }
     wheelZoomTargetRef.current = null;
+    wheelZoomFrameCountRef.current = 0;
     stopPanInertia();
   }, [stopPanInertia, stopProgrammaticViewAnimation]);
 
@@ -237,25 +258,47 @@ export function useCanvasInteractionsNavigation({
 
   const startWheelZoomLoop = useCallback((): void => {
     if (wheelZoomRafRef.current !== null) return;
+    wheelZoomFrameCountRef.current = 0;
     const tick = (): void => {
       wheelZoomRafRef.current = null;
       const target = wheelZoomTargetRef.current;
       if (!target) return;
+      wheelZoomFrameCountRef.current += 1;
       const currentView = latestViewRef.current;
       const remainingScale = target.scale - currentView.scale;
-      if (Math.abs(remainingScale) <= WHEEL_ZOOM_STOP_THRESHOLD) {
+      if (
+        Math.abs(remainingScale) <= WHEEL_ZOOM_STOP_THRESHOLD ||
+        wheelZoomFrameCountRef.current >= WHEEL_ZOOM_MAX_FRAMES
+      ) {
         const finalView = getZoomTargetView(target.scale, target.anchorClientPos);
         setViewClamped(finalView);
         wheelZoomTargetRef.current = null;
+        wheelZoomFrameCountRef.current = 0;
         return;
       }
       const steppedScale = currentView.scale + remainingScale * WHEEL_ZOOM_EASING;
       const steppedView = getZoomTargetView(steppedScale, target.anchorClientPos);
-      setViewClamped(steppedView);
+      const didUpdate = setViewClamped(steppedView);
+      const remainingAfterStep = Math.abs(target.scale - latestViewRef.current.scale);
+      const madeProgress = remainingAfterStep < Math.abs(remainingScale) - VIEW_SCALE_EPSILON;
+      if (!didUpdate || !madeProgress) {
+        const finalView = getZoomTargetView(target.scale, target.anchorClientPos);
+        setViewClamped(finalView);
+        wheelZoomTargetRef.current = null;
+        wheelZoomFrameCountRef.current = 0;
+        return;
+      }
       wheelZoomRafRef.current = requestAnimationFrame(tick);
     };
     wheelZoomRafRef.current = requestAnimationFrame(tick);
   }, [getZoomTargetView, setViewClamped, latestViewRef]);
+
+  useEffect(
+    () => (): void => {
+      stopViewAnimation();
+    },
+    [stopViewAnimation]
+  );
 
   const animateViewTo = useCallback(
     (
@@ -426,13 +469,20 @@ export function useCanvasInteractionsNavigation({
       deltaY: number,
       clientX: number,
       clientY: number,
-      deltaMode = 0,
-      ctrlKey = false,
-      metaKey = false,
-      deltaX = 0,
-      options?: { immediate?: boolean }
+      options?: {
+        deltaMode?: number;
+        ctrlKey?: boolean;
+        metaKey?: boolean;
+        deltaX?: number;
+        immediate?: boolean;
+      }
     ): void => {
       stopProgrammaticViewAnimation();
+      const deltaMode = options?.deltaMode ?? 0;
+      const ctrlKey = options?.ctrlKey ?? false;
+      const metaKey = options?.metaKey ?? false;
+      const deltaX = options?.deltaX ?? 0;
+
       // Some macOS trackpad pinch streams report minimal deltaY and meaningful deltaX.
       const normalizedDeltaYRaw = Number.isFinite(deltaY) ? deltaY : 0;
       const normalizedDeltaXRaw = Number.isFinite(deltaX) ? deltaX : 0;
@@ -476,7 +526,7 @@ export function useCanvasInteractionsNavigation({
           y: clientY,
         },
       };
-      if (options?.immediate) {
+      if (options?.immediate === true) {
         if (wheelZoomRafRef.current !== null) {
           cancelAnimationFrame(wheelZoomRafRef.current);
           wheelZoomRafRef.current = null;

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';
 import { getTextContent } from '@/shared/utils/a11y';

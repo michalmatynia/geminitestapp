@@ -18,10 +18,10 @@ export const readFilemakerCampaignSettingValue = async (
   key: string
 ): Promise<string | null> => {
   const provider = await findProviderForKey(key);
-  if (provider) {
+  if (provider !== null) {
     return await provider.readValue(key);
   }
-  if (!process.env['MONGODB_URI']) return null;
+  if (process.env['MONGODB_URI'] === undefined || process.env['MONGODB_URI'] === '') return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)
@@ -34,14 +34,14 @@ export const upsertFilemakerCampaignSettingValue = async (
   value: string
 ): Promise<boolean> => {
   const provider = await findProviderForKey(key);
-  if (provider) {
+  if (provider !== null) {
     const persisted = await provider.upsertValue(key, value);
     if (persisted) {
       invalidateSettingsCaches();
     }
     return persisted;
   }
-  if (!process.env['MONGODB_URI']) return false;
+  if (process.env['MONGODB_URI'] === undefined || process.env['MONGODB_URI'] === '') return false;
   const mongo = await getMongoDb();
   const now = new Date();
   const encodedValue = encodeSettingValue(key, value);
@@ -57,6 +57,8 @@ export const upsertFilemakerCampaignSettingValue = async (
   return true;
 };
 
-export const __testOnly = {
+const testOnly = {
   invalidateSettingsCaches,
 };
+
+export { testOnly as __testOnly };

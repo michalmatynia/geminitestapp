@@ -12,12 +12,12 @@ import {
   toPersistedFilemakerEmailCampaignSchedulerStatus,
 } from '../settings';
 import { upsertFilemakerCampaignSettingValue } from '../server/campaign-settings-store';
-import { runFilemakerEmailCampaignSchedulerTick } from '../server/filemakerEmailCampaignScheduler';
+import { runFilemakerEmailCampaignSchedulerTick, type FilemakerEmailCampaignSchedulerTickResult } from '../server/filemakerEmailCampaignScheduler';
 import { enqueueFilemakerEmailCampaignRunJob, startFilemakerEmailCampaignQueue } from './filemakerEmailCampaignQueue';
 
 const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number): number => {
   const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return fallback;
+  if (Number.isFinite(parsed) === false) return fallback;
   return Math.max(min, Math.floor(parsed));
 };
 
@@ -49,6 +49,60 @@ const queueState =
     startupTickQueued: false,
   });
 
+type DispatchModes = { queued: number; inline: number };
+
+const persistSchedulerStatus = async (
+  startedAt: string,
+  completedAt: string,
+  result: FilemakerEmailCampaignSchedulerTickResult,
+  dispatchModes: DispatchModes
+): Promise<void> => {
+  await upsertFilemakerCampaignSettingValue(
+    FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY,
+    JSON.stringify(
+      toPersistedFilemakerEmailCampaignSchedulerStatus({
+        version: 1,
+        lastStartedAt: startedAt,
+        lastCompletedAt: completedAt,
+        lastSuccessfulAt: completedAt,
+        evaluatedCampaignCount: result.evaluatedCampaignCount,
+        dueCampaignCount: result.dueCampaignCount,
+        launchedRuns: result.launchedRuns,
+        queuedDispatchCount: dispatchModes.queued,
+        inlineDispatchCount: dispatchModes.inline,
+        skippedByReason: result.skippedByReason,
+        launchFailures: result.launchFailures,
+      })
+    )
+  );
+};
+
+const logSchedulerTick = async (
+  result: FilemakerEmailCampaignSchedulerTickResult,
+  dispatchModes: DispatchModes
+): Promise<void> => {
+  if (
+    result.launchedRuns.length > 0 ||
+    result.dueRetryRuns.length > 0 ||
+    result.launchFailures.length > 0 ||
+    result.skippedByReason.length > 0
+  ) {
+    await ErrorSystem.logInfo('Filemaker campaign scheduler tick processed', {
+      service: 'filemaker-email-campaign-scheduler-queue',
+      evaluatedCampaignCount: result.evaluatedCampaignCount,
+      dueCampaignCount: result.dueCampaignCount,
+      launchedRunCount: result.launchedRuns.length,
+      launchedRunIds: result.launchedRuns.map((run) => run.runId),
+      dueRetryRunCount: result.dueRetryRuns.length,
+      dueRetryRunIds: result.dueRetryRuns.map((run) => run.runId),
+      launchFailures: result.launchFailures,
+      skippedByReason: result.skippedByReason,
+      queuedDispatchCount: dispatchModes.queued,
+      inlineDispatchCount: dispatchModes.inline,
+    });
+  }
+};
+
 const queue = createManagedQueue<ScheduledTickJobData>({
   name: 'filemaker-email-campaign-scheduler',
   concurrency: 1,
@@ -63,63 +117,42 @@ const queue = createManagedQueue<ScheduledTickJobData>({
     const startedAt = new Date().toISOString();
     const result = await runFilemakerEmailCampaignSchedulerTick();
 
-    if (result.launchedRuns.some((run) => run.queuedDeliveryCount > 0)) {
+    if (
+      result.launchedRuns.some((run) => run.queuedDeliveryCount > 0) ||
+      result.dueRetryRuns.length > 0
+    ) {
       startFilemakerEmailCampaignQueue();
     }
 
-    const dispatchModes = {
-      queued: 0,
-      inline: 0,
-    };
-
-    for (const launchedRun of result.launchedRuns) {
-      if (launchedRun.queuedDeliveryCount <= 0) continue;
-
-      const dispatch = await enqueueFilemakerEmailCampaignRunJob({
-        campaignId: launchedRun.campaignId,
-        runId: launchedRun.runId,
-        reason: 'launch',
-      });
-      dispatchModes[dispatch.dispatchMode] += 1;
-    }
-
-    const completedAt = new Date().toISOString();
-    await upsertFilemakerCampaignSettingValue(
-      FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY,
-      JSON.stringify(
-        toPersistedFilemakerEmailCampaignSchedulerStatus({
-          version: 1,
-          lastStartedAt: startedAt,
-          lastCompletedAt: completedAt,
-          lastSuccessfulAt: completedAt,
-          evaluatedCampaignCount: result.evaluatedCampaignCount,
-          dueCampaignCount: result.dueCampaignCount,
-          launchedRuns: result.launchedRuns,
-          queuedDispatchCount: dispatchModes.queued,
-          inlineDispatchCount: dispatchModes.inline,
-          skippedByReason: result.skippedByReason,
-          launchFailures: result.launchFailures,
+    const dispatchModes: DispatchModes = { queued: 0, inline: 0 };
+    const launchDispatchPromises = result.launchedRuns
+      .filter((run) => run.queuedDeliveryCount > 0)
+      .map((run) =>
+        enqueueFilemakerEmailCampaignRunJob({
+          campaignId: run.campaignId,
+          runId: run.runId,
+          reason: 'launch',
         })
-      )
+      );
+    const retryDispatchPromises = result.dueRetryRuns.map((run) =>
+      enqueueFilemakerEmailCampaignRunJob({
+        campaignId: run.campaignId,
+        runId: run.runId,
+        reason: 'retry',
+      })
     );
 
-    if (
-      result.launchedRuns.length > 0 ||
-      result.launchFailures.length > 0 ||
-      result.skippedByReason.length > 0
-    ) {
-      await ErrorSystem.logInfo('Filemaker campaign scheduler tick processed', {
-        service: 'filemaker-email-campaign-scheduler-queue',
-        evaluatedCampaignCount: result.evaluatedCampaignCount,
-        dueCampaignCount: result.dueCampaignCount,
-        launchedRunCount: result.launchedRuns.length,
-        launchedRunIds: result.launchedRuns.map((run) => run.runId),
-        launchFailures: result.launchFailures,
-        skippedByReason: result.skippedByReason,
-        queuedDispatchCount: dispatchModes.queued,
-        inlineDispatchCount: dispatchModes.inline,
-      });
-    }
+    const dispatches = await Promise.all([
+      ...launchDispatchPromises,
+      ...retryDispatchPromises,
+    ]);
+    dispatches.forEach((d) => {
+      dispatchModes[d.dispatchMode] += 1;
+    });
+
+    const completedAt = new Date().toISOString();
+    await persistSchedulerStatus(startedAt, completedAt, result, dispatchModes);
+    await logSchedulerTick(result, dispatchModes);
 
     return {
       ...result,
@@ -135,14 +168,14 @@ const queue = createManagedQueue<ScheduledTickJobData>({
 });
 
 export const startFilemakerEmailCampaignSchedulerQueue = (): void => {
-  if (!queueState.workerStarted) {
+  if (queueState.workerStarted === false) {
     queueState.workerStarted = true;
     queue.startWorker();
   }
 
-  if (!queueState.startupTickQueued) {
+  if (queueState.startupTickQueued === false) {
     queueState.startupTickQueued = true;
-    void queue
+    queue
       .enqueue(
         { type: 'scheduled-tick' },
         {
@@ -151,19 +184,19 @@ export const startFilemakerEmailCampaignSchedulerQueue = (): void => {
           removeOnFail: true,
         }
       )
-      .catch(async (error) => {
+      .catch((error) => {
         queueState.startupTickQueued = false;
-        await ErrorSystem.captureException(error, {
+        ErrorSystem.captureException(error, {
           service: 'filemaker-email-campaign-scheduler-queue',
           action: 'enqueueStartupTick',
-        });
+        }).catch(() => {});
       });
   }
 
-  if (queueState.schedulerRegistered) return;
+  if (queueState.schedulerRegistered === true) return;
   queueState.schedulerRegistered = true;
 
-  void queue
+  queue
     .enqueue(
       { type: 'scheduled-tick' },
       {
@@ -171,11 +204,11 @@ export const startFilemakerEmailCampaignSchedulerQueue = (): void => {
         jobId: 'filemaker-email-campaign-scheduler-tick',
       }
     )
-    .catch(async (error) => {
+    .catch((error) => {
       queueState.schedulerRegistered = false;
-      await ErrorSystem.captureException(error, {
+      ErrorSystem.captureException(error, {
         service: 'filemaker-email-campaign-scheduler-queue',
         action: 'registerScheduler',
-      });
+      }).catch(() => {});
     });
 };

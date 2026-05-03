@@ -1,18 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
   PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
+  SCRAPED_SOURCE_INTEGRATION_SLUG,
   TRADERA_INTEGRATION_SLUGS,
 } from '@/features/integrations/constants/slugs';
 import {
-  getProductListingRepository,
   getIntegrationRepository,
 } from '@/features/integrations/server';
+import {
+  listAllProductListingsAcrossProviders,
+  listProductListingsByProductIdsAcrossProviders,
+} from '@/features/integrations/services/product-listing-repository';
 import {
   applyCanonicalBaseBadgeFallback,
   isCanonicalBaseIntegrationSlug,
 } from '@/features/integrations/services/base-listing-canonicalization';
+import { resolvePendingTraderaExecutionAction } from '@/features/integrations/utils/tradera-listing-status';
 import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -23,6 +28,12 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 type MarketplaceBadgeKey = keyof MarketplaceBadgeEntry;
+type ListingBadgeCandidateMeta = {
+  status: string;
+  updatedAtMs: number;
+  rank: number;
+  success: boolean;
+};
 const shouldLogTiming = () => env.DEBUG_API_TIMING;
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
@@ -45,13 +56,62 @@ const attachTimingHeaders = (
 const normalizeStatus = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
-const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
+const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok', 'linked']);
+const CLOSED_STATUS = 'closed';
+
+const shouldReplaceTraderaClosedCandidate = (
+  currentMeta: ListingBadgeCandidateMeta,
+  nextMeta: ListingBadgeCandidateMeta
+): boolean | null => {
+  const currentIsClosed = currentMeta.status === CLOSED_STATUS;
+  const nextIsClosed = nextMeta.status === CLOSED_STATUS;
+  if (!currentIsClosed && !nextIsClosed) return null;
+  if (currentIsClosed !== nextIsClosed) {
+    const otherMeta = currentIsClosed ? nextMeta : currentMeta;
+    if (!otherMeta.success) {
+      return nextIsClosed;
+    }
+  }
+  if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
+    return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+  }
+  return nextIsClosed && !currentIsClosed;
+};
+
+const shouldReplaceMarketplaceBadgeCandidate = (
+  marketplace: MarketplaceBadgeKey,
+  currentMeta: ListingBadgeCandidateMeta,
+  nextMeta: ListingBadgeCandidateMeta
+): boolean => {
+  if (marketplace === 'tradera') {
+    const traderaClosedDecision = shouldReplaceTraderaClosedCandidate(currentMeta, nextMeta);
+    if (traderaClosedDecision !== null) return traderaClosedDecision;
+  }
+
+  if (currentMeta.success !== nextMeta.success) {
+    return nextMeta.success;
+  }
+
+  if (!currentMeta.success && !nextMeta.success) {
+    if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
+      return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+    }
+    return nextMeta.rank > currentMeta.rank;
+  }
+
+  if (nextMeta.rank !== currentMeta.rank) {
+    return nextMeta.rank > currentMeta.rank;
+  }
+
+  return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+};
 
 const resolveMarketplaceKey = (slug: string | null | undefined): MarketplaceBadgeKey | null => {
   const normalized = (slug ?? '').trim().toLowerCase();
   if (isCanonicalBaseIntegrationSlug(normalized)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(normalized)) return 'tradera';
   if (normalized === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'playwrightProgrammable';
+  if (normalized === SCRAPED_SOURCE_INTEGRATION_SLUG) return 'scrapedSource';
   return null;
 };
 
@@ -63,11 +123,15 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
   if (isCanonicalBaseIntegrationSlug(marketplace)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(marketplace)) return 'tradera';
   if (marketplace === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'playwrightProgrammable';
+  if (marketplace === SCRAPED_SOURCE_INTEGRATION_SLUG || marketplace === 'scrape') {
+    return 'scrapedSource';
+  }
 
   const source = typeof data['source'] === 'string' ? data['source'].trim().toLowerCase() : '';
   if (source.includes('base')) return 'base';
   if (source.includes('tradera')) return 'tradera';
   if (source.includes('playwright')) return 'playwrightProgrammable';
+  if (source.includes('scrape')) return 'scrapedSource';
 
   const traderaData = data['tradera'];
   if (traderaData && typeof traderaData === 'object') return 'tradera';
@@ -77,6 +141,9 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
 
   const playwrightData = data['playwright'];
   if (playwrightData && typeof playwrightData === 'object') return 'playwrightProgrammable';
+
+  const scrapedSourceData = data['scrapedSource'];
+  if (scrapedSourceData && typeof scrapedSourceData === 'object') return 'scrapedSource';
 
   return null;
 };
@@ -114,12 +181,11 @@ const buildPayload = async (
   );
 
   const integrationRepository = await getIntegrationRepository();
-  const listingRepository = await getProductListingRepository();
   const lookupStart = performance.now();
   const listingsPromise =
     normalizedRequestedProductIds.length > 0
-      ? listingRepository.getListingsByProductIds(normalizedRequestedProductIds)
-      : listingRepository.listAllListings();
+      ? listProductListingsByProductIdsAcrossProviders(normalizedRequestedProductIds)
+      : listAllProductListingsAcrossProviders();
   const [listings, integrations] = await Promise.all([
     listingsPromise,
     integrationRepository.listIntegrations(),
@@ -141,28 +207,33 @@ const buildPayload = async (
     completed: 5,
     listed: 5,
     ok: 5,
+    linked: 5,
+    review_required: 4,
+    purchase_review_required: 4,
+    purchase_queued: 4,
     running: 4,
     processing: 4,
     in_progress: 4,
     pending: 3,
     queued: 3,
     queued_relist: 3,
+    closed: 2,
+    unsold: 2,
+    ended: 2,
     failed: 1,
+    check_failed: 1,
     needs_login: 1,
     auth_required: 1,
     error: 1,
     removed: 0,
+    unavailable: 0,
   };
 
   const byProduct = new Map<string, MarketplaceBadgeEntry>();
+  const productsWithPendingTraderaStatusCheck = new Set<string>();
   const candidateMetaByKey = new Map<
     string,
-    {
-      status: string;
-      updatedAtMs: number;
-      rank: number;
-      success: boolean;
-    }
+    ListingBadgeCandidateMeta
   >();
   const assembleStart = performance.now();
   for (const listing of listings) {
@@ -170,8 +241,15 @@ const buildPayload = async (
       integrationMarketplaceById.get(listing.integrationId) ??
       inferMarketplaceFromListingMetadata(
         (listing as { marketplaceData?: unknown }).marketplaceData
-      );
+    );
     if (!marketplace) continue;
+
+    if (
+      marketplace === 'tradera' &&
+      resolvePendingTraderaExecutionAction(listing.marketplaceData) === 'check_status'
+    ) {
+      productsWithPendingTraderaStatusCheck.add(listing.productId);
+    }
 
     const normalizedStatus = normalizeStatus(listing.status);
     const candidateKey = `${listing.productId}:${marketplace}`;
@@ -193,24 +271,11 @@ const buildPayload = async (
       continue;
     }
 
-    const shouldReplace = (() => {
-      if (currentMeta.success !== nextMeta.success) {
-        return nextMeta.success;
-      }
-
-      if (!currentMeta.success && !nextMeta.success) {
-        if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
-          return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
-        }
-        return nextMeta.rank > currentMeta.rank;
-      }
-
-      if (nextMeta.rank !== currentMeta.rank) {
-        return nextMeta.rank > currentMeta.rank;
-      }
-
-      return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
-    })();
+    const shouldReplace = shouldReplaceMarketplaceBadgeCandidate(
+      marketplace,
+      currentMeta,
+      nextMeta
+    );
 
     if (shouldReplace) {
       byProduct.set(listing.productId, {
@@ -225,6 +290,12 @@ const buildPayload = async (
   }
 
   const payload = Object.fromEntries(byProduct.entries()) as ListingBadgesPayload;
+  productsWithPendingTraderaStatusCheck.forEach((productId) => {
+    payload[productId] = {
+      ...(payload[productId] ?? {}),
+      tradera: 'processing',
+    };
+  });
   const canonicalPayload = await applyCanonicalBaseBadgeFallback(
     payload,
     normalizedRequestedProductIds
@@ -237,7 +308,7 @@ const buildPayload = async (
  * GET /api/v2/integrations/product-listings
  * Returns listing badge statuses grouped by marketplace for each product.
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const totalStart = performance.now();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
@@ -258,7 +329,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/v2/integrations/product-listings
  * Returns listing badge statuses grouped by marketplace for requested products.
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const totalStart = performance.now();
   const parsed = await parseJsonBody(req, productIdsBodySchema, {

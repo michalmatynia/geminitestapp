@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AdminNotificationsSettingsPage } from '@/features/admin/public/pages';
 

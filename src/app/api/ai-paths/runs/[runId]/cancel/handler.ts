@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   assertAiPathRunAccess,
@@ -12,9 +12,9 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
-const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled']);
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
@@ -29,7 +29,7 @@ export async function POST_handler(
   }
   const { runId } = parsedParams.data;
   const repo = await getPathRunRepository();
-  let existing: AiPathRunRecord | null = await repo.findRunById(runId);
+  const existing: AiPathRunRecord | null = await repo.findRunById(runId);
   if (!existing) {
     await removePathRunQueueEntries([runId]);
     return NextResponse.json({

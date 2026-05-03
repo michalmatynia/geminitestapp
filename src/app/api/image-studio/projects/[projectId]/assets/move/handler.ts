@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
@@ -73,7 +73,7 @@ const moveSchema = z.object({
   targetFolder: z.string().optional(),
 });
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }

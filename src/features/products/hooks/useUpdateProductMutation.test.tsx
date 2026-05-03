@@ -12,11 +12,26 @@ const { toastMock } = vi.hoisted(() => ({
   toastMock: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+const { apiGetMock } = vi.hoisted(() => ({
+  apiGetMock: vi.fn(),
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: toastMock,
   }),
 }));
+
+vi.mock('@/shared/lib/api-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/api-client')>();
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      get: apiGetMock,
+    },
+  };
+});
 
 import { getProductDetailQueryKey } from './productCache';
 import { useUpdateProductMutation } from './useProductDataMutations';
@@ -87,6 +102,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
 describe('useUpdateProductMutation', () => {
   beforeEach(() => {
     toastMock.mockReset();
+    apiGetMock.mockReset();
     vi.stubGlobal('navigator', {
       ...window.navigator,
       onLine: true,
@@ -192,5 +208,126 @@ describe('useUpdateProductMutation', () => {
           JSON.stringify(options) === JSON.stringify({ queryKey: QUERY_KEYS.products.lists() })
       )
     ).toBe(false);
+  });
+
+  it('surfaces validation field details from FormData update failures', async () => {
+    const queryClient = createQueryClient();
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: 'Validation failed',
+          details: {
+            fields: {
+              customFields: ['Select at least one valid option.'],
+              name_en: ['Name is required.'],
+            },
+          },
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useUpdateProductMutation(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    let thrown: unknown;
+    await act(async () => {
+      try {
+        await result.current.mutateAsync({
+          id: 'product-1',
+          data: new FormData(),
+        });
+      } catch (error) {
+        thrown = error;
+      }
+    });
+
+    expect(thrown).toBeInstanceOf(Error);
+    expect((thrown as Error).message).toBe(
+      'Validation failed (customFields: Select at least one valid option., name_en: Name is required.)'
+    );
+    expect(toastMock).toHaveBeenCalledWith(
+      'Validation failed (customFields: Select at least one valid option., name_en: Name is required.)',
+      { variant: 'error' }
+    );
+  });
+
+  it('recovers stale product ids by disambiguating duplicate SKUs with the original English name', async () => {
+    const queryClient = createQueryClient();
+    const savedProduct = createProduct({
+      id: 'resolved-product-id',
+      sku: 'KEYCHA1045',
+      name: { en: 'Keychain A', pl: null, de: null },
+      name_en: 'Keychain A',
+    });
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'Product not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(savedProduct), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    apiGetMock.mockResolvedValue([
+      createProduct({
+        id: 'product-a',
+        sku: 'KEYCHA1045',
+        name: { en: 'Keychain A', pl: null, de: null },
+        name_en: 'Keychain A',
+      }),
+      createProduct({
+        id: 'product-b',
+        sku: 'KEYCHA1045',
+        name: { en: 'Keychain B', pl: null, de: null },
+        name_en: 'Keychain B',
+      }),
+    ]);
+
+    const { result } = renderHook(() => useUpdateProductMutation(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        id: 'stale-product-id',
+        data: new FormData(),
+        originalSku: 'KEYCHA1045',
+        originalNameEn: 'Keychain A',
+      });
+    });
+
+    expect(apiGetMock).toHaveBeenCalledWith('/api/v2/products?sku=KEYCHA1045', {
+      cache: 'no-store',
+      logError: false,
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/v2/products/stale-product-id',
+      expect.objectContaining({
+        method: 'PUT',
+        body: expect.any(FormData),
+      })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/v2/products/product-a',
+      expect.objectContaining({
+        method: 'PUT',
+        body: expect.any(FormData),
+      })
+    );
   });
 });

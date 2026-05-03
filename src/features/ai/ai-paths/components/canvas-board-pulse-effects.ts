@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import type { AiNode, AiPathRuntimeEvent, Edge } from '@/shared/lib/ai-paths';
-import { hashRuntimeValue } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeEvent } from '@/shared/contracts/ai-paths-runtime';
+import { hashRuntimeValue } from '@/shared/lib/ai-paths/core/utils';
 
 import {
   normalizeRuntimeStatus,

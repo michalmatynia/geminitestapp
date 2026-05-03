@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { Producer } from '@/shared/contracts/products/producers';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 
 import {
@@ -47,18 +48,37 @@ const categories: ProductCategory[] = [
   },
 ];
 
-const createApplyApi = (currentValues: Partial<Record<keyof ProductFormData, unknown>>) => {
+const producers: Producer[] = [
+  {
+    id: 'producer-1',
+    name: 'StarGater.net',
+    website: 'https://stargater.net',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
+
+const createApplyApi = (
+  currentValues: Partial<Record<keyof ProductFormData, unknown>>
+): {
+  setFormFieldValue: ReturnType<typeof vi.fn>;
+  setCategoryId: ReturnType<typeof vi.fn>;
+  setProducerIds: ReturnType<typeof vi.fn>;
+  getCurrentFieldValue: (fieldName: keyof ProductFormData) => unknown;
+} => {
   const setFormFieldValue = vi.fn();
   const setCategoryId = vi.fn();
+  const setProducerIds = vi.fn();
 
   return {
     setFormFieldValue,
     setCategoryId,
+    setProducerIds,
     getCurrentFieldValue: (fieldName: keyof ProductFormData): unknown => currentValues[fieldName],
   };
 };
 
-describe('applyValidatorFieldReplacement', () => {
+describe('applyValidatorFieldReplacement metadata setters', () => {
   it('applies category replacements through setCategoryId', () => {
     const applyApi = createApplyApi({ categoryId: 'category-1' });
 
@@ -90,6 +110,25 @@ describe('applyValidatorFieldReplacement', () => {
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
   });
 
+  it('applies producer replacements through setProducerIds', () => {
+    const applyApi = createApplyApi({ producerIds: [] });
+
+    expect(
+      applyValidatorFieldReplacement({
+        fieldName: 'producerIds',
+        replacementValue: 'StarGater.net',
+        producers,
+        ...applyApi,
+      })
+    ).toBe(true);
+
+    expect(applyApi.setProducerIds).toHaveBeenCalledWith(['producer-1']);
+    expect(applyApi.setFormFieldValue).not.toHaveBeenCalled();
+    expect(applyApi.setCategoryId).not.toHaveBeenCalled();
+  });
+});
+
+describe('applyValidatorFieldReplacement numeric values', () => {
   it('preserves decimal replacements for dimension fields', () => {
     const applyApi = createApplyApi({ sizeLength: 10 });
 
@@ -102,6 +141,36 @@ describe('applyValidatorFieldReplacement', () => {
     ).toBe(true);
 
     expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('sizeLength', 12.5);
+    expect(applyApi.setCategoryId).not.toHaveBeenCalled();
+  });
+
+  it('applies unit-bearing dimension replacements from imported product names', () => {
+    const applyApi = createApplyApi({ length: 0 });
+
+    expect(
+      applyValidatorFieldReplacement({
+        fieldName: 'length',
+        replacementValue: '4 cm',
+        ...applyApi,
+      })
+    ).toBe(true);
+
+    expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('length', 4);
+    expect(applyApi.setCategoryId).not.toHaveBeenCalled();
+  });
+
+  it('applies BattleStock dimension replacements embedded in source text', () => {
+    const applyApi = createApplyApi({ sizeLength: 0 });
+
+    expect(
+      applyValidatorFieldReplacement({
+        fieldName: 'sizeLength',
+        replacementValue: 'BattleStock 32mm base',
+        ...applyApi,
+      })
+    ).toBe(true);
+
+    expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('sizeLength', 3.2);
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
   });
 
@@ -128,6 +197,21 @@ describe('applyValidatorFieldReplacement', () => {
       })
     ).toBe(false);
   });
+});
+
+describe('applyValidatorFieldReplacement matching checks', () => {
+  it('detects when a producer replacement is already applied', () => {
+    const applyApi = createApplyApi({ producerIds: ['producer-1'] });
+
+    expect(
+      doesValidatorFieldReplacementMatchCurrentValue({
+        fieldName: 'producerIds',
+        replacementValue: 'stargater.net',
+        producers,
+        ...applyApi,
+      })
+    ).toBe(true);
+  });
 
   it('applies trimmed text replacements through setFormFieldValue', () => {
     const applyApi = createApplyApi({ name_en: 'Current title' });
@@ -143,7 +227,9 @@ describe('applyValidatorFieldReplacement', () => {
     expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('name_en', 'Next title');
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
   });
+});
 
+describe('applyValidatorFieldReplacement guard cases', () => {
   it('returns false when the replacement cannot be resolved', () => {
     const applyApi = createApplyApi({ categoryId: 'category-1' });
 

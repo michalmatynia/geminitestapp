@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { normalizeAuthEmail } from '@/features/auth/server';

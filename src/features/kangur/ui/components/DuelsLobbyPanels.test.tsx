@@ -16,7 +16,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,

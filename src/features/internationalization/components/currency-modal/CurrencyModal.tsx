@@ -59,12 +59,13 @@ export function CurrencyModal(): React.JSX.Element | null {
     handleCloseCurrencyModal();
   };
 
-  const handleChange = (values: Partial<CurrencyFormState>) => {
+  const handleChange = (values: Partial<CurrencyFormState>): void => {
     // Handle uppercase for code
-    if (values.code) {
-      values.code = values.code.toUpperCase();
+    const updatedValues = { ...values };
+    if (updatedValues.code !== undefined && updatedValues.code !== '') {
+      updatedValues.code = updatedValues.code.toUpperCase();
     }
-    setForm((prev) => ({ ...prev, ...values }));
+    setForm((prev) => ({ ...prev, ...updatedValues }));
   };
 
   return (

@@ -32,6 +32,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     length: null,
     published: false,
     categoryId: 'category-1',
+    studioProjectId: null,
     catalogId: 'catalog-1',
     tags: [],
     producers: [],
@@ -64,6 +65,241 @@ describe('mongoProductWriteImpl.duplicateProduct', () => {
         baseProductId: null,
         importSource: null,
       })
+    );
+  });
+});
+
+describe('mongoProductWriteImpl custom fields persistence', () => {
+  it('stores derived structured title terms on create and update when English title changes', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      } as any,
+      async () => ({ insertOne }) as any
+    );
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        name_en: 'Survey Corps | 7 cm | Acrylic | Anime Pin | Naruto',
+      } as any,
+      async () => ({ findOneAndUpdate }) as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        structuredTitle: {
+          size: '4 cm',
+          material: 'Metal',
+          theme: 'Attack On Titan',
+        },
+      })
+    );
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          structuredTitle: {
+            size: '7 cm',
+            material: 'Acrylic',
+            theme: 'Naruto',
+          },
+        }),
+      }),
+      expect.anything()
+    );
+  });
+
+  it('stores normalized custom fields on create', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const collection = {
+      insertOne,
+    };
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        customFields: [
+          { fieldId: '  notes  ', textValue: '  Handle with care  ' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', ' gift-ready ', 'fragile'] },
+        ],
+      } as any,
+      async () => collection as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customFields: [
+          { fieldId: 'notes', textValue: 'Handle with care' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'fragile'] },
+        ],
+      })
+    );
+  });
+
+  it('stores normalized custom fields on update', async () => {
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+    const collection = {
+      findOneAndUpdate,
+    };
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        customFields: [
+          { fieldId: 'notes', textValue: 'Updated notes' },
+          { fieldId: 'flags', selectedOptionIds: ['gift-ready', 'gift-ready'] },
+        ],
+      } as any,
+      async () => collection as any
+    );
+
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          customFields: [
+            { fieldId: 'notes', textValue: 'Updated notes' },
+            { fieldId: 'flags', selectedOptionIds: ['gift-ready'] },
+          ],
+        }),
+      }),
+      expect.anything()
+    );
+  });
+
+  it('stores normalized notes on create and update', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+    const createCollection = {
+      insertOne,
+    };
+    const updateCollection = {
+      findOneAndUpdate,
+    };
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        notes: {
+          text: '  Remember to keep the old insert sheet.  ',
+          color: '  #fecaca ',
+        },
+      } as any,
+      async () => createCollection as any
+    );
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        notes: {
+          text: '  Updated internal note  ',
+          color: '  #bfdbfe ',
+        },
+      } as any,
+      async () => updateCollection as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notes: {
+          text: 'Remember to keep the old insert sheet.',
+          color: '#fecaca',
+        },
+      })
+    );
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          notes: {
+            text: 'Updated internal note',
+            color: '#bfdbfe',
+          },
+        }),
+      }),
+      expect.anything()
+    );
+  });
+
+  it('stores studio project ids on create and update', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        studioProjectId: 'studio-1',
+      } as any,
+      async () => ({ insertOne }) as any
+    );
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        studioProjectId: null,
+      } as any,
+      async () => ({ findOneAndUpdate }) as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        studioProjectId: 'studio-1',
+      })
+    );
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          studioProjectId: null,
+        }),
+      }),
+      expect.anything()
+    );
+  });
+
+  it('stores source prices separately from final prices on create and update', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        sourcePrice: 12.5,
+        sourcePriceCurrencyCode: 'PLN',
+      } as any,
+      async () => ({ insertOne }) as any
+    );
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        sourcePrice: 14.75,
+        sourcePriceCurrencyCode: 'EUR',
+      } as any,
+      async () => ({ findOneAndUpdate }) as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourcePrice: 12.5,
+        sourcePriceCurrencyCode: 'PLN',
+        price: 0,
+      })
+    );
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          sourcePrice: 14.75,
+          sourcePriceCurrencyCode: 'EUR',
+        }),
+      }),
+      expect.anything()
     );
   });
 });

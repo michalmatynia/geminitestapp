@@ -26,7 +26,9 @@ const resolveTrimmedPracticePlayerName = (
   value: string | null | undefined,
 ): string | null => {
   const normalizedValue = value?.trim();
-  return normalizedValue ? normalizedValue : null;
+  return normalizedValue !== undefined && normalizedValue !== ''
+    ? normalizedValue
+    : null;
 };
 
 export const resolvePracticePlayerName = (
@@ -36,12 +38,12 @@ export const resolvePracticePlayerName = (
   const activeLearnerName = resolveTrimmedPracticePlayerName(
     session?.user?.activeLearner?.displayName,
   );
-  if (activeLearnerName) {
+  if (activeLearnerName !== null) {
     return activeLearnerName;
   }
 
   const fullName = resolveTrimmedPracticePlayerName(session?.user?.full_name);
-  if (fullName) {
+  if (fullName !== null) {
     return fullName;
   }
 

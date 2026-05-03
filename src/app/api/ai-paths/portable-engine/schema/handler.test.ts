@@ -11,7 +11,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: requireAiPathsAccessMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('ai-paths portable-engine schema handler', () => {
   beforeEach(() => {
@@ -19,9 +19,9 @@ describe('ai-paths portable-engine schema handler', () => {
   });
 
   it('returns portable schema catalog by default', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/schema'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -44,9 +44,9 @@ describe('ai-paths portable-engine schema handler', () => {
   });
 
   it('returns selected schema kind payload', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -58,14 +58,14 @@ describe('ai-paths portable-engine schema handler', () => {
   });
 
   it('returns 304 for matching If-None-Match', async () => {
-    const firstResponse = await GET_handler(
+    const firstResponse = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
     const etag = firstResponse.headers.get('etag');
     expect(etag).toBeTruthy();
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package',
         {
@@ -74,7 +74,7 @@ describe('ai-paths portable-engine schema handler', () => {
           },
         }
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(304);
@@ -84,9 +84,9 @@ describe('ai-paths portable-engine schema handler', () => {
 
   it('rejects unsupported schema kinds', async () => {
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=invalid'),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Invalid portable schema kind.');
   });

@@ -65,6 +65,15 @@ describe('resolveKangurApiPathSegments', () => {
     expect(segments).toEqual(['duels', 'lobby', 'stream']);
   });
 
+  it('accepts the browser-facing kangur-api prefix', () => {
+    const request = {
+      url: 'http://localhost/kangur-api/lesson-sections?subject=maths',
+      nextUrl: new URL('http://localhost/kangur-api/lesson-sections?subject=maths'),
+    } as Request;
+    const segments = resolveKangurApiPathSegments(request, { params: {} });
+    expect(segments).toEqual(['lesson-sections']);
+  });
+
   it('returns an empty array when URL does not match the API prefix', () => {
     const request = {
       url: 'http://localhost/health',

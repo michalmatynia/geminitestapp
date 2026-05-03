@@ -1,4 +1,4 @@
-export const focusOnMount = <T extends HTMLElement>(node: T | null): void => {
+export const focusOnMount = (node: HTMLElement | null): void => {
   if (!node || typeof window === 'undefined' || typeof document === 'undefined') {
     return;
   }

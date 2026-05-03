@@ -23,7 +23,7 @@ export type MediaReplaceTarget = {
 export const SECTION_BLOCK_TYPES = CMS_SECTION_BLOCK_TYPES.filter((type) => type !== 'Repeater');
 
 export const normalizeSlideshowAnimationType = (value?: string): string => {
-  if (!value) return 'fade';
+  if (value === undefined || value === '') return 'fade';
   if (value === 'fade-in') return 'fade';
   return value;
 };

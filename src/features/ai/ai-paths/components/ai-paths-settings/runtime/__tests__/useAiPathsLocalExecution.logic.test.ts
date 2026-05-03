@@ -17,14 +17,14 @@ vi.mock('../segments/useLocalRunOutcome', () => ({
   },
 }));
 
-vi.mock('../segments/useLocalExecutionLoop', () => ({
+vi.mock('@/features/ai/ai-paths/services/local-execution/useLocalExecutionLoop', () => ({
   useLocalExecutionLoop: (args: unknown) => {
     mockState.loopCalls.push(args);
     return mockState.loop;
   },
 }));
 
-vi.mock('../segments/useLocalExecutionTriggers', () => ({
+vi.mock('@/features/ai/ai-paths/services/local-execution/useLocalExecutionTriggers', () => ({
   useLocalExecutionTriggers: (args: unknown, loop: unknown, outcome: unknown) => {
     mockState.triggerCalls.push({ args, loop, outcome });
     return mockState.triggers;

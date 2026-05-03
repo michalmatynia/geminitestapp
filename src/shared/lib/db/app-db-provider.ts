@@ -1,6 +1,7 @@
 import type { AppProviderValue as AppDbProvider } from '@/shared/contracts/system';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 
 import {
   getDatabaseEnginePolicy,
@@ -8,6 +9,7 @@ import {
   isPrimaryProviderConfigured,
 } from './database-engine-policy';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
+import { SafeDatabaseCache } from './utils/database-cache';
 
 
 export const APP_DB_PROVIDER_SETTING_KEY = 'app_db_provider';
@@ -22,8 +24,18 @@ const readPositiveIntegerEnv = (key: string, fallback: number): number => {
 };
 
 const PROVIDER_CACHE_TTL_MS = readPositiveIntegerEnv('APP_DB_PROVIDER_CACHE_TTL_MS', 5 * 60_000);
-let providerCache: { value: AppDbProvider | null; ts: number } | null = null;
-let providerInflight: Promise<AppDbProvider | null> | null = null;
+
+const providerSettingCache = new SafeDatabaseCache<AppDbProvider | null>({
+  ttlMs: PROVIDER_CACHE_TTL_MS,
+  source: 'db.app-db-provider',
+  action: 'getAppDbProviderSetting',
+});
+
+const resolvedProviderCache = new SafeDatabaseCache<AppDbProvider>({
+  ttlMs: 60000, // 60 seconds
+  source: 'db.app-db-provider',
+  action: 'getAppDbProvider',
+});
 
 const normalizeProvider = (value?: string | null): AppDbProvider | null => {
   if (!value) return null;
@@ -33,6 +45,7 @@ const normalizeProvider = (value?: string | null): AppDbProvider | null => {
 };
 
 const readMongoAppProviderSetting = async (): Promise<AppDbProvider | null> => {
+  await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return null;
   try {
     const mongo = await getMongoDb();
@@ -53,78 +66,63 @@ const readMongoAppProviderSetting = async (): Promise<AppDbProvider | null> => {
 };
 
 export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> => {
-  const now = Date.now();
-  if (providerCache && now - providerCache.ts < PROVIDER_CACHE_TTL_MS) {
-    return providerCache.value;
-  }
-  if (providerInflight) {
-    return providerInflight;
-  }
-  providerInflight = (async (): Promise<AppDbProvider | null> => {
+  return providerSettingCache.get(async () => {
+    await applyActiveMongoSourceEnv();
     if (process.env['APP_DB_PROVIDER']) {
       const envProvider = normalizeProvider(process.env['APP_DB_PROVIDER']);
       if (envProvider) return envProvider;
     }
     return readMongoAppProviderSetting();
-  })();
-  const value = await providerInflight;
-  providerCache = { value, ts: Date.now() };
-  providerInflight = null;
-  return value;
+  });
 };
 
-let resolvedProviderCache: { value: AppDbProvider; ts: number } | null = null;
-const RESOLVED_PROVIDER_TTL_MS = 10000; // 10 seconds
-
 export const getAppDbProvider = async (): Promise<AppDbProvider> => {
-  const now = Date.now();
-  if (resolvedProviderCache && now - resolvedProviderCache.ts < RESOLVED_PROVIDER_TTL_MS) {
-    return resolvedProviderCache.value;
-  }
+  return resolvedProviderCache.get(async () => {
+    await applyActiveMongoSourceEnv();
 
-  const [policy, routeProvider] = await Promise.all([
-    getDatabaseEnginePolicy(),
-    getDatabaseEngineServiceProvider('app'),
-  ]);
-  let result: AppDbProvider;
+    const [policy, routeProvider] = await Promise.all([
+      getDatabaseEnginePolicy(),
+      getDatabaseEngineServiceProvider('app'),
+    ]);
+    let result: AppDbProvider;
 
-  if (routeProvider) {
-    if (routeProvider === 'redis') {
-      throw internalError('Database Engine route "app" cannot target Redis. Use MongoDB.');
-    }
-    if (routeProvider !== 'mongodb') {
-      throw internalError(
-        `Database Engine route "app" targets "${routeProvider}" but only MongoDB is supported.`
-      );
-    }
-    if (!isPrimaryProviderConfigured(routeProvider)) {
-      throw internalError(
-        `Database Engine route "app" targets "${routeProvider}" but it is not configured in environment variables.`
-      );
-    }
-    result = routeProvider;
-  } else if (policy.requireExplicitServiceRouting) {
-    throw internalError(
-      'Database Engine requires explicit service routing for "app". Configure it in Workflow Database -> Database Engine.'
-    );
-  } else {
-    const setting = await getAppDbProviderSetting();
-    if (setting === 'mongodb' || process.env['MONGODB_URI']) {
-      if (!process.env['MONGODB_URI']) {
-        throw internalError('App provider is set to MongoDB but MONGODB_URI is missing.');
+    if (routeProvider) {
+      if (routeProvider === 'redis') {
+        throw internalError('Database Engine route "app" cannot target Redis. Use MongoDB.');
       }
-      result = 'mongodb';
+      if (routeProvider !== 'mongodb') {
+        throw internalError(
+          `Database Engine route "app" targets "${routeProvider}" but only MongoDB is supported.`
+        );
+      }
+      if (!isPrimaryProviderConfigured(routeProvider)) {
+        throw internalError(
+          `Database Engine route "app" targets "${routeProvider}" but it is not configured in environment variables.`
+        );
+      }
+      result = routeProvider;
+    } else if (policy.requireExplicitServiceRouting) {
+      throw internalError(
+        'Database Engine requires explicit service routing for "app". Configure it in Workflow Database -> Database Engine.'
+      );
     } else {
-      throw internalError('No database provider is configured. Set MONGODB_URI.');
+      const setting = await getAppDbProviderSetting();
+      if (setting === 'mongodb' || process.env['MONGODB_URI']) {
+        if (!process.env['MONGODB_URI']) {
+          throw internalError('App provider is set to MongoDB but MONGODB_URI is missing.');
+        }
+        result = 'mongodb';
+      } else {
+        throw internalError('No database provider is configured. Set MONGODB_URI.');
+      }
     }
-  }
 
-  resolvedProviderCache = { value: result, ts: now };
-  return result;
+    return result;
+  });
 };
 
 export const invalidateAppDbProviderCache = (): void => {
-  providerCache = null;
-  providerInflight = null;
-  resolvedProviderCache = null;
+  providerSettingCache.invalidate();
+  resolvedProviderCache.invalidate();
 };
+

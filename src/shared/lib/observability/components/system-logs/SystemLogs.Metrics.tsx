@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { useSystemLogsState } from '@/features/observability/context/SystemLogsContext';
+import { useSystemLogsState } from '@/shared/lib/observability/context/SystemLogsContext';
 import { Alert, Button, Card } from '@/shared/ui/primitives.public';
 import { FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
 import { LoadingState, MetadataItem, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
-import { formatTimestamp } from '../../utils/formatTimestamp';
+import { formatTimestamp } from '@/shared/lib/observability/utils/formatTimestamp';
 
 export function LogMetrics(): React.JSX.Element {
   const { metricsQuery, metrics, levels } = useSystemLogsState();

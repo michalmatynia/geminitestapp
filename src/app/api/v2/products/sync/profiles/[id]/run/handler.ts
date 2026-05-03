@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { startProductSyncRun } from '@/features/product-sync/services/product-sync-run-starter';
@@ -9,7 +9,7 @@ const paramsSchema = z.object({
   id: z.string().trim().min(1, 'Sync profile id is required'),
 });
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

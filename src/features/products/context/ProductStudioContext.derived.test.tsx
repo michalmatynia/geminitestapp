@@ -20,6 +20,7 @@ describe('useProductStudioDerivedState', () => {
           {
             index: 0,
             label: 'Slot 1',
+            sourceType: 'file',
             src: '/products/source.jpg',
           },
         ],

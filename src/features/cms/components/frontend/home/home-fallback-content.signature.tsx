@@ -5,14 +5,11 @@ import { Layers, Palette, TrendingUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { ProductCard } from '@/features/products/public';
-import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { useHomeFallback } from './home-fallback-content';
 import { UI_GRID_RELAXED_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/layout';
 
-export function HomeFallbackSignature({
-  products,
-}: {
-  products: ProductWithImages[];
-}): React.JSX.Element {
+export function HomeFallbackSignature(): React.JSX.Element {
+  const { products } = useHomeFallback();
   const translations = useTranslations('FallbackHome.Signature');
   const featuredProducts = React.useMemo(() => products.slice(0, 3), [products]);
   const impactStats = [

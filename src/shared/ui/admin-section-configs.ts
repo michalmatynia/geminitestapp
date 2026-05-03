@@ -59,3 +59,13 @@ export const ADMIN_SETTINGS_SECTION: AdminBreadcrumbNode = {
   label: 'Settings',
   href: '/admin/settings',
 };
+
+export const ADMIN_PLAYWRIGHT_SECTION: AdminBreadcrumbNode = {
+  label: 'Playwright',
+  href: '/admin/integrations/marketplaces/playwright',
+};
+
+export const ADMIN_JOB_BOARD_SECTION: AdminBreadcrumbNode = {
+  label: 'Job Board',
+  href: '/admin/job-board',
+};

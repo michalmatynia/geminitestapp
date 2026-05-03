@@ -1,11 +1,15 @@
 'use client';
+'use no memo';
 
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import type { NodeDefinition } from '@/shared/lib/ai-paths';
-import { palette, derivePaletteNodeTypeId, TRIGGER_INPUT_PORTS, TRIGGER_OUTPUT_PORTS, triggerButtonsApi } from '@/shared/lib/ai-paths';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import type { NodeDefinition } from '@/shared/contracts/ai-paths-core/nodes';
+import { TRIGGER_INPUT_PORTS, TRIGGER_OUTPUT_PORTS } from '@/shared/lib/ai-paths/core/constants';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
+import { derivePaletteNodeTypeId } from '@/shared/lib/ai-paths/core/utils/node-identity';
+import { triggerButtonsApi } from '@/shared/lib/ai-paths/api';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function usePaletteWithTriggerButtons({
@@ -13,7 +17,7 @@ export function usePaletteWithTriggerButtons({
 }: {
   enabled?: boolean;
 } = {}): NodeDefinition[] {
-  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
+  const triggerButtonsQuery = useQuery<AiTriggerButtonRecord[]>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async () => {
       const response = await triggerButtonsApi.list({ entityType: 'custom' });
@@ -21,12 +25,6 @@ export function usePaletteWithTriggerButtons({
       return response.data;
     },
     enabled,
-    meta: {
-      source: 'ai.ai-paths.settings.trigger-buttons',
-      operation: 'list',
-      resource: 'aiPaths.triggerButtons',
-      domain: 'global',
-      description: 'Loads ai paths trigger buttons.'},
   });
 
   return useMemo<NodeDefinition[]>(() => {

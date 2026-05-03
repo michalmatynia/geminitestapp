@@ -60,7 +60,7 @@ export function SequencingPanelProvider({
 }: {
   children: React.ReactNode;
   value: SequencingPanelContextValue;
-}) {
+}): React.JSX.Element {
   return (
     <SequencingPanelContext.Provider value={value}>{children}</SequencingPanelContext.Provider>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import {
   useIntegrationsActions,
@@ -28,149 +28,193 @@ import { SessionModal } from './SessionModal';
 import { TestLogModal } from './TestLogModal';
 import { TestResultModal } from './TestResultModal';
 
+type IntegrationModalPanelsProps = {
+  activeTab: string;
+  setActiveTab: (value: string) => void;
+  showAllegroConsole: boolean;
+  showBaseConsole: boolean;
+  showPlaywright: boolean;
+};
+
+type IntegrationModalDialogsProps = {
+  showSessionModal: boolean;
+  setShowSessionModal: (show: boolean) => void;
+  showTestErrorModal: boolean;
+  setShowTestErrorModal: (show: boolean) => void;
+  showTestLogModal: boolean;
+  setShowTestLogModal: (show: boolean) => void;
+  showTestSuccessModal: boolean;
+  setShowTestSuccessModal: (show: boolean) => void;
+};
+
+type IntegrationModalFrameProps = {
+  onCloseModal: () => void;
+  showAllegroConsole: boolean;
+  showBaseConsole: boolean;
+  showPlaywright: boolean;
+  activeTab: string;
+  setActiveTab: (value: string) => void;
+  dialogs: IntegrationModalDialogsProps;
+};
+
+function IntegrationModalPanels({
+  activeTab,
+  setActiveTab,
+  showAllegroConsole,
+  showBaseConsole,
+  showPlaywright,
+}: IntegrationModalPanelsProps): React.JSX.Element {
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <IntegrationTabsList />
+
+      <TabsContent value='connections' className='mt-4 space-y-6'>
+        <ConnectionManager />
+      </TabsContent>
+
+      <TabsContent value='settings' className='mt-4'>
+        <IntegrationSettingsContent />
+      </TabsContent>
+
+      {showBaseConsole ? (
+        <TabsContent value='base-api' className='mt-4'>
+          <BaseApiConsole />
+        </TabsContent>
+      ) : null}
+
+      {showAllegroConsole ? (
+        <TabsContent value='allegro-api' className='mt-4'>
+          <AllegroApiConsole />
+        </TabsContent>
+      ) : null}
+
+      <TabsContent value='price-sync' className='mt-4'>
+        <div className='min-h-[220px]' />
+      </TabsContent>
+      <TabsContent value='inventory-sync' className='mt-4'>
+        <div className='min-h-[220px]' />
+      </TabsContent>
+
+      {showPlaywright ? (
+        <TabsContent value='playwright' className='mt-4 space-y-4'>
+          <PlaywrightTabContent />
+        </TabsContent>
+      ) : null}
+    </Tabs>
+  );
+}
+
+function IntegrationModalDialogs({
+  showSessionModal,
+  setShowSessionModal,
+  showTestErrorModal,
+  setShowTestErrorModal,
+  showTestLogModal,
+  setShowTestLogModal,
+  showTestSuccessModal,
+  setShowTestSuccessModal,
+}: IntegrationModalDialogsProps): React.JSX.Element {
+  return (
+    <>
+      <TestLogModal isOpen={showTestLogModal} onClose={() => setShowTestLogModal(false)} />
+
+      <TestResultModal
+        isOpen={showTestErrorModal || showTestSuccessModal}
+        onClose={() => {
+          setShowTestErrorModal(false);
+          setShowTestSuccessModal(false);
+        }}
+      />
+
+      <SessionModal isOpen={showSessionModal} onClose={() => setShowSessionModal(false)} />
+    </>
+  );
+}
+
+function IntegrationModalFrame({
+  onCloseModal,
+  showAllegroConsole,
+  showBaseConsole,
+  showPlaywright,
+  activeTab,
+  setActiveTab,
+  dialogs,
+}: IntegrationModalFrameProps): React.JSX.Element {
+  return (
+    <FormModal
+      isOpen={true}
+      onClose={onCloseModal}
+      title={<IntegrationModalHeader />}
+      subtitle={<IntegrationModalSubtitle />}
+      onSave={() => undefined}
+      isSaving={false}
+      disableCloseWhileSaving={false}
+      showSaveButton={false}
+      showCancelButton={true}
+      cancelText='Close'
+      saveText='Save'
+      size='xl'
+    >
+      <IntegrationModalPanels
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        showAllegroConsole={showAllegroConsole}
+        showBaseConsole={showBaseConsole}
+        showPlaywright={showPlaywright}
+      />
+      <IntegrationModalDialogs {...dialogs} />
+    </FormModal>
+  );
+}
+
 export function IntegrationModal(): React.JSX.Element {
   const { activeIntegration } = useIntegrationsData();
   const { onCloseModal, onOpenSessionModal } = useIntegrationsActions();
-  const {
-    showTestLogModal,
-    setShowTestLogModal,
-    showTestErrorModal,
-    setShowTestErrorModal,
-    showTestSuccessModal,
-    setShowTestSuccessModal,
-  } = useIntegrationsTesting();
-  const { showSessionModal, setShowSessionModal } = useIntegrationsSession();
-  const [isSaving, setIsSaving] = useState(false);
-
-  const {
-    activeTab,
-    setActiveTab,
-    isTradera,
-    isAllegro,
-    isLinkedIn,
-    isBaselinker,
-    showPlaywright,
-    showAllegroConsole,
-    showBaseConsole,
-    activeConnection,
-    handleSavePlaywrightSettings,
-  } = useIntegrationTabs();
-
-  const canSaveBrowserSettings = isTradera && showPlaywright;
-
-  const handleSave = useCallback(async (): Promise<void> => {
-    if (!canSaveBrowserSettings || isSaving) {
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await handleSavePlaywrightSettings();
-    } finally {
-      setIsSaving(false);
-    }
-  }, [canSaveBrowserSettings, handleSavePlaywrightSettings, isSaving]);
-
+  const testing = useIntegrationsTesting();
+  const session = useIntegrationsSession();
+  const tabs = useIntegrationTabs();
   if (!activeIntegration) return <></>;
 
   const modalViewContextValue: IntegrationModalViewContextValue = useMemo(
     () => ({
       integrationName: activeIntegration.name,
-      activeTab,
-      isTradera,
-      isAllegro,
-      isLinkedIn,
-      isBaselinker,
-      showPlaywright,
-      showAllegroConsole,
-      showBaseConsole,
-      activeConnection,
+      activeTab: tabs.activeTab,
+      isTradera: tabs.isTradera,
+      isVinted: tabs.isVinted,
+      is1688: tabs.is1688,
+      isPracuj: tabs.isPracuj,
+      isAllegro: tabs.isAllegro,
+      isLinkedIn: tabs.isLinkedIn,
+      isBaselinker: tabs.isBaselinker,
+      showPlaywright: tabs.showPlaywright,
+      showAllegroConsole: tabs.showAllegroConsole,
+      showBaseConsole: tabs.showBaseConsole,
+      activeConnection: tabs.activeConnection,
       onOpenSessionModal,
-      onSavePlaywrightSettings: () => {
-        void handleSave();
-      },
     }),
-    [
-      activeConnection,
-      activeIntegration.name,
-      activeTab,
-      handleSave,
-      isAllegro,
-      isLinkedIn,
-      isBaselinker,
-      isTradera,
-      onOpenSessionModal,
-      showAllegroConsole,
-      showBaseConsole,
-      showPlaywright,
-    ]
+    [activeIntegration.name, onOpenSessionModal, tabs]
   );
 
   return (
     <IntegrationModalViewProvider value={modalViewContextValue}>
-      <FormModal
-        isOpen={true}
-        onClose={onCloseModal}
-        title={<IntegrationModalHeader />}
-        subtitle={<IntegrationModalSubtitle />}
-        onSave={() => void handleSave()}
-        isSaving={isSaving}
-        disableCloseWhileSaving={canSaveBrowserSettings}
-        showSaveButton={canSaveBrowserSettings}
-        showCancelButton={true}
-        cancelText='Close'
-        saveText='Save'
-        size='xl'
-      >
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <IntegrationTabsList />
-
-          <TabsContent value='connections' className='mt-4 space-y-6'>
-            <ConnectionManager />
-          </TabsContent>
-
-          <TabsContent value='settings' className='mt-4'>
-            <IntegrationSettingsContent />
-          </TabsContent>
-
-          {showBaseConsole && (
-            <TabsContent value='base-api' className='mt-4'>
-              <BaseApiConsole />
-            </TabsContent>
-          )}
-
-          {showAllegroConsole && (
-            <TabsContent value='allegro-api' className='mt-4'>
-              <AllegroApiConsole />
-            </TabsContent>
-          )}
-
-          <TabsContent value='price-sync' className='mt-4'>
-            <div className='min-h-[220px]' />
-          </TabsContent>
-          <TabsContent value='inventory-sync' className='mt-4'>
-            <div className='min-h-[220px]' />
-          </TabsContent>
-
-          {showPlaywright && (
-            <TabsContent value='playwright' className='mt-4 space-y-4'>
-              <PlaywrightTabContent />
-            </TabsContent>
-          )}
-        </Tabs>
-
-        <TestLogModal isOpen={showTestLogModal} onClose={() => setShowTestLogModal(false)} />
-
-        <TestResultModal
-          isOpen={showTestErrorModal || showTestSuccessModal}
-          onClose={() => {
-            setShowTestErrorModal(false);
-            setShowTestSuccessModal(false);
-          }}
-        />
-
-        <SessionModal isOpen={showSessionModal} onClose={() => setShowSessionModal(false)} />
-      </FormModal>
+      <IntegrationModalFrame
+        onCloseModal={onCloseModal}
+        showAllegroConsole={tabs.showAllegroConsole}
+        showBaseConsole={tabs.showBaseConsole}
+        showPlaywright={tabs.showPlaywright}
+        activeTab={tabs.activeTab}
+        setActiveTab={tabs.setActiveTab}
+        dialogs={{
+          showSessionModal: session.showSessionModal,
+          setShowSessionModal: session.setShowSessionModal,
+          showTestErrorModal: testing.showTestErrorModal,
+          setShowTestErrorModal: testing.setShowTestErrorModal,
+          showTestLogModal: testing.showTestLogModal,
+          setShowTestLogModal: testing.setShowTestLogModal,
+          showTestSuccessModal: testing.showTestSuccessModal,
+          setShowTestSuccessModal: testing.setShowTestSuccessModal,
+        }}
+      />
     </IntegrationModalViewProvider>
   );
 }

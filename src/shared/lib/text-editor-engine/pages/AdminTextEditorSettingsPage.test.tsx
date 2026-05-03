@@ -18,8 +18,8 @@ vi.mock('@/shared/hooks/use-settings', async (importOriginal) => {
   };
 });
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: () => ({ toast: toastMock }),

@@ -1,22 +1,24 @@
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { triggers } from '@/shared/lib/ai-paths';
+import { normalizeAiPathTriggerLabel } from '@/shared/lib/ai-paths/core/utils/trigger-label-migration';
 import { useToast } from '@/shared/ui/primitives.public';
 
-import { useGraphState } from '../../context';
+import { usePathMetadataState } from '../../context';
 import { usePersistenceActions } from '../../context/PersistenceContext';
 import { useAiPathsErrorReporting } from '../ai-paths-settings/useAiPathsErrorReporting';
 import { useAiPathsSettingsPathActions } from '../ai-paths-settings/useAiPathsSettingsPathActions';
 
-function normalizeTriggerLabel(value?: string | null): string {
-  return value === 'Product Modal - Context Grabber'
-    ? 'Product Modal - Context Filter'
-    : (value ?? triggers[0] ?? 'Product Modal - Context Filter');
-}
+type PathsTabPanelActions = ReturnType<typeof useAiPathsSettingsPathActions> & {
+  savePathIndex: ReturnType<typeof usePersistenceActions>['savePathIndex'];
+  persistPathSettings: ReturnType<typeof usePersistenceActions>['persistPathSettings'];
+  toast: ReturnType<typeof useToast>['toast'];
+  reportAiPathsError: ReturnType<typeof useAiPathsErrorReporting>['reportAiPathsError'];
+  ConfirmationModal: ReturnType<typeof useConfirm>['ConfirmationModal'];
+};
 
-export function usePathsTabPanelActions() {
+export function usePathsTabPanelActions(): PathsTabPanelActions {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
-  const { activePathId, isPathLocked, pathConfigs, paths } = useGraphState();
+  const { activePathId, isPathLocked, pathConfigs, paths } = usePathMetadataState();
   const {
     persistPathSettings,
     persistSettingsBulk,
@@ -30,7 +32,7 @@ export function usePathsTabPanelActions() {
     isPathLocked,
     pathConfigs,
     paths,
-    normalizeTriggerLabel,
+    normalizeTriggerLabel: normalizeAiPathTriggerLabel,
     persistPathSettings: async (nextPaths, configId, config) => {
       await persistPathSettings(nextPaths, configId, config);
     },

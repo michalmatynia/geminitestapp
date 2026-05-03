@@ -48,7 +48,7 @@ const toPlaywrightScriptParseError = (
   if (error instanceof SyntaxError) {
     const prefix =
       mode === 'wrapped'
-        ? 'Invalid Playwright script syntax after function-body recovery'
+        ? 'Invalid Playwright script syntax after function-body wrapping'
         : 'Invalid Playwright script syntax';
     const normalized = new SyntaxError(`${prefix}: ${error.message}`);
     normalized.stack = error.stack;
@@ -117,7 +117,7 @@ export const parseUserScript = (
   }
 
   // Retry: wrap the source in an async function (handles bare function bodies)
-  const wrappedSource = `async function run(context) {\nconst { page, input, emit, artifacts, log, helpers } = context;\n${normalizedSource}\n}`;
+  const wrappedSource = `async function run(context) {\nconst { page, input, emit, artifacts, log, helpers, runtime } = context;\n${normalizedSource}\n}`;
   let resolved: unknown;
   try {
     const wrappedScript = new vm.Script(buildBootstrap(wrappedSource), {

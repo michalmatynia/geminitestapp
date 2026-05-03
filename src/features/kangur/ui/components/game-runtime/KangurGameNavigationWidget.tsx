@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -22,7 +22,7 @@ export function KangurGameNavigationWidget({
     user,
   } = useKangurGameRuntime();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const { openLoginModal } = useKangurLoginModal();
+  const { openLoginModal } = useKangurLoginModalActions();
   const navigation = useMemo(
     () => ({
       basePath,

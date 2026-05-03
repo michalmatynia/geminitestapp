@@ -1,44 +1,130 @@
-import { normalizeString } from '../../filemaker-settings.helpers';
 import {
   getFilemakerEmailById,
-  getFilemakerOrganizationsForEvent,
 } from '../database-getters';
-import { getFilemakerOrganizationById, getFilemakerPersonById } from '../party-getters';
 import {
-  FilemakerDatabase,
-  FilemakerEmailCampaignAudienceRule,
-  FilemakerEmailCampaignSuppressionRegistry,
-  FilemakerPartyKind,
-  FilemakerPartyReference,
+  type FilemakerDatabase,
+  type FilemakerEmail,
+  type FilemakerEmailLink,
+  type FilemakerEmailCampaignAudienceRule,
+  type FilemakerEmailCampaignSuppressionRegistry,
 } from '../../types';
 import {
-  FilemakerEmailCampaignAudiencePreview,
-  FilemakerEmailCampaignAudienceRecipient,
+  type FilemakerEmailCampaignAudiencePreview,
+  type FilemakerEmailCampaignAudienceRecipient,
 } from '../../types/campaigns';
 import {
-  getFilemakerEmailCampaignSuppressionByAddress,
   normalizeCampaignAudienceRule,
   normalizeFilemakerEmailCampaignSuppressionRegistry,
 } from '../campaign-factories';
+import {
+  evaluateAudienceConditionGroup,
+} from '../campaign-audience-conditions';
+import {
+  buildOrganizationDemandValuesById,
+  resolveOrganizationDemandValues,
+} from '../campaign-audience-demand-values';
+import {
+  type AudiencePreviewContext,
+  type AudiencePartyResolution,
+  type AudienceLinkEvaluation,
+  buildOrganizationsByEventId,
+  collectEventIdsFromConditions,
+  isAudienceEmailEligible,
+  matchesAudiencePartyReferenceFilters,
+  resolveAudienceParty,
+  matchesAudienceOrganizationFilter,
+  matchesAudiencePartyLocation,
+  toAudienceRecipient,
+  excludedAudienceLink,
+  resolveEventIdsForLink,
+} from '../campaign-audience-evaluation.helpers';
 
-export const matchesPartyReferenceFilter = (
-  references: FilemakerPartyReference[],
-  partyKind: FilemakerPartyKind,
-  partyId: string
-): boolean =>
-  references.some(
-    (reference: FilemakerPartyReference): boolean =>
-      reference.kind === partyKind && reference.id === partyId
+const evaluateAudienceConditions = ({
+  context,
+  link,
+  email,
+  resolution,
+  matchedEventIds,
+}: {
+  context: AudiencePreviewContext;
+  link: FilemakerEmailLink;
+  email: FilemakerEmail;
+  resolution: AudiencePartyResolution;
+  matchedEventIds: string[];
+}): boolean => {
+  const organizationDemandValues = resolveOrganizationDemandValues(
+    context.organizationDemandValuesById,
+    resolution.organization
   );
 
-export const matchesLocationFilter = (
-  values: string[],
-  candidate: string
-): boolean => {
-  if (values.length === 0) return true;
-  const normalizedCandidate = normalizeString(candidate).toLowerCase();
-  if (!normalizedCandidate) return false;
-  return values.some((value: string): boolean => value.trim().toLowerCase() === normalizedCandidate);
+  return evaluateAudienceConditionGroup(context.audience.conditionGroup, {
+    person: resolution.person,
+    organization: resolution.organization,
+    email,
+    organizationIds: link.partyKind === 'organization' ? [link.partyId] : [],
+    eventIds: matchedEventIds,
+    organizationDemandLabels: organizationDemandValues.labels,
+    organizationDemandLegacyValueUuids: organizationDemandValues.legacyValueUuids,
+    organizationDemandPaths: organizationDemandValues.paths,
+    organizationDemandValueIds: organizationDemandValues.valueIds,
+  });
+};
+
+const evaluateAudienceEmailLink = (
+  context: AudiencePreviewContext,
+  link: FilemakerEmailLink
+): AudienceLinkEvaluation => {
+  const email = getFilemakerEmailById(context.database, link.emailId);
+  if (email === null) return excludedAudienceLink();
+
+  const emailEligibility = isAudienceEmailEligible(context, link, email);
+  if (emailEligibility !== null) return emailEligibility;
+  if (!matchesAudiencePartyReferenceFilters(context.audience, link)) return excludedAudienceLink();
+
+  const resolution = resolveAudienceParty(context.database, link);
+  if (resolution === null) return excludedAudienceLink();
+  if (!matchesAudienceOrganizationFilter(context.audience, link)) return excludedAudienceLink();
+
+  const matchedEventIds = resolveEventIdsForLink(context, link);
+  if (!matchesAudiencePartyLocation(context.audience, resolution.party)) return excludedAudienceLink();
+
+  const conditionsMatched = evaluateAudienceConditions({
+    context,
+    link,
+    email,
+    resolution,
+    matchedEventIds,
+  });
+
+  if (!conditionsMatched) {
+    return excludedAudienceLink();
+  }
+
+  return {
+    recipient: toAudienceRecipient(email, link, resolution, matchedEventIds),
+    suppressed: false,
+  };
+};
+
+const dedupeAudienceRecipients = (
+  recipients: FilemakerEmailCampaignAudienceRecipient[]
+): FilemakerEmailCampaignAudienceRecipient[] =>
+  Array.from(
+    recipients.reduce<Map<string, FilemakerEmailCampaignAudienceRecipient>>((map, entry) => {
+      const key = entry.email.trim().toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, entry);
+      }
+      return map;
+    }, new Map())
+  ).map(([, value]) => value);
+
+const limitAudienceRecipients = (
+  recipients: FilemakerEmailCampaignAudienceRecipient[],
+  limit: number | null | undefined
+): FilemakerEmailCampaignAudienceRecipient[] => {
+  if (limit === null || limit === undefined || limit <= 0) return recipients;
+  return recipients.slice(0, limit);
 };
 
 export const resolveFilemakerEmailCampaignAudiencePreview = (
@@ -54,131 +140,30 @@ export const resolveFilemakerEmailCampaignAudiencePreview = (
   let excludedCount = 0;
   let suppressedCount = 0;
   let totalLinkedEmailCount = 0;
-  const organizationsByEventId = new Map<string, Set<string>>();
-
-  normalizedAudience.eventIds.forEach((eventId: string): void => {
-    organizationsByEventId.set(
-      eventId,
-      new Set(getFilemakerOrganizationsForEvent(database, eventId).map((entry) => entry.id))
-    );
-  });
+  const eventIdsInConditions = collectEventIdsFromConditions(normalizedAudience.conditionGroup);
+  const context = {
+    database,
+    audience: normalizedAudience,
+    suppressionRegistry: normalizedSuppressionRegistry,
+    organizationDemandValuesById: buildOrganizationDemandValuesById(database),
+    organizationsByEventId: buildOrganizationsByEventId(database, eventIdsInConditions),
+  };
 
   database.emailLinks.forEach((link): void => {
     totalLinkedEmailCount += 1;
-    const email = getFilemakerEmailById(database, link.emailId);
-    if (!email) {
+    const evaluation = evaluateAudienceEmailLink(context, link);
+    if (evaluation.recipient === null) {
       excludedCount += 1;
+      if (evaluation.suppressed) suppressedCount += 1;
       return;
     }
-    if (!normalizedAudience.partyKinds.includes(link.partyKind)) {
-      excludedCount += 1;
-      return;
-    }
-    if (!normalizedAudience.emailStatuses.includes(email.status)) {
-      excludedCount += 1;
-      return;
-    }
-    if (getFilemakerEmailCampaignSuppressionByAddress(normalizedSuppressionRegistry, email.email)) {
-      excludedCount += 1;
-      suppressedCount += 1;
-      return;
-    }
-    if (
-      normalizedAudience.includePartyReferences.length > 0 &&
-      !matchesPartyReferenceFilter(
-        normalizedAudience.includePartyReferences,
-        link.partyKind,
-        link.partyId
-      )
-    ) {
-      excludedCount += 1;
-      return;
-    }
-    if (
-      matchesPartyReferenceFilter(
-        normalizedAudience.excludePartyReferences,
-        link.partyKind,
-        link.partyId
-      )
-    ) {
-      excludedCount += 1;
-      return;
-    }
-
-    const person =
-      link.partyKind === 'person' ? getFilemakerPersonById(database, link.partyId) : null;
-    const organization =
-      link.partyKind === 'organization'
-        ? getFilemakerOrganizationById(database, link.partyId)
-        : null;
-    const party = person ?? organization;
-    if (!party) {
-      excludedCount += 1;
-      return;
-    }
-
-    if (
-      normalizedAudience.organizationIds.length > 0 &&
-      (link.partyKind !== 'organization' ||
-        !normalizedAudience.organizationIds.includes(link.partyId))
-    ) {
-      excludedCount += 1;
-      return;
-    }
-
-    const matchedEventIds =
-      normalizedAudience.eventIds.length === 0
-        ? []
-        : normalizedAudience.eventIds.filter((eventId: string): boolean =>
-            organizationsByEventId.get(eventId)?.has(link.partyId) ?? false
-          );
-
-    if (normalizedAudience.eventIds.length > 0 && matchedEventIds.length === 0) {
-      excludedCount += 1;
-      return;
-    }
-
-    if (!matchesLocationFilter(normalizedAudience.countries, party.country)) {
-      excludedCount += 1;
-      return;
-    }
-    if (!matchesLocationFilter(normalizedAudience.cities, party.city)) {
-      excludedCount += 1;
-      return;
-    }
-
-    recipients.push({
-      emailId: email.id,
-      email: email.email,
-      emailStatus: email.status,
-      partyKind: link.partyKind,
-      partyId: link.partyId,
-      partyName:
-        link.partyKind === 'person'
-          ? [person?.firstName, person?.lastName].filter(Boolean).join(' ').trim() || link.partyId
-          : organization?.name || link.partyId,
-      city: party.city,
-      country: party.country,
-      matchedEventIds,
-    });
+    recipients.push(evaluation.recipient);
   });
 
-  const dedupedRecipients =
-    normalizedAudience.dedupeByEmail
-      ? Array.from(
-          recipients.reduce<Map<string, FilemakerEmailCampaignAudienceRecipient>>((map, entry) => {
-            const key = entry.email.trim().toLowerCase();
-            if (!map.has(key)) {
-              map.set(key, entry);
-            }
-            return map;
-          }, new Map())
-        ).map(([, value]) => value)
-      : recipients;
-  const limitedRecipients =
-    normalizedAudience.limit && normalizedAudience.limit > 0
-      ? dedupedRecipients.slice(0, normalizedAudience.limit)
-      : dedupedRecipients;
+  const dedupedRecipients = normalizedAudience.dedupeByEmail
+    ? dedupeAudienceRecipients(recipients)
+    : recipients;
+  const limitedRecipients = limitAudienceRecipients(dedupedRecipients, normalizedAudience.limit);
 
   return {
     recipients: limitedRecipients,

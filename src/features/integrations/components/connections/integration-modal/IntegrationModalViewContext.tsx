@@ -8,6 +8,9 @@ export type IntegrationModalViewContextValue = {
   integrationName: string;
   activeTab: string;
   isTradera: boolean;
+  isVinted: boolean;
+  is1688: boolean;
+  isPracuj: boolean;
   isAllegro: boolean;
   isLinkedIn: boolean;
   isBaselinker: boolean;
@@ -16,7 +19,6 @@ export type IntegrationModalViewContextValue = {
   showBaseConsole: boolean;
   activeConnection: unknown;
   onOpenSessionModal: () => void;
-  onSavePlaywrightSettings: () => void;
 };
 
 export const { Context: IntegrationModalViewContext, useValue: useIntegrationModalViewContext } =

@@ -47,6 +47,7 @@ type ResolveWriteTemplateGuardrailInput = {
   templates: WriteTemplateSource[];
   templateContext: Record<string, unknown>;
   currentValue: unknown;
+  allowEmptyArrays?: boolean;
 };
 
 type ResolveWriteTemplateGuardrailResult =
@@ -66,6 +67,8 @@ type ReadNumericCounters = {
   modifiedCount: number | null;
   deletedCount: number | null;
   insertedCount: number | null;
+  upsertedCount: number | null;
+  upsertedId: unknown;
   count: number | null;
 };
 
@@ -112,10 +115,10 @@ const normalizeTokenRoot = (token: string): string => {
 const isSystemRoot = (root: string): boolean =>
   SYSTEM_ROOT_PREFIXES.some((prefix: string): boolean => root.startsWith(prefix));
 
-const isEmptyTemplateValue = (value: unknown): boolean => {
+const isEmptyTemplateValue = (value: unknown, allowEmptyArrays = false): boolean => {
   if (value === undefined || value === null) return true;
   if (typeof value === 'string') return value.trim().length === 0;
-  if (Array.isArray(value)) return value.length === 0;
+  if (Array.isArray(value)) return allowEmptyArrays ? false : value.length === 0;
   if (typeof value === 'object') return Object.keys(value as Record<string, unknown>).length === 0;
   return false;
 };
@@ -225,6 +228,46 @@ const resolveTokenValue = (
       value: templateContext['value'] !== undefined ? templateContext['value'] : currentValue,
     };
   }
+  if (trimmedToken.startsWith('value.')) {
+    const nestedPath = trimmedToken.slice('value.'.length);
+    const resolvedFromContext = readByPath(templateContext, trimmedToken, policy);
+    if (resolvedFromContext.value !== undefined) {
+      return {
+        value: resolvedFromContext.value,
+        ...(resolvedFromContext.parseDiagnostic
+          ? {
+              parseDiagnostic: {
+                port: normalizeTokenRoot(trimmedToken) || undefined,
+                token: trimmedToken,
+                rawType: resolvedFromContext.parseDiagnostic.rawType,
+                parseState: resolvedFromContext.parseDiagnostic.parseState,
+                repairApplied: resolvedFromContext.parseDiagnostic.repairApplied,
+                parseError: resolvedFromContext.parseDiagnostic.parseError,
+                truncationDetected: resolvedFromContext.parseDiagnostic.truncationDetected,
+                repairSteps: resolvedFromContext.parseDiagnostic.repairSteps,
+              },
+            }
+          : {}),
+      };
+    }
+    const resolvedFromCurrent = readByPath(currentValue, nestedPath, policy);
+    return {
+      value: resolvedFromCurrent.value,
+      ...(resolvedFromCurrent.parseDiagnostic
+        ? {
+            parseDiagnostic: {
+              token: trimmedToken,
+              rawType: resolvedFromCurrent.parseDiagnostic.rawType,
+              parseState: resolvedFromCurrent.parseDiagnostic.parseState,
+              repairApplied: resolvedFromCurrent.parseDiagnostic.repairApplied,
+              parseError: resolvedFromCurrent.parseDiagnostic.parseError,
+              truncationDetected: resolvedFromCurrent.parseDiagnostic.truncationDetected,
+              repairSteps: resolvedFromCurrent.parseDiagnostic.repairSteps,
+            },
+          }
+        : {}),
+    };
+  }
   if (trimmedToken.startsWith('current.')) {
     const resolved = readByPath(currentValue, trimmedToken.slice('current.'.length), policy);
     return {
@@ -287,6 +330,7 @@ const inspectWriteTemplates = ({
   templates,
   templateContext,
   currentValue,
+  allowEmptyArrays = false,
 }: ResolveWriteTemplateGuardrailInput): WriteTemplateInspection => {
   const missing: WriteTemplateTokenDiagnostic[] = [];
   const empty: WriteTemplateTokenDiagnostic[] = [];
@@ -331,7 +375,7 @@ const inspectWriteTemplates = ({
         });
         return;
       }
-      if (isEmptyTemplateValue(value)) {
+      if (isEmptyTemplateValue(value, allowEmptyArrays)) {
         empty.push({
           template: name,
           token,
@@ -386,6 +430,8 @@ const readWriteCounters = (result: unknown): ReadNumericCounters => {
     modifiedCount: readNumericField(payload, 'modifiedCount'),
     deletedCount: readNumericField(payload, 'deletedCount'),
     insertedCount: readNumericField(payload, 'insertedCount'),
+    upsertedCount: readNumericField(payload, 'upsertedCount'),
+    upsertedId: payload['upsertedId'],
     count: readNumericField(payload, 'count'),
   };
 };
@@ -422,6 +468,14 @@ const resolveAffectedCount = (
     actionLower.includes('andupdate') ||
     actionLower.startsWith('replace');
   if (treatAsUpdate) {
+    const upsertedCount =
+      counters.upsertedCount ?? (counters.upsertedId !== null && counters.upsertedId !== undefined ? 1 : null);
+    if (upsertedCount !== null && upsertedCount > 0) {
+      return {
+        affectedCount: upsertedCount,
+        isZeroAffected: false,
+      };
+    }
     if (counters.modifiedCount !== null) {
       return {
         affectedCount: counters.modifiedCount,
@@ -453,11 +507,13 @@ export const resolveWriteTemplateGuardrail = ({
   templates,
   templateContext,
   currentValue,
+  allowEmptyArrays,
 }: ResolveWriteTemplateGuardrailInput): ResolveWriteTemplateGuardrailResult => {
   const inspection = inspectWriteTemplates({
     templates,
     templateContext,
     currentValue,
+    allowEmptyArrays,
   });
   if (
     inspection.missing.length === 0 &&

@@ -40,7 +40,7 @@ export function validate3DFile(file: File): { valid: boolean; error?: string } {
     return { valid: false, error: 'File too large. Maximum size: 100MB' };
   }
 
-  const ext = '.' + file.name.toLowerCase().split('.').pop();
+  const ext = `.${  file.name.toLowerCase().split('.').pop()}`;
   if (!Object.keys(SUPPORTED_3D_FORMATS).includes(ext)) {
     return {
       valid: false,
@@ -55,7 +55,7 @@ export async function validate3DFileAsync(file: File): Promise<{ valid: boolean;
   const baseValidation = validate3DFile(file);
   if (!baseValidation.valid) return baseValidation;
 
-  const ext = '.' + file.name.toLowerCase().split('.').pop();
+  const ext = `.${  file.name.toLowerCase().split('.').pop()}`;
   if (ext === '.gltf') {
     const hasExternal = await hasExternalGltfResources(file);
     if (hasExternal) {
@@ -71,7 +71,7 @@ export async function validate3DFileAsync(file: File): Promise<{ valid: boolean;
 }
 
 export function isValid3DAsset(file: File): boolean {
-  const ext = '.' + file.name.toLowerCase().split('.').pop();
+  const ext = `.${  file.name.toLowerCase().split('.').pop()}`;
   const allowedExtensions = Object.keys(SUPPORTED_3D_FORMATS);
   const allowedMimetypes = ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream'];
 

@@ -21,9 +21,6 @@ const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
 const ACTIVE_RUN_STATUSES = new Set<AiPathRunRecord['status']>([
   'queued',
   'running',
-  'blocked_on_lease',
-  'handoff_ready',
-  'paused',
 ]);
 
 type StoredOptimisticRun = {

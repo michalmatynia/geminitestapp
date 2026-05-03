@@ -1,12 +1,12 @@
 ## Brief overview
 
-Project-specific coding conventions and architecture patterns for a Next.js 15 application with TypeScript, Prisma, Tailwind CSS, and shadcn/ui components. This application features a complex admin/CMS system with product management, file handling, and database operations.
+Project-specific coding conventions and architecture patterns for a Next.js 15 application with TypeScript, MongoDB, Tailwind CSS, and shadcn/ui components. This application features a complex admin/CMS system with product management, file handling, and database operations.
 
 ## Tech stack preferences
 
 - Use Next.js 15 with App Router architecture
 - TypeScript with strict configuration (noImplicitAny, strictNullChecks enabled)
-- Prisma ORM with SQLite database for development
+- MongoDB-backed persistence for development and production data flows
 - Tailwind CSS with shadcn/ui component library
 - React Hook Form with Zod validation schemas
 - Custom server implementation using Hono framework
@@ -19,7 +19,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Use React Context providers for complex state management
 - Organize routes using Next.js route groups: `(admin)` and `(frontend)`
 - Separate API routes by feature in dedicated directories
-- Implement many-to-many relationships using Prisma join tables
+- Model many-to-many relationships explicitly in MongoDB documents or dedicated collection records
 - Use compound component patterns for complex UI components
 - Abstract file operations into utility services
 
@@ -31,7 +31,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Organize components by feature in dedicated subdirectories
 - Use `lib/context/` for React Context providers
 - Store type definitions in `lib/types.ts`
-- Place database schema in `prisma/schema.prisma`
+- Place shared database contracts and document shapes near the owning feature or shared contract module
 
 ## Naming conventions
 
@@ -44,7 +44,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 
 ## Database design patterns
 
-- Use `cuid()` for primary keys in Prisma models
+- Use stable string IDs or MongoDB `ObjectId` values consistently at collection boundaries
 - Include `createdAt` and `updatedAt` timestamps on all models
 - Implement join tables for many-to-many relationships (e.g., `ProductImage`, `PageSlug`)
 - Use cascade deletion for dependent records

@@ -1,8 +1,10 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -13,8 +15,11 @@ import {
   createFilemakerEmailCampaign,
   createFilemakerEmailCampaignSuppressionEntry,
   evaluateFilemakerEmailCampaignLaunch,
+  buildFilemakerCountryList,
+  buildFilemakerCountryOptions,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
@@ -23,6 +28,7 @@ import {
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
   normalizeFilemakerEmailCampaignSuppressionRegistry,
   parseFilemakerDatabase,
+  parseFilemakerEmailCampaignContentGroupRegistry,
   parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignEventRegistry,
@@ -37,6 +43,7 @@ import {
   toPersistedFilemakerEmailCampaignDeliveryAttemptRegistry,
   toPersistedFilemakerEmailCampaignDeliveryRegistry,
   toPersistedFilemakerEmailCampaignEventRegistry,
+  toPersistedFilemakerEmailCampaignContentGroupRegistry,
   toPersistedFilemakerEmailCampaignRegistry,
   toPersistedFilemakerEmailCampaignRunRegistry,
   toPersistedFilemakerEmailCampaignSchedulerStatus,
@@ -53,6 +60,7 @@ import {
 import { useFilemakerCampaignRunActions } from './useFilemakerCampaignRunActions';
 import type {
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignContentGroupRegistry,
   FilemakerEmailCampaignRun,
   FilemakerEmailCampaignSuppressionRegistry,
   FilemakerEmailCampaignRunMode,
@@ -74,12 +82,14 @@ export function useAdminFilemakerCampaignEditState() {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const { handleRunAction, isRunActionPending } = useFilemakerCampaignRunActions();
+  const countriesQuery = useCountries();
 
   const campaignId = useMemo(() => decodeRouteParam(params['campaignId']), [params]);
   const isCreateMode = campaignId === 'new' || !campaignId;
 
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
+  const rawContentGroups = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY);
   const rawRuns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY);
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
   const rawAttempts = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY);
@@ -91,6 +101,10 @@ export function useAdminFilemakerCampaignEditState() {
   const campaignRegistry = useMemo(
     () => parseFilemakerEmailCampaignRegistry(rawCampaigns),
     [rawCampaigns]
+  );
+  const contentGroupRegistry = useMemo(
+    () => parseFilemakerEmailCampaignContentGroupRegistry(rawContentGroups),
+    [rawContentGroups]
   );
   const runRegistry = useMemo(() => parseFilemakerEmailCampaignRunRegistry(rawRuns), [rawRuns]);
   const deliveryRegistry = useMemo(
@@ -110,6 +124,11 @@ export function useAdminFilemakerCampaignEditState() {
     () => parseFilemakerEmailCampaignSchedulerStatus(rawSchedulerStatus),
     [rawSchedulerStatus]
   );
+  const countries = useMemo(
+    () => buildFilemakerCountryList(countriesQuery.data ?? []),
+    [countriesQuery.data]
+  );
+  const countryOptions = useMemo(() => buildFilemakerCountryOptions(countries), [countries]);
 
   const existingCampaign = useMemo(
     () =>
@@ -210,7 +229,7 @@ export function useAdminFilemakerCampaignEditState() {
     return [
       {
         value: '__shared__',
-        label: 'Shared Filemaker campaign delivery provider',
+        label: 'Select an email account (required)',
       },
       ...options,
     ];
@@ -221,8 +240,16 @@ export function useAdminFilemakerCampaignEditState() {
     [database, draft.audience, suppressionRegistry]
   );
   const launchEvaluation = useMemo(
-    () => evaluateFilemakerEmailCampaignLaunch(draft, preview),
-    [draft, preview]
+    () =>
+      evaluateFilemakerEmailCampaignLaunch(draft, preview, {
+        now: new Date(),
+        contentGroupRegistry,
+        senderAssignment: {
+          mailAccounts,
+          requireAssignedMailAccount: true,
+        },
+      }),
+    [contentGroupRegistry, draft, mailAccounts, preview]
   );
   const recentRuns = useMemo(
     () =>
@@ -264,6 +291,16 @@ export function useAdminFilemakerCampaignEditState() {
             campaigns: nextCampaigns,
           })
         ),
+      });
+    },
+    [updateSetting]
+  );
+
+  const persistContentGroupRegistry = useCallback(
+    async (nextRegistry: FilemakerEmailCampaignContentGroupRegistry): Promise<void> => {
+      await updateSetting.mutateAsync({
+        key: FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY,
+        value: JSON.stringify(toPersistedFilemakerEmailCampaignContentGroupRegistry(nextRegistry)),
       });
     },
     [updateSetting]
@@ -462,6 +499,12 @@ export function useAdminFilemakerCampaignEditState() {
       });
       return;
     }
+    if ((draft.mailAccountId ?? '').trim().length === 0) {
+      toast('Assign an email account before sending a test delivery.', {
+        variant: 'error',
+      });
+      return;
+    }
 
     setIsTestSendPending(true);
     try {
@@ -469,6 +512,7 @@ export function useAdminFilemakerCampaignEditState() {
         '/api/filemaker/campaigns/test-send',
         {
           campaign: buildPersistedCampaign(),
+          contentGroupRegistry,
           recipientEmail,
         }
       );
@@ -485,7 +529,7 @@ export function useAdminFilemakerCampaignEditState() {
     } finally {
       setIsTestSendPending(false);
     }
-  }, [buildPersistedCampaign, testRecipientEmailDraft, toast]);
+  }, [buildPersistedCampaign, contentGroupRegistry, draft.mailAccountId, testRecipientEmailDraft, toast]);
 
   const handleDuplicateCampaign = useCallback(async (): Promise<void> => {
     if (isCreateMode) return;
@@ -654,6 +698,10 @@ export function useAdminFilemakerCampaignEditState() {
     campaignId,
     isCreateMode,
     database,
+    contentGroupRegistry,
+    persistContentGroupRegistry,
+    countries,
+    countryOptions,
     existingCampaign,
     draft,
     setDraft,

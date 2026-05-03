@@ -11,6 +11,7 @@ import type {
 import { getAuthDataProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { applyActiveMongoSourceEnv, getMongoSourceState } from '@/shared/lib/db/mongo-source';
 import {
   getDatabaseEngineCollectionRouteMap,
   getDatabaseEnginePolicy,
@@ -26,6 +27,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const services: DatabaseEngineService[] = ['app', 'auth', 'product', 'integrations', 'cms'];
 
 const getKnownMongoCollections = async (): Promise<string[]> => {
+  await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return [];
   try {
     const mongo = await getMongoDb();
@@ -180,6 +182,7 @@ const buildBlockingIssues = (params: {
 };
 
 export async function getDatabaseEngineStatus(): Promise<DatabaseEngineStatus> {
+  await applyActiveMongoSourceEnv();
   const [policy, partialServiceRouteMap, collectionRouteMap] = await Promise.all([
     getDatabaseEnginePolicy(),
     getDatabaseEngineServiceRouteMap(),
@@ -216,6 +219,7 @@ export async function getDatabaseEngineStatus(): Promise<DatabaseEngineStatus> {
       mongodbConfigured: isPrimaryProviderConfigured('mongodb'),
       redisConfigured: isRedisProviderConfigured(),
     },
+    mongoSource: await getMongoSourceState(),
     serviceRouteMap,
     collectionRouteMap,
     services: servicesStatus,

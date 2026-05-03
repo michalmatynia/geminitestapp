@@ -17,6 +17,8 @@ const mockState = vi.hoisted(() => ({
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useGraphState: () => mockState.graphState,
+  useGraphDataState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
   useRuntimeActions: () => ({
     setLastError: mockState.setLastError,
   }),

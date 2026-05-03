@@ -27,7 +27,7 @@ export function CmsPageProvider({
   colorSchemes,
   layout,
   children,
-}: CmsPageContextValue & { children: React.ReactNode }) {
+}: CmsPageContextValue & { children: React.ReactNode }): React.JSX.Element {
   return (
     <CmsPageContext.Provider value={{ colorSchemes, layout }}>{children}</CmsPageContext.Provider>
   );

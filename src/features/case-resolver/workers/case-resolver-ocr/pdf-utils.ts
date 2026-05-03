@@ -26,7 +26,7 @@ export const extractPdfTextForOcr = async (diskPath: string): Promise<string> =>
   const pdfParse = resolvePdfParseFunction(await import('pdf-parse'));
   const parsed = await pdfParse(fileBuffer);
   const text = typeof parsed.text === 'string' ? parsed.text.trim() : '';
-  if (!text) return '';
+  if (text === '') return '';
   if (text.length <= MAX_PDF_OCR_TEXT_CHARS) return text;
   const truncatedChars = text.length - MAX_PDF_OCR_TEXT_CHARS;
   return `${text.slice(0, MAX_PDF_OCR_TEXT_CHARS)}

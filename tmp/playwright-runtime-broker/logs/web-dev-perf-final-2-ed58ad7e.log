@@ -215,7 +215,7 @@ Ready on http://localhost:49284 { port: 49284, host: '127.0.0.1' }
 [api/settings] [api/settings] [settings] cache fallback {
   service: 'api/settings',
   scope: 'heavy',
-  status: 'timeout-prisma-fallback',
+  status: 'timeout-removedOrm-fallback',
   reason: '[settings] cache miss fetch timed out after 3000ms',
   category: 'SYSTEM',
   otelTraceId: 'fc638bed9aecdb4dc8be495cac84edfd',
@@ -250,7 +250,7 @@ Ready on http://localhost:49284 { port: 49284, host: '127.0.0.1' }
 [api/settings] [api/settings] [settings] cache fallback {
   service: 'api/settings',
   scope: 'heavy',
-  status: 'timeout-prisma-fallback',
+  status: 'timeout-removedOrm-fallback',
   reason: '[settings] inflight fetch timed out after 3000ms',
   category: 'SYSTEM',
   otelTraceId: 'ef4ac63a8465598de467191e3981d4b3',

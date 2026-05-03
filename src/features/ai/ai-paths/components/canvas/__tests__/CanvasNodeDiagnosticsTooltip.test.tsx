@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 const mockRenderNodeDiagnosticsTooltipContent = vi.fn();
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Card: ({
     className,
     children,

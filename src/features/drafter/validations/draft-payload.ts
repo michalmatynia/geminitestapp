@@ -7,5 +7,5 @@ export const resolveDraftCategoryId = (input: {
   categoryId?: string | null | undefined;
 }): string | null => {
   const explicitCategoryId = typeof input.categoryId === 'string' ? input.categoryId.trim() : '';
-  return explicitCategoryId || null;
+  return explicitCategoryId.length > 0 ? explicitCategoryId : null;
 };

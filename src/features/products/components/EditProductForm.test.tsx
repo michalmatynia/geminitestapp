@@ -9,7 +9,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import EditProductPage from '@/features/products/components/EditProductForm';
 
 const { handleSubmitMock, routerPushMock, useProductFormImagesMock } = vi.hoisted(() => ({
-  handleSubmitMock: vi.fn(),
+  handleSubmitMock: vi.fn().mockResolvedValue(undefined),
   routerPushMock: vi.fn(),
   useProductFormImagesMock: vi.fn(),
 }));
@@ -19,6 +19,12 @@ const { productFormPropsMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({ push: routerPushMock })),
+  usePathname: vi.fn(() => '/admin/products'),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   useRouter: vi.fn(() => ({ push: routerPushMock })),
   usePathname: vi.fn(() => '/admin/products'),
   useSearchParams: vi.fn(() => new URLSearchParams()),

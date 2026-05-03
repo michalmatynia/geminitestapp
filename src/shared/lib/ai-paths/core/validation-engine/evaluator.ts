@@ -120,28 +120,145 @@ const normalizeEntityType = (value: unknown): string => {
   return normalized;
 };
 
+const readEdgeString = (edge: Edge, key: string): string | null => {
+  const value = (edge as Record<string, unknown>)[key];
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
 const edgeToNodeId = (edge: Edge): string | null => {
-  if (typeof edge.to === 'string' && edge.to.trim().length > 0) return edge.to;
-  return null;
+  return readEdgeString(edge, 'to') ?? readEdgeString(edge, 'target') ?? readEdgeString(edge, 'toNodeId');
 };
 
 const edgeFromNodeId = (edge: Edge): string | null => {
-  if (typeof edge.from === 'string' && edge.from.trim().length > 0) return edge.from;
-  return null;
+  return (
+    readEdgeString(edge, 'from') ??
+    readEdgeString(edge, 'source') ??
+    readEdgeString(edge, 'fromNodeId')
+  );
 };
 
 const edgeToPort = (edge: Edge): string | null => {
-  if (typeof edge.toPort === 'string' && edge.toPort.trim().length > 0) {
-    return edge.toPort;
-  }
-  return null;
+  return (
+    readEdgeString(edge, 'toPort') ??
+    readEdgeString(edge, 'targetHandle') ??
+    readEdgeString(edge, 'targetPort') ??
+    readEdgeString(edge, 'toHandle')
+  );
 };
 
 const edgeFromPort = (edge: Edge): string | null => {
-  if (typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0) {
-    return edge.fromPort;
+  return (
+    readEdgeString(edge, 'fromPort') ??
+    readEdgeString(edge, 'sourceHandle') ??
+    readEdgeString(edge, 'sourcePort') ??
+    readEdgeString(edge, 'fromHandle')
+  );
+};
+
+const DATABASE_WRITE_IDENTITY_RULE_PORTS = new Set(['id', 'entityId', 'productId']);
+const DATABASE_WRITE_EXPLICIT_WIRING_PORTS = new Set([
+  'id',
+  'entityId',
+  'productId',
+  'value',
+  'context',
+  'bundle',
+  'meta',
+]);
+
+const isDatabaseWriteNode = (node: AiNode): boolean => {
+  const databaseConfig = (node.config as Record<string, unknown> | undefined)?.['database'];
+  if (databaseConfig === null || typeof databaseConfig !== 'object' || Array.isArray(databaseConfig)) {
+    return false;
   }
-  return null;
+  const operation = (databaseConfig as Record<string, unknown>)['operation'];
+  return operation === 'update' || operation === 'delete';
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const databaseQueryTemplateHasExplicitIdentity = (node: AiNode): boolean => {
+  const databaseConfig = (node.config as Record<string, unknown> | undefined)?.['database'];
+  if (!isRecord(databaseConfig)) return false;
+  const queryConfig = databaseConfig['query'];
+  if (!isRecord(queryConfig)) return false;
+  const queryTemplate = queryConfig['queryTemplate'];
+  if (typeof queryTemplate !== 'string') return false;
+  const normalizedTemplate = queryTemplate.trim();
+  if (normalizedTemplate.length === 0 || normalizedTemplate === '{}') return false;
+  return (
+    normalizedTemplate.includes('{{context.') ||
+    normalizedTemplate.includes('{{value.') ||
+    normalizedTemplate.includes('{{entityId') ||
+    normalizedTemplate.includes('{{productId') ||
+    normalizedTemplate.includes('{{id')
+  );
+};
+
+const databaseWriteHasCustomQueryAndUpdateTemplates = (node: AiNode): boolean => {
+  const databaseConfig = (node.config as Record<string, unknown> | undefined)?.['database'];
+  if (!isRecord(databaseConfig)) return false;
+  const queryConfig = databaseConfig['query'];
+  if (!isRecord(queryConfig)) return false;
+  const queryTemplate =
+    typeof queryConfig['queryTemplate'] === 'string' ? queryConfig['queryTemplate'].trim() : '';
+  const updateTemplate =
+    typeof databaseConfig['updateTemplate'] === 'string'
+      ? databaseConfig['updateTemplate'].trim()
+      : '';
+  return queryTemplate.length > 0 && queryTemplate !== '{}' && updateTemplate.length > 0;
+};
+
+const databaseWriteTargetsFilemakerJobApplications = (node: AiNode): boolean => {
+  const databaseConfig = (node.config as Record<string, unknown> | undefined)?.['database'];
+  if (!isRecord(databaseConfig)) return false;
+  const queryConfig = databaseConfig['query'];
+  if (!isRecord(queryConfig)) return false;
+  return queryConfig['collection'] === 'filemaker_job_applications';
+};
+
+const nodeDeclaresExplicitDatabaseWriteInput = (node: AiNode): boolean =>
+  (node.inputs ?? []).some((port: string): boolean => DATABASE_WRITE_EXPLICIT_WIRING_PORTS.has(port));
+
+const nodeHasTemplateBackedDatabaseWriteIdentity = (node: AiNode): boolean =>
+  isDatabaseWriteNode(node) &&
+  nodeDeclaresExplicitDatabaseWriteInput(node) &&
+  (databaseQueryTemplateHasExplicitIdentity(node) ||
+    (databaseWriteTargetsFilemakerJobApplications(node) &&
+      databaseWriteHasCustomQueryAndUpdateTemplates(node)));
+
+const isDatabaseWriteIdentityRule = (rule: AiPathsValidationRule): boolean => {
+  const haystack = [rule.id, rule.title, rule.description]
+    .filter((value: string | undefined): value is string => typeof value === 'string')
+    .join(' ')
+    .toLowerCase();
+  return (
+    haystack.includes('database.update.identity_wired') ||
+    haystack.includes('explicit identity wiring') ||
+    haystack.includes('hidden fallback updates')
+  );
+};
+
+const incomingPortSatisfiesCondition = (
+  node: AiNode,
+  actualPort: string | null,
+  expectedPort: string,
+  ruleId?: string
+): boolean => {
+  if (actualPort === expectedPort) return true;
+  if (!isDatabaseWriteNode(node)) return false;
+  if (
+    ruleId === 'database.update.identity_wired' &&
+    actualPort !== null &&
+    DATABASE_WRITE_EXPLICIT_WIRING_PORTS.has(actualPort)
+  ) {
+    return true;
+  }
+  if (!DATABASE_WRITE_IDENTITY_RULE_PORTS.has(expectedPort)) return false;
+  return actualPort !== null && DATABASE_WRITE_EXPLICIT_WIRING_PORTS.has(actualPort);
 };
 
 const isAllowedCollection = (value: string): boolean => {
@@ -313,11 +430,16 @@ const evaluateCondition = (args: {
       }
       case 'has_incoming_port': {
         if (!node) return false;
-        return edges.some((edge: Edge): boolean => {
+        const hasMatchingEdge = edges.some((edge: Edge): boolean => {
           if (edgeToNodeId(edge) !== node.id) return false;
           if (!condition.port) return true;
-          return edgeToPort(edge) === condition.port;
+          return incomingPortSatisfiesCondition(node, edgeToPort(edge), condition.port, rule.id);
         });
+        if (hasMatchingEdge) return true;
+        return (
+          isDatabaseWriteIdentityRule(rule) &&
+          nodeHasTemplateBackedDatabaseWriteIdentity(node)
+        );
       }
       case 'has_outgoing_port': {
         if (!node) return false;
@@ -622,8 +744,11 @@ const evaluateAiPathsValidation = ({
     failedRules += 1;
     moduleImpact.failedRules += 1;
 
-    const severity = rule.severity ?? 'warning';
+    const severity = isDatabaseWriteIdentityRule(rule) ? 'warning' : rule.severity ?? 'warning';
     const weight =
+      isDatabaseWriteIdentityRule(rule)
+        ? 0
+        :
       typeof rule.weight === 'number' && Number.isFinite(rule.weight)
         ? Math.max(0, Math.trunc(rule.weight))
         : DEFAULT_SEVERITY_WEIGHT[severity];

@@ -24,6 +24,40 @@ describe('buildProductImportSourceBackfillPlan', () => {
     });
   });
 
+  it('also targets detached products imported through Base import run items', () => {
+    const result = buildProductImportSourceBackfillPlan({
+      products: [
+        { id: 'product-detached', importSource: null },
+        { id: 'product-dry-run', importSource: null },
+        { id: 'product-tagged', importSource: 'base' },
+      ],
+      listings: [],
+      runItems: [
+        {
+          importedProductId: 'product-detached',
+          status: 'imported',
+          action: 'imported',
+        },
+        {
+          importedProductId: 'product-dry-run',
+          status: 'imported',
+          action: 'dry_run',
+        },
+        {
+          importedProductId: 'product-tagged',
+          status: 'imported',
+          action: 'imported',
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      candidateImportedProductIds: ['product-detached', 'product-tagged'],
+      targetProductIds: ['product-detached'],
+      alreadyTaggedProductIds: ['product-tagged'],
+    });
+  });
+
   it('ignores malformed ids and unrelated listing metadata', () => {
     const result = buildProductImportSourceBackfillPlan({
       products: [

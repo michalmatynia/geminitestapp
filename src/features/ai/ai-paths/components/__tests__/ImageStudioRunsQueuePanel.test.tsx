@@ -13,13 +13,16 @@ vi.mock('../../hooks/useImageStudioRuns', () => ({
   useImageStudioRuns: () => mockState.hookValue,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     ...props
   }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
     <button {...props}>{children}</button>
   ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     ariaLabel,
     options,
@@ -43,6 +46,21 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
+  StatusBadge: ({
+    status,
+    variant,
+  }: {
+    status: React.ReactNode;
+    variant?: string;
+  }): React.JSX.Element => (
+    <span data-testid='status-badge'>{`${String(status)}:${variant ?? 'none'}`}</span>
+  ),
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
   PanelStats: ({
     stats,
   }: {
@@ -56,15 +74,6 @@ vi.mock('@/shared/ui', () => ({
         </div>
       ))}
     </div>
-  ),
-  StatusBadge: ({
-    status,
-    variant,
-  }: {
-    status: React.ReactNode;
-    variant?: string;
-  }): React.JSX.Element => (
-    <span data-testid='status-badge'>{`${String(status)}:${variant ?? 'none'}`}</span>
   ),
   StandardDataTablePanel: ({
     title,

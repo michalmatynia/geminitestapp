@@ -1,3 +1,4 @@
+ 
 export function Q10Illustration() {
   const fruits = [
     { emoji: '🍎', name: 'jabłko' },

@@ -1,4 +1,5 @@
 import { ApiError } from '@/shared/lib/api-client';
+import { safeSetTimeout } from '@/shared/lib/timers';
 import type {
   KangurSocialPost,
   KangurSocialPostEditorStateDto,
@@ -167,7 +168,7 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error;
       if (attempt < maxAttempts && retryable(error)) {
-        await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+        await new Promise<void>((resolve) => safeSetTimeout(resolve, delayMs * attempt));
         continue;
       }
       throw error;

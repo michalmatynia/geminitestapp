@@ -1,8 +1,8 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import React, { useCallback, useMemo } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { useCallback, useMemo, startTransition } from 'react';
 import type { TranslationValues } from 'use-intl';
 import { BADGES, getCurrentLevel, getNextLevel } from '@kangur/core';
 
@@ -19,7 +19,7 @@ import {
   resolveKangurCmsResultTitle,
   translateKangurCmsRuntimeWithFallback,
 } from '@/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.i18n';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurAuthSessionState } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   useOptionalKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
@@ -172,7 +172,7 @@ export function KangurCmsRuntimeDataProvider({
   const progressRuntimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const router = useRouter();
   const routeTransition = useOptionalKangurRouteTransition();
-  const auth = useKangurAuth();
+  const auth = useKangurAuthSessionState();
   const routing = useOptionalKangurRouting();
   const progress = useKangurProgressState();
   const game = useOptionalKangurGameRuntime();
@@ -195,7 +195,7 @@ export function KangurCmsRuntimeDataProvider({
     useKangurAssignments({
       enabled:
         routing?.pageKey === 'Game' &&
-        (auth.canAccessParentAssignments ?? Boolean(auth.user?.activeLearner?.id)),
+        auth.canAccessParentAssignments,
       query: {
         includeArchived: false,
       },
@@ -206,7 +206,7 @@ export function KangurCmsRuntimeDataProvider({
         href,
         pageKey,
       });
-      router.push(href);
+      startTransition(() => { router.push(href); });
     },
     [routeTransition, router]
   );

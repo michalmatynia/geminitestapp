@@ -13,7 +13,10 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useUsersState, type UseUsersStateReturn } from '../hooks/useUsersState';
 
-const createUsersStrictContext = <T,>(hookName: string, displayName: string) =>
+const createUsersStrictContext = <T,>(hookName: string, displayName: string): {
+  Context: React.Context<T | undefined>;
+  useStrictContext: () => T;
+} =>
   createStrictContext<T>({
     hookName,
     providerName: 'a UsersProvider',
@@ -84,92 +87,40 @@ export const {
   useStrictContext: useUsersDialogs,
 } = createUsersStrictContext<UsersDialogs>('useUsersDialogs', 'UsersDialogsContext');
 
-export function UsersProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const state = useUsersState();
-
+const UsersProviderInternal = ({
+  state,
+  children,
+}: {
+  state: UseUsersStateReturn;
+  children: React.ReactNode;
+}): React.JSX.Element => {
   const dataValue = useMemo<UsersData>(
     () => ({
-      users: state.users,
-      filteredUsers: state.filteredUsers,
-      isLoading: state.isLoading,
-      isFetching: state.isFetching,
-      canReadUsers: state.canReadUsers,
-      canManageSecurity: state.canManageSecurity,
-      roles: state.roles,
-      provider: state.provider,
-      refetch: state.refetch,
-      userSecurity: state.userSecurity,
-      loadingSecurity: state.loadingSecurity,
-      mutations: state.mutations,
+      users: state.users, filteredUsers: state.filteredUsers, isLoading: state.isLoading,
+      isFetching: state.isFetching, canReadUsers: state.canReadUsers, canManageSecurity: state.canManageSecurity,
+      roles: state.roles, provider: state.provider, refetch: state.refetch,
+      userSecurity: state.userSecurity, loadingSecurity: state.loadingSecurity, mutations: state.mutations,
     }),
-    [
-      state.users,
-      state.filteredUsers,
-      state.isLoading,
-      state.isFetching,
-      state.canReadUsers,
-      state.canManageSecurity,
-      state.roles,
-      state.provider,
-      state.refetch,
-      state.userSecurity,
-      state.loadingSecurity,
-      state.mutations,
-    ]
+    [state.users, state.filteredUsers, state.isLoading, state.isFetching, state.canReadUsers, state.canManageSecurity, state.roles, state.provider, state.refetch, state.userSecurity, state.loadingSecurity, state.mutations]
   );
 
   const searchValue = useMemo<UsersSearch>(
-    () => ({
-      search: state.search,
-      setSearch: state.setSearch,
-    }),
+    () => ({ search: state.search, setSearch: state.setSearch }),
     [state.search, state.setSearch]
   );
 
   const rolesValue = useMemo<UsersRoles>(
-    () => ({
-      localUserRoles: state.localUserRoles,
-      handleRoleChange: state.handleRoleChange,
-      dirtyRoles: state.dirtyRoles,
-      saveRoles: state.saveRoles,
-    }),
+    () => ({ localUserRoles: state.localUserRoles, handleRoleChange: state.handleRoleChange, dirtyRoles: state.dirtyRoles, saveRoles: state.saveRoles }),
     [state.localUserRoles, state.handleRoleChange, state.dirtyRoles, state.saveRoles]
   );
 
   const dialogsValue = useMemo<UsersDialogs>(
     () => ({
-      editingUser: state.editingUser,
-      setEditingUser: state.setEditingUser,
-      userToDelete: state.userToDelete,
-      setUserToDelete: state.setUserToDelete,
-      deleteUser: state.deleteUser,
-      createOpen: state.createOpen,
-      setCreateOpen: state.setCreateOpen,
-      createForm: state.createForm,
-      setCreateForm: state.setCreateForm,
-      mockOpen: state.mockOpen,
-      setMockOpen: state.setMockOpen,
-      mockEmail: state.mockEmail,
-      setMockEmail: state.setMockEmail,
-      mockPassword: state.mockPassword,
-      setMockPassword: state.setMockPassword,
+      editingUser: state.editingUser, setEditingUser: state.setEditingUser, userToDelete: state.userToDelete, setUserToDelete: state.setUserToDelete,
+      deleteUser: state.deleteUser, createOpen: state.createOpen, setCreateOpen: state.setCreateOpen, createForm: state.createForm, setCreateForm: state.setCreateForm,
+      mockOpen: state.mockOpen, setMockOpen: state.setMockOpen, mockEmail: state.mockEmail, setMockEmail: state.setMockEmail, mockPassword: state.mockPassword, setMockPassword: state.setMockPassword,
     }),
-    [
-      state.editingUser,
-      state.setEditingUser,
-      state.userToDelete,
-      state.setUserToDelete,
-      state.deleteUser,
-      state.createOpen,
-      state.setCreateOpen,
-      state.createForm,
-      state.setCreateForm,
-      state.mockOpen,
-      state.setMockOpen,
-      state.mockEmail,
-      state.mockPassword,
-      state.setMockPassword,
-    ]
+    [state.editingUser, state.setEditingUser, state.userToDelete, state.setUserToDelete, state.deleteUser, state.createOpen, state.setCreateOpen, state.createForm, state.setCreateForm, state.mockOpen, state.setMockOpen, state.mockEmail, state.setMockEmail, state.mockPassword, state.setMockPassword]
   );
 
   return (
@@ -181,4 +132,9 @@ export function UsersProvider({ children }: { children: React.ReactNode }): Reac
       </SearchContext.Provider>
     </DataContext.Provider>
   );
+};
+
+export function UsersProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const state = useUsersState();
+  return <UsersProviderInternal state={state}>{children}</UsersProviderInternal>;
 }

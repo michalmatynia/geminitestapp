@@ -42,10 +42,19 @@ vi.mock('../components/AnalyticsEventsTable', () => ({
   ),
 }));
 
-vi.mock('@/shared/ui', () => ({
-  Button: ({ children }: { children?: React.ReactNode }) => <button>{children}</button>,
+vi.mock('@/shared/ui/primitives.public', () => ({
+  Button: ({ children, onClick, disabled }: { children?: React.ReactNode; onClick?: () => void; disabled?: boolean }) => (
+    <button onClick={onClick} disabled={disabled}>{children}</button>
+  ),
   Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   DataTable: () => <div>data-table</div>,
+  StatusBadge: ({ status }: { status?: React.ReactNode }) => <div>{status}</div>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormSection: ({ children, title }: { children?: React.ReactNode; title?: React.ReactNode }) => (
     <div>
       {title ? <div>{title}</div> : null}
@@ -53,6 +62,18 @@ vi.mock('@/shared/ui', () => ({
     </div>
   ),
   Hint: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  SelectSimple: ({ value, options, onValueChange }: any) => (
+    <select value={value} onChange={(e) => onValueChange(e.target.value)} aria-label='Select option'>
+      {options.map((opt: any) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   MetadataItem: ({
     label,
     value,
@@ -87,8 +108,6 @@ vi.mock('@/shared/ui', () => ({
       {actions}
     </div>
   ),
-  SelectSimple: () => <div>select-simple</div>,
-  StatusBadge: ({ status }: { status?: React.ReactNode }) => <div>{status}</div>,
   UI_GRID_RELAXED_CLASSNAME: 'grid gap-4',
   UI_GRID_ROOMY_CLASSNAME: 'grid gap-6',
 }));

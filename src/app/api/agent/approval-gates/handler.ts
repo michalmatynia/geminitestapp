@@ -14,30 +14,39 @@ export const querySchema = z.object({
   requiredFor: optionalTrimmedQueryString(),
 });
 
-export const GET_handler = async (_request: Request, ctx: ApiHandlerContext) => {
+export const getApprovalGatesHandler = (
+  _request: Request,
+  ctx: ApiHandlerContext
+): Promise<Response> => {
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
   const gateId = query.gateId;
 
-  if (gateId) {
+  if (typeof gateId === 'string' && gateId !== '') {
     const gate = getAgentApprovalGate(gateId);
 
-    if (!gate) {
-      return NextResponse.json(
-        { error: `Unknown approval gate: ${gateId}` },
-        { status: 404 },
+    if (gate === null) {
+      return Promise.resolve(
+        NextResponse.json(
+          { error: `Unknown approval gate: ${gateId}` },
+          { status: 404 },
+        )
       );
     }
 
-    return NextResponse.json({
-      approvalGate: gate,
-      ...getAgentDiscoverySummary(),
-    });
+    return Promise.resolve(
+      NextResponse.json({
+        approvalGate: gate,
+        ...getAgentDiscoverySummary(),
+      })
+    );
   }
 
-  return NextResponse.json({
-    approvalGates: listAgentApprovalGates({
-      requiredFor: query.requiredFor ?? null,
-    }),
-    ...getAgentDiscoverySummary(),
-  });
+  return Promise.resolve(
+    NextResponse.json({
+      approvalGates: listAgentApprovalGates({
+        requiredFor: query.requiredFor ?? null,
+      }),
+      ...getAgentDiscoverySummary(),
+    })
+  );
 };

@@ -12,24 +12,27 @@ type CmsDomainSelectorProps = {
   onChange?: (domainId: string) => void;
 };
 
+const getDomainDescription = (item: CmsDomain, hostDomainId: string | null): string => {
+  const parts = [];
+  if (hostDomainId !== null && hostDomainId === item.id) parts.push('current host');
+  if (item.aliasOf !== undefined && item.aliasOf !== null) parts.push('shared zone');
+  return parts.join(', ');
+};
+
 export function CmsDomainSelector({
   label = 'Zone',
   triggerClassName,
   onChange,
-}: CmsDomainSelectorProps): React.ReactNode {
+}: CmsDomainSelectorProps): React.JSX.Element {
   const { domains, activeDomainId, hostDomainId, setActiveDomainId, zoningEnabled, isLoading } =
     useCmsDomainSelection();
+
   const options = useMemo(
     () =>
       domains.map((item: CmsDomain) => ({
         value: item.id,
         label: item.domain,
-        description: [
-          hostDomainId === item.id ? 'current host' : null,
-          item.aliasOf ? 'shared zone' : null,
-        ]
-          .filter(Boolean)
-          .join(', '),
+        description: getDomainDescription(item, hostDomainId),
       })),
     [domains, hostDomainId]
   );
@@ -40,27 +43,23 @@ export function CmsDomainSelector({
     onChange?.(domainId);
   };
 
+  const renderLabel = (): React.JSX.Element | null => (
+    label !== '' ? <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>{label}</span> : null
+  );
+
   if (isLoading) {
     return (
       <div className='flex items-center gap-2' aria-busy='true'>
-        {label && (
-          <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>
-            {label}
-          </span>
-        )}
+        {renderLabel()}
         <span className='text-[11px] text-gray-500'>Loading zones...</span>
       </div>
     );
   }
 
-  if (!zoningEnabled) {
+  if (zoningEnabled !== true) {
     return (
       <div className='flex items-center gap-2'>
-        {label && (
-          <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>
-            {label}
-          </span>
-        )}
+        {renderLabel()}
         <span className='text-[11px] text-gray-500'>Simple routing</span>
       </div>
     );
@@ -68,15 +67,11 @@ export function CmsDomainSelector({
 
   return (
     <div className='flex items-center gap-2'>
-      {label && (
-        <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>
-          {label}
-        </span>
-      )}
+      {renderLabel()}
       <SelectSimple
         size='sm'
         options={options}
-        value={activeDomainId ?? undefined}
+        value={activeDomainId ?? ''}
         onValueChange={handleChange}
         disabled={domains.length === 0}
         placeholder='Select zone'

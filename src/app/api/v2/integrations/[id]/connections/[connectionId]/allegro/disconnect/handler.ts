@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import type { IntegrationDisconnectResponse } from '@/shared/contracts/integrations/api';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

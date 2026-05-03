@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   deleteAiPathsSettings,
+  ensureCanonicalStarterWorkflowSettingsForPathIds,
   listAiPathsSettings,
   upsertAiPathsSetting,
   upsertAiPathsSettingsBulk,
@@ -57,8 +58,17 @@ const parseRequestedKeys = (req: NextRequest): string[] => {
   return unique;
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+const getRequestedConfigPathIds = (keys: string[]): string[] =>
+  keys
+    .filter((key) => key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX))
+    .map((key) => key.slice(AI_PATHS_CONFIG_KEY_PREFIX.length))
+    .filter((pathId) => pathId.length > 0);
+
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestedKeys = parseRequestedKeys(req);
+  if (requestedKeys.length > 0) {
+    await ensureCanonicalStarterWorkflowSettingsForPathIds(getRequestedConfigPathIds(requestedKeys));
+  }
   const startedAt = Date.now();
   const settings =
     requestedKeys.length > 0
@@ -88,7 +98,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   });
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
 
@@ -118,7 +128,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   throw badRequestError('Invalid AI Paths settings payload.');
 }
 
-export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
 

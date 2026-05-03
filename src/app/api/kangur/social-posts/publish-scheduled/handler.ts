@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';

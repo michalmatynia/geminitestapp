@@ -1,5 +1,10 @@
 'use client';
 
+// ProductSettingsPageContext: provides shared state for product settings
+// pages (catalogs, tags, price groups). Centralizes temporary edit state,
+// save/rollback helpers, and cross-panel notifications so individual panels
+// can remain focused.
+
 import { createContext, useContext } from 'react';
 
 import type { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';
@@ -8,6 +13,13 @@ import type { ProductTag } from '@/shared/contracts/products/tags';
 import { internalError } from '@/shared/errors/app-error';
 
 // --- Granular Contexts ---
+
+const useRequiredProductSettingsSection = <T,>(context: T | null, hookName: string): T => {
+  if (context === null) {
+    throw internalError(`${hookName} must be used within ProductSettingsPageProvider`);
+  }
+  return context;
+};
 
 export type ProductSettingsCategoriesSection = {
   loading: boolean;
@@ -18,14 +30,11 @@ export type ProductSettingsCategoriesSection = {
   onRefresh: () => void;
 };
 const CategoriesContext = createContext<ProductSettingsCategoriesSection | null>(null);
-export const useProductSettingsCategoriesSection = () => {
-  const context = useContext(CategoriesContext);
-  if (!context)
-    throw internalError(
-      'useProductSettingsCategoriesSection must be used within ProductSettingsPageProvider'
-    );
-  return context;
-};
+export const useProductSettingsCategoriesSection = (): ProductSettingsCategoriesSection =>
+  useRequiredProductSettingsSection(
+    useContext(CategoriesContext),
+    'useProductSettingsCategoriesSection'
+  );
 
 export type ProductSettingsTagsSection = {
   loading: boolean;
@@ -36,14 +45,8 @@ export type ProductSettingsTagsSection = {
   onRefresh: () => void;
 };
 const TagsContext = createContext<ProductSettingsTagsSection | null>(null);
-export const useProductSettingsTagsSection = () => {
-  const context = useContext(TagsContext);
-  if (!context)
-    throw internalError(
-      'useProductSettingsTagsSection must be used within ProductSettingsPageProvider'
-    );
-  return context;
-};
+export const useProductSettingsTagsSection = (): ProductSettingsTagsSection =>
+  useRequiredProductSettingsSection(useContext(TagsContext), 'useProductSettingsTagsSection');
 
 export type ProductSettingsPriceGroupsSection = {
   loadingGroups: boolean;
@@ -56,14 +59,11 @@ export type ProductSettingsPriceGroupsSection = {
   handleDeleteGroup: (group: PriceGroup) => void;
 };
 const PriceGroupsContext = createContext<ProductSettingsPriceGroupsSection | null>(null);
-export const useProductSettingsPriceGroupsSection = () => {
-  const context = useContext(PriceGroupsContext);
-  if (!context)
-    throw internalError(
-      'useProductSettingsPriceGroupsSection must be used within ProductSettingsPageProvider'
-    );
-  return context;
-};
+export const useProductSettingsPriceGroupsSection = (): ProductSettingsPriceGroupsSection =>
+  useRequiredProductSettingsSection(
+    useContext(PriceGroupsContext),
+    'useProductSettingsPriceGroupsSection'
+  );
 
 export type ProductSettingsCatalogsSection = {
   loadingCatalogs: boolean;
@@ -73,14 +73,8 @@ export type ProductSettingsCatalogsSection = {
   handleDeleteCatalog: (catalog: Catalog) => void;
 };
 const CatalogsContext = createContext<ProductSettingsCatalogsSection | null>(null);
-export const useProductSettingsCatalogsSection = () => {
-  const context = useContext(CatalogsContext);
-  if (!context)
-    throw internalError(
-      'useProductSettingsCatalogsSection must be used within ProductSettingsPageProvider'
-    );
-  return context;
-};
+export const useProductSettingsCatalogsSection = (): ProductSettingsCatalogsSection =>
+  useRequiredProductSettingsSection(useContext(CatalogsContext), 'useProductSettingsCatalogsSection');
 
 export type ProductSettingsCatalogModalSection = {
   isOpen: boolean;
@@ -92,14 +86,11 @@ export type ProductSettingsCatalogModalSection = {
   defaultGroupId: string;
 };
 const CatalogModalContext = createContext<ProductSettingsCatalogModalSection | null>(null);
-export const useProductSettingsCatalogModalSection = () => {
-  const context = useContext(CatalogModalContext);
-  if (!context)
-    throw internalError(
-      'useProductSettingsCatalogModalSection must be used within ProductSettingsPageProvider'
-    );
-  return context;
-};
+export const useProductSettingsCatalogModalSection = (): ProductSettingsCatalogModalSection =>
+  useRequiredProductSettingsSection(
+    useContext(CatalogModalContext),
+    'useProductSettingsCatalogModalSection'
+  );
 
 export type ProductSettingsPriceGroupModalSection = {
   isOpen: boolean;
@@ -109,14 +100,11 @@ export type ProductSettingsPriceGroupModalSection = {
   priceGroups: PriceGroup[];
 };
 const PriceGroupModalContext = createContext<ProductSettingsPriceGroupModalSection | null>(null);
-export const useProductSettingsPriceGroupModalSection = () => {
-  const context = useContext(PriceGroupModalContext);
-  if (!context)
-    throw internalError(
-      'useProductSettingsPriceGroupModalSection must be used within ProductSettingsPageProvider'
-    );
-  return context;
-};
+export const useProductSettingsPriceGroupModalSection = (): ProductSettingsPriceGroupModalSection =>
+  useRequiredProductSettingsSection(
+    useContext(PriceGroupModalContext),
+    'useProductSettingsPriceGroupModalSection'
+  );
 
 type ProductSettingsPageContextValue = {
   categories: ProductSettingsCategoriesSection;

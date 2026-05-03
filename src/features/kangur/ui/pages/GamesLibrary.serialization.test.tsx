@@ -97,6 +97,21 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => searchParamsState.value,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  permanentRedirect: vi.fn(),
+  redirect: vi.fn(),
+  usePathname: () => '/games',
+  useRouter: () => ({
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+    push: vi.fn(),
+    refresh: vi.fn(),
+    replace: vi.fn(),
+  }),
+  useSearchParams: () => searchParamsState.value,
+}));
+
 vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/config/routing')>();
 
@@ -143,6 +158,22 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
     },
     logout: vi.fn(),
   }),
+  useKangurAuthSessionState: () => ({
+    user: {
+      id: 'admin-1',
+      role: 'super_admin',
+      canManageLearners: true,
+    },
+    isAuthenticated: true,
+    hasResolvedAuth: true,
+    canAccessParentAssignments: false,
+  }),
+  useKangurAuthActions: () => ({
+    logout: vi.fn(),
+    navigateToLogin: vi.fn(),
+    checkAppState: vi.fn(),
+    selectLearner: vi.fn(),
+  }),
   useOptionalKangurAuth: () => ({
     user: {
       id: 'admin-1',
@@ -162,6 +193,9 @@ vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: () => ({
+    openLoginModal: vi.fn(),
+  }),
+  useKangurLoginModalActions: () => ({
     openLoginModal: vi.fn(),
   }),
 }));
@@ -237,48 +271,44 @@ vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/pages/GamesLibrary.tabs', () => ({
-  CatalogTab: ({
-    groupedGames,
-    setSelectedGame,
-  }: {
-    groupedGames: Array<{ entries: Array<{ game: { title: string } }> }>;
-    setSelectedGame: (
-      game: { title: string },
-      trigger?: HTMLElement | null
-    ) => void;
-  }) => (
-    <div data-testid='games-library-catalog-tab'>
-      {groupedGames.flatMap((group) => group.entries).map((entry) => (
-        <button
-          key={entry.game.title}
-          onClick={(event) =>
-            setSelectedGame(
-              entry.game as { title: string },
-              event.currentTarget
-            )
-          }
-          type='button'
-        >
-          {entry.game.title}
-        </button>
-      ))}
-    </div>
-  ),
-  StructureTab: () => <div data-testid='games-library-structure-tab'>Structure content</div>,
-  RuntimeTab: ({
-    serializationAudit,
-    serializationAuditVisible,
-  }: {
-    serializationAudit: { explicitRuntimeVariantCount: number };
-    serializationAuditVisible: boolean;
-  }) =>
-    serializationAuditVisible ? (
-      <div data-testid='games-library-runtime-tab'>
-        {serializationAudit.explicitRuntimeVariantCount}
-      </div>
-    ) : null,
-}));
+vi.mock('@/features/kangur/ui/pages/GamesLibrary.tabs', async () => {
+  const { useGamesLibraryContext } = await import('@/features/kangur/ui/pages/GamesLibrary.context');
+
+  return {
+    CatalogTab: () => {
+      const { groupedGames, setSelectedGame } = useGamesLibraryContext();
+
+      return (
+        <div data-testid='games-library-catalog-tab'>
+          {groupedGames.flatMap((group) => group.entries).map((entry) => (
+            <button
+              key={entry.game.title}
+              onClick={(event) =>
+                setSelectedGame(
+                  entry.game as { title: string },
+                  event.currentTarget
+                )
+              }
+              type='button'
+            >
+              {entry.game.title}
+            </button>
+          ))}
+        </div>
+      );
+    },
+    StructureTab: () => <div data-testid='games-library-structure-tab'>Structure content</div>,
+    RuntimeTab: () => {
+      const { serializationAudit, serializationAuditVisible } = useGamesLibraryContext();
+
+      return serializationAuditVisible ? (
+        <div data-testid='games-library-runtime-tab'>
+          {serializationAudit.explicitRuntimeVariantCount}
+        </div>
+      ) : null;
+    },
+  };
+});
 
 vi.mock('@/features/kangur/ui/pages/GamesLibraryGameModal', () => ({
   GamesLibraryGameModal: ({

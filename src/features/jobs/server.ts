@@ -35,6 +35,10 @@ export {
   enqueuePlaywrightListingJob,
   startTraderaListingQueue,
   enqueueTraderaListingJob,
+  buildTraderaListingQueueJobId,
+  TRADERA_LISTING_QUEUE_NAMES,
+  startVintedListingQueue,
+  enqueueVintedListingJob,
 } from '@/server/queues/integrations';
 export { startTraderaRelistSchedulerQueue } from '@/server/queues/integrations';
 export {
@@ -47,6 +51,11 @@ export {
   startFilemakerEmailCampaignQueue,
   stopFilemakerEmailCampaignQueue,
   enqueueFilemakerEmailCampaignRunJob,
+  startFilemakerMailSyncSchedulerQueue,
+  startFilemakerMailSyncQueue,
+  stopFilemakerMailSyncQueue,
+  enqueueFilemakerMailSyncJob,
+  startFilemakerCampaignColdPruneSchedulerQueue,
 } from '@/server/queues/filemaker';
 
 export {
@@ -60,6 +69,12 @@ export {
   processProductAiJob,
   getQueueStatus,
 } from '@/server/queues/product-ai';
+export {
+  enqueueProductMarketplaceCopyDebrandBatchJob,
+  processProductMarketplaceCopyDebrandBatchJob,
+  startProductMarketplaceCopyDebrandBatchQueue,
+  stopProductMarketplaceCopyDebrandBatchQueue,
+} from '@/server/queues/products';
 
 export { startProductSyncSchedulerQueue } from '@/server/queues/product-sync';
 export { startProductSyncBackfillQueue, stopProductSyncBackfillQueue, enqueueProductSyncBackfillJob } from '@/server/queues/product-sync';

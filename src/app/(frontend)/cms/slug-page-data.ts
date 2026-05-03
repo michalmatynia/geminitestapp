@@ -2,7 +2,7 @@ import { getUserPreferences } from '@/features/auth/server';
 import {
   getMediaInlineStyles,
   getMediaStyleVars,
-} from '@/features/cms/public';
+} from '@/features/cms/components/frontend/theme-styles';
 import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from '@/features/cms/server';
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
@@ -12,6 +12,7 @@ import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { isElevatedSession } from '@/shared/lib/auth/elevated-session-user';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Metadata } from 'next';
@@ -34,6 +35,7 @@ export type SlugRenderData = {
 
 type SlugResolutionOptions = {
   locale?: string;
+  domainId?: string;
 };
 
 const normalizeRendererComponent = (
@@ -53,12 +55,12 @@ const isAdminSession = isElevatedSession;
 const canPreviewDrafts = async (session: Session | null): Promise<boolean> => {
   if (!isAdminSession(session)) return false;
   const userId = session?.user?.id;
-  if (!userId) return false;
+  if (typeof userId !== 'string' || userId === '') return false;
   try {
     const prefs = await getUserPreferences(userId);
     return prefs.cmsPreviewEnabled === true;
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'frontend.slug-page-data',
       source: 'frontend.slug-page-data',
       action: 'canPreviewDrafts',
@@ -68,6 +70,22 @@ const canPreviewDrafts = async (session: Session | null): Promise<boolean> => {
   }
 };
 
+async function resolveDomainIdFromOptionsOrHeaders(options?: SlugResolutionOptions): Promise<string> {
+  const domainId = options?.domainId;
+  if (typeof domainId === 'string' && domainId !== '') {
+    return domainId;
+  }
+  return (await resolveCmsDomainFromHeaders(await readOptionalRequestHeaders())).id;
+}
+
+async function resolveDraftPermission(page: Page): Promise<Page | null> {
+  if (page.status === 'published') return page;
+
+  const session = await readOptionalServerAuthSession();
+  const allowDrafts = await canPreviewDrafts(session);
+  return allowDrafts ? page : null;
+}
+
 export async function resolveSlugToPage(
   slugSegments: string[],
   options?: SlugResolutionOptions
@@ -75,21 +93,17 @@ export async function resolveSlugToPage(
   const slugValue = slugSegments.join('/');
   try {
     const cmsRepository = await getCmsRepository();
-    const hdrs = await readOptionalRequestHeaders();
-    const domain = await resolveCmsDomainFromHeaders(hdrs);
-    const domainSlug = await getSlugForDomainByValue(domain.id, slugValue, cmsRepository, {
+    const domainId = await resolveDomainIdFromOptionsOrHeaders(options);
+    const domainSlug = await getSlugForDomainByValue(domainId, slugValue, cmsRepository, {
       locale: options?.locale,
     });
-    if (!domainSlug) return null;
+    if (domainSlug === null) return null;
     const page = await cmsRepository.getPageBySlug(slugValue, { locale: options?.locale });
-    if (!page) return null;
-    if (page.status === 'published') return page;
-    const session = await readOptionalServerAuthSession();
-    const allowDrafts = await canPreviewDrafts(session);
-    if (!allowDrafts) return null;
-    return page;
+    if (page === null) return null;
+
+    return await resolveDraftPermission(page);
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'frontend.slug-page-data',
       source: 'frontend.slug-page-data',
       action: 'resolveSlugToPage',
@@ -100,25 +114,57 @@ export async function resolveSlugToPage(
   }
 }
 
-export const buildSlugMetadata = (page: Page): Metadata => {
-  const metadata: Metadata = {
-    title: page.seoTitle || page.name,
-    robots: page.robotsMeta || 'index,follow',
-  };
+export async function resolvePublishedSlugToPageCached(
+  domainId: string,
+  slugSegments: string[],
+  options?: Pick<SlugResolutionOptions, 'locale'>
+): Promise<Page | null> {
+  'use cache';
+  applyCacheLife('hours');
 
-  if (page.seoDescription) {
-    metadata.description = page.seoDescription;
+  const slugValue = slugSegments.join('/');
+  const cmsRepository = await getCmsRepository();
+  const domainSlug = await getSlugForDomainByValue(domainId, slugValue, cmsRepository, {
+    locale: options?.locale,
+  });
+  if (domainSlug === null) {
+    return null;
   }
 
-  if (page.seoOgImage) {
+  const page = await cmsRepository.getPageBySlug(slugValue, { locale: options?.locale });
+  if (page?.status !== 'published') {
+    return null;
+  }
+
+  return page;
+}
+
+function getNonEmptyString(value: string | null | undefined): string | null {
+  return typeof value === 'string' && value !== '' ? value : null;
+}
+
+export const buildSlugMetadata = (page: Page): Metadata => {
+  const metadata: Metadata = {
+    title: getNonEmptyString(page.seoTitle) ?? page.name,
+    robots: getNonEmptyString(page.robotsMeta) ?? 'index,follow',
+  };
+
+  const description = getNonEmptyString(page.seoDescription);
+  if (description !== null) {
+    metadata.description = description;
+  }
+
+  const ogImage = getNonEmptyString(page.seoOgImage);
+  if (ogImage !== null) {
     metadata.openGraph = {
-      images: [{ url: page.seoOgImage }],
+      images: [{ url: ogImage }],
     };
   }
 
-  if (page.seoCanonical) {
+  const canonical = getNonEmptyString(page.seoCanonical);
+  if (canonical !== null) {
     metadata.alternates = {
-      canonical: page.seoCanonical,
+      canonical,
     };
   }
 
@@ -129,41 +175,77 @@ export const loadSlugRenderData = async (
   page: Page,
   options?: SlugResolutionOptions
 ): Promise<SlugRenderData> => {
-  let theme: CmsTheme | null = null;
-  if (page.themeId) {
-    const cmsRepository = await getCmsRepository();
-    theme = await cmsRepository.getThemeById(page.themeId);
+  const domainId = await resolveDomainIdFromOptionsOrHeaders(options);
+  const locale = options?.locale ?? page.locale;
+  return buildSlugRenderDataForDomain(page, domainId, locale);
+};
+
+export const loadPublishedSlugRenderDataCached = async (
+  pageId: string,
+  domainId: string,
+  options?: Pick<SlugResolutionOptions, 'locale'>
+): Promise<SlugRenderData | null> => {
+  'use cache';
+  applyCacheLife('hours');
+
+  const cmsRepository = await getCmsRepository();
+  const page = await cmsRepository.getPageById(pageId);
+  if (page?.status !== 'published') {
+    return null;
   }
 
-  const hdrs = await readOptionalRequestHeaders();
-  const domain = await resolveCmsDomainFromHeaders(hdrs);
-  const themeSettings = await getCmsThemeSettings();
-  const menuSettings = await getCmsMenuSettings(
-    domain.id,
-    options?.locale ?? page.locale ?? undefined
-  );
-  const colorSchemes = buildColorSchemeMap(themeSettings);
-  const layout = { fullWidth: Boolean(themeSettings.fullWidth) };
-  const mediaVars = getMediaStyleVars(themeSettings);
-  const mediaStyles = getMediaInlineStyles(themeSettings);
-  const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
-  const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
-  const showMenu = page.showMenu !== false;
-  const rendererComponents = [...page.components]
+  const locale = options?.locale ?? page.locale;
+  return buildSlugRenderDataForDomain(page, domainId, locale);
+};
+
+async function resolveTheme(themeId: string | null | undefined): Promise<CmsTheme | null> {
+  const id = getNonEmptyString(themeId);
+  if (id === null) {
+    return null;
+  }
+  const cmsRepository = await getCmsRepository();
+  return cmsRepository.getThemeById(id);
+}
+
+function resolveRendererComponents(page: Page): PageComponent[] {
+  return [...page.components]
     .sort((left, right) => left.order - right.order)
     .map((component, index) => normalizeRendererComponent(page.id, component, index));
+}
+
+function buildSlugRenderData(
+  page: Page,
+  theme: CmsTheme | null,
+  themeSettings: Awaited<ReturnType<typeof getCmsThemeSettings>>,
+  menuSettings: Awaited<ReturnType<typeof getCmsMenuSettings>>
+): SlugRenderData {
+  const animationsEnabled = themeSettings.enableAnimations === true;
+  const hoverEffect = animationsEnabled ? themeSettings.hoverEffect : undefined;
+  const hoverScale = animationsEnabled ? themeSettings.hoverScale : undefined;
 
   return {
     theme,
     menuSettings,
     themeSettings,
-    colorSchemes,
-    showMenu,
-    rendererComponents,
-    layout,
-    mediaVars,
-    mediaStyles,
+    colorSchemes: buildColorSchemeMap(themeSettings),
+    showMenu: page.showMenu !== false,
+    rendererComponents: resolveRendererComponents(page),
+    layout: { fullWidth: themeSettings.fullWidth === true },
+    mediaVars: getMediaStyleVars(themeSettings),
+    mediaStyles: getMediaInlineStyles(themeSettings),
     hoverEffect,
     hoverScale,
   };
+}
+
+const buildSlugRenderDataForDomain = async (
+  page: Page,
+  domainId: string,
+  locale?: string
+): Promise<SlugRenderData> => {
+  const theme = await resolveTheme(page.themeId);
+  const themeSettings = await getCmsThemeSettings();
+  const menuSettings = await getCmsMenuSettings(domainId, locale);
+
+  return buildSlugRenderData(page, theme, themeSettings, menuSettings);
 };

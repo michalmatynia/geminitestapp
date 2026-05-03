@@ -7,10 +7,21 @@ import {
   createFilemakerEmailLink,
   createFilemakerEvent,
   createFilemakerEventOrganizationLink,
+  createDefaultFilemakerLexiconValidationPatterns,
+  createDefaultFilemakerLexiconTypes,
+  createFilemakerJobListing,
+  createFilemakerJobListingLexiconLink,
+  createFilemakerLexiconTerm,
+  createFilemakerLexiconType,
+  createFilemakerLexiconValidationPattern,
   createFilemakerOrganization,
+  createFilemakerOrganizationLegacyDemand,
   createFilemakerPerson,
   createFilemakerPhoneNumber,
   createFilemakerPhoneNumberLink,
+  createFilemakerValue,
+  createFilemakerValueParameter,
+  createFilemakerValueParameterLink,
 } from './filemaker-settings.entities';
 import {
   ensureUniqueId,
@@ -28,11 +39,20 @@ import {
   type FilemakerEmailLink,
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
+  type FilemakerJobListing,
+  type FilemakerJobListingLexiconLink,
+  type FilemakerLexiconTerm,
+  type FilemakerLexiconType,
+  type FilemakerLexiconValidationPattern,
   type FilemakerOrganization,
+  type FilemakerOrganizationLegacyDemand,
   type FilemakerPartyKind,
   type FilemakerPhoneNumber,
   type FilemakerPhoneNumberLink,
   type FilemakerPerson,
+  type FilemakerValue,
+  type FilemakerValueParameter,
+  type FilemakerValueParameterLink,
 } from './types';
 
 const FILEMAKER_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -68,6 +88,15 @@ export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
   emails: [],
   emailLinks: [],
   eventOrganizationLinks: [],
+  values: [],
+  valueParameters: [],
+  valueParameterLinks: [],
+  organizationLegacyDemands: [],
+  jobListings: [],
+  lexiconTypes: createDefaultFilemakerLexiconTypes(),
+  lexiconValidationPatterns: createDefaultFilemakerLexiconValidationPatterns(),
+  lexiconTerms: [],
+  jobListingLexiconLinks: [],
 });
 
 const defaultAddressLinkIdForValues = (
@@ -113,6 +142,47 @@ const defaultEventOrganizationLinkIdForValues = (
 ): string => {
   const joined = `${eventId}-${organizationId}`;
   return `filemaker-event-organization-link-${toIdToken(joined) || 'entry'}`;
+};
+
+const defaultValueParameterLinkIdForValues = (
+  valueId: string,
+  parameterId: string
+): string => {
+  const joined = `${valueId}-${parameterId}`;
+  return `filemaker-value-parameter-link-${toIdToken(joined) || 'entry'}`;
+};
+
+const defaultLexiconTermIdForValues = (category: string, normalizedLabel: string): string => {
+  const joined = `${category}-${normalizedLabel}`;
+  const token = toIdToken(joined);
+  return `filemaker-lexicon-term-${token.length > 0 ? token : 'entry'}`;
+};
+
+const defaultLexiconTypeIdForValues = (key: string): string => {
+  const token = toIdToken(key);
+  return `filemaker-lexicon-type-${token.length > 0 ? token : 'other'}`;
+};
+
+const defaultJobListingLexiconLinkIdForValues = (
+  jobListingId: string,
+  lexiconTermId: string
+): string => {
+  const joined = `${jobListingId}-${lexiconTermId}`;
+  const token = toIdToken(joined);
+  return `filemaker-job-listing-lexicon-link-${token.length > 0 ? token : 'entry'}`;
+};
+
+const defaultOrganizationLegacyDemandIdForValues = (
+  organizationId: string,
+  valueIds: string[]
+): string => {
+  const joined = `${organizationId}-${valueIds.join('-')}`;
+  return `filemaker-organization-legacy-demand-${toIdToken(joined) || 'entry'}`;
+};
+
+const defaultJobListingIdForValues = (organizationId: string, title: string): string => {
+  const joined = `${organizationId}-${title}`;
+  return `filemaker-job-listing-${toIdToken(joined) || 'entry'}`;
 };
 
 const hasAnyAddressData = (value: {
@@ -196,11 +266,13 @@ const isAddressOwnerPresent = (
   personIds: Set<string>,
   organizationIds: Set<string>,
   eventIds: Set<string>,
+  jobListingIds: Set<string>,
   ownerKind: FilemakerAddressOwnerKind,
   ownerId: string
 ): boolean => {
   if (ownerKind === 'person') return personIds.has(ownerId);
   if (ownerKind === 'organization') return organizationIds.has(ownerId);
+  if (ownerKind === 'job_listing') return jobListingIds.has(ownerId);
   return eventIds.has(ownerId);
 };
 
@@ -272,6 +344,27 @@ export const normalizeFilemakerDatabase = (
   const rawPhoneNumberLinks = getRecordList('phoneNumberLinks', valueRecord['phoneNumberLinks']);
   const rawEmails = getRecordList('emails', valueRecord['emails']);
   const rawEmailLinks = getRecordList('emailLinks', valueRecord['emailLinks']);
+  const rawValues = getRecordList('values', valueRecord['values']);
+  const rawValueParameters = getRecordList('valueParameters', valueRecord['valueParameters']);
+  const rawValueParameterLinks = getRecordList(
+    'valueParameterLinks',
+    valueRecord['valueParameterLinks']
+  );
+  const rawOrganizationLegacyDemands = getRecordList(
+    'organizationLegacyDemands',
+    valueRecord['organizationLegacyDemands']
+  );
+  const rawJobListings = getRecordList('jobListings', valueRecord['jobListings']);
+  const rawLexiconTypes = getRecordList('lexiconTypes', valueRecord['lexiconTypes']);
+  const rawLexiconValidationPatterns = getRecordList(
+    'lexiconValidationPatterns',
+    valueRecord['lexiconValidationPatterns']
+  );
+  const rawLexiconTerms = getRecordList('lexiconTerms', valueRecord['lexiconTerms']);
+  const rawJobListingLexiconLinks = getRecordList(
+    'jobListingLexiconLinks',
+    valueRecord['jobListingLexiconLinks']
+  );
   const rawEventOrganizationLinks = getRecordList(
     'eventOrganizationLinks',
     valueRecord['eventOrganizationLinks']
@@ -291,7 +384,11 @@ export const normalizeFilemakerDatabase = (
         postalCode: normalizeString(entry['postalCode']),
         country: normalizeString(entry['country']),
         countryId: normalizeString(entry['countryId']),
+        countryValueId: normalizeString(entry['countryValueId']),
+        countryValueLabel: normalizeString(entry['countryValueLabel']),
         createdAt: normalizeString(entry['createdAt']) || undefined,
+        legacyCountryUuid: normalizeString(entry['legacyCountryUuid']),
+        legacyUuid: normalizeString(entry['legacyUuid']),
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       })
     );
@@ -317,6 +414,15 @@ export const normalizeFilemakerDatabase = (
         nip: normalizeString(entry['nip']),
         regon: normalizeString(entry['regon']),
         phoneNumbers: [],
+        linkedinUrl: normalizeString(entry['linkedinUrl']),
+        githubUrl: normalizeString(entry['githubUrl']),
+        languageSkills: entry['languageSkills'],
+        profileEducation: entry['profileEducation'],
+        profileJobExperience: entry['profileJobExperience'],
+        cvHeadline: normalizeString(entry['cvHeadline']),
+        cvProfessionalSummary: normalizeString(entry['cvProfessionalSummary']),
+        cvCoreStrengths: entry['cvCoreStrengths'],
+        cvSelectedTechnicalEnvironment: entry['cvSelectedTechnicalEnvironment'],
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
@@ -329,16 +435,61 @@ export const normalizeFilemakerDatabase = (
       const id = normalizeString(entry['id']);
       if (!id || organizationIds.has(id)) return null;
       organizationIds.add(id);
+      const legacyUuid = normalizeString(entry['legacyUuid']);
+      const legacyParentUuid = normalizeString(entry['legacyParentUuid']);
+      const legacyDefaultAddressUuid = normalizeString(entry['legacyDefaultAddressUuid']);
+      const legacyDisplayAddressUuid = normalizeString(entry['legacyDisplayAddressUuid']);
+      const legacyDefaultBankAccountUuid = normalizeString(entry['legacyDefaultBankAccountUuid']);
+      const legacyDisplayBankAccountUuid = normalizeString(entry['legacyDisplayBankAccountUuid']);
       return createFilemakerOrganization({
         id,
         name: normalizeString(entry['name']),
         addressId: normalizeString(entry['addressId']),
-        street: '',
-        streetNumber: '',
-        city: '',
-        postalCode: '',
-        country: '',
-        countryId: '',
+        displayAddressId: normalizeString(entry['displayAddressId']),
+        street: normalizeString(entry['street']),
+        streetNumber: normalizeString(entry['streetNumber']),
+        city: normalizeString(entry['city']),
+        postalCode: normalizeString(entry['postalCode']),
+        country: normalizeString(entry['country']),
+        countryId: normalizeString(entry['countryId']),
+        taxId: normalizeString(entry['taxId']),
+        krs: normalizeString(entry['krs']),
+        regon: normalizeString(entry['regon']),
+        tradingName: normalizeString(entry['tradingName']),
+        cooperationStatus: normalizeString(entry['cooperationStatus']),
+        establishedDate: normalizeString(entry['establishedDate']),
+        parentOrganizationId: normalizeString(entry['parentOrganizationId']),
+        defaultBankAccountId: normalizeString(entry['defaultBankAccountId']),
+        displayBankAccountId: normalizeString(entry['displayBankAccountId']),
+        legacyUuid: legacyUuid.length > 0 ? legacyUuid : undefined,
+        legacyParentUuid: legacyParentUuid.length > 0 ? legacyParentUuid : undefined,
+        legacyDefaultAddressUuid:
+          legacyDefaultAddressUuid.length > 0 ? legacyDefaultAddressUuid : undefined,
+        legacyDisplayAddressUuid:
+          legacyDisplayAddressUuid.length > 0 ? legacyDisplayAddressUuid : undefined,
+        legacyDefaultBankAccountUuid:
+          legacyDefaultBankAccountUuid.length > 0 ? legacyDefaultBankAccountUuid : undefined,
+        legacyDisplayBankAccountUuid:
+          legacyDisplayBankAccountUuid.length > 0 ? legacyDisplayBankAccountUuid : undefined,
+        updatedBy: normalizeString(entry['updatedBy']) || undefined,
+        jobBoardCompanyProfile: normalizeString(entry['jobBoardCompanyProfile']) || undefined,
+        jobBoardCompanyProfileUrl:
+          normalizeString(entry['jobBoardCompanyProfileUrl']) || undefined,
+        jobBoardCompanyProfileScrapedAt:
+          normalizeString(entry['jobBoardCompanyProfileScrapedAt']) || undefined,
+        jobBoardCompanyAddress: normalizeString(entry['jobBoardCompanyAddress']) || undefined,
+        jobBoardCompanyRegion: normalizeString(entry['jobBoardCompanyRegion']) || undefined,
+        jobBoardCompanyWebsiteUrl:
+          normalizeString(entry['jobBoardCompanyWebsiteUrl']) || undefined,
+        jobBoardCompanyEmail: normalizeString(entry['jobBoardCompanyEmail']) || undefined,
+        jobBoardCompanyPhone: normalizeString(entry['jobBoardCompanyPhone']) || undefined,
+        jobBoardCompanyIndustry: normalizeString(entry['jobBoardCompanyIndustry']) || undefined,
+        jobBoardCompanySize: normalizeString(entry['jobBoardCompanySize']) || undefined,
+        jobBoardCompanyLogoUrl: normalizeString(entry['jobBoardCompanyLogoUrl']) || undefined,
+        jobBoardSourceSite: normalizeString(entry['jobBoardSourceSite']) || undefined,
+        jobBoardSourceUrl: normalizeString(entry['jobBoardSourceUrl']) || undefined,
+        jobBoardSourceLabel: normalizeString(entry['jobBoardSourceLabel']) || undefined,
+        jobBoardScrapedAt: normalizeString(entry['jobBoardScrapedAt']) || undefined,
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
@@ -346,6 +497,14 @@ export const normalizeFilemakerDatabase = (
     .filter((entry: FilemakerOrganization | null): entry is FilemakerOrganization =>
       Boolean(entry)
     );
+  const organizationIdByLegacyUuid = new Map<string, string>(
+    organizations
+      .map((organization: FilemakerOrganization): [string, string] => [
+        normalizeString(organization.legacyUuid),
+        organization.id,
+      ])
+      .filter(([legacyUuid]: [string, string]): boolean => legacyUuid.length > 0)
+  );
 
   const eventIds = new Set<string>();
   const events: FilemakerEvent[] = rawEvents
@@ -369,6 +528,11 @@ export const normalizeFilemakerDatabase = (
     })
     .filter((entry: FilemakerEvent | null): entry is FilemakerEvent => Boolean(entry));
 
+  const rawJobListingOwnerIds = new Set<string>(
+    rawJobListings
+      .map((entry: Record<string, unknown>): string => normalizeString(entry['id']))
+      .filter((id: string): boolean => id.length > 0)
+  );
   const addressLinkIds = new Set<string>();
   const addressRelationKeys = new Set<string>();
   const groupedAddressLinks = new Map<string, FilemakerAddressLink[]>();
@@ -383,7 +547,12 @@ export const normalizeFilemakerDatabase = (
     updatedAt?: string | null | undefined;
   }): void => {
     const ownerKindRaw = normalizeString(input.ownerKind).toLowerCase();
-    if (ownerKindRaw !== 'person' && ownerKindRaw !== 'organization' && ownerKindRaw !== 'event') {
+    if (
+      ownerKindRaw !== 'person' &&
+      ownerKindRaw !== 'organization' &&
+      ownerKindRaw !== 'event' &&
+      ownerKindRaw !== 'job_listing'
+    ) {
       return;
     }
     const ownerKind = ownerKindRaw;
@@ -391,7 +560,16 @@ export const normalizeFilemakerDatabase = (
     const addressId = normalizeString(input.addressId);
     if (!ownerId || !addressId) return;
     if (!addressesById.has(addressId)) return;
-    if (!isAddressOwnerPresent(personIds, organizationIds, eventIds, ownerKind, ownerId)) {
+    if (
+      !isAddressOwnerPresent(
+        personIds,
+        organizationIds,
+        eventIds,
+        rawJobListingOwnerIds,
+        ownerKind,
+        ownerId
+      )
+    ) {
       return;
     }
 
@@ -480,10 +658,16 @@ export const normalizeFilemakerDatabase = (
     (organization: FilemakerOrganization): FilemakerOrganization => {
       const defaultAddressId = defaultAddressIdByOwner.get(`organization:${organization.id}`) ?? '';
       const resolvedAddress = addressesById.get(defaultAddressId);
+      const resolvedParentOrganizationId =
+        organization.parentOrganizationId ??
+        organizationIdByLegacyUuid.get(organization.legacyParentUuid ?? '');
       if (!resolvedAddress) {
         return {
           ...organization,
           addressId: defaultAddressId,
+          ...(resolvedParentOrganizationId !== undefined
+            ? { parentOrganizationId: resolvedParentOrganizationId }
+            : {}),
           street: '',
           streetNumber: '',
           city: '',
@@ -495,6 +679,9 @@ export const normalizeFilemakerDatabase = (
       return {
         ...organization,
         addressId: resolvedAddress.id,
+        ...(resolvedParentOrganizationId !== undefined
+          ? { parentOrganizationId: resolvedParentOrganizationId }
+          : {}),
         street: resolvedAddress.street,
         streetNumber: resolvedAddress.streetNumber,
         city: resolvedAddress.city,
@@ -764,6 +951,445 @@ export const normalizeFilemakerDatabase = (
     );
   });
 
+  const valueIds = new Set<string>();
+  const values: FilemakerValue[] = [];
+  rawValues.forEach((entry: Record<string, unknown>) => {
+    const id = normalizeString(entry['id']);
+    const label = normalizeString(entry['label']);
+    const legacyUuid = normalizeString(entry['legacyUuid']);
+    if (id.length === 0 || label.length === 0 || valueIds.has(id)) return;
+    valueIds.add(id);
+    values.push(
+      createFilemakerValue({
+        id,
+        parentId: normalizeString(entry['parentId']) || null,
+        label,
+        value: normalizeString(entry['value']),
+        description: normalizeString(entry['description']) || undefined,
+        sortOrder: Number(entry['sortOrder']),
+        legacyUuid: legacyUuid.length > 0 ? legacyUuid : undefined,
+        legacyParentUuids: Array.isArray(entry['legacyParentUuids'])
+          ? entry['legacyParentUuids']
+          : [],
+        legacyListUuids: Array.isArray(entry['legacyListUuids']) ? entry['legacyListUuids'] : [],
+        createdBy: normalizeString(entry['createdBy']) || undefined,
+        updatedBy: normalizeString(entry['updatedBy']) || undefined,
+        createdAt: normalizeString(entry['createdAt']) || undefined,
+        updatedAt: normalizeString(entry['updatedAt']) || undefined,
+      })
+    );
+  });
+
+  const normalizedValues = values.map((entryValue: FilemakerValue): FilemakerValue => {
+    if (
+      entryValue.parentId === null ||
+      entryValue.parentId === undefined ||
+      valueIds.has(entryValue.parentId)
+    ) {
+      return entryValue;
+    }
+    return { ...entryValue, parentId: null };
+  });
+
+  const valueParameterIds = new Set<string>();
+  const valueParameterLegacyUuidByLabel = new Map<string, string | null>();
+  const valueParameters: FilemakerValueParameter[] = [];
+  rawValueParameters.forEach((entry: Record<string, unknown>) => {
+    const id = normalizeString(entry['id']);
+    const label = normalizeString(entry['label']);
+    const normalizedLabel = label.toLowerCase();
+    const legacyUuid = normalizeString(entry['legacyUuid']);
+    const existingLegacyUuid = valueParameterLegacyUuidByLabel.get(normalizedLabel);
+    const isDuplicateLabel =
+      existingLegacyUuid !== undefined &&
+      (legacyUuid.length === 0 || existingLegacyUuid === legacyUuid);
+    if (
+      id.length === 0 ||
+      label.length === 0 ||
+      valueParameterIds.has(id) ||
+      isDuplicateLabel
+    ) {
+      return;
+    }
+    valueParameterIds.add(id);
+    valueParameterLegacyUuidByLabel.set(
+      normalizedLabel,
+      legacyUuid.length > 0 ? legacyUuid : null
+    );
+    valueParameters.push(
+      createFilemakerValueParameter({
+        id,
+        label,
+        description: normalizeString(entry['description']) || undefined,
+        legacyUuid: legacyUuid.length > 0 ? legacyUuid : undefined,
+        createdAt: normalizeString(entry['createdAt']) || undefined,
+        updatedAt: normalizeString(entry['updatedAt']) || undefined,
+      })
+    );
+  });
+
+  const valueParameterLinkIds = new Set<string>();
+  const valueParameterRelationKeys = new Set<string>();
+  const valueParameterLinks: FilemakerValueParameterLink[] = [];
+  rawValueParameterLinks.forEach((entry: Record<string, unknown>) => {
+    const valueId = normalizeString(entry['valueId']);
+    const parameterId = normalizeString(entry['parameterId']);
+    const legacyValueUuid = normalizeString(entry['legacyValueUuid']);
+    const legacyParameterUuid = normalizeString(entry['legacyParameterUuid']);
+    if (valueId.length === 0 || parameterId.length === 0) return;
+    if (!valueIds.has(valueId) || !valueParameterIds.has(parameterId)) return;
+
+    const relationKey = `${valueId}:${parameterId}`;
+    if (valueParameterRelationKeys.has(relationKey)) return;
+    const baseId = defaultValueParameterLinkIdForValues(valueId, parameterId);
+    const id = ensureUniqueId(
+      normalizeString(entry['id']) || baseId,
+      valueParameterLinkIds,
+      baseId
+    );
+    valueParameterLinkIds.add(id);
+    valueParameterRelationKeys.add(relationKey);
+    valueParameterLinks.push(
+      createFilemakerValueParameterLink({
+        id,
+        valueId,
+        parameterId,
+        legacyValueUuid: legacyValueUuid.length > 0 ? legacyValueUuid : undefined,
+        legacyParameterUuid: legacyParameterUuid.length > 0 ? legacyParameterUuid : undefined,
+        createdAt: normalizeString(entry['createdAt']) || undefined,
+        updatedAt: normalizeString(entry['updatedAt']) || undefined,
+      })
+    );
+  });
+
+  const valueParentIdById = new Map<string, string | null>(
+    normalizedValues.map((normalizedValue: FilemakerValue): [string, string | null] => [
+      normalizedValue.id,
+      normalizedValue.parentId ?? null,
+    ])
+  );
+  const normalizeOrganizationLegacyDemandValueIds = (input: unknown): string[] => {
+    const rawValueIds = Array.isArray(input) ? input : [];
+    const normalizedValueIds: string[] = [];
+    let expectedParentId: string | null = null;
+
+    for (const rawValueId of rawValueIds.slice(0, 4)) {
+      const valueId = normalizeString(rawValueId);
+      if (valueId.length === 0 || !valueIds.has(valueId)) break;
+
+      const parentId = valueParentIdById.get(valueId) ?? null;
+      if (parentId !== expectedParentId) break;
+
+      normalizedValueIds.push(valueId);
+      expectedParentId = valueId;
+    }
+
+    return normalizedValueIds;
+  };
+  const getOrganizationLegacyDemandRawValueIds = (
+    entry: Record<string, unknown>
+  ): unknown[] => {
+    if (Array.isArray(entry['valueIds'])) return entry['valueIds'];
+    return [
+      entry['level1ValueId'],
+      entry['level2ValueId'],
+      entry['level3ValueId'],
+      entry['level4ValueId'],
+    ];
+  };
+  const organizationLegacyDemandIds = new Set<string>();
+  const organizationLegacyDemandRelationKeys = new Set<string>();
+  const organizationLegacyDemands: FilemakerOrganizationLegacyDemand[] = [];
+  const isKnownOrganizationId = (organizationId: string): boolean =>
+    organizationId.length > 0 && organizationIds.has(organizationId);
+  rawOrganizationLegacyDemands.forEach((entry: Record<string, unknown>) => {
+    const organizationId = normalizeString(entry['organizationId']);
+    if (!isKnownOrganizationId(organizationId)) return;
+
+    const demandValueIds = normalizeOrganizationLegacyDemandValueIds(
+      getOrganizationLegacyDemandRawValueIds(entry)
+    );
+    if (demandValueIds.length === 0) return;
+
+    const relationKey = `${organizationId}:${demandValueIds.join('>')}`;
+    if (organizationLegacyDemandRelationKeys.has(relationKey)) return;
+
+    const baseId = defaultOrganizationLegacyDemandIdForValues(organizationId, demandValueIds);
+    const requestedId = normalizeString(entry['id']);
+    const legacyUuid = normalizeString(entry['legacyUuid']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const id = ensureUniqueId(
+      requestedId.length > 0 ? requestedId : baseId,
+      organizationLegacyDemandIds,
+      baseId
+    );
+    organizationLegacyDemandIds.add(id);
+    organizationLegacyDemandRelationKeys.add(relationKey);
+    organizationLegacyDemands.push(
+      createFilemakerOrganizationLegacyDemand({
+        id,
+        organizationId,
+        valueIds: demandValueIds,
+        legacyUuid: legacyUuid.length > 0 ? legacyUuid : undefined,
+        createdAt: createdAt.length > 0 ? createdAt : undefined,
+        updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
+      })
+    );
+  });
+
+  const lexiconTypesByKey = new Map<string, FilemakerLexiconType>(
+    createDefaultFilemakerLexiconTypes().map(
+      (lexiconType: FilemakerLexiconType): [string, FilemakerLexiconType] => [
+        lexiconType.key,
+        lexiconType,
+      ]
+    )
+  );
+  rawLexiconTypes.forEach((entry: Record<string, unknown>): void => {
+    const keyProbe = createFilemakerLexiconType({
+      key: entry['key'],
+    });
+    const existing = lexiconTypesByKey.get(keyProbe.key);
+    const requestedId = normalizeString(entry['id']);
+    const label = normalizeString(entry['label']);
+    const description = normalizeString(entry['description']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const lexiconType = createFilemakerLexiconType({
+      id:
+        requestedId.length > 0
+          ? requestedId
+          : existing?.id ?? defaultLexiconTypeIdForValues(keyProbe.key),
+      key: keyProbe.key,
+      label: label.length > 0 ? label : existing?.label,
+      description: description.length > 0 ? description : existing?.description,
+      sortOrder: entry['sortOrder'] ?? existing?.sortOrder,
+      system: entry['system'] ?? existing?.system ?? true,
+      createdAt: createdAt.length > 0 ? createdAt : existing?.createdAt,
+      updatedAt: updatedAt.length > 0 ? updatedAt : existing?.updatedAt,
+    });
+    lexiconTypesByKey.set(lexiconType.key, lexiconType);
+  });
+  const lexiconTypes = Array.from(lexiconTypesByKey.values()).sort(
+    (left: FilemakerLexiconType, right: FilemakerLexiconType): number => {
+      const sortCompare = left.sortOrder - right.sortOrder;
+      if (sortCompare !== 0) return sortCompare;
+      return left.label.localeCompare(right.label);
+    }
+  );
+
+  const lexiconValidationPatternsById = new Map<string, FilemakerLexiconValidationPattern>(
+    createDefaultFilemakerLexiconValidationPatterns().map(
+      (
+        pattern: FilemakerLexiconValidationPattern
+      ): [string, FilemakerLexiconValidationPattern] => [pattern.id, pattern]
+    )
+  );
+  rawLexiconValidationPatterns.forEach((entry: Record<string, unknown>): void => {
+    const requestedId = normalizeString(entry['id']);
+    if (requestedId.length === 0) return;
+    const existing = lexiconValidationPatternsById.get(requestedId);
+    const label = normalizeString(entry['label']);
+    const patternValue = normalizeString(entry['pattern']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const storedVersion = Number(entry['version']);
+    const isUntouchedExistingSeed =
+      existing !== undefined && (updatedAt.length === 0 || updatedAt === existing.updatedAt);
+    const isOutdatedSystemSeed =
+      existing !== undefined &&
+      entry['system'] !== false &&
+      (!Number.isFinite(storedVersion) || storedVersion < existing.version);
+    const defaultPattern =
+      (isUntouchedExistingSeed || isOutdatedSystemSeed) &&
+      entry['system'] !== false &&
+      existing !== undefined
+        ? existing
+        : null;
+    const resolvedPatternValue = defaultPattern?.pattern ?? patternValue;
+    if ((label.length === 0 && existing === undefined) || resolvedPatternValue.length === 0) return;
+    const pattern = createFilemakerLexiconValidationPattern({
+      id: requestedId,
+      label: defaultPattern?.label ?? (label.length > 0 ? label : existing?.label),
+      enabled: defaultPattern !== null
+        ? entry['enabled'] ?? defaultPattern.enabled
+        : entry['enabled'] ?? existing?.enabled ?? true,
+      version: defaultPattern?.version ?? entry['version'] ?? existing?.version,
+      priority: defaultPattern?.priority ?? entry['priority'] ?? existing?.priority,
+      matchMode: defaultPattern?.matchMode ?? entry['matchMode'] ?? existing?.matchMode,
+      pattern: resolvedPatternValue,
+      targetTypeKey: defaultPattern?.targetTypeKey ?? entry['targetTypeKey'] ?? existing?.targetTypeKey,
+      sourceScope: defaultPattern?.sourceScope ?? entry['sourceScope'] ?? existing?.sourceScope,
+      confidence: defaultPattern?.confidence ?? entry['confidence'] ?? existing?.confidence,
+      notes: defaultPattern?.notes ?? entry['notes'] ?? existing?.notes,
+      system: defaultPattern !== null ? true : entry['system'] ?? existing?.system ?? false,
+      createdAt: defaultPattern?.createdAt ?? (createdAt.length > 0 ? createdAt : existing?.createdAt),
+      updatedAt: defaultPattern?.updatedAt ?? (updatedAt.length > 0 ? updatedAt : existing?.updatedAt),
+    });
+    lexiconValidationPatternsById.set(pattern.id, pattern);
+  });
+  const lexiconValidationPatterns = Array.from(lexiconValidationPatternsById.values()).sort(
+    (
+      left: FilemakerLexiconValidationPattern,
+      right: FilemakerLexiconValidationPattern
+    ): number => {
+      const priorityCompare = left.priority - right.priority;
+      if (priorityCompare !== 0) return priorityCompare;
+      return left.label.localeCompare(right.label);
+    }
+  );
+
+  const lexiconTermIds = new Set<string>();
+  const lexiconTermKeys = new Set<string>();
+  const lexiconTerms: FilemakerLexiconTerm[] = [];
+  rawLexiconTerms.forEach((entry: Record<string, unknown>): void => {
+    const label = normalizeString(entry['label']);
+    if (label.length === 0) return;
+    const requestedNormalizedLabel = normalizeString(entry['normalizedLabel']);
+    const normalizedLabel =
+      requestedNormalizedLabel.length > 0
+        ? requestedNormalizedLabel
+        : label.toLowerCase().replace(/\s+/g, ' ');
+    const requestedTypeKey = normalizeString(entry['typeKey']);
+    const requestedCategory = normalizeString(entry['category']);
+    const rawTypeKey =
+      requestedTypeKey.length > 0
+        ? requestedTypeKey
+        : requestedCategory.length > 0
+          ? requestedCategory
+          : 'other';
+    const typeKey = createFilemakerLexiconType({ key: rawTypeKey }).key;
+    const relationKey = `${typeKey}:${normalizedLabel}`;
+    if (lexiconTermKeys.has(relationKey)) return;
+    const baseId = defaultLexiconTermIdForValues(typeKey, normalizedLabel);
+    const requestedId = normalizeString(entry['id']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const id = ensureUniqueId(
+      requestedId.length > 0 ? requestedId : baseId,
+      lexiconTermIds,
+      baseId
+    );
+    lexiconTermIds.add(id);
+    lexiconTermKeys.add(relationKey);
+    lexiconTerms.push(
+      createFilemakerLexiconTerm({
+        id,
+        label,
+        normalizedLabel,
+        typeKey,
+        category: typeKey,
+        sourceSite: normalizeString(entry['sourceSite']),
+        sourceProvider: normalizeString(entry['sourceProvider']),
+        iconUrl: normalizeString(entry['iconUrl']),
+        firstSeenAt: normalizeString(entry['firstSeenAt']),
+        lastSeenAt: normalizeString(entry['lastSeenAt']),
+        occurrenceCount: entry['occurrenceCount'],
+        createdAt: createdAt.length > 0 ? createdAt : undefined,
+        updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
+      })
+    );
+  });
+
+  const jobListingIds = new Set<string>();
+  const jobListings: FilemakerJobListing[] = [];
+  rawJobListings.forEach((entry: Record<string, unknown>): void => {
+    const organizationId = normalizeString(entry['organizationId']);
+    const title = normalizeString(entry['title']);
+    if (organizationId.length === 0 || title.length === 0) return;
+
+    const baseId = defaultJobListingIdForValues(organizationId, title);
+    const requestedId = normalizeString(entry['id']);
+    const lastTargetedAt = normalizeString(entry['lastTargetedAt']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const id = ensureUniqueId(
+      requestedId.length > 0 ? requestedId : baseId,
+      jobListingIds,
+      baseId
+    );
+    jobListingIds.add(id);
+    const defaultAddressId =
+      defaultAddressIdByOwner.get(`job_listing:${id}`) ?? normalizeString(entry['addressId']);
+    const resolvedAddress = addressesById.get(defaultAddressId);
+    jobListings.push(
+      createFilemakerJobListing({
+        id,
+        organizationId,
+        title,
+        description: normalizeString(entry['description']),
+        requirements: normalizeString(entry['requirements']),
+        responsibilities: normalizeString(entry['responsibilities']),
+        location: normalizeString(entry['location']),
+        addressId: resolvedAddress?.id ?? defaultAddressId,
+        street: resolvedAddress?.street ?? normalizeString(entry['street']),
+        streetNumber: resolvedAddress?.streetNumber ?? normalizeString(entry['streetNumber']),
+        city: resolvedAddress?.city ?? normalizeString(entry['city']),
+        postalCode: resolvedAddress?.postalCode ?? normalizeString(entry['postalCode']),
+        country: resolvedAddress?.country ?? normalizeString(entry['country']),
+        countryId: resolvedAddress?.countryId ?? normalizeString(entry['countryId']),
+        salaryMin: entry['salaryMin'],
+        salaryMax: entry['salaryMax'],
+        salaryCurrency: normalizeString(entry['salaryCurrency']),
+        salaryText: normalizeString(entry['salaryText']),
+        salaryPeriod: normalizeString(entry['salaryPeriod']),
+        status: normalizeString(entry['status']),
+        targetedCampaignIds: entry['targetedCampaignIds'],
+        lastTargetedAt: lastTargetedAt.length > 0 ? lastTargetedAt : undefined,
+        sourceExternalId: normalizeString(entry['sourceExternalId']),
+        sourceSite: normalizeString(entry['sourceSite']),
+        sourceUrl: normalizeString(entry['sourceUrl']),
+        postedAt: normalizeString(entry['postedAt']),
+        expiresAt: normalizeString(entry['expiresAt']),
+        scrapedAt: normalizeString(entry['scrapedAt']),
+        lexiconTermIds: entry['lexiconTermIds'],
+        createdAt: createdAt.length > 0 ? createdAt : undefined,
+        updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
+      })
+    );
+  });
+
+  const jobListingLexiconLinkIds = new Set<string>();
+  const jobListingLexiconRelationKeys = new Set<string>();
+  const jobListingLexiconLinks: FilemakerJobListingLexiconLink[] = [];
+  rawJobListingLexiconLinks.forEach((entry: Record<string, unknown>): void => {
+    const jobListingId = normalizeString(entry['jobListingId']);
+    const lexiconTermId = normalizeString(entry['lexiconTermId']);
+    if (jobListingId.length === 0 || lexiconTermId.length === 0) return;
+    if (!jobListingIds.has(jobListingId) || !lexiconTermIds.has(lexiconTermId)) return;
+    const relationKey = `${jobListingId}:${lexiconTermId}`;
+    if (jobListingLexiconRelationKeys.has(relationKey)) return;
+    const baseId = defaultJobListingLexiconLinkIdForValues(jobListingId, lexiconTermId);
+    const requestedId = normalizeString(entry['id']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const linkTypeKey = normalizeString(entry['typeKey']);
+    const linkCategory = normalizeString(entry['category']);
+    const id = ensureUniqueId(
+      requestedId.length > 0 ? requestedId : baseId,
+      jobListingLexiconLinkIds,
+      baseId
+    );
+    jobListingLexiconLinkIds.add(id);
+    jobListingLexiconRelationKeys.add(relationKey);
+    jobListingLexiconLinks.push(
+      createFilemakerJobListingLexiconLink({
+        id,
+        jobListingId,
+        lexiconTermId,
+        sourceSite: normalizeString(entry['sourceSite']),
+        sourceUrl: normalizeString(entry['sourceUrl']),
+        sourceValue: normalizeString(entry['sourceValue']),
+        typeKey: linkTypeKey.length > 0 ? linkTypeKey : linkCategory,
+        category: linkTypeKey.length > 0 ? linkTypeKey : linkCategory,
+        position: entry['position'],
+        createdAt: createdAt.length > 0 ? createdAt : undefined,
+        updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
+      })
+    );
+  });
+
   const addresses: FilemakerAddress[] = Array.from(addressesById.values());
 
   return {
@@ -778,6 +1404,15 @@ export const normalizeFilemakerDatabase = (
     emails,
     emailLinks,
     eventOrganizationLinks,
+    values: normalizedValues,
+    valueParameters,
+    valueParameterLinks,
+    organizationLegacyDemands,
+    jobListings,
+    lexiconTypes,
+    lexiconValidationPatterns,
+    lexiconTerms,
+    jobListingLexiconLinks,
   };
 };
 

@@ -3,8 +3,9 @@
 import { useCallback, useRef } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui/base';
-import type { AiNode, RuntimeState, Edge } from '@/shared/lib/ai-paths';
-import { clampTranslate } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { clampTranslate } from '@/shared/lib/ai-paths/core/utils/graph';
 
 import {
   getMarqueeRect,

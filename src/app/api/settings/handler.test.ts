@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KANGUR_LAUNCH_ROUTE_SETTINGS_KEY } from '@/shared/contracts/kangur-settings-keys';
 import { OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
+import { PLAYWRIGHT_ACTIONS_SETTINGS_KEY } from '@/shared/contracts/playwright-steps';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { KANGUR_SLOT_ASSIGNMENTS_KEY, KANGUR_THEME_CATALOG_KEY } from '@/shared/contracts/kangur';
 
@@ -193,7 +194,7 @@ vi.mock('@/features/kangur/services/kangur-settings-repository', async () => {
   };
 });
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -255,7 +256,7 @@ describe('settings handler', () => {
   });
 
   it('clears settings caches, resets logging-control cache, and clears lite cache for lite keys', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -291,7 +292,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -346,7 +347,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -389,7 +390,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -432,7 +433,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -464,7 +465,7 @@ describe('settings handler', () => {
       },
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/settings', {
         method: 'POST',
         body: JSON.stringify({
@@ -488,6 +489,161 @@ describe('settings handler', () => {
     });
   });
 
+  it('rejects invalid playwright runtime action manifests before writing settings', async () => {
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
+        value: JSON.stringify([
+          {
+            id: 'runtime_action__tradera_quicklist_list',
+            name: 'Tradera Quicklist List',
+            description: 'Invalid runtime manifest',
+            runtimeKey: 'tradera_quicklist_list',
+            blocks: [
+              {
+                id: 'block_sell_page_open',
+                kind: 'runtime_step',
+                refId: 'sell_page_open',
+                enabled: true,
+                label: null,
+              },
+              {
+                id: 'block_browser_open',
+                kind: 'runtime_step',
+                refId: 'browser_open',
+                enabled: true,
+                label: null,
+              },
+              {
+                id: 'block_publish',
+                kind: 'runtime_step',
+                refId: 'publish',
+                enabled: true,
+                label: null,
+              },
+            ],
+            stepSetIds: [],
+            personaId: null,
+            createdAt: '2026-04-17T00:00:00.000Z',
+            updatedAt: '2026-04-17T00:00:00.000Z',
+          },
+        ]),
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
+          value: 'ignored-by-mock',
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(400);
+    expect(mocks.updateOneMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      error: 'Runtime action "tradera_quicklist_list" must include publish and publish_verify.',
+    });
+  });
+
+  it('canonicalizes valid playwright actions before persisting them', async () => {
+    const incomingValue = JSON.stringify([
+      {
+        id: 'legacy_action',
+        name: 'Legacy action',
+        description: null,
+        runtimeKey: null,
+        blocks: [],
+        stepSetIds: ['step_set_1'],
+        personaId: null,
+        createdAt: '2026-04-17T00:00:00.000Z',
+        updatedAt: '2026-04-17T00:00:00.000Z',
+      },
+    ]);
+
+    const normalizedValue = JSON.stringify([
+      {
+        id: 'legacy_action',
+        name: 'Legacy action',
+        description: null,
+        runtimeKey: null,
+        blocks: [
+          {
+            id: 'legacy_action__step_set__0',
+            kind: 'step_set',
+            refId: 'step_set_1',
+            enabled: true,
+            label: null,
+            config: {
+              viewportWidth: null,
+              viewportHeight: null,
+              settleDelayMs: null,
+              locale: null,
+              timezoneId: null,
+              userAgent: null,
+              colorScheme: null,
+              reducedMotion: null,
+              geolocationLatitude: null,
+              geolocationLongitude: null,
+              permissions: [],
+            },
+          },
+        ],
+        stepSetIds: ['step_set_1'],
+        personaId: null,
+        executionSettings: {
+          headless: null,
+          browserPreference: null,
+          emulateDevice: null,
+          deviceName: null,
+          slowMo: null,
+          timeout: null,
+          navigationTimeout: null,
+          locale: null,
+          timezoneId: null,
+        },
+        createdAt: '2026-04-17T00:00:00.000Z',
+        updatedAt: '2026-04-17T00:00:00.000Z',
+      },
+    ]);
+
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
+        value: incomingValue,
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
+          value: incomingValue,
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateOneMock).toHaveBeenCalledWith(
+      { key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY },
+      expect.objectContaining({
+        $set: expect.objectContaining({ value: normalizedValue }),
+      }),
+      { upsert: true }
+    );
+    await expect(response.json()).resolves.toEqual({
+      key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
+      value: normalizedValue,
+    });
+  });
+
   it('self-seeds the Mongo-backed theme catalog when the admin requests it directly', async () => {
     mocks.isKangurSettingKeyMock.mockImplementation((key: string) => key.startsWith('kangur_'));
     mocks.ensureKangurThemeCatalogSeededMock.mockResolvedValue({
@@ -495,7 +651,7 @@ describe('settings handler', () => {
       value: '[{"id":"kangur-daily-bloom","name":"Daily Bloom"}]',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         `http://localhost/api/settings?scope=light&key=${encodeURIComponent(KANGUR_THEME_CATALOG_KEY)}`
       ),
@@ -542,7 +698,7 @@ describe('settings handler', () => {
       value: '{"daily":{"id":"factory_daily","name":"Daily Factory"}}',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/settings?scope=light'),
       {
         ...createContext(),

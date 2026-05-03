@@ -37,6 +37,12 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: permanentRedirectMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  notFound: notFoundMock,
+  redirect: redirectMock,
+  permanentRedirect: permanentRedirectMock,
+}));
+
 vi.mock('next-intl/server', () => ({
   getTranslations: getTranslationsMock,
 }));
@@ -49,7 +55,7 @@ vi.mock('@/features/kangur/server', () => ({
   getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
 }));
 
-vi.mock('@/features/kangur/public', () => ({
+vi.mock('@/features/kangur/ui/FrontendPublicOwnerKangurShell', () => ({
   FrontendPublicOwnerKangurShell: ({
     embeddedOverride,
     initialAppearance,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 const KANGUR_COARSE_POINTER_QUERY = '(pointer: coarse)';
 const KANGUR_HOVER_NONE_QUERY = '(hover: none)';
@@ -46,9 +47,9 @@ const scheduleKangurWarmupTask = (callback: () => void): (() => void) => {
     };
   }
 
-  const timeoutId = window.setTimeout(callback, 1);
+  const timeoutId = safeSetTimeout(callback, 1);
   return () => {
-    window.clearTimeout(timeoutId);
+    safeClearTimeout(timeoutId);
   };
 };
 

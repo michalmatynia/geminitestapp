@@ -94,13 +94,9 @@ export type AiPathRuntimeNodeStatusMap = z.infer<typeof aiPathRuntimeNodeStatusM
 export const aiPathRunStatusSchema = z.enum([
   'queued',
   'running',
-  'blocked_on_lease',
-  'handoff_ready',
-  'paused',
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ]);
 
 export type AiPathRunStatus = z.infer<typeof aiPathRunStatusSchema>;
@@ -132,15 +128,11 @@ export const aiPathRunSchema = dtoBaseSchema.extend({
   leaseResourceId: z.string().nullable().optional(),
   leaseScopeId: z.string().nullable().optional(),
   leaseOwnerAgentId: z.string().nullable().optional(),
-  blockedOnLeaseAt: z.string().nullable().optional(),
-  handoffReadyAt: z.string().nullable().optional(),
-  handoffReason: z.string().nullable().optional(),
   checkpointLineageId: z.string().nullable().optional(),
   memoryKey: z.string().nullable().optional(),
   startedAt: z.string().nullable().optional(),
   completedAt: z.string().nullable().optional(),
   finishedAt: z.string().nullable().optional(),
-  deadLetteredAt: z.string().nullable().optional(),
   retryCount: z.number().nullable().optional(),
   maxAttempts: z.number().nullable().optional(),
   nextRetryAt: z.string().nullable().optional(),
@@ -178,8 +170,6 @@ export type AiPathRuntimeEvent = z.infer<typeof aiPathRuntimeEventSchema>;
 export const runStatusSchema = z.enum([
   'idle',
   'running',
-  'blocked_on_lease',
-  'handoff_ready',
   'paused',
   'stepping',
   'completed',
@@ -293,34 +283,6 @@ export const runtimeTraceEffectSchema = z.object({
 });
 export type RuntimeTraceEffect = z.infer<typeof runtimeTraceEffectSchema>;
 
-export const runtimeTraceResumeModeSchema = z.enum(['resume', 'retry', 'replay']);
-export type RuntimeTraceResumeMode = z.infer<typeof runtimeTraceResumeModeSchema>;
-
-export const runtimeTraceResumeDecisionSchema = z.enum(['reused', 'reexecuted']);
-export type RuntimeTraceResumeDecision = z.infer<typeof runtimeTraceResumeDecisionSchema>;
-
-export const runtimeTraceResumeReasonSchema = z.enum([
-  'completed_upstream',
-  'failed_node',
-  'downstream_of_failure',
-  'retry_target',
-  'downstream_of_retry',
-  'incomplete',
-  'replay_requested',
-]);
-export type RuntimeTraceResumeReason = z.infer<typeof runtimeTraceResumeReasonSchema>;
-
-export const runtimeTraceResumeSchema = z.object({
-  mode: runtimeTraceResumeModeSchema,
-  decision: runtimeTraceResumeDecisionSchema,
-  reason: runtimeTraceResumeReasonSchema,
-  sourceTraceId: z.string().nullable().optional(),
-  sourceSpanId: z.string().nullable().optional(),
-  sourceRunStartedAt: z.string().nullable().optional(),
-  sourceStatus: aiPathNodeStatusSchema.nullable().optional(),
-});
-export type RuntimeTraceResume = z.infer<typeof runtimeTraceResumeSchema>;
-
 export const runtimeTraceErrorSchema = z.object({
   code: z.string().nullable().optional(),
   message: z.string().nullable().optional(),
@@ -357,7 +319,6 @@ export const runtimeTraceSpanSchema = z.object({
   cache: runtimeTraceCacheSchema.optional(),
   branch: runtimeTraceBranchSchema.optional(),
   effect: runtimeTraceEffectSchema.optional(),
-  resume: runtimeTraceResumeSchema.optional(),
   error: runtimeTraceErrorSchema.optional(),
 });
 export type RuntimeTraceSpan = z.infer<typeof runtimeTraceSpanSchema>;
@@ -386,9 +347,9 @@ export const runtimeTraceRecordSchema = z
   });
 export type RuntimeTraceRecord = z.infer<typeof runtimeTraceRecordSchema>;
 
-export type NodeRuntimeResolutionStrategy = 'compatibility' | 'code_object_v3';
+export type NodeRuntimeResolutionStrategy = 'code_object_v3';
 
-export const nodeRuntimeResolutionStrategySchema = z.enum(['compatibility', 'code_object_v3']);
+export const nodeRuntimeResolutionStrategySchema = z.literal('code_object_v3');
 
 export const runtimeHistoryEntrySchema = z.object({
   timestamp: z.string(),
@@ -414,13 +375,6 @@ export const runtimeHistoryEntrySchema = z.object({
   activationHash: z.string().nullable().optional(),
   idempotencyKey: z.string().nullable().optional(),
   effectSourceSpanId: z.string().nullable().optional(),
-  resumeMode: runtimeTraceResumeModeSchema.optional(),
-  resumeDecision: runtimeTraceResumeDecisionSchema.optional(),
-  resumeReason: runtimeTraceResumeReasonSchema.optional(),
-  resumeSourceTraceId: z.string().nullable().optional(),
-  resumeSourceSpanId: z.string().nullable().optional(),
-  resumeSourceRunStartedAt: z.string().nullable().optional(),
-  resumeSourceStatus: aiPathNodeStatusSchema.nullable().optional(),
   correlationIds: z.array(z.string()).optional(),
   cacheDecision: runtimeTraceCacheDecisionSchema.optional(),
   branch: runtimeTraceBranchSchema.optional(),
@@ -590,8 +544,8 @@ export const queueSloThresholdsSchema = z.object({
   queueLagCriticalMs: z.number(),
   successRateWarningPct: z.number(),
   successRateCriticalPct: z.number(),
-  deadLetterRateWarningPct: z.number(),
-  deadLetterRateCriticalPct: z.number(),
+  failureRateWarningPct: z.number(),
+  failureRateCriticalPct: z.number(),
   brainErrorRateWarningPct: z.number(),
   brainErrorRateCriticalPct: z.number(),
   minTerminalSamples: z.number(),
@@ -621,7 +575,7 @@ export const aiPathRunQueueSloStatusSchema = z.object({
       sampleSize: z.number(),
       message: z.string(),
     }),
-    deadLetterRate24h: z.object({
+    failureRate24h: z.object({
       level: sloLevelSchema,
       valuePct: z.number(),
       sampleSize: z.number(),

@@ -2,13 +2,14 @@
 
 import React, { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   apiPostMock,
   createListQueryV2Mock,
   getProductsMock,
+  setProducerIdsSpy,
   setValueSpy,
   useProductFormCoreMock,
   useProductFormMetadataMock,
@@ -19,6 +20,7 @@ const {
   apiPostMock: vi.fn(),
   createListQueryV2Mock: vi.fn(),
   getProductsMock: vi.fn(),
+  setProducerIdsSpy: vi.fn(),
   setValueSpy: vi.fn(),
   useProductFormCoreMock: vi.fn(),
   useProductFormMetadataMock: vi.fn(),
@@ -29,6 +31,7 @@ const {
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
   createListQueryV2: (config: unknown) => createListQueryV2Mock(config),
+  useListQueryV2: (config: unknown) => createListQueryV2Mock(config),
 }));
 
 vi.mock('@/features/products/api/products', () => ({
@@ -213,8 +216,11 @@ describe('useProductFormValidator latest SKU source', () => {
     });
     useProductFormMetadataMock.mockReturnValue({
       categories: [],
+      producers: [],
       selectedCategoryId: null,
+      selectedProducerIds: [],
       setCategoryId: vi.fn(),
+      setProducerIds: setProducerIdsSpy,
       selectedCatalogIds: [],
     });
     useProductValidatorConfigMock.mockReturnValue({
@@ -237,6 +243,144 @@ describe('useProductFormValidator latest SKU source', () => {
     });
     getProductsMock.mockResolvedValue([]);
     apiPostMock.mockResolvedValue({});
+  });
+
+  it('auto-applies producer replacements through metadata selection state', async () => {
+    vi.useFakeTimers();
+
+    const producerPattern = createPattern({
+      id: 'pattern-producer-default',
+      regex: '^$',
+      target: 'producer',
+      replacementValue: 'StarGater.net',
+      replacementFields: ['producerIds'],
+    });
+
+    useProductValidatorConfigMock.mockReturnValue({
+      data: {
+        enabledByDefault: true,
+        formatterEnabledByDefault: true,
+        instanceDenyBehavior: null,
+        patterns: [producerPattern],
+      },
+    });
+    useProductFormMetadataMock.mockReturnValue({
+      categories: [],
+      producers: [
+        {
+          id: 'producer-1',
+          name: 'StarGater.net',
+          website: 'https://stargater.net',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      selectedCategoryId: null,
+      selectedProducerIds: [],
+      setCategoryId: vi.fn(),
+      setProducerIds: setProducerIdsSpy,
+      selectedCatalogIds: [],
+    });
+    useProductValidatorIssuesMock.mockReturnValue({
+      visibleFieldIssues: {
+        producerIds: [
+          {
+            patternId: 'pattern-producer-default',
+            message: 'Producer mismatch',
+            severity: 'warning',
+            matchText: '',
+            index: 0,
+            length: 1,
+            regex: '^$',
+            flags: null,
+            replacementValue: 'StarGater.net',
+            replacementApplyMode: 'replace_whole_field',
+            replacementScope: 'field',
+            replacementActive: true,
+            postAcceptBehavior: 'revalidate',
+            debounceMs: 0,
+          },
+        ],
+      },
+    });
+
+    renderHook(() => useProductFormValidator(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+
+    expect(setProducerIdsSpy).toHaveBeenCalledWith(['producer-1']);
+    expect(apiPostMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes validator values after auto-applied formatter field updates', async () => {
+    vi.useFakeTimers();
+
+    const sizeLengthPattern = createPattern({
+      id: 'pattern-size-length-name-segment',
+      regex: '^0$',
+      target: 'size_length',
+      replacementValue: '4',
+      replacementFields: ['sizeLength'],
+    });
+
+    useProductValidatorConfigMock.mockReturnValue({
+      data: {
+        enabledByDefault: true,
+        formatterEnabledByDefault: true,
+        instanceDenyBehavior: null,
+        patterns: [sizeLengthPattern],
+      },
+    });
+    useProductValidatorIssuesMock.mockReturnValue({
+      visibleFieldIssues: {
+        sizeLength: [
+          {
+            patternId: 'pattern-size-length-name-segment',
+            message: 'Length mismatch',
+            severity: 'warning',
+            matchText: '0',
+            index: 0,
+            length: 1,
+            regex: '^0$',
+            flags: null,
+            replacementValue: '4',
+            replacementApplyMode: 'replace_whole_field',
+            replacementScope: 'field',
+            replacementActive: true,
+            postAcceptBehavior: 'revalidate',
+            debounceMs: 0,
+          },
+        ],
+      },
+    });
+
+    renderHook(() => useProductFormValidator(), {
+      wrapper: createWrapper({ defaultSizeLength: 0 }),
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
+
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'sizeLength',
+      4,
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      })
+    );
+
+    const observedSizeLengthValues = useProductValidatorIssuesMock.mock.calls.map(
+      ([args]) => (args as { values: { sizeLength?: unknown } }).values.sizeLength
+    );
+    expect(observedSizeLengthValues).toContain(4);
   });
 
   it('requests a fresh latest-product source snapshot for SKU sequencing', async () => {
@@ -267,6 +411,39 @@ describe('useProductFormValidator latest SKU source', () => {
       undefined,
       { fresh: true }
     );
+  });
+
+  it('applies global formatter default when validator settings load after mount', async () => {
+    let validatorConfig:
+      | {
+          enabledByDefault: boolean;
+          formatterEnabledByDefault: boolean;
+          instanceDenyBehavior: null;
+          patterns: ProductValidationPattern[];
+        }
+      | undefined;
+    useProductValidatorConfigMock.mockImplementation(() => ({
+      data: validatorConfig,
+    }));
+
+    const { result, rerender } = renderHook(() => useProductFormValidator(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.formatterEnabled).toBe(false);
+
+    validatorConfig = {
+      enabledByDefault: true,
+      formatterEnabledByDefault: true,
+      instanceDenyBehavior: null,
+      patterns: [],
+    };
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.validatorEnabled).toBe(true);
+      expect(result.current.formatterEnabled).toBe(true);
+    });
   });
 
   it('excludes the current product when resolving the latest validator source in edit mode', () => {

@@ -30,13 +30,14 @@ describe('product-listings-copy', () => {
     ).toBe('Integrations - Vintage Chair');
   });
 
-  it('resolves Base.com and Tradera list-product modal copy', () => {
+  it('resolves Base.com, Tradera, and Vinted list-product modal copy', () => {
     expect(
       resolveListProductModalCopy({
         productName: 'Vintage Chair',
         isBaseComIntegration: true,
         isTraderaIntegration: false,
         selectedIntegrationName: 'Base.com',
+        selectedIntegrationSlug: 'baselinker',
       })
     ).toEqual({
       modalTitle: 'Export to Base.com - Vintage Chair',
@@ -49,10 +50,24 @@ describe('product-listings-copy', () => {
         isBaseComIntegration: false,
         isTraderaIntegration: true,
         selectedIntegrationName: 'Tradera',
+        selectedIntegrationSlug: 'tradera',
       })
     ).toEqual({
       modalTitle: 'List on Tradera - Vintage Chair',
       saveText: 'List on Tradera',
+    });
+
+    expect(
+      resolveListProductModalCopy({
+        productName: 'Vintage Chair',
+        isBaseComIntegration: false,
+        isTraderaIntegration: false,
+        selectedIntegrationName: 'Vinted',
+        selectedIntegrationSlug: 'vinted',
+      })
+    ).toEqual({
+      modalTitle: 'List on Vinted.pl - Vintage Chair',
+      saveText: 'List on Vinted.pl',
     });
   });
 
@@ -63,6 +78,7 @@ describe('product-listings-copy', () => {
         isBaseComIntegration: false,
         isTraderaIntegration: false,
         selectedIntegrationName: 'Playwright programmable',
+        selectedIntegrationSlug: 'playwright-programmable',
       })
     ).toEqual({
       modalTitle: 'List on Playwright programmable - Vintage Chair',
@@ -75,6 +91,7 @@ describe('product-listings-copy', () => {
         isBaseComIntegration: false,
         isTraderaIntegration: false,
         selectedIntegrationName: null,
+        selectedIntegrationSlug: null,
       })
     ).toEqual({
       modalTitle: 'List Product - Vintage Chair',
@@ -87,6 +104,7 @@ describe('product-listings-copy', () => {
       resolveMassListProductModalCopy({
         productCount: 3,
         selectedIntegrationName: 'Base.com',
+        selectedIntegrationSlug: 'baselinker',
         isBaseComIntegration: true,
       })
     ).toEqual({
@@ -98,10 +116,23 @@ describe('product-listings-copy', () => {
       resolveMassListProductModalCopy({
         productCount: 3,
         selectedIntegrationName: 'Tradera',
+        selectedIntegrationSlug: 'tradera',
         isBaseComIntegration: false,
       })
     ).toEqual({
       modalTitle: 'List 3 Products to Tradera',
+      saveText: 'List Products',
+    });
+
+    expect(
+      resolveMassListProductModalCopy({
+        productCount: 2,
+        selectedIntegrationName: 'Vinted',
+        selectedIntegrationSlug: 'vinted',
+        isBaseComIntegration: false,
+      })
+    ).toEqual({
+      modalTitle: 'List 2 Products to Vinted.pl',
       saveText: 'List Products',
     });
   });
@@ -151,6 +182,7 @@ describe('product-listings-copy', () => {
     expect(
       resolveListProductIntegrationSelectionCopy({
         selectedIntegrationName: 'Tradera',
+        selectedIntegrationSlug: 'tradera',
       })
     ).toEqual({
       sectionTitle: 'Integration Target',
@@ -159,6 +191,20 @@ describe('product-listings-copy', () => {
       accountLabel: 'Account',
       accountPlaceholder: 'Select an account...',
       accountDescription: 'Choose which account to use for listing this product on Tradera.',
+    });
+
+    expect(
+      resolveListProductIntegrationSelectionCopy({
+        selectedIntegrationName: 'Vinted',
+        selectedIntegrationSlug: 'vinted',
+      })
+    ).toEqual({
+      sectionTitle: 'Integration Target',
+      marketplaceLabel: 'Marketplace / Integration',
+      marketplacePlaceholder: 'Select a marketplace...',
+      accountLabel: 'Account',
+      accountPlaceholder: 'Select an account...',
+      accountDescription: 'Choose which account to use for listing this product on Vinted.pl.',
     });
 
     expect(resolveSelectProductIntegrationSettingsCopy()).toEqual({

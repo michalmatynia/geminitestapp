@@ -88,7 +88,7 @@ vi.mock('@/features/ai/ai-paths/utils/ui-utils', () => ({
   formatPortLabel: (value: string) => value.toUpperCase(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   ...(() => {
     const React = require('react') as typeof import('react');
     return {

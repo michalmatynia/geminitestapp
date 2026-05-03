@@ -1,3 +1,13 @@
+// product-list-state-utils: shared, pure helpers and constants used by the
+// product list UI. This module centralizes:
+// - time constants and UI timing values used for transient row highlights
+// - canonical sets for listing 'in-flight' and 'completed' statuses used to
+//   detect transitions and provide visual feedback
+// - lightweight normalization and parsing helpers (strings, records, dates)
+// - category and catalog resolution helpers used to derive display labels and
+//   stable ids across denormalized product payloads
+//
+// Keep this module side-effect free and cheap to import from client code.
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
@@ -40,7 +50,9 @@ const toTrimmedString = (value: unknown): string => {
 };
 
 const toRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
   return value as Record<string, unknown>;
 };
 
@@ -57,7 +69,7 @@ const toMillis = (value: unknown): number | null => {
   }
   if (typeof value === 'string') {
     const trimmed = value.trim();
-    if (!trimmed) return null;
+    if (trimmed.length === 0) return null;
     const parsed = Date.parse(trimmed);
     return Number.isNaN(parsed) ? null : parsed;
   }
@@ -74,8 +86,8 @@ export const isIncomingProductDetailNewer = (
   const incomingUpdatedAt = toMillis(incoming.updatedAt);
   const currentUpdatedAt = toMillis(current.updatedAt);
 
-  if (incomingUpdatedAt == null) return false;
-  if (currentUpdatedAt == null) return true;
+  if (incomingUpdatedAt === null) return false;
+  if (currentUpdatedAt === null) return true;
   return incomingUpdatedAt > currentUpdatedAt;
 };
 
@@ -86,7 +98,7 @@ export const isIncomingProductDetailSameRevision = (
   const incomingUpdatedAt = toMillis(incoming.updatedAt);
   const currentUpdatedAt = toMillis(current.updatedAt);
 
-  if (incomingUpdatedAt == null || currentUpdatedAt == null) return false;
+  if (incomingUpdatedAt === null || currentUpdatedAt === null) return false;
   return incomingUpdatedAt === currentUpdatedAt;
 };
 
@@ -98,7 +110,7 @@ const resolveComparableLocalizedText = (
   const directValue = toTrimmedString(
     (product as Record<string, unknown>)[`${prefix}_${locale}`]
   );
-  if (directValue) return directValue;
+  if (directValue.length > 0) return directValue;
 
   const localizedRecord = toRecord((product as Record<string, unknown>)[prefix]);
   return toTrimmedString(localizedRecord?.[locale]);
@@ -150,9 +162,9 @@ export const buildCategoryNameById = (
     if (!Array.isArray(categories)) continue;
     for (const category of categories) {
       const categoryId = resolveCategoryRecordId(category);
-      if (!categoryId || map.has(categoryId)) continue;
+      if (categoryId.length === 0 || map.has(categoryId)) continue;
       const label = resolveCategoryLabelByLocale(category, locale);
-      if (!label) continue;
+      if (label.length === 0) continue;
       map.set(categoryId, label);
     }
   }
@@ -164,7 +176,7 @@ export const resolveProductCategoryDisplayLabel = (
   categoryNameById: ReadonlyMap<string, string>
 ): string => {
   const normalizedCategoryId = toTrimmedString(categoryId);
-  if (!normalizedCategoryId) return 'Unassigned';
+  if (normalizedCategoryId.length === 0) return 'Unassigned';
 
   return resolveCategoryDisplayLabel(
     normalizedCategoryId,
@@ -175,10 +187,10 @@ export const resolveProductCategoryDisplayLabel = (
 
 export const resolveProductCategoryId = (product: ProductWithImages): string => {
   const direct = toTrimmedString(product.categoryId);
-  if (direct) return direct;
+  if (direct.length > 0) return direct;
 
   const categoryRecord = resolveProductCategoryRecord(product);
-  if (!categoryRecord) return '';
+  if (categoryRecord === null) return '';
 
   return resolveCategoryRecordIdValue(categoryRecord);
 };
@@ -188,17 +200,17 @@ export const resolveProductCatalogId = (product: ProductWithImages): string => {
   if (Array.isArray(catalogs)) {
     const first = catalogs[0] as Record<string, unknown> | undefined;
     const relationCatalogId = resolveCatalogRelationIdValue(first);
-    if (relationCatalogId) {
+    if (relationCatalogId.length > 0) {
       return relationCatalogId;
     }
   }
 
   const direct = toTrimmedString(product.catalogId);
-  if (direct) return direct;
+  if (direct.length > 0) return direct;
 
   const categoryRecord = resolveProductCategoryRecord(product);
   const categoryCatalogId = toTrimmedString(categoryRecord?.['catalogId']);
-  if (categoryCatalogId) return categoryCatalogId;
+  if (categoryCatalogId.length > 0) return categoryCatalogId;
 
   return '';
 };

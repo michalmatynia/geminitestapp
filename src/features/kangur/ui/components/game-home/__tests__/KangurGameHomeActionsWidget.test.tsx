@@ -23,8 +23,16 @@ const { useOptionalKangurRouteTransitionStateMock } = vi.hoisted(() => ({
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
 }));
 
+const { useKangurDeferredStandaloneHomeReadyMock } = vi.hoisted(() => ({
+  useKangurDeferredStandaloneHomeReadyMock: vi.fn(),
+}));
+
 const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
+}));
+
+const { lazyMotionDivPropsMock } = vi.hoisted(() => ({
+  lazyMotionDivPropsMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
@@ -75,13 +83,35 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady', () => ({
+  useKangurDeferredStandaloneHomeReady: () => useKangurDeferredStandaloneHomeReadyMock(),
+}));
+
+vi.mock('@/features/kangur/ui/components/LazyAnimatePresence', () => ({
+  LazyMotionDiv: ({
+    children,
+    loadMotion,
+    ...props
+  }: React.HTMLAttributes<HTMLDivElement> & {
+    loadMotion?: boolean;
+  }) => {
+    lazyMotionDivPropsMock({
+      'data-testid': props['data-testid'],
+      loadMotion,
+    });
+    return <div {...props}>{children}</div>;
+  },
+}));
+
 import { KangurGameHomeActionsWidget } from '../KangurGameHomeActionsWidget';
 
 describe('KangurGameHomeActionsWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     kangurTransitionLinkPropsMock.mockClear();
+    lazyMotionDivPropsMock.mockClear();
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
       setSubject: vi.fn(),
@@ -241,6 +271,37 @@ describe('KangurGameHomeActionsWidget', () => {
     );
     expect(screen.getByTestId('kangur-home-actions-list')).toHaveClass(
       ...GAME_HOME_ACTIONS_LIST_CLASSNAME.split(' ')
+    );
+  });
+
+  it('keeps home action motion disabled until the standalone home idle gate opens', () => {
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(false);
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canStartFromHome: true,
+      handleStartGame: vi.fn(),
+      screen: 'home',
+      setScreen: vi.fn(),
+    });
+
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(screen.getByRole('link', { name: 'Lekcje' })).toBeInTheDocument();
+    expect(
+      lazyMotionDivPropsMock.mock.calls
+        .map(([call]) => call)
+        .filter((call) => String(call['data-testid']).startsWith('kangur-home-action-'))
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          'data-testid': 'kangur-home-action-lessons',
+          loadMotion: false,
+        }),
+        expect.objectContaining({
+          'data-testid': 'kangur-home-action-play',
+          loadMotion: false,
+        }),
+      ])
     );
   });
 

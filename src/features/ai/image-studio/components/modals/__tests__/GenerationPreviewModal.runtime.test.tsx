@@ -24,11 +24,23 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/ui/data-display.public', async () => {
   const mocks = await import('../../studio-modals/__tests__/studioInlineEditRuntimeMockComponents');
   return {
     StatusBadge: mocks.MockStatusBadge,
+  };
+});
+
+vi.mock('@/shared/ui/navigation-and-layout.public', async () => {
+  const mocks = await import('../../studio-modals/__tests__/studioInlineEditRuntimeMockComponents');
+  return {
     MetadataItem: mocks.MockMetadataItem,
+  };
+});
+
+vi.mock('@/shared/ui/forms-and-actions.public', async () => {
+  const mocks = await import('../../studio-modals/__tests__/studioInlineEditRuntimeMockComponents');
+  return {
     FormActions: mocks.MockFormActions,
   };
 });

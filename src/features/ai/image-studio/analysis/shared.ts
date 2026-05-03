@@ -16,58 +16,89 @@ export * from './segments/alpha-detection';
 export * from './segments/white-bg-detection';
 export * from './segments/autoscale-planning';
 
-export const normalizeImageStudioAnalysisLayoutConfig = (
-  config?: Partial<ImageStudioCenterLayoutConfig> | null
-): NormalizedImageStudioAnalysisLayoutConfig => {
-  const paddingPercent = Math.max(
+const clampNumber = (value: number, min: number, max: number): number =>
+  Math.max(min, Math.min(max, value));
+
+const normalizePaddingPercent = (
+  config: Partial<ImageStudioCenterLayoutConfig> | null | undefined
+): number =>
+  clampNumber(
+    config?.paddingPercent ?? IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_PADDING_PERCENT,
     IMAGE_STUDIO_CENTER_LAYOUT_MIN_PADDING_PERCENT,
-    Math.min(
-      IMAGE_STUDIO_CENTER_LAYOUT_MAX_PADDING_PERCENT,
-      config?.paddingPercent ?? IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_PADDING_PERCENT
-    )
+    IMAGE_STUDIO_CENTER_LAYOUT_MAX_PADDING_PERCENT
   );
 
-  const result = {
+const normalizeTargetCanvasSide = (value: number | null | undefined): number | null =>
+  value !== null && value !== undefined
+    ? clampNumber(
+      value,
+      IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX,
+      IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX
+    )
+    : null;
+
+const normalizeWhiteThreshold = (
+  config: Partial<ImageStudioCenterLayoutConfig> | null | undefined
+): number =>
+  clampNumber(
+    config?.whiteThreshold ?? IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD,
+    IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
+    IMAGE_STUDIO_CENTER_LAYOUT_MAX_WHITE_THRESHOLD
+  );
+
+const normalizeChromaThreshold = (
+  config: Partial<ImageStudioCenterLayoutConfig> | null | undefined
+): number =>
+  clampNumber(
+    config?.chromaThreshold ?? IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
+    IMAGE_STUDIO_CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
+    IMAGE_STUDIO_CENTER_LAYOUT_MAX_CHROMA_THRESHOLD
+  );
+
+const normalizePaddingConfig = (
+  config: Partial<ImageStudioCenterLayoutConfig> | null | undefined
+): Pick<
+  NormalizedImageStudioAnalysisLayoutConfig,
+  'paddingPercent' | 'paddingXPercent' | 'paddingYPercent'
+> => {
+  const paddingPercent = normalizePaddingPercent(config);
+  return {
     paddingPercent,
     paddingXPercent: config?.paddingXPercent ?? paddingPercent,
     paddingYPercent: config?.paddingYPercent ?? paddingPercent,
-    fillMissingCanvasWhite: config?.fillMissingCanvasWhite ?? false,
-    targetCanvasWidth:
-      config?.targetCanvasWidth != null
-        ? Math.max(
-          IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX,
-          Math.min(IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX, config.targetCanvasWidth)
-        )
-        : null,
-    targetCanvasHeight:
-      config?.targetCanvasHeight != null
-        ? Math.max(
-          IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX,
-          Math.min(
-            IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX,
-            config.targetCanvasHeight
-          )
-        )
-        : null,
-    whiteThreshold: Math.max(
-      IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
-      Math.min(
-        IMAGE_STUDIO_CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
-        config?.whiteThreshold ?? IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD
-      )
-    ),
-    chromaThreshold: Math.max(
-      IMAGE_STUDIO_CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
-      Math.min(
-        IMAGE_STUDIO_CENTER_LAYOUT_MAX_CHROMA_THRESHOLD,
-        config?.chromaThreshold ?? IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD
-      )
-    ),
-    shadowPolicy: config?.shadowPolicy ?? 'auto',
-    detection: config?.detection ?? 'auto',
   };
-  return result;
 };
+
+const normalizeCanvasConfig = (
+  config: Partial<ImageStudioCenterLayoutConfig> | null | undefined
+): Pick<
+  NormalizedImageStudioAnalysisLayoutConfig,
+  'targetCanvasWidth' | 'targetCanvasHeight'
+> => ({
+  targetCanvasWidth: normalizeTargetCanvasSide(config?.targetCanvasWidth),
+  targetCanvasHeight: normalizeTargetCanvasSide(config?.targetCanvasHeight),
+});
+
+const normalizeDetectionConfig = (
+  config: Partial<ImageStudioCenterLayoutConfig> | null | undefined
+): Pick<
+  NormalizedImageStudioAnalysisLayoutConfig,
+  'fillMissingCanvasWhite' | 'shadowPolicy' | 'detection'
+> => ({
+  fillMissingCanvasWhite: config?.fillMissingCanvasWhite ?? false,
+  shadowPolicy: config?.shadowPolicy ?? 'auto',
+  detection: config?.detection ?? 'auto',
+});
+
+export const normalizeImageStudioAnalysisLayoutConfig = (
+  config?: Partial<ImageStudioCenterLayoutConfig> | null
+): NormalizedImageStudioAnalysisLayoutConfig => ({
+    ...normalizePaddingConfig(config),
+    ...normalizeDetectionConfig(config),
+    ...normalizeCanvasConfig(config),
+    whiteThreshold: normalizeWhiteThreshold(config),
+    chromaThreshold: normalizeChromaThreshold(config),
+  });
 
 export const analyzeImageObjectFromRgba = (params: {
   pixelData: PixelData;

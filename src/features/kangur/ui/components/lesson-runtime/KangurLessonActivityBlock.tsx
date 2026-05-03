@@ -2,7 +2,7 @@
 
 import { Printer } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 
 import { getLocalizedKangurLessonActivityDefinition } from '@/features/kangur/lessons/activities';
 import {
@@ -19,6 +19,58 @@ import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/Kangu
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/features/kangur/shared/contracts/kangur';
 import { KangurLessonActivityRuntime } from '../KangurLessonActivityRuntime';
+
+export type KangurLessonActivityRuntimeContextValue = {
+  onFinish: () => void;
+};
+
+export const KangurLessonActivityRuntimeContext = createContext<KangurLessonActivityRuntimeContextValue | null>(null);
+
+export function useKangurLessonActivityRuntimeContext(): KangurLessonActivityRuntimeContextValue {
+  const context = useContext(KangurLessonActivityRuntimeContext);
+  if (!context) {
+    throw new Error('useKangurLessonActivityRuntimeContext must be used within KangurLessonActivityBlock');
+  }
+  return context;
+}
+
+type KangurLessonActivityBlockContextValue = {
+  activityRuntime: ReturnType<typeof getLocalizedKangurLessonActivityDefinition>['lessonActivityRuntime'];
+  blockId: string;
+  definitionLabel: string;
+  description: string;
+  instanceKey: number;
+  isCoarsePointer: boolean;
+  isCompleted: boolean;
+  lessonPrint: ReturnType<typeof useOptionalKangurLessonPrint>;
+  printPanelId: string;
+  printPanelLabel: string;
+  title: string;
+};
+
+const KangurLessonActivityBlockContext = createContext<KangurLessonActivityBlockContextValue | null>(null);
+
+function useKangurLessonActivityBlock(): KangurLessonActivityBlockContextValue {
+  const context = useContext(KangurLessonActivityBlockContext);
+  if (!context) {
+    throw new Error('useKangurLessonActivityBlock must be used within KangurLessonActivityBlock');
+  }
+  return context;
+}
+
+export function KangurLessonActivityRuntimeProvider({
+  children,
+  onFinish,
+}: {
+  children: React.ReactNode;
+  onFinish: () => void;
+}): React.JSX.Element {
+  return (
+    <KangurLessonActivityRuntimeContext.Provider value={{ onFinish }}>
+      {children}
+    </KangurLessonActivityRuntimeContext.Provider>
+  );
+}
 
 type KangurLessonActivityBlockProps = {
   block: KangurLessonActivityBlockType;
@@ -73,15 +125,9 @@ const resolveKangurLessonActivityButtonClassName = (
     : `${spacing}px-4`;
 };
 
-function KangurLessonActivityEditorPreview({
-  definitionLabel,
-  description,
-  title,
-}: {
-  definitionLabel: string;
-  description: string;
-  title: string;
-}): React.JSX.Element {
+function KangurLessonActivityEditorPreview(): React.JSX.Element {
+  const { definitionLabel, description, title } = useKangurLessonActivityBlock();
+
   return (
     <KangurSurfacePanel
       accent='emerald'
@@ -105,17 +151,8 @@ function KangurLessonActivityEditorPreview({
   );
 }
 
-function KangurLessonActivityPrintButton({
-  isCoarsePointer,
-  lessonPrint,
-  printPanelId,
-  printPanelLabel,
-}: {
-  isCoarsePointer: boolean;
-  lessonPrint: ReturnType<typeof useOptionalKangurLessonPrint>;
-  printPanelId: string;
-  printPanelLabel: string;
-}): React.JSX.Element | null {
+function KangurLessonActivityPrintButton(): React.JSX.Element | null {
+  const { isCoarsePointer, lessonPrint, printPanelId, printPanelLabel } = useKangurLessonActivityBlock();
   if (!lessonPrint?.onPrintPanel) {
     return null;
   }
@@ -141,15 +178,8 @@ function KangurLessonActivityPrintButton({
   );
 }
 
-function KangurLessonActivityPrintSummary({
-  description,
-  isCompleted,
-  title,
-}: {
-  description: string;
-  isCompleted: boolean;
-  title: string;
-}): React.JSX.Element {
+function KangurLessonActivityPrintSummary(): React.JSX.Element {
+  const { description, isCompleted, title } = useKangurLessonActivityBlock();
   const summaryText = isCompleted
     ? 'Completed in the live lesson view.'
     : 'Open this lesson on screen to play the interactive task.';
@@ -170,12 +200,12 @@ function KangurLessonActivityPrintSummary({
 }
 
 function KangurLessonActivityCompletedState({
-  isCoarsePointer,
   onRestart,
 }: {
-  isCoarsePointer: boolean;
   onRestart: () => void;
 }): React.JSX.Element {
+  const { isCoarsePointer } = useKangurLessonActivityBlock();
+
   return (
     <KangurSummaryPanel
       accent='emerald'
@@ -199,17 +229,8 @@ function KangurLessonActivityCompletedState({
   );
 }
 
-function KangurLessonActivityRuntimeState({
-  activityRuntime,
-  blockId,
-  instanceKey,
-  onFinish,
-}: {
-  activityRuntime: ReturnType<typeof getLocalizedKangurLessonActivityDefinition>['lessonActivityRuntime'];
-  blockId: string;
-  instanceKey: number;
-  onFinish: () => void;
-}): React.JSX.Element | null {
+function KangurLessonActivityRuntimeState(): React.JSX.Element | null {
+  const { activityRuntime, blockId, instanceKey } = useKangurLessonActivityBlock();
   if (!activityRuntime) {
     return null;
   }
@@ -219,17 +240,13 @@ function KangurLessonActivityRuntimeState({
       <KangurLessonActivityRuntime
         key={`${blockId}-${instanceKey}`}
         runtime={activityRuntime}
-        onFinish={onFinish}
       />
     </div>
   );
 }
 
-function KangurLessonActivityUnavailableState({
-  activityRuntime,
-}: {
-  activityRuntime: ReturnType<typeof getLocalizedKangurLessonActivityDefinition>['lessonActivityRuntime'];
-}): React.JSX.Element | null {
+function KangurLessonActivityUnavailableState(): React.JSX.Element | null {
+  const { activityRuntime } = useKangurLessonActivityBlock();
   if (activityRuntime) {
     return null;
   }
@@ -265,69 +282,72 @@ export function KangurLessonActivityBlock(
   const description = block.description?.trim() || definition.description;
   const activityRuntime = definition.lessonActivityRuntime ?? null;
 
+  const contextValue: KangurLessonActivityBlockContextValue = {
+    activityRuntime,
+    blockId: block.id,
+    definitionLabel: definition.label,
+    description,
+    instanceKey,
+    isCoarsePointer,
+    isCompleted,
+    lessonPrint,
+    printPanelId,
+    printPanelLabel,
+    title,
+  };
+
   if (renderMode === 'editor') {
     return (
-      <KangurLessonActivityEditorPreview
-        definitionLabel={definition.label}
-        description={description}
-        title={title}
-      />
+      <KangurLessonActivityBlockContext.Provider value={contextValue}>
+        <KangurLessonActivityEditorPreview />
+      </KangurLessonActivityBlockContext.Provider>
     );
   }
 
   return (
-    <KangurSurfacePanel
-      accent='emerald'
-      data-kangur-print-panel='true'
-      data-kangur-print-paged-panel='true'
-      data-kangur-print-panel-id={printPanelId}
-      data-kangur-print-panel-title={title}
-      data-testid='lesson-activity-block-shell'
-      padding='lg'
-    >
-      <div data-kangur-print-exclude='true'>
-        <KangurLessonActivityHeader
-          badgeRowClassName={`mb-4 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}
-          description={description}
-          label={definition.label}
-          title={title}
-          wrapperClassName='mb-4'
-        />
-        <KangurLessonActivityPrintButton
-          isCoarsePointer={isCoarsePointer}
-          lessonPrint={lessonPrint}
-          printPanelId={printPanelId}
-          printPanelLabel={printPanelLabel}
-        />
-      </div>
+    <KangurLessonActivityBlockContext.Provider value={contextValue}>
+      <KangurSurfacePanel
+        accent='emerald'
+        data-kangur-print-panel='true'
+        data-kangur-print-paged-panel='true'
+        data-kangur-print-panel-id={printPanelId}
+        data-kangur-print-panel-title={title}
+        data-testid='lesson-activity-block-shell'
+        padding='lg'
+      >
+        <div data-kangur-print-exclude='true'>
+          <KangurLessonActivityHeader
+            badgeRowClassName={`mb-4 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}
+            description={description}
+            label={definition.label}
+            title={title}
+            wrapperClassName='mb-4'
+          />
+          <KangurLessonActivityPrintButton />
+        </div>
 
-      <KangurLessonActivityPrintSummary
-        description={description}
-        isCompleted={isCompleted}
-        title={title}
-      />
+        <KangurLessonActivityPrintSummary />
 
-      {isCompleted ? (
-        <KangurLessonActivityCompletedState
-          isCoarsePointer={isCoarsePointer}
-          onRestart={(): void => {
-            setIsCompleted(false);
-            setInstanceKey((current) => current + 1);
-          }}
-        />
-      ) : (
-        <>
-          <KangurLessonActivityRuntimeState
-            activityRuntime={activityRuntime}
-            blockId={block.id}
-            instanceKey={instanceKey}
-            onFinish={(): void => {
-              setIsCompleted(true);
+        {isCompleted ? (
+          <KangurLessonActivityCompletedState
+            onRestart={(): void => {
+              setIsCompleted(false);
+              setInstanceKey((current) => current + 1);
             }}
           />
-          <KangurLessonActivityUnavailableState activityRuntime={activityRuntime} />
-        </>
-      )}
-    </KangurSurfacePanel>
+        ) : (
+          <KangurLessonActivityRuntimeContext.Provider
+            value={{
+              onFinish: (): void => {
+                setIsCompleted(true);
+              },
+            }}
+          >
+            <KangurLessonActivityRuntimeState />
+            <KangurLessonActivityUnavailableState />
+          </KangurLessonActivityRuntimeContext.Provider>
+        )}
+      </KangurSurfacePanel>
+    </KangurLessonActivityBlockContext.Provider>
   );
 }

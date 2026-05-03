@@ -73,6 +73,7 @@ vi.mock('@/features/kangur/ui/components/SubtractingGardenGame', () => ({
 }));
 
 import { KangurLessonActivityRuntime } from './KangurLessonActivityRuntime';
+import { KangurLessonActivityRuntimeProvider } from './lesson-runtime/KangurLessonActivityBlock';
 
 describe('KangurLessonActivityRuntime', () => {
   beforeEach(() => {
@@ -130,7 +131,11 @@ describe('KangurLessonActivityRuntime', () => {
       title,
     };
 
-    render(<KangurLessonActivityRuntime onFinish={vi.fn()} runtime={runtime} />);
+    render(
+      <KangurLessonActivityRuntimeProvider onFinish={vi.fn()}>
+        <KangurLessonActivityRuntime runtime={runtime} />
+      </KangurLessonActivityRuntimeProvider>
+    );
 
     expect(screen.getByTestId(testId)).toBeInTheDocument();
     expect(mock).toHaveBeenCalledTimes(1);

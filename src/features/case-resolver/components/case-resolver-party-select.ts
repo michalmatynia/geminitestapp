@@ -1,5 +1,5 @@
 import {
-  decodeFilemakerPartyReference,
+  type decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
 } from '@/features/filemaker/public';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
@@ -11,7 +11,7 @@ export type DecodedFilemakerPartyReference = ReturnType<typeof decodeFilemakerPa
 export const buildMissingSelectedPartyOption = (
   selectedReference: DecodedFilemakerPartyReference
 ): CaseResolverPartySelectOption | null => {
-  if (!selectedReference) return null;
+  if (selectedReference === null || selectedReference === undefined) return null;
   const selectedValue = encodeFilemakerPartyReference(selectedReference);
   if (!selectedValue || selectedValue === 'none') return null;
   const kindLabel = selectedReference.kind === 'person' ? 'Person' : 'Organization';

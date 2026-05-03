@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
@@ -32,7 +32,7 @@ const parseProfileId = (params: { id: string }): string => {
   return parsed.data.id;
 };
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -45,7 +45,7 @@ export async function GET_handler(
   return NextResponse.json(profile, { headers: { 'Cache-Control': 'no-store' } });
 }
 
-export async function PUT_handler(
+export async function putHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { id: string }
@@ -54,6 +54,7 @@ export async function PUT_handler(
   const body = ctx.body as ProductSyncProfileUpdatePayload;
   const patch: Partial<ProductSyncProfile> = {};
   if (body.name !== undefined) patch.name = body.name;
+  if (body.isDefault !== undefined) patch.isDefault = body.isDefault;
   if (body.enabled !== undefined) patch.enabled = body.enabled;
   if (body.connectionId !== undefined) patch.connectionId = body.connectionId;
   if (body.inventoryId !== undefined) patch.inventoryId = body.inventoryId;
@@ -80,7 +81,7 @@ export async function PUT_handler(
   return NextResponse.json(profile, { headers: { 'Cache-Control': 'no-store' } });
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

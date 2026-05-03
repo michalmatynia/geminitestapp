@@ -52,11 +52,7 @@ vi.mock('@/features/ai/agentcreator/components/AgentPersonaSettingsForm', () => 
   AgentPersonaSettingsForm: () => <div data-testid='agent-persona-settings-form' />,
 }));
 
-vi.mock('@/shared/ui', () => ({
-  ItemLibrary: (props: Record<string, unknown>) => {
-    latestItemLibraryProps = props;
-    return <div data-testid='item-library' />;
-  },
+vi.mock('@/shared/ui/admin.public', () => ({
   AdminAgentCreatorBreadcrumbs: ({
     current,
     ...props
@@ -64,6 +60,16 @@ vi.mock('@/shared/ui', () => ({
     current: string;
     className?: string;
   }) => <nav {...props}>{current}</nav>,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
+  ItemLibrary: (props: Record<string, unknown>) => {
+    latestItemLibraryProps = props;
+    return <div data-testid='item-library' />;
+  },
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: toastMock }),
   Button: ({
     children,

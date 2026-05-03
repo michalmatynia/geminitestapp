@@ -6,7 +6,7 @@ import type { CSSProperties } from 'react';
 
 import { KangurHomeLogo } from '@/features/kangur/ui/components/wordmarks/KangurHomeLogo';
 import { safeHtml } from '@/shared/lib/security/safe-html';
-import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
+import { safeClearInterval, safeSetInterval, safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 
 type KangurAppLoaderProps = {
   offsetTopBar?: boolean;
@@ -229,7 +229,7 @@ const useKangurAppLoaderExitState = ({
   useEffect(() => {
     if (prevVisibleRef.current && !visible) {
       setIsExiting(true);
-      exitTimeoutRef.current = globalThis.setTimeout(() => {
+      exitTimeoutRef.current = safeSetTimeout(() => {
         setIsExiting(false);
       }, prefersReducedMotion ? 0 : 120);
     }
@@ -237,7 +237,7 @@ const useKangurAppLoaderExitState = ({
 
     return () => {
       if (exitTimeoutRef.current !== null) {
-        globalThis.clearTimeout(exitTimeoutRef.current);
+        safeClearTimeout(exitTimeoutRef.current);
       }
     };
   }, [visible, prefersReducedMotion]);
@@ -260,13 +260,13 @@ const setupKangurAppLoaderThemeTransition = ({
 
   const clearThemeTransition = (): void => {
     if (maxWaitTimeoutId !== null) {
-      globalThis.clearTimeout(maxWaitTimeoutId);
+      safeClearTimeout(maxWaitTimeoutId);
     }
     if (pollIntervalId !== null) {
       safeClearInterval(pollIntervalId);
     }
     if (paintTimeoutId !== null) {
-      globalThis.clearTimeout(paintTimeoutId);
+      safeClearTimeout(paintTimeoutId);
     }
     observer?.disconnect();
   };
@@ -278,14 +278,14 @@ const setupKangurAppLoaderThemeTransition = ({
 
     cancelled = true;
     if (maxWaitTimeoutId !== null) {
-      globalThis.clearTimeout(maxWaitTimeoutId);
+      safeClearTimeout(maxWaitTimeoutId);
     }
     if (pollIntervalId !== null) {
       safeClearInterval(pollIntervalId);
     }
     observer?.disconnect();
     setColorPhase((previous) => (previous === 'color' ? previous : 'paint'));
-    paintTimeoutId = globalThis.setTimeout(() => {
+    paintTimeoutId = safeSetTimeout(() => {
       setColorPhase('color');
     }, 80);
   };
@@ -307,7 +307,7 @@ const setupKangurAppLoaderThemeTransition = ({
     for (const target of resolveKangurAppLoaderTargets()) {
       observer.observe(target, { attributes: true, attributeFilter: ['class'] });
     }
-    maxWaitTimeoutId = globalThis.setTimeout(() => {
+    maxWaitTimeoutId = safeSetTimeout(() => {
       onThemeReady();
     }, maxWaitMs);
   } else {
@@ -391,7 +391,7 @@ export function KangurAppLoader({
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: KANGUR_APP_LOADER_PULSE_KEYFRAMES }} />
+      <style dangerouslySetInnerHTML={{ __html: safeHtml(KANGUR_APP_LOADER_PULSE_KEYFRAMES) }} />
       <div
         aria-busy='true'
         aria-live='polite'

@@ -14,7 +14,7 @@ export const ensureUniqueId = (
   fallbackPrefix: string
 ): string => {
   const normalizedCandidate = normalizeString(candidate);
-  const base = normalizedCandidate || fallbackPrefix;
+  const base = normalizedCandidate !== '' ? normalizedCandidate : fallbackPrefix;
   if (!usedIds.has(base)) return base;
   let index = 2;
   while (usedIds.has(`${base}-${index}`)) {
@@ -29,7 +29,7 @@ export const normalizePhoneNumbers = (value: unknown): string[] => {
   if (Array.isArray(value)) {
     value.forEach((entry: unknown) => {
       const normalized = normalizeString(entry);
-      if (!normalized) return;
+      if (normalized === '') return;
       unique.add(normalized);
     });
     return Array.from(unique);
@@ -40,7 +40,7 @@ export const normalizePhoneNumbers = (value: unknown): string[] => {
       .split(',')
       .map((entry: string) => entry.trim())
       .forEach((entry: string): void => {
-        if (!entry) return;
+        if (entry === '') return;
         unique.add(entry);
       });
     return Array.from(unique);
@@ -51,18 +51,18 @@ export const normalizePhoneNumbers = (value: unknown): string[] => {
 
 export const sanitizePhoneCandidate = (value: string): string => {
   let current = value.trim().replace(/^tel:\s*/i, '');
-  if (!current) return '';
+  if (current === '') return '';
 
   current = current.replace(/(?:ext\.?|extension|x)\s*[:.]?\s*\d+$/i, '').trim();
-  if (!current) return '';
+  if (current === '') return '';
 
   const hasInternationalPrefix = current.startsWith('+') || current.startsWith('00');
   const digits = current.replace(/\D+/g, '');
-  if (!digits) return '';
+  if (digits === '') return '';
 
   if (hasInternationalPrefix) {
     const withoutPrefix = current.startsWith('00') ? digits.replace(/^00/, '') : digits;
-    return withoutPrefix ? `+${withoutPrefix}` : '';
+    return withoutPrefix !== '' ? `+${withoutPrefix}` : '';
   }
   return digits;
 };

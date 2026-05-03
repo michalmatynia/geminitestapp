@@ -42,7 +42,7 @@ const summarizeDocument = (document: ContextRuntimeDocument): Record<string, unk
 export const readAgentRuntimeContextRegistry = (
   planState: unknown
 ): ContextRegistryConsumerEnvelope | null => {
-  if (!planState || typeof planState !== 'object' || Array.isArray(planState)) {
+  if (planState === null || typeof planState !== 'object' || Array.isArray(planState)) {
     return null;
   }
   const parsed = contextRegistryConsumerEnvelopeSchema.safeParse(
@@ -54,7 +54,10 @@ export const readAgentRuntimeContextRegistry = (
 export const buildAgentRuntimeContextRegistryPrompt = (
   registryBundle: ContextRegistryResolutionBundle | null | undefined
 ): string => {
-  if (!registryBundle || (!registryBundle.nodes.length && !registryBundle.documents.length)) {
+  if (registryBundle === null || registryBundle === undefined) {
+    return '';
+  }
+  if (registryBundle.nodes.length === 0 && registryBundle.documents.length === 0) {
     return '';
   }
 
@@ -81,7 +84,7 @@ export const applyAgentRuntimeContextMemory = (
     .filter((entry: string): boolean => entry.length > 0);
   const prompt = contextRegistryPrompt?.trim();
 
-  if (!prompt) {
+  if (prompt === undefined || prompt === '') {
     return normalizedEntries.slice(-maxItems);
   }
 

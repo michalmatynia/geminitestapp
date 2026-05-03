@@ -5,6 +5,7 @@ import {
   userPreferencesUpdateSchema,
 } from '@/shared/contracts/auth';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
+
 export {
   USER_PREFERENCES_HEX_COLOR_PATTERN,
   userPreferencesResponseSchema,
@@ -31,13 +32,14 @@ const resolveDefinedValue = <TInput, TOutput>(
   normalizer: (value: TInput) => TOutput
 ): TOutput | undefined => (value === undefined ? undefined : normalizer(value));
 
-const setNormalizedPreference = <TKey extends keyof UserPreferencesUpdatePayload>(
-  normalized: Partial<UserPreferencesUpdatePayload>,
+const applyNormalizedPreference = <TKey extends keyof UserPreferencesUpdatePayload>(
+  target: Partial<UserPreferencesUpdatePayload>,
   key: TKey,
   value: UserPreferencesUpdatePayload[TKey] | undefined
 ): void => {
   if (value !== undefined) {
-    normalized[key] = value;
+    // eslint-disable-next-line no-param-reassign
+    target[key] = value;
   }
 };
 
@@ -50,147 +52,159 @@ const normalizeDraftIconColor = (value: string | null): string | null =>
 const normalizeNullableArray = <T>(value: T[] | null): T[] => value ?? [];
 
 const normalizeNullableRecord = <T extends Record<string, unknown>>(value: T | null): T =>
-  value ?? ({} as T);
+  value ?? ({} as unknown as T);
 
 const normalizeAdminMenuCustomNav = <T>(value: T | null): T | [] => value ?? [];
+
+const normalizeProductListPreferences = (
+  payload: UserPreferencesUpdatePayload,
+  normalized: Partial<UserPreferencesUpdatePayload>
+): void => {
+  applyNormalizedPreference(normalized, 'productListNameLocale', payload.productListNameLocale);
+  applyNormalizedPreference(
+    normalized,
+    'productListCatalogFilter',
+    resolveDefinedValue(payload.productListCatalogFilter, normalizeNullableString)
+  );
+  applyNormalizedPreference(
+    normalized,
+    'productListCurrencyCode',
+    resolveDefinedValue(payload.productListCurrencyCode, normalizeNullableString)
+  );
+  applyNormalizedPreference(
+    normalized,
+    'productListPageSize',
+    resolveDefinedValue(payload.productListPageSize, normalizeProductListPageSize)
+  );
+  applyNormalizedPreference(normalized, 'productListThumbnailSource', payload.productListThumbnailSource);
+  applyNormalizedPreference(normalized, 'productListFiltersCollapsedByDefault', payload.productListFiltersCollapsedByDefault);
+  applyNormalizedPreference(normalized, 'productListShowTriggerRunFeedback', payload.productListShowTriggerRunFeedback);
+  applyNormalizedPreference(
+    normalized,
+    'productListAdvancedFilterPresets',
+    resolveDefinedValue(payload.productListAdvancedFilterPresets, normalizeNullableArray)
+  );
+  applyNormalizedPreference(
+    normalized,
+    'productListAppliedAdvancedFilter',
+    resolveDefinedValue(payload.productListAppliedAdvancedFilter, normalizeNullableString)
+  );
+  applyNormalizedPreference(
+    normalized,
+    'productListAppliedAdvancedFilterPresetId',
+    resolveDefinedValue(payload.productListAppliedAdvancedFilterPresetId, normalizeNullableString)
+  );
+  applyNormalizedPreference(normalized, 'productListDraftIconColorMode', payload.productListDraftIconColorMode);
+  applyNormalizedPreference(
+    normalized,
+    'productListDraftIconColor',
+    resolveDefinedValue(payload.productListDraftIconColor, normalizeDraftIconColor)
+  );
+};
+
+const normalizeCaseResolverPreferences = (
+  payload: UserPreferencesUpdatePayload,
+  normalized: Partial<UserPreferencesUpdatePayload>
+): void => {
+  applyNormalizedPreference(
+    normalized,
+    'caseResolverCaseListViewMode',
+    payload.caseResolverCaseListViewMode
+  );
+  applyNormalizedPreference(
+    normalized,
+    'caseResolverCaseListSortBy',
+    payload.caseResolverCaseListSortBy
+  );
+  applyNormalizedPreference(
+    normalized,
+    'caseResolverCaseListSortOrder',
+    payload.caseResolverCaseListSortOrder
+  );
+  applyNormalizedPreference(
+    normalized,
+    'caseResolverCaseListSearchScope',
+    payload.caseResolverCaseListSearchScope
+  );
+  applyNormalizedPreference(
+    normalized,
+    'caseResolverCaseListFiltersCollapsedByDefault',
+    payload.caseResolverCaseListFiltersCollapsedByDefault
+  );
+  applyNormalizedPreference(
+    normalized,
+    'caseResolverCaseListShowNestedContent',
+    payload.caseResolverCaseListShowNestedContent
+  );
+};
+
+const normalizeAdminMenuPreferences = (
+  payload: UserPreferencesUpdatePayload,
+  normalized: Partial<UserPreferencesUpdatePayload>
+): void => {
+  applyNormalizedPreference(normalized, 'adminMenuCollapsed', payload.adminMenuCollapsed);
+  applyNormalizedPreference(
+    normalized,
+    'adminMenuFavorites',
+    resolveDefinedValue(payload.adminMenuFavorites, normalizeStringArray)
+  );
+  applyNormalizedPreference(
+    normalized,
+    'adminMenuSectionColors',
+    resolveDefinedValue(payload.adminMenuSectionColors, normalizeNullableRecord)
+  );
+  applyNormalizedPreference(
+    normalized,
+    'adminMenuCustomEnabled',
+    payload.adminMenuCustomEnabled
+  );
+  applyNormalizedPreference(
+    normalized,
+    'adminMenuCustomNav',
+    resolveDefinedValue(payload.adminMenuCustomNav, normalizeAdminMenuCustomNav)
+  );
+};
+
+const normalizeCmsPreferences = (
+  payload: UserPreferencesUpdatePayload,
+  normalized: Partial<UserPreferencesUpdatePayload>
+): void => {
+  applyNormalizedPreference(normalized, 'cmsLastPageId', payload.cmsLastPageId);
+  applyNormalizedPreference(normalized, 'cmsActiveDomainId', payload.cmsActiveDomainId);
+  applyNormalizedPreference(
+    normalized,
+    'cmsThemeOpenSections',
+    resolveDefinedValue(payload.cmsThemeOpenSections, normalizeStringArray)
+  );
+  applyNormalizedPreference(normalized, 'cmsThemeLogoWidth', payload.cmsThemeLogoWidth);
+  applyNormalizedPreference(
+    normalized,
+    'cmsThemeLogoUrl',
+    resolveDefinedValue(payload.cmsThemeLogoUrl, normalizeNullableString)
+  );
+  applyNormalizedPreference(normalized, 'cmsPreviewEnabled', payload.cmsPreviewEnabled);
+  applyNormalizedPreference(
+    normalized,
+    'cmsSlideshowPauseOnHoverInEditor',
+    payload.cmsSlideshowPauseOnHoverInEditor
+  );
+};
 
 export const normalizeUserPreferencesUpdatePayload = (
   payload: UserPreferencesUpdatePayload
 ): Partial<UserPreferencesUpdatePayload> => {
   const normalized: Partial<UserPreferencesUpdatePayload> = {};
 
-  setNormalizedPreference(normalized, 'productListNameLocale', payload.productListNameLocale);
-  setNormalizedPreference(
-    normalized,
-    'productListCatalogFilter',
-    resolveDefinedValue(payload.productListCatalogFilter, normalizeNullableString)
-  );
-  setNormalizedPreference(
-    normalized,
-    'productListCurrencyCode',
-    resolveDefinedValue(payload.productListCurrencyCode, normalizeNullableString)
-  );
-  setNormalizedPreference(
-    normalized,
-    'productListPageSize',
-    resolveDefinedValue(payload.productListPageSize, normalizeProductListPageSize)
-  );
-  setNormalizedPreference(
-    normalized,
-    'productListThumbnailSource',
-    payload.productListThumbnailSource
-  );
-  setNormalizedPreference(
-    normalized,
-    'productListFiltersCollapsedByDefault',
-    payload.productListFiltersCollapsedByDefault
-  );
-  setNormalizedPreference(
-    normalized,
-    'productListShowTriggerRunFeedback',
-    payload.productListShowTriggerRunFeedback
-  );
-  setNormalizedPreference(
-    normalized,
-    'productListAdvancedFilterPresets',
-    resolveDefinedValue(payload.productListAdvancedFilterPresets, normalizeNullableArray)
-  );
-  setNormalizedPreference(
-    normalized,
-    'productListAppliedAdvancedFilter',
-    resolveDefinedValue(payload.productListAppliedAdvancedFilter, normalizeNullableString)
-  );
-  setNormalizedPreference(
-    normalized,
-    'productListAppliedAdvancedFilterPresetId',
-    resolveDefinedValue(payload.productListAppliedAdvancedFilterPresetId, normalizeNullableString)
-  );
-  setNormalizedPreference(
-    normalized,
-    'productListDraftIconColorMode',
-    payload.productListDraftIconColorMode
-  );
-  setNormalizedPreference(
-    normalized,
-    'productListDraftIconColor',
-    resolveDefinedValue(payload.productListDraftIconColor, normalizeDraftIconColor)
-  );
-  setNormalizedPreference(normalized, 'aiPathsActivePathId', payload.aiPathsActivePathId);
-  setNormalizedPreference(
+  normalizeProductListPreferences(payload, normalized);
+  applyNormalizedPreference(normalized, 'aiPathsActivePathId', payload.aiPathsActivePathId);
+  applyNormalizedPreference(
     normalized,
     'imageStudioLastProjectId',
     payload.imageStudioLastProjectId
   );
-  setNormalizedPreference(
-    normalized,
-    'caseResolverCaseListViewMode',
-    payload.caseResolverCaseListViewMode
-  );
-  setNormalizedPreference(
-    normalized,
-    'caseResolverCaseListSortBy',
-    payload.caseResolverCaseListSortBy
-  );
-  setNormalizedPreference(
-    normalized,
-    'caseResolverCaseListSortOrder',
-    payload.caseResolverCaseListSortOrder
-  );
-  setNormalizedPreference(
-    normalized,
-    'caseResolverCaseListSearchScope',
-    payload.caseResolverCaseListSearchScope
-  );
-  setNormalizedPreference(
-    normalized,
-    'caseResolverCaseListFiltersCollapsedByDefault',
-    payload.caseResolverCaseListFiltersCollapsedByDefault
-  );
-  setNormalizedPreference(
-    normalized,
-    'caseResolverCaseListShowNestedContent',
-    payload.caseResolverCaseListShowNestedContent
-  );
-  setNormalizedPreference(normalized, 'adminMenuCollapsed', payload.adminMenuCollapsed);
-  setNormalizedPreference(
-    normalized,
-    'adminMenuFavorites',
-    resolveDefinedValue(payload.adminMenuFavorites, normalizeStringArray)
-  );
-  setNormalizedPreference(
-    normalized,
-    'adminMenuSectionColors',
-    resolveDefinedValue(payload.adminMenuSectionColors, normalizeNullableRecord)
-  );
-  setNormalizedPreference(
-    normalized,
-    'adminMenuCustomEnabled',
-    payload.adminMenuCustomEnabled
-  );
-  setNormalizedPreference(
-    normalized,
-    'adminMenuCustomNav',
-    resolveDefinedValue(payload.adminMenuCustomNav, normalizeAdminMenuCustomNav)
-  );
-  setNormalizedPreference(normalized, 'cmsLastPageId', payload.cmsLastPageId);
-  setNormalizedPreference(normalized, 'cmsActiveDomainId', payload.cmsActiveDomainId);
-  setNormalizedPreference(
-    normalized,
-    'cmsThemeOpenSections',
-    resolveDefinedValue(payload.cmsThemeOpenSections, normalizeStringArray)
-  );
-  setNormalizedPreference(normalized, 'cmsThemeLogoWidth', payload.cmsThemeLogoWidth);
-  setNormalizedPreference(
-    normalized,
-    'cmsThemeLogoUrl',
-    resolveDefinedValue(payload.cmsThemeLogoUrl, normalizeNullableString)
-  );
-  setNormalizedPreference(normalized, 'cmsPreviewEnabled', payload.cmsPreviewEnabled);
-  setNormalizedPreference(
-    normalized,
-    'cmsSlideshowPauseOnHoverInEditor',
-    payload.cmsSlideshowPauseOnHoverInEditor
-  );
+  normalizeCaseResolverPreferences(payload, normalized);
+  normalizeAdminMenuPreferences(payload, normalized);
+  normalizeCmsPreferences(payload, normalized);
 
   return normalized;
 };

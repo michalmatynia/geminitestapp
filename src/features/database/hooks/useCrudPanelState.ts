@@ -1,40 +1,27 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-
-import {
-  type DatabaseColumnInfo,
-  type DatabaseTableDetail,
-  type DatabaseType,
-  type CrudResult,
-  type CrudRequest,
-} from '@/shared/contracts/database';
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
+import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { ApiError } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 import { executeSqlQuery } from '../api';
 import { useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
-import { useCrudMutation } from '../hooks/useDatabaseQueries';
+import { useCrudMutations, type UseCrudMutationsReturn } from './crud/useCrudMutations';
 
 type CrudRowsResult = {
   rows: Record<string, unknown>[];
   totalRows: number;
 };
 
-export interface UseCrudPanelStateReturn {
+export interface UseCrudPanelStateReturn extends UseCrudMutationsReturn {
   selectedTable: string;
   setSelectedTable: (table: string) => void;
   page: number;
   setPage: (page: number) => void;
   pageSize: number;
   setPageSize: (size: number) => void;
-  mutationError: string | null;
-  setMutationError: (error: string | null) => void;
-  successMessage: string | null;
-  setSuccessMessage: (message: string | null) => void;
   showAddModal: boolean;
   setShowAddModal: (show: boolean) => void;
   editingRow: Record<string, unknown> | null;
@@ -47,10 +34,6 @@ export interface UseCrudPanelStateReturn {
   isLoadingRows: boolean;
   maxPage: number;
   fetchRows: () => void;
-  handleAdd: (data: Record<string, unknown>) => void;
-  handleEdit: (data: Record<string, unknown>) => void;
-  handleDelete: () => void;
-  crudMutation: MutationResult<CrudResult, CrudRequest>;
   dbType: DatabaseType;
   tableDetails: DatabaseTableDetail[];
   columns: DatabaseColumnInfo[];
@@ -71,37 +54,23 @@ export function useCrudPanelState(props: {
   const [selectedTable, setSelectedTable] = useState(props.defaultTable ?? '');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [mutationError, setMutationError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingRow, setEditingRow] = useState<Record<string, unknown> | null>(null);
   const [deletingRow, setDeletingRow] = useState<Record<string, unknown> | null>(null);
 
-  const crudMutation = useCrudMutation();
+  const mutations = useCrudMutations();
 
   const tableDetail = useMemo(
     () => tableDetails.find((t) => t.name === selectedTable),
     [tableDetails, selectedTable]
   );
 
-  useEffect(() => {
-    if (props.defaultTable && props.defaultTable !== selectedTable) {
-      setSelectedTable(props.defaultTable);
-      setPage(1);
-      setMutationError(null);
-      setSuccessMessage(null);
-    }
-  }, [props.defaultTable, selectedTable]);
-
   const rowsQuery = createListQueryV2<CrudRowsResult, CrudRowsResult>({
     queryKey: dbKeys.crudRows({ dbType, selectedTable, page, pageSize }),
-    enabled: Boolean(selectedTable),
+    enabled: selectedTable !== '',
     queryFn: async () => {
-      if (!selectedTable) return { rows: [], totalRows: 0 };
-      if (dbType !== 'mongodb') {
-        throw new ApiError('Only MongoDB CRUD operations are supported.', 400);
-      }
+      if (selectedTable === '') return { rows: [], totalRows: 0 };
+      if (dbType !== 'mongodb') throw new ApiError('Only MongoDB CRUD operations are supported.', 400);
 
       const mongoResult = await executeSqlQuery({
         type: 'mongodb',
@@ -117,126 +86,46 @@ export function useCrudPanelState(props: {
         totalRows: mongoResult.rowCount ?? mongoResult.rows.length,
       };
     },
-    staleTime: 30_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    meta: {
-      source: 'database.hooks.useCrudPanelState.rows',
-      operation: 'list',
-      resource: 'database.crud-rows',
-      domain: 'database',
-      tags: ['database', 'crud', dbType],
-      description: 'Loads database crud rows.'},
   });
 
   const fetchRows = useCallback(() => {
-    if (!selectedTable) return;
-    setMutationError(null);
-    setSuccessMessage(null);
+    if (selectedTable === '') return;
+    mutations.setMutationError(null);
+    mutations.setSuccessMessage(null);
     void rowsQuery.refetch();
-  }, [rowsQuery, selectedTable]);
-
-  const getPrimaryKey = (row: Record<string, unknown>) => {
-    if (row['_id'] === undefined) return { ...row };
-    return { _id: row['_id'] };
-  };
+  }, [rowsQuery, selectedTable, mutations]);
 
   const handleAdd = (data: Record<string, unknown>) => {
-    setSuccessMessage(null);
-    setMutationError(null);
-    crudMutation.mutate(
-      { collection: selectedTable, operation: 'create', provider: 'mongodb', data },
-      {
-        onSuccess: (result) => {
-          if (result.error) setMutationError(result.error);
-          else {
-            setShowAddModal(false);
-            setSuccessMessage('Record created successfully');
-            void rowsQuery.refetch();
-          }
-        },
-        onError: (err) => {
-          logClientError(err, {
-            context: { source: 'useCrudPanelState', action: 'insertRow', table: selectedTable },
-          });
-          setMutationError(err.message);
-        },
-      }
-    );
+    mutations.handleAdd(selectedTable, data, () => {
+      setShowAddModal(false);
+      void rowsQuery.refetch();
+    });
   };
 
   const handleEdit = (data: Record<string, unknown>) => {
     if (!editingRow) return;
-    setSuccessMessage(null);
-    setMutationError(null);
-    crudMutation.mutate(
-      {
-        collection: selectedTable,
-        operation: 'update',
-        provider: 'mongodb',
-        data,
-        filter: getPrimaryKey(editingRow),
-      },
-      {
-        onSuccess: (result) => {
-          if (result.error) setMutationError(result.error);
-          else {
-            setEditingRow(null);
-            setSuccessMessage('Record updated successfully');
-            void rowsQuery.refetch();
-          }
-        },
-        onError: (err) => {
-          logClientError(err, {
-            context: { source: 'useCrudPanelState', action: 'updateRow', table: selectedTable },
-          });
-          setMutationError(err.message);
-        },
-      }
-    );
+    mutations.handleEdit(selectedTable, editingRow, data, () => {
+      setEditingRow(null);
+      void rowsQuery.refetch();
+    });
   };
 
   const handleDelete = () => {
     if (!deletingRow) return;
-    setSuccessMessage(null);
-    setMutationError(null);
-    crudMutation.mutate(
-      {
-        collection: selectedTable,
-        operation: 'delete',
-        provider: 'mongodb',
-        filter: getPrimaryKey(deletingRow),
-      },
-      {
-        onSuccess: (result) => {
-          if (result.error) setMutationError(result.error);
-          else {
-            setDeletingRow(null);
-            setSuccessMessage('Record deleted successfully');
-            void rowsQuery.refetch();
-          }
-        },
-        onError: (err) => {
-          logClientError(err, {
-            context: { source: 'useCrudPanelState', action: 'deleteRow', table: selectedTable },
-          });
-          setMutationError(err.message);
-        },
-      }
-    );
+    mutations.handleDelete(selectedTable, deletingRow, () => {
+      setDeletingRow(null);
+      void rowsQuery.refetch();
+    });
   };
+
   return {
+    ...mutations,
     selectedTable,
     setSelectedTable,
     page,
     setPage,
     pageSize,
     setPageSize,
-    mutationError,
-    setMutationError,
-    successMessage,
-    setSuccessMessage,
     showAddModal,
     setShowAddModal,
     editingRow,
@@ -247,12 +136,11 @@ export function useCrudPanelState(props: {
     rows: rowsQuery.data?.rows ?? [],
     totalRows: rowsQuery.data?.totalRows ?? 0,
     isLoadingRows: rowsQuery.isLoading,
-    maxPage: Math.max(1, Math.ceil((rowsQuery.data?.totalRows ?? 0) / pageSize)),
+    maxPage: Math.ceil((rowsQuery.data?.totalRows ?? 0) / pageSize),
     fetchRows,
     handleAdd,
     handleEdit,
     handleDelete,
-    crudMutation,
     dbType,
     tableDetails,
     columns: tableDetail?.columns ?? [],

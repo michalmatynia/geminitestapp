@@ -10,9 +10,6 @@ type LocalizedLoginPageProps = {
   params: Promise<{ locale: string }>;
 };
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export async function generateMetadata({
   params,
 }: LocalizedLoginPageProps): Promise<Metadata> {

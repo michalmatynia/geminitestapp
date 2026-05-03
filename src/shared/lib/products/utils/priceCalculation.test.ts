@@ -1,11 +1,16 @@
 /**
  * @vitest-environment node
  */
+/* eslint-disable max-lines-per-function */
 
 import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
 import { describe, expect, it } from 'vitest';
 
-import { calculatePriceForCurrency, normalizeCurrencyCode } from './priceCalculation';
+import {
+  calculatePriceForCurrency,
+  normalizeCurrencyCode,
+  resolveSourcePriceCurrencyCode,
+} from './priceCalculation';
 
 const createGroup = (overrides: Partial<PriceGroupForCalculation>): PriceGroupForCalculation => ({
   id: 'group-default',
@@ -170,5 +175,143 @@ describe('products priceCalculation utils', () => {
       currencyCode: 'USD',
       baseCurrencyCode: 'USD',
     });
+  });
+
+  it('calculates a dependent price group from scraped sourcePrice', () => {
+    const groups = [
+      createGroup({
+        id: 'group-usd',
+        groupId: 'USD',
+        currencyId: 'USD',
+        currency: { code: 'USD' },
+        currencyCode: 'USD',
+        isDefault: true,
+      }),
+      createGroup({
+        id: 'group-retail',
+        groupId: 'RETAIL',
+        currencyId: 'PLN',
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+        type: 'dependent',
+        basePriceField: 'sourcePrice',
+        sourceGroupId: null,
+        priceMultiplier: 2,
+        addToPrice: 5,
+      }),
+    ];
+
+    expect(
+      calculatePriceForCurrency(null, 'group-usd', 'PLN', groups, { sourcePrice: 60 })
+    ).toEqual({
+      price: 125,
+      currencyCode: 'PLN',
+      baseCurrencyCode: 'USD',
+    });
+    expect(
+      calculatePriceForCurrency(null, 'group-retail', 'PLN', groups, { sourcePrice: 60 })
+    ).toEqual({
+      price: 125,
+      currencyCode: 'PLN',
+      baseCurrencyCode: 'PLN',
+    });
+  });
+
+  it('calculates a default sourcePrice-backed group instead of falling back to a null base price', () => {
+    const groups = [
+      createGroup({
+        id: 'group-retail',
+        groupId: 'RETAIL',
+        currencyId: 'PLN',
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+        isDefault: true,
+        type: 'standard',
+        basePriceField: 'sourcePrice',
+        priceMultiplier: 1.5,
+        addToPrice: 10,
+      }),
+    ];
+
+    expect(
+      calculatePriceForCurrency(null, 'group-retail', 'PLN', groups, { sourcePrice: 60 })
+    ).toEqual({
+      price: 100,
+      currencyCode: 'PLN',
+      baseCurrencyCode: 'PLN',
+    });
+  });
+
+  it('uses sourcePrice as the base for a standard group matching the selected source currency', () => {
+    const groups = [
+      createGroup({
+        id: 'group-pln',
+        groupId: 'PLN',
+        currencyId: 'PLN',
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+        type: 'standard',
+        basePriceField: 'price',
+        sourceGroupId: null,
+        priceMultiplier: 1,
+        addToPrice: 0,
+      }),
+      createGroup({
+        id: 'group-eur',
+        groupId: 'EUR',
+        currencyId: 'EUR',
+        currency: { code: 'EUR' },
+        currencyCode: 'EUR',
+        type: 'dependent',
+        basePriceField: 'price',
+        sourceGroupId: 'group-pln',
+        priceMultiplier: 0.28,
+        addToPrice: 0,
+      }),
+    ];
+
+    expect(
+      calculatePriceForCurrency(null, 'group-pln', 'PLN', groups, {
+        sourcePrice: 370,
+        sourcePriceCurrencyCode: 'PLN',
+      })
+    ).toEqual({
+      price: 370,
+      currencyCode: 'PLN',
+      baseCurrencyCode: 'PLN',
+    });
+    expect(
+      calculatePriceForCurrency(null, 'group-eur', 'EUR', groups, {
+        sourcePrice: 370,
+        sourcePriceCurrencyCode: 'PLN',
+      })
+    ).toEqual({
+      price: 103.60000000000001,
+      currencyCode: 'EUR',
+      baseCurrencyCode: 'EUR',
+    });
+  });
+
+  it('resolves sourcePrice currency from the assigned sourcePrice-backed group', () => {
+    const groups = [
+      createGroup({
+        id: 'group-usd',
+        groupId: 'USD',
+        currencyId: 'USD',
+        currency: { code: 'USD' },
+        currencyCode: 'USD',
+      }),
+      createGroup({
+        id: 'group-retail',
+        groupId: 'RETAIL',
+        currencyId: 'PLN',
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+        basePriceField: 'sourcePrice',
+      }),
+    ];
+
+    expect(resolveSourcePriceCurrencyCode('group-retail', groups)).toBe('PLN');
+    expect(resolveSourcePriceCurrencyCode('group-usd', groups)).toBe('PLN');
   });
 });

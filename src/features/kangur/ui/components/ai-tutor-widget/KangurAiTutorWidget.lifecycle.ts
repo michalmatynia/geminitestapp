@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
@@ -220,12 +221,12 @@ export function useKangurAiTutorLifecycleEffects(input: UseKangurAiTutorLifecycl
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       setContextSwitchNotice(null);
     }, 4_000);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [contextSwitchNotice, isOpen, setContextSwitchNotice]);
 }

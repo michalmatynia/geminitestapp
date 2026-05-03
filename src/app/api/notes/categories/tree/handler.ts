@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { noteService } from '@/features/notesapp/server';
@@ -13,7 +13,7 @@ export const querySchema = z.object({
  * GET /api/notes/categories/tree
  * Fetches categories as a hierarchical tree structure
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const notebook = query.notebookId
     ? { id: query.notebookId }

@@ -15,9 +15,10 @@ function getRuntimeStateMock() {
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useRuntimeState: getRuntimeStateMock,
+  useRuntimeDataState: getRuntimeStateMock,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/data-display.public', () => ({
   StatusBadge: ({
     status,
     variant,
@@ -37,6 +38,9 @@ vi.mock('@/shared/ui', () => ({
       data-classname={className ?? ''}
     />
   ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   CompactEmptyState: ({
     title,
     description,
@@ -52,6 +56,8 @@ vi.mock('@/shared/ui', () => ({
     </div>
   ),
 }));
+
+vi.mock('@/shared/ui', () => ({}));
 
 import { AiPathsLiveLog } from '../AiPathsLiveLog';
 

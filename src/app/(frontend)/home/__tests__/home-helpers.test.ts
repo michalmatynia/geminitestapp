@@ -118,7 +118,7 @@ describe('home-helpers', () => {
     expect(getMongoDbMock).toHaveBeenCalledTimes(1);
     expect(captureExceptionMock).not.toHaveBeenCalled();
 
-    vi.setSystemTime(new Date('2026-03-23T12:00:31.000Z'));
+    vi.advanceTimersByTime(31_000);
 
     await expect(getFrontPageSetting()).resolves.toBeNull();
     expect(getMongoDbMock).toHaveBeenCalledTimes(2);
@@ -167,7 +167,7 @@ describe('home-helpers', () => {
     const { getFrontPageSetting } = await import('@/app/(frontend)/home/home-helpers');
 
     await expect(getFrontPageSetting()).resolves.toBe('kangur');
-    vi.setSystemTime(new Date('2026-03-23T12:00:31.000Z'));
+    vi.advanceTimersByTime(31_000);
     await expect(getFrontPageSetting()).resolves.toBe('kangur');
 
     expect(getMongoDbMock).toHaveBeenCalledTimes(2);

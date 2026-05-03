@@ -2,6 +2,14 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CanvasSvgNodeLayer } from '@/features/ai/ai-paths/components/canvas-svg-node-layer';
+
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: () => ({
+    effectiveModelId: 'test-model',
+    descriptors: [],
+  }),
+}));
+
 import {
   CanvasBoardUIProvider,
   type CanvasBoardUIContextValue,

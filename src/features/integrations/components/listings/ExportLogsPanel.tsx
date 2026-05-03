@@ -6,17 +6,22 @@ import type { CapturedLog } from '@/features/integrations/services/exports/log-c
 
 import { ExportLogViewer } from './ExportLogViewer';
 
-type ExportLogsPanelProps = {
-  logs: CapturedLog[];
+type ExportLogsPanelDisplayConfig = {
   isOpen?: boolean;
   onToggle?: (open: boolean) => void;
 };
 
+type ExportLogsPanelProps = {
+  logs: CapturedLog[];
+  config?: ExportLogsPanelDisplayConfig;
+};
+
 export function ExportLogsPanel({
   logs,
-  isOpen,
-  onToggle,
+  config = {},
 }: ExportLogsPanelProps): React.JSX.Element | null {
+  const { isOpen, onToggle } = config;
+
   if (logs.length === 0) {
     return null;
   }

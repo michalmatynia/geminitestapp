@@ -33,15 +33,32 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/ui/navigation-and-layout.public', async () => {
   const mocks = await import('../../studio-modals/__tests__/studioInlineEditRuntimeMockComponents');
   return {
-    EmptyState: mocks.MockEmptyState,
     CompactEmptyState: mocks.MockEmptyState,
-    FormModal: mocks.MockFormModal,
-    Label: mocks.MockLabel,
-    StandardDataTablePanel: mocks.MockStandardDataTablePanel,
     UI_GRID_RELAXED_CLASSNAME: mocks.UI_GRID_RELAXED_CLASSNAME,
+  };
+});
+
+vi.mock('@/shared/ui/forms-and-actions.public', async () => {
+  const mocks = await import('../../studio-modals/__tests__/studioInlineEditRuntimeMockComponents');
+  return {
+    FormModal: mocks.MockFormModal,
+  };
+});
+
+vi.mock('@/shared/ui/primitives.public', async () => {
+  const mocks = await import('../../studio-modals/__tests__/studioInlineEditRuntimeMockComponents');
+  return {
+    Label: mocks.MockLabel,
+  };
+});
+
+vi.mock('@/shared/ui/templates.public', async () => {
+  const mocks = await import('../../studio-modals/__tests__/studioInlineEditRuntimeMockComponents');
+  return {
+    StandardDataTablePanel: mocks.MockStandardDataTablePanel,
   };
 });
 

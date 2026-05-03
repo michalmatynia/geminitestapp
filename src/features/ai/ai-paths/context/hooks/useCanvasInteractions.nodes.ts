@@ -3,8 +3,12 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui/base';
-import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/shared/lib/ai-paths';
-import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, createNodeInstanceId, getDefaultConfigForType, palette, resolveNodeTypeId } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, NodeDefinition } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH } from '@/shared/lib/ai-paths/core/constants';
+import { getDefaultConfigForType } from '@/shared/lib/ai-paths/core/normalization';
+import { createNodeInstanceId, resolveNodeTypeId } from '@/shared/lib/ai-paths/core/utils';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 
 import { computeNodeSelectionDeleteResult } from './canvas/delete-selection-command';
@@ -33,6 +37,70 @@ export interface UseCanvasInteractionsNodesValue {
   rafIdRef: React.MutableRefObject<number | null>;
   dragSelectionRef: React.MutableRefObject<DragSelectionState | null>;
 }
+
+export type UseCanvasInteractionsNodesGraphOps = {
+  nodes: AiNode[];
+  edges: Edge[];
+  setNodes: (
+    nodes: AiNode[] | ((prev: AiNode[]) => AiNode[]),
+    mutationMeta?: GraphMutationMeta
+  ) => void;
+  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[]), mutationMeta?: GraphMutationMeta) => void;
+  setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;
+  pruneRuntimeInputsInternal: (
+    state: RuntimeState,
+    removedEdges: Edge[],
+    remainingEdges: Edge[]
+  ) => RuntimeState;
+};
+
+export type UseCanvasInteractionsNodesSelectionOps = {
+  selectedNodeIdSet: Set<string>;
+  selectedNodeIds: string[];
+  setNodeSelection: (nodeIds: string[]) => void;
+  toggleNodeSelection: (nodeId: string) => void;
+  selectNode: (nodeId: string | null) => void;
+  selectEdge: (edgeId: string | null) => void;
+  resolveActiveNodeSelectionIds: () => string[];
+};
+
+export type UseCanvasInteractionsNodesCanvasOps = {
+  startDrag: (nodeId: string, offsetX: number, offsetY: number) => void;
+  endDrag: () => void;
+  dragState: { nodeId: string; offsetX: number; offsetY: number } | null;
+  updateLastPointerCanvasPosFromClient: (
+    clientX: number,
+    clientY: number
+  ) => { x: number; y: number } | null;
+  stopViewAnimation: () => void;
+  viewportRef: React.RefObject<HTMLDivElement | null>;
+  view: { x: number; y: number; scale: number };
+  setLastDrop: (pos: { x: number; y: number }) => void;
+  ensureNodeVisible: (node: AiNode) => void;
+};
+
+export type UseCanvasInteractionsNodesInteractionOps = {
+  isPathLocked: boolean;
+  notifyLocked: () => void;
+  confirmNodeSwitch?: (nodeId: string) => boolean | Promise<boolean>;
+  confirm: (options: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDangerous?: boolean;
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }) => void;
+  toast: Toast;
+};
+
+export type UseCanvasInteractionsNodesArgs = {
+  graphOps: UseCanvasInteractionsNodesGraphOps;
+  selectionOps: UseCanvasInteractionsNodesSelectionOps;
+  canvasOps: UseCanvasInteractionsNodesCanvasOps;
+  interactionOps: UseCanvasInteractionsNodesInteractionOps;
+};
 
 const NODE_DRAG_START_THRESHOLD_PX = 4;
 
@@ -79,80 +147,34 @@ const clampNodePosition = (x: number, y: number): { x: number; y: number } => ({
 });
 
 export function useCanvasInteractionsNodes({
-  nodes,
-  edges,
-  isPathLocked,
-  notifyLocked,
-  confirmNodeSwitch,
-  selectedNodeIdSet,
-  selectedNodeIds,
-  setNodes,
-  setNodeSelection,
-  toggleNodeSelection,
-  selectNode,
-  selectEdge,
-  startDrag,
-  endDrag,
-  dragState,
-  updateLastPointerCanvasPosFromClient,
-  stopViewAnimation,
-  resolveActiveNodeSelectionIds,
-  confirm,
-  setEdges,
-  setRuntimeState,
-  pruneRuntimeInputsInternal,
-  viewportRef,
-  view,
-  setLastDrop,
-  ensureNodeVisible,
-  toast,
-}: {
-  nodes: AiNode[];
-  edges: Edge[];
-  isPathLocked: boolean;
-  notifyLocked: () => void;
-  confirmNodeSwitch?: (nodeId: string) => boolean | Promise<boolean>;
-  selectedNodeIdSet: Set<string>;
-  selectedNodeIds: string[];
-  setNodes: (
-    nodes: AiNode[] | ((prev: AiNode[]) => AiNode[]),
-    mutationMeta?: GraphMutationMeta
-  ) => void;
-  setNodeSelection: (nodeIds: string[]) => void;
-  toggleNodeSelection: (nodeId: string) => void;
-  selectNode: (nodeId: string | null) => void;
-  selectEdge: (edgeId: string | null) => void;
-  startDrag: (nodeId: string, offsetX: number, offsetY: number) => void;
-  endDrag: () => void;
-  dragState: { nodeId: string; offsetX: number; offsetY: number } | null;
-  updateLastPointerCanvasPosFromClient: (
-    clientX: number,
-    clientY: number
-  ) => { x: number; y: number } | null;
-  stopViewAnimation: () => void;
-  resolveActiveNodeSelectionIds: () => string[];
-  confirm: (options: {
-    title: string;
-    message: string;
-    confirmText?: string;
-    cancelText?: string;
-    isDangerous?: boolean;
-    onConfirm: () => void;
-    onCancel?: () => void;
-  }) => void;
-  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[]), mutationMeta?: GraphMutationMeta) => void;
-  setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;
-  pruneRuntimeInputsInternal: (
-    state: RuntimeState,
-    removedEdges: Edge[],
-    remainingEdges: Edge[]
-  ) => RuntimeState;
-  viewportRef: React.RefObject<HTMLDivElement | null>;
-  view: { x: number; y: number; scale: number };
-  setLastDrop: (pos: { x: number; y: number }) => void;
-  ensureNodeVisible: (node: AiNode) => void;
-  toast: Toast;
-}): UseCanvasInteractionsNodesValue {
+  graphOps,
+  selectionOps,
+  canvasOps,
+  interactionOps,
+}: UseCanvasInteractionsNodesArgs): UseCanvasInteractionsNodesValue {
+  const { nodes, edges, setNodes, setEdges, setRuntimeState, pruneRuntimeInputsInternal } =
+    graphOps;
+  const {
+    selectedNodeIdSet,
+    selectedNodeIds,
+    setNodeSelection,
+    toggleNodeSelection,
+    selectNode,
+    selectEdge,
+    resolveActiveNodeSelectionIds,
+  } = selectionOps;
+  const {
+    startDrag,
+    endDrag,
+    dragState,
+    updateLastPointerCanvasPosFromClient,
+    stopViewAnimation,
+    viewportRef,
+    view,
+    setLastDrop,
+    ensureNodeVisible,
+  } = canvasOps;
+  const { isPathLocked, notifyLocked, confirmNodeSwitch, confirm, toast } = interactionOps;
   const toWorldPoint = useCallback(
     (point: { x: number; y: number }): { x: number; y: number } => {
       const scale = Number.isFinite(view.scale) && view.scale > 0 ? view.scale : 1;

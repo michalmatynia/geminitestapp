@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { getProductOrdersImportRepository } from '@/features/products/server';
@@ -28,7 +28,7 @@ const assertBaseConnectionExists = async (connectionId: string): Promise<void> =
   }
 };
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof baseOrderImportPersistPayloadSchema>;
   await assertBaseConnectionExists(data.connectionId);
 

@@ -75,7 +75,8 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: (...args: unknown[]) => logKangurClientErrorMock(...args),
   trackKangurClientEvent: (...args: unknown[]) => trackKangurClientEventMock(...args),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () => ({
   ErrorSystem: {

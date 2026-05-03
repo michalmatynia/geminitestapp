@@ -81,7 +81,7 @@ export function VersionGraphInspector(): React.JSX.Element {
             {getSlotImageSrc(selectedNode.slot) ? (
               <img
                 src={getSlotImageSrc(selectedNode.slot)!}
-                alt={selectedNode.label}
+                alt={`Selected node thumbnail: ${selectedNode.label}`}
                 className='h-full w-full object-cover'
               />
             ) : (

@@ -75,21 +75,21 @@ const normalizeIdEntries = (entries: FormDataEntryValue[]): string[] =>
     .map((entry: FormDataEntryValue): string => (typeof entry === 'string' ? entry.trim() : ''))
     .filter((entry: string): boolean => entry.length > 0);
 
-const normalizeCategoryId = (formData: FormData): string | null => {
-  const direct = formData.get('categoryId');
-  if (typeof direct === 'string') {
-    const trimmed = direct.trim();
+const normalizeLastStringEntry = (entries: FormDataEntryValue[]): string | null => {
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (typeof entry !== 'string') continue;
+    const trimmed = entry.trim();
     if (trimmed) return trimmed;
   }
   return null;
 };
 
-const normalizeStudioProjectId = (formData: FormData): string | null => {
-  const raw = formData.get('studioProjectId');
-  if (typeof raw !== 'string') return null;
-  const normalized = raw.trim();
-  return normalized.length > 0 ? normalized : null;
-};
+const normalizeCategoryId = (formData: FormData): string | null =>
+  normalizeLastStringEntry(formData.getAll('categoryId'));
+
+const normalizeStudioProjectId = (formData: FormData): string | null =>
+  normalizeLastStringEntry(formData.getAll('studioProjectId'));
 
 export function parseProductForm(formData: FormData): ParsedProductForm {
   const rawData = formDataToObject(formData);
@@ -126,6 +126,22 @@ export function parseProductForm(formData: FormData): ParsedProductForm {
     noteIds: normalizeIdEntries(formData.getAll('noteIds')),
     studioProjectId: normalizeStudioProjectId(formData),
   };
+}
+
+export function buildNormalizedProductValidationPayload(formData: FormData): Record<string, unknown> {
+  const parsed = parseProductForm(formData);
+  const payload: Record<string, unknown> = {
+    ...parsed.rawData,
+    imageFileIds: parsed.imageFileIds,
+    catalogIds: parsed.catalogIds,
+    categoryId: parsed.categoryId,
+    tagIds: parsed.tagIds,
+    producerIds: parsed.producerIds,
+    noteIds: parsed.noteIds,
+    studioProjectId: parsed.studioProjectId,
+  };
+  delete payload['images'];
+  return payload;
 }
 
 export const getProductImageFilepath = (image: ProductImageRecord): string | null => {

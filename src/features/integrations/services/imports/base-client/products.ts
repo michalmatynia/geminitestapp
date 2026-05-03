@@ -1,11 +1,21 @@
-import { BaseProductRecord, BaseApiResponse } from '@/shared/contracts/integrations/base-api';
+import { type BaseProductRecord, type BaseApiResponse } from '@/shared/contracts/integrations/base-api';
+import { isAppError } from '@/shared/errors/app-error';
 
 import { callBaseApi } from './core';
+import { fetchPagedBaseProductIds } from './product-list-ids';
+import { resolveBaseProductIdBySku } from './product-sku-resolution';
 import { extractProductIds, extractProducts, toStringId } from '../base-client-parsers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+const isUnknownMethodError = (error: unknown): boolean =>
+  isAppError(error) && error.meta?.['errorCode'] === 'ERROR_UNKNOWN_METHOD';
+const INVENTORY_PRODUCTS_LIST_METHOD = 'getInventoryProductsList';
 
-export async function fetchBaseProductIds(token: string, inventoryId: string): Promise<string[]> {
+export async function fetchBaseProductIds(
+  token: string,
+  inventoryId: string,
+  limit?: number
+): Promise<string[]> {
   const candidates = [
     {
       method: 'getInventoryProductsList',
@@ -16,19 +26,25 @@ export async function fetchBaseProductIds(token: string, inventoryId: string): P
       paramKey: 'storage_id',
     },
   ];
+  let lastError: Error | null = null;
 
   for (const candidate of candidates) {
     try {
-      const payload = await callBaseApi(token, candidate.method, {
-        [candidate.paramKey]: inventoryId,
-      });
-      const ids = extractProductIds(payload);
+      const ids = await fetchPagedBaseProductIds(token, inventoryId, candidate, limit);
       if (ids.length > 0) return ids;
-    } catch (error) {
+    } catch (error: unknown) {
       logClientError(error);
-    
-      // Continue to next candidate
+      const resolvedError = error instanceof Error ? error : new Error('Base API error.');
+      if (isAppError(error) && error.expected && !isUnknownMethodError(error)) {
+        throw resolvedError;
+      }
+      if (!isUnknownMethodError(error) || lastError === null) {
+        lastError = resolvedError;
+      }
     }
+  }
+  if (lastError) {
+    throw lastError;
   }
   return [];
 }
@@ -64,6 +80,7 @@ export async function fetchBaseProductDetails(
     const batch = chunks.slice(i, i + CONCURRENCY);
     const chunkResults = await Promise.all(
       batch.map(async (chunk) => {
+        let lastError: Error | null = null;
         for (const candidate of candidates) {
           try {
             const payload = await callBaseApi(token, candidate.method, {
@@ -72,11 +89,19 @@ export async function fetchBaseProductDetails(
             });
             const products = extractProducts(payload);
             if (products.length > 0) return products;
-          } catch (error) {
+          } catch (error: unknown) {
             logClientError(error);
-          
-            // Continue
+            const resolvedError = error instanceof Error ? error : new Error('Base API error.');
+            if (isAppError(error) && error.expected && !isUnknownMethodError(error)) {
+              throw resolvedError;
+            }
+            if (!isUnknownMethodError(error) || lastError === null) {
+              lastError = resolvedError;
+            }
           }
+        }
+        if (lastError) {
+          throw lastError;
         }
         return [];
       })
@@ -92,7 +117,7 @@ export async function fetchBaseProducts(
   inventoryId: string,
   limit?: number
 ): Promise<BaseProductRecord[]> {
-  const ids = await fetchBaseProductIds(token, inventoryId);
+  const ids = await fetchBaseProductIds(token, inventoryId, limit);
   const targetIds = typeof limit === 'number' && limit > 0 ? ids.slice(0, limit) : ids;
 
   if (targetIds.length === 0) return [];
@@ -122,16 +147,16 @@ export async function checkBaseSkuExists(
         const payload = await callBaseApi(token, candidate.method, {
           [candidate.paramKey]: inventoryId,
           filter_sku: sku,
+          ...(candidate.method === INVENTORY_PRODUCTS_LIST_METHOD ? { include_variants: true } : {}),
         });
         const ids = extractProductIds(payload);
         if (ids.length > 0) {
           const details = await fetchBaseProductDetails(token, inventoryId, ids);
-          const match = details.find((p: BaseProductRecord) => {
-            const pSku = p['sku'] ?? p['SKU'] ?? p['Sku'];
-            return typeof pSku === 'string' && pSku.toLowerCase() === sku.toLowerCase();
-          });
+          const match = details
+            .map((record: BaseProductRecord) => resolveBaseProductIdBySku(record, sku))
+            .find((productId: string | null): productId is string => productId !== null);
           if (match) {
-            const productId = toStringId(match['product_id'] ?? match['id']);
+            const productId = toStringId(match);
             return productId ? { exists: true, productId } : { exists: true };
           }
         }
@@ -149,12 +174,11 @@ export async function checkBaseSkuExists(
     for (let i = 0; i < allIds.length; i += batchSize) {
       const batch = allIds.slice(i, i + batchSize);
       const products = await fetchBaseProductDetails(token, inventoryId, batch);
-      const match = products.find((p: BaseProductRecord) => {
-        const pSku = p['sku'] ?? p['SKU'] ?? p['Sku'];
-        return typeof pSku === 'string' && pSku.toLowerCase() === sku.toLowerCase();
-      });
+      const match = products
+        .map((record: BaseProductRecord) => resolveBaseProductIdBySku(record, sku))
+        .find((productId: string | null): productId is string => productId !== null);
       if (match) {
-        const productId = toStringId(match['product_id'] ?? match['id']);
+        const productId = toStringId(match);
         return productId ? { exists: true, productId } : { exists: true };
       }
     }
@@ -180,6 +204,74 @@ export async function checkBaseSkuExists(
     }
     return { exists: false };
   }
+}
+
+/**
+ * Fetch a single product's full detail from Base.com.
+ * Tries dedicated single-product endpoints first (richer data), then falls back to batch methods.
+ * Returns null if the product cannot be found via any supported method.
+ */
+export async function fetchBaseProductById(
+  token: string,
+  inventoryId: string,
+  productId: string
+): Promise<BaseProductRecord | null> {
+  // Try dedicated single-product endpoints first — they may return extended attributes
+  const singleCandidates = [
+    { method: 'getInventoryProductDetails', paramKey: 'inventory_id' },
+    { method: 'getProductDetails', paramKey: 'storage_id' },
+  ];
+
+  for (const candidate of singleCandidates) {
+    try {
+      const payload = await callBaseApi(token, candidate.method, {
+        [candidate.paramKey]: inventoryId,
+        product_id: productId,
+      });
+      const products = extractProducts(payload);
+      if (products.length > 0) return products[0] ?? null;
+      // Some endpoints wrap single product directly rather than in an array
+      if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+        const directId =
+          toStringId(payload['product_id']) ?? toStringId(payload['id']) ?? toStringId(payload['base_product_id']);
+        if (directId) return payload;
+      }
+    } catch (error) {
+      logClientError(error);
+      // Continue to next candidate
+    }
+  }
+
+  // Fall back to batch endpoints with a single-item list
+  const batchCandidates = [
+    { method: 'getInventoryProductsData', paramKey: 'inventory_id' },
+    { method: 'getProductsData', paramKey: 'storage_id' },
+  ];
+
+  for (const candidate of batchCandidates) {
+    try {
+      const payload = await callBaseApi(token, candidate.method, {
+        [candidate.paramKey]: inventoryId,
+        products: [productId],
+      });
+      const products = extractProducts(payload);
+      if (products.length > 0) return products[0] ?? null;
+    } catch (error) {
+      logClientError(error);
+      // Continue to next candidate
+    }
+  }
+  return null;
+}
+
+/** Returns true if a product record is considered sparse (no name or description in any language). */
+export function isBaseProductRecordSparse(record: BaseProductRecord): boolean {
+  const hasName =
+    typeof record['name'] === 'string' && record['name'].trim().length > 0 ||
+    typeof record['name_pl'] === 'string' && record['name_pl'].trim().length > 0 ||
+    typeof record['name_en'] === 'string' && record['name_en'].trim().length > 0 ||
+    typeof record['title'] === 'string' && record['title'].trim().length > 0;
+  return !hasName;
 }
 
 export async function deleteBaseProduct(

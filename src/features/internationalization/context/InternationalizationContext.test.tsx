@@ -33,7 +33,7 @@ vi.mock('@/shared/hooks/use-i18n-queries', () => ({
   useLanguages: () => mocks.useLanguages(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mocks.toast }),
 }));
 

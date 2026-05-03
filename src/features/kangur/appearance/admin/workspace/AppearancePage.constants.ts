@@ -2,7 +2,7 @@ import type { KangurThemeMode as AppearanceSlot } from '@/features/kangur/appear
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
-import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 export type { KangurThemeMode as AppearanceSlot } from '@/features/kangur/appearance/theme-settings';
 export { KANGUR_SLOT_ASSIGNMENTS_KEY } from '@/shared/contracts/kangur';
@@ -80,12 +80,33 @@ const parseSlotAssignmentEntry = (
   return { id, name };
 };
 
+const withAppearanceParseFallback = <T>(
+  context: {
+    action: string;
+    description: string;
+    context?: Record<string, unknown>;
+  },
+  task: () => T,
+  fallback: T
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    reportObservabilityInternalError(error, {
+      source: 'kangur.admin.appearance',
+      action: context.action,
+      description: context.description,
+      ...(context.context ?? {}),
+    });
+    return fallback;
+  }
+};
+
 export const parseSlotAssignments = (raw: string | null | undefined): SlotAssignments => {
   const fallback: SlotAssignments = { daily: null, dawn: null, sunset: null, nightly: null };
   if (!raw?.trim()) return fallback;
-  return withKangurClientErrorSync(
+  return withAppearanceParseFallback(
     {
-      source: 'kangur.admin.appearance',
       action: 'parse-slot-assignments',
       description: 'Parses serialized slot assignments for appearance presets.',
       context: { rawLength: raw.length },
@@ -103,7 +124,7 @@ export const parseSlotAssignments = (raw: string | null | undefined): SlotAssign
         nightly: parseSlotAssignmentEntry(record['nightly']),
       };
     },
-    { fallback }
+    fallback
   );
 };
 

@@ -1,7 +1,8 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams } from 'next/navigation';
+import React, { Suspense, useCallback, useEffect, useRef, useState, startTransition } from 'react';
 
 import {
   ContextRegistryPageProvider,
@@ -209,7 +210,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
         params.set('tab', nextTab);
       }
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
+      startTransition(() => { router.replace(query ? `${pathname}?${query}` : pathname); });
     },
     [pathname, router, searchParams]
   );
@@ -225,7 +226,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
       params.set('projectId', normalizedProjectId);
       params.delete('tab');
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
+      startTransition(() => { router.replace(query ? `${pathname}?${query}` : pathname); });
     },
     [pathname, router, searchParams, setProjectId]
   );
@@ -243,7 +244,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     } else {
       target.searchParams.delete('studioVariantSlotId');
     }
-    router.push(`${target.pathname}${target.search}`);
+    startTransition(() => { router.push(`${target.pathname}${target.search}`); });
   }, [projectId, returnToPath, router, selectedSlot?.id]);
 
   return (

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src';
+import { getImageStudioSlotImageSrc } from '@/features/ai/public';
 import { buildProductStudioWorkspaceContextBundle } from '@/features/products/context-registry/workspace';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ContextRegistryPageSource } from '@/shared/lib/ai-context-registry/page-context-shared';
@@ -42,6 +42,182 @@ type ProductStudioDerivedState = {
   registrySource: Omit<ContextRegistryPageSource, 'sourceId'> | null;
 };
 
+type ProductStudioVariant = ProductStudioVariantsResponse['variants'][number];
+
+const selectProductStudioVariant = (
+  variants: ProductStudioVariantsResponse['variants'],
+  selectedVariantSlotId: string | null
+): ProductStudioVariant | null =>
+  variants.find((slot) => slot.id === selectedVariantSlotId) ?? variants[0] ?? null;
+
+const resolveSourceImageSrc = ({
+  productImagesExternalBaseUrl,
+  selectedSourcePreview,
+  variantsData,
+}: {
+  productImagesExternalBaseUrl: string;
+  selectedSourcePreview: ProductImageSlotPreview | null;
+  variantsData: ProductStudioVariantsResponse | null;
+}): string | null =>
+  getImageStudioSlotImageSrc(variantsData?.sourceSlot, productImagesExternalBaseUrl) ??
+  selectedSourcePreview?.src ??
+  null;
+
+const resolveSequenceReadinessMessage = (
+  variantsData: ProductStudioVariantsResponse | null
+): string | null => {
+  const sequenceReadiness = variantsData?.sequenceReadiness ?? null;
+  if (sequenceReadiness === null || sequenceReadiness.ready === true) {
+    return null;
+  }
+  return sequenceReadiness.message ?? 'Not ready.';
+};
+
+const countVariantsProducedForActiveRun = (
+  variants: ProductStudioVariantsResponse['variants'],
+  activeRunBaselineVariantIds: readonly string[]
+): number => {
+  const activeRunBaselineVariantIdSet = new Set(activeRunBaselineVariantIds);
+  return variants.filter(
+    (slot) => slot.id.length > 0 && !activeRunBaselineVariantIdSet.has(slot.id)
+  ).length;
+};
+
+const resolvePendingVariantPlaceholderCount = ({
+  activeRunBaselineVariantIds,
+  activeRunId,
+  pendingExpectedOutputs,
+  runStatus,
+  variants,
+}: {
+  activeRunBaselineVariantIds: readonly string[];
+  activeRunId: string | null;
+  pendingExpectedOutputs: number;
+  runStatus: ProductStudioRunStatus | null;
+  variants: ProductStudioVariantsResponse['variants'];
+}): number => {
+  const isActiveRunPending =
+    activeRunId !== null && (runStatus === 'queued' || runStatus === 'running');
+  if (!isActiveRunPending) {
+    return 0;
+  }
+
+  const variantsProducedForActiveRun = countVariantsProducedForActiveRun(
+    variants,
+    activeRunBaselineVariantIds
+  );
+  return Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun);
+};
+
+const resolveRegistrySource = ({
+  activeRunId,
+  auditEntries,
+  imageSlotPreviews,
+  pendingVariantPlaceholderCount,
+  product,
+  runStatus,
+  selectedImageIndex,
+  selectedVariantSlotId,
+  sequenceReadinessMessage,
+  studioProjectId,
+  variantsData,
+}: {
+  activeRunId: string | null;
+  auditEntries: ProductStudioAuditEntry[];
+  imageSlotPreviews: ProductImageSlotPreview[];
+  pendingVariantPlaceholderCount: number;
+  product: ProductWithImages | null | undefined;
+  runStatus: ProductStudioRunStatus | null;
+  selectedImageIndex: number | null;
+  selectedVariantSlotId: string | null;
+  sequenceReadinessMessage: string | null;
+  studioProjectId: string | null;
+  variantsData: ProductStudioVariantsResponse | null;
+}): Omit<ContextRegistryPageSource, 'sourceId'> | null => {
+  if (product === null || product === undefined) {
+    return null;
+  }
+  if (product.id.length === 0) {
+    return null;
+  }
+
+  return {
+    label: 'Product Studio workspace state',
+    resolved: buildProductStudioWorkspaceContextBundle({
+      product,
+      studioProjectId,
+      selectedImageIndex,
+      imageSlotPreviews,
+      selectedVariantSlotId,
+      variantsData,
+      activeRunId,
+      runStatus,
+      pendingVariantPlaceholderCount,
+      sequenceReadinessMessage,
+      auditEntries,
+    }),
+  };
+};
+
+const buildProductStudioDerivedState = ({
+  product,
+  studioProjectId,
+  selectedImageIndex,
+  imageSlotPreviews,
+  productImagesExternalBaseUrl,
+  selectedVariantSlotId,
+  variantsData,
+  activeRunId,
+  runStatus,
+  activeRunBaselineVariantIds,
+  pendingExpectedOutputs,
+  auditEntries,
+}: UseProductStudioDerivedStateInput): ProductStudioDerivedState => {
+  const variants = variantsData?.variants ?? [];
+  const selectedVariant = selectProductStudioVariant(variants, selectedVariantSlotId);
+  const selectedSourcePreview =
+    imageSlotPreviews.find((preview) => preview.index === selectedImageIndex) ?? null;
+  const sourceImageSrc = resolveSourceImageSrc({
+    productImagesExternalBaseUrl,
+    selectedSourcePreview,
+    variantsData,
+  });
+  const variantImageSrc = getImageStudioSlotImageSrc(selectedVariant, productImagesExternalBaseUrl);
+  const sequenceReadinessMessage = resolveSequenceReadinessMessage(variantsData);
+  const pendingVariantPlaceholderCount = resolvePendingVariantPlaceholderCount({
+    activeRunBaselineVariantIds,
+    activeRunId,
+    pendingExpectedOutputs,
+    runStatus,
+    variants,
+  });
+
+  return {
+    variants,
+    selectedVariant,
+    selectedSourcePreview,
+    sourceImageSrc,
+    variantImageSrc,
+    canCompareWithSource: sourceImageSrc !== null && variantImageSrc !== null,
+    sequenceReadinessMessage,
+    blockSendForSequenceReadiness: sequenceReadinessMessage !== null,
+    pendingVariantPlaceholderCount,
+    registrySource: resolveRegistrySource({
+      activeRunId,
+      auditEntries,
+      imageSlotPreviews,
+      pendingVariantPlaceholderCount,
+      product,
+      runStatus,
+      selectedImageIndex,
+      selectedVariantSlotId,
+      sequenceReadinessMessage,
+      studioProjectId,
+      variantsData,
+    }),
+  };
+};
+
 export const useProductStudioDerivedState = ({
   product,
   studioProjectId,
@@ -57,66 +233,20 @@ export const useProductStudioDerivedState = ({
   auditEntries,
 }: UseProductStudioDerivedStateInput): ProductStudioDerivedState =>
   useMemo(() => {
-    const variants = variantsData?.variants ?? [];
-    const selectedVariant =
-      variants.find((slot) => slot.id === selectedVariantSlotId) ?? variants[0] ?? null;
-    const selectedSourcePreview =
-      imageSlotPreviews.find((preview) => preview.index === selectedImageIndex) ?? null;
-    const sourceImageSrc =
-      getImageStudioSlotImageSrc(variantsData?.sourceSlot, productImagesExternalBaseUrl) ??
-      selectedSourcePreview?.src ??
-      null;
-    const variantImageSrc = getImageStudioSlotImageSrc(
-      selectedVariant,
-      productImagesExternalBaseUrl
-    );
-    const canCompareWithSource = Boolean(sourceImageSrc && variantImageSrc);
-    const sequenceReadiness = variantsData?.sequenceReadiness ?? null;
-    const sequenceReadinessMessage =
-      sequenceReadiness && !sequenceReadiness.ready
-        ? (sequenceReadiness.message ?? 'Not ready.')
-        : null;
-    const blockSendForSequenceReadiness = Boolean(sequenceReadinessMessage);
-    const activeRunBaselineVariantIdSet = new Set(activeRunBaselineVariantIds);
-    const variantsProducedForActiveRun = variants.filter(
-      (slot) => slot.id && !activeRunBaselineVariantIdSet.has(slot.id)
-    ).length;
-    const pendingVariantPlaceholderCount =
-      activeRunId && (runStatus === 'queued' || runStatus === 'running')
-        ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun)
-        : 0;
-    const registrySource =
-      product?.id
-        ? {
-          label: 'Product Studio workspace state',
-          resolved: buildProductStudioWorkspaceContextBundle({
-            product,
-            studioProjectId,
-            selectedImageIndex,
-            imageSlotPreviews,
-            selectedVariantSlotId,
-            variantsData,
-            activeRunId,
-            runStatus,
-            pendingVariantPlaceholderCount,
-            sequenceReadinessMessage,
-            auditEntries,
-          }),
-        }
-        : null;
-
-    return {
-      variants,
-      selectedVariant,
-      selectedSourcePreview,
-      sourceImageSrc,
-      variantImageSrc,
-      canCompareWithSource,
-      sequenceReadinessMessage,
-      blockSendForSequenceReadiness,
-      pendingVariantPlaceholderCount,
-      registrySource,
-    };
+    return buildProductStudioDerivedState({
+      product,
+      studioProjectId,
+      selectedImageIndex,
+      imageSlotPreviews,
+      productImagesExternalBaseUrl,
+      selectedVariantSlotId,
+      variantsData,
+      activeRunId,
+      runStatus,
+      activeRunBaselineVariantIds,
+      pendingExpectedOutputs,
+      auditEntries,
+    });
   }, [
     activeRunBaselineVariantIds,
     activeRunId,

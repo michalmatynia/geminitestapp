@@ -7,24 +7,31 @@ import {
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/assignments/KangurAssignmentPriorityChip';
 import { cn } from '@/features/kangur/shared/utils';
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
+import { useKangurAssignmentItem } from './KangurAssignmentItemContext';
 
 export function KangurAssignmentManagerCardHeader({
   title,
   description,
   priority,
 }: {
-  title: string;
-  description: string | null;
+  title?: string;
+  description?: string | null;
   priority?: KangurAssignmentSnapshot['priority'];
 }): React.JSX.Element {
+  const contextItem = useKangurAssignmentItem();
+  
+  const effectiveTitle = title ?? contextItem?.title ?? '';
+  const effectiveDescription = description ?? contextItem?.description ?? null;
+  const effectivePriority = priority ?? contextItem?.createInput.priority;
+
   return (
     <div className='space-y-1.5'>
       <div className='flex items-start justify-between gap-3'>
-        <KangurCardTitle size='sm'>{title}</KangurCardTitle>
-        {priority !== undefined && <KangurAssignmentPriorityChip priority={priority} />}
+        <KangurCardTitle size='sm'>{effectiveTitle}</KangurCardTitle>
+        {effectivePriority !== undefined && <KangurAssignmentPriorityChip priority={effectivePriority} />}
       </div>
-      {description ? (
-        <KangurCardDescription className='line-clamp-2'>{description}</KangurCardDescription>
+      {effectiveDescription ? (
+        <KangurCardDescription className='line-clamp-2'>{effectiveDescription}</KangurCardDescription>
       ) : null}
     </div>
   );

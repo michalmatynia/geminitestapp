@@ -4,6 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
@@ -81,12 +83,12 @@ function useAiTutorDeferredUsageQueryReady(shouldLoadUsage: boolean): boolean {
     }
 
     setIsUsageQueryReady(false);
-    const timeoutId = setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       setIsUsageQueryReady(true);
     }, AI_TUTOR_USAGE_LOAD_DEFER_MS);
 
     return () => {
-      clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [shouldLoadUsage]);
 
@@ -131,6 +133,7 @@ function useAiTutorUsageState({
       queryKey: kangurKeys.aiTutor.usage(activeLearnerId),
       tags: ['kangur', 'ai-tutor', 'usage'],
       description: 'Loads AI tutor usage for the active learner.',
+      errorPresentation: 'inline',
     },
   });
 

@@ -89,6 +89,23 @@ vi.mock('next/navigation', () => ({
   permanentRedirect: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: lessonsTestHoisted.routerPushMock,
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+  }),
+  usePathname: () => '/kangur/lessons',
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({})),
+  useSelectedLayoutSegment: vi.fn(() => null),
+  useSelectedLayoutSegments: vi.fn(() => []),
+  redirect: vi.fn(),
+  notFound: vi.fn(),
+  permanentRedirect: vi.fn(),
+}));
+
 const KangurLessonNavigationContext = React.createContext<any>(null);
 
 vi.mock('@/features/kangur/ui/context/KangurLessonNavigationContext', () => ({

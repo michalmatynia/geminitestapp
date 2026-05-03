@@ -1,4 +1,4 @@
-import { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import { type AiNode, type Edge } from '@/shared/contracts/ai-paths';
 
 import { resolveEdgeToNodeId } from './engine-utils';
 
@@ -32,5 +32,11 @@ export function resolveScopedNodeIds(args: {
       }
     });
   }
+
+  // Include seeded nodes
+  Object.keys(args.seedHashes).forEach((nodeId) => {
+    reachable.add(nodeId);
+  });
+
   return reachable;
 }

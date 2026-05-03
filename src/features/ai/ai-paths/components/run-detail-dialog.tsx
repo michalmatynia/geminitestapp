@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathRunNodeRecord, RuntimeHistoryEntry } from '@/shared/contracts/ai-paths';
@@ -12,8 +12,15 @@ import { JsonViewer } from '@/shared/ui/data-display.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { normalizeRunEvents, normalizeRunNodes } from './job-queue-panel-utils';
-import { collectPlaywrightArtifacts } from './playwright-artifacts';
-import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
+import {
+  collectPlaywrightArtifacts,
+  collectPlaywrightRuntimePostures,
+  formatPlaywrightRuntimePostureBrowser,
+  formatPlaywrightRuntimePostureIdentity,
+  formatPlaywrightRuntimePostureProxy,
+  formatPlaywrightRuntimePostureStickyState,
+  resolvePlaywrightArtifactDisplayName,
+} from './playwright-artifacts';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunTimeline } from './run-timeline';
 import { readRuntimeTraceSummary } from './run-trace-utils';
@@ -35,8 +42,6 @@ function RunDetailField({ label, children }: RunDetailFieldProps): React.JSX.Ele
 }
 
 export function RunDetailDialog(): React.JSX.Element {
-  const [isMarkingHandoff, setIsMarkingHandoff] = useState(false);
-  const [handoffRequested, setHandoffRequested] = useState(false);
   const {
     runDetailOpen: isOpen,
     runDetailLoading,
@@ -51,9 +56,6 @@ export function RunDetailDialog(): React.JSX.Element {
     setRunDetailOpen,
     setRunStreamPaused: onStreamPauseToggle,
     setRunHistoryNodeId: onHistoryNodeSelect,
-    resumeRun,
-    handoffRun,
-    retryRunNode,
   } = useRunHistoryActions();
 
   const onClose = () => setRunDetailOpen(false);
@@ -116,33 +118,12 @@ export function RunDetailDialog(): React.JSX.Element {
   const slowestRuntimeNodeSpan = runtimeTraceSummary?.slowestSpan ?? null;
 
   const playwrightArtifacts = useMemo(() => collectPlaywrightArtifacts(runNodes), [runNodes]);
+  const playwrightRuntimePostures = useMemo(
+    () => collectPlaywrightRuntimePostures(runNodes),
+    [runNodes]
+  );
 
   const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === 'scheduled_run');
-  const runMeta =
-    runDetail?.run?.meta && typeof runDetail.run.meta === 'object' ? runDetail.run.meta : null;
-  const executionLease =
-    runMeta &&
-    typeof runMeta['executionLease'] === 'object' &&
-    runMeta['executionLease'] !== null
-      ? (runMeta['executionLease'] as Record<string, unknown>)
-      : null;
-  const handoffMeta =
-    runMeta &&
-    typeof runMeta['handoff'] === 'object' &&
-    runMeta['handoff'] !== null
-      ? (runMeta['handoff'] as Record<string, unknown>)
-      : null;
-  const leaseOwnerAgentId =
-    typeof executionLease?.['ownerAgentId'] === 'string' ? executionLease['ownerAgentId'] : null;
-  const leaseOwnerRunId =
-    typeof executionLease?.['ownerRunId'] === 'string' ? executionLease['ownerRunId'] : null;
-  const handoffReason =
-    typeof handoffMeta?.['reason'] === 'string' ? handoffMeta['reason'] : null;
-  const handoffCheckpointLineageId =
-    typeof handoffMeta?.['checkpointLineageId'] === 'string'
-      ? handoffMeta['checkpointLineageId']
-      : null;
-  const canMarkHandoffReady = runDetail?.run?.status === 'blocked_on_lease';
 
   const switchRoutingSummary = useMemo(() => {
     if (!runDetailHistory || !runDetail?.run?.graph?.nodes) return [];
@@ -211,7 +192,7 @@ export function RunDetailDialog(): React.JSX.Element {
                   size='sm'
                   onClick={() => onStreamPauseToggle(!runStreamPaused)}
                 >
-                  {runStreamPaused ? 'Resume stream' : 'Pause stream'}
+                  {runStreamPaused ? 'Reconnect stream' : 'Pause stream'}
                 </Button>
               </div>
             </RunDetailField>
@@ -239,67 +220,6 @@ export function RunDetailDialog(): React.JSX.Element {
               </div>
             </RunDetailField>
           </div>
-          {runDetail.run.status === 'blocked_on_lease' ? (
-            <Alert variant='warning' className='px-3 py-2 text-[11px]'>
-              <div className='flex flex-wrap items-center justify-between gap-2'>
-                <div className='space-y-1'>
-                  <div className='font-semibold'>Execution lease blocked</div>
-                  <div>
-                    This run cannot continue until the active execution owner releases the lease or
-                    the run is handed off.
-                  </div>
-                  {leaseOwnerAgentId ? (
-                    <div className='text-[10px] text-current/80'>
-                      Current owner: {leaseOwnerAgentId}
-                      {leaseOwnerRunId ? ` (${leaseOwnerRunId})` : ''}
-                    </div>
-                  ) : null}
-                </div>
-                {canMarkHandoffReady ? (
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    onClick={() => {
-                      setIsMarkingHandoff(true);
-                      setHandoffRequested(false);
-                      void handoffRun(runDetail.run.id)
-                        .then((ok: boolean) => {
-                          setHandoffRequested(ok);
-                        })
-                        .finally(() => {
-                          setIsMarkingHandoff(false);
-                        });
-                    }}
-                    disabled={isMarkingHandoff}
-                  >
-                    {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
-                  </Button>
-                ) : null}
-              </div>
-              {handoffRequested ? (
-                <div className='text-[10px] text-current/80'>
-                  Handoff requested. Refreshing run status...
-                </div>
-              ) : null}
-            </Alert>
-          ) : null}
-          {runDetail.run.status === 'handoff_ready' ? (
-            <Alert variant='info' className='px-3 py-2 text-[11px]'>
-              <div className='space-y-1'>
-                <div className='font-semibold'>Ready for delegated continuation</div>
-                <div>
-                  {handoffReason ??
-                    'This run was prepared for another operator or agent to continue.'}
-                </div>
-                {handoffCheckpointLineageId ? (
-                  <div className='text-[10px] text-current/80'>
-                    Checkpoint lineage: {handoffCheckpointLineageId}
-                  </div>
-                ) : null}
-              </div>
-            </Alert>
-          ) : null}
           {runNodeSummary ? (
             <div className='rounded-md border border-border/70 bg-black/20 p-3'>
               <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500'>
@@ -395,8 +315,6 @@ export function RunDetailDialog(): React.JSX.Element {
                 <div>Node spans: {runtimeTraceSummary?.nodeSpanCount ?? 0}</div>
                 <div>Seed reuses: {runtimeTraceSummary?.seededSpanCount ?? 0}</div>
                 <div>Effect reuses: {runtimeTraceSummary?.effectReplayCount ?? 0}</div>
-                <div>Resume reuses: {runtimeTraceSummary?.resumeReuseCount ?? 0}</div>
-                <div>Resume re-execs: {runtimeTraceSummary?.resumeReexecutionCount ?? 0}</div>
                 <div>Source: {runtimeTraceSummary?.source ?? 'unknown'}</div>
                 <div>
                   Trace finished:{' '}
@@ -503,14 +421,54 @@ export function RunDetailDialog(): React.JSX.Element {
                         className='text-sky-200 underline decoration-sky-300/60 underline-offset-2 hover:text-sky-100'
                         title={artifact.path}
                       >
-                        {artifact.name}
+                        {resolvePlaywrightArtifactDisplayName(artifact)}
                       </a>
                     ) : (
-                      <span className='text-gray-200'>{artifact.name}</span>
+                      <span className='text-gray-200'>{resolvePlaywrightArtifactDisplayName(artifact)}</span>
                     )}
                     {artifact.kind ? (
                       <span className='text-gray-500'>({artifact.kind})</span>
                     ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {playwrightRuntimePostures.length > 0 ? (
+            <div className='rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3'>
+              <div className='text-[11px] font-semibold text-emerald-100'>
+                Playwright Runtime Posture ({playwrightRuntimePostures.length})
+              </div>
+              <div className='mt-2 space-y-2'>
+                {playwrightRuntimePostures.map((runtimePosture) => (
+                  <div
+                    key={`${runtimePosture.nodeId}:${runtimePosture.browserLabel ?? runtimePosture.browserEngine ?? 'runtime'}`}
+                    className='rounded-md border border-emerald-500/20 bg-black/20 p-2'
+                  >
+                    <div className='text-[11px] text-gray-300'>
+                      {runtimePosture.nodeTitle ?? runtimePosture.nodeId}
+                      {runtimePosture.nodeType ? ` (${runtimePosture.nodeType})` : ''}
+                    </div>
+                    <div className='mt-2 grid gap-2 lg:grid-cols-2'>
+                      {[
+                        { label: 'Browser', value: formatPlaywrightRuntimePostureBrowser(runtimePosture) },
+                        { label: 'Identity', value: formatPlaywrightRuntimePostureIdentity(runtimePosture) },
+                        { label: 'Proxy', value: formatPlaywrightRuntimePostureProxy(runtimePosture) },
+                        { label: 'Sticky state', value: formatPlaywrightRuntimePostureStickyState(runtimePosture) },
+                      ]
+                        .filter(
+                          (entry): entry is { label: string; value: string } =>
+                            typeof entry.value === 'string' && entry.value.trim().length > 0
+                        )
+                        .map((entry) => (
+                          <div key={entry.label}>
+                            <div className='text-[10px] uppercase text-emerald-200/80'>
+                              {entry.label}
+                            </div>
+                            <div className='mt-1 text-[11px] text-emerald-50'>{entry.value}</div>
+                          </div>
+                        ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -547,17 +505,6 @@ export function RunDetailDialog(): React.JSX.Element {
                 <RunHistoryEntries
                   entries={historyEntries}
                   emptyMessage='No history for this node.'
-                  onReplayFromEntry={(entry): void => {
-                    if (!runDetail?.run?.id) return;
-                    const action = resolveRunHistoryEntryAction(entry);
-                    if (action.kind === 'retry_node') {
-                      void retryRunNode(runDetail.run.id, entry.nodeId).catch(() => {});
-                      return;
-                    }
-                    void resumeRun(runDetail.run.id, action.resumeMode ?? 'replay').catch(
-                      () => {}
-                    );
-                  }}
                 />
               </div>
             ) : (

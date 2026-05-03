@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentProps, ReactNode } from 'react';
+import { createContext, useContext, useMemo, type ComponentProps, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/game-home/KangurGameHomeMomentumWidget';
@@ -22,6 +22,9 @@ import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-
 import { getNextLockedBadge, getProgressBadges } from '@/features/kangur/ui/services/progress';
 import { translateKangurProgressWithFallback } from '@/features/kangur/ui/services/progress-i18n';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import type { KangurXpToastQuestHint } from '@/features/kangur/ui/types';
+
+type KangurGameResultDailyQuest = KangurXpToastQuestHint | null | undefined;
 
 type KangurResultSectionCardProps = {
   accent: ComponentProps<typeof KangurInfoCard>['accent'];
@@ -75,39 +78,31 @@ type KangurGameResultRecommendation = ReturnType<
 >['activeSessionRecommendation'];
 type KangurGameResultBadge = ReturnType<typeof getProgressBadges>[number];
 type KangurGameResultNextBadge = ReturnType<typeof getNextLockedBadge>;
-type KangurGameResultDailyQuest = KangurGameResultXpToast['dailyQuest'];
 type KangurGameResultCurrentQuest = ReturnType<typeof getCurrentKangurDailyQuest>;
 
-type KangurGameResultRewardSectionProps = {
-  fallbackCopy: KangurGameResultFallbackCopy;
-  resultTranslations: KangurGameResultTranslations;
-  xpToast: KangurGameResultXpToast;
-};
-
-type KangurGameResultRecommendationSectionProps = {
+type KangurGameResultContextValue = {
   activeSessionRecommendation: KangurGameResultRecommendation;
-  fallbackCopy: KangurGameResultFallbackCopy;
-  resultTranslations: KangurGameResultTranslations;
-};
-
-type KangurGameResultBadgesSectionProps = {
-  fallbackCopy: KangurGameResultFallbackCopy;
-  resultTranslations: KangurGameResultTranslations;
-  unlockedBadgeDetails: KangurGameResultBadge[];
-};
-
-type KangurGameResultFollowupSectionProps = {
+  basePath: string;
   currentQuest: KangurGameResultCurrentQuest;
   fallbackCopy: KangurGameResultFallbackCopy;
   nextBadge: KangurGameResultNextBadge;
+  resultPracticeAssignment: ReturnType<typeof useKangurGameRuntime>['resultPracticeAssignment'];
   resultTranslations: KangurGameResultTranslations;
+  unlockedBadgeDetails: KangurGameResultBadge[];
   xpToast: KangurGameResultXpToast;
 };
 
-type KangurGameResultAssignmentBannerProps = {
-  basePath: string;
-  resultPracticeAssignment: ReturnType<typeof useKangurGameRuntime>['resultPracticeAssignment'];
-};
+// KangurGameResultContext provides result-screen data to all sub-components
+// without prop drilling. Scoped to the KangurGameResultWidget tree.
+const KangurGameResultContext = createContext<KangurGameResultContextValue | null>(null);
+
+function useKangurGameResult(): KangurGameResultContextValue {
+  const context = useContext(KangurGameResultContext);
+  if (!context) {
+    throw new Error('useKangurGameResult must be used within KangurGameResultWidget');
+  }
+  return context;
+}
 
 const getGameResultFallbackCopy = (
   locale: ReturnType<typeof normalizeSiteLocale>
@@ -207,10 +202,8 @@ const resolveKangurGameResultQuestStatusAccent = (
   return 'indigo';
 };
 
-function KangurGameResultAssignmentBanner({
-  basePath,
-  resultPracticeAssignment,
-}: KangurGameResultAssignmentBannerProps): React.JSX.Element | null {
+function KangurGameResultAssignmentBanner(): React.JSX.Element | null {
+  const { basePath, resultPracticeAssignment } = useKangurGameResult();
   if (!resultPracticeAssignment) {
     return null;
   }
@@ -226,11 +219,9 @@ function KangurGameResultAssignmentBanner({
   );
 }
 
-function KangurGameResultRewardSection({
-  fallbackCopy,
-  resultTranslations,
-  xpToast,
-}: KangurGameResultRewardSectionProps): React.JSX.Element | null {
+function KangurGameResultRewardSection(): React.JSX.Element | null {
+  const { fallbackCopy, resultTranslations, xpToast } = useKangurGameResult();
+
   if (xpToast.xpGained <= 0) {
     return null;
   }
@@ -312,11 +303,9 @@ function KangurGameResultRewardSection({
   );
 }
 
-function KangurGameResultRecommendationSection({
-  activeSessionRecommendation,
-  fallbackCopy,
-  resultTranslations,
-}: KangurGameResultRecommendationSectionProps): React.JSX.Element | null {
+function KangurGameResultRecommendationSection(): React.JSX.Element | null {
+  const { activeSessionRecommendation, fallbackCopy, resultTranslations } = useKangurGameResult();
+
   if (!activeSessionRecommendation) {
     return null;
   }
@@ -356,11 +345,9 @@ function KangurGameResultRecommendationSection({
   );
 }
 
-function KangurGameResultBadgesSection({
-  fallbackCopy,
-  resultTranslations,
-  unlockedBadgeDetails,
-}: KangurGameResultBadgesSectionProps): React.JSX.Element | null {
+function KangurGameResultBadgesSection(): React.JSX.Element | null {
+  const { unlockedBadgeDetails, fallbackCopy, resultTranslations } = useKangurGameResult();
+
   if (unlockedBadgeDetails.length === 0) {
     return null;
   }
@@ -415,18 +402,12 @@ function KangurGameResultBadgesSection({
 }
 
 function KangurGameResultFollowupChips({
-  currentQuest,
   dailyQuest,
-  fallbackCopy,
-  nextBadge,
-  resultTranslations,
 }: {
-  currentQuest: KangurGameResultCurrentQuest;
   dailyQuest: KangurGameResultDailyQuest;
-  fallbackCopy: KangurGameResultFallbackCopy;
-  nextBadge: KangurGameResultNextBadge;
-  resultTranslations: KangurGameResultTranslations;
 }): React.JSX.Element {
+  const { currentQuest, fallbackCopy, nextBadge, resultTranslations } = useKangurGameResult();
+
   return (
     <KangurResultSectionChips>
       {dailyQuest ? (
@@ -492,15 +473,11 @@ function KangurGameResultFollowupChips({
 
 function KangurGameResultFollowupContent({
   dailyQuest,
-  fallbackCopy,
-  nextBadge,
-  resultTranslations,
 }: {
   dailyQuest: KangurGameResultDailyQuest;
-  fallbackCopy: KangurGameResultFallbackCopy;
-  nextBadge: KangurGameResultNextBadge;
-  resultTranslations: KangurGameResultTranslations;
 }): React.JSX.Element | null {
+  const { fallbackCopy, nextBadge, resultTranslations } = useKangurGameResult();
+
   if (dailyQuest) {
     return (
       <>
@@ -540,13 +517,9 @@ function KangurGameResultFollowupContent({
   );
 }
 
-function KangurGameResultFollowupSection({
-  currentQuest,
-  fallbackCopy,
-  nextBadge,
-  resultTranslations,
-  xpToast,
-}: KangurGameResultFollowupSectionProps): React.JSX.Element | null {
+function KangurGameResultFollowupSection(): React.JSX.Element | null {
+  const { nextBadge, xpToast } = useKangurGameResult();
+
   if (!xpToast.dailyQuest && !nextBadge) {
     return null;
   }
@@ -556,19 +529,8 @@ function KangurGameResultFollowupSection({
       accent={resolveKangurGameResultFollowupAccent(xpToast.dailyQuest)}
       testId='kangur-result-followup-card'
     >
-      <KangurGameResultFollowupChips
-        currentQuest={currentQuest}
-        dailyQuest={xpToast.dailyQuest}
-        fallbackCopy={fallbackCopy}
-        nextBadge={nextBadge}
-        resultTranslations={resultTranslations}
-      />
-      <KangurGameResultFollowupContent
-        dailyQuest={xpToast.dailyQuest}
-        fallbackCopy={fallbackCopy}
-        nextBadge={nextBadge}
-        resultTranslations={resultTranslations}
-      />
+      <KangurGameResultFollowupChips dailyQuest={xpToast.dailyQuest} />
+      <KangurGameResultFollowupContent dailyQuest={xpToast.dailyQuest} />
     </KangurResultSectionCard>
   );
 }
@@ -613,47 +575,40 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
     unlockedBadgeIds.has(badge.id)
   );
 
-  return (
-    <div className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurGameResultAssignmentBanner
-        basePath={basePath}
-        resultPracticeAssignment={resultPracticeAssignment}
-      />
-      <ResultScreen
-        score={score}
-        total={totalQuestions}
-        playerName={playerName}
-        operation={operation}
-        timeTaken={timeTaken}
-        onRestart={handleRestart}
-        onHome={handleHome}
-      />
-      <KangurGameResultRewardSection
-        fallbackCopy={fallbackCopy}
-        resultTranslations={resultTranslations}
-        xpToast={xpToast}
-      />
-      <KangurGameResultRecommendationSection
-        activeSessionRecommendation={activeSessionRecommendation}
-        fallbackCopy={fallbackCopy}
-        resultTranslations={resultTranslations}
-      />
-      <KangurGameResultBadgesSection
-        fallbackCopy={fallbackCopy}
-        resultTranslations={resultTranslations}
-        unlockedBadgeDetails={unlockedBadgeDetails}
-      />
-      <KangurGameResultFollowupSection
-        currentQuest={currentQuest}
-        fallbackCopy={fallbackCopy}
-        nextBadge={nextBadge}
-        resultTranslations={resultTranslations}
-        xpToast={xpToast}
-      />
+  const contextValue: KangurGameResultContextValue = useMemo(() => ({
+    activeSessionRecommendation,
+    basePath,
+    currentQuest,
+    fallbackCopy,
+    nextBadge,
+    resultPracticeAssignment,
+    resultTranslations,
+    unlockedBadgeDetails,
+    xpToast,
+  }), [activeSessionRecommendation, basePath, currentQuest, fallbackCopy, nextBadge, resultPracticeAssignment, resultTranslations, unlockedBadgeDetails, xpToast]);
 
-      <div className='w-full max-w-2xl'>
-        <KangurGameHomeMomentumWidget basePath={basePath} progress={progress} />
+  return (
+    <KangurGameResultContext.Provider value={contextValue}>
+      <div className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+        <KangurGameResultAssignmentBanner />
+        <ResultScreen
+          score={score}
+          total={totalQuestions}
+          playerName={playerName}
+          operation={operation}
+          timeTaken={timeTaken}
+          onRestart={handleRestart}
+          onHome={handleHome}
+        />
+        <KangurGameResultRewardSection />
+        <KangurGameResultRecommendationSection />
+        <KangurGameResultBadgesSection />
+        <KangurGameResultFollowupSection />
+
+        <div className='w-full max-w-2xl'>
+          <KangurGameHomeMomentumWidget basePath={basePath} progress={progress} />
+        </div>
       </div>
-    </div>
+    </KangurGameResultContext.Provider>
   );
 }

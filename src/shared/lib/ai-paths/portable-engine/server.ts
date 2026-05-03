@@ -42,7 +42,6 @@ export const runPortablePathServer = async (
     validationMiddleware,
     signingPolicyProfile,
     signingPolicyTelemetrySurface = 'api',
-    repairIdentities = true,
     enforcePayloadLimits = true,
     limits,
     fingerprintVerificationMode,
@@ -67,7 +66,6 @@ export const runPortablePathServer = async (
   const resolved = await resolvePortablePathInputAsync(input, {
     signingPolicyProfile,
     signingPolicyTelemetrySurface,
-    repairIdentities,
     includeConnections: false,
     enforcePayloadLimits,
     limits,

@@ -109,4 +109,22 @@ describe('page-context', () => {
       'useContextRegistryPageState must be used within ContextRegistryPageProvider'
     );
   });
+
+  it('keeps the envelope dormant while disabled', () => {
+    render(
+      <ContextRegistryPageProvider
+        enabled={false}
+        pageId='admin:brain'
+        title='AI Brain'
+        rootNodeIds={['page-root']}
+      >
+        <StateProbe />
+        <RegisteredSource />
+      </ContextRegistryPageProvider>
+    );
+
+    expect(screen.getByTestId('page-id')).toHaveTextContent('admin:brain');
+    expect(screen.getByTestId('source-count')).toHaveTextContent('0');
+    expect(screen.getByTestId('ref-ids')).toHaveTextContent(JSON.stringify([]));
+  });
 });

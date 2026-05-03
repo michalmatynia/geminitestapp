@@ -6,9 +6,12 @@ import { useEffect, useMemo } from 'react';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurPageIntroCard';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
@@ -32,49 +35,12 @@ import {
 
 const SOCIAL_UPDATES_MAIN_ID = 'kangur-social-updates-main';
 
-const formatDate = (value: string | null | undefined): string => {
-  if (!value) return '—';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '—';
-  return parsed.toLocaleDateString('pl-PL', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-};
-
-const getPostTitle = (post: KangurSocialPost): string =>
-  post.titlePl.trim() || post.titleEn.trim() || 'New Kangur update';
-
-const getPostExcerpt = (post: KangurSocialPost): string => {
-  const sections = resolvePostSections(post);
-  const combined = sections.map((section) => section.body.trim()).filter(Boolean).join(' ');
-  if (!combined) return 'Latest product updates from Kangur and StudiQ.';
-  return combined.length > 180 ? `${combined.slice(0, 177).trimEnd()}...` : combined;
-};
-
-const resolvePostSections = (post: KangurSocialPost): Array<{ label?: string; body: string }> => {
-  const pl = post.bodyPl.trim();
-  const en = post.bodyEn.trim();
-  if (pl || en) {
-    return [
-      ...(pl ? [{ label: 'PL', body: pl }] : []),
-      ...(en ? [{ label: 'EN', body: en }] : []),
-    ];
-  }
-
-  const combined = post.combinedBody.trim();
-  if (!combined) return [];
-  const split = combined
-    .split(KANGUR_SOCIAL_BILINGUAL_SEPARATOR)
-    .map((part) => part.trim())
-    .filter(Boolean);
-  if (split.length <= 1) return [{ body: combined }];
-  return split.map((body, index) => ({
-    label: split.length === 2 ? (index === 0 ? 'PL' : 'EN') : `Part ${index + 1}`,
-    body,
-  }));
-};
+import { SocialPostCard } from '../components/SocialPostCard';
+import {
+  formatDate,
+  getPostExcerpt,
+  getPostTitle,
+} from '../utils/social-post-formatters';
 
 function useSocialUpdatesViewTracking(input: {
   isLoading: boolean;
@@ -236,7 +202,7 @@ function SocialUpdatesArchive(props: {
       </div>
       <div className='grid gap-4 lg:grid-cols-2'>
         {archivePosts.map((post) => (
-          <SocialUpdatesArchiveCard key={post.id} post={post} />
+          <SocialPostCard key={post.id} post={post} />
         ))}
       </div>
     </div>
@@ -269,10 +235,10 @@ function SocialUpdatesBody(props: {
 
 export default function SocialUpdates(): React.JSX.Element {
   const { basePath } = useKangurRouting();
-  const auth = useKangurAuth();
-  const { user, logout } = auth;
+  const { user } = useKangurAuthSessionState();
+  const { logout } = useKangurAuthActions();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const { openLoginModal } = useKangurLoginModal();
+  const { openLoginModal } = useKangurLoginModalActions();
   const routeNavigator = useKangurRouteNavigator();
   const postsQuery = useKangurSocialPosts({ scope: 'public', limit: 8 });
   const posts = postsQuery.data ?? [];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AiPathLocalRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathLocalRunRecord } from '@/shared/contracts/ai-paths';
 import { shouldIncludeLocalRun } from './local-run-filters';
 
 const createRun = (source: string | null): AiPathLocalRunRecord => ({

@@ -1,12 +1,5 @@
-'use client';
-
-import { useTranslations } from 'next-intl';
 import type {
-  KangurDrawingEngineCatalogEntry,
   KangurGameEngineCatalogEntry,
-  KangurGameEngineCatalogImplementationGroup,
-  KangurGameLibraryPageData,
-  KangurGamesLibraryCohortGroup,
   KangurGamesLibraryVariantGroup,
 } from '@/features/kangur/games';
 import {
@@ -38,22 +31,8 @@ import {
   resolveImplementationOwnershipAccent,
   resolveVariantGroupAccent,
 } from '../GamesLibrary.utils';
-import type { GamesLibraryFilterState } from '../GamesLibrary.filters';
 
-type GamesLibraryTranslations = ReturnType<typeof useTranslations>;
-
-export interface StructureTabProps {
-  filters: GamesLibraryFilterState;
-  translations: GamesLibraryTranslations;
-  implementationGroups: KangurGameEngineCatalogImplementationGroup[];
-  coverageGroups: KangurGameLibraryPageData['coverage']['groups'];
-  cohortGroups: KangurGamesLibraryCohortGroup[];
-  drawingGroups: KangurDrawingEngineCatalogEntry[];
-  engineGroups: KangurGameEngineCatalogEntry[];
-  variantGroups: KangurGamesLibraryVariantGroup[];
-  locale: string;
-  metrics: KangurGameLibraryPageData['overview']['metrics'];
-}
+import { useGamesLibraryContext } from '../GamesLibrary.context';
 
 const STRUCTURE_SECTION_CLASSNAME = cn(
   GAMES_LIBRARY_PANEL_INSET_SURFACE_CLASSNAME,
@@ -68,18 +47,22 @@ const formatVariantGroupMetric = (group: KangurGamesLibraryVariantGroup): number
 const formatEngineGroupMetric = (group: KangurGameEngineCatalogEntry): number =>
   new Set(group.entries.map((entry) => entry.game.id)).size;
 
-export const StructureTab = ({
-  filters,
-  translations,
-  implementationGroups,
-  coverageGroups,
-  cohortGroups,
-  drawingGroups,
-  engineGroups,
-  variantGroups,
-  locale,
-  metrics,
-}: StructureTabProps) => {
+export interface StructureTabProps {}
+
+export const StructureTab = () => {
+  const {
+    filters,
+    translations,
+    implementationGroups,
+    coverageGroups,
+    cohortGroups,
+    drawingGroups,
+    engineGroups,
+    variantGroups,
+    locale,
+    metrics,
+  } = useGamesLibraryContext();
+
   const structurePanelEyebrow =
     filters.engineId === 'all'
       ? translations('tabs.structure')

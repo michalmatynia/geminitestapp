@@ -51,6 +51,10 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: (
     ...args: Parameters<typeof kangurAiTutorContextTestHoisted.useOptionalKangurAuthMock>
   ) => kangurAiTutorContextTestHoisted.useOptionalKangurAuthMock(...args),
+  useOptionalKangurAuthSessionState: () => {
+    const auth = kangurAiTutorContextTestHoisted.useOptionalKangurAuthMock();
+    return auth === null ? null : { user: auth.user ?? null };
+  },
 }));
 
 vi.mock('@/features/kangur/observability/client', () => {
@@ -66,7 +70,8 @@ vi.mock('@/features/kangur/observability/client', () => {
     withKangurClientError,
     withKangurClientErrorSync,
   };
-});
+,
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),});
 
 vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () => ({
   ErrorSystem: {

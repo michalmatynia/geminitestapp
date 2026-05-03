@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { cancelBaseImportRun, toStartResponse } from '@/features/integrations/server';
@@ -10,7 +10,7 @@ const paramsSchema = z.object({
   runId: z.string().trim().min(1, 'Run id is required'),
 });
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }

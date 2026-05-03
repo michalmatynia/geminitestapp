@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 import { getImageFileRepository, getDiskPathFromPublicPath, isHttpFilepath } from '@/features/files/server';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 
@@ -14,7 +14,7 @@ vi.mock('@/shared/lib/files/runtime-fs', () => ({
   getFsPromises: vi.fn(),
 }));
 
-describe('files/preview GET_handler', () => {
+describe('files/preview getHandler', () => {
   const mockContext = { source: 'test', query: {} } as any;
 
   beforeEach(() => {
@@ -23,7 +23,7 @@ describe('files/preview GET_handler', () => {
 
   it('throws badRequestError if fileId is missing', async () => {
     const req = new NextRequest('http://localhost/api/files/preview');
-    await expect(GET_handler(req, mockContext)).rejects.toThrow('File ID is required');
+    await expect(getHandler(req, mockContext)).rejects.toThrow('File ID is required');
   });
 
   it('serves file from disk if local path exists', async () => {
@@ -37,7 +37,7 @@ describe('files/preview GET_handler', () => {
 
     const contextWithQuery = { ...mockContext, query: { fileId: 'f1' } };
     const req = new NextRequest('http://localhost/api/files/preview?fileId=f1');
-    const response = await GET_handler(req, contextWithQuery);
+    const response = await getHandler(req, contextWithQuery);
 
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('content');

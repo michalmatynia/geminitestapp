@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -38,7 +38,7 @@ const searchSchema = z.object({
   provider: z.string().trim().optional(),
 });
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, searchSchema, {
     logPrefix: 'search',
   });

@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import type { AiNode, NodeConfig } from '@/shared/lib/ai-paths';
+import type { AiNode, NodeConfig } from '@/shared/contracts/ai-paths';
 
 export function useAiPathsNodeConfigActions(args: { selectedNodeId: string | null }) {
   const { selectedNodeId } = args;

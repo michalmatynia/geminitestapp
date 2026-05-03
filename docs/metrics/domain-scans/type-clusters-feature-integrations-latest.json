@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-26T13:27:22.862Z",
+  "generatedAt": "2026-04-17T12:20:27.898Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -12,25 +12,29 @@
     "domains": [
       "feature:integrations"
     ],
-    "minRisk": 0
+    "minRisk": 0,
+    "topLimit": 25,
+    "planTopLimit": 20,
+    "historyDisabled": true,
+    "noWrite": true
   },
   "thresholds": {
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 7787,
-    "exportedDeclarationsScanned": 5176,
-    "candidateDeclarationsScanned": 5152,
-    "exactShapeClusters": 12,
-    "nearShapeClusters": 5,
+    "filesScanned": 10655,
+    "exportedDeclarationsScanned": 6312,
+    "candidateDeclarationsScanned": 6292,
+    "exactShapeClusters": 9,
+    "nearShapeClusters": 3,
     "clustersAfterFilters": 1,
     "declarationsInClusters": 2,
     "highestRiskScore": 8
   },
   "clusters": [
     {
-      "clusterId": "exact-0006",
-      "clusterKind": "exact-shape",
+      "clusterId": "near-0001",
+      "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
       "declarationCount": 2,
@@ -39,30 +43,35 @@
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "807893788d98",
-        "memberCount": 1,
-        "preview": "prop:listing:ProductListingWithDetails"
+        "normalizedShapeHash": "136fe2e48cab",
+        "memberCount": 8,
+        "preview": "prop:entryCount:number; prop:fallbackReason?:string; prop:fallbackToCode:boolean; prop:overlayEntryCount:number; prop:requestedProfile:string; prop:resolvedProfile:string; prop:selectorRuntime:AmazonSelectorRuntime; prop:sourceProfiles:string[]"
       },
       "declarations": [
         {
-          "name": "ProductListingActionsProps",
+          "id": "src/features/integrations/services/amazon-selector-registry.ts#ResolvedAmazonSelectorRegistryRuntime",
+          "name": "ResolvedAmazonSelectorRegistryRuntime",
           "kind": "type",
-          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 25,
-          "domain": "feature:integrations",
+          "path": "src/features/integrations/services/amazon-selector-registry.ts",
+          "source": {
+            "path": "src/features/integrations/services/amazon-selector-registry.ts",
+            "line": 58,
+            "domain": "feature:integrations"
+          },
           "usageCount": 0
         },
         {
-          "name": "ProductListingDetailsProps",
+          "id": "src/features/integrations/services/supplier-1688-selector-registry.ts#ResolvedSupplier1688SelectorRegistryNativeRuntime",
+          "name": "ResolvedSupplier1688SelectorRegistryNativeRuntime",
           "kind": "type",
-          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
-          "line": 29,
-          "domain": "feature:integrations",
+          "path": "src/features/integrations/services/supplier-1688-selector-registry.ts",
+          "source": {
+            "path": "src/features/integrations/services/supplier-1688-selector-registry.ts",
+            "line": 58,
+            "domain": "feature:integrations"
+          },
           "usageCount": 0
         }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
       ]
     }
   ],

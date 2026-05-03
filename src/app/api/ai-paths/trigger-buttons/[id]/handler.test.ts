@@ -15,7 +15,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   upsertAiPathsSetting: upsertAiPathsSettingMock,
 }));
 
-import { DELETE_handler, PATCH_handler } from './handler';
+import { deleteHandler, patchHandler } from './handler';
 
 const createStoredButton = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
   id: 'btn-1',
@@ -53,7 +53,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await PATCH_handler(request, {} as Parameters<typeof PATCH_handler>[1], {
+    const response = await patchHandler(request, {} as Parameters<typeof patchHandler>[1], {
       id: 'btn-1',
     });
 
@@ -93,7 +93,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
     });
 
     await expect(
-      PATCH_handler(request, {} as Parameters<typeof PATCH_handler>[1], { id: 'btn-1' })
+      patchHandler(request, {} as Parameters<typeof patchHandler>[1], { id: 'btn-1' })
     ).rejects.toThrow('Invalid AI trigger button record payload.');
 
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
@@ -124,7 +124,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
     });
 
     await expect(
-      PATCH_handler(request, {} as Parameters<typeof PATCH_handler>[1], { id: 'btn-1' })
+      patchHandler(request, {} as Parameters<typeof patchHandler>[1], { id: 'btn-1' })
     ).rejects.toThrow('AI Path "path-missing" does not exist.');
 
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
       method: 'DELETE',
     });
 
-    const response = await DELETE_handler(request, {} as Parameters<typeof DELETE_handler>[1], {
+    const response = await deleteHandler(request, {} as Parameters<typeof deleteHandler>[1], {
       id: 'btn-1',
     });
 
@@ -175,7 +175,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
     });
 
     await expect(
-      DELETE_handler(request, {} as Parameters<typeof DELETE_handler>[1], { id: 'btn-1' })
+      deleteHandler(request, {} as Parameters<typeof deleteHandler>[1], { id: 'btn-1' })
     ).rejects.toThrow('Invalid AI trigger button record payload.');
 
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();

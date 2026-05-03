@@ -31,53 +31,8 @@ function ChatbotPageInner(): React.JSX.Element | null {
   const searchParams = useSearchParams();
   const [mounted, setMounted] = React.useState<boolean>(false);
   const [activeTab, setActiveTab] = React.useState<string>('chat');
-  const { messages } = useChatbotMessages();
-  const { sessions, currentSessionId } = useChatbotSessions();
-  const {
-    personaId,
-    webSearchEnabled,
-    useGlobalContext,
-    useLocalContext,
-    globalContext,
-    localContext,
-    localContextMode,
-  } = useChatbotSettings();
-  const { latestAgentRunId } = useChatbotUI();
 
-  const registrySource = React.useMemo(
-    () => ({
-      label: 'Chatbot workspace state',
-      resolved: buildChatbotWorkspaceContextBundle({
-        activeTab,
-        messages,
-        sessions,
-        currentSessionId,
-        personaId,
-        webSearchEnabled,
-        useGlobalContext,
-        useLocalContext,
-        globalContext,
-        localContext,
-        localContextMode,
-        latestAgentRunId,
-      }),
-    }),
-    [
-      activeTab,
-      currentSessionId,
-      globalContext,
-      latestAgentRunId,
-      localContext,
-      localContextMode,
-      messages,
-      personaId,
-      sessions,
-      useGlobalContext,
-      useLocalContext,
-      webSearchEnabled,
-    ]
-  );
-
+  const registrySource = useChatbotRegistrySource(activeTab);
   useRegisterContextRegistryPageSource('chatbot-workspace-state', registrySource);
 
   React.useEffect((): void => {
@@ -96,35 +51,97 @@ function ChatbotPageInner(): React.JSX.Element | null {
     <div className='page-section-tight h-[calc(100vh-120px)]'>
       <h1 className='sr-only'>Chatbot</h1>
       <div className='grid h-full grid-cols-1 gap-6 lg:grid-cols-5'>
-        {/* Session Sidebar */}
-        <Card className='hidden overflow-hidden border-border/60 bg-card/40 p-0 lg:block'>
-          <SessionSidebar />
-        </Card>
-
-        {/* Main Chat Area */}
-        <Card className='flex flex-col overflow-hidden border-border/60 bg-card/40 p-0 lg:col-span-3'>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className='flex h-full flex-col'>
-            <div className='border-b border-border/60 bg-muted/40 px-4 py-2'>
-              <TabsList className='bg-card' aria-label='Chatbot workspace tabs'>
-                <TabsTrigger value='chat'>Chat</TabsTrigger>
-                <TabsTrigger value='settings'>Settings</TabsTrigger>
-              </TabsList>
-            </div>
-            <div className='flex-1 overflow-hidden'>
-              <TabsContent value='chat' className='h-full m-0 p-0 outline-none'>
-                <ChatInterface />
-              </TabsContent>
-              <TabsContent value='settings' className='h-full m-0 overflow-y-auto outline-none'>
-                <SettingsTab />
-              </TabsContent>
-            </div>
-          </Tabs>
-        </Card>
-        <Card className='hidden overflow-hidden border-border/60 bg-card/40 p-0 lg:block'>
-          <ChatbotDebugPanel />
-        </Card>
+        <SessionSidebarCard />
+        <ChatInterfaceCard activeTab={activeTab} onTabChange={setActiveTab} />
+        <ChatbotDebugPanelCard />
       </div>
     </div>
+  );
+}
+
+function useChatbotRegistrySource(activeTab: string) {
+  const { messages } = useChatbotMessages();
+  const { sessions, currentSessionId } = useChatbotSessions();
+  const settings = useChatbotSettings();
+  const { latestAgentRunId } = useChatbotUI();
+
+  return React.useMemo(
+    () => ({
+      label: 'Chatbot workspace state',
+      resolved: buildChatbotWorkspaceContextBundle({
+        activeTab,
+        messages,
+        sessions,
+        currentSessionId,
+        personaId: settings.personaId,
+        webSearchEnabled: settings.webSearchEnabled,
+        useGlobalContext: settings.useGlobalContext,
+        useLocalContext: settings.useLocalContext,
+        globalContext: settings.globalContext,
+        localContext: settings.localContext,
+        localContextMode: settings.localContextMode,
+        latestAgentRunId,
+      }),
+    }),
+    [
+      activeTab,
+      currentSessionId,
+      settings.globalContext,
+      latestAgentRunId,
+      settings.localContext,
+      settings.localContextMode,
+      messages,
+      settings.personaId,
+      sessions,
+      settings.useGlobalContext,
+      settings.useLocalContext,
+      settings.webSearchEnabled,
+    ]
+  );
+}
+
+function SessionSidebarCard(): React.JSX.Element {
+  return (
+    <Card className='hidden overflow-hidden border-border/60 bg-card/40 p-0 lg:block'>
+      <SessionSidebar />
+    </Card>
+  );
+}
+
+function ChatInterfaceCard({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}): React.JSX.Element {
+  return (
+    <Card className='flex flex-col overflow-hidden border-border/60 bg-card/40 p-0 lg:col-span-3'>
+      <Tabs value={activeTab} onValueChange={onTabChange} className='flex h-full flex-col'>
+        <div className='border-b border-border/60 bg-muted/40 px-4 py-2'>
+          <TabsList className='bg-card' aria-label='Chatbot workspace tabs'>
+            <TabsTrigger value='chat'>Chat</TabsTrigger>
+            <TabsTrigger value='settings'>Settings</TabsTrigger>
+          </TabsList>
+        </div>
+        <div className='flex-1 overflow-hidden'>
+          <TabsContent value='chat' className='h-full m-0 p-0 outline-none'>
+            <ChatInterface />
+          </TabsContent>
+          <TabsContent value='settings' className='h-full m-0 overflow-y-auto outline-none'>
+            <SettingsTab />
+          </TabsContent>
+        </div>
+      </Tabs>
+    </Card>
+  );
+}
+
+function ChatbotDebugPanelCard(): React.JSX.Element {
+  return (
+    <Card className='hidden overflow-hidden border-border/60 bg-card/40 p-0 lg:block'>
+      <ChatbotDebugPanel />
+    </Card>
   );
 }
 

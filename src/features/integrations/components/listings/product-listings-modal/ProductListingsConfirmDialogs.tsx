@@ -15,13 +15,20 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
   const {
     listingToDelete,
     setListingToDelete,
+    listingToMoveToUnsold,
+    setListingToMoveToUnsold,
     listingToPurge,
     setListingToPurge,
     isSyncImagesConfirmOpen,
     setIsSyncImagesConfirmOpen,
   } = useProductListingsModals();
 
-  const { handleDeleteFromBase, handlePurgeListing, handleSyncBaseImages } =
+  const {
+    handleDeleteFromBase,
+    handleMoveTraderaListingToUnsold,
+    handlePurgeListing,
+    handleSyncBaseImages,
+  } =
     useProductListingsActions();
 
   const baseListing =
@@ -34,7 +41,7 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
   const confirmDialogs = [
     {
       id: 'delete-from-base',
-      open: !!listingToDelete,
+      open: Boolean(listingToDelete),
       onOpenChange: (open: boolean) => !open && setListingToDelete(null),
       onConfirm: () => {
         if (listingToDelete) void handleDeleteFromBase(listingToDelete);
@@ -45,8 +52,23 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
       isDestructive: true,
     },
     {
+      id: 'move-tradera-listing-to-unsold',
+      open: Boolean(listingToMoveToUnsold),
+      onOpenChange: (open: boolean) => !open && setListingToMoveToUnsold(null),
+      onConfirm: () => {
+        if (listingToMoveToUnsold) void handleMoveTraderaListingToUnsold(listingToMoveToUnsold, {
+          browserMode: 'headed',
+        });
+      },
+      title: 'End On Tradera',
+      description:
+        'End this Tradera listing and move it to Unsold if possible? The app connection and listing history will be kept so you can relist it later.',
+      confirmText: 'End Listing',
+      isDestructive: true,
+    },
+    {
       id: 'purge-listing',
-      open: !!listingToPurge,
+      open: Boolean(listingToPurge),
       onOpenChange: (open: boolean) => !open && setListingToPurge(null),
       onConfirm: () => {
         if (listingToPurge) void handlePurgeListing(listingToPurge);

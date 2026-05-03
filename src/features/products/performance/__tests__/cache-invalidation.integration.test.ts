@@ -31,12 +31,13 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
 }));
 
 import { queryCache, ProductCacheHelpers } from '@/features/products/performance/query-cache';
-import { CachedProductMutations, withCacheInvalidation } from '@/features/products/server';
+import { CachedProductMutations, CachedProductService, withCacheInvalidation } from '@/features/products/server';
 import { productService } from '@/shared/lib/products/services/productService';
 
 const createProductMock = productService.createProduct as ReturnType<typeof vi.fn>;
 const updateProductMock = productService.updateProduct as ReturnType<typeof vi.fn>;
 const deleteProductMock = productService.deleteProduct as ReturnType<typeof vi.fn>;
+const getProductsWithCountMock = productService.getProductsWithCount as ReturnType<typeof vi.fn>;
 
 const PRODUCT_ID = 'prod-abc-123';
 
@@ -139,6 +140,7 @@ describe('CachedProductMutations', () => {
     createProductMock.mockReset();
     updateProductMock.mockReset();
     deleteProductMock.mockReset();
+    getProductsWithCountMock.mockReset();
   });
 
   // ── createProduct ────────────────────────────────────────────────────
@@ -286,6 +288,37 @@ describe('CachedProductMutations', () => {
       expect(countAfter).toBeNull();
       expect(pagedAfter).toBeNull();
       expect(categoriesAfter).toEqual(['c1']);
+    });
+  });
+});
+
+describe('CachedProductService', () => {
+  beforeEach(() => {
+    queryCache.clear();
+    getProductsWithCountMock.mockReset();
+  });
+
+  it('refreshes invalid paged cache entries that are missing total', async () => {
+    queryCache.set('products:paged:{}', [], { products: [mockProduct] }, {
+      tags: ['products:paged', 'products:list'],
+    });
+    getProductsWithCountMock.mockResolvedValue({
+      products: [mockProduct],
+      total: 1,
+    });
+
+    const result = await CachedProductService.getProductsWithCount({});
+    const secondResult = await CachedProductService.getProductsWithCount({});
+
+    expect(result).toEqual({
+      products: [mockProduct],
+      total: 1,
+    });
+    expect(secondResult).toEqual(result);
+    expect(getProductsWithCountMock).toHaveBeenCalledTimes(1);
+    expect(queryCache.get('products:paged:{}', [])).toEqual({
+      products: [mockProduct],
+      total: 1,
     });
   });
 });

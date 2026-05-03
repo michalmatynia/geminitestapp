@@ -1,13 +1,17 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 
-import KangurAssignmentSpotlight from '@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
+import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { GAME_HOME_HERO_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
+import {
+  GAME_HOME_COPY_IDLE_DELAY_MS,
+  GAME_HOME_HERO_SHELL_CLASSNAME,
+} from '@/features/kangur/ui/pages/GameHome.constants';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type KangurGameHomeHeroWidgetProps = {
@@ -30,6 +34,17 @@ type KangurGameHomeHeroViewModel = {
   intro: React.JSX.Element | null;
   milestoneSummary: React.JSX.Element | null;
 };
+
+const KangurAssignmentSpotlight = dynamic(
+  () =>
+    import('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight').then((m) => ({
+      default: m.default,
+    })),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+);
 
 const hasMeaningfulProgress = (progress: KangurProgressState): boolean =>
   progress.totalXp > 0 ||
@@ -114,7 +129,7 @@ const shouldRenderKangurGameHomeHeroShell = ({
 }: {
   assignmentSpotlight: React.JSX.Element | null;
   milestoneSummary: React.JSX.Element | null;
-}): boolean => Boolean(assignmentSpotlight || milestoneSummary);
+}): boolean => assignmentSpotlight !== null || milestoneSummary !== null;
 
 const resolveKangurGameHomeHeroCopy = ({
   heroContent,
@@ -187,7 +202,12 @@ export function KangurGameHomeHeroWidget(
   const { hideWhenScreenMismatch, showAssignmentSpotlight, showIntro } =
     resolveKangurGameHomeHeroWidgetProps(props);
   const runtime = useKangurGameRuntime();
-  const { entry: heroContent } = useKangurPageContentEntry('game-home-hero');
+  const shouldLoadHeroContent = useKangurIdleReady({
+    minimumDelayMs: GAME_HOME_COPY_IDLE_DELAY_MS,
+  });
+  const { entry: heroContent } = useKangurPageContentEntry('game-home-hero', undefined, {
+    enabled: shouldLoadHeroContent,
+  });
   const { basePath, progress, screen, user } = runtime;
   const canAccessParentAssignments = resolveKangurGameHomeHeroAccess({
     canAccessParentAssignments: runtime.canAccessParentAssignments,

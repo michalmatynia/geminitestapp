@@ -36,7 +36,7 @@ const KANGUR_PROGRESS_STORAGE_KEY = 'sprycio_progress';
 const KANGUR_PROGRESS_OWNER_STORAGE_KEY = 'sprycio_progress_owner';
 
 export const readWebCookieValue = (name: string): string | null => {
-  if (typeof document === 'undefined') {
+  if (typeof document === 'undefined' || document === null) {
     return null;
   }
 
@@ -57,10 +57,10 @@ export const buildKangurMobileRuntimeHeaders = (
   const activeLearnerId = storage.getItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY);
   const bearerToken = storage.getItem(KANGUR_MOBILE_AUTH_BEARER_TOKEN_STORAGE_KEY);
 
-  if (activeLearnerId) {
+  if (activeLearnerId !== null) {
     headers.set(KANGUR_ACTIVE_LEARNER_HEADER, activeLearnerId);
   }
-  if (bearerToken) {
+  if (bearerToken !== null) {
     headers.set('Authorization', `Bearer ${bearerToken}`);
   }
 
@@ -68,7 +68,7 @@ export const buildKangurMobileRuntimeHeaders = (
     storage,
     webCookieToken,
   });
-  if (csrfToken) {
+  if (csrfToken !== null) {
     headers.set('x-csrf-token', csrfToken);
   }
 
@@ -95,11 +95,11 @@ export const createTrackedKangurMobileProgressStore = (
   },
 });
 
-const createKangurMobileApiBaseUrlState = () =>
+const createKangurMobileApiBaseUrlState = (): ReturnType<typeof resolveKangurMobileApiBaseUrl> =>
   resolveKangurMobileApiBaseUrl({
     configuredApiBaseUrl: resolveKangurMobilePublicConfig().apiUrl ?? null,
     developmentHost: extractExpoDevelopmentHost({
-      hostUri: Constants.expoConfig?.hostUri ?? Constants.platform?.hostUri ?? null,
+      hostUri: (Constants.expoConfig?.hostUri ?? Constants.platform?.hostUri ?? null),
       linkingUri: Constants.linkingUri ?? null,
     }),
     platformOs: Platform.OS,
@@ -108,7 +108,7 @@ const createKangurMobileApiBaseUrlState = () =>
 const createKangurMobileApiClient = (
   apiBaseUrl: string,
   storage: KangurClientStorageAdapter
-) =>
+): ReturnType<typeof createKangurApiClient> =>
   createKangurApiClient({
     baseUrl: apiBaseUrl,
     credentials: 'include',

@@ -29,7 +29,7 @@ export const parseRuntimeActionArgs = (value: unknown): unknown[] => {
   }
 
   const trimmed = value.trim();
-  if (!trimmed) {
+  if (trimmed === '') {
     return [];
   }
 

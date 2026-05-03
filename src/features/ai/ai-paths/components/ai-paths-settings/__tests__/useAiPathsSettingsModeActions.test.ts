@@ -1,8 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { PathConfig, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
-import { DEFAULT_AI_PATHS_VALIDATION_CONFIG, createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { DEFAULT_AI_PATHS_VALIDATION_CONFIG } from '@/shared/lib/ai-paths/core/validation-engine';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 
 import { useAiPathsSettingsModeActions } from '../useAiPathsSettingsModeActions';
 

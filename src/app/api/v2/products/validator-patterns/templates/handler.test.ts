@@ -8,7 +8,7 @@ vi.mock('@/features/products/server', () => ({
   getValidationPatternRepository: () => getValidationPatternRepositoryMock(),
 }));
 
-import { POST_validator_template_handler } from './handler';
+import { postValidatorTemplateHandler } from './handler';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 describe('validator-patterns templates handler module', () => {
@@ -17,7 +17,7 @@ describe('validator-patterns templates handler module', () => {
   });
 
   it('exports the supported handlers', () => {
-    expect(typeof POST_validator_template_handler).toBe('function');
+    expect(typeof postValidatorTemplateHandler).toBe('function');
   });
 
   it('creates the category inference template with the expected category replacement wiring', async () => {
@@ -34,7 +34,7 @@ describe('validator-patterns templates handler module', () => {
       updatePattern,
     });
 
-    const response = await POST_validator_template_handler(
+    const response = await postValidatorTemplateHandler(
       {} as never,
       {} as never,
       { type: 'name-segment-category' }
@@ -104,7 +104,7 @@ describe('validator-patterns templates handler module', () => {
       updatePattern,
     });
 
-    const response = await POST_validator_template_handler(
+    const response = await postValidatorTemplateHandler(
       {} as never,
       {} as never,
       { type: 'name-segment-category' }
@@ -144,7 +144,7 @@ describe('validator-patterns templates handler module', () => {
       updatePattern: vi.fn(),
     });
 
-    const response = await POST_validator_template_handler(
+    const response = await postValidatorTemplateHandler(
       {} as never,
       {} as never,
       { type: 'name-segment-dimensions' }
@@ -167,6 +167,49 @@ describe('validator-patterns templates handler module', () => {
           target: 'name',
           patternId: 'pattern-dimensions',
           label: 'Name Segment: Dimensions',
+        },
+      ],
+    });
+  });
+
+  it('creates the StarGater producer template with producer replacement wiring', async () => {
+    const createPattern = vi.fn(async (input) => ({
+      id: 'pattern-producer',
+      label: input.label,
+      target: input.target,
+    }));
+
+    getValidationPatternRepositoryMock.mockResolvedValue({
+      listPatterns: vi.fn(async () => []),
+      createPattern,
+      updatePattern: vi.fn(),
+    });
+
+    const response = await postValidatorTemplateHandler(
+      {} as never,
+      {} as never,
+      { type: 'producer-stargater' }
+    );
+
+    expect(createPattern).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Producer -> StarGater.net',
+        target: 'producer',
+        regex: '^.*$',
+        replacementEnabled: true,
+        replacementAutoApply: true,
+        replacementValue: 'StarGater.net',
+        replacementFields: ['producerIds'],
+      }),
+      { semanticAuditSource: 'template' }
+    );
+    await expect(response.json()).resolves.toEqual({
+      outcomes: [
+        {
+          action: 'created',
+          target: 'producer',
+          patternId: 'pattern-producer',
+          label: 'Producer -> StarGater.net',
         },
       ],
     });

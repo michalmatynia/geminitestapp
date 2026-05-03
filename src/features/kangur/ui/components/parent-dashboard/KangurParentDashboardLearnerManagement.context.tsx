@@ -15,7 +15,11 @@ export type LearnerManagementContextValue = {
 
 const LearnerManagementContext = createContext<LearnerManagementContextValue | null>(null);
 
-export function LearnerManagementProvider({ children }: { children: React.ReactNode }) {
+export function LearnerManagementProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const state = useLearnerManagementState();
   const runtime = useLearnerManagementWidgetRuntime(state);
 

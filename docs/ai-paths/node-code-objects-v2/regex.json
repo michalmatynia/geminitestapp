@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-28T14:11:53.253Z",
+  "generatedAt": "2026-04-11T13:54:15.455Z",
   "id": "node_obj_regex_portable_v2",
   "nodeType": "regex",
   "nodeDocVersion": "2026-02-20.v1",
@@ -302,5 +302,5 @@
     "semanticNodeHash": "119b8b6056ec81cb38c9cbd2d5cc55c2353a94bf86fd0ad407fc9e9f06eb251e"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "907dbe955b8d9f59e2669867602af84f53957624b63c14994b2121bcf6d0ac1b"
+  "objectHash": "13c4f410da5690a9f123347636c96b3dda5fe286b7c1acd372cdee8e64339322"
 }

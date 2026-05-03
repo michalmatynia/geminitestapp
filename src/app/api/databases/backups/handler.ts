@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
@@ -62,7 +62,7 @@ async function getBackups(): Promise<DatabaseInfo[]> {
   });
 }
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
 
   try {

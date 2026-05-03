@@ -1,4 +1,5 @@
 import { isRetryableError } from '@/shared/errors/app-error';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 import {
   withRetry,
   type RetryOptions,
@@ -6,11 +7,8 @@ import {
   type CircuitBreakerOptions,
 } from '@/shared/utils/retry';
 
-import { getTransientRecoverySettings } from './settings';
-
 import type { TransientRecoverySettings } from './constants';
-import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
-
+import { getTransientRecoverySettings } from './settings';
 
 export type TransientRecoveryOptions = {
   source?: string;
@@ -42,6 +40,21 @@ const logRecoveryFallbackExecuted = async (
 
     // logging must never interrupt recovery fallback
   }
+};
+
+const reportRecoveryFallbackFailure = (
+  source: string | undefined,
+  circuitId: string | undefined,
+  originalError: unknown,
+  fallbackError: unknown
+): void => {
+  reportObservabilityInternalError(fallbackError, {
+    source: 'observability.transient-recovery',
+    action: 'fallback',
+    recoverySource: source ?? 'transient-recovery',
+    circuitId: circuitId ?? null,
+    originalError: originalError instanceof Error ? originalError.message : String(originalError),
+  });
 };
 
 export const isTransientError = (error: unknown): boolean => {
@@ -111,16 +124,14 @@ export async function withTransientRecovery<T>(
     }
     return await execute();
   } catch (error) {
-    reportObservabilityInternalError(error, {
-      source: 'observability.transient-recovery',
-      action: 'withTransientRecovery',
-      recoverySource: options?.source ?? 'transient-recovery',
-      circuitId: options?.circuitId ?? null,
-      hasFallback: Boolean(options?.fallback),
-    });
     if (options?.fallback && isTransientError(error)) {
       void logRecoveryFallbackExecuted(options?.source, error);
-      return (await options.fallback()) as T;
+      try {
+        return (await options.fallback()) as T;
+      } catch (fallbackError) {
+        reportRecoveryFallbackFailure(options?.source, options?.circuitId, error, fallbackError);
+        throw fallbackError;
+      }
     }
     throw error;
   }

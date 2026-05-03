@@ -17,7 +17,7 @@ vi.mock('@/features/filemaker/server', () => ({
   upsertFilemakerMailAccount: upsertFilemakerMailAccountMock,
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('filemaker mail accounts handler', () => {
   beforeEach(() => {
@@ -34,9 +34,9 @@ describe('filemaker mail accounts handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/filemaker/mail/accounts'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(requireFilemakerMailAdminSessionMock).toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe('filemaker mail accounts handler', () => {
       emailAddress: 'support@example.com',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/mail/accounts', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -84,7 +84,7 @@ describe('filemaker mail accounts handler', () => {
           maxMessagesPerSync: 100,
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(upsertFilemakerMailAccountMock).toHaveBeenCalledWith(
@@ -102,5 +102,49 @@ describe('filemaker mail accounts handler', () => {
         emailAddress: 'support@example.com',
       },
     });
+  });
+
+  it('defaults omitted update passwords so stored credentials can be preserved', async () => {
+    upsertFilemakerMailAccountMock.mockResolvedValue({
+      id: 'account-1',
+      name: 'Support',
+      emailAddress: 'support@example.com',
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/filemaker/mail/accounts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: 'account-1',
+          name: 'Support',
+          emailAddress: 'support@example.com',
+          status: 'active',
+          imapHost: 'imap.example.com',
+          imapPort: 993,
+          imapSecure: true,
+          imapUser: 'support@example.com',
+          smtpHost: 'smtp.example.com',
+          smtpPort: 465,
+          smtpSecure: true,
+          smtpUser: 'support@example.com',
+          fromName: 'Support',
+          replyToEmail: null,
+          folderAllowlist: ['INBOX'],
+          initialSyncLookbackDays: 30,
+          maxMessagesPerSync: 100,
+        }),
+      }),
+      {} as Parameters<typeof postHandler>[1]
+    );
+
+    expect(upsertFilemakerMailAccountMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'account-1',
+        imapPassword: '',
+        smtpPassword: '',
+      })
+    );
+    expect(response.status).toBe(201);
   });
 });

@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import type { MotionStyle, TargetAndTransition, Transition } from 'framer-motion';
 import type { CSSProperties } from 'react';
 
-import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { type useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
+import { type useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import {
   KANGUR_PANEL_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';

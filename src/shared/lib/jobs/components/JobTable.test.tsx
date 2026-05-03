@@ -34,8 +34,8 @@ vi.mock('lucide-react', async (importOriginal) => {
   };
 });
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/shared/ui/templates.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/templates.public')>();
 
   return {
     ...actual,

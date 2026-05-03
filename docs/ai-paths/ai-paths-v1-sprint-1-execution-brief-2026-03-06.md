@@ -17,7 +17,7 @@ For the current runtime map and active operator surface, use:
 - [`overview.md`](./overview.md)
 - [`reference.md`](./reference.md)
 - [`parameter-inference-workflow.md`](./parameter-inference-workflow.md)
-- [`portable-engine-receiver-runbook.md`](./portable-engine-receiver-runbook.md)
+- [`portable-engine-scaffolding.md`](./portable-engine-scaffolding.md)
 
 For the current validation bundle, use:
 

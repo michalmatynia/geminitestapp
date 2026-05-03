@@ -51,3 +51,39 @@ jobs:
       - name: Repair StudiQ production domain sync
         if: ${{ env.VERCEL_TOKEN != '' && github.event_name == 'workflow_dispatch' && inputs.mode == 'repair' }}
         run: npm run repair:vercel:production:sync
+
+  studiq-web-sync:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      STUDIQ_WEB_VERCEL_DOMAIN: ${{ vars.STUDIQ_WEB_VERCEL_DOMAIN }}
+      STUDIQ_WEB_CANONICAL_ALIAS: ${{ vars.STUDIQ_WEB_CANONICAL_ALIAS }}
+    steps:
+      - name: Skip when studiq-web Vercel project is not configured
+        if: ${{ env.VERCEL_TOKEN == '' || env.STUDIQ_WEB_VERCEL_DOMAIN == '' || env.STUDIQ_WEB_CANONICAL_ALIAS == '' }}
+        run: |
+          {
+            echo "## studiq-web Vercel Sync Guardrail"
+            echo
+            echo "- Status: skipped"
+            echo "- Reason: one of VERCEL_TOKEN / STUDIQ_WEB_VERCEL_DOMAIN / STUDIQ_WEB_CANONICAL_ALIAS is not configured."
+            echo "- Action: set the studiq-web project's production domain + canonical *.vercel.app alias in repository variables, then re-run."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Checkout
+        if: ${{ env.VERCEL_TOKEN != '' && env.STUDIQ_WEB_VERCEL_DOMAIN != '' && env.STUDIQ_WEB_CANONICAL_ALIAS != '' }}
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        if: ${{ env.VERCEL_TOKEN != '' && env.STUDIQ_WEB_VERCEL_DOMAIN != '' && env.STUDIQ_WEB_CANONICAL_ALIAS != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Check studiq-web production domain sync
+        if: ${{ env.VERCEL_TOKEN != '' && env.STUDIQ_WEB_VERCEL_DOMAIN != '' && env.STUDIQ_WEB_CANONICAL_ALIAS != '' && (github.event_name != 'workflow_dispatch' || inputs.mode == 'check') }}
+        run: node scripts/build/check-vercel-production-alias-sync.mjs --scope michalmatynias-projects --domain "$STUDIQ_WEB_VERCEL_DOMAIN" --canonical-alias "$STUDIQ_WEB_CANONICAL_ALIAS"
+
+      - name: Repair studiq-web production domain sync
+        if: ${{ env.VERCEL_TOKEN != '' && env.STUDIQ_WEB_VERCEL_DOMAIN != '' && env.STUDIQ_WEB_CANONICAL_ALIAS != '' && github.event_name == 'workflow_dispatch' && inputs.mode == 'repair' }}
+        run: node scripts/build/check-vercel-production-alias-sync.mjs --scope michalmatynias-projects --domain "$STUDIQ_WEB_VERCEL_DOMAIN" --canonical-alias "$STUDIQ_WEB_CANONICAL_ALIAS" --repair

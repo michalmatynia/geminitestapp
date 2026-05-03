@@ -1,19 +1,13 @@
-import {
-  isTraderaApiIntegrationSlug,
-  isTraderaIntegrationSlug,
-} from '@/features/integrations/constants/slugs';
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './default-script';
 
-export const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v97';
+export const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v153';
 
 const MANAGED_TRADERA_QUICKLIST_MARKER_PATTERN = /tradera-quicklist-default:v\d+/;
 const COMPATIBLE_LEGACY_MANAGED_TRADERA_QUICKLIST_MARKERS = new Set([
   'tradera-quicklist-default:v76',
 ]);
-
-const isTraderaBrowserIntegrationSlug = (slug: string | null | undefined): boolean =>
-  isTraderaIntegrationSlug(slug) && !isTraderaApiIntegrationSlug(slug);
 
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
@@ -78,7 +72,7 @@ export const normalizePersistedTraderaPlaywrightListingScript = ({
 }): string | null | undefined => {
   const normalizedScript = toTrimmedString(playwrightListingScript);
 
-  if (!isTraderaBrowserIntegrationSlug(integrationSlug)) {
+  if (!isTraderaIntegrationSlug(integrationSlug)) {
     return normalizedScript || (playwrightListingScript ?? undefined);
   }
 

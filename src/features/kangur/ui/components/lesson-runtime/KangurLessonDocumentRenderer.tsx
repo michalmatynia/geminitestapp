@@ -43,6 +43,8 @@ type KangurLessonDocumentRendererProps = {
   activePageId?: string | null | undefined;
 };
 
+// TEXT_ALIGN_CLASSNAME maps lesson text block alignment values to Tailwind
+// text-align utility classes.
 const TEXT_ALIGN_CLASSNAME: Record<KangurLessonTextBlock['align'], string> = {
   left: 'text-left',
   center: 'text-center',
@@ -61,6 +63,8 @@ const IMAGE_ALIGN_CLASSNAME: Record<KangurLessonImageBlock['align'], string> = {
   right: 'justify-end',
 };
 
+// GRID_CLASSNAME_BY_COLUMNS: responsive grid classes for stacking layouts
+// (single column on mobile, full columns on md+).
 const GRID_CLASSNAME_BY_COLUMNS: Record<KangurLessonGridBlock['columns'], string> = {
   1: 'grid-cols-1',
   2: 'grid-cols-1 md:grid-cols-2',
@@ -68,6 +72,8 @@ const GRID_CLASSNAME_BY_COLUMNS: Record<KangurLessonGridBlock['columns'], string
   4: 'grid-cols-1 md:grid-cols-4',
 };
 
+// GRID_CLASSNAME_BY_COLUMNS_NO_STACK: responsive grid classes for fixed
+// layouts that start stacking at sm instead of md (tighter breakpoints).
 const GRID_CLASSNAME_BY_COLUMNS_NO_STACK: Record<KangurLessonGridBlock['columns'], string> = {
   1: 'grid-cols-1',
   2: 'grid-cols-1 sm:grid-cols-2',
@@ -280,7 +286,6 @@ function renderImageBlock(
             <img src={block.src} alt={altText} className='kangur-lesson-inset' loading='lazy' />
           ) : (
             <KangurInlineFallback
-              accent='amber'
               className='kangur-lesson-inset min-h-[180px] shadow-none'
               style={{
                 borderColor:
@@ -288,12 +293,15 @@ function renderImageBlock(
                 color: 'color-mix(in srgb, rgb(180 83 9) 80%, var(--kangur-page-text))',
               }}
               data-testid={`lesson-image-empty-${block.id}`}
-              icon={
-                <span aria-hidden='true' className='text-lg'>
-                  🖼️
-                </span>
-              }
               title={translate('imageMissingSource')}
+              config={{
+                accent: 'amber',
+                icon: (
+                  <span aria-hidden='true' className='text-lg'>
+                    🖼️
+                  </span>
+                ),
+              }}
             />
           )}
         </KangurMediaFrame>
@@ -683,6 +691,14 @@ function renderGridBlock(
   );
 }
 
+// KangurLessonDocumentRenderer renders a structured lesson document as a
+// sequence of pages. Each page is a list of typed blocks (text, image, SVG,
+// grid, callout, quiz, activity, inline). It handles:
+//  - Page filtering by activePageId (single-page lesson view)
+//  - Section headers: shown when the section key/title changes between pages
+//  - Page summaries: optional summary panel at the end of each page
+//  - Print mode: shows a print button when the lesson print context is active
+//  - renderMode: 'lesson' (learner view) vs 'editor' (admin CMS preview)
 export function KangurLessonDocumentRenderer(
   props: KangurLessonDocumentRendererProps
 ): React.JSX.Element {

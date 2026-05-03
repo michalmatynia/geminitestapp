@@ -44,7 +44,7 @@ const VALIDATION_RULE_INFERENCE_STATUSES: ReadonlySet<string> = new Set([
   'deprecated',
 ]);
 
-export const AI_PATHS_VALIDATION_SCHEMA_VERSION = 2;
+export const AI_PATHS_VALIDATION_SCHEMA_VERSION = 3;
 export const DEFAULT_AI_PATHS_VALIDATION_SCHEMA_VERSION = AI_PATHS_VALIDATION_SCHEMA_VERSION;
 
 const sanitizeStringArray = (value: unknown): string[] => {
@@ -226,10 +226,116 @@ const sanitizeRules = (rules: AiPathsValidationRule[]): AiPathsValidationRule[] 
       .filter((rule: AiPathsValidationRule | null): rule is AiPathsValidationRule => Boolean(rule))
   );
 
+const DATABASE_WRITE_EXPLICIT_IDENTITY_PORTS = [
+  'id',
+  'entityId',
+  'productId',
+  'value',
+  'context',
+  'bundle',
+  'meta',
+];
+
+const DATABASE_WRITE_EXPLICIT_IDENTITY_CONDITION_IDS: Record<string, string> = {
+  bundle: 'database-write-has-incoming-bundle-port',
+  context: 'database-write-has-incoming-context-port',
+  entityId: 'database-write-has-incoming-entity-id-port',
+  id: 'database-write-has-incoming-record-id-port',
+  meta: 'database-write-has-incoming-meta-port',
+  productId: 'database-write-has-incoming-product-id-port',
+  value: 'database-write-has-incoming-value-port',
+};
+
+const normalizeDatabaseWriteIdentityCondition = (
+  condition: AiPathsValidationCondition
+): AiPathsValidationCondition => {
+  if (
+    condition.operator !== 'has_incoming_port' ||
+    typeof condition.port !== 'string' ||
+    condition.port.trim().length === 0
+  ) {
+    return condition;
+  }
+  const normalizedPort = condition.port.trim();
+  const normalizedId = DATABASE_WRITE_EXPLICIT_IDENTITY_CONDITION_IDS[normalizedPort];
+  return normalizedId
+    ? {
+        ...condition,
+        id: normalizedId,
+        port: normalizedPort,
+      }
+    : condition;
+};
+
+const dedupeDatabaseWriteIdentityConditions = (
+  conditions: AiPathsValidationCondition[]
+): AiPathsValidationCondition[] => {
+  const seenIncomingPorts = new Set<string>();
+  return conditions.filter((condition: AiPathsValidationCondition): boolean => {
+    if (
+      condition.operator !== 'has_incoming_port' ||
+      typeof condition.port !== 'string' ||
+      condition.port.trim().length === 0
+    ) {
+      return true;
+    }
+    const normalizedPort = condition.port.trim();
+    if (seenIncomingPorts.has(normalizedPort)) return false;
+    seenIncomingPorts.add(normalizedPort);
+    return true;
+  });
+};
+
+const upgradeDatabaseWriteIdentityRule = (
+  rule: AiPathsValidationRule
+): AiPathsValidationRule => {
+  if (rule.id !== 'database.update.identity_wired') return rule;
+  const existingConditions = (rule.conditions ?? []).map(normalizeDatabaseWriteIdentityCondition);
+  const existingIncomingPorts = new Set(
+    existingConditions
+      .filter(
+        (condition: AiPathsValidationCondition): boolean =>
+          condition.operator === 'has_incoming_port' &&
+          typeof condition.port === 'string' &&
+          condition.port.trim().length > 0
+      )
+      .map((condition: AiPathsValidationCondition): string => condition.port?.trim() ?? '')
+  );
+  const missingIncomingPortConditions = DATABASE_WRITE_EXPLICIT_IDENTITY_PORTS.filter(
+    (port: string): boolean => !existingIncomingPorts.has(port)
+  ).map(
+    (port: string): AiPathsValidationCondition => ({
+      id:
+        DATABASE_WRITE_EXPLICIT_IDENTITY_CONDITION_IDS[port] ??
+        `database-write-has-incoming-${port.toLowerCase()}-port`,
+      operator: 'has_incoming_port',
+      port,
+    })
+  );
+  if (missingIncomingPortConditions.length === 0) return rule;
+  return {
+    ...rule,
+    conditions: dedupeDatabaseWriteIdentityConditions([
+      ...existingConditions,
+      ...missingIncomingPortConditions,
+    ]),
+    severity: 'warning',
+    weight: 0,
+    recommendation:
+      'Wire Parser/Context output into Database.id, entityId, productId, value, context, bundle, or meta for deterministic writes.',
+  };
+};
+
+const upgradePersistedValidationRules = (
+  rules: AiPathsValidationRule[]
+): AiPathsValidationRule[] => rules.map(upgradeDatabaseWriteIdentityRule);
+
 export const normalizeAiPathsValidationRules = (
   rules: AiPathsValidationRule[] | null | undefined
 ): AiPathsValidationRule[] =>
-  Array.isArray(rules) && rules.length > 0 ? sanitizeRules(rules) : [];
+  Array.isArray(rules) && rules.length > 0
+    ? upgradePersistedValidationRules(sanitizeRules(rules))
+    : [];
 
 const sanitizeDocsSyncState = (
   value: AiPathsValidationConfig['docsSyncState'] | null | undefined
@@ -358,7 +464,7 @@ const buildCoreRules = (): AiPathsValidationRule[] => [
     title: 'Path has trigger node',
     description: 'A runnable path must include at least one Trigger node.',
     enabled: true,
-    severity: 'error',
+    severity: 'warning',
     module: 'graph',
     sequence: 10,
     conditionMode: 'all',
@@ -427,9 +533,9 @@ const buildCoreRules = (): AiPathsValidationRule[] => [
   },
   {
     id: 'database.update.identity_wired',
-    title: 'Database update/delete has identity input',
+    title: 'Database update/delete has explicit write input',
     description:
-      'Write operations should have explicit identity wiring to avoid hidden fallback updates.',
+      'Write operations should have explicit identity, value, context, bundle, or meta wiring to avoid hidden fallback updates.',
     enabled: true,
     severity: 'error',
     module: 'database',
@@ -445,7 +551,12 @@ const buildCoreRules = (): AiPathsValidationRule[] => [
         negate: true,
       },
       {
-        id: 'database-write-has-incoming-id-port',
+        id: 'database-write-has-incoming-record-id-port',
+        operator: 'has_incoming_port',
+        port: 'id',
+      },
+      {
+        id: 'database-write-has-incoming-entity-id-port',
         operator: 'has_incoming_port',
         port: 'entityId',
       },
@@ -454,10 +565,30 @@ const buildCoreRules = (): AiPathsValidationRule[] => [
         operator: 'has_incoming_port',
         port: 'productId',
       },
+      {
+        id: 'database-write-has-incoming-value-port',
+        operator: 'has_incoming_port',
+        port: 'value',
+      },
+      {
+        id: 'database-write-has-incoming-context-port',
+        operator: 'has_incoming_port',
+        port: 'context',
+      },
+      {
+        id: 'database-write-has-incoming-bundle-port',
+        operator: 'has_incoming_port',
+        port: 'bundle',
+      },
+      {
+        id: 'database-write-has-incoming-meta-port',
+        operator: 'has_incoming_port',
+        port: 'meta',
+      },
     ],
-    weight: 40,
+    weight: 0,
     recommendation:
-      'Wire Parser/Context output into Database.entityId (or productId) for deterministic writes.',
+      'Wire Parser/Context output into Database.entityId, productId, value, context, bundle, or meta for deterministic writes.',
     docsBindings: ['ai-paths:node-docs', 'ai-paths:quick-wiring'],
   },
 ];

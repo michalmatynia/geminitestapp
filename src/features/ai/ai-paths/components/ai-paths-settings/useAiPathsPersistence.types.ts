@@ -1,5 +1,20 @@
 import type { Toast } from '@/shared/contracts/ui/base';
-import type { AiPathsSettingRecordDto, AiNode, Edge, ParserSampleState, PathConfig, PathBlockedRunPolicy, PathExecutionMode, PathFlowIntensity, AiPathsValidationConfig, PathRunMode, PathMeta, RuntimeState, UpdaterSampleState } from '@/shared/lib/ai-paths';
+import type {
+  AiNode,
+  AiPathsSettingRecordDto,
+  AiPathsValidationConfig,
+  Edge,
+  ParserSampleState,
+  PathBlockedRunPolicy,
+  PathConfig,
+  PathExecutionMode,
+  PathFlowIntensity,
+  PathMeta,
+  PathRunMode,
+  UpdaterSampleState,
+} from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import type * as React from 'react';
 
 export type PathSaveOptions = {
   silent?: boolean | undefined;
@@ -17,13 +32,16 @@ export type UseAiPathsPersistenceArgs = {
   activeTrigger: string;
   edges: Edge[];
   expandedPaletteGroups: Set<string>;
+  setExpandedPaletteGroups: React.Dispatch<React.SetStateAction<Set<string>>>;
   isPathActive: boolean;
   isPathLocked: boolean;
+  isPathTreeVisible: boolean;
   lastRunAt: string | null;
   loadNonce: number;
   loading: boolean;
   nodes: AiNode[];
   paletteCollapsed: boolean;
+  setPaletteCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   parserSamples: Record<string, ParserSampleState>;
   pathConfigs: Record<string, PathConfig>;
   pathDescription: string;
@@ -36,6 +54,7 @@ export type UseAiPathsPersistenceArgs = {
   blockedRunPolicy: PathBlockedRunPolicy;
   aiPathsValidation: AiPathsValidationConfig;
   selectedNodeId: string | null;
+  setIsPathTreeVisible: React.Dispatch<React.SetStateAction<boolean>>;
   runtimeState: RuntimeState;
   updaterSamples: Record<string, UpdaterSampleState>;
   normalizeTriggerLabel: (value?: string | null) => string;
@@ -53,6 +72,7 @@ export type AiPathsUiState = {
   activePathId?: string | null;
   expandedGroups?: string[];
   paletteCollapsed?: boolean;
+  pathTreeVisible?: boolean;
 };
 
 export type AiPathsUserPreferences = {

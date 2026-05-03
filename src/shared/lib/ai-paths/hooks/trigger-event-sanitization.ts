@@ -1,8 +1,9 @@
-import { TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
+import type { TriggerEntitySnapshotMode } from '@/shared/contracts/ai-paths-core/nodes-primitives';
+import { type TriggerEventEntityType } from '@/shared/contracts/ai-trigger-buttons';
 
 import { toRecord } from './trigger-event-utils';
 
-export const TRIGGER_ENTITY_SNAPSHOT_MAX_DEPTH = 6;
+export const TRIGGER_ENTITY_SNAPSHOT_MAX_DEPTH = 10;
 export const TRIGGER_ENTITY_OMITTED_VALUE = '[omitted_large_field]';
 export const TRIGGER_ENTITY_HEAVY_KEY_PATTERNS: RegExp[] = [
   /^imagebase64s?$/i,
@@ -61,17 +62,33 @@ export const sanitizeTriggerEntitySnapshot = (
   return toRecord(sanitizeTriggerEntityValue(entityJson, 0));
 };
 
+export const resolveTriggerEntitySnapshotMode = (
+  value: unknown
+): TriggerEntitySnapshotMode => {
+  if (value === 'always' || value === 'never' || value === 'auto') {
+    return value;
+  }
+  return 'auto';
+};
+
 export const shouldEmbedTriggerEntitySnapshot = (args: {
+  mode?: TriggerEntitySnapshotMode | null | undefined;
   entityType: TriggerEventEntityType;
   entityId?: string | null | undefined;
   sourceLocation?: string | null | undefined;
 }): boolean => {
+  const mode = resolveTriggerEntitySnapshotMode(args.mode);
+  if (mode === 'always') return true;
+  if (mode === 'never') return false;
+
   const normalizedSourceLocation =
     typeof args.sourceLocation === 'string' ? args.sourceLocation.trim().toLowerCase() : null;
   if (args.entityType === 'custom') return true;
   if (
     normalizedSourceLocation === 'product_modal' ||
     normalizedSourceLocation === 'product_row' ||
+    normalizedSourceLocation === 'product_marketplace_copy_row' ||
+    normalizedSourceLocation === 'product_parameter_row' ||
     normalizedSourceLocation === 'note_modal'
   ) {
     return true;

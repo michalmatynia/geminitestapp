@@ -1,7 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useCallback, useRef } from 'react';
+
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 
 import {
   buildDocumentPdfMarkup,
@@ -284,7 +286,7 @@ export function useAdminCaseResolverDocumentActions({
         URL.revokeObjectURL(previewUrl);
         throw new Error('Preview popup was blocked by the browser.');
       }
-      window.setTimeout((): void => {
+      safeSetTimeout((): void => {
         URL.revokeObjectURL(previewUrl);
       }, 120_000);
     } catch (_error: unknown) {
@@ -302,7 +304,7 @@ export function useAdminCaseResolverDocumentActions({
       printInFlightRef.current = true;
       const frame = document.createElement('iframe');
       let hasTriggeredPrint = false;
-      const releasePrintLockTimeout = window.setTimeout((): void => {
+      const releasePrintLockTimeout = safeSetTimeout((): void => {
         printInFlightRef.current = false;
       }, 10_000);
       frame.setAttribute('aria-hidden', 'true');
@@ -314,8 +316,8 @@ export function useAdminCaseResolverDocumentActions({
       frame.style.pointerEvents = 'none';
 
       const cleanup = (): void => {
-        window.setTimeout((): void => {
-          window.clearTimeout(releasePrintLockTimeout);
+        safeSetTimeout((): void => {
+          safeClearTimeout(releasePrintLockTimeout);
           printInFlightRef.current = false;
           if (frame.parentNode) {
             frame.parentNode.removeChild(frame);
@@ -326,7 +328,7 @@ export function useAdminCaseResolverDocumentActions({
       frame.onload = (): void => {
         if (hasTriggeredPrint) return;
         hasTriggeredPrint = true;
-        window.setTimeout((): void => {
+        safeSetTimeout((): void => {
           const frameWindow = frame.contentWindow;
           if (!frameWindow) {
             toast('Failed to open the print dialog.', { variant: 'error' });
@@ -405,7 +407,7 @@ export function useAdminCaseResolverDocumentActions({
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      window.setTimeout((): void => {
+      safeSetTimeout((): void => {
         URL.revokeObjectURL(downloadUrl);
       }, 500);
       toast('PDF exported.', { variant: 'success' });

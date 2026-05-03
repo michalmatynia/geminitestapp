@@ -14,7 +14,7 @@ vi.mock('@/features/filemaker/server', () => ({
   listFilemakerMailThreads: listFilemakerMailThreadsMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('filemaker mail threads handler', () => {
   beforeEach(() => {
@@ -22,7 +22,7 @@ describe('filemaker mail threads handler', () => {
     requireFilemakerMailAdminSessionMock.mockResolvedValue(undefined);
   });
 
-  it('forwards query and account filters to the thread listing service', async () => {
+  it('forwards query, account filters, and optional limits to the thread listing service', async () => {
     listFilemakerMailThreadsMock.mockResolvedValue([
       {
         id: 'thread-1',
@@ -30,16 +30,20 @@ describe('filemaker mail threads handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
-        'http://localhost/api/filemaker/mail/threads?query=hello&accountId=account-1'
+        'http://localhost/api/filemaker/mail/threads?query=hello&accountId=account-1&campaignId=campaign-1&runId=run-1&deliveryId=delivery-1&limit=5'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(listFilemakerMailThreadsMock).toHaveBeenCalledWith({
       query: 'hello',
       accountId: 'account-1',
+      campaignId: 'campaign-1',
+      runId: 'run-1',
+      deliveryId: 'delivery-1',
+      limit: 5,
     });
     await expect(response.json()).resolves.toEqual({
       threads: [{ id: 'thread-1', subject: 'Hello' }],

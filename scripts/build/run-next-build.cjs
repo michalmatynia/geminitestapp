@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 
@@ -16,6 +17,11 @@ const turbopackTransientPanicPattern =
   /FATAL:\s+An unexpected Turbopack error occurred[\s\S]*?(?:failed to create symlink|File exists \(os error 17\))/i;
 const webpackServerManifestRacePattern =
   /(?:Cannot find module|ENOENT: no such file or directory, open) ['"].*\/\.next\/server\/[^'"]*manifest(?:\.[^'"]+)?['"]/i;
+const webpackStaticManifestRacePattern =
+  /(?:Cannot find module|ENOENT: no such file or directory, open) ['"].*\/\.next\/static\/[^'"]*\/_(?:build|ssg)Manifest\.js(?:\.[^'"]+)?['"]/i;
+const largeMachineHeapThresholdMb = 24 * 1024;
+const localDefaultHeapMb = 8192;
+const largeMachineLocalHeapMb = 12288;
 
 const getDefaultHeapMb = () => {
   const explicitHeapMb = Number.parseInt(process.env.NEXT_BUILD_HEAP_MB ?? '', 10);
@@ -28,7 +34,18 @@ const getDefaultHeapMb = () => {
   // a worker for static page generation that inherits NODE_OPTIONS, so the total
   // memory is roughly 2× this value. 3584 MB × 2 = 7168 MB, leaving ~800 MB
   // for the OS and other processes.
-  return process.env.VERCEL ? '3584' : '8192';
+  if (process.env.VERCEL) {
+    return '3584';
+  }
+
+  const totalSystemMb = Math.floor(os.totalmem() / 1024 / 1024);
+
+  // Local webpack builds in this repo now exceed the prior 8 GB ceiling during
+  // module graph compilation. On larger developer machines, allow a higher heap
+  // limit so `npm run build` stays usable without requiring ad hoc env overrides.
+  return totalSystemMb >= largeMachineHeapThresholdMb
+    ? String(largeMachineLocalHeapMb)
+    : String(localDefaultHeapMb);
 };
 
 const buildEnv = {
@@ -105,15 +122,15 @@ const shouldRetryWebpackServerManifestRace = (result) =>
   result.bundler === 'webpack' &&
   result.code !== 0 &&
   !result.signal &&
-  webpackServerManifestRacePattern.test(result.output);
+  (webpackServerManifestRacePattern.test(result.output) ||
+    webpackStaticManifestRacePattern.test(result.output));
 
 const getPreferredBundler = (bundler) => {
   if (bundler === 'webpack' || bundler === 'turbopack') return bundler;
-  // Turbopack cold builds exceed Vercel's 45-minute limit on this codebase.
-  // Default to webpack on Vercel until the project is small enough for a
-  // cold turbopack build to complete in time, or Vercel caches a warm build.
-  if (process.env.VERCEL) return 'webpack';
-  return 'turbopack';
+  // Production builds for this repo currently behave better on webpack than on
+  // Turbopack. Default to webpack unless the caller explicitly forces a
+  // bundler, so `npm run build` stays reliable in local and CI environments.
+  return 'webpack';
 };
 
 const main = async () => {
@@ -156,7 +173,7 @@ const main = async () => {
 
   if (shouldRetryWebpackServerManifestRace(result)) {
     console.warn(
-      '[run-next-build] Webpack hit a transient server manifest race. Retrying webpack once.'
+      '[run-next-build] Webpack hit a transient manifest race. Retrying webpack once.'
     );
     result = await runBuild('webpack');
 

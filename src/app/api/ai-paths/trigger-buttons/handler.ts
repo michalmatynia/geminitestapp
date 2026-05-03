@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   getAiPathsSetting,
@@ -7,8 +7,13 @@ import {
   upsertAiPathsSetting,
 } from '@/features/ai/ai-paths/server';
 import {
+  getAllAiPathsSettings,
+  ensureCanonicalStarterWorkflowSettingsForPathIds,
+} from '@/features/ai/ai-paths/server/settings-store';
+import {
   AI_PATHS_CONFIG_KEY_PREFIX,
   AI_PATHS_INDEX_KEY,
+  type AiPathsSettingRecord,
 } from '@/features/ai/ai-paths/server/settings-store.constants';
 import { parsePathMetas } from '@/features/ai/ai-paths/server/settings-store.parsing';
 import {
@@ -29,7 +34,7 @@ import {
   PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM,
   shouldIncludePlaywrightAiPathsFixtureButtons,
 } from '@/shared/lib/ai-paths/playwright-fixture-scope';
-import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 import { assertTriggerButtonPathExists } from './path-validation';
@@ -37,12 +42,41 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
+const DEPRECATED_STARTER_WORKFLOW_PATH_IDS = new Set<string>(['path_base_export_blwo_v1']);
+const DEPRECATED_STARTER_WORKFLOW_TRIGGER_BUTTON_IDS = new Set<string>([
+  '5f36f340-3d89-4f6f-a08f-2387f380b90b',
+]);
 export { aiTriggerButtonsQuerySchema as querySchema };
+const readAllAiPathsSettings = getAllAiPathsSettings as () => Promise<AiPathsSettingRecord[]>;
 const readTriggerButtonsRaw = async (): Promise<string | null> =>
   await getAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY);
 
 const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
   await upsertAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY, value);
+};
+
+const createMinimalTriggerButtonSettingsSnapshot = (): AiPathsSettingRecord[] => [
+  { key: AI_PATHS_INDEX_KEY, value: '[]' },
+  { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '[]' },
+];
+
+const buildSettingsValueMap = (records: AiPathsSettingRecord[]): Map<string, string> =>
+  new Map(records.map((record) => [record.key, record.value]));
+
+const getBoundPathIds = (buttons: AiTriggerButtonRecord[]): string[] =>
+  Array.from(
+    new Set(
+      buttons
+        .map((button) => button.pathId?.trim() ?? '')
+        .filter((pathId) => pathId.length > 0)
+    )
+  );
+
+const readTriggerButtonSettingsSnapshot = async (): Promise<Map<string, string>> => {
+  const existingRecords = await readAllAiPathsSettings();
+  const sourceRecords =
+    existingRecords.length > 0 ? existingRecords : createMinimalTriggerButtonSettingsSnapshot();
+  return buildSettingsValueMap(sourceRecords);
 };
 
 const isMalformedPathIndexPayload = (raw: string | null): boolean => {
@@ -62,7 +96,8 @@ const isMalformedPathIndexPayload = (raw: string | null): boolean => {
 };
 
 const filterButtonsWithExistingPaths = async (
-  buttons: AiTriggerButtonRecord[]
+  buttons: AiTriggerButtonRecord[],
+  settingsSnapshot?: Map<string, string>
 ): Promise<AiTriggerButtonRecord[]> => {
   const boundButtons = buttons.filter(
     (button) => typeof button.pathId === 'string' && button.pathId.trim().length > 0
@@ -71,13 +106,12 @@ const filterButtonsWithExistingPaths = async (
     return buttons;
   }
 
-  const pathIndexRaw = await getAiPathsSetting(AI_PATHS_INDEX_KEY);
+  const pathIndexRaw = settingsSnapshot?.get(AI_PATHS_INDEX_KEY) ?? (await getAiPathsSetting(AI_PATHS_INDEX_KEY));
   if (isMalformedPathIndexPayload(pathIndexRaw)) {
     return buttons;
   }
   const indexedPathMetas = parsePathMetas(pathIndexRaw);
   const indexedPathIds = new Set(indexedPathMetas.map((meta) => meta.id));
-  const pathNameById = new Map(indexedPathMetas.map((meta) => [meta.id, meta.name ?? null]));
   const validButtonIds = new Set<string>();
 
   await Promise.all(
@@ -88,22 +122,18 @@ const filterButtonsWithExistingPaths = async (
       }
 
       const configKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${pathId}`;
-      const rawConfig = await getAiPathsSetting(configKey);
+      const rawConfig = settingsSnapshot?.get(configKey) ?? (await getAiPathsSetting(configKey));
       if (typeof rawConfig !== 'string' || rawConfig.trim().length === 0) return;
 
       try {
-        const resolved = materializeStoredTriggerPathConfig({
+        loadCanonicalStoredPathConfig({
           pathId,
           rawConfig,
-          fallbackName: pathNameById.get(pathId) ?? null,
         });
-        if (resolved.changed) {
-          await upsertAiPathsSetting(configKey, JSON.stringify(resolved.config));
-        }
         validButtonIds.add(button.id);
       } catch (error) {
         void ErrorSystem.captureException(error);
-      
+
         // Hide buttons bound to malformed or otherwise invalid path configs.
       }
     })
@@ -123,7 +153,29 @@ const readRequestCookie = (req: NextRequest, name: string): string | null => {
   return cookies?.get?.(name)?.value ?? null;
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+const isDeprecatedStarterWorkflowTriggerButton = (
+  button: Pick<AiTriggerButtonRecord, 'id' | 'pathId'> | null | undefined
+): boolean => {
+  if (!button) return false;
+  const buttonId = typeof button.id === 'string' ? button.id.trim() : '';
+  const pathId = typeof button.pathId === 'string' ? button.pathId.trim() : '';
+  return (
+    DEPRECATED_STARTER_WORKFLOW_TRIGGER_BUTTON_IDS.has(buttonId) ||
+    DEPRECATED_STARTER_WORKFLOW_PATH_IDS.has(pathId)
+  );
+};
+
+const pruneDeprecatedTriggerButtons = (
+  buttons: AiTriggerButtonRecord[]
+): { nextButtons: AiTriggerButtonRecord[]; removedCount: number } => {
+  const nextButtons = buttons.filter((button) => !isDeprecatedStarterWorkflowTriggerButton(button));
+  return {
+    nextButtons,
+    removedCount: buttons.length - nextButtons.length,
+  };
+};
+
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     await requireAiPathsRunAccess();
   } catch (error) {
@@ -143,7 +195,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw error;
   }
 
-  const raw = await readTriggerButtonsRaw();
+  let settingsSnapshot = await readTriggerButtonSettingsSnapshot();
+  const raw = settingsSnapshot.get(AI_PATHS_TRIGGER_BUTTONS_KEY) ?? null;
   let parsedButtons: AiTriggerButtonRecord[];
   try {
     parsedButtons = parseAiTriggerButtonsRaw(raw);
@@ -155,6 +208,20 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       },
     });
   }
+  const deprecatedPrune = pruneDeprecatedTriggerButtons(parsedButtons);
+  if (deprecatedPrune.removedCount > 0) {
+    parsedButtons = deprecatedPrune.nextButtons;
+    await writeTriggerButtonsRaw(serializeAiTriggerButtonsRaw(parsedButtons));
+  }
+  const starterMaintenance = await ensureCanonicalStarterWorkflowSettingsForPathIds(
+    getBoundPathIds(parsedButtons)
+  );
+  if (starterMaintenance.affectedCount > 0) {
+    settingsSnapshot = buildSettingsValueMap(starterMaintenance.records);
+    parsedButtons = parseAiTriggerButtonsRaw(
+      settingsSnapshot.get(AI_PATHS_TRIGGER_BUTTONS_KEY) ?? null
+    );
+  }
   const query = aiTriggerButtonsQuerySchema.parse(_ctx.query ?? {});
   const fixtureCookieValue = readRequestCookie(req, PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME);
   const includeFixtureButtons =
@@ -165,7 +232,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     : parsedButtons.filter((button) => !isPlaywrightAiPathsFixtureTriggerButton(button));
   let visibleButtons = scopedButtons;
   try {
-    visibleButtons = await filterButtonsWithExistingPaths(scopedButtons);
+    visibleButtons = await filterButtonsWithExistingPaths(scopedButtons, settingsSnapshot);
   } catch (error) {
     void ErrorSystem.captureException(error);
     visibleButtons = scopedButtons;
@@ -178,14 +245,14 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   });
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
   const parsed = await parseJsonBody(req, aiTriggerButtonCreateSchema, {
     logPrefix: 'ai-paths.trigger-buttons.POST',
   });
   if (!parsed.ok) return parsed.response;
 
-  const { name, iconId, pathId, enabled, locations, mode, display } = parsed.data;
+  const { name, iconId, pathId, enabled, locations, mode, display, contextTemplate } = parsed.data;
   const raw = await readTriggerButtonsRaw();
   const existing = parseAiTriggerButtonsRaw(raw);
   const normalizedName = name.trim();
@@ -212,6 +279,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     locations,
     mode,
     display: buildCanonicalTriggerButtonDisplay(normalizedName, display),
+    contextTemplate: contextTemplate ?? null,
     createdAt: now,
     updatedAt: now,
     sortIndex: maxSortIndex + 1,

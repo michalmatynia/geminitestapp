@@ -1,6 +1,6 @@
 ---
 owner: 'Case Resolver Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:case-resolver'
@@ -15,6 +15,13 @@ related_components:
 
 This folder is the maintained documentation hub for Case Resolver.
 
+## Open This Hub When
+
+- you need to know which Case Resolver doc covers architecture, APIs, data model, or operations
+- you are working in the Case Resolver admin routes or `/api/case-resolver/*`
+- you need the right runbook for OCR, workspace conflicts, list degradation, or releases
+- you need to distinguish stable feature docs from operational runbooks or changelog history
+
 ## Canonical entry points
 
 - Overview: [./overview.md](./overview.md)
@@ -26,6 +33,19 @@ This folder is the maintained documentation hub for Case Resolver.
 - FAQ: [./faq.md](./faq.md)
 - Changelog: [./changelog.md](./changelog.md)
 - Runbooks hub: [./runbooks/README.md](./runbooks/README.md)
+
+## Which Doc To Use
+
+| Question | Canonical doc |
+| --- | --- |
+| What is Case Resolver and how do the operator routes divide responsibility? | [./overview.md](./overview.md) |
+| How is the feature wired internally? | [./architecture.md](./architecture.md) |
+| Which APIs does the feature own? | [./apis.md](./apis.md) |
+| What are the main persisted models and state boundaries? | [./data-model.md](./data-model.md) |
+| How should I reason about performance constraints? | [./performance.md](./performance.md) |
+| What are the security boundaries? | [./security.md](./security.md) |
+| What operational recovery or release procedure do I need? | [./runbooks/README.md](./runbooks/README.md) |
+| What changed recently, as history rather than current policy? | [./changelog.md](./changelog.md) |
 
 ## Verified operator route map
 
@@ -64,6 +84,9 @@ Important boundary:
 - [./runbooks/prompt-exploder-capture-handoff.md](./runbooks/prompt-exploder-capture-handoff.md)
 - [./runbooks/release-and-rollback.md](./runbooks/release-and-rollback.md)
 - [./runbooks/data-integrity-checks.md](./runbooks/data-integrity-checks.md)
+
+Use the runbooks for operational response. Use the architecture, APIs, and
+data-model docs for stable feature behavior.
 
 ## Related docs
 

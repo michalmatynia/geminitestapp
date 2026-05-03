@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildNormalizedProductValidationPayload,
   formDataToObject,
   getProductImageFilepath,
   parseProductForm,
@@ -59,6 +60,22 @@ describe('product-service-form-utils', () => {
     expect(parsed.producerIds).toEqual(['producer-a']);
     expect(parsed.noteIds).toEqual(['note-a']);
     expect(parsed.studioProjectId).toBe('studio-1');
+  });
+
+  it('prefers the latest scalar category selection when duplicate form entries are present', () => {
+    const formData = new FormData();
+    formData.append('categoryId', ' category-initial ');
+    formData.append('categoryId', ' category-final ');
+    formData.append('studioProjectId', ' studio-initial ');
+    formData.append('studioProjectId', ' studio-final ');
+
+    const parsed = parseProductForm(formData);
+    const payload = buildNormalizedProductValidationPayload(formData);
+
+    expect(parsed.categoryId).toBe('category-final');
+    expect(parsed.studioProjectId).toBe('studio-final');
+    expect(payload['categoryId']).toBe('category-final');
+    expect(payload['studioProjectId']).toBe('studio-final');
   });
 
   it('returns normalized image filepaths only when the nested imageFile payload is usable', () => {

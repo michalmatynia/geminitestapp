@@ -7,7 +7,7 @@ import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useOptionalKangurAuthSessionState } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   loadKangurLeaderboardScores,
@@ -291,8 +291,8 @@ const resolveKangurLeaderboardLimit = (
   typeof options.limit === 'number' && options.limit > 0 ? Math.round(options.limit) : 10;
 
 const resolveKangurLeaderboardCurrentUser = (
-  auth: ReturnType<typeof useOptionalKangurAuth>
-): KangurUser | null => auth?.user ?? null;
+  authSessionState: ReturnType<typeof useOptionalKangurAuthSessionState>
+): KangurUser | null => authSessionState?.user ?? null;
 
 const resolveInitialCachedKangurLeaderboardScores = ({
   enabled,
@@ -368,8 +368,8 @@ export const useKangurLeaderboardState = (
   const translations = useTranslations('KangurGameWidgets.leaderboard');
   const enabled = resolveKangurLeaderboardEnabled(options);
   const limit = resolveKangurLeaderboardLimit(options);
-  const auth = useOptionalKangurAuth();
-  const currentUser = resolveKangurLeaderboardCurrentUser(auth);
+  const authSessionState = useOptionalKangurAuthSessionState();
+  const currentUser = resolveKangurLeaderboardCurrentUser(authSessionState);
   const [operationFilter, setOperationFilter] = useState('all');
   const [userFilter, setUserFilter] = useState<KangurLeaderboardUserFilter>('all');
   const [error, setError] = useState<string | null>(null);

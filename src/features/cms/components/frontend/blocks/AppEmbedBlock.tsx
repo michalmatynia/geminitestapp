@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { Session } from 'next-auth';
 import React from 'react';
@@ -21,12 +22,19 @@ import {
   KANGUR_PAGE_TO_SLUG,
   readKangurUrlParam,
   KANGUR_EMBED_QUERY_PARAM,
-  KangurFeaturePage,
   resolveKangurPageKeyFromSlug,
 } from '@/shared/lib/kangur-cms-bridge';
 import { Card } from '@/shared/ui/primitives.public';
 
 import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './BlockContext';
+
+const LazyKangurFeaturePage = dynamic(
+  () => import('@/features/kangur/ui/KangurFeaturePage').then((mod) => mod.KangurFeaturePage),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
 
 const resolveAppEmbedHeight = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -173,7 +181,7 @@ export function AppEmbedBlock(): React.ReactNode {
           className='cms-appearance-surface relative overflow-hidden rounded-[28px] border'
           style={{ minHeight: height }}
         >
-          <KangurFeaturePage slug={activeSlug} basePath={embeddedBasePath} embedded />
+          <LazyKangurFeaturePage slug={activeSlug} basePath={embeddedBasePath} embedded />
         </div>
       ) : embedUrl ? (
         <iframe

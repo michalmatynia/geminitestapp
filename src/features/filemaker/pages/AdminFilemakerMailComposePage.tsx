@@ -1,8 +1,9 @@
 'use client';
 
-import { ArrowLeft, SendHorizonal } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Paperclip, SendHorizonal, X } from 'lucide-react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useSearchParams } from 'next/navigation';
+import React, { useEffect, useMemo, useState, startTransition } from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
@@ -30,6 +31,16 @@ type ForwardDraftResponse = {
 
 const EMPTY_BODY_HTML = '<p><br/></p>';
 
+class FetchJsonError extends Error {
+  readonly status: number;
+  readonly body: unknown;
+  constructor(status: number, body: unknown, message: string) {
+    super(message);
+    this.status = status;
+    this.body = body;
+  }
+}
+
 const fetchJson = async <T,>(url: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(url, {
     ...init,
@@ -39,9 +50,48 @@ const fetchJson = async <T,>(url: string, init?: RequestInit): Promise<T> => {
     },
   });
   if (!response.ok) {
-    throw new Error(`Request failed (${response.status})`);
+    let body: unknown = null;
+    try {
+      body = await response.json();
+    } catch {
+      try {
+        body = await response.text();
+      } catch {
+        body = null;
+      }
+    }
+    const message =
+      (body && typeof body === 'object' && 'message' in (body as Record<string, unknown>) &&
+        typeof (body as { message?: unknown }).message === 'string'
+          ? (body as { message: string }).message
+          : null) ?? `Request failed (${response.status})`;
+    throw new FetchJsonError(response.status, body, message);
   }
   return (await response.json()) as T;
+};
+
+const readFileAsBase64 = async (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = (): void => reject(reader.error ?? new Error('File read failed'));
+    reader.onload = (): void => {
+      const result = reader.result;
+      if (typeof result !== 'string') {
+        reject(new Error('Unexpected file reader result'));
+        return;
+      }
+      const commaIndex = result.indexOf(',');
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
+    reader.readAsDataURL(file);
+  });
+
+type ComposeAttachment = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  dataBase64: string;
 };
 
 const formatParticipants = (participants: FilemakerMailParticipant[]): string =>
@@ -58,6 +108,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   const [bcc, setBcc] = useState('');
   const [subject, setSubject] = useState('');
   const [bodyHtml, setBodyHtml] = useState(EMPTY_BODY_HTML);
+  const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const accountIdFromRoute = searchParams.get('accountId');
@@ -73,20 +124,36 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   const rawRecentMailboxFilter = searchParams.get('recentMailbox');
   const rawRecentUnreadOnly = searchParams.get('recentUnread') === '1';
   const rawRecentQuery = searchParams.get('recentQuery');
+  const rawRecentCampaignId = searchParams.get('campaignId');
+  const rawRecentRunId = searchParams.get('runId');
+  const rawRecentDeliveryId = searchParams.get('deliveryId');
   const rawSearchQuery = searchParams.get('searchQuery');
   const rawSearchAccountId = searchParams.get('searchAccountId');
+  const rawSearchContextAccountId = searchParams.get('searchContextAccountId');
   const recentMailboxFilter =
     originPanel === 'recent' && rawRecentMailboxFilter ? rawRecentMailboxFilter : null;
   const recentUnreadOnly = originPanel === 'recent' ? rawRecentUnreadOnly : false;
   const recentQuery = originPanel === 'recent' && rawRecentQuery ? rawRecentQuery : null;
+  const recentCampaignId =
+    originPanel === 'recent' && rawRecentCampaignId ? rawRecentCampaignId : null;
+  const recentRunId = originPanel === 'recent' && rawRecentRunId ? rawRecentRunId : null;
+  const recentDeliveryId =
+    originPanel === 'recent' && rawRecentDeliveryId ? rawRecentDeliveryId : null;
   const searchQuery = originPanel === 'search' && rawSearchQuery ? rawSearchQuery : null;
   const searchAccountId =
     originPanel === 'search' && rawSearchAccountId === 'all' ? 'all' : null;
   const isGlobalSearchContext = searchAccountId === 'all';
+  const persistedSearchContextAccountId =
+    originPanel === 'search' &&
+    !isGlobalSearchContext &&
+    rawSearchContextAccountId &&
+    rawSearchContextAccountId !== accountIdFromRoute
+      ? rawSearchContextAccountId
+      : null;
   const searchContextAccountId = originPanel === 'search'
     ? isGlobalSearchContext
       ? null
-      : accountIdFromRoute
+      : persistedSearchContextAccountId ?? accountIdFromRoute
     : null;
   const backLabel =
     originPanel === 'recent'
@@ -102,14 +169,20 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       recentMailboxFilter: originPanel === 'recent' ? recentMailboxFilter : null,
       recentUnreadOnly: originPanel === 'recent' ? recentUnreadOnly : false,
       recentQuery: originPanel === 'recent' ? recentQuery : null,
+      recentCampaignId: originPanel === 'recent' ? recentCampaignId : null,
+      recentRunId: originPanel === 'recent' ? recentRunId : null,
+      recentDeliveryId: originPanel === 'recent' ? recentDeliveryId : null,
       searchQuery: originPanel === 'search' ? searchQuery : null,
     });
   }, [
     accountIdFromRoute,
     mailboxPathFromRoute,
     originPanel,
+    recentCampaignId,
+    recentDeliveryId,
     recentMailboxFilter,
     recentQuery,
+    recentRunId,
     recentUnreadOnly,
     searchContextAccountId,
     searchQuery,
@@ -120,46 +193,62 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       (rawRecentMailboxFilter ?? null) === recentMailboxFilter &&
       rawRecentUnreadOnly === recentUnreadOnly &&
       (rawRecentQuery ?? null) === recentQuery &&
+      (rawRecentCampaignId ?? null) === recentCampaignId &&
+      (rawRecentRunId ?? null) === recentRunId &&
+      (rawRecentDeliveryId ?? null) === recentDeliveryId &&
       (rawSearchQuery ?? null) === searchQuery &&
-      (rawSearchAccountId ?? null) === searchAccountId
+      (rawSearchAccountId ?? null) === searchAccountId &&
+      (rawSearchContextAccountId ?? null) === persistedSearchContextAccountId
     ) {
       return;
     }
 
-    router.replace(
-      buildComposeHref({
-        accountId: accountIdFromRoute,
-        forwardThreadId,
-        mailboxPath: mailboxPathFromRoute,
-        originPanel,
-        recentMailboxFilter,
-        recentUnreadOnly,
-        recentQuery,
-        searchAccountId,
-        searchQuery,
-      })
-    );
+    startTransition(() => { router.replace(
+            buildComposeHref({
+              accountId: accountIdFromRoute,
+              forwardThreadId,
+              mailboxPath: mailboxPathFromRoute,
+              originPanel,
+              recentMailboxFilter,
+              recentUnreadOnly,
+              recentQuery,
+              recentCampaignId,
+              recentRunId,
+              recentDeliveryId,
+              searchContextAccountId: persistedSearchContextAccountId,
+              searchAccountId,
+              searchQuery,
+            })
+          ); });
   }, [
     accountIdFromRoute,
     forwardThreadId,
     mailboxPathFromRoute,
     originPanel,
     rawOriginPanel,
+    rawRecentCampaignId,
+    rawRecentDeliveryId,
     rawRecentMailboxFilter,
     rawRecentQuery,
+    rawRecentRunId,
     rawRecentUnreadOnly,
     rawSearchAccountId,
+    rawSearchContextAccountId,
     rawSearchQuery,
+    recentCampaignId,
+    recentDeliveryId,
     recentMailboxFilter,
     recentQuery,
+    recentRunId,
     recentUnreadOnly,
+    persistedSearchContextAccountId,
     router,
     searchAccountId,
     searchQuery,
   ]);
   const composeDraftResetKey = forwardThreadId
     ? `forward:${accountIdFromRoute ?? ''}:${forwardThreadId}`
-    : `fresh:${accountIdFromRoute ?? ''}:${mailboxPathFromRoute ?? ''}:${originPanel ?? ''}:${recentMailboxFilter ?? ''}:${recentUnreadOnly ? '1' : '0'}:${recentQuery ?? ''}:${rawSearchAccountId ?? ''}:${searchQuery ?? ''}`;
+    : `fresh:${accountIdFromRoute ?? ''}:${mailboxPathFromRoute ?? ''}:${originPanel ?? ''}:${recentMailboxFilter ?? ''}:${recentUnreadOnly ? '1' : '0'}:${recentQuery ?? ''}:${recentCampaignId ?? ''}:${recentRunId ?? ''}:${recentDeliveryId ?? ''}:${rawSearchAccountId ?? ''}:${rawSearchContextAccountId ?? ''}:${searchQuery ?? ''}`;
 
   useEffect(() => {
     setAccountId(accountIdFromRoute ?? '');
@@ -168,6 +257,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     setBcc('');
     setSubject('');
     setBodyHtml(EMPTY_BODY_HTML);
+    setAttachments([]);
   }, [accountIdFromRoute, composeDraftResetKey]);
 
   useEffect(() => {
@@ -229,7 +319,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     };
   }, [accountIdFromRoute, forwardThreadId, toast]);
 
-  const handleSend = async (): Promise<void> => {
+  const handleSend = async (options?: { overrideSuppression?: boolean }): Promise<void> => {
     setIsSending(true);
     try {
       const result = await fetchJson<{ message: { threadId: string } }>('/api/filemaker/mail/send', {
@@ -241,24 +331,48 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
           bcc: parseFilemakerMailParticipantsInput(bcc),
           subject,
           bodyHtml,
+          attachments: attachments.map((entry) => ({
+            fileName: entry.fileName,
+            contentType: entry.contentType,
+            dataBase64: entry.dataBase64,
+          })),
+          ...(options?.overrideSuppression ? { overrideSuppression: true } : {}),
         }),
       });
       toast('Email sent.', { variant: 'success' });
       const preserveRouteContext = !accountIdFromRoute || accountIdFromRoute === accountId;
-      router.push(
-        buildThreadHref({
-          threadId: result.message.threadId,
-          accountId,
-          mailboxPath: preserveRouteContext ? mailboxPathFromRoute : null,
-          originPanel: preserveRouteContext ? originPanel : null,
-          recentMailboxFilter: preserveRouteContext ? recentMailboxFilter : null,
-          recentUnreadOnly: preserveRouteContext ? recentUnreadOnly : false,
-          recentQuery: preserveRouteContext ? recentQuery : null,
-          searchAccountId: preserveRouteContext && isGlobalSearchContext ? 'all' : null,
-          searchQuery: preserveRouteContext ? searchQuery : null,
-        })
-      );
+      startTransition(() => { router.push(
+                buildThreadHref({
+                  threadId: result.message.threadId,
+                  accountId,
+                  mailboxPath: preserveRouteContext ? mailboxPathFromRoute : null,
+                  originPanel: preserveRouteContext ? originPanel : null,
+                  recentMailboxFilter: preserveRouteContext ? recentMailboxFilter : null,
+                  recentUnreadOnly: preserveRouteContext ? recentUnreadOnly : false,
+                  recentQuery: preserveRouteContext ? recentQuery : null,
+                  searchContextAccountId: preserveRouteContext ? persistedSearchContextAccountId : null,
+                  searchAccountId: preserveRouteContext && isGlobalSearchContext ? 'all' : null,
+                  searchQuery: preserveRouteContext ? searchQuery : null,
+                })
+              ); });
     } catch (error) {
+      const isSuppression =
+        error instanceof FetchJsonError &&
+        error.status >= 400 &&
+        error.status < 500 &&
+        /suppression/i.test(error.message);
+      if (isSuppression && !options?.overrideSuppression) {
+        const confirmed =
+          typeof window !== 'undefined' &&
+          window.confirm(
+            `${error.message}\n\nSend anyway? This will bypass the campaign suppression list for this message only.`
+          );
+        if (confirmed) {
+          setIsSending(false);
+          await handleSend({ overrideSuppression: true });
+          return;
+        }
+      }
       toast(error instanceof Error ? error.message : 'Failed to send email.', {
         variant: 'error',
       });
@@ -267,22 +381,53 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     }
   };
 
+  const handleAddAttachments = async (fileList: FileList | null): Promise<void> => {
+    if (!fileList || fileList.length === 0) return;
+    const additions: ComposeAttachment[] = [];
+    for (const file of Array.from(fileList)) {
+      try {
+        const dataBase64 = await readFileAsBase64(file);
+        additions.push({
+          id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+          fileName: file.name,
+          contentType: file.type || 'application/octet-stream',
+          sizeBytes: file.size,
+          dataBase64,
+        });
+      } catch (error) {
+        toast(
+          `Could not attach ${file.name}: ${error instanceof Error ? error.message : 'unknown error'}`,
+          { variant: 'error' }
+        );
+      }
+    }
+    if (additions.length > 0) {
+      setAttachments((current) => [...current, ...additions]);
+    }
+  };
+
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
       <FilemakerMailSidebar
-        selectedAccountId={accountId || accountIdFromRoute}
-        selectedMailboxPath={mailboxPathFromRoute}
-        selectedPanel='compose'
-        originPanel={originPanel}
-        recentMailboxFilter={recentMailboxFilter}
-        recentUnreadOnly={recentUnreadOnly}
-        recentQuery={recentQuery}
-        searchContextAccountId={searchContextAccountId}
-        searchQuery={searchQuery}
-        onAccountUpdated={(account) => {
-          setAccounts((current) =>
-            current.map((entry) => (entry.id === account.id ? account : entry))
-          );
+        selection={{
+          accountId: accountId || accountIdFromRoute,
+          mailboxPath: mailboxPathFromRoute,
+          panel: 'compose',
+          originPanel,
+        }}
+        filters={{
+          recentMailboxFilter,
+          recentUnreadOnly,
+          recentQuery,
+          searchContextAccountId,
+          searchQuery,
+        }}
+        actions={{
+          onAccountUpdated: (account) => {
+            setAccounts((current) =>
+              current.map((entry) => (entry.id === account.id ? account : entry))
+            );
+          },
         }}
       />
 
@@ -297,7 +442,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
               label: backLabel,
               icon: <ArrowLeft className='size-4' />,
               variant: 'outline',
-              onClick: () => router.push(backHref),
+              onClick: () => startTransition(() => { router.push(backHref); }),
             },
             {
               key: 'send',
@@ -351,6 +496,53 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
             onChange={setBodyHtml}
             placeholder='Write your email...'
           />
+
+          <div className='space-y-2'>
+            <div className='flex items-center gap-2'>
+              <label className='inline-flex cursor-pointer items-center gap-2 text-xs text-gray-300 underline-offset-2 hover:underline'>
+                <Paperclip className='size-4' />
+                Add attachments
+                <input
+                  type='file'
+                  multiple
+                  className='hidden'
+                  onChange={(event) => {
+                    const files = event.target.files;
+                    void handleAddAttachments(files);
+                    event.target.value = '';
+                  }}
+                />
+              </label>
+              {attachments.length > 0 ? (
+                <span className='text-[11px] text-gray-500'>{attachments.length} file(s)</span>
+              ) : null}
+            </div>
+            {attachments.length > 0 ? (
+              <ul className='flex flex-wrap gap-2'>
+                {attachments.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className='inline-flex items-center gap-2 rounded-md border border-border/60 bg-card/30 px-2 py-1 text-[11px] text-gray-300'
+                  >
+                    <span>{entry.fileName}</span>
+                    <span className='text-gray-500'>
+                      {(entry.sizeBytes / 1024).toFixed(1)} KB
+                    </span>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setAttachments((current) => current.filter((item) => item.id !== entry.id));
+                      }}
+                      aria-label={`Remove ${entry.fileName}`}
+                      className='text-gray-400 hover:text-red-300'
+                    >
+                      <X className='size-3' />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
 
           {accountId ? (
             <div className='text-xs text-gray-500'>

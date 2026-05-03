@@ -41,7 +41,9 @@ export const getAiPathsEnabledCached = async (options?: {
   try {
     return await result;
   } finally {
-    aiPathsEnabledInFlight = null;
+    if (aiPathsEnabledInFlight === result) {
+      aiPathsEnabledInFlight = null;
+    }
   }
 };
 

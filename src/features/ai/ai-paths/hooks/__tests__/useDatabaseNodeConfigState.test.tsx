@@ -84,6 +84,7 @@ vi.mock('@/shared/hooks/use-settings', () => ({
 vi.mock('@/shared/lib/ai-paths', () => ({
   createPresetId: () => mocks.createPresetIdMock(),
   extractJsonPathEntries: (...args: unknown[]) => mocks.extractJsonPathEntriesMock(...args),
+  renderTemplate: vi.fn((template) => template),
   dbApi: {
     schema: (...args: unknown[]) => mocks.dbSchemaMock(...args),
   },
@@ -95,6 +96,8 @@ vi.mock('@/shared/lib/ai-paths/core/utils/provider-actions', () => ({
 
 vi.mock('@/shared/lib/ai-paths/core/utils/runtime', () => ({
   safeParseJson: (...args: unknown[]) => mocks.safeParseJsonMock(...args),
+  stableStringify: vi.fn((val: unknown) => JSON.stringify(val)),
+  hashString: vi.fn((val: string) => `hash:${val}`),
 }));
 
 vi.mock('@/shared/lib/prompt-engine/settings', () => ({

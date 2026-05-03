@@ -33,7 +33,7 @@ export function useAgentSnapshots(runId: string | null): ListQuery<AgentBrowserS
   return createListQueryV2<AgentBrowserSnapshotRecord>({
     queryKey,
     queryFn: () => api.getAgentSnapshots(runId!),
-    enabled: !!runId,
+    enabled: Boolean(runId),
     meta: {
       source: 'agentRuns.hooks.useAgentSnapshots',
       operation: 'list',
@@ -53,7 +53,7 @@ export function useAgentLogs(
   return createListQueryV2<AgentBrowserLogRecord>({
     queryKey,
     queryFn: () => api.getAgentLogs(runId!),
-    enabled: !!runId,
+    enabled: Boolean(runId),
     refetchInterval: options?.refetchInterval ?? false,
     meta: {
       source: 'agentRuns.hooks.useAgentLogs',
@@ -74,7 +74,7 @@ export function useAgentAudits(
   return createListQueryV2<AgentAuditLogRecord>({
     queryKey,
     queryFn: () => api.getAgentAudits(runId!),
-    enabled: !!runId,
+    enabled: Boolean(runId),
     refetchInterval: options?.refetchInterval ?? false,
     meta: {
       source: 'agentRuns.hooks.useAgentAudits',

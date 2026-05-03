@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { imageFileService } from '@/features/files/server';
@@ -20,7 +20,7 @@ export const querySchema = z.object({
   tags: optionalCsvQueryStringArray(),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 
   const files = await imageFileService.listImageFiles({

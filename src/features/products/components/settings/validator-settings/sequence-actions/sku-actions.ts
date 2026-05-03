@@ -37,9 +37,7 @@ export const handleCreateSkuAutoIncrementSequence = async (args: {
   });
 
   try {
-    for (const payload of bundle.patterns) {
-      await createPattern.mutateAsync(payload);
-    }
+    await Promise.all(bundle.patterns.map((payload) => createPattern.mutateAsync(payload)));
 
     setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => ({
       ...prev,

@@ -1,18 +1,18 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET_heavy_handler } from './handler';
+import { getHeavyHandler } from './handler';
 import { assertSettingsManageAccess } from '@/features/auth/server';
-import { GET_handler } from '../handler';
+import { getHandler } from '../handler';
 
 vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../handler', () => ({
-  GET_handler: vi.fn(),
+  getHandler: vi.fn(),
 }));
 
-describe('settings/heavy GET_heavy_handler', () => {
+describe('settings/heavy getHeavyHandler', () => {
   const mockContext = { source: 'test' } as any;
 
   beforeEach(() => {
@@ -20,12 +20,12 @@ describe('settings/heavy GET_heavy_handler', () => {
   });
 
   it('calls assertSettingsManageAccess and delegates to base handler with heavy mode', async () => {
-    vi.mocked(GET_handler).mockResolvedValue(new Response(JSON.stringify({ ok: true })));
+    vi.mocked(getHandler).mockResolvedValue(new Response(JSON.stringify({ ok: true })));
 
     const req = new NextRequest('http://localhost/api/settings/heavy');
-    await GET_heavy_handler(req, mockContext);
+    await getHeavyHandler(req, mockContext);
 
     expect(assertSettingsManageAccess).toHaveBeenCalled();
-    expect(GET_handler).toHaveBeenCalledWith(req, mockContext, 'heavy');
+    expect(getHandler).toHaveBeenCalledWith(req, mockContext, 'heavy');
   });
 });

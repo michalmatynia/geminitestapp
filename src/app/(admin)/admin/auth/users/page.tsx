@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AuthUsersPage } from '@/features/auth/public';
 

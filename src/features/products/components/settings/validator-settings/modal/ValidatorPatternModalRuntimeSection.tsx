@@ -13,6 +13,59 @@ import { RUNTIME_TYPE_OPTIONS } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
 
+const AI_RUNTIME_CONFIG_EXAMPLE =
+  '{\n  "systemPrompt": "You validate product data.",\n  "promptTemplate": "Check [fieldName]: [fieldValue]. Return JSON: {\\"match\\":boolean,\\"message\\":string,\\"replacementValue\\":string|null}",\n  "model": "gpt-4o-mini"\n}';
+
+const DATABASE_RUNTIME_CONFIG_EXAMPLE =
+  '{\n  "operation": "query",\n  "payload": {\n    "provider": "auto",\n    "collection": "products",\n    "single": false,\n    "limit": 1,\n    "filter": { "sku": "[sku]" }\n  },\n  "resultPath": "count",\n  "operator": "gt",\n  "operand": 0,\n  "replacementPaths": ["items[0].price"]\n}';
+
+const getRuntimeConfigExample = (runtimeType: ProductValidationRuntimeType): string => {
+  if (runtimeType === 'ai_prompt') return AI_RUNTIME_CONFIG_EXAMPLE;
+  return DATABASE_RUNTIME_CONFIG_EXAMPLE;
+};
+
+function RuntimeEnabledFields(): React.JSX.Element {
+  const { formData, setFormData } = useValidatorSettingsContext();
+  const runtimeConfigExample = getRuntimeConfigExample(formData.runtimeType);
+
+  return (
+    <div className='mt-4 space-y-4'>
+      <FormField label='Runtime Type'>
+        <SelectSimple
+          size='sm'
+          value={formData.runtimeType}
+          onValueChange={(value: string): void =>
+            setFormData((prev: PatternFormData) => ({
+              ...prev,
+              runtimeType: value as ProductValidationRuntimeType,
+            }))
+          }
+          options={RUNTIME_TYPE_OPTIONS}
+          ariaLabel='Runtime Type'
+          title='Runtime Type'
+        />
+      </FormField>
+      <FormField label='Runtime Config (JSON)'>
+        <ValidatorDocTooltip docId='validator.modal.runtime.config'>
+          <Textarea
+            className='min-h-[160px] font-mono text-[11px]'
+            value={formData.runtimeConfig}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+              setFormData((prev: PatternFormData) => ({
+                ...prev,
+                runtimeConfig: event.target.value,
+              }))
+            }
+            placeholder={runtimeConfigExample}
+            aria-label={runtimeConfigExample}
+            title={runtimeConfigExample}
+          />
+        </ValidatorDocTooltip>
+      </FormField>
+    </div>
+  );
+}
+
 export function ValidatorPatternModalRuntimeSection(): React.JSX.Element {
   const { formData, setFormData } = useValidatorSettingsContext();
 
@@ -43,46 +96,7 @@ export function ValidatorPatternModalRuntimeSection(): React.JSX.Element {
         </ValidatorDocTooltip>
       }
     >
-      {formData.runtimeEnabled && (
-        <div className='mt-4 space-y-4'>
-          <FormField label='Runtime Type'>
-            <SelectSimple
-              size='sm'
-              value={formData.runtimeType}
-              onValueChange={(value: string): void =>
-                setFormData((prev: PatternFormData) => ({
-                  ...prev,
-                  runtimeType: value as ProductValidationRuntimeType,
-                }))
-              }
-              options={RUNTIME_TYPE_OPTIONS}
-             ariaLabel='Runtime Type' title='Runtime Type'/>
-          </FormField>
-          <FormField label='Runtime Config (JSON)'>
-            <ValidatorDocTooltip docId='validator.modal.runtime.config'>
-              <Textarea
-                className='min-h-[160px] font-mono text-[11px]'
-                value={formData.runtimeConfig}
-                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                  setFormData((prev: PatternFormData) => ({
-                    ...prev,
-                    runtimeConfig: event.target.value,
-                  }))
-                }
-                placeholder={
-                  formData.runtimeType === 'ai_prompt'
-                    ? '{\n  "systemPrompt": "You validate product data.",\n  "promptTemplate": "Check [fieldName]: [fieldValue]. Return JSON: {\\"match\\":boolean,\\"message\\":string,\\"replacementValue\\":string|null}",\n  "model": "gpt-4o-mini"\n}'
-                    : '{\n  "operation": "query",\n  "payload": {\n    "provider": "auto",\n    "collection": "products",\n    "single": false,\n    "limit": 1,\n    "filter": { "sku": "[sku]" }\n  },\n  "resultPath": "count",\n  "operator": "gt",\n  "operand": 0,\n  "replacementPaths": ["items[0].price"]\n}'
-                }
-               aria-label={formData.runtimeType === 'ai_prompt'
-                    ? '{\n  "systemPrompt": "You validate product data.",\n  "promptTemplate": "Check [fieldName]: [fieldValue]. Return JSON: {\\"match\\":boolean,\\"message\\":string,\\"replacementValue\\":string|null}",\n  "model": "gpt-4o-mini"\n}'
-                    : '{\n  "operation": "query",\n  "payload": {\n    "provider": "auto",\n    "collection": "products",\n    "single": false,\n    "limit": 1,\n    "filter": { "sku": "[sku]" }\n  },\n  "resultPath": "count",\n  "operator": "gt",\n  "operand": 0,\n  "replacementPaths": ["items[0].price"]\n}'} title={formData.runtimeType === 'ai_prompt'
-                    ? '{\n  "systemPrompt": "You validate product data.",\n  "promptTemplate": "Check [fieldName]: [fieldValue]. Return JSON: {\\"match\\":boolean,\\"message\\":string,\\"replacementValue\\":string|null}",\n  "model": "gpt-4o-mini"\n}'
-                    : '{\n  "operation": "query",\n  "payload": {\n    "provider": "auto",\n    "collection": "products",\n    "single": false,\n    "limit": 1,\n    "filter": { "sku": "[sku]" }\n  },\n  "resultPath": "count",\n  "operator": "gt",\n  "operand": 0,\n  "replacementPaths": ["items[0].price"]\n}'}/>
-            </ValidatorDocTooltip>
-          </FormField>
-        </div>
-      )}
+      {formData.runtimeEnabled && <RuntimeEnabledFields />}
     </FormSection>
   );
 }

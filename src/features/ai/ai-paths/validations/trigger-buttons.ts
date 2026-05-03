@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import {
@@ -64,6 +64,7 @@ const toStoredAiTriggerButtonRecord = (
     locations: record.locations,
     mode: record.mode,
     display: toStoredDisplayMode(record.display),
+    contextTemplate: record.contextTemplate ?? null,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
     sortIndex: record.sortIndex,
@@ -90,6 +91,7 @@ const toCanonicalAiTriggerButtonRecord = (
     locations: [...record.locations],
     mode: record.mode,
     display: buildCanonicalTriggerButtonDisplay(record.name, record.display),
+    contextTemplate: record.contextTemplate ?? null,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
     sortIndex: record.sortIndex,
@@ -99,7 +101,7 @@ const toCanonicalAiTriggerButtonRecord = (
 export const parseAiTriggerButtonsRawWithReport = (
   raw: string | null
 ): AiTriggerButtonsRawParseReport => {
-  if (!raw) {
+  if (raw === null || raw === '') {
     return {
       records: [],
       shouldPersist: false,

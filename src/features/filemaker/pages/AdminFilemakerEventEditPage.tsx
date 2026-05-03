@@ -1,10 +1,11 @@
+/* eslint-disable complexity, consistent-return, max-lines, max-lines-per-function, @typescript-eslint/no-shadow, @typescript-eslint/strict-boolean-expressions */
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useParams } from 'next/navigation';
+import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -28,6 +29,12 @@ import {
   toPersistedFilemakerDatabase,
 } from '../settings';
 import {
+  buildFilemakerCountryList,
+  buildFilemakerCountryLookup,
+  buildFilemakerCountryOptions,
+  resolveFilemakerCountryName,
+} from '../settings/filemaker-country-options';
+import {
   decodeRouteParam,
   formatTimestamp,
   hasAddressFields,
@@ -35,7 +42,20 @@ import {
 } from './filemaker-page-utils';
 
 import type { EditableAddress } from '../hooks/editable-address';
-import type { FilemakerEvent, FilemakerOrganization } from '../types';
+import type { MongoFilemakerEvent } from './AdminFilemakerEventsPage.types';
+import type { FilemakerAddress, FilemakerEvent, FilemakerOrganization } from '../types';
+import type { FilemakerAnyParam } from '../filemaker-anyparam.types';
+import type { FilemakerAnyText } from '../filemaker-anytext.types';
+import type { FilemakerBankAccount } from '../filemaker-bank-account.types';
+import type { FilemakerContract } from '../filemaker-contract.types';
+import type { FilemakerDocument } from '../filemaker-document.types';
+import type { MongoFilemakerWebsite } from '../filemaker-websites.types';
+import { FilemakerAnyParamsSection } from '../components/shared/FilemakerAnyParamsSection';
+import { FilemakerAnyTextsSection } from '../components/shared/FilemakerAnyTextsSection';
+import { FilemakerBankAccountsSection } from '../components/shared/FilemakerBankAccountsSection';
+import { FilemakerContractsSection } from '../components/shared/FilemakerContractsSection';
+import { FilemakerDocumentsSection } from '../components/shared/FilemakerDocumentsSection';
+import { FilemakerLinkedWebsitesSection } from '../components/shared/FilemakerLinkedWebsitesSection';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -55,6 +75,154 @@ const toggleSelection = (value: string, checked: boolean, previous: string[]): s
   return previous.filter((entry: string): boolean => entry !== value);
 };
 
+type ImportedEventState = {
+  error: string | null;
+  event: MongoFilemakerEvent | null;
+  isLoading: boolean;
+  linkedAddresses: FilemakerAddress[];
+  linkedAnyParams: FilemakerAnyParam[];
+  linkedAnyTexts: FilemakerAnyText[];
+  linkedBankAccounts: FilemakerBankAccount[];
+  linkedContracts: FilemakerContract[];
+  linkedDocuments: FilemakerDocument[];
+  linkedWebsites: MongoFilemakerWebsite[];
+};
+
+function ImportedEventDetails(props: {
+  event: MongoFilemakerEvent;
+  linkedAddresses: FilemakerAddress[];
+  linkedAnyParams: FilemakerAnyParam[];
+  linkedAnyTexts: FilemakerAnyText[];
+  linkedBankAccounts: FilemakerBankAccount[];
+  linkedContracts: FilemakerContract[];
+  linkedDocuments: FilemakerDocument[];
+  linkedWebsites: MongoFilemakerWebsite[];
+  onBack: () => void;
+}): React.JSX.Element {
+  const {
+    event,
+    linkedAddresses,
+    linkedAnyParams,
+    linkedAnyTexts,
+    linkedBankAccounts,
+    linkedContracts,
+    linkedDocuments,
+    linkedWebsites,
+    onBack,
+  } = props;
+  return (
+    <div className='page-section-compact space-y-6'>
+      <SectionHeader
+        title='Imported Event'
+        description='View the event record imported from FileMaker.'
+        eyebrow={
+          <AdminFilemakerBreadcrumbs
+            parent={{ label: 'Events', href: '/admin/filemaker/events' }}
+            current='Imported'
+            className='mb-2'
+          />
+        }
+        actions={<FormActions onCancel={onBack} cancelText='Back to Events' />}
+      />
+
+      <div className='flex flex-wrap gap-2'>
+        <Badge variant='outline' className='text-[10px]'>
+          ID: {event.id}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Legacy UUID: {event.legacyUuid ?? 'n/a'}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Created: {formatTimestamp(event.createdAt)}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Updated: {formatTimestamp(event.updatedAt)}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Updated By: {event.updatedBy ?? 'n/a'}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Linked Organisations: {event.organizationLinkCount}
+        </Badge>
+      </div>
+
+      <FormSection title='Event Details' className='space-y-3 p-4'>
+        <div className='grid gap-3 md:grid-cols-2'>
+          <FormField label='Event Name'>
+            <Input value={event.eventName} readOnly className='h-9' />
+          </FormField>
+          <FormField label='Event Start'>
+            <Input value={event.eventStartDate ?? ''} readOnly className='h-9' />
+          </FormField>
+          <FormField label='Default Address UUID'>
+            <Input value={event.legacyDefaultAddressUuid ?? ''} readOnly className='h-9' />
+          </FormField>
+          <FormField label='Display Address UUID'>
+            <Input value={event.legacyDisplayAddressUuid ?? ''} readOnly className='h-9' />
+          </FormField>
+          <FormField label='Address' className='md:col-span-2'>
+            <Input value={formatFilemakerAddress(event)} readOnly className='h-9' />
+          </FormField>
+        </div>
+      </FormSection>
+
+      <FormSection title='Linked Addresses' className='space-y-3 p-4'>
+        {linkedAddresses.length > 0 ? (
+          <div className='grid gap-2'>
+            {linkedAddresses.map((address: FilemakerAddress) => (
+              <div
+                key={address.id}
+                className='rounded border border-border bg-muted/20 px-3 py-2 text-sm text-gray-200'
+              >
+                <div className='font-medium'>
+                  {formatFilemakerAddress(address) || address.legacyUuid || address.id}
+                </div>
+                <div className='text-[11px] text-gray-500'>
+                  Legacy UUID: {address.legacyUuid ?? 'n/a'}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className='text-sm text-gray-500'>No linked addresses.</div>
+        )}
+      </FormSection>
+
+      <FilemakerBankAccountsSection bankAccounts={linkedBankAccounts} />
+
+      <FilemakerContractsSection contracts={linkedContracts} />
+
+      <FilemakerDocumentsSection documents={linkedDocuments} />
+
+      <FilemakerAnyTextsSection anyTexts={linkedAnyTexts} />
+
+      <FilemakerAnyParamsSection anyParams={linkedAnyParams} />
+
+      <FilemakerLinkedWebsitesSection websites={linkedWebsites} />
+
+      <FormSection title='Linked Organisations' className='space-y-3 p-4'>
+        {event.linkedOrganizations.length > 0 ? (
+          <div className='grid gap-2'>
+            {event.linkedOrganizations.slice(0, 50).map((link) => (
+              <div
+                key={link.id}
+                className='rounded border border-border bg-muted/20 px-3 py-2 text-sm text-gray-200'
+              >
+                <div className='font-medium'>{link.organizationName ?? 'Unresolved organisation'}</div>
+                <div className='text-[11px] text-gray-500'>
+                  Legacy UUID: {link.legacyOrganizationUuid}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className='text-sm text-gray-500'>No linked organisations.</div>
+        )}
+      </FormSection>
+    </div>
+  );
+}
+
 export function AdminFilemakerEventEditPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
@@ -63,18 +231,16 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
   const { toast } = useToast();
 
   const countriesQuery = useCountries();
-  const countries = countriesQuery.data ?? [];
+  const countries = useMemo(
+    () => buildFilemakerCountryList(countriesQuery.data ?? []),
+    [countriesQuery.data]
+  );
   const countryById = useMemo(
-    () => new Map(countries.map((country: CountryOption) => [country.id, country])),
+    () => buildFilemakerCountryLookup(countries),
     [countries]
   );
   const countryOptions = useMemo(
-    () =>
-      countries.map((country: CountryOption) => ({
-        value: country.id,
-        label: country.name,
-        description: country.code,
-      })),
+    () => buildFilemakerCountryOptions(countries),
     [countries]
   );
 
@@ -105,6 +271,92 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [linkedOrganizationIds, setLinkedOrganizationIds] = useState<string[]>([]);
   const [hydratedEventId, setHydratedEventId] = useState<string | null>(null);
+  const [importedEventState, setImportedEventState] = useState<ImportedEventState>({
+    error: null,
+    event: null,
+    isLoading: false,
+    linkedAddresses: [],
+    linkedAnyParams: [],
+    linkedAnyTexts: [],
+    linkedBankAccounts: [],
+    linkedContracts: [],
+    linkedDocuments: [],
+    linkedWebsites: [],
+  });
+
+  useEffect(() => {
+    if (event !== null || eventId.length === 0 || eventId === 'new') return;
+    const controller = new AbortController();
+    setImportedEventState({
+      error: null,
+      event: null,
+      isLoading: true,
+      linkedAddresses: [],
+      linkedAnyParams: [],
+      linkedAnyTexts: [],
+      linkedBankAccounts: [],
+      linkedContracts: [],
+      linkedDocuments: [],
+      linkedWebsites: [],
+    });
+    fetch(`/api/filemaker/events/${encodeURIComponent(eventId)}`, { signal: controller.signal })
+      .then(async (
+        response: Response
+      ): Promise<{
+        event: MongoFilemakerEvent;
+        linkedAddresses?: FilemakerAddress[];
+        linkedAnyParams?: FilemakerAnyParam[];
+        linkedAnyTexts?: FilemakerAnyText[];
+        linkedBankAccounts?: FilemakerBankAccount[];
+        linkedContracts?: FilemakerContract[];
+        linkedDocuments?: FilemakerDocument[];
+        linkedWebsites?: MongoFilemakerWebsite[];
+      }> => {
+        if (!response.ok) throw new Error(`Failed to load event (${response.status}).`);
+        return (await response.json()) as {
+          event: MongoFilemakerEvent;
+          linkedAddresses?: FilemakerAddress[];
+          linkedAnyParams?: FilemakerAnyParam[];
+          linkedAnyTexts?: FilemakerAnyText[];
+          linkedBankAccounts?: FilemakerBankAccount[];
+          linkedContracts?: FilemakerContract[];
+          linkedDocuments?: FilemakerDocument[];
+          linkedWebsites?: MongoFilemakerWebsite[];
+        };
+      })
+      .then((response): void => {
+        setImportedEventState({
+          error: null,
+          event: response.event,
+          isLoading: false,
+          linkedAddresses: response.linkedAddresses ?? [],
+          linkedAnyParams: response.linkedAnyParams ?? [],
+          linkedAnyTexts: response.linkedAnyTexts ?? [],
+          linkedBankAccounts: response.linkedBankAccounts ?? [],
+          linkedContracts: response.linkedContracts ?? [],
+          linkedDocuments: response.linkedDocuments ?? [],
+          linkedWebsites: response.linkedWebsites ?? [],
+        });
+      })
+      .catch((error: unknown): void => {
+        if (controller.signal.aborted) return;
+        setImportedEventState({
+          error: error instanceof Error ? error.message : 'Failed to load imported event.',
+          event: null,
+          isLoading: false,
+          linkedAddresses: [],
+          linkedAnyParams: [],
+          linkedAnyTexts: [],
+          linkedBankAccounts: [],
+          linkedContracts: [],
+          linkedDocuments: [],
+          linkedWebsites: [],
+        });
+      });
+    return () => {
+      controller.abort();
+    };
+  }, [event, eventId]);
 
   useEffect(() => {
     if (!event) return;
@@ -124,8 +376,17 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
           city: address.city,
           postalCode: address.postalCode,
           countryId: resolveCountryId(address.countryId, address.country, countries, countryById),
-          country: address.country,
+          country: resolveFilemakerCountryName(
+            address.countryId,
+            address.country,
+            countries,
+            countryById
+          ),
+          countryValueId: address.countryValueId,
+          countryValueLabel: address.countryValueLabel,
           isDefault: link.isDefault,
+          legacyCountryUuid: address.legacyCountryUuid,
+          legacyUuid: address.legacyUuid,
         };
       })
       .filter((entry: EditableAddress | null): entry is EditableAddress => Boolean(entry));
@@ -141,7 +402,12 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
             city: event.city,
             postalCode: event.postalCode,
             countryId: resolveCountryId(event.countryId, event.country, countries, countryById),
-            country: event.country,
+            country: resolveFilemakerCountryName(
+              event.countryId,
+              event.country,
+              countries,
+              countryById
+            ),
             isDefault: true,
           },
         ];
@@ -298,8 +564,12 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       const normalizedCity = address.city.trim();
       const normalizedPostalCode = address.postalCode.trim();
       const normalizedCountryId = address.countryId.trim();
-      const normalizedCountry =
-        countryById.get(normalizedCountryId)?.name ?? address.country.trim();
+      const normalizedCountry = resolveFilemakerCountryName(
+        normalizedCountryId,
+        address.country,
+        countries,
+        countryById
+      );
       return {
         addressId: address.addressId.trim(),
         street: normalizedStreet,
@@ -308,19 +578,23 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
         postalCode: normalizedPostalCode,
         countryId: normalizedCountryId,
         country: normalizedCountry,
+        countryValueId: address.countryValueId,
+        countryValueLabel: address.countryValueLabel,
         isDefault: address.isDefault,
+        legacyCountryUuid: address.legacyCountryUuid,
+        legacyUuid: address.legacyUuid,
       };
     });
 
     const hasInvalidAddress = preparedAddresses.some(
       (address): boolean =>
-        !hasAddressFields(
-          address.street,
-          address.streetNumber,
-          address.city,
-          address.postalCode,
-          address.countryId
-        )
+        !hasAddressFields({
+          city: address.city,
+          countryId: address.countryId,
+          postalCode: address.postalCode,
+          street: address.street,
+          streetNumber: address.streetNumber,
+        })
     );
     if (hasInvalidAddress) {
       toast(
@@ -362,6 +636,10 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
           postalCode: address.postalCode,
           country: address.country,
           countryId: address.countryId,
+          countryValueId: address.countryValueId,
+          countryValueLabel: address.countryValueLabel,
+          legacyCountryUuid: address.legacyCountryUuid,
+          legacyUuid: address.legacyUuid,
           updatedAt: new Date().toISOString(),
         })
       );
@@ -422,7 +700,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
         value: JSON.stringify(toPersistedFilemakerDatabase(nextDatabase)),
       });
       toast('Event updated.', { variant: 'success' });
-      router.push('/admin/filemaker/events');
+      startTransition(() => { router.push('/admin/filemaker/events'); });
     } catch (error: unknown) {
       logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to update event.', {
@@ -431,6 +709,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
     }
   }, [
     addresses,
+    countries,
     countryById,
     database,
     event,
@@ -442,11 +721,33 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
   ]);
 
   if (!event) {
+    if (importedEventState.event !== null) {
+      return (
+        <ImportedEventDetails
+          event={importedEventState.event}
+          linkedAddresses={importedEventState.linkedAddresses}
+          linkedAnyParams={importedEventState.linkedAnyParams}
+          linkedAnyTexts={importedEventState.linkedAnyTexts}
+          linkedBankAccounts={importedEventState.linkedBankAccounts}
+          linkedContracts={importedEventState.linkedContracts}
+          linkedDocuments={importedEventState.linkedDocuments}
+          linkedWebsites={importedEventState.linkedWebsites}
+          onBack={(): void => {
+            startTransition(() => { router.push('/admin/filemaker/events'); });
+          }}
+        />
+      );
+    }
+
     return (
       <div className='page-section-compact space-y-6'>
         <SectionHeader
           title='Edit Event'
-          description='The requested event record could not be found.'
+          description={
+            importedEventState.isLoading
+              ? 'Loading imported event record.'
+              : importedEventState.error ?? 'The requested event record could not be found.'
+          }
           eyebrow={
             <AdminFilemakerBreadcrumbs
               parent={{ label: 'Events', href: '/admin/filemaker/events' }}
@@ -457,7 +758,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
           actions={
             <FormActions
               onCancel={(): void => {
-                router.push('/admin/filemaker/events');
+                startTransition(() => { router.push('/admin/filemaker/events'); });
               }}
               cancelText='Back to Events'
             />
@@ -482,7 +783,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
         actions={
           <FormActions
             onCancel={(): void => {
-              router.push('/admin/filemaker/events');
+              startTransition(() => { router.push('/admin/filemaker/events'); });
             }}
             cancelText='Back to Events'
             onSave={(): void => {
@@ -637,7 +938,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
               options={countryOptions}
               placeholder={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'}
               size='sm'
-              disabled={!selectedAddress || countriesQuery.isLoading || countriesQuery.isError}
+              disabled={!selectedAddress || countriesQuery.isLoading}
              ariaLabel={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'} title={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'}/>
           </FormField>
         </div>

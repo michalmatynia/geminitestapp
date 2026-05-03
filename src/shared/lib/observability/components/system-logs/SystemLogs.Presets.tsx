@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { useSystemLogsState, useSystemLogsActions } from '@/features/observability/context/SystemLogsContext';
+import { useSystemLogsState, useSystemLogsActions } from '@/shared/lib/observability/context/SystemLogsContext';
 import {
   SYSTEM_LOG_FILTER_DEFAULTS,
   SYSTEM_LOG_TRIAGE_PRESETS,

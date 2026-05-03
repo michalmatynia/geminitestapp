@@ -101,6 +101,8 @@ export type PrepareDatabaseTemplateContextInput = {
   resolvedInputs: Record<string, unknown>;
   dbConfig: DatabaseConfig;
   aiPromptTemplate: string;
+  runId?: string | undefined;
+  runStartedAt?: string | undefined;
   simulationEntityType: string | null;
   fallbackEntityId: string | null;
   fetchEntityCached: NodeHandlerContext['fetchEntityCached'];
@@ -123,6 +125,8 @@ export function prepareDatabaseTemplateContext({
   resolvedInputs,
   dbConfig,
   aiPromptTemplate,
+  runId,
+  runStartedAt,
   simulationEntityType,
   fallbackEntityId,
   fetchEntityCached,
@@ -130,7 +134,9 @@ export function prepareDatabaseTemplateContext({
   strictFlowMode = true,
 }: PrepareDatabaseTemplateContextInput): PrepareDatabaseTemplateContextResult {
   const templateInputValue: unknown =
-    resolvedInputs['value'] ?? coerceInput(resolvedInputs['jobId']);
+    resolvedInputs['value'] ??
+    resolvedInputs['result'] ??
+    coerceInput(resolvedInputs['jobId']);
 
   const placeholderContext: Record<string, unknown> = {
     'Date: Current': new Date().toISOString(),
@@ -152,6 +158,26 @@ export function prepareDatabaseTemplateContext({
   const templateInputs: RuntimePortValues = {
     ...resolvedInputs,
   };
+  const rawContext = templateInputs['context'];
+  const existingContext = toRecord(rawContext);
+  const runtimeContextPatch: Record<string, unknown> = {};
+  if (runId?.trim()) {
+    templateInputs['runId'] ??= runId;
+    runtimeContextPatch['runId'] = runId;
+  }
+  if (runStartedAt?.trim()) {
+    templateInputs['runStartedAt'] ??= runStartedAt;
+    runtimeContextPatch['runStartedAt'] = runStartedAt;
+  }
+  if (
+    Object.keys(runtimeContextPatch).length > 0 &&
+    (rawContext === undefined || rawContext === null || existingContext !== null)
+  ) {
+    templateInputs['context'] = {
+      ...(existingContext ?? {}),
+      ...runtimeContextPatch,
+    };
+  }
   const templateContext: Record<string, unknown> = {
     ...templateInputs,
     ...placeholderContext,

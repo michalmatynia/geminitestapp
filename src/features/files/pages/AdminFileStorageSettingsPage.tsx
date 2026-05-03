@@ -6,15 +6,17 @@ import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settin
 import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
-  fileStorageSourceValues,
 } from '@/shared/lib/files/constants';
 import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
 import { AdminSettingsPageLayout } from '@/shared/ui/admin.public';
-import { Alert, Card, Input, useToast } from '@/shared/ui/primitives.public';
-import { FormActions, FormField, FormSection, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { Alert, useToast } from '@/shared/ui/primitives.public';
+import { FormActions } from '@/shared/ui/forms-and-actions.public';
 import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+
+import { StorageSourceSection } from '../components/settings/StorageSourceSection';
+import { FastCometConfigSection } from '../components/settings/FastCometConfigSection';
 
 const normalizeSource = (value: string | null | undefined): FileStorageSource =>
   value === 'fastcomet' ? 'fastcomet' : 'local';
@@ -27,42 +29,47 @@ const normalizeFastCometConfig = (raw: string | null | undefined): FastCometStor
     ? Math.min(Math.max(Math.floor(timeoutRaw), 1_000), 120_000)
     : 20_000;
 
+  const baseUrl = typeof parsed.baseUrl === 'string' ? parsed.baseUrl : '';
+  const uploadEndpoint = typeof parsed.uploadEndpoint === 'string' ? parsed.uploadEndpoint : '';
+  
+  const deleteEndpoint =
+    typeof parsed.deleteEndpoint === 'string' && parsed.deleteEndpoint.trim() !== ''
+      ? parsed.deleteEndpoint
+      : null;
+
+  const authToken =
+    typeof parsed.authToken === 'string' && parsed.authToken.trim() !== ''
+      ? parsed.authToken
+      : null;
+
+  const keepLocalCopy = typeof parsed.keepLocalCopy === 'boolean' ? parsed.keepLocalCopy : true;
+
   return {
-    baseUrl: typeof parsed.baseUrl === 'string' ? parsed.baseUrl : '',
-    uploadEndpoint: typeof parsed.uploadEndpoint === 'string' ? parsed.uploadEndpoint : '',
-    deleteEndpoint:
-      typeof parsed.deleteEndpoint === 'string' && parsed.deleteEndpoint.trim().length > 0
-        ? parsed.deleteEndpoint
-        : null,
-    authToken:
-      typeof parsed.authToken === 'string' && parsed.authToken.trim().length > 0
-        ? parsed.authToken
-        : null,
-    keepLocalCopy: typeof parsed.keepLocalCopy === 'boolean' ? parsed.keepLocalCopy : true,
+    baseUrl,
+    uploadEndpoint,
+    deleteEndpoint,
+    authToken,
+    keepLocalCopy,
     timeoutMs,
   };
 };
 
-const normalizeConfigForSave = (config: FastCometStorageConfig): FastCometStorageConfig => ({
-  baseUrl: config.baseUrl.trim(),
-  uploadEndpoint: config.uploadEndpoint.trim(),
-  deleteEndpoint: config.deleteEndpoint?.trim() || null,
-  authToken: config.authToken?.trim() || null,
-  keepLocalCopy: config.keepLocalCopy,
-  timeoutMs: Math.min(Math.max(Math.floor(config.timeoutMs), 1_000), 120_000),
-});
+const normalizeConfigForSave = (config: FastCometStorageConfig): FastCometStorageConfig => {
+  const deleteEndpoint = config.deleteEndpoint?.trim();
+  const authToken = config.authToken?.trim();
+  
+  return {
+    baseUrl: config.baseUrl.trim(),
+    uploadEndpoint: config.uploadEndpoint.trim(),
+    deleteEndpoint: deleteEndpoint !== undefined && deleteEndpoint !== '' ? deleteEndpoint : null,
+    authToken: authToken !== undefined && authToken !== '' ? authToken : null,
+    keepLocalCopy: config.keepLocalCopy,
+    timeoutMs: Math.min(Math.max(Math.floor(config.timeoutMs), 1_000), 120_000),
+  };
+};
 
 const areConfigsEqual = (left: FastCometStorageConfig, right: FastCometStorageConfig): boolean =>
   JSON.stringify(normalizeConfigForSave(left)) === JSON.stringify(normalizeConfigForSave(right));
-
-const sourceOptions = fileStorageSourceValues.map((value) => ({
-  value,
-  label: value === 'local' ? 'Local folder' : 'FastComet',
-  description:
-    value === 'local'
-      ? 'Store files in /public/uploads.'
-      : 'Upload files to your FastComet server.',
-}));
 
 export function AdminFileStorageSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -94,21 +101,15 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
   const normalizedDraft = normalizeConfigForSave(fastCometConfig);
   const normalizedStored = normalizeConfigForSave(storedFastCometConfig);
 
-  const isDirty = source !== storedSource || !areConfigsEqual(normalizedDraft, normalizedStored);
+  const isDirty = source !== storedSource || areConfigsEqual(normalizedDraft, normalizedStored) === false;
 
   const isFastCometMisconfigured =
-    source === 'fastcomet' && normalizedDraft.uploadEndpoint.trim().length === 0;
+    source === 'fastcomet' && normalizedDraft.uploadEndpoint.trim() === '';
 
   const saveSettings = (): void => {
     const payloads = [
-      {
-        key: FILE_STORAGE_SOURCE_SETTING_KEY,
-        value: source,
-      },
-      {
-        key: FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
-        value: serializeSetting(normalizedDraft),
-      },
+      { key: FILE_STORAGE_SOURCE_SETTING_KEY, value: source },
+      { key: FASTCOMET_STORAGE_CONFIG_SETTING_KEY, value: serializeSetting(normalizedDraft) },
     ];
 
     updateSettingsBulk.mutate(payloads, {
@@ -117,12 +118,9 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
       },
       onError: (error: Error): void => {
         logClientError(error, {
-          context: {
-            source: 'AdminFileStorageSettingsPage',
-            action: 'saveSettings',
-          },
+          context: { source: 'AdminFileStorageSettingsPage', action: 'saveSettings' },
         });
-        toast(error.message || 'Failed to save file storage settings.', {
+        toast(error.message !== '' ? error.message : 'Failed to save file storage settings.', {
           variant: 'error',
         });
       },
@@ -136,154 +134,15 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
       description='Choose whether files are served from local uploads or FastComet storage.'
     >
       <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
-        <FormSection
-          title='Storage Source'
-          description='Switch where new uploads are written and where file URLs point.'
-          className='p-6'
-        >
-          <FormField label='Active provider'>
-            <SelectSimple
-              size='sm'
-              value={source}
-              onValueChange={(value: string): void => setSource(normalizeSource(value))}
-              options={sourceOptions}
-              placeholder='Select file source'
-             ariaLabel='Select file source' title='Select file source'/>
-            <Hint className='mt-1'>
-              Local keeps uploads in this app. FastComet writes new uploads to your external server.
-            </Hint>
-          </FormField>
-
-          <Card
-            variant='subtle-compact'
-            padding='md'
-            className='border-border bg-muted/20 space-y-1'
-          >
-            <div className='flex justify-between text-sm text-gray-300'>
-              <span>Current mode</span>
-              <span className='font-medium text-gray-100'>
-                {source === 'local' ? 'Local folder' : 'FastComet'}
-              </span>
-            </div>
-            <Hint variant='muted'>
-              Existing file records are not auto-migrated. This setting affects new uploads.
-            </Hint>
-          </Card>
-        </FormSection>
-
-        <FormSection
-          title='FastComet Configuration'
-          description='Used when source is set to FastComet. Upload endpoint is required.'
-          className='p-6'
-        >
-          <div className='space-y-4'>
-            <FormField label='Base URL'>
-              <Input
-                value={fastCometConfig.baseUrl}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFastCometConfig((prev: FastCometStorageConfig) => ({
-                    ...prev,
-                    baseUrl: event.target.value,
-                  }))
-                }
-                placeholder='https://files.example.com'
-               aria-label='https://files.example.com' title='https://files.example.com'/>
-              <Hint className='mt-1'>
-                Optional public base URL, e.g. https://files.your-domain.com.
-              </Hint>
-            </FormField>
-
-            <FormField label='Upload endpoint'>
-              <Input
-                value={fastCometConfig.uploadEndpoint}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFastCometConfig((prev: FastCometStorageConfig) => ({
-                    ...prev,
-                    uploadEndpoint: event.target.value,
-                  }))
-                }
-                placeholder='https://files.example.com/api/uploads'
-               aria-label='https://files.example.com/api/uploads' title='https://files.example.com/api/uploads'/>
-              <Hint className='mt-1'>
-                Server endpoint that receives multipart upload requests from this app.
-              </Hint>
-            </FormField>
-
-            <FormField label='Delete endpoint'>
-              <Input
-                value={fastCometConfig.deleteEndpoint ?? ''}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFastCometConfig((prev: FastCometStorageConfig) => ({
-                    ...prev,
-                    deleteEndpoint: event.target.value,
-                  }))
-                }
-                placeholder='https://files.example.com/api/uploads/delete'
-               aria-label='https://files.example.com/api/uploads/delete' title='https://files.example.com/api/uploads/delete'/>
-              <Hint className='mt-1'>
-                Optional endpoint used to delete remote files when records are removed.
-              </Hint>
-            </FormField>
-
-            <FormField label='Bearer token'>
-              <Input
-                type='password'
-                value={fastCometConfig.authToken ?? ''}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFastCometConfig((prev: FastCometStorageConfig) => ({
-                    ...prev,
-                    authToken: event.target.value,
-                  }))
-                }
-                placeholder='Optional API token'
-               aria-label='Optional API token' title='Optional API token'/>
-              <Hint className='mt-1'>
-                Optional token sent as Authorization: Bearer &lt;token&gt;.
-              </Hint>
-            </FormField>
-
-            <FormField label='Request timeout (ms)'>
-              <Input
-                type='number'
-                min={1_000}
-                max={120_000}
-                value={fastCometConfig.timeoutMs}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFastCometConfig((prev: FastCometStorageConfig) => ({
-                    ...prev,
-                    timeoutMs: Number(event.target.value),
-                  }))
-                }
-               aria-label='Request timeout (ms)' title='Request timeout (ms)'/>
-              <Hint className='mt-1'>Range: 1000 - 120000 ms.</Hint>
-            </FormField>
-
-            <FormField label='Keep local mirror copy'>
-              <ToggleRow
-                label='Keep local copy in /public/uploads'
-                checked={fastCometConfig.keepLocalCopy}
-                onCheckedChange={(checked: boolean): void =>
-                  setFastCometConfig((prev: FastCometStorageConfig) => ({
-                    ...prev,
-                    keepLocalCopy: checked,
-                  }))
-                }
-                variant='switch'
-                className='border-none bg-muted/20 px-3 py-2 hover:bg-muted/30'
-              />
-              <Hint className='mt-1'>
-                Recommended: preserves compatibility with server-side image operations.
-              </Hint>
-            </FormField>
-          </div>
-        </FormSection>
+        <StorageSourceSection source={source} setSource={setSource} />
+        <FastCometConfigSection config={fastCometConfig} setConfig={setFastCometConfig} />
       </div>
 
-      {isFastCometMisconfigured ? (
+      {isFastCometMisconfigured && (
         <Alert variant='warning' className='mt-6'>
           FastComet mode requires an upload endpoint. Add it before saving.
         </Alert>
-      ) : null}
+      )}
 
       <FormActions
         onCancel={(): void => {
@@ -294,7 +153,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
         saveText='Save Settings'
         cancelText='Reset'
         isDisabled={
-          !isDirty ||
+          isDirty === false ||
           updateSettingsBulk.isPending ||
           isFastCometMisconfigured ||
           settingsQuery.isLoading

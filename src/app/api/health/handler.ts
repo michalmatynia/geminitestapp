@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb';
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { configurationError } from '@/shared/errors/app-error';
@@ -43,7 +43,7 @@ const resolveProvider = async (): Promise<AppDbProvider | 'unknown'> => {
   }
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const startedAtMs = Date.now();
   const provider = await resolveProvider();
   const db = {

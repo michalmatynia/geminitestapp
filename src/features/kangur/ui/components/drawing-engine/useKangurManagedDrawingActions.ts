@@ -30,6 +30,16 @@ export type UseKangurManagedDrawingActionsOptions<
   undoLastStroke: () => void;
 };
 
+export type UseKangurManagedDrawingActionsResult<
+  TElement extends HTMLElement | SVGElement = HTMLCanvasElement,
+> = {
+  clearDrawing: () => void;
+  exportDrawing: ReturnType<typeof useKangurDrawingDownloadAction>;
+  handleCanvasKeyDown: (event: ReactKeyboardEvent<TElement>) => void;
+  redoDrawing: () => void;
+  undoDrawing: () => void;
+};
+
 export const useKangurManagedDrawingActions = <
   TElement extends HTMLElement | SVGElement = HTMLCanvasElement,
 >({
@@ -47,7 +57,7 @@ export const useKangurManagedDrawingActions = <
   onUnhandledKeyDown,
   redoLastStroke,
   undoLastStroke,
-}: UseKangurManagedDrawingActionsOptions<TElement>) => {
+}: UseKangurManagedDrawingActionsOptions<TElement>): UseKangurManagedDrawingActionsResult<TElement> => {
   const clearDrawing = useCallback((): void => {
     clearDraftSnapshot?.();
     clearStrokes();

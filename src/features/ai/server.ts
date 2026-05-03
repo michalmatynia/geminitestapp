@@ -1,18 +1,56 @@
 import { logAgentAudit } from './agent-runtime/audit';
 import { registerErrorEnricher } from '@/shared/utils/observability/error-enricher-registry';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 // Register AI-specific error enricher to ErrorSystem without circular dependencies
 if (typeof logAgentAudit === 'function') {
   registerErrorEnricher(async (error, context) => {
-    if (context['runId']) {
+    const runId = context['runId'];
+    if (typeof runId === 'string' && runId.length > 0) {
       const message = error instanceof Error ? error.message : String(error);
       const level = context['level'] === 'warn' ? 'warning' : 'error';
-      await logAgentAudit(context['runId'] as string, level, message, context);
+      await logAgentAudit(runId, level, message, context);
     }
   });
 }
 
+// Register AI Paths specific error enricher
+registerErrorEnricher(async (error, context) => {
+  const runId = context['runId'] as string | undefined;
+  if (runId === undefined || runId === '') return;
+
+  try {
+    const repository = await getPathRunRepository();
+    const message = error instanceof Error ? error.message : String(error);
+    const level = context['level'] === 'warn' ? 'warn' : 'error';
+
+    await repository.createRunEvent({
+      runId,
+      level,
+      message: `[GlobalError] ${message}`,
+      metadata: {
+        ...context,
+        error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
+      },
+    });
+  } catch (enrichError) {
+    // Avoid infinite recursion or noisy errors during enrichment
+    logSystemEvent({
+      level: 'error',
+      source: 'ai-paths-enricher',
+      message: 'Failed to enrich error',
+      context: {
+        error: enrichError instanceof Error ? { message: enrichError.message, stack: enrichError.stack } : enrichError,
+      },
+    }).catch(() => {
+      // Ignore failures within enrichment failure logging
+    });
+  }
+});
+
 export * from './ai-context-registry/server';
+export * from './ai-paths/server';
 export * from './ai-context-registry/services/runtime-providers/kangur-recent-features';
 export * from './ai-paths/workers/aiPathRunQueue';
 export {

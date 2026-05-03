@@ -79,7 +79,6 @@ export function ConnectionEditModal(props: ConnectionEditModalProps): React.JSX.
           form={form}
           setForm={setForm}
           mode='edit'
-          selectedConnection={connection}
         />
       </div>
     </DetailModal>

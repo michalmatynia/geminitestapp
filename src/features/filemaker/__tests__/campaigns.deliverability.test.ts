@@ -81,6 +81,12 @@ describe('filemaker campaign settings', () => {
             partyKind: 'person',
             partyId: 'person-1',
             status: 'sent',
+            contentGroupId: 'content-group-1',
+            contentVariantId: 'variant-pl',
+            languageCode: 'pl',
+            resolvedCountryId: 'PL',
+            resolvedCountryName: 'Poland',
+            usedFallbackContent: false,
             createdAt: '2026-03-27T10:00:00.000Z',
             updatedAt: '2026-03-27T10:10:00.000Z',
           },
@@ -93,6 +99,12 @@ describe('filemaker campaign settings', () => {
             partyKind: 'organization',
             partyId: 'organization-1',
             status: 'bounced',
+            contentGroupId: 'content-group-1',
+            contentVariantId: 'variant-en',
+            languageCode: 'en',
+            resolvedCountryId: 'DE',
+            resolvedCountryName: 'Germany',
+            usedFallbackContent: true,
             createdAt: '2026-03-27T10:00:00.000Z',
             updatedAt: '2026-03-27T10:20:00.000Z',
           },
@@ -105,6 +117,12 @@ describe('filemaker campaign settings', () => {
             partyKind: 'person',
             partyId: 'person-1',
             status: 'skipped',
+            contentGroupId: 'content-group-1',
+            contentVariantId: 'variant-pl',
+            languageCode: 'pl',
+            resolvedCountryId: 'PL',
+            resolvedCountryName: 'Poland',
+            usedFallbackContent: false,
             createdAt: '2026-03-28T10:00:00.000Z',
             updatedAt: '2026-03-28T10:01:00.000Z',
           },
@@ -206,6 +224,18 @@ describe('filemaker campaign settings', () => {
             createdAt: '2026-03-30T11:00:00.000Z',
             updatedAt: '2026-03-30T11:00:00.000Z',
           },
+          {
+            id: 'event-7',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'reply_received',
+            message: 'jan@example.com replied to the campaign email.',
+            mailThreadId: 'thread-reply-1',
+            mailMessageId: 'message-reply-1',
+            createdAt: '2026-03-31T08:00:00.000Z',
+            updatedAt: '2026-03-31T08:00:00.000Z',
+          },
         ],
       })
     );
@@ -263,14 +293,17 @@ describe('filemaker campaign settings', () => {
         resubscribeRatePercent: 100,
         netUnsubscribeCount: 0,
         netUnsubscribeRatePercent: 0,
+        replyCount: 1,
+        replyRatePercent: 100,
         latestRunStatus: 'completed',
         latestRunAt: '2026-03-28T10:00:00.000Z',
-        latestActivityAt: '2026-03-30T11:00:00.000Z',
+        latestActivityAt: '2026-03-31T08:00:00.000Z',
         latestOpenAt: '2026-03-28T12:05:00.000Z',
         latestClickAt: '2026-03-28T13:07:00.000Z',
+        latestReplyAt: '2026-03-31T08:00:00.000Z',
         latestUnsubscribeAt: '2026-03-29T09:00:00.000Z',
         latestResubscribeAt: '2026-03-30T11:00:00.000Z',
-        eventCount: 9,
+        eventCount: 10,
       })
     );
     expect(analytics.topClickedLinks).toEqual([
@@ -287,6 +320,52 @@ describe('filemaker campaign settings', () => {
         uniqueDeliveryCount: 1,
         clickRatePercent: 100,
         latestClickAt: '2026-03-28T13:07:00.000Z',
+      }),
+    ]);
+    expect(analytics.fallbackContentCount).toBe(1);
+    expect(analytics.fallbackContentRatePercent).toBe(33.3);
+    expect(analytics.languageSummaries).toEqual([
+      expect.objectContaining({
+        key: 'pl',
+        label: 'PL',
+        totalRecipients: 2,
+        sentCount: 1,
+        skippedCount: 1,
+        uniqueOpenCount: 1,
+        uniqueClickCount: 1,
+        replyCount: 1,
+        fallbackContentCount: 0,
+      }),
+      expect.objectContaining({
+        key: 'en',
+        label: 'EN',
+        totalRecipients: 1,
+        bouncedCount: 1,
+        fallbackContentCount: 1,
+      }),
+    ]);
+    expect(analytics.countrySummaries[0]).toEqual(
+      expect.objectContaining({
+        key: 'PL',
+        label: 'Poland',
+        totalRecipients: 2,
+      })
+    );
+    expect(analytics.contentVariantSummaries[0]).toEqual(
+      expect.objectContaining({
+        key: 'variant-pl',
+        label: 'PL • variant-pl',
+        totalRecipients: 2,
+      })
+    );
+    expect(analytics.domainSummaries).toEqual([
+      expect.objectContaining({
+        key: 'example.com',
+        totalRecipients: 2,
+      }),
+      expect.objectContaining({
+        key: 'acme.test',
+        bouncedCount: 1,
       }),
     ]);
   });
@@ -542,6 +621,20 @@ describe('filemaker campaign settings', () => {
         'campaign_health',
       ])
     );
+    expect(overview.suppressionReasonBreakdown).toEqual([
+      expect.objectContaining({
+        reason: 'bounced',
+        count: 1,
+        ratePercent: 33.3,
+        latestSuppressedAt: iso,
+      }),
+      expect.objectContaining({
+        reason: 'unsubscribed',
+        count: 1,
+        ratePercent: 33.3,
+        latestSuppressedAt: iso,
+      }),
+    ]);
     expect(overview.domainHealth[0]).toEqual(
       expect.objectContaining({
         domain: 'acme.test',
@@ -668,8 +761,8 @@ describe('filemaker campaign settings', () => {
             partyKind: 'person',
             partyId: 'person-1',
             status: 'failed',
-            failureCategory: 'timeout',
-            lastError: 'Timed out waiting for SMTP.',
+            failureCategory: 'rate_limited',
+            lastError: 'Recipient domain backoff is active.',
             nextRetryAt: '2026-03-27T10:05:00.000Z',
             createdAt: '2026-03-27T10:00:00.000Z',
             updatedAt: '2026-03-27T10:00:00.000Z',
@@ -692,8 +785,8 @@ describe('filemaker campaign settings', () => {
             attemptNumber: 1,
             status: 'failed',
             provider: 'smtp',
-            failureCategory: 'timeout',
-            errorMessage: 'Timed out waiting for SMTP.',
+            failureCategory: 'rate_limited',
+            errorMessage: 'Recipient domain backoff is active.',
             attemptedAt: '2026-03-27T10:00:00.000Z',
             createdAt: '2026-03-27T10:00:00.000Z',
             updatedAt: '2026-03-27T10:00:00.000Z',
@@ -713,6 +806,7 @@ describe('filemaker campaign settings', () => {
 
     expect(overview.pendingRetryCount).toBe(1);
     expect(overview.overdueRetryCount).toBe(0);
+    expect(overview.rateLimitedRetryCount).toBe(1);
     expect(overview.nextScheduledRetryAt).toBe('2026-03-27T10:05:00.000Z');
     expect(overview.nextScheduledRetryInMinutes).toBe(5);
     expect(overview.oldestOverdueRetryAt).toBeNull();
@@ -723,16 +817,25 @@ describe('filemaker campaign settings', () => {
         campaignId: 'campaign-retry',
         runId: 'run-retry',
         emailAddress: 'jan@example.com',
-        failureCategory: 'timeout',
+        failureCategory: 'rate_limited',
         attemptCount: 1,
         nextRetryAt: '2026-03-27T10:05:00.000Z',
       }),
     ]);
+    expect(overview.alerts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'rate_limited_retries',
+          value: 1,
+        }),
+      ])
+    );
     expect(overview.campaignHealth[0]).toEqual(
       expect.objectContaining({
         campaignId: 'campaign-retry',
         pendingRetryCount: 1,
         overdueRetryCount: 0,
+        rateLimitedRetryCount: 1,
         nextScheduledRetryAt: '2026-03-27T10:05:00.000Z',
         oldestOverdueRetryAt: null,
       })
@@ -742,6 +845,7 @@ describe('filemaker campaign settings', () => {
         domain: 'example.com',
         pendingRetryCount: 1,
         overdueRetryCount: 0,
+        rateLimitedRetryCount: 1,
         nextScheduledRetryAt: '2026-03-27T10:05:00.000Z',
         oldestOverdueRetryAt: null,
       })
@@ -866,5 +970,69 @@ describe('filemaker campaign settings', () => {
         oldestOverdueRetryAt: '2026-03-27T10:05:00.000Z',
       })
     );
+  });
+
+  it('raises a complaint pressure alert from ARF complaint suppressions', () => {
+    const database = createDatabase();
+    const campaignRegistry = parseFilemakerEmailCampaignRegistry(
+      JSON.stringify({
+        version: 1,
+        campaigns: [
+          createFilemakerEmailCampaign({
+            id: 'campaign-complaints',
+            name: 'Complaint campaign',
+            status: 'active',
+            subject: 'Complaint',
+          }),
+        ],
+      })
+    );
+    const runRegistry = parseFilemakerEmailCampaignRunRegistry(
+      JSON.stringify({ version: 1, runs: [] })
+    );
+    const deliveryRegistry = parseFilemakerEmailCampaignDeliveryRegistry(
+      JSON.stringify({ version: 1, deliveries: [] })
+    );
+    const suppressionRegistry = parseFilemakerEmailCampaignSuppressionRegistry(
+      JSON.stringify({
+        version: 1,
+        entries: [
+          createFilemakerEmailCampaignSuppressionEntry({
+            emailAddress: 'jan@example.com',
+            reason: 'complaint',
+            actor: 'system',
+            notes: 'Auto-suppressed after ARF complaint.',
+            createdAt: iso,
+            updatedAt: iso,
+          }),
+        ],
+      })
+    );
+
+    const overview = summarizeFilemakerEmailCampaignDeliverabilityOverview({
+      database,
+      campaignRegistry,
+      runRegistry,
+      deliveryRegistry,
+      suppressionRegistry,
+      now: new Date('2026-03-27T12:00:00.000Z'),
+    });
+
+    expect(overview.alerts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'complaint_pressure',
+          level: 'warning',
+          value: 1,
+        }),
+      ])
+    );
+    expect(overview.suppressionReasonBreakdown).toEqual([
+      expect.objectContaining({
+        reason: 'complaint',
+        count: 1,
+        ratePercent: 33.3,
+      }),
+    ]);
   });
 });

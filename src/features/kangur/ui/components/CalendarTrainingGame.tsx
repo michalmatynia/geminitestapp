@@ -3,6 +3,7 @@
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
@@ -221,7 +222,7 @@ export default function CalendarTrainingGame({
     const newScore = correct ? score + 1 : score;
     if (correct) setScore(newScore);
 
-    setTimeout(() => {
+    safeSetTimeout(() => {
       setSelected(null);
       if (current + 1 >= TOTAL) {
         handleDone(newScore);

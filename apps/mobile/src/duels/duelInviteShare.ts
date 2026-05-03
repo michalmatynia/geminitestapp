@@ -53,7 +53,7 @@ const toInviteShareErrorMessage = (
   }
 
   const message = error.message.trim();
-  return message || inviteUnavailable;
+  return message !== '' ? message : inviteUnavailable;
 };
 
 export const createKangurDuelInviteUrl = (sessionId: string): string =>

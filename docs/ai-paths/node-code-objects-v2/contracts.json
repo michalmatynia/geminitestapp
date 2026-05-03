@@ -1,6 +1,6 @@
 {
   "schemaVersion": "ai-paths.node-code-object-contracts.v2",
-  "generatedAt": "2026-03-28T14:11:53.253Z",
+  "generatedAt": "2026-04-11T13:54:15.455Z",
   "specVersion": "ai-paths.portable-engine.v1",
   "totalContracts": 34,
   "contracts": {
@@ -8,207 +8,207 @@
       "objectId": "node_obj_agent_portable_v2",
       "title": "Reasoning Agent",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "de33f581c49a271996e9257fd7d3e4f794228f66ed7aa606ee28e9d52af377fe"
+      "objectHash": "6a9c3e45820f66503c3d893c77dcb433a5750c4380a725c3820ce1cfe7606555"
     },
     "api_advanced": {
       "objectId": "node_obj_api_advanced_portable_v2",
       "title": "API Operation (Advanced)",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "23420abf6f866eecf276d6163caa0af6bd2bd9788edcfdf3adc7869ed5e1602b"
+      "objectHash": "4f776a6c1133a6e0f051b00438d37f9724e2d000c2c07b91c190142abe2be945"
     },
     "audio_oscillator": {
       "objectId": "node_obj_audio_oscillator_portable_v2",
       "title": "Audio Oscillator",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "7284d5bb9855a023e8bf5f3da9c8ab8977fce65f7ca07c4a2f1cf1d809279e81"
+      "objectHash": "435e6f0ba4d96426b1daf59dbee74af7148a61b0b72296e3aab59d80ad564640"
     },
     "audio_speaker": {
       "objectId": "node_obj_audio_speaker_portable_v2",
       "title": "Audio Speaker (Mono)",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "535884fcb5f9c64ee667fc2065670b37d5c0d2a7a3fede86f41ad84b0c20bb52"
+      "objectHash": "a7013f82e6a9f99fbc4aa7e9234b508da0554be28eba687cf07d5b718fdcce50"
     },
     "bundle": {
       "objectId": "node_obj_bundle_portable_v2",
       "title": "Bundle",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "459b824c4ed2864aff7bfab1cc3f426d4a50896131934e01dcc9425697238d73"
+      "objectHash": "216a92c480a60f89c12667992063bc20a1ef883419c7975acb2d8384510caff3"
     },
     "compare": {
       "objectId": "node_obj_compare_portable_v2",
       "title": "Compare",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "f1e75b9113daddc3a201a3dc3bdeabcb7964a033784955c29cacd00d0fedb300"
+      "objectHash": "f720b4b66da92f5f3c949c262de16474a256c87d9b7b6f4c0c2941f920ca79af"
     },
     "constant": {
       "objectId": "node_obj_constant_portable_v2",
       "title": "Constant",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "3c387334706091bbed90f896a8bb3fca368eb4c6bf43bc18935f17c72a0d9fb0"
+      "objectHash": "754c4b0f71342cd7961742ed69bdd4e762d4fd8bba93021cec3c5797251c51d3"
     },
     "context": {
       "objectId": "node_obj_context_portable_v2",
       "title": "Context Filter",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "0c0b22c91cb6e1681f0d10fb5561ea068a9a2f9b7144a04abff452bfdf778942"
+      "objectHash": "7dd908a6fcc0d76fb358f424fdc97e4c5fc471ede9fa3e1657e57c05a6b54936"
     },
     "database": {
       "objectId": "node_obj_database_portable_v2",
       "title": "Database Query",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "dfa47adfb83f781138544cf358b78c88adcd041744b86b1607e32492379da766"
+      "objectHash": "8c15fcb3bbb1c8b213a328e0a688b6754d48e6bdf7f0e3608355fabe24e95314"
     },
     "db_schema": {
       "objectId": "node_obj_db_schema_portable_v2",
       "title": "Database Schema",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "b1ed031f64208ed9a9809957b8472de69f6efd9a14629492ba79bdd51d7f6efa"
+      "objectHash": "9a59353b93d2fe5d4e76b93759f2981cbeb58e893f1140e1a5f5922e6d150d91"
     },
     "delay": {
       "objectId": "node_obj_delay_portable_v2",
       "title": "Delay",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "81e8186187eeca6b9d8c7f880b7f437f2263a40083c8edfbf1ad2a6f050bc914"
+      "objectHash": "ababcc104dd48840b8b75ab99c1ced2b8fa22bcf607dfb22a814d417d72df530"
     },
     "fetcher": {
       "objectId": "node_obj_fetcher_portable_v2",
       "title": "Fetcher: Trigger Context",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "9a52d1d1d72723abb3440980d1db6d88df4b21f5efb1f611b6ca55903e169041"
+      "objectHash": "c000f28520b3e646b0303ff9bf49e29e673cfc44e1685692be52ce8257c81370"
     },
     "gate": {
       "objectId": "node_obj_gate_portable_v2",
       "title": "Gate",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "fc911ee2576d2e3850c225b8db21b3ec878ee3b12f2307b66f903ac4b4efcfd6"
+      "objectHash": "ddf95eb97e1a28650e94b698e884f2d7c37343ea2c9df4e015f06704c401eaa1"
     },
     "http": {
       "objectId": "node_obj_http_portable_v2",
       "title": "HTTP Fetch",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "b72cf08f00ed7369b08fb44b073ed0c19fa79fc7e43e225533cafe90f5debcf1"
+      "objectHash": "5ae28e7bc0e983fbb752aa03f0ffacb0530054c670dc98448a6ac691ccf3187e"
     },
     "iterator": {
       "objectId": "node_obj_iterator_portable_v2",
       "title": "Iterator",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "a02527122585440a1ac9d402ca97abe405eb20938e4e0928ef32fe9919abfc4d"
+      "objectHash": "680bb49df011790e93ee3448d36b0b7d58f81dfa9cfc5bcfeef6e45e943b0dd1"
     },
     "learner_agent": {
       "objectId": "node_obj_learner_agent_portable_v2",
       "title": "Learner Agent",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "f977fc468e7a6a200dd2b7e55a5edba8e6e5abae5d8d2064075933262ad3612f"
+      "objectHash": "00db47953549b24ccdb3cdb9f008d1390bd5561e5f3034c64f0a0f502c396fab"
     },
     "mapper": {
       "objectId": "node_obj_mapper_portable_v2",
       "title": "JSON Mapper",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "ce222c0fe5f556b9d6b57968c62b523e33a85d2b2ebd603b9c38a4655cf11940"
+      "objectHash": "93409d3f48cae40c974cc027b8e2862960721dd3069fc02fc30030f56115e642"
     },
     "math": {
       "objectId": "node_obj_math_portable_v2",
       "title": "Math",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "a2be8affe30441ff00a1670c539b6284121037984fd60ef8390c78d3b457de4a"
+      "objectHash": "2c05204091e8244d38aebb441417d33891875b5ce5c3d512a73e1571d1803f63"
     },
     "model": {
       "objectId": "node_obj_model_portable_v2",
       "title": "Model",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "0a5fc5f360866a97e8f78ace51d476e36c5365d17dad5a4b65631746ec175fdd"
+      "objectHash": "eaf3e15b687b28b236b182922b41bfbf3581f378153c58ca9aaf767dd4d04e3e"
     },
     "mutator": {
       "objectId": "node_obj_mutator_portable_v2",
       "title": "Mutator",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "dffecfb38c6e32d82c614de0f0b54e9e1660f49facf1a254d6cb5e1ad785436f"
+      "objectHash": "4560b0ffe723a8156bfb708d3817e92d35031d58a66b5b2fab5f1a3e7392d7f2"
     },
     "notification": {
       "objectId": "node_obj_notification_portable_v2",
       "title": "Toast Notification",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "c19314d0dbba43552d8f3d0388648361063324cd54c0f286a84f894b2b210e87"
+      "objectHash": "83adb4953951d8928b4ac4e229963b46c48b12a832ad118be721937f7fde688f"
     },
     "parser": {
       "objectId": "node_obj_parser_portable_v2",
       "title": "JSON Parser",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "e56815b4f97f201085c3945337d2e51099342c3c233a8e73a4c3d4223c5da207"
+      "objectHash": "f345bb5bb1dd3535e0463b8ebb2c65477e1ca6d38fc5cf1cff3df17aafc564e9"
     },
     "playwright": {
       "objectId": "node_obj_playwright_portable_v2",
-      "title": "Playwright",
+      "title": "Playwright: Batch Capture",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "81fb0a69fde9df0fafb5210019ffdb20038f9a7b924a2c227a9c34100cb09ab9"
+      "objectHash": "220a81b00937dbce4c2c661a8cb404015390daeeb32420d9590bd9f6b9156b39"
     },
     "poll": {
       "objectId": "node_obj_poll_portable_v2",
       "title": "Poll Job",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "9d46f224b253c3d785c29ede75813ff80c0b402745ba37428f322fcbd692ba04"
+      "objectHash": "a78769269d689ecde49047ea1672a2c94163ba1bfc90417333bd2d5f849b2a92"
     },
     "prompt": {
       "objectId": "node_obj_prompt_portable_v2",
       "title": "Prompt",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "fc299321625524facb6b68638d67a59767fb7180c9830003d66f418cb76d1a42"
+      "objectHash": "aa8a13734c3e2bb5deb5913dabb5f3bc1faffc792cc66d53c2609dfc1cc561d8"
     },
     "regex": {
       "objectId": "node_obj_regex_portable_v2",
       "title": "Regex Grouper",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "907dbe955b8d9f59e2669867602af84f53957624b63c14994b2121bcf6d0ac1b"
+      "objectHash": "13c4f410da5690a9f123347636c96b3dda5fe286b7c1acd372cdee8e64339322"
     },
     "router": {
       "objectId": "node_obj_router_portable_v2",
       "title": "Router",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "88c8024ad2261b3eeaf0da17135593f15b6346e99a8142fd2dcd7bbb4124b0b9"
+      "objectHash": "ef790d5fbc8c469854cb0bcc6cda76ff30189fb99ba465b91a1501b632554dc9"
     },
     "simulation": {
       "objectId": "node_obj_simulation_portable_v2",
       "title": "Simulation: Entity Modal",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "b995cebc655f6e5aff9d491618b80744d96877b471c839e429e15a2a42d6bbc6"
+      "objectHash": "11c9a11cbaf07eddaa1403b9413794b7bd311cc2c1d0466ab7e9374c30d937c1"
     },
     "string_mutator": {
       "objectId": "node_obj_string_mutator_portable_v2",
       "title": "String Mutator",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "9496a2b1ee4c3318d5355611eaf99ee6c773a73d15ce77b636d0ffd5d8fe3ba7"
+      "objectHash": "380783149ec4bf84c4d6e6a5e3d0ed4322c5e0d27a2e7f1c3ea6db0ddd776a78"
     },
     "template": {
       "objectId": "node_obj_template_portable_v2",
       "title": "Template",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "401376fbc96a9e269f1d00adcbfa2c89ab35fc842301ecd4e7f1a30f48e67ff8"
+      "objectHash": "d5d358c9fb7d1deac57bdca5a33d7ab20a7f971e64b0fb8bd18adc5e8a8519ea"
     },
     "trigger": {
       "objectId": "node_obj_trigger_portable_v2",
       "title": "Trigger: Image Studio Analysis",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "39ca4951952c3315db7a5254aa104511a99354a02fc0ffd8ea6e72989c285d5e"
+      "objectHash": "d79c587172606f10fdecb0301d004ae92497dc060b7f11684c28ea462dd89b23"
     },
     "validation_pattern": {
       "objectId": "node_obj_validation_pattern_portable_v2",
       "title": "Validation Pattern",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "fc34e194553d4630d8eb605236b17645ddd880918184fbc46bbb2dcc3c0ad5eb"
+      "objectHash": "bd3a74fec5ee9c0ef93e4375d62b08fa8606662c9d18536c027f2b165e523aec"
     },
     "validator": {
       "objectId": "node_obj_validator_portable_v2",
       "title": "Validator",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "26220bf0cff2791f3b49a993cc62702ed4466578981c6e29ab6a24ddff631c63"
+      "objectHash": "3666c901cee31babca41a866417bd3b0af7f43267006c7ebc3f42bdb470a5755"
     },
     "viewer": {
       "objectId": "node_obj_viewer_portable_v2",
       "title": "Result Viewer",
       "objectHashAlgorithm": "sha256",
-      "objectHash": "d7fa486a539430a408bbbd3fb3edca4d633ffe8cfb907a27156ecb11db3829b3"
+      "objectHash": "0ecff56fbf080e57a2db466e9b5f9c5d80899b10f3a0123dfe4e420143bc40c5"
     }
   },
   "contractsHashAlgorithm": "sha256",
-  "contractsHash": "7e22273fdd63abe11faaaa8dcbd79a05a74b4c2d5c46776f5f4af78b2f3a1e71"
+  "contractsHash": "86ce6a07684207f9a60a7cb4d0254320cdd5379de41a317f4b12d92e7ea08d15"
 }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   getAiPathsSetting,
@@ -26,7 +26,7 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
   await upsertAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY, value);
 };
 
-export async function PATCH_handler(
+export async function patchHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -66,6 +66,9 @@ export async function PATCH_handler(
     ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}),
     ...(parsed.data.locations ? { locations: parsed.data.locations } : {}),
     ...(parsed.data.mode ? { mode: parsed.data.mode } : {}),
+    ...(parsed.data.contextTemplate !== undefined
+      ? { contextTemplate: parsed.data.contextTemplate ?? null }
+      : {}),
     display: buildCanonicalTriggerButtonDisplay(nextName, nextDisplayMode),
     updatedAt: now,
   };
@@ -75,7 +78,7 @@ export async function PATCH_handler(
   return NextResponse.json(nextRecord);
 }
 
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

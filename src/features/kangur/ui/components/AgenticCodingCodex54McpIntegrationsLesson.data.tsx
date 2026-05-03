@@ -36,7 +36,7 @@ const MCP_SURFACES = [
   { title: 'Prompts', description: 'Szablony promptów do ponownego użycia.' },
 ] as const;
 
-const MCP_SYSTEMS = ['Figma', 'Linear', 'GitHub', 'wewnętrzne bazy wiedzy'] as const;
+const MCP_SYSTEMS = ['Figma', 'GitHub', 'wewnętrzne bazy wiedzy'] as const;
 
 const MCP_CONNECTIONS = [
   'STDIO dla lokalnych serwerów.',
@@ -53,14 +53,11 @@ const MCP_START_SMALL = [
   'Zacznij od 1-2 integracji i rozbudowuj po sprawdzeniu efektu.',
 ] as const;
 
-const LINEAR_COMMAND = 'codex mcp add linear --url https://mcp.linear.app/mcp';
+const MCP_REMOVAL_COMMAND = 'codex mcp remove <name>';
 
-const LINEAR_CONFIG = `[mcp_servers.linear]
-url = "https://mcp.linear.app/mcp"`;
-
-const LINEAR_NOTES = [
-  'CLI, IDE i App korzystają z tej samej konfiguracji MCP (config.toml).',
-  'Po dodaniu serwera Codex poprosi o logowanie do Linear.',
+const MCP_REMOVAL_STEPS = [
+  'Usuń serwer z config.toml, jeśli chcesz wyczyścić konfigurację ręcznie.',
+  'Po usunięciu integracji odśwież sesję CLI, IDE lub App, jeśli narzędzia nadal są widoczne.',
 ] as const;
 
 export const McpFlowVisual = (): JSX.Element => {
@@ -275,17 +272,17 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Przykład: Linear',
+      title: 'Usuwanie integracji',
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
-            Integracje w CLI i IDE korzystają z tej samej konfiguracji MCP.
+            Gdy integracja nie jest już potrzebna, usuń ją w CLI i posprzątaj
+            konfigurację.
           </KangurLessonLead>
-          <AgenticLessonCodeBlock accent='sky' title='CLI' code={LINEAR_COMMAND} />
-          <AgenticLessonCodeBlock accent='sky' title='config.toml' code={LINEAR_CONFIG} />
+          <AgenticLessonCodeBlock accent='sky' title='CLI' code={MCP_REMOVAL_COMMAND} />
           <KangurLessonCallout accent='sky' padding='sm' className='text-left'>
             <ul className='space-y-2 text-sm text-sky-950'>
-              {LINEAR_NOTES.map((item) => (
+              {MCP_REMOVAL_STEPS.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>

@@ -22,5 +22,6 @@ export function getCaseResolverDocTooltipWithFallback(
   key: keyof typeof CASE_RESOLVER_DOC_KEYS,
   fallback: string
 ): string {
-  return getCaseResolverDocTooltip(key) || fallback;
+  const tooltip = getCaseResolverDocTooltip(key);
+  return tooltip !== '' ? tooltip : fallback;
 }

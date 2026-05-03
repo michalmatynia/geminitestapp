@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
+import { initializeQueues } from '@/features/jobs/server';
 import { listBaseImportRuns } from '@/features/integrations/services/imports/base-import-run-repository';
 import { startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
 import type { BaseImportRunsListQuery, BaseImportRunsResponse, BaseImportRunStartPayload, BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
@@ -10,7 +11,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 export const startRunSchema = baseImportRunStartPayloadSchema;
 export const listRunsQuerySchema = baseImportRunsListQuerySchema;
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = (ctx.query ?? {}) as BaseImportRunsListQuery;
   const runs = await listBaseImportRuns(query.limit ?? 25);
   const response: BaseImportRunsResponse = { runs };
@@ -24,7 +25,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   );
 }
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const rawConnectionId =
     typeof (ctx.body as Record<string, unknown> | undefined)?.['connectionId'] === 'string'
       ? String((ctx.body as Record<string, unknown>)['connectionId']).trim()
@@ -32,6 +33,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   if (!rawConnectionId) {
     throw badRequestError('Base.com connection is required.');
   }
+
+  initializeQueues();
 
   const data = ctx.body as BaseImportRunStartPayload;
   const response: BaseImportStartResponse = await startBaseImportRunResponse({
@@ -44,6 +47,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     ...(data.templateId ? { templateId: data.templateId } : {}),
     ...(typeof data.limit === 'number' ? { limit: data.limit } : {}),
     ...(Array.isArray(data.selectedIds) ? { selectedIds: data.selectedIds } : {}),
+    ...(data.directTarget ? { directTarget: data.directTarget } : {}),
     ...(typeof data.dryRun === 'boolean' ? { dryRun: data.dryRun } : {}),
     ...(data.mode ? { mode: data.mode } : {}),
     ...(data.requestId ? { requestId: data.requestId } : {}),

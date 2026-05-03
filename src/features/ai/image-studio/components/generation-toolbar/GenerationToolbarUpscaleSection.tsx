@@ -14,32 +14,8 @@ import { useGenerationToolbarUpscaleSectionRuntime } from './GenerationToolbarSe
 import type { UpscaleSmoothingQuality } from './GenerationToolbarImageUtils';
 
 export function GenerationToolbarUpscaleSection(): React.JSX.Element {
-  const {
-    upscaleMode,
-    setUpscaleMode,
-    upscaleStrategy,
-    setUpscaleStrategy,
-    upscaleScale,
-    setUpscaleScale,
-    upscaleTargetWidth,
-    setUpscaleTargetWidth,
-    upscaleTargetHeight,
-    setUpscaleTargetHeight,
-    upscaleSmoothingQuality,
-    setUpscaleSmoothingQuality,
-    upscaleBusy,
-  } = useGenerationToolbarContext();
-  const {
-    hasSourceImage,
-    onCancelUpscale,
-    onUpscale,
-    upscaleBusyLabel,
-    upscaleMaxOutputSide,
-    upscaleModeOptions,
-    upscaleScaleOptions,
-    upscaleSmoothingOptions,
-    upscaleStrategyOptions,
-  } = useGenerationToolbarUpscaleSectionRuntime();
+  const settings = useGenerationToolbarContext();
+  const runtime = useGenerationToolbarUpscaleSectionRuntime();
 
   return (
     <InsetPanel radius='compact' padding='sm'>
@@ -48,104 +24,155 @@ export function GenerationToolbarUpscaleSection(): React.JSX.Element {
         <SelectSimple
           size='sm'
           className='w-full'
-          value={upscaleMode}
-          onValueChange={(val) => setUpscaleMode(val as UpscaleMode)}
-          options={upscaleModeOptions}
+          value={settings.upscaleMode}
+          onValueChange={(val) => settings.setUpscaleMode(val as UpscaleMode)}
+          options={runtime.upscaleModeOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Upscale mode'
-         title='Select option'/>
+          title='Select option'
+        />
         <SelectSimple
           size='sm'
           className='w-full'
-          value={upscaleStrategy}
-          onValueChange={(val) => setUpscaleStrategy(val as UpscaleStrategy)}
-          options={upscaleStrategyOptions}
+          value={settings.upscaleStrategy}
+          onValueChange={(val) => settings.setUpscaleStrategy(val as UpscaleStrategy)}
+          options={runtime.upscaleStrategyOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Upscale strategy'
-         title='Select option'/>
+          title='Select option'
+        />
       </div>
+
       <div className='mt-2'>
-        {upscaleStrategy === 'scale' ? (
+        {settings.upscaleStrategy === 'scale' ? (
           <SelectSimple
             size='sm'
             className='w-full sm:w-[130px]'
-            value={upscaleScale}
-            onValueChange={setUpscaleScale}
-            options={upscaleScaleOptions}
+            value={settings.upscaleScale}
+            onValueChange={settings.setUpscaleScale}
+            options={runtime.upscaleScaleOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Upscale multiplier'
-           title='Select option'/>
+            title='Select option'
+          />
         ) : (
-          <div className='flex h-8 w-full items-center gap-1 rounded border border-border/60 bg-card/40 px-2 sm:w-[180px]'>
-            <input
-              type='number'
-              min={1}
-              max={upscaleMaxOutputSide}
-              step={1}
-              inputMode='numeric'
-              value={upscaleTargetWidth}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                setUpscaleTargetWidth(event.target.value);
-              }}
-              placeholder='W'
-              className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
-              aria-label='Target upscale width'
-            />
-            <span className='text-[11px] text-gray-500'>x</span>
-            <input
-              type='number'
-              min={1}
-              max={upscaleMaxOutputSide}
-              step={1}
-              inputMode='numeric'
-              value={upscaleTargetHeight}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                setUpscaleTargetHeight(event.target.value);
-              }}
-              placeholder='H'
-              className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
-              aria-label='Target upscale height'
-            />
-          </div>
+          <TargetDimensionInputs
+            width={settings.upscaleTargetWidth}
+            height={settings.upscaleTargetHeight}
+            maxOutput={runtime.upscaleMaxOutputSide}
+            onWidthChange={settings.setUpscaleTargetWidth}
+            onHeightChange={settings.setUpscaleTargetHeight}
+          />
         )}
       </div>
-      {upscaleMode === 'client_canvas' ? (
+
+      {settings.upscaleMode === 'client_canvas' && (
         <div className='mt-2'>
           <SelectSimple
             size='sm'
             className='w-full sm:w-[180px]'
-            value={upscaleSmoothingQuality}
-            onValueChange={(val) => setUpscaleSmoothingQuality(val as UpscaleSmoothingQuality)}
-            options={upscaleSmoothingOptions}
+            value={settings.upscaleSmoothingQuality}
+            onValueChange={(val) => settings.setUpscaleSmoothingQuality(val as UpscaleSmoothingQuality)}
+            options={runtime.upscaleSmoothingOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Upscale smoothing quality'
-           title='Select option'/>
+            title='Select option'
+          />
         </div>
-      ) : null}
-      <div className='mt-2 flex flex-wrap items-center gap-2'>
+      )}
+
+      <UpscaleActions
+        hasSourceImage={runtime.hasSourceImage}
+        upscaleBusy={settings.upscaleBusy}
+        busyLabel={runtime.upscaleBusyLabel}
+        onUpscale={runtime.onUpscale}
+        onCancelUpscale={runtime.onCancelUpscale}
+      />
+    </InsetPanel>
+  );
+}
+
+function TargetDimensionInputs({
+  width,
+  height,
+  maxOutput,
+  onWidthChange,
+  onHeightChange,
+}: {
+  width: string;
+  height: string;
+  maxOutput: number;
+  onWidthChange: (v: string) => void;
+  onHeightChange: (v: string) => void;
+}) {
+  return (
+    <div className='flex h-8 w-full items-center gap-1 rounded border border-border/60 bg-card/40 px-2 sm:w-[180px]'>
+      <input
+        type='number'
+        min={1}
+        max={maxOutput}
+        step={1}
+        inputMode='numeric'
+        value={width}
+        onChange={(e) => onWidthChange(e.target.value)}
+        placeholder='W'
+        className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
+        aria-label='Target upscale width'
+      />
+      <span className='text-[11px] text-gray-500'>x</span>
+      <input
+        type='number'
+        min={1}
+        max={maxOutput}
+        step={1}
+        inputMode='numeric'
+        value={height}
+        onChange={(e) => onHeightChange(e.target.value)}
+        placeholder='H'
+        className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
+        aria-label='Target upscale height'
+      />
+    </div>
+  );
+}
+
+function UpscaleActions({
+  hasSourceImage,
+  upscaleBusy,
+  busyLabel,
+  onUpscale,
+  onCancelUpscale,
+}: {
+  hasSourceImage: boolean;
+  upscaleBusy: boolean;
+  busyLabel: string;
+  onUpscale: () => void;
+  onCancelUpscale: () => void;
+}) {
+  return (
+    <div className='mt-2 flex flex-wrap items-center gap-2'>
+      <Button
+        size='xs'
+        type='button'
+        variant='outline'
+        onClick={onUpscale}
+        disabled={!hasSourceImage || upscaleBusy}
+        title='Create an upscaled linked variant from the active slot'
+        loading={upscaleBusy}
+      >
+        {busyLabel}
+      </Button>
+      {upscaleBusy && (
         <Button
           size='xs'
           type='button'
           variant='outline'
-          onClick={onUpscale}
-          disabled={!hasSourceImage || upscaleBusy}
-          title='Create an upscaled linked variant from the active slot'
-          loading={upscaleBusy}
+          onClick={onCancelUpscale}
+          title='Cancel upscale request'
         >
-          {upscaleBusyLabel}
+          Cancel Upscale
         </Button>
-        {upscaleBusy ? (
-          <Button
-            size='xs'
-            type='button'
-            variant='outline'
-            onClick={onCancelUpscale}
-            title='Cancel upscale request'
-          >
-            Cancel Upscale
-          </Button>
-        ) : null}
-      </div>
-    </InsetPanel>
+      )}
+    </div>
   );
 }

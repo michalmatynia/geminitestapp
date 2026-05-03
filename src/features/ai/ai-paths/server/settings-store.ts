@@ -13,7 +13,6 @@ import {
 import {
   assertMongoConfigured,
   isAiPathsKey,
-  parseBooleanEnv,
   parsePositiveInt,
 } from './settings-store.helpers';
 import {
@@ -23,13 +22,16 @@ import {
 } from './settings-store.maintenance';
 import { parsePathMetas, preservePathConfigFlagsOnSeed } from './settings-store.parsing';
 import {
+  ensureCanonicalStarterWorkflowRecordsForPathIds,
+  getCanonicalStarterWorkflowPathIds,
+  isCanonicalStarterWorkflowPathId,
+} from './starter-workflows-settings';
+import {
   deleteMongoAiPathsSettings,
   fetchMongoAiPathsSettings,
   upsertMongoAiPathsSettings,
   ensureMongoIndexes,
 } from './settings-store.repository';
-import { ensureStarterWorkflowDefaults } from './starter-workflows-settings';
-
 const AI_PATHS_MONGO_OP_TIMEOUT_MS = parsePositiveInt(
   process.env['AI_PATHS_MONGO_OP_TIMEOUT_MS'],
   15000
@@ -83,8 +85,6 @@ export async function getAiPathsSettings(
   keys?: string[],
   options?: { bypassCache?: boolean }
 ): Promise<AiPathsSettingRecord[]> {
-  assertMongoConfigured();
-
   if (!keys || keys.length === 0) {
     // Return server-side cache if fresh and not bypassed
     if (
@@ -100,6 +100,7 @@ export async function getAiPathsSettings(
     }
 
     const fetchAll = async (): Promise<AiPathsSettingRecord[]> => {
+      assertMongoConfigured();
       // Fetch index and then all configs
       const indexRecord = await fetchMongoAiPathsSettings(
         [AI_PATHS_INDEX_KEY],
@@ -142,8 +143,10 @@ export async function getAiPathsSettings(
       return await inflight;
     }
 
-    const fetchByKeys = fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS)
-      .then((records) => {
+    const fetchByKeys = (async () => {
+      assertMongoConfigured();
+      return await fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
+    })().then((records) => {
         serverSettingsByKeysCache.set(keysetCacheKey, {
           records,
           cachedAt: Date.now(),
@@ -167,59 +170,13 @@ export async function getAiPathsSetting(key: string): Promise<string | null> {
   return records[0]?.value ?? null;
 }
 
-export async function getAllAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
-  assertMongoConfigured();
-  // We don't have a 'fetchAll' in mongo wrapper yet, but we can fetch index and then all configs
-
-  const indexRecord = await fetchMongoAiPathsSettings(
-    [AI_PATHS_INDEX_KEY],
-    AI_PATHS_MONGO_OP_TIMEOUT_MS
-  );
-  if (!indexRecord.length) return [];
-  const metas = parsePathMetas(indexRecord[0]?.value);
-  const configKeys = metas.map((m) => `${AI_PATHS_CONFIG_KEY_PREFIX}${m.id}`);
-  const triggerButtonsKey = AI_PATHS_TRIGGER_BUTTONS_KEY;
-
-  const allKeys = [AI_PATHS_INDEX_KEY, triggerButtonsKey, ...configKeys];
-  return getAiPathsSettings(allKeys);
+export async function getAllAiPathsSettings(options?: {
+  bypassCache?: boolean;
+}): Promise<AiPathsSettingRecord[]> {
+  return await getAiPathsSettings(undefined, options);
 }
 
 export const listAiPathsSettings = getAiPathsSettings;
-
-async function maybeAutoApplyDefaultSeedsOnRead(
-  requestedKeys: string[],
-  existingRecords: AiPathsSettingRecord[],
-  testOptions?: {
-    autoApply?: boolean;
-    applyDefaultSeeds?: (items: AiPathsSettingRecord[]) => Promise<AiPathsSettingRecord[]>;
-  }
-): Promise<AiPathsSettingRecord[]> {
-  const envAutoApply =
-    testOptions?.autoApply !== undefined
-      ? testOptions.autoApply
-      : parseBooleanEnv(process.env['AI_PATHS_AUTO_APPLY_DEFAULTS'], false);
-
-  if (!envAutoApply) return existingRecords;
-
-  if (testOptions?.applyDefaultSeeds) {
-    return testOptions.applyDefaultSeeds(existingRecords);
-  }
-
-  const result = [...existingRecords];
-  const requestedDefaultKeys = requestedKeys.filter((key) => {
-    if (key === AI_PATHS_INDEX_KEY || key === AI_PATHS_TRIGGER_BUTTONS_KEY) return true;
-    return key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX);
-  });
-  if (requestedDefaultKeys.length > 0) {
-    const seeded = ensureStarterWorkflowDefaults(result);
-    if (seeded.affectedCount > 0) {
-      await upsertAiPathsSettings(seeded.nextRecords);
-      return seeded.nextRecords;
-    }
-  }
-
-  return result;
-}
 
 export async function upsertAiPathsSettings(records: AiPathsSettingRecord[]): Promise<void> {
   const normalized = records.filter((r) => isAiPathsKey(r.key));
@@ -248,6 +205,29 @@ export async function deleteAiPathsSettings(keys: string[]): Promise<number> {
   await deleteMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
   invalidateServerSettingsCache();
   return normalizedKeys.length;
+}
+
+export async function ensureCanonicalStarterWorkflowSettingsForPathIds(
+  pathIds?: string[]
+): Promise<{ records: AiPathsSettingRecord[]; affectedCount: number }> {
+  const targetPathIds =
+    pathIds && pathIds.length > 0
+      ? Array.from(new Set(pathIds.map((pathId) => pathId.trim()).filter(isCanonicalStarterWorkflowPathId)))
+      : getCanonicalStarterWorkflowPathIds();
+  if (targetPathIds.length === 0) {
+    return { records: [], affectedCount: 0 };
+  }
+
+  const allSettings = await getAllAiPathsSettings({ bypassCache: true });
+  const result = ensureCanonicalStarterWorkflowRecordsForPathIds(allSettings, targetPathIds);
+  if (result.affectedCount > 0) {
+    await upsertAiPathsSettings(result.nextRecords);
+  }
+
+  return {
+    records: result.nextRecords,
+    affectedCount: result.affectedCount,
+  };
 }
 
 export const runAiPathsMaintenance = async (
@@ -298,10 +278,7 @@ export const applyAiPathsSettingsMaintenance = async (
 };
 
 export const __testOnly = {
-  maybeAutoApplyDefaultSeedsOnRead,
   preservePathConfigFlagsOnSeed,
-  resolveAutoApplyDefaultSeedsOnRead: (value: string | undefined): boolean =>
-    parseBooleanEnv(value, false),
 };
 
 export type {

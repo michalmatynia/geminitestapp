@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { RegexConfig } from '@/shared/lib/ai-paths';
+import type { RegexConfig } from '@/shared/contracts/ai-paths';
 import { Button, Input, Label } from '@/shared/ui/primitives.public';
 import { FormField, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { Producer } from '@/shared/contracts/products/producers';
 
 import { resolveValidatorFieldReplacement } from './resolveValidatorFieldReplacement';
 
@@ -31,7 +32,24 @@ const categories: ProductCategory[] = [
   },
 ];
 
-describe('resolveValidatorFieldReplacement', () => {
+const producers: Producer[] = [
+  {
+    id: 'producer-1',
+    name: 'StarGater.net',
+    website: 'https://stargater.net',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'producer-2',
+    name: 'Capsule Works',
+    website: 'https://capsule-works.test',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
+
+describe('resolveValidatorFieldReplacement text values', () => {
   it('resolves text replacements as trimmed strings', () => {
     expect(
       resolveValidatorFieldReplacement({
@@ -46,7 +64,9 @@ describe('resolveValidatorFieldReplacement', () => {
       displayValue: 'New title',
     });
   });
+});
 
+describe('resolveValidatorFieldReplacement numeric values', () => {
   it('resolves integer numeric replacements for stock fields', () => {
     expect(
       resolveValidatorFieldReplacement({
@@ -77,6 +97,38 @@ describe('resolveValidatorFieldReplacement', () => {
     });
   });
 
+  it('normalizes validation target names before resolving numeric replacements', () => {
+    expect(
+      resolveValidatorFieldReplacement({
+        fieldName: 'size_length',
+        replacementValue: '4',
+      })
+    ).toEqual({
+      kind: 'number',
+      fieldName: 'sizeLength',
+      value: 4,
+      comparableValue: '4',
+      displayValue: '4',
+    });
+  });
+
+  it('resolves dimension replacements from structured title size segments', () => {
+    expect(
+      resolveValidatorFieldReplacement({
+        fieldName: 'length',
+        replacementValue: '40 mm',
+      })
+    ).toEqual({
+      kind: 'number',
+      fieldName: 'length',
+      value: 4,
+      comparableValue: '4',
+      displayValue: '4',
+    });
+  });
+});
+
+describe('resolveValidatorFieldReplacement category values', () => {
   it('resolves category replacements to ids and display labels', () => {
     expect(
       resolveValidatorFieldReplacement({
@@ -118,5 +170,40 @@ describe('resolveValidatorFieldReplacement', () => {
         categories,
       })
     ).toBeNull();
+  });
+});
+
+describe('resolveValidatorFieldReplacement producer values', () => {
+  it('resolves producer replacements by producer name and preserves display labels', () => {
+    expect(
+      resolveValidatorFieldReplacement({
+        fieldName: 'producerIds',
+        replacementValue: 'StarGater.net',
+        producers,
+      })
+    ).toEqual({
+      kind: 'producers',
+      fieldName: 'producerIds',
+      value: ['producer-1'],
+      comparableValue: 'producer-1',
+      displayValue: 'StarGater.net',
+    });
+  });
+
+  it('resolves producer replacements by normalized website domain', () => {
+    expect(
+      resolveValidatorFieldReplacement({
+        fieldName: 'producerIds',
+        replacementValue: 'stargater.net',
+        producers,
+        producerNameById: new Map([['producer-1', 'StarGater.net']]),
+      })
+    ).toEqual({
+      kind: 'producers',
+      fieldName: 'producerIds',
+      value: ['producer-1'],
+      comparableValue: 'producer-1',
+      displayValue: 'StarGater.net',
+    });
   });
 });

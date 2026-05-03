@@ -9,21 +9,9 @@ import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/layout';
 export function HomeFallbackHighlights(): React.JSX.Element {
   const translations = useTranslations('FallbackHome.Highlights');
   const highlightItems = [
-    {
-      title: translations('itemOneTitle'),
-      description: translations('itemOneDescription'),
-      Icon: Sparkles,
-    },
-    {
-      title: translations('itemTwoTitle'),
-      description: translations('itemTwoDescription'),
-      Icon: ShieldCheck,
-    },
-    {
-      title: translations('itemThreeTitle'),
-      description: translations('itemThreeDescription'),
-      Icon: LayoutGrid,
-    },
+    { title: translations('itemOneTitle'), description: translations('itemOneDescription'), Icon: Sparkles },
+    { title: translations('itemTwoTitle'), description: translations('itemTwoDescription'), Icon: ShieldCheck },
+    { title: translations('itemThreeTitle'), description: translations('itemThreeDescription'), Icon: LayoutGrid },
   ];
 
   return (
@@ -37,39 +25,50 @@ export function HomeFallbackHighlights(): React.JSX.Element {
         aria-hidden='true'
       />
       <div className='container px-4 md:px-6'>
-        <div className='flex flex-col gap-3 text-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2'>
-          <p className='text-xs font-semibold uppercase tracking-[0.3em] text-[var(--cms-appearance-muted-text)]'>
-            {translations('eyebrow')}
-          </p>
-          <h2
-            id='highlights-title'
-            className='font-heading text-3xl font-semibold tracking-tight sm:text-[2.3rem]'
-          >
-            {translations('title')}
-          </h2>
-          <p className='mx-auto max-w-2xl text-sm leading-relaxed text-[var(--cms-appearance-muted-text)] sm:text-base'>
-            {translations('description')}
-          </p>
-        </div>
+        <HighlightsHeader translations={translations} />
         <ul className={`${UI_GRID_ROOMY_CLASSNAME} mt-10 md:grid-cols-3 list-none p-0 m-0`}>
-          {highlightItems.map(({ title, description, Icon }) => (
-            <li
-              key={title}
-              className='cms-appearance-surface rounded-3xl border p-6 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4'
-            >
-              <span className='cms-appearance-subtle-surface inline-flex size-10 items-center justify-center rounded-2xl border'>
-                <Icon className='size-5' aria-hidden='true' />
-              </span>
-              <h3 className='mt-4 text-lg font-semibold text-[var(--cms-appearance-page-text)]'>
-                {title}
-              </h3>
-              <p className='mt-2 text-sm leading-relaxed text-[var(--cms-appearance-muted-text)]'>
-                {description}
-              </p>
-            </li>
+          {highlightItems.map((item) => (
+            <HighlightItem key={item.title} item={item} />
           ))}
         </ul>
       </div>
     </section>
+  );
+}
+
+function HighlightsHeader({ translations }: { translations: any }): React.JSX.Element {
+  return (
+    <div className='flex flex-col gap-3 text-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2'>
+      <p className='text-xs font-semibold uppercase tracking-[0.3em] text-[var(--cms-appearance-muted-text)]'>
+        {translations('eyebrow')}
+      </p>
+      <h2
+        id='highlights-title'
+        className='font-heading text-3xl font-semibold tracking-tight sm:text-[2.3rem]'
+      >
+        {translations('title')}
+      </h2>
+      <p className='mx-auto max-w-2xl text-sm leading-relaxed text-[var(--cms-appearance-muted-text)] sm:text-base'>
+        {translations('description')}
+      </p>
+    </div>
+  );
+}
+
+function HighlightItem({ item }: { item: { title: string; description: string; Icon: React.ElementType } }): React.JSX.Element {
+  return (
+    <li
+      className='cms-appearance-surface rounded-3xl border p-6 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4'
+    >
+      <span className='cms-appearance-subtle-surface inline-flex size-10 items-center justify-center rounded-2xl border'>
+        <item.Icon className='size-5' aria-hidden='true' />
+      </span>
+      <h3 className='mt-4 text-lg font-semibold text-[var(--cms-appearance-page-text)]'>
+        {item.title}
+      </h3>
+      <p className='mt-2 text-sm leading-relaxed text-[var(--cms-appearance-muted-text)]'>
+        {item.description}
+      </p>
+    </li>
   );
 }

@@ -14,31 +14,7 @@ const mockState = vi.hoisted(() => ({
 
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ id: 'query-client' }),
-}));
-
-vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
-  useRuntimeActions: () => ({
-    setParserSamples: mockState.setParserSamples,
-    setUpdaterSamples: mockState.setUpdaterSamples,
-  }),
-}));
-
-vi.mock('@/shared/lib/product-query-keys', () => ({
-  getProductDetailQueryKey: (id: string) => ['product', id],
-}));
-
-vi.mock('@/shared/lib/ai-paths', () => ({
-  dbApi: {
-    query: (...args: unknown[]) => mockState.dbQuery(...args),
-  },
-  entityApi: {
-    getProduct: (...args: unknown[]) => mockState.getProduct(...args),
-    getNote: (...args: unknown[]) => mockState.getNote(...args),
-  },
-}));
-
-vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createMutationV2: (config: {
+  useMutation: (config: {
     mutationKey?: unknown;
     mutationFn: (variables: unknown) => Promise<unknown>;
     onSuccess?: (data: unknown, variables: unknown) => void;
@@ -60,6 +36,30 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
       },
     };
   },
+}));
+
+vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
+  useRuntimeActions: () => ({
+    setParserSamples: mockState.setParserSamples,
+    setUpdaterSamples: mockState.setUpdaterSamples,
+  }),
+}));
+
+vi.mock('@/shared/lib/product-query-keys', () => ({
+  getProductDetailQueryKey: (id: string) => ['product', id],
+}));
+
+vi.mock('@/shared/lib/ai-paths/api', () => ({
+  dbApi: {
+    query: (...args: unknown[]) => mockState.dbQuery(...args),
+  },
+  entityApi: {
+    getProduct: (...args: unknown[]) => mockState.getProduct(...args),
+    getNote: (...args: unknown[]) => mockState.getNote(...args),
+  },
+}));
+
+vi.mock('@/shared/lib/query-factories-v2', () => ({
   fetchQueryV2: (_queryClient: unknown, options: Record<string, unknown>) => {
     mockState.fetchQueryCalls.push(options);
     return async () => {

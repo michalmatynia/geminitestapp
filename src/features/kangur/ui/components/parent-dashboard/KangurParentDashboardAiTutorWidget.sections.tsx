@@ -1,7 +1,7 @@
 'use client';
 
 import { BrainCircuit } from 'lucide-react';
-import React, { useId } from 'react';
+import React, { createContext, useContext, useId } from 'react';
 
 import {
   type KangurAiTutorHintDepth,
@@ -29,10 +29,17 @@ import {
 import { KANGUR_PARENT_DASHBOARD_ENABLE_TUTOR_BUTTON_CLASSNAME } from './KangurParentDashboardAiTutorWidget.constants';
 import type {
   AiTutorConfigPanelState,
-  KangurAiTutorMoodPresentation,
-  KangurAiTutorUsagePresentation,
-  KangurParentDashboardTutorContent,
 } from './KangurParentDashboardAiTutorWidget.types';
+
+const AiTutorConfigPanelContext = createContext<AiTutorConfigPanelState | null>(null);
+
+function useAiTutorConfigPanel(): AiTutorConfigPanelState {
+  const context = useContext(AiTutorConfigPanelContext);
+  if (!context) {
+    throw new Error('useAiTutorConfigPanel must be used within AiTutorConfigPanel.');
+  }
+  return context;
+}
 
 export function TutorToggleField({
   checked,
@@ -92,15 +99,7 @@ export function TutorToggleField({
   );
 }
 
-export function AiTutorSelectFieldRow({
-  children,
-  description,
-  disabled = false,
-  id,
-  label,
-  onChange,
-  value,
-}: {
+type AiTutorSelectFieldConfig = {
   children: React.ReactNode;
   description: string;
   disabled?: boolean;
@@ -108,7 +107,15 @@ export function AiTutorSelectFieldRow({
   label: string;
   onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   value: string;
+};
+
+export function AiTutorSelectFieldRow({
+  config,
+}: {
+  config: AiTutorSelectFieldConfig;
 }): React.JSX.Element {
+  const { children, description, disabled = false, id, label, onChange, value } = config;
+
   return (
     <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
       <label
@@ -133,14 +140,12 @@ export function AiTutorSelectFieldRow({
 }
 
 export function AiTutorPanelHeader({
-  sectionSummary,
-  sectionTitle,
   title,
 }: {
-  sectionSummary: string;
-  sectionTitle: string;
   title: string;
 }): React.JSX.Element {
+  const { sectionSummary, sectionTitle } = useAiTutorConfigPanel();
+
   return (
     <KangurPanelRow className='items-start sm:items-center'>
       <BrainCircuit aria-hidden='true' className='h-5 w-5 text-orange-500' />
@@ -157,17 +162,12 @@ export function AiTutorPanelHeader({
   );
 }
 
-export function AiTutorNoActiveLearnerPanel({
-  state,
-}: {
-  state: AiTutorConfigPanelState;
-}): React.JSX.Element {
+export function AiTutorNoActiveLearnerPanel(): React.JSX.Element {
+  const state = useAiTutorConfigPanel();
   return (
     <KangurSurfacePanel accent='amber' padding='lg' className='w-full'>
       <KangurPanelStack>
         <AiTutorPanelHeader
-          sectionSummary={state.sectionSummary}
-          sectionTitle={state.sectionTitle}
           title={state.tutorContent.parentDashboard.noActiveLearner}
         />
         {state.isTutorHidden ? (
@@ -186,13 +186,9 @@ export function AiTutorNoActiveLearnerPanel({
   );
 }
 
-export function AiTutorMoodSection({
-  parentDashboardContent,
-  presentation,
-}: {
-  parentDashboardContent: KangurParentDashboardTutorContent;
-  presentation: KangurAiTutorMoodPresentation;
-}): React.JSX.Element {
+export function AiTutorMoodSection(): React.JSX.Element {
+  const { tutorContent, moodPresentation: presentation } = useAiTutorConfigPanel();
+  const { parentDashboard: parentDashboardContent } = tutorContent;
   return (
     <div
       className='rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3'
@@ -249,13 +245,9 @@ export function AiTutorMoodSection({
   );
 }
 
-export function AiTutorUsageSection({
-  parentDashboardContent,
-  presentation,
-}: {
-  parentDashboardContent: KangurParentDashboardTutorContent;
-  presentation: KangurAiTutorUsagePresentation;
-}): React.JSX.Element | null {
+export function AiTutorUsageSection(): React.JSX.Element | null {
+  const { tutorContent, usagePresentation: presentation } = useAiTutorConfigPanel();
+  const { parentDashboard: parentDashboardContent } = tutorContent;
   if (!presentation.showUsage) {
     return null;
   }
@@ -282,19 +274,18 @@ export function AiTutorUsageSection({
   );
 }
 
-export function AiTutorAvailabilityRow({
-  compactActionClassName,
-  enabled,
-  isTemporarilyDisabled,
-  onToggleEnabled,
-  parentDashboardContent,
-}: {
-  compactActionClassName: string;
-  enabled: boolean;
-  isTemporarilyDisabled: boolean;
-  onToggleEnabled: () => void;
-  parentDashboardContent: KangurParentDashboardTutorContent;
-}): React.JSX.Element {
+export function AiTutorAvailabilityRow(): React.JSX.Element {
+  const {
+    actionClasses,
+    formBindings,
+    handleToggleEnabled,
+    isTemporarilyDisabled,
+    tutorContent,
+  } = useAiTutorConfigPanel();
+  const { parentDashboard: parentDashboardContent } = tutorContent;
+  const { compactActionClassName } = actionClasses;
+  const { enabled } = formBindings.formState;
+
   return (
     <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
       <span className='text-sm font-medium [color:var(--kangur-page-text)]'>
@@ -304,7 +295,7 @@ export function AiTutorAvailabilityRow({
       </span>
       <KangurButton
         className={compactActionClassName}
-        onClick={onToggleEnabled}
+        onClick={handleToggleEnabled}
         size='sm'
         variant={enabled ? 'surface' : 'primary'}
         disabled={isTemporarilyDisabled}
@@ -317,21 +308,17 @@ export function AiTutorAvailabilityRow({
   );
 }
 
-export function AiTutorGuardrailsSection({
-  controlsDisabled,
-  formBindings,
-  hintDepthFieldId,
-  parentDashboardContent,
-  proactiveNudgesFieldId,
-  testAccessModeFieldId,
-}: {
-  controlsDisabled: boolean;
-  formBindings: AiTutorConfigPanelState['formBindings'];
-  hintDepthFieldId: string;
-  parentDashboardContent: KangurParentDashboardTutorContent;
-  proactiveNudgesFieldId: string;
-  testAccessModeFieldId: string;
-}): React.JSX.Element {
+export function AiTutorGuardrailsSection(): React.JSX.Element {
+  const {
+    controlsDisabled,
+    formBindings,
+    hintDepthFieldId,
+    proactiveNudgesFieldId,
+    testAccessModeFieldId,
+    tutorContent,
+  } = useAiTutorConfigPanel();
+  const { parentDashboard: parentDashboardContent } = tutorContent;
+
   return (
     <div className='space-y-3'>
       <KangurSectionEyebrow className='text-xs tracking-wide'>
@@ -352,51 +339,66 @@ export function AiTutorGuardrailsSection({
         onChange={formBindings.setAllowGames}
       />
       <AiTutorSelectFieldRow
-        id={testAccessModeFieldId}
-        value={formBindings.formState.testAccessMode}
-        onChange={(event) =>
-          formBindings.setTestAccessMode(event.target.value as KangurAiTutorTestAccessMode)}
-        label={parentDashboardContent.selects.testAccessModeLabel}
-        description={parentDashboardContent.selects.testAccessModeDescription}
-        disabled={controlsDisabled}
-      >
-        <option value='disabled'>{parentDashboardContent.selects.testAccessModeDisabled}</option>
-        <option value='guided'>{parentDashboardContent.selects.testAccessModeGuided}</option>
-        <option value='review_after_answer'>
-          {parentDashboardContent.selects.testAccessModeReview}
-        </option>
-      </AiTutorSelectFieldRow>
+        config={{
+          id: testAccessModeFieldId,
+          value: formBindings.formState.testAccessMode,
+          onChange: (event) =>
+            formBindings.setTestAccessMode(event.target.value as KangurAiTutorTestAccessMode),
+          label: parentDashboardContent.selects.testAccessModeLabel,
+          description: parentDashboardContent.selects.testAccessModeDescription,
+          disabled: controlsDisabled,
+          children: (
+            <>
+              <option value='disabled'>{parentDashboardContent.selects.testAccessModeDisabled}</option>
+              <option value='guided'>{parentDashboardContent.selects.testAccessModeGuided}</option>
+              <option value='review_after_answer'>
+                {parentDashboardContent.selects.testAccessModeReview}
+              </option>
+            </>
+          ),
+        }}
+      />
       <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
         <AiTutorSelectFieldRow
-          id={hintDepthFieldId}
-          value={formBindings.formState.hintDepth}
-          onChange={(event) =>
-            formBindings.setHintDepth(event.target.value as KangurAiTutorHintDepth)}
-          label={parentDashboardContent.selects.hintDepthLabel}
-          description={parentDashboardContent.selects.hintDepthDescription}
-          disabled={controlsDisabled}
-        >
-          <option value='brief'>{parentDashboardContent.selects.hintDepthBrief}</option>
-          <option value='guided'>{parentDashboardContent.selects.hintDepthGuided}</option>
-          <option value='step_by_step'>
-            {parentDashboardContent.selects.hintDepthStepByStep}
-          </option>
-        </AiTutorSelectFieldRow>
+          config={{
+            id: hintDepthFieldId,
+            value: formBindings.formState.hintDepth,
+            onChange: (event) =>
+              formBindings.setHintDepth(event.target.value as KangurAiTutorHintDepth),
+            label: parentDashboardContent.selects.hintDepthLabel,
+            description: parentDashboardContent.selects.hintDepthDescription,
+            disabled: controlsDisabled,
+            children: (
+              <>
+                <option value='brief'>{parentDashboardContent.selects.hintDepthBrief}</option>
+                <option value='guided'>{parentDashboardContent.selects.hintDepthGuided}</option>
+                <option value='step_by_step'>
+                  {parentDashboardContent.selects.hintDepthStepByStep}
+                </option>
+              </>
+            ),
+          }}
+        />
         <AiTutorSelectFieldRow
-          id={proactiveNudgesFieldId}
-          value={formBindings.formState.proactiveNudges}
-          onChange={(event) =>
-            formBindings.setProactiveNudges(
-              event.target.value as KangurAiTutorProactiveNudges
-            )}
-          label={parentDashboardContent.selects.proactiveNudgesLabel}
-          description={parentDashboardContent.selects.proactiveNudgesDescription}
-          disabled={controlsDisabled}
-        >
-          <option value='off'>{parentDashboardContent.selects.proactiveNudgesOff}</option>
-          <option value='gentle'>{parentDashboardContent.selects.proactiveNudgesGentle}</option>
-          <option value='coach'>{parentDashboardContent.selects.proactiveNudgesCoach}</option>
-        </AiTutorSelectFieldRow>
+          config={{
+            id: proactiveNudgesFieldId,
+            value: formBindings.formState.proactiveNudges,
+            onChange: (event) =>
+              formBindings.setProactiveNudges(
+                event.target.value as KangurAiTutorProactiveNudges
+              ),
+            label: parentDashboardContent.selects.proactiveNudgesLabel,
+            description: parentDashboardContent.selects.proactiveNudgesDescription,
+            disabled: controlsDisabled,
+            children: (
+              <>
+                <option value='off'>{parentDashboardContent.selects.proactiveNudgesOff}</option>
+                <option value='gentle'>{parentDashboardContent.selects.proactiveNudgesGentle}</option>
+                <option value='coach'>{parentDashboardContent.selects.proactiveNudgesCoach}</option>
+              </>
+            ),
+          }}
+        />
       </div>
       <TutorToggleField
         checked={formBindings.formState.showSources}
@@ -430,56 +432,56 @@ export function AiTutorGuardrailsSection({
   );
 }
 
-export function AiTutorUiModeSection({
-  controlsDisabled,
-  formBindings,
-  parentDashboardContent,
-  uiModeFieldId,
-}: {
-  controlsDisabled: boolean;
-  formBindings: AiTutorConfigPanelState['formBindings'];
-  parentDashboardContent: KangurParentDashboardTutorContent;
-  uiModeFieldId: string;
-}): React.JSX.Element {
+export function AiTutorUiModeSection(): React.JSX.Element {
+  const {
+    controlsDisabled,
+    formBindings,
+    tutorContent,
+    uiModeFieldId,
+  } = useAiTutorConfigPanel();
+  const { parentDashboard: parentDashboardContent } = tutorContent;
+
   return (
     <AiTutorSelectFieldRow
-      id={uiModeFieldId}
-      value={formBindings.formState.uiMode}
-      onChange={(event) =>
-        formBindings.setUiMode(event.target.value as KangurAiTutorUiMode)}
-      label={parentDashboardContent.selects.uiModeLabel}
-      description={parentDashboardContent.selects.uiModeDescription}
-      disabled={controlsDisabled}
-    >
-      <option value='anchored'>{parentDashboardContent.selects.uiModeAnchored}</option>
-      <option value='freeform'>{parentDashboardContent.selects.uiModeFreeform}</option>
-      <option value='static'>{parentDashboardContent.selects.uiModeStatic}</option>
-    </AiTutorSelectFieldRow>
+      config={{
+        id: uiModeFieldId,
+        value: formBindings.formState.uiMode,
+        onChange: (event) =>
+          formBindings.setUiMode(event.target.value as KangurAiTutorUiMode),
+        label: parentDashboardContent.selects.uiModeLabel,
+        description: parentDashboardContent.selects.uiModeDescription,
+        disabled: controlsDisabled,
+        children: (
+          <>
+            <option value='anchored'>{parentDashboardContent.selects.uiModeAnchored}</option>
+            <option value='freeform'>{parentDashboardContent.selects.uiModeFreeform}</option>
+            <option value='static'>{parentDashboardContent.selects.uiModeStatic}</option>
+          </>
+        ),
+      }}
+    />
   );
 }
 
-export function AiTutorSaveAction({
-  feedback,
-  fullWidthActionClassName,
-  isSaving,
-  isTemporarilyDisabled,
-  onSave,
-  parentDashboardContent,
-}: {
-  feedback: string | null;
-  fullWidthActionClassName: string | undefined;
-  isSaving: boolean;
-  isTemporarilyDisabled: boolean;
-  onSave: () => Promise<void>;
-  parentDashboardContent: KangurParentDashboardTutorContent;
-}): React.JSX.Element {
+export function AiTutorSaveAction(): React.JSX.Element {
+  const {
+    actionClasses,
+    feedback,
+    handleSave,
+    isSaving,
+    isTemporarilyDisabled,
+    tutorContent,
+  } = useAiTutorConfigPanel();
+  const { parentDashboard: parentDashboardContent } = tutorContent;
+  const { fullWidthActionClassName } = actionClasses;
+
   return (
     <>
       <KangurButton
         type='button'
         variant='primary'
         size='sm'
-        onClick={() => void onSave()}
+        onClick={() => void handleSave()}
         disabled={isSaving || isTemporarilyDisabled}
         fullWidth
         className={fullWidthActionClassName}
@@ -502,58 +504,22 @@ export function AiTutorSaveAction({
   );
 }
 
-export function AiTutorConfiguredPanel({
-  state,
-}: {
-  state: AiTutorConfigPanelState;
-}): React.JSX.Element {
+export function AiTutorConfiguredPanel(): React.JSX.Element {
+  const state = useAiTutorConfigPanel();
   const parentDashboardContent = state.tutorContent.parentDashboard;
 
   return (
     <KangurSurfacePanel accent='amber' padding='lg' className='w-full'>
       <KangurPanelStack>
         <AiTutorPanelHeader
-          sectionSummary={state.sectionSummary}
-          sectionTitle={state.sectionTitle}
           title={state.learnerHeaderTitle ?? parentDashboardContent.noActiveLearner}
         />
-        <AiTutorMoodSection
-          parentDashboardContent={parentDashboardContent}
-          presentation={state.moodPresentation}
-        />
-        <AiTutorUsageSection
-          parentDashboardContent={parentDashboardContent}
-          presentation={state.usagePresentation}
-        />
-        <AiTutorAvailabilityRow
-          compactActionClassName={state.actionClasses.compactActionClassName}
-          enabled={state.formBindings.formState.enabled}
-          isTemporarilyDisabled={state.isTemporarilyDisabled}
-          onToggleEnabled={state.handleToggleEnabled}
-          parentDashboardContent={parentDashboardContent}
-        />
-        <AiTutorGuardrailsSection
-          controlsDisabled={state.controlsDisabled}
-          formBindings={state.formBindings}
-          hintDepthFieldId={state.hintDepthFieldId}
-          parentDashboardContent={parentDashboardContent}
-          proactiveNudgesFieldId={state.proactiveNudgesFieldId}
-          testAccessModeFieldId={state.testAccessModeFieldId}
-        />
-        <AiTutorUiModeSection
-          controlsDisabled={state.controlsDisabled}
-          formBindings={state.formBindings}
-          parentDashboardContent={parentDashboardContent}
-          uiModeFieldId={state.uiModeFieldId}
-        />
-        <AiTutorSaveAction
-          feedback={state.feedback}
-          fullWidthActionClassName={state.actionClasses.fullWidthActionClassName}
-          isSaving={state.isSaving}
-          isTemporarilyDisabled={state.isTemporarilyDisabled}
-          onSave={state.handleSave}
-          parentDashboardContent={parentDashboardContent}
-        />
+        <AiTutorMoodSection />
+        <AiTutorUsageSection />
+        <AiTutorAvailabilityRow />
+        <AiTutorGuardrailsSection />
+        <AiTutorUiModeSection />
+        <AiTutorSaveAction />
       </KangurPanelStack>
     </KangurSurfacePanel>
   );
@@ -570,9 +536,9 @@ export function AiTutorConfigPanel({
 }: {
   state: AiTutorConfigPanelState;
 }): React.JSX.Element | null {
-  if (!state.activeLearner) {
-    return <AiTutorNoActiveLearnerPanel state={state} />;
-  }
-
-  return <AiTutorConfiguredPanel state={state} />;
+  return (
+    <AiTutorConfigPanelContext.Provider value={state}>
+      {state.activeLearner ? <AiTutorConfiguredPanel /> : <AiTutorNoActiveLearnerPanel />}
+    </AiTutorConfigPanelContext.Provider>
+  );
 }

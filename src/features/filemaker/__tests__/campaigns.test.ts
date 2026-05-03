@@ -19,6 +19,39 @@ import {
   summarizeFilemakerEmailCampaignRunDeliveries,
   syncFilemakerEmailCampaignRunWithDeliveries,
 } from './campaigns.test-support';
+import type { FilemakerMailAccount } from '../types';
+
+const createMailAccount = (overrides?: Partial<FilemakerMailAccount>): FilemakerMailAccount => ({
+  id: 'mail-account-sales',
+  name: 'Sales Mailbox',
+  emailAddress: 'sales@example.com',
+  provider: 'imap_smtp',
+  status: 'active',
+  imapHost: 'imap.example.com',
+  imapPort: 993,
+  imapSecure: true,
+  imapUser: 'sales@example.com',
+  imapPasswordSettingKey: 'filemaker_mail_account_mail-account-sales_imap_password',
+  smtpHost: 'smtp.example.com',
+  smtpPort: 587,
+  smtpSecure: true,
+  smtpUser: 'sales@example.com',
+  smtpPasswordSettingKey: 'filemaker_mail_account_mail-account-sales_smtp_password',
+  fromName: 'Sales',
+  replyToEmail: 'reply@example.com',
+  folderAllowlist: [],
+  initialSyncLookbackDays: 30,
+  maxMessagesPerSync: 100,
+  pushEnabled: true,
+  lastSyncedAt: null,
+  lastSyncError: null,
+  dkimDomain: null,
+  dkimKeySelector: null,
+  dkimPrivateKeySettingKey: null,
+  createdAt: iso,
+  updatedAt: iso,
+  ...overrides,
+});
 
 describe('filemaker campaign settings', () => {
   it('normalizes campaign registries and keeps a default audience/launch contract', () => {
@@ -111,6 +144,81 @@ describe('filemaker campaign settings', () => {
     );
   });
 
+  it('filters organization audiences by legacy demand value conditions', () => {
+    const database = {
+      ...createDatabase(),
+      values: [
+        {
+          id: 'value-market',
+          parentId: null,
+          label: 'Market',
+          value: 'market',
+          sortOrder: 1,
+          legacyUuid: 'LEGACY-MARKET',
+          createdAt: iso,
+          updatedAt: iso,
+        },
+        {
+          id: 'value-food',
+          parentId: 'value-market',
+          label: 'Food vendors',
+          value: 'food-vendors',
+          sortOrder: 2,
+          legacyUuid: 'LEGACY-FOOD',
+          createdAt: iso,
+          updatedAt: iso,
+        },
+      ],
+      organizationLegacyDemands: [
+        {
+          id: 'demand-1',
+          organizationId: 'organization-1',
+          valueIds: ['value-market', 'value-food'],
+          legacyUuid: 'LEGACY-DEMAND-1',
+          createdAt: iso,
+          updatedAt: iso,
+        },
+      ],
+    };
+    const campaign = createFilemakerEmailCampaign({
+      id: 'campaign-demand',
+      name: 'Demand targeting',
+      status: 'active',
+      subject: 'Food vendor outreach',
+      audience: {
+        partyKinds: ['organization'],
+        emailStatuses: ['active'],
+        includePartyReferences: [],
+        excludePartyReferences: [],
+        conditionGroup: {
+          id: 'group-demand',
+          type: 'group',
+          combinator: 'and',
+          children: [
+            {
+              id: 'condition-demand',
+              type: 'condition',
+              field: 'organization.demandValueId',
+              operator: 'equals',
+              value: 'value-food',
+            },
+          ],
+        },
+        organizationIds: [],
+        eventIds: [],
+        countries: [],
+        cities: [],
+        dedupeByEmail: true,
+        limit: null,
+      },
+    });
+
+    const preview = resolveFilemakerEmailCampaignAudiencePreview(database, campaign.audience);
+
+    expect(preview.recipients).toHaveLength(1);
+    expect(preview.recipients[0]?.partyId).toBe('organization-1');
+  });
+
   it('evaluates launch blockers for inactive, approval-gated, and future-scheduled campaigns', () => {
     const database = createDatabase();
     const campaign = createFilemakerEmailCampaign({
@@ -160,6 +268,64 @@ describe('filemaker campaign settings', () => {
     expect(evaluation.blockers).toContain('Campaign is outside of the allowed launch hours.');
     expect(evaluation.blockers).toContain('Campaign is scheduled for a future time.');
     expect(evaluation.nextEligibleAt).toBe('2026-04-01T09:00:00.000Z');
+  });
+
+  it('evaluates required sender account assignment for campaign launches', () => {
+    const database = createDatabase();
+    const campaign = createFilemakerEmailCampaign({
+      id: 'campaign-sender',
+      name: 'Sender required',
+      status: 'active',
+      subject: 'Hello',
+      bodyText: 'Campaign body',
+      mailAccountId: null,
+      audience: {
+        partyKinds: ['person'],
+        emailStatuses: ['active'],
+        includePartyReferences: [],
+        excludePartyReferences: [],
+        organizationIds: [],
+        eventIds: [],
+        countries: [],
+        cities: [],
+        dedupeByEmail: true,
+        limit: null,
+      },
+    });
+
+    const preview = resolveFilemakerEmailCampaignAudiencePreview(database, campaign.audience);
+    const missingAssignment = evaluateFilemakerEmailCampaignLaunch(campaign, preview, {
+      now: new Date('2026-03-27T10:00:00.000Z'),
+      contentGroupRegistry: null,
+      senderAssignment: {
+        mailAccounts: [createMailAccount()],
+        requireAssignedMailAccount: true,
+      },
+    });
+
+    expect(missingAssignment.blockers).toContain(
+      'Campaign must have an email account assigned before it can launch.'
+    );
+
+    const pausedSender = evaluateFilemakerEmailCampaignLaunch(
+      {
+        ...campaign,
+        mailAccountId: 'mail-account-sales',
+      },
+      preview,
+      {
+        now: new Date('2026-03-27T10:00:00.000Z'),
+        contentGroupRegistry: null,
+        senderAssignment: {
+          mailAccounts: [createMailAccount({ status: 'paused' })],
+          requireAssignedMailAccount: true,
+        },
+      }
+    );
+
+    expect(pausedSender.blockers).toContain(
+      'Assigned email account Sales Mailbox <sales@example.com> is paused.'
+    );
   });
 
   it('excludes suppressed email addresses from the audience preview', () => {

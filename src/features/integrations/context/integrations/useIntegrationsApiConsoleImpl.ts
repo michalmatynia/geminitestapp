@@ -1,10 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
 
-export function useIntegrationsApiConsoleImpl() {
+type IntegrationsApiConsoleState = {
+  baseApiMethod: string;
+  setBaseApiMethod: Dispatch<SetStateAction<string>>;
+  baseApiParams: string;
+  setBaseApiParams: Dispatch<SetStateAction<string>>;
+  baseApiResponse: IntegrationBaseApiResponse | null;
+  setBaseApiResponse: Dispatch<SetStateAction<IntegrationBaseApiResponse | null>>;
+  baseApiError: string | null;
+  setBaseApiError: Dispatch<SetStateAction<string | null>>;
+  baseApiLoading: boolean;
+  setBaseApiLoading: Dispatch<SetStateAction<boolean>>;
+  allegroApiMethod: IntegrationAllegroApiMethod;
+  setAllegroApiMethod: Dispatch<SetStateAction<IntegrationAllegroApiMethod>>;
+  allegroApiPath: string;
+  setAllegroApiPath: Dispatch<SetStateAction<string>>;
+  allegroApiBody: string;
+  setAllegroApiBody: Dispatch<SetStateAction<string>>;
+  allegroApiResponse: IntegrationAllegroApiResponse | null;
+  setAllegroApiResponse: Dispatch<SetStateAction<IntegrationAllegroApiResponse | null>>;
+  allegroApiError: string | null;
+  setAllegroApiError: Dispatch<SetStateAction<string | null>>;
+  allegroApiLoading: boolean;
+  setAllegroApiLoading: Dispatch<SetStateAction<boolean>>;
+};
+
+export function useIntegrationsApiConsoleImpl(): IntegrationsApiConsoleState {
   // API Console State (Base)
   const [baseApiMethod, setBaseApiMethod] = useState('getInventories');
   const [baseApiParams, setBaseApiParams] = useState('{}');

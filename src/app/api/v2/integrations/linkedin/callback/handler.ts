@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
@@ -84,7 +84,7 @@ const fetchLinkedInProfile = async (
 
 const LOG_SOURCE = 'integrations.linkedin.callback.GET';
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

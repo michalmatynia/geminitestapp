@@ -2,7 +2,7 @@
 
 import { type JSX, type ReactNode } from 'react';
 
-import { FilterField } from '@/shared/contracts/ui/panels';
+import { type FilterField } from '@/shared/contracts/ui/panels';
 
 import { PanelFilters, PanelFiltersSearchPlaceholderRuntimeContext } from './panels/PanelFilters';
 
@@ -166,6 +166,7 @@ function FilterPanelPresets({ onApplyPreset, presets }: FilterPanelPresetsProps)
       {presets.map((preset, index) => (
         <button
           key={index}
+          type='button'
           onClick={() => onApplyPreset?.(preset.values)}
           className='inline-flex items-center rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100'
           aria-label={preset.label}
@@ -196,7 +197,7 @@ function FilterPanelActiveCount({
     isActiveFilterValue(value)
   ).length;
   return (
-    <div className='mt-2 text-xs text-gray-500'>
+    <div className='mt-2 text-xs text-gray-500' role='status' aria-live='polite' aria-atomic='true'>
       {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} active
     </div>
   );

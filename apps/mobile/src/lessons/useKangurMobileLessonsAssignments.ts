@@ -5,7 +5,7 @@ import {
 
 export type KangurMobileLessonsAssignmentItem = KangurMobileHomeAssignmentItem;
 
-type UseKangurMobileLessonsAssignmentsResult = {
+export type UseKangurMobileLessonsAssignmentsResult = {
   assignmentItems: KangurMobileLessonsAssignmentItem[];
 };
 

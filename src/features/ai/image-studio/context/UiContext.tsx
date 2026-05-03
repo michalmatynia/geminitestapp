@@ -107,12 +107,44 @@ const UiStateContext = createContext<UiState | null>(null);
 const UiActionsContext = createContext<UiActions | null>(null);
 
 export function UiProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const layout = useUiLayoutStateInit();
+  const canvas = useUiCanvasStateInit();
+  const tools = useUiToolsStateInit();
+  const sequence = useUiSequenceStateInit();
+  const actions = useUiActionsInit();
+
+  const state = useMemo<UiState>(
+    () => ({
+      ...layout.layoutState,
+      ...canvas.canvasState,
+      ...tools.toolsState,
+      ...sequence.sequenceState,
+    }),
+    [layout.layoutState, canvas.canvasState, tools.toolsState, sequence.sequenceState]
+  );
+
+  return (
+    <UiActionsContext.Provider value={actions}>
+      <UiLayoutContext.Provider value={layout.layoutState}>
+        <UiCanvasContext.Provider value={canvas.canvasState}>
+          <UiToolsContext.Provider value={tools.toolsState}>
+            <UiSequenceContext.Provider value={sequence.sequenceState}>
+              <UiStateContext.Provider value={state}>{children}</UiStateContext.Provider>
+            </UiSequenceContext.Provider>
+          </UiToolsContext.Provider>
+        </UiCanvasContext.Provider>
+      </UiLayoutContext.Provider>
+    </UiActionsContext.Provider>
+  );
+}
+
+function useUiLayoutStateInit() {
   const [isFocusMode, setIsFocusMode] = useState(false);
-  const [maskPreviewEnabled, setMaskPreviewEnabled] = useState(false);
-  const [centerGuidesEnabled, setCenterGuidesEnabled] = useState(false);
-  const [validatorEnabled, setValidatorEnabledState] = useState(true);
-  const [formatterEnabled, setFormatterEnabledState] = useState(false);
-  const [canvasSelectionEnabled, setCanvasSelectionEnabled] = useState(false);
+  const layoutState = useMemo<UiLayoutState>(() => ({ isFocusMode }), [isFocusMode]);
+  return { layoutState, setIsFocusMode };
+}
+
+function useUiCanvasStateInit() {
   const [previewCanvasSize, setPreviewCanvasSize] = useState<PreviewCanvasSize>('regular');
   const [imageTransformMode, setImageTransformMode] = useState<ImageTransformMode>('none');
   const [canvasImageOffsetState, setCanvasImageOffsetState] = useState<CanvasImageOffset>(
@@ -122,14 +154,6 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const [canvasBackgroundColor, setCanvasBackgroundColorState] = useState(
     DEFAULT_CANVAS_BACKGROUND_COLOR
   );
-  const [pendingSequenceThumbnail, setPendingSequenceThumbnail] =
-    useState<PendingSequenceThumbnailState | null>(null);
-  const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(
-    null
-  );
-  const previewCanvasImageFrameResolverRef = useRef<PreviewCanvasImageFrameResolver | null>(null);
-
-  const layoutState = useMemo<UiLayoutState>(() => ({ isFocusMode }), [isFocusMode]);
   const canvasState = useMemo<UiCanvasState>(
     () => ({
       previewCanvasSize,
@@ -138,108 +162,69 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       canvasBackgroundLayerEnabled,
       canvasBackgroundColor,
     }),
-    [
-      previewCanvasSize,
-      imageTransformMode,
-      canvasImageOffsetState,
-      canvasBackgroundLayerEnabled,
-      canvasBackgroundColor,
-    ]
+    [previewCanvasSize, imageTransformMode, canvasImageOffsetState, canvasBackgroundLayerEnabled, canvasBackgroundColor]
   );
+  return { canvasState, setPreviewCanvasSize, setImageTransformMode, setCanvasImageOffsetState, setCanvasBackgroundLayerEnabled, setCanvasBackgroundColorState };
+}
 
+function useUiToolsStateInit() {
+  const [maskPreviewEnabled, setMaskPreviewEnabled] = useState(false);
+  const [centerGuidesEnabled, setCenterGuidesEnabled] = useState(false);
+  const [validatorEnabled, setValidatorEnabledState] = useState(true);
+  const [formatterEnabled, setFormatterEnabledState] = useState(false);
+  const [canvasSelectionEnabled, setCanvasSelectionEnabled] = useState(false);
   const toolsState = useMemo<UiToolsState>(
-    () => ({
-      maskPreviewEnabled,
-      centerGuidesEnabled,
-      validatorEnabled,
-      formatterEnabled,
-      canvasSelectionEnabled,
-    }),
-    [
-      maskPreviewEnabled,
-      centerGuidesEnabled,
-      validatorEnabled,
-      formatterEnabled,
-      canvasSelectionEnabled,
-    ]
+    () => ({ maskPreviewEnabled, centerGuidesEnabled, validatorEnabled, formatterEnabled, canvasSelectionEnabled }),
+    [maskPreviewEnabled, centerGuidesEnabled, validatorEnabled, formatterEnabled, canvasSelectionEnabled]
   );
+  return { toolsState, setMaskPreviewEnabled, setCenterGuidesEnabled, setValidatorEnabledState, setFormatterEnabledState, setCanvasSelectionEnabled };
+}
 
-  const sequenceState = useMemo<UiSequenceState>(
-    () => ({ pendingSequenceThumbnail }),
-    [pendingSequenceThumbnail]
-  );
+function useUiSequenceStateInit() {
+  const [pendingSequenceThumbnail, setPendingSequenceThumbnail] = useState<PendingSequenceThumbnailState | null>(null);
+  const sequenceState = useMemo<UiSequenceState>(() => ({ pendingSequenceThumbnail }), [pendingSequenceThumbnail]);
+  return { sequenceState, setPendingSequenceThumbnail };
+}
 
-  const state = useMemo<UiState>(
-    () => ({
-      ...layoutState,
-      ...canvasState,
-      ...toolsState,
-      ...sequenceState,
-    }),
-    [layoutState, canvasState, toolsState, sequenceState]
-  );
+function useUiActionsInit(): UiActions {
+  const { setIsFocusMode } = useUiLayoutStateInit();
+  const canvas = useUiCanvasStateInit();
+  const tools = useUiToolsStateInit();
+  const sequence = useUiSequenceStateInit();
+  const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
+  const previewCanvasImageFrameResolverRef = useRef<PreviewCanvasImageFrameResolver | null>(null);
 
-  const actions = useMemo<UiActions>(
+  return useMemo<UiActions>(
     () => ({
       setIsFocusMode,
-      toggleFocusMode: () => {
-        setIsFocusMode((prev) => !prev);
-      },
-      setMaskPreviewEnabled,
-      setCenterGuidesEnabled,
+      toggleFocusMode: () => setIsFocusMode((prev) => !prev),
+      setMaskPreviewEnabled: tools.setMaskPreviewEnabled,
+      setCenterGuidesEnabled: tools.setCenterGuidesEnabled,
       setValidatorEnabled: (value: boolean): void => {
-        setValidatorEnabledState(value);
-        if (!value) {
-          setFormatterEnabledState(false);
-        }
+        tools.setValidatorEnabledState(value);
+        if (!value) tools.setFormatterEnabledState(false);
       },
-      setFormatterEnabled: (value: boolean): void => {
-        setFormatterEnabledState(value);
-      },
-      setCanvasSelectionEnabled,
-      setPreviewCanvasSize,
-      setImageTransformMode,
+      setFormatterEnabled: tools.setFormatterEnabledState,
+      setCanvasSelectionEnabled: tools.setCanvasSelectionEnabled,
+      setPreviewCanvasSize: canvas.setPreviewCanvasSize,
+      setImageTransformMode: canvas.setImageTransformMode,
       setCanvasImageOffset: (offset: CanvasImageOffset): void => {
-        setCanvasImageOffsetState(normalizeCanvasImageOffset(offset));
+        canvas.setCanvasImageOffsetState(normalizeCanvasImageOffset(offset));
       },
       resetCanvasImageOffset: (): void => {
-        setCanvasImageOffsetState(DEFAULT_CANVAS_IMAGE_OFFSET);
+        canvas.setCanvasImageOffsetState(DEFAULT_CANVAS_IMAGE_OFFSET);
       },
-      setCanvasBackgroundLayerEnabled,
+      setCanvasBackgroundLayerEnabled: canvas.setCanvasBackgroundLayerEnabled,
       setCanvasBackgroundColor: (value: string): void => {
-        setCanvasBackgroundColorState(normalizeCanvasBackgroundColor(value));
+        canvas.setCanvasBackgroundColorState(normalizeCanvasBackgroundColor(value));
       },
-      setPendingSequenceThumbnail,
-      registerPreviewCanvasViewportCropResolver: (
-        resolver: PreviewCanvasViewportCropResolver | null
-      ): void => {
-        previewCanvasViewportCropResolverRef.current = resolver;
-      },
-      getPreviewCanvasViewportCrop: (): PreviewCanvasViewportCrop | null =>
-        previewCanvasViewportCropResolverRef.current?.() ?? null,
-      registerPreviewCanvasImageFrameResolver: (
-        resolver: PreviewCanvasImageFrameResolver | null
-      ): void => {
-        previewCanvasImageFrameResolverRef.current = resolver;
-      },
-      getPreviewCanvasImageFrame: (): PreviewCanvasImageFrameBinding | null =>
-        previewCanvasImageFrameResolverRef.current?.() ?? null,
+      setPendingSequenceThumbnail: sequence.setPendingSequenceThumbnail,
+      registerPreviewCanvasViewportCropResolver: (resolver) => { previewCanvasViewportCropResolverRef.current = resolver; },
+      getPreviewCanvasViewportCrop: () => previewCanvasViewportCropResolverRef.current?.() ?? null,
+      registerPreviewCanvasImageFrameResolver: (resolver) => { previewCanvasImageFrameResolverRef.current = resolver; },
+      getPreviewCanvasImageFrame: () => previewCanvasImageFrameResolverRef.current?.() ?? null,
     }),
-    []
-  );
-
-  return (
-    <UiActionsContext.Provider value={actions}>
-      <UiLayoutContext.Provider value={layoutState}>
-        <UiCanvasContext.Provider value={canvasState}>
-          <UiToolsContext.Provider value={toolsState}>
-            <UiSequenceContext.Provider value={sequenceState}>
-              <UiStateContext.Provider value={state}>{children}</UiStateContext.Provider>
-            </UiSequenceContext.Provider>
-          </UiToolsContext.Provider>
-        </UiCanvasContext.Provider>
-      </UiLayoutContext.Provider>
-    </UiActionsContext.Provider>
+    [setIsFocusMode, canvas, tools, sequence]
   );
 }
 

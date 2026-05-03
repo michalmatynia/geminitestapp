@@ -34,6 +34,12 @@ type TriggerRunState = {
 };
 
 export type TriggerButtonLastRun = TriggerButtonRunFeedbackSnapshot;
+export type TriggerButtonRunSnapshotArgs = {
+  button: AiTriggerButtonRecord;
+  entityId?: string | null | undefined;
+  entityType: 'product' | 'note' | 'custom';
+  snapshot: TrackedAiPathRunSnapshot;
+};
 
 const areTriggerButtonLastRunsEqual = (
   left: TriggerButtonLastRun | undefined,
@@ -137,32 +143,12 @@ const resolveTriggerEntityId = (
   );
 };
 
-const resolveFeedbackAliasButtonIds = (
-  button: AiTriggerButtonRecord,
-  allButtons: AiTriggerButtonRecord[]
-): string[] => {
-  const buttonId = normalizeOptionalEntityId(button.id);
-  if (!buttonId) return [];
-
-  const pathId = normalizeOptionalEntityId(button.pathId);
-  if (!pathId) return [buttonId];
-
-  const aliases = new Set<string>();
-  allButtons.forEach((candidate: AiTriggerButtonRecord) => {
-    const candidateId = normalizeOptionalEntityId(candidate.id);
-    if (!candidateId) return;
-    if (normalizeOptionalEntityId(candidate.pathId) !== pathId) return;
-    aliases.add(candidateId);
-  });
-  aliases.add(buttonId);
-  return Array.from(aliases);
-};
-
 interface UseTriggerButtonsOptions {
   location: AiTriggerButtonLocation;
   entityType: 'product' | 'note' | 'custom';
   entityId?: string | null | undefined;
-  getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+  getEntityJson?: ((button?: AiTriggerButtonRecord) => Record<string, unknown> | null) | undefined;
+  getTriggerExtras?: ((button?: AiTriggerButtonRecord) => Record<string, unknown> | null) | undefined;
   onRunQueued?:
     | ((args: {
         button: AiTriggerButtonRecord;
@@ -171,6 +157,7 @@ interface UseTriggerButtonsOptions {
         entityType: 'product' | 'note' | 'custom';
       }) => void)
     | undefined;
+  onRunSnapshot?: ((args: TriggerButtonRunSnapshotArgs) => void) | undefined;
 }
 
 export function useTriggerButtons({
@@ -178,7 +165,9 @@ export function useTriggerButtons({
   entityType,
   entityId,
   getEntityJson,
+  getTriggerExtras,
   onRunQueued,
+  onRunSnapshot,
 }: UseTriggerButtonsOptions) {
   const { toast } = useToast();
   const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
@@ -225,15 +214,6 @@ export function useTriggerButtons({
       });
   }, [allButtons, location]);
 
-  const feedbackAliasButtonIdsById = useMemo(() => {
-    const next = new Map<string, string[]>();
-    buttons.forEach((button: AiTriggerButtonRecord) => {
-      if (!button.id) return;
-      next.set(button.id, resolveFeedbackAliasButtonIds(button, allButtons));
-    });
-    return next;
-  }, [allButtons, buttons]);
-
   const stopRunSubscription = useCallback((buttonId: string): void => {
     const unsubscribe = runSubscriptionsRef.current.get(buttonId);
     if (!unsubscribe) return;
@@ -249,8 +229,8 @@ export function useTriggerButtons({
         entityId: string | null;
         entityType: 'product' | 'note' | 'custom';
         pathId?: string | null | undefined;
-        legacyButtonIds?: readonly string[] | undefined;
         initialSnapshot?: Partial<TrackedAiPathRunSnapshot> | undefined;
+        onSnapshot?: ((snapshot: TrackedAiPathRunSnapshot) => void) | undefined;
       }
     ): void => {
       stopRunSubscription(buttonId);
@@ -272,12 +252,12 @@ export function useTriggerButtons({
           persistTriggerButtonRunFeedback({
             buttonId,
             pathId: options.pathId,
-            legacyButtonIds: options.legacyButtonIds,
             location,
             entityId: options.entityId ?? snapshot.entityId ?? null,
             entityType: options.entityType,
             run: nextLastRun,
           });
+          options.onSnapshot?.(snapshot);
 
           if (snapshot.trackingState !== 'stopped' || didStop) return;
           didStop = true;
@@ -308,11 +288,9 @@ export function useTriggerButtons({
     const restoredRuns: Record<string, TriggerButtonLastRun> = {};
     buttons.forEach((button: AiTriggerButtonRecord) => {
       if (!button.id) return;
-      const feedbackAliasButtonIds = feedbackAliasButtonIdsById.get(button.id) ?? [button.id];
       const restoredRun = readTriggerButtonRunFeedback({
         buttonId: button.id,
         pathId: button.pathId ?? null,
-        legacyButtonIds: feedbackAliasButtonIds,
         entityType,
         entityId: feedbackEntityId,
       });
@@ -330,8 +308,15 @@ export function useTriggerButtons({
           entityId: feedbackEntityId,
           entityType,
           pathId: button.pathId ?? null,
-          legacyButtonIds: feedbackAliasButtonIds,
           ...(initialSnapshot ? { initialSnapshot } : {}),
+          onSnapshot: (snapshot: TrackedAiPathRunSnapshot): void => {
+            onRunSnapshot?.({
+              button,
+              entityId: feedbackEntityId,
+              entityType,
+              snapshot,
+            });
+          },
         });
       }
     });
@@ -355,9 +340,9 @@ export function useTriggerButtons({
   }, [
     buttons,
     entityType,
-    feedbackAliasButtonIdsById,
     feedbackEntityId,
     feedbackScopeKey,
+    onRunSnapshot,
     startRunSubscription,
     stopRunSubscription,
   ]);
@@ -393,8 +378,17 @@ export function useTriggerButtons({
         ...prev,
         [button.id]: { status: 'running', progress: 0 },
       }));
-      const resolvedEntityId = resolveTriggerEntityId(entityId, getEntityJson);
-      const feedbackAliasButtonIds = feedbackAliasButtonIdsById.get(button.id) ?? [button.id];
+      const getButtonEntityJson = getEntityJson
+        ? (): Record<string, unknown> | null => getEntityJson(button)
+        : undefined;
+      const resolvedEntityId = resolveTriggerEntityId(entityId, getButtonEntityJson);
+      const buttonContextTemplate =
+        button.contextTemplate &&
+        typeof button.contextTemplate === 'object' &&
+        !Array.isArray(button.contextTemplate)
+          ? button.contextTemplate
+          : null;
+      let customExtras: Record<string, unknown> | null = buttonContextTemplate;
 
       // Guard: if the caller signals an entity context (via explicit entityId prop or getEntityJson)
       // but resolution yields null, abort early rather than firing with no entity context.
@@ -412,6 +406,43 @@ export function useTriggerButtons({
         return;
       }
 
+      if (getTriggerExtras) {
+        try {
+          const resolvedTriggerExtras = getTriggerExtras(button);
+          if (resolvedTriggerExtras === null) {
+            toast('Trigger context is not ready for this AI Path trigger.', {
+              variant: 'warning',
+            });
+            setRunStates((prev) => ({ ...prev, [button.id]: { status: 'idle', progress: 0 } }));
+            return;
+          }
+          if (
+            resolvedTriggerExtras &&
+            typeof resolvedTriggerExtras === 'object' &&
+            !Array.isArray(resolvedTriggerExtras)
+          ) {
+            customExtras = {
+              ...(buttonContextTemplate ?? {}),
+              ...resolvedTriggerExtras,
+            };
+          }
+        } catch (error) {
+          logClientCatch(error, {
+            source: 'useTriggerButtons',
+            action: 'getTriggerExtras',
+            buttonId: button.id,
+            pathId: button.pathId,
+            location,
+            entityType,
+          });
+          toast('Could not build trigger context for this AI Path trigger.', {
+            variant: 'error',
+          });
+          setRunStates((prev) => ({ ...prev, [button.id]: { status: 'idle', progress: 0 } }));
+          return;
+        }
+      }
+
       try {
         const waitingRun: TriggerButtonLastRun = {
           runId: `waiting:${button.id}:${Date.now()}`,
@@ -427,7 +458,6 @@ export function useTriggerButtons({
         clearTriggerButtonRunFeedback({
           buttonId: button.id,
           pathId: button.pathId ?? null,
-          legacyButtonIds: feedbackAliasButtonIds,
           location,
           entityId: resolvedEntityId,
           entityType,
@@ -439,10 +469,11 @@ export function useTriggerButtons({
           preferredPathId: button.pathId ?? null,
           entityType,
           entityId: resolvedEntityId,
-          ...(getEntityJson ? { getEntityJson } : {}),
+          ...(getButtonEntityJson ? { getEntityJson: getButtonEntityJson } : {}),
           event: options.event,
           source: { tab: entityType, location },
           extras: {
+            ...(customExtras ?? {}),
             mode: options.mode,
             ...(options.mode === 'toggle' ? { checked: options.checked } : {}),
           },
@@ -457,7 +488,6 @@ export function useTriggerButtons({
             persistTriggerButtonRunFeedback({
               buttonId: button.id,
               pathId: button.pathId ?? null,
-              legacyButtonIds: feedbackAliasButtonIds,
               location,
               entityId: resolvedEntityId,
               entityType,
@@ -475,14 +505,42 @@ export function useTriggerButtons({
               entityId: resolvedEntityId,
               entityType,
               pathId: button.pathId ?? null,
-              legacyButtonIds: feedbackAliasButtonIds,
               ...(initialSnapshot ? { initialSnapshot } : {}),
+              onSnapshot: (snapshot: TrackedAiPathRunSnapshot): void => {
+                onRunSnapshot?.({
+                  button,
+                  entityId: resolvedEntityId,
+                  entityType,
+                  snapshot,
+                });
+              },
             });
             onRunQueued?.({
               button,
               runId,
               entityId: resolvedEntityId,
               entityType,
+            });
+          },
+          onError: (errorMessage?: string): void => {
+            const errorRun: TriggerButtonLastRun = {
+              runId: `error:${button.id}:${Date.now()}`,
+              status: 'error',
+              updatedAt: new Date().toISOString(),
+              finishedAt: new Date().toISOString(),
+              errorMessage: errorMessage ?? null,
+            };
+            persistTriggerButtonRunFeedback({
+              buttonId: button.id,
+              pathId: button.pathId ?? null,
+              location,
+              entityId: resolvedEntityId,
+              entityType,
+              run: errorRun,
+            });
+            setLastRuns((prev) => {
+              if (prev[button.id]?.status !== 'waiting') return prev;
+              return { ...prev, [button.id]: errorRun };
             });
           },
           onProgress: (payload: {
@@ -555,10 +613,11 @@ export function useTriggerButtons({
       entityId,
       entityType,
       fireAiPathTriggerEvent,
-      feedbackAliasButtonIdsById,
       getEntityJson,
+      getTriggerExtras,
       location,
       onRunQueued,
+      onRunSnapshot,
       startRunSubscription,
       toast,
     ]

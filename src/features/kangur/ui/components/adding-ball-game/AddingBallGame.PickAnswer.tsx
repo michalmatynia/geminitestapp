@@ -23,6 +23,7 @@ import {
   BALL_POOL_CLASSNAME,
   getAnswerSlotSurface,
 } from './utils';
+import { safeSetTimeout } from '@/shared/lib/timers';
 import { DraggableBall } from './AddingBallGame.Shared';
 
 export function PickAnswer({
@@ -54,7 +55,7 @@ export function PickAnswer({
     const ok = ball.num === round.correct;
     setChecked(true);
     setSelectedBallId(null);
-    setTimeout(() => onResult(ok), 1400);
+    safeSetTimeout(() => onResult(ok), 1400);
   };
 
   const selectedBall = resolveSelectedBall(balls, selectedBallId);
@@ -65,7 +66,7 @@ export function PickAnswer({
     const ok = selectedBall.num === round.correct;
     setChecked(true);
     setSelectedBallId(null);
-    setTimeout(() => onResult(ok), 1400);
+    safeSetTimeout(() => onResult(ok), 1400);
   };
 
   return (
@@ -183,7 +184,10 @@ function PickAnswerBallPreview({
   }
 
   return (
-    <div className={`flex h-16 w-16 items-center justify-center rounded-full ${dropped.color} shadow-md`}>
+    <div
+      className='flex h-16 w-16 items-center justify-center rounded-full shadow-md'
+      style={{ backgroundColor: dropped.color }}
+    >
       <span className='text-xl font-extrabold text-white'>{dropped.num}</span>
     </div>
   );

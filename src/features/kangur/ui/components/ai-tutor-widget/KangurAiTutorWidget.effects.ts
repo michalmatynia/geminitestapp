@@ -468,9 +468,9 @@ export function useKangurAiTutorNarrationObserverEffect(input: {
 
     const observer = new MutationObserver(() => {
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
-      timeoutId = window.setTimeout(updateText, 120);
+      timeoutId = safeSetTimeout(updateText, 120);
     });
 
     observer.observe(root, {
@@ -482,7 +482,7 @@ export function useKangurAiTutorNarrationObserverEffect(input: {
     return () => {
       observer.disconnect();
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
     };
   }, [

@@ -5,7 +5,7 @@ const DEBUG_STORAGE_KEY = 'kangur_theme_debug';
 const DEBUG_ENV_KEY = 'NEXT_PUBLIC_KANGUR_THEME_DEBUG';
 
 const parseFlag = (value: string | null): boolean => {
-  if (!value) return false;
+  if (value === null || value === '') return false;
   const normalized = value.trim().toLowerCase();
   return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
 };
@@ -15,11 +15,12 @@ export const isKangurThemeDebugEnabled = (): boolean => {
   try {
     if (parseFlag(process.env[DEBUG_ENV_KEY] ?? null)) return true;
     const params = new URLSearchParams(window.location.search);
-    if (parseFlag(params.get(DEBUG_PARAM))) return true;
+    const paramVal = params.get(DEBUG_PARAM);
+    if (paramVal !== null && parseFlag(paramVal)) return true;
     const stored = window.localStorage.getItem(DEBUG_STORAGE_KEY);
     return parseFlag(stored);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => {});
     return false;
   }
 };

@@ -76,7 +76,8 @@ vi.mock('@/features/kangur/observability/client', async (importOriginal) => {
       }
     },
   };
-});
+,
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),});
 
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,

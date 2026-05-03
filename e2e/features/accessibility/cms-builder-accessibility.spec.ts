@@ -70,7 +70,7 @@ test('cms builder exposes shell controls accessibly and passes the accessibility
   await expect(page.getByRole('heading', { name: '3 sections' })).toBeVisible();
   await expect(page.getByTestId('preview-canvas')).toBeVisible();
 
-  const skipLink = page.getByRole('link', { name: 'Skip to content' });
+  const skipLink = page.getByRole('link', { name: /Skip to (main )?content/i });
   await skipLink.focus();
   await expect(skipLink).toBeFocused();
 

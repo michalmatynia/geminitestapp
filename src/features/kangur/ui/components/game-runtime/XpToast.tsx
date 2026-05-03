@@ -189,7 +189,7 @@ function XpToastBadgePanels({
   ));
 }
 
-const XpToast = memo(function XpToast(props: XpToastProps): React.JSX.Element {
+const XpToast = memo((props: XpToastProps): React.JSX.Element => {
   const {
     breakdown,
     dailyQuest,

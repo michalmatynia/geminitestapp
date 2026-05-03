@@ -36,12 +36,6 @@ export const authzRoutePolicies = [
     expectedAccess: 'public',
   },
   {
-    id: 'portable-remediation-webhook',
-    pattern: /^ai-paths\/portable-engine\/remediation-webhook$/,
-    methods: ['POST'],
-    expectedAccess: 'signed',
-  },
-  {
     id: 'kangur-actor-routes',
     pattern:
       /^kangur\/(auth\/me|progress|scores|learners|learners\/\[id\]|ai-tutor\/chat|ai-tutor\/usage|tts|tts\/status|assignments|assignments\/\[id\])$/,

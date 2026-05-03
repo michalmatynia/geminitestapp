@@ -114,7 +114,7 @@ export function FileAttachments(): React.JSX.Element {
                 <div className='flex h-full flex-col items-center justify-center p-2'>
                   <FileIcon className='h-6 w-6 text-gray-400' />
                   <span className='mt-1 text-[10px] text-gray-400 truncate w-full text-center'>
-                    {file.filename.length > 12 ? file.filename.slice(0, 10) + '...' : file.filename}
+                    {file.filename.length > 12 ? `${file.filename.slice(0, 10)  }...` : file.filename}
                   </span>
                 </div>
               )}

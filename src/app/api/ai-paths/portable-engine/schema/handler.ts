@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { portablePathJsonSchemaKindQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';
@@ -60,7 +60,7 @@ const parseSchemaKindQuery = (value: string | undefined): SchemaKindQueryValue =
   throw new Error('Invalid portable schema kind.');
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
   const query = portablePathJsonSchemaKindQuerySchema.parse(resolveSchemaQueryInput(req, _ctx));

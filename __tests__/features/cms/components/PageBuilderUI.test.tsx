@@ -29,6 +29,19 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: () => new URLSearchParams('pageId=1'),
+  usePathname: () => '/',
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
+}));
+
 vi.mock('@/features/foldertree/v2', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/foldertree/v2')>();
   return {

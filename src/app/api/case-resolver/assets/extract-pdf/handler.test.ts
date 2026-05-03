@@ -32,7 +32,7 @@ vi.mock('pdf-parse', () => ({
   },
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -68,7 +68,7 @@ describe('case resolver extract-pdf handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createContext());
+    const response = await postHandler(request, createContext());
 
     expect(response.status).toBe(200);
     expect(getDiskPathFromPublicPathMock).toHaveBeenCalledWith(
@@ -93,7 +93,7 @@ describe('case resolver extract-pdf handler', () => {
       },
     });
 
-    await expect(POST_handler(request, createContext())).rejects.toMatchObject({
+    await expect(postHandler(request, createContext())).rejects.toMatchObject({
       code: 'BAD_REQUEST',
       httpStatus: 400,
     });
@@ -114,7 +114,7 @@ describe('case resolver extract-pdf handler', () => {
       },
     });
 
-    await expect(POST_handler(request, createContext())).rejects.toThrow(
+    await expect(postHandler(request, createContext())).rejects.toThrow(
       'PDF parser is unavailable'
     );
   });

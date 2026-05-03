@@ -143,64 +143,68 @@ vi.mock('@/shared/lib/ai-paths', () => ({
         },
 }));
 
-vi.mock('@/shared/ui', () => ({
-  ...(() => {
-    const React = require('react') as typeof import('react');
-    return {
-      Button: ({
-        children,
-        ...props
-      }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
-        <button {...props}>{children}</button>
-      ),
-      FormField: ({
-        label,
-        children,
-      }: {
-        label: React.ReactNode;
-        children: React.ReactNode;
-      }): React.JSX.Element => (
-        <label>
-          <span>{label}</span>
-          {children}
-        </label>
-      ),
-      Input: ({
-        ...props
-      }: React.InputHTMLAttributes<HTMLInputElement>): React.JSX.Element => <input {...props} />,
-      SelectSimple: ({
-        ariaLabel,
-        onValueChange,
-        options,
-        value,
-      }: {
-        ariaLabel?: string;
-        onValueChange?: (value: string) => void;
-        options: Array<{ value: string; label: string }>;
-        value?: string;
-      }): React.JSX.Element => (
-        <select
-          aria-label={ariaLabel}
-          value={value}
-          onChange={(event) => onValueChange?.(event.target.value)}
-        >
-          <option value=''>Select</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      ),
-      Textarea: React.forwardRef<
-        HTMLTextAreaElement,
-        React.TextareaHTMLAttributes<HTMLTextAreaElement>
-      >(function MockTextarea(props, ref): React.JSX.Element {
-        return <textarea ref={ref} {...props} />;
-      }),
-    };
-  })(),
-}));
+vi.mock('@/shared/ui/primitives.public', () => {
+  const React = require('react') as typeof import('react');
+  return {
+    Button: ({
+      children,
+      ...props
+    }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
+      <button {...props}>{children}</button>
+    ),
+    Input: ({
+      ...props
+    }: React.InputHTMLAttributes<HTMLInputElement>): React.JSX.Element => <input {...props} />,
+    Textarea: React.forwardRef<
+      HTMLTextAreaElement,
+      React.TextareaHTMLAttributes<HTMLTextAreaElement>
+    >(function MockTextarea(props, ref): React.JSX.Element {
+      return <textarea ref={ref} {...props} />;
+    }),
+  };
+});
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => {
+  const React = require('react') as typeof import('react');
+  return {
+    FormField: ({
+      label,
+      children,
+    }: {
+      label: React.ReactNode;
+      children: React.ReactNode;
+    }): React.JSX.Element => (
+      <label>
+        <span>{label}</span>
+        {children}
+      </label>
+    ),
+    SelectSimple: ({
+      ariaLabel,
+      onValueChange,
+      options,
+      value,
+    }: {
+      ariaLabel?: string;
+      onValueChange?: (value: string) => void;
+      options: Array<{ value: string; label: string }>;
+      value?: string;
+    }): React.JSX.Element => (
+      <select
+        aria-label={ariaLabel}
+        value={value}
+        onChange={(event) => onValueChange?.(event.target.value)}
+      >
+        <option value=''>Select</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    ),
+  };
+});
 
 import { ParserNodeConfigSection } from '../node-config/ParserNodeConfigSection';
 

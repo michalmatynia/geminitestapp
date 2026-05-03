@@ -34,14 +34,15 @@ export const autoformatMarkdown = (text: string): string => {
     try {
       const urlObj = new URL(url);
       const pathParts = urlObj.pathname.split('/').filter(Boolean);
-      const lastPart = pathParts[pathParts.length - 1] || urlObj.hostname;
+      const lastPart = pathParts[pathParts.length - 1] ?? urlObj.hostname;
 
       // Clean up the title (remove file extensions, decode URI components)
-      const title =
-        decodeURIComponent(lastPart)
-          .replace(/\.[^.]+$/, '') // Remove file extension
-          .replace(/[-_]/g, ' ') // Replace dashes/underscores with spaces
-          .trim() || urlObj.hostname;
+      const decodedLastPart = decodeURIComponent(lastPart)
+        .replace(/\.[^.]+$/, '') // Remove file extension
+        .replace(/[-_]/g, ' ') // Replace dashes/underscores with spaces
+        .trim();
+
+      const title = decodedLastPart.length > 0 ? decodedLastPart : urlObj.hostname;
 
       return `[${title}](${url})`;
     } catch (error) {

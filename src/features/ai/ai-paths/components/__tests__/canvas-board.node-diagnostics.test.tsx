@@ -2,12 +2,20 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
-import type { AiNode, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from '../CanvasBoardUIContext';
 import { renderNodeDiagnosticsTooltipContent } from '../CanvasBoard.utils';
 import { CanvasMinimap } from '../canvas-minimap';
 import { CanvasSvgNodeLayer } from '../canvas-svg-node-layer';
+
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: () => ({
+    effectiveModelId: 'test-model',
+    descriptors: [],
+  }),
+}));
 
 const baseRuntimeState: RuntimeState = {
   status: 'idle',

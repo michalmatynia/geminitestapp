@@ -35,6 +35,7 @@ vi.mock('lucide-react', () => ({
   LogOut: () => <svg data-testid='logout-icon' />,
   LogIn: () => <svg data-testid='login-icon' />,
   SparklesIcon: () => <svg data-testid='sparkles-icon' />,
+  AlertCircle: () => <svg data-testid='alert-circle-icon' />,
 }));
 
 vi.mock('@/features/admin/context/AdminLayoutContext', () => ({
@@ -55,7 +56,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Avatar: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   AvatarFallback: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   AvatarImage: ({ alt }: { alt: string }) => <img alt={alt} />,
@@ -121,6 +122,9 @@ vi.mock('@/shared/ui', () => ({
   ),
   DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuSeparator: () => <hr />,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   ToggleRow: ({
     label,
     checked,

@@ -3,7 +3,7 @@ import {
   AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
 import {
-  normalizeRuntimeKernelConfigRecord,
+  normalizeRuntimeKernelConfigRecordDetailed,
   normalizeRuntimeKernelNodeTypeToken,
   normalizeRuntimeKernelResolverIdToken,
   parseRuntimeKernelListValue,
@@ -13,6 +13,9 @@ import {
   DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
   DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
+
+import { loadStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 
 import { compactPathConfigValue } from './settings-store.compaction';
 import {
@@ -27,13 +30,15 @@ import {
 } from './settings-store.constants';
 import { parsePathMetas } from './settings-store.parsing';
 import {
+  countPendingCanonicalStarterWorkflows,
   countPendingStarterWorkflowConfigRefreshes,
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
+  pruneDeprecatedStarterWorkflowRecords,
   refreshStarterWorkflowConfigs,
+  seedCanonicalStarterWorkflows,
 } from './starter-workflows-settings';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
 
 const RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID = 'normalize_runtime_kernel_settings';
 
@@ -58,6 +63,9 @@ const toCanonicalRuntimeKernelSettingEntryValue = (
   entry: AiPathsSettingRecord
 ): string | undefined | null => {
   if (entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY) {
+    return undefined;
+  }
+  if (entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) {
     return undefined;
   }
   if (entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) {
@@ -98,19 +106,23 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
   const runtimeKernel = asRecord(extensions['runtimeKernel']);
   if (!runtimeKernel) return null;
 
-  const nextRuntimeKernel = normalizeRuntimeKernelConfigRecord(runtimeKernel, {
-    translateLegacyAliases: true,
-  });
-  if (!nextRuntimeKernel || nextRuntimeKernel === runtimeKernel) return null;
+  const normalizedRuntimeKernel = normalizeRuntimeKernelConfigRecordDetailed(runtimeKernel);
+  if (!normalizedRuntimeKernel?.changed) return null;
 
-  const nextExtensions = {
-    ...extensions,
-    runtimeKernel: nextRuntimeKernel,
-  };
+  const nextExtensions = { ...extensions };
+  if (Object.keys(normalizedRuntimeKernel.value).length === 0) {
+    delete nextExtensions['runtimeKernel'];
+  } else {
+    nextExtensions['runtimeKernel'] = normalizedRuntimeKernel.value;
+  }
   const nextConfig = {
     ...parsed,
-    extensions: nextExtensions,
   };
+  if (Object.keys(nextExtensions).length === 0) {
+    delete nextConfig['extensions'];
+  } else {
+    nextConfig['extensions'] = nextExtensions;
+  }
   return JSON.stringify(nextConfig);
 };
 
@@ -123,46 +135,9 @@ const normalizeRuntimeKernelSettingsRecords = (
 } => {
   const nextRecords: AiPathsSettingRecord[] = [];
   const deletedKeys = new Set<string>();
-  const canonicalNodeTypesEntry =
-    records.find((entry) => entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) ?? null;
-  const legacyNodeTypesEntry =
-    records.find(
-      (entry) => entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY
-    ) ?? null;
-  const rawNodeTypesValue =
-    canonicalNodeTypesEntry?.value ?? legacyNodeTypesEntry?.value ?? undefined;
-  const canonicalNodeTypesValue =
-    toCanonicalRuntimeKernelListSettingValue({
-      value: rawNodeTypesValue,
-      normalizeToken: normalizeRuntimeKernelNodeTypeToken,
-    }) ?? '';
-  const shouldManageNodeTypesEntry =
-    canonicalNodeTypesEntry !== null || legacyNodeTypesEntry !== null;
-  const shouldUpdateCanonicalNodeTypesEntry =
-    shouldManageNodeTypesEntry && canonicalNodeTypesEntry?.value !== canonicalNodeTypesValue;
-  const shouldDeleteLegacyNodeTypesEntry = legacyNodeTypesEntry !== null;
-  let affectedCount =
-    shouldUpdateCanonicalNodeTypesEntry || shouldDeleteLegacyNodeTypesEntry ? 1 : 0;
-  let nodeTypesHandled = false;
+  let affectedCount = 0;
 
   for (const entry of records) {
-    if (
-      entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY ||
-      entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY
-    ) {
-      if (!nodeTypesHandled && shouldManageNodeTypesEntry) {
-        nextRecords.push({
-          key: AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
-          value: canonicalNodeTypesValue,
-        });
-        nodeTypesHandled = true;
-      }
-      if (entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) {
-        deletedKeys.add(entry.key);
-      }
-      continue;
-    }
-
     const nextValue = toCanonicalRuntimeKernelSettingEntryValue(entry);
     if (nextValue === undefined) {
       deletedKeys.add(entry.key);
@@ -214,6 +189,21 @@ export const countPendingPathConfigCompactions = (records: AiPathsSettingRecord[
     const compacted = compactPathConfigValue(entry.value);
     return compacted ? count + 1 : count;
   }, 0);
+};
+
+export const countPendingPathConfigCanonicalization = (records: AiPathsSettingRecord[]): number => {
+  let count = 0;
+  for (const entry of records) {
+    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) continue;
+    const pathId = entry.key.slice(AI_PATHS_CONFIG_KEY_PREFIX.length);
+    try {
+      const result = loadStoredPathConfig({ pathId, rawConfig: entry.value });
+      if (result.changed) count++;
+    } catch {
+      // unparseable or invalid configs are skipped — they are not canonical but cannot be repaired here
+    }
+  }
+  return count;
 };
 
 export const needsPathIndexConsistencyRepair = (records: AiPathsSettingRecord[]): boolean => {
@@ -298,8 +288,34 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
+  const deprecatedStarterPruneCount = pruneDeprecatedStarterWorkflowRecords(records).affectedCount;
+  if (deprecatedStarterPruneCount > 0) {
+    actions.push({
+      id: 'prune_deprecated_starter_workflows',
+      title: 'Prune Deprecated Starter Workflows',
+      description:
+        'Delete deprecated starter-workflow path configs, index entries, and trigger buttons that should no longer be exposed.',
+      blocking: false,
+      status: 'pending',
+      affectedRecords: deprecatedStarterPruneCount,
+    });
+  }
+
+  const canonicalStarterSeedCount = countPendingCanonicalStarterWorkflows(records);
+  if (canonicalStarterSeedCount > 0) {
+    actions.push({
+      id: 'seed_canonical_starter_workflows',
+      title: 'Seed Canonical Starter Workflows',
+      description:
+        'Create canonical AI Paths, index entries, and trigger buttons from semantic starter workflow assets.',
+      blocking: false,
+      status: 'pending',
+      affectedRecords: canonicalStarterSeedCount,
+    });
+  }
+
   const starterDefaultsCount = countPendingStarterWorkflowDefaults(records);
-  if (starterDefaultsCount > 0) {
+  if (starterDefaultsCount > 0 && canonicalStarterSeedCount === 0) {
     actions.push({
       id: 'ensure_starter_workflow_defaults',
       title: 'Ensure Starter Workflow Defaults',
@@ -329,12 +345,24 @@ export const buildAiPathsMaintenanceReport = (
   if (runtimeKernelSettingsNormalizationCount > 0) {
     actions.push({
       id: RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,
-      title: 'Normalize Runtime Kernel Settings',
+      title: 'Prune Deprecated Runtime Kernel Settings',
       description:
-        'Prune deprecated runtime-kernel mode/strict settings and normalize node-type overrides plus resolver ids for forward-compatible execution.',
+        'Delete deprecated runtime-kernel settings and aliases while normalizing canonical node-type and resolver-id entries.',
       blocking: false,
       status: 'pending',
       affectedRecords: runtimeKernelSettingsNormalizationCount,
+    });
+  }
+
+  const canonicalizationCount = countPendingPathConfigCanonicalization(records);
+  if (canonicalizationCount > 0) {
+    actions.push({
+      id: 'canonicalize_path_configs',
+      title: 'Canonicalize Path Configs',
+      description: `Re-persist ${canonicalizationCount} path config(s) whose stored values differ from their canonical form.`,
+      blocking: true,
+      status: 'pending',
+      affectedRecords: canonicalizationCount,
     });
   }
 
@@ -380,8 +408,27 @@ export const runMaintenanceAction = (args: {
       });
       break;
 
+    case 'prune_deprecated_starter_workflows': {
+      const pruned = pruneDeprecatedStarterWorkflowRecords(args.records);
+      return {
+        actionId: args.actionId,
+        affectedCount: pruned.affectedCount,
+        deletedKeys: pruned.deletedKeys,
+        durationMs: Date.now() - startedAt,
+        nextRecords: pruned.nextRecords,
+        success: true,
+      };
+    }
+
     case 'ensure_starter_workflow_defaults': {
       const result = ensureStarterWorkflowDefaults(args.records);
+      nextRecords.push(...result.nextRecords);
+      affectedCount = result.affectedCount;
+      break;
+    }
+
+    case 'seed_canonical_starter_workflows': {
+      const result = seedCanonicalStarterWorkflows(args.records);
       nextRecords.push(...result.nextRecords);
       affectedCount = result.affectedCount;
       break;
@@ -423,6 +470,37 @@ export const runMaintenanceAction = (args: {
       };
     }
 
+    case 'canonicalize_path_configs': {
+      const nextRecords: AiPathsSettingRecord[] = [];
+      let affectedCount = 0;
+      for (const entry of args.records) {
+        if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) {
+          nextRecords.push(entry);
+          continue;
+        }
+        const pathId = entry.key.slice(AI_PATHS_CONFIG_KEY_PREFIX.length);
+        try {
+          const result = loadStoredPathConfig({ pathId, rawConfig: entry.value });
+          if (result.changed) {
+            nextRecords.push({ ...entry, value: stableStringify(result.config) });
+            affectedCount++;
+          } else {
+            nextRecords.push(entry);
+          }
+        } catch {
+          nextRecords.push(entry);
+        }
+      }
+      return {
+        actionId: args.actionId,
+        affectedCount,
+        deletedKeys: [],
+        durationMs: Date.now() - startedAt,
+        nextRecords,
+        success: true,
+      };
+    }
+
     default:
       throw new Error(`Unknown AI Paths maintenance action: ${args.actionId}`);
   }
@@ -445,9 +523,12 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
     [
       'compact_oversized_configs',
       'repair_path_index',
+      'prune_deprecated_starter_workflows',
+      'seed_canonical_starter_workflows',
       'ensure_starter_workflow_defaults',
       'refresh_starter_workflow_configs',
       RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,
+      'canonicalize_path_configs',
     ] as AiPathsMaintenanceActionId[]
   ).forEach((actionId: AiPathsMaintenanceActionId) => {
     const report = runMaintenanceAction({ actionId, records: currentRecords });

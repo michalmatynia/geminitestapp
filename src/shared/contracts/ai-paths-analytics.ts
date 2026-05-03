@@ -42,8 +42,8 @@ export const aiPathRuntimeTraceFailedNodeSchema = z.object({
 export type AiPathRuntimeTraceFailedNode = z.infer<typeof aiPathRuntimeTraceFailedNodeSchema>;
 
 export const aiPathRuntimeKernelStrategyCountsSchema = z.object({
-  compatibility: z.number(),
   code_object_v3: z.number(),
+  compatibility: z.number(),
   unknown: z.number(),
 });
 export type AiPathRuntimeKernelStrategyCounts = z.infer<
@@ -159,12 +159,8 @@ export const aiPathRuntimeAnalyticsSummarySchema = z.object({
     completed: z.number(),
     failed: z.number(),
     canceled: z.number(),
-    deadLettered: z.number(),
-    blockedOnLease: z.number().optional(),
-    handoffReady: z.number().optional(),
     successRate: z.number(),
     failureRate: z.number(),
-    deadLetterRate: z.number(),
     avgDurationMs: z.number().nullable(),
     p95DurationMs: z.number().nullable(),
   }),

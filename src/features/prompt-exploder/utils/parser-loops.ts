@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 
 import {
@@ -25,7 +26,7 @@ import {
 } from '../parser-type-inference';
 import { trimTrailingBlankLines } from './parser-utils';
 import { createPromptExploderSegment } from '../parser-segment-factory';
-import { PromptExploderListItem, PromptExploderSegment } from '../types';
+import { type PromptExploderListItem, type PromptExploderSegment } from '../types';
 
 type PromptExploderSegmentInput = Omit<
   Parameters<typeof createPromptExploderSegment>[0],

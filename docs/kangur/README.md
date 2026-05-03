@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:kangur'
@@ -12,6 +12,13 @@ canonical: true
 ## Purpose
 
 Kangur is the learner-facing math practice application for guided lessons, games, tests, and parent-supported progress tracking. It powers the public StudiQ learning app and combines authored lesson content, interactive minigames, practice flows, and test suites in one product shell.
+
+## Open This Hub When
+
+- you need to know which Kangur surface owns web, mobile, admin, API, or shared-package behavior
+- you need the canonical doc for a learner feature area instead of searching across workspace READMEs
+- you need to understand which Kangur docs are runtime topology versus feature-specific references
+- you are changing cross-platform boundaries between the root app, `apps/mobile`, and the shared `packages/kangur-*`
 
 ## Application topology
 
@@ -72,3 +79,25 @@ Canonical feature documentation stays under `docs/kangur/*`. Local app and packa
 - `packages/kangur-core/README.md`
 - `packages/kangur-api-client/README.md`
 - `packages/kangur-platform/README.md`
+
+## Which Doc To Use
+
+| Question | Canonical doc |
+| --- | --- |
+| What owns the current web, mobile, admin, and API topology? | [`studiq-application.md`](./studiq-application.md) |
+| How are the cross-platform workspaces and packages split? | [`react-native-monorepo-scaffold.md`](./react-native-monorepo-scaffold.md) |
+| How do learner routes and navigation fit together? | [`learner-navigation.md`](./learner-navigation.md) |
+| How are lessons and reusable activities authored? | [`lessons-and-activities.md`](./lessons-and-activities.md) |
+| How do tests, exams, and competition flows work? | [`tests-and-exams.md`](./tests-and-exams.md) |
+| How do profile and parent-facing surfaces work? | [`profile-and-parent-dashboard.md`](./profile-and-parent-dashboard.md) |
+| How is admin authoring and configuration documented? | [`admin-content-authoring.md`](./admin-content-authoring.md), [`settings-and-narration.md`](./settings-and-narration.md) |
+| What are the current mobile runtime commands and caveats? | [`../../apps/mobile/README.md`](../../apps/mobile/README.md) |
+| What is the status of the reserved mobile-web workspace? | [`../../apps/mobile-web/README.md`](../../apps/mobile-web/README.md) |
+| Which package owns contracts, domain logic, transport, or platform ports? | [`../../packages/kangur-contracts/README.md`](../../packages/kangur-contracts/README.md), [`../../packages/kangur-core/README.md`](../../packages/kangur-core/README.md), [`../../packages/kangur-api-client/README.md`](../../packages/kangur-api-client/README.md), [`../../packages/kangur-platform/README.md`](../../packages/kangur-platform/README.md) |
+
+## Documentation Shape
+
+- Use this hub for feature-level topology and entrypoint selection.
+- Use the app READMEs for runtime commands, local workflows, and app-specific caveats.
+- Use the package READMEs for ownership boundaries and export intent.
+- Treat [`recent-feature-updates.md`](./recent-feature-updates.md) as change history and product context, not as the canonical runtime specification.

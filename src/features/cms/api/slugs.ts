@@ -47,7 +47,7 @@ export const createSlug = async (input: {
     return { ok: true, payload };
   } catch (_error) {
     logClientError(_error);
-    return { ok: false, payload: {} as Slug };
+    return { ok: false, payload: {} as unknown as Slug };
   }
 };
 
@@ -63,7 +63,7 @@ export const updateSlug = async (
     return { ok: true, payload };
   } catch (_error) {
     logClientError(_error);
-    return { ok: false, payload: {} as Slug };
+    return { ok: false, payload: {} as unknown as Slug };
   }
 };
 

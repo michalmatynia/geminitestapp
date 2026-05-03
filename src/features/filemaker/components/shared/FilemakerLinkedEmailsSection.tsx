@@ -62,7 +62,7 @@ export function FilemakerLinkedEmailsSection(
             onClick={() => {
               void onExtractEmails();
             }}
-            disabled={!emailExtractionText.trim() || isSaving}
+            disabled={emailExtractionText.trim().length === 0 || isSaving}
           >
             <Plus className='mr-1.5 size-3.5' />
             Extract Emails

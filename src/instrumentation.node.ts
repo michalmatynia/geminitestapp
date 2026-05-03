@@ -111,6 +111,9 @@ export async function registerNodeInstrumentation() {
   const { initializeNodeOtel } = await import('@/shared/lib/observability/otel-node');
   await initializeNodeOtel();
 
+  // Ensure observability-specific log hydrators are registered
+  await import('@/shared/lib/observability/entry-server');
+
   // Register centralized logging handler for shared logger
   const { registerLogHandler } = await import('@/shared/utils/logger');
   const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');

@@ -27,12 +27,13 @@ export function AdminSectionBreadcrumbs({
   parent,
   className,
   baseClassName,
+  'data-testid': testId,
 }: AdminSectionBreadcrumbsProps): React.JSX.Element {
   const items = buildAdminSectionBreadcrumbItems({ section, current, parent });
   const resolvedClassName = baseClassName ? cn(baseClassName, className) : className;
 
   return (
-    <AdminFavoriteBreadcrumbRow>
+    <AdminFavoriteBreadcrumbRow data-testid={testId}>
       <Breadcrumbs items={items} className={resolvedClassName} />
     </AdminFavoriteBreadcrumbRow>
   );

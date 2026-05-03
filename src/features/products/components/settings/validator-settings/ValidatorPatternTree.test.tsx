@@ -216,4 +216,69 @@ describe('ValidatorPatternTree', () => {
     expect(screen.getByTestId('tree-viewport')).toBeInTheDocument();
     expect(screen.queryByText('Semantic History')).not.toBeInTheDocument();
   });
+
+  it('shows a delete sequence action for the selected sequence group', () => {
+    const handleUngroup = vi.fn();
+
+    useMasterFolderTreeShellMock.mockReturnValue({
+      appearance: { rootDropUi: null },
+      controller: { selectedNodeId: 'vseq_group:group-1' },
+      viewport: { scrollToNodeRef: { current: null } },
+    });
+
+    useValidatorSettingsContextMock.mockReturnValue({
+      patterns: [],
+      orderedPatterns: [],
+      sequenceGroups: new Map([
+        ['group-1', { id: 'group-1', label: 'Sequence Alpha', debounceMs: 300, patternIds: [] }],
+      ]),
+      groupDrafts: {},
+      setGroupDrafts: vi.fn(),
+      getGroupDraft: vi.fn(() => ({ label: 'Sequence Alpha', debounceMs: '300' })),
+      handleEditPattern: vi.fn(),
+      handleDuplicatePattern: vi.fn(),
+      setPatternToDelete: vi.fn(),
+      handleTogglePattern: vi.fn(),
+      handleSaveSequenceGroup: vi.fn(),
+      handleUngroup,
+      patternActionsPending: false,
+      reorderPending: false,
+    });
+
+    render(<ValidatorPatternTree />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Sequence' }));
+
+    expect(handleUngroup).toHaveBeenCalledWith('group-1');
+  });
+
+  it('does not render group controls for a stale selected sequence id', () => {
+    useMasterFolderTreeShellMock.mockReturnValue({
+      appearance: { rootDropUi: null },
+      controller: { selectedNodeId: 'vseq_group:missing-group' },
+      viewport: { scrollToNodeRef: { current: null } },
+    });
+
+    useValidatorSettingsContextMock.mockReturnValue({
+      patterns: [],
+      orderedPatterns: [],
+      sequenceGroups: new Map(),
+      groupDrafts: {},
+      setGroupDrafts: vi.fn(),
+      getGroupDraft: vi.fn(() => ({ label: 'Missing', debounceMs: '300' })),
+      handleEditPattern: vi.fn(),
+      handleDuplicatePattern: vi.fn(),
+      setPatternToDelete: vi.fn(),
+      handleTogglePattern: vi.fn(),
+      handleSaveSequenceGroup: vi.fn(),
+      handleUngroup: vi.fn(),
+      patternActionsPending: false,
+      reorderPending: false,
+    });
+
+    render(<ValidatorPatternTree />);
+
+    expect(screen.queryByRole('button', { name: 'Delete Sequence' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save Group' })).not.toBeInTheDocument();
+  });
 });

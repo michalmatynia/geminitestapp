@@ -1,7 +1,7 @@
 import { AdminRouteLoading } from '@/features/admin/public';
-import { JSX, Suspense } from 'react';
+import { type JSX, Suspense } from 'react';
 
-import { AddIntegrationPage } from '@/features/integrations/public';
+import { AddIntegrationPage } from '@/features/integrations/admin.public';
 
 export default function Page(): JSX.Element {
   return (

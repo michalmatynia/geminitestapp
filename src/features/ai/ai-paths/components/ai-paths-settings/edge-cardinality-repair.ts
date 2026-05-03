@@ -1,5 +1,5 @@
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
-import { getNodeInputPortCardinality } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import { getNodeInputPortCardinality } from '@/shared/lib/ai-paths/core/utils';
 
 export type SingleCardinalityEdgeRepairResult = {
   edges: Edge[];

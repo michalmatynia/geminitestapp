@@ -13,6 +13,7 @@ describe('folder-tree-profiles-v2', () => {
   it('exposes the unified folder tree instances', () => {
     expect(Array.from(folderTreeInstanceValues)).toEqual([
       'notes',
+      'ai_paths',
       'image_studio',
       'product_categories',
       'cms_page_builder',

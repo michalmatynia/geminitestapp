@@ -55,6 +55,13 @@ describe('mongo product repository mappers shared-lib coverage', () => {
     expect(result.description).toEqual({ en: 'Desc EN', pl: 'Desc PL', de: null });
     expect(result.importSource).toBe('base');
     expect(result.catalogId).toBe('catalog-mentios');
+    expect(result.catalogs).toEqual([
+      {
+        productId: 'product-1',
+        catalogId: 'catalog-mentios',
+        assignedAt: '2026-01-02T00:00:00.000Z',
+      },
+    ]);
     expect(result.categoryId).toBe('category-1');
     expect(result.parameters).toEqual([
       {
@@ -74,6 +81,7 @@ describe('mongo product repository mappers shared-lib coverage', () => {
       catalogId: 'catalog-1',
       published: true,
       categoryId: 'category-1',
+      studioProjectId: ' studio-1 ',
       category: {
         id: 'category-1',
         name_en: 'Keychains',
@@ -99,6 +107,8 @@ describe('mongo product repository mappers shared-lib coverage', () => {
       updatedAt: '2026-01-02T00:00:00.000Z',
     });
     expect(base.category).toEqual(response.category);
+    expect(response.studioProjectId).toBe('studio-1');
+    expect(base.studioProjectId).toBe('studio-1');
   });
 
   it('maps canonical tags, producers, note ids, and default images through toProductBase', () => {
@@ -110,6 +120,10 @@ describe('mongo product repository mappers shared-lib coverage', () => {
       updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       catalogId: 'catalog-1',
       published: true,
+      notes: {
+        text: 'Internal note',
+        color: '#fde68a',
+      },
       noteIds: ['note-1', 'note-2'],
       tags: [
         {
@@ -130,6 +144,10 @@ describe('mongo product repository mappers shared-lib coverage', () => {
     } as ProductDocument);
 
     expect(result.noteIds).toEqual(['note-1', 'note-2']);
+    expect(result.notes).toEqual({
+      text: 'Internal note',
+      color: '#fde68a',
+    });
     expect(result.importSource).toBe('base');
     expect(result.images).toEqual([]);
     expect(result.tags).toEqual([
@@ -148,6 +166,75 @@ describe('mongo product repository mappers shared-lib coverage', () => {
         producer: { id: 'producer-1', name: 'Acme' },
       },
     ]);
+  });
+
+  it('normalizes marketplace content overrides on response and base product mappings', () => {
+    const doc = asProductDocument({
+      _id: 'product-copy-1',
+      id: 'product-copy-1',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      published: true,
+      marketplaceContentOverrides: [
+        {
+          integrationIds: [' integration-tradera ', 'integration-vinted'],
+          title: ' Alternate title ',
+          description: ' Alternate description ',
+        },
+        {
+          integrationIds: [' integration-ebay '],
+          title: '   ',
+          description: null,
+        },
+        {
+          integrationIds: [],
+          title: null,
+          description: null,
+        },
+      ],
+    });
+
+    expect(toProductResponse(doc).marketplaceContentOverrides).toEqual([
+      {
+        integrationIds: ['integration-tradera', 'integration-vinted'],
+        title: 'Alternate title',
+        description: 'Alternate description',
+      },
+      {
+        integrationIds: ['integration-ebay'],
+        title: null,
+        description: null,
+      },
+    ]);
+    expect(toProductBase(doc).marketplaceContentOverrides).toEqual([
+      {
+        integrationIds: ['integration-tradera', 'integration-vinted'],
+        title: 'Alternate title',
+        description: 'Alternate description',
+      },
+      {
+        integrationIds: ['integration-ebay'],
+        title: null,
+        description: null,
+      },
+    ]);
+  });
+
+  it('normalizes legacy object-backed stock payloads on response and base product mappings', () => {
+    const doc = asProductDocument({
+      _id: 'product-stock-legacy-1',
+      id: 'product-stock-legacy-1',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      name_en: 'Keychain',
+      stock: { warehouse_a: '2', warehouse_b: 3 },
+      published: true,
+    });
+
+    expect(toProductResponse(doc).stock).toBe(5);
+    expect(toProductBase(doc).stock).toBe(5);
   });
 
   it('reconstructs legacy producer references in both response and base mappers', () => {

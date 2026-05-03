@@ -3,7 +3,7 @@ import React from 'react';
 import type { ThemeSettings, ColorScheme } from '@/shared/contracts/cms-theme';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
-import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
+import type { SettingsPanelField, SettingsFieldRenderProps } from '@/shared/contracts/ui/settings';
 
 const THEME_ANIMATION_EASING_OPTIONS = [
   { label: 'Ease out', value: 'ease-out' },
@@ -736,7 +736,7 @@ export const getFieldsForSection = (
           type: 'custom',
           helperText:
             'Default uses the darker public palette. Dark applies the global dark storefront palette.',
-          render: ({ value, onChange, disabled }: { value: any; onChange: any; disabled?: boolean }) =>
+          render: ({ value, onChange, disabled }: SettingsFieldRenderProps) =>
             React.createElement(SelectSimple, {
               value: value === true ? 'dark' : 'default',
               onValueChange: (nextValue: string) => onChange(nextValue === 'dark'),

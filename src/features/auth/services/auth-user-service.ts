@@ -9,7 +9,9 @@ import {
   findAuthUserById as repoFindById,
 } from './auth-user-repository';
 
-export const findAuthUserByEmail = async (email: string) => {
+import type { AuthUser } from '@/shared/contracts/auth';
+
+export const findAuthUserByEmail = async (email: string): Promise<AuthUser | null> => {
   try {
     return await repoFindByEmail(email);
   } catch (error) {
@@ -23,7 +25,7 @@ export const findAuthUserByEmail = async (email: string) => {
   }
 };
 
-export const findAuthUserById = cache(async (userId: string) => {
+export const findAuthUserById = cache(async (userId: string): Promise<AuthUser | null> => {
   try {
     return await repoFindById(userId);
   } catch (error) {

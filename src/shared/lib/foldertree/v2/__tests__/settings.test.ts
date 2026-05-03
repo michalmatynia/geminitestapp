@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { canNestTreeNodeV2 } from '@/shared/utils/folder-tree-profiles-v2';
 import {
   parseFolderTreeProfileV2Entry,
   parseFolderTreeUiStateV2Entry,
@@ -55,5 +56,63 @@ describe('folder tree v2 settings', () => {
         })
       ).placeholders.preset
     ).toBe('classic');
+  });
+
+  it('preserves required category nesting for persisted product category profiles', () => {
+    const profile = parseFolderTreeProfileV2Entry(
+      'product_categories',
+      JSON.stringify({
+        nesting: {
+          defaultAllow: false,
+          blockedTargetKinds: ['category'],
+          rules: [
+            {
+              childType: 'folder',
+              childKinds: ['*'],
+              targetType: 'folder',
+              targetKinds: ['*'],
+              allow: false,
+            },
+            {
+              childType: 'folder',
+              childKinds: ['*'],
+              targetType: 'root',
+              targetKinds: ['root'],
+              allow: false,
+            },
+          ],
+        },
+      })
+    );
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'folder',
+        nodeKind: 'category',
+        targetType: 'folder',
+        targetFolderKind: 'category',
+      })
+    ).toBe(true);
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'folder',
+        nodeKind: 'category',
+        targetType: 'root',
+        targetFolderKind: null,
+      })
+    ).toBe(true);
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'file',
+        nodeKind: 'product',
+        targetType: 'folder',
+        targetFolderKind: 'category',
+      })
+    ).toBe(false);
   });
 });

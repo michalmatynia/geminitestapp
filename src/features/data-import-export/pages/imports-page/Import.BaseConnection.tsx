@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
+import { useBaseImportQueueHealth } from '@/shared/lib/jobs/hooks/useJobQueries';
 import { Button, Card } from '@/shared/ui/primitives.public';
-import { FormField, FormSection, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { FormField, FormSection, Hint, RefreshButton, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { UI_GRID_RELAXED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { cn } from '@/shared/utils/ui-utils';
@@ -18,13 +20,13 @@ import {
   IMAGE_MODE_OPTIONS,
   IMPORT_MODE_OPTIONS,
   LIMIT_OPTIONS,
-  NO_CATALOG_OPTION,
   NO_TEMPLATE_OPTION,
   isImageMode,
   isImportMode,
 } from './ImportsPage.Constants';
 
 export function ImportBaseConnectionSection(): React.JSX.Element {
+  const baseImportQueueHealthQuery = useBaseImportQueueHealth();
   const {
     inventories,
     isFetchingInventories: loadingInventories,
@@ -32,6 +34,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     loadingCatalogs,
     importTemplates,
     loadingImportTemplates,
+    activeImportRunId,
     isBaseConnected,
     baseConnections,
   } = useImportExportData();
@@ -52,16 +55,22 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     setImportMode,
     importDryRun,
     setImportDryRun,
+    uniqueOnly,
+    setUniqueOnly,
     allowDuplicateSku,
     setAllowDuplicateSku,
+    importDirectTargetType,
+    importDirectTargetValue,
+    saveImportSettings,
+    hasUnsavedImportSettingsChanges,
   } = useImportExportState();
   const {
     handleLoadInventories,
     handleClearInventory,
+    handleClearSavedImportSettings,
+    handleSaveImportSettings,
     savingDefaultConnection,
     handleSaveDefaultBaseConnection,
-    importing,
-    handleImport,
   } = useImportExportActions();
   const baseConnectionOptions = React.useMemo(
     (): Array<LabeledOptionDto<string>> => [
@@ -82,13 +91,11 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     [inventories]
   );
   const catalogOptions = React.useMemo(
-    (): Array<LabeledOptionDto<string>> => [
-      NO_CATALOG_OPTION,
-      ...catalogs.map((cat: CatalogOption) => ({
+    (): Array<LabeledOptionDto<string>> =>
+      catalogs.map((cat: CatalogOption) => ({
         value: cat.id,
         label: `${cat.name}${cat.isDefault ? ' (Default)' : ''}`,
       })),
-    ],
     [catalogs]
   );
   const templateOptions = React.useMemo(
@@ -101,7 +108,52 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     ],
     [importTemplates]
   );
+  const canSaveImportSettings = !saveImportSettings || hasUnsavedImportSettingsChanges;
+  const normalizedDirectTargetValue = importDirectTargetValue.trim();
+  const hasDirectTarget = normalizedDirectTargetValue.length > 0;
+  const directTargetLabel = hasDirectTarget
+    ? importDirectTargetType === 'sku'
+      ? `SKU ${normalizedDirectTargetValue}`
+      : `Base Product ID ${normalizedDirectTargetValue}`
+    : null;
+  const baseImportQueueHealth = baseImportQueueHealthQuery.data ?? null;
+  const baseImportQueue = baseImportQueueHealth?.queues.baseImport ?? null;
+  const baseImportRuntimeMode = baseImportQueueHealthQuery.isLoading
+    ? 'Scanning...'
+    : (baseImportQueueHealth?.mode ?? 'Unknown');
+  const baseImportWorkerStatus = baseImportQueueHealthQuery.isLoading
+    ? 'Checking'
+    : baseImportQueueHealth?.mode === 'inline'
+      ? 'Inline'
+      : baseImportQueue?.running
+        ? 'Running'
+        : 'Offline';
+  const runtimeQueueWarning = React.useMemo(() => {
+    if (baseImportQueueHealthQuery.isLoading) return null;
 
+    if (baseImportQueueHealth?.mode === 'inline') {
+      return {
+        title: 'Runtime queue is in inline fallback mode',
+        message:
+          'New imports will run inline and will not appear as BullMQ runtime jobs until Redis queueing is available again.',
+      };
+    }
+
+    if (baseImportQueueHealth?.redisAvailable && !baseImportQueue?.running) {
+      return {
+        title: 'Base import worker is offline',
+        message:
+          'Redis is available, but the base-import worker is not running. New imports may queue without being processed until the worker is restored.',
+      };
+    }
+
+    return null;
+  }, [
+    baseImportQueue?.running,
+    baseImportQueueHealth?.mode,
+    baseImportQueueHealth?.redisAvailable,
+    baseImportQueueHealthQuery.isLoading,
+  ]);
   return (
     <FormSection
       title='Base.com Connection'
@@ -214,14 +266,20 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
         </div>
 
         <div className={cn(UI_GRID_ROOMY_CLASSNAME, 'md:grid-cols-2')}>
-          <FormField label='Catalog' description='Optional catalog override for import.'>
+          <FormField label='Catalog' description='Required target catalog for imported products.'>
             <SelectSimple
               size='sm'
               value={catalogId}
-              onValueChange={(v: string): void => setCatalogId(v === '__none__' ? '' : v)}
+              onValueChange={setCatalogId}
               options={catalogOptions}
-              disabled={loadingCatalogs}
-              placeholder={loadingCatalogs ? 'Loading catalogs...' : 'Select catalog'}
+              disabled={loadingCatalogs || catalogOptions.length === 0}
+              placeholder={
+                loadingCatalogs
+                  ? 'Loading catalogs...'
+                  : catalogOptions.length === 0
+                    ? 'No catalogs available'
+                    : 'Select catalog'
+              }
             />
           </FormField>
           <FormField label='Import template' description='Optional mapping template for import.'>
@@ -239,7 +297,11 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
         <div className={cn(UI_GRID_RELAXED_CLASSNAME, 'md:grid-cols-2')}>
           <FormSection
             title='Import Mode'
-            description='Choose how Base products should be matched.'
+            description={
+              hasDirectTarget
+                ? `Exact target ${directTargetLabel} is active. This run will always create a new product with a Base.com connection.`
+                : 'Choose how Base products should be matched.'
+            }
             className='p-4'
           >
             <SelectSimple
@@ -251,9 +313,13 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 }
               }}
               options={IMPORT_MODE_OPTIONS}
+              disabled={hasDirectTarget}
+              ariaLabel='Import mode'
             />
             <Hint className='mt-2'>
-              Upsert by Base ID will update existing products tied to a Base.com product id.
+              {hasDirectTarget
+                ? 'Exact target imports bypass upsert matching and always create a new product with its own Base.com connection.'
+                : 'Upsert by Base ID will update existing products tied to a Base.com product id.'}
             </Hint>
           </FormSection>
           <FormSection
@@ -278,25 +344,157 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
         </div>
 
         <Card className='border-border/60 bg-card/40 p-4'>
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-start justify-between gap-3'>
             <div>
               <h3 className='text-sm font-semibold text-white'>Import Options</h3>
               <p className='text-xs text-gray-500'>
                 Control execution behavior for this import run.
               </p>
+              <p className='mt-2 text-xs text-gray-400'>
+                {saveImportSettings
+                  ? hasUnsavedImportSettingsChanges
+                    ? 'Saved import settings exist. You have unsaved changes.'
+                    : 'Saved import settings will be restored on the next reload in this browser.'
+                  : 'No saved import settings yet. Use Save Import Settings to retain this page configuration after reloads.'}
+              </p>
             </div>
-            <Button
-              size='sm'
-              onClick={(): void => {
-                void handleImport();
-              }}
-              loading={importing}
-              loadingText='Importing...'
+            <div className='ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:self-start'>
+              <Button
+                type='button'
+                size='sm'
+                variant={canSaveImportSettings ? 'success' : 'outline'}
+                onClick={(): void => {
+                  void handleSaveImportSettings();
+                }}
+                disabled={!canSaveImportSettings}
+                className={cn(
+                  canSaveImportSettings &&
+                    'border-emerald-400/40 bg-emerald-500/15 text-emerald-300 shadow-[0_0_0_1px_rgba(16,185,129,0.24),0_0_28px_rgba(16,185,129,0.18)] transition-all duration-200 hover:bg-emerald-500/25 hover:text-emerald-200 hover:shadow-[0_0_0_1px_rgba(16,185,129,0.32),0_0_34px_rgba(16,185,129,0.24)]'
+                )}
+              >
+                Save Import Settings
+              </Button>
+              <Button
+                type='button'
+                size='sm'
+                variant='ghost'
+                onClick={(): void => {
+                  void handleClearSavedImportSettings();
+                }}
+                disabled={!saveImportSettings}
+              >
+                Clear Saved
+              </Button>
+            </div>
+          </div>
+          {runtimeQueueWarning ? (
+            <Card variant='warning' padding='sm' className='mt-4'>
+              <p className='text-xs font-semibold uppercase tracking-wider text-amber-200'>
+                {runtimeQueueWarning.title}
+              </p>
+              <p className='mt-1 text-xs text-amber-100/90'>{runtimeQueueWarning.message}</p>
+            </Card>
+          ) : null}
+          <div className='mt-4 grid gap-3 md:grid-cols-3'>
+            <FormSection
+              title='Runtime Queue'
+              variant='subtle-compact'
+              className='p-3'
             >
-              Run import
-            </Button>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <Hint size='xxs' uppercase className='font-bold text-gray-500'>
+                  Delivery
+                </Hint>
+                <StatusBadge
+                  status={baseImportQueueHealth?.redisAvailable ? 'Redis Up' : 'No Redis'}
+                  variant={baseImportQueueHealth?.redisAvailable ? 'success' : 'warning'}
+                  className='text-[9px]'
+                />
+              </div>
+              <div className='mt-2 text-xs font-medium text-gray-300'>{baseImportRuntimeMode}</div>
+              <Hint className='mt-2 text-[11px] text-gray-500'>
+                Base imports run on the separate <code>base-import</code> runtime queue.
+              </Hint>
+              <div className='mt-3 flex flex-wrap items-center gap-2'>
+                <RefreshButton
+                  onRefresh={(): void => {
+                    void baseImportQueueHealthQuery.refetch();
+                  }}
+                  isRefreshing={Boolean(baseImportQueueHealthQuery.isFetching)}
+                  label='Refresh'
+                  size='xs'
+                  variant='ghost'
+                />
+                <Link
+                  href='/api/v2/integrations/queues/base-import'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  <Button variant='outline' size='xs'>
+                    Inspect runtime
+                  </Button>
+                </Link>
+                <Link
+                  href={
+                    activeImportRunId
+                      ? `/admin/ai-paths/queue?tab=product-imports&query=${encodeURIComponent(activeImportRunId)}`
+                      : '/admin/ai-paths/queue?tab=product-imports'
+                  }
+                >
+                  <Button variant='outline' size='xs'>
+                    View Import Jobs
+                  </Button>
+                </Link>
+              </div>
+            </FormSection>
+            <FormSection title='Worker Status' variant='subtle-compact' className='p-3'>
+              <div className='flex items-center justify-between'>
+                <Hint size='xxs' uppercase className='font-bold text-gray-500'>
+                  Service
+                </Hint>
+                <StatusBadge
+                  status={baseImportWorkerStatus}
+                  variant={
+                    baseImportWorkerStatus === 'Running'
+                      ? 'success'
+                      : baseImportWorkerStatus === 'Inline'
+                        ? 'warning'
+                        : 'error'
+                  }
+                  className='text-[9px]'
+                />
+              </div>
+              <div className='mt-2 text-xs text-gray-400'>
+                Waiting {baseImportQueue?.waitingCount ?? 0} | Active {baseImportQueue?.activeCount ?? 0}
+              </div>
+            </FormSection>
+            <FormSection title='Failures' variant='subtle-compact' className='p-3'>
+              <div className='flex items-center justify-between'>
+                <Hint size='xxs' uppercase className='font-bold text-gray-500'>
+                  Queue state
+                </Hint>
+                <div className='text-xs font-medium text-rose-300'>
+                  {baseImportQueue?.failedCount ?? 0} failed
+                </div>
+              </div>
+              <div className='mt-2 text-xs text-gray-400'>
+                Completed {baseImportQueue?.completedCount ?? 0}
+              </div>
+            </FormSection>
           </div>
           <div className='mt-3 space-y-2'>
+            <ToggleRow
+              label='Unique products only'
+              description='Apply unique-only filtering to both the import list preview and the import run.'
+              checked={uniqueOnly}
+              onCheckedChange={setUniqueOnly}
+              disabled={hasDirectTarget}
+              title={
+                hasDirectTarget
+                  ? 'Exact target imports ignore unique-only filtering.'
+                  : undefined
+              }
+            />
             <ToggleRow
               label='Dry run (do not write to database)'
               description='Fetch and validate import data without saving.'
@@ -305,9 +503,19 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
             />
             <ToggleRow
               label='Allow duplicate SKUs'
-              description='If enabled, duplicates are allowed to import.'
+              description={
+                hasDirectTarget
+                  ? 'Exact target imports already create a new product and generate a unique SKU if needed.'
+                  : 'If enabled, duplicates are allowed to import.'
+              }
               checked={allowDuplicateSku}
               onCheckedChange={setAllowDuplicateSku}
+              disabled={hasDirectTarget}
+              title={
+                hasDirectTarget
+                  ? 'Exact target imports ignore the duplicate-SKU toggle.'
+                  : undefined
+              }
             />
           </div>
         </Card>

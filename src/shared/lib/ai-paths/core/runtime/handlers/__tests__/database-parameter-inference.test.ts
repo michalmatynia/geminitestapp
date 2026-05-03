@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyParameterInferenceGuard,
   mergeParameterInferenceUpdates,
-  mergeTranslatedParameterUpdates,
+  mergeLocalizedParameterUpdates,
   materializeParameterInferenceUpdates,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference';
 
@@ -317,9 +317,9 @@ describe('applyParameterInferenceGuard', () => {
   });
 });
 
-describe('mergeTranslatedParameterUpdates', () => {
+describe('mergeLocalizedParameterUpdates', () => {
   it('preserves existing parameter metadata while merging Polish translations by parameterId', () => {
-    const result = mergeTranslatedParameterUpdates({
+    const result = mergeLocalizedParameterUpdates({
       targetPath: 'parameters',
       updates: {
         parameters: [
@@ -371,7 +371,7 @@ describe('mergeTranslatedParameterUpdates', () => {
   });
 
   it('skips parameter writes when the translation payload does not match existing parameter rows', () => {
-    const result = mergeTranslatedParameterUpdates({
+    const result = mergeLocalizedParameterUpdates({
       targetPath: 'parameters',
       updates: {
         parameters: [{ parameterId: 'unknown', value: 'Nowa wartość' }],
@@ -399,7 +399,7 @@ describe('mergeTranslatedParameterUpdates', () => {
   });
 
   it('skips translation parameter writes when full parameter coverage is required and payload is incomplete', () => {
-    const result = mergeTranslatedParameterUpdates({
+    const result = mergeLocalizedParameterUpdates({
       targetPath: 'parameters',
       updates: {
         parameters: [{ parameterId: 'color', value: 'Niebieski' }],

@@ -23,7 +23,8 @@ const { withKangurClientErrorSyncMock } = vi.hoisted(() => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientErrorSync: withKangurClientErrorSyncMock,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 let storageModule: typeof import('./KangurAiTutorWidget.storage');
 

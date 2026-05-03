@@ -5,7 +5,7 @@ import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
-export function LibraryStatusSidebar() {
+export function LibraryStatusSidebar(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const state = useTestSuitesManager();
   const logic = useTestSuitesManagerLogic(settingsStore);

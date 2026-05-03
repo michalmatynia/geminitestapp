@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getKangurObservabilitySummary } from '@/features/kangur/observability/summary';
@@ -15,7 +15,7 @@ export const querySchema = z.object({
   ),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
 
   const parsedQuery = querySchema.safeParse(_ctx.query ?? {});

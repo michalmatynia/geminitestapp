@@ -19,7 +19,43 @@ interface IntegrationSelectorProps {
   className?: string;
 }
 
-export function IntegrationSelector(props: IntegrationSelectorProps) {
+type IntegrationSelectorFieldProps = {
+  label: string;
+  value: string;
+  onValueChange: (id: string) => void;
+  disabled: boolean;
+  options: ReadonlyArray<LabeledOptionDto<string>>;
+  placeholder: string;
+  ariaLabel: string;
+};
+
+function IntegrationSelectorField({
+  label,
+  value,
+  onValueChange,
+  disabled,
+  options,
+  placeholder,
+  ariaLabel,
+}: IntegrationSelectorFieldProps): React.JSX.Element {
+  return (
+    <div>
+      <Label className='mb-2 block text-sm font-medium text-gray-300'>{label}</Label>
+      <SelectSimple
+        size='sm'
+        value={value}
+        onValueChange={onValueChange}
+        disabled={disabled}
+        options={options}
+        placeholder={placeholder}
+        ariaLabel={ariaLabel}
+        title={ariaLabel}
+      />
+    </div>
+  );
+}
+
+export function IntegrationSelector(props: IntegrationSelectorProps): React.JSX.Element {
   const {
     integrations,
     selectedIntegrationId,
@@ -30,6 +66,7 @@ export function IntegrationSelector(props: IntegrationSelectorProps) {
     loading = false,
     className = 'space-y-4',
   } = props;
+  const isDisabled = disabled || loading;
 
   const selectedIntegration = integrations.find((i) => i.id === selectedIntegrationId);
   const integrationOptions = useMemo<Array<LabeledOptionDto<string>>>(
@@ -55,32 +92,26 @@ export function IntegrationSelector(props: IntegrationSelectorProps) {
 
   return (
     <div className={className}>
-      <div>
-        <Label className='mb-2 block text-sm font-medium text-gray-300'>Integration</Label>
-        <SelectSimple
-          size='sm'
-          value={selectedIntegrationId}
-          onValueChange={onIntegrationChange}
-          disabled={disabled || loading}
-          options={integrationOptions}
-          placeholder='Select an integration...'
-         ariaLabel='Select an integration...' title='Select an integration...'/>
-      </div>
+      <IntegrationSelectorField
+        label='Integration'
+        value={selectedIntegrationId}
+        onValueChange={onIntegrationChange}
+        disabled={isDisabled}
+        options={integrationOptions}
+        placeholder='Select an integration...'
+        ariaLabel='Select an integration...'
+      />
 
       {selectedIntegration && selectedIntegration.connections.length > 0 && (
-        <div>
-          <Label className='mb-2 block text-sm font-medium text-gray-300'>
-            Account / Connection
-          </Label>
-          <SelectSimple
-            size='sm'
-            value={selectedConnectionId}
-            onValueChange={onConnectionChange}
-            disabled={disabled || loading}
-            options={connectionOptions}
-            placeholder='Select an account...'
-           ariaLabel='Select an account...' title='Select an account...'/>
-        </div>
+        <IntegrationSelectorField
+          label='Account / Connection'
+          value={selectedConnectionId}
+          onValueChange={onConnectionChange}
+          disabled={isDisabled}
+          options={connectionOptions}
+          placeholder='Select an account...'
+          ariaLabel='Select an account...'
+        />
       )}
     </div>
   );

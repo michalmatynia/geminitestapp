@@ -17,7 +17,7 @@ const readPersistedKangurMobileAuthUser = (
   storage: KangurClientStorageAdapter,
 ): KangurUser | null => {
   const rawUser = storage.getItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY)?.trim() ?? '';
-  if (!rawUser) {
+  if (rawUser === '') {
     return null;
   }
 
@@ -64,7 +64,7 @@ export const persistResolvedKangurMobileLearnerSession = (
   }
 
   storage.setItem(KANGUR_MOBILE_AUTH_USER_STORAGE_KEY, JSON.stringify(session.user));
-  if (session.user.activeLearner?.id) {
+  if (typeof session.user.activeLearner?.id === 'string') {
     storage.setItem(
       KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY,
       session.user.activeLearner.id,

@@ -26,7 +26,7 @@ vi.mock('@/features/products/server', async () => {
   };
 });
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const makeRequest = (body: Record<string, unknown>): NextRequest =>
   new NextRequest('http://localhost/api/v2/products/ai-jobs/bulk', {
@@ -50,7 +50,7 @@ describe('products ai jobs bulk graph_model payload validation', () => {
   });
 
   it('preserves graph.requestedModelId for bulk graph_model jobs', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         type: 'graph_model',
         config: {
@@ -81,7 +81,7 @@ describe('products ai jobs bulk graph_model payload validation', () => {
   });
 
   it('rejects invalid graph_model config payload shapes', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         type: 'graph_model',
         config: {
@@ -100,7 +100,7 @@ describe('products ai jobs bulk graph_model payload validation', () => {
   });
 
   it('rejects graph_model bulk requests without source', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         type: 'graph_model',
         config: {
@@ -120,7 +120,7 @@ describe('products ai jobs bulk graph_model payload validation', () => {
   });
 
   it('rejects graph_model bulk requests without config', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         type: 'graph_model',
       }),
@@ -133,7 +133,7 @@ describe('products ai jobs bulk graph_model payload validation', () => {
   });
 
   it('rejects graph_model bulk requests with a blank prompt', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         type: 'graph_model',
         config: {
@@ -154,7 +154,7 @@ describe('products ai jobs bulk graph_model payload validation', () => {
   });
 
   it('rejects ai_paths graph_model bulk requests without graph node context', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         type: 'graph_model',
         config: {
@@ -171,7 +171,7 @@ describe('products ai jobs bulk graph_model payload validation', () => {
   });
 
   it('rejects ai_paths graph_model bulk requests without graph.nodeId even when source is explicit', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         type: 'graph_model',
         config: {

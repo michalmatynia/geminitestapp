@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DELETE_handler, GET_handler } from './handler';
+import { deleteHandler, getHandler } from './handler';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 
 vi.mock('@/features/ai/chatbot/server', () => ({
@@ -39,13 +39,13 @@ describe('chatbot sessions handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/chatbot/sessions'),
       {
         query: {
           scope: 'ids',
         },
-      } as Parameters<typeof GET_handler>[1]
+      } as Parameters<typeof getHandler>[1]
     );
 
     await expect(response.json()).resolves.toEqual({
@@ -56,7 +56,7 @@ describe('chatbot sessions handler', () => {
   it('deletes multiple sessions using the shared delete-body DTO', async () => {
     vi.mocked(chatbotSessionRepository.deleteMany).mockResolvedValue(2);
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/chatbot/sessions', {
         method: 'DELETE',
       }),
@@ -64,7 +64,7 @@ describe('chatbot sessions handler', () => {
         body: {
           sessionIds: ['session-1', 'session-2'],
         },
-      } as Parameters<typeof DELETE_handler>[1]
+      } as Parameters<typeof deleteHandler>[1]
     );
 
     expect(chatbotSessionRepository.deleteMany).toHaveBeenCalledWith(['session-1', 'session-2']);
@@ -77,7 +77,7 @@ describe('chatbot sessions handler', () => {
   it('deletes a single session using the shared delete-body DTO', async () => {
     vi.mocked(chatbotSessionRepository.delete).mockResolvedValue(true);
 
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/chatbot/sessions', {
         method: 'DELETE',
       }),
@@ -85,7 +85,7 @@ describe('chatbot sessions handler', () => {
         body: {
           sessionId: 'session-1',
         },
-      } as Parameters<typeof DELETE_handler>[1]
+      } as Parameters<typeof deleteHandler>[1]
     );
 
     expect(chatbotSessionRepository.delete).toHaveBeenCalledWith('session-1');

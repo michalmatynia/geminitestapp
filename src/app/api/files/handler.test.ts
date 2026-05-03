@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 import { imageFileService } from '@/features/files/server';
 import { getProductRepository } from '@/features/products/server';
 
@@ -14,7 +14,7 @@ vi.mock('@/features/products/server', () => ({
   getProductRepository: vi.fn(),
 }));
 
-describe('files GET_handler', () => {
+describe('files getHandler', () => {
   const mockContext = { source: 'test', query: {} } as any;
 
   beforeEach(() => {
@@ -26,7 +26,7 @@ describe('files GET_handler', () => {
     vi.mocked(imageFileService.listImageFiles).mockResolvedValue(mockFiles as any);
 
     const req = new NextRequest('http://localhost/api/files');
-    const response = await GET_handler(req, mockContext);
+    const response = await getHandler(req, mockContext);
     const data = await response.json();
 
     expect(data).toHaveLength(1);
@@ -50,7 +50,7 @@ describe('files GET_handler', () => {
 
     const contextWithQuery = { ...mockContext, query: { productId: 'p1' } };
     const req = new NextRequest('http://localhost/api/files?productId=p1');
-    const response = await GET_handler(req, contextWithQuery);
+    const response = await getHandler(req, contextWithQuery);
     const data = await response.json();
 
     expect(data).toHaveLength(1);

@@ -2,14 +2,14 @@ export const runtime = 'nodejs';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { DELETE_handler, PATCH_handler, deleteQuerySchema } from './handler';
+import { deleteHandler, patchHandler, deleteQuerySchema } from './handler';
 
-export const PATCH = apiHandlerWithParams<{ slotId: string }>(PATCH_handler, {
+export const PATCH = apiHandlerWithParams<{ slotId: string }>(patchHandler, {
   source: 'image-studio.slots.[slotId].PATCH',
   requireAuth: true,
 });
 
-export const DELETE = apiHandlerWithParams<{ slotId: string }>(DELETE_handler, {
+export const DELETE = apiHandlerWithParams<{ slotId: string }>(deleteHandler, {
   source: 'image-studio.slots.[slotId].DELETE',
   querySchema: deleteQuerySchema,
   requireAuth: true,

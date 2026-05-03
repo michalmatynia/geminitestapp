@@ -1,4 +1,8 @@
 type ProductTriggerPublicationStatus = 'published' | 'draft';
+type ProductTriggerStatusFields = Partial<{
+  status: string;
+  publicationStatus: ProductTriggerPublicationStatus;
+}>;
 
 const normalizeTriggerStatusValue = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
@@ -10,29 +14,32 @@ const resolveTriggerPublicationStatus = (
   return value ? 'published' : 'draft';
 };
 
-const applyTriggerPublicationStatusIfMissing = (
-  entityJson: Record<string, unknown>,
-  publicationStatus: ProductTriggerPublicationStatus
-): void => {
-  if (typeof entityJson['publicationStatus'] !== 'string') {
-    entityJson['publicationStatus'] = publicationStatus;
-  }
-};
+const shouldApplyTriggerPublicationStatus = (entityJson: Record<string, unknown>): boolean =>
+  typeof entityJson['publicationStatus'] !== 'string';
 
-export const normalizeProductTriggerStatus = (entityJson: Record<string, unknown>): void => {
+export const buildNormalizedProductTriggerStatusFields = (
+  entityJson: Record<string, unknown>
+): ProductTriggerStatusFields => {
   const existingStatus = normalizeTriggerStatusValue(entityJson['status']);
   const derivedPublicationStatus = resolveTriggerPublicationStatus(entityJson['published']);
+  const fields: ProductTriggerStatusFields = {};
 
-  if (existingStatus) {
-    entityJson['status'] = existingStatus;
-    if (derivedPublicationStatus) {
-      applyTriggerPublicationStatusIfMissing(entityJson, derivedPublicationStatus);
+  if (existingStatus !== '') {
+    fields.status = existingStatus;
+    if (
+      derivedPublicationStatus !== null &&
+      shouldApplyTriggerPublicationStatus(entityJson)
+    ) {
+      fields.publicationStatus = derivedPublicationStatus;
     }
-    return;
+    return fields;
   }
 
-  if (!derivedPublicationStatus) return;
+  if (derivedPublicationStatus === null) return fields;
 
-  entityJson['status'] = derivedPublicationStatus;
-  applyTriggerPublicationStatusIfMissing(entityJson, derivedPublicationStatus);
+  fields.status = derivedPublicationStatus;
+  if (shouldApplyTriggerPublicationStatus(entityJson)) {
+    fields.publicationStatus = derivedPublicationStatus;
+  }
+  return fields;
 };

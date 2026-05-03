@@ -67,8 +67,7 @@ At runtime AI Paths use:
 - compile/validation passes before execution
 - typed or convention-based input/output ports
 - run records and node event records
-- queue-aware orchestration with cancellation/retry handling
-- explicit lease-blocked and handoff-ready execution states for contested runs
+- queue-aware orchestration with cancellation and forward-only failure handling
 - runtime analytics and observability hooks
 
 The exact graph contract is documented in the semantic grammar docs under
@@ -103,11 +102,10 @@ other record scope depending on where the button is mounted.
 
 The current operator API surface also includes:
 
-- run resume and replay: `src/app/api/ai-paths/runs/[runId]/resume/`
-- run handoff: `src/app/api/ai-paths/runs/[runId]/handoff/`
+- run cancel: `src/app/api/ai-paths/runs/[runId]/cancel/`
 - queue status: `src/app/api/ai-paths/runs/queue-status/`
 - runtime analytics summary and insights: `src/app/api/ai-paths/runtime-analytics/`
-- portable-engine schema, remediation, and trend snapshots: `src/app/api/ai-paths/portable-engine/`
+- portable-engine schema and trend snapshots: `src/app/api/ai-paths/portable-engine/`
 
 ## Starter Workflow Registry
 
@@ -137,6 +135,7 @@ used only for generic starter maintenance/migration, not runtime execution.
 - queued execution is preferred when Redis is available
 - some flows can fall back to inline execution when Redis is absent
 - observability and run inspection are first-class parts of the system
+- server-side runs are forward-only; failed work should be restarted as a new run
 - security-sensitive nodes rely on central policy helpers such as outbound URL
   restrictions and provider gating
 
@@ -176,5 +175,4 @@ npm run ai-paths:check:canonical
 - `docs/ai-paths/reference.md`
 - `docs/ai-paths/semantic-grammar/README.md`
 - `docs/ai-paths/playwright-node.md`
-- `docs/platform/ai-paths-resume-vs-handoff.md`
 - `docs/platform/architecture-guardrails.md`

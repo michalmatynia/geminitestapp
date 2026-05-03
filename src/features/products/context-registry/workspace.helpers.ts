@@ -1,3 +1,6 @@
+// Workspace helpers: string and title helpers used across the product editor
+// context workspace. Keep these small, deterministic, and free of runtime
+// side-effects so they can be used in server and client contexts.
 import type {
   ProductStudioVariantsResponse,
 } from '@/features/products/context/ProductStudioContext.types';
@@ -8,7 +11,7 @@ const normalizeTrimmedText = (value: string | null | undefined): string | null =
     return null;
   }
   const normalized = value.trim();
-  return normalized ? normalized : null;
+  return normalized === '' ? null : normalized;
 };
 
 const truncateText = (value: string, maxLength: number): string =>
@@ -22,7 +25,7 @@ const pickFirstTrimmedText = (
 ): string | null => {
   for (const value of values) {
     const normalized = trimText(value, maxLength);
-    if (normalized) {
+    if (normalized !== null) {
       return normalized;
     }
   }
@@ -31,7 +34,7 @@ const pickFirstTrimmedText = (
 
 export const trimText = (value: string | null | undefined, maxLength: number): string | null => {
   const normalized = normalizeTrimmedText(value);
-  return normalized ? truncateText(normalized, maxLength) : null;
+  return normalized === null ? null : truncateText(normalized, maxLength);
 };
 
 export const pickProductTitle = (product: ProductWithImages): string =>

@@ -2,11 +2,19 @@
 
 import { PlusIcon, SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useEffect } from 'react';
 
 import { useIntegrationList } from '@/features/integrations/hooks/useIntegrationList';
-import { Button, Badge, Card } from '@/shared/ui/primitives.public';
+import {
+  Badge,
+  Button,
+  Card,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/shared/ui/primitives.public';
 import { ListPanel } from '@/shared/ui/navigation-and-layout.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 
@@ -15,22 +23,97 @@ export function IntegrationList(): React.JSX.Element {
   const {
     handleIntegrationClick,
     integrationSlugs,
-    hasIntegrations,
     traderaDefinition,
-    traderaApiDefinition,
     allegroDefinition,
+    vintedDefinition,
+    scanner1688Definition,
     baselinkerDefinition,
+    scrapedSourceDefinition,
     linkedinDefinition,
+    pracujDefinition,
   } = useIntegrationList();
 
   useEffect(() => {
     router.prefetch('/admin/integrations/add');
   }, [router]);
 
+  const marketplaceNodes = [
+    {
+      slug: 'tradera',
+      label: 'Tradera',
+      type: 'Browser',
+      variant: 'warning' as const,
+      color: 'info' as const,
+      definition: traderaDefinition,
+    },
+    {
+      slug: 'vinted',
+      label: 'Vinted.pl',
+      type: 'Browser',
+      variant: 'warning' as const,
+      color: 'success' as const,
+      definition: vintedDefinition,
+    },
+    {
+      slug: '1688',
+      label: '1688',
+      type: 'Browser',
+      variant: 'warning' as const,
+      color: 'warning' as const,
+      definition: scanner1688Definition,
+    },
+    {
+      slug: 'allegro',
+      label: 'Allegro',
+      type: 'API',
+      variant: 'info' as const,
+      color: 'warning' as const,
+      definition: allegroDefinition,
+    },
+    {
+      slug: 'baselinker',
+      label: 'Baselinker',
+      type: 'Platform',
+      variant: 'processing' as const,
+      color: 'active' as const,
+      definition: baselinkerDefinition,
+    },
+    {
+      slug: 'scraped-source',
+      label: 'Scraped Source',
+      type: 'Source',
+      variant: 'info' as const,
+      color: 'info' as const,
+      definition: scrapedSourceDefinition,
+    },
+    {
+      slug: 'linkedin',
+      label: 'LinkedIn',
+      type: 'Social',
+      variant: 'info' as const,
+      color: 'info' as const,
+      definition: linkedinDefinition,
+    },
+  ];
+
+  const jobSearchPlatforms = [
+    {
+      slug: 'pracuj-pl',
+      label: 'Pracuj.pl',
+      type: 'Browser',
+      definition: pracujDefinition,
+      description:
+        'Connect a reusable Pracuj.pl candidate profile for authenticated job applications.',
+    },
+  ];
+  const hasMarketplaceIntegrations = marketplaceNodes.some((item) =>
+    integrationSlugs.includes(item.slug)
+  );
+
   return (
     <ListPanel
       title='Integrations'
-      description='Visualize and manage marketplace and platform connections.'
+      description='Manage marketplace systems separately from job-search platform profiles.'
       headerActions={
         <Button asChild className='gap-2'>
           <Link href='/admin/integrations/add'>
@@ -40,113 +123,136 @@ export function IntegrationList(): React.JSX.Element {
         </Button>
       }
     >
-      <Card variant='glass' padding='lg' className='relative overflow-hidden'>
-        <div className='absolute -left-20 -top-20 size-64 rounded-full bg-emerald-500/10 blur-3xl' />
-        <div className='absolute -bottom-24 right-10 size-72 rounded-full bg-sky-500/10 blur-3xl' />
-        <div className='absolute -right-16 top-20 size-48 rounded-full bg-purple-500/10 blur-3xl' />
+      <Tabs defaultValue='marketplace-system' className='space-y-4'>
+        <TabsList aria-label='Integration groups'>
+          <TabsTrigger value='marketplace-system'>Marketplace System</TabsTrigger>
+          <TabsTrigger value='job-search-platforms'>Job Search Platforms</TabsTrigger>
+        </TabsList>
 
-        <div className='relative mx-auto flex min-h-[420px] max-w-5xl items-center justify-center'>
-          <div className='relative z-10 flex flex-col items-center gap-6'>
-            <Card
-              variant='subtle'
-              padding='lg'
-              className='border-emerald-400/40 bg-emerald-500/10 text-center shadow-lg rounded-2xl'
-            >
-              <p className='text-xs uppercase tracking-[0.3em] text-emerald-200'>Core</p>
-              <p className='mt-2 text-xl font-semibold text-white'>Stardb Hub</p>
-            </Card>
-            <div className='flex flex-wrap items-center justify-center gap-3'>
-              {[
-                {
-                  slug: 'tradera',
-                  label: 'Tradera',
-                  type: 'Browser',
-                  variant: 'warning' as const,
-                  color: 'info' as const,
-                  definition: traderaDefinition,
-                },
-                {
-                  slug: 'tradera-api',
-                  label: 'Tradera API',
-                  type: 'API',
-                  variant: 'info' as const,
-                  color: 'info' as const,
-                  definition: traderaApiDefinition,
-                },
-                {
-                  slug: 'allegro',
-                  label: 'Allegro',
-                  type: 'API',
-                  variant: 'info' as const,
-                  color: 'warning' as const,
-                  definition: allegroDefinition,
-                },
-                {
-                  slug: 'baselinker',
-                  label: 'Baselinker',
-                  type: 'Platform',
-                  variant: 'processing' as const,
-                  color: 'active' as const,
-                  definition: baselinkerDefinition,
-                },
-                {
-                  slug: 'linkedin',
-                  label: 'LinkedIn',
-                  type: 'Social',
-                  variant: 'info' as const,
-                  color: 'info' as const,
-                  definition: linkedinDefinition,
-                },
-              ].map((item) => {
-                if (!integrationSlugs.includes(item.slug)) return null;
+        <TabsContent value='marketplace-system'>
+          <Card variant='glass' padding='lg' className='relative overflow-hidden'>
+            <div className='absolute -left-20 -top-20 size-64 rounded-full bg-emerald-500/10 blur-3xl' />
+            <div className='absolute -bottom-24 right-10 size-72 rounded-full bg-sky-500/10 blur-3xl' />
+            <div className='absolute -right-16 top-20 size-48 rounded-full bg-purple-500/10 blur-3xl' />
 
-                return (
-                  <Badge
-                    key={item.slug}
-                    variant={item.color}
-                    className='flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-normal'
-                  >
-                    <StatusBadge
-                      status={item.type}
-                      variant={item.variant}
-                      size='sm'
-                      className='h-4 font-bold'
-                    />
-                    <span className='font-medium'>{item.label}</span>
+            <div className='relative mx-auto flex min-h-[420px] max-w-5xl items-center justify-center'>
+              <div className='relative z-10 flex flex-col items-center gap-6'>
+                <Card
+                  variant='subtle'
+                  padding='lg'
+                  className='border-emerald-400/40 bg-emerald-500/10 text-center shadow-lg rounded-2xl'
+                >
+                  <p className='text-xs uppercase tracking-[0.3em] text-emerald-200'>Core</p>
+                  <p className='mt-2 text-xl font-semibold text-white'>Stardb Hub</p>
+                </Card>
+                <div className='flex flex-wrap items-center justify-center gap-3'>
+                  {marketplaceNodes.map((item) => {
+                    if (!integrationSlugs.includes(item.slug)) return null;
+
+                    return (
+                      <Badge
+                        key={item.slug}
+                        variant={item.color}
+                        className='flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-normal'
+                      >
+                        <StatusBadge
+                          status={item.type}
+                          variant={item.variant}
+                          size='sm'
+                          className='h-4 font-bold'
+                        />
+                        <span className='font-medium'>{item.label}</span>
+                        <Button
+                          type='button'
+                          onClick={() => {
+                            if (item.definition) {
+                              void handleIntegrationClick(item.definition);
+                            }
+                          }}
+                          className='h-6 w-6 rounded-full border border-white/20 bg-white/10 p-0 text-white hover:bg-white/20'
+                          aria-label={`Manage ${item.label} settings`}
+                          title={`Manage ${item.label} settings`}
+                        >
+                          <SettingsIcon className='size-3' />
+                        </Button>
+                      </Badge>
+                    );
+                  })}
+                  {!hasMarketplaceIntegrations && (
+                    <div className='text-xs text-gray-500'>
+                      No marketplace integrations added yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className='mt-6 grid gap-3 text-xs text-gray-500 md:grid-cols-3'>
+              <Card variant='subtle-compact' padding='sm' className='text-xs text-muted-foreground'>
+                Connect marketplaces and automate listings.
+              </Card>
+              <Card variant='subtle-compact' padding='sm' className='text-xs text-muted-foreground'>
+                Monitor sync status and data flow.
+              </Card>
+              <Card variant='subtle-compact' padding='sm' className='text-xs text-muted-foreground'>
+                Add new nodes to expand your stack.
+              </Card>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value='job-search-platforms'>
+          <div className='grid gap-3 md:grid-cols-2'>
+            {jobSearchPlatforms.map((platform) => {
+              const configured = integrationSlugs.includes(platform.slug);
+              return (
+                <Card
+                  key={platform.slug}
+                  variant='subtle'
+                  padding='md'
+                  className='border-border bg-card/40'
+                >
+                  <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+                    <div className='space-y-2'>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <h3 className='text-base font-semibold text-white'>{platform.label}</h3>
+                        <StatusBadge
+                          status={platform.type}
+                          variant='warning'
+                          size='sm'
+                          className='font-semibold'
+                        />
+                        <StatusBadge
+                          status={configured ? 'Configured' : 'Not configured'}
+                          variant={configured ? 'success' : 'neutral'}
+                          size='sm'
+                          className='font-semibold'
+                        />
+                      </div>
+                      <p className='max-w-xl text-sm text-muted-foreground'>
+                        {platform.description}
+                      </p>
+                    </div>
                     <Button
                       type='button'
+                      variant='outline'
+                      className='gap-2'
                       onClick={() => {
-                        if (item.definition) {
-                          void handleIntegrationClick(item.definition);
+                        if (platform.definition) {
+                          void handleIntegrationClick(platform.definition);
                         }
                       }}
-                      className='h-6 w-6 rounded-full border border-white/20 bg-white/10 p-0 text-white hover:bg-white/20'
-                      aria-label={`Manage ${item.label} settings`}
-                      title={`Manage ${item.label} settings`}>
-                      <SettingsIcon className='size-3' />
+                    >
+                      <SettingsIcon className='size-4' />
+                      {configured ? 'Manage' : 'Configure'}
                     </Button>
-                  </Badge>
-                );
-              })}
-              {!hasIntegrations && (
-                <div className='text-xs text-gray-500'>No integrations added yet.</div>
-              )}
-            </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-        </div>
-
-        <div className='mt-6 grid gap-3 text-xs text-gray-500 md:grid-cols-3'>
-          <Card variant='subtle-compact' padding='sm' className='text-xs text-muted-foreground'>
-            Connect marketplaces and automate listings.
-          </Card>
-          <Card variant='subtle-compact' padding='sm' className='text-xs text-muted-foreground'>
-            Monitor sync status and data flow.
-          </Card>
-          <Card variant='subtle-compact' padding='sm' className='text-xs text-muted-foreground'>
-            Add new nodes to expand your stack.
-          </Card>
-        </div>
-      </Card>
+        </TabsContent>
+      </Tabs>
     </ListPanel>
   );
 }

@@ -5,6 +5,7 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
@@ -281,10 +282,12 @@ export default function LogicalAnalogiesRelationGame({
       finalizeRound(true);
       return;
     }
-    const timerId = window.setTimeout(() => {
+    const timerId = safeSetTimeout(() => {
       setTimeLeft((prev) => (prev === null ? prev : Math.max(prev - 1, 0)));
     }, 1000);
-    return () => window.clearTimeout(timerId);
+    return () => {
+      safeClearTimeout(timerId);
+    };
   }, [isRushMode, timeLeft, checked, done, finalizeRound]);
 
   const goToNextRound = (): void => {

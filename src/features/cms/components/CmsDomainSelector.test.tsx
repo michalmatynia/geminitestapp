@@ -30,7 +30,7 @@ vi.mock('@/features/cms/hooks/useCmsDomainSelection', () => ({
   useCmsDomainSelection: () => cmsDomainSelectionState.value,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: (props: MockSelectSimpleProps) => {
     latestSelectSimpleProps.current = props;
     return (

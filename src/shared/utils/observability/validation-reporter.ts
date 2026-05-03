@@ -15,8 +15,8 @@ export async function reportValidationError(
     const { logger } = await import('@/shared/utils/logger');
     logger.warn(`[ValidationReporter] ${message}`, {
       ...context,
-      service: context.service || 'validation',
-    } as Record<string, unknown>);
+      service: context.service ?? 'validation',
+    } satisfies Record<string, unknown>);
     return;
   }
 
@@ -39,7 +39,7 @@ export async function reportValidationError(
     logClientCatch(err, {
       source: 'validation-reporter',
       action: 'sendClientValidationReport',
-      service: context.service || 'validation',
+      service: context.service ?? 'validation',
     });
     const { logger } = await import('@/shared/utils/logger');
     logger.error(

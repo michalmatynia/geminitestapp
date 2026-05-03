@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -346,7 +346,7 @@ export const queryTelemetryTestUtils = {
   },
 };
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<NextResponse> {

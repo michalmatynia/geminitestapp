@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import { KANGUR_MUSIC_PIANO_ROLL_WRAPPER_TEST_IDS } from '@/features/kangur/games/music-piano-roll-contract';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
@@ -58,7 +59,7 @@ export default function MusicPianoRollFreePlayGame({
 
   const clearPressedResetTimeout = useCallback((): void => {
     if (pressedResetTimeoutRef.current !== null) {
-      globalThis.clearTimeout(pressedResetTimeoutRef.current);
+      safeClearTimeout(pressedResetTimeoutRef.current);
       pressedResetTimeoutRef.current = null;
     }
   }, []);
@@ -68,7 +69,7 @@ export default function MusicPianoRollFreePlayGame({
       clearPressedResetTimeout();
       setPressedNoteId(noteId);
       setPressedVelocity(velocity);
-      pressedResetTimeoutRef.current = globalThis.setTimeout(() => {
+      pressedResetTimeoutRef.current = safeSetTimeout(() => {
         setPressedNoteId(null);
         setPressedVelocity(null);
         pressedResetTimeoutRef.current = null;

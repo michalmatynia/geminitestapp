@@ -25,6 +25,26 @@ import type {
   FilemakerMailThread,
 } from '../types';
 
+type RecentThreadFilterInput = {
+  recentMailboxFilter?: string | null;
+  recentUnreadOnly?: boolean;
+  recentQuery?: string | null;
+};
+type MailSearchUrlInput = {
+  accountId?: string | null;
+  mailboxPath?: string | null;
+  originPanel?: 'recent' | 'search' | null;
+  recentMailboxFilter?: string | null;
+  recentUnreadOnly?: boolean;
+  recentCampaignId?: string | null;
+  recentRunId?: string | null;
+  recentDeliveryId?: string | null;
+  searchContextAccountId?: string | null;
+  recentQuery?: string | null;
+  searchAccountId?: string | null;
+  searchQuery?: string | null;
+};
+
 const getFilemakerMailFolderIcon = (
   role: FilemakerMailFolderRole
 ): React.ComponentType<{ className?: string }> => {
@@ -40,7 +60,7 @@ const renderFilemakerMailCountBadge = (
   label: string,
   value: number,
   tone: 'default' | 'accent' = 'default'
-) => (
+): React.JSX.Element => (
   <span
     className={cn(
       'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-medium',
@@ -55,24 +75,24 @@ const renderFilemakerMailCountBadge = (
 const formatFilemakerMailThreadParticipantsLabel = (value: unknown): string => {
   if (!Array.isArray(value)) return '';
   return value
-    .map((entry) => {
-      if (!entry || typeof entry !== 'object') return '';
+    .map((entry: unknown): string => {
+      if (entry === null || typeof entry !== 'object') return '';
       const participant = entry as { name?: unknown; address?: unknown };
-      if (typeof participant.name === 'string' && participant.name.trim()) {
+      if (typeof participant.name === 'string' && participant.name.trim() !== '') {
         return participant.name.trim();
       }
-      if (typeof participant.address === 'string' && participant.address.trim()) {
+      if (typeof participant.address === 'string' && participant.address.trim() !== '') {
         return participant.address.trim();
       }
       return '';
     })
-    .filter(Boolean)
+    .filter((s: string): boolean => s !== '')
     .slice(0, 2)
     .join(', ');
 };
 
 const formatFilemakerMailLastSyncedLabel = (value: unknown): string => {
-  if (typeof value !== 'string' || !value.trim()) {
+  if (typeof value !== 'string' || value.trim() === '') {
     return 'Last sync: Never';
   }
   const date = new Date(value);
@@ -85,21 +105,22 @@ const formatFilemakerMailLastSyncedLabel = (value: unknown): string => {
 const toFilemakerAccountStatusToggleDraft = (
   account: FilemakerMailAccount,
   nextStatus: 'active' | 'paused'
-) => ({
+): FilemakerMailAccount => ({
   id: account.id,
   name: account.name,
   emailAddress: account.emailAddress,
+  provider: account.provider,
   status: nextStatus,
   imapHost: account.imapHost,
   imapPort: account.imapPort,
   imapSecure: account.imapSecure,
   imapUser: account.imapUser,
-  imapPassword: '',
+  imapPasswordSettingKey: account.imapPasswordSettingKey,
   smtpHost: account.smtpHost,
   smtpPort: account.smtpPort,
   smtpSecure: account.smtpSecure,
   smtpUser: account.smtpUser,
-  smtpPassword: '',
+  smtpPasswordSettingKey: account.smtpPasswordSettingKey,
   fromName: account.fromName ?? null,
   replyToEmail: account.replyToEmail ?? null,
   folderAllowlist: account.folderAllowlist,
@@ -107,106 +128,107 @@ const toFilemakerAccountStatusToggleDraft = (
   maxMessagesPerSync: account.maxMessagesPerSync,
 });
 
+const hasParamValue = (value: string | null | undefined): value is string =>
+  value !== null && value !== undefined && value !== '';
+
+const setParamIfPresent = (
+  search: URLSearchParams,
+  key: string,
+  value: string | null | undefined
+): void => {
+  if (hasParamValue(value)) search.set(key, value);
+};
+
+const matchesRecentMailboxFilter = (
+  thread: FilemakerMailThread,
+  filter: string | null | undefined
+): boolean => !hasParamValue(filter) || thread.mailboxPath === filter;
+
+const matchesRecentUnreadFilter = (
+  thread: FilemakerMailThread,
+  unreadOnly: boolean | undefined
+): boolean => unreadOnly !== true || thread.unreadCount >= 1;
+
 const matchesFilemakerMailRecentThreadFilters = (
   thread: FilemakerMailThread,
-  input: {
-    recentMailboxFilter?: string | null;
-    recentUnreadOnly?: boolean;
-    recentQuery?: string | null;
-  }
+  input: RecentThreadFilterInput
 ): boolean => {
-  if (input.recentMailboxFilter && thread.mailboxPath !== input.recentMailboxFilter) {
-    return false;
-  }
-  if (input.recentUnreadOnly && thread.unreadCount < 1) {
-    return false;
-  }
-  const query = input.recentQuery?.trim().toLowerCase();
-  if (!query) return true;
+  if (!matchesRecentMailboxFilter(thread, input.recentMailboxFilter)) return false;
+  if (!matchesRecentUnreadFilter(thread, input.recentUnreadOnly)) return false;
+  const query = (input.recentQuery?.trim().toLowerCase()) ?? '';
+  if (query === '') return true;
+
   const haystack = [
     thread.subject,
     thread.snippet ?? '',
     thread.mailboxPath,
-    ...thread.participantSummary.flatMap((participant) => [
-      participant.name ?? '',
-      participant.address,
-    ]),
+    ...thread.participantSummary.flatMap((p) => [p.name ?? '', p.address]),
   ]
     .join(' ')
     .toLowerCase();
   return haystack.includes(query);
 };
 
-const buildFilemakerMailComposeHref = (input: {
-  accountId?: string | null;
-  forwardThreadId?: string | null;
-  mailboxPath?: string | null;
-  originPanel?: 'recent' | 'search' | null;
-  recentMailboxFilter?: string | null;
-  recentUnreadOnly?: boolean;
-  recentQuery?: string | null;
-  searchAccountId?: string | null;
-  searchQuery?: string | null;
-}): string => {
-  const search = new URLSearchParams();
-  if (input.accountId) search.set('accountId', input.accountId);
-  if (input.forwardThreadId) search.set('forwardThreadId', input.forwardThreadId);
-  if (input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
-  if (input.accountId && input.originPanel === 'recent') search.set('panel', 'recent');
-  if (input.originPanel === 'search') search.set('panel', 'search');
-  if (input.accountId && input.originPanel === 'recent' && input.recentMailboxFilter) {
-    search.set('recentMailbox', input.recentMailboxFilter);
-  }
-  if (input.accountId && input.originPanel === 'recent' && input.recentUnreadOnly) {
+const setRecentPanelSearchParams = (
+  search: URLSearchParams,
+  input: MailSearchUrlInput
+): void => {
+  if (!hasParamValue(input.accountId) || input.originPanel !== 'recent') return;
+  search.set('panel', 'recent');
+  setParamIfPresent(search, 'recentMailbox', input.recentMailboxFilter);
+  if (input.recentUnreadOnly === true) {
     search.set('recentUnread', '1');
   }
-  if (input.accountId && input.originPanel === 'recent' && input.recentQuery) {
-    search.set('recentQuery', input.recentQuery);
-  }
-  if (input.originPanel === 'search' && input.searchQuery) {
-    search.set('searchQuery', input.searchQuery);
-  }
-  if (input.originPanel === 'search' && input.searchAccountId === 'all') {
-    search.set('searchAccountId', 'all');
-  }
-  const nextSearch = search.toString();
-  return nextSearch ? `/admin/filemaker/mail/compose?${nextSearch}` : '/admin/filemaker/mail/compose';
+  setParamIfPresent(search, 'recentQuery', input.recentQuery);
+  setParamIfPresent(search, 'campaignId', input.recentCampaignId);
+  setParamIfPresent(search, 'runId', input.recentRunId);
+  setParamIfPresent(search, 'deliveryId', input.recentDeliveryId);
 };
 
-const buildFilemakerMailThreadHref = (input: {
-  threadId: string;
-  accountId?: string | null;
-  mailboxPath?: string | null;
-  originPanel?: 'recent' | 'search' | null;
-  recentMailboxFilter?: string | null;
-  recentUnreadOnly?: boolean;
-  recentQuery?: string | null;
-  searchAccountId?: string | null;
-  searchQuery?: string | null;
-}): string => {
-  const search = new URLSearchParams();
-  if (input.accountId) search.set('accountId', input.accountId);
-  if (input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
-  if (input.accountId && input.originPanel === 'recent') search.set('panel', 'recent');
-  if (input.originPanel === 'search') search.set('panel', 'search');
-  if (input.accountId && input.originPanel === 'recent' && input.recentMailboxFilter) {
-    search.set('recentMailbox', input.recentMailboxFilter);
-  }
-  if (input.accountId && input.originPanel === 'recent' && input.recentUnreadOnly) {
-    search.set('recentUnread', '1');
-  }
-  if (input.accountId && input.originPanel === 'recent' && input.recentQuery) {
-    search.set('recentQuery', input.recentQuery);
-  }
-  if (input.originPanel === 'search' && input.searchQuery) {
-    search.set('searchQuery', input.searchQuery);
-  }
-  if (input.originPanel === 'search' && input.searchAccountId === 'all') {
+const setSearchPanelSearchParams = (
+  search: URLSearchParams,
+  input: MailSearchUrlInput
+): void => {
+  if (input.originPanel !== 'search') return;
+  search.set('panel', 'search');
+  setParamIfPresent(search, 'searchQuery', input.searchQuery);
+  if (input.searchAccountId === 'all') {
     search.set('searchAccountId', 'all');
   }
+  if (
+    input.searchAccountId !== 'all' &&
+    hasParamValue(input.searchContextAccountId) &&
+    input.searchContextAccountId !== input.accountId
+  ) {
+    search.set('searchContextAccountId', input.searchContextAccountId);
+  }
+};
+
+const buildCommonSearchUrl = (search: URLSearchParams, input: MailSearchUrlInput): void => {
+  setParamIfPresent(search, 'accountId', input.accountId);
+  setParamIfPresent(search, 'mailboxPath', input.mailboxPath);
+  setRecentPanelSearchParams(search, input);
+  setSearchPanelSearchParams(search, input);
+};
+
+const buildFilemakerMailComposeHref = (input: MailSearchUrlInput & {
+  forwardThreadId?: string | null;
+}): string => {
+  const search = new URLSearchParams();
+  setParamIfPresent(search, 'forwardThreadId', input.forwardThreadId);
+  buildCommonSearchUrl(search, input);
+  const nextSearch = search.toString();
+  return nextSearch !== '' ? `/admin/filemaker/mail/compose?${nextSearch}` : '/admin/filemaker/mail/compose';
+};
+
+const buildFilemakerMailThreadHref = (input: MailSearchUrlInput & {
+  threadId: string;
+}): string => {
+  const search = new URLSearchParams();
+  buildCommonSearchUrl(search, input);
   const nextSearch = search.toString();
   const base = `/admin/filemaker/mail/threads/${encodeURIComponent(input.threadId)}`;
-  return nextSearch ? `${base}?${nextSearch}` : base;
+  return nextSearch !== '' ? `${base}?${nextSearch}` : base;
 };
 
 export {

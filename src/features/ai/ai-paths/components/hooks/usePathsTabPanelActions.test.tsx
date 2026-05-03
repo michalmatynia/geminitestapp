@@ -40,9 +40,11 @@ const mockState = vi.hoisted(() => ({
   errorReportingSurface: null as string | null,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mockState.toast }),
 }));
+
+vi.mock('@/shared/ui', () => ({}));
 
 vi.mock('@/shared/hooks/ui/useConfirm', () => ({
   useConfirm: () => ({
@@ -52,7 +54,7 @@ vi.mock('@/shared/hooks/ui/useConfirm', () => ({
 }));
 
 vi.mock('../../context', () => ({
-  useGraphState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
 }));
 
 vi.mock('../../context/PersistenceContext', () => ({

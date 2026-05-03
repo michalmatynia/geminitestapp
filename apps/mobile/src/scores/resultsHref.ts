@@ -12,7 +12,7 @@ export const createKangurResultsHref = (
 ): Href => {
   const operation = options.operation?.trim() ?? '';
 
-  if (operation) {
+  if (operation !== '') {
     return ({
       pathname: '/results',
       params: {
@@ -21,7 +21,7 @@ export const createKangurResultsHref = (
     }) as unknown as Href;
   }
 
-  if (options.family && options.family !== 'all') {
+  if (options.family !== undefined && options.family !== 'all') {
     return ({
       pathname: '/results',
       params: {

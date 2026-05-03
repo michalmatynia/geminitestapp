@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AdminCaseResolverIdentifiersPage } from '@/features/case-resolver/public';
 

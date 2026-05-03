@@ -7,10 +7,23 @@ import { usePersistenceActions } from '@/features/ai/ai-paths/context/Persistenc
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { LastErrorInfo } from '@/shared/contracts/ai-paths-runtime-ui-types';
-import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
-import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
-import { AI_PATHS_HISTORY_RETENTION_KEY, AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY, AI_PATHS_LAST_ERROR_KEY, PATH_CONFIG_PREFIX, PATH_INDEX_KEY, createDefaultPathConfig, normalizeNodes, sanitizeEdges, normalizeAiPathsValidationConfig, stableStringify } from '@/shared/lib/ai-paths';
-import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
+import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import {
+  AI_PATHS_HISTORY_RETENTION_KEY,
+  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
+  AI_PATHS_LAST_ERROR_KEY,
+  PATH_CONFIG_PREFIX,
+  PATH_INDEX_KEY,
+} from '@/shared/lib/ai-paths/core/constants/segments/storage';
+import { createDefaultPathConfig, sanitizeEdges, stableStringify } from '@/shared/lib/ai-paths/core/utils';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
+import {
+  normalizeParserSamples,
+  normalizeUpdaterSamples,
+  parseRuntimeState,
+} from '@/shared/lib/ai-paths/core/utils/runtime-state';
 import {
   fetchAiPathsSettingsByKeysCached,
   updateAiPathsSettingsBulk,
@@ -27,12 +40,6 @@ import {
   normalizeLoadedPathMetas,
   resolvePathSaveBlockedMessage,
 } from './useAiPathsPersistence.helpers';
-import {
-  normalizeParserSamples,
-  normalizeUpdaterSamples,
-  parseRuntimeState,
-  sanitizePathConfig,
-} from '../AiPathsSettingsUtils';
 import { usePathPersistence } from './hooks/persistence/usePathPersistence';
 import { usePreferencePersistence } from './hooks/persistence/usePreferencePersistence';
 import { usePresetPersistence } from './hooks/persistence/usePresetPersistence';
@@ -48,6 +55,7 @@ import {
 const PATH_CONFIG_PREFETCH_BATCH_SIZE = 3;
 const PATH_CONFIG_PREFETCH_IDLE_DELAY_MS = 250;
 const PATH_CONFIG_PREFETCH_TIMEOUT_MS = 6_000;
+const CANVAS_BOOT_SETTINGS_TIMEOUT_MS = 20_000;
 
 export function useAiPathsPersistence(
   args: UseAiPathsPersistenceArgs
@@ -55,16 +63,20 @@ export function useAiPathsPersistence(
   const {
     activePathId,
     expandedPaletteGroups,
+    setExpandedPaletteGroups,
     normalizeTriggerLabel,
     loadNonce,
     loading,
     paletteCollapsed,
+    setPaletteCollapsed,
     pathConfigs,
     reportAiPathsError,
     toast,
     isPathLocked,
     isPathActive,
+    isPathTreeVisible,
     paths,
+    setIsPathTreeVisible,
   } = args;
   const {
     setNodes,
@@ -115,49 +127,6 @@ export function useAiPathsPersistence(
     return promise;
   }, []);
 
-  const sanitizePrefetchedPathConfig = useCallback(
-    (config: PathConfig, pathId: string): PathConfig | null => {
-      try {
-        return sanitizePathConfig(config);
-      } catch (error) {
-        logClientCatch(error, {
-          source: 'useAiPathsPersistence',
-          action: 'sanitizePrefetchedPathConfig',
-          pathId,
-        });
-        return null;
-      }
-    },
-    []
-  );
-
-  const resolveLoadedPathConfig = useCallback(
-    (payload: string, pathId: string, fallbackName?: string): PathConfig => {
-      const resolved = resolvePortablePathInput(payload, {
-        repairIdentities: true,
-        includeConnections: false,
-        signingPolicyTelemetrySurface: 'canvas',
-        nodeCodeObjectHashVerificationMode: 'warn',
-      });
-      if (!resolved.ok) {
-        throw new Error(resolved.error);
-      }
-      const base = createDefaultPathConfig(pathId);
-      const resolvedConfig = resolved.value.pathConfig;
-      const resolvedName =
-        typeof resolvedConfig.name === 'string' && resolvedConfig.name.trim().length > 0
-          ? resolvedConfig.name
-          : (fallbackName ?? base.name);
-      return {
-        ...base,
-        ...resolvedConfig,
-        id: pathId,
-        name: resolvedName,
-      };
-    },
-    []
-  );
-
   const persistLastError = useCallback(
     async (error: LastErrorInfo | null): Promise<void> => {
       const message = error?.message ?? null;
@@ -191,9 +160,30 @@ export function useAiPathsPersistence(
           'ai_paths_trigger_buttons',
         ];
         const stageAStartedAt = Date.now();
-        const baseSettings = await fetchAiPathsSettingsByKeysCached(baseKeys, { timeoutMs: 8_000 });
+        const baseSettings = await fetchAiPathsSettingsByKeysCached(baseKeys, {
+          timeoutMs: CANVAS_BOOT_SETTINGS_TIMEOUT_MS,
+        });
         const stageADurationMs = Date.now() - stageAStartedAt;
         const userPrefs = prefs.resolveUserPreferences(baseSettings);
+        const uiState = prefs.resolveUiState(baseSettings);
+
+        if (uiState?.expandedGroups) {
+          setExpandedPaletteGroups(new Set(uiState.expandedGroups));
+        }
+        if (typeof uiState?.paletteCollapsed === 'boolean') {
+          setPaletteCollapsed(uiState.paletteCollapsed);
+        }
+        if (typeof uiState?.pathTreeVisible === 'boolean') {
+          setIsPathTreeVisible(uiState.pathTreeVisible);
+        }
+
+        if (uiState) {
+          prefs.lastUiStatePayloadRef.current = stableStringify({
+            expandedGroups: uiState.expandedGroups ?? Array.from(expandedPaletteGroups).sort(),
+            paletteCollapsed: uiState.paletteCollapsed ?? paletteCollapsed,
+            pathTreeVisible: uiState.pathTreeVisible ?? isPathTreeVisible,
+          });
+        }
 
         const pathIndexItem = baseSettings.find((s) => s.key === PATH_INDEX_KEY);
         let rawPaths: PathMeta[] = [];
@@ -232,51 +222,18 @@ export function useAiPathsPersistence(
 
         const activeConfigKey = `${PATH_CONFIG_PREFIX}${resolvedActivePathId}`;
         const stageBStartedAt = Date.now();
-        let config: PathConfig = createDefaultPathConfig(resolvedActivePathId);
-        let activeConfigValue: string | null = null;
-        try {
-          const activeConfigSettings = await fetchAiPathsSettingsByKeysCached([activeConfigKey], {
-            timeoutMs: 10_000,
-          });
-          const configItem = activeConfigSettings.find((item) => item.key === activeConfigKey);
-          if (configItem?.value) {
-            activeConfigValue = configItem.value;
-            try {
-              const fallbackName = loadedPaths.find(
-                (path: PathMeta): boolean => path.id === resolvedActivePathId
-              )?.name;
-              config = resolveLoadedPathConfig(
-                configItem.value,
-                resolvedActivePathId,
-                fallbackName
-              );
-            } catch (error) {
-              logClientCatch(error, {
-                source: 'useAiPathsPersistence',
-                action: 'parsePathConfig',
-                pathId: resolvedActivePathId,
-              });
-            }
-          }
-        } catch (error) {
-          logClientCatch(error, {
-            source: 'useAiPathsPersistence',
-            action: 'loadActivePathConfig',
-            pathId: resolvedActivePathId,
-            level: 'warn',
-          });
+        const activeConfigSettings = await fetchAiPathsSettingsByKeysCached([activeConfigKey], {
+          timeoutMs: CANVAS_BOOT_SETTINGS_TIMEOUT_MS,
+        });
+        const configItem = activeConfigSettings.find((item) => item.key === activeConfigKey);
+        if (!configItem?.value) {
+          throw new Error(`Stored AI Path config not found for "${resolvedActivePathId}".`);
         }
+        const config = loadCanonicalStoredPathConfig({
+          pathId: resolvedActivePathId,
+          rawConfig: configItem.value,
+        });
         const stageBDurationMs = Date.now() - stageBStartedAt;
-        config = sanitizePathConfig(config);
-        if (activeConfigValue) {
-          void persistLegacyTriggerContextModeRepair({
-            pathId: resolvedActivePathId,
-            rawPayload: activeConfigValue,
-            repairedConfig: config,
-            source: 'useAiPathsPersistence',
-            action: 'persistActivePathLegacyTriggerContextModeRepair',
-          });
-        }
 
         setActivePathId(resolvedActivePathId);
         setPathConfigs((prev) => ({ ...prev, [resolvedActivePathId]: config }));
@@ -301,13 +258,17 @@ export function useAiPathsPersistence(
             : 'medium'
         );
         setRunMode(
-          config.runMode === 'automatic' || config.runMode === 'manual' || config.runMode === 'step'
+          config.runMode === 'automatic' ||
+          config.runMode === 'manual' ||
+          config.runMode === 'step'
             ? config.runMode
             : 'manual'
         );
         setStrictFlowMode(config.strictFlowMode !== false);
         setBlockedRunPolicy(
-          config.blockedRunPolicy === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run'
+          config.blockedRunPolicy === 'complete_with_warning'
+            ? 'complete_with_warning'
+            : 'fail_run'
         );
         setAiPathsValidation(normalizeAiPathsValidationConfig(config.aiPathsValidation));
         setParserSamples(normalizeParserSamples(config.parserSamples));
@@ -367,6 +328,7 @@ export function useAiPathsPersistence(
     const uiState: AiPathsUiState = {
       expandedGroups,
       paletteCollapsed,
+      pathTreeVisible: isPathTreeVisible,
     };
     const payloadKey = stableStringify(uiState);
     if (payloadKey === prefs.lastUiStatePayloadRef.current) return;
@@ -398,7 +360,7 @@ export function useAiPathsPersistence(
       }
     }, 200);
     return (): void => clearTimeout(timeout);
-  }, [activePathId, expandedPaletteGroups, paletteCollapsed, uiStateLoaded, prefs]);
+  }, [activePathId, expandedPaletteGroups, isPathTreeVisible, paletteCollapsed, uiStateLoaded, prefs]);
 
   const handleSave = useCallback(
     async (options?: PathSaveOptions): Promise<boolean> => {
@@ -477,20 +439,10 @@ export function useAiPathsPersistence(
             const item = settingByKey.get(`${PATH_CONFIG_PREFIX}${pathId}`);
             if (!item?.value) return;
             try {
-              const fallbackName = paths.find(
-                (path: PathMeta): boolean => path.id === pathId
-              )?.name;
-              const parsed = resolveLoadedPathConfig(item.value, pathId, fallbackName);
-              const sanitized = sanitizePrefetchedPathConfig(parsed, pathId);
-              if (!sanitized) return;
-              void persistLegacyTriggerContextModeRepair({
+              hydratedConfigs[pathId] = loadCanonicalStoredPathConfig({
                 pathId,
-                rawPayload: item.value,
-                repairedConfig: sanitized,
-                source: 'useAiPathsPersistence',
-                action: 'persistPrefetchedLegacyTriggerContextModeRepair',
+                rawConfig: item.value,
               });
-              hydratedConfigs[pathId] = sanitized;
             } catch (error) {
               logClientCatch(error, {
                 source: 'useAiPathsPersistence',
@@ -577,8 +529,6 @@ export function useAiPathsPersistence(
     loading,
     pathConfigs,
     paths,
-    resolveLoadedPathConfig,
-    sanitizePrefetchedPathConfig,
     setPathConfigs,
   ]);
 

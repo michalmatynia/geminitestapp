@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { ensureImageStudioSlotFromUploadedAsset } from '@/features/ai/image-studio/server/ensure-slot-from-upload';
@@ -16,7 +16,7 @@ const ensureFromUploadSchema = z.object({
   selectedSlotId: z.string().trim().optional().nullable(),
 });
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }

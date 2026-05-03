@@ -8,9 +8,9 @@ import type { SystemSetting } from '@/shared/contracts/settings';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createListQueryV2,
-  createSingleQueryV2,
-  createUpdateMutationV2,
+  useListQueryV2,
+  useSingleQueryV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -56,7 +56,7 @@ export function useSettings(options?: {
   enabled?: boolean;
 }): ListQuery<SystemSetting, SystemSetting[]> {
   const scope = options?.scope ?? 'light';
-  return createListQueryV2<SystemSetting, SystemSetting[]>({
+  return useListQueryV2<SystemSetting, SystemSetting[]>({
     queryKey: QUERY_KEYS.settings.scope(scope),
     queryFn: async (): Promise<SystemSetting[]> =>
       await fetchSettingsWithFallback(scope, 'useSettings'),
@@ -82,7 +82,7 @@ export function useSettingsMap(options?: {
   enabled?: boolean;
 }): SingleQuery<Map<string, string>> {
   const scope = options?.scope ?? 'light';
-  return createSingleQueryV2<SystemSetting[], Map<string, string>>({
+  return useSingleQueryV2<SystemSetting[], Map<string, string>>({
     id: `settings-map:${scope}`,
     queryKey: QUERY_KEYS.settings.scope(scope),
     queryFn: async (): Promise<SystemSetting[]> =>
@@ -108,7 +108,7 @@ export function useSettingsMap(options?: {
 export function useLiteSettingsMap(options?: {
   enabled?: boolean;
 }): SingleQuery<Map<string, string>> {
-  return createSingleQueryV2<SystemSetting[], Map<string, string>>({
+  return useSingleQueryV2<SystemSetting[], Map<string, string>>({
     id: 'settings-map:lite',
     queryKey: QUERY_KEYS.settings.scope('lite'),
     queryFn: fetchLiteSettingsWithFallback,
@@ -131,7 +131,7 @@ export function useLiteSettingsMap(options?: {
 }
 
 export function useUpdateSetting(): MutationResult<SystemSetting, { key: string; value: string }> {
-  return createUpdateMutationV2<SystemSetting, { key: string; value: string }>({
+  return useUpdateMutationV2<SystemSetting, { key: string; value: string }>({
     mutationKey: QUERY_KEYS.settings.mutation('update-setting'),
     mutationFn: async ({ key, value }: { key: string; value: string }): Promise<SystemSetting> => {
       const res = await api.post<SystemSetting>('/api/settings', { key, value });
@@ -154,7 +154,7 @@ export function useUpdateSettingsBulk(): MutationResult<
   SystemSetting[],
   Array<{ key: string; value: string }>
   > {
-  return createUpdateMutationV2<SystemSetting[], Array<{ key: string; value: string }>>({
+  return useUpdateMutationV2<SystemSetting[], Array<{ key: string; value: string }>>({
     mutationKey: QUERY_KEYS.settings.mutation('update-settings-bulk'),
     mutationFn: async (
       payloads: Array<{ key: string; value: string }>

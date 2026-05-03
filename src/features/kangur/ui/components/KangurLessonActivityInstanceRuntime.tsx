@@ -15,6 +15,7 @@ import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instan
 import type { KangurGameId } from '@/shared/contracts/kangur-games';
 
 import { KangurLessonActivityRuntime } from './KangurLessonActivityRuntime';
+import { KangurLessonActivityRuntimeProvider } from './lesson-runtime/KangurLessonActivityBlock';
 
 type KangurGameInstancesQuery = ReturnType<typeof useKangurGameInstances>;
 type KangurGameContentSetsQuery = ReturnType<typeof useKangurGameContentSets>;
@@ -147,14 +148,12 @@ const isKangurLessonActivityRuntimeWaitingForContentSet = ({
 }): boolean =>
   Boolean(activeInstance?.contentSetId) && !builtInContentSet && !persistedContentSet && isPending;
 
-const renderKangurLessonActivityInstanceRuntimeState = ({
+const KangurLessonActivityInstanceRuntimeView = ({
   isWaiting,
-  onFinish,
   rendererProps,
   runtime,
 }: {
   isWaiting: boolean;
-  onFinish: () => void;
   rendererProps: KangurGameRuntimeRendererProps | null | undefined;
   runtime: ReturnType<typeof getKangurLessonActivityRuntimeSpecForGame>;
 }): React.JSX.Element => {
@@ -168,24 +167,25 @@ const renderKangurLessonActivityInstanceRuntimeState = ({
 
   return (
     <KangurLessonActivityRuntime
-      onFinish={onFinish}
       rendererProps={rendererProps ?? undefined}
       runtime={runtime}
     />
   );
 };
 
-export function KangurLessonActivityInstanceRuntime({
-  engineOverrides,
-  gameId,
-  instanceId,
-  onFinish,
-}: {
+export type KangurLessonActivityRuntimeConfig = {
   engineOverrides?: KangurGameRuntimeRendererProps;
   gameId: KangurGameId;
   instanceId: KangurGameInstanceId;
   onFinish: () => void;
+};
+
+export function KangurLessonActivityInstanceRuntime({
+  config,
+}: {
+  config: KangurLessonActivityRuntimeConfig;
 }): React.JSX.Element {
+  const { engineOverrides, gameId, instanceId, onFinish } = config;
   const gameInstanceQuery = useKangurGameInstances({
     enabledOnly: true,
     gameId,
@@ -252,12 +252,15 @@ export function KangurLessonActivityInstanceRuntime({
     persistedContentSet,
   });
 
-  return renderKangurLessonActivityInstanceRuntimeState({
-    isWaiting: isWaitingForPersistedInstance || isWaitingForPersistedContentSet,
-    onFinish,
-    rendererProps,
-    runtime: activeInstance && !isMissingRequiredContentSet ? runtime : null,
-  });
+  return (
+    <KangurLessonActivityRuntimeProvider onFinish={onFinish}>
+      <KangurLessonActivityInstanceRuntimeView
+        isWaiting={isWaitingForPersistedInstance || isWaitingForPersistedContentSet}
+        rendererProps={rendererProps}
+        runtime={activeInstance && !isMissingRequiredContentSet ? runtime : null}
+      />
+    </KangurLessonActivityRuntimeProvider>
+  );
 }
 
 export default KangurLessonActivityInstanceRuntime;

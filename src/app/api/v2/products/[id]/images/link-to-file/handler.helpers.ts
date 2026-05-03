@@ -1,10 +1,22 @@
 import path from 'path';
 
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
+
+type LinkedImageUpload = {
+  id: string;
+  filepath: string;
+};
+
+const normalizeOptionalText = (value?: string | null): string | null => {
+  const trimmed = value?.trim() ?? '';
+  return trimmed.length > 0 ? trimmed : null;
+};
 
 export const requireLinkedProductImageId = (params: { id: string }): string => {
   const productId = params.id.trim();
-  if (!productId) {
+  if (productId.length === 0) {
     throw badRequestError('Product id is required');
   }
 
@@ -15,7 +27,7 @@ export const requireLinkedProduct = <TProduct>(
   product: TProduct | null,
   productId: string
 ): TProduct => {
-  if (!product) {
+  if (product === null) {
     throw notFoundError('Product not found', { productId });
   }
 
@@ -59,7 +71,8 @@ export const resolveLinkedImageMimeType = (input: {
   headerType?: string | null;
   url: string;
 }): string => {
-  const detectedMime = input.blobType?.trim() || input.headerType?.trim() || 'image/jpeg';
+  const detectedMime =
+    normalizeOptionalText(input.blobType) ?? normalizeOptionalText(input.headerType) ?? 'image/jpeg';
   if (!detectedMime.toLowerCase().startsWith('image/')) {
     throw badRequestError('URL does not point to an image.', {
       url: input.url,
@@ -78,29 +91,56 @@ export const resolveLinkedImageFilename = (input: {
   captureException?: (error: unknown) => unknown;
 }): string => {
   const baseFallback = `linked-image-${(input.now ?? Date.now)()}`;
+  const preferred = normalizeOptionalText(input.preferred);
   const withSource =
-    input.preferred?.trim() ||
+    preferred ??
     (() => {
       try {
         const parsed = new URL(input.url);
         const basename = path.basename(parsed.pathname).trim();
-        return basename || '';
+        return basename.length > 0 ? basename : '';
       } catch (error) {
-        void (input.captureException?.(error) ?? undefined);
+        void input.captureException?.(error);
         return '';
       }
     })();
 
-  const source = withSource || baseFallback;
+  const source = withSource.length > 0 ? withSource : baseFallback;
   const ext = path.extname(source).trim();
   if (ext.length > 0) return source;
   return `${source}${resolveLinkedImageExtensionForMimeType(input.mimetype)}`;
 };
 
-export const buildLinkedProductImageResponse = (uploaded: {
-  id: string;
-  filepath: string;
-}): {
+export const clearLinkedImageSlotValue = (
+  values: string[] | undefined,
+  imageSlotIndex: number
+): string[] => {
+  const next = Array.from(
+    { length: Math.max(values?.length ?? 0, imageSlotIndex + 1) },
+    (_value, index) => values?.[index] ?? ''
+  );
+  next[imageSlotIndex] = '';
+  return next;
+};
+
+export const resolveConvertedLinkedImageFileIds = (
+  product: ProductWithImages,
+  imageSlotIndex: number,
+  imageFileId: string
+): string[] => {
+  const nextImageFileIds = product.images
+    .slice(0, DEFAULT_IMAGE_SLOT_COUNT)
+    .map((image) => image.imageFileId.trim())
+    .filter((id) => id.length > 0);
+
+  while (nextImageFileIds.length <= imageSlotIndex) {
+    nextImageFileIds.push('');
+  }
+  nextImageFileIds[imageSlotIndex] = imageFileId;
+  return nextImageFileIds.filter((id) => id.length > 0);
+};
+
+export const buildLinkedProductImageResponse = (uploaded: LinkedImageUpload): {
   status: 'ok';
   imageFile: {
     id: string;
@@ -112,4 +152,12 @@ export const buildLinkedProductImageResponse = (uploaded: {
     id: uploaded.id,
     filepath: uploaded.filepath,
   },
+});
+
+export const buildLinkedProductImageWithProductResponse = <TProduct>(
+  uploaded: LinkedImageUpload,
+  product: TProduct
+): ReturnType<typeof buildLinkedProductImageResponse> & { product: TProduct } => ({
+  ...buildLinkedProductImageResponse(uploaded),
+  product,
 });

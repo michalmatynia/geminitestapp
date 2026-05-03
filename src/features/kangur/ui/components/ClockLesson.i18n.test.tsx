@@ -14,6 +14,10 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
     isAuthenticated: true,
     user: { actorType: 'learner', ownerUserId: 'parent-1' },
   }),
+  useKangurAuthSessionState: () => ({
+    isAuthenticated: true,
+    user: { actorType: 'learner', ownerUserId: 'parent-1' },
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonPanelProgress', async () => {
@@ -143,9 +147,9 @@ describe('ClockLesson i18n', () => {
     await waitFor(() => {
       expect(screen.getByText('What does the short hand show?')).toBeInTheDocument();
     });
-    expect(
-      screen.getByText('The short hand jumps from hour to hour.')
-    ).toBeInTheDocument();
+    const hourJumpCaption = screen.getByText('The short hand jumps from hour to hour.');
+    expect(hourJumpCaption).toBeInTheDocument();
+    expect(hourJumpCaption).toHaveClass('max-w-full', 'whitespace-normal', 'break-words');
 
     fireEvent.click(screen.getByRole('button', { name: /Back to topics/i }));
 
@@ -200,9 +204,15 @@ describe('ClockLesson i18n', () => {
     await waitFor(() => {
       expect(screen.getByText('Was zeigt der kurze Zeiger?')).toBeInTheDocument();
     });
-    expect(
-      screen.getByText('Der kurze Zeiger springt von Stunde zu Stunde.')
-    ).toBeInTheDocument();
+    const germanHourJumpCaption = screen.getByText(
+      'Der kurze Zeiger springt von Stunde zu Stunde.'
+    );
+    expect(germanHourJumpCaption).toBeInTheDocument();
+    expect(germanHourJumpCaption).toHaveClass(
+      'max-w-full',
+      'whitespace-normal',
+      'break-words'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /Zurück zu den Themen/i }));
 

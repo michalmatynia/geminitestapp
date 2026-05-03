@@ -4,9 +4,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { getProductDetailQueryKey } from '@/shared/lib/product-query-keys';
-import type { AiNode, AiPathsValidationConfig, Edge, RuntimePortValues, RuntimeState, PathExecutionMode } from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathsValidationConfig, Edge, PathExecutionMode } from '@/shared/contracts/ai-paths';
+import type { RuntimePortValues, RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 import { evaluateDataContractPreflight } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
-import { TRIGGER_EVENTS, entityApi } from '@/shared/lib/ai-paths';
+import { TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
+import { entityApi } from '@/shared/lib/ai-paths/api';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

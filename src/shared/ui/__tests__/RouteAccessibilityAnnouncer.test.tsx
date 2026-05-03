@@ -15,6 +15,10 @@ vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: usePathnameMock,
+}));
+
 describe('RouteAccessibilityAnnouncer', () => {
   beforeEach(() => {
     vi.restoreAllMocks();

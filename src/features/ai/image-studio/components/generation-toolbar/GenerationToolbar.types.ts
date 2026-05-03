@@ -1,5 +1,5 @@
 import { type QueryClient, type UseQueryResult } from '@tanstack/react-query';
-import React from 'react';
+import type React from 'react';
 import { type ZodIssue } from 'zod';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';

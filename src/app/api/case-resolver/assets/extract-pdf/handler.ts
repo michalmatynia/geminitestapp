@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getDiskPathFromPublicPath } from '@/features/files/server';
 import { caseResolverPdfExtractRequestSchema } from '@/shared/contracts/case-resolver/file';
@@ -39,7 +39,7 @@ const isPdfParseFn = (value: unknown): value is PdfParseFn => typeof value === '
 const normalizePdfParseResult = (value: unknown): PdfParseResult =>
   value && typeof value === 'object' ? (value as PdfParseResult) : {};
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let rawPayload: unknown;
   try {
     rawPayload = (await req.json()) as unknown;

@@ -10,6 +10,7 @@ import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder
 import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 import { useProductSettingsPriceGroupsContext } from '../../ProductSettingsContext';
+import { PRODUCT_SOURCE_PRICE_SOURCE_ID } from './hooks/priceGroupSourceSelection';
 import { usePriceGroupForm } from './hooks/usePriceGroupForm';
 
 interface PriceGroupModalProps extends EntityModalProps<PriceGroup> {}
@@ -26,6 +27,11 @@ type PriceGroupFormState = {
 
 const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
+const PRODUCT_SOURCE_PRICE_OPTION = {
+  value: PRODUCT_SOURCE_PRICE_SOURCE_ID,
+  label: 'Scraped product sourcePrice',
+};
+
 const wouldCreateSourceGroupCycle = ({
   currentPriceGroup,
   sourceGroupId,
@@ -36,24 +42,24 @@ const wouldCreateSourceGroupCycle = ({
   priceGroups: PriceGroup[];
 }): boolean => {
   const normalizedSourceGroupId = toTrimmedString(sourceGroupId);
-  if (!normalizedSourceGroupId) {
+  if (normalizedSourceGroupId === '') {
     return false;
   }
 
   const selfIdentifiers = new Set(
     [currentPriceGroup?.id, currentPriceGroup?.groupId]
       .map((value) => toTrimmedString(value))
-      .filter(Boolean)
+      .filter((v): v is string => v !== '')
   );
   const groupByIdentifier = new Map<string, PriceGroup>();
 
   priceGroups.forEach((group) => {
     const id = toTrimmedString(group.id);
     const groupId = toTrimmedString(group.groupId);
-    if (id) {
+    if (id !== '') {
       groupByIdentifier.set(id, group);
     }
-    if (groupId) {
+    if (groupId !== '') {
       groupByIdentifier.set(groupId, group);
     }
   });
@@ -61,7 +67,7 @@ const wouldCreateSourceGroupCycle = ({
   const visited = new Set<string>();
   let currentIdentifier = normalizedSourceGroupId;
 
-  while (currentIdentifier) {
+  while (currentIdentifier !== '') {
     if (selfIdentifiers.has(currentIdentifier) || visited.has(currentIdentifier)) {
       return true;
     }
@@ -73,6 +79,55 @@ const wouldCreateSourceGroupCycle = ({
 
   return false;
 };
+
+function usePriceGroupFields({
+  currencyOptions,
+  loadingCurrencies,
+  sourceGroupOptions,
+  formType,
+}: {
+  currencyOptions: { code: string; name: string }[];
+  loadingCurrencies: boolean;
+  sourceGroupOptions: { value: string; label: string }[];
+  formType: string;
+}): SettingsPanelField<PriceGroupFormState>[] {
+  const commonFields: SettingsPanelField<PriceGroupFormState>[] = useMemo(() => [
+    { key: 'name', label: 'Name', type: 'text', placeholder: 'e.g. Standard', required: true },
+    {
+      key: 'currencyCode',
+      label: 'Currency',
+      type: 'select',
+      options: currencyOptions.map((curr) => ({ value: curr.code, label: `${curr.code} · ${curr.name}` })),
+      placeholder: loadingCurrencies === true ? 'Loading currencies...' : 'Select currency',
+      disabled: loadingCurrencies === true,
+      required: true,
+    },
+    { key: 'isDefault', label: 'Set as default price group', type: 'checkbox' },
+    {
+      key: 'type',
+      label: 'Group type',
+      type: 'select',
+      options: [{ value: 'standard', label: 'Standard' }, { value: 'dependent', label: 'Dependent' }],
+      placeholder: 'Select price group type',
+      required: true,
+    },
+  ], [currencyOptions, loadingCurrencies]);
+
+  const dependentFields: SettingsPanelField<PriceGroupFormState>[] = useMemo(() => [
+    {
+      key: 'sourceGroupId',
+      label: 'Source price',
+      type: 'select',
+      options: sourceGroupOptions,
+      placeholder: 'Select source price',
+      disabled: formType !== 'dependent',
+    },
+    { key: 'priceMultiplier', label: 'Price multiplier', type: 'number', step: 0.01 },
+    { key: 'addToPrice', label: 'Add to price', type: 'number', step: 0.01 },
+  ], [formType, sourceGroupOptions]);
+
+  return useMemo(() => [...commonFields, ...dependentFields], [commonFields, dependentFields]);
+}
 
 export function PriceGroupModal(props: PriceGroupModalProps): React.JSX.Element {
   const { isOpen, onClose, onSuccess, item: priceGroup } = props;
@@ -88,11 +143,12 @@ export function PriceGroupModal(props: PriceGroupModalProps): React.JSX.Element 
   } = usePriceGroupForm({ priceGroup, priceGroups });
 
   const sourceGroupOptions = useMemo(
-    () =>
-      priceGroups
+    () => [
+      PRODUCT_SOURCE_PRICE_OPTION,
+      ...priceGroups
         .filter((group) => {
           const normalizedId = toTrimmedString(group.id);
-          if (!normalizedId) return false;
+          if (normalizedId === '') return false;
           return !wouldCreateSourceGroupCycle({
             currentPriceGroup: priceGroup,
             sourceGroupId: normalizedId,
@@ -103,76 +159,25 @@ export function PriceGroupModal(props: PriceGroupModalProps): React.JSX.Element 
           value: group.id,
           label: `${group.name} (${group.currencyCode})`,
         })),
+    ],
     [priceGroup, priceGroups]
   );
 
   const handleSave = async (): Promise<void> => {
-    await handleFormSubmit();
-    onSuccess?.();
+    const saved = await handleFormSubmit();
+    if (saved) {
+      onSuccess?.();
+    }
   };
 
-  const fields: SettingsPanelField<PriceGroupFormState>[] = useMemo(
-    () => [
-      {
-        key: 'name',
-        label: 'Name',
-        type: 'text',
-        placeholder: 'e.g. Standard',
-        required: true,
-      },
-      {
-        key: 'currencyCode',
-        label: 'Currency',
-        type: 'select',
-        options: currencyOptions.map((curr) => ({
-          value: curr.code,
-          label: `${curr.code} · ${curr.name}`,
-        })),
-        placeholder: loadingCurrencies ? 'Loading currencies...' : 'Select currency',
-        disabled: loadingCurrencies,
-        required: true,
-      },
-      {
-        key: 'isDefault',
-        label: 'Set as default price group',
-        type: 'checkbox',
-      },
-      {
-        key: 'type',
-        label: 'Group type',
-        type: 'select',
-        options: [
-          { value: 'standard', label: 'Standard' },
-          { value: 'dependent', label: 'Dependent' },
-        ],
-        placeholder: 'Select price group type',
-        required: true,
-      },
-      {
-        key: 'sourceGroupId',
-        label: 'Source price group',
-        type: 'select',
-        options: sourceGroupOptions,
-        placeholder: 'Select source price group',
-        disabled: form.type !== 'dependent',
-      },
-      {
-        key: 'priceMultiplier',
-        label: 'Price multiplier',
-        type: 'number',
-        step: 0.01,
-      },
-      {
-        key: 'addToPrice',
-        label: 'Add to price',
-        type: 'number',
-        step: 0.01,
-      },
-    ],
-    [currencyOptions, form.type, loadingCurrencies, sourceGroupOptions]
-  );
+  const fields = usePriceGroupFields({
+    currencyOptions,
+    loadingCurrencies,
+    sourceGroupOptions,
+    formType: form.type,
+  });
 
-  const handleChange = (values: Partial<PriceGroupFormState>) => {
+  const handleChange = (values: Partial<PriceGroupFormState>): void => {
     setForm((prev) => ({ ...prev, ...values }));
   };
 

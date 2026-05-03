@@ -1,19 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { IntegrationConnectionRecord, IntegrationRecord } from '@/shared/contracts/integrations/repositories';
+import type {
+  IntegrationConnectionRecord,
+  IntegrationLookupRepository,
+  IntegrationRecord,
+} from '@/shared/contracts/integrations/repositories';
 
 const {
   fetchBaseCategoriesMock,
-  fetchTraderaCategoriesForConnectionMock,
+  fetchTraderaCategoriesFromListingFormForConnectionMock,
   resolveBaseConnectionTokenMock,
-  getTraderaCategoriesMock,
-  resolveTraderaPublicApiCredentialsMock,
+  loadTraderaSystemSettingsMock,
 } = vi.hoisted(() => ({
   fetchBaseCategoriesMock: vi.fn(),
-  fetchTraderaCategoriesForConnectionMock: vi.fn(),
+  fetchTraderaCategoriesFromListingFormForConnectionMock: vi.fn(),
   resolveBaseConnectionTokenMock: vi.fn(),
-  getTraderaCategoriesMock: vi.fn(),
-  resolveTraderaPublicApiCredentialsMock: vi.fn(),
+  loadTraderaSystemSettingsMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -22,24 +24,21 @@ vi.mock('@/features/integrations/server', () => ({
 }));
 
 vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
-  fetchTraderaCategoriesForConnection: fetchTraderaCategoriesForConnectionMock,
+  fetchTraderaCategoriesFromListingFormForConnection:
+    fetchTraderaCategoriesFromListingFormForConnectionMock,
 }));
 
-vi.mock('@/features/integrations/services/tradera-api-client', () => ({
-  getTraderaCategories: getTraderaCategoriesMock,
-}));
-
-vi.mock('@/features/integrations/services/tradera-listing/api', () => ({
-  resolveTraderaPublicApiCredentials: resolveTraderaPublicApiCredentialsMock,
+vi.mock('@/features/integrations/services/tradera-system-settings', () => ({
+  loadTraderaSystemSettings: loadTraderaSystemSettingsMock,
 }));
 
 import {
+  buildMarketplaceCategoryStats,
   buildEmptyMarketplaceCategoryFetchResponse,
   buildMarketplaceCategoryFetchResponse,
   fetchMarketplaceCategories,
   requireMarketplaceConnectionId,
   resolveMarketplaceCategoryFetchContext,
-  type CategoryFetchIntegrationRepository,
 } from './handler.helpers';
 
 const createConnection = (
@@ -72,6 +71,16 @@ describe('marketplace categories fetch helpers', () => {
       source: 'baseApiToken',
       error: null,
     });
+    loadTraderaSystemSettingsMock.mockResolvedValue({
+      defaultDurationHours: 72,
+      autoRelistEnabled: true,
+      autoRelistLeadMinutes: 180,
+      schedulerEnabled: false,
+      schedulerIntervalMs: 300000,
+      allowSimulatedSuccess: false,
+      listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      selectorProfile: 'default',
+    });
   });
 
   it('requires a non-empty connection id', () => {
@@ -82,7 +91,7 @@ describe('marketplace categories fetch helpers', () => {
   });
 
   it('resolves and fetches base marketplace categories', async () => {
-    const integrationRepo: CategoryFetchIntegrationRepository = {
+    const integrationRepo: IntegrationLookupRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),
       getIntegrationById: vi.fn().mockResolvedValue(createIntegration()),
     };
@@ -96,6 +105,7 @@ describe('marketplace categories fetch helpers', () => {
       connectionId: 'conn-1',
       inventoryId: 'inventory-1',
       sourceName: 'Base.com',
+      responseSourceName: 'Base.com',
       token: 'base-token',
       mode: 'base',
     });
@@ -108,32 +118,46 @@ describe('marketplace categories fetch helpers', () => {
   });
 
   it('resolves tradera contexts, builds responses, and rejects unsupported integrations', async () => {
-    // Browser connection without API credentials falls back to Playwright scrape
-    resolveTraderaPublicApiCredentialsMock.mockImplementation(() => {
-      throw new Error('Tradera API App ID is missing.');
-    });
-
-    const traderaRepo: CategoryFetchIntegrationRepository = {
+    // Browser connection defaults to the authenticated listing form picker
+    const traderaRepo: IntegrationLookupRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),
       getIntegrationById: vi.fn().mockResolvedValue(
         createIntegration({ name: 'Tradera', slug: 'tradera' })
       ),
     };
-    fetchTraderaCategoriesForConnectionMock.mockResolvedValue([
-      { id: 'cat-2', name: 'Category 2', parentId: '0' },
-    ]);
-
     const traderaContext = await resolveMarketplaceCategoryFetchContext(traderaRepo, 'conn-1');
     expect(traderaContext).toMatchObject({
       connectionId: 'conn-1',
       sourceName: 'Tradera',
-      mode: 'tradera',
+      responseSourceName: 'Tradera listing form picker',
+      browserMode: 'headed',
+      mode: 'tradera-listing-form',
     });
+    fetchTraderaCategoriesFromListingFormForConnectionMock.mockResolvedValue([
+      { id: 'cat-2', name: 'Category 2', parentId: '0' },
+    ]);
     await expect(fetchMarketplaceCategories(traderaContext)).resolves.toEqual([
       { id: 'cat-2', name: 'Category 2', parentId: '0' },
     ]);
+    expect(fetchTraderaCategoriesFromListingFormForConnectionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'conn-1' }),
+      {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        browserMode: 'headed',
+      }
+    );
 
-    const unsupportedRepo: CategoryFetchIntegrationRepository = {
+    const headlessTraderaContext = await resolveMarketplaceCategoryFetchContext(
+      traderaRepo,
+      'conn-1',
+      'headless'
+    );
+    expect(headlessTraderaContext).toMatchObject({
+      browserMode: 'headless',
+      mode: 'tradera-listing-form',
+    });
+
+    const unsupportedRepo: IntegrationLookupRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),
       getIntegrationById: vi.fn().mockResolvedValue(
         createIntegration({ name: 'Other', slug: 'other' })
@@ -144,42 +168,61 @@ describe('marketplace categories fetch helpers', () => {
       'Other is not yet supported for category fetch'
     );
 
-    // tradera-api slug uses the SOAP API when credentials are available
-    resolveTraderaPublicApiCredentialsMock.mockReturnValue({
-      appId: 123,
-      appKey: 'test-key',
-      sandbox: false,
-    });
-    getTraderaCategoriesMock.mockResolvedValue([
-      { id: 'api-cat-1', name: 'API Category 1', parentId: null },
-    ]);
-
-    const traderaApiRepo: CategoryFetchIntegrationRepository = {
-      getConnectionById: vi.fn().mockResolvedValue(createConnection()),
-      getIntegrationById: vi.fn().mockResolvedValue(
-        createIntegration({ name: 'Tradera API', slug: 'tradera-api' })
-      ),
-    };
-
-    const traderaApiContext = await resolveMarketplaceCategoryFetchContext(traderaApiRepo, 'conn-1');
-    expect(traderaApiContext).toMatchObject({
-      connectionId: 'conn-1',
-      sourceName: 'Tradera',
-      mode: 'tradera-api',
-    });
-    await expect(fetchMarketplaceCategories(traderaApiContext)).resolves.toEqual([
-      { id: 'api-cat-1', name: 'API Category 1', parentId: null },
-    ]);
-
-    expect(buildEmptyMarketplaceCategoryFetchResponse('Tradera')).toEqual({
+    expect(buildEmptyMarketplaceCategoryFetchResponse('Tradera listing form picker')).toEqual({
       fetched: 0,
       total: 0,
-      message: 'No categories found in Tradera.',
+      message: 'No categories found in Tradera listing form picker.',
+      source: 'Tradera listing form picker',
+      categoryStats: {
+        rootCount: 0,
+        withParentCount: 0,
+        maxDepth: 0,
+        depthHistogram: {},
+      },
     });
-    expect(buildMarketplaceCategoryFetchResponse('Base.com', 2, 3)).toEqual({
+    expect(
+      buildMarketplaceCategoryStats([
+        { id: '49', name: 'Collectibles', parentId: null },
+        { id: '2929', name: 'Pins & needles', parentId: '49' },
+        { id: '292904', name: 'Other pins & needles', parentId: '2929' },
+      ])
+    ).toEqual({
+      rootCount: 1,
+      withParentCount: 2,
+      maxDepth: 2,
+      depthHistogram: {
+        '0': 1,
+        '1': 1,
+        '2': 1,
+      },
+    });
+    expect(
+      buildMarketplaceCategoryFetchResponse('Base.com', 2, 3, {
+        rootCount: 1,
+        withParentCount: 2,
+        maxDepth: 2,
+        depthHistogram: {
+          '0': 1,
+          '1': 1,
+          '2': 1,
+        },
+      })
+    ).toEqual({
       fetched: 2,
       total: 3,
-      message: 'Successfully synced 2 categories from Base.com',
+      message: 'Successfully synced 2 categories from Base.com (roots: 1, max depth: 2).',
+      source: 'Base.com',
+      categoryStats: {
+        rootCount: 1,
+        withParentCount: 2,
+        maxDepth: 2,
+        depthHistogram: {
+          '0': 1,
+          '1': 1,
+          '2': 1,
+        },
+      },
     });
   });
+
 });

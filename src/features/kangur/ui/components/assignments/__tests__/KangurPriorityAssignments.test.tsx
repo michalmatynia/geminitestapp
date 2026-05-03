@@ -4,18 +4,25 @@
 
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 
 const { useKangurAssignmentsMock } = vi.hoisted(() => ({
   useKangurAssignmentsMock: vi.fn(),
 }));
 
-const { useKangurPageContentEntryMock, useKangurSubjectFocusMock } = vi.hoisted(() => ({
-  useKangurPageContentEntryMock: vi.fn(),
-  useKangurSubjectFocusMock: vi.fn(),
-}));
+const { useKangurIdleReadyMock, useKangurPageContentEntryMock, useKangurSubjectFocusMock } =
+  vi.hoisted(() => ({
+    useKangurIdleReadyMock: vi.fn(),
+    useKangurPageContentEntryMock: vi.fn(),
+    useKangurSubjectFocusMock: vi.fn(),
+  }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurIdleReady', () => ({
+  useKangurIdleReady: useKangurIdleReadyMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
@@ -61,6 +68,7 @@ const assignment: KangurAssignmentSnapshot = {
 describe('KangurPriorityAssignments', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useKangurIdleReadyMock.mockReturnValue(true);
     useKangurPageContentEntryMock.mockReturnValue({ entry: null });
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
@@ -97,5 +105,28 @@ describe('KangurPriorityAssignments', () => {
     expect(screen.getByTestId('kangur-priority-assignments-empty')).toHaveTextContent(
       'Brak aktywnych zadan od rodzica.'
     );
+  });
+
+  it('stays dormant until idle time unlocks the assignments query', () => {
+    useKangurIdleReadyMock.mockReturnValue(false);
+
+    const { container } = render(<KangurPriorityAssignments basePath='/kangur' enabled />);
+
+    expect(useKangurIdleReadyMock).toHaveBeenCalledWith({
+      minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+    });
+
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledWith(
+      'game-home-priority-assignments',
+      undefined,
+      { enabled: false }
+    );
+    expect(useKangurAssignmentsMock).toHaveBeenCalledWith({
+      enabled: false,
+      query: {
+        includeArchived: false,
+      },
+    });
+    expect(container).toBeEmptyDOMElement();
   });
 });

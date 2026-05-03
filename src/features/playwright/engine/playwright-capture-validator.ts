@@ -3,6 +3,10 @@ import type {
   PlaywrightCaptureRouteValidation,
   PlaywrightCaptureValidationResult,
 } from '@/shared/contracts/playwright';
+import {
+  formatSelectorRegistryRoleLabel,
+  isSelectorRoleCompatibleWithCaptureTarget,
+} from '@/shared/lib/browser-execution/selector-registry-roles';
 
 /** Resolves a capture route URL by joining baseUrl + path. No application-specific query params are added. */
 export const resolvePlaywrightCaptureRouteUrl = (
@@ -66,6 +70,17 @@ export const validatePlaywrightCaptureRoutes = (
         const routeTitle = route.title.trim() || `Route ${index + 1}`;
         seenTargets.set(targetKey, routeTitle);
       }
+    }
+
+    if (
+      !issue &&
+      route.selector?.trim() &&
+      route.selectorRole &&
+      !isSelectorRoleCompatibleWithCaptureTarget(route.selectorRole)
+    ) {
+      issue = `${
+        formatSelectorRegistryRoleLabel(route.selectorRole) ?? route.selectorRole
+      } selectors are not suitable capture targets. Use content or ready-signal roles instead.`;
     }
 
     return { routeId: route.id, resolvedUrl: preview.resolvedUrl, issue };

@@ -1,0 +1,279 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "path_job_board_lexicon_classification_v1",
+    "version": 1,
+    "name": "Job Board Lexicon Classification",
+    "description": "Classify unclassified scraped job-board pills into FileMaker lexicon types.",
+    "trigger": "Scraped Job Offer - Classify",
+    "updatedAt": "2026-04-29T00:00:00.000Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": true,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-trigger-job-board-lexicon-classification",
+      "type": "trigger",
+      "title": "Trigger: Classify",
+      "description": "Fire classification from the FileMaker scraped job offer row.",
+      "position": { "x": 24, "y": 240 },
+      "inputs": [],
+      "outputs": ["trigger", "triggerName"],
+      "config": {
+        "trigger": {
+          "event": "8e7a7cb6-8973-4aa4-b2ee-b7c8e5b93e78",
+          "contextMode": "trigger_only",
+          "entitySnapshotMode": "always"
+        }
+      }
+    },
+    {
+      "id": "node-fetcher-job-board-lexicon-classification",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve the embedded scraped offer and lexicon context.",
+      "position": { "x": 240, "y": 240 },
+      "inputs": ["trigger", "context", "meta", "entityId", "entityType"],
+      "outputs": ["context", "meta", "entityId", "entityType"],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "custom",
+          "entityId": ""
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": { "required": true },
+            "context": { "required": false },
+            "meta": { "required": false },
+            "entityId": { "required": false },
+            "entityType": { "required": false }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-parser-job-board-lexicon-classification",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract offer, unclassified pills, lexicon types, and output contract.",
+      "position": { "x": 500, "y": 240 },
+      "inputs": ["context"],
+      "outputs": ["bundle", "classificationInput", "lexiconContext", "outputContract"],
+      "config": {
+        "parser": {
+          "mappings": {
+            "classificationInput": "$.entityJson.classificationInput",
+            "lexiconContext": "$.entityJson.lexiconContext",
+            "outputContract": "$.entityJson.outputContract"
+          },
+          "outputMode": "bundle",
+          "presetId": "custom"
+        }
+      }
+    },
+    {
+      "id": "node-prompt-job-board-lexicon-classification",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Ask the model to classify only the provided unclassified pills.",
+      "position": { "x": 820, "y": 240 },
+      "inputs": ["bundle", "context"],
+      "outputs": ["prompt", "images"],
+      "config": {
+        "prompt": {
+          "template": "Classify unclassified job-board scrape pills into FileMaker lexicon types.\n\nClassification input JSON: {{bundle.classificationInput}}\nLexicon context JSON: {{bundle.lexiconContext}}\nOutput contract JSON: {{bundle.outputContract}}\n\nReturn ONLY valid JSON with this exact schema:\n{\"classifications\":[{\"label\":\"\",\"normalizedLabel\":\"\",\"typeKey\":\"technology\",\"confidence\":0,\"reason\":\"\",\"evidence\":\"\",\"matchedLexiconTerm\":\"\",\"matchedValidationPatternId\":\"\",\"action\":\"classify\"}]}\n\nDecision order:\n1. Classify only labels listed in classificationInput.unclassifiedPills. Keep label identical to the input pill label. Do not add new labels.\n2. Exact normalized matches in lexiconContext.knownTerms with classificationRole authoritative win. If several authoritative terms match, prefer the highest occurrenceCount and cite matchedLexiconTerm.\n3. Known terms with typeKey other or address are supporting evidence only. They usually mean the scrape parser could not safely classify the label before; do not let polluted Other terms block a better direct pattern match.\n4. Then apply lexiconContext.directValidationPatterns by ascending priority. Put the matched pattern id in matchedValidationPatternId. Use lexiconContext.validationPatterns only as supporting context when directlyApplicableToUnclassified is false.\n5. If a direct pattern has classificationPolicy keep_unclassified or targetTypeKey other/address, do not enrich the lexicon. Return action ignore or typeKey other, include matchedValidationPatternId, and keep confidence below 0.65.\n6. Then use sourceHint, nearbyClassifiedPills, offer title/location/company, type descriptions, and sampleTerms for semantic classification.\n7. typeKey must be one of lexiconContext.types keys. Use other only when no specific type, authoritative known term, or direct validation pattern fits.\n8. Use action ignore for provider UI text, assistant names, button labels, tracking text, or noise such as Asystent Pracuj.pl. Ignored items should use low confidence.\n9. Never classify regions, cities, voivodeships, or locations such as Lower Silesia as technology. These should stay unclassified/ignored unless a direct specific non-location pattern applies.\n10. Classify technology only for real languages, tools, frameworks, platforms, libraries, databases, cloud services, or stacks.\n11. Confidence must be between 0 and 1. Use confidence below 0.65 when the classification is weak or the item should not enrich the lexicon.\n12. Return JSON only. No markdown, no code fences, no commentary."
+        }
+      }
+    },
+    {
+      "id": "node-model-job-board-lexicon-classification",
+      "type": "model",
+      "title": "gpt-oss:120b-cloud Classification Model",
+      "description": "Classify unclassified scrape pills against FileMaker lexicon types using the AI Brain model selection.",
+      "position": { "x": 1180, "y": 240 },
+      "inputs": ["prompt", "images", "context"],
+      "outputs": ["result", "jobId"],
+      "config": {
+        "model": {
+          "temperature": 0.1,
+          "maxTokens": 1400,
+          "vision": false,
+          "waitForResult": true
+        }
+      }
+    },
+    {
+      "id": "node-regex-job-board-lexicon-classification",
+      "type": "regex",
+      "title": "Regex JSON Extract",
+      "description": "Parse the classification JSON response.",
+      "position": { "x": 1540, "y": 240 },
+      "inputs": ["value", "prompt", "regexCallback"],
+      "outputs": ["grouped", "matches", "value", "aiPrompt"],
+      "config": {
+        "regex": {
+          "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      }
+    },
+    {
+      "id": "node-view-job-board-lexicon-classification",
+      "type": "viewer",
+      "title": "Classification Result",
+      "description": "Inspect the validated classification payload before the FileMaker modal applies it.",
+      "position": { "x": 1900, "y": 240 },
+      "inputs": ["bundle", "context", "prompt", "entityId", "entityType", "meta"],
+      "outputs": [],
+      "config": {
+        "viewer": {
+          "outputs": {
+            "bundle": "",
+            "context": "",
+            "prompt": "",
+            "entityId": "",
+            "entityType": "",
+            "meta": ""
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-trigger-fetcher-job-board-lexicon-classification",
+      "fromNodeId": "node-trigger-job-board-lexicon-classification",
+      "toNodeId": "node-fetcher-job-board-lexicon-classification",
+      "fromPort": "trigger",
+      "toPort": "trigger"
+    },
+    {
+      "id": "edge-fetcher-parser-job-board-lexicon-classification",
+      "fromNodeId": "node-fetcher-job-board-lexicon-classification",
+      "toNodeId": "node-parser-job-board-lexicon-classification",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-parser-prompt-job-board-lexicon-classification",
+      "fromNodeId": "node-parser-job-board-lexicon-classification",
+      "toNodeId": "node-prompt-job-board-lexicon-classification",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-fetcher-prompt-context-job-board-lexicon-classification",
+      "fromNodeId": "node-fetcher-job-board-lexicon-classification",
+      "toNodeId": "node-prompt-job-board-lexicon-classification",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-prompt-model-job-board-lexicon-classification",
+      "fromNodeId": "node-prompt-job-board-lexicon-classification",
+      "toNodeId": "node-model-job-board-lexicon-classification",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-prompt-images-model-job-board-lexicon-classification",
+      "fromNodeId": "node-prompt-job-board-lexicon-classification",
+      "toNodeId": "node-model-job-board-lexicon-classification",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-fetcher-model-context-job-board-lexicon-classification",
+      "fromNodeId": "node-fetcher-job-board-lexicon-classification",
+      "toNodeId": "node-model-job-board-lexicon-classification",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-model-regex-job-board-lexicon-classification",
+      "fromNodeId": "node-model-job-board-lexicon-classification",
+      "toNodeId": "node-regex-job-board-lexicon-classification",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-regex-viewer-job-board-lexicon-classification",
+      "fromNodeId": "node-regex-job-board-lexicon-classification",
+      "toNodeId": "node-view-job-board-lexicon-classification",
+      "fromPort": "value",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-fetcher-viewer-context-job-board-lexicon-classification",
+      "fromNodeId": "node-fetcher-job-board-lexicon-classification",
+      "toNodeId": "node-view-job-board-lexicon-classification",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-prompt-viewer-job-board-lexicon-classification",
+      "fromNodeId": "node-prompt-job-board-lexicon-classification",
+      "toNodeId": "node-view-job-board-lexicon-classification",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-fetcher-entity-id-viewer-job-board-lexicon-classification",
+      "fromNodeId": "node-fetcher-job-board-lexicon-classification",
+      "toNodeId": "node-view-job-board-lexicon-classification",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-fetcher-entity-type-viewer-job-board-lexicon-classification",
+      "fromNodeId": "node-fetcher-job-board-lexicon-classification",
+      "toNodeId": "node-view-job-board-lexicon-classification",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    },
+    {
+      "id": "edge-fetcher-meta-viewer-job-board-lexicon-classification",
+      "fromNodeId": "node-fetcher-job-board-lexicon-classification",
+      "toNodeId": "node-view-job-board-lexicon-classification",
+      "fromPort": "meta",
+      "toPort": "meta"
+    }
+  ],
+  "execution": {
+    "parserSamples": {},
+    "updaterSamples": {},
+    "runtimeState": {
+      "inputs": {},
+      "outputs": {}
+    },
+    "lastRunAt": null,
+    "runCount": 0
+  },
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-04-29T00:00:00.000Z",
+    "pathId": "path_job_board_lexicon_classification_v1"
+  }
+}

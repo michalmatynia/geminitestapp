@@ -2,11 +2,16 @@
 
 import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import { ERROR_CATEGORY } from '@/shared/contracts/observability';
 import { classifyError } from '@/shared/errors/error-classifier';
+import { getTanstackFactoryMetaFromBag } from '@/shared/lib/observability/tanstack-telemetry';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
+import type {
+  TanstackErrorPresentation,
+  TanstackFactoryDomain,
+} from '@/shared/lib/tanstack-factory-v2.types';
 import { useToast } from '@/shared/ui/primitives.public';
 import {
   logClientCatch,
@@ -33,6 +38,7 @@ const NOISE_MESSAGES = new Set(['{}', '[]', '[object Object]']);
 const DEFAULT_TOAST_DEDUPE_WINDOW_MS = 20_000;
 const DEFAULT_AUTO_RETRY_DELAY_MS = 5_000;
 const DEFAULT_MAX_AUTO_RETRIES_PER_QUERY = 1;
+const DEFAULT_QUERY_ERROR_PRESENTATION: TanstackErrorPresentation = 'toast';
 
 const isMeaningfulMessage = (message: string): boolean => {
   const trimmed = message.trim();
@@ -152,6 +158,14 @@ export const buildErrorToastSignature = (
   return buildQueryErrorSignature(queryKey, message);
 };
 
+export const resolveQueryErrorPresentationFromMetaBag = (
+  metaBag: unknown
+): TanstackErrorPresentation =>
+  getTanstackFactoryMetaFromBag(metaBag)?.errorPresentation ?? DEFAULT_QUERY_ERROR_PRESENTATION;
+
+export const shouldShowGlobalQueryErrorToastForQuery = (metaBag: unknown): boolean =>
+  resolveQueryErrorPresentationFromMetaBag(metaBag) === 'toast';
+
 export const shouldEmitDedupedErrorToast = (args: {
   signature: string;
   dedupeWindowMs: number;
@@ -179,7 +193,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
   const queryClient = useQueryClient();
   const errorToastSignaturesRef = useRef<Map<string, number>>(new Map());
   const autoRetryCountByQueryRef = useRef<Map<string, number>>(new Map());
-  const autoRetryTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const autoRetryTimersRef = useRef<Map<string, ReturnType<typeof safeSetTimeout>>>(new Map());
 
   const showToast = config.showToast ?? false;
   const logErrors = config.logErrors !== false;
@@ -190,8 +204,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
   const toastDedupeWindowMs = config.toastDedupeWindowMs ?? DEFAULT_TOAST_DEDUPE_WINDOW_MS;
   const onError = config.onError;
 
-  // Only use toast on client side
-  const toast = typeof window !== 'undefined' ? useToast().toast : null;
+  const { toast } = useToast();
 
   useEffect((): (() => void) => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
@@ -203,12 +216,11 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         autoRetryCountByQueryRef.current.delete(queryKeySignature);
         const retryTimer = autoRetryTimersRef.current.get(queryKeySignature);
         if (retryTimer !== undefined) {
-          clearTimeout(retryTimer);
+          safeClearTimeout(retryTimer);
           autoRetryTimersRef.current.delete(queryKeySignature);
         }
         return;
       }
-
       if (event.query.state.status === 'error') {
         const error = event.query.state.error as unknown;
 
@@ -265,7 +277,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         }
 
         // Show toast notification
-        if (showToast && toast) {
+        if (showToast && toast && shouldShowGlobalQueryErrorToastForQuery(event.query.meta)) {
           const shouldShowToast = shouldEmitDedupedErrorToast({
             signature: buildErrorToastSignature(queryKey, message, error),
             dedupeWindowMs: toastDedupeWindowMs,
@@ -293,10 +305,10 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           autoRetryCountByQueryRef.current.set(queryKeySignature, retriesPerformed + 1);
           const existingRetryTimer = autoRetryTimersRef.current.get(queryKeySignature);
           if (existingRetryTimer !== undefined) {
-            clearTimeout(existingRetryTimer);
+            safeClearTimeout(existingRetryTimer);
           }
-          const retryTimer = setTimeout((): void => {
-            clearTimeout(retryTimer);
+          const retryTimer = safeSetTimeout((): void => {
+            safeClearTimeout(retryTimer);
             autoRetryTimersRef.current.delete(queryKeySignature);
             void queryClient.invalidateQueries({ queryKey });
           }, Math.max(0, retryDelayMs));
@@ -307,8 +319,8 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
 
     return (): void => {
       unsubscribe();
-      autoRetryTimersRef.current.forEach((timerId: ReturnType<typeof setTimeout>): void => {
-        clearTimeout(timerId);
+      autoRetryTimersRef.current.forEach((timerId: ReturnType<typeof safeSetTimeout>): void => {
+        safeClearTimeout(timerId);
       });
       autoRetryTimersRef.current.clear();
     };
@@ -337,7 +349,7 @@ export function useResilientQuery<TData>(
     domain?: TanstackFactoryDomain;
   }
 ): UseQueryResult<TData, Error> {
-  const toast = typeof window !== 'undefined' ? useToast().toast : null;
+  const { toast } = useToast();
   const domain = options?.domain ?? 'global';
 
   const query = createListQueryV2<unknown, TData>({

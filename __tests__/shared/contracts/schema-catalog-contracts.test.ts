@@ -319,6 +319,28 @@ describe('shared contract runtime coverage for schema catalogs', () => {
             organizationId: 'organization-1',
           },
         ],
+        values: [
+          {
+            id: 'value-1',
+            parentId: null,
+            label: 'Matter Type',
+            value: 'matter_type',
+            sortOrder: 0,
+          },
+        ],
+        valueParameters: [
+          {
+            id: 'value-parameter-1',
+            label: 'Colour',
+          },
+        ],
+        valueParameterLinks: [
+          {
+            id: 'value-parameter-link-1',
+            valueId: 'value-1',
+            parameterId: 'value-parameter-1',
+          },
+        ],
       })
     ).toEqual(
       expect.objectContaining({
@@ -338,6 +360,12 @@ describe('shared contract runtime coverage for schema catalogs', () => {
           emailStatuses: ['active'],
           includePartyReferences: [],
           excludePartyReferences: [],
+          conditionGroup: {
+            id: 'audience-root',
+            type: 'group',
+            combinator: 'and',
+            children: [],
+          },
           organizationIds: ['organization-1'],
           eventIds: ['event-1'],
           countries: ['Poland'],
@@ -405,6 +433,12 @@ describe('shared contract runtime coverage for schema catalogs', () => {
               emailStatuses: ['active'],
               includePartyReferences: [],
               excludePartyReferences: [],
+              conditionGroup: {
+                id: 'registry-audience-root',
+                type: 'group',
+                combinator: 'and',
+                children: [],
+              },
               organizationIds: [],
               eventIds: [],
               countries: [],

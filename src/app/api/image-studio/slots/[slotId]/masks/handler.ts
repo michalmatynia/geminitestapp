@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { z } from 'zod';
 
@@ -225,7 +225,7 @@ async function buildServerPolygonMaskBuffer({
     .toBuffer();
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { slotId: string }

@@ -7,16 +7,19 @@ const {
   enforceAiPathsActionRateLimitMock,
   assertAiPathRunAccessMock,
   resolvePathRunRepositoryMock,
+  deletePathRunWithRepositoryMock,
 } = vi.hoisted(() => ({
   requireAiPathsAccessMock: vi.fn(),
   requireAiPathsRunAccessMock: vi.fn(),
   enforceAiPathsActionRateLimitMock: vi.fn(),
   assertAiPathRunAccessMock: vi.fn(),
   resolvePathRunRepositoryMock: vi.fn(),
+  deletePathRunWithRepositoryMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
   assertAiPathRunAccess: assertAiPathRunAccessMock,
+  deletePathRunWithRepository: deletePathRunWithRepositoryMock,
   enforceAiPathsActionRateLimit: enforceAiPathsActionRateLimitMock,
   requireAiPathsAccess: requireAiPathsAccessMock,
   requireAiPathsRunAccess: requireAiPathsRunAccessMock,
@@ -31,7 +34,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', async (importOrigi
   };
 });
 
-import { GET_handler } from './handler';
+import { deleteHandler, getHandler } from './handler';
 
 describe('ai-paths run detail handler', () => {
   const repo = {
@@ -45,6 +48,7 @@ describe('ai-paths run detail handler', () => {
     requireAiPathsRunAccessMock.mockReset().mockResolvedValue({ userId: 'user-1' });
     enforceAiPathsActionRateLimitMock.mockReset().mockResolvedValue(undefined);
     assertAiPathRunAccessMock.mockReset().mockReturnValue(undefined);
+    deletePathRunWithRepositoryMock.mockReset().mockResolvedValue(true);
     repo.findRunById.mockReset().mockResolvedValue({
       id: 'run-1',
       status: 'queued',
@@ -67,9 +71,9 @@ describe('ai-paths run detail handler', () => {
   });
 
   it('returns run detail with repository provider headers', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/run-1'),
-      {} as Parameters<typeof GET_handler>[1],
+      {} as Parameters<typeof getHandler>[1],
       { runId: 'run-1' }
     );
 
@@ -117,9 +121,9 @@ describe('ai-paths run detail handler', () => {
       },
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/run-2'),
-      {} as Parameters<typeof GET_handler>[1],
+      {} as Parameters<typeof getHandler>[1],
       { runId: 'run-2' }
     );
 
@@ -147,10 +151,43 @@ describe('ai-paths run detail handler', () => {
   it('returns not found when the selected repository cannot find the run', async () => {
     repo.findRunById.mockResolvedValueOnce(null);
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/ai-paths/runs/run-alt'),
-        {} as Parameters<typeof GET_handler>[1],
+        {} as Parameters<typeof getHandler>[1],
         { runId: 'run-alt' }
+      )
+    ).rejects.toMatchObject({
+      message: 'Run not found',
+    });
+  });
+
+  it('deletes the run through the server-side repository delete flow', async () => {
+    const response = await deleteHandler(
+      new NextRequest('http://localhost/api/ai-paths/runs/run-1', { method: 'DELETE' }),
+      {} as Parameters<typeof deleteHandler>[1],
+      { runId: 'run-1' }
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      deleted: true,
+      runId: 'run-1',
+    });
+    expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(
+      { userId: 'user-1' },
+      'run-delete'
+    );
+    expect(deletePathRunWithRepositoryMock).toHaveBeenCalledWith(repo, 'run-1');
+  });
+
+  it('returns not found when the repository delete reports no matching run', async () => {
+    deletePathRunWithRepositoryMock.mockResolvedValueOnce(false);
+
+    await expect(
+      deleteHandler(
+        new NextRequest('http://localhost/api/ai-paths/runs/run-1', { method: 'DELETE' }),
+        {} as Parameters<typeof deleteHandler>[1],
+        { runId: 'run-1' }
       )
     ).rejects.toMatchObject({
       message: 'Run not found',

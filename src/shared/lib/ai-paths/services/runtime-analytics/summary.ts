@@ -93,9 +93,6 @@ export const getRuntimeAnalyticsSummaryBase = async (
       pipeline.zcount(keyRuns('completed'), fromMs, toMs);
       pipeline.zcount(keyRuns('failed'), fromMs, toMs);
       pipeline.zcount(keyRuns('canceled'), fromMs, toMs);
-      pipeline.zcount(keyRuns('dead_lettered'), fromMs, toMs);
-      pipeline.zcount(keyRuns('blocked_on_lease'), fromMs, toMs);
-      pipeline.zcount(keyRuns('handoff_ready'), fromMs, toMs);
       pipeline.zcount(keyNodes('started'), fromMs, toMs);
       pipeline.zcount(keyNodes('completed'), fromMs, toMs);
       pipeline.zcount(keyNodes('failed'), fromMs, toMs);
@@ -125,7 +122,7 @@ export const getRuntimeAnalyticsSummaryBase = async (
 
       const readCountAt = (index: number): number =>
         toPipelineCount(Array.isArray(results[index]) ? results[index]?.[1] : 0);
-      const durationMembers = toPipelineStrings(Array.isArray(results[22]) ? results[22]?.[1] : []);
+      const durationMembers = toPipelineStrings(Array.isArray(results[19]) ? results[19]?.[1] : []);
       const durations = durationMembers
         .map(parseDurationMember)
         .filter((value: number | null): value is number => value !== null)
@@ -146,17 +143,12 @@ export const getRuntimeAnalyticsSummaryBase = async (
       const runsCompleted = readCountAt(3);
       const runsFailed = readCountAt(4);
       const runsCanceled = readCountAt(5);
-      const runsDeadLettered = readCountAt(6);
-      const runsBlockedOnLease = readCountAt(7);
-      const runsHandoffReady = readCountAt(8);
-      const terminalRuns = runsCompleted + runsFailed + runsCanceled + runsDeadLettered;
+      const terminalRuns = runsCompleted + runsFailed + runsCanceled;
       const successRate = terminalRuns > 0 ? clampRate((runsCompleted / terminalRuns) * 100) : 0;
       const failureRate =
         terminalRuns > 0
-          ? clampRate(((runsFailed + runsCanceled + runsDeadLettered) / terminalRuns) * 100)
+          ? clampRate(((runsFailed + runsCanceled) / terminalRuns) * 100)
           : 0;
-      const deadLetterRate =
-        terminalRuns > 0 ? clampRate((runsDeadLettered / terminalRuns) * 100) : 0;
       const traces = await runtimeTracePromise;
 
       const summary: AiPathRuntimeAnalyticsSummary = {
@@ -171,31 +163,27 @@ export const getRuntimeAnalyticsSummaryBase = async (
           completed: runsCompleted,
           failed: runsFailed,
           canceled: runsCanceled,
-          deadLettered: runsDeadLettered,
-          blockedOnLease: runsBlockedOnLease,
-          handoffReady: runsHandoffReady,
           successRate,
           failureRate,
-          deadLetterRate,
           avgDurationMs,
           p95DurationMs,
         },
         nodes: {
-          started: readCountAt(9),
-          completed: readCountAt(10),
-          failed: readCountAt(11),
-          queued: readCountAt(12),
-          running: readCountAt(13),
-          polling: readCountAt(14),
-          cached: readCountAt(15),
-          waitingCallback: readCountAt(16),
+          started: readCountAt(6),
+          completed: readCountAt(7),
+          failed: readCountAt(8),
+          queued: readCountAt(9),
+          running: readCountAt(10),
+          polling: readCountAt(11),
+          cached: readCountAt(12),
+          waitingCallback: readCountAt(13),
         },
         brain: {
-          analyticsReports: readCountAt(17),
-          logReports: readCountAt(18),
-          totalReports: readCountAt(19),
-          warningReports: readCountAt(20),
-          errorReports: readCountAt(21),
+          analyticsReports: readCountAt(14),
+          logReports: readCountAt(15),
+          totalReports: readCountAt(16),
+          warningReports: readCountAt(17),
+          errorReports: readCountAt(18),
         },
         traces,
         generatedAt: new Date().toISOString(),

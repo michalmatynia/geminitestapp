@@ -70,32 +70,21 @@ function LoadingChipRow(): React.JSX.Element {
   );
 }
 
-export function HomeLoadingShell(): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
-
+function HeroLoadingSection(): React.JSX.Element {
   return (
-    <KangurMobileScrollScreen
-      accessibilityLabel={copy({
-        de: 'Startseite wird geladen',
-        en: 'Loading home page',
-        pl: 'Ładowanie strony głównej',
-      })}
-      backgroundColor='#fffaf2'
-      contentContainerStyle={{
-        gap: 16,
-        paddingHorizontal: 24,
-        paddingVertical: 28,
-      }}
-      testID='home-loading-shell'
-    >
-      <View style={{ gap: 10 }} testID='home-loading-hero'>
-        <SkeletonBlock height={36} radius={18} width='52%' />
-        <SkeletonBlock height={18} width='100%' />
-        <SkeletonBlock height={18} width='88%' />
-        <LoadingChipRow />
-        <LoadingButtonStack count={3} />
-      </View>
+    <View style={{ gap: 10 }} testID='home-loading-hero'>
+      <SkeletonBlock height={36} radius={18} width='52%' />
+      <SkeletonBlock height={18} width='100%' />
+      <SkeletonBlock height={18} width='88%' />
+      <LoadingChipRow />
+      <LoadingButtonStack count={3} />
+    </View>
+  );
+}
 
+function CardsLoadingSection(): React.JSX.Element {
+  return (
+    <>
       <LoadingCard testID='home-loading-account-card'>
         <SkeletonBlock height={18} width='42%' />
         <SkeletonBlock height={18} width='55%' />
@@ -132,7 +121,13 @@ export function HomeLoadingShell(): React.JSX.Element {
         <LoadingInsetCard />
         <LoadingInsetCard />
       </LoadingCard>
+    </>
+  );
+}
 
+function StatsLoadingSection(): React.JSX.Element {
+  return (
+    <>
       <LoadingCard testID='home-loading-duel-leaderboard-card'>
         <LoadingChipRow />
         <LoadingInsetCard />
@@ -166,7 +161,13 @@ export function HomeLoadingShell(): React.JSX.Element {
         </View>
         <SkeletonBlock height={42} radius={999} width='100%' />
       </LoadingCard>
+    </>
+  );
+}
 
+function FinalLoadingSection(): React.JSX.Element {
+  return (
+    <>
       <LoadingCard testID='home-loading-recent-lessons-card'>
         <SkeletonBlock height={16} width='100%' />
         <SkeletonBlock height={16} width='88%' />
@@ -190,6 +191,32 @@ export function HomeLoadingShell(): React.JSX.Element {
         <LoadingInsetCard />
         <SkeletonBlock height={42} radius={999} width='100%' />
       </LoadingCard>
+    </>
+  );
+}
+
+export function HomeLoadingShell(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+
+  return (
+    <KangurMobileScrollScreen
+      accessibilityLabel={copy({
+        de: 'Startseite wird geladen',
+        en: 'Loading home page',
+        pl: 'Ładowanie strony głównej',
+      })}
+      backgroundColor='#fffaf2'
+      contentContainerStyle={{
+        gap: 16,
+        paddingHorizontal: 24,
+        paddingVertical: 28,
+      }}
+      testID='home-loading-shell'
+    >
+      <HeroLoadingSection />
+      <CardsLoadingSection />
+      <StatsLoadingSection />
+      <FinalLoadingSection />
     </KangurMobileScrollScreen>
   );
 }

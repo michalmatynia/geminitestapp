@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { type AiNode, type DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
+import type { AiNode, DataContractNodeIssueSummary } from '@/shared/contracts/ai-paths';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { CanvasConnectorTooltip } from './canvas/CanvasConnectorTooltip';

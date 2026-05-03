@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-
 import type {
   DatabaseType,
   DatabasePreviewMode,
@@ -11,10 +10,7 @@ import type {
 } from '@/shared/contracts/database';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-
 import { useDatabasePreview } from '../hooks/useDatabaseQueries';
-
-// --- Granular Contexts ---
 
 const { Context: ConfigContext, useStrictContext: useDatabaseConfig } =
   createStrictContext<DatabaseUiConfig>({
@@ -42,6 +38,44 @@ const { Context: PaginationContext, useStrictContext: useDatabasePagination } =
 
 export { useDatabaseConfig, useDatabaseData, useDatabasePagination };
 
+function useDatabaseValues(
+  props: {
+    dbType: DatabaseType;
+    mode: DatabasePreviewMode;
+    backupName: string | undefined;
+    refetch: () => Promise<unknown>;
+    data: DatabaseData | undefined | null;
+    isLoading: boolean;
+    error: Error | null;
+  }
+): { configValue: DatabaseUiConfig; dataValue: DatabaseData } {
+  const { dbType, mode, backupName, refetch, data, isLoading, error } = props;
+  const tableDetails = useMemo(() => data?.tableDetails ?? [], [data]);
+  const groups = useMemo(() => data?.groups ?? [], [data]);
+  const tables = useMemo(() => data?.tables ?? [], [data]);
+  const tableRows = useMemo(() => data?.tableRows ?? [], [data]);
+  const enums = useMemo(() => data?.enums ?? [], [data]);
+  const databaseSize = data?.databaseSize ?? '';
+
+  const configValue = useMemo(() => ({ dbType, setDbType: () => {}, mode, backupName }), [dbType, mode, backupName]);
+
+  const dataValue = useMemo(() => ({
+    tableDetails,
+    isLoading,
+    error: error?.message ?? null,
+    refresh: () => {
+      refetch().catch(() => {});
+    },
+    groups,
+    tables,
+    tableRows,
+    enums,
+    databaseSize,
+  }), [tableDetails, isLoading, error, refetch, groups, tables, tableRows, enums, databaseSize]);
+
+  return { configValue, dataValue };
+}
+
 export function DatabaseProvider({
   children,
   defaultDbType = 'mongodb',
@@ -66,52 +100,19 @@ export function DatabaseProvider({
     enabled: true,
   });
 
-  const tableDetails = useMemo(() => data?.tableDetails ?? [], [data]);
-  const groups = useMemo(() => data?.groups ?? [], [data]);
-  const tables = useMemo(() => data?.tables ?? [], [data]);
-  const tableRows = useMemo(() => data?.tableRows ?? [], [data]);
-  const enums = useMemo(() => data?.enums ?? [], [data]);
-  const databaseSize = data?.databaseSize ?? '';
-
-  const configValue = useMemo<DatabaseUiConfig>(
-    () => ({
-      dbType,
-      setDbType,
-      mode,
-      backupName,
-    }),
-    [dbType, mode, backupName]
-  );
-
-  const dataValue = useMemo<DatabaseData>(
-    () => ({
-      tableDetails,
-      isLoading,
-      error: error?.message ?? null,
-      refresh: () => {
-        void refetch();
-      },
-      groups,
-      tables,
-      tableRows,
-      enums,
-      databaseSize,
-    }),
-    [tableDetails, isLoading, error, refetch, groups, tables, tableRows, enums, databaseSize]
-  );
-
-  const paginationValue = useMemo<DatabasePagination>(
-    () => ({
-      page,
-      setPage,
-      pageSize,
-      setPageSize,
-    }),
-    [page, pageSize]
-  );
+  const { configValue, dataValue } = useDatabaseValues({
+    dbType,
+    mode,
+    backupName,
+    refetch,
+    data,
+    isLoading,
+    error,
+  });
+  const paginationValue = useMemo(() => ({ page, setPage, pageSize, setPageSize }), [page, pageSize]);
 
   return (
-    <ConfigContext.Provider value={configValue}>
+    <ConfigContext.Provider value={{ ...configValue, setDbType }}>
       <DataContext.Provider value={dataValue}>
         <PaginationContext.Provider value={paginationValue}>{children}</PaginationContext.Provider>
       </DataContext.Provider>

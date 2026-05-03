@@ -115,6 +115,71 @@ const ProductSettingsTagsContext = React.createContext<ProductSettingsTagsSectio
 const ProductSettingsParametersContext =
   React.createContext<ProductSettingsParametersSection | null>(null);
 
+const buildCatalogsValue = (
+  value: ProductSettingsContextValue
+): ProductSettingsCatalogsSection => ({
+  loadingCatalogs: value.loadingCatalogs,
+  catalogs: value.catalogs,
+  onOpenCatalogModal: value.onOpenCatalogModal,
+  onEditCatalog: value.onEditCatalog,
+  onDeleteCatalog: value.onDeleteCatalog,
+});
+
+const buildPriceGroupsValue = (
+  value: ProductSettingsContextValue
+): ProductSettingsPriceGroupsSection => ({
+  loadingGroups: value.loadingGroups,
+  priceGroups: value.priceGroups,
+  defaultGroupId: value.defaultGroupId,
+  onDefaultGroupChange: value.onDefaultGroupChange,
+  defaultGroupSaving: value.defaultGroupSaving,
+  onOpenPriceGroupCreate: value.onOpenPriceGroupCreate,
+  onEditPriceGroup: value.onEditPriceGroup,
+  onDeletePriceGroup: value.onDeletePriceGroup,
+});
+
+const buildCategoriesValue = (
+  value: ProductSettingsContextValue
+): ProductSettingsCategoriesSection => ({
+  loadingCategories: value.loadingCategories,
+  categories: value.categories,
+  catalogs: value.catalogs,
+  selectedCategoryCatalogId: value.selectedCategoryCatalogId,
+  onCategoryCatalogChange: value.onCategoryCatalogChange,
+  onRefreshCategories: value.onRefreshCategories,
+});
+
+const buildTagsValue = (value: ProductSettingsContextValue): ProductSettingsTagsSection => ({
+  loadingTags: value.loadingTags,
+  tags: value.tags,
+  catalogs: value.catalogs,
+  selectedTagCatalogId: value.selectedTagCatalogId,
+  onTagCatalogChange: value.onTagCatalogChange,
+  onRefreshTags: value.onRefreshTags,
+});
+
+const buildShippingGroupsValue = (
+  value: ProductSettingsContextValue
+): ProductSettingsShippingGroupsSection => ({
+  loadingShippingGroups: value.loadingShippingGroups,
+  shippingGroups: value.shippingGroups,
+  catalogs: value.catalogs,
+  selectedShippingGroupCatalogId: value.selectedShippingGroupCatalogId,
+  onShippingGroupCatalogChange: value.onShippingGroupCatalogChange,
+  onRefreshShippingGroups: value.onRefreshShippingGroups,
+});
+
+const buildParametersValue = (
+  value: ProductSettingsContextValue
+): ProductSettingsParametersSection => ({
+  loadingParameters: value.loadingParameters,
+  parameters: value.parameters,
+  catalogs: value.catalogs,
+  selectedParameterCatalogId: value.selectedParameterCatalogId,
+  onParameterCatalogChange: value.onParameterCatalogChange,
+  onRefreshParameters: value.onRefreshParameters,
+});
+
 export function ProductSettingsProvider({
   value,
   children,
@@ -122,55 +187,12 @@ export function ProductSettingsProvider({
   value: ProductSettingsContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
-  const catalogsValue: ProductSettingsCatalogsSection = {
-    loadingCatalogs: value.loadingCatalogs,
-    catalogs: value.catalogs,
-    onOpenCatalogModal: value.onOpenCatalogModal,
-    onEditCatalog: value.onEditCatalog,
-    onDeleteCatalog: value.onDeleteCatalog,
-  };
-  const priceGroupsValue: ProductSettingsPriceGroupsSection = {
-    loadingGroups: value.loadingGroups,
-    priceGroups: value.priceGroups,
-    defaultGroupId: value.defaultGroupId,
-    onDefaultGroupChange: value.onDefaultGroupChange,
-    defaultGroupSaving: value.defaultGroupSaving,
-    onOpenPriceGroupCreate: value.onOpenPriceGroupCreate,
-    onEditPriceGroup: value.onEditPriceGroup,
-    onDeletePriceGroup: value.onDeletePriceGroup,
-  };
-  const categoriesValue: ProductSettingsCategoriesSection = {
-    loadingCategories: value.loadingCategories,
-    categories: value.categories,
-    catalogs: value.catalogs,
-    selectedCategoryCatalogId: value.selectedCategoryCatalogId,
-    onCategoryCatalogChange: value.onCategoryCatalogChange,
-    onRefreshCategories: value.onRefreshCategories,
-  };
-  const tagsValue: ProductSettingsTagsSection = {
-    loadingTags: value.loadingTags,
-    tags: value.tags,
-    catalogs: value.catalogs,
-    selectedTagCatalogId: value.selectedTagCatalogId,
-    onTagCatalogChange: value.onTagCatalogChange,
-    onRefreshTags: value.onRefreshTags,
-  };
-  const shippingGroupsValue: ProductSettingsShippingGroupsSection = {
-    loadingShippingGroups: value.loadingShippingGroups,
-    shippingGroups: value.shippingGroups,
-    catalogs: value.catalogs,
-    selectedShippingGroupCatalogId: value.selectedShippingGroupCatalogId,
-    onShippingGroupCatalogChange: value.onShippingGroupCatalogChange,
-    onRefreshShippingGroups: value.onRefreshShippingGroups,
-  };
-  const parametersValue: ProductSettingsParametersSection = {
-    loadingParameters: value.loadingParameters,
-    parameters: value.parameters,
-    catalogs: value.catalogs,
-    selectedParameterCatalogId: value.selectedParameterCatalogId,
-    onParameterCatalogChange: value.onParameterCatalogChange,
-    onRefreshParameters: value.onRefreshParameters,
-  };
+  const catalogsValue = buildCatalogsValue(value);
+  const priceGroupsValue = buildPriceGroupsValue(value);
+  const categoriesValue = buildCategoriesValue(value);
+  const tagsValue = buildTagsValue(value);
+  const shippingGroupsValue = buildShippingGroupsValue(value);
+  const parametersValue = buildParametersValue(value);
 
   return (
     <ProductSettingsCatalogsContext.Provider value={catalogsValue}>

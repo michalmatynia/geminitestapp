@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
@@ -69,7 +69,7 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
   };
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');

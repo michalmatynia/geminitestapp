@@ -11,6 +11,12 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: routerPushMock,
+  }),
+}));
+
 describe('MasterTreeSettingsButton', () => {
   it('delegates navigation to the custom open handler when provided', () => {
     const onOpen = vi.fn();

@@ -14,6 +14,7 @@ export type LessonTranslate = (key: string, values?: TranslationValues) => strin
 export type LessonShellScope = 'game' | 'draw' | 'synthesis';
 
 type LessonTranslateWithHas = LessonTranslate & { has?: (messageKey: string) => boolean };
+type LessonShellTitleKeys = { forward: string; legacy: string };
 
 export const createLessonFallbackTranslate = (
   translate: LessonTranslateWithHas,
@@ -67,7 +68,7 @@ export const translateLessonValueWithLegacyKey = (
   return fallback;
 };
 
-export const getLessonShellTitleKeys = (scope: LessonShellScope) => ({
+export const getLessonShellTitleKeys = (scope: LessonShellScope): LessonShellTitleKeys => ({
   forward: `${scope}.gameTitle`,
   legacy: `${scope}.${KANGUR_LEGACY_LESSON_SHELL_TITLE_KEY}`,
 });

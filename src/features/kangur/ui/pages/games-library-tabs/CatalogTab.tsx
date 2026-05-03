@@ -1,10 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
 import type {
   KangurGameCatalogEntry,
-  KangurGamesLibrarySubjectGroup,
 } from '@/features/kangur/games';
 import {
   getLocalizedKangurAgeGroupLabel,
@@ -33,38 +31,29 @@ import {
   resolveAgeGroupAccent,
   resolveStatusAccent,
 } from '../GamesLibrary.utils';
-import type { GamesLibraryFilterState } from '../GamesLibrary.filters';
 
-type GamesLibraryTranslations = ReturnType<typeof useTranslations>;
-type GamesLibrarySelectedGame = KangurGameCatalogEntry['game'];
+import { useGamesLibraryContext } from '../GamesLibrary.context';
 
 export interface CatalogTabProps {
-  filters: GamesLibraryFilterState;
-  hasActiveFilters: boolean;
-  applyFilters: (filters: GamesLibraryFilterState, sourceId: string) => void;
-  translations: GamesLibraryTranslations;
-  visibleGameCount: number;
-  totalGameCount: number;
-  groupedGames: KangurGamesLibrarySubjectGroup[];
-  locale: string;
-  basePath: string;
-  selectedGame: GamesLibrarySelectedGame | null;
-  setSelectedGame: (game: GamesLibrarySelectedGame, trigger?: HTMLElement | null) => void;
+  setSelectedGame: (game: KangurGameCatalogEntry['game'], trigger?: HTMLElement | null) => void;
 }
 
 export const CatalogTab = ({
-  filters,
-  hasActiveFilters,
-  applyFilters,
-  translations,
-  visibleGameCount,
-  totalGameCount,
-  groupedGames,
-  locale,
-  basePath,
-  selectedGame,
   setSelectedGame,
 }: CatalogTabProps) => {
+  const {
+    filters,
+    hasActiveFilters,
+    applyFilters,
+    translations,
+    visibleGameCount,
+    totalGameCount,
+    groupedGames,
+    locale,
+    basePath,
+    selectedGame,
+  } = useGamesLibraryContext();
+
   const catalogPanelEyebrow =
     filters.gameId === 'all' ? translations('tabs.catalog') : translations('focus.gameTitle');
   const catalogSummaryText = hasActiveFilters

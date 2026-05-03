@@ -93,8 +93,23 @@ describe('server model catalog', () => {
     expect(describeBrainModel('dall-e-3').family).toBe('image_generation');
     expect(describeBrainModel('docling-ocr').family).toBe('ocr');
     expect(describeBrainModel('llava:latest').family).toBe('vision_extract');
+    expect(describeBrainModel('ollama:gemma4').family).toBe('vision_extract');
+    expect(describeBrainModel('ollama:gemma-4').family).toBe('vision_extract');
     expect(describeBrainModel('guard-mini').family).toBe('validation');
     expect(describeBrainModel('gpt-4o-mini').family).toBe('chat');
+  });
+
+  it('classifies Gemma 4 descriptors as multimodal', () => {
+    expect(describeBrainModel('ollama:gemma4')).toMatchObject({
+      family: 'vision_extract',
+      modality: 'multimodal',
+      vendor: 'ollama',
+    });
+    expect(describeBrainModel('ollama:gemma-4')).toMatchObject({
+      family: 'vision_extract',
+      modality: 'multimodal',
+      vendor: 'ollama',
+    });
   });
 
   it('logs the last Ollama discovery failure once when every endpoint errors', async () => {

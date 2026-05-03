@@ -1,4 +1,4 @@
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 import type { 
   QueueHistoryEntry, 
@@ -30,7 +30,7 @@ export type JobQueueContextValue = {
   pausedStreams: Set<string>;
   toggleStream: (runId: string) => void;
   pauseAllStreams: () => void;
-  resumeAllStreams: () => void;
+  reconnectAllStreams: () => void;
   autoRefreshEnabled: boolean;
   setAutoRefreshEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   autoRefreshInterval: number;
@@ -62,9 +62,6 @@ export type JobQueueContextValue = {
   // Actions
   refetchQueueData: () => void;
   handleClearRuns: (scope: 'terminal' | 'all') => Promise<void>;
-  handleResumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
-  handleHandoffRun: (runId: string, reason?: string) => Promise<boolean>;
-  handleRetryRunNode: (runId: string, nodeId: string) => Promise<void>;
   handleCancelRun: (runId: string) => Promise<void>;
   handleDeleteRun: (runId: string) => Promise<void>;
   loadRunDetail: (runId: string) => Promise<void>;
@@ -80,7 +77,7 @@ export type JobQueueActionKey =
   | 'setHistorySelection'
   | 'toggleStream'
   | 'pauseAllStreams'
-  | 'resumeAllStreams'
+  | 'reconnectAllStreams'
   | 'setAutoRefreshEnabled'
   | 'setAutoRefreshInterval'
   | 'setShowMetricsPanel'
@@ -89,9 +86,6 @@ export type JobQueueActionKey =
   | 'setRunToDelete'
   | 'refetchQueueData'
   | 'handleClearRuns'
-  | 'handleResumeRun'
-  | 'handleHandoffRun'
-  | 'handleRetryRunNode'
   | 'handleCancelRun'
   | 'handleDeleteRun'
   | 'loadRunDetail';

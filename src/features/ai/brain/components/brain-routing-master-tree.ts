@@ -83,6 +83,16 @@ export const ROUTING_FEATURES: BrainRoutingFeatureConfig[] = [
     label: 'Agent Teaching',
     description: 'Teaching chat and embedding model routing.',
   },
+  {
+    key: 'playwright',
+    label: 'Playwright',
+    description: 'AI model routing for Playwright step sequencer evaluation and live scripter probe suggestions.',
+  },
+  {
+    key: 'job_board',
+    label: 'Job Board',
+    description: 'Offer extraction and vision-guided contact discovery for job-board scrape jobs.',
+  },
 ];
 
 export const ROUTING_GROUPS: BrainRoutingCapabilityGroup[] = ROUTING_FEATURES.map(

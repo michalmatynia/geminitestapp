@@ -451,7 +451,7 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     });
   };
   let mutationResolvedTargetFileId = precheckTargetResolution.resolvedTargetFileId;
-  let mutationResolutionStrategy = precheckTargetResolution.resolutionStrategy;
+  const mutationResolutionStrategy = precheckTargetResolution.resolutionStrategy;
   const mutationWorkspaceFileCount = workspaceFiles.length;
 
   if (!mutationResolvedTargetFileId) {

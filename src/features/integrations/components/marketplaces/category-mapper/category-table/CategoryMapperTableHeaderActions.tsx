@@ -1,13 +1,54 @@
-import { Download, Link2, Save } from 'lucide-react';
+import { Download, Link2, Monitor, Save, Server } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/shared/ui/primitives.public';
-import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui/api';
+import { SegmentedControl } from '@/shared/ui/forms-and-actions.public';
+import type { TraderaCategoryFetchBrowserMode } from '@/shared/contracts/integrations/marketplace';
 
-type CategoryMapperTableHeaderActionsProps = GenericMapperHeaderActionsProps & {
+type CategoryMapperTableHeaderActionsProps = {
+  onFetch: () => void | Promise<void>;
+  isFetching: boolean;
   onAutoMatchByName: () => void;
   autoMatchDisabled: boolean;
+  onSave: () => void | Promise<void>;
+  isSaving: boolean;
+  pendingCount: number;
+  showBrowserModeControl?: boolean;
+  browserMode?: TraderaCategoryFetchBrowserMode;
+  onBrowserModeChange?: (mode: TraderaCategoryFetchBrowserMode) => void;
 };
+
+const runHeaderAction = (action: () => void | Promise<void>): void => {
+  const result = action();
+  if (result !== undefined) {
+    result.catch(() => undefined);
+  }
+};
+
+function TraderaBrowserModeControl({
+  browserMode,
+  onBrowserModeChange,
+  show,
+}: {
+  browserMode: TraderaCategoryFetchBrowserMode;
+  onBrowserModeChange?: (mode: TraderaCategoryFetchBrowserMode) => void;
+  show: boolean;
+}): React.JSX.Element | null {
+  if (!show || onBrowserModeChange === undefined) return null;
+
+  return (
+    <SegmentedControl<TraderaCategoryFetchBrowserMode>
+      ariaLabel='Tradera category fetch browser mode'
+      size='xs'
+      value={browserMode}
+      onChange={onBrowserModeChange}
+      options={[
+        { value: 'headed', label: 'Headed', icon: Monitor },
+        { value: 'headless', label: 'Headless', icon: Server },
+      ]}
+    />
+  );
+}
 
 export function CategoryMapperTableHeaderActions(
   props: CategoryMapperTableHeaderActionsProps
@@ -20,11 +61,26 @@ export function CategoryMapperTableHeaderActions(
     onSave,
     isSaving,
     pendingCount,
+    showBrowserModeControl = false,
+    browserMode = 'headed',
+    onBrowserModeChange,
   } = props;
 
   return (
     <div className='flex items-center gap-2'>
-      <Button variant='outline' size='xs' className='h-8' onClick={onFetch} loading={isFetching}>
+      <TraderaBrowserModeControl
+        browserMode={browserMode}
+        onBrowserModeChange={onBrowserModeChange}
+        show={showBrowserModeControl}
+      />
+
+      <Button
+        variant='outline'
+        size='xs'
+        className='h-8'
+        onClick={() => runHeaderAction(onFetch)}
+        loading={isFetching}
+      >
         <Download className='mr-2 h-3.5 w-3.5' />
         Fetch Categories
       </Button>
@@ -43,7 +99,7 @@ export function CategoryMapperTableHeaderActions(
       <Button
         size='xs'
         className='h-8'
-        onClick={onSave}
+        onClick={() => runHeaderAction(onSave)}
         loading={isSaving}
         disabled={pendingCount === 0}
       >

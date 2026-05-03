@@ -1,3 +1,5 @@
+'use client';
+
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { cn } from '@/shared/utils/ui-utils';
 
@@ -39,12 +41,12 @@ export function FrontendBlocksSection({
 
   const contentClass = cn(
     contentClassName,
-    withContentAlignmentJustify ? getContentAlignmentClass(settings['contentAlignment']) : null
+    withContentAlignmentJustify ? getContentAlignmentClass(settings['contentAlignment']) : undefined
   );
 
   return (
     <section className={sectionClassName} style={sectionStyles}>
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass })}>
+      <div className={getSectionContainerClass({ fullWidth: layout.fullWidth, maxWidthClass })}>
         <div className={contentClass}>
           {blocks.length === 0
             ? emptyState

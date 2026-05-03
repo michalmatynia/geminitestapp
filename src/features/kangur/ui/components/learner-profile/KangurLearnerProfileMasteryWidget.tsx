@@ -7,9 +7,14 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import { translateKangurLearnerProfileWithFallback } from '@/features/kangur/ui/services/profile';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
+type KangurLearnerProfileMasteryFallbackCopy = {
+  summary: string;
+  title: string;
+};
+
 const getKangurLearnerProfileMasteryFallbackCopy = (
   locale: ReturnType<typeof normalizeSiteLocale>
-) => {
+): KangurLearnerProfileMasteryFallbackCopy => {
   if (locale === 'uk') {
     return {
       summary: 'Переглянь теми для повторення та найсильніші напрями на основі збережених уроків.',

@@ -37,13 +37,15 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => useOptionalKangurAuthMock(),
+  useOptionalKangurAuthSessionState: () => useOptionalKangurAuthMock(),
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { useKangurLeaderboardState } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
 

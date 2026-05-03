@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getAgentBrowserSnapshotDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
@@ -7,7 +7,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-async function GET_handler(
+async function getHandler(
   _req: NextRequest,
   { params }: { params: Promise<{ snapshotId: string }> }
 ): Promise<Response> {
@@ -35,6 +35,6 @@ async function GET_handler(
 
 export const GET = apiHandlerWithParams<{ snapshotId: string }>(
   async (_req: NextRequest, _ctx: ApiHandlerContext, params: { snapshotId: string }) =>
-    GET_handler(_req, { params: Promise.resolve(params) }),
+    getHandler(_req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.snapshots.[snapshotId].GET', requireAuth: true }
 );

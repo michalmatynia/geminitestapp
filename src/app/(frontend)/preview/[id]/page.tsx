@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { readOptionalServerAuthSession } from '@/features/auth/server';
 
@@ -8,8 +8,6 @@ import { renderCmsPage } from '../../cms/render';
 import { isAdminSession, loadPreviewRenderData } from '../preview-page-data';
 
 import type { Metadata } from 'next';
-
-export const dynamic = 'force-dynamic';
 
 interface PreviewPageProps {
   params: Promise<{ id: string }>;

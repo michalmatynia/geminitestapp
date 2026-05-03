@@ -1,25 +1,22 @@
 'use client';
 
-import { Lock, Edit, Copy, Trash2 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 
-import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import { PATH_TEMPLATES } from '@/shared/lib/ai-paths/core/utils/path-templates';
 import { buildPortablePathPackage, resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
-import { createDefaultPathConfig, createPathId } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig, createPathId } from '@/shared/lib/ai-paths/core/utils';
+import { normalizeAiPathFolderPath } from '@/shared/lib/ai-paths/core/utils/path-folders';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import { AppModal } from '@/shared/ui/feedback.public';
-import { Button, DropdownMenuItem, DropdownMenuSeparator, Textarea } from '@/shared/ui/primitives.public';
-import { StandardDataTablePanel } from '@/shared/ui/templates.public';
-import { cn } from '@/shared/utils/ui-utils';
+import { Button, DropdownMenuItem, Textarea } from '@/shared/ui/primitives.public';
 
-import { useGraphActions, useGraphState } from '../../context';
-import { sanitizePathConfig } from '../AiPathsSettingsUtils';
+import { useGraphActions, usePathMetadataState } from '../../context';
+import { AiPathsMasterTreePanel } from '../ai-paths-settings/AiPathsMasterTreePanel';
 import { usePathsTabPanelActions } from '../hooks/usePathsTabPanelActions';
 
-import type { ColumnDef } from '@tanstack/react-table';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 export type PathsTabPanelProps = {
   onPathOpen?: ((id: string) => void) | undefined;
@@ -28,60 +25,34 @@ export type PathsTabPanelProps = {
 export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Element {
   const {
     handleCreatePath,
+    handleCreateFromTemplate,
     handleSwitchPath,
     handleDeletePath,
     handleDuplicatePath,
-    handleCreateFromTemplate,
+    handleMoveFolder,
+    handleMovePathToFolder,
+    handleRenameFolder,
     savePathIndex,
     persistPathSettings,
     toast,
     reportAiPathsError,
     ConfirmationModal,
   } = usePathsTabPanelActions();
-  const { paths: graphPaths, pathConfigs } = useGraphState();
+  const { paths: graphPaths, pathConfigs, activePathId } = usePathMetadataState();
   const { setPaths, setPathConfigs } = useGraphActions();
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importPayload, setImportPayload] = useState('');
   const [importing, setImporting] = useState(false);
 
-  const resolvedPathFlagsById = useMemo(() => {
-    const next: Record<
-      string,
-      {
-        isLocked?: boolean;
-        isActive?: boolean;
-        lastRunAt?: string | null;
-        runCount?: number;
-      }
-    > = {};
-    graphPaths.forEach((meta) => {
-      const config = pathConfigs[meta.id];
-      next[meta.id] = {
-        isLocked: config?.isLocked ?? false,
-        isActive: config?.isActive ?? true,
-        lastRunAt: config?.lastRunAt ?? null,
-        runCount:
-          typeof config?.runCount === 'number' && Number.isFinite(config.runCount)
-            ? Math.max(0, Math.trunc(config.runCount))
-            : 0,
-      };
-    });
-    return next;
-  }, [graphPaths, pathConfigs]);
-
   const handleSaveList = () => {
     void savePathIndex(graphPaths).catch(() => {});
   };
+
   const handleOpenPath = (pathId: string) => {
     handleSwitchPath(pathId);
     onPathOpen?.(pathId);
   };
-  const handleDeletePathById = (pathId: string) => {
-    void handleDeletePath(pathId).catch(() => {});
-  };
-  const handleDuplicatePathById = (pathId: string) => {
-    handleDuplicatePath(pathId);
-  };
+
   const handleCopyPathJson = async (pathId: string): Promise<void> => {
     const pathConfig = pathConfigs[pathId];
     if (!pathConfig) {
@@ -144,7 +115,6 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
     setImporting(true);
     try {
       const resolved = resolvePortablePathInput(payload, {
-        repairIdentities: true,
         includeConnections: false,
         signingPolicyTelemetrySurface: 'canvas',
         nodeCodeObjectHashVerificationMode: 'strict',
@@ -168,6 +138,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
         typeof importedPathConfig.name === 'string' && importedPathConfig.name.trim().length > 0
           ? importedPathConfig.name.trim()
           : `Imported Path ${graphPaths.length + 1}`;
+      const importedFolderPath = (importedPathConfig as { folderPath?: unknown }).folderPath;
       const nextConfig = sanitizePathConfig({
         ...baseConfig,
         ...importedPathConfig,
@@ -178,6 +149,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
       const nextMeta: PathMeta = {
         id: nextPathId,
         name: nextConfig.name,
+        folderPath: normalizeAiPathFolderPath(importedFolderPath),
         createdAt: now,
         updatedAt:
           typeof nextConfig.updatedAt === 'string' && nextConfig.updatedAt.trim().length > 0
@@ -214,143 +186,65 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
     }
   };
 
-  const columns = useMemo<ColumnDef<PathMeta>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Path Name',
-        cell: ({ row }) => {
-          const path = row.original;
-          const flags = resolvedPathFlagsById[path.id] ?? {};
-          const isLocked = Boolean(flags.isLocked);
-          const isActive = flags.isActive !== false;
-
-          return (
-            <button
-              type='button'
-              className={cn(
-                'inline-flex items-center gap-2 cursor-pointer text-left text-sm transition',
-                isActive ? 'text-white hover:text-gray-200' : 'text-gray-400 hover:text-gray-300'
-              )}
-              onClick={() => handleOpenPath(path.id)}
-              aria-label={`Open ${path.name?.trim() || `Path ${path.id.slice(0, 6)}`}`}
-            >
-              {isLocked ? <Lock className='size-3 text-amber-300/90' /> : null}
-              {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}
-            </button>
-          );
-        },
-      },
-      {
-        id: 'lastRunAt',
-        header: 'Last Run',
-        cell: ({ row }) => {
-          const path = row.original;
-          const value = resolvedPathFlagsById[path.id]?.lastRunAt;
-          return (
-            <span className='text-xs text-gray-400'>
-              {value ? new Date(value).toLocaleString() : '—'}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'runCount',
-        header: 'Runs',
-        cell: ({ row }) => {
-          const path = row.original;
-          const value = resolvedPathFlagsById[path.id]?.runCount ?? 0;
-          return <span className='text-xs text-gray-300'>{value}</span>;
-        },
-      },
-      {
-        accessorKey: 'updatedAt',
-        header: 'Updated',
-        cell: ({ row }) => (
-          <span className='text-xs text-gray-400'>
-            {row.original.updatedAt ? new Date(row.original.updatedAt).toLocaleString() : '—'}
-          </span>
-        ),
-      },
-      {
-        id: 'actions',
-        header: () => <div className='text-right'>Actions</div>,
-        cell: ({ row }) => (
-          <div className='flex justify-end'>
-            <ActionMenu>
-              <DropdownMenuItem onClick={() => handleOpenPath(row.original.id)}>
-                <Edit className='mr-2 size-3.5' />
-                Edit Path
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className='text-sky-300 focus:text-sky-200'
-                onClick={() => handleDuplicatePathById(row.original.id)}
-              >
-                <Copy className='mr-2 size-3.5' />
-                Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className='text-indigo-300 focus:text-indigo-200'
-                onClick={() => {
-                  void handleCopyPathJson(row.original.id);
-                }}
-              >
-                <Copy className='mr-2 size-3.5' />
-                Copy JSON
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className='text-rose-400 focus:text-rose-300'
-                onClick={() => handleDeletePathById(row.original.id)}
-              >
-                <Trash2 className='mr-2 size-3.5' />
-                Delete
-              </DropdownMenuItem>
-            </ActionMenu>
-          </div>
-        ),
-      },
-    ],
-    [resolvedPathFlagsById, handleOpenPath, handleDuplicatePathById, handleDeletePathById]
-  );
-
   return (
     <>
       <div className='space-y-4'>
-        <div className='flex flex-wrap items-center justify-between gap-3'>
-          <div className='text-sm text-gray-300'>
-            Manage and rename your AI paths, then open them for editing.
-          </div>
-          <div className='flex items-center gap-2'>
-            <Button variant='outline' size='sm' onClick={handleCreatePath}>
-              New Path
-            </Button>
-            <ActionMenu
-              trigger='From Template ▾'
-              variant='outline'
-              size='sm'
-              ariaLabel='Create path from template'
-              align='end'
-            >
-              {PATH_TEMPLATES.map((t) => (
-                <DropdownMenuItem
-                  key={t.templateId}
-                  onClick={() => handleCreateFromTemplate(t.templateId)}
-                >
-                  {t.name}
-                </DropdownMenuItem>
-              ))}
-            </ActionMenu>
-            <Button variant='outline' size='sm' onClick={handleSaveList}>
-              Save List
-            </Button>
-            <Button variant='outline' size='sm' onClick={handleOpenImportModal}>
-              Import JSON
-            </Button>
-          </div>
-        </div>
-
-        <StandardDataTablePanel columns={columns} data={graphPaths} variant='flat' />
+        <AiPathsMasterTreePanel
+          activePathId={activePathId}
+          adapter={{
+            handleCreatePath,
+            handleDeletePath,
+            handleDuplicatePath,
+            handleMoveFolder,
+            handleMovePathToFolder,
+            handleRenameFolder,
+            handleSwitchPath,
+          }}
+          headerDescription='Browse, group, and reorganize AI paths with nested folders.'
+          headerTitle='Paths'
+          emptyLabel='No AI paths yet. Create a path, folder, or template here.'
+          onCopyPathJson={(pathId: string): void => {
+            void handleCopyPathJson(pathId);
+          }}
+          onPathOpen={onPathOpen}
+          panelClassName='min-h-[680px] overflow-hidden rounded-2xl border border-border/60 bg-card/20 shadow-xl'
+          pathClickBehavior='select'
+          paths={graphPaths}
+          renderHeaderActions={({ selectedFolderPath }) => (
+            <>
+              <ActionMenu
+                trigger='From Template ▾'
+                variant='outline'
+                size='sm'
+                ariaLabel='Create path from template'
+                align='end'
+              >
+                {PATH_TEMPLATES.map((template) => (
+                  <DropdownMenuItem
+                    key={template.templateId}
+                    onClick={() =>
+                      handleCreateFromTemplate(template.templateId, {
+                        folderPath: selectedFolderPath,
+                      })
+                    }
+                  >
+                    {template.name}
+                  </DropdownMenuItem>
+                ))}
+              </ActionMenu>
+              <Button variant='outline' size='sm' onClick={handleSaveList}>
+                Save List
+              </Button>
+              <Button variant='outline' size='sm' onClick={handleOpenImportModal}>
+                Import JSON
+              </Button>
+            </>
+          )}
+          searchAriaLabel='Search paths'
+          searchPlaceholder='Search folders or paths'
+          showPathHoverActions
+          toast={toast}
+        />
         <AppModal
           open={importModalOpen}
           onClose={() => {
@@ -373,7 +267,8 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
               }
               aria-label='Import path JSON'
               placeholder='Paste AI Path JSON payload here...'
-             title='Paste AI Path JSON payload here...'/>
+              title='Paste AI Path JSON payload here...'
+            />
             <div className='flex items-center justify-end gap-2'>
               <Button
                 type='button'

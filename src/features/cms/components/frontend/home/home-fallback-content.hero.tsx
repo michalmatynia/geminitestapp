@@ -5,18 +5,17 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
-import type { CmsAppearanceTone } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
+import { useHomeFallback } from './home-fallback-content';
 import { UI_CENTER_ROW_SPACED_CLASSNAME, UI_STACK_LOOSE_CLASSNAME } from '@/shared/ui/layout';
 
 type HomeFallbackHeroProps = {
-  appearanceTone?: CmsAppearanceTone;
   collectionCount: number;
 };
 
 export function HomeFallbackHero({
-  appearanceTone,
   collectionCount,
 }: HomeFallbackHeroProps): React.JSX.Element {
+  const { appearanceTone } = useHomeFallback();
   const translations = useTranslations('FallbackHome.Hero');
   const setupSteps = [
     translations('setupStepOne'),

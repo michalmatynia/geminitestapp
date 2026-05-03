@@ -8,6 +8,7 @@ const {
   toastMock,
   useCatalogsMock,
   useCategoriesMock,
+  useCustomFieldsMock,
   useDeleteCatalogMutationMock,
   useDeletePriceGroupMutationMock,
   useParametersMock,
@@ -20,6 +21,7 @@ const {
   toastMock: vi.fn(),
   useCatalogsMock: vi.fn(),
   useCategoriesMock: vi.fn(),
+  useCustomFieldsMock: vi.fn(),
   useDeleteCatalogMutationMock: vi.fn(),
   useDeletePriceGroupMutationMock: vi.fn(),
   useParametersMock: vi.fn(),
@@ -34,9 +36,14 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => useSearchParamsMock(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useSearchParams: () => useSearchParamsMock(),
+}));
+
 vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
   useCatalogs: (...args: unknown[]) => useCatalogsMock(...args),
   useCategories: (...args: unknown[]) => useCategoriesMock(...args),
+  useCustomFields: (...args: unknown[]) => useCustomFieldsMock(...args),
   useDeleteCatalogMutation: () => useDeleteCatalogMutationMock(),
   useDeletePriceGroupMutation: () => useDeletePriceGroupMutationMock(),
   useParameters: (...args: unknown[]) => useParametersMock(...args),
@@ -58,11 +65,15 @@ vi.mock('@/features/products/components/settings/TagsSettings', () => ({
   TagsSettings: () => <div data-testid='tags-settings' />,
 }));
 
+vi.mock('@/features/products/components/settings/CustomFieldsSettings', () => ({
+  CustomFieldsSettings: () => <div data-testid='custom-fields-settings' />,
+}));
+
 vi.mock('@/features/products/components/settings/ShippingGroupsSettings', () => ({
   ShippingGroupsSettings: () => <div data-testid='shipping-groups-settings' />,
 }));
 
-vi.mock('@/features/products/components/constructor/ParametersSettings', () => ({
+vi.mock('@/features/products/components/settings/parameters/ParametersSettings', () => ({
   ParametersSettings: () => <div data-testid='parameters-settings' />,
 }));
 
@@ -118,12 +129,19 @@ vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
+    asChild,
     ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
-    <button type='button' onClick={onClick} {...props}>
-      {children}
-    </button>
-  ),
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    children?: React.ReactNode;
+    asChild?: boolean;
+  }) =>
+    asChild ? (
+      <span {...props}>{children}</span>
+    ) : (
+      <button type='button' onClick={onClick} {...props}>
+        {children}
+      </button>
+    ),
 }));
 
 vi.mock('@/shared/ui/card', () => ({
@@ -169,6 +187,7 @@ describe('ProductSettingsPage metadata gating', () => {
     useCategoriesMock.mockReturnValue(buildQueryResult());
     useShippingGroupsMock.mockReturnValue(buildQueryResult());
     useTagsMock.mockReturnValue(buildQueryResult());
+    useCustomFieldsMock.mockReturnValue(buildQueryResult());
     useParametersMock.mockReturnValue(buildQueryResult());
     useUpdatePriceGroupMutationMock.mockReturnValue({
       mutateAsync: vi.fn(),
@@ -195,6 +214,7 @@ describe('ProductSettingsPage metadata gating', () => {
     expect(usePriceGroupsMock).toHaveBeenLastCalledWith({ enabled: false });
     expect(useShippingGroupsMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(useTagsMock).toHaveBeenLastCalledWith(null, { enabled: false });
+    expect(useCustomFieldsMock).toHaveBeenLastCalledWith({ enabled: false });
     expect(useParametersMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('categories-settings')).toBeInTheDocument();
     expect(screen.queryByTestId('catalog-modal')).not.toBeInTheDocument();
@@ -230,6 +250,17 @@ describe('ProductSettingsPage metadata gating', () => {
     expect(useTagsMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
     expect(screen.getByTestId('shipping-groups-settings')).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Custom Fields' }));
+
+    await waitFor(() => {
+      expect(useCustomFieldsMock).toHaveBeenLastCalledWith({ enabled: true });
+    });
+
+    expect(useShippingGroupsMock).toHaveBeenLastCalledWith('catalog-default', {
+      enabled: false,
+    });
+    expect(screen.getByTestId('custom-fields-settings')).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: 'Price Groups' }));
 
     await waitFor(() => {
@@ -241,8 +272,21 @@ describe('ProductSettingsPage metadata gating', () => {
       enabled: false,
     });
     expect(useTagsMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
-    expect(useParametersMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('price-groups-settings')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Parameters' }));
+
+    await waitFor(() => {
+      expect(useParametersMock).toHaveBeenLastCalledWith('catalog-default', {
+        enabled: true,
+      });
+    });
+
+    expect(useShippingGroupsMock).toHaveBeenLastCalledWith('catalog-default', {
+      enabled: false,
+    });
+    expect(useTagsMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
+    expect(screen.getByTestId('parameters-settings')).toBeInTheDocument();
   });
 
   it('opens the requested settings section from the url search params', async () => {
@@ -260,5 +304,22 @@ describe('ProductSettingsPage metadata gating', () => {
 
     expect(useCategoriesMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('shipping-groups-settings')).toBeInTheDocument();
+  });
+
+  it('opens parameters section from the url search params', async () => {
+    useSearchParamsMock.mockReturnValue({
+      get: (key: string) => (key === 'section' ? 'parameters' : null),
+    });
+
+    render(<ProductSettingsPage />);
+
+    await waitFor(() => {
+      expect(useParametersMock).toHaveBeenLastCalledWith('catalog-default', {
+        enabled: true,
+      });
+    });
+
+    expect(useCategoriesMock).toHaveBeenLastCalledWith(null, { enabled: false });
+    expect(screen.getByTestId('parameters-settings')).toBeInTheDocument();
   });
 });

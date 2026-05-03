@@ -1,0 +1,44 @@
+{
+  "browser": {
+    "engine": "chromium",
+    "label": "Brave",
+    "headless": true,
+    "slowMo": 0,
+    "channel": null,
+    "executablePathLabel": "Brave Browser"
+  },
+  "antiDetection": {
+    "identityProfile": "default",
+    "locale": null,
+    "timezoneId": null,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "acceptLanguage": null,
+    "chromiumDefaultsApplied": true,
+    "runtimePacingScope": null,
+    "runtimeBehavior": {
+      "prewarmUrl": null,
+      "prewarmWaitMs": 600,
+      "postStartUrlWaitMs": 450,
+      "launchCooldownMs": 1200
+    },
+    "stickyStorageState": {
+      "enabled": false,
+      "loaded": false,
+      "scopeLabel": null,
+      "origin": null
+    },
+    "proxy": {
+      "enabled": false,
+      "providerPreset": "custom",
+      "sessionAffinityEnabled": false,
+      "sessionMode": "sticky",
+      "applied": false,
+      "reason": "disabled",
+      "serverHost": null,
+      "hasUsername": false,
+      "scopeLabel": null,
+      "origin": null,
+      "mutations": []
+    }
+  }
+}

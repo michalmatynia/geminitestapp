@@ -1,11 +1,17 @@
-import { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import { type AiNode, type Edge, type RuntimePortValues } from '@/shared/contracts/ai-paths';
 import {
-  NodeHandlerContext,
-  RuntimeHistoryEntry,
-  RuntimeTraceResume,
+  type NodeHandlerContext,
+  type RuntimeHistoryEntry,
 } from '@/shared/contracts/ai-paths-runtime';
 
-import { nowMs, resolveNodeTimeoutMs, withTimeout, withRetries } from '../execution-helpers';
+import {
+  isAbortError,
+  nowMs,
+  resolveAbortSignalMessage,
+  resolveNodeTimeoutMs,
+  withTimeout,
+  withRetries,
+} from '../execution-helpers';
 import { cloneValue } from '../utils';
 import { buildSpanId } from './engine-execution-context';
 import { resolveNodeHandlerOrThrow } from './engine-execution-handlers';
@@ -17,10 +23,12 @@ import {
   readRuntimeRetryPolicy,
   resolveRecoverableNodeWaitState,
 } from './engine-runtime-status';
-import { EngineStateManager } from './engine-state-manager';
+import { type EngineStateManager } from './engine-state-manager';
 import {
+  GraphExecutionCancelled,
   GraphExecutionError,
   type EvaluateGraphOptions,
+  type RuntimeNodeBlockedReason,
   type RuntimeNodeResolutionTelemetry,
 } from './engine-types';
 import {
@@ -45,6 +53,21 @@ const createExecutedState = (): NodeHandlerContext['executed'] => ({
   mapper: new Set<string>(),
 });
 
+const normalizeBlockedReason = (value: unknown): RuntimeNodeBlockedReason => {
+  if (typeof value !== 'string') return 'flow_control';
+  const normalized = value.trim().toLowerCase();
+  switch (normalized) {
+    case 'missing_inputs':
+    case 'flow_control':
+    case 'validation':
+    case 'error':
+    case 'waiting_callback':
+      return normalized;
+    default:
+      return 'flow_control';
+  }
+};
+
 export type RunNodeArgs = {
   node: AiNode;
   iteration: number;
@@ -63,27 +86,10 @@ export type RunNodeArgs = {
   executed: NodeHandlerContext['executed'];
 };
 
-const EFFECT_NODE_TYPES = new Set<string>([
-  'agent',
-  'api_advanced',
-  'database',
-  'http',
-  'learner_agent',
-  'model',
-  'notification',
-  'playwright',
-]);
-
-const DEFAULT_SIDE_EFFECT_POLICY_BY_NODE_TYPE = new Map<string, 'per_run' | 'per_activation'>([
-  ['agent', 'per_activation'],
-  ['api_advanced', 'per_activation'],
-  ['database', 'per_activation'],
-  ['http', 'per_activation'],
-  ['learner_agent', 'per_activation'],
-  ['model', 'per_activation'],
-  ['notification', 'per_run'],
-  ['playwright', 'per_activation'],
-]);
+import {
+  getDefaultSideEffectPolicy,
+  isEffectNodeType,
+} from '../../node-handler-registry';
 
 const EFFECT_EXECUTED_BUCKET_BY_NODE_TYPE = new Map<string, keyof NodeHandlerContext['executed']>([
   ['agent', 'ai'],
@@ -101,7 +107,7 @@ const resolveNodeSideEffectPolicy = (node: AiNode): 'per_run' | 'per_activation'
   if (configured === 'per_run' || configured === 'per_activation') {
     return configured;
   }
-  return DEFAULT_SIDE_EFFECT_POLICY_BY_NODE_TYPE.get(node.type);
+  return getDefaultSideEffectPolicy(node.type);
 };
 
 const resolveNodeIdempotencyKey = (input: {
@@ -164,19 +170,6 @@ const resolveSourceSpanId = (input: {
   return typeof matched?.spanId === 'string' ? matched.spanId : null;
 };
 
-const resolveNodeResume = (
-  options: EvaluateGraphOptions,
-  nodeId: string
-): RuntimeTraceResume | null => {
-  const resumeByNodeId = options['resumeByNodeId'];
-  if (!resumeByNodeId || typeof resumeByNodeId !== 'object' || Array.isArray(resumeByNodeId)) {
-    return null;
-  }
-  const value = (resumeByNodeId as Record<string, unknown>)[nodeId];
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  return value as RuntimeTraceResume;
-};
-
 const appendNodeHistoryEntry = (input: {
   state: EngineStateManager;
   options: EvaluateGraphOptions;
@@ -197,7 +190,6 @@ const appendNodeHistoryEntry = (input: {
   sideEffectDecision?: string;
   idempotencyKey?: string | null;
   effectSourceSpanId?: string | null;
-  resume?: RuntimeTraceResume | null;
   error?: string | null;
   durationMs?: number;
   runtimeTelemetry?: RuntimeNodeResolutionTelemetry | null;
@@ -225,13 +217,6 @@ const appendNodeHistoryEntry = (input: {
     sideEffectDecision: input.sideEffectDecision,
     idempotencyKey: input.idempotencyKey ?? null,
     effectSourceSpanId: input.effectSourceSpanId ?? null,
-    resumeMode: input.resume?.mode,
-    resumeDecision: input.resume?.decision,
-    resumeReason: input.resume?.reason,
-    resumeSourceTraceId: input.resume?.sourceTraceId ?? null,
-    resumeSourceSpanId: input.resume?.sourceSpanId ?? null,
-    resumeSourceRunStartedAt: input.resume?.sourceRunStartedAt ?? null,
-    resumeSourceStatus: input.resume?.sourceStatus ?? null,
     error: input.error ?? undefined,
     inputsFrom: buildInputLinks(
       input.node.id,
@@ -281,7 +266,6 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
   const activationHash = buildNodeInputHash(node, nodeInputs, {
     iteration,
   });
-  const resume = resolveNodeResume(options, node.id);
 
   // --- Cache Check Start ---
   const nodeHash = buildNodeHash(
@@ -305,7 +289,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
   const isImplicitTriggerNode = node.type === 'trigger' && !options.triggerNodeId;
   const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
   const isCacheDisabled = cacheMode === 'disabled';
-  const isEffectNodeType = EFFECT_NODE_TYPES.has(node.type);
+  const isEffectNode = isEffectNodeType(node.type);
   const sideEffectPolicy = resolveNodeSideEffectPolicy(node);
   const effectExecutedBucket = EFFECT_EXECUTED_BUCKET_BY_NODE_TYPE.get(node.type);
   const idempotencyKey = resolveNodeIdempotencyKey({
@@ -341,7 +325,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
     const attempt = state.reserveNodeAttempt(node.id);
     const spanId = buildSpanId(node.id, attempt, iteration);
     const out = cacheSource;
-    const effectSourceSpanId = isEffectNodeType
+    const effectSourceSpanId = isEffectNode
       ? resolveSourceSpanId({
         state,
         options,
@@ -372,10 +356,9 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       activationHash,
       cacheDecision: isSeedMatch ? 'seed' : 'hit',
       sideEffectPolicy,
-      sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
+      sideEffectDecision: isEffectNode ? 'skipped_duplicate' : undefined,
       idempotencyKey,
       effectSourceSpanId,
-      resume,
       runtimeTelemetry,
     });
 
@@ -390,7 +373,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         status: 'cached',
         durationMs: 0,
         sideEffectPolicy,
-        sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
+        sideEffectDecision: isEffectNode ? 'skipped_duplicate' : undefined,
         activationHash: activationHash ?? undefined,
         ...(idempotencyKey ? { idempotencyKey } : {}),
         ...buildRuntimeTelemetryFields(runtimeTelemetry),
@@ -413,7 +396,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         cached: true,
         cacheDecision: isSeedMatch ? 'seed' : 'hit',
         sideEffectPolicy,
-        sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
+        sideEffectDecision: isEffectNode ? 'skipped_duplicate' : undefined,
         activationHash,
         idempotencyKey,
         effectSourceSpanId,
@@ -495,9 +478,9 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
     const retryPolicy = readRuntimeRetryPolicy(node);
 
     const sideEffectDecision: 'executed' | 'skipped_policy' | undefined =
-      isEffectNodeType && effectExecutedBucket && executed[effectExecutedBucket].has(node.id)
+      isEffectNode && effectExecutedBucket && executed[effectExecutedBucket].has(node.id)
         ? 'skipped_policy'
-        : isEffectNodeType
+        : isEffectNode
           ? 'executed'
           : undefined;
 
@@ -508,8 +491,8 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       nodeInputs,
       prevOutputs: prevOutputs ?? {},
       edges: sanitizedEdges,
-      nodes: nodes,
-      nodeById: nodeById,
+      nodes,
+      nodeById,
       runId: resolvedRunId,
       runStartedAt: resolvedRunStartedAt,
       timeoutMs: resolveNodeTimeoutMs(node),
@@ -634,6 +617,80 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       return true;
     }
 
+    // Detect handler-declared blocked status (e.g. model returning { status: 'blocked', reason: 'missing_prompt' }).
+    // Route through the blocked-node path so downstream nodes wait instead of processing garbage data.
+    const handlerDeclaredBlocked =
+      typeof nextOutputs?.['status'] === 'string' &&
+      nextOutputs['status'].trim().toLowerCase() === 'blocked';
+
+    if (handlerDeclaredBlocked) {
+      const blockedReason = normalizeBlockedReason(nextOutputs['reason']);
+      const nodeDurationMs = nowMs() - nodeStartedAt;
+      state.nodeDurationsMap.set(node.id, nodeDurationMs);
+      state.activeNodes.delete(node.id);
+      state.blockedNodes.add(node.id);
+      state.outputs[node.id] = nextOutputs;
+
+      appendNodeHistoryEntry({
+        state,
+        options,
+        resolvedRunId,
+        spanId,
+        node,
+        status: 'executed',
+        iteration,
+        attempt,
+        nodeInputs,
+        nodeOutputs: nextOutputs,
+        nodeById,
+        sanitizedEdges,
+        inputHash: nodeHash,
+        activationHash,
+        cacheDecision: isCacheDisabled ? 'disabled' : 'miss',
+        sideEffectPolicy,
+        sideEffectDecision,
+        idempotencyKey,
+        durationMs: nodeDurationMs,
+        runtimeTelemetry,
+      });
+
+      if (options.profile?.onEvent) {
+        options.profile.onEvent({
+          type: 'node',
+          runId: resolvedRunId,
+          runStartedAt: resolvedRunStartedAt,
+          nodeId: node.id,
+          nodeType: node.type,
+          iteration,
+          status: 'skipped',
+          durationMs: nodeDurationMs,
+          reason: blockedReason,
+          ...buildRuntimeTelemetryFields(runtimeTelemetry),
+        });
+      }
+
+      if (options.onNodeBlocked) {
+        void options.onNodeBlocked({
+          runId: resolvedRunId,
+          traceId: resolvedRunId,
+          spanId,
+          node,
+          iteration,
+          attempt,
+          reason: blockedReason,
+          status: 'blocked',
+          message: `Node ${node.title || node.id} blocked: ${String(nextOutputs['reason'] ?? 'handler declared blocked status')}`,
+          waitingOnPorts: Array.isArray(nextOutputs['waitingOnPorts'])
+            ? (nextOutputs['waitingOnPorts'] as string[])
+            : [],
+          waitingOnDetails: [],
+          ...buildRuntimeTelemetryFields(runtimeTelemetry),
+        });
+      }
+
+      return true;
+    }
+
     const nodeDurationMs = nowMs() - nodeStartedAt;
     state.nodeDurationsMap.set(node.id, nodeDurationMs);
     state.finishedNodes.add(node.id);
@@ -668,7 +725,6 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       sideEffectPolicy,
       sideEffectDecision,
       idempotencyKey,
-      resume,
       durationMs: nodeDurationMs,
       runtimeTelemetry,
     });
@@ -745,7 +801,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       const changed = JSON.stringify(state.inputs[toNodeId]) !== JSON.stringify(targetInputs);
 
       if (changed) {
-        state.inputs[toNodeId] = targetInputs;
+        state.inputs[toNodeId] = cloneValue(targetInputs);
         if (state.finishedNodes.has(toNodeId)) {
           const previousHash = state.nodeHashes.get(toNodeId) ?? null;
           const nextHash = buildNodeHash(
@@ -810,6 +866,18 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       return false;
     }
 
+    if (isAbortError(error) || options.abortSignal?.aborted) {
+      state.activeNodes.delete(node.id);
+      state.finishedNodes.delete(node.id);
+      state.blockedNodes.delete(node.id);
+      throw new GraphExecutionCancelled(
+        resolveAbortSignalMessage(options.abortSignal, 'Run cancelled.'),
+        state.buildRuntimeStateSnapshot(state.inputs),
+        node.id,
+        error instanceof Error ? error : undefined
+      );
+    }
+
     state.activeNodes.delete(node.id);
     state.errorNodes.add(node.id);
     state.finishedNodes.delete(node.id);
@@ -856,7 +924,6 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       sideEffectPolicy,
       sideEffectDecision: sideEffectPolicy ? 'failed' : undefined,
       idempotencyKey,
-      resume,
       error: graphError.message,
       durationMs: nodeDurationMs,
       runtimeTelemetry,

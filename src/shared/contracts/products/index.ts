@@ -1,11 +1,17 @@
 export * from './base';
+export * from './batch-edit';
 export * from './catalogs';
 export * from './categories';
+export * from './custom-fields';
+export * from './marketplace-copy-debrand-batch';
+export * from './marketplace-copy-debrand-run';
 export * from './parameters';
+export * from './parse-actions';
 export * from './producers';
 export * from './product';
 export * from './shipping-groups';
 export * from './tags';
+export * from './title-terms';
 
 export * from './io';
 export * from './migration';
@@ -15,3 +21,7 @@ export * from './studio';
 export * from './drafts';
 export * from './errors';
 export * from './orders-import';
+export * from './scanner-settings';
+export * from './scrape-profiles';
+export * from './scrape-template-placeholders';
+export * from './scraped-source';

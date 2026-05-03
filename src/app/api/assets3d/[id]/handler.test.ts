@@ -18,7 +18,7 @@ vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
 }));
 
-import { DELETE_handler, GET_handler, PATCH_handler } from './handler';
+import { deleteHandler, getHandler, patchHandler } from './handler';
 
 describe('assets3d by-id handler module', () => {
   const repository = {
@@ -50,7 +50,7 @@ describe('assets3d by-id handler module', () => {
       name: 'Preview asset',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/assets3d/asset-1'),
       requestContext,
       { id: 'asset-1' }
@@ -67,7 +67,7 @@ describe('assets3d by-id handler module', () => {
     repository.getAsset3DById.mockResolvedValue(null);
 
     await expect(
-      GET_handler(new NextRequest('http://localhost/api/assets3d/missing'), requestContext, {
+      getHandler(new NextRequest('http://localhost/api/assets3d/missing'), requestContext, {
         id: 'missing',
       })
     ).rejects.toThrow('3D asset not found');
@@ -83,7 +83,7 @@ describe('assets3d by-id handler module', () => {
       response: parseErrorResponse,
     });
 
-    const response = await PATCH_handler(
+    const response = await patchHandler(
       new NextRequest('http://localhost/api/assets3d/asset-1', { method: 'PATCH' }),
       requestContext,
       { id: 'asset-1' }
@@ -99,7 +99,7 @@ describe('assets3d by-id handler module', () => {
       name: 'Updated asset',
     });
 
-    const response = await PATCH_handler(
+    const response = await patchHandler(
       new NextRequest('http://localhost/api/assets3d/asset-1', { method: 'PATCH' }),
       requestContext,
       { id: 'asset-1' }
@@ -116,7 +116,7 @@ describe('assets3d by-id handler module', () => {
   });
 
   it('deletes an asset and returns success', async () => {
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/assets3d/asset-1', { method: 'DELETE' }),
       requestContext,
       { id: 'asset-1' }
@@ -130,7 +130,7 @@ describe('assets3d by-id handler module', () => {
     deleteAsset3DMock.mockResolvedValue(false);
 
     await expect(
-      DELETE_handler(new NextRequest('http://localhost/api/assets3d/missing', { method: 'DELETE' }), requestContext, {
+      deleteHandler(new NextRequest('http://localhost/api/assets3d/missing', { method: 'DELETE' }), requestContext, {
         id: 'missing',
       })
     ).rejects.toThrow('3D asset not found');

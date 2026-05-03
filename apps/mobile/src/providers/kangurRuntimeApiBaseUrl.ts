@@ -23,7 +23,7 @@ const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 export const normalizeApiBaseUrl = (value: string | undefined | null): string | null => {
   const trimmed = value?.trim();
-  if (!trimmed) {
+  if (trimmed === undefined || trimmed === '') {
     return null;
   }
 
@@ -32,7 +32,7 @@ export const normalizeApiBaseUrl = (value: string | undefined | null): string | 
 
 const normalizeHostname = (value: string | null | undefined): string | null => {
   const trimmed = value?.trim().toLowerCase();
-  return trimmed ? trimmed : null;
+  return trimmed !== undefined && trimmed !== '' ? trimmed : null;
 };
 
 const readUrlHostname = (value: string): string | null => {
@@ -61,7 +61,7 @@ export const isLoopbackHost = (hostname: string | null): boolean =>
 
 const parseRuntimeHostCandidate = (value: string | null | undefined): string | null => {
   const trimmed = value?.trim();
-  if (!trimmed) {
+  if (trimmed === undefined || trimmed === '') {
     return null;
   }
 
@@ -85,7 +85,7 @@ export const extractExpoDevelopmentHost = ({
 }): string | null => {
   for (const candidate of [hostUri, linkingUri]) {
     const parsedHost = parseRuntimeHostCandidate(candidate);
-    if (parsedHost) {
+    if (parsedHost !== null) {
       return parsedHost;
     }
   }
@@ -126,52 +126,56 @@ export const resolveKangurMobileApiBaseUrl = ({
   const normalizedConfiguredApiBaseUrl = normalizeApiBaseUrl(configuredApiBaseUrl);
   const normalizedDevelopmentHost = normalizeHostname(developmentHost);
 
-  if (normalizedConfiguredApiBaseUrl) {
-    const configuredHostname = readUrlHostname(normalizedConfiguredApiBaseUrl);
+  if (normalizedConfiguredApiBaseUrl !== null) {
+    return resolveConfiguredUrl(
+      normalizedConfiguredApiBaseUrl,
+      normalizedDevelopmentHost,
+      platformOs,
+    );
+  }
 
-    if (
-      canUseExpoDevelopmentHost(normalizedDevelopmentHost, platformOs) &&
-      (isLoopbackHost(configuredHostname) || configuredHostname === ANDROID_EMULATOR_HOST)
-    ) {
-      return {
-        apiBaseUrl:
-          createApiUrlWithHostname(
-            normalizedConfiguredApiBaseUrl,
-            normalizedDevelopmentHost,
-          ) ?? normalizedConfiguredApiBaseUrl,
-        apiBaseUrlSource: 'expo-development-host',
-      };
-    }
+  return resolveDefaultUrl(normalizedDevelopmentHost, platformOs);
+};
 
-    if (platformOs === 'android' && isLoopbackHost(configuredHostname)) {
-      return {
-        apiBaseUrl:
-          createApiUrlWithHostname(
-            normalizedConfiguredApiBaseUrl,
-            ANDROID_EMULATOR_HOST,
-          ) ?? normalizedConfiguredApiBaseUrl,
-        apiBaseUrlSource: 'android-emulator-default',
-      };
-    }
+const resolveConfiguredUrl = (
+  configuredUrl: string,
+  devHost: string | null,
+  platformOs: PlatformOSType,
+): KangurResolvedApiBaseUrl => {
+  const configuredHostname = readUrlHostname(configuredUrl);
 
+  if (canUseExpoDevelopmentHost(devHost, platformOs) && isDevHostCandidate(configuredHostname)) {
     return {
-      apiBaseUrl: normalizedConfiguredApiBaseUrl,
-      apiBaseUrlSource: 'env',
+      apiBaseUrl: createApiUrlWithHostname(configuredUrl, devHost) ?? configuredUrl,
+      apiBaseUrlSource: 'expo-development-host',
     };
   }
 
-  const defaultApiBaseUrlState = resolveDefaultApiBaseUrl(platformOs);
-
-  if (canUseExpoDevelopmentHost(normalizedDevelopmentHost, platformOs)) {
+  if (platformOs === 'android' && isLoopbackHost(configuredHostname)) {
     return {
-      apiBaseUrl:
-        createApiUrlWithHostname(
-          defaultApiBaseUrlState.apiBaseUrl,
-          normalizedDevelopmentHost,
-        ) ?? defaultApiBaseUrlState.apiBaseUrl,
+      apiBaseUrl: createApiUrlWithHostname(configuredUrl, ANDROID_EMULATOR_HOST) ?? configuredUrl,
+      apiBaseUrlSource: 'android-emulator-default',
+    };
+  }
+
+  return { apiBaseUrl: configuredUrl, apiBaseUrlSource: 'env' };
+};
+
+const isDevHostCandidate = (hostname: string | null): boolean =>
+  isLoopbackHost(hostname) || hostname === ANDROID_EMULATOR_HOST;
+
+const resolveDefaultUrl = (
+  devHost: string | null,
+  platformOs: PlatformOSType,
+): KangurResolvedApiBaseUrl => {
+  const defaults = resolveDefaultApiBaseUrl(platformOs);
+
+  if (canUseExpoDevelopmentHost(devHost, platformOs)) {
+    return {
+      apiBaseUrl: createApiUrlWithHostname(defaults.apiBaseUrl, devHost) ?? defaults.apiBaseUrl,
       apiBaseUrlSource: 'expo-development-host-default',
     };
   }
 
-  return defaultApiBaseUrlState;
+  return defaults;
 };

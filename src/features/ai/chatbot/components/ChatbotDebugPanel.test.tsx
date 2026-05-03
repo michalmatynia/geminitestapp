@@ -20,7 +20,7 @@ vi.mock('../context/ChatbotContext', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/data-display.public', () => ({
   LogList: (props: { logs: unknown[] }) => {
     mocks.logList(props);
     return <div data-testid='log-list'>{JSON.stringify(props.logs)}</div>;

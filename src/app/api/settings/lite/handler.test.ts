@@ -37,7 +37,8 @@ vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
 }));
 
 import {
-  GET_handler,
+  __testOnly,
+  getHandler,
   clearLiteSettingsServerCache,
   prewarmLiteSettingsServerCache,
 } from './handler';
@@ -85,7 +86,7 @@ describe('settings lite handler', () => {
     });
     getMongoDbMock.mockResolvedValue({ collection: collectionMock });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/settings/lite'),
       createRequestContext()
     );
@@ -152,7 +153,7 @@ describe('settings lite handler', () => {
     const dbCallsAfterPrewarm = getMongoDbMock.mock.calls.length;
     expect(dbCallsAfterPrewarm).toBeGreaterThan(0);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/settings/lite'),
       createRequestContext()
     );
@@ -200,7 +201,7 @@ describe('settings lite handler', () => {
     });
     getMongoDbMock.mockResolvedValue({ collection: collectionMock });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/settings/lite'),
       createRequestContext()
     );
@@ -224,11 +225,11 @@ describe('settings lite handler', () => {
   });
 
   it('returns a degraded empty response for transient mongo connectivity failures', async () => {
-    const error = new Error("Socket 'secureConnect' timed out after 11640ms (connectTimeoutMS: 1000)");
+    const error = new Error('Socket \'secureConnect\' timed out after 11640ms (connectTimeoutMS: 1000)');
     error.name = 'MongoServerSelectionError';
     getMongoDbMock.mockRejectedValue(error);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/settings/lite'),
       createRequestContext()
     );
@@ -240,8 +241,27 @@ describe('settings lite handler', () => {
     expect(captureExceptionMock).not.toHaveBeenCalled();
   });
 
+  it('times out hung lite settings fetches', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const handled = __testOnly
+        .withLiteSettingsTimeout(new Promise(() => undefined))
+        .catch((error: unknown) => error);
+
+      await vi.advanceTimersByTimeAsync(2_501);
+
+      await expect(handled).resolves.toMatchObject({
+        message: 'Lite settings fetch timed out after 2500ms.',
+        name: 'LiteSettingsFetchTimeoutError',
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('suppresses transient mongo connectivity failures during SSR prewarm', async () => {
-    const error = new Error("Socket 'secureConnect' timed out after 11640ms (connectTimeoutMS: 1000)");
+    const error = new Error('Socket \'secureConnect\' timed out after 11640ms (connectTimeoutMS: 1000)');
     error.name = 'MongoServerSelectionError';
     getMongoDbMock.mockRejectedValue(error);
 

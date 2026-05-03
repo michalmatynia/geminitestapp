@@ -112,7 +112,6 @@ export const SERVER_NATIVE_CODE_OBJECT_HANDLER_IDS: readonly string[] = Object.f
 ]);
 
 const defaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
-  resolveLegacyHandler,
   resolveNativeCodeObjectHandler: SERVER_HANDLER_CATALOG.resolveNativeCodeObjectHandler,
 });
 

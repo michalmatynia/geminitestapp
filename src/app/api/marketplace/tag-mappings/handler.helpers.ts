@@ -1,16 +1,15 @@
-import { z } from 'zod';
-
 import type { TagMapping, TagMappingCreateInput } from '@/shared/contracts/integrations/listings';
 import { badRequestError } from '@/shared/errors/app-error';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-const marketplaceTagMappingsQuerySchema = z.object({
-  connectionId: optionalTrimmedQueryString(),
-});
-
-export type MarketplaceTagMappingsListQuery = {
-  connectionId: string;
-};
+import {
+  connectionIdQuerySchema,
+  type ConnectionIdQuery,
+} from '@/shared/validations/product-metadata-api-schemas';
+import {
+  type MarketplaceMappingSaveResult,
+  type MarketplaceMappingSaveRepository,
+  saveMarketplaceMapping,
+} from '../marketplace-api.types';
 
 export type TagMappingCreateFields = {
   connectionId: string;
@@ -18,36 +17,32 @@ export type TagMappingCreateFields = {
   internalTagId: string;
 };
 
-export type TagMappingSaveRepository = {
-  getByInternalTag: (connectionId: string, internalTagId: string) => Promise<TagMapping | null>;
-  update: (
-    id: string,
-    input: { externalTagId: string; isActive: true }
-  ) => Promise<TagMapping>;
-  create: (input: TagMappingCreateFields) => Promise<TagMapping>;
+export type TagMappingUpdateFields = {
+  externalTagId: string;
+  isActive: true;
 };
 
-export type TagMappingSaveResult = {
-  body: TagMapping;
-  status: 200 | 201;
+export type TagMappingSaveRepository = MarketplaceMappingSaveRepository<
+  TagMapping,
+  TagMappingCreateFields,
+  TagMappingUpdateFields
+> & {
+  getByInternalTag: (connectionId: string, internalTagId: string) => Promise<TagMapping | null>;
 };
+
+export type TagMappingSaveResult = MarketplaceMappingSaveResult<TagMapping>;
 
 export const parseMarketplaceTagMappingsQuery = (
   rawQuery: unknown
-): MarketplaceTagMappingsListQuery => {
-  const query = marketplaceTagMappingsQuerySchema.safeParse(rawQuery);
+): ConnectionIdQuery => {
+  const query = connectionIdQuerySchema.safeParse(rawQuery);
   if (!query.success) {
     throw badRequestError('Invalid marketplace tag mappings query.', {
       errors: query.error.flatten(),
     });
   }
 
-  const { connectionId } = query.data;
-  if (!connectionId) {
-    throw badRequestError('connectionId is required');
-  }
-
-  return { connectionId };
+  return query.data;
 };
 
 export const requireTagMappingCreateFields = (
@@ -69,16 +64,10 @@ export const requireTagMappingCreateFields = (
 export const saveTagMapping = async (
   repo: TagMappingSaveRepository,
   input: TagMappingCreateFields
-): Promise<TagMappingSaveResult> => {
-  const existing = await repo.getByInternalTag(input.connectionId, input.internalTagId);
-  if (existing) {
-    const updated = await repo.update(existing.id, {
-      externalTagId: input.externalTagId,
-      isActive: true,
-    });
-    return { body: updated, status: 200 };
-  }
-
-  const mapping = await repo.create(input);
-  return { body: mapping, status: 201 };
-};
+): Promise<TagMappingSaveResult> =>
+  saveMarketplaceMapping(
+    repo,
+    () => repo.getByInternalTag(input.connectionId, input.internalTagId),
+    input,
+    { externalTagId: input.externalTagId, isActive: true }
+  );

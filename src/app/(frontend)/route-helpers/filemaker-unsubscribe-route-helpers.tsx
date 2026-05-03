@@ -26,14 +26,14 @@ const readSearchParamValue = (
   return null;
 };
 
-export const generateFilemakerUnsubscribeMetadata = async (): Promise<Metadata> => ({
+export const generateFilemakerUnsubscribeMetadata = (): Metadata => ({
   title: 'Unsubscribe from Filemaker campaign emails',
   description: 'Remove an email address from future Filemaker campaign sends.',
 });
 
-export const renderFilemakerUnsubscribeRoute = async ({
+export const renderFilemakerUnsubscribeRoute = ({
   searchParams,
-}: FilemakerUnsubscribeRouteOptions = {}): Promise<JSX.Element> => {
+}: FilemakerUnsubscribeRouteOptions = {}): JSX.Element => {
   const token = readSearchParamValue(searchParams, 'token');
   const tokenPayload = parseFilemakerCampaignUnsubscribeToken(token);
 

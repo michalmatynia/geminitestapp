@@ -22,10 +22,8 @@ const buildSummary = (
       completed: 8,
       failed: 2,
       canceled: 0,
-      deadLettered: 0,
       successRate: 80,
       failureRate: 20,
-      deadLetterRate: 0,
       avgDurationMs: 1200,
       p95DurationMs: 2200,
     },
@@ -63,9 +61,9 @@ const buildSummary = (
         runsWithKernelParity: 2,
         sampledHistoryEntries: 5,
         strategyCounts: {
-          compatibility: 2,
           code_object_v3: 3,
-          unknown: 0,
+          compatibility: 0,
+          unknown: 2,
         },
         resolutionSourceCounts: {
           override: 3,
@@ -123,7 +121,7 @@ describe('buildRuntimeKernelParityPrompt', () => {
     expect(prompt).toContain('Kernel parity migration risk: HIGH');
     expect(prompt).toContain('Runs with kernel parity telemetry: 2 (66.7%)');
     expect(prompt).toContain(
-      'Strategy split: code_object_v3=3 (60.0%), compatibility=2 (40.0%), unknown=0 (0.0%)'
+      'Strategy split: code_object_v3=3 (60.0%), compatibility=0 (0.0%), unknown=2 (40.0%)'
     );
     expect(prompt).toContain(
       'Resolution source counts: override=3, registry=2, missing=0, unknown=0'
@@ -143,8 +141,8 @@ describe('buildRuntimeKernelParityPrompt', () => {
             runsWithKernelParity: 0,
             sampledHistoryEntries: 0,
             strategyCounts: {
-              compatibility: 0,
               code_object_v3: 0,
+              compatibility: 0,
               unknown: 0,
             },
             resolutionSourceCounts: {
@@ -176,8 +174,8 @@ describe('buildRuntimeKernelParityPrompt', () => {
             runsWithKernelParity: 20,
             sampledHistoryEntries: 100,
             strategyCounts: {
-              compatibility: 8,
-              code_object_v3: 92,
+              code_object_v3: 100,
+              compatibility: 0,
               unknown: 0,
             },
             resolutionSourceCounts: {
@@ -205,9 +203,9 @@ describe('buildRuntimeKernelParityPrompt', () => {
           runsWithKernelParity: 8,
           sampledHistoryEntries: 20,
           strategyCounts: {
-            compatibility: 4,
             code_object_v3: 15,
-            unknown: 1,
+            compatibility: 0,
+            unknown: 5,
           },
           resolutionSourceCounts: {
             override: 10,
@@ -224,10 +222,10 @@ describe('buildRuntimeKernelParityPrompt', () => {
 
     expect(metadata).toMatchObject({
       runtimeAnalyticsRange: '24h',
-      runtimeKernelParityRiskLevel: 'medium',
+      runtimeKernelParityRiskLevel: 'high',
       runtimeKernelParityCoverageRate: 80,
       runtimeKernelParityV3Rate: 75,
-      runtimeKernelParityUnknownRate: 5,
+      runtimeKernelParityUnknownRate: 25,
       runtimeKernelParityMissingResolutionRate: 10,
     });
     expect(metadata['runtimeKernelParitySignals']).toEqual(

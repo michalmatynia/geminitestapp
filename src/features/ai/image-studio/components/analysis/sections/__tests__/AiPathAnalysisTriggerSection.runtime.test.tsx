@@ -10,7 +10,7 @@ import {
 
 import type { UseAiPathsObjectAnalysisReturn } from '@/features/ai/image-studio/hooks/useAiPathsObjectAnalysis';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     loading: _loading,
@@ -21,6 +21,9 @@ vi.mock('@/shared/ui', () => ({
     <button {...rest}>{children}</button>
   ),
   Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     value,
     onValueChange,

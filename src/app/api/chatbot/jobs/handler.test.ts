@@ -55,7 +55,7 @@ vi.mock('@/features/ai/chatbot/workers/chatbotJobQueue', () => ({
   startChatbotJobQueue: startChatbotJobQueueMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const buildChatbotJobRequestPayload = (
   overrides: Record<string, unknown>
@@ -143,13 +143,13 @@ describe('chatbot jobs handler', () => {
     const requestPayload = buildChatbotJobRequestPayload({
       userMessage: 'Translate this',
     });
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/chatbot/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestPayload),
-      }) as Parameters<typeof POST_handler>[0],
-      { requestId: 'req-3' } as Parameters<typeof POST_handler>[1]
+      }) as Parameters<typeof postHandler>[0],
+      { requestId: 'req-3' } as Parameters<typeof postHandler>[1]
     );
 
     const payload = (await response.json()) as {
@@ -202,13 +202,13 @@ describe('chatbot jobs handler', () => {
       model: 'legacy-model',
     });
     await expect(
-      POST_handler(
+      postHandler(
         new Request('http://localhost/api/chatbot/jobs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestPayload),
-        }) as Parameters<typeof POST_handler>[0],
-        { requestId: 'req-4' } as Parameters<typeof POST_handler>[1]
+        }) as Parameters<typeof postHandler>[0],
+        { requestId: 'req-4' } as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/unsupported model override/i);
 
@@ -286,13 +286,13 @@ describe('chatbot jobs handler', () => {
       }),
     };
 
-    await POST_handler(
+    await postHandler(
       new Request('http://localhost/api/chatbot/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contextRegistryRequestPayload),
-      }) as Parameters<typeof POST_handler>[0],
-      { requestId: 'req-5' } as Parameters<typeof POST_handler>[1]
+      }) as Parameters<typeof postHandler>[0],
+      { requestId: 'req-5' } as Parameters<typeof postHandler>[1]
     );
 
     expect(contextRegistryResolveRefsMock).toHaveBeenCalledWith({

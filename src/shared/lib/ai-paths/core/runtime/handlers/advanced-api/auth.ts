@@ -1,4 +1,4 @@
-import { AdvancedApiConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import { type AdvancedApiConfig, type RuntimePortValues } from '@/shared/contracts/ai-paths';
 import { fetchWithOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 
 import { toObject } from './utils';

@@ -21,6 +21,13 @@ vi.mock('next/navigation', () => ({
   })),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: usePathnameMock,
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+  })),
+}));
+
 // Mock next-auth/react
 vi.mock('next-auth/react', () => ({
   useSession: vi.fn(() => ({

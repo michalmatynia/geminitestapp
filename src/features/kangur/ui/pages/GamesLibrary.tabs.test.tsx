@@ -28,6 +28,7 @@ vi.mock('next/link', () => ({
 }));
 
 import { CatalogTab } from './GamesLibrary.tabs';
+import { GamesLibraryContext } from './GamesLibrary.context';
 import {
   DEFAULT_GAMES_LIBRARY_FILTERS,
   getKangurGameCardAnchorId,
@@ -94,20 +95,23 @@ describe('CatalogTab', () => {
 
     const setSelectedGame = vi.fn();
 
+    const contextValue = {
+      applyFilters: vi.fn(),
+      basePath: '/kangur',
+      filters: DEFAULT_GAMES_LIBRARY_FILTERS,
+      groupedGames: pageData.overview.subjectGroups,
+      hasActiveFilters: false,
+      locale: 'en',
+      selectedGame: null as any,
+      totalGameCount: pageData.catalogFacets.gameCount,
+      translations: translations as any,
+      visibleGameCount: pageData.overview.metrics.visibleGameCount,
+    } as any;
+
     const { rerender } = render(
-      <CatalogTab
-        applyFilters={vi.fn()}
-        basePath='/kangur'
-        filters={DEFAULT_GAMES_LIBRARY_FILTERS}
-        groupedGames={pageData.overview.subjectGroups}
-        hasActiveFilters={false}
-        locale='en'
-        selectedGame={null}
-        setSelectedGame={setSelectedGame}
-        totalGameCount={pageData.catalogFacets.gameCount}
-        translations={translations}
-        visibleGameCount={pageData.overview.metrics.visibleGameCount}
-      />
+      <GamesLibraryContext.Provider value={contextValue}>
+        <CatalogTab setSelectedGame={setSelectedGame} />
+      </GamesLibraryContext.Provider>
     );
 
     const card = document.getElementById(getKangurGameCardAnchorId(firstEntry!.game.id));
@@ -132,19 +136,9 @@ describe('CatalogTab', () => {
     expect(setSelectedGame).toHaveBeenCalledWith(firstEntry!.game, previewButton);
 
     rerender(
-      <CatalogTab
-        applyFilters={vi.fn()}
-        basePath='/kangur'
-        filters={DEFAULT_GAMES_LIBRARY_FILTERS}
-        groupedGames={pageData.overview.subjectGroups}
-        hasActiveFilters={false}
-        locale='en'
-        selectedGame={firstEntry!.game}
-        setSelectedGame={setSelectedGame}
-        totalGameCount={pageData.catalogFacets.gameCount}
-        translations={translations}
-        visibleGameCount={pageData.overview.metrics.visibleGameCount}
-      />
+      <GamesLibraryContext.Provider value={{ ...contextValue, selectedGame: firstEntry!.game }}>
+        <CatalogTab setSelectedGame={setSelectedGame} />
+      </GamesLibraryContext.Provider>
     );
 
     expect(

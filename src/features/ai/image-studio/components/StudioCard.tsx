@@ -42,10 +42,10 @@ export function StudioCard({
   return (
     <StudioCardRuntimeContext.Provider value={{ className }}>
       <StudioCardShell>
-        {label != null && (
+        {label !== undefined && (
           <Label className='text-[11px] text-gray-300'>
             {label}
-            {count != null && ` (${count})`}
+            {count !== undefined && ` (${count})`}
           </Label>
         )}
         {children}

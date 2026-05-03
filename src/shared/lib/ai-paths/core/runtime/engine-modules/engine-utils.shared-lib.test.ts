@@ -361,15 +361,30 @@ describe('engine-utils shared-lib behavior', () => {
       buildNode({
         id: 'db-insert',
         type: 'database',
-        config: { database: { operation: 'insert', query: { queryTemplate: 'insert {{ value }}' } } },
+        config: {
+          database: {
+            operation: 'insert',
+            query: {
+              queryTemplate: 'insert {{ value.applicationEmail }} {{ context.entityId }}',
+            },
+          },
+        },
       }),
       {},
-      [{ id: 'edge-1', from: 'source', to: 'db-insert', toPort: 'value' } as Edge],
+      [
+        { id: 'edge-1', from: 'source', to: 'db-insert', toPort: 'value' } as Edge,
+        { id: 'edge-2', from: 'source', to: 'db-insert', toPort: 'context' } as Edge,
+      ],
       new Map(),
       () => 'pending',
       () => ({})
     );
-    expect(dbInsertTemplate.ready).toBe(true);
+    expect(dbInsertTemplate).toEqual(
+      expect.objectContaining({
+        ready: false,
+        waitingOnPorts: ['value', 'context'],
+      })
+    );
 
     const dbUpdate = evaluateInputReadiness(
       buildNode({

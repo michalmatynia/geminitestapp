@@ -1,6 +1,6 @@
 import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths-analytics';
 import type { AnalyticsSummary } from '@/shared/contracts/analytics';
-import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
+import type { BrainModelDescriptor, BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SelectSimpleOption } from '@/shared/contracts/ui/controls';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
@@ -48,6 +48,7 @@ export interface BrainStateContextType {
   insightsQuery: SingleQuery<InsightsSnapshot>;
   runtimeAnalyticsQuery: SingleQuery<AiPathRuntimeAnalyticsSummary>;
   modelQuickPicks: SelectSimpleOption[];
+  modelDescriptors: Record<string, BrainModelDescriptor>;
   agentQuickPicks: SelectSimpleOption[];
   effectiveAssignments: Record<AiBrainFeature, AiBrainAssignment>;
   effectiveCapabilityAssignments: Record<AiBrainCapabilityKey, AiBrainAssignment>;

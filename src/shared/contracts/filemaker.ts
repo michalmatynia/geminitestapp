@@ -22,7 +22,17 @@ export const filemakerEntityKindSchema = z.enum([
   'email',
   'email_link',
   'event_organization_link',
+  'value',
+  'value_parameter',
+  'value_parameter_link',
+  'organization_legacy_demand',
+  'job_listing',
+  'lexicon_type',
+  'lexicon_term',
+  'job_listing_lexicon_link',
   'email_campaign',
+  'email_campaign_content_group',
+  'email_campaign_content_variant',
   'email_campaign_run',
   'email_campaign_delivery',
   'email_campaign_delivery_attempt',
@@ -48,12 +58,21 @@ export const filemakerAddressSchema = dtoBaseSchema.extend({
   postalCode: z.string(),
   country: z.string(),
   countryId: z.string(),
+  countryValueId: z.string().optional(),
+  countryValueLabel: z.string().optional(),
+  legacyCountryUuid: z.string().optional(),
+  legacyUuid: z.string().optional(),
 });
 
 export type FilemakerAddressDto = z.infer<typeof filemakerAddressSchema>;
 export type FilemakerAddress = FilemakerAddressDto;
 
-export const filemakerAddressOwnerKindSchema = z.enum(['person', 'organization', 'event']);
+export const filemakerAddressOwnerKindSchema = z.enum([
+  'person',
+  'organization',
+  'event',
+  'job_listing',
+]);
 export type FilemakerAddressOwnerKindDto = z.infer<typeof filemakerAddressOwnerKindSchema>;
 export type FilemakerAddressOwnerKind = FilemakerAddressOwnerKindDto;
 
@@ -66,6 +85,49 @@ export const filemakerAddressLinkSchema = dtoBaseSchema.extend({
 
 export type FilemakerAddressLinkDto = z.infer<typeof filemakerAddressLinkSchema>;
 export type FilemakerAddressLink = FilemakerAddressLinkDto;
+
+export const filemakerPersonProfileEducationSchema = z.object({
+  id: z.string().optional(),
+  degree: z.string(),
+  institution: z.string(),
+  period: z.string(),
+  country: z.string().optional(),
+  description: z.string().optional(),
+});
+
+export type FilemakerPersonProfileEducationDto = z.infer<
+  typeof filemakerPersonProfileEducationSchema
+>;
+export type FilemakerPersonProfileEducation = FilemakerPersonProfileEducationDto;
+
+export const filemakerPersonProfileJobExperienceSchema = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  organization: z.string(),
+  period: z.string(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  isCurrent: z.boolean().optional(),
+  location: z.string().optional(),
+  description: z.string().optional(),
+  highlights: z.array(z.string()).optional(),
+});
+
+export type FilemakerPersonProfileJobExperienceDto = z.infer<
+  typeof filemakerPersonProfileJobExperienceSchema
+>;
+export type FilemakerPersonProfileJobExperience = FilemakerPersonProfileJobExperienceDto;
+
+export const filemakerPersonLanguageSkillSchema = z.object({
+  id: z.string().optional(),
+  language: z.string(),
+  level: z.number().int().min(1).max(10),
+});
+
+export type FilemakerPersonLanguageSkillDto = z.infer<
+  typeof filemakerPersonLanguageSkillSchema
+>;
+export type FilemakerPersonLanguageSkill = FilemakerPersonLanguageSkillDto;
 
 export const filemakerPersonSchema = dtoBaseSchema.extend({
   firstName: z.string(),
@@ -80,6 +142,15 @@ export const filemakerPersonSchema = dtoBaseSchema.extend({
   nip: z.string(),
   regon: z.string(),
   phoneNumbers: z.array(z.string()),
+  linkedinUrl: z.string().optional(),
+  githubUrl: z.string().optional(),
+  languageSkills: z.array(filemakerPersonLanguageSkillSchema).optional(),
+  profileEducation: z.array(filemakerPersonProfileEducationSchema).optional(),
+  profileJobExperience: z.array(filemakerPersonProfileJobExperienceSchema).optional(),
+  cvHeadline: z.string().optional(),
+  cvProfessionalSummary: z.string().optional(),
+  cvCoreStrengths: z.array(z.string()).optional(),
+  cvSelectedTechnicalEnvironment: z.array(z.string()).optional(),
 });
 
 export type FilemakerPersonDto = z.infer<typeof filemakerPersonSchema>;
@@ -88,6 +159,7 @@ export type FilemakerPerson = FilemakerPersonDto;
 export const filemakerOrganizationSchema = dtoBaseSchema.extend({
   name: z.string(),
   addressId: z.string(),
+  displayAddressId: z.string().nullable().optional(),
   street: z.string(),
   streetNumber: z.string(),
   city: z.string(),
@@ -96,6 +168,35 @@ export const filemakerOrganizationSchema = dtoBaseSchema.extend({
   countryId: z.string(),
   taxId: z.string().optional(),
   krs: z.string().optional(),
+  regon: z.string().optional(),
+  tradingName: z.string().optional(),
+  cooperationStatus: z.string().optional(),
+  establishedDate: z.string().nullable().optional(),
+  parentOrganizationId: z.string().nullable().optional(),
+  defaultBankAccountId: z.string().nullable().optional(),
+  displayBankAccountId: z.string().nullable().optional(),
+  legacyUuid: z.string().optional(),
+  legacyParentUuid: z.string().optional(),
+  legacyDefaultAddressUuid: z.string().optional(),
+  legacyDisplayAddressUuid: z.string().optional(),
+  legacyDefaultBankAccountUuid: z.string().optional(),
+  legacyDisplayBankAccountUuid: z.string().optional(),
+  updatedBy: z.string().optional(),
+  jobBoardCompanyProfile: z.string().optional(),
+  jobBoardCompanyProfileUrl: z.string().optional(),
+  jobBoardCompanyProfileScrapedAt: z.string().nullable().optional(),
+  jobBoardCompanyAddress: z.string().optional(),
+  jobBoardCompanyRegion: z.string().optional(),
+  jobBoardCompanyWebsiteUrl: z.string().optional(),
+  jobBoardCompanyEmail: z.string().optional(),
+  jobBoardCompanyPhone: z.string().optional(),
+  jobBoardCompanyIndustry: z.string().optional(),
+  jobBoardCompanySize: z.string().optional(),
+  jobBoardCompanyLogoUrl: z.string().optional(),
+  jobBoardSourceSite: z.string().optional(),
+  jobBoardSourceUrl: z.string().optional(),
+  jobBoardSourceLabel: z.string().optional(),
+  jobBoardScrapedAt: z.string().nullable().optional(),
 });
 
 export type FilemakerOrganizationDto = z.infer<typeof filemakerOrganizationSchema>;
@@ -161,6 +262,229 @@ export type FilemakerEventOrganizationLinkDto = z.infer<
   typeof filemakerEventOrganizationLinkSchema
 >;
 export type FilemakerEventOrganizationLink = FilemakerEventOrganizationLinkDto;
+
+export const filemakerValueSchema = dtoBaseSchema.extend({
+  parentId: z.string().nullable().optional(),
+  label: z.string(),
+  value: z.string(),
+  description: z.string().optional(),
+  sortOrder: z.number().int().nonnegative().default(0),
+  legacyUuid: z.string().optional(),
+  legacyParentUuids: z.array(z.string()).optional(),
+  legacyListUuids: z.array(z.string()).optional(),
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
+});
+
+export type FilemakerValueDto = z.infer<typeof filemakerValueSchema>;
+export type FilemakerValue = FilemakerValueDto;
+
+export const filemakerValueParameterSchema = dtoBaseSchema.extend({
+  label: z.string(),
+  description: z.string().optional(),
+  legacyUuid: z.string().optional(),
+});
+
+export type FilemakerValueParameterDto = z.infer<typeof filemakerValueParameterSchema>;
+export type FilemakerValueParameter = FilemakerValueParameterDto;
+
+export const filemakerValueParameterLinkSchema = dtoBaseSchema.extend({
+  valueId: z.string(),
+  parameterId: z.string(),
+  legacyValueUuid: z.string().optional(),
+  legacyParameterUuid: z.string().optional(),
+});
+
+export type FilemakerValueParameterLinkDto = z.infer<
+  typeof filemakerValueParameterLinkSchema
+>;
+export type FilemakerValueParameterLink = FilemakerValueParameterLinkDto;
+
+export const filemakerOrganizationLegacyDemandSchema = dtoBaseSchema.extend({
+  organizationId: z.string(),
+  valueIds: z.array(z.string()).max(4).default([]),
+  legacyUuid: z.string().optional(),
+});
+
+export type FilemakerOrganizationLegacyDemandDto = z.infer<
+  typeof filemakerOrganizationLegacyDemandSchema
+>;
+export type FilemakerOrganizationLegacyDemand = FilemakerOrganizationLegacyDemandDto;
+
+export const filemakerJobListingStatusSchema = z.enum(['draft', 'open', 'paused', 'closed']);
+export type FilemakerJobListingStatusDto = z.infer<typeof filemakerJobListingStatusSchema>;
+export type FilemakerJobListingStatus = FilemakerJobListingStatusDto;
+
+export const filemakerJobListingSalaryPeriodSchema = z.enum([
+  'hourly',
+  'monthly',
+  'yearly',
+  'fixed',
+]);
+export type FilemakerJobListingSalaryPeriodDto = z.infer<
+  typeof filemakerJobListingSalaryPeriodSchema
+>;
+export type FilemakerJobListingSalaryPeriod = FilemakerJobListingSalaryPeriodDto;
+
+export const filemakerLexiconTypeKeySchema = z.enum([
+  'address',
+  'benefit',
+  'company_attribute',
+  'contract_type',
+  'employment_type',
+  'experience_level',
+  'language',
+  'requirement',
+  'responsibility',
+  'salary',
+  'start_date',
+  'technology',
+  'work_mode',
+  'other',
+]);
+export type FilemakerLexiconTypeKeyDto = z.infer<typeof filemakerLexiconTypeKeySchema>;
+export type FilemakerLexiconTypeKey = FilemakerLexiconTypeKeyDto;
+
+export const filemakerLexiconTypeSchema = dtoBaseSchema.extend({
+  key: filemakerLexiconTypeKeySchema,
+  label: z.string(),
+  description: z.string().optional(),
+  sortOrder: z.number().int().nonnegative().default(0),
+  system: z.boolean().default(true),
+});
+
+export type FilemakerLexiconTypeDto = z.infer<typeof filemakerLexiconTypeSchema>;
+export type FilemakerLexiconType = FilemakerLexiconTypeDto;
+
+export const filemakerLexiconTermCategorySchema = filemakerLexiconTypeKeySchema;
+export type FilemakerLexiconTermCategoryDto = z.infer<
+  typeof filemakerLexiconTermCategorySchema
+>;
+export type FilemakerLexiconTermCategory = FilemakerLexiconTermCategoryDto;
+
+export const filemakerLexiconValidationPatternMatchModeSchema = z.enum([
+  'contains',
+  'exact',
+  'partial',
+  'regex',
+]);
+export type FilemakerLexiconValidationPatternMatchModeDto = z.infer<
+  typeof filemakerLexiconValidationPatternMatchModeSchema
+>;
+export type FilemakerLexiconValidationPatternMatchMode =
+  FilemakerLexiconValidationPatternMatchModeDto;
+
+export const filemakerLexiconValidationPatternSourceScopeSchema = z.enum([
+  'all',
+  'address_candidate',
+  'listing_field',
+  'listing_field_benefit',
+  'listing_field_contract',
+  'listing_field_employment',
+  'listing_field_experience',
+  'listing_field_language',
+  'listing_field_requirement',
+  'listing_field_responsibility',
+  'listing_field_salary',
+  'listing_field_technology',
+  'listing_field_work_mode',
+  'section',
+  'section_heading',
+  'section_value',
+  'snapshot_fact',
+  'snapshot_pill',
+  'unclassified',
+]);
+export type FilemakerLexiconValidationPatternSourceScopeDto = z.infer<
+  typeof filemakerLexiconValidationPatternSourceScopeSchema
+>;
+export type FilemakerLexiconValidationPatternSourceScope =
+  FilemakerLexiconValidationPatternSourceScopeDto;
+
+export const filemakerLexiconValidationPatternSchema = dtoBaseSchema.extend({
+  label: z.string(),
+  enabled: z.boolean().default(true),
+  version: z.number().int().nonnegative().default(1),
+  priority: z.number().int().nonnegative().default(100),
+  matchMode: filemakerLexiconValidationPatternMatchModeSchema.default('regex'),
+  pattern: z.string(),
+  targetTypeKey: filemakerLexiconTypeKeySchema,
+  sourceScope: filemakerLexiconValidationPatternSourceScopeSchema.default('all'),
+  confidence: z.number().min(0).max(1).default(1),
+  notes: z.string().optional(),
+  system: z.boolean().default(true),
+});
+
+export type FilemakerLexiconValidationPatternDto = z.infer<
+  typeof filemakerLexiconValidationPatternSchema
+>;
+export type FilemakerLexiconValidationPattern = FilemakerLexiconValidationPatternDto;
+
+export const filemakerLexiconTermSchema = dtoBaseSchema.extend({
+  label: z.string(),
+  normalizedLabel: z.string(),
+  typeKey: filemakerLexiconTypeKeySchema.default('other'),
+  category: filemakerLexiconTermCategorySchema.default('other'),
+  sourceSite: z.string().optional(),
+  sourceProvider: z.string().optional(),
+  iconUrl: z.string().optional(),
+  firstSeenAt: z.string().nullable().optional(),
+  lastSeenAt: z.string().nullable().optional(),
+  occurrenceCount: z.number().int().nonnegative().default(0),
+});
+
+export type FilemakerLexiconTermDto = z.infer<typeof filemakerLexiconTermSchema>;
+export type FilemakerLexiconTerm = FilemakerLexiconTermDto;
+
+export const filemakerJobListingLexiconLinkSchema = dtoBaseSchema.extend({
+  jobListingId: z.string(),
+  lexiconTermId: z.string(),
+  sourceSite: z.string().optional(),
+  sourceUrl: z.string().optional(),
+  sourceValue: z.string().optional(),
+  typeKey: filemakerLexiconTypeKeySchema.default('other'),
+  category: filemakerLexiconTermCategorySchema.default('other'),
+  position: z.number().int().nonnegative().default(0),
+});
+
+export type FilemakerJobListingLexiconLinkDto = z.infer<
+  typeof filemakerJobListingLexiconLinkSchema
+>;
+export type FilemakerJobListingLexiconLink = FilemakerJobListingLexiconLinkDto;
+
+export const filemakerJobListingSchema = dtoBaseSchema.extend({
+  organizationId: z.string(),
+  title: z.string(),
+  description: z.string(),
+  requirements: z.string().optional(),
+  responsibilities: z.string().optional(),
+  location: z.string().optional(),
+  addressId: z.string().optional(),
+  street: z.string().optional(),
+  streetNumber: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
+  countryId: z.string().optional(),
+  salaryMin: z.number().nonnegative().nullable().optional(),
+  salaryMax: z.number().nonnegative().nullable().optional(),
+  salaryCurrency: z.string().optional(),
+  salaryText: z.string().optional(),
+  salaryPeriod: filemakerJobListingSalaryPeriodSchema.default('monthly'),
+  status: filemakerJobListingStatusSchema.default('draft'),
+  targetedCampaignIds: z.array(z.string()).default([]),
+  lastTargetedAt: z.string().nullable().optional(),
+  sourceExternalId: z.string().optional(),
+  sourceSite: z.string().optional(),
+  sourceUrl: z.string().optional(),
+  postedAt: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
+  scrapedAt: z.string().nullable().optional(),
+  lexiconTermIds: z.array(z.string()).default([]),
+});
+
+export type FilemakerJobListingDto = z.infer<typeof filemakerJobListingSchema>;
+export type FilemakerJobListing = FilemakerJobListingDto;
 
 export const filemakerEmailCampaignLifecycleStatusSchema = z.enum([
   'draft',
@@ -253,6 +577,8 @@ export const filemakerEmailCampaignSuppressionReasonSchema = z.enum([
   'manual_block',
   'unsubscribed',
   'bounced',
+  'complaint',
+  'cold',
 ]);
 export type FilemakerEmailCampaignSuppressionReasonDto = z.infer<
   typeof filemakerEmailCampaignSuppressionReasonSchema
@@ -272,26 +598,108 @@ export const filemakerEmailCampaignEventTypeSchema = z.enum([
   'delivery_sent',
   'delivery_failed',
   'delivery_bounced',
+  'delivery_deferred_domain',
+  'delivery_deferred_warmup',
+  'run_paused_circuit_breaker',
   'status_changed',
   'paused',
   'completed',
   'failed',
   'cancelled',
+  'reply_received',
 ]);
 export type FilemakerEmailCampaignEventTypeDto = z.infer<
   typeof filemakerEmailCampaignEventTypeSchema
 >;
 export type FilemakerEmailCampaignEventType = FilemakerEmailCampaignEventTypeDto;
 
+export const filemakerAudienceFieldSchema = z.enum([
+  'organization.name',
+  'organization.tradingName',
+  'organization.cooperationStatus',
+  'organization.taxId',
+  'organization.krs',
+  'organization.city',
+  'organization.country',
+  'organization.postalCode',
+  'organization.street',
+  'organization.demandValueId',
+  'organization.demandLegacyValueUuid',
+  'organization.demandLabel',
+  'organization.demandPath',
+  'person.firstName',
+  'person.lastName',
+  'person.city',
+  'person.country',
+  'person.postalCode',
+  'person.street',
+  'person.nip',
+  'person.regon',
+  'person.phoneNumbers',
+  'email.address',
+  'email.status',
+  'organizationId',
+  'eventId',
+]);
+export type FilemakerAudienceFieldDto = z.infer<typeof filemakerAudienceFieldSchema>;
+export type FilemakerAudienceField = FilemakerAudienceFieldDto;
+
+export const filemakerAudienceOperatorSchema = z.enum([
+  'equals',
+  'not_equals',
+  'contains',
+  'not_contains',
+  'starts_with',
+  'ends_with',
+  'is_empty',
+  'is_not_empty',
+]);
+export type FilemakerAudienceOperatorDto = z.infer<typeof filemakerAudienceOperatorSchema>;
+export type FilemakerAudienceOperator = FilemakerAudienceOperatorDto;
+
+export const filemakerAudienceConditionSchema = z.object({
+  id: z.string(),
+  type: z.literal('condition').default('condition'),
+  field: filemakerAudienceFieldSchema,
+  operator: filemakerAudienceOperatorSchema,
+  value: z.string().default(''),
+});
+export type FilemakerAudienceConditionDto = z.infer<typeof filemakerAudienceConditionSchema>;
+export type FilemakerAudienceCondition = FilemakerAudienceConditionDto;
+
+export type FilemakerAudienceConditionGroup = {
+  id: string;
+  type: 'group';
+  combinator: 'and' | 'or';
+  not?: boolean;
+  children: Array<FilemakerAudienceCondition | FilemakerAudienceConditionGroup>;
+};
+
+export const filemakerAudienceConditionGroupSchema: z.ZodType<FilemakerAudienceConditionGroup> =
+  z.lazy(() =>
+    z.object({
+      id: z.string(),
+      type: z.literal('group'),
+      combinator: z.enum(['and', 'or']),
+      not: z.boolean().optional().default(false),
+      children: z.array(
+        z.union([filemakerAudienceConditionSchema, filemakerAudienceConditionGroupSchema])
+      ),
+    })
+  );
+export type FilemakerAudienceConditionGroupDto = FilemakerAudienceConditionGroup;
+
 export const filemakerEmailCampaignAudienceRuleSchema = z.object({
   partyKinds: z.array(filemakerPartyKindSchema),
   emailStatuses: z.array(filemakerEmailStatusSchema),
   includePartyReferences: z.array(filemakerPartyReferenceSchema),
   excludePartyReferences: z.array(filemakerPartyReferenceSchema),
-  organizationIds: z.array(z.string()),
-  eventIds: z.array(z.string()),
-  countries: z.array(z.string()),
-  cities: z.array(z.string()),
+  conditionGroup: filemakerAudienceConditionGroupSchema,
+  // Legacy fields — retained for back-compat; the normalizer folds them into conditionGroup on read.
+  organizationIds: z.array(z.string()).default([]),
+  eventIds: z.array(z.string()).default([]),
+  countries: z.array(z.string()).default([]),
+  cities: z.array(z.string()).default([]),
   dedupeByEmail: z.boolean(),
   limit: z.number().int().positive().nullable().optional(),
 });
@@ -330,17 +738,51 @@ export type FilemakerEmailCampaignLaunchRuleDto = z.infer<
 >;
 export type FilemakerEmailCampaignLaunchRule = FilemakerEmailCampaignLaunchRuleDto;
 
+export const filemakerEmailCampaignContentVariantSchema = dtoBaseSchema.extend({
+  groupId: z.string(),
+  languageCode: z.string(),
+  label: z.string(),
+  countryIds: z.array(z.string()).default([]),
+  subject: z.string(),
+  previewText: z.string().nullable().optional(),
+  bodyText: z.string().nullable().optional(),
+  bodyHtml: z.string().nullable().optional(),
+  bodyBlocks: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
+});
+export type FilemakerEmailCampaignContentVariantDto = z.infer<
+  typeof filemakerEmailCampaignContentVariantSchema
+>;
+export type FilemakerEmailCampaignContentVariant =
+  FilemakerEmailCampaignContentVariantDto;
+
+export const filemakerEmailCampaignContentGroupSchema = dtoBaseSchema.extend({
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  defaultLanguageCode: z.string(),
+  defaultVariantId: z.string().nullable().optional(),
+  variants: z.array(filemakerEmailCampaignContentVariantSchema),
+});
+export type FilemakerEmailCampaignContentGroupDto = z.infer<
+  typeof filemakerEmailCampaignContentGroupSchema
+>;
+export type FilemakerEmailCampaignContentGroup =
+  FilemakerEmailCampaignContentGroupDto;
+
 export const filemakerEmailCampaignSchema = dtoBaseSchema.extend({
   name: z.string(),
   description: z.string().nullable().optional(),
   status: filemakerEmailCampaignLifecycleStatusSchema,
   subject: z.string(),
   previewText: z.string().nullable().optional(),
+  contentGroupId: z.string().nullable().optional(),
+  defaultContentVariantId: z.string().nullable().optional(),
+  translatedSendingEnabled: z.boolean().default(false),
   mailAccountId: z.string().nullable().optional(),
   fromName: z.string().nullable().optional(),
   replyToEmail: z.string().nullable().optional(),
   bodyText: z.string().nullable().optional(),
   bodyHtml: z.string().nullable().optional(),
+  bodyBlocks: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
   audience: filemakerEmailCampaignAudienceRuleSchema,
   launch: filemakerEmailCampaignLaunchRuleSchema,
   approvalGrantedAt: z.string().nullable().optional(),
@@ -380,6 +822,12 @@ export const filemakerEmailCampaignDeliverySchema = dtoBaseSchema.extend({
   lastError: z.string().nullable().optional(),
   sentAt: z.string().nullable().optional(),
   nextRetryAt: z.string().nullable().optional(),
+  contentGroupId: z.string().nullable().optional(),
+  contentVariantId: z.string().nullable().optional(),
+  languageCode: z.string().nullable().optional(),
+  resolvedCountryId: z.string().nullable().optional(),
+  resolvedCountryName: z.string().nullable().optional(),
+  usedFallbackContent: z.boolean().optional(),
 });
 export type FilemakerEmailCampaignDeliveryDto = z.infer<
   typeof filemakerEmailCampaignDeliverySchema
@@ -400,6 +848,12 @@ export const filemakerEmailCampaignDeliveryAttemptSchema = dtoBaseSchema.extend(
   providerMessage: z.string().nullable().optional(),
   errorMessage: z.string().nullable().optional(),
   attemptedAt: z.string().nullable().optional(),
+  contentGroupId: z.string().nullable().optional(),
+  contentVariantId: z.string().nullable().optional(),
+  languageCode: z.string().nullable().optional(),
+  resolvedCountryId: z.string().nullable().optional(),
+  resolvedCountryName: z.string().nullable().optional(),
+  usedFallbackContent: z.boolean().optional(),
 });
 export type FilemakerEmailCampaignDeliveryAttemptDto = z.infer<
   typeof filemakerEmailCampaignDeliveryAttemptSchema
@@ -414,6 +868,8 @@ export const filemakerEmailCampaignEventSchema = dtoBaseSchema.extend({
   message: z.string(),
   actor: z.string().nullable().optional(),
   targetUrl: z.string().nullable().optional(),
+  mailThreadId: z.string().nullable().optional(),
+  mailMessageId: z.string().nullable().optional(),
   runStatus: filemakerEmailCampaignRunStatusSchema.nullable().optional(),
   deliveryStatus: filemakerEmailCampaignDeliveryStatusSchema.nullable().optional(),
 });
@@ -464,6 +920,16 @@ export type FilemakerEmailCampaignRegistryDto = z.infer<
   typeof filemakerEmailCampaignRegistrySchema
 >;
 export type FilemakerEmailCampaignRegistry = FilemakerEmailCampaignRegistryDto;
+
+export const filemakerEmailCampaignContentGroupRegistrySchema = z.object({
+  version: z.number().int().nonnegative(),
+  groups: z.array(filemakerEmailCampaignContentGroupSchema),
+});
+export type FilemakerEmailCampaignContentGroupRegistryDto = z.infer<
+  typeof filemakerEmailCampaignContentGroupRegistrySchema
+>;
+export type FilemakerEmailCampaignContentGroupRegistry =
+  FilemakerEmailCampaignContentGroupRegistryDto;
 
 export const filemakerEmailCampaignRunRegistrySchema = z.object({
   version: z.number().int().nonnegative(),
@@ -566,6 +1032,8 @@ export type FilemakerEmailCampaignCancelRunResponse =
 
 export const filemakerEmailCampaignTestSendRequestSchema = z.object({
   campaign: filemakerEmailCampaignSchema,
+  contentGroupRegistry: filemakerEmailCampaignContentGroupRegistrySchema.optional(),
+  contentVariantId: z.string().trim().min(1).nullable().optional(),
   recipientEmail: z.string().trim().email(),
 });
 export type FilemakerEmailCampaignTestSendRequestDto = z.infer<
@@ -675,6 +1143,15 @@ export const filemakerDatabaseSchema = z.object({
   emails: z.array(filemakerEmailSchema),
   emailLinks: z.array(filemakerEmailLinkSchema),
   eventOrganizationLinks: z.array(filemakerEventOrganizationLinkSchema),
+  values: z.array(filemakerValueSchema).default([]),
+  valueParameters: z.array(filemakerValueParameterSchema).default([]),
+  valueParameterLinks: z.array(filemakerValueParameterLinkSchema).default([]),
+  organizationLegacyDemands: z.array(filemakerOrganizationLegacyDemandSchema).default([]),
+  jobListings: z.array(filemakerJobListingSchema).default([]),
+  lexiconTypes: z.array(filemakerLexiconTypeSchema).default([]),
+  lexiconValidationPatterns: z.array(filemakerLexiconValidationPatternSchema).default([]),
+  lexiconTerms: z.array(filemakerLexiconTermSchema).default([]),
+  jobListingLexiconLinks: z.array(filemakerJobListingLexiconLinkSchema).default([]),
 });
 
 export type FilemakerDatabaseDto = z.infer<typeof filemakerDatabaseSchema>;
@@ -697,6 +1174,10 @@ export type FilemakerAddressFields = {
   postalCode: string;
   country: string;
   countryId: string;
+  countryValueId?: string;
+  countryValueLabel?: string;
+  legacyCountryUuid?: string;
+  legacyUuid?: string;
 };
 
 export type FilemakerEditableAddressDto = FilemakerAddressFields & {

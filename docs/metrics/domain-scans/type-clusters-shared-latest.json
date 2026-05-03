@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-26T13:27:58.830Z",
+  "generatedAt": "2026-04-17T12:21:03.075Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -12,225 +12,277 @@
     "domains": [
       "shared"
     ],
-    "minRisk": 0
+    "minRisk": 0,
+    "topLimit": 25,
+    "planTopLimit": 20,
+    "historyDisabled": true,
+    "noWrite": true
   },
   "thresholds": {
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 7787,
-    "exportedDeclarationsScanned": 5176,
-    "candidateDeclarationsScanned": 5152,
-    "exactShapeClusters": 12,
-    "nearShapeClusters": 5,
-    "clustersAfterFilters": 5,
+    "filesScanned": 10656,
+    "exportedDeclarationsScanned": 6312,
+    "candidateDeclarationsScanned": 6292,
+    "exactShapeClusters": 9,
+    "nearShapeClusters": 3,
+    "clustersAfterFilters": 6,
     "declarationsInClusters": 12,
-    "highestRiskScore": 20
+    "highestRiskScore": 13
   },
   "clusters": [
     {
-      "clusterId": "exact-0002",
-      "clusterKind": "exact-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 20,
-      "declarationCount": 3,
-      "domains": [
-        "shared",
-        "shared:contracts"
-      ],
-      "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "a38c2e730457",
-        "memberCount": 1,
-        "preview": "StringRecordDto"
-      },
-      "declarations": [
-        {
-          "name": "CatchAllRouteParams",
-          "kind": "type",
-          "path": "src/shared/lib/api/catch-all-router.ts",
-          "line": 8,
-          "domain": "shared",
-          "usageCount": 5
-        },
-        {
-          "name": "AiPathsCollectionMap",
-          "kind": "type",
-          "path": "src/shared/lib/ai-paths/core/utils/collection-mapping.ts",
-          "line": 3,
-          "domain": "shared",
-          "usageCount": 2
-        },
-        {
-          "name": "StringRecord",
-          "kind": "type",
-          "path": "src/shared/contracts/base.ts",
-          "line": 26,
-          "domain": "shared:contracts",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "near-0001",
+      "clusterId": "near-0002",
       "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 16,
-      "declarationCount": 3,
-      "domains": [
-        "feature:kangur",
-        "shared"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "4ca7be7bf5a8",
-        "memberCount": 2,
-        "preview": "prop:kind:'success' | 'error'; prop:text:string"
-      },
-      "declarations": [
-        {
-          "name": "Segment",
-          "kind": "type",
-          "path": "src/shared/utils/prompt-params/scanner.ts",
-          "line": 17,
-          "domain": "shared",
-          "usageCount": 3
-        },
-        {
-          "name": "KangurMiniGameFeedbackDto",
-          "kind": "type",
-          "path": "src/features/kangur/ui/types.ts",
-          "line": 82,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        },
-        {
-          "name": "KangurMiniGameInformationalFeedbackDto",
-          "kind": "type",
-          "path": "src/features/kangur/ui/types.ts",
-          "line": 91,
-          "domain": "feature:kangur",
-          "usageCount": 0
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "near-0005",
-      "clusterKind": "near-shape",
-      "canonicalDtoCandidate": null,
-      "riskScore": 14,
-      "declarationCount": 2,
-      "domains": [
-        "shared"
-      ],
-      "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "f29799e1c9b0",
-        "memberCount": 1,
-        "preview": "prop:type:'alert-tick'"
-      },
-      "declarations": [
-        {
-          "name": "ScheduledTickJobData",
-          "kind": "type",
-          "path": "src/shared/lib/queue/scheduler-queue-types.ts",
-          "line": 1,
-          "domain": "shared",
-          "usageCount": 5
-        },
-        {
-          "name": "SystemLogAlertsJobData",
-          "kind": "type",
-          "path": "src/shared/lib/observability/workers/system-log-alerts/types.ts",
-          "line": 4,
-          "domain": "shared",
-          "usageCount": 1
-        }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
-      ]
-    },
-    {
-      "clusterId": "exact-0011",
-      "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 13,
       "declarationCount": 2,
       "domains": [
-        "shared",
-        "shared:contracts"
+        "feature:products",
+        "shared"
       ],
       "signature": {
-        "shapeKind": "type-expression",
-        "normalizedShapeHash": "cabeb613a9ab",
-        "memberCount": 1,
-        "preview": "UnknownRecordDto"
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "2b01d310aaab",
+        "memberCount": 2,
+        "preview": "prop:end:number; prop:start:number"
       },
       "declarations": [
         {
-          "name": "ClientErrorContext",
+          "id": "src/features/products/components/form/StructuredProductNameField.types.ts#SegmentBounds",
+          "name": "SegmentBounds",
           "kind": "type",
-          "path": "src/shared/utils/observability/client-error-logger.ts",
-          "line": 18,
-          "domain": "shared",
-          "usageCount": 2
+          "path": "src/features/products/components/form/StructuredProductNameField.types.ts",
+          "source": {
+            "path": "src/features/products/components/form/StructuredProductNameField.types.ts",
+            "line": 15,
+            "domain": "feature:products"
+          },
+          "usageCount": 1
         },
         {
-          "name": "UnknownRecord",
+          "id": "src/shared/ui/cms-appearance/appearance-logic/CmsStorefrontAppearance.accent-vars.ts#KangurAccentThemeInput",
+          "name": "KangurAccentThemeInput",
           "kind": "type",
-          "path": "src/shared/contracts/base.ts",
-          "line": 24,
-          "domain": "shared:contracts",
-          "usageCount": 1
+          "path": "src/shared/ui/cms-appearance/appearance-logic/CmsStorefrontAppearance.accent-vars.ts",
+          "source": {
+            "path": "src/shared/ui/cms-appearance/appearance-logic/CmsStorefrontAppearance.accent-vars.ts",
+            "line": 7,
+            "domain": "shared"
+          },
+          "usageCount": 2
         }
-      ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
       ]
     },
     {
-      "clusterId": "exact-0010",
+      "clusterId": "exact-0006",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 11,
+      "riskScore": 8,
       "declarationCount": 2,
       "domains": [
-        "feature:kangur",
         "shared"
       ],
       "signature": {
         "shapeKind": "type-expression",
-        "normalizedShapeHash": "32b509c4d84b",
+        "normalizedShapeHash": "464ee26b2e97",
         "memberCount": 1,
-        "preview": "IdLabelOptionDto<string>"
+        "preview": "string | string[]"
       },
       "declarations": [
         {
-          "name": "AdminFavoriteCandidate",
+          "id": "src/shared/lib/browser-execution/selectors/amazon.ts#AmazonSelectorRegistryValue",
+          "name": "AmazonSelectorRegistryValue",
           "kind": "type",
-          "path": "src/shared/providers/AdminFavoritesProvider.tsx",
-          "line": 6,
-          "domain": "shared",
-          "usageCount": 1
+          "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
+            "line": 306,
+            "domain": "shared"
+          },
+          "usageCount": 0
         },
         {
-          "name": "SortGameBin",
+          "id": "src/shared/lib/browser-execution/selectors/supplier-1688.ts#Supplier1688SelectorRegistryValue",
+          "name": "Supplier1688SelectorRegistryValue",
           "kind": "type",
-          "path": "src/features/kangur/ui/components/AgenticCodingMiniGames.types.ts",
-          "line": 14,
-          "domain": "feature:kangur",
+          "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
+            "line": 98,
+            "domain": "shared"
+          },
           "usageCount": 0
         }
+      ]
+    },
+    {
+      "clusterId": "exact-0007",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
       ],
-      "notes": [
-        "Review semantics before consolidating structurally similar declarations into one DTO."
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "8fe1031fbe9d",
+        "memberCount": 1,
+        "preview": "'string' | 'string_array'"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/lib/browser-execution/selectors/amazon.ts#AmazonSelectorRegistryValueType",
+          "name": "AmazonSelectorRegistryValueType",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
+            "line": 308,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/browser-execution/selectors/supplier-1688.ts#Supplier1688SelectorRegistryValueType",
+          "name": "Supplier1688SelectorRegistryValueType",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
+            "line": 100,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0008",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "c35cbe52f0f7",
+        "memberCount": 1,
+        "preview": "'selector' | 'text_hint' | 'pattern'"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/lib/browser-execution/selectors/amazon.ts#AmazonSelectorRegistryKind",
+          "name": "AmazonSelectorRegistryKind",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
+            "line": 310,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/browser-execution/selectors/supplier-1688.ts#Supplier1688SelectorRegistryKind",
+          "name": "Supplier1688SelectorRegistryKind",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
+            "line": 102,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0009",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "477e993a2e3e",
+        "memberCount": 5,
+        "preview": "prop:buffer?:Buffer | null; prop:id?:string | null; prop:localPath?:string | null; prop:rank?:number | null; prop:url?:string | null"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts#AmazonScanImageCandidate",
+          "name": "AmazonScanImageCandidate",
+          "kind": "interface",
+          "path": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts",
+            "line": 41,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts#Supplier1688ScanImageCandidate",
+          "name": "Supplier1688ScanImageCandidate",
+          "kind": "interface",
+          "path": "src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts",
+            "line": 11,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0003",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "76d79a1e71e2",
+        "memberCount": 5,
+        "preview": "prop:description:string; prop:key:string; prop:kind:AmazonSelectorRegistryKind; prop:label:string; prop:value:AmazonSelectorRegistryValue"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/lib/browser-execution/selectors/amazon.ts#AmazonSelectorRegistryDefinition",
+          "name": "AmazonSelectorRegistryDefinition",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
+            "line": 312,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/browser-execution/selectors/supplier-1688.ts#Supplier1688SelectorRegistryDefinition",
+          "name": "Supplier1688SelectorRegistryDefinition",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
+            "line": 104,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
       ]
     }
   ],

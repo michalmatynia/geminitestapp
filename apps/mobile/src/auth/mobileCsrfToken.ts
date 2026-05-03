@@ -9,7 +9,7 @@ export const persistKangurMobileCsrfTokenFromHeaders = (
   headers: Pick<Headers, 'get'>,
 ): void => {
   const token = headers.get(KANGUR_CSRF_HEADER_NAME)?.trim();
-  if (!token) {
+  if (token === undefined || token === '') {
     return;
   }
 

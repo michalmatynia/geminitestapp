@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { parseJsonBody } from '@/features/products/server';
@@ -17,7 +17,7 @@ const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 export { chatbotSessionMessageCreateRequestSchema as messageSchema };
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { sessionId: string }
@@ -48,7 +48,7 @@ export async function GET_handler(
   });
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { sessionId: string }

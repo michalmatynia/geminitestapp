@@ -22,7 +22,7 @@ vi.mock('@/features/products/server', () => ({
   parseJsonBody: (...args: unknown[]) => parseJsonBodyMock(...args),
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('tradera default connection handler', () => {
   beforeEach(() => {
@@ -32,7 +32,7 @@ describe('tradera default connection handler', () => {
   it('returns the stored Tradera default connection id', async () => {
     getTraderaDefaultConnectionIdMock.mockResolvedValue('conn-tradera-1');
 
-    const response = await GET_handler({} as NextRequest, {} as never);
+    const response = await getHandler({} as NextRequest, {} as never);
 
     await expect(response.json()).resolves.toEqual({ connectionId: 'conn-tradera-1' });
   });
@@ -44,7 +44,7 @@ describe('tradera default connection handler', () => {
     });
     setTraderaDefaultConnectionIdMock.mockResolvedValue(undefined);
 
-    const response = await POST_handler({} as NextRequest, {} as never);
+    const response = await postHandler({} as NextRequest, {} as never);
 
     expect(setTraderaDefaultConnectionIdMock).toHaveBeenCalledWith('conn-tradera-2');
     await expect(response.json()).resolves.toEqual({ connectionId: 'conn-tradera-2' });

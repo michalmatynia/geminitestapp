@@ -74,50 +74,73 @@ export function FrontendBlockRenderer({ block }: FrontendBlockRendererProps): Re
   );
 }
 
-function BlockContent(): React.ReactNode {
+function BlockContent(): React.JSX.Element | null {
   const { block } = useRequiredBlockRenderContext();
-  switch (block.type) {
-    case 'Heading':
-      return <HeadingBlock />;
-    case 'Text':
-      return <TextBlock />;
-    case 'TextElement':
-      return <TextElementBlock />;
-    case 'TextAtom':
-      return <TextAtomBlock />;
-    case 'TextAtomLetter':
-      return <TextAtomLetterBlock />;
-    case 'Announcement':
-      return <AnnouncementBlock />;
-    case 'Button':
-      return <ButtonBlock />;
-    case 'RichText':
-      return <RichTextBlock />;
-    case 'ImageElement':
-      return <ImageElementBlock />;
-    case 'Image':
-      return <ImageBlock />;
-    case 'Input':
-      return <InputBlock />;
-    case 'Progress':
-      return <ProgressBlock />;
-    case 'Repeater':
-      return <RepeaterBlock />;
-    case 'Model3D':
-      return <Model3DBlock />;
-    case 'VideoEmbed':
-      return <VideoEmbedBlock />;
-    case 'Divider':
-      return <DividerBlock />;
-    case 'SocialLinks':
-      return <SocialLinksBlock />;
-    case 'Icon':
-      return <IconBlock />;
-    case 'AppEmbed':
-      return <AppEmbedBlock />;
-    case 'KangurWidget':
-      return <KangurWidgetBlock />;
-    default:
-      return null;
+  
+  if (isTextBlock(block.type)) return <TextBlockComponents type={block.type} />;
+  if (isImageBlock(block.type)) return <ImageBlockComponents type={block.type} />;
+  if (isInteractiveBlock(block.type)) return <InteractiveBlockComponents type={block.type} />;
+  if (isMediaBlock(block.type)) return <MediaBlockComponents type={block.type} />;
+
+  return null;
+}
+
+function isTextBlock(type: string): boolean {
+  return ['Heading', 'Text', 'TextElement', 'TextAtom', 'TextAtomLetter', 'RichText'].includes(type);
+}
+
+function TextBlockComponents({ type }: { type: string }): React.JSX.Element | null {
+  switch (type) {
+    case 'Heading': return <HeadingBlock />;
+    case 'Text': return <TextBlock />;
+    case 'TextElement': return <TextElementBlock />;
+    case 'TextAtom': return <TextAtomBlock />;
+    case 'TextAtomLetter': return <TextAtomLetterBlock />;
+    case 'RichText': return <RichTextBlock />;
+    default: return null;
+  }
+}
+
+function isImageBlock(type: string): boolean {
+  return ['ImageElement', 'Image'].includes(type);
+}
+
+function ImageBlockComponents({ type }: { type: string }): React.JSX.Element | null {
+  switch (type) {
+    case 'ImageElement': return <ImageElementBlock />;
+    case 'Image': return <ImageBlock />;
+    default: return null;
+  }
+}
+
+function isInteractiveBlock(type: string): boolean {
+  return ['Announcement', 'Button', 'Input', 'Progress', 'Repeater', 'AppEmbed', 'KangurWidget'].includes(type);
+}
+
+function InteractiveBlockComponents({ type }: { type: string }): React.JSX.Element | null {
+  switch (type) {
+    case 'Announcement': return <AnnouncementBlock />;
+    case 'Button': return <ButtonBlock />;
+    case 'Input': return <InputBlock />;
+    case 'Progress': return <ProgressBlock />;
+    case 'Repeater': return <RepeaterBlock />;
+    case 'AppEmbed': return <AppEmbedBlock />;
+    case 'KangurWidget': return <KangurWidgetBlock />;
+    default: return null;
+  }
+}
+
+function isMediaBlock(type: string): boolean {
+  return ['Model3D', 'VideoEmbed', 'Divider', 'SocialLinks', 'Icon'].includes(type);
+}
+
+function MediaBlockComponents({ type }: { type: string }): React.JSX.Element | null {
+  switch (type) {
+    case 'Model3D': return <Model3DBlock />;
+    case 'VideoEmbed': return <VideoEmbedBlock />;
+    case 'Divider': return <DividerBlock />;
+    case 'SocialLinks': return <SocialLinksBlock />;
+    case 'Icon': return <IconBlock />;
+    default: return null;
   }
 }

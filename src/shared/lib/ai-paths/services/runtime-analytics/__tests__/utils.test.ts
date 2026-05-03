@@ -18,7 +18,7 @@ describe('runtime analytics utils', () => {
   });
 
   it('rejects unsupported statuses', () => {
-    expect(normalizeNodeStatus('dead_lettered')).toBeNull();
+    expect(normalizeNodeStatus('legacy_server_status')).toBeNull();
     expect(normalizeNodeStatus('')).toBeNull();
     expect(normalizeNodeStatus(null)).toBeNull();
   });
@@ -27,7 +27,7 @@ describe('runtime analytics utils', () => {
     expect(resolveRuntimeAnalyticsNodeStatusKey('running')).toBe('started');
     expect(resolveRuntimeAnalyticsNodeStatusKey('waiting_callback')).toBe('waiting_callback');
     expect(resolveRuntimeAnalyticsNodeStatusKey('skipped')).toBeNull();
-    expect(resolveRuntimeAnalyticsNodeStatusKey('dead_lettered')).toBeNull();
+    expect(resolveRuntimeAnalyticsNodeStatusKey('legacy_server_status')).toBeNull();
     expect(RUNTIME_ANALYTICS_NODE_STATUS_KEYS).toEqual([
       'started',
       'completed',

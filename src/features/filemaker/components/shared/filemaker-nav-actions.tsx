@@ -1,19 +1,37 @@
-import { Building2, CalendarDays, Database, Mail, Megaphone, ShieldAlert, Users } from 'lucide-react';
-
+import {
+  Building2,
+  BookOpen,
+  CalendarDays,
+  Database,
+  Globe,
+  Mail,
+  Megaphone,
+  FileText,
+  ShieldAlert,
+  ShieldOff,
+  Tags,
+  Users,
+} from 'lucide-react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { ReactNode } from 'react';
+import { startTransition } from 'react';
 
 type FilemakerPageKey =
   | 'persons'
   | 'organizations'
   | 'emails'
+  | 'invoices'
+  | 'websites'
   | 'mail'
   | 'events'
+  | 'values'
+  | 'lexicon'
   | 'campaigns'
   | 'control-centre'
+  | 'suppressions'
   | 'manage';
 
 const NAV_ITEMS: Array<{
@@ -39,15 +57,29 @@ const NAV_ITEMS: Array<{
   },
   {
     key: 'emails',
-    label: 'Emails',
+    label: 'Email Records',
     href: '/admin/filemaker/emails',
     icon: <Mail className='size-4' />,
     variant: 'outline',
   },
   {
+    key: 'invoices',
+    label: 'Invoices',
+    href: '/admin/filemaker/invoices',
+    icon: <FileText className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'websites',
+    label: 'Websites',
+    href: '/admin/filemaker/websites',
+    icon: <Globe className='size-4' />,
+    variant: 'outline',
+  },
+  {
     key: 'mail',
-    label: 'Mail',
-    href: '/admin/filemaker/mail',
+    label: 'Email Client',
+    href: '/admin/filemaker/mail-client',
     icon: <Mail className='size-4' />,
     variant: 'outline',
   },
@@ -56,6 +88,20 @@ const NAV_ITEMS: Array<{
     label: 'Events',
     href: '/admin/filemaker/events',
     icon: <CalendarDays className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'values',
+    label: 'Values',
+    href: '/admin/filemaker/values',
+    icon: <Tags className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'lexicon',
+    label: 'Lexicon',
+    href: '/admin/filemaker/lexicon',
+    icon: <BookOpen className='size-4' />,
     variant: 'outline',
   },
   {
@@ -73,6 +119,13 @@ const NAV_ITEMS: Array<{
     variant: 'outline',
   },
   {
+    key: 'suppressions',
+    label: 'Suppressions',
+    href: '/admin/filemaker/campaigns/suppressions',
+    icon: <ShieldOff className='size-4' />,
+    variant: 'outline',
+  },
+  {
     key: 'manage',
     label: 'Manage Database',
     href: '/admin/filemaker',
@@ -84,11 +137,18 @@ export function buildFilemakerNavActions(
   router: AppRouterInstance,
   currentPage: FilemakerPageKey
 ): PanelAction[] {
-  return NAV_ITEMS.filter((item) => item.key !== currentPage).map((item) => ({
-    key: item.key,
-    label: item.label,
-    icon: item.icon,
-    ...(item.variant ? { variant: item.variant } : {}),
-    onClick: () => router.push(item.href),
-  }));
+  return NAV_ITEMS.filter((item) => item.key !== currentPage).map((item) => {
+    const action: PanelAction = {
+      key: item.key,
+      label: item.label,
+      icon: item.icon,
+      onClick: () => startTransition(() => { router.push(item.href); }),
+    };
+
+    if (item.variant !== undefined) {
+      action.variant = item.variant;
+    }
+
+    return action;
+  });
 }

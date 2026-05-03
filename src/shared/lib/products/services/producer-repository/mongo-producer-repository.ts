@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 
-import type { ProducerRepository, ProducerFilters } from '@/shared/contracts/products/drafts';
+import type { ProducerRepository, BaseFilters } from '@/shared/contracts/products/drafts';
 import type { Producer } from '@/shared/contracts/products/producers';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -26,7 +26,7 @@ const toProducerDomain = (doc: ProducerDoc): Producer => ({
 });
 
 export const mongoProducerRepository: ProducerRepository = {
-  async listProducers(filters: ProducerFilters): Promise<Producer[]> {
+  async listProducers(filters: BaseFilters): Promise<Producer[]> {
     const db = await getMongoDb();
     const query: Filter<ProducerDoc> = {};
     if (filters.search) {

@@ -20,6 +20,9 @@ describe('IntegrationModalViewContext', () => {
           integrationName: 'Tradera',
           activeTab: 'settings',
           isTradera: true,
+          isVinted: false,
+          is1688: false,
+          isPracuj: false,
           isAllegro: false,
           isLinkedIn: false,
           isBaselinker: false,
@@ -28,7 +31,6 @@ describe('IntegrationModalViewContext', () => {
           showBaseConsole: false,
           activeConnection: null,
           onOpenSessionModal: () => {},
-          onSavePlaywrightSettings: () => {},
         }}
       >
         <Consumer />

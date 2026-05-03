@@ -13,7 +13,12 @@ export type {
   LabeledOptionWithDescription,
   LabeledOptionWithDisabledDto,
   LabeledOptionWithDisabled,
+  LabeledOptionWithGroupDto,
+  LabeledOptionWithGroup,
   ListResponse,
+  StatusVariant,
+  RequestStatus,
+  AutoSaveStatus,
   IdDataDto,
   OptionalIdDataDto,
 } from '../base';
@@ -61,7 +66,7 @@ export type AdminSectionBreadcrumbWrapperPropsDto = {
 };
 export type AdminSectionBreadcrumbWrapperProps = AdminSectionBreadcrumbWrapperPropsDto;
 
-export type AdminSectionBreadcrumbsPropsDto = {
+export type AdminSectionBreadcrumbsPropsDto = DataAttributesDto & {
   section: AdminBreadcrumbNode;
   current: string;
   parent?: AdminBreadcrumbNode;
@@ -164,15 +169,3 @@ export type ToastOptions = {
 };
 
 export type Toast = (message: string, options?: ToastOptions) => void;
-
-export type StatusVariant =
-  | 'pending'
-  | 'active'
-  | 'failed'
-  | 'removed'
-  | 'neutral'
-  | 'info'
-  | 'success'
-  | 'warning'
-  | 'error'
-  | 'processing';

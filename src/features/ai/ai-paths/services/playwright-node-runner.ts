@@ -1,8 +1,6 @@
 import 'server-only';
 
-import { randomUUID } from 'crypto';
-import { createRequire } from 'module';
-import os from 'os';
+import { createHash, randomUUID } from 'crypto';
 import path from 'path';
 
 import {
@@ -13,21 +11,45 @@ import {
 } from '@/shared/contracts/playwright';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { buildAiPathsContextRegistrySystemPrompt } from '@/shared/lib/ai-paths/context-registry/system-prompt';
+import {
+  buildChromiumAntiDetectionContextOptions,
+  buildChromiumAntiDetectionLaunchOptions,
+  installChromiumAntiDetectionInitScript,
+  resolveChromiumAntiDetectionRuntimeBehavior,
+} from '@/shared/lib/playwright/anti-detection';
+import { applyPlaywrightProxySessionAffinity } from '@/shared/lib/playwright/proxy-affinity';
 import { sanitizePlaywrightStorageState } from '@/shared/lib/playwright/storage-state';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
+import { recordPlaywrightActionRunSnapshot } from '@/shared/lib/playwright/action-run-history-recorder.server';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import {
+  isSensitiveKey,
+  REDACTED_VALUE,
+  redactSensitiveText,
+} from '@/shared/utils/observability/redaction-policy';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import type { PlaywrightActionRunRequestSummary } from '@/shared/contracts/playwright-action-runs';
 
 import { parseUserScript, safeStringify } from './playwright-node-runner.parser';
+import {
+  evaluateStepWithAI,
+  injectCodeWithAI,
+  type PlaywrightStepEvaluateOptions,
+  type PlaywrightStepInjectOptions,
+} from '@/features/playwright/server/ai-step-service';
+import { findRuntimeEntry } from './playwright-node-runner.runtime-registry';
+export { validatePlaywrightNodeScript } from './playwright-node-runner.parser';
 export * from './playwright-node-runner.types';
 import type {
   PlaywrightNodeRunArtifact,
+  PlaywrightNodeRunInstance,
   PlaywrightNodeRunRecord,
   PlaywrightNodeRunRequest,
   PlaywrightNodeArtifactReadResult,
 } from './playwright-node-runner.types';
+import { isPlaywrightNodeRuntimeRunRequest } from './playwright-node-runner.types';
 
 import type {
   Browser,
@@ -38,63 +60,110 @@ import type {
   Page,
 } from 'playwright';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import {
+  RUN_ROOT_DIR,
+  RUN_TTL_MS,
+  getPlaywright,
+  type PlaywrightHelperTarget,
+  pickDelayInRange,
+  pickSignedOffset,
+  clampNumber,
+  resolveRunStatePath,
+  resolveRunArtifactsDir,
+} from './playwright-node-runner.helpers';
 
-
-export const RUN_ROOT_DIR = path.join(os.tmpdir(), 'ai-paths-playwright-runs');
-const RUN_TTL_MS = 24 * 60 * 60 * 1000;
 const nodeFs = getFsPromises();
+const STICKY_SESSION_ROOT_DIR = path.join(RUN_ROOT_DIR, 'sticky-sessions');
+const STICKY_SESSION_TTL_MS = RUN_TTL_MS;
+const PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS = (() => {
+  const raw = Number(process.env['PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS']);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 2_000;
+})();
+const PLAYWRIGHT_STARTUP_TIMEOUT_MS = (() => {
+  const raw = Number(process.env['PLAYWRIGHT_STARTUP_TIMEOUT_MS']);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 45_000;
+})();
+const HOSTILE_STICKY_IDENTITY_PROFILES = new Set<PlaywrightSettings['identityProfile']>([
+  'search',
+  'marketplace',
+]);
+const chromiumRuntimePacingChains = new Map<string, Promise<void>>();
+const chromiumRuntimePacingNextAllowedAt = new Map<string, number>();
 
-const getPlaywright = (): typeof import('playwright') => {
-  const requireFn = createRequire(import.meta.url);
-  return requireFn('playwright') as typeof import('playwright');
+type StickySessionDescriptor = {
+  key: string;
+  path: string;
+  profile: PlaywrightSettings['identityProfile'];
+  origin: string;
+  scopeLabel: string;
 };
 
-
-type PlaywrightHelperTarget = {
-  scrollIntoViewIfNeeded?: (() => Promise<unknown> | unknown) | undefined;
-  click?: ((options?: Record<string, unknown>) => Promise<unknown> | unknown) | undefined;
-  boundingBox?:
-    | (() =>
-        | Promise<{ x: number; y: number; width: number; height: number } | null>
-        | { x: number; y: number; width: number; height: number }
-        | null)
-    | undefined;
+type ChromiumRuntimePacingDescriptor = {
+  key: string;
+  label: string;
+  profile: PlaywrightSettings['identityProfile'];
 };
 
-const normalizeDelayRange = (min: number, max: number): { min: number; max: number } => {
-  const safeMin = Math.max(0, Math.trunc(Number.isFinite(min) ? min : 0));
-  const safeMax = Math.max(0, Math.trunc(Number.isFinite(max) ? max : 0));
-  return {
-    min: Math.min(safeMin, safeMax),
-    max: Math.max(safeMin, safeMax),
+type RuntimePostureSnapshot = {
+  browser: {
+    engine: 'chromium' | 'firefox' | 'webkit';
+    label: string;
+    headless: boolean;
+    slowMo: number;
+    channel: string | null;
+    executablePathLabel: string | null;
+  };
+  antiDetection: {
+    identityProfile: PlaywrightSettings['identityProfile'];
+    locale: string | null;
+    timezoneId: string | null;
+    userAgent: string | null;
+    acceptLanguage: string | null;
+    chromiumDefaultsApplied: boolean;
+    runtimePacingScope: string | null;
+    runtimeBehavior: {
+      prewarmUrl: string | null;
+      prewarmWaitMs: number;
+      postStartUrlWaitMs: number;
+      launchCooldownMs: number;
+    };
+    stickyStorageState: {
+      enabled: boolean;
+      loaded: boolean;
+      scopeLabel: string | null;
+      origin: string | null;
+    };
+    proxy: {
+      enabled: boolean;
+      providerPreset: PlaywrightSettings['proxyProviderPreset'];
+      sessionAffinityEnabled: boolean;
+      sessionMode: PlaywrightSettings['proxySessionMode'];
+      applied: boolean;
+      reason:
+        | 'disabled'
+        | 'no-proxy'
+        | 'no-scope'
+        | 'no-placeholder'
+        | 'applied'
+        | null;
+      serverHost: string | null;
+      hasUsername: boolean;
+      scopeLabel: string | null;
+      origin: string | null;
+      mutations: Array<{
+        field: 'server' | 'username' | 'password';
+        source: 'placeholder' | 'provider_preset';
+      }>;
+    };
   };
 };
 
-const pickDelayInRange = (min: number, max: number): number => {
-  const normalized = normalizeDelayRange(min, max);
-  if (normalized.min === normalized.max) {
-    return normalized.min;
-  }
-  return normalized.min + Math.floor(Math.random() * (normalized.max - normalized.min + 1));
-};
-
-const pickSignedOffset = (magnitude: number): number => {
-  const safeMagnitude = Math.max(0, Math.trunc(Number.isFinite(magnitude) ? magnitude : 0));
-  if (safeMagnitude === 0) {
-    return 0;
-  }
-  return Math.floor(Math.random() * (safeMagnitude * 2 + 1)) - safeMagnitude;
-};
-
-const clampNumber = (value: number, min: number, max: number): number =>
-  Math.min(Math.max(value, min), max);
-
-const resolveRunStatePath = (runId: string): string => path.join(RUN_ROOT_DIR, `${runId}.json`);
-
-const resolveRunArtifactsDir = (runId: string): string => path.join(RUN_ROOT_DIR, runId);
-
 const ensureRunRoot = async (): Promise<void> => {
   await nodeFs.mkdir(RUN_ROOT_DIR, { recursive: true });
+};
+
+const ensureStickySessionRoot = async (): Promise<void> => {
+  await nodeFs.mkdir(STICKY_SESSION_ROOT_DIR, { recursive: true });
 };
 
 const withTimeout = async <T>(
@@ -112,18 +181,31 @@ const withTimeout = async <T>(
         }, timeoutMs);
       }),
     ]);
-  } finally {
-    if (timeoutRef) clearTimeout(timeoutRef);
-  }
+    } finally {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (timeoutRef !== null) clearTimeout(timeoutRef);
+    }
+    };
+
+const shouldHoldBrowserOpenForFailure = (message: string): boolean => {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('auth_required') ||
+    normalized.includes('manual verification') ||
+    normalized.includes('captcha')
+  );
 };
 
-const cleanupOldRuns = async (): Promise<void> => {
+    const cleanupOldRuns = async (): Promise<void> => {
   try {
     await ensureRunRoot();
     const now = Date.now();
     const entries = await nodeFs.readdir(RUN_ROOT_DIR, { withFileTypes: true });
     await Promise.all(
       entries.map(async (entry) => {
+        if (entry.name === path.basename(STICKY_SESSION_ROOT_DIR)) {
+          return;
+        }
         const targetPath = path.join(RUN_ROOT_DIR, entry.name);
         const stat = await nodeFs.stat(targetPath).catch(() => null);
         if (!stat) return;
@@ -131,10 +213,288 @@ const cleanupOldRuns = async (): Promise<void> => {
         await nodeFs.rm(targetPath, { recursive: true, force: true }).catch(() => undefined);
       })
     );
+    await ensureStickySessionRoot();
+    const stickyEntries = await nodeFs.readdir(STICKY_SESSION_ROOT_DIR, { withFileTypes: true });
+    await Promise.all(
+      stickyEntries.map(async (entry) => {
+        const targetPath = path.join(STICKY_SESSION_ROOT_DIR, entry.name);
+        const stat = await nodeFs.stat(targetPath).catch(() => null);
+        if (!stat) return;
+        if (now - stat.mtimeMs < STICKY_SESSION_TTL_MS) return;
+        await nodeFs.rm(targetPath, { recursive: true, force: true }).catch(() => undefined);
+      })
+    );
   } catch (error) {
-    void ErrorSystem.captureException(error);
-  
+    await ErrorSystem.captureException(error);
     // best effort cleanup only
+  }
+  };
+
+  const isLocalStickySessionHost = (hostname: string): boolean => {
+
+  const normalized = hostname.trim().toLowerCase();
+  return (
+    normalized === 'localhost' ||
+    normalized === '127.0.0.1' ||
+    normalized === '::1' ||
+    normalized.endsWith('.localhost')
+  );
+};
+
+const resolveUrlRuntimePacing = (input: {
+  identityProfile: PlaywrightSettings['identityProfile'];
+  url: string;
+}): ChromiumRuntimePacingDescriptor | null => {
+  try {
+    const parsed = new URL(input.url);
+    const protocol = parsed.protocol;
+    if (protocol !== 'http:' && protocol !== 'https:') {
+      return null;
+    }
+    const hostname = parsed.hostname;
+    if (isLocalStickySessionHost(hostname)) {
+      return null;
+    }
+    const host = parsed.host.toLowerCase();
+    return {
+      key: `${input.identityProfile}:${host}`,
+      label: `${input.identityProfile}/${host}`,
+      profile: input.identityProfile,
+    };
+  } catch {
+    return {
+      key: `${input.identityProfile}:global`,
+      label: `${input.identityProfile}/global`,
+      profile: input.identityProfile,
+    };
+  }
+};
+
+const resolveChromiumRuntimePacingDescriptor = (input: {
+  identityProfile: PlaywrightSettings['identityProfile'];
+  startUrl: string | undefined;
+}): ChromiumRuntimePacingDescriptor | null => {
+  if (!HOSTILE_STICKY_IDENTITY_PROFILES.has(input.identityProfile)) {
+    return null;
+  }
+
+  const normalizedStartUrl =
+    typeof input.startUrl === 'string' && input.startUrl.trim().length > 0 ? input.startUrl.trim() : null;
+
+  if (normalizedStartUrl === null) {
+    return {
+      key: `${input.identityProfile}:global`,
+      label: `${input.identityProfile}/global`,
+      profile: input.identityProfile,
+    };
+  }
+
+  return resolveUrlRuntimePacing({
+    identityProfile: input.identityProfile,
+    url: normalizedStartUrl,
+  });
+};
+
+
+const waitForChromiumRuntimePacing = async (input: {
+  descriptor: ChromiumRuntimePacingDescriptor | null;
+  cooldownMs: number;
+  logs: string[];
+  sleep: (ms: number) => Promise<void>;
+}): Promise<void> => {
+  if (!input.descriptor || input.cooldownMs <= 0) {
+    return;
+  }
+
+  const previous = chromiumRuntimePacingChains.get(input.descriptor.key) ?? Promise.resolve();
+  let releaseCurrent!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    releaseCurrent = resolve;
+  });
+  const currentChain = previous.catch(() => undefined).then(() => gate);
+  chromiumRuntimePacingChains.set(input.descriptor.key, currentChain);
+
+  await previous.catch(() => undefined);
+
+  try {
+    const now = Date.now();
+    const waitMs = Math.max(
+      0,
+      (chromiumRuntimePacingNextAllowedAt.get(input.descriptor.key) ?? now) - now
+    );
+    if (waitMs > 0) {
+      input.logs.push(
+        `[runtime] Applied Chromium anti-detection cooldown (${input.descriptor.label}) for ${waitMs}ms.`
+      );
+      await input.sleep(waitMs);
+    }
+    chromiumRuntimePacingNextAllowedAt.set(
+      input.descriptor.key,
+      Date.now() + input.cooldownMs
+    );
+  } finally {
+    releaseCurrent();
+    if (chromiumRuntimePacingChains.get(input.descriptor.key) === currentChain) {
+      chromiumRuntimePacingChains.delete(input.descriptor.key);
+    }
+  }
+};
+
+const resolveStickyScope = (input: {
+  instance: PlaywrightNodeRunInstance | null;
+  ownerUserId: string | null;
+}): { value: string; label: string } | null => {
+  const inst = input.instance;
+  const connectionId = inst !== null ? inst.connectionId : undefined;
+  if (connectionId !== undefined && connectionId !== null && connectionId.trim() !== '') {
+    const cid = connectionId.trim();
+    return { value: cid, label: `connection:${cid}` };
+  }
+  const ownerUserId = input.ownerUserId;
+  if (ownerUserId !== null && ownerUserId.trim() !== '') {
+    const oid = ownerUserId.trim();
+    return { value: oid, label: `owner:${oid}` };
+  }
+  const integrationId = inst !== null ? inst.integrationId : undefined;
+  if (integrationId !== undefined && integrationId !== null && integrationId.trim() !== '') {
+    const iid = integrationId.trim();
+    return { value: iid, label: `integration:${iid}` };
+  }
+  return null;
+};
+
+const resolveStickyOrigin = (startUrl: string | undefined): string | null => {
+  const normalized = typeof startUrl === 'string' && startUrl.trim().length > 0 ? startUrl.trim() : null;
+  if (normalized === null) return null;
+  try {
+    const parsed = new URL(normalized);
+    const protocol = parsed.protocol;
+    if (protocol !== 'http:' && protocol !== 'https:') {
+      return null;
+    }
+    if (isLocalStickySessionHost(parsed.hostname)) {
+      return null;
+    }
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+};
+
+const resolveStickySessionDescriptor = (input: {
+  ownerUserId: string | null;
+  instance: PlaywrightNodeRunInstance | null;
+  personaId: string | undefined;
+  identityProfile: PlaywrightSettings['identityProfile'];
+  startUrl: string | undefined;
+  explicitStorageState: BrowserContextOptions['storageState'] | undefined;
+}): StickySessionDescriptor | null => {
+  if (
+    input.explicitStorageState !== undefined &&
+    input.explicitStorageState !== null ||
+    !HOSTILE_STICKY_IDENTITY_PROFILES.has(input.identityProfile)
+  ) {
+    return null;
+  }
+
+  const scope = resolveStickyScope({
+    instance: input.instance,
+    ownerUserId: input.ownerUserId,
+  });
+  if (scope === null) return null;
+
+  const origin = resolveStickyOrigin(input.startUrl);
+  if (origin === null) return null;
+
+  const personaId = (input.personaId?.trim() ?? '') !== '' ? (input.personaId?.trim() as string) : 'default-persona';
+  const key = createHash('sha256')
+    .update(
+      JSON.stringify({
+        scopeLabel: scope.label,
+        profile: input.identityProfile,
+        origin,
+        personaId,
+      })
+    )
+    .digest('hex');
+
+  return {
+    key,
+    path: path.join(STICKY_SESSION_ROOT_DIR, `${key}.json`),
+    profile: input.identityProfile,
+    origin,
+    scopeLabel: scope.label,
+  };
+};
+
+const loadStickySessionStorageState = async (
+  descriptor: StickySessionDescriptor,
+  logs: string[]
+): Promise<BrowserContextOptions['storageState'] | undefined> => {
+  try {
+    const raw = await nodeFs.readFile(descriptor.path, 'utf8');
+    const parsed = JSON.parse(raw) as unknown;
+    const candidate = isObjectRecord(parsed) ? parsed['storageState'] : parsed;
+    if (typeof candidate === 'string') {
+      return undefined;
+    }
+    const sanitized = sanitizePlaywrightStorageState(candidate as BrowserContextOptions['storageState'], {
+      fallbackOrigin: descriptor.origin,
+    });
+    if (!sanitized) {
+      await nodeFs.rm(descriptor.path, { force: true }).catch(() => undefined);
+      return undefined;
+    }
+    const now = new Date();
+    await nodeFs.utimes(descriptor.path, now, now).catch(() => undefined);
+    logs.push(
+      `[runtime] Loaded sticky storage state (${descriptor.profile}) for ${descriptor.scopeLabel} at ${descriptor.origin}.`
+    );
+    return sanitized as BrowserContextOptions['storageState'];
+  } catch {
+    return undefined;
+  }
+};
+
+const persistStickySessionStorageState = async (input: {
+  context: BrowserContext | null;
+  descriptor: StickySessionDescriptor | null;
+  logs: string[];
+}): Promise<void> => {
+  if (!input.context || !input.descriptor || typeof input.context.storageState !== 'function') {
+    return;
+  }
+
+  try {
+    const rawStorageState = await input.context.storageState();
+    const sanitized = sanitizePlaywrightStorageState(rawStorageState, {
+      fallbackOrigin: input.descriptor.origin,
+    });
+    if (!sanitized) {
+      return;
+    }
+    await ensureStickySessionRoot();
+    await nodeFs.writeFile(
+      input.descriptor.path,
+      `${JSON.stringify(
+        {
+          version: 1,
+          profile: input.descriptor.profile,
+          origin: input.descriptor.origin,
+          scopeLabel: input.descriptor.scopeLabel,
+          updatedAt: nowIso(),
+          storageState: sanitized,
+        },
+        null,
+        2
+      )}\n`,
+      'utf8'
+    );
+    input.logs.push(
+      `[runtime] Saved sticky storage state (${input.descriptor.profile}) for ${input.descriptor.scopeLabel} at ${input.descriptor.origin}.`
+    );
+  } catch (error) {
+    await ErrorSystem.captureException(error);
   }
 };
 
@@ -159,8 +519,44 @@ const buildBaseRunState = (runId: string): PlaywrightNodeRunRecord => {
     completedAt: null,
     createdAt: now,
     updatedAt: now,
+    instance: null,
     artifacts: [],
     logs: [],
+    requestSummary: null,
+  };
+};
+
+const normalizeRunInstance = (
+  value: PlaywrightNodeRunInstance | null | undefined
+): PlaywrightNodeRunInstance | null => {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const normalizedKind = typeof value.kind === 'string' ? value.kind.trim() : '';
+  if (!normalizedKind) {
+    return null;
+  }
+
+  const toOptionalString = (entry: unknown): string | null =>
+    typeof entry === 'string' && entry.trim().length > 0 ? entry.trim() : null;
+
+  const normalizedTags = Array.isArray(value.tags)
+    ? value.tags
+        .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+        .filter((tag) => tag.length > 0)
+    : [];
+  const normalizedFamily = toOptionalString(value.family) as PlaywrightNodeRunInstance['family'];
+
+  return {
+    kind: normalizedKind as PlaywrightNodeRunInstance['kind'],
+    family: normalizedFamily ?? null,
+    label: toOptionalString(value.label),
+    connectionId: toOptionalString(value.connectionId),
+    integrationId: toOptionalString(value.integrationId),
+    listingId: toOptionalString(value.listingId),
+    nodeId: toOptionalString(value.nodeId),
+    tags: normalizedTags.length > 0 ? normalizedTags : null,
   };
 };
 
@@ -175,11 +571,99 @@ export const updateRunState = async (
     ...patch,
     runId,
     updatedAt: nowIso(),
-    artifacts: patch.artifacts ?? base.artifacts ?? [],
-    logs: patch.logs ?? base.logs ?? [],
+    instance:
+      patch.instance === undefined
+        ? (base.instance ?? null)
+        : normalizeRunInstance(patch.instance ?? null),
+    requestSummary:
+      patch.requestSummary === undefined
+        ? (base.requestSummary ?? null)
+        : (patch.requestSummary ?? null),
+    artifacts: patch.artifacts ?? base.artifacts,
+    logs: patch.logs ?? base.logs,
   };
   await writeRunState(next);
+  await recordPlaywrightActionRunSnapshot(next).catch(async (error: unknown) => {
+    await ErrorSystem.captureException(error, {
+      service: 'playwright-node-runner',
+      action: 'record-action-run-history',
+      runId,
+    });
+  });
   return next;
+};
+
+const REDACTED_REQUEST_SUMMARY_MAX_DEPTH = 6;
+const REDACTED_REQUEST_SUMMARY_MAX_ARRAY = 50;
+
+const isNullableRequestSummaryValue = (value: unknown): value is null | undefined =>
+  value === null || value === undefined;
+
+const isSensitiveRequestSummaryKey = (key: string): boolean =>
+  key.length > 0 && isSensitiveKey(key);
+
+const redactPlaywrightRunRequestArray = (value: unknown[], depth: number): unknown[] =>
+  value
+    .slice(0, REDACTED_REQUEST_SUMMARY_MAX_ARRAY)
+    .map((entry) => redactPlaywrightRunRequestValue(entry, '', depth + 1));
+
+const redactPlaywrightRunRequestObject = (value: object, depth: number): unknown => {
+  if (!isObjectRecord(value)) return '[unserializable]';
+  return Object.fromEntries(
+    Object.entries(value).map(([entryKey, entryValue]) => [
+      entryKey,
+      redactPlaywrightRunRequestValue(entryValue, entryKey, depth + 1),
+    ])
+  );
+};
+
+const redactPlaywrightRunRequestValue = (
+  value: unknown,
+  key: string,
+  depth: number
+): unknown => {
+  if (isSensitiveRequestSummaryKey(key)) return REDACTED_VALUE;
+  if (typeof value === 'string') return redactSensitiveText(value);
+  if (isNullableRequestSummaryValue(value)) return value;
+  if (typeof value !== 'object') return value;
+  if (depth >= REDACTED_REQUEST_SUMMARY_MAX_DEPTH) return '[truncated-depth]';
+  if (Array.isArray(value)) return redactPlaywrightRunRequestArray(value, depth);
+  return redactPlaywrightRunRequestObject(value, depth);
+};
+
+const redactPlaywrightRunRequestInput = (
+  input: Record<string, unknown>
+): Record<string, unknown> => {
+  const redacted = redactPlaywrightRunRequestValue(input, '', 0);
+  return isObjectRecord(redacted) ? redacted : {};
+};
+
+const resolveRequestSummaryString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined;
+
+const summarizePlaywrightRunRequest = (
+  request: PlaywrightNodeRunRequest
+): PlaywrightActionRunRequestSummary => {
+  const summary: PlaywrightActionRunRequestSummary = {
+    startUrl: resolveRequestSummaryString(request.startUrl),
+    browserEngine: resolveRequestSummaryString(request.browserEngine),
+    timeoutMs: typeof request.timeoutMs === 'number' ? request.timeoutMs : undefined,
+    runtimeKey: resolveRequestSummaryString(request.runtimeKey),
+    actionId: resolveRequestSummaryString(request.actionId),
+    actionName: resolveRequestSummaryString(request.actionName),
+    selectorProfile: resolveRequestSummaryString(request.selectorProfile),
+  };
+  if (isObjectRecord(request.input)) {
+    summary.input = redactPlaywrightRunRequestInput(request.input);
+  }
+  if (typeof request.personaId === 'string' && request.personaId.length > 0) {
+    summary.input = {
+      ...(summary.input ?? {}),
+      personaId: request.personaId,
+    };
+  }
+  if (isObjectRecord(request.capture)) summary.capture = request.capture;
+  return summary;
 };
 
 const normalizeSettingsOverrides = (
@@ -231,20 +715,24 @@ const getBrowserType = (
       ? playwright.webkit
       : playwright.chromium;
 
+const isChromiumBrowserEngine = (
+  engine: 'chromium' | 'firefox' | 'webkit'
+): boolean => engine === 'chromium';
+
 const buildLaunchOptions = (
   settings: PlaywrightSettings,
-  launchOverrides: Record<string, unknown>,
+  launchOverrides: LaunchOptions,
   capture: PlaywrightNodeRunRequest['capture']
 ): LaunchOptions => {
   const base: LaunchOptions = {
     headless: settings.headless,
     slowMo: settings.slowMo,
   };
-  if (settings.proxyEnabled && settings.proxyServer) {
+  if (settings.proxyEnabled && (settings.proxyServer ?? '') !== '') {
     base.proxy = {
-      server: settings.proxyServer,
-      ...(settings.proxyUsername ? { username: settings.proxyUsername } : {}),
-      ...(settings.proxyPassword ? { password: settings.proxyPassword } : {}),
+      server: settings.proxyServer as string,
+      ...((settings.proxyUsername ?? '') !== '' ? { username: settings.proxyUsername } : {}),
+      ...((settings.proxyPassword ?? '') !== '' ? { password: settings.proxyPassword } : {}),
     };
   }
   const merged = {
@@ -259,45 +747,248 @@ const buildLaunchOptions = (
   return merged;
 };
 
+const buildBaseContextOptions = (
+  playwright: typeof import('playwright'),
+  settings: PlaywrightSettings
+): BrowserContextOptions => {
+  const devicePreset =
+    settings.emulateDevice && (settings.deviceName ?? '') !== ''
+      ? playwright.devices?.[settings.deviceName as string]
+      : undefined;
+  return {
+    ...(devicePreset ?? {}),
+    ...((settings.locale ?? '') !== '' ? { locale: settings.locale } : {}),
+    ...((settings.timezoneId ?? '') !== '' ? { timezoneId: settings.timezoneId } : {}),
+  };
+};
+
+const resolveStorageStateOption = (
+  storageState: BrowserContextOptions['storageState'],
+  startUrl: string | undefined
+): BrowserContextOptions['storageState'] | undefined => {
+  if (typeof storageState !== 'string' && storageState !== undefined && storageState !== null) {
+    const sanitized = sanitizePlaywrightStorageState(storageState, {
+      fallbackOrigin: startUrl ?? null,
+    });
+    if (sanitized !== undefined && sanitized !== null) {
+      return sanitized as BrowserContextOptions['storageState'];
+    }
+    return undefined;
+  }
+  return storageState;
+};
+
+const resolveViewportWithJitter = (
+  viewport: BrowserContextOptions['viewport'],
+  settings: PlaywrightSettings,
+  isViewportOverridden: boolean
+): BrowserContextOptions['viewport'] => {
+  const jitterBudget = Math.max(0, Math.trunc(settings.viewportJitterPx ?? 0));
+  if (
+    jitterBudget > 0 &&
+    viewport !== undefined &&
+    viewport !== null &&
+    typeof viewport === 'object' &&
+    typeof (viewport as { width: number }).width === 'number' &&
+    typeof (viewport as { height: number }).height === 'number' &&
+    !isViewportOverridden
+  ) {
+    const v = viewport as { width: number; height: number };
+    return {
+      width: Math.max(320, v.width + pickSignedOffset(jitterBudget)),
+      height: Math.max(240, v.height + pickSignedOffset(jitterBudget)),
+    };
+  }
+  return viewport;
+};
+
 const buildContextOptions = (
   playwright: typeof import('playwright'),
   settings: PlaywrightSettings,
   runArtifactsDir: string,
-  contextOverrides: Record<string, unknown>,
+  contextOverrides: BrowserContextOptions,
   capture: PlaywrightNodeRunRequest['capture'],
   startUrl?: string
 ): BrowserContextOptions => {
-  const devicePreset =
-    settings.emulateDevice && settings.deviceName
-      ? playwright.devices?.[settings.deviceName]
-      : undefined;
-  const base: BrowserContextOptions = {
-    ...(devicePreset ?? {}),
+  const base = buildBaseContextOptions(playwright, settings);
+  const videoOptions: BrowserContextOptions = capture?.video === true
+    ? { recordVideo: { dir: runArtifactsDir, size: { width: 1280, height: 720 } } }
+    : {};
+
+  const merged: BrowserContextOptions = {
+    ...base,
+    ...videoOptions,
+    ...(contextOverrides),
   };
-  if (capture?.video) {
-    base.recordVideo = {
-      dir: runArtifactsDir,
-      size: {
-        width: 1280,
-        height: 720,
-      },
+
+  return {
+    ...merged,
+    storageState: resolveStorageStateOption(merged.storageState, startUrl),
+    viewport: resolveViewportWithJitter(merged.viewport, settings, contextOverrides.viewport !== undefined),
+  };
+};
+
+const readOptionalTrimmedString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const isNodeErrorWithCode = (error: unknown, code: string): boolean =>
+  isObjectRecord(error) && error['code'] === code;
+
+const resolveBrowserLaunchLabel = (input: {
+  browserEngine: 'chromium' | 'firefox' | 'webkit';
+  launchOptions: LaunchOptions;
+}): { label: string; channel: string | null; executablePathLabel: string | null } => {
+  const channel = readOptionalTrimmedString(input.launchOptions.channel);
+  const executablePath = readOptionalTrimmedString(input.launchOptions.executablePath);
+  const executablePathLabel = executablePath ? path.basename(executablePath) : null;
+
+  if (input.browserEngine === 'firefox') {
+    return { label: 'Firefox', channel, executablePathLabel };
+  }
+  if (input.browserEngine === 'webkit') {
+    return { label: 'WebKit', channel, executablePathLabel };
+  }
+  if (channel === 'chrome') {
+    return { label: 'Chrome', channel, executablePathLabel };
+  }
+  if (executablePathLabel?.toLowerCase().includes('brave')) {
+    return { label: 'Brave', channel, executablePathLabel };
+  }
+  if (executablePathLabel) {
+    return {
+      label: `Chromium (${executablePathLabel})`,
+      channel,
+      executablePathLabel,
     };
   }
-  const merged = {
-    ...base,
-    ...(contextOverrides as BrowserContextOptions),
+  return {
+    label: 'Chromium (bundled)',
+    channel,
+    executablePathLabel,
   };
-  if (typeof merged.storageState !== 'string' && merged.storageState) {
-    const sanitizedStorageState = sanitizePlaywrightStorageState(merged.storageState, {
-      fallbackOrigin: startUrl ?? null,
-    });
-    if (sanitizedStorageState) {
-      merged.storageState = sanitizedStorageState as BrowserContextOptions['storageState'];
-    } else {
-      delete merged.storageState;
-    }
+};
+
+const resolveProxyServerHost = (value: unknown): string | null => {
+  const server = readOptionalTrimmedString(value);
+  if (!server) {
+    return null;
   }
-  return merged;
+
+  try {
+    return new URL(server).host || server;
+  } catch {
+    return server;
+  }
+};
+
+const resolveAcceptLanguageHeader = (contextOptions: BrowserContextOptions): string | null => {
+  const header = Object.entries(contextOptions.extraHTTPHeaders ?? {}).find(
+    ([key]) => key.trim().toLowerCase() === 'accept-language'
+  );
+  return typeof header?.[1] === 'string' ? header[1] : null;
+};
+
+const buildAntiDetectionSnapshot = (input: {
+  browserEngine: 'chromium' | 'firefox' | 'webkit';
+  effectiveContextOptions: BrowserContextOptions;
+  effectiveSettings: PlaywrightSettings;
+  runtimeAntiDetectionBehavior: ReturnType<typeof resolveChromiumAntiDetectionRuntimeBehavior>;
+  runtimePacingDescriptor: ChromiumRuntimePacingDescriptor | null;
+  acceptLanguage: string | null;
+}): RuntimePostureSnapshot['antiDetection'] => ({
+  identityProfile: input.effectiveSettings.identityProfile,
+  locale: readOptionalTrimmedString(input.effectiveContextOptions.locale),
+  timezoneId: readOptionalTrimmedString(input.effectiveContextOptions.timezoneId),
+  userAgent: readOptionalTrimmedString(input.effectiveContextOptions.userAgent),
+  acceptLanguage: input.acceptLanguage,
+  chromiumDefaultsApplied: isChromiumBrowserEngine(input.browserEngine),
+  runtimePacingScope: input.runtimePacingDescriptor?.label ?? null,
+  runtimeBehavior: {
+    prewarmUrl: input.runtimeAntiDetectionBehavior.prewarmUrl,
+    prewarmWaitMs: input.runtimeAntiDetectionBehavior.prewarmWaitMs,
+    postStartUrlWaitMs: input.runtimeAntiDetectionBehavior.postStartUrlWaitMs,
+    launchCooldownMs: input.runtimeAntiDetectionBehavior.launchCooldownMs,
+  },
+  stickyStorageState: {
+    enabled: false, // will be updated
+    loaded: false, // will be updated
+    scopeLabel: null, // will be updated
+    origin: null, // will be updated
+  },
+  proxy: {
+    enabled: false, // will be updated
+    providerPreset: input.effectiveSettings.proxyProviderPreset,
+    sessionAffinityEnabled: input.effectiveSettings.proxySessionAffinity,
+    sessionMode: input.effectiveSettings.proxySessionMode,
+    applied: false, // will be updated
+    reason: null, // will be updated
+    serverHost: null, // will be updated
+    hasUsername: false, // will be updated
+    scopeLabel: null, // will be updated
+    origin: null, // will be updated
+    mutations: [], // will be updated
+  },
+});
+
+const buildRuntimePostureSnapshot = (input: {
+  browserEngine: 'chromium' | 'firefox' | 'webkit';
+  effectiveLaunchOptions: LaunchOptions;
+  effectiveContextOptions: BrowserContextOptions;
+  effectiveSettings: PlaywrightSettings;
+  runtimeAntiDetectionBehavior: ReturnType<typeof resolveChromiumAntiDetectionRuntimeBehavior>;
+  runtimePacingDescriptor: ChromiumRuntimePacingDescriptor | null;
+  stickySessionDescriptor: StickySessionDescriptor | null;
+  stickySessionStorageState: BrowserContextOptions['storageState'] | undefined;
+  proxyAffinityResult: ReturnType<typeof applyPlaywrightProxySessionAffinity>;
+}): RuntimePostureSnapshot => {
+  const browserLaunch = resolveBrowserLaunchLabel({
+    browserEngine: input.browserEngine,
+    launchOptions: input.effectiveLaunchOptions,
+  });
+  const acceptLanguage = resolveAcceptLanguageHeader(input.effectiveContextOptions);
+
+  const snapshot: RuntimePostureSnapshot = {
+    browser: {
+      engine: input.browserEngine,
+      label: browserLaunch.label,
+      headless: input.effectiveLaunchOptions.headless !== false,
+      slowMo: typeof input.effectiveLaunchOptions.slowMo === 'number' ? input.effectiveLaunchOptions.slowMo : 0,
+      channel: browserLaunch.channel,
+      executablePathLabel: browserLaunch.executablePathLabel,
+    },
+    antiDetection: buildAntiDetectionSnapshot({
+      browserEngine: input.browserEngine,
+      effectiveContextOptions: input.effectiveContextOptions,
+      effectiveSettings: input.effectiveSettings,
+      runtimeAntiDetectionBehavior: input.runtimeAntiDetectionBehavior,
+      runtimePacingDescriptor: input.runtimePacingDescriptor,
+      acceptLanguage,
+    }),
+  };
+
+  const ad = snapshot.antiDetection;
+  ad.stickyStorageState = {
+    enabled: input.stickySessionDescriptor !== null,
+    loaded: input.stickySessionStorageState !== undefined && input.stickySessionStorageState !== null,
+    scopeLabel: input.stickySessionDescriptor?.scopeLabel ?? null,
+    origin: input.stickySessionDescriptor?.origin ?? null,
+  };
+
+  ad.proxy = {
+    enabled: (input.effectiveLaunchOptions.proxy?.server ?? '') !== '',
+    providerPreset: input.effectiveSettings.proxyProviderPreset,
+    sessionAffinityEnabled: input.effectiveSettings.proxySessionAffinity,
+    sessionMode: input.effectiveSettings.proxySessionMode,
+    applied: input.proxyAffinityResult.applied,
+    reason: input.proxyAffinityResult.reason,
+    serverHost: resolveProxyServerHost(input.effectiveLaunchOptions.proxy?.server),
+    hasUsername: (readOptionalTrimmedString(input.effectiveLaunchOptions.proxy?.username) ?? '') !== '',
+    scopeLabel: input.proxyAffinityResult.descriptor?.scopeLabel ?? null,
+    origin: input.proxyAffinityResult.descriptor?.origin ?? null,
+    mutations: [...input.proxyAffinityResult.mutations],
+  };
+
+  return snapshot;
 };
 
 
@@ -342,7 +1033,7 @@ const registerOutboundPolicyRoute = async (
     try {
       parsed = new URL(requestUrl);
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      await ErrorSystem.captureException(error);
       await route.continue();
       return;
     }
@@ -376,25 +1067,35 @@ import {
   persistVideoArtifact
 } from './playwright-node-runner.artifacts';
 
-const executePlaywrightNodeRun = async (
-  runId: string,
-  request: PlaywrightNodeRunRequest
-): Promise<PlaywrightNodeRunRecord> => {
-  const startedAt = nowIso();
-  const logs: string[] = [];
-  const artifacts: PlaywrightNodeRunArtifact[] = [];
-  const runArtifactsDir = resolveRunArtifactsDir(runId);
-  await nodeFs.mkdir(runArtifactsDir, { recursive: true });
-  await updateRunState(runId, {
-    status: 'running',
-    startedAt,
-    logs,
-    artifacts,
-  });
-  const liveRunState = createLiveRunStateCoordinator(runId);
-
+const prepareRunConfiguration = async (params: {
+  runId: string;
+  request: PlaywrightNodeRunRequest;
+  queuedRun: PlaywrightNodeRunRecord | null;
+  runArtifactsDir: string;
+  logs: string[];
+}): Promise<{
+  effectiveSettings: PlaywrightSettings;
+  launchOptions: LaunchOptions;
+  contextOptions: BrowserContextOptions;
+  proxyAffinityResult: ReturnType<typeof applyPlaywrightProxySessionAffinity>;
+}> => {
+  const { runId, request, queuedRun, runArtifactsDir, logs } = params;
   const playwright = getPlaywright();
-  const personaSettings = await resolvePersonaSettings(request.personaId);
+  const personaSettings = await withTimeout(
+    resolvePersonaSettings(request.personaId),
+    PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS,
+    'Timed out resolving Playwright persona settings.'
+  ).catch(async (error) => {
+    logs.push('[runtime][warn] Timed out resolving Playwright persona settings. Using defaults.');
+    await ErrorSystem.captureException(error, {
+      service: 'playwright-node-runner',
+      action: 'resolvePersonaSettings',
+      runId,
+      personaId: request.personaId ?? null,
+      timeoutMs: PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS,
+    });
+    return { ...defaultPlaywrightSettings };
+  });
   const settingsOverrides = normalizeSettingsOverrides(request.settingsOverrides);
   const effectiveSettings: PlaywrightSettings = {
     ...personaSettings,
@@ -405,6 +1106,34 @@ const executePlaywrightNodeRun = async (
     request.launchOptions ?? {},
     request.capture
   );
+  const proxyAffinityResult = applyPlaywrightProxySessionAffinity({
+    enabled: effectiveSettings.proxySessionAffinity,
+    mode: effectiveSettings.proxySessionMode,
+    providerPreset: effectiveSettings.proxyProviderPreset,
+    launchOptions,
+    identityProfile: effectiveSettings.identityProfile,
+    connectionId: queuedRun?.instance?.connectionId ?? null,
+    ownerUserId: queuedRun?.ownerUserId ?? null,
+    integrationId: queuedRun?.instance?.integrationId ?? null,
+    personaId: request.personaId,
+    startUrl: request.startUrl,
+    runScopeKey: runId,
+  });
+  if (effectiveSettings.proxySessionAffinity) {
+    if (proxyAffinityResult.reason === 'applied' && proxyAffinityResult.descriptor !== null) {
+      logs.push(
+        `[runtime] Applied ${proxyAffinityResult.descriptor.mode} proxy session (${effectiveSettings.identityProfile}) for ${proxyAffinityResult.descriptor.scopeLabel}${proxyAffinityResult.descriptor.origin !== null ? ` at ${proxyAffinityResult.descriptor.origin}` : ''}.`
+      );
+    } else if (proxyAffinityResult.reason === 'no-placeholder') {
+      logs.push(
+        '[runtime] Sticky proxy session is enabled, but the proxy configuration has no session placeholder.'
+      );
+    } else if (proxyAffinityResult.reason === 'no-scope') {
+      logs.push(
+        '[runtime] Sticky proxy session is enabled, but this run has no stable scope for proxy affinity.'
+      );
+    }
+  }
   const contextOptions = buildContextOptions(
     playwright,
     effectiveSettings,
@@ -413,13 +1142,143 @@ const executePlaywrightNodeRun = async (
     request.capture,
     request.startUrl
   );
+
+  return {
+    effectiveSettings,
+    launchOptions,
+    contextOptions,
+    proxyAffinityResult,
+  };
+};
+
+const executePlaywrightNodeRun = async (
+  runId: string,
+  request: PlaywrightNodeRunRequest
+): Promise<PlaywrightNodeRunRecord> => {
+  const startedAt = nowIso();
+  const logs: string[] = [];
+  const artifacts: PlaywrightNodeRunArtifact[] = [];
+  const runArtifactsDir = resolveRunArtifactsDir(runId);
+  await nodeFs.mkdir(runArtifactsDir, { recursive: true });
+  const queuedRun = await readPlaywrightNodeRun(runId);
+  await updateRunState(runId, {
+    status: 'running',
+    startedAt,
+    logs,
+    artifacts,
+  });
+  const liveRunState = createLiveRunStateCoordinator(runId);
+  const queueLiveStateSnapshot = (): void => {
+    liveRunState.queueUpdate(() => ({
+      logs: [...logs],
+      artifacts: [...artifacts],
+    }));
+  };
+  const sleep = async (ms: number): Promise<void> => {
+    const safeMs = Math.max(0, Math.trunc(ms));
+    await new Promise<void>((resolve) => setTimeout(resolve, safeMs));
+  };
+
+  const playwright = getPlaywright();
+  const { effectiveSettings, contextOptions, proxyAffinityResult } = await prepareRunConfiguration({
+    runId,
+    request,
+    queuedRun,
+    runArtifactsDir,
+    logs,
+  });
+  logs.push('[runtime] Prepared Playwright runtime configuration.');
+  queueLiveStateSnapshot();
+
   const timeoutMs = Math.max(1_000, request.timeoutMs ?? 120_000);
+
   const browserEngine = request.browserEngine ?? 'chromium';
+  const effectiveLaunchOptions = isChromiumBrowserEngine(browserEngine)
+    ? buildChromiumAntiDetectionLaunchOptions(proxyAffinityResult.launchOptions)
+    : proxyAffinityResult.launchOptions;
+  const stickySessionDescriptor = isChromiumBrowserEngine(browserEngine)
+    ? resolveStickySessionDescriptor({
+        ownerUserId: queuedRun?.ownerUserId ?? null,
+        instance: queuedRun?.instance ?? null,
+        personaId: request.personaId,
+        identityProfile: effectiveSettings.identityProfile,
+        startUrl: request.startUrl,
+        explicitStorageState:
+          typeof contextOptions.storageState === 'string' ? undefined : contextOptions.storageState,
+      })
+    : null;
+  const stickySessionStorageState = stickySessionDescriptor !== null
+    ? await loadStickySessionStorageState(stickySessionDescriptor, logs)
+    : undefined;
+  const contextOptionsWithStickyState =
+    stickySessionStorageState !== undefined &&
+    stickySessionStorageState !== null &&
+    contextOptions.storageState === undefined
+      ? {
+          ...contextOptions,
+          storageState: stickySessionStorageState,
+        }
+      : contextOptions;
+
+  const effectiveContextOptions = isChromiumBrowserEngine(browserEngine)
+    ? buildChromiumAntiDetectionContextOptions(
+        contextOptionsWithStickyState,
+        effectiveSettings.identityProfile
+      )
+    : contextOptionsWithStickyState;
+  const runtimeAntiDetectionBehavior = isChromiumBrowserEngine(browserEngine)
+    ? resolveChromiumAntiDetectionRuntimeBehavior({
+        identityProfile: effectiveSettings.identityProfile,
+        startUrl: request.startUrl,
+        overrides: {
+          launchCooldownMs: effectiveSettings.launchCooldownMs,
+          prewarmWaitMs: effectiveSettings.prewarmWaitMs,
+          postStartUrlWaitMs: effectiveSettings.postStartUrlWaitMs,
+        },
+      })
+    : {
+        prewarmUrl: null,
+        prewarmWaitMs: 0,
+        postStartUrlWaitMs: 0,
+        launchCooldownMs: 0,
+      };
+  const runtimePacingDescriptor = isChromiumBrowserEngine(browserEngine)
+    ? resolveChromiumRuntimePacingDescriptor({
+        identityProfile: effectiveSettings.identityProfile,
+        startUrl: request.startUrl,
+      })
+    : null;
   const policyAllowedHosts = normalizePolicyAllowedHosts(request.policyAllowedHosts);
   const contextRegistry = request.contextRegistry ?? null;
   const contextRegistryPrompt = buildAiPathsContextRegistrySystemPrompt(
     contextRegistry?.resolved ?? null
   );
+  const runtimePostureSnapshot = buildRuntimePostureSnapshot({
+    browserEngine,
+    effectiveLaunchOptions,
+    effectiveContextOptions,
+    effectiveSettings,
+    runtimeAntiDetectionBehavior,
+    runtimePacingDescriptor,
+    stickySessionDescriptor,
+    stickySessionStorageState,
+    proxyAffinityResult,
+  });
+  try {
+    artifacts.push(
+      await saveFileArtifact({
+        runArtifactsDir,
+        name: 'runtime-posture',
+        extension: 'json',
+        content: `${JSON.stringify(runtimePostureSnapshot, null, 2)}\n`,
+        mimeType: 'application/json',
+        kind: 'json',
+      })
+    );
+  } catch (error) {
+
+    await ErrorSystem.captureException(error);
+  }
 
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
@@ -440,38 +1299,142 @@ const executePlaywrightNodeRun = async (
     runtimeLifecycle[key] = true;
     logs.push(message);
   };
+  let stickySessionStatePersisted = false;
+  let videoArtifactPersisted = false;
+  let pageCleanupAttempted = false;
+  let runtimeCleanupAttempted = false;
+  const isRunnerPageOpen = (): boolean =>
+    page !== null &&
+    runtimeLifecycle.pageClosed === false &&
+    runtimeLifecycle.pageCrashed === false &&
+    (typeof page.isClosed !== 'function' || page.isClosed() === false);
+  const persistStickySessionStorageStateOnce = async (): Promise<void> => {
+    if (stickySessionStatePersisted) {
+      return;
+    }
+    stickySessionStatePersisted = true;
+    await persistStickySessionStorageState({
+      context,
+      descriptor: stickySessionDescriptor,
+      logs,
+    });
+  };
+  const persistVideoArtifactOnce = async (): Promise<boolean> => {
+    if (videoArtifactPersisted) {
+      return false;
+    }
+    videoArtifactPersisted = true;
+    return persistVideoArtifact({
+      artifacts,
+      logs,
+      page,
+      request,
+      runArtifactsDir,
+    });
+  };
+  const closeRunnerPageOnce = async (): Promise<void> => {
+    if (pageCleanupAttempted) {
+      return;
+    }
+    pageCleanupAttempted = true;
+    if (!isRunnerPageOpen()) {
+      return;
+    }
+    await page
+      ?.close({ runBeforeUnload: false })
+      .catch(() => undefined);
+    if (page !== null && typeof page.isClosed === 'function' && page.isClosed()) {
+      logRuntimeLifecycle('pageClosed', '[runtime] Runner page closed.');
+    }
+  };
+  const closePlaywrightRuntimeOnce = async (): Promise<void> => {
+    if (runtimeCleanupAttempted) {
+      return;
+    }
+    runtimeCleanupAttempted = true;
+    await closeRunnerPageOnce();
+    if (context) {
+      const contextClosed = await context.close().then(() => true).catch(() => false);
+      if (contextClosed) {
+        logRuntimeLifecycle('contextClosed', '[runtime] Browser context closed.');
+      }
+    }
+    if (browser) {
+      const browserClosed = await browser.close().then(() => true).catch(() => false);
+      if (browserClosed) {
+        logRuntimeLifecycle('browserDisconnected', '[runtime] Browser disconnected.');
+      }
+    }
+  };
   try {
+    await waitForChromiumRuntimePacing({
+      descriptor: runtimePacingDescriptor,
+      cooldownMs: runtimeAntiDetectionBehavior.launchCooldownMs,
+      logs,
+      sleep,
+    });
     logs.push(`[runtime] Launching ${browserEngine} browser.`);
-    browser = await getBrowserType(playwright, browserEngine).launch(launchOptions);
+    logs.push(
+      `[runtime] Anti-detection posture: browser=${runtimePostureSnapshot.browser.label}, mode=${runtimePostureSnapshot.browser.headless ? 'headless' : 'headed'}, profile=${runtimePostureSnapshot.antiDetection.identityProfile}, locale=${runtimePostureSnapshot.antiDetection.locale ?? 'default'}, timezone=${runtimePostureSnapshot.antiDetection.timezoneId ?? 'default'}, proxy=${runtimePostureSnapshot.antiDetection.proxy.enabled ? `${runtimePostureSnapshot.antiDetection.proxy.providerPreset}/${runtimePostureSnapshot.antiDetection.proxy.sessionMode}/${runtimePostureSnapshot.antiDetection.proxy.reason}` : 'disabled'}.`
+    );
+    queueLiveStateSnapshot();
+    browser = await withTimeout(
+      getBrowserType(playwright, browserEngine).launch(effectiveLaunchOptions),
+      PLAYWRIGHT_STARTUP_TIMEOUT_MS,
+      `Timed out launching ${browserEngine} browser.`
+    );
     browser.on('disconnected', () => {
       logRuntimeLifecycle('browserDisconnected', '[runtime] Browser disconnected.');
     });
-    context = await browser.newContext(contextOptions);
+    context = await withTimeout(
+      browser.newContext(effectiveContextOptions),
+      PLAYWRIGHT_STARTUP_TIMEOUT_MS,
+      'Timed out creating Playwright browser context.'
+    );
     context.on('close', () => {
       logRuntimeLifecycle('contextClosed', '[runtime] Browser context closed.');
     });
     context.setDefaultTimeout(effectiveSettings.timeout);
     context.setDefaultNavigationTimeout(effectiveSettings.navigationTimeout);
     await registerOutboundPolicyRoute(context, logs, policyAllowedHosts);
-
-    if (request.capture?.trace) {
-      await context.tracing.start({
-        screenshots: true,
-        snapshots: true,
-        sources: true,
+    if (isChromiumBrowserEngine(browserEngine)) {
+      await installChromiumAntiDetectionInitScript(context, {
+        locale: effectiveContextOptions.locale,
+        userAgent: effectiveContextOptions.userAgent,
       });
-      logs.push('[runtime] Trace capture started.');
+      logs.push(
+        `[runtime] Applied Chromium anti-detection defaults (profile: ${effectiveSettings.identityProfile}).`
+      );
     }
 
-    page = await context.newPage();
+    if (request.capture?.trace === true) {
+      await withTimeout(
+        context.tracing.start({
+          screenshots: true,
+          snapshots: true,
+          sources: true,
+        }),
+        PLAYWRIGHT_STARTUP_TIMEOUT_MS,
+        'Timed out starting Playwright trace capture.'
+      );
+      logs.push('[runtime] Trace capture started.');
+      queueLiveStateSnapshot();
+    }
+
+    page = await withTimeout(
+      context.newPage(),
+      PLAYWRIGHT_STARTUP_TIMEOUT_MS,
+      'Timed out creating Playwright page.'
+    );
     page.on('close', () => {
       logRuntimeLifecycle('pageClosed', '[runtime] Runner page closed.');
     });
     page.on('crash', () => {
       logRuntimeLifecycle('pageCrashed', '[runtime] Runner page crashed.');
     });
+    queueLiveStateSnapshot();
 
-    if (request.preventNewPages) {
+    if (request.preventNewPages === true) {
       const runnerPage = page;
       context.on('page', async (newPage: Page) => {
         if (newPage === runnerPage) {
@@ -482,21 +1445,93 @@ const executePlaywrightNodeRun = async (
       });
     }
 
-    if (request.startUrl?.trim()) {
-      const allowedByPolicyOverride = isPolicyAllowedHost(request.startUrl, policyAllowedHosts);
+    const trimmedStartUrl = request.startUrl?.trim() ?? '';
+    if (trimmedStartUrl !== '') {
+
+      const newTabSettleMs = pickDelayInRange(
+        effectiveSettings.actionDelayMin,
+        effectiveSettings.actionDelayMax
+      );
+      if (newTabSettleMs > 0) {
+        logs.push(`[runtime] New tab opened — settling ${newTabSettleMs}ms before focusing the address bar.`);
+        await sleep(newTabSettleMs);
+      }
+      const allowedByPolicyOverride = isPolicyAllowedHost(trimmedStartUrl, policyAllowedHosts);
       const decision = allowedByPolicyOverride
         ? { allowed: true, reason: null }
-        : evaluateOutboundUrlPolicy(request.startUrl);
-      if (!decision.allowed) {
+        : evaluateOutboundUrlPolicy(trimmedStartUrl);
+      if (decision.allowed === false) {
         throw new Error(
-          `Blocked outbound URL (${decision.reason ?? 'policy_violation'}): ${request.startUrl}`
+          `Blocked outbound URL (${decision.reason ?? 'policy_violation'}): ${trimmedStartUrl}`
         );
       }
-      logs.push(`[runtime] Navigating to start URL: ${request.startUrl}`);
-      await page.goto(request.startUrl, {
+
+      if ((runtimeAntiDetectionBehavior.prewarmUrl ?? '') !== '') {
+        logs.push(`[runtime] Prewarming target origin: ${runtimeAntiDetectionBehavior.prewarmUrl as string}`);
+        await page.goto(runtimeAntiDetectionBehavior.prewarmUrl as string, {
+          waitUntil: 'domcontentloaded',
+          timeout: effectiveSettings.navigationTimeout,
+        });
+        if (runtimeAntiDetectionBehavior.prewarmWaitMs > 0) {
+          await sleep(runtimeAntiDetectionBehavior.prewarmWaitMs);
+          logs.push(
+            `[runtime] Settled prewarm navigation for ${runtimeAntiDetectionBehavior.prewarmWaitMs}ms.`
+          );
+        }
+      }
+      const perCharTypingDelay = pickDelayInRange(
+        effectiveSettings.inputDelayMin,
+        effectiveSettings.inputDelayMax
+      );
+      const typingDurationMs = trimmedStartUrl.length * perCharTypingDelay;
+      const preEnterReviewMs = pickDelayInRange(
+        effectiveSettings.actionDelayMin,
+        effectiveSettings.actionDelayMax
+      );
+      logs.push(
+        `[runtime] Simulating address bar typing for ${trimmedStartUrl.length} chars @ ~${perCharTypingDelay}ms/char (${typingDurationMs}ms) + ${preEnterReviewMs}ms pre-Enter pause.`
+      );
+      if (typingDurationMs > 0) {
+        await sleep(typingDurationMs);
+      }
+      if (preEnterReviewMs > 0) {
+        await sleep(preEnterReviewMs);
+      }
+      logs.push(`[runtime] Navigating to start URL: ${trimmedStartUrl}`);
+      await page.goto(trimmedStartUrl, {
         waitUntil: 'load',
         timeout: effectiveSettings.navigationTimeout,
       });
+      if (runtimeAntiDetectionBehavior.postStartUrlWaitMs > 0) {
+        await sleep(runtimeAntiDetectionBehavior.postStartUrlWaitMs);
+        logs.push(
+          `[runtime] Settled start URL navigation for ${runtimeAntiDetectionBehavior.postStartUrlWaitMs}ms.`
+        );
+      }
+      const viewportSize =
+        effectiveSettings.postLoadNudgeEnabled !== false &&
+        typeof page.viewportSize === 'function'
+          ? page.viewportSize()
+          : null;
+      if (viewportSize) {
+        const baselineX = Math.trunc(viewportSize.width * 0.45);
+        const baselineY = Math.trunc(viewportSize.height * 0.35);
+        const nudgeX = clampNumber(baselineX + pickSignedOffset(80), 4, viewportSize.width - 4);
+        const nudgeY = clampNumber(baselineY + pickSignedOffset(60), 4, viewportSize.height - 4);
+        await page.mouse
+          .move(nudgeX, nudgeY, { steps: 10 + Math.floor(Math.random() * 8) })
+          .catch(() => undefined);
+        const nudgeSettleMs = pickDelayInRange(
+          effectiveSettings.clickDelayMin,
+          effectiveSettings.clickDelayMax
+        );
+        if (nudgeSettleMs > 0) {
+          await sleep(nudgeSettleMs);
+        }
+        logs.push(
+          `[runtime] Nudged cursor to (${nudgeX}, ${nudgeY}) after load (+${nudgeSettleMs}ms settle).`
+        );
+      }
     }
 
     if (contextRegistry) {
@@ -516,11 +1551,6 @@ const executePlaywrightNodeRun = async (
       outputs: { ...emittedOutputs },
       inlineArtifacts: [...inlineArtifacts],
     });
-    const userScript = parseUserScript(request.script, logs);
-    const sleep = async (ms: number): Promise<void> => {
-      const safeMs = Math.max(0, Math.trunc(ms));
-      await new Promise<void>((resolve) => setTimeout(resolve, safeMs));
-    };
     const pauseForRange = async (min: number, max: number): Promise<number> => {
       const delayMs = pickDelayInRange(min, max);
       if (delayMs > 0) {
@@ -631,16 +1661,18 @@ const executePlaywrightNodeRun = async (
       await pressKey('Delete', { delayMs: 0 });
       await pressKey('Backspace', { delayMs: 0 });
     };
+    const aiRuntime: Record<string, unknown> = {};
     const userContext = {
       browser,
       context,
       page,
       input: request.input ?? {},
+      runtime: aiRuntime,
       contextRegistry,
-      contextRegistryPrompt: contextRegistryPrompt || null,
+      contextRegistryPrompt: contextRegistryPrompt !== '' ? contextRegistryPrompt : null,
       emit: (port: string, value: unknown): void => {
         const normalizedPort = port.trim();
-        if (!normalizedPort) return;
+        if (normalizedPort === '') return;
         emittedOutputs[normalizedPort] = value;
         liveRunState.queueUpdate(() => ({
           result: buildLiveResultSnapshot(),
@@ -648,15 +1680,15 @@ const executePlaywrightNodeRun = async (
       },
       artifacts: {
         screenshot: async (name: string = 'screenshot'): Promise<string> => {
-          if (!page) throw new Error('Page is not available.');
-          const artifact = await saveFileArtifact(
+          if (page === null) throw new Error('Page is not available.');
+          const artifact = await saveFileArtifact({
             runArtifactsDir,
             name,
-            'png',
-            await page.screenshot({ fullPage: true }),
-            'image/png',
-            'screenshot'
-          );
+            extension: 'png',
+            content: await page.screenshot({ fullPage: true }),
+            mimeType: 'image/png',
+            kind: 'screenshot',
+          });
           artifacts.push(artifact);
           return artifact.path;
         },
@@ -665,47 +1697,47 @@ const executePlaywrightNodeRun = async (
           value: string | Buffer,
           options?: { extension?: string; mimeType?: string; kind?: string }
         ): Promise<string> => {
-          const extension = options?.extension?.trim() || 'bin';
-          const mimeType = options?.mimeType?.trim() || 'application/octet-stream';
-          const kind = options?.kind?.trim() || 'file';
-          const artifact = await saveFileArtifact(
+          const extension = (options?.extension?.trim() ?? '') !== '' ? (options?.extension?.trim() as string) : 'bin';
+          const mimeType = (options?.mimeType?.trim() ?? '') !== '' ? (options?.mimeType?.trim() as string) : 'application/octet-stream';
+          const kind = (options?.kind?.trim() ?? '') !== '' ? (options?.kind?.trim() as string) : 'file';
+          const artifact = await saveFileArtifact({
             runArtifactsDir,
             name,
             extension,
-            value,
+            content: value,
             mimeType,
-            kind
-          );
+            kind,
+          });
           artifacts.push(artifact);
           return artifact.path;
         },
         html: async (name: string = 'page'): Promise<string> => {
-          if (!page) throw new Error('Page is not available.');
-          const artifact = await saveFileArtifact(
+          if (page === null) throw new Error('Page is not available.');
+          const artifact = await saveFileArtifact({
             runArtifactsDir,
             name,
-            'html',
-            await page.content(),
-            'text/html',
-            'html'
-          );
+            extension: 'html',
+            content: await page.content(),
+            mimeType: 'text/html',
+            kind: 'html',
+          });
           artifacts.push(artifact);
           return artifact.path;
         },
         json: async (name: string, value: unknown): Promise<string> => {
-          const artifact = await saveFileArtifact(
+          const artifact = await saveFileArtifact({
             runArtifactsDir,
-            name || 'artifact',
-            'json',
-            `${JSON.stringify(value, null, 2)}\n`,
-            'application/json',
-            'json'
-          );
+            name: (name ?? '') !== '' ? name : 'artifact',
+            extension: 'json',
+            content: `${JSON.stringify(value, null, 2)}\n`,
+            mimeType: 'application/json',
+            kind: 'json',
+          });
           artifacts.push(artifact);
           return artifact.path;
         },
         add: (name: string, value: unknown): void => {
-          inlineArtifacts.push({ name: name.trim() || 'artifact', value });
+          inlineArtifacts.push({ name: (name.trim() ?? '') !== '' ? name.trim() : 'artifact', value });
           liveRunState.queueUpdate(() => ({
             result: buildLiveResultSnapshot(),
           }));
@@ -814,13 +1846,49 @@ const executePlaywrightNodeRun = async (
             await pauseForAction();
           }
         },
+        aiEvaluate: async (
+          opts: PlaywrightStepEvaluateOptions
+        ): Promise<{ output: string; modelId: string }> => {
+          return evaluateStepWithAI(opts);
+        },
+        aiInject: async (
+          opts: PlaywrightStepInjectOptions
+        ): Promise<{ code: string; done: boolean; reasoning: string; modelId: string }> => {
+          return injectCodeWithAI(opts);
+        },
+        aiInjectExecute: async (code: string): Promise<void> => {
+          if (!code.trim()) return;
+          const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor as new (...args: string[]) => (...args: unknown[]) => Promise<unknown>;
+          const fn = new AsyncFunction('page', 'runtime', code);
+          await fn(page, aiRuntime);
+        },
       },
     };
 
+    const runtimeEntry = isPlaywrightNodeRuntimeRunRequest(request)
+      ? findRuntimeEntry(request.runtimeKey)
+      : undefined;
+
     const returnValue = await withTimeout(
-      Promise.resolve(userScript(userContext)),
+      (() => {
+        if (runtimeEntry && isPlaywrightNodeRuntimeRunRequest(request)) {
+          return runtimeEntry.handle({
+            page,
+            runtimeKey: request.runtimeKey,
+            input: request.input ?? {},
+            emit: userContext.emit,
+            log: userContext.log,
+            artifacts: userContext.artifacts,
+            helpers: userContext.helpers,
+          });
+        }
+        if (isPlaywrightNodeRuntimeRunRequest(request)) {
+          throw new Error(`Unsupported Playwright runtime request: ${request.runtimeKey}`);
+        }
+        return Promise.resolve(parseUserScript(request.script, logs)(userContext));
+      })(),
       timeoutMs,
-      'Playwright script timed out.'
+      runtimeEntry?.timeoutMessage ?? 'Playwright script timed out.'
     );
 
     await captureFinalRunArtifacts({
@@ -843,13 +1911,20 @@ const executePlaywrightNodeRun = async (
       logs,
       page,
       returnValue,
+      runtimePosture: runtimePostureSnapshot,
       runId,
       startedAt,
     });
+    await persistStickySessionStorageStateOnce();
+    await closeRunnerPageOnce();
+    await persistVideoArtifactOnce();
+    await closePlaywrightRuntimeOnce();
+    finalState.artifacts = artifacts;
+    finalState.logs = logs;
     await writeRunState(finalState);
     return finalState;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     await liveRunState.flush();
     liveRunState.finalize();
     const existingRun = await readPlaywrightNodeRun(runId);
@@ -865,33 +1940,52 @@ const executePlaywrightNodeRun = async (
       runArtifactsDir,
     });
     logs.push(`[runtime][error] ${message}`);
+    const failureHoldOpenMs =
+      typeof request.failureHoldOpenMs === 'number' &&
+      Number.isFinite(request.failureHoldOpenMs)
+        ? Math.max(0, Math.trunc(request.failureHoldOpenMs))
+        : 0;
+    const shouldHoldBrowserOpenOnFailure =
+      failureHoldOpenMs > 0 &&
+      shouldHoldBrowserOpenForFailure(message) &&
+      effectiveSettings.headless === false &&
+      browser !== null &&
+      context !== null &&
+      page !== null &&
+      runtimeLifecycle.browserDisconnected === false &&
+      runtimeLifecycle.contextClosed === false &&
+      runtimeLifecycle.pageClosed === false &&
+      runtimeLifecycle.pageCrashed === false &&
+      (typeof page.isClosed !== 'function' || page.isClosed() === false);
+    if (shouldHoldBrowserOpenOnFailure) {
+      logs.push(
+        `[runtime] Holding headed browser open for ${failureHoldOpenMs}ms after failure.`
+      );
+    }
+    if (shouldHoldBrowserOpenOnFailure) {
+      await sleep(failureHoldOpenMs);
+    }
+    await persistStickySessionStorageStateOnce();
+    await closeRunnerPageOnce();
+    await persistVideoArtifactOnce();
+    await closePlaywrightRuntimeOnce();
     const failedState = buildFailedRunState({
       artifacts,
       errorMessage: message,
       existingRun,
       logs,
+      runtimePosture: runtimePostureSnapshot,
       runId,
       startedAt,
     });
     await writeRunState(failedState);
     return failedState;
   } finally {
-    const shouldPersistArtifacts = await persistVideoArtifact({
-      artifacts,
-      logs,
-      page,
-      request,
-      runArtifactsDir,
-    });
-    if (shouldPersistArtifacts) {
-      await updateRunState(runId, { artifacts, logs }).catch(() => undefined);
-    }
-    if (context) {
-      await context.close().catch(() => undefined);
-    }
-    if (browser) {
-      await browser.close().catch(() => undefined);
-    }
+    await persistStickySessionStorageStateOnce();
+    await closeRunnerPageOnce();
+    await persistVideoArtifactOnce();
+    await closePlaywrightRuntimeOnce();
+    await updateRunState(runId, { artifacts, logs }).catch(() => undefined);
   }
 };
 
@@ -899,14 +1993,24 @@ export const enqueuePlaywrightNodeRun = async (input: {
   request: PlaywrightNodeRunRequest;
   waitForResult: boolean;
   ownerUserId?: string | null;
+  instance?: PlaywrightNodeRunInstance | null;
 }): Promise<PlaywrightNodeRunRecord> => {
   await cleanupOldRuns();
   const runId = randomUUID();
   const queuedState = {
     ...buildBaseRunState(runId),
     ownerUserId: input.ownerUserId?.trim() || null,
+    instance: normalizeRunInstance(input.instance ?? null),
+    requestSummary: summarizePlaywrightRunRequest(input.request),
   };
   await writeRunState(queuedState);
+  await recordPlaywrightActionRunSnapshot(queuedState).catch(async (error: unknown) => {
+    await ErrorSystem.captureException(error, {
+      service: 'playwright-node-runner',
+      action: 'record-action-run-history',
+      runId,
+    });
+  });
 
   if (input.waitForResult) {
     return executePlaywrightNodeRun(runId, input.request);
@@ -936,9 +2040,15 @@ export const readPlaywrightNodeRun = async (
     return {
       ...(parsed as PlaywrightNodeRunRecord),
       ownerUserId: typeof parsed['ownerUserId'] === 'string' ? parsed['ownerUserId'] : null,
+      instance: normalizeRunInstance(
+        isObjectRecord(parsed['instance']) ? (parsed['instance'] as PlaywrightNodeRunInstance) : null
+      ),
     };
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    if (isNodeErrorWithCode(error, 'ENOENT')) {
+      return null;
+    }
+    await ErrorSystem.captureException(error);
     return null;
   }
 };
@@ -985,7 +2095,7 @@ export const readPlaywrightNodeArtifact = async (input: {
       content,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     return null;
   }
 };

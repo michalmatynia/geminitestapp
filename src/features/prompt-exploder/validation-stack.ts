@@ -69,7 +69,7 @@ const isPromptExploderValidatorScope = (
 const normalizeStackValue = (
   value: PromptExploderValidationRuleStack | null | undefined
 ): string => {
-  if (!value) return '';
+  if (value === undefined || value === null || value === '') return '';
   return value.trim();
 };
 
@@ -96,7 +96,7 @@ const resolveCanonicalStackByScope = (
   patternLists: ValidatorPatternList[]
 ): PromptExploderValidationStackResolution => {
   const matchedList = findFirstListByScope(patternLists, scope);
-  if (matchedList) {
+  if (matchedList !== null) {
     return {
       stack: matchedList.id,
       scope: toRuntimeScope(matchedList.scope),
@@ -140,7 +140,7 @@ export const resolvePromptExploderValidationStack = (args: {
   const normalizedStack = normalizeStackValue(args.stack);
   const preferredScope = toPreferredPromptExploderScope(args.preferredScope);
 
-  if (!normalizedStack) {
+  if (normalizedStack === '') {
     return resolveCanonicalStackByScope(CANONICAL_STACK_BY_SCOPE[preferredScope], patternLists);
   }
 
@@ -149,7 +149,7 @@ export const resolvePromptExploderValidationStack = (args: {
       (list: ValidatorPatternList): boolean =>
         list.id === normalizedStack && isPromptExploderValidatorScope(list.scope)
     ) ?? null;
-  if (matchedList) {
+  if (matchedList !== null) {
     return {
       stack: matchedList.id,
       scope: toRuntimeScope(matchedList.scope),
@@ -161,7 +161,7 @@ export const resolvePromptExploderValidationStack = (args: {
 
   const nonPromptMatchedList =
     patternLists.find((list: ValidatorPatternList): boolean => list.id === normalizedStack) ?? null;
-  if (nonPromptMatchedList) {
+  if (nonPromptMatchedList !== null) {
     throw new PromptValidationScopeResolutionError(
       `Validation stack "${normalizedStack}" is bound to unsupported scope "${nonPromptMatchedList.scope}".`,
       {
@@ -172,7 +172,7 @@ export const resolvePromptExploderValidationStack = (args: {
   }
 
   const canonicalScope = resolveCanonicalScopeByStackId(normalizedStack);
-  if (canonicalScope) {
+  if (canonicalScope !== null) {
     return resolveCanonicalStackByScope(canonicalScope, patternLists);
   }
 
@@ -191,13 +191,13 @@ export const buildPromptExploderValidationRuleStackOptions = (
   const promptExploderLists = patternLists.filter((list) =>
     isPromptExploderValidatorScope(list.scope)
   );
-  if (!promptExploderLists.length) return FALLBACK_VALIDATION_STACK_OPTIONS;
+  if (promptExploderLists.length === 0) return FALLBACK_VALIDATION_STACK_OPTIONS;
   return promptExploderLists.map((list: ValidatorPatternList) => ({
     id: list.id,
     name: list.name,
     value: list.id,
     label: list.name,
-    description: list.description.trim() || VALIDATOR_SCOPE_DESCRIPTIONS[list.scope],
+    description: list.description.trim() !== '' ? list.description.trim() : VALIDATOR_SCOPE_DESCRIPTIONS[list.scope],
     scope: list.scope,
   }));
 };
@@ -209,22 +209,23 @@ export const normalizePromptExploderValidationRuleStack = (
   stack: PromptExploderValidationRuleStack | null | undefined,
   patternLists: ValidatorPatternList[] = []
 ): PromptExploderValidationRuleStack => {
-  return (
-    resolvePromptExploderValidationStack({
-      stack,
-      patternLists,
-    }).stack || DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK
-  );
+  const resolved = resolvePromptExploderValidationStack({
+    stack,
+    patternLists,
+  });
+  return (resolved.stack !== '' ? resolved.stack : DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK);
 };
 
 export const promptExploderValidationScopeFromStack = (
   stack: PromptExploderValidationRuleStack | null | undefined,
   patternLists: ValidatorPatternList[] = []
-): PromptExploderRuntimeValidationScope =>
-  resolvePromptExploderValidationStack({
+): PromptExploderRuntimeValidationScope => {
+  const resolved = resolvePromptExploderValidationStack({
     stack,
     patternLists,
-  }).scope || 'prompt_exploder';
+  });
+  return (resolved.scope as string) !== '' ? resolved.scope : 'prompt_exploder';
+};
 
 export const promptExploderValidationStackFromScope = (
   scope: PromptValidationScope | null | undefined,

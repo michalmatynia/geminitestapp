@@ -14,11 +14,17 @@ export interface ConfirmConfig {
   onCancel?: () => void;
 }
 
+type UseConfirmResult = {
+  confirm: (newConfig: ConfirmConfig) => void;
+  ConfirmationModal: () => React.JSX.Element | null;
+  isPending: boolean;
+};
+
 /**
  * Hook for managing confirmation modal state.
  * Returns a function to trigger confirmation and the modal component to render.
  */
-export function useConfirm() {
+export function useConfirm(): UseConfirmResult {
   const [config, setConfirmConfig] = useState<ConfirmConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 

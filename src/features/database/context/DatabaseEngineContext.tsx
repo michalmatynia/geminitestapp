@@ -20,6 +20,7 @@ export type DatabaseEngineStateContextValue = Omit<
   | 'updateCollectionRoute'
   | 'updateBackupSchedule'
   | 'updateOperationControls'
+  | 'syncMongoSources'
   | 'saveSettings'
   | 'refetchAll'
 >;
@@ -32,6 +33,7 @@ export type DatabaseEngineActionsContextValue = Pick<
   | 'updateCollectionRoute'
   | 'updateBackupSchedule'
   | 'updateOperationControls'
+  | 'syncMongoSources'
   | 'saveSettings'
   | 'refetchAll'
 >;
@@ -72,6 +74,7 @@ export function DatabaseEngineProvider({
     updateCollectionRoute,
     updateBackupSchedule,
     updateOperationControls,
+    syncMongoSources,
     saveSettings,
     refetchAll,
     ...stateValue
@@ -84,6 +87,7 @@ export function DatabaseEngineProvider({
     updateCollectionRoute,
     updateBackupSchedule,
     updateOperationControls,
+    syncMongoSources,
     saveSettings,
     refetchAll,
   };

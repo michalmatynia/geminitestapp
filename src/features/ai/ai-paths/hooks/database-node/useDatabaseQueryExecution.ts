@@ -4,8 +4,11 @@ import { useCallback } from 'react';
 
 import { buildPresetQueryTemplate } from '@/features/ai/ai-paths/config/query-presets';
 import type { Toast } from '@/shared/contracts/ui/base';
-import { renderTemplate, safeParseJson, dbApi } from '@/shared/lib/ai-paths';
-import type { DatabaseAction, DatabaseConfig, DbQueryConfig, RuntimeState } from '@/shared/lib/ai-paths';
+import type { DatabaseAction, DatabaseConfig, DbQueryConfig } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { renderTemplate } from '@/shared/lib/ai-paths/core/utils';
+import { safeParseJson } from '@/shared/lib/ai-paths/core/utils';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

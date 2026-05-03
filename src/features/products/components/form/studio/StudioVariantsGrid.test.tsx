@@ -154,6 +154,7 @@ describe('StudioVariantsGrid', () => {
       setSelectedVariantSlotId,
       deletingVariantId: null,
       handleDeleteVariant,
+      pendingExpectedOutputs: 3,
       pendingVariantPlaceholderCount: 1,
       sending: false,
       accepting: false,
@@ -165,7 +166,7 @@ describe('StudioVariantsGrid', () => {
 
     render(<StudioVariantsGrid />);
 
-    expect(screen.getByText('Waiting for sequence output')).toBeInTheDocument();
+    expect(screen.getByText('2 of 3 generated')).toBeInTheDocument();
 
     await user.click(screen.getByTestId('grid-item-pending-0'));
     expect(setSelectedVariantSlotId).not.toHaveBeenCalled();

@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import { IMAGE_STUDIO_UPSCALE_ERROR_CODES } from '@/features/ai/image-studio/contracts/upscale';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 
-import { StudioSlotRecord } from './types';
+import { type StudioSlotRecord } from './types';
 import { upscaleBadRequest } from './upscale-request-parser';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

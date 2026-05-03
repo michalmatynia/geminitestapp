@@ -4,8 +4,8 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
-import { getAiPathRun, handoffAiPathRun, resumeAiPathRun, retryAiPathRunNode } from '@/shared/lib/ai-paths';
-import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
+import { getAiPathRun } from '@/shared/lib/ai-paths/api';
+import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/contracts/ai-paths';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import {
@@ -197,7 +197,7 @@ export function useJobQueueRuntime({
     pauseAllStreams,
     pausedStreams,
     queueHistory,
-    resumeAllStreams,
+    reconnectAllStreams,
     setQueueHistory,
     streamStatuses,
   } = useJobQueueRealtime({
@@ -208,6 +208,7 @@ export function useJobQueueRuntime({
     queueStatus: queueStatusQuery.data?.status,
     refetchQueueData,
     rememberVisibleOptimisticRun,
+    runs: visibleRunsPayload.runs,
     runDetails,
     setRunDetails,
   });
@@ -314,48 +315,6 @@ export function useJobQueueRuntime({
     [clearRunsMutation.mutateAsync]
   );
 
-  const handleResumeRun = useCallback(
-    async (id: string, mode: 'resume' | 'replay'): Promise<void> => {
-      const response = await resumeAiPathRun(id, mode);
-      if (!response.ok) {
-        toast(response.error || 'Failed to resume run.', { variant: 'error' });
-        return;
-      }
-      toast(mode === 'resume' ? 'Run resumed.' : 'Run replay queued.', {
-        variant: 'success',
-      });
-      refetchQueueData({ fresh: true, markBurst: true });
-    },
-    [refetchQueueData, toast]
-  );
-
-  const handleHandoffRun = useCallback(
-    async (id: string, reason?: string): Promise<boolean> => {
-      const response = await handoffAiPathRun(id, reason ? { reason } : undefined);
-      if (!response.ok) {
-        toast(response.error || 'Failed to mark run handoff-ready.', { variant: 'error' });
-        return false;
-      }
-      toast('Run marked handoff-ready.', { variant: 'success' });
-      refetchQueueData({ fresh: true, markBurst: true });
-      return true;
-    },
-    [refetchQueueData, toast]
-  );
-
-  const handleRetryRunNode = useCallback(
-    async (id: string, nodeId: string): Promise<void> => {
-      const response = await retryAiPathRunNode(id, nodeId);
-      if (!response.ok) {
-        toast(response.error || 'Failed to queue node retry.', { variant: 'error' });
-        return;
-      }
-      toast('Node retry queued.', { variant: 'success' });
-      refetchQueueData({ fresh: true, markBurst: true });
-    },
-    [refetchQueueData, toast]
-  );
-
   const handleCancelRun = useCallback(
     async (id: string): Promise<void> => {
       await cancelRunMutation.mutateAsync(id);
@@ -448,7 +407,7 @@ export function useJobQueueRuntime({
       setHistorySelection: setHistorySelectionForRun,
       toggleStream: handleToggleStream,
       pauseAllStreams,
-      resumeAllStreams,
+      reconnectAllStreams,
       setAutoRefreshEnabled,
       setAutoRefreshInterval,
       setShowMetricsPanel,
@@ -457,9 +416,6 @@ export function useJobQueueRuntime({
       setRunToDelete,
       refetchQueueData: refetchQueueDataAction,
       handleClearRuns,
-      handleResumeRun,
-      handleHandoffRun,
-      handleRetryRunNode,
       handleCancelRun,
       handleDeleteRun,
       loadRunDetail,
@@ -469,15 +425,12 @@ export function useJobQueueRuntime({
       setHistorySelectionForRun,
       handleToggleStream,
       pauseAllStreams,
-      resumeAllStreams,
+      reconnectAllStreams,
       setAutoRefreshEnabled,
       setAutoRefreshInterval,
       setQueueHistory,
       refetchQueueDataAction,
       handleClearRuns,
-      handleResumeRun,
-      handleHandoffRun,
-      handleRetryRunNode,
       handleCancelRun,
       handleDeleteRun,
       loadRunDetail,

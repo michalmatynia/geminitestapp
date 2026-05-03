@@ -5,7 +5,7 @@ import {
 
 export type KangurMobileDailyPlanBadgeItem = KangurMobileHomeBadgeItem;
 
-type UseKangurMobileDailyPlanBadgesResult = {
+export type UseKangurMobileDailyPlanBadgesResult = {
   recentBadges: KangurMobileDailyPlanBadgeItem[];
   remainingBadges: number;
   totalBadges: number;

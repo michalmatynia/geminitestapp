@@ -10,7 +10,7 @@ const buildSignatureHeader = (timestamp: string, body: string, secret: string): 
 
 describe('portable-engine receiver signature verification', () => {
   it('accepts valid signed payloads within skew window and marks replay guard', async () => {
-    const body = JSON.stringify({ event: 'portable_audit_sink_auto_remediation' });
+    const body = JSON.stringify({ event: 'portable_audit_sink_observation' });
     const timestamp = '2026-03-05T01:00:00.000Z';
     const signature = buildSignatureHeader(timestamp, body, 'receiver-secret');
     const hasSeen = vi.fn().mockResolvedValue(false);
@@ -38,7 +38,7 @@ describe('portable-engine receiver signature verification', () => {
   });
 
   it('rejects payload when timestamp skew exceeds maxSkewSeconds', async () => {
-    const body = JSON.stringify({ event: 'portable_audit_sink_auto_remediation' });
+    const body = JSON.stringify({ event: 'portable_audit_sink_observation' });
     const timestamp = '2026-03-05T01:00:00.000Z';
     const signature = buildSignatureHeader(timestamp, body, 'receiver-secret');
 
@@ -60,7 +60,7 @@ describe('portable-engine receiver signature verification', () => {
   });
 
   it('rejects replayed payloads when replay guard reports seen key', async () => {
-    const body = JSON.stringify({ event: 'portable_audit_sink_auto_remediation' });
+    const body = JSON.stringify({ event: 'portable_audit_sink_observation' });
     const timestamp = '2026-03-05T01:00:00.000Z';
     const signature = buildSignatureHeader(timestamp, body, 'receiver-secret');
 
@@ -85,7 +85,7 @@ describe('portable-engine receiver signature verification', () => {
 
   it('rejects signature mismatches', async () => {
     const result = await verifyPortablePathWebhookSignature({
-      rawBody: JSON.stringify({ event: 'portable_audit_sink_auto_remediation' }),
+      rawBody: JSON.stringify({ event: 'portable_audit_sink_observation' }),
       signatureHeader: 'v1=1234',
       timestampHeader: '2026-03-05T01:00:00.000Z',
       secret: 'receiver-secret',

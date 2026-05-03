@@ -16,7 +16,6 @@ export const TERMINAL_BASE_QUICK_EXPORT_RUN_STATUSES = new Set<TriggerButtonRunF
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ]);
 
 const canUseSessionStorage = (): boolean =>

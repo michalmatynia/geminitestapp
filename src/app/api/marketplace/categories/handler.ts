@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getExternalCategoryRepository } from '@/features/integrations/server';
@@ -21,7 +21,7 @@ const querySchema = z.object({
  *   - connectionId (required): The integration connection ID
  *   - tree (optional): If "true", returns categories as a hierarchical tree
  */
-export async function GET_handler(
+export async function getHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

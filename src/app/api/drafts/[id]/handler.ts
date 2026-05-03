@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getDraft, updateDraft, deleteDraft } from '@/features/drafter/server';
 import {
@@ -14,7 +14,7 @@ import { notFoundError } from '@/shared/errors/app-error';
  * GET /api/drafts/[id]
  * Get a single product draft by ID
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -30,7 +30,7 @@ export async function GET_handler(
  * PUT /api/drafts/[id]
  * Update a product draft by ID
  */
-export async function PUT_handler(
+export async function putHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -43,10 +43,11 @@ export async function PUT_handler(
   }
   const data = parsed.data;
   const categoryId = resolveDraftCategoryId(data);
-  const updated = await updateDraft(params.id, {
+  const updatePayload: UpdateProductDraftInput = {
     ...data,
-    ...(categoryId !== undefined ? { categoryId } : {}),
-  } as UpdateProductDraftInput);
+    categoryId,
+  };
+  const updated = await updateDraft(params.id, updatePayload);
   if (!updated) {
     throw notFoundError('Draft not found.', { draftId: params.id });
   }
@@ -57,11 +58,14 @@ export async function PUT_handler(
  * DELETE /api/drafts/[id]
  * Delete a product draft by ID
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  await deleteDraft(params.id);
+  const deleted = await deleteDraft(params.id);
+  if (!deleted) {
+    throw notFoundError('Draft not found.', { draftId: params.id });
+  }
   return NextResponse.json({ ok: true });
 }

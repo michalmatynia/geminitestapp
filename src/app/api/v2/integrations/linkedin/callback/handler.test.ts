@@ -98,8 +98,8 @@ const callHandler = async (
   req: NextRequest,
   ctx: { query: Record<string, string | undefined> }
 ) => {
-  const { GET_handler } = await import('./handler');
-  return GET_handler(req, ctx as never);
+  const { getHandler } = await import('./handler');
+  return getHandler(req, ctx as never);
 };
 
 describe('stable linkedin callback handler', () => {

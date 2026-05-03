@@ -43,7 +43,7 @@ const normalizePathSegment = (value: string): string =>
 
 const getPathLeaf = (path: string): string => {
   const normalized = normalizeMasterTreePath(path);
-  if (!normalized) return '';
+  if (normalized === '') return '';
   const segments = normalized.split('/');
   return segments[segments.length - 1] ?? '';
 };
@@ -52,10 +52,11 @@ export const resolveMasterTreePathSegment = (
   node: Pick<MasterTreeNode, 'id' | 'name' | 'path'>
 ): string => {
   const pathLeaf = normalizePathSegment(getPathLeaf(node.path));
-  if (pathLeaf) return pathLeaf;
+  if (pathLeaf !== '') return pathLeaf;
   const nameLeaf = normalizePathSegment(node.name);
-  if (nameLeaf) return nameLeaf;
-  return normalizePathSegment(node.id) || node.id;
+  if (nameLeaf !== '') return nameLeaf;
+  const normalizedId = normalizePathSegment(node.id);
+  return normalizedId !== '' ? normalizedId : node.id;
 };
 
 export const normalizeMasterTreeKind = (
@@ -63,7 +64,7 @@ export const normalizeMasterTreeKind = (
   fallback: string
 ): MasterTreeKind => {
   const normalized = (value ?? '').trim().toLowerCase();
-  return normalized || fallback;
+  return normalized !== '' ? normalized : fallback;
 };
 
 export const compareMasterTreeNodes = (a: MasterTreeNode, b: MasterTreeNode): number => {

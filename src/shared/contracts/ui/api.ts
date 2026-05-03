@@ -1,10 +1,15 @@
 import type { NextRequest } from 'next/server';
 import type { ZodSchema } from 'zod';
 
-export type {
+import type {
   ContextRuntimeDocument,
   ContextRegistryResolutionBundle,
 } from '../ai-context-registry';
+
+export type {
+  ContextRuntimeDocument,
+  ContextRegistryResolutionBundle,
+};
 
 /**
  * API Handler Types
@@ -52,10 +57,9 @@ export interface GenericApiConsoleProps {
   onRequest: () => void;
 }
 
-export interface DeleteResponse {
-  success: boolean;
-  message?: string;
-}
+import type { SimpleDeleteResponse } from '../base';
+
+export type DeleteResponse = SimpleDeleteResponse;
 
 export interface ApiHandlerContext {
   requestId: string;

@@ -16,8 +16,8 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: mocks.getMongoDb,
 }));
 
-import { GET_intl_handler, POST_intl_handler } from '@/app/api/v2/metadata/handler';
-import { PUT_metadata_id_handler } from '@/app/api/v2/metadata/[type]/[id]/handler';
+import { getIntlHandler, postIntlHandler } from '@/app/api/v2/metadata/handler';
+import { putMetadataIdHandler } from '@/app/api/v2/metadata/[type]/[id]/handler';
 
 describe('Countries API', () => {
   beforeEach(() => {
@@ -54,7 +54,7 @@ describe('Countries API', () => {
       }),
     });
 
-    const res = await GET_intl_handler(
+    const res = await getIntlHandler(
       new NextRequest('http://localhost/api/v2/metadata/countries'),
       {} as any,
       { type: 'countries' }
@@ -97,7 +97,7 @@ describe('Countries API', () => {
       }),
     });
 
-    const res = await POST_intl_handler(req, {} as any, { type: 'countries' });
+    const res = await postIntlHandler(req, {} as any, { type: 'countries' });
     const country = await res.json();
 
     expect(res.status).toBe(200);
@@ -156,7 +156,7 @@ describe('Countries API', () => {
       }),
     });
 
-    const res = await PUT_metadata_id_handler(req, {} as any, {
+    const res = await putMetadataIdHandler(req, {} as any, {
       type: 'countries',
       id: 'PL',
     });
@@ -180,7 +180,7 @@ describe('Countries API', () => {
       body: JSON.stringify({ code: 'PL' }),
     });
 
-    await expect(POST_intl_handler(req, {} as any, { type: 'countries' })).rejects.toThrow(
+    await expect(postIntlHandler(req, {} as any, { type: 'countries' })).rejects.toThrow(
       'Code and name are required'
     );
   });

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
+const createMutationV2Mock = vi.hoisted(() => vi.fn());
 const createUpdateMutationV2Mock = vi.hoisted(() => vi.fn());
 const apiPostMock = vi.hoisted(() => vi.fn());
 
@@ -12,6 +13,7 @@ vi.mock('@/shared/lib/query-factories-v2', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/query-factories-v2')>();
   return {
     ...actual,
+    createMutationV2: createMutationV2Mock,
     createUpdateMutationV2: createUpdateMutationV2Mock,
   };
 });
@@ -22,11 +24,16 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-import { useUpdateDefaultTraderaConnection } from './useIntegrationMutations';
+import {
+  useTestConnection,
+  useUpdateDefaultTraderaConnection,
+  useUpdateDefaultVintedConnection,
+} from './useIntegrationMutations';
 
 describe('useIntegrationMutations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    createMutationV2Mock.mockReturnValue({ kind: 'mutation' });
     createUpdateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
     apiPostMock.mockResolvedValue({ connectionId: 'conn-tradera-1' });
   });
@@ -48,5 +55,56 @@ describe('useIntegrationMutations', () => {
     expect(config.invalidateKeys).toEqual([
       QUERY_KEYS.integrations.selection.traderaDefaultConnection(),
     ]);
+  });
+
+  it('posts Vinted preferred connection updates to the dedicated endpoint', async () => {
+    apiPostMock.mockResolvedValue({ connectionId: 'conn-vinted-1' });
+    const { result } = renderHook(() => useUpdateDefaultVintedConnection());
+    const config = createUpdateMutationV2Mock.mock.calls[0]?.[0];
+
+    expect(result.current).toEqual({ kind: 'mutation' });
+    expect(config.mutationKey).toEqual(QUERY_KEYS.integrations.selection.vintedDefaultConnection());
+
+    await expect(config.mutationFn({ connectionId: 'conn-vinted-1' })).resolves.toEqual({
+      connectionId: 'conn-vinted-1',
+    });
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/exports/vinted/default-connection',
+      { connectionId: 'conn-vinted-1' }
+    );
+    expect(config.invalidateKeys).toEqual([
+      QUERY_KEYS.integrations.selection.vintedDefaultConnection(),
+    ]);
+  });
+
+  it('flattens manual test payload fields and uses timeout as request config', async () => {
+    apiPostMock.mockResolvedValue({ ok: true, steps: [] });
+    const { result } = renderHook(() => useTestConnection());
+    const config = createMutationV2Mock.mock.calls[0]?.[0];
+
+    expect(result.current).toEqual({ kind: 'mutation' });
+    expect(config.mutationKey).toEqual(QUERY_KEYS.integrations.connections());
+
+    await expect(
+      config.mutationFn({
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+        type: 'test',
+        body: { mode: 'manual', manualTimeoutMs: 240000 },
+        timeoutMs: 300000,
+      })
+    ).resolves.toEqual({ ok: true, steps: [] });
+
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/integration-vinted-1/connections/conn-vinted-1/test',
+      {
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+        type: 'test',
+        mode: 'manual',
+        manualTimeoutMs: 240000,
+      },
+      { timeout: 300000 }
+    );
   });
 });

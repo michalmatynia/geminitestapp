@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
@@ -17,7 +17,7 @@ const requestSchema = z.object({
  * POST /api/v2/integrations/[id]/connections/[connectionId]/base/products
  * Fetches products from a specific inventory in Base.com/Baselinker.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

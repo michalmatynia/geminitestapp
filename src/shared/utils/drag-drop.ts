@@ -33,10 +33,11 @@ export const setDragData = (
     if (value === undefined || value === null) return;
     dataTransfer.setData(key, String(value));
   });
-  if (options?.text !== undefined && options?.text !== null) {
+  if (options?.text !== undefined && options.text !== null) {
     dataTransfer.setData(DRAG_KEYS.TEXT, String(options.text));
   }
-  if (options?.effectAllowed) {
+  if (options?.effectAllowed !== undefined && options.effectAllowed !== 'none') {
+    // eslint-disable-next-line no-param-reassign
     dataTransfer.effectAllowed = options.effectAllowed;
   }
 };
@@ -59,12 +60,12 @@ export const getFirstDragValue = (
 };
 
 export const hasDragType = (dataTransfer: DataTransfer, keys: string[]): boolean => {
-  const types = Array.from(dataTransfer.types ?? []);
+  const types = Array.from(dataTransfer.types);
   return keys.some((key: string) => types.includes(key));
 };
 
 export const parseDragIndex = (rawIndex?: string | null): number | null => {
-  if (!rawIndex) return null;
+  if (rawIndex === undefined || rawIndex === null || rawIndex.length === 0) return null;
   const parsed = Number.parseInt(rawIndex, 10);
   return Number.isNaN(parsed) ? null : parsed;
 };

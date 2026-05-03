@@ -14,6 +14,7 @@ const migratedRouteHandlerPaths = [
   'route-handler.ts',
   'with-connections/route-handler.ts',
   'jobs/route-handler.ts',
+  'queues/base-import/route-handler.ts',
   'queues/tradera/route-handler.ts',
   'product-listings/route-handler.ts',
   'images/sync-base/all/route-handler.ts',
@@ -42,7 +43,9 @@ const migratedRouteHandlerPaths = [
   'products/[id]/listings/[listingId]/delete-from-base/route-handler.ts',
   'products/[id]/listings/[listingId]/purge/route-handler.ts',
   'products/[id]/listings/[listingId]/relist/route-handler.ts',
+  'products/[id]/listings/[listingId]/sync/route-handler.ts',
   'products/[id]/listings/[listingId]/sync-base-images/route-handler.ts',
+  'tradera/parameter-mapper/catalog/fetch/route-handler.ts',
 ] as const;
 
 const removedLegacyAliasRoutes = [
@@ -78,6 +81,7 @@ const migratedLegacyEndpointTokens = [
   '/api/integrations/',
   '/api/integrations/with-connections',
   '/api/integrations/jobs',
+  '/api/integrations/queues/base-import',
   '/api/integrations/queues/tradera',
   '/api/integrations/product-listings',
   '/api/integrations/images/sync-base/all',

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { parseJsonBody } from '@/features/products/server';
 import { productBulkImagesBase64RequestSchema as bulkSchema } from '@/shared/contracts/products/product';
@@ -6,7 +6,7 @@ import { type ProductBulkImagesBase64Response } from '@/shared/contracts/product
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, bulkSchema, {
     logPrefix: 'products.images.base64.bulk.POST',
   });

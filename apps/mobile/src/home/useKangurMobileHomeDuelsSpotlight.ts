@@ -37,34 +37,28 @@ const toSpotlightErrorMessage = (
   error: unknown,
   copy: ReturnType<typeof useKangurMobileI18n>['copy'],
 ): string | null => {
-  if (!error) {
+  if (error === null || error === undefined || error === false) {
     return null;
   }
 
+  const fallbackMsg = copy({
+    de: 'Aktive Duelle aus der Lobby konnten nicht geladen werden.',
+    en: 'Could not load active duels from the lobby.',
+    pl: 'Nie udało się pobrać aktywnych pojedynków z lobby.',
+  });
+
   if (!(error instanceof Error)) {
-    return copy({
-      de: 'Aktive Duelle aus der Lobby konnten nicht geladen werden.',
-      en: 'Could not load active duels from the lobby.',
-      pl: 'Nie udało się pobrać aktywnych pojedynków z lobby.',
-    });
+    return fallbackMsg;
   }
 
   const message = error.message.trim();
-  if (!message) {
-    return copy({
-      de: 'Aktive Duelle aus der Lobby konnten nicht geladen werden.',
-      en: 'Could not load active duels from the lobby.',
-      pl: 'Nie udało się pobrać aktywnych pojedynków z lobby.',
-    });
+  if (message === '') {
+    return fallbackMsg;
   }
 
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Aktive Duelle aus der Lobby konnten nicht geladen werden.',
-      en: 'Could not load active duels from the lobby.',
-      pl: 'Nie udało się pobrać aktywnych pojedynków z lobby.',
-    });
+    return fallbackMsg;
   }
 
   return message;
@@ -82,45 +76,23 @@ export const useKangurMobileHomeDuelsSpotlight = ({
   const { copy } = useKangurMobileI18n();
   const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
   const { session } = useKangurMobileAuth();
-  const learnerIdentity =
-    session.user?.activeLearner?.id ??
-    session.user?.email ??
-    session.user?.id ??
-    'guest';
+  const learnerIdentity = session.user?.activeLearner?.id ?? session.user?.email ?? session.user?.id ?? 'guest';
 
   const spotlightQuery = useQuery({
     enabled,
-    queryKey: buildKangurMobileHomeDuelLobbyQueryKey(
-      apiBaseUrl,
-      learnerIdentity,
-      'public',
-    ),
-    queryFn: async () =>
-      apiClient.listDuelLobby(
-        {
-          limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT,
-          visibility: 'public',
-        },
-        { cache: 'no-store' },
-      ),
+    queryKey: buildKangurMobileHomeDuelLobbyQueryKey(apiBaseUrl, learnerIdentity, 'public'),
+    queryFn: async () => apiClient.listDuelLobby({ limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT, visibility: 'public' }, { cache: 'no-store' }),
     refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
     staleTime: 10_000,
   });
 
   const entries = useMemo(
-    () =>
-      (spotlightQuery.data?.entries ?? [])
-        .filter((entry) => isSpotlightEntry(entry))
-        .sort((left, right) => {
-          const statusPriority =
-            DUEL_SPOTLIGHT_STATUS_PRIORITY[left.status] -
-            DUEL_SPOTLIGHT_STATUS_PRIORITY[right.status];
-
-          if (statusPriority !== 0) {
-            return statusPriority;
-          }
-
-          return Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
+    () => (spotlightQuery.data?.entries ?? [])
+        .filter((e) => isSpotlightEntry(e))
+        .sort((l, r) => {
+          const statusPriority = DUEL_SPOTLIGHT_STATUS_PRIORITY[l.status] - DUEL_SPOTLIGHT_STATUS_PRIORITY[r.status];
+          if (statusPriority !== 0) return statusPriority;
+          return Date.parse(r.updatedAt) - Date.parse(l.updatedAt);
         })
         .slice(0, MOBILE_HOME_DUELS_SPOTLIGHT_LIMIT),
     [spotlightQuery.data?.entries],
@@ -130,12 +102,6 @@ export const useKangurMobileHomeDuelsSpotlight = ({
     entries,
     error: toSpotlightErrorMessage(spotlightQuery.error, copy),
     isLoading: enabled && spotlightQuery.isLoading,
-    refresh: async () => {
-      if (!enabled) {
-        return;
-      }
-
-      await spotlightQuery.refetch();
-    },
+    refresh: async () => { if (enabled) await spotlightQuery.refetch(); },
   };
 };

@@ -1,8 +1,8 @@
 'use client';
 
 import { MousePointer2, Plus, Trash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
@@ -10,10 +10,10 @@ import {
   type AiTriggerButtonCreatePayload,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
-import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
-import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, type PathConfig, triggerButtonsApi } from '@/shared/lib/ai-paths';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
+import { triggerButtonsApi } from '@/shared/lib/ai-paths/api';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
-import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import { api } from '@/shared/lib/api-client';
 import { ICON_LIBRARY, IconSelector } from '@/shared/lib/icons';
 import {
@@ -39,13 +39,11 @@ import {
   type AiTriggerButtonRow,
 } from '../components/TriggerButtonListManager';
 
-type TriggerButtonDraft = AiTriggerButtonCreatePayload & { id?: string };
-type TriggerButtonPathUsage = { id: string; name: string };
-type TriggerButtonPathRepair = {
-  pathId: string;
-  rawPayload: string;
-  repairedConfig: PathConfig;
+type TriggerButtonDraft = AiTriggerButtonCreatePayload & {
+  contextTemplateRaw: string;
+  id?: string;
 };
+type TriggerButtonPathUsage = { id: string; name: string };
 type TriggerButtonFixtureCleanupResult = {
   removedTriggerButtons: number;
   removedPathIndexEntries: number;
@@ -56,6 +54,14 @@ const LOCATION_OPTIONS: Array<LabeledOptionDto<AiTriggerButtonLocation>> = [
   { value: 'product_modal', label: 'Products: Product Modal' },
   { value: 'product_list', label: 'Products: Product List (Footer)' },
   { value: 'product_row', label: 'Products: Product Row' },
+  {
+    value: 'product_marketplace_copy_row',
+    label: 'Products: Marketplace Copy Row',
+  },
+  {
+    value: 'product_parameter_row',
+    label: 'Products: Parameter Row',
+  },
   { value: 'product_list_header', label: 'Products: List Header' },
   { value: 'product_list_item', label: 'Products: List Item (Context)' },
   { value: 'product_form_header', label: 'Products: Form Header' },
@@ -65,6 +71,18 @@ const LOCATION_OPTIONS: Array<LabeledOptionDto<AiTriggerButtonLocation>> = [
   { value: 'cms_page_header', label: 'CMS: Page Header' },
   { value: 'cms_block_header', label: 'CMS: Block Header' },
   { value: 'admin_dashboard', label: 'Admin: Dashboard' },
+  {
+    value: 'filemaker_organization_job_application',
+    label: 'FileMaker: Organisation Job Application',
+  },
+  {
+    value: 'filemaker_prepared_application',
+    label: 'FileMaker: Prepared Application',
+  },
+  {
+    value: 'filemaker_job_board_scraped_offer',
+    label: 'FileMaker: Scraped Job Offer',
+  },
 ];
 
 const MODE_OPTIONS: Array<LabeledOptionDto<string>> = [
@@ -94,19 +112,19 @@ const normalizeDraft = (record?: AiTriggerButtonRow | null): TriggerButtonDraft 
   locations: record?.locations ?? ['product_modal'],
   mode: record?.mode ?? 'click',
   display: toDisplayMode(record),
+  contextTemplate: record?.contextTemplate ?? null,
+  contextTemplateRaw: record?.contextTemplate
+    ? JSON.stringify(record.contextTemplate, null, 2)
+    : '',
 });
 
 const BUILT_IN_TRIGGER_EVENTS = new Set<string>(['manual', 'scheduled_run']);
 
 const extractTriggerButtonPathUsageMap = (
   settings: Array<{ key: string; value: string }>
-): {
-  usageByButtonId: Map<string, TriggerButtonPathUsage[]>;
-  repairedPaths: TriggerButtonPathRepair[];
-} => {
+): Map<string, TriggerButtonPathUsage[]> => {
   const map = new Map<string, string>(settings.map((item) => [item.key, item.value]));
   const usageByButtonId = new Map<string, TriggerButtonPathUsage[]>();
-  const repairedPaths: TriggerButtonPathRepair[] = [];
   const indexNameById = new Map<string, string>();
   const indexRaw = map.get(PATH_INDEX_KEY);
   if (indexRaw) {
@@ -135,27 +153,14 @@ const extractTriggerButtonPathUsageMap = (
     const pathId = key.slice(PATH_CONFIG_PREFIX.length).trim();
     if (!pathId) return;
 
-    const resolvedConfig = resolvePortablePathInput(value, {
-      repairIdentities: true,
-      includeConnections: false,
-      signingPolicyTelemetrySurface: 'canvas',
-      nodeCodeObjectHashVerificationMode: 'warn',
-    });
-    if (!resolvedConfig.ok) {
-      return;
-    }
-    const parsedConfig = resolvedConfig.value.pathConfig;
-    if (!parsedConfig || typeof parsedConfig !== 'object') return;
-    if (
-      resolvedConfig.value.migrationWarnings.some(
-        (warning) => warning.code === 'removed_trigger_context_modes_normalized'
-      )
-    ) {
-      repairedPaths.push({
+    let parsedConfig;
+    try {
+      parsedConfig = loadCanonicalStoredPathConfig({
         pathId,
-        rawPayload: value,
-        repairedConfig: parsedConfig,
+        rawConfig: value,
       });
+    } catch {
+      return;
     }
 
     const configNameRaw = (parsedConfig as { name?: unknown }).name;
@@ -202,7 +207,7 @@ const extractTriggerButtonPathUsageMap = (
     );
   });
 
-  return { usageByButtonId, repairedPaths };
+  return usageByButtonId;
 };
 
 export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
@@ -496,26 +501,15 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           });
         });
       const params = new URLSearchParams({ pathId: normalizedPathId });
-      router.push(`/admin/ai-paths?${params.toString()}`);
+      startTransition(() => { router.push(`/admin/ai-paths?${params.toString()}`); });
     },
     [router]
   );
 
-  const { usageByButtonId: triggerButtonPathUsageMap, repairedPaths } = useMemo(
+  const triggerButtonPathUsageMap = useMemo(
     () => extractTriggerButtonPathUsageMap(aiPathsSettingsQuery.data ?? []),
     [aiPathsSettingsQuery.data]
   );
-  useEffect(() => {
-    repairedPaths.forEach((entry) => {
-      void persistLegacyTriggerContextModeRepair({
-        pathId: entry.pathId,
-        rawPayload: entry.rawPayload,
-        repairedConfig: entry.repairedConfig,
-        source: 'AdminAiPathsTriggerButtonsPage',
-        action: 'persistLegacyTriggerContextModeRepair',
-      });
-    });
-  }, [repairedPaths]);
   const draftPathUsage = useMemo<TriggerButtonPathUsage[]>(
     () => (draft.id ? (triggerButtonPathUsageMap.get(draft.id) ?? []) : []),
     [draft.id, triggerButtonPathUsageMap]
@@ -620,6 +614,15 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         helperText: 'How the button behaves when clicked.',
       },
       {
+        key: 'contextTemplateRaw',
+        label: 'Trigger Context Metadata',
+        type: 'textarea',
+        placeholder:
+          '{\n  "jobApplicationArtifactKind": "tailored_cv"\n}',
+        helperText:
+          'Optional JSON merged into trigger extras. Use this for UI-owned trigger metadata, not hardcoded feature behavior.',
+      },
+      {
         key: 'locations',
         label: 'Location Visibility',
         type: 'custom',
@@ -697,10 +700,29 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         helperText: 'Paths containing Trigger nodes configured for this button.',
       },
     ],
-    [draft.iconId, draft.id, draft.locations, draftPathUsage, selectedIconItem]
+    [draft.contextTemplateRaw, draft.iconId, draft.id, draft.locations, draftPathUsage, selectedIconItem]
   );
 
   const handleSave = async (): Promise<void> => {
+    let contextTemplate: Record<string, unknown> | null = null;
+    const contextTemplateRaw = draft.contextTemplateRaw.trim();
+    if (contextTemplateRaw.length > 0) {
+      try {
+        const parsedContextTemplate = JSON.parse(contextTemplateRaw) as unknown;
+        if (
+          parsedContextTemplate === null ||
+          typeof parsedContextTemplate !== 'object' ||
+          Array.isArray(parsedContextTemplate)
+        ) {
+          toast('Trigger context metadata must be a JSON object.', { variant: 'error' });
+          return;
+        }
+        contextTemplate = parsedContextTemplate as Record<string, unknown>;
+      } catch {
+        toast('Trigger context metadata must be valid JSON.', { variant: 'error' });
+        return;
+      }
+    }
     const validation = validateFormData(
       aiTriggerButtonCreateSchema,
       {
@@ -710,6 +732,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         locations: draft.locations,
         mode: draft.mode,
         display: draft.display,
+        ...(contextTemplate !== null || draft.contextTemplate !== null ? { contextTemplate } : {}),
       },
       'Trigger button form is invalid.'
     );
@@ -828,7 +851,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       </AppModal>
 
       <ConfirmModal
-        isOpen={!!buttonToDelete}
+        isOpen={Boolean(buttonToDelete)}
         onClose={(): void => {
           setButtonToDelete(null);
         }}

@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { DatabaseBackupResponse, DatabaseInfo, DatabaseRestoreResponse, DatabaseType } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -344,11 +344,15 @@ ${String(error)}`);
 
   const handlePreview = (backupName: string): void => {
     const url = `/admin/databases/preview?backup=${encodeURIComponent(backupName)}&type=${activeTab}`;
-    router.push(url);
+    startTransition(() => {
+      router.push(url);
+    });
   };
 
   const handlePreviewCurrent = (): void => {
-    router.push(`/admin/databases/preview?mode=current&type=${activeTab}`);
+    startTransition(() => {
+      router.push(`/admin/databases/preview?mode=current&type=${activeTab}`);
+    });
   };
 
   const handleSchedulerEnabledDraftChange = useCallback((enabled: boolean): void => {

@@ -1,3 +1,12 @@
+---
+owner: 'Kangur Team'
+last_reviewed: '2026-04-17'
+status: 'active'
+doc_type: 'overview'
+scope: 'package:@kangur/api-client'
+canonical: true
+---
+
 # `@kangur/api-client`
 
 Shared HTTP client for the `/api/kangur/*` backend.
@@ -6,6 +15,12 @@ Shared HTTP client for the `/api/kangur/*` backend.
 
 Use this package when mobile or web code needs a transport layer for Kangur
 without importing app-route handlers directly.
+
+## Use This Package When
+
+- a caller needs to talk to `/api/kangur/*` through a shared client
+- you want one transport surface reused by mobile and web code
+- the behavior is about request construction and endpoint access, not UI state
 
 ## Current scope
 
@@ -26,6 +41,12 @@ without importing app-route handlers directly.
 - Do not move React hooks, storage logic, or UI state into this package.
 - Shared request and response types come from `@kangur/contracts`.
 - Callers own runtime concerns such as auth headers, CSRF headers, and retry policy through `KangurApiClientOptions`.
+
+## Do Not Put Here
+
+- app-specific session bootstrapping
+- React Query hooks or component state
+- deterministic business logic that belongs in `@kangur/core`
 
 ## Related docs
 

@@ -7,9 +7,8 @@ import type {
 
 import { mongoCurrencyRepository } from './mongo-currency-repository';
 
-export const getCurrencyRepository = async (
-  providerOverride?: InternationalizationProvider
-): Promise<CurrencyRepository> => {
-  void providerOverride;
+export const getCurrencyRepository = (
+  _providerOverride?: InternationalizationProvider
+): CurrencyRepository => {
   return mongoCurrencyRepository;
 };

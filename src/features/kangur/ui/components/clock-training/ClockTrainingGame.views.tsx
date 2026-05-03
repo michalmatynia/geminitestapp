@@ -1,7 +1,5 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-
 import {
   KangurButton,
   KangurInfoCard,
@@ -22,11 +20,8 @@ import { ClockTrainingSummary } from '../clock-training/ClockTrainingSummary';
 import { KANGUR_CLOCK_THEME_COLORS } from '../clock-theme';
 import type {
   ClockGameMode,
-  ClockTask,
-  ClockTrainingTaskPoolId,
 } from '../clock-training/types';
 import { CHALLENGE_TIME_LIMIT_SECONDS, buildClockTaskPrompt, pad, taskToKey } from './clock-training-utils';
-import { getClockTrainingSectionContent } from './clock-training-data';
 import { DraggableClock } from '../clock-training/DraggableClock';
 import { useClockTrainingContext } from './ClockTraining.context';
 import type { ClockFeedback } from '../clock-training/types';
@@ -40,14 +35,35 @@ const resolveClockTrainingProgressPillColor = ({
 }: {
   gameMode: ClockGameMode;
   isActive: boolean;
-}): string =>
-  gameMode === 'challenge'
-    ? isActive
+}): string => {
+  if (gameMode === 'challenge') {
+    return isActive
       ? KANGUR_CLOCK_THEME_COLORS.progressChallengeActive
-      : KANGUR_CLOCK_THEME_COLORS.progressChallengeDone
-    : isActive
-      ? KANGUR_CLOCK_THEME_COLORS.progressPracticeActive
-      : KANGUR_CLOCK_THEME_COLORS.progressPracticeDone;
+      : KANGUR_CLOCK_THEME_COLORS.progressChallengeDone;
+  }
+
+  return isActive
+    ? KANGUR_CLOCK_THEME_COLORS.progressPracticeActive
+    : KANGUR_CLOCK_THEME_COLORS.progressPracticeDone;
+};
+
+const resolveClockTrainingProgressPillClassName = ({
+  isActive,
+  isCompleted,
+}: {
+  isActive: boolean;
+  isCompleted: boolean;
+}): string => {
+  if (isActive) {
+    return 'w-7';
+  }
+
+  if (isCompleted) {
+    return 'w-4';
+  }
+
+  return KANGUR_PENDING_STEP_PILL_CLASSNAME;
+};
 
 const resolveClockTrainingCompletedSubmitFeedback = ({
   done,
@@ -56,6 +72,60 @@ const resolveClockTrainingCompletedSubmitFeedback = ({
   done: boolean;
   gameMode: ClockGameMode;
 }): 'correct' | null => (done && gameMode === 'practice' ? 'correct' : null);
+
+const resolveClockTrainingPromptPanelAccent = (
+  feedback: ClockFeedback | null
+): React.ComponentProps<typeof KangurSummaryPanel>['accent'] => {
+  if (feedback?.kind === 'correct') {
+    return 'emerald';
+  }
+
+  if (feedback?.kind === 'wrong') {
+    return 'rose';
+  }
+
+  return 'amber';
+};
+
+const resolveClockTrainingPromptPanelTitle = ({
+  feedback,
+  showTaskTitle,
+  task,
+}: {
+  feedback: ClockFeedback | null;
+  showTaskTitle: boolean;
+  task: { hours: number; minutes: number };
+}): string | undefined =>
+  feedback?.title ?? (showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : undefined);
+
+const resolveClockTrainingPromptPanelTone = (
+  feedback: ClockFeedback | null
+): React.ComponentProps<typeof KangurSummaryPanel>['tone'] =>
+  feedback ? 'neutral' : 'accent';
+
+const resolveClockTrainingPromptPanelBodyClassName = ({
+  feedback,
+}: {
+  feedback: ClockFeedback | null;
+}): string =>
+  cn(
+    'flex min-h-[5.5rem] items-center justify-center text-center transition-colors duration-200',
+    feedback ? 'text-sm font-medium leading-relaxed' : 'text-xs font-semibold'
+  );
+
+const resolveClockTrainingPromptPanelBodyStyle = ({
+  feedback,
+}: {
+  feedback: ClockFeedback | null;
+}): React.CSSProperties =>
+  feedback
+    ? {
+        color:
+          feedback.kind === 'correct'
+            ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectText
+            : KANGUR_CLOCK_THEME_COLORS.feedbackWrongText,
+      }
+    : { color: KANGUR_CLOCK_THEME_COLORS.promptText };
 
 const resolveClockTrainingSubmitFeedback = ({
   done,
@@ -78,17 +148,11 @@ const shouldShowClockTrainingSummary = ({
   showStandalonePracticeSummary: boolean;
 }): boolean => done && (gameMode === 'challenge' || showStandalonePracticeSummary);
 
-function ClockTrainingModeSwitch({
-  gameMode,
-  isCoarsePointer,
-  onResetSession,
-  translations,
-}: {
-  gameMode: ClockGameMode;
-  isCoarsePointer: boolean;
-  onResetSession: (mode: ClockGameMode) => void;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function ClockTrainingModeSwitch(): React.JSX.Element {
+  const { state, actions } = useClockTrainingContext();
+  const { gameMode, isCoarsePointer, translations } = state;
+  const { resetSession } = actions;
+
   return (
     <div
       data-testid='clock-mode-switch'
@@ -99,7 +163,7 @@ function ClockTrainingModeSwitch({
     >
       <KangurButton
         data-testid='clock-mode-practice'
-        onClick={() => onResetSession('practice')}
+        onClick={() => resetSession('practice')}
         className={cn(
           'h-10 flex-1 px-4 text-xs touch-manipulation select-none sm:flex-none',
           isCoarsePointer && 'min-h-12 active:scale-[0.98]'
@@ -111,7 +175,7 @@ function ClockTrainingModeSwitch({
       </KangurButton>
       <KangurButton
         data-testid='clock-mode-challenge'
-        onClick={() => onResetSession('challenge')}
+        onClick={() => resetSession('challenge')}
         className={cn(
           'h-10 flex-1 px-4 text-xs touch-manipulation select-none sm:flex-none',
           isCoarsePointer && 'min-h-12 active:scale-[0.98]'
@@ -125,15 +189,18 @@ function ClockTrainingModeSwitch({
   );
 }
 
-function ClockTrainingGuidance({
-  trainingSectionContent,
-}: {
-  trainingSectionContent: ReturnType<typeof getClockTrainingSectionContent>;
-}): React.JSX.Element | null {
+function ClockTrainingGuidance(): React.JSX.Element | null {
+  const { state } = useClockTrainingContext();
+  const { trainingSectionContent } = state;
+  const { guidanceTitle, guidance, legend } = trainingSectionContent;
+
   if (
-    !trainingSectionContent.guidanceTitle ||
-    !trainingSectionContent.guidance ||
-    !trainingSectionContent.legend
+    typeof guidanceTitle !== 'string' ||
+    guidanceTitle === '' ||
+    typeof guidance !== 'string' ||
+    guidance === '' ||
+    typeof legend !== 'string' ||
+    legend === ''
   ) {
     return null;
   }
@@ -162,21 +229,18 @@ function ClockTrainingGuidance({
   );
 }
 
-function ClockTrainingStatusRow({
-  challengeTimeLeft,
-  current,
-  gameMode,
-  retryAddedCount,
-  tasksCount,
-  translations,
-}: {
-  challengeTimeLeft: number;
-  current: number;
-  gameMode: ClockGameMode;
-  retryAddedCount: number;
-  tasksCount: number;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function ClockTrainingStatusRow(): React.JSX.Element {
+  const { state } = useClockTrainingContext();
+  const {
+    challengeTimeLeft,
+    current,
+    gameMode,
+    retryAddedCount,
+    tasks,
+    translations,
+  } = state;
+  const tasksCount = tasks.length;
+
   const seriesLabel = translateClockTrainingWithFallback(
     translations,
     'seriesProgress',
@@ -242,19 +306,9 @@ function ClockTrainingStatusRow({
   );
 }
 
-function ClockTrainingTaskProgressView({
-  current,
-  done,
-  gameMode,
-  tasks,
-  translations,
-}: {
-  current: number;
-  done: boolean;
-  gameMode: ClockGameMode;
-  tasks: ClockTask[];
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function ClockTrainingTaskProgressView(): React.JSX.Element {
+  const { state } = useClockTrainingContext();
+  const { current, done, gameMode, tasks, translations } = state;
   const currentTaskNumber = resolveClockTrainingCurrentTaskNumber(current, tasks.length);
 
   return (
@@ -283,7 +337,10 @@ function ClockTrainingTaskProgressView({
               className={cn(
                 KANGUR_STEP_PILL_CLASSNAME,
                 'h-[12px] min-w-[12px]',
-                isActive ? 'w-7' : isCompleted ? 'w-4' : KANGUR_PENDING_STEP_PILL_CLASSNAME
+                resolveClockTrainingProgressPillClassName({
+                  isActive,
+                  isCompleted,
+                })
               )}
               data-testid={`clock-task-progress-pill-${index}`}
               style={
@@ -304,47 +361,59 @@ function ClockTrainingTaskProgressView({
   );
 }
 
-function ClockTrainingPromptPanel({
-  section,
-  showTaskTitle,
-  task,
-  trainingSectionContent,
-  translations,
-}: {
-  section: ClockTrainingTaskPoolId;
-  showTaskTitle: boolean;
-  task: ClockTask;
-  trainingSectionContent: ReturnType<typeof getClockTrainingSectionContent>;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
-  const taskSummaryTitle = showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : undefined;
+function ClockTrainingPromptPanel(): React.JSX.Element {
+  const { props, state } = useClockTrainingContext();
+  const { feedback, section, task, trainingSectionContent, translations } = state;
+  const { showTaskTitle } = props;
+
+  if (!task) {
+    return <></>;
+  }
+
+  const taskSummaryTitle = resolveClockTrainingPromptPanelTitle({
+    feedback,
+    showTaskTitle: showTaskTitle ?? true,
+    task,
+  });
 
   return (
     <KangurSummaryPanel
-      accent='amber'
+      accent={resolveClockTrainingPromptPanelAccent(feedback)}
       align='center'
       className='w-full max-w-md'
       label={trainingSectionContent.promptLabel}
       padding='md'
       title={taskSummaryTitle}
-      tone='accent'
+      tone={resolveClockTrainingPromptPanelTone(feedback)}
     >
-      <p
-        data-testid='clock-task-prompt'
-        className='mt-1 text-xs font-semibold'
-        style={{ color: KANGUR_CLOCK_THEME_COLORS.promptText }}
-      >
-        {buildClockTaskPrompt(task, section, translations)}
-      </p>
+      {feedback ? (
+        <div
+          aria-atomic='true'
+          aria-live='polite'
+          className={resolveClockTrainingPromptPanelBodyClassName({ feedback })}
+          data-testid='clock-submit-feedback'
+          role='status'
+          style={resolveClockTrainingPromptPanelBodyStyle({ feedback })}
+        >
+          {feedback.details}
+        </div>
+      ) : (
+        <p
+          data-testid='clock-task-prompt'
+          className={resolveClockTrainingPromptPanelBodyClassName({ feedback })}
+          style={resolveClockTrainingPromptPanelBodyStyle({ feedback })}
+        >
+          {buildClockTaskPrompt(task, section, translations)}
+        </p>
+      )}
     </KangurSummaryPanel>
   );
 }
 
-function ClockTrainingTouchHint({
-  translations,
-}: {
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function ClockTrainingTouchHint(): React.JSX.Element {
+  const { state } = useClockTrainingContext();
+  const { translations } = state;
+
   return (
     <p
       className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
@@ -359,61 +428,37 @@ function ClockTrainingTouchHint({
   );
 }
 
-function ClockTrainingModeSwitchSlot({
-  gameMode,
-  hideModeSwitch,
-  isCoarsePointer,
-  onResetSession,
-  translations,
-}: {
-  gameMode: ClockGameMode;
-  hideModeSwitch: boolean;
-  isCoarsePointer: boolean;
-  onResetSession: (mode: ClockGameMode) => void;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element | null {
-  if (hideModeSwitch) {
+function ClockTrainingModeSwitchSlot(): React.JSX.Element | null {
+  const { props } = useClockTrainingContext();
+  const { hideModeSwitch } = props;
+
+  if (hideModeSwitch === true) {
     return null;
   }
 
-  return (
-    <ClockTrainingModeSwitch
-      gameMode={gameMode}
-      isCoarsePointer={isCoarsePointer}
-      onResetSession={onResetSession}
-      translations={translations}
-    />
-  );
+  return <ClockTrainingModeSwitch />;
 }
 
-function ClockTrainingGuidanceSlot({
-  gameMode,
-  section,
-  trainingSectionContent,
-}: {
-  gameMode: ClockGameMode;
-  section: ClockTrainingTaskPoolId;
-  trainingSectionContent: ReturnType<typeof getClockTrainingSectionContent>;
-}): React.JSX.Element | null {
+function ClockTrainingGuidanceSlot(): React.JSX.Element | null {
+  const { state } = useClockTrainingContext();
+  const { gameMode, section } = state;
+
   if (section === 'mixed' || gameMode === 'challenge') {
     return null;
   }
 
-  return <ClockTrainingGuidance trainingSectionContent={trainingSectionContent} />;
+  return <ClockTrainingGuidance />;
 }
 
-function ClockTrainingTouchHintSlot({
-  isCoarsePointer,
-  translations,
-}: {
-  isCoarsePointer: boolean;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element | null {
+function ClockTrainingTouchHintSlot(): React.JSX.Element | null {
+  const { state } = useClockTrainingContext();
+  const { isCoarsePointer } = state;
+
   if (!isCoarsePointer) {
     return null;
   }
 
-  return <ClockTrainingTouchHint translations={translations} />;
+  return <ClockTrainingTouchHint />;
 }
 
 function ClockTrainingFeedbackAnnouncer({
@@ -465,64 +510,23 @@ function ClockTrainingActiveView(): React.JSX.Element {
   const { props, state, actions } = useClockTrainingContext();
   const {
     challengeTimeLeft,
-    current,
     done,
     feedback,
     gameMode,
-    isCoarsePointer,
-    retryAddedCount,
     section,
     submitNextStep,
-    task,
-    tasks,
-    trainingSectionContent,
-    translations,
   } = state;
-  const { handleSubmit, resetSession } = actions;
-  const { hideModeSwitch, showHourHand, showMinuteHand, showTaskTitle, showTimeDisplay } = props;
+  const { handleSubmit } = actions;
+  const { showHourHand, showMinuteHand, showTimeDisplay } = props;
 
   return (
     <div className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <ClockTrainingModeSwitchSlot
-        gameMode={gameMode}
-        hideModeSwitch={hideModeSwitch ?? false}
-        isCoarsePointer={isCoarsePointer}
-        onResetSession={resetSession}
-        translations={translations}
-      />
-      <ClockTrainingGuidanceSlot
-        gameMode={gameMode}
-        section={section}
-        trainingSectionContent={trainingSectionContent}
-      />
-      <ClockTrainingStatusRow
-        challengeTimeLeft={challengeTimeLeft}
-        current={current}
-        gameMode={gameMode}
-        retryAddedCount={retryAddedCount}
-        tasksCount={tasks.length}
-        translations={translations}
-      />
-      <ClockTrainingTaskProgressView
-        current={current}
-        done={done}
-        gameMode={gameMode}
-        tasks={tasks}
-        translations={translations}
-      />
-      {task && (
-        <ClockTrainingPromptPanel
-          section={section}
-          showTaskTitle={showTaskTitle ?? true}
-          task={task}
-          trainingSectionContent={trainingSectionContent}
-          translations={translations}
-        />
-      )}
-      <ClockTrainingTouchHintSlot
-        isCoarsePointer={isCoarsePointer}
-        translations={translations}
-      />
+      <ClockTrainingModeSwitchSlot />
+      <ClockTrainingGuidanceSlot />
+      <ClockTrainingStatusRow />
+      <ClockTrainingTaskProgressView />
+      <ClockTrainingPromptPanel />
+      <ClockTrainingTouchHintSlot />
       <ClockTrainingFeedbackAnnouncer feedback={feedback} />
       <DraggableClock
         onSubmit={handleSubmit}

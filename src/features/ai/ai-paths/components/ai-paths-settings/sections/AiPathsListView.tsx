@@ -1,10 +1,10 @@
 import React from 'react';
 
 import { PathsTabPanel } from '../../ui-panels';
-import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
+import { useAiPathsSettingsPageWorkspaceContext } from '../AiPathsSettingsPageContext';
 
 export function AiPathsListView(): React.JSX.Element | null {
-  const { activeTab, onTabChange } = useAiPathsSettingsPageContext();
+  const { activeTab, onTabChange } = useAiPathsSettingsPageWorkspaceContext();
 
   if (activeTab !== 'paths') return null;
 

@@ -7,7 +7,21 @@ import {
 
 type PlaceholderSectionId = 'summary';
 
-export const createPlaceholderLessonData = (lessonTitle: string, emoji = '📘') => {
+type PlaceholderLessonData = {
+  HUB_SECTIONS: readonly {
+    id: PlaceholderSectionId;
+    emoji: string;
+    title: string;
+    description: string;
+    slideCount: number;
+  }[];
+  SLIDES: Record<PlaceholderSectionId, LessonSlide[]>;
+};
+
+export const createPlaceholderLessonData = (
+  lessonTitle: string,
+  emoji = '📘'
+): PlaceholderLessonData => {
   const SLIDES: Record<PlaceholderSectionId, LessonSlide[]> = {
     summary: [
       {

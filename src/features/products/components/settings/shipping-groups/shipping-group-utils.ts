@@ -12,7 +12,79 @@ export const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object';
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const readStringArray = (value: unknown, transform: (text: string) => string = (text) => text): string[] =>
+  Array.isArray(value)
+    ? value
+        .map((entry) => transform(toTrimmedString(entry)))
+        .filter((entry) => entry.length > 0)
+    : [];
+
+const hasConflictScope = ({
+  appliesToAllCategories,
+  appliesToAllCurrencies,
+  overlapCategoryIds,
+  overlapCurrencyCodes,
+}: {
+  appliesToAllCategories: boolean;
+  appliesToAllCurrencies: boolean;
+  overlapCategoryIds: readonly string[];
+  overlapCurrencyCodes: readonly string[];
+}): boolean =>
+  (appliesToAllCategories || overlapCategoryIds.length > 0) &&
+  (appliesToAllCurrencies || overlapCurrencyCodes.length > 0);
+
+const readFirstTwo = (values: readonly string[]): readonly [string, string] | null => {
+  const first = values[0];
+  const second = values[1];
+  if (first === undefined || second === undefined) {
+    return null;
+  }
+  return [first, second];
+};
+
+const readShippingGroupConflict = (
+  conflict: unknown
+): ShippingGroupRuleConflict | null => {
+  if (!isRecord(conflict)) {
+    return null;
+  }
+
+  const groupIds = readStringArray(conflict['groupIds']);
+  const groupNames = readStringArray(conflict['groupNames']);
+  const overlapCategoryIds = readStringArray(conflict['overlapCategoryIds']);
+  const overlapCurrencyCodes = readStringArray(
+    conflict['overlapCurrencyCodes'],
+    (value) => value.toUpperCase()
+  );
+  const appliesToAllCategories = conflict['appliesToAllCategories'] === true;
+  const appliesToAllCurrencies = conflict['appliesToAllCurrencies'] === true;
+  const firstTwoGroupIds = readFirstTwo(groupIds);
+  const firstTwoGroupNames = readFirstTwo(groupNames);
+
+  if (
+    firstTwoGroupIds === null ||
+    firstTwoGroupNames === null ||
+    !hasConflictScope({
+      appliesToAllCategories,
+      appliesToAllCurrencies,
+      overlapCategoryIds,
+      overlapCurrencyCodes,
+    })
+  ) {
+    return null;
+  }
+
+  return {
+    groupIds: [...firstTwoGroupIds],
+    groupNames: [...firstTwoGroupNames],
+    overlapCategoryIds,
+    overlapCurrencyCodes,
+    appliesToAllCategories,
+    appliesToAllCurrencies,
+  };
+};
 
 export const readConflictMetaFromApiError = (error: unknown): ShippingGroupRuleConflict[] => {
   if (!(error instanceof ApiError) || !isRecord(error.payload)) {
@@ -20,50 +92,14 @@ export const readConflictMetaFromApiError = (error: unknown): ShippingGroupRuleC
   }
 
   const meta = isRecord(error.payload['meta']) ? error.payload['meta'] : null;
-  const conflicts = meta && Array.isArray(meta['conflicts']) ? meta['conflicts'] : null;
-  if (!conflicts) {
+  const conflicts = meta !== null && Array.isArray(meta['conflicts']) ? meta['conflicts'] : null;
+  if (conflicts === null) {
     return [];
   }
 
-  return conflicts.flatMap((conflict): ShippingGroupRuleConflict[] => {
-    if (!isRecord(conflict)) {
-      return [];
-    }
-    const groupIds = Array.isArray(conflict['groupIds'])
-      ? conflict['groupIds'].map((value) => toTrimmedString(value)).filter(Boolean)
-      : [];
-    const groupNames = Array.isArray(conflict['groupNames'])
-      ? conflict['groupNames'].map((value) => toTrimmedString(value)).filter(Boolean)
-      : [];
-    const overlapCategoryIds = Array.isArray(conflict['overlapCategoryIds'])
-      ? conflict['overlapCategoryIds'].map((value) => toTrimmedString(value)).filter(Boolean)
-      : [];
-    const overlapCurrencyCodes = Array.isArray(conflict['overlapCurrencyCodes'])
-      ? conflict['overlapCurrencyCodes'].map((value) => toTrimmedString(value).toUpperCase()).filter(Boolean)
-      : [];
-    const appliesToAllCategories = Boolean(conflict['appliesToAllCategories']);
-    const appliesToAllCurrencies = Boolean(conflict['appliesToAllCurrencies']);
-
-    if (
-      groupIds.length < 2 ||
-      groupNames.length < 2 ||
-      (!appliesToAllCategories && overlapCategoryIds.length === 0) ||
-      (!appliesToAllCurrencies && overlapCurrencyCodes.length === 0)
-    ) {
-      return [];
-    }
-
-    return [
-      {
-        groupIds: [groupIds[0]!, groupIds[1]!],
-        groupNames: [groupNames[0]!, groupNames[1]!],
-        overlapCategoryIds,
-        overlapCurrencyCodes,
-        appliesToAllCategories,
-        appliesToAllCurrencies,
-      },
-    ];
-  });
+  return conflicts
+    .map((conflict) => readShippingGroupConflict(conflict))
+    .filter((conflict): conflict is ShippingGroupRuleConflict => conflict !== null);
 };
 
 export const formatShippingGroupConflictMessage = ({
@@ -105,10 +141,32 @@ export const buildCategoryParentMap = (
   const parentMap = new Map<string, string | null>();
   for (const category of categories) {
     const categoryId = toTrimmedString(category.id);
-    if (!categoryId) continue;
-    parentMap.set(categoryId, toTrimmedString(category.parentId) || null);
+    if (categoryId.length === 0) continue;
+    const parentId = toTrimmedString(category.parentId);
+    parentMap.set(categoryId, parentId.length > 0 ? parentId : null);
   }
   return parentMap;
+};
+
+const isDescendantOfSelectedCategory = ({
+  categoryId,
+  categoryParentMap,
+  selectedCategoryIds,
+}: {
+  categoryId: string;
+  categoryParentMap: ReadonlyMap<string, string | null>;
+  selectedCategoryIds: ReadonlySet<string>;
+}): boolean => {
+  const visited = new Set<string>();
+  let currentCategoryId = categoryParentMap.get(categoryId) ?? null;
+  while (currentCategoryId !== null && !visited.has(currentCategoryId)) {
+    if (selectedCategoryIds.has(currentCategoryId)) {
+      return true;
+    }
+    visited.add(currentCategoryId);
+    currentCategoryId = categoryParentMap.get(currentCategoryId) ?? null;
+  }
+  return false;
 };
 
 export const summarizeRuleDescendantCoverage = ({
@@ -124,7 +182,9 @@ export const summarizeRuleDescendantCoverage = ({
   descendantSummary: string | null;
 } => {
   const selectedCategoryIds = new Set(
-    categoryIds.map((categoryId) => toTrimmedString(categoryId)).filter(Boolean)
+    categoryIds
+      .map((categoryId) => toTrimmedString(categoryId))
+      .filter((categoryId) => categoryId.length > 0)
   );
   if (selectedCategoryIds.size === 0 || categories.length === 0) {
     return {
@@ -138,19 +198,18 @@ export const summarizeRuleDescendantCoverage = ({
 
   for (const category of categories) {
     const categoryId = toTrimmedString(category.id);
-    if (!categoryId || selectedCategoryIds.has(categoryId)) {
+    if (categoryId.length === 0 || selectedCategoryIds.has(categoryId)) {
       continue;
     }
 
-    const visited = new Set<string>();
-    let currentCategoryId = categoryParentMap.get(categoryId) ?? null;
-    while (currentCategoryId && !visited.has(currentCategoryId)) {
-      if (selectedCategoryIds.has(currentCategoryId)) {
-        descendantIds.push(categoryId);
-        break;
-      }
-      visited.add(currentCategoryId);
-      currentCategoryId = categoryParentMap.get(currentCategoryId) ?? null;
+    if (
+      isDescendantOfSelectedCategory({
+        categoryId,
+        categoryParentMap,
+        selectedCategoryIds,
+      })
+    ) {
+      descendantIds.push(categoryId);
     }
   }
 

@@ -10,9 +10,7 @@ import {
 import { isAppError } from '@/shared/errors/app-error';
 import { resolveErrorUserMessage } from '@/shared/errors/error-catalog';
 import type { ResolvedError } from '@/shared/contracts/base';
-import { isServerLoggingEnabled } from '@/shared/lib/observability/logging-controls-server';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
-
 
 export const ErrorCategories = ERROR_CATEGORY;
 export type { ErrorCategory, ErrorContext };
@@ -43,6 +41,107 @@ const logErrorSystemFailure = async (
   }
 };
 
+const safeLogErrorSystemFailure = (
+  message: string,
+  error: unknown,
+  level: 'error' | 'warn' = 'error'
+): void => {
+  logErrorSystemFailure(message, error, level).catch(() => {
+    // Ultimate fallback is ignored
+  });
+};
+
+const getNonEmptyContextString = (value: string | null | undefined): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined;
+
+const getService = (context: ErrorContext): string =>
+  getNonEmptyContextString(context.service) ?? 'unknown';
+
+const resolveErrorCategory = (
+  contextCategory: string | null | undefined,
+  error: unknown
+): ErrorCategory => {
+  const category = getNonEmptyContextString(contextCategory);
+  return category !== undefined && (Object.values(ErrorCategories) as string[]).includes(category)
+    ? (category as ErrorCategory)
+    : classifySharedError(error);
+};
+
+const resolveBaseError = (
+  error: unknown,
+  context: ErrorContext,
+  category: ErrorCategory
+): ResolvedError | null => {
+  if (!isAppError(error)) return null;
+
+  return {
+    errorId: getNonEmptyContextString(context.errorId) ?? `err_${Date.now()}`,
+    message: error.message,
+    code: error.code,
+    httpStatus: error.httpStatus,
+    expected: error.expected,
+    critical: error.critical,
+    retryable: error.retryable,
+    category,
+    suggestedActions: getSharedSuggestedActions(category, error),
+    ...(typeof error.retryAfterMs === 'number' ? { retryAfterMs: error.retryAfterMs } : {}),
+    ...(error.meta ? { meta: error.meta } : {}),
+    cause: error.cause,
+  };
+};
+
+const resolveReportUserMessage = (
+  context: ErrorContext,
+  baseResolved: ResolvedError | null
+): string => {
+  const userMessage = getNonEmptyContextString(context.userMessage);
+  if (userMessage !== undefined) return userMessage;
+
+  const fallback = baseResolved !== null ? resolveErrorUserMessage(baseResolved) : null;
+  return fallback !== null && fallback.length > 0
+    ? fallback
+    : 'An unexpected error occurred. Please try again or contact support.';
+};
+
+const buildReportContext = (context: ErrorContext): Record<string, unknown> => ({
+  ...context,
+  // Remove sensitive or redundant info
+  errorId: undefined,
+  userMessage: undefined,
+  category: undefined,
+});
+
+async function isLoggingEnabled(type: 'info' | 'activity' | 'error'): Promise<boolean> {
+  if (typeof window !== 'undefined') return true;
+  try {
+    const { isServerLoggingEnabled } = await import('@/shared/lib/observability/logging-controls-server');
+    return await isServerLoggingEnabled(type);
+  } catch (error) {
+    reportObservabilityInternalError(error, {
+      source: 'error-system',
+      action: 'isLoggingEnabled',
+      type,
+    });
+    return true;
+  }
+}
+
+const getCategory = async (
+  contextCategory: string | null | undefined,
+  errorOrMessage: unknown
+): Promise<string | undefined> => {
+  const category = getNonEmptyContextString(contextCategory);
+  if (category !== undefined) return category;
+  if (typeof window !== 'undefined') return undefined;
+  try {
+    const { classifyError } = await import('@/shared/errors/error-classifier');
+    return classifyError(errorOrMessage);
+  } catch (classifyErr) {
+    safeLogErrorSystemFailure('[ErrorSystem] Failed to classify.', classifyErr, 'warn');
+    return category;
+  }
+};
+
 /**
  * Centralized error handling system.
  * Captures exceptions, logs them to the system log (DB), and optionally
@@ -55,14 +154,13 @@ export const ErrorSystem = {
    * @param context Contextual information (service name, IDs, etc.)
    */
   captureException: async (error: unknown, context: ErrorContext = {}): Promise<void> => {
-    if (!(await isServerLoggingEnabled('error'))) return;
+    if (!(await isLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const { classifyError } = await import('@/shared/errors/error-classifier');
+      const category = await getCategory(context.category, error);
 
       const message = error instanceof Error ? error.message : String(error);
-      const service = context.service || 'unknown';
-      const category = context.category || classifyError(error);
+      const service = getService(context);
 
       // 1. Log to System Log (DB + Console)
       await logSystemEvent({
@@ -79,15 +177,17 @@ export const ErrorSystem = {
         },
       });
 
-      // 2. Domain-Specific Logging
-      await (await import('./error-enricher-registry')).notifyErrorEnrichers(error, {
-        ...context,
-        category,
-        message,
-        level: 'error',
-      });
+      if (typeof window === 'undefined') {
+        // 2. Domain-Specific Logging
+        await (await import('./error-enricher-registry')).notifyErrorEnrichers(error, {
+          ...context,
+          category,
+          message,
+          level: 'error',
+        });
+      }
     } catch (importError) {
-      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
+      safeLogErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -95,12 +195,11 @@ export const ErrorSystem = {
    * Log a warning (non-fatal issue).
    */
   logWarning: async (message: string, context: ErrorContext = {}): Promise<void> => {
-    if (!(await isServerLoggingEnabled('error'))) return;
+    if (!(await isLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const { classifyError } = await import('@/shared/errors/error-classifier');
-      const service = context.service || 'unknown';
-      const category = context.category || classifyError(message);
+      const service = getService(context);
+      const category = await getCategory(context.category, message);
 
       await logSystemEvent({
         level: 'warn',
@@ -112,15 +211,17 @@ export const ErrorSystem = {
         },
       });
 
-      // Domain-Specific Logging
-      await (await import('./error-enricher-registry')).notifyErrorEnrichers(message, {
-        ...context,
-        category,
-        message,
-        level: 'warn',
-      });
+      if (typeof window === 'undefined') {
+        // Domain-Specific Logging
+        await (await import('./error-enricher-registry')).notifyErrorEnrichers(message, {
+          ...context,
+          category,
+          message,
+          level: 'warn',
+        });
+      }
     } catch (importError) {
-      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
+      safeLogErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -128,10 +229,10 @@ export const ErrorSystem = {
    * Log a validation error.
    */
   logValidationError: async (message: string, context: ErrorContext = {}): Promise<void> => {
-    if (!(await isServerLoggingEnabled('error'))) return;
+    if (!(await isLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const service = context.service || 'unknown';
+      const service = getService(context);
 
       await logSystemEvent({
         level: 'warn',
@@ -143,7 +244,7 @@ export const ErrorSystem = {
         },
       });
     } catch (importError) {
-      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
+      safeLogErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -151,12 +252,11 @@ export const ErrorSystem = {
    * Log an operational info event.
    */
   logInfo: async (message: string, context: ErrorContext = {}): Promise<void> => {
-    if (!(await isServerLoggingEnabled('info'))) return;
+    if (!(await isLoggingEnabled('info'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-      const { classifyError } = await import('@/shared/errors/error-classifier');
-      const service = context.service || 'unknown';
-      const category = context.category || classifyError(message);
+      const service = getService(context);
+      const category = await getCategory(context.category, message);
 
       await logSystemEvent({
         level: 'info',
@@ -168,7 +268,7 @@ export const ErrorSystem = {
         },
       });
     } catch (importError) {
-      await logErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
+      safeLogErrorSystemFailure('[ErrorSystem] Failed to import dependencies.', importError);
     }
   },
 
@@ -178,48 +278,18 @@ export const ErrorSystem = {
   generateErrorReport: (error: unknown, context: ErrorContext = {}): Record<string, unknown> => {
     const message = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
-    const contextCategory = context.category;
-    const category: ErrorCategory =
-      typeof contextCategory === 'string' &&
-      (Object.values(ErrorCategories) as string[]).includes(contextCategory)
-        ? (contextCategory as ErrorCategory)
-        : classifySharedError(error);
-
-    const baseResolved: ResolvedError | null = isAppError(error)
-      ? {
-        errorId: context.errorId || `err_${Date.now()}`,
-        message: error.message,
-        code: error.code,
-        httpStatus: error.httpStatus,
-        expected: error.expected,
-        critical: error.critical,
-        retryable: error.retryable,
-        category,
-        suggestedActions: getSharedSuggestedActions(category, error),
-        ...(typeof error.retryAfterMs === 'number' ? { retryAfterMs: error.retryAfterMs } : {}),
-        ...(error.meta ? { meta: error.meta } : {}),
-        cause: error.cause,
-      }
-      : null;
-    const userMessage = context.userMessage || (baseResolved ? resolveErrorUserMessage(baseResolved) : null);
+    const category = resolveErrorCategory(context.category, error);
+    const baseResolved = resolveBaseError(error, context, category);
 
     return {
-      id: context.errorId || `err_${Date.now()}`,
+      id: getNonEmptyContextString(context.errorId) ?? `err_${Date.now()}`,
       timestamp: new Date().toISOString(),
       category,
       message,
-      userMessage:
-        userMessage ||
-        'An unexpected error occurred. Please try again or contact support.',
-      service: context.service || 'unknown',
+      userMessage: resolveReportUserMessage(context, baseResolved),
+      service: getService(context),
       suggestedActions: getSharedSuggestedActions(category, error),
-      context: {
-        ...context,
-        // Remove sensitive or redundant info
-        errorId: undefined,
-        userMessage: undefined,
-        category: undefined,
-      },
+      context: buildReportContext(context),
       debug: process.env['NODE_ENV'] !== 'production' ? { stack } : undefined,
     };
   },

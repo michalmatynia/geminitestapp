@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/shared/lib/ai-paths';
+import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/shared/contracts/ai-paths';
 
 import type { QueryValidationResult } from './query-utils';
 
@@ -90,24 +90,45 @@ export function DatabaseQueryInputControlsContextProvider({
   value: DatabaseQueryInputControlsContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
+  const stateValue = useDatabaseQueryInputControlsStateValue(value);
+  const actionsValue = useDatabaseQueryInputControlsActionsValue(value);
+
+  return (
+    <DatabaseQueryInputControlsActionsContext.Provider value={actionsValue}>
+      <DatabaseQueryInputControlsStateContext.Provider value={stateValue}>
+        {children}
+      </DatabaseQueryInputControlsStateContext.Provider>
+    </DatabaseQueryInputControlsActionsContext.Provider>
+  );
+}
+
+function useDatabaseQueryInputControlsStateValue(
+  value: DatabaseQueryInputControlsContextValue
+): DatabaseQueryInputControlsStateContextValue {
+  return useMemo<DatabaseQueryInputControlsStateContextValue>(() => {
+    const {
+      onFilterChange: _1,
+      onToggleRunDry: _2,
+      onActionCategoryChange: _3,
+      onActionChange: _4,
+      onFormatClick: _5,
+      onFormatContextMenu: _6,
+      onToggleValidator: _7,
+      onRunQuery: _8,
+      onQueryChange: _9,
+      onQueryFocus: _10,
+      onFilterFocus: _11,
+      onProviderChange: _12,
+      ...state
+    } = value;
+    return state;
+  }, [value]);
+}
+
+function useDatabaseQueryInputControlsActionsValue(
+  value: DatabaseQueryInputControlsContextValue
+): DatabaseQueryInputControlsActionsContextValue {
   const {
-    provider,
-    requestedProvider,
-    actionCategory,
-    action,
-    actionCategoryOptions,
-    actionOptions,
-    queryTemplateValue,
-    queryPlaceholder,
-    showFilterInput,
-    filterTemplateValue,
-    filterPlaceholder,
-    runDry,
-    queryValidation,
-    queryFormatterEnabled,
-    queryValidatorEnabled,
-    testQueryLoading,
-    queryTemplateRef,
     onFilterChange,
     onToggleRunDry,
     onActionCategoryChange,
@@ -122,48 +143,7 @@ export function DatabaseQueryInputControlsContextProvider({
     onProviderChange,
   } = value;
 
-  const stateValue = useMemo<DatabaseQueryInputControlsStateContextValue>(
-    () => ({
-      provider,
-      requestedProvider,
-      actionCategory,
-      action,
-      actionCategoryOptions,
-      actionOptions,
-      queryTemplateValue,
-      queryPlaceholder,
-      showFilterInput,
-      filterTemplateValue,
-      filterPlaceholder,
-      runDry,
-      queryValidation,
-      queryFormatterEnabled,
-      queryValidatorEnabled,
-      testQueryLoading,
-      queryTemplateRef,
-    }),
-    [
-      provider,
-      requestedProvider,
-      actionCategory,
-      action,
-      actionCategoryOptions,
-      actionOptions,
-      queryTemplateValue,
-      queryPlaceholder,
-      showFilterInput,
-      filterTemplateValue,
-      filterPlaceholder,
-      runDry,
-      queryValidation,
-      queryFormatterEnabled,
-      queryValidatorEnabled,
-      testQueryLoading,
-      queryTemplateRef,
-    ]
-  );
-
-  const actionsValue = useMemo<DatabaseQueryInputControlsActionsContextValue>(
+  return useMemo<DatabaseQueryInputControlsActionsContextValue>(
     () => ({
       onFilterChange,
       onToggleRunDry,
@@ -192,14 +172,6 @@ export function DatabaseQueryInputControlsContextProvider({
       onFilterFocus,
       onProviderChange,
     ]
-  );
-
-  return (
-    <DatabaseQueryInputControlsActionsContext.Provider value={actionsValue}>
-      <DatabaseQueryInputControlsStateContext.Provider value={stateValue}>
-        {children}
-      </DatabaseQueryInputControlsStateContext.Provider>
-    </DatabaseQueryInputControlsActionsContext.Provider>
   );
 }
 

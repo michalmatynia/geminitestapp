@@ -27,11 +27,11 @@ function safeJsonStringify(value: unknown): string {
   }
 }
 
-export const ParamRow = React.memo(function ParamRow({
+export const ParamRow = React.memo(({
   leaf,
 }: {
   leaf: ParamLeaf;
-}): React.JSX.Element {
+}): React.JSX.Element => {
   const { paramSpecs, paramUiOverrides, paramFlipMap, issuesByPath } = usePromptState();
   const { onParamChange, onParamFlip, onParamUiControlChange } = usePromptActions();
 

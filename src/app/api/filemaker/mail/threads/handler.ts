@@ -1,18 +1,38 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { requireFilemakerMailAdminSession } from '@/features/filemaker/server';
 import { listFilemakerMailThreads } from '@/features/filemaker/server';
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { z } from 'zod';
+
+const querySchema = z.object({
+  query: optionalTrimmedQueryString(),
+  accountId: optionalTrimmedQueryString(),
+  mailboxPath: optionalTrimmedQueryString(),
+  campaignId: optionalTrimmedQueryString(),
+  runId: optionalTrimmedQueryString(),
+  deliveryId: optionalTrimmedQueryString(),
+  limit: z.coerce.number().int().positive().max(50).optional(),
+});
+
+const hasQueryValue = (value: string | null | undefined): value is string =>
+  typeof value === 'string' && value.length > 0;
+
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
-  const query = req.nextUrl.searchParams.get('query');
-  const accountId = req.nextUrl.searchParams.get('accountId');
-  const mailboxPath = req.nextUrl.searchParams.get('mailboxPath');
+  const { query, accountId, mailboxPath, campaignId, runId, deliveryId, limit } = querySchema.parse(
+    Object.fromEntries(req.nextUrl.searchParams.entries())
+  );
   const input = {
-    ...(query ? { query } : {}),
-    ...(accountId ? { accountId } : {}),
-    ...(mailboxPath ? { mailboxPath } : {}),
+    ...(hasQueryValue(query) ? { query } : {}),
+    ...(hasQueryValue(accountId) ? { accountId } : {}),
+    ...(hasQueryValue(mailboxPath) ? { mailboxPath } : {}),
+    ...(hasQueryValue(campaignId) ? { campaignId } : {}),
+    ...(hasQueryValue(runId) ? { runId } : {}),
+    ...(hasQueryValue(deliveryId) ? { deliveryId } : {}),
+    ...(typeof limit === 'number' ? { limit } : {}),
   };
   return Response.json({
     threads: await listFilemakerMailThreads(input),

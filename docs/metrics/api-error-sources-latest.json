@@ -1,47 +1,19 @@
 {
-  "generatedAt": "2026-04-02T21:14:54.167Z",
-  "status": "warn",
+  "generatedAt": "2026-04-15T10:54:05.929Z",
+  "status": "passed",
   "summary": {
-    "total": 2,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 2,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "routeFileCount": 302,
-    "handlerFileCount": 422
+    "status": "passed",
+    "routeFileCount": 313,
+    "handlerFileCount": 450
   },
   "scope": {
     "root": "src/app/api"
   },
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "raw-new-response",
-      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
-      "file": "src/app/api/filemaker/campaigns/click/handler.ts",
-      "line": 27,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "warn",
-      "ruleId": "raw-new-response",
-      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
-      "file": "src/app/api/filemaker/campaigns/open/handler.ts",
-      "line": 25,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "raw-new-response",
-      "errorCount": 0,
-      "warningCount": 2,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 164
+  "issues": [],
+  "rules": [],
+  "durationMs": 128
 }

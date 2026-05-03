@@ -1,0 +1,362 @@
+{
+  "imageSearchProvider": "google_lens_upload",
+  "imageSearchPageUrl": null,
+  "status": "triage_ready",
+  "asin": null,
+  "title": null,
+  "price": null,
+  "url": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6",
+  "description": null,
+  "amazonDetails": null,
+  "amazonProbe": null,
+  "matchedImageId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+  "candidateUrls": [
+    "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6"
+  ],
+  "candidateResults": [
+    {
+      "url": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6",
+      "score": null,
+      "asin": "B0DGDDX6S6",
+      "marketplaceDomain": "www.amazon.co.jp",
+      "title": "Fortnite Long Wallet, Leather, Coin Purse, Men's, Women's, Large Capacity, Popular, Round Zipper, Bill Holder, Card Storage, Long Wallet, Present, Wallet",
+      "snippet": "About this item                     Long Wallet Size: Approx. 8.1 x 4.3 inches (20.5 x 11 cm), Thickness: 0.9 inch (2.3 cm), this long wallet has a large capacity that can hold bills, coins, and cards without hesitation. Weight about 170g     Luxurious synthetic leather: This thin long wallet is made of high quality synthetic leather, so it can be used clean and long lasting. Made of durable material that is scratch and stain resistant     COOL AND FUNCTIONAL: Simple and classy look that you need for a long time. We have focused on ease of use and functionality. The card slots are visible at a glance, making it easy to put out bills and coin purse. Keep it thin and stylish even when you put it all. Comfortable zipper pulls with custom zipper     4 Reasons to Choose a Long Wallet: 1. The design is easy to use and easy to remove cards and bills. 2. The free space design can store business cards, examination tickets, insurance cards, driver's licenses, etc. \"Does not break, stain or bend. \" Features: 3. The coin purse is designed to open wide, so it is easy to store and easy to take out. 4     Multi-functional and easy to organize long wallet: With card storage and spacious free space, you can keep your cards and cash organized and organized       \n                     ›  See more product details",
+      "rank": 1
+    }
+  ],
+  "candidatePreviews": [
+    {
+      "id": "B0DGDDX6S6",
+      "matchedImageId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "url": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6",
+      "asin": "B0DGDDX6S6",
+      "marketplaceDomain": "www.amazon.co.jp",
+      "title": "Fortnite Long Wallet, Leather, Coin Purse, Men's, Women's, Large Capacity, Popular, Round Zipper, Bill Holder, Card Storage, Long Wallet, Present, Wallet",
+      "snippet": "About this item                     Long Wallet Size: Approx. 8.1 x 4.3 inches (20.5 x 11 cm), Thickness: 0.9 inch (2.3 cm), this long wallet has a large capacity that can hold bills, coins, and cards without hesitation. Weight about 170g     Luxurious synthetic leather: This thin long wallet is made of high quality synthetic leather, so it can be used clean and long lasting. Made of durable material that is scratch and stain resistant     COOL AND FUNCTIONAL: Simple and classy look that you need for a long time. We have focused on ease of use and functionality. The card slots are visible at a glance, making it easy to put out bills and coin purse. Keep it thin and stylish even when you put it all. Comfortable zipper pulls with custom zipper     4 Reasons to Choose a Long Wallet: 1. The design is easy to use and easy to remove cards and bills. 2. The free space design can store business cards, examination tickets, insurance cards, driver's licenses, etc. \"Does not break, stain or bend. \" Features: 3. The coin purse is designed to open wide, so it is easy to store and easy to take out. 4     Multi-functional and easy to organize long wallet: With card storage and spacious free space, you can keep your cards and cash organized and organized       \n                     ›  See more product details",
+      "heroImageUrl": "https://m.media-amazon.com/images/I/61hJHP2HKOL._AC_SL1500_.jpg",
+      "heroImageAlt": "Fortnite Long Wallet, Leather, Coin Purse, Men&#39;s, Women&#39;s, Large Capacity, Popular, Round Zipper, Bill Holder, Card Storage, Long Wallet, Present, Wallet",
+      "heroImageArtifactName": "amazon-scan-probe-d1b9e0c4-d74e-4c87-aeae-f8149e69164e-attempt-1-rank-1-hero-1777023112954.png",
+      "artifactKey": "amazon-scan-probe-d1b9e0c4-d74e-4c87-aeae-f8149e69164e-attempt-1-rank-1",
+      "rank": 1
+    }
+  ],
+  "currentUrl": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6",
+  "message": "Collected Amazon candidate previews for manual selection.",
+  "stage": "amazon_probe",
+  "scrapedItems": [
+    {
+      "id": "B0DGDDX6S6",
+      "matchedImageId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "url": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6",
+      "asin": "B0DGDDX6S6",
+      "marketplaceDomain": "www.amazon.co.jp",
+      "title": "Fortnite Long Wallet, Leather, Coin Purse, Men's, Women's, Large Capacity, Popular, Round Zipper, Bill Holder, Card Storage, Long Wallet, Present, Wallet",
+      "snippet": "About this item                     Long Wallet Size: Approx. 8.1 x 4.3 inches (20.5 x 11 cm), Thickness: 0.9 inch (2.3 cm), this long wallet has a large capacity that can hold bills, coins, and cards without hesitation. Weight about 170g     Luxurious synthetic leather: This thin long wallet is made of high quality synthetic leather, so it can be used clean and long lasting. Made of durable material that is scratch and stain resistant     COOL AND FUNCTIONAL: Simple and classy look that you need for a long time. We have focused on ease of use and functionality. The card slots are visible at a glance, making it easy to put out bills and coin purse. Keep it thin and stylish even when you put it all. Comfortable zipper pulls with custom zipper     4 Reasons to Choose a Long Wallet: 1. The design is easy to use and easy to remove cards and bills. 2. The free space design can store business cards, examination tickets, insurance cards, driver's licenses, etc. \"Does not break, stain or bend. \" Features: 3. The coin purse is designed to open wide, so it is easy to store and easy to take out. 4     Multi-functional and easy to organize long wallet: With card storage and spacious free space, you can keep your cards and cash organized and organized       \n                     ›  See more product details",
+      "heroImageUrl": "https://m.media-amazon.com/images/I/61hJHP2HKOL._AC_SL1500_.jpg",
+      "heroImageAlt": "Fortnite Long Wallet, Leather, Coin Purse, Men&#39;s, Women&#39;s, Large Capacity, Popular, Round Zipper, Bill Holder, Card Storage, Long Wallet, Present, Wallet",
+      "heroImageArtifactName": "amazon-scan-probe-d1b9e0c4-d74e-4c87-aeae-f8149e69164e-attempt-1-rank-1-hero-1777023112954.png",
+      "artifactKey": "amazon-scan-probe-d1b9e0c4-d74e-4c87-aeae-f8149e69164e-attempt-1-rank-1",
+      "rank": 1
+    }
+  ],
+  "steps": [
+    {
+      "key": "validate",
+      "label": "Validate scan input",
+      "group": "input",
+      "attempt": 1,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": "about:blank",
+      "startedAt": "2026-04-24T09:30:14.097Z",
+      "completedAt": "2026-04-24T09:30:14.097Z",
+      "durationMs": 0
+    },
+    {
+      "key": "google_lens_open",
+      "label": "Open Google Lens search",
+      "group": "google_lens",
+      "attempt": 1,
+      "candidateId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Google Lens search opened.",
+      "warning": null,
+      "details": [
+        {
+          "label": "Image search provider",
+          "value": "google_lens_upload"
+        },
+        {
+          "label": "Open attempt",
+          "value": "1"
+        },
+        {
+          "label": "Image search page",
+          "value": "https://lens.google.com/?hl=en"
+        },
+        {
+          "label": "Current URL",
+          "value": "https://www.google.com/?olud"
+        },
+        {
+          "label": "Ready",
+          "value": "true"
+        },
+        {
+          "label": "Ready reason",
+          "value": "file_input_ready"
+        },
+        {
+          "label": "Upload entry URL",
+          "value": "false"
+        },
+        {
+          "label": "File input count",
+          "value": "3"
+        },
+        {
+          "label": "File input selector",
+          "value": "input[type=\"file\"][accept*=\"image\"]"
+        },
+        {
+          "label": "File input scope",
+          "value": "page"
+        },
+        {
+          "label": "File input frame",
+          "value": "https://www.google.com/?olud"
+        },
+        {
+          "label": "Entry trigger",
+          "value": null
+        }
+      ],
+      "url": "https://www.google.com/?olud",
+      "startedAt": "2026-04-24T09:30:14.097Z",
+      "completedAt": "2026-04-24T09:30:20.572Z",
+      "durationMs": 6475
+    },
+    {
+      "key": "google_upload",
+      "label": "Upload product image to Google",
+      "group": "google_lens",
+      "attempt": 1,
+      "candidateId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Image was submitted to Google Lens and the search advanced.",
+      "warning": null,
+      "details": [
+        {
+          "label": "Image search provider",
+          "value": "google_lens_upload"
+        }
+      ],
+      "url": "https://www.google.com/search?vsrid=CJyZ0YfOvLDspQEQAhgBIiRjZDM3MjA0Yi05ZjczLTQ2MjMtODdjMi0xZTQ3NjU5ODQ3ZGQyeiICZW4oCEJyCi5sZmUtZHVtbXk6MTU0NDNkODktODI3NC00ZmVmLTgyZGQtNzJmMDRhNTBjZDhkEkAKPi9ibnMvZW4vYm9yZy9lbi9ibnMvbGVucy1mcm9udGVuZC1hcGkvcHJvZC5sZW5zLWZyb250ZW5kLWFwaS8wOIb4qs-WhpQD&vsint=CAIqDAoCCAcSAggKGAEgATojChYNAAAAPxUAAAA_HQAAgD8lAACAPzABEIAIGIAIJQAAgD8&udm=26&lns_mode=un&source=lns.web.gsbubb&vsdim=1024,1024&gsessionid=keRxI_i_-icOLSrSONZd3BB1VUv8-f8ecSKkUHCPLf5YqczDze58kg&lsessionid=xGH-xbI4MWlAZmYwg3gWx1GrAruYLhYCdCw-sI2HCoIIEaUJ6Df6jA&lns_surface=26&authuser=0&lns_vfs=e&qsubts=1777023020587&biw=1278&bih=723&hl=pl&sei=LDjraZ7ZOff-7_UPiZSuwAk",
+      "startedAt": "2026-04-24T09:30:20.572Z",
+      "completedAt": "2026-04-24T09:31:47.935Z",
+      "durationMs": 87363
+    },
+    {
+      "key": "google_verification_review",
+      "label": "Inspect Google verification barrier",
+      "group": "google_lens",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    },
+    {
+      "key": "google_captcha",
+      "label": "Resolve Google captcha",
+      "group": "google_lens",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    },
+    {
+      "key": "google_candidates",
+      "label": "Collect Amazon candidates from Google",
+      "group": "google_lens",
+      "attempt": 1,
+      "candidateId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Found 1 Amazon candidate URL(s).",
+      "warning": null,
+      "details": [
+        {
+          "label": "Candidate 1",
+          "value": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6"
+        }
+      ],
+      "url": "https://www.google.com/search?vsrid=CJyZ0YfOvLDspQEQAhgBIiRjZDM3MjA0Yi05ZjczLTQ2MjMtODdjMi0xZTQ3NjU5ODQ3ZGQyeiICZW4oCEJyCi5sZmUtZHVtbXk6MTU0NDNkODktODI3NC00ZmVmLTgyZGQtNzJmMDRhNTBjZDhkEkAKPi9ibnMvZW4vYm9yZy9lbi9ibnMvbGVucy1mcm9udGVuZC1hcGkvcHJvZC5sZW5zLWZyb250ZW5kLWFwaS8wOIb4qs-WhpQD&vsint=CAIqDAoCCAcSAggKGAEgATojChYNAAAAPxUAAAA_HQAAgD8lAACAPzABEIAIGIAIJQAAgD8&udm=26&lns_mode=un&source=lns.web.gsbubb&vsdim=1024,1024&gsessionid=keRxI_i_-icOLSrSONZd3BB1VUv8-f8ecSKkUHCPLf5YqczDze58kg&lsessionid=xGH-xbI4MWlAZmYwg3gWx1GrAruYLhYCdCw-sI2HCoIIEaUJ6Df6jA&lns_surface=26&authuser=0&lns_vfs=e&qsubts=1777023020587&biw=1278&bih=723&hl=pl&sei=LDjraZ7ZOff-7_UPiZSuwAk",
+      "startedAt": "2026-04-24T09:31:47.935Z",
+      "completedAt": "2026-04-24T09:31:49.451Z",
+      "durationMs": 1516
+    },
+    {
+      "key": "amazon_open",
+      "label": "Open Amazon candidate",
+      "group": "amazon",
+      "attempt": 1,
+      "candidateId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Amazon product page opened.",
+      "warning": null,
+      "details": [],
+      "url": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6",
+      "startedAt": "2026-04-24T09:31:49.451Z",
+      "completedAt": "2026-04-24T09:31:51.513Z",
+      "durationMs": 2062
+    },
+    {
+      "key": "amazon_overlays",
+      "label": "Dismiss Amazon overlays",
+      "group": "amazon",
+      "attempt": 1,
+      "candidateId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Amazon overlays dismissed.",
+      "warning": null,
+      "details": [],
+      "url": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6",
+      "startedAt": "2026-04-24T09:31:51.513Z",
+      "completedAt": "2026-04-24T09:31:52.740Z",
+      "durationMs": 1227
+    },
+    {
+      "key": "amazon_content_ready",
+      "label": "Wait for Amazon product content",
+      "group": "amazon",
+      "attempt": 1,
+      "candidateId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Amazon product content is visible.",
+      "warning": null,
+      "details": [],
+      "url": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6",
+      "startedAt": "2026-04-24T09:31:52.740Z",
+      "completedAt": "2026-04-24T09:31:52.782Z",
+      "durationMs": 42
+    },
+    {
+      "key": "amazon_probe",
+      "label": "Probe Amazon product page",
+      "group": "amazon",
+      "attempt": 1,
+      "candidateId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "probe_ready",
+      "status": "completed",
+      "message": "Collected Amazon candidate page evidence before extraction.",
+      "warning": null,
+      "details": [
+        {
+          "label": "ASIN",
+          "value": "B0DGDDX6S6"
+        },
+        {
+          "label": "Title",
+          "value": "Fortnite Long Wallet, Leather, Coin Purse, Men's, Women's, Large Capacity, Popular, Round Zipper, Bill Holder, Card Storage, Long Wallet, Present, Wallet"
+        },
+        {
+          "label": "Description",
+          "value": "About this item                     Long Wallet Size: Approx. 8.1 x 4.3 inches (20.5 x 11 cm), Thickness: 0.9 inch (2.3 cm), this long wallet has a large capacity that can hold bills, coins, and cards without hesitation. Weight about 170g     Luxurious synthetic leather: This thin long wallet is made of high quality synthetic leather, so it can be used clean and long lasting. Made of durable material that is scratch and stain resistant     COOL AND FUNCTIONAL: Simple and classy look that you need for a long time. We have focused on ease of use and functionality. The card slots are visible at a glance, making it easy to put out bills and coin purse. Keep it thin and stylish even when you put it all. Comfortable zipper pulls with custom zipper     4 Reasons to Choose a Long Wallet: 1. The design is easy to use and easy to remove cards and bills. 2. The free space design can store business cards, examination tickets, insurance cards, driver's licenses, etc. \"Does not break, stain or bend. \" Features: 3. The coin purse is designed to open wide, so it is easy to store and easy to take out. 4     Multi-functional and easy to organize long wallet: With card storage and spacious free space, you can keep your cards and cash organized and organized       \n                     ›  See more product details"
+        },
+        {
+          "label": "Page language",
+          "value": "en-us"
+        },
+        {
+          "label": "Language source",
+          "value": "html_lang"
+        },
+        {
+          "label": "Marketplace domain",
+          "value": "www.amazon.co.jp"
+        },
+        {
+          "label": "Canonical URL",
+          "value": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6"
+        },
+        {
+          "label": "Hero image URL",
+          "value": "https://m.media-amazon.com/images/I/61hJHP2HKOL._AC_SL1500_.jpg"
+        },
+        {
+          "label": "Hero image artifact",
+          "value": "amazon-scan-probe-d1b9e0c4-d74e-4c87-aeae-f8149e69164e-attempt-1-rank-1-hero-1777023112954.png"
+        },
+        {
+          "label": "Artifact key",
+          "value": "amazon-scan-probe-d1b9e0c4-d74e-4c87-aeae-f8149e69164e-attempt-1-rank-1"
+        },
+        {
+          "label": "Bullet count",
+          "value": "5"
+        },
+        {
+          "label": "Attribute count",
+          "value": "0"
+        }
+      ],
+      "url": "https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6",
+      "startedAt": "2026-04-24T09:31:52.782Z",
+      "completedAt": "2026-04-24T09:31:53.351Z",
+      "durationMs": 569
+    }
+  ]
+}

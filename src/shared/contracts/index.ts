@@ -47,3 +47,4 @@ export * from './validator-import';
 export * from './vector';
 export * from './viewer3d';
 export * from './product-image-manager';
+export * from './product-scans';

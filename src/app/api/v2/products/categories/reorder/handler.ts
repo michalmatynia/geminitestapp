@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
@@ -48,7 +48,7 @@ const normalizeId = (value: string | null | undefined): string | null => {
   return trimmed ? trimmed : null;
 };
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const requestStart = performance.now();
   const payload = ctx.body as ReorderCategoryPayload;

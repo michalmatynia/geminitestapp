@@ -6,17 +6,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const meMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/features/kangur/services/kangur-platform', () => ({
-  getKangurPlatform: () => ({
+vi.mock('@/features/kangur/services/kangur-shell-session-client', () => ({
+  kangurShellSessionClient: {
     auth: {
       me: meMock,
     },
-  }),
+    learners: {
+      select: vi.fn(),
+    },
+  },
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientErrorSync: <T,>(_: unknown, task: () => T) => task(),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 const AUTHENTICATED_USER = {
   id: 'parent-1',

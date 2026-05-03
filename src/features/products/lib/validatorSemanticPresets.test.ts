@@ -7,6 +7,7 @@ import {
   buildLatestFieldMirrorPatternPayload,
   buildNameMirrorPolishSequenceBundle,
   buildNameSegmentCategoryTemplatePayload,
+  buildStarGaterProducerTemplatePayload,
   buildSkuAutoIncrementSequenceBundle,
   getValidatorTemplatePresetByType,
 } from './validatorSemanticPresets';
@@ -54,7 +55,23 @@ describe('validator semantic presets', () => {
   it('resolves template presets by route type', () => {
     expect(getValidatorTemplatePresetByType('name-segment-category')?.patterns).toHaveLength(1);
     expect(getValidatorTemplatePresetByType('name-segment-dimensions')?.patterns).toHaveLength(1);
+    expect(getValidatorTemplatePresetByType('producer-stargater')?.patterns).toHaveLength(1);
     expect(getValidatorTemplatePresetByType('missing')).toBeNull();
+  });
+
+  it('builds the StarGater producer template with producer replacement wiring', () => {
+    const payload = buildStarGaterProducerTemplatePayload();
+
+    expect(payload).toMatchObject({
+      label: 'Producer -> StarGater.net',
+      target: 'producer',
+      regex: '^.*$',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementValue: 'StarGater.net',
+      replacementFields: ['producerIds'],
+      appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+    });
   });
 
   it('builds the SKU auto-increment bundle from semantic preset builders', () => {

@@ -25,6 +25,18 @@ const routingState = {
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => authState,
+  useKangurAuthSessionState: () => ({
+    user: authState.user,
+    isAuthenticated: authState.isAuthenticated,
+    hasResolvedAuth: true,
+    canAccessParentAssignments: false,
+  }),
+  useKangurAuthActions: () => ({
+    logout: authState.logout,
+    navigateToLogin: vi.fn(),
+    checkAppState: vi.fn(),
+    selectLearner: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -41,6 +53,9 @@ vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: () => ({
+    openLoginModal: vi.fn(),
+  }),
+  useKangurLoginModalActions: () => ({
     openLoginModal: vi.fn(),
   }),
 }));

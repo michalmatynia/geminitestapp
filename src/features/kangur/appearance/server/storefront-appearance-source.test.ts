@@ -78,4 +78,26 @@ describe('storefront-appearance-source', () => {
       'default'
     );
   });
+
+  it('does not block the returned snapshot on slow background seed writes', async () => {
+    listKangurSettingsByKeysMock.mockResolvedValue([
+      { key: KANGUR_DAILY_THEME_SETTINGS_KEY, value: '{"accent":"daily"}' },
+    ]);
+    upsertKangurSettingValueMock.mockImplementation(() => new Promise(() => undefined));
+
+    const { ensureKangurStorefrontAppearanceSettingsSeeded } = await import(
+      './storefront-appearance-source'
+    );
+
+    const result = await Promise.race([
+      ensureKangurStorefrontAppearanceSettingsSeeded(),
+      new Promise<'timed-out'>((resolve) => {
+        setTimeout(() => resolve('timed-out'), 0);
+      }),
+    ]);
+
+    expect(result).not.toBe('timed-out');
+    expect(result).toHaveLength(5);
+    expect(upsertKangurSettingValueMock).toHaveBeenCalledTimes(4);
+  });
 });

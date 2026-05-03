@@ -112,6 +112,7 @@ export type IntegrationConnectionTestType = z.infer<typeof integrationConnection
 export const integrationConnectionTestModeSchema = z.enum([
   'auto',
   'manual',
+  'manual_session_refresh',
   'quicklist_preflight',
 ]);
 

@@ -10,7 +10,7 @@ import {
 } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
-import { clampScale } from '@/shared/lib/ai-paths';
+import { clampScale } from '@/shared/lib/ai-paths/core/utils/graph';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 // ---------------------------------------------------------------------------

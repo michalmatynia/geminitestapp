@@ -5,6 +5,7 @@ import { normalizeProductStudioSequenceGenerationMode } from '@/shared/contracts
 import { type ProductStudioConfig, type ProductStudioPreflightResponse, type ProductStudioSequenceGenerationMode, type ProductStudioVariantsResponse } from '@/shared/contracts/products';
 
 import { resolveGenerationVariants } from './product-studio-service.analysis';
+import { resolveProductStudioActiveRunInfo } from './product-studio-service.active-run';
 import {
   resolveProductAndStudioTarget,
   resolveSourceSlotIdForIndex,
@@ -22,7 +23,7 @@ export type ProductStudioSequencePreflightResult = ProductStudioPreflightRespons
 
 const buildProductStudioVariantsResultBase = (
   preflight: ProductStudioSequencePreflightResult
-): Omit<ProductStudioVariantsResult, 'sourceSlotId' | 'sourceSlot' | 'variants'> => ({
+): Omit<ProductStudioVariantsResult, 'activeRun' | 'sourceSlotId' | 'sourceSlot' | 'variants'> => ({
   config: preflight.config,
   sequencing: preflight.sequencing,
   sequencingDiagnostics: preflight.sequencingDiagnostics,
@@ -94,6 +95,7 @@ export const resolveProductStudioSequencePreflight = async (params: {
     sequencingDiagnostics,
     sequenceGenerationMode,
     modelId,
+    brainConfigWarning,
   } = await resolveStudioSettingsBundle(resolved.projectId);
   const activeSequenceSteps = resolveImageStudioSequenceActiveSteps(
     parsedStudioSettings.projectSequencing
@@ -107,7 +109,11 @@ export const resolveProductStudioSequencePreflight = async (params: {
     requestedMode: requestedSequenceMode,
     modelId,
   });
-  const warnings = [...routeDecision.warnings, ...buildSequenceStepPlanWarnings(sequenceStepPlan)];
+  const warnings = [
+    ...routeDecision.warnings,
+    ...buildSequenceStepPlanWarnings(sequenceStepPlan),
+    ...(brainConfigWarning !== null ? [brainConfigWarning] : []),
+  ];
   const sequenceReadiness = resolveSequenceReadiness({
     sequencing,
     sequencingDiagnostics,
@@ -136,18 +142,25 @@ export async function getProductStudioVariants(params: {
   imageSlotIndex: number;
   projectId?: string | null | undefined;
 }): Promise<ProductStudioVariantsResult> {
-  const preflight = await resolveProductStudioSequencePreflight({
-    productId: params.productId,
-    imageSlotIndex: params.imageSlotIndex,
-    projectId: params.projectId,
-  });
+  const [preflight, activeRun] = await Promise.all([
+    resolveProductStudioSequencePreflight({
+      productId: params.productId,
+      imageSlotIndex: params.imageSlotIndex,
+      projectId: params.projectId,
+    }),
+    resolveProductStudioActiveRunInfo({
+      productId: params.productId,
+      imageSlotIndex: params.imageSlotIndex,
+    }),
+  ]);
+
   const sourceSlotCandidates = resolveProductStudioSourceSlotCandidates(
     preflight.config,
     preflight.imageSlotIndex
   );
 
   if (sourceSlotCandidates.length === 0) {
-    return buildEmptyProductStudioVariantsResult(preflight);
+    return { ...buildEmptyProductStudioVariantsResult(preflight), activeRun };
   }
 
   const resolved = await resolveGenerationVariants({
@@ -155,7 +168,7 @@ export async function getProductStudioVariants(params: {
     sourceSlotIds: sourceSlotCandidates,
   });
 
-  return buildResolvedProductStudioVariantsResult(preflight, sourceSlotCandidates, resolved);
+  return { ...buildResolvedProductStudioVariantsResult(preflight, sourceSlotCandidates, resolved), activeRun };
 }
 
 export async function getProductStudioSequencePreflight(params: {

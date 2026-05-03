@@ -1,6 +1,8 @@
+/* eslint-disable max-lines */
+
 import { caseResolverProfiles } from './defaults-case-resolver';
 import { imageStudioProfiles } from './defaults-image-studio';
-import { FolderTreeProfilesV2Map } from './types';
+import { type FolderTreeProfilesV2Map, type FolderTreeProfileV2 } from './types';
 
 export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
   notes: {
@@ -60,13 +62,72 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  ai_paths: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop into group',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileCode2',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {
+        path: 'FileCode2',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['path'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['path'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
 
-  image_studio: imageStudioProfiles['image_studio']!,
-  case_resolver: caseResolverProfiles['case_resolver']!,
-  case_resolver_case_hierarchy: caseResolverProfiles['case_resolver_case_hierarchy']!,
-  case_resolver_document_relations: caseResolverProfiles['case_resolver_document_relations']!,
-  case_resolver_nodefile_relations: caseResolverProfiles['case_resolver_nodefile_relations']!,
-  case_resolver_scanfile_relations: caseResolverProfiles['case_resolver_scanfile_relations']!,
+  image_studio: imageStudioProfiles['image_studio'] as FolderTreeProfileV2,
+  case_resolver: caseResolverProfiles['case_resolver'] as FolderTreeProfileV2,
+  case_resolver_case_hierarchy: caseResolverProfiles['case_resolver_case_hierarchy'] as FolderTreeProfileV2,
+  case_resolver_document_relations: caseResolverProfiles['case_resolver_document_relations'] as FolderTreeProfileV2,
+  case_resolver_nodefile_relations: caseResolverProfiles['case_resolver_nodefile_relations'] as FolderTreeProfileV2,
+  case_resolver_scanfile_relations: caseResolverProfiles['case_resolver_scanfile_relations'] as FolderTreeProfileV2,
 
   product_categories: {
     version: 2,
@@ -117,6 +178,158 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
     },
     nesting: {
       defaultAllow: true,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  filemaker_organizations: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to organization group',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'building-2',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_organization: 'building-2',
+        filemaker_organization_group: 'folder',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  filemaker_persons: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to person group',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'user',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_person: 'user',
+        filemaker_person_group: 'folder',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  filemaker_events: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to event',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'calendar-days',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_event: 'calendar-days',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  filemaker_invoices: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to invoice',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'file-text',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_invoice: 'file-text',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  filemaker_values: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to value',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'tag',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_value: 'tag',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
       blockedTargetKinds: [],
       rules: [],
     },
@@ -708,6 +921,113 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
           childKinds: ['brain-routing-feature'],
           targetType: 'root',
           targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  playwright_step_seq_constructor: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to step',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['playwright_step'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['playwright_action'],
+          targetType: 'folder',
+          targetKinds: ['playwright_step'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  playwright_step_seq_action_runs: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to run',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['playwright_action_run_date'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['playwright_action_run'],
+          targetType: 'folder',
+          targetKinds: ['playwright_action_run_date'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['playwright_action_run_step'],
+          targetType: 'folder',
+          targetKinds: ['playwright_action_run'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['playwright_action_run_step'],
+          targetType: 'folder',
+          targetKinds: ['playwright_action_run_step'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['playwright_action_run_step'],
+          targetType: 'folder',
+          targetKinds: ['playwright_action_run'],
           allow: true,
         },
       ],

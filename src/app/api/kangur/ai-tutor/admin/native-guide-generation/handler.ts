@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/server';
@@ -90,7 +90,7 @@ const parseGeneratedGuideJson = (text: string): GeneratedGuideEntry | null => {
   }
 };
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {

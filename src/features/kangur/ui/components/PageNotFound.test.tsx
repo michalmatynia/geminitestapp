@@ -22,6 +22,13 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: usePathnameMock,
+  useRouter: () => ({
+    push: routerPushMock,
+  }),
+}));
+
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({
     auth: {

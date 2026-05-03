@@ -53,6 +53,9 @@ describe('admin loading route wrappers', () => {
     const { default: AdminFilemakerPersonsLoading } = await import(
       '@/app/(admin)/admin/filemaker/persons/loading'
     );
+    const { default: AdminProductsImportLoading } = await import(
+      '@/app/(admin)/admin/products/import/loading'
+    );
     const { default: AdminProductsPreferencesLoading } = await import(
       '@/app/(admin)/admin/products/preferences/loading'
     );
@@ -63,11 +66,12 @@ describe('admin loading route wrappers', () => {
         <AdminCmsPagesLoading />
         <AdminAiPathsQueueLoading />
         <AdminFilemakerPersonsLoading />
+        <AdminProductsImportLoading />
         <AdminProductsPreferencesLoading />
       </>
     );
 
-    expect(screen.getAllByTestId('admin-route-loading-probe')).toHaveLength(5);
-    expect(adminRouteLoadingMock).toHaveBeenCalledTimes(5);
+    expect(screen.getAllByTestId('admin-route-loading-probe')).toHaveLength(6);
+    expect(adminRouteLoadingMock).toHaveBeenCalledTimes(6);
   });
 });

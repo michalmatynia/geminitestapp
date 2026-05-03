@@ -1,3 +1,5 @@
+'use client';
+
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { CompactEmptyState, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { Card } from '@/shared/ui/primitives.public';

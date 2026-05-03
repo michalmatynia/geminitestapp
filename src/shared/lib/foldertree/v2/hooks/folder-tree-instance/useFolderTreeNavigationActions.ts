@@ -2,11 +2,11 @@
 
 import { useCallback } from 'react';
 
-import { MasterTreeId } from '@/shared/contracts/master-folder-tree';
+import { type MasterTreeId } from '@/shared/contracts/master-folder-tree';
 
 import { getAncestorIds } from '../../operations/expansion';
-import { FolderTreeStore } from '../../store/createFolderTreeStore';
-import { FolderTreeState } from '../../types';
+import { type FolderTreeStore } from '../../store/createFolderTreeStore';
+import { type FolderTreeState } from '../../types';
 
 export function useFolderTreeNavigationActions(store: FolderTreeStore) {
   const selectNode = useCallback(

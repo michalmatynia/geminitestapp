@@ -11,18 +11,15 @@ import {
 } from '@/shared/contracts/cms-theme';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const CMS_THEME_SETTINGS_CACHE_TTL_MS = 30_000;
 
-type CmsThemeSettingsCacheEntry = {
-  expiresAt: number;
-  value: ThemeSettings;
-};
-
-let cmsThemeSettingsCacheEntry: CmsThemeSettingsCacheEntry | null = null;
+let cmsThemeSettingsCacheEntry: ThemeSettings | null = null;
 let cmsThemeSettingsInFlight: Promise<ThemeSettings> | null = null;
+let cmsThemeSettingsCacheInvalidationHandle: ReturnType<typeof setTimeout> | null = null;
 
 const parseEnvNumber = (value: string | undefined): number | null => {
   if (typeof value !== 'string') return null;
@@ -70,6 +67,7 @@ const toMongoId = (id: string): string | ObjectId => {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
+  await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return null;
   try {
     const mongo = await getMongoDb();
@@ -91,10 +89,22 @@ const getCmsThemeSettingsUncached = async (): Promise<ThemeSettings> => {
   return normalizeThemeSettings(parsed);
 };
 
+const scheduleCmsThemeSettingsHotCacheInvalidation = (): void => {
+  if (cmsThemeSettingsCacheInvalidationHandle !== null) {
+    clearTimeout(cmsThemeSettingsCacheInvalidationHandle);
+  }
+
+  cmsThemeSettingsCacheInvalidationHandle = setTimeout(() => {
+    cmsThemeSettingsCacheEntry = null;
+    cmsThemeSettingsCacheInvalidationHandle = null;
+  }, CMS_THEME_SETTINGS_CACHE_TTL_MS);
+
+  cmsThemeSettingsCacheInvalidationHandle.unref?.();
+};
+
 const getCmsThemeSettingsHotCached = async (): Promise<ThemeSettings> => {
-  const now = Date.now();
-  if (cmsThemeSettingsCacheEntry && cmsThemeSettingsCacheEntry.expiresAt > now) {
-    return cmsThemeSettingsCacheEntry.value;
+  if (cmsThemeSettingsCacheEntry) {
+    return cmsThemeSettingsCacheEntry;
   }
 
   if (cmsThemeSettingsInFlight) {
@@ -103,10 +113,8 @@ const getCmsThemeSettingsHotCached = async (): Promise<ThemeSettings> => {
 
   cmsThemeSettingsInFlight = getCmsThemeSettingsUncached()
     .then((value) => {
-      cmsThemeSettingsCacheEntry = {
-        value,
-        expiresAt: Date.now() + CMS_THEME_SETTINGS_CACHE_TTL_MS,
-      };
+      cmsThemeSettingsCacheEntry = value;
+      scheduleCmsThemeSettingsHotCacheInvalidation();
       return value;
     })
     .finally(() => {
@@ -116,7 +124,7 @@ const getCmsThemeSettingsHotCached = async (): Promise<ThemeSettings> => {
   return await awaitThemeSettingsWithinTimeout(
     cmsThemeSettingsInFlight,
     getCmsThemeSettingsReadTimeoutMs(),
-    cmsThemeSettingsCacheEntry?.value ?? DEFAULT_THEME
+    cmsThemeSettingsCacheEntry ?? DEFAULT_THEME
   );
 };
 
@@ -126,4 +134,5 @@ export const getCmsThemeSettings = cache(async (): Promise<ThemeSettings> => {
 
 export const __testOnly = {
   getCmsThemeSettingsReadTimeoutMs,
+  scheduleCmsThemeSettingsHotCacheInvalidation,
 };

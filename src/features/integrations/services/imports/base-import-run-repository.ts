@@ -9,7 +9,7 @@ import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/s
 import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import type { Filter } from 'mongodb';
+import type { Filter, Sort } from 'mongodb';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -17,6 +17,7 @@ const RUN_KEY_PREFIX = 'base_import_run:';
 const ITEM_KEY_PREFIX = 'base_import_run_item:';
 const LIST_LIMIT_DEFAULT = 50;
 const RUN_ITEM_HARD_LIMIT = 100_000;
+const RUN_ITEM_STATS_PAGE_SIZE = 1000;
 const BASE_IMPORT_AGENT_RESOURCE_ID = 'integrations.base-import.run';
 
 const toRunLeasePatch = (
@@ -238,16 +239,20 @@ const deleteSettingByKey = async (key: string): Promise<void> => {
 
 const listSettingValuesByPrefix = async (
   prefix: string,
-  take = LIST_LIMIT_DEFAULT
+  take = LIST_LIMIT_DEFAULT,
+  skip = 0,
+  sortBy: 'key' | 'updatedAt' = 'updatedAt'
 ): Promise<string[]> => {
   const mongo = await getMongoDb();
   const regex = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
+  const sort: Sort = sortBy === 'key' ? { key: 1 } : { updatedAt: -1, createdAt: -1 };
   const docs = await mongo
     .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
     .find(
       { key: { $regex: regex } } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>
     )
-    .sort({ updatedAt: -1, createdAt: -1 })
+    .sort(sort)
+    .skip(Math.max(0, Math.floor(skip)))
     .limit(Math.max(1, take))
     .toArray();
   return docs
@@ -413,18 +418,12 @@ export const getBaseImportRunItem = async (
   const raw = await readSettingValue(itemKey(runId, itemId));
   const parsed = parseJson<BaseImportItemRecord>(raw);
   if (!parsed) return null;
-  return {
-    ...parsed,
-    errorClass: normalizeItemErrorClass(parsed),
-    retryable: typeof parsed.retryable === 'boolean' ? parsed.retryable : null,
-    nextRetryAt: parsed.nextRetryAt ?? null,
-    lastErrorAt: parsed.lastErrorAt ?? null,
-    parameterImportSummary: normalizeParameterImportSummary(parsed.parameterImportSummary),
-  };
+  return normalizeRunItemRecord(parsed);
 };
 
 type ListBaseImportRunItemsOptions = {
   limit?: number;
+  offset?: number;
   statuses?: BaseImportItemStatus[];
   page?: number;
   pageSize?: number;
@@ -459,6 +458,15 @@ const normalizeItemErrorClass = (item: BaseImportItemRecord): BaseImportErrorCla
     ? item.errorClass
     : null;
 
+const normalizeRunItemRecord = (item: BaseImportItemRecord): BaseImportItemRecord => ({
+  ...item,
+  errorClass: normalizeItemErrorClass(item),
+  retryable: typeof item.retryable === 'boolean' ? item.retryable : null,
+  nextRetryAt: item.nextRetryAt ?? null,
+  lastErrorAt: item.lastErrorAt ?? null,
+  parameterImportSummary: normalizeParameterImportSummary(item.parameterImportSummary),
+});
+
 const normalizeListOptions = (
   limitOrOptions: number | ListBaseImportRunItemsOptions | undefined
 ): ListBaseImportRunItemsOptions => {
@@ -477,23 +485,20 @@ export const listBaseImportRunItems = async (
     typeof options.limit === 'number' && Number.isFinite(options.limit) && options.limit > 0
       ? Math.floor(options.limit)
       : 10_000;
+  const requestedOffset =
+    typeof options.offset === 'number' && Number.isFinite(options.offset) && options.offset > 0
+      ? Math.floor(options.offset)
+      : 0;
   const values = await listSettingValuesByPrefix(
     `${ITEM_KEY_PREFIX}${runId}:`,
-    Math.min(requestedLimit, RUN_ITEM_HARD_LIMIT)
+    Math.min(requestedLimit, RUN_ITEM_HARD_LIMIT),
+    requestedOffset,
+    'key'
   );
   const items = values
     .map((value: string) => parseJson<BaseImportItemRecord>(value))
     .filter((item: BaseImportItemRecord | null): item is BaseImportItemRecord => Boolean(item))
-    .map(
-      (item: BaseImportItemRecord): BaseImportItemRecord => ({
-        ...item,
-        errorClass: normalizeItemErrorClass(item),
-        retryable: typeof item.retryable === 'boolean' ? item.retryable : null,
-        nextRetryAt: item.nextRetryAt ?? null,
-        lastErrorAt: item.lastErrorAt ?? null,
-        parameterImportSummary: normalizeParameterImportSummary(item.parameterImportSummary),
-      })
-    )
+    .map(normalizeRunItemRecord)
     .sort((a: BaseImportItemRecord, b: BaseImportItemRecord) => a.itemId.localeCompare(b.itemId));
   return filterItems(items, options);
 };
@@ -551,13 +556,51 @@ export const deleteBaseImportRunItems = async (runId: string): Promise<void> => 
 };
 
 export const computeBaseImportRunStats = (items: BaseImportItemRecord[]): BaseImportRunStats => {
-  const stats: BaseImportRunStats = initialStats(items.length);
+  const stats: BaseImportRunStats = initialStats(0);
   const parameterImportSummary =
     stats.parameterImportSummary ?? createEmptyRunParameterImportSummary();
   for (const item of items) {
+    stats.total += 1;
     incrementRunStatsForItemStatus(stats, item.status);
     applyItemParameterImportSummary(parameterImportSummary, item.parameterImportSummary);
   }
+  stats.pending = Math.max(
+    0,
+    stats.total - stats.processing - stats.imported - stats.updated - stats.skipped - stats.failed
+  );
+  stats.parameterImportSummary = parameterImportSummary;
+  return stats;
+};
+
+const computeBaseImportRunStatsByPages = async (runId: string): Promise<BaseImportRunStats> => {
+  const stats: BaseImportRunStats = initialStats(0);
+  const parameterImportSummary =
+    stats.parameterImportSummary ?? createEmptyRunParameterImportSummary();
+  let offset = 0;
+
+  while (offset < RUN_ITEM_HARD_LIMIT) {
+    const take = Math.min(RUN_ITEM_STATS_PAGE_SIZE, RUN_ITEM_HARD_LIMIT - offset);
+    const values = await listSettingValuesByPrefix(
+      `${ITEM_KEY_PREFIX}${runId}:`,
+      take,
+      offset,
+      'key'
+    );
+    if (values.length === 0) break;
+
+    for (const value of values) {
+      const parsed = parseJson<BaseImportItemRecord>(value);
+      if (!parsed) continue;
+      const item = normalizeRunItemRecord(parsed);
+      stats.total += 1;
+      incrementRunStatsForItemStatus(stats, item.status);
+      applyItemParameterImportSummary(parameterImportSummary, item.parameterImportSummary);
+    }
+
+    offset += values.length;
+    if (values.length < take) break;
+  }
+
   stats.pending = Math.max(
     0,
     stats.total - stats.processing - stats.imported - stats.updated - stats.skipped - stats.failed
@@ -571,8 +614,7 @@ export const recomputeBaseImportRunStats = async (runId: string): Promise<BaseIm
   if (!run) {
     throw new Error(`Base import run not found: ${runId}`);
   }
-  const items = await listBaseImportRunItems(runId);
-  const stats = computeBaseImportRunStats(items);
+  const stats = await computeBaseImportRunStatsByPages(runId);
   return updateBaseImportRun(runId, { stats });
 };
 

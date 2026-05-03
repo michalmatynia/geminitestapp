@@ -98,6 +98,28 @@ describe('ai-brain settings helpers', () => {
     });
   });
 
+  it('exposes a dedicated Amazon scan candidate match capability', () => {
+    expect(getBrainCapabilityDefinition('product.scan.amazon_candidate_match')).toMatchObject({
+      feature: 'products',
+      modelFamily: 'vision_extract',
+    });
+    expect(getBrainCapabilityModelFamilies('product.scan.amazon_candidate_match')).toEqual([
+      'vision_extract',
+    ]);
+  });
+
+  it('exposes dedicated Job Board AI capabilities', () => {
+    expect(getDefaultCapabilityForFeature('job_board')).toBe('job_board.offer_extraction');
+    expect(getBrainCapabilityDefinition('job_board.offer_extraction')).toMatchObject({
+      feature: 'job_board',
+      modelFamily: 'chat',
+    });
+    expect(getBrainCapabilityDefinition('job_board.vision_email_finder')).toMatchObject({
+      feature: 'job_board',
+      modelFamily: 'vision_extract',
+    });
+  });
+
   it('coerces invalid providers to the allowed provider set', () => {
     const sanitized = sanitizeBrainAssignmentForProviders(
       {

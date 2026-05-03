@@ -37,7 +37,7 @@ vi.mock('@/shared/lib/queue', () => ({
   isRedisReachable: (...args: unknown[]) => isRedisReachableMock(...args),
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -82,7 +82,7 @@ describe('social pipeline status handler', () => {
   });
 
   it('reports the queue as running while work is actively processing even if the local worker flag is false', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/status'),
       createContext()
     );
@@ -127,7 +127,7 @@ describe('social pipeline status handler', () => {
       timeSinceLastPoll: 0,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/status'),
       createContext()
     );
@@ -160,7 +160,7 @@ describe('social pipeline status handler', () => {
     isRedisAvailableMock.mockReturnValueOnce(true);
     isRedisReachableMock.mockResolvedValueOnce(false);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/status'),
       createContext()
     );
@@ -209,7 +209,7 @@ describe('social pipeline status handler', () => {
     });
     getKangurSocialPipelineWorkerHeartbeatMock.mockResolvedValueOnce(heartbeatAt);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/status'),
       createContext()
     );
@@ -243,7 +243,7 @@ describe('social pipeline status handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/status'),
       createContext()
     );

@@ -66,7 +66,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
         : options.fallback;
     }
   },
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 describe('subject-focus remote API client integration', () => {
   beforeEach(() => {
@@ -91,7 +92,7 @@ describe('subject-focus remote API client integration', () => {
     await expect(loadRemoteSubjectFocus()).resolves.toBe('maths');
     expect(createActorAwareHeadersMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/subject-focus',
+      '/kangur-api/subject-focus',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',
@@ -115,7 +116,7 @@ describe('subject-focus remote API client integration', () => {
     await expect(loadRemoteSubjectFocus(controller.signal)).resolves.toBeNull();
     expect(trackReadFailureMock).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/subject-focus',
+      '/kangur-api/subject-focus',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',
@@ -152,7 +153,7 @@ describe('subject-focus remote API client integration', () => {
     await expect(persistRemoteSubjectFocus('learner-1', 'english')).resolves.toBe('english');
     expect(createActorAwareHeadersMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/subject-focus',
+      '/kangur-api/subject-focus',
       expect.objectContaining({
         method: 'PATCH',
         credentials: 'same-origin',

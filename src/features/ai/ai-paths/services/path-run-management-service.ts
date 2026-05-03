@@ -1,32 +1,20 @@
 import 'server-only';
 
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
-import {
-  recordRuntimeRunFinished,
-  recordRuntimeRunQueued,
-} from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import {
-  getAiPathsRuntimeFingerprint,
-  withRuntimeFingerprintMeta,
-} from '@/features/ai/ai-paths/services/runtime-fingerprint';
+import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { removePathRunQueueEntries } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
-import type { AiNode, AiPathRunListOptions, AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
-import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
+import type {
+  AiPathRunListOptions,
+  AiPathRunRecord,
+  AiPathRunRepository,
+} from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-import {
-  ACTIVE_RUN_STATUSES,
-  dispatchRun,
-  resolveDispatchErrorMessage,
-  resolveRunStartedAt,
-} from './path-run-enqueue-service';
+const CANCELLABLE_RUN_STATUS_FILTER = ['queued', 'running'] as const;
 
-const CANCELLABLE_RUN_STATUS_FILTER = ['queued', 'running', 'blocked_on_lease', 'handoff_ready', 'paused'] as const;
-
-export const cleanupRunQueueEntries = async (runId: string): Promise<void> => {
-  void Promise.resolve(removePathRunQueueEntries([runId])).catch((error) => {
+const cleanupRunQueueEntries = (runId: string): void => {
+  void removePathRunQueueEntries([runId]).catch((error) => {
     void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning(`Non-critical queue cleanup failure for run ${runId}`, {
       service: 'ai-paths-service',
@@ -37,7 +25,7 @@ export const cleanupRunQueueEntries = async (runId: string): Promise<void> => {
   });
 };
 
-export const cleanupRunQueueEntriesBatch = async (runIds: string[]): Promise<void> => {
+const cleanupRunQueueEntriesBatch = (runIds: string[]): void => {
   const uniqueRunIds = Array.from(
     new Set(
       runIds
@@ -46,7 +34,7 @@ export const cleanupRunQueueEntriesBatch = async (runIds: string[]): Promise<voi
     )
   );
   if (uniqueRunIds.length === 0) return;
-  void Promise.resolve(removePathRunQueueEntries(uniqueRunIds)).catch((error) => {
+  void removePathRunQueueEntries(uniqueRunIds).catch((error) => {
     void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Non-critical queue cleanup failure for bulk run deletion', {
       service: 'ai-paths-service',
@@ -57,316 +45,9 @@ export const cleanupRunQueueEntriesBatch = async (runIds: string[]): Promise<voi
   });
 };
 
-export const resumePathRun = async (
-  runId: string,
-  mode: 'resume' | 'replay' = 'resume'
-): Promise<AiPathRunRecord> => {
-  try {
-    const repo = await getPathRunRepository();
-    const run = await repo.findRunById(runId);
-    if (!run) throw new Error(`Run ${runId} not found`);
-    if (ACTIVE_RUN_STATUSES.has(run.status)) {
-      if (run.status === 'queued') {
-        await dispatchRun(run.id);
-      }
-      return run;
-    }
-    const runtimeFingerprint = getAiPathsRuntimeFingerprint();
-    const meta = withRuntimeFingerprintMeta({
-      ...(run.meta ?? {}),
-      resumeMode: mode,
-      retryNodeIds: [],
-    });
-    const updated = await repo.updateRunIfStatus(runId, [run.status], {
-      status: 'queued',
-      errorMessage: null,
-      retryCount: 0,
-      nextRetryAt: null,
-      deadLetteredAt: null,
-      meta,
-    });
-    if (!updated) {
-      const latest = await repo.findRunById(runId);
-      if (!latest) throw new Error(`Run ${runId} not found`);
-      if (latest.status === 'queued') {
-        await dispatchRun(latest.id);
-      }
-      return latest;
-    }
-
-    try {
-      await Promise.all([
-        repo.createRunEvent({
-          runId,
-          level: 'info',
-          message: `Run resumed (${mode}).`,
-          metadata: {
-            runStartedAt: resolveRunStartedAt(updated),
-            runtimeFingerprint,
-            traceId: runId,
-          },
-        }),
-        recordRuntimeRunQueued({ runId: updated.id }),
-      ]);
-    } catch (auxError) {
-      void ErrorSystem.captureException(auxError);
-      void ErrorSystem.logWarning(`Non-critical resume logging failure for run ${runId}`, {
-        service: 'ai-paths-service',
-        error: auxError,
-        runId,
-      });
-    }
-
-    try {
-      await dispatchRun(updated.id);
-    } catch (dispatchError) {
-      void ErrorSystem.captureException(dispatchError);
-      const dispatchMessage = resolveDispatchErrorMessage(dispatchError);
-      const failedAt = new Date().toISOString();
-      const errorReport = buildAiPathErrorReport({
-        error: dispatchError,
-        code: 'AI_PATHS_RESUME_DISPATCH_FAILED',
-        category: 'runtime',
-        scope: 'enqueue',
-        severity: 'error',
-        userMessage: `Run dispatch failed during resume: ${dispatchMessage}`,
-        timestamp: failedAt,
-        traceId: runId,
-        runId,
-        retryable: true,
-        metadata: {
-          resumeMode: mode,
-          revertedToStatus: run.status,
-          runtimeFingerprint,
-        },
-      });
-      const revertMeta = withRuntimeFingerprintMeta({
-        ...(updated.meta ?? {}),
-        resumeDispatchFailure: {
-          failedAt,
-          reason: dispatchMessage,
-          revertedToStatus: run.status,
-          mode,
-        },
-      });
-      const reverted = await repo.updateRunIfStatus(updated.id, ['queued'], {
-        status: run.status,
-        errorMessage: run.errorMessage ?? dispatchMessage,
-        retryCount: run.retryCount ?? null,
-        nextRetryAt: run.nextRetryAt ?? null,
-        deadLetteredAt: run.deadLetteredAt ?? null,
-        meta: revertMeta,
-      });
-
-      try {
-        await repo.createRunEvent({
-          runId,
-          level: 'error',
-          message: `Run dispatch failed during resume: ${dispatchMessage}`,
-          metadata: {
-            runStartedAt: resolveRunStartedAt(reverted ?? updated),
-            runtimeFingerprint,
-            resumeMode: mode,
-            revertedToStatus: run.status,
-            traceId: runId,
-            errorCode: errorReport.code,
-            errorCategory: errorReport.category,
-            errorScope: errorReport.scope,
-            retryable: errorReport.retryable,
-            errorReport,
-          },
-        });
-      } catch (eventError) {
-        void ErrorSystem.captureException(eventError);
-        void ErrorSystem.logWarning(
-          `Non-critical resume dispatch failure logging error for ${runId}`,
-          {
-            service: 'ai-paths-service',
-            action: 'resumeDispatchFailureEvent',
-            runId,
-            error: eventError,
-          }
-        );
-      }
-
-      throw new Error(`Run dispatch failed: ${dispatchMessage}`, { cause: dispatchError });
-    }
-
-    publishRunUpdate(runId, 'run', { status: 'queued', mode, traceId: runId });
-
-    return updated;
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    void ErrorSystem.captureException(error, {
-      service: 'ai-paths-service',
-      action: 'resumePathRun',
-      runId,
-    });
-    throw error;
-  }
-};
-
-export const retryPathRunNode = async (runId: string, nodeId: string): Promise<AiPathRunRecord> => {
-  try {
-    const repo = await getPathRunRepository();
-    const run = await repo.findRunById(runId);
-    if (!run) throw new Error(`Run ${runId} not found`);
-    if (ACTIVE_RUN_STATUSES.has(run.status)) {
-      if (run.status === 'queued') {
-        await dispatchRun(run.id);
-      }
-      return run;
-    }
-    const nodeInfo = run.graph?.nodes?.find((node: AiNode) => node.id === nodeId) ?? null;
-    const runtimeFingerprint = getAiPathsRuntimeFingerprint();
-    const meta = withRuntimeFingerprintMeta({
-      ...(run.meta ?? {}),
-      resumeMode: 'retry',
-      retryNodeIds: [nodeId],
-    });
-    const updated = await repo.updateRunIfStatus(runId, [run.status], {
-      status: 'queued',
-      errorMessage: null,
-      retryCount: 0,
-      nextRetryAt: null,
-      deadLetteredAt: null,
-      meta,
-    });
-    if (!updated) {
-      const latest = await repo.findRunById(runId);
-      if (!latest) throw new Error(`Run ${runId} not found`);
-      if (latest.status === 'queued') {
-        await dispatchRun(latest.id);
-      }
-      return latest;
-    }
-
-    await repo.upsertRunNode(runId, nodeId, {
-      nodeType: nodeInfo?.type ?? 'unknown',
-      nodeTitle: nodeInfo?.title ?? null,
-      status: 'pending',
-      attempt: 0,
-      inputs: undefined,
-      outputs: undefined,
-      errorMessage: null,
-      startedAt: null,
-      finishedAt: null,
-    });
-
-    try {
-      await Promise.all([
-        repo.createRunEvent({
-          runId,
-          level: 'info',
-          message: `Retry node ${nodeId}.`,
-          metadata: {
-            runStartedAt: resolveRunStartedAt(updated),
-            runtimeFingerprint,
-            traceId: runId,
-          },
-        }),
-        recordRuntimeRunQueued({ runId: updated.id }),
-      ]);
-    } catch (auxError) {
-      void ErrorSystem.captureException(auxError);
-      void ErrorSystem.logWarning(
-        `Non-critical retry logging failure for run ${runId}, node ${nodeId}`,
-        {
-          service: 'ai-paths-service',
-          error: auxError,
-          runId,
-          nodeId,
-        }
-      );
-    }
-
-    try {
-      await dispatchRun(updated.id);
-    } catch (dispatchError) {
-      void ErrorSystem.captureException(dispatchError);
-      const dispatchMessage = resolveDispatchErrorMessage(dispatchError);
-      const failedAt = new Date().toISOString();
-      const errorReport = buildAiPathErrorReport({
-        error: dispatchError,
-        code: 'AI_PATHS_RETRY_DISPATCH_FAILED',
-        category: 'runtime',
-        scope: 'enqueue',
-        severity: 'error',
-        userMessage: `Run dispatch failed during node retry: ${dispatchMessage}`,
-        timestamp: failedAt,
-        traceId: runId,
-        runId,
-        nodeId,
-        retryable: true,
-        metadata: {
-          revertedToStatus: run.status,
-          runtimeFingerprint,
-        },
-      });
-      const revertMeta = withRuntimeFingerprintMeta({
-        ...(updated.meta ?? {}),
-        resumeDispatchFailure: {
-          failedAt,
-          reason: dispatchMessage,
-          revertedToStatus: run.status,
-          mode: 'retry',
-        },
-      });
-      const reverted = await repo.updateRunIfStatus(updated.id, ['queued'], {
-        status: run.status,
-        errorMessage: run.errorMessage ?? dispatchMessage,
-        retryCount: run.retryCount ?? null,
-        nextRetryAt: run.nextRetryAt ?? null,
-        deadLetteredAt: run.deadLetteredAt ?? null,
-        meta: revertMeta,
-      });
-
-      try {
-        await repo.createRunEvent({
-          runId,
-          level: 'error',
-          message: `Run dispatch failed during node retry: ${dispatchMessage}`,
-          metadata: {
-            runStartedAt: resolveRunStartedAt(reverted ?? updated),
-            runtimeFingerprint,
-            traceId: runId,
-            nodeId,
-            errorCode: errorReport.code,
-            errorCategory: errorReport.category,
-            errorScope: errorReport.scope,
-            retryable: errorReport.retryable,
-            errorReport,
-          },
-        });
-      } catch (eventError) {
-        void ErrorSystem.captureException(eventError);
-        void ErrorSystem.logWarning(
-          `Non-critical retry dispatch failure logging error for ${runId}`,
-          {
-            service: 'ai-paths-service',
-            action: 'retryDispatchFailureEvent',
-            runId,
-            error: eventError,
-          }
-        );
-      }
-
-      throw new Error(`Run dispatch failed: ${dispatchMessage}`, { cause: dispatchError });
-    }
-
-    publishRunUpdate(runId, 'run', { status: 'queued', retryNodeId: nodeId, traceId: runId });
-
-    return updated;
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    void ErrorSystem.captureException(error, {
-      service: 'ai-paths-service',
-      action: 'retryPathRunNode',
-      runId,
-      nodeId,
-    });
-    throw new Error(error instanceof Error ? error.message : String(error), { cause: error });
-  }
+const resolveDurationMs = (startedAt: string | null | undefined): number | null => {
+  const startedAtMs = typeof startedAt === 'string' ? Date.parse(startedAt) : Number.NaN;
+  return Number.isFinite(startedAtMs) ? Math.max(0, Date.now() - startedAtMs) : null;
 };
 
 export const deletePathRun = async (runId: string): Promise<boolean> => {
@@ -378,7 +59,7 @@ export const deletePathRunWithRepository = async (
   runId: string
 ): Promise<boolean> => {
   try {
-    await cleanupRunQueueEntries(runId);
+    cleanupRunQueueEntries(runId);
     return await repo.deleteRun(runId);
   } catch (error) {
     void ErrorSystem.captureException(error);
@@ -400,7 +81,7 @@ export const deletePathRunsWithRepository = async (
     const runIds = runs
       .map((run: AiPathRunRecord): string | undefined => run.id)
       .filter((runId: string | undefined): runId is string => Boolean(runId));
-    await cleanupRunQueueEntriesBatch(runIds);
+    cleanupRunQueueEntriesBatch(runIds);
     return await repo.deleteRuns(options);
   } catch (error) {
     void ErrorSystem.captureException(error);
@@ -424,54 +105,45 @@ export const cancelPathRunWithRepository = async (
   try {
     const run = await repo.findRunById(runId);
     if (!run) throw new Error(`Run ${runId} not found`);
-    if (run.status === 'canceled') {
-      await cleanupRunQueueEntries(runId);
+    if (run.status === 'canceled' || run.status === 'completed' || run.status === 'failed') {
+      cleanupRunQueueEntries(runId);
       return run;
     }
-    if (run.status === 'completed' || run.status === 'failed' || run.status === 'dead_lettered') {
-      await cleanupRunQueueEntries(runId);
-      return run;
-    }
-    const wasInFlight = run.status === 'running' || run.status === 'paused';
-    const finishedAt = new Date();
-    const startedAtMs = typeof run.startedAt === 'string' ? Date.parse(run.startedAt) : Number.NaN;
-    const durationMs = Number.isFinite(startedAtMs)
-      ? Math.max(0, finishedAt.getTime() - startedAtMs)
-      : null;
-    const nextMeta = {
-      ...(run.meta ?? {}),
-      cancellation: {
-        requestedAt: finishedAt.toISOString(),
-        previousStatus: run.status,
-        phase: wasInFlight ? 'requested' : 'completed',
-      },
-    };
+
+    const wasInFlight = run.status === 'running';
+    const finishedAt = new Date().toISOString();
+    const durationMs = resolveDurationMs(run.startedAt);
     const updated = await repo.updateRunIfStatus(runId, [...CANCELLABLE_RUN_STATUS_FILTER], {
       status: 'canceled',
-      finishedAt: finishedAt.toISOString(),
-      meta: nextMeta,
+      finishedAt,
+      meta: {
+        ...(run.meta ?? {}),
+        cancellation: {
+          requestedAt: finishedAt,
+          previousStatus: run.status,
+          phase: wasInFlight ? 'requested' : 'completed',
+        },
+      },
     });
+
     if (!updated) {
       const latest = await repo.findRunById(runId);
       if (!latest) throw new Error(`Run ${runId} not found`);
-      await cleanupRunQueueEntries(runId);
+      cleanupRunQueueEntries(runId);
       return latest;
     }
 
-    const cancellationMessage = wasInFlight
-      ? 'Cancellation requested. Run marked canceled while in-flight work stops.'
-      : 'Run canceled.';
     try {
       await Promise.all([
         repo.createRunEvent({
           runId,
           level: 'warn',
-          message: cancellationMessage,
+          message: wasInFlight
+            ? 'Cancellation requested. Run marked canceled while in-flight work stops.'
+            : 'Run canceled.',
           metadata: {
-            runStartedAt: resolveRunStartedAt(updated),
-            cancellationRequestedAt: finishedAt.toISOString(),
+            cancellationRequestedAt: finishedAt,
             cancellationPhase: wasInFlight ? 'requested' : 'completed',
-            runtimeFingerprint: getAiPathsRuntimeFingerprint(),
             traceId: runId,
           },
         }),
@@ -492,8 +164,7 @@ export const cancelPathRunWithRepository = async (
     }
 
     publishRunUpdate(runId, 'done', { status: 'canceled', traceId: runId });
-    await cleanupRunQueueEntries(runId);
-
+    cleanupRunQueueEntries(runId);
     return updated;
   } catch (error) {
     void ErrorSystem.captureException(error);
@@ -505,103 +176,3 @@ export const cancelPathRunWithRepository = async (
     throw error;
   }
 };
-
-export async function markPathRunHandoffReady({
-  runId,
-  reason,
-  checkpointLineageId,
-  requestedBy,
-}: {
-  runId: string;
-  reason?: string | null;
-  checkpointLineageId?: string | null;
-  requestedBy?: string | null;
-}) {
-  const repo = await getPathRunRepository();
-  const run = await repo.findRunById(runId);
-
-  if (!run) {
-    return null;
-  }
-
-  if (
-    run.status !== 'blocked_on_lease' &&
-    run.status !== 'paused' &&
-    run.status !== 'failed'
-  ) {
-    return run;
-  }
-
-  const readyAt = new Date().toISOString();
-  let normalizedReason = 'Run requires delegated continuation.';
-  if (typeof reason === 'string' && reason.trim().length > 0) {
-    normalizedReason = reason.trim();
-  } else if (run.status === 'blocked_on_lease') {
-    normalizedReason = 'Execution lease is still owned by another worker.';
-  }
-  const lineageId =
-    typeof checkpointLineageId === 'string' && checkpointLineageId.trim().length > 0
-      ? checkpointLineageId.trim()
-      : `${run.id}:${Date.now()}`;
-  const nextMeta =
-    run.meta && typeof run.meta === 'object'
-      ? { ...run.meta }
-      : {};
-
-  nextMeta['handoff'] = {
-    readyAt,
-    reason: normalizedReason,
-    previousStatus: run.status,
-    checkpointLineageId: lineageId,
-    requestedBy: requestedBy ?? null,
-  };
-
-  const updated = await repo.updateRunIfStatus(run.id, [run.status], {
-    status: 'handoff_ready',
-    meta: nextMeta,
-  });
-
-  const current = updated ?? (await repo.findRunById(run.id));
-  if (!updated || !current) {
-    return current;
-  }
-
-  try {
-    const { recordRuntimeRunHandoffReady } = await import(
-      '@/features/ai/ai-paths/services/runtime-analytics-service'
-    );
-    await Promise.all([
-      repo.createRunEvent({
-        runId: run.id,
-        level: 'warn',
-        message: 'Run marked handoff-ready for delegated continuation.',
-        metadata: {
-          reason: normalizedReason,
-          previousStatus: run.status,
-          checkpointLineageId: lineageId,
-          requestedBy: requestedBy ?? null,
-          runtimeFingerprint: getAiPathsRuntimeFingerprint(),
-          traceId: run.id,
-        },
-      }),
-      recordRuntimeRunHandoffReady({ runId: run.id }),
-    ]);
-  } catch (auxError) {
-    void ErrorSystem.captureException(auxError);
-    void ErrorSystem.logWarning(`Non-critical handoff logging failure for run ${run.id}`, {
-      service: 'ai-paths-service',
-      error: auxError,
-      runId: run.id,
-    });
-  }
-
-  publishRunUpdate(run.id, 'run', {
-    status: 'handoff_ready',
-    reason: normalizedReason,
-    checkpointLineageId: lineageId,
-    traceId: run.id,
-  });
-  await cleanupRunQueueEntries(run.id);
-
-  return current;
-}

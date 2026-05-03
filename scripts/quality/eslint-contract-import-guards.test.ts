@@ -49,4 +49,17 @@ describe('eslint contract import guards', () => {
       ])
     );
   });
+
+  it('keeps the broad integrations barrel out of product-facing and internal callers', () => {
+    const restrictedPaths = collectRestrictedPaths();
+
+    expect(restrictedPaths).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: '@/features/integrations/public',
+          message: expect.stringContaining('@/features/integrations/product-integrations-adapter'),
+        }),
+      ])
+    );
+  });
 });

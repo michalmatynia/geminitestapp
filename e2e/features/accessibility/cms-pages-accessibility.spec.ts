@@ -41,7 +41,7 @@ test('cms pages list exposes filters and actions accessibly and passes the acces
     timeout: 15_000,
   });
 
-  const skipLink = page.getByRole('link', { name: 'Skip to content' });
+  const skipLink = page.getByRole('link', { name: /Skip to (main )?content/i });
   await skipLink.focus();
   await expect(skipLink).toBeFocused();
 

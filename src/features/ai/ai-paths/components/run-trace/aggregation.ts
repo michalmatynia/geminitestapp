@@ -30,8 +30,6 @@ export const aggregateTraceNodes = (summary: RuntimeTraceSummary): AggregatedRun
       avgMs: null,
       maxMs: null,
       spanCount: 0,
-      resumeMode: span.resumeMode,
-      resumeDecision: span.resumeDecision,
       durations: [],
       latestAt: -Infinity,
     };
@@ -45,8 +43,6 @@ export const aggregateTraceNodes = (summary: RuntimeTraceSummary): AggregatedRun
       existing.latestAt = spanTime;
       existing.status = span.status;
       existing.nodeTitle = span.nodeTitle ?? existing.nodeTitle;
-      existing.resumeMode = span.resumeMode;
-      existing.resumeDecision = span.resumeDecision;
     }
     buckets.set(key, existing);
   });
@@ -65,8 +61,6 @@ export const aggregateTraceNodes = (summary: RuntimeTraceSummary): AggregatedRun
       avgMs: totalMs !== null ? totalMs / bucket.durations.length : null,
       maxMs,
       spanCount: bucket.spanCount,
-      resumeMode: bucket.resumeMode,
-      resumeDecision: bucket.resumeDecision,
     };
   });
 };
@@ -92,8 +86,6 @@ export const aggregateHistoryNodes = (run: AiPathRunRecord): AggregatedRuntimeNo
     avgMs: entry.durationMs ?? null,
     maxMs: entry.durationMs ?? null,
     spanCount: 1,
-    resumeMode: entry.resumeMode ?? null,
-    resumeDecision: entry.resumeDecision ?? null,
   }));
 };
 

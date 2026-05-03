@@ -25,7 +25,7 @@ vi.mock('@/shared/lib/observability/activity-repository', () => ({
   getActivityRepository: getActivityRepositoryMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const createRequestContext = (query: Record<string, unknown>): ApiHandlerContext =>
   ({
@@ -68,7 +68,7 @@ describe('system activity handler', () => {
     listActivityMock.mockResolvedValue(logs);
     countActivityMock.mockResolvedValue(1);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/system/activity'),
       createRequestContext({
         page: 2,
@@ -104,7 +104,7 @@ describe('system activity handler', () => {
     listActivityMock.mockResolvedValue([]);
     countActivityMock.mockResolvedValue(0);
 
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/system/activity'),
       createRequestContext({
         page: 1,

@@ -19,9 +19,13 @@ const {
 
 export { useCampaignEditContext };
 
-export function CampaignEditProvider({ children }: { children: React.ReactNode }) {
+export function CampaignEditProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const state = useAdminFilemakerCampaignEditState();
-  
+
   const value = useMemo(() => state, [state]);
 
   return (

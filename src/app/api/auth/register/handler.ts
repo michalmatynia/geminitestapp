@@ -1,5 +1,5 @@
 import { hash } from 'bcryptjs';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { normalizeAuthEmail } from '@/features/auth/server';
 import { getAuthSecurityPolicy, validatePasswordStrength } from '@/features/auth/server';
@@ -34,7 +34,7 @@ type MongoUserDoc = {
   updatedAt: Date;
 };
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as RegisterPayload | undefined;
   if (!data) throw badRequestError('Invalid payload');
   await logAuthEvent({

@@ -4,10 +4,18 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const { localeMock } = vi.hoisted(() => ({
   localeMock: vi.fn(() => 'pl'),
+}));
+
+const { standaloneHomeReadyMock } = vi.hoisted(() => ({
+  standaloneHomeReadyMock: vi.fn(() => true),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady', () => ({
+  useKangurDeferredStandaloneHomeReady: () => standaloneHomeReadyMock(),
 }));
 
 vi.mock('next-intl', () => ({
@@ -51,6 +59,28 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 
 describe('KangurProfileMenu', () => {
+  afterEach(() => {
+    standaloneHomeReadyMock.mockReturnValue(true);
+  });
+
+  it('falls back to the default profile icon before standalone home idle is ready', () => {
+    localeMock.mockReturnValue('pl');
+    standaloneHomeReadyMock.mockReturnValue(false);
+
+    render(
+      <KangurProfileMenu
+        avatar={{ label: 'Lisek', src: '/avatars/kangur/star-fox.svg' }}
+        label='Profil Maja'
+        profile={{ href: '/kangur/profile' }}
+      />
+    );
+
+    const profileLink = screen.getByRole('link', { name: 'Profil Maja' });
+    expect(profileLink.querySelector('img')).toBeNull();
+    expect(profileLink.querySelector('svg')).not.toBeNull();
+
+  });
+
   it('uses touch-friendly coarse-pointer sizing for the profile trigger', () => {
     localeMock.mockReturnValue('pl');
     render(
@@ -91,5 +121,8 @@ describe('KangurProfileMenu', () => {
 
     expect(avatarImage).not.toBeNull();
     expect(avatarImage).toHaveAttribute('src', '/avatars/kangur/star-fox.svg');
+    expect(avatarImage).toHaveAttribute('loading', 'lazy');
+    expect(avatarImage).toHaveAttribute('decoding', 'async');
+    expect(avatarImage).toHaveAttribute('fetchpriority', 'low');
   });
 });

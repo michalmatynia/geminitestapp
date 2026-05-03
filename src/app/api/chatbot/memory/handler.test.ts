@@ -10,7 +10,7 @@ vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
   getAgentLongTermMemoryDelegate: getAgentLongTermMemoryDelegateMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('chatbot memory handler', () => {
   beforeEach(() => {
@@ -29,7 +29,7 @@ describe('chatbot memory handler', () => {
   });
 
   it('loads memory items using the shared memory query DTO', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/chatbot/memory'),
       {
         query: {
@@ -38,7 +38,7 @@ describe('chatbot memory handler', () => {
           q: 'deploy',
           limit: '25',
         },
-      } as Parameters<typeof GET_handler>[1]
+      } as Parameters<typeof getHandler>[1]
     );
 
     expect(findManyMock).toHaveBeenCalledWith({

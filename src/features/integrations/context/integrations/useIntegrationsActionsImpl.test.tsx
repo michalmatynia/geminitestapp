@@ -5,14 +5,15 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import type { Integration } from '@/shared/contracts/integrations/base';
-import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 
 const {
   toastMock,
   upsertConnectionMutateAsyncMock,
+  testConnectionMutateAsyncMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   upsertConnectionMutateAsyncMock: vi.fn(),
+  testConnectionMutateAsyncMock: vi.fn(),
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
@@ -27,7 +28,9 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
   useDeleteConnection: () => ({ mutateAsync: vi.fn() }),
   useDisconnectAllegro: () => ({ mutateAsync: vi.fn() }),
   useDisconnectLinkedIn: () => ({ mutateAsync: vi.fn() }),
-  useTestConnection: () => ({ mutateAsync: vi.fn() }),
+  useTestConnection: () => ({
+    mutateAsync: (...args: unknown[]) => testConnectionMutateAsyncMock(...args),
+  }),
   useBaseApiRequest: () => ({ mutateAsync: vi.fn() }),
   useAllegroApiRequest: () => ({ mutateAsync: vi.fn() }),
 }));
@@ -63,11 +66,6 @@ const createArgs = (activeIntegration: Integration) => ({
   setTestErrorMeta: vi.fn(),
   setShowTestSuccessModal: vi.fn(),
   setTestSuccessMessage: vi.fn(),
-  playwrightPersonas: [],
-  setPlaywrightPersonaId: vi.fn(),
-  setPlaywrightSettings: vi.fn(),
-  playwrightPersonaId: null,
-  playwrightSettings: {} as never,
   setShowSessionModal: vi.fn(),
   baseApiMethod: 'GET',
   baseApiParams: '',
@@ -91,6 +89,11 @@ describe('useIntegrationsActionsImpl', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     upsertConnectionMutateAsyncMock.mockResolvedValue({ id: 'connection-1' });
+    testConnectionMutateAsyncMock.mockResolvedValue({
+      ok: true,
+      steps: [],
+      sessionReady: true,
+    });
   });
 
   it('persists scripted Tradera browser mode and Playwright script', async () => {
@@ -153,73 +156,222 @@ describe('useIntegrationsActionsImpl', () => {
     );
   });
 
-  it('maps Playwright settings to connection payload fields when saving browser settings', async () => {
-    const activeIntegration = createIntegration('tradera');
-    const connection = {
-      id: 'connection-1',
-      integrationId: activeIntegration.id,
-      name: 'Tradera browser',
-      username: 'seller@example.com',
-      createdAt: '2026-04-02T00:00:00.000Z',
-      updatedAt: '2026-04-02T00:00:00.000Z',
-    } as IntegrationConnection;
-    const args = {
-      ...createArgs(activeIntegration),
-      connections: [connection],
-      editingConnectionId: connection.id,
-      playwrightPersonaId: 'persona-1',
-      playwrightSettings: {
-        ...defaultPlaywrightSettings,
-        headless: false,
-        slowMo: 125,
-        timeout: 45000,
-        navigationTimeout: 60000,
-        humanizeMouse: true,
-        mouseJitter: 12,
-        clickDelayMin: 40,
-        clickDelayMax: 160,
-        inputDelayMin: 35,
-        inputDelayMax: 140,
-        actionDelayMin: 300,
-        actionDelayMax: 1100,
-        proxyEnabled: true,
-        proxyServer: 'http://proxy.example.test',
-        proxyUsername: 'proxy-user',
-        proxyPassword: 'proxy-pass',
-        emulateDevice: true,
-        deviceName: 'iPhone 14 Pro',
-      },
-    };
+  it('allows creating a Vinted browser connection without username or password', async () => {
+    const activeIntegration = createIntegration('vinted');
+    const args = createArgs(activeIntegration);
     const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Vinted Browser',
+      username: '   ',
+      password: '   ',
+    };
 
-    await result.current.handleSavePlaywrightSettings();
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    const [{ payload }] = upsertConnectionMutateAsyncMock.mock.calls.at(-1) as [
+      { payload: Record<string, unknown> },
+    ];
 
     expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
       expect.objectContaining({
         integrationId: activeIntegration.id,
-        connectionId: connection.id,
         payload: expect.objectContaining({
-          name: connection.name,
-          username: connection.username,
-          playwrightPersonaId: 'persona-1',
-          playwrightHeadless: false,
-          playwrightSlowMo: 125,
-          playwrightTimeout: 45000,
-          playwrightNavigationTimeout: 60000,
-          playwrightHumanizeMouse: true,
-          playwrightMouseJitter: 12,
-          playwrightClickDelayMin: 40,
-          playwrightClickDelayMax: 160,
-          playwrightInputDelayMin: 35,
-          playwrightInputDelayMax: 140,
-          playwrightActionDelayMin: 300,
-          playwrightActionDelayMax: 1100,
-          playwrightProxyEnabled: true,
-          playwrightProxyServer: 'http://proxy.example.test',
-          playwrightProxyUsername: 'proxy-user',
-          playwrightProxyPassword: 'proxy-pass',
-          playwrightEmulateDevice: true,
-          playwrightDeviceName: 'iPhone 14 Pro',
+          name: 'Vinted Browser',
+        }),
+      })
+    );
+    expect(payload).not.toHaveProperty('username');
+    expect(payload).not.toHaveProperty('password');
+  });
+
+  it('allows creating a Pracuj.pl browser connection without username or password', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Pracuj.pl Profile',
+      username: '   ',
+      password: '   ',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    const [{ payload }] = upsertConnectionMutateAsyncMock.mock.calls.at(-1) as [
+      { payload: Record<string, unknown> },
+    ];
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        payload: expect.objectContaining({
+          name: 'Pracuj.pl Profile',
+          pracujLoginMode: 'password',
+          pracujAuthMode: 'auto',
+        }),
+      })
+    );
+    expect(payload).not.toHaveProperty('username');
+    expect(payload).not.toHaveProperty('password');
+  });
+
+  it('sends pracujAuthMode: manual when configured for manual login on apply runs', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Pracuj.pl Profile',
+      pracujAuthMode: 'manual' as const,
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'update',
+      connectionId: 'connection-pracuj-1',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          pracujAuthMode: 'manual',
+        }),
+      })
+    );
+  });
+
+  it('allows creating a scraped source connection without credentials', async () => {
+    const activeIntegration = createIntegration('scraped-source');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'BattleStock',
+      username: '   ',
+      password: '   ',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    const [{ payload }] = upsertConnectionMutateAsyncMock.mock.calls.at(-1) as [
+      { payload: Record<string, unknown> },
+    ];
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        payload: expect.objectContaining({
+          name: 'BattleStock',
+        }),
+      })
+    );
+    expect(payload).not.toHaveProperty('username');
+    expect(payload).not.toHaveProperty('password');
+  });
+
+  it('persists scraped source credentials when provided', async () => {
+    const activeIntegration = createIntegration('scraped-source');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'BattleStock',
+      username: 'buyer@example.com',
+      password: 'secret',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'update',
+      connectionId: 'connection-battlestock',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        connectionId: 'connection-battlestock',
+        payload: expect.objectContaining({
+          name: 'BattleStock',
+          username: 'buyer@example.com',
+          password: 'secret',
+        }),
+      })
+    );
+  });
+
+  it('persists the selected Persons profile for Pracuj.pl job applications', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Pracuj.pl Profile',
+      jobApplicationPersonId: 'person-1',
+      jobApplicationPersonName: 'Ada Lovelace',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        payload: expect.objectContaining({
+          name: 'Pracuj.pl Profile',
+          jobApplicationPersonId: 'person-1',
+          jobApplicationPersonName: 'Ada Lovelace',
+        }),
+      })
+    );
+  });
+
+  it('persists 1688 profile fields without requiring credentials', async () => {
+    const activeIntegration = createIntegration('1688');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: '1688 Browser',
+      username: '   ',
+      password: '   ',
+      scanner1688StartUrl: 'https://detail.1688.com/',
+      scanner1688LoginMode: 'manual_login' as const,
+      scanner1688DefaultSearchMode: 'image_url_fallback' as const,
+      scanner1688CandidateResultLimit: '12',
+      scanner1688MinimumCandidateScore: '8',
+      scanner1688MaxExtractedImages: '14',
+      scanner1688AllowUrlImageSearchFallback: true,
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        payload: expect.objectContaining({
+          name: '1688 Browser',
+          scanner1688StartUrl: 'https://detail.1688.com/',
+          scanner1688LoginMode: 'manual_login',
+          scanner1688DefaultSearchMode: 'image_url_fallback',
+          scanner1688CandidateResultLimit: 12,
+          scanner1688MinimumCandidateScore: 8,
+          scanner1688MaxExtractedImages: 14,
+          scanner1688AllowUrlImageSearchFallback: true,
         }),
       })
     );
@@ -228,8 +380,141 @@ describe('useIntegrationsActionsImpl', () => {
       { payload: Record<string, unknown> },
     ];
 
-    expect(payload).not.toHaveProperty('headless');
-    expect(payload).not.toHaveProperty('slowMo');
-    expect(payload).not.toHaveProperty('proxyPassword');
+    expect(payload).not.toHaveProperty('username');
+    expect(payload).not.toHaveProperty('password');
+  });
+
+  it('starts the 1688 manual login flow with the extended timeout', async () => {
+    const activeIntegration = createIntegration('1688');
+    const connection = {
+      id: 'connection-1688',
+      integrationId: activeIntegration.id,
+      name: '1688 Browser',
+      username: '',
+      createdAt: '2026-04-02T00:00:00.000Z',
+      updatedAt: '2026-04-02T00:00:00.000Z',
+    } as IntegrationConnection;
+    const args = {
+      ...createArgs(activeIntegration),
+      connections: [connection],
+    };
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+
+    await result.current.handle1688ManualLogin(connection);
+
+    expect(testConnectionMutateAsyncMock).toHaveBeenCalledWith({
+      integrationId: activeIntegration.id,
+      connectionId: 'connection-1688',
+      type: 'test',
+      body: {
+        mode: 'manual',
+        manualTimeoutMs: 300000,
+      },
+      timeoutMs: 360000,
+    });
+  });
+
+  it('starts the Pracuj.pl manual login flow for job-search sessions', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const connection = {
+      id: 'connection-pracuj',
+      integrationId: activeIntegration.id,
+      name: 'Pracuj.pl Profile',
+      username: '',
+      createdAt: '2026-04-02T00:00:00.000Z',
+      updatedAt: '2026-04-02T00:00:00.000Z',
+    } as IntegrationConnection;
+    const args = {
+      ...createArgs(activeIntegration),
+      connections: [connection],
+    };
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+
+    await result.current.handlePracujManualLogin(connection);
+
+    expect(testConnectionMutateAsyncMock).toHaveBeenCalledWith({
+      integrationId: activeIntegration.id,
+      connectionId: 'connection-pracuj',
+      type: 'test',
+      body: {
+        mode: 'manual',
+        manualTimeoutMs: 240000,
+      },
+      timeoutMs: 300000,
+    });
+  });
+
+  it('persists pracujSalaryExpectation and pracujCooperationForm for Pracuj.pl connections', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Pracuj.pl Profile',
+      pracujSalaryExpectation: '22000',
+      pracujCooperationForm: 'b2b' as const,
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          pracujSalaryExpectation: 22000,
+          pracujCooperationForm: 'b2b',
+        }),
+      })
+    );
+  });
+
+  it('sends pracujSalaryExpectation: null when salary field is empty', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Pracuj.pl Profile',
+      pracujSalaryExpectation: '   ',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          pracujSalaryExpectation: null,
+        }),
+      })
+    );
+  });
+
+  it('does not persist browser preference through the integration save path', async () => {
+    const activeIntegration = createIntegration('tradera');
+    const { result } = renderHook(() => useIntegrationsActionsImpl(createArgs(activeIntegration)));
+
+    await result.current.handleSaveConnection({
+      mode: 'update',
+      connectionId: 'connection-1',
+      formData: {
+        ...createEmptyConnectionForm(),
+        name: 'Tradera Browser',
+        username: 'seller@example.com',
+      },
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionId: 'connection-1',
+        payload: expect.not.objectContaining({
+          playwrightBrowser: expect.anything(),
+        }),
+      })
+    );
   });
 });

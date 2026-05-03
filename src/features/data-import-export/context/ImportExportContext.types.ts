@@ -1,12 +1,18 @@
 import type { TemplateMapping, ImportListItem, ImportListStats, DebugWarehouses, CatalogOption, InventoryOption, WarehouseOption, Template, ImportResponse, ImportRunDetail } from '@/shared/contracts/integrations/import-export';
-import type { BaseImportMode } from '@/shared/contracts/integrations/base-com';
+import type { BaseImportDirectTarget, BaseImportDirectTargetType, BaseImportMode } from '@/shared/contracts/integrations/base-com';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { ImportTemplateParameterImport } from '@/shared/contracts/integrations';
 
 import type { Dispatch, SetStateAction } from 'react';
 
+export type ImportsPageTab = 'import-list' | 'import-settings' | 'import-template';
+
 export interface ImportExportContextType {
+  saveImportSettings: boolean;
+  hasUnsavedImportSettingsChanges: boolean;
+  importsPageTab: ImportsPageTab;
+  setImportsPageTab: (tab: ImportsPageTab) => void;
   inventoryId: string;
   setInventoryId: (id: string) => void;
   exportInventoryId: string;
@@ -61,6 +67,10 @@ export interface ImportExportContextType {
   setImportNameSearch: (val: string) => void;
   importSkuSearch: string;
   setImportSkuSearch: (val: string) => void;
+  importDirectTargetType: BaseImportDirectTargetType;
+  setImportDirectTargetType: (type: BaseImportDirectTargetType) => void;
+  importDirectTargetValue: string;
+  setImportDirectTargetValue: (value: string) => void;
   importListPage: number;
   setImportListPage: (page: number) => void;
   importListPageSize: number;
@@ -72,6 +82,7 @@ export interface ImportExportContextType {
   lastResult: ImportResponse | null;
   setLastResult: (res: ImportResponse | null) => void;
   activeImportRunId: string;
+  setActiveImportRunId: (id: string) => void;
   activeImportRun: ImportRunDetail | null;
   loadingImportRun: boolean;
   importSourceFields: string[];
@@ -106,18 +117,20 @@ export interface ImportExportContextType {
   handleLoadInventories: () => Promise<void>;
   handleLoadWarehouses: () => Promise<void>;
   handleLoadImportList: () => Promise<void>;
-  handleImport: () => Promise<void>;
+  handleImport: (options?: { directTarget?: BaseImportDirectTarget | null }) => Promise<void>;
   handleResumeImport: () => Promise<void>;
   handleCancelImport: () => Promise<void>;
   handleDownloadImportReport: () => void;
+  handleSaveImportSettings: () => Promise<void>;
+  handleClearSavedImportSettings: () => Promise<void>;
   handleSaveDefaultBaseConnection: () => Promise<void>;
   handleSaveExportSettings: () => Promise<void>;
   handleClearInventory: () => Promise<void>;
-  handleNewTemplate: () => void;
-  handleDuplicateTemplate: () => Promise<void>;
+  handleNewTemplate: (scope?: 'import' | 'export') => void;
+  handleDuplicateTemplate: (scope?: 'import' | 'export') => Promise<void>;
   handleCreateExportFromImportTemplate: () => Promise<void>;
-  handleSaveTemplate: () => Promise<void>;
-  handleDeleteTemplate: () => Promise<void>;
+  handleSaveTemplate: (scope?: 'import' | 'export') => Promise<void>;
+  handleDeleteTemplate: (scope?: 'import' | 'export') => Promise<void>;
   applyTemplate: (template: Template, scope: 'import' | 'export') => void;
 
   importing: boolean;
@@ -129,6 +142,10 @@ export interface ImportExportContextType {
 
 export type ImportExportStateContextType = Pick<
   ImportExportContextType,
+  | 'saveImportSettings'
+  | 'hasUnsavedImportSettingsChanges'
+  | 'importsPageTab'
+  | 'setImportsPageTab'
   | 'inventoryId'
   | 'setInventoryId'
   | 'exportInventoryId'
@@ -181,6 +198,10 @@ export type ImportExportStateContextType = Pick<
   | 'setImportNameSearch'
   | 'importSkuSearch'
   | 'setImportSkuSearch'
+  | 'importDirectTargetType'
+  | 'setImportDirectTargetType'
+  | 'importDirectTargetValue'
+  | 'setImportDirectTargetValue'
   | 'importListPage'
   | 'setImportListPage'
   | 'importListPageSize'
@@ -189,6 +210,8 @@ export type ImportExportStateContextType = Pick<
   | 'setImportListEnabled'
   | 'selectedImportIds'
   | 'setSelectedImportIds'
+  | 'activeImportRunId'
+  | 'setActiveImportRunId'
   | 'templateScope'
   | 'setTemplateScope'
   | 'showAllWarehouses'
@@ -237,6 +260,8 @@ export type ImportExportActionsContextType = Pick<
   | 'handleResumeImport'
   | 'handleCancelImport'
   | 'handleDownloadImportReport'
+  | 'handleSaveImportSettings'
+  | 'handleClearSavedImportSettings'
   | 'handleSaveDefaultBaseConnection'
   | 'handleSaveExportSettings'
   | 'handleClearInventory'

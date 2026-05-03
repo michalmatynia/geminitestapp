@@ -205,7 +205,7 @@ describe('evaluateGraph', () => {
     expect(String(result.outputs['prompt-1']?.['prompt'] ?? '')).toContain('Draft ready');
   });
 
-  it('includes upstream waiting diagnostics when model is blocked on prompt', async () => {
+  it('rejects unsupported prompt-model circular dependencies before execution', async () => {
     const nodes: AiNode[] = [
       {
         id: 'prompt-1',
@@ -269,46 +269,16 @@ describe('evaluateGraph', () => {
       },
     ];
 
-    const result = await evaluateGraph({
-      ...defaultOptions,
-      nodes,
-      edges,
-    });
-
-    expect(result.outputs['model-1']?.['status']).toBe('waiting_callback');
-    expect(result.outputs['model-1']?.['skipReason']).toBe('missing_inputs');
-    expect(result.outputs['model-1']?.['waitingOnPorts']).toContain('prompt');
-    expect(result.outputs['model-1']?.['message']).toContain('Upstream status for prompt');
-    const waitingOnDetails = result.outputs['model-1']?.['waitingOnDetails'] as
-      | Array<{
-          port?: string;
-          upstream?: Array<{
-            nodeId?: string;
-            status?: string;
-            waitingOnPorts?: string[];
-            blockedReason?: string;
-          }>;
-        }>
-      | undefined;
-    const promptDetail = waitingOnDetails?.find(
-      (detail): boolean => detail?.port === 'prompt' && Array.isArray(detail.upstream)
-    );
-    const promptUpstream = promptDetail?.upstream?.find(
-      (entry): boolean =>
-        entry?.nodeId === 'prompt-1' &&
-        /^(?:blocked|waiting_callback)$/.test(String(entry?.status ?? ''))
-    );
-
-    expect(promptDetail).toBeDefined();
-    expect(promptUpstream).toBeDefined();
-    if (Array.isArray(promptUpstream?.waitingOnPorts)) {
-      expect(promptUpstream.waitingOnPorts).toContain('result');
-    } else {
-      expect(promptUpstream?.blockedReason).toBe('missing_inputs');
-    }
+    await expect(
+      evaluateGraph({
+        ...defaultOptions,
+        nodes,
+        edges,
+      })
+    ).rejects.toThrow(/unsupported circular dependency detected/i);
   });
 
-  it('does not emit blocked halt when unresolved nodes are waiting on upstream callbacks', async () => {
+  it('does not emit blocked halt when an unsupported prompt-model cycle is rejected early', async () => {
     const onHalt = vi.fn();
     const nodes: AiNode[] = [
       {
@@ -373,14 +343,14 @@ describe('evaluateGraph', () => {
       },
     ];
 
-    const result = await evaluateGraph({
-      ...defaultOptions,
-      nodes,
-      edges,
-      onHalt,
-    });
-
-    expect(result.outputs['model-1']?.['status']).toBe('waiting_callback');
+    await expect(
+      evaluateGraph({
+        ...defaultOptions,
+        nodes,
+        edges,
+        onHalt,
+      })
+    ).rejects.toThrow(/unsupported circular dependency detected/i);
     expect(onHalt).not.toHaveBeenCalled();
   });
 
@@ -730,7 +700,7 @@ describe('evaluateGraph', () => {
     expect(result.outputs['n4']).toEqual({ value: 8 });
   });
 
-  it('should stop if max iterations reached in a loop', async () => {
+  it('rejects unsupported self-loops before maxIterations is reached', async () => {
     // n1 (math +1) -> n1 (loop back)
     // evaluateGraph uses maxIterations = Math.max(2, nodes.length + 2)
     // For 1 node, maxIterations = 3.
@@ -758,7 +728,7 @@ describe('evaluateGraph', () => {
         seedOutputs: { n1: { value: 0 } },
         maxIterations: 3,
       })
-    ).rejects.toThrow(/maximum iterations/i);
+    ).rejects.toThrow(/unsupported circular dependency detected/i);
   });
 
   it('keeps inferred array values for database update mappings', async () => {

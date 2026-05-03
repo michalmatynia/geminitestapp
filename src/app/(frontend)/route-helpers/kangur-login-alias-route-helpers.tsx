@@ -5,8 +5,12 @@ import { redirect } from 'next/navigation';
 import { Suspense, type JSX } from 'react';
 
 import { resolveFrontPageSelection } from '@/app/(frontend)/home/home-helpers';
-import { getKangurCanonicalPublicHref, getKangurHomeHref, KangurFeatureRouteShell } from '@/features/kangur/public';
+import {
+  getKangurCanonicalPublicHref,
+  getKangurHomeHref,
+} from '@/features/kangur/config/routing';
 import { readSanitizedKangurAliasLoginSearchParams } from '@/features/kangur/server';
+import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurAliasLoginSearchParams = Record<string, string | string[] | undefined>;
@@ -20,14 +24,14 @@ const resolveAliasLocale = (locale?: string | null): string | undefined =>
   typeof locale === 'string' ? normalizeSiteLocale(locale) : undefined;
 
 const localizeAliasPath = (pathname: string, locale?: string): string =>
-  locale ? buildLocalizedPathname(pathname, locale) : pathname;
+  (typeof locale === 'string' && locale !== '') ? buildLocalizedPathname(pathname, locale) : pathname;
 
 export const renderKangurLoginAliasRoute = async ({
   locale,
   searchParams,
 }: RenderKangurLoginAliasRouteOptions = {}): Promise<JSX.Element> => {
   const resolvedLocale = resolveAliasLocale(locale);
-  const translations = resolvedLocale
+  const translations = (typeof resolvedLocale === 'string' && resolvedLocale !== '')
     ? await getTranslations({ locale: resolvedLocale, namespace: 'KangurPublic' })
     : await getTranslations('KangurPublic');
   const frontPageSelection = await resolveFrontPageSelection();

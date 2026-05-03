@@ -24,6 +24,7 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 
 import { KANGUR_SCORES_ENDPOINT } from './local-kangur-platform-endpoints';
 import { resolveSessionUser } from './local-kangur-platform-auth';
+import { isRecoverableScoreListReadError } from './local-kangur-platform-score-errors';
 import {
   clearScoreQueryCache,
   scoreQueryCache,
@@ -57,8 +58,10 @@ const buildScoresUrl = (params: {
   learner_id?: string;
 }): string => buildKangurScoreListPath(params);
 
-const getScoreDedupKey = (score: KangurScoreRecord): string =>
-  score.client_mutation_id?.trim() || score.id;
+const getScoreDedupKey = (score: KangurScoreRecord): string => {
+  const mutationId = score.client_mutation_id?.trim();
+  return typeof mutationId === 'string' && mutationId.length > 0 ? mutationId : score.id;
+};
 
 const mergeScoreRows = (input: {
   localRows: KangurScoreRecord[];
@@ -166,6 +169,10 @@ export const requestMergedScores = async (params: {
       limit: params.limit,
     });
   } catch (error: unknown) {
+    if (isRecoverableScoreListReadError(error)) {
+      return localRows;
+    }
+
     if (!isRecoverableKangurClientFetchError(error)) {
       void ErrorSystem.captureException(error);
       reportKangurClientError(error, {
@@ -236,10 +243,10 @@ const requestScoresFromApi = async (
         },
         {
           fallback: [] as KangurScoreRecord[],
-          shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
+          shouldReport: (error) => !isRecoverableScoreListReadError(error),
           shouldRethrow: () => true,
           onError: (error) => {
-            if (isRecoverableKangurClientFetchError(error)) {
+            if (isRecoverableScoreListReadError(error)) {
               return;
             }
             trackReadFailure('score.list', error, {

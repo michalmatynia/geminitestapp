@@ -1,6 +1,6 @@
-import type { KangurDuelLeaderboardEntry } from '@kangur/contracts/kangur-duels';
+import type { KangurDuelLeaderboardEntry, KangurDuelOpponentEntry } from '@kangur/contracts/kangur-duels';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileHomeDuelsLeaderboard } from '../home/useKangurMobileHomeDuelsLeaderboard';
@@ -23,121 +23,94 @@ type UseKangurMobileLeaderboardDuelsResult = {
   isActionPending: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
-  pendingLearnerId: string | null;
+  pendingOpponentLearnerId: string | null;
   refresh: () => Promise<void>;
 };
 
-const toLeaderboardDuelsActionErrorMessage = (
-  error: unknown,
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
-): string => {
-  if (typeof error === 'object' && error && 'status' in error) {
-    const status = (error as { status?: number }).status;
-
-    if (status === 401) {
-      return copy({
-        de: 'Melde dich an, um ein privates Duell zu senden.',
-        en: 'Sign in to send a private duel.',
-        pl: 'Zaloguj się, aby wysłać prywatny pojedynek.',
-      });
+function useLeaderboardDuelsActionErrorMessage(copy: ReturnType<typeof useKangurMobileI18n>['copy']): (error: unknown) => string {
+  return useCallback((error: unknown): string => {
+    if (typeof error === 'object' && error !== null && 'status' in error) {
+      if ((error as { status?: number }).status === 401) {
+        return copy({ de: 'Melde dich an.', en: 'Sign in.', pl: 'Zaloguj się.' });
+      }
     }
-  }
+    if (!(error instanceof Error)) return copy({ de: 'Fehler.', en: 'Error.', pl: 'Błąd.' });
+    const message = error.message.trim();
+    if (message === '' || message.toLowerCase().includes('failed to fetch')) {
+       return copy({ de: 'Fehler.', en: 'Error.', pl: 'Błąd.' });
+    }
+    return message;
+  }, [copy]);
+}
 
-  if (!(error instanceof Error)) {
-    return copy({
-      de: 'Das private Duell konnte nicht erstellt werden.',
-      en: 'Could not create the private duel.',
-      pl: 'Nie udało się utworzyć prywatnego pojedynku.',
-    });
-  }
+function useLeaderboardRank(activeLearnerId: string | null, entries: KangurDuelLeaderboardEntry[]): number {
+  return useMemo(() => {
+    if (activeLearnerId === null) return -1;
+    return entries.findIndex((entry) => entry.learnerId === activeLearnerId);
+  }, [activeLearnerId, entries]);
+}
 
-  const message = error.message.trim();
-  if (!message) {
-    return copy({
-      de: 'Das private Duell konnte nicht erstellt werden.',
-      en: 'Could not create the private duel.',
-      pl: 'Nie udało się utworzyć prywatnego pojedynku.',
-    });
-  }
-
-  const normalized = message.toLowerCase();
-  if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Das private Duell konnte nicht erstellt werden.',
-      en: 'Could not create the private duel.',
-      pl: 'Nie udało się utworzyć prywatnego pojedynku.',
-    });
-  }
-
-  return message;
+type ChallengeActionState = {
+  actionError: string | null;
+  isActionPending: boolean;
+  pendingOpponentLearnerId: string | null;
+  challengeLearner: (opponentLearnerId: string) => Promise<string | null>;
 };
 
-export const useKangurMobileLeaderboardDuels =
+function performDuelChallenge(apiClient: any, queryClient: any, opponentLearnerId: string, apiBaseUrl: string) {
+  return apiClient.createDuel({
+    difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY, mode: 'challenge', operation: MOBILE_DUEL_DEFAULT_OPERATION,
+    opponentLearnerId, questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT, timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
+    visibility: 'private',
+  }, { cache: 'no-store' }).then(async (response: any) => {
+    await queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'home', 'duels-leaderboard', apiBaseUrl] });
+    return response.session.id;
+  });
+}
+
+function useLeaderboardChallengeAction(toErrorMessage: (error: unknown) => string): ChallengeActionState {
+  const queryClient = useQueryClient();
+  const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isActionPending, setIsActionPending] = useState(false);
+  const [pendingOpponentLearnerId, setPendingOpponentLearnerId] = useState<string | null>(null);
+
+  const challengeLearner = useCallback(async (opponentLearnerId: string) => {
+    setActionError(null);
+    setIsActionPending(true);
+    setPendingOpponentLearnerId(opponentLearnerId);
+    try {
+      return await performDuelChallenge(apiClient, queryClient, opponentLearnerId, apiBaseUrl);
+    } catch (error) {
+      setActionError(toErrorMessage(error));
+      return null;
+    } finally {
+      setIsActionPending(false);
+      setPendingOpponentLearnerId(null);
+    }
+  }, [apiClient, toErrorMessage, queryClient, apiBaseUrl]);
+
+  return { actionError, isActionPending, pendingOpponentLearnerId, challengeLearner };
+}
+
+export const useKangurMobileLearnerDuelsSummary =
   (): UseKangurMobileLeaderboardDuelsResult => {
-    const queryClient = useQueryClient();
     const { copy } = useKangurMobileI18n();
-    const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
     const duelLeaderboard = useKangurMobileHomeDuelsLeaderboard();
     const { session } = useKangurMobileAuth();
-    const [actionError, setActionError] = useState<string | null>(null);
-    const [isActionPending, setIsActionPending] = useState(false);
-    const [pendingLearnerId, setPendingLearnerId] = useState<string | null>(null);
     const activeLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
     const isAuthenticated = session.status === 'authenticated';
-    const leaderboardQueryKey = [
-      'kangur-mobile',
-      'home',
-      'duels-leaderboard',
-      apiBaseUrl,
-    ] as const;
+    const toErrorMessage = useLeaderboardDuelsActionErrorMessage(copy);
 
-    const currentRank = useMemo(() => {
-      if (!activeLearnerId) {
-        return -1;
-      }
-
-      return duelLeaderboard.entries.findIndex((entry) => entry.learnerId === activeLearnerId);
-    }, [activeLearnerId, duelLeaderboard.entries]);
+    const currentIdx = useLeaderboardRank(activeLearnerId, duelLeaderboard.entries);
+    const challengeAction = useLeaderboardChallengeAction(toErrorMessage);
 
     return {
-      actionError,
-      challengeLearner: async (opponentLearnerId) => {
-        setActionError(null);
-        setIsActionPending(true);
-        setPendingLearnerId(opponentLearnerId);
-
-        try {
-          const response = await apiClient.createDuel(
-            {
-              difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
-              mode: 'challenge',
-              operation: MOBILE_DUEL_DEFAULT_OPERATION,
-              opponentLearnerId,
-              questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
-              timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
-              visibility: 'private',
-            },
-            { cache: 'no-store' },
-          );
-
-          await queryClient.invalidateQueries({ queryKey: leaderboardQueryKey });
-          return response.session.id;
-        } catch (error) {
-          setActionError(toLeaderboardDuelsActionErrorMessage(error, copy));
-          return null;
-        } finally {
-          setIsActionPending(false);
-          setPendingLearnerId(null);
-        }
-      },
-      currentEntry: currentRank >= 0 ? duelLeaderboard.entries[currentRank] ?? null : null,
-      currentRank: currentRank >= 0 ? currentRank + 1 : null,
-      entries: duelLeaderboard.entries,
-      error: duelLeaderboard.error,
-      isActionPending,
-      isAuthenticated,
-      isLoading: duelLeaderboard.isLoading,
-      pendingLearnerId,
+      ...challengeAction,
+      currentEntry: currentIdx >= 0 ? duelLeaderboard.entries[currentIdx] ?? null : null,
+      currentRank: currentIdx >= 0 ? currentIdx + 1 : null,
+      entries: duelLeaderboard.entries, error: duelLeaderboard.error,
+      isAuthenticated, isLoading: duelLeaderboard.isLoading,
       refresh: duelLeaderboard.refresh,
     };
   };

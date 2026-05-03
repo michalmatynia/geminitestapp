@@ -1,100 +1,12 @@
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
-import {
-  getAutoSeedStarterWorkflowEntries,
-  materializeStarterWorkflowPathConfig,
-  upgradeStarterWorkflowPathConfig,
-} from '@/shared/lib/ai-paths/core/starter-workflows';
+import { upgradeStarterWorkflowPathConfig } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
 
 import { normalizeLoadedPathName, sanitizeTriggerPathConfig } from './trigger-normalization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-const LEGACY_TRIGGER_PROVIDER_ALIASES = new Set(['all', 'mongodb']);
-
-export const repairLegacyTriggerProviderAliases = (
-  config: PathConfig
-): { config: PathConfig; changed: boolean } => {
-  if (!Array.isArray(config.nodes) || config.nodes.length === 0) {
-    return { config, changed: false };
-  }
-
-  let changed = false;
-  const nextNodes = config.nodes.map((node: AiNode): AiNode => {
-    if (node.type === 'database') {
-      const databaseConfig =
-        node.config?.database && typeof node.config.database === 'object'
-          ? node.config.database
-          : null;
-      const queryConfig =
-        databaseConfig?.query && typeof databaseConfig.query === 'object'
-          ? databaseConfig.query
-          : null;
-      const provider =
-        typeof queryConfig?.provider === 'string' ? queryConfig.provider.trim().toLowerCase() : null;
-      if (!databaseConfig || !queryConfig || !provider) {
-        return node;
-      }
-      if (!LEGACY_TRIGGER_PROVIDER_ALIASES.has(provider)) {
-        return node;
-      }
-
-      changed = true;
-      return {
-        ...node,
-        config: {
-          ...node.config,
-          database: {
-            ...databaseConfig,
-            query: {
-              ...queryConfig,
-              provider: 'auto',
-            },
-          },
-        },
-      };
-    }
-
-    if (node.type === 'db_schema') {
-      const schemaConfig =
-        node.config?.db_schema && typeof node.config.db_schema === 'object'
-          ? node.config.db_schema
-          : null;
-      const provider =
-        typeof schemaConfig?.provider === 'string' ? schemaConfig.provider.trim().toLowerCase() : null;
-      if (!schemaConfig || !provider || !LEGACY_TRIGGER_PROVIDER_ALIASES.has(provider)) {
-        return node;
-      }
-
-      changed = true;
-      return {
-        ...node,
-        config: {
-          ...node.config,
-          db_schema: {
-            ...schemaConfig,
-            provider: 'auto',
-          },
-        },
-      };
-    }
-
-    return node;
-  });
-
-  return changed
-    ? {
-        config: {
-          ...config,
-          nodes: nextNodes,
-        },
-        changed: true,
-      }
-    : { config, changed: false };
-};
 
 const createStoredPathConfigFallback = (pathId: string): PathConfig => {
   const baseConfig = createDefaultPathConfig(pathId);
@@ -161,12 +73,6 @@ const resolveStoredUiState = (args: {
   };
 };
 
-const normalizeOptionalText = (value: unknown): string | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-};
-
 const hasNodeWithId = (nodes: AiNode[] | undefined, selectedNodeId: string | null | undefined): boolean =>
   Boolean(selectedNodeId && (nodes ?? []).some((node: AiNode): boolean => node.id === selectedNodeId));
 
@@ -214,48 +120,6 @@ const resolveSelectedNodeIdOverride = (
   return resolveStoredSelectedNodeIdValue(resolveStoredUiStateRecord(parsedConfig));
 };
 
-const resolveSeededStarterFallbackConfig = (args: {
-  pathId: string;
-  rawConfig: string;
-  fallbackName?: string | null | undefined;
-}): PathConfig | null => {
-  const { pathId, rawConfig, fallbackName } = args;
-  const entry =
-    getAutoSeedStarterWorkflowEntries().find((candidate) => candidate.seedPolicy?.defaultPathId === pathId) ??
-    null;
-  if (!entry) return null;
-
-  let parsedConfig: Record<string, unknown> | null = null;
-  try {
-    const parsed = JSON.parse(rawConfig) as unknown;
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      parsedConfig = parsed as Record<string, unknown>;
-    }
-  } catch (error) {
-    logClientError(error);
-    parsedConfig = null;
-  }
-
-  return materializeStarterWorkflowPathConfig(entry, {
-    pathId,
-    name:
-      normalizeLoadedPathName(pathId, parsedConfig?.['name']) ||
-      normalizeLoadedPathName(pathId, fallbackName) ||
-      entry.name,
-    description: normalizeOptionalText(parsedConfig?.['description']),
-    isActive:
-      typeof parsedConfig?.['isActive'] === 'boolean'
-        ? parsedConfig['isActive']
-        : entry.seedPolicy?.isActive,
-    isLocked:
-      typeof parsedConfig?.['isLocked'] === 'boolean'
-        ? parsedConfig['isLocked']
-        : entry.seedPolicy?.isLocked,
-    seededDefault: true,
-    updatedAt: normalizeOptionalText(parsedConfig?.['updatedAt']),
-  });
-};
-
 const normalizeResolvedTriggerConfig = (args: {
   pathId: string;
   fallbackName?: string | null | undefined;
@@ -273,7 +137,6 @@ const normalizeResolvedTriggerConfig = (args: {
     selectedNodeIdOverride,
   });
   const resolvedConfig = resolvePortablePathInput(preSanitizedConfig, {
-    repairIdentities: true,
     includeConnections: false,
     signingPolicyTelemetrySurface: 'product',
     nodeCodeObjectHashVerificationMode: 'warn',
@@ -339,6 +202,7 @@ export const materializeStoredTriggerPathConfig = (args: {
   pathId: string;
   rawConfig: string;
   fallbackName?: string | null | undefined;
+  applyStarterWorkflowUpgrade?: boolean | undefined;
 }): {
   config: PathConfig;
   changed: boolean;
@@ -362,14 +226,13 @@ export const materializeStoredTriggerPathConfig = (args: {
       parsedConfig && typeof parsedConfig === 'object' && !Array.isArray(parsedConfig)
         ? (parsedConfig as PathConfig)
         : null;
-    const rawStarterUpgrade = rawParsedConfig ? upgradeStarterWorkflowPathConfig(rawParsedConfig) : null;
-    const triggerPreflightBaseConfig = rawStarterUpgrade?.config ?? rawParsedConfig;
-    const providerAliasRepair =
-      triggerPreflightBaseConfig ? repairLegacyTriggerProviderAliases(triggerPreflightBaseConfig) : null;
-    const configForResolution = providerAliasRepair?.config ?? rawStarterUpgrade?.config ?? parsedConfig;
+    const rawStarterUpgrade =
+      rawParsedConfig && args.applyStarterWorkflowUpgrade !== false
+        ? upgradeStarterWorkflowPathConfig(rawParsedConfig)
+        : null;
+    const configForResolution = rawStarterUpgrade?.config ?? parsedConfig;
 
     const resolvedConfig = resolvePortablePathInput(configForResolution, {
-      repairIdentities: true,
       includeConnections: false,
       signingPolicyTelemetrySurface: 'product',
       nodeCodeObjectHashVerificationMode: 'warn',
@@ -444,21 +307,6 @@ export const materializeStoredTriggerPathConfig = (args: {
     };
   } catch (error) {
     logClientError(error);
-    const fallbackConfig = resolveSeededStarterFallbackConfig({
-      pathId,
-      rawConfig,
-      fallbackName,
-    });
-    if (!fallbackConfig) {
-      throw error;
-    }
-    return {
-      config: normalizeResolvedTriggerConfig({
-        pathId,
-        fallbackName,
-        config: fallbackConfig,
-      }),
-      changed: true,
-    };
+    throw error;
   }
 };

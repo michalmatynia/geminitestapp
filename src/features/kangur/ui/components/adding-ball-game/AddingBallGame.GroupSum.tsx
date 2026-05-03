@@ -13,6 +13,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 
 import { DraggableBall, PointerDropZone } from './AddingBallGame.Shared';
 import { PointerDragProvider } from './PointerDragProvider';
+import { safeSetTimeout } from '@/shared/lib/timers';
 import type { BallItem, GroupSlotId, GroupSumRound, GroupSumState } from './types';
 import {
   BALL_POOL_CLASSNAME,
@@ -33,6 +34,21 @@ const GROUP_SUM_ZONE_DEFINITIONS = [
 ] as const;
 
 type SetGroupSumState = React.Dispatch<React.SetStateAction<GroupSumState>>;
+
+type GroupSumContextValue = ReturnType<typeof useGroupSumState> & {
+  round: GroupSumRound;
+  onResult: (correct: boolean) => void;
+};
+
+const GroupSumContext = React.createContext<GroupSumContextValue | null>(null);
+
+function useGroupSum(): GroupSumContextValue {
+  const context = React.useContext(GroupSumContext);
+  if (!context) {
+    throw new Error('useGroupSum must be used within GroupSum.');
+  }
+  return context;
+}
 
 function useGroupSumState(round: GroupSumRound) {
   const total = round.a + round.b;
@@ -78,7 +94,7 @@ function useGroupSumState(round: GroupSumRound) {
       const ok = isAcceptedCountSplit(state.group1.length, state.group2.length, round.a, round.b);
       setCorrect(ok);
       setChecked(true);
-      setTimeout(() => onResult(ok), 1400);
+      safeSetTimeout(() => onResult(ok), 1400);
     },
     [round.a, round.b, state.group1.length, state.group2.length]
   );
@@ -203,15 +219,9 @@ const applyGroupSumDropResult = ({
   });
 };
 
-function GroupSumHeader({
-  round,
-  total,
-  acceptedGroupPair,
-}: {
-  round: GroupSumRound;
-  total: number;
-  acceptedGroupPair: string;
-}): React.JSX.Element {
+function GroupSumHeader(): React.JSX.Element {
+  const { round, total } = useGroupSum();
+  const acceptedGroupPair = formatAcceptedGroupPair(round.a, round.b);
   return (
     <>
       <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
@@ -233,17 +243,14 @@ function GroupSumHeader({
   );
 }
 
-function GroupSumResult({
-  checked,
-  correct,
-  successMessage,
-  retryMessage,
-}: {
-  checked: boolean;
-  correct: boolean;
-  successMessage: string;
-  retryMessage: string;
-}): React.JSX.Element | null {
+function GroupSumResult(): React.JSX.Element | null {
+  const { checked, correct, round, state } = useGroupSum();
+  const submittedGroupPair = formatSubmittedGroupPair(state.group1.length, state.group2.length);
+  const { success: successMessage, retry: retryMessage } = resolveGroupSumMessages(
+    round,
+    submittedGroupPair
+  );
+
   if (!checked) {
     return null;
   }
@@ -259,21 +266,16 @@ function GroupSumResult({
   );
 }
 
-function GroupSumCheckButton({
-  checked,
-  hasAnswer,
-  onCheck,
-}: {
-  checked: boolean;
-  hasAnswer: boolean;
-  onCheck: () => void;
-}): React.JSX.Element | null {
+function GroupSumCheckButton(): React.JSX.Element | null {
+  const { checked, state, check, onResult } = useGroupSum();
+  const hasAnswer = state.group1.length > 0 && state.group2.length > 0;
+
   if (checked) {
     return null;
   }
 
   return (
-    <KangurButton disabled={!hasAnswer} onClick={onCheck} size='lg' variant='primary'>
+    <KangurButton disabled={!hasAnswer} onClick={() => check(onResult)} size='lg' variant='primary'>
       Sprawdź ✓
     </KangurButton>
   );
@@ -282,14 +284,13 @@ function GroupSumCheckButton({
 function GroupSumDesktopZone(props: {
   id: Extract<GroupSlotId, 'group1' | 'group2'>;
   label: string;
-  items: BallItem[];
-  checked: boolean;
-  correct: boolean;
   selectedBallId: string | null;
-  selectedBall: BallItem | null;
   onSelectBall: (id: string) => void;
 }): React.JSX.Element {
-  const { id, label, items, checked, correct, selectedBallId, selectedBall, onSelectBall } = props;
+  const { id, label, selectedBallId, onSelectBall } = props;
+  const { state, checked, correct } = useGroupSum();
+  const items = state[id];
+  const selectedBall = resolveSelectedGroupBall(state, selectedBallId);
 
   return (
     <Droppable droppableId={id} direction='horizontal'>
@@ -336,13 +337,12 @@ function GroupSumDesktopZone(props: {
 }
 
 function GroupSumPool(props: {
-  checked: boolean;
-  selectedBall: BallItem | null;
-  state: GroupSumState;
   selectedBallId: string | null;
   onSelectBall: (id: string) => void;
 }): React.JSX.Element {
-  const { checked, selectedBall, state, selectedBallId, onSelectBall } = props;
+  const { selectedBallId, onSelectBall } = props;
+  const { checked, state } = useGroupSum();
+  const selectedBall = resolveSelectedGroupBall(state, selectedBallId);
 
   return (
     <Droppable droppableId='pool' direction='horizontal'>
@@ -378,13 +378,13 @@ function GroupSumPool(props: {
 }
 
 function GroupSumSelectionControls(props: {
-  checked: boolean;
   selectedBall: BallItem | null;
   onMoveToGroup1: () => void;
   onMoveToGroup2: () => void;
   onMoveToPool: () => void;
 }): React.JSX.Element {
-  const { checked, selectedBall, onMoveToGroup1, onMoveToGroup2, onMoveToPool } = props;
+  const { selectedBall, onMoveToGroup1, onMoveToGroup2, onMoveToPool } = props;
+  const { checked } = useGroupSum();
 
   return (
     <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
@@ -412,22 +412,13 @@ function GroupSumSelectionControls(props: {
   );
 }
 
-function GroupSumMobile({
-  round,
-  onResult,
-}: {
-  round: GroupSumRound;
-  onResult: (correct: boolean) => void;
-}): React.JSX.Element {
-  const { state, checked, correct, moveBallTo, check, total } = useGroupSumState(round);
-  const acceptedGroupPair = formatAcceptedGroupPair(round.a, round.b);
-  const submittedGroupPair = formatSubmittedGroupPair(state.group1.length, state.group2.length);
-  const { success, retry } = resolveGroupSumMessages(round, submittedGroupPair);
+function GroupSumMobile(): React.JSX.Element {
+  const { state, checked, correct, moveBallTo } = useGroupSum();
 
   return (
     <PointerDragProvider onDrop={moveBallTo} disabled={checked}>
       <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-        <GroupSumHeader round={round} total={total} acceptedGroupPair={acceptedGroupPair} />
+        <GroupSumHeader />
 
         <div className='flex kangur-panel-gap flex-wrap justify-center'>
           <PointerDropZone id='group1' items={state.group1} label='Grupa 1' checked={checked} correct={correct} small />
@@ -443,29 +434,16 @@ function GroupSumMobile({
           Przeciągnij piłkę do grupy 1, grupy 2 albo z powrotem do puli.
         </p>
 
-        <GroupSumCheckButton
-          checked={checked}
-          hasAnswer={state.group1.length > 0 && state.group2.length > 0}
-          onCheck={() => check(onResult)}
-        />
-        <GroupSumResult checked={checked} correct={correct} successMessage={success} retryMessage={retry} />
+        <GroupSumCheckButton />
+        <GroupSumResult />
       </div>
     </PointerDragProvider>
   );
 }
 
-function GroupSumDesktop({
-  round,
-  onResult,
-}: {
-  round: GroupSumRound;
-  onResult: (correct: boolean) => void;
-}): React.JSX.Element {
-  const { state, setState, checked, correct, check, total } = useGroupSumState(round);
+function GroupSumDesktop(): React.JSX.Element {
+  const { state, setState, checked } = useGroupSum();
   const [selectedBallId, setSelectedBallId] = useState<string | null>(null);
-  const acceptedGroupPair = formatAcceptedGroupPair(round.a, round.b);
-  const submittedGroupPair = formatSubmittedGroupPair(state.group1.length, state.group2.length);
-  const { success, retry } = resolveGroupSumMessages(round, submittedGroupPair);
   const selectedBall = resolveSelectedGroupBall(state, selectedBallId);
 
   const handleSelectBall = useCallback((id: string): void => {
@@ -500,7 +478,7 @@ function GroupSumDesktop({
   return (
     <KangurDragDropContext onDragEnd={handleDragEnd}>
       <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-        <GroupSumHeader round={round} total={total} acceptedGroupPair={acceptedGroupPair} />
+        <GroupSumHeader />
 
         <div className='flex kangur-panel-gap flex-wrap justify-center'>
           {GROUP_SUM_ZONE_DEFINITIONS.map((group) => (
@@ -508,38 +486,26 @@ function GroupSumDesktop({
               key={group.id}
               id={group.id}
               label={group.label}
-              items={state[group.id]}
-              checked={checked}
-              correct={correct}
               selectedBallId={selectedBallId}
-              selectedBall={selectedBall}
               onSelectBall={handleSelectBall}
             />
           ))}
         </div>
 
         <GroupSumPool
-          checked={checked}
-          selectedBall={selectedBall}
-          state={state}
           selectedBallId={selectedBallId}
           onSelectBall={handleSelectBall}
         />
 
         <GroupSumSelectionControls
-          checked={checked}
           selectedBall={selectedBall}
           onMoveToGroup1={() => handleMoveSelectedBallTo('group1')}
           onMoveToGroup2={() => handleMoveSelectedBallTo('group2')}
           onMoveToPool={() => handleMoveSelectedBallTo('pool')}
         />
 
-        <GroupSumCheckButton
-          checked={checked}
-          hasAnswer={state.group1.length > 0 && state.group2.length > 0}
-          onCheck={() => check(onResult)}
-        />
-        <GroupSumResult checked={checked} correct={correct} successMessage={success} retryMessage={retry} />
+        <GroupSumCheckButton />
+        <GroupSumResult />
       </div>
     </KangurDragDropContext>
   );
@@ -553,10 +519,11 @@ export function GroupSum({
   onResult: (correct: boolean) => void;
 }): React.JSX.Element {
   const isCoarsePointer = useKangurCoarsePointer();
+  const state = useGroupSumState(round);
 
-  if (isCoarsePointer) {
-    return <GroupSumMobile round={round} onResult={onResult} />;
-  }
-
-  return <GroupSumDesktop round={round} onResult={onResult} />;
+  return (
+    <GroupSumContext.Provider value={{ ...state, round, onResult }}>
+      {isCoarsePointer ? <GroupSumMobile /> : <GroupSumDesktop />}
+    </GroupSumContext.Provider>
+  );
 }

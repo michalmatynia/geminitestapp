@@ -23,34 +23,28 @@ const toLeaderboardErrorMessage = (
   error: unknown,
   copy: ReturnType<typeof useKangurMobileI18n>['copy'],
 ): string | null => {
-  if (!error) {
+  if (error === null || error === undefined || error === false) {
     return null;
   }
 
+  const fallbackMsg = copy({
+    de: 'Die Duell-Rangliste konnte nicht geladen werden.',
+    en: 'Could not load the duel leaderboard.',
+    pl: 'Nie udało się pobrać rankingu pojedynków.',
+  });
+
   if (!(error instanceof Error)) {
-    return copy({
-      de: 'Die Duell-Rangliste konnte nicht geladen werden.',
-      en: 'Could not load the duel leaderboard.',
-      pl: 'Nie udało się pobrać rankingu pojedynków.',
-    });
+    return fallbackMsg;
   }
 
   const message = error.message.trim();
-  if (!message) {
-    return copy({
-      de: 'Die Duell-Rangliste konnte nicht geladen werden.',
-      en: 'Could not load the duel leaderboard.',
-      pl: 'Nie udało się pobrać rankingu pojedynków.',
-    });
+  if (message === '') {
+    return fallbackMsg;
   }
 
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Die Duell-Rangliste konnte nicht geladen werden.',
-      en: 'Could not load the duel leaderboard.',
-      pl: 'Nie udało się pobrać rankingu pojedynków.',
-    });
+    return fallbackMsg;
   }
 
   return message;
@@ -64,20 +58,11 @@ export const useKangurMobileHomeDuelsLeaderboard = ({
 
   const leaderboardQuery = useQuery({
     enabled,
-    queryKey: [
-      'kangur-mobile',
-      'home',
-      'duels-leaderboard',
-      apiBaseUrl,
-    ] as const,
-    queryFn: async () =>
-      apiClient.getDuelLeaderboard(
-        {
-          limit: MOBILE_HOME_DUELS_LEADERBOARD_LIMIT,
-          lookbackDays: MOBILE_HOME_DUELS_LEADERBOARD_LOOKBACK_DAYS,
-        },
-        { cache: 'no-store' },
-      ),
+    queryKey: ['kangur-mobile', 'home', 'duels-leaderboard', apiBaseUrl] as const,
+    queryFn: async () => apiClient.getDuelLeaderboard(
+        { limit: MOBILE_HOME_DUELS_LEADERBOARD_LIMIT, lookbackDays: MOBILE_HOME_DUELS_LEADERBOARD_LOOKBACK_DAYS },
+        { cache: 'no-store' }
+    ),
     refetchInterval: MOBILE_HOME_DUELS_LEADERBOARD_POLL_MS,
     staleTime: 15_000,
   });
@@ -86,12 +71,6 @@ export const useKangurMobileHomeDuelsLeaderboard = ({
     entries: leaderboardQuery.data?.entries ?? [],
     error: toLeaderboardErrorMessage(leaderboardQuery.error, copy),
     isLoading: enabled && leaderboardQuery.isLoading,
-    refresh: async () => {
-      if (!enabled) {
-        return;
-      }
-
-      await leaderboardQuery.refetch();
-    },
+    refresh: async () => { if (enabled) await leaderboardQuery.refetch(); },
   };
 };

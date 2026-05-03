@@ -18,7 +18,7 @@ const ExamNavigationContext = createContext<ExamNavigationContextValue | null>(n
 
 export const ExamNavigationProvider = ExamNavigationContext.Provider;
 
-export function useExamNavigation() {
+export function useExamNavigation(): ExamNavigationContextValue {
   const context = useContext(ExamNavigationContext);
   if (!context) {
     throw internalError('useExamNavigation must be used within an ExamNavigationProvider');

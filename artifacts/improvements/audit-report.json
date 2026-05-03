@@ -1,60 +1,41 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-02T21:14:56.627Z",
+  "generatedAt": "2026-04-30T09:41:38.928Z",
   "phase": "audit",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
-    "products-parameter-integrity",
-    "products-category-schema-normalization",
-    "repo-quality-baseline"
+    "image-studio-product-integration"
   ],
   "reportPath": "artifacts/improvements/audit-report.json",
   "steps": [
     {
-      "id": "products-parameter-audit",
-      "title": "Audit products with missing parameters",
-      "trackId": "products-parameter-integrity",
+      "id": "image-studio-product-runtime-audit",
+      "title": "Audit Product modal Image Studio runtime health",
+      "trackId": "image-studio-product-integration",
       "phase": "audit",
-      "mode": "automatic",
+      "mode": "manual",
       "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-missing-parameters-audit-*.json",
-        "/tmp/product-missing-parameters-audit-latest.json"
-      ],
-      "instructions": [],
-      "script": "products:audit:missing-parameters",
-      "durationMs": 2943
+      "status": "manual",
+      "outputs": [],
+      "instructions": [
+        "Open the Product edit modal and switch to the Studio tab with a product that has image slots.",
+        "Confirm the Studio project field, source image selector, action bar, variant grid, and audit history render without React maximum update depth errors.",
+        "Verify the selected Studio project can be changed without repeated autosave requests for the same value."
+      ]
     },
     {
-      "id": "repo-quality-api-error-sources",
-      "title": "Check API error source coverage",
-      "trackId": "repo-quality-baseline",
-      "phase": "audit",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "docs/metrics/api-error-sources-latest.json",
-        "docs/metrics/api-error-sources-latest.md"
-      ],
-      "instructions": [],
-      "script": "check:api-error-sources",
-      "durationMs": 381
-    },
-    {
-      "id": "repo-quality-canonical-sitewide",
-      "title": "Check canonical sitewide coverage",
-      "trackId": "repo-quality-baseline",
+      "id": "image-studio-product-regression-tests",
+      "title": "Run Product modal and Image Studio integration regression tests",
+      "trackId": "image-studio-product-integration",
       "phase": "audit",
       "mode": "automatic",
       "writes": false,
       "status": "passed",
       "outputs": [],
       "instructions": [],
-      "script": "canonical:check:sitewide",
-      "durationMs": 2450
+      "script": "test:image-studio-product",
+      "durationMs": 13439
     }
   ]
 }

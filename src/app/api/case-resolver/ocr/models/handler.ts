@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import type { CaseResolverOcrModelsResponse } from '@/shared/contracts/case-resolver/ocr';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const payload = await listBrainModels({ family: 'ocr' });
   const ollamaModels = payload.models.filter((modelId: string): boolean => {
     const descriptor = payload.descriptors?.[modelId];

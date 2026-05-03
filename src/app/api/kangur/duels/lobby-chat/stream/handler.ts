@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { listKangurDuelLobbyChatMessages } from '@/features/kangur/duels/lobby-chat';
@@ -42,7 +42,7 @@ const createSubscriber = (): Redis | null => {
   });
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

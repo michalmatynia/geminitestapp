@@ -5,8 +5,9 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
 
 import { buildGameRuntime, expectStandardMobileGameLayout } from './Game.test-support';
 
@@ -14,6 +15,7 @@ const {
   useKangurGameRuntimeMock,
   useKangurGameContentSetsMock,
   useKangurGameInstancesMock,
+  useKangurLearnerActivityPingMock,
   useKangurMobileBreakpointMock,
   routeNavigatorPrefetchMock,
   routeNavigatorPushMock,
@@ -21,7 +23,9 @@ const {
   assignmentSpotlightPropsMock,
   homeActionsPropsMock,
   homeDuelsInvitesPropsMock,
+  useKangurTutorAnchorsMock,
   tutorSessionSyncPropsMock,
+  lazyDocsTooltipEnhancerPropsMock,
   xpToastPropsMock,
   addingBallGamePropsMock,
   addingSynthesisGamePropsMock,
@@ -39,6 +43,7 @@ const {
   useKangurGameRuntimeMock: vi.fn(),
   useKangurGameContentSetsMock: vi.fn(),
   useKangurGameInstancesMock: vi.fn(),
+  useKangurLearnerActivityPingMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
   routeNavigatorPrefetchMock: vi.fn(),
   routeNavigatorPushMock: vi.fn(),
@@ -46,7 +51,9 @@ const {
   assignmentSpotlightPropsMock: vi.fn(),
   homeActionsPropsMock: vi.fn(),
   homeDuelsInvitesPropsMock: vi.fn(),
+  useKangurTutorAnchorsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
+  lazyDocsTooltipEnhancerPropsMock: vi.fn(),
   xpToastPropsMock: vi.fn(),
   addingBallGamePropsMock: vi.fn(),
   addingSynthesisGamePropsMock: vi.fn(),
@@ -135,6 +142,38 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorSessionSync: (props: unknown) => {
     tutorSessionSyncPropsMock(props);
     return null;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/pages/GameDeferredAiTutorSessionSync', () => ({
+  default: (props: unknown) => {
+    tutorSessionSyncPropsMock(props);
+    return null;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/pages/GameDeferredDocsTooltipEnhancer', () => ({
+  default: (props: unknown) => {
+    lazyDocsTooltipEnhancerPropsMock(props);
+    return null;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/pages/GameDeferredLearnerActivityPing', () => ({
+  default: (props: unknown) => {
+    useKangurLearnerActivityPingMock(props);
+    return null;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchors', () => ({
+  useKangurTutorAnchors: (...args: unknown[]) => useKangurTutorAnchorsMock(...args),
+}));
+
+vi.mock('@/features/kangur/ui/components/LazyKangurDocsTooltipEnhancer', () => ({
+  LazyKangurDocsTooltipEnhancer: (props: unknown) => {
+    lazyDocsTooltipEnhancerPropsMock(props);
+    return <div data-testid='lazy-kangur-docs-tooltip-enhancer' />;
   },
 }));
 
@@ -322,6 +361,10 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
 import Game from '@/features/kangur/ui/pages/Game';
 
 describe('Game page', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
@@ -341,7 +384,7 @@ describe('Game page', () => {
     });
   });
 
-  it('keeps the shared game navigation visible on the home screen', () => {
+  it('keeps the shared game navigation visible on the home screen', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
@@ -350,24 +393,19 @@ describe('Game page', () => {
 
     render(<Game />);
 
-    expect(screen.getByTestId('kangur-home-hero-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-home-hero-fallback')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-home-actions-widget')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-home-quest-widget')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-assignment-spotlight-widget')).toBeInTheDocument();
-    expect(homeHeroPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        hideWhenScreenMismatch: false,
-        showIntro: false,
-        showAssignmentSpotlight: false,
-      })
-    );
+    expect(screen.getByTestId('kangur-home-quest-fallback')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-home-duels-invites-fallback')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-assignment-spotlight-widget')).toBeInTheDocument();
+    expect(homeHeroPropsMock).not.toHaveBeenCalled();
     expect(assignmentSpotlightPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ basePath: '/kangur', enabled: true })
     );
     expect(homeActionsPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ hideWhenScreenMismatch: false })
     );
-    expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-game-navigation-widget')).not.toBeInTheDocument();
   });
 
   it('does not prefetch other Kangur pages while the game shell mounts', () => {
@@ -380,6 +418,117 @@ describe('Game page', () => {
     render(<Game />);
 
     expect(routeNavigatorPrefetchMock).not.toHaveBeenCalled();
+  });
+
+  it('defers tutor session sync and docs tooltip mounting on the initial standalone home load', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('home'),
+      canAccessParentAssignments: true,
+      progress: { totalXp: 1 },
+      user: {
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    expect(useKangurTutorAnchorsMock).not.toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'kangur-game-home-actions',
+        }),
+      ])
+    );
+    expect(tutorSessionSyncPropsMock).not.toHaveBeenCalled();
+    expect(lazyDocsTooltipEnhancerPropsMock).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(useKangurTutorAnchorsMock).toHaveBeenLastCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'kangur-game-home-actions',
+          }),
+        ])
+      );
+    }, {
+      timeout: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS + 1000,
+    });
+    await waitFor(() => {
+      expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          learnerId: 'learner-1',
+        })
+      );
+    }, {
+      timeout: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS + 1000,
+    });
+    await waitFor(() => {
+      expect(lazyDocsTooltipEnhancerPropsMock).toHaveBeenCalledWith({
+        rootId: 'kangur-game-page',
+        surface: 'home',
+      });
+    }, {
+      timeout: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS + 1000,
+    });
+  });
+
+  it('does not start learner activity pinging on the home screen', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('home'),
+      user: {
+        actorType: 'learner',
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    expect(useKangurLearnerActivityPingMock).not.toHaveBeenCalled();
+  });
+
+  it('starts learner activity pinging on live game screens', async () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('playing'),
+      user: {
+        actorType: 'learner',
+        activeLearner: {
+          id: 'learner-1',
+        },
+      },
+    });
+
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(useKangurLearnerActivityPingMock).toHaveBeenCalledWith({
+        activity: expect.objectContaining({ kind: 'game' }),
+        enabled: true,
+      });
+    });
+  });
+
+  it('does not mount the xp toast chunk when no toast is visible', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildGameRuntime('home'),
+      xpToast: {
+        xpGained: 0,
+        newBadges: [],
+        breakdown: [],
+        nextBadge: null,
+        dailyQuest: null,
+        recommendation: null,
+        visible: false,
+      },
+    });
+
+    render(<Game />);
+
+    expect(xpToastPropsMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('xp-toast-widget')).toBeNull();
   });
 
   it('keeps mount behavior unchanged on mobile without route prefetch work', () => {
@@ -395,7 +544,7 @@ describe('Game page', () => {
     expect(routeNavigatorPrefetchMock).not.toHaveBeenCalled();
   });
 
-  it('keeps the home screen motion static so the skeleton handoff does not jump vertically', () => {
+  it('keeps the home screen in plain-div mode until deferred home widgets are ready', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
@@ -406,22 +555,10 @@ describe('Game page', () => {
 
     const homeLayout = screen.getByTestId('kangur-game-home-layout');
 
-    expect(homeLayout).toHaveAttribute(
-      'data-motion-initial',
-      JSON.stringify({ opacity: 1, y: 0 })
-    );
-    expect(homeLayout).toHaveAttribute(
-      'data-motion-animate',
-      JSON.stringify({ opacity: 1, y: 0 })
-    );
-    expect(homeLayout).toHaveAttribute(
-      'data-motion-exit',
-      JSON.stringify({ opacity: 1, y: 0 })
-    );
-    expect(homeLayout).toHaveAttribute(
-      'data-motion-transition',
-      JSON.stringify({ duration: 0 })
-    );
+    expect(homeLayout).not.toHaveAttribute('data-motion-initial');
+    expect(homeLayout).not.toHaveAttribute('data-motion-animate');
+    expect(homeLayout).not.toHaveAttribute('data-motion-exit');
+    expect(homeLayout).not.toHaveAttribute('data-motion-transition');
   });
 
   it('shows the parent add-learner prompt under the home actions when no learner is selected', () => {
@@ -451,6 +588,7 @@ describe('Game page', () => {
   });
 
   it('keeps the home leaderboard and progress columns centered within the same 900px section', async () => {
+    vi.useFakeTimers();
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildGameRuntime('home'),
       canAccessParentAssignments: true,
@@ -468,15 +606,23 @@ describe('Game page', () => {
       'xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
     );
 
-    await waitFor(() => {
-      expect(screen.getByTestId('leaderboard-widget')).toBeInTheDocument();
+    expect(screen.queryByTestId('leaderboard-widget')).toBeNull();
+    expect(screen.queryByTestId('player-progress-widget')).toBeNull();
+    expect(screen.getByTestId('kangur-home-leaderboard-fallback')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-home-player-progress-fallback')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS);
     });
-    expect(screen.getByTestId('leaderboard-widget').parentElement).toHaveClass(
+
+    expect(screen.queryByTestId('kangur-home-leaderboard-fallback')).toBeNull();
+    expect(screen.queryByTestId('kangur-home-player-progress-fallback')).toBeNull();
+    expect(document.getElementById('kangur-home-leaderboard')).toHaveClass(
       'flex',
       'w-full',
       'justify-center'
     );
-    expect(screen.getByTestId('player-progress-widget').parentElement).toHaveClass(
+    expect(document.getElementById('kangur-home-player-progress')).toHaveClass(
       'flex',
       'w-full',
       'justify-center'
@@ -506,9 +652,9 @@ describe('Game page', () => {
     );
   });
 
-  it('forwards the full xp toast state on the live game page path', () => {
+  it('forwards the full xp toast state on the live game page path', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildGameRuntime('home'),
+      ...buildGameRuntime('playing'),
       xpToast: {
         xpGained: 44,
         newBadges: ['first_game'],
@@ -534,26 +680,28 @@ describe('Game page', () => {
 
     render(<Game />);
 
-    expect(xpToastPropsMock).toHaveBeenCalledWith({
-      xpGained: 44,
-      newBadges: ['first_game'],
-      breakdown: [{ kind: 'base', label: 'Ukończenie rundy', xp: 18 }],
-      nextBadge: {
-        emoji: '⭐',
-        name: 'Pół tysiąca XP',
-        summary: '420/500 XP',
-      },
-      dailyQuest: {
-        title: '📅 Powtórka: Kalendarz',
-        summary: '68% / 75% opanowania',
-        xpAwarded: 55,
-      },
-      recommendation: {
-        label: 'Misja dnia',
-        summary: 'Ten ruch najmocniej przybliża odznakę Pół tysiąca XP.',
-        title: '📅 Powtórka: Kalendarz',
-      },
-      visible: true,
+    await waitFor(() => {
+      expect(xpToastPropsMock).toHaveBeenCalledWith({
+        xpGained: 44,
+        newBadges: ['first_game'],
+        breakdown: [{ kind: 'base', label: 'Ukończenie rundy', xp: 18 }],
+        nextBadge: {
+          emoji: '⭐',
+          name: 'Pół tysiąca XP',
+          summary: '420/500 XP',
+        },
+        dailyQuest: {
+          title: '📅 Powtórka: Kalendarz',
+          summary: '68% / 75% opanowania',
+          xpAwarded: 55,
+        },
+        recommendation: {
+          label: 'Misja dnia',
+          summary: 'Ten ruch najmocniej przybliża odznakę Pół tysiąca XP.',
+          title: '📅 Powtórka: Kalendarz',
+        },
+        visible: true,
+      });
     });
   });
 
@@ -586,7 +734,7 @@ describe('Game page', () => {
     expect(screen.queryByRole('button', { name: 'Wróć do lekcji' })).not.toBeInTheDocument();
   });
 
-  it('keeps active gameplay screens on the standard mobile layout', () => {
+  it('keeps active gameplay screens on the standard mobile layout', async () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildGameRuntime('playing'),
@@ -598,11 +746,11 @@ describe('Game page', () => {
     const gameMain = document.getElementById('kangur-game-main');
 
     expectStandardMobileGameLayout(gameMain);
-    expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wróć do lekcji' })).not.toBeInTheDocument();
   });
 
-  it('scrolls back to the top and focuses the next screen heading without re-scrolling when entering a quiz', () => {
+  it('scrolls back to the top and focuses the next screen heading without re-scrolling when entering a quiz', async () => {
     const scrollToMock = vi.fn();
     const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus');
     const requestAnimationFrameSpy = vi
@@ -629,8 +777,10 @@ describe('Game page', () => {
     runtime = buildGameRuntime('calendar_quiz');
     rerender(<Game />);
 
-    expect(scrollToMock).toHaveBeenCalledWith({ behavior: 'auto', left: 0, top: 0 });
-    expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+    await waitFor(() => {
+      expect(scrollToMock).toHaveBeenCalledWith({ behavior: 'auto', left: 0, top: 0 });
+      expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+    });
 
     focusSpy.mockRestore();
     requestAnimationFrameSpy.mockRestore();
@@ -642,9 +792,8 @@ describe('Game page', () => {
 
     render(<Game />);
 
-    const transitionShell = (await screen.findByTestId('kangur-calendar-training-top-section')).closest(
-      '[data-motion-initial]'
-    );
+    await screen.findByTestId('kangur-calendar-training-top-section');
+    const transitionShell = document.querySelector('[data-motion-initial]');
 
     expect(transitionShell).not.toBeNull();
     expect(transitionShell).toHaveAttribute(
@@ -665,7 +814,7 @@ describe('Game page', () => {
     );
   });
 
-  it('publishes activity-specific tutor context for Grajmy instead of one generic game scope', () => {
+  it('publishes activity-specific tutor context for Grajmy instead of one generic game scope', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildGameRuntime('calendar_quiz'),
       user: {
@@ -677,18 +826,20 @@ describe('Game page', () => {
 
     render(<Game />);
 
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        learnerId: 'learner-1',
-        sessionContext: expect.objectContaining({
-          surface: 'game',
-          contentId: 'game:calendar_quiz',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          learnerId: 'learner-1',
+          sessionContext: expect.objectContaining({
+            surface: 'game',
+            contentId: 'game:calendar_quiz',
+          }),
+        })
+      );
+    });
   });
 
-  it('keeps gameplay tutor context stable per practice activity and assignment', () => {
+  it('keeps gameplay tutor context stable per practice activity and assignment', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildGameRuntime('playing'),
       activePracticeAssignment: {
@@ -714,14 +865,16 @@ describe('Game page', () => {
 
     render(<Game />);
 
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        sessionContext: expect.objectContaining({
-          contentId: 'game:assignment:assignment-division-easy',
-          assignmentId: 'assignment-division-easy',
-          questionId: 'game-question-1',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionContext: expect.objectContaining({
+            contentId: 'game:assignment:assignment-division-easy',
+            assignmentId: 'assignment-division-easy',
+            questionId: 'game-question-1',
+          }),
+        })
+      );
+    });
   });
 });

@@ -16,10 +16,10 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: mocks.getMongoDb,
 }));
 
-import { GET_intl_handler, POST_intl_handler } from '@/app/api/v2/metadata/handler';
+import { getIntlHandler, postIntlHandler } from '@/app/api/v2/metadata/handler';
 import {
-  DELETE_metadata_id_handler,
-  PUT_metadata_id_handler,
+  deleteMetadataIdHandler,
+  putMetadataIdHandler,
 } from '@/app/api/v2/metadata/[type]/[id]/handler';
 
 describe('Languages API', () => {
@@ -73,7 +73,7 @@ describe('Languages API', () => {
       }),
     });
 
-    const res = await GET_intl_handler(
+    const res = await getIntlHandler(
       new NextRequest('http://localhost/api/v2/metadata/languages'),
       {} as any,
       { type: 'languages' }
@@ -132,7 +132,7 @@ describe('Languages API', () => {
       }),
     });
 
-    const res = await POST_intl_handler(req, {} as any, { type: 'languages' });
+    const res = await postIntlHandler(req, {} as any, { type: 'languages' });
     const language = await res.json();
 
     expect(res.status).toBe(200);
@@ -207,7 +207,7 @@ describe('Languages API', () => {
       }),
     });
 
-    const res = await PUT_metadata_id_handler(req, {} as any, {
+    const res = await putMetadataIdHandler(req, {} as any, {
       type: 'languages',
       id: 'PL',
     });
@@ -255,7 +255,7 @@ describe('Languages API', () => {
       }),
     });
 
-    const res = await DELETE_metadata_id_handler(
+    const res = await deleteMetadataIdHandler(
       new NextRequest('http://localhost/api/v2/metadata/languages/SV'),
       {} as any,
       {

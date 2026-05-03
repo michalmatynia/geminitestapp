@@ -4,33 +4,15 @@ import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { type PickActions, type OmitState } from '@/shared/lib/react/types';
 
 import { useAdminFilemakerPageState } from '../hooks/useAdminFilemakerPageState';
 
 export type AdminFilemakerPageContextValue = ReturnType<typeof useAdminFilemakerPageState>;
 
-type AdminFilemakerPageFunctionKeys = {
-  [Key in keyof AdminFilemakerPageContextValue]-?: AdminFilemakerPageContextValue[Key] extends (
-    ...args: never[]
-  ) => unknown
-    ? Key
-    : never;
-}[keyof AdminFilemakerPageContextValue];
+export type AdminFilemakerPageStateContextValue = OmitState<AdminFilemakerPageContextValue>;
 
-type AdminFilemakerPageDataKeys = Exclude<
-  keyof AdminFilemakerPageContextValue,
-  AdminFilemakerPageFunctionKeys
->;
-
-export type AdminFilemakerPageStateContextValue = Pick<
-  AdminFilemakerPageContextValue,
-  AdminFilemakerPageDataKeys
->;
-
-export type AdminFilemakerPageActionsContextValue = Pick<
-  AdminFilemakerPageContextValue,
-  AdminFilemakerPageFunctionKeys
->;
+export type AdminFilemakerPageActionsContextValue = PickActions<AdminFilemakerPageContextValue>;
 
 const {
   Context: AdminFilemakerPageStateContext,
@@ -55,58 +37,8 @@ export function AdminFilemakerPageProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const value = useAdminFilemakerPageState();
-  const {
-    setActiveTab,
-    setSearchQuery,
-    setIsPersonModalOpen,
-    setPersonDraft,
-    openCreatePerson,
-    handleStartEditPerson,
-    handleDeletePerson,
-    setIsOrgModalOpen,
-    setOrgDraft,
-    openCreateOrg,
-    handleStartEditOrg,
-    handleDeleteOrganization,
-    setIsEmailModalOpen,
-    setEmailDraft,
-    openCreateEmail,
-    handleStartEditEmail,
-    handleDeleteEmail,
-    setIsEventModalOpen,
-    setEventDraft,
-    openCreateEvent,
-    handleStartEditEvent,
-    handleDeleteEvent,
-    handleCreateEvent,
-    ...stateValue
-  } = value;
-
-  const actionsValue: AdminFilemakerPageActionsContextValue = {
-    setActiveTab,
-    setSearchQuery,
-    setIsPersonModalOpen,
-    setPersonDraft,
-    openCreatePerson,
-    handleStartEditPerson,
-    handleDeletePerson,
-    setIsOrgModalOpen,
-    setOrgDraft,
-    openCreateOrg,
-    handleStartEditOrg,
-    handleDeleteOrganization,
-    setIsEmailModalOpen,
-    setEmailDraft,
-    openCreateEmail,
-    handleStartEditEmail,
-    handleDeleteEmail,
-    setIsEventModalOpen,
-    setEventDraft,
-    openCreateEvent,
-    handleStartEditEvent,
-    handleDeleteEvent,
-    handleCreateEvent,
-  };
+  const stateValue = React.useMemo(() => value as AdminFilemakerPageStateContextValue, [value]);
+  const actionsValue = React.useMemo(() => value as AdminFilemakerPageActionsContextValue, [value]);
 
   return (
     <AdminFilemakerPageActionsContext.Provider value={actionsValue}>

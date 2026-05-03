@@ -2,6 +2,23 @@ import type { ErrorContext } from '@/shared/contracts/observability';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
+const getNonEmptyContextString = (value: string | null | undefined): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined;
+
+const extractErrorInfo = (error: unknown): { message: string; stack: string | undefined; name: string } => {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    };
+  }
+  return {
+    message: String(error),
+    stack: undefined,
+    name: 'ClientError',
+  };
+};
 
 export const reportClientError = async (
   error: unknown,
@@ -10,10 +27,9 @@ export const reportClientError = async (
   if (isAbortLikeError(error)) return;
 
   try {
+    const errorInfo = extractErrorInfo(error);
     const errorPayload = {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : 'ClientError',
+      ...errorInfo,
       context,
     };
 
@@ -30,7 +46,7 @@ export const reportClientError = async (
     logClientCatch(err, {
       source: 'client-error-reporter',
       action: 'sendClientErrorReport',
-      service: context.service || 'observability.client-error-reporter',
+      service: getNonEmptyContextString(context.service) ?? 'observability.client-error-reporter',
     });
     const { logger } = await import('@/shared/utils/logger');
     logger.error(

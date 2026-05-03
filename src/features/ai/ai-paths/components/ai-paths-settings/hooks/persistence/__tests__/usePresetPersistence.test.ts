@@ -8,9 +8,9 @@ const mockState = vi.hoisted(() => ({
 }));
 
 vi.mock('@/shared/lib/ai-paths', () => ({
-  CLUSTER_PRESETS_KEY: 'cluster-presets',
-  DB_NODE_PRESETS_KEY: 'db-node-presets',
-  DB_QUERY_PRESETS_KEY: 'db-query-presets',
+  CLUSTER_PRESETS_KEY: 'ai_paths_cluster_presets',
+  DB_NODE_PRESETS_KEY: 'ai_paths_db_node_presets',
+  DB_QUERY_PRESETS_KEY: 'ai_paths_db_query_presets',
 }));
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
@@ -51,7 +51,7 @@ describe('usePresetPersistence', () => {
 
     expect(core.stringifyForStorage).toHaveBeenCalledWith(presets, 'cluster presets');
     expect(mockState.updateAiPathsSettingsBulk).toHaveBeenCalledWith([
-      { key: 'cluster-presets', value: JSON.stringify(presets) },
+      { key: 'ai_paths_cluster_presets', value: JSON.stringify(presets) },
     ]);
   });
 
@@ -69,10 +69,10 @@ describe('usePresetPersistence', () => {
     expect(core.stringifyForStorage).toHaveBeenNthCalledWith(1, queryPresets, 'DB query presets');
     expect(core.stringifyForStorage).toHaveBeenNthCalledWith(2, nodePresets, 'DB node presets');
     expect(mockState.updateAiPathsSettingsBulk).toHaveBeenNthCalledWith(1, [
-      { key: 'db-query-presets', value: JSON.stringify(queryPresets) },
+      { key: 'ai_paths_db_query_presets', value: JSON.stringify(queryPresets) },
     ]);
     expect(mockState.updateAiPathsSettingsBulk).toHaveBeenNthCalledWith(2, [
-      { key: 'db-node-presets', value: JSON.stringify(nodePresets) },
+      { key: 'ai_paths_db_node_presets', value: JSON.stringify(nodePresets) },
     ]);
   });
 });

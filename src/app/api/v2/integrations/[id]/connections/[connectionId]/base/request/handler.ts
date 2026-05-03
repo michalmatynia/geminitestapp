@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { callBaseApi, fetchBaseProducts } from '@/features/integrations/server';
@@ -27,7 +27,7 @@ const normalizeNumericObjectKey = (value: string): string | null => {
  * POST /api/v2/integrations/[id]/connections/[connectionId]/base/request
  * Proxy Base.com API requests using the stored token.
  */
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

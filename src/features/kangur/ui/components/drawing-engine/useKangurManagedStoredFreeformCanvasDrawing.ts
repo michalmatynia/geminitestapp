@@ -1,5 +1,6 @@
 import {
   useKangurManagedDrawingActions,
+  type UseKangurManagedDrawingActionsResult,
   type UseKangurManagedDrawingActionsOptions,
 } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 import {
@@ -30,7 +31,8 @@ type UseKangurManagedStoredFreeformCanvasDrawingOptions = {
 export const useKangurManagedStoredFreeformCanvasDrawing = ({
   actions,
   drawing: drawingOptions,
-}: UseKangurManagedStoredFreeformCanvasDrawingOptions) => {
+}: UseKangurManagedStoredFreeformCanvasDrawingOptions): UseKangurStoredFreeformCanvasDrawingResult &
+  UseKangurManagedDrawingActionsResult<HTMLCanvasElement> => {
   const drawing = useKangurStoredFreeformCanvasDrawing(drawingOptions);
   const {
     resolveCanExport = (current) => current.hasDrawableContent,

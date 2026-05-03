@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { RuntimeState } from '@/shared/lib/ai-paths';
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 
 import { buildRuntimePersistenceConfig } from '../useAiPathsSettingsState.runtime';
 

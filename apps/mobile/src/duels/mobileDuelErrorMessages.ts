@@ -33,6 +33,10 @@ const isFallbackNetworkMessage = (message: string): boolean => {
   return normalized === 'failed to fetch' || normalized.includes('networkerror');
 };
 
+import { isPresent, isStringNotEmpty } from './utils/duels-guards';
+
+// ... (other code)
+
 export const resolveMobileDuelErrorMessage = ({
   error,
   copy,
@@ -40,13 +44,13 @@ export const resolveMobileDuelErrorMessage = ({
   unauthorized,
   unauthorizedStatuses = [401],
 }: ResolveMobileDuelErrorMessageArgs): string | null => {
-  if (!error) {
+  if (!isPresent(error)) {
     return null;
   }
 
   const status = readErrorStatus(error);
   if (
-    unauthorized &&
+    isPresent(unauthorized) &&
     status !== null &&
     unauthorizedStatuses.includes(status)
   ) {
@@ -54,7 +58,7 @@ export const resolveMobileDuelErrorMessage = ({
   }
 
   const message = readErrorMessage(error);
-  if (!message || isFallbackNetworkMessage(message)) {
+  if (!isStringNotEmpty(message) || isFallbackNetworkMessage(message)) {
     return copy(fallback);
   }
 

@@ -3,15 +3,16 @@ import 'server-only';
 import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
-  evaluateFilemakerEmailCampaignLaunch,
   parseFilemakerDatabase,
+  parseFilemakerEmailCampaignContentGroupRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
   parseFilemakerEmailCampaignSuppressionRegistry,
-  resolveFilemakerEmailCampaignAudiencePreview,
-  resolveFilemakerEmailCampaignRecurringWindowKey,
   toPersistedFilemakerEmailCampaignRegistry,
 } from '../settings';
 import {
@@ -19,6 +20,15 @@ import {
   upsertFilemakerCampaignSettingValue,
 } from './campaign-settings-store';
 import { createFilemakerCampaignRuntimeService } from './campaign-runtime';
+import {
+  resolveDueFilemakerEmailCampaignRetryRuns,
+  type FilemakerEmailCampaignSchedulerDueRetryRun,
+} from './campaign-retry-scheduler';
+import {
+  resolveDueFilemakerEmailCampaigns,
+  type FilemakerEmailCampaignSchedulerDueCampaign,
+  type FilemakerEmailCampaignDueResolution,
+} from './filemakerEmailCampaignScheduler.due';
 import {
   type FilemakerEmailCampaignSchedulerLaunchFailure,
   type FilemakerEmailCampaignSchedulerSkipReason,
@@ -28,11 +38,7 @@ import type {
   FilemakerCampaignRunLaunchResult,
 } from './campaign-runtime';
 import type {
-  FilemakerDatabase,
-  FilemakerEmailCampaign,
   FilemakerEmailCampaignRegistry,
-  FilemakerEmailCampaignRunRegistry,
-  FilemakerEmailCampaignSuppressionRegistry,
 } from '../types';
 
 type FilemakerEmailCampaignSchedulerDeps = {
@@ -46,13 +52,6 @@ type FilemakerEmailCampaignSchedulerDeps = {
   }) => Promise<FilemakerCampaignRunLaunchResult>;
 };
 
-export type FilemakerEmailCampaignSchedulerDueCampaign = {
-  campaignId: string;
-  launchMode: Extract<FilemakerEmailCampaign['launch']['mode'], 'scheduled' | 'recurring'>;
-  launchReason: string;
-  scheduleWindowKey: string;
-};
-
 export type FilemakerEmailCampaignSchedulerTickResult = {
   evaluatedCampaignCount: number;
   dueCampaignCount: number;
@@ -62,8 +61,35 @@ export type FilemakerEmailCampaignSchedulerTickResult = {
     queuedDeliveryCount: number;
     launchMode: FilemakerEmailCampaignSchedulerDueCampaign['launchMode'];
   }>;
+  dueRetryRuns: FilemakerEmailCampaignSchedulerDueRetryRun[];
   skippedByReason: FilemakerEmailCampaignSchedulerSkipReason[];
   launchFailures: FilemakerEmailCampaignSchedulerLaunchFailure[];
+};
+
+export type FilemakerEmailCampaignSchedulerService = {
+  runTick: () => Promise<FilemakerEmailCampaignSchedulerTickResult>;
+};
+
+type SchedulerRawSettings = {
+  databaseRaw: string | null;
+  contentGroupsRaw: string | null;
+  campaignsRaw: string | null;
+  runsRaw: string | null;
+  suppressionsRaw: string | null;
+  deliveriesRaw: string | null;
+  attemptsRaw: string | null;
+};
+
+type LaunchRunResult = FilemakerEmailCampaignSchedulerTickResult['launchedRuns'][number];
+
+type LaunchOutcome = {
+  launchedRun: LaunchRunResult | null;
+  launchFailure: FilemakerEmailCampaignSchedulerLaunchFailure | null;
+};
+
+type LaunchCollection = {
+  launchedRuns: FilemakerEmailCampaignSchedulerTickResult['launchedRuns'];
+  launchFailures: FilemakerEmailCampaignSchedulerTickResult['launchFailures'];
 };
 
 const defaultDeps = (): FilemakerEmailCampaignSchedulerDeps => {
@@ -72,171 +98,172 @@ const defaultDeps = (): FilemakerEmailCampaignSchedulerDeps => {
     now,
     readSettingValue: readFilemakerCampaignSettingValue,
     upsertSettingValue: upsertFilemakerCampaignSettingValue,
-    launchRun: async () => {
-      throw new Error('Default launchRun placeholder should be replaced during scheduler init.');
-    },
+    launchRun: () =>
+      Promise.reject(new Error('Default launchRun placeholder should be replaced during scheduler init.')),
   };
 };
 
-const parseTimestamp = (value: string | null | undefined): number | null => {
-  if (!value) return null;
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? null : parsed;
+const readSchedulerRawSettings = async (
+  deps: FilemakerEmailCampaignSchedulerDeps
+): Promise<SchedulerRawSettings> => {
+  const [
+    databaseRaw,
+    contentGroupsRaw,
+    campaignsRaw,
+    runsRaw,
+    suppressionsRaw,
+    deliveriesRaw,
+    attemptsRaw,
+  ] = await Promise.all([
+    deps.readSettingValue(FILEMAKER_DATABASE_KEY),
+    deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY),
+    deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGNS_KEY),
+    deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY),
+    deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY),
+    deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY),
+    deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY),
+  ]);
+  return {
+    databaseRaw,
+    contentGroupsRaw,
+    campaignsRaw,
+    runsRaw,
+    suppressionsRaw,
+    deliveriesRaw,
+    attemptsRaw,
+  };
 };
 
-const hasActiveLiveRun = (
-  campaignId: string,
-  runRegistry: FilemakerEmailCampaignRunRegistry
-): boolean =>
-  runRegistry.runs.some(
-    (run) =>
-      run.campaignId === campaignId &&
-      run.mode === 'live' &&
-      (run.status === 'pending' || run.status === 'queued' || run.status === 'running')
+const persistEvaluatedCampaigns = async (
+  deps: FilemakerEmailCampaignSchedulerDeps,
+  campaignRegistry: FilemakerEmailCampaignRegistry,
+  evaluatedCampaignIds: string[],
+  nowIso: string
+): Promise<void> => {
+  if (evaluatedCampaignIds.length === 0) return;
+  const evaluatedIdSet = new Set(evaluatedCampaignIds);
+  await deps.upsertSettingValue(
+    FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+    JSON.stringify(
+      toPersistedFilemakerEmailCampaignRegistry({
+        version: campaignRegistry.version,
+        campaigns: campaignRegistry.campaigns.map((campaign) =>
+          evaluatedIdSet.has(campaign.id) ? { ...campaign, lastEvaluatedAt: nowIso } : campaign
+        ),
+      })
+    )
   );
-
-const resolveScheduledWindowKey = (
-  campaign: FilemakerEmailCampaign
-): string | null => {
-  const scheduledAtMs = parseTimestamp(campaign.launch.scheduledAt);
-  if (scheduledAtMs == null) return null;
-  return `scheduled:${scheduledAtMs}`;
 };
 
-const isScheduledCampaignDue = (
-  campaign: FilemakerEmailCampaign,
-  nowMs: number
-): boolean => {
-  const scheduledAtMs = parseTimestamp(campaign.launch.scheduledAt);
-  if (scheduledAtMs == null || scheduledAtMs > nowMs) return false;
-  const lastLaunchedAtMs = parseTimestamp(campaign.lastLaunchedAt);
-  if (lastLaunchedAtMs != null && lastLaunchedAtMs >= scheduledAtMs) {
-    return false;
-  }
-  return true;
-};
-
-const isRecurringCampaignDue = (
-  campaign: FilemakerEmailCampaign,
+const resolveSchedulerDueCampaigns = (
+  rawSettings: SchedulerRawSettings,
   now: Date
-): boolean => {
-  const currentWindowKey = resolveFilemakerEmailCampaignRecurringWindowKey(campaign, now);
-  if (!currentWindowKey) return false;
-
-  const lastLaunchedAtMs = parseTimestamp(campaign.lastLaunchedAt);
-  if (lastLaunchedAtMs == null) return true;
-
-  const lastWindowKey = resolveFilemakerEmailCampaignRecurringWindowKey(
-    campaign,
-    new Date(lastLaunchedAtMs)
-  );
-  return lastWindowKey !== currentWindowKey;
-};
-
-const incrementReason = (reasons: Map<string, number>, reason: string): void => {
-  reasons.set(reason, (reasons.get(reason) ?? 0) + 1);
-};
-
-export const resolveDueFilemakerEmailCampaigns = (input: {
+): {
   campaignRegistry: FilemakerEmailCampaignRegistry;
-  runRegistry: FilemakerEmailCampaignRunRegistry;
-  database: FilemakerDatabase;
-  suppressionRegistry: FilemakerEmailCampaignSuppressionRegistry;
-  now?: Date;
-}): {
-  evaluatedCampaignCount: number;
-  dueCampaigns: FilemakerEmailCampaignSchedulerDueCampaign[];
-  skippedByReason: FilemakerEmailCampaignSchedulerSkipReason[];
-  evaluatedCampaignIds: string[];
+  resolution: FilemakerEmailCampaignDueResolution;
 } => {
-  const now = input.now ?? new Date();
-  const nowMs = now.getTime();
-  const dueCampaigns: FilemakerEmailCampaignSchedulerDueCampaign[] = [];
-  const skippedReasons = new Map<string, number>();
-  const evaluatedCampaignIds: string[] = [];
-  let evaluatedCampaignCount = 0;
+  const campaignRegistry = parseFilemakerEmailCampaignRegistry(rawSettings.campaignsRaw);
+  const contentGroupRegistry = parseFilemakerEmailCampaignContentGroupRegistry(
+    rawSettings.contentGroupsRaw
+  );
+  return {
+    campaignRegistry,
+    resolution: resolveDueFilemakerEmailCampaigns({
+      database: parseFilemakerDatabase(rawSettings.databaseRaw),
+      contentGroupRegistry,
+      campaignRegistry,
+      runRegistry: parseFilemakerEmailCampaignRunRegistry(rawSettings.runsRaw),
+      suppressionRegistry: parseFilemakerEmailCampaignSuppressionRegistry(rawSettings.suppressionsRaw),
+      now,
+    }),
+  };
+};
 
-  input.campaignRegistry.campaigns.forEach((campaign) => {
-    if (campaign.launch.mode !== 'scheduled' && campaign.launch.mode !== 'recurring') {
-      return;
-    }
-
-    evaluatedCampaignCount += 1;
-    evaluatedCampaignIds.push(campaign.id);
-
-    if (campaign.status !== 'active') {
-      incrementReason(skippedReasons, 'inactive-campaign');
-      return;
-    }
-
-    if (hasActiveLiveRun(campaign.id, input.runRegistry)) {
-      incrementReason(skippedReasons, 'live-run-in-progress');
-      return;
-    }
-
-    const preview = resolveFilemakerEmailCampaignAudiencePreview(
-      input.database,
-      campaign.audience,
-      input.suppressionRegistry
-    );
-    const evaluation = evaluateFilemakerEmailCampaignLaunch(campaign, preview, now);
-
-    if (!evaluation.isEligible) {
-      incrementReason(skippedReasons, evaluation.blockers[0] ?? 'launch-blocked');
-      return;
-    }
-
-    if (campaign.launch.mode === 'scheduled') {
-      const scheduleWindowKey = resolveScheduledWindowKey(campaign);
-      if (!scheduleWindowKey) {
-        incrementReason(skippedReasons, 'scheduled-time-missing');
-        return;
-      }
-      if (!isScheduledCampaignDue(campaign, nowMs)) {
-        incrementReason(skippedReasons, 'scheduled-not-due');
-        return;
-      }
-
-      dueCampaigns.push({
-        campaignId: campaign.id,
-        launchMode: 'scheduled',
-        launchReason: 'Automatically launched when the scheduled send window was reached.',
-        scheduleWindowKey,
-      });
-      return;
-    }
-
-    const scheduleWindowKey = resolveFilemakerEmailCampaignRecurringWindowKey(campaign, now);
-    if (!scheduleWindowKey) {
-      incrementReason(skippedReasons, 'recurring-window-not-ready');
-      return;
-    }
-    if (!isRecurringCampaignDue(campaign, now)) {
-      incrementReason(skippedReasons, 'recurring-window-already-launched');
-      return;
-    }
-
-    dueCampaigns.push({
-      campaignId: campaign.id,
-      launchMode: 'recurring',
-      launchReason: 'Automatically launched from the recurring campaign window.',
-      scheduleWindowKey,
-    });
+const resolveDueRetryRuns = (
+  rawSettings: SchedulerRawSettings,
+  now: Date
+): FilemakerEmailCampaignSchedulerDueRetryRun[] =>
+  resolveDueFilemakerEmailCampaignRetryRuns({
+    deliveriesRaw: rawSettings.deliveriesRaw,
+    attemptsRaw: rawSettings.attemptsRaw,
+    runsRaw: rawSettings.runsRaw,
+    now,
   });
 
-  return {
-    evaluatedCampaignCount,
-    dueCampaigns,
-    evaluatedCampaignIds,
-    skippedByReason: Array.from(skippedReasons.entries())
-      .sort((left, right) => right[1] - left[1])
-      .map(([reason, count]) => ({ reason, count })),
-  };
+const normalizeLaunchErrorMessage = (error: unknown): string => {
+  if (!(error instanceof Error)) return 'Unknown launch error';
+  const message = error.message.trim();
+  return message.length > 0 ? message : 'Unknown launch error';
 };
+
+const launchDueCampaign = async (
+  deps: FilemakerEmailCampaignSchedulerDeps,
+  dueCampaign: FilemakerEmailCampaignSchedulerDueCampaign
+): Promise<LaunchOutcome> => {
+  try {
+    const launch = await deps.launchRun({
+      campaignId: dueCampaign.campaignId,
+      mode: 'live',
+      launchReason: dueCampaign.launchReason,
+    });
+    return {
+      launchedRun: {
+        campaignId: launch.campaign.id,
+        runId: launch.run.id,
+        queuedDeliveryCount: launch.queuedDeliveryCount,
+        launchMode: dueCampaign.launchMode,
+      },
+      launchFailure: null,
+    };
+  } catch (error: unknown) {
+    return {
+      launchedRun: null,
+      launchFailure: {
+        campaignId: dueCampaign.campaignId,
+        message: normalizeLaunchErrorMessage(error),
+      },
+    };
+  }
+};
+
+const appendLaunchOutcome = (
+  collection: LaunchCollection,
+  outcome: LaunchOutcome
+): LaunchCollection => ({
+  launchedRuns: outcome.launchedRun !== null
+    ? collection.launchedRuns.concat(outcome.launchedRun)
+    : collection.launchedRuns,
+  launchFailures: outcome.launchFailure !== null
+    ? collection.launchFailures.concat(outcome.launchFailure)
+    : collection.launchFailures,
+});
+
+const launchDueCampaignsSequentially = (
+  deps: FilemakerEmailCampaignSchedulerDeps,
+  dueCampaigns: FilemakerEmailCampaignSchedulerDueCampaign[]
+): Promise<LaunchCollection> =>
+  dueCampaigns.reduce<Promise<LaunchCollection>>(async (previous, dueCampaign) => {
+    const collection = await previous;
+    const outcome = await launchDueCampaign(deps, dueCampaign);
+    return appendLaunchOutcome(collection, outcome);
+  }, Promise.resolve({ launchedRuns: [], launchFailures: [] }));
+
+const buildSchedulerTickResult = (
+  resolution: FilemakerEmailCampaignDueResolution,
+  dueRetryRuns: FilemakerEmailCampaignSchedulerDueRetryRun[],
+  launches: LaunchCollection
+): FilemakerEmailCampaignSchedulerTickResult => ({
+  evaluatedCampaignCount: resolution.evaluatedCampaignCount,
+  dueCampaignCount: resolution.dueCampaigns.length,
+  launchedRuns: launches.launchedRuns,
+  dueRetryRuns,
+  skippedByReason: resolution.skippedByReason,
+  launchFailures: launches.launchFailures,
+});
 
 export const createFilemakerEmailCampaignSchedulerService = (
   overrides?: Partial<FilemakerEmailCampaignSchedulerDeps>
-) => {
+): FilemakerEmailCampaignSchedulerService => {
   const baseDeps = defaultDeps();
   const mergedDeps: FilemakerEmailCampaignSchedulerDeps = {
     ...baseDeps,
@@ -262,78 +289,17 @@ export const createFilemakerEmailCampaignSchedulerService = (
   return {
     runTick: async (): Promise<FilemakerEmailCampaignSchedulerTickResult> => {
       const now = deps.now();
-      const nowIso = now.toISOString();
-      const [databaseRaw, campaignsRaw, runsRaw, suppressionsRaw] = await Promise.all([
-        deps.readSettingValue(FILEMAKER_DATABASE_KEY),
-        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGNS_KEY),
-        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY),
-        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY),
-      ]);
-      const campaignRegistry = parseFilemakerEmailCampaignRegistry(campaignsRaw);
-
-      const resolution = resolveDueFilemakerEmailCampaigns({
-        database: parseFilemakerDatabase(databaseRaw),
+      const rawSettings = await readSchedulerRawSettings(deps);
+      const { campaignRegistry, resolution } = resolveSchedulerDueCampaigns(rawSettings, now);
+      await persistEvaluatedCampaigns(
+        deps,
         campaignRegistry,
-        runRegistry: parseFilemakerEmailCampaignRunRegistry(runsRaw),
-        suppressionRegistry: parseFilemakerEmailCampaignSuppressionRegistry(suppressionsRaw),
-        now,
-      });
-
-      if (resolution.evaluatedCampaignIds.length > 0) {
-        const evaluatedIdSet = new Set(resolution.evaluatedCampaignIds);
-        await deps.upsertSettingValue(
-          FILEMAKER_EMAIL_CAMPAIGNS_KEY,
-          JSON.stringify(
-            toPersistedFilemakerEmailCampaignRegistry({
-              version: campaignRegistry.version,
-              campaigns: campaignRegistry.campaigns.map((campaign) =>
-                evaluatedIdSet.has(campaign.id)
-                  ? {
-                      ...campaign,
-                      lastEvaluatedAt: nowIso,
-                    }
-                  : campaign
-              ),
-            })
-          )
-        );
-      }
-
-      const launchedRuns: FilemakerEmailCampaignSchedulerTickResult['launchedRuns'] = [];
-      const launchFailures: FilemakerEmailCampaignSchedulerTickResult['launchFailures'] = [];
-
-      for (const dueCampaign of resolution.dueCampaigns) {
-        try {
-          const launch = await deps.launchRun({
-            campaignId: dueCampaign.campaignId,
-            mode: 'live',
-            launchReason: dueCampaign.launchReason,
-          });
-          launchedRuns.push({
-            campaignId: launch.campaign.id,
-            runId: launch.run.id,
-            queuedDeliveryCount: launch.queuedDeliveryCount,
-            launchMode: dueCampaign.launchMode,
-          });
-        } catch (error) {
-          const message =
-            error instanceof Error && error.message.trim()
-              ? error.message.trim()
-              : 'Unknown launch error';
-          launchFailures.push({
-            campaignId: dueCampaign.campaignId,
-            message,
-          });
-        }
-      }
-
-      return {
-        evaluatedCampaignCount: resolution.evaluatedCampaignCount,
-        dueCampaignCount: resolution.dueCampaigns.length,
-        launchedRuns,
-        skippedByReason: resolution.skippedByReason,
-        launchFailures,
-      };
+        resolution.evaluatedCampaignIds,
+        now.toISOString()
+      );
+      const dueRetryRuns = resolveDueRetryRuns(rawSettings, now);
+      const launches = await launchDueCampaignsSequentially(deps, resolution.dueCampaigns);
+      return buildSchedulerTickResult(resolution, dueRetryRuns, launches);
     },
   };
 };
@@ -341,3 +307,6 @@ export const createFilemakerEmailCampaignSchedulerService = (
 export const runFilemakerEmailCampaignSchedulerTick =
   async (): Promise<FilemakerEmailCampaignSchedulerTickResult> =>
     createFilemakerEmailCampaignSchedulerService().runTick();
+
+export { resolveDueFilemakerEmailCampaigns };
+export type { FilemakerEmailCampaignSchedulerDueCampaign };

@@ -15,7 +15,7 @@ vi.mock('@/features/integrations/server', () => ({
   getExternalProducerRepository: getExternalProducerRepositoryMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -47,7 +47,7 @@ describe('marketplace producers handler', () => {
     const request = new NextRequest(
       'http://localhost/api/marketplace/producers?connectionId=conn-1'
     );
-    const response = await GET_handler(request, createContext());
+    const response = await getHandler(request, createContext());
 
     expect(listByConnectionMock).toHaveBeenCalledWith('conn-1');
     await expect(response.json()).resolves.toEqual([
@@ -63,7 +63,7 @@ describe('marketplace producers handler', () => {
   it('rejects requests without connectionId', async () => {
     const request = new NextRequest('http://localhost/api/marketplace/producers');
 
-    await expect(GET_handler(request, createContext())).rejects.toThrow('connectionId is required');
+    await expect(getHandler(request, createContext())).rejects.toThrow('connectionId is required');
 
     expect(listByConnectionMock).not.toHaveBeenCalled();
   });

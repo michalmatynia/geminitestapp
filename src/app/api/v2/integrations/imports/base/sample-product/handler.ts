@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { callBaseApi } from '@/features/integrations/server';
@@ -62,14 +62,14 @@ const extractFirstProductId = (payload: unknown): string | null => {
   return null;
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const productId = await getImportSampleProductId();
   const inventoryId = await getImportSampleInventoryId();
   const response: BaseSampleProductResponse = { productId, inventoryId };
   return NextResponse.json(response);
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, baseSampleProductPayloadSchema, {
     logPrefix: 'imports.base.sample-product.POST',
   });

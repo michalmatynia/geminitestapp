@@ -175,12 +175,16 @@ function useGeometrySymmetryRoundAdvance(input: {
         setScore(nextScore);
       }
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... existing code
+
       if (nextRoundTimeoutRef.current !== null) {
-        window.clearTimeout(nextRoundTimeoutRef.current);
+        safeClearTimeout(nextRoundTimeoutRef.current);
       }
 
       const isLastRound = roundIndex + 1 >= totalRounds;
-      nextRoundTimeoutRef.current = window.setTimeout((): void => {
+      nextRoundTimeoutRef.current = safeSetTimeout((): void => {
         nextRoundTimeoutRef.current = null;
         setFeedback(null);
         clearDrawing();

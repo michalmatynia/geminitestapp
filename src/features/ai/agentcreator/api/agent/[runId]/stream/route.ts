@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import { getAgentBrowserSnapshotDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { internalError } from '@/shared/errors/app-error';
@@ -9,11 +9,9 @@ import {
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-export const runtime = 'nodejs';
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-async function GET_handler(
+async function getHandler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
@@ -88,6 +86,6 @@ async function GET_handler(
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx, params) => getHandler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].stream.GET', requireAuth: true }
 );

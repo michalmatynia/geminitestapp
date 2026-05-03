@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { Card } from '@/shared/ui/primitives.public';
 import { RunComparisonTool } from './RunComparisonTool';
 import { RunHistoryFilterControls } from './RunHistoryFilterControls';
@@ -10,139 +10,87 @@ import { RunHistoryList } from './RunHistoryList';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
 import { useRunComparison } from '../hooks/useRunComparison';
 
-export type RunHistoryFilterView = 'all' | 'active' | 'failed' | 'dead';
+export type RunHistoryFilterView = 'all' | 'active' | 'failed' | 'canceled';
 
 export function RunHistoryPanel(): React.JSX.Element {
-  const runHistoryState = useRunHistoryState();
   const {
     runList: resolvedRuns,
     runsRefreshing: resolvedIsRefreshing,
     expandedRunHistory,
     runHistorySelection,
-  } = runHistoryState;
+    runFilter: rawRunFilter,
+  } = useRunHistoryState();
   const {
     setRunFilter: setRunFilterContext,
     setExpandedRunHistory,
     setRunHistorySelection,
     refreshRuns,
     openRunDetail,
-    resumeRun,
-    handoffRun,
-    retryRunNode,
     cancelRun,
-    requeueDeadLetter,
   } = useRunHistoryActions();
 
-  const [handoffStateByRunId, setHandoffStateByRunId] = React.useState<
-    Record<string, 'pending' | 'success'>
-  >({});
-  const handoffResetTimeoutsRef = React.useRef<Record<string, number>>({});
+  const comparison = useRunComparison(resolvedRuns);
 
-  const {
-    compareMode,
-    toggleCompareMode,
-    primaryRunId,
-    setPrimaryRunId,
-    secondaryRunId,
-    setSecondaryRunId,
-    compareInspectorRowKey,
-    setCompareInspectorRowKey,
-    compareResumeChangesOnly,
-    setCompareResumeChangesOnly,
-    primaryRun,
-    secondaryRun,
-    traceComparison,
-    displayedComparisonRows,
-  } = useRunComparison(resolvedRuns);
+  const { runFilter, setRunFilter, filteredRunList } = useFilteredRunList(
+    rawRunFilter as string,
+    resolvedRuns,
+    setRunFilterContext
+  );
 
-  React.useEffect(() => {
-    return () => {
-      Object.values(handoffResetTimeoutsRef.current).forEach((timeoutId) => {
-        window.clearTimeout(timeoutId);
-      });
-      handoffResetTimeoutsRef.current = {};
-    };
-  }, []);
+  return (
+    <Card variant='subtle' padding='md' className='bg-card/60'>
+      <RunHistoryFilterControls
+        runFilter={runFilter}
+        onSetRunFilter={setRunFilter}
+        compareMode={comparison.compareMode}
+        onToggleCompareMode={comparison.toggleCompareMode}
+        isRefreshing={resolvedIsRefreshing}
+        onRefresh={() => void refreshRuns().catch(() => {})}
+      />
 
-  const handleRefresh = (): void => {
-    void refreshRuns().catch(() => {});
-  };
-  const handleOpenRunDetail = (runId: string): void => {
-    openRunDetail(runId);
-  };
-  const handleResumeRun = (runId: string, mode: 'resume' | 'replay'): void => {
-    void resumeRun(runId, mode).catch(() => {});
-  };
-  const handleHandoffRun = (runId: string): void => {
-    setHandoffStateByRunId((prev) => ({
-      ...prev,
-      [runId]: 'pending',
-    }));
-    void handoffRun(runId)
-      .then((ok: boolean) => {
-        if (!ok) {
-          const existingTimeoutId = handoffResetTimeoutsRef.current[runId];
-          if (typeof existingTimeoutId === 'number') {
-            window.clearTimeout(existingTimeoutId);
-            delete handoffResetTimeoutsRef.current[runId];
-          }
-          setHandoffStateByRunId((prev) => {
-            const next = { ...prev };
-            delete next[runId];
-            return next;
-          });
-          return;
-        }
-        setHandoffStateByRunId((prev) => ({
-          ...prev,
-          [runId]: 'success',
-        }));
-        const existingTimeoutId = handoffResetTimeoutsRef.current[runId];
-        if (typeof existingTimeoutId === 'number') {
-          window.clearTimeout(existingTimeoutId);
-        }
-        handoffResetTimeoutsRef.current[runId] = window.setTimeout(() => {
-          setHandoffStateByRunId((prev) => {
-            if (prev[runId] !== 'success') return prev;
-            const next = { ...prev };
-            delete next[runId];
-            return next;
-          });
-          delete handoffResetTimeoutsRef.current[runId];
-        }, 4000);
-      })
-      .catch(() => {
-        const existingTimeoutId = handoffResetTimeoutsRef.current[runId];
-        if (typeof existingTimeoutId === 'number') {
-          window.clearTimeout(existingTimeoutId);
-          delete handoffResetTimeoutsRef.current[runId];
-        }
-        setHandoffStateByRunId((prev) => {
-          const next = { ...prev };
-          delete next[runId];
-          return next;
-        });
-      });
-  };
-  const handleRetryRunNode = (runId: string, nodeId: string): void => {
-    void retryRunNode(runId, nodeId).catch(() => {});
-  };
-  const handleCancelRun = (runId: string): void => {
-    void cancelRun(runId).catch(() => {});
-  };
-  const handleRequeueDeadLetter = (runId: string): void => {
-    void requeueDeadLetter(runId).catch(() => {});
-  };
-  const rawRunFilter = runHistoryState.runFilter as string;
+      <RunHistoryList
+        runs={filteredRunList}
+        compareMode={comparison.compareMode}
+        primaryRunId={comparison.primaryRunId}
+        secondaryRunId={comparison.secondaryRunId}
+        onSetPrimaryRunId={comparison.setPrimaryRunId}
+        onSetSecondaryRunId={comparison.setSecondaryRunId}
+        onOpenRunDetail={openRunDetail}
+        onExpandedRunHistory={setExpandedRunHistory}
+        expandedRunHistory={expandedRunHistory}
+        runHistorySelection={runHistorySelection}
+        onSetRunHistorySelection={setRunHistorySelection}
+        onCancelRun={(runId) => void cancelRun(runId).catch(() => {})}
+      />
 
+      {comparison.compareMode && comparison.primaryRun && comparison.secondaryRun && (
+        <RunComparisonTool
+          primaryRun={comparison.primaryRun}
+          secondaryRun={comparison.secondaryRun}
+          traceComparison={comparison.traceComparison}
+          displayedComparisonRows={comparison.displayedComparisonRows}
+          compareInspectorRowKey={comparison.compareInspectorRowKey}
+          onSetCompareInspectorRowKey={comparison.setCompareInspectorRowKey}
+        />
+      )}
+    </Card>
+  );
+}
+
+function useFilteredRunList(
+  rawRunFilter: string,
+  resolvedRuns: AiPathRunRecord[],
+  setRunFilterContext: (next: string) => void
+) {
   const runFilter: RunHistoryFilterView = React.useMemo((): RunHistoryFilterView => {
     if (rawRunFilter === 'active' || rawRunFilter === 'running' || rawRunFilter === 'queued') {
       return 'active';
     }
     if (rawRunFilter === 'failed') return 'failed';
-    if (rawRunFilter === 'dead') return 'dead';
+    if (rawRunFilter === 'canceled') return 'canceled';
     return 'all';
   }, [rawRunFilter]);
+
   const setRunFilter = React.useCallback(
     (nextFilter: RunHistoryFilterView): void => {
       setRunFilterContext(nextFilter);
@@ -154,66 +102,14 @@ export function RunHistoryPanel(): React.JSX.Element {
     if (runFilter === 'all') return resolvedRuns;
     if (runFilter === 'active') {
       return resolvedRuns.filter(
-        (run: AiPathRunRecord): boolean =>
-          run.status === 'queued' ||
-          run.status === 'running' ||
-          run.status === 'blocked_on_lease'
+        (run: AiPathRunRecord): boolean => run.status === 'queued' || run.status === 'running'
       );
     }
     if (runFilter === 'failed') {
-      return resolvedRuns.filter(
-        (run: AiPathRunRecord): boolean =>
-          run.status === 'failed' ||
-          run.status === 'paused' ||
-          run.status === 'handoff_ready'
-      );
+      return resolvedRuns.filter((run: AiPathRunRecord): boolean => run.status === 'failed');
     }
-    return resolvedRuns.filter((run: AiPathRunRecord): boolean => run.status === 'dead_lettered');
+    return resolvedRuns.filter((run: AiPathRunRecord): boolean => run.status === 'canceled');
   }, [runFilter, resolvedRuns]);
 
-  return (
-    <Card variant='subtle' padding='md' className='bg-card/60'>
-      <RunHistoryFilterControls
-        runFilter={runFilter}
-        onSetRunFilter={setRunFilter}
-        compareMode={compareMode}
-        onToggleCompareMode={toggleCompareMode}
-        isRefreshing={resolvedIsRefreshing}
-        onRefresh={handleRefresh}
-      />
-
-      <RunHistoryList
-        runs={filteredRunList}
-        compareMode={compareMode}
-        primaryRunId={primaryRunId}
-        secondaryRunId={secondaryRunId}
-        onSetPrimaryRunId={setPrimaryRunId}
-        onSetSecondaryRunId={setSecondaryRunId}
-        onOpenRunDetail={handleOpenRunDetail}
-        onExpandedRunHistory={setExpandedRunHistory}
-        expandedRunHistory={expandedRunHistory}
-        runHistorySelection={runHistorySelection}
-        onSetRunHistorySelection={setRunHistorySelection}
-        onResumeRun={handleResumeRun}
-        onHandoffRun={handleHandoffRun}
-        handoffStateByRunId={handoffStateByRunId}
-        onCancelRun={handleCancelRun}
-        onRequeueDeadLetter={handleRequeueDeadLetter}
-        onRetryRunNode={handleRetryRunNode}
-      />
-
-      {compareMode && primaryRun && secondaryRun && (
-        <RunComparisonTool
-          primaryRun={primaryRun}
-          secondaryRun={secondaryRun}
-          traceComparison={traceComparison}
-          displayedComparisonRows={displayedComparisonRows}
-          compareResumeChangesOnly={compareResumeChangesOnly}
-          compareInspectorRowKey={compareInspectorRowKey}
-          onSetCompareInspectorRowKey={setCompareInspectorRowKey}
-          onToggleResumeChangesOnly={(): void => setCompareResumeChangesOnly((prev) => !prev)}
-        />
-      )}
-    </Card>
-  );
+  return { runFilter, setRunFilter, filteredRunList };
 }

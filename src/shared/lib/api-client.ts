@@ -1,4 +1,5 @@
 import type { ErrorCategory, SuggestedAction } from '@/shared/contracts/observability';
+import { resolveKangurClientEndpoint } from '@/features/kangur/services/resolve-kangur-client-endpoint';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
@@ -169,11 +170,13 @@ export async function apiClient<T>(
   endpoint: string,
   { params, logError = true, timeout = 15000, ...customConfig }: ApiClientOptions = {}
 ): Promise<T> {
+  const resolvedEndpoint =
+    isBrowserRuntime() ? resolveKangurClientEndpoint(endpoint) : endpoint;
   const isFormData = customConfig.body instanceof FormData;
   const headers: Record<string, string> = isFormData ? {} : { 'Content-Type': 'application/json' };
 
   // Build URL with query parameters
-  let url = endpoint;
+  let url = resolvedEndpoint;
   if (params) {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {

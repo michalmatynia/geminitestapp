@@ -68,27 +68,24 @@ type KangurAssignmentsListRuntimeContextValue = {
 };
 
 type KangurAssignmentsListPrimaryActionProps = {
-  isCoarsePointer: boolean;
-  item: KangurAssignmentListItem;
-  onItemActionClick?: (item: KangurAssignmentListItem) => void;
   transitionSourceId: string;
   variant: 'surface' | KangurAssignmentListItem['actionVariant'];
 };
 
 type KangurAssignmentsListProgressMetaProps = {
   countdownLabel: string | null;
-  lastActivityLabel: string | null | undefined;
-  lastActivityPrefix: string;
-  timeLimitLabel: string | null | undefined;
 };
 
 type KangurAssignmentsListShellProps = {
-  compact: boolean;
   emptyStateDescription: string;
+};
+
+type KangurAssignmentsListLayoutContextValue = {
+  compact: boolean;
   items: KangurAssignmentListItem[];
+  showTimeCountdown: boolean;
   summary?: string;
   title: string;
-  translations: ReturnType<typeof useTranslations<'KangurAssignmentsList'>>;
 };
 
 const KangurAssignmentsListItemContext = createContext<KangurAssignmentsListItemContextValue | null>(
@@ -98,17 +95,39 @@ const KangurAssignmentsListActionContext =
   createContext<{ onItemActionClick?: (item: KangurAssignmentListItem) => void } | null>(null);
 const KangurAssignmentsListArchiveContext =
   createContext<KangurAssignmentsListArchiveContextValue | null>(null);
+const KangurAssignmentsListLayoutContext =
+  createContext<KangurAssignmentsListLayoutContextValue | null>(null);
 const KangurAssignmentsListRuntimeContext =
   createContext<KangurAssignmentsListRuntimeContextValue | null>(null);
+const KangurAssignmentsListTranslationsContext =
+  createContext<ReturnType<typeof useTranslations<'KangurAssignmentsList'>> | null>(null);
 
-const useKangurAssignmentsListItem = (): KangurAssignmentListItem => {
+function useKangurAssignmentsListLayout(): KangurAssignmentsListLayoutContextValue {
+  const context = useContext(KangurAssignmentsListLayoutContext);
+  if (!context) {
+    throw new Error('useKangurAssignmentsListLayout must be used within KangurAssignmentsList.');
+  }
+  return context;
+}
+
+function useKangurAssignmentsListItem(): KangurAssignmentListItem {
   const context = useContext(KangurAssignmentsListItemContext);
-
   if (!context) {
     throw new Error('useKangurAssignmentsListItem must be used within KangurAssignmentsList.');
   }
-
   return context.item;
+}
+
+const useKangurAssignmentsListTranslations = (): ReturnType<
+  typeof useTranslations<'KangurAssignmentsList'>
+> => {
+  const context = useContext(KangurAssignmentsListTranslationsContext);
+  if (!context) {
+    throw new Error(
+      'useKangurAssignmentsListTranslations must be used within KangurAssignmentsList.'
+    );
+  }
+  return context;
 };
 
 const useKangurAssignmentsListArchive = (): KangurAssignmentsListArchiveContextValue => {
@@ -122,10 +141,12 @@ const useKangurAssignmentsListActions = (): {
 };
 
 const useKangurAssignmentsListRuntime = (): KangurAssignmentsListRuntimeContextValue => {
-  return useContext(KangurAssignmentsListRuntimeContext) ?? {
-    now: Date.now(),
-    showTimeCountdown: false,
-  };
+  return (
+    useContext(KangurAssignmentsListRuntimeContext) ?? {
+      now: Date.now(),
+      showTimeCountdown: false,
+    }
+  );
 };
 
 const formatAssignmentCountLabel = (
@@ -185,12 +206,13 @@ const shouldTickAssignmentsCountdown = (
   items.some((item) => Boolean(item.timeLimitMinutes) && item.status !== 'completed');
 
 function KangurAssignmentsListPrimaryAction({
-  isCoarsePointer,
-  item,
-  onItemActionClick,
   transitionSourceId,
   variant,
 }: KangurAssignmentsListPrimaryActionProps): React.JSX.Element {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const item = useKangurAssignmentsListItem();
+  const { onItemActionClick } = useKangurAssignmentsListActions();
+
   return (
     <KangurButton
       asChild
@@ -225,10 +247,13 @@ function KangurAssignmentsListTimeMeta({ label }: { label: string }): React.JSX.
 
 function KangurAssignmentsListProgressMeta({
   countdownLabel,
-  lastActivityLabel,
-  lastActivityPrefix,
-  timeLimitLabel,
 }: KangurAssignmentsListProgressMetaProps): React.JSX.Element | null {
+  const item = useKangurAssignmentsListItem();
+  const translations = useKangurAssignmentsListTranslations();
+  const lastActivityLabel = item.lastActivityLabel;
+  const lastActivityPrefix = translations('lastActivityPrefix');
+  const timeLimitLabel = item.timeLimitLabel;
+
   if (!countdownLabel && !timeLimitLabel && !lastActivityLabel) {
     return null;
   }
@@ -246,17 +271,13 @@ function KangurAssignmentsListProgressMeta({
   );
 }
 
-function KangurAssignmentsListTimeLimitAction({
-  isCoarsePointer,
-  itemId,
-  label,
-  onTimeLimitClick,
-}: {
-  isCoarsePointer: boolean;
-  itemId: string;
-  label: string;
-  onTimeLimitClick?: (assignmentId: string) => void;
-}): React.JSX.Element | null {
+function KangurAssignmentsListTimeLimitAction(): React.JSX.Element | null {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const item = useKangurAssignmentsListItem();
+  const translations = useKangurAssignmentsListTranslations();
+  const { onTimeLimitClick } = useKangurAssignmentsListArchive();
+  const label = translations('timeLimitButtonLabel');
+
   if (!onTimeLimitClick) {
     return null;
   }
@@ -267,7 +288,7 @@ function KangurAssignmentsListTimeLimitAction({
       title={label}
       className={resolveAssignmentsIconButtonClassName(isCoarsePointer)}
       type='button'
-      onClick={() => onTimeLimitClick(itemId)}
+      onClick={() => onTimeLimitClick(item.id)}
       size='sm'
       variant='ghost'
     >
@@ -276,30 +297,26 @@ function KangurAssignmentsListTimeLimitAction({
   );
 }
 
-function KangurAssignmentsListReassignAction({
-  isCoarsePointer,
-  itemId,
-  isReassigning,
-  label,
-  onReassign,
-  reassigningLabel,
-}: {
-  isCoarsePointer: boolean;
-  itemId: string;
-  isReassigning: boolean;
-  label: string;
-  onReassign?: (assignmentId: string) => void;
-  reassigningLabel: string;
-}): React.JSX.Element | null {
-  if (!onReassign) {
+function KangurAssignmentsListReassignAction(): React.JSX.Element | null {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const item = useKangurAssignmentsListItem();
+  const translations = useKangurAssignmentsListTranslations();
+  const { onReassign, reassigningId } = useKangurAssignmentsListArchive();
+
+  const canReassign = Boolean(onReassign && item.status === 'completed');
+  if (!onReassign || !canReassign) {
     return null;
   }
+
+  const isReassigning = Boolean(reassigningId && reassigningId === item.id);
+  const label = translations('reassign');
+  const reassigningLabel = translations('reassigning');
 
   return (
     <KangurButton
       className={resolveAssignmentsActionButtonClassName(isCoarsePointer)}
       type='button'
-      onClick={() => onReassign(itemId)}
+      onClick={() => onReassign(item.id)}
       size='sm'
       variant='ghost'
       disabled={isReassigning}
@@ -309,17 +326,13 @@ function KangurAssignmentsListReassignAction({
   );
 }
 
-function KangurAssignmentsListArchiveAction({
-  isCoarsePointer,
-  itemId,
-  label,
-  onArchive,
-}: {
-  isCoarsePointer: boolean;
-  itemId: string;
-  label: string;
-  onArchive?: (assignmentId: string) => void;
-}): React.JSX.Element | null {
+function KangurAssignmentsListArchiveAction(): React.JSX.Element | null {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const item = useKangurAssignmentsListItem();
+  const translations = useKangurAssignmentsListTranslations();
+  const { onArchive } = useKangurAssignmentsListArchive();
+  const label = translations('archive');
+
   if (!onArchive) {
     return null;
   }
@@ -328,7 +341,7 @@ function KangurAssignmentsListArchiveAction({
     <KangurButton
       className={resolveAssignmentsActionButtonClassName(isCoarsePointer)}
       type='button'
-      onClick={() => onArchive(itemId)}
+      onClick={() => onArchive(item.id)}
       size='sm'
       variant='ghost'
     >
@@ -338,13 +351,10 @@ function KangurAssignmentsListArchiveAction({
 }
 
 function KangurAssignmentsListShell({
-  compact,
   emptyStateDescription,
-  items,
-  summary,
-  title,
-  translations,
 }: KangurAssignmentsListShellProps): React.JSX.Element {
+  const { compact, items, summary, title } = useKangurAssignmentsListLayout();
+  const translations = useKangurAssignmentsListTranslations();
   const CardComponent = compact ? KangurAssignmentsListCompactCard : KangurAssignmentsListStandardCard;
   const countLabel = formatAssignmentCountLabel(items.length, translations);
   const shellSurface = compact ? 'mist' : 'mistStrong';
@@ -399,12 +409,11 @@ function KangurAssignmentsListShell({
 
 function KangurAssignmentsListCompactCard(): React.JSX.Element {
   const locale = useLocale();
-  const translations = useTranslations('KangurAssignmentsList');
+  const translations = useKangurAssignmentsListTranslations();
   const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
-  const isCoarsePointer = useKangurCoarsePointer();
   const item = useKangurAssignmentsListItem();
-  const { onItemActionClick } = useKangurAssignmentsListActions();
-  const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
+  const { showTimeCountdown } = useKangurAssignmentsListLayout();
+  const { now } = useKangurAssignmentsListRuntime();
   const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown, {
     locale,
     translate: runtimeTranslations,
@@ -463,9 +472,6 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
             {item.progressSummary}
           </KangurCardDescription>
           <KangurAssignmentsListPrimaryAction
-            isCoarsePointer={isCoarsePointer}
-            item={item}
-            onItemActionClick={onItemActionClick}
             transitionSourceId={`assignments-list:compact:${item.id}`}
             variant={item.actionVariant}
           />
@@ -488,20 +494,15 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
 
 function KangurAssignmentsListStandardCard(): React.JSX.Element {
   const locale = useLocale();
-  const translations = useTranslations('KangurAssignmentsList');
+  const translations = useKangurAssignmentsListTranslations();
   const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
-  const isCoarsePointer = useKangurCoarsePointer();
   const item = useKangurAssignmentsListItem();
-  const { onItemActionClick } = useKangurAssignmentsListActions();
-  const { onArchive, onTimeLimitClick, onReassign, reassigningId } =
-    useKangurAssignmentsListArchive();
-  const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
+  const { showTimeCountdown } = useKangurAssignmentsListLayout();
+  const { now } = useKangurAssignmentsListRuntime();
   const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown, {
     locale,
     translate: runtimeTranslations,
   });
-  const canReassign = Boolean(onReassign && item.status === 'completed');
-  const isReassigning = Boolean(reassigningId && reassigningId === item.id);
   const subjectLabel = getLocalizedKangurSubjectLabel(item.subject, locale, item.subjectLabel);
 
   return (
@@ -552,40 +553,17 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         />
         <KangurAssignmentsListProgressMeta
           countdownLabel={countdownLabel}
-          lastActivityLabel={item.lastActivityLabel}
-          lastActivityPrefix={translations('lastActivityPrefix')}
-          timeLimitLabel={item.timeLimitLabel}
         />
       </KangurSummaryPanel>
 
       <div className={`mt-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:flex-wrap sm:items-center`}>
         <KangurAssignmentsListPrimaryAction
-          isCoarsePointer={isCoarsePointer}
-          item={item}
-          onItemActionClick={onItemActionClick}
           transitionSourceId={`assignments-list:standard:${item.id}`}
           variant='surface'
         />
-        <KangurAssignmentsListTimeLimitAction
-          isCoarsePointer={isCoarsePointer}
-          itemId={item.id}
-          label={translations('timeLimitButtonLabel')}
-          onTimeLimitClick={onTimeLimitClick}
-        />
-        <KangurAssignmentsListReassignAction
-          isCoarsePointer={isCoarsePointer}
-          itemId={item.id}
-          isReassigning={isReassigning}
-          label={translations('reassign')}
-          onReassign={canReassign ? onReassign : undefined}
-          reassigningLabel={translations('reassigning')}
-        />
-        <KangurAssignmentsListArchiveAction
-          isCoarsePointer={isCoarsePointer}
-          itemId={item.id}
-          label={translations('archive')}
-          onArchive={onArchive}
-        />
+        <KangurAssignmentsListTimeLimitAction />
+        <KangurAssignmentsListReassignAction />
+        <KangurAssignmentsListArchiveAction />
       </div>
     </KangurInfoCard>
   );
@@ -620,6 +598,16 @@ export function KangurAssignmentsList({
     () => ({ onItemActionClick }),
     [onItemActionClick]
   );
+  const layoutContextValue = useMemo(
+    () => ({
+      compact,
+      items,
+      showTimeCountdown,
+      summary,
+      title,
+    }),
+    [compact, items, showTimeCountdown, summary, title]
+  );
 
   useEffect(() => {
     if (!shouldTick) {
@@ -634,20 +622,19 @@ export function KangurAssignmentsList({
   }, shouldTick ? 1000 : null);
 
   return (
-    <KangurAssignmentsListRuntimeContext.Provider value={runtimeContextValue}>
+    <KangurAssignmentsListLayoutContext.Provider value={layoutContextValue}>
       <KangurAssignmentsListActionContext.Provider value={actionContextValue}>
         <KangurAssignmentsListArchiveContext.Provider value={archiveContextValue}>
-          <KangurAssignmentsListShell
-            compact={compact}
-            emptyStateDescription={emptyStateDescription}
-            items={items}
-            summary={summary}
-            title={title}
-            translations={translations}
-          />
+          <KangurAssignmentsListRuntimeContext.Provider value={runtimeContextValue}>
+            <KangurAssignmentsListTranslationsContext.Provider value={translations}>
+              <KangurAssignmentsListShell
+                emptyStateDescription={emptyStateDescription}
+              />
+            </KangurAssignmentsListTranslationsContext.Provider>
+          </KangurAssignmentsListRuntimeContext.Provider>
         </KangurAssignmentsListArchiveContext.Provider>
       </KangurAssignmentsListActionContext.Provider>
-    </KangurAssignmentsListRuntimeContext.Provider>
+    </KangurAssignmentsListLayoutContext.Provider>
   );
 }
 

@@ -8,6 +8,7 @@ import {
   getImprovementTrack,
   type ImprovementPhase,
 } from './general-improvement-operations';
+import { refreshImprovementDocs } from './generate-improvement-docs';
 
 interface PhaseResult {
   phase: ImprovementPhase;
@@ -124,10 +125,6 @@ async function main(): Promise<void> {
   for (const phase of phases) {
     const result = await runPhase(phase, selectedTrackIds);
     phaseResults.push(result);
-
-    if (result.status === 'failed') {
-      break;
-    }
   }
 
   const report: ImprovementBatchReport = {
@@ -138,12 +135,16 @@ async function main(): Promise<void> {
   };
 
   await writeReport(reportPath, report);
+  await refreshImprovementDocs(repoRoot);
   process.stdout.write(`General improvement batch report wrote ${reportPath}\n`);
+  process.stdout.write('Improvement docs refreshed.\n');
 
   if (phaseResults.some((result) => result.status === 'failed')) {
+    process.stdout.write(
+      'General improvement batch completed with one or more failed phases. See the batch report for the full cross-phase picture.\n'
+    );
     process.exitCode = 1;
   }
 }
 
 void main();
-

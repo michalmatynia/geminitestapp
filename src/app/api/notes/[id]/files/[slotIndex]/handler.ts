@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { deleteNoteFile } from '@/features/notesapp/server';
 import { noteService } from '@/features/notesapp/server';
@@ -12,7 +12,7 @@ const MAX_SLOT_INDEX = 9;
  * DELETE /api/notes/[id]/files/[slotIndex]
  * Delete a file from a specific slot
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; slotIndex: string }

@@ -23,6 +23,7 @@ export type TanstackEntityKind =
 export type TanstackLifecycleStage = 'start' | 'success' | 'error' | 'retry' | 'cancel';
 
 export type TanstackCriticality = 'low' | 'normal' | 'high' | 'critical';
+export type TanstackErrorPresentation = 'toast' | 'inline' | 'silent';
 
 export type TanstackFactoryDomain =
   | 'global'
@@ -60,6 +61,7 @@ export type TanstackFactoryMeta = {
   criticality?: TanstackCriticality | undefined;
   samplingRate?: number | undefined;
   logError?: boolean | undefined;
+  errorPresentation?: TanstackErrorPresentation | undefined;
   tags?: string[] | undefined;
 };
 
@@ -72,6 +74,7 @@ export type TanstackFactoryMetaResolved = {
   criticality: TanstackCriticality;
   samplingRate: number;
   logError: boolean;
+  errorPresentation: TanstackErrorPresentation;
   domain: TanstackFactoryDomain;
   tags: string[];
 };

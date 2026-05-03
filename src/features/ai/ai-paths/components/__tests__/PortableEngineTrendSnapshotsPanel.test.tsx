@@ -11,32 +11,6 @@ const buildPayload = () => ({
     driftAlertsTotal: 1,
     sinkWritesFailedTotal: 2,
   },
-  autoRemediation: {
-    enabled: true,
-    strategy: 'degrade_to_log_only' as const,
-    threshold: 3,
-    cooldownSeconds: 300,
-    rateLimitWindowSeconds: 3600,
-    rateLimitMaxActions: 2,
-    notifications: {
-      enabled: true,
-      webhookConfigured: true,
-      emailWebhookConfigured: false,
-      emailRecipients: [],
-      timeoutMs: 8000,
-      deadLetter: {
-        queuedCount: 1,
-        replayPolicySkipsTotal: 1,
-        replayPolicySkipReasons: [{ reason: 'dead_letter_endpoint_disallowed', count: 1 }],
-      },
-    },
-    state: {
-      consecutiveFailureCount: 2,
-      remediationCount: 1,
-      lastStatus: 'degraded',
-      lastRemediatedAt: '2026-03-05T00:30:00.000Z',
-    },
-  },
   runExecution: {
     source: 'in_memory' as const,
     totals: {

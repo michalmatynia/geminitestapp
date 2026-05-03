@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
+import { reconcileRuntimeState } from '@/features/ai/ai-paths/runtime/state-reconciler';
 import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
@@ -14,19 +15,21 @@ import { sanitizeRuntimeState } from '../path-run-executor.logic';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
+export interface PathRunRuntimeStateManagerParams {
+  run: AiPathRunRecord;
+  initialRuntimeState: RuntimeState;
+  accInputs: Record<string, RuntimePortValues>;
+  accOutputs: Record<string, RuntimePortValues>;
+  repo: AiPathRunRepository;
+  resolvedRunStartedAt: string;
+}
+
 export class PathRunRuntimeStateManager {
   private latestSnapshot: RuntimeState | null = null;
   private historyEntriesByNode = new Map<string, RuntimeHistoryEntry[]>();
   private nodeStatusOverrides = new Map<string, RuntimeState['nodeStatuses'][string]>();
 
-  constructor(
-    private run: AiPathRunRecord,
-    private initialRuntimeState: RuntimeState,
-    private accInputs: Record<string, RuntimePortValues>,
-    private accOutputs: Record<string, RuntimePortValues>,
-    private repo: AiPathRunRepository,
-    private resolvedRunStartedAt: string
-  ) {}
+  constructor(private params: PathRunRuntimeStateManagerParams) {}
 
   setLatestSnapshot(snapshot: RuntimeState | null): void {
     this.latestSnapshot = snapshot;
@@ -44,7 +47,7 @@ export class PathRunRuntimeStateManager {
 
   private async loadRunNodesForRuntimeRepair(): Promise<AiPathRunNodeRecord[]> {
     try {
-      return await this.repo.listRunNodes(this.run.id);
+      return await this.params.repo.listRunNodes(this.params.run.id);
     } catch (error) {
       void ErrorSystem.captureException(error);
       return [];
@@ -53,82 +56,32 @@ export class PathRunRuntimeStateManager {
 
   async buildCurrentRuntimeStateSnapshot(): Promise<RuntimeState> {
     const currentRun = {
-      ...this.run,
+      ...this.params.run,
       status: 'running' as const,
-      startedAt: this.resolvedRunStartedAt,
+      startedAt: this.params.resolvedRunStartedAt,
     };
 
-    const statusFromLatest = this.latestSnapshot?.status ?? this.initialRuntimeState.status;
-    const nodeStatusesFromLatest =
-      this.latestSnapshot?.nodeStatuses ?? this.initialRuntimeState.nodeStatuses;
-    const nodeOutputsFromLatest =
-      this.latestSnapshot?.nodeOutputs ?? this.initialRuntimeState.nodeOutputs;
-    const historyFromLatest = this.latestSnapshot?.history ?? this.initialRuntimeState.history;
-    const hashesFromLatest = this.latestSnapshot?.hashes ?? this.initialRuntimeState.hashes;
-    const hashTimestampsFromLatest =
-      this.latestSnapshot?.hashTimestamps ?? this.initialRuntimeState.hashTimestamps;
-    const nodeDurationsFromLatest =
-      this.latestSnapshot?.nodeDurations ?? this.initialRuntimeState.nodeDurations;
-    const mergedHistory = new Map<string, Map<string, RuntimeHistoryEntry>>();
-    const buildHistoryEntryKey = (entry: RuntimeHistoryEntry): string =>
-      entry.spanId ??
-      [
-        entry.traceId ?? '',
-        entry.timestamp,
-        entry.status,
-        entry.attempt ?? '',
-        entry.iteration,
-      ].join(':');
-    const appendHistory = (
-      source: Record<string, RuntimeHistoryEntry[]> | undefined
-    ): void => {
-      if (!source) return;
-      Object.entries(source).forEach(([nodeId, entries]) => {
-        if (!Array.isArray(entries) || entries.length === 0) return;
-        const existing = mergedHistory.get(nodeId) ?? new Map<string, RuntimeHistoryEntry>();
-        entries.forEach((entry) => {
-          existing.set(buildHistoryEntryKey(entry), entry);
-        });
-        mergedHistory.set(nodeId, existing);
-      });
+    // The partial update from our local tracking
+    const localUpdate: Partial<RuntimeState> = {
+      inputs: this.params.accInputs,
+      outputs: this.params.accOutputs,
+      nodeStatuses: Object.fromEntries(this.nodeStatusOverrides),
+      history: Object.fromEntries(this.historyEntriesByNode),
     };
-    appendHistory(this.initialRuntimeState.history);
-    appendHistory(historyFromLatest);
-    this.historyEntriesByNode.forEach((entries, nodeId) => {
-      if (!Array.isArray(entries) || entries.length === 0) return;
-      const existing = mergedHistory.get(nodeId) ?? new Map<string, RuntimeHistoryEntry>();
-      entries.forEach((entry) => {
-        existing.set(buildHistoryEntryKey(entry), entry);
-      });
-      mergedHistory.set(nodeId, existing);
-    });
-    const mergedNodeStatuses: RuntimeState['nodeStatuses'] = {
-      ...(nodeStatusesFromLatest ?? {}),
-    };
-    this.nodeStatusOverrides.forEach((status, nodeId) => {
-      mergedNodeStatuses[nodeId] = status;
-    });
-      
+
+    // Reconcile the initial state with the latest engine snapshot (if any) and our local updates
+    const updates: Partial<RuntimeState>[] = [];
+    if (this.latestSnapshot) {
+      updates.push(this.latestSnapshot);
+    }
+    updates.push(localUpdate);
+
+    const reconciled = reconcileRuntimeState(this.params.initialRuntimeState, updates);
+
+    // Ensure the currentRun is correctly set
     const candidate: RuntimeState = {
-      status: statusFromLatest ?? 'running',
+      ...reconciled,
       currentRun,
-      inputs: this.accInputs,
-      outputs: this.accOutputs,
-      nodeOutputs: nodeOutputsFromLatest ?? this.accOutputs,
-      nodeStatuses: mergedNodeStatuses,
-      history: mergedHistory.size
-        ? Object.fromEntries(
-          Array.from(mergedHistory.entries()).map(([nodeId, entries]) => [
-            nodeId,
-            Array.from(entries.values()),
-          ])
-        )
-        : {},
-      hashes: hashesFromLatest ?? {},
-      hashTimestamps: hashTimestampsFromLatest ?? {},
-      nodeDurations: nodeDurationsFromLatest ?? {},
-      variables: this.latestSnapshot?.variables ?? this.initialRuntimeState.variables ?? {},
-      events: this.latestSnapshot?.events ?? this.initialRuntimeState.events ?? [],
     };
 
     const repaired = repairRuntimeStatePorts({

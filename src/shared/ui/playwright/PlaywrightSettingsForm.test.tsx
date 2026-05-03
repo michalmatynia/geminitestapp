@@ -175,4 +175,145 @@ describe('PlaywrightSettingsForm', () => {
     expect(updater(defaultPlaywrightSettings).headless).toBe(false);
     expect(onSave).toHaveBeenCalledTimes(1);
   });
+
+  it('updates locale and timezone fields through the shared settings form', () => {
+    const setSettings = vi.fn();
+
+    render(
+      <PlaywrightSettingsForm
+        settings={defaultPlaywrightSettings}
+        setSettings={setSettings}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Locale'), {
+      target: { value: 'en-US' },
+    });
+    fireEvent.change(screen.getByLabelText('Timezone'), {
+      target: { value: 'Europe/Warsaw' },
+    });
+
+    const localeUpdater = setSettings.mock.calls[0]?.[0] as (
+      prev: PlaywrightSettings
+    ) => PlaywrightSettings;
+    const timezoneUpdater = setSettings.mock.calls[1]?.[0] as (
+      prev: PlaywrightSettings
+    ) => PlaywrightSettings;
+
+    expect(localeUpdater(defaultPlaywrightSettings).locale).toBe('en-US');
+    expect(timezoneUpdater(defaultPlaywrightSettings).timezoneId).toBe('Europe/Warsaw');
+  });
+
+  it('updates identity profile through the shared settings form', () => {
+    const setSettings = vi.fn();
+
+    render(
+      <PlaywrightSettingsForm
+        settings={defaultPlaywrightSettings}
+        setSettings={setSettings}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Identity profile'), {
+      target: { value: 'search' },
+    });
+
+    const updater = setSettings.mock.calls[0]?.[0] as (
+      prev: PlaywrightSettings
+    ) => PlaywrightSettings;
+
+    expect(updater(defaultPlaywrightSettings).identityProfile).toBe('search');
+  });
+
+  it('updates proxy session token affinity through the shared settings form', () => {
+    const setSettings = vi.fn();
+
+    render(
+      <PlaywrightSettingsForm
+        settings={{
+          ...defaultPlaywrightSettings,
+          proxyEnabled: true,
+        }}
+        setSettings={setSettings}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Proxy session tokens' }));
+
+    const updater = setSettings.mock.calls[0]?.[0] as (
+      prev: PlaywrightSettings
+    ) => PlaywrightSettings;
+
+    expect(
+      updater({
+        ...defaultPlaywrightSettings,
+        proxyEnabled: true,
+      }).proxySessionAffinity
+    ).toBe(true);
+  });
+
+  it('updates proxy session mode through the shared settings form', () => {
+    const setSettings = vi.fn();
+
+    render(
+      <PlaywrightSettingsForm
+        settings={{
+          ...defaultPlaywrightSettings,
+          proxyEnabled: true,
+          proxySessionAffinity: true,
+        }}
+        setSettings={setSettings}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }));
+    fireEvent.change(screen.getByLabelText('Proxy session mode'), {
+      target: { value: 'rotate' },
+    });
+
+    const updater = setSettings.mock.calls[0]?.[0] as (
+      prev: PlaywrightSettings
+    ) => PlaywrightSettings;
+
+    expect(
+      updater({
+        ...defaultPlaywrightSettings,
+        proxyEnabled: true,
+        proxySessionAffinity: true,
+      }).proxySessionMode
+    ).toBe('rotate');
+  });
+
+  it('updates proxy provider preset through the shared settings form', () => {
+    const setSettings = vi.fn();
+
+    render(
+      <PlaywrightSettingsForm
+        settings={{
+          ...defaultPlaywrightSettings,
+          proxyEnabled: true,
+          proxySessionAffinity: true,
+        }}
+        setSettings={setSettings}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced settings' }));
+    fireEvent.change(screen.getByLabelText('Proxy provider preset'), {
+      target: { value: 'oxylabs' },
+    });
+
+    const updater = setSettings.mock.calls[0]?.[0] as (
+      prev: PlaywrightSettings
+    ) => PlaywrightSettings;
+
+    expect(
+      updater({
+        ...defaultPlaywrightSettings,
+        proxyEnabled: true,
+        proxySessionAffinity: true,
+      }).proxyProviderPreset
+    ).toBe('oxylabs');
+  });
 });

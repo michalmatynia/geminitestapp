@@ -7,7 +7,7 @@ import {
   getFloatingTutorArrowheadGeometry,
   GUIDED_CALLOUT_HEIGHT,
   getGuidedCalloutClusterLayout,
-  getGuidedCalloutLayout,
+  type getGuidedCalloutLayout,
   getGuidedSelectionCalloutHeight,
   getMotionPositionPoint,
   getSelectionGlowStyle,

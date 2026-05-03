@@ -6,10 +6,14 @@ import {
 
 export type { UserPreferences, UserPreferencesUpdate };
 
-export function useUserPreferences(options?: { enabled?: boolean }) {
+export function useUserPreferences(
+  options?: { enabled?: boolean }
+): ReturnType<typeof useSharedUserPreferences> {
   return useSharedUserPreferences(options);
 }
 
-export function useUpdateUserPreferencesMutation() {
+export function useUpdateUserPreferencesMutation(): ReturnType<
+  typeof useUpdateUserPreferences
+> {
   return useUpdateUserPreferences();
 }

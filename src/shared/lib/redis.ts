@@ -64,7 +64,7 @@ export function getRedisClient(): Redis | null {
 }
 
 export const isRedisEnabled = (): boolean => {
-  return !!process.env['REDIS_URL'];
+  return Boolean(process.env['REDIS_URL']);
 };
 
 export const getRedisInitializationTimestampMs = (): number | null => {

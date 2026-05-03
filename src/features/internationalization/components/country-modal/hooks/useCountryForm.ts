@@ -4,13 +4,9 @@ import React from 'react';
 
 import { useSaveCountryMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import type { CountryOption, CurrencyOption } from '@/shared/contracts/internationalization';
+import type { CodeNameDto } from '@/shared/contracts/base';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-
-interface CountryFormState {
-  code: string;
-  name: string;
-}
 
 interface UseCountryFormProps {
   country?: CountryOption | null;
@@ -19,8 +15,8 @@ interface UseCountryFormProps {
 }
 
 interface UseCountryFormReturn {
-  form: CountryFormState;
-  setForm: React.Dispatch<React.SetStateAction<CountryFormState>>;
+  form: CodeNameDto;
+  setForm: React.Dispatch<React.SetStateAction<CodeNameDto>>;
   selectedCurrencyIds: string[];
   setSelectedCurrencyIds: React.Dispatch<React.SetStateAction<string[]>>;
   saveMutation: ReturnType<typeof useSaveCountryMutation>;
@@ -32,7 +28,7 @@ export function useCountryForm({
   defaultCountryCode,
   defaultCountryName,
 }: UseCountryFormProps): UseCountryFormReturn {
-  const [form, setForm] = React.useState<CountryFormState>({
+  const [form, setForm] = React.useState<CodeNameDto>({
     code: defaultCountryCode,
     name: defaultCountryName,
   });
@@ -43,46 +39,36 @@ export function useCountryForm({
   React.useEffect(() => {
     if (country) {
       setForm({ code: country.code, name: country.name });
-      setSelectedCurrencyIds(
-        country.currencies?.map((c: { currencyId: string }) => c.currencyId) ?? []
-      );
+      setSelectedCurrencyIds(country.currencies.map((c: { currencyId: string }) => c.currencyId));
     } else {
-      setForm({
-        code: defaultCountryCode,
-        name: defaultCountryName,
-      });
+      setForm({ code: defaultCountryCode, name: defaultCountryName });
       setSelectedCurrencyIds([]);
     }
   }, [country, defaultCountryCode, defaultCountryName]);
 
   const handleSubmit = async (_currencies: CurrencyOption[]): Promise<void> => {
-    if (!form.code.trim() || !form.name.trim()) {
+    if (form.code.trim() === '' || form.name.trim() === '') {
       toast('Required fields missing.', { variant: 'error' });
       return;
     }
 
     try {
-      const payload: { id?: string; data: { code: string; name: string; currencyIds: string[] } } =
-        {
-          data: {
-            code: form.code.trim().toUpperCase(),
-            name: form.name.trim(),
-            currencyIds: selectedCurrencyIds,
-          },
-        };
-      if (country?.id) {
+      const payload: { id?: string; data: { code: string; name: string; currencyIds: string[] } } = {
+        data: {
+          code: form.code.trim().toUpperCase(),
+          name: form.name.trim(),
+          currencyIds: selectedCurrencyIds,
+        },
+      };
+
+      if (country?.id !== undefined && country.id !== '') {
         payload.id = country.id;
       }
 
       await saveMutation.mutateAsync(payload);
-
       toast('Country saved.', { variant: 'success' });
     } catch (err) {
-      logClientCatch(err, {
-        source: 'CountryModal',
-        action: 'saveCountry',
-        countryId: country?.id,
-      });
+      logClientCatch(err, { source: 'CountryModal', action: 'saveCountry', countryId: country?.id });
       toast('Failed to save country.', { variant: 'error' });
     }
   };

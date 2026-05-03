@@ -3,9 +3,12 @@ import { z } from 'zod';
 export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'compact_oversized_configs',
   'repair_path_index',
+  'prune_deprecated_starter_workflows',
+  'seed_canonical_starter_workflows',
   'ensure_starter_workflow_defaults',
   'refresh_starter_workflow_configs',
   'normalize_runtime_kernel_settings',
+  'canonicalize_path_configs',
 ] as const;
 export const aiPathsMaintenanceActionIdSchema = z.enum(AI_PATHS_MAINTENANCE_ACTION_IDS);
 export type AiPathsMaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];

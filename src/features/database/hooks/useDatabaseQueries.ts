@@ -4,6 +4,9 @@ import type {
   DatabaseBackupFile as DatabaseInfoResponse,
   DatabaseBackupResponse,
   DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
+  DatabaseEngineMongoSourceState as DatabaseEngineMongoSourceStateResponse,
+  DatabaseEngineMongoSyncDirection,
+  DatabaseEngineMongoSyncResponse as DatabaseEngineMongoSyncResponsePayload,
   DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
   DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
   DatabaseEngineStatus as DatabaseEngineStatusResponse,
@@ -43,6 +46,7 @@ import {
   fetchAllCollectionsSchema,
   fetchDatabaseBackups,
   fetchDatabaseEngineBackupSchedulerStatus,
+  getDatabaseEngineMongoSource,
   fetchDatabaseEngineOperationsJobs,
   fetchDatabaseEngineProviderPreview,
   fetchDatabaseEngineStatus,
@@ -51,6 +55,7 @@ import {
   fetchRedisOverview,
   restoreDatabaseBackup,
   restoreJsonBackup,
+  syncDatabaseEngineMongoSource,
   uploadDatabaseBackup,
 } from '../api';
 
@@ -66,6 +71,10 @@ export const invalidateSchemaAll = (queryClient: QueryClient): void => {
 
 export const invalidateEngineSchedulerStatus = (queryClient: QueryClient): void => {
   void queryClient.invalidateQueries({ queryKey: dbKeys.engineBackupSchedulerStatus() });
+};
+
+export const invalidateEngineMongoSource = (queryClient: QueryClient): void => {
+  void queryClient.invalidateQueries({ queryKey: dbKeys.engineMongoSource() });
 };
 
 export function useDatabaseBackups(dbType: DatabaseType): ListQuery<DatabaseInfoResponse> {
@@ -213,7 +222,7 @@ export function useDatabasePreview(input: {
       }
       return result.payload as DatabasePreviewPayload;
     },
-    enabled: enabled && (!!backupName || mode === 'current'),
+    enabled: enabled && (Boolean(backupName) || mode === 'current'),
     meta: {
       source: 'database.hooks.useDatabasePreview',
       operation: 'detail',
@@ -326,6 +335,25 @@ export function useDatabaseEngineStatus(): SingleQuery<DatabaseEngineStatusRespo
   });
 }
 
+export function useDatabaseEngineMongoSource(): SingleQuery<DatabaseEngineMongoSourceStateResponse> {
+  const queryKey = dbKeys.engineMongoSource();
+  return createSingleQueryV2({
+    id: 'engine-mongo-source',
+    queryKey,
+    queryFn: getDatabaseEngineMongoSource,
+    staleTime: 5_000,
+    refetchInterval: 10_000,
+    meta: {
+      source: 'database.hooks.useDatabaseEngineMongoSource',
+      operation: 'polling',
+      resource: 'system.databases.engine-mongo-source',
+      domain: 'database',
+      tags: ['database', 'engine', 'mongo-source'],
+      description: 'Polls the active MongoDB source state.',
+    },
+  });
+}
+
 export function useDatabaseBackupSchedulerStatus(): SingleQuery<DatabaseEngineBackupSchedulerStatusResponse> {
   const queryKey = dbKeys.engineBackupSchedulerStatus();
   return createSingleQueryV2({
@@ -386,6 +414,32 @@ export function useDatabaseEngineProviderPreview(
 
       tags: ['database', 'engine', 'provider-preview'],
       description: 'Polls system databases engine provider preview.'},
+  });
+}
+
+export function useSyncDatabaseEngineMongoSourceMutation(): MutationResult<
+  DatabaseEngineMongoSyncResponsePayload,
+  DatabaseEngineMongoSyncDirection
+> {
+  const mutationKey = dbKeys.all;
+  return createMutationV2({
+    mutationFn: (direction: DatabaseEngineMongoSyncDirection) =>
+      syncDatabaseEngineMongoSource(direction),
+    mutationKey,
+    meta: {
+      source: 'database.hooks.useSyncDatabaseEngineMongoSourceMutation',
+      operation: 'action',
+      resource: 'system.databases.engine-mongo-sync',
+      domain: 'database',
+      mutationKey,
+      tags: ['database', 'engine', 'mongo-source', 'sync'],
+      description: 'Synchronizes local and cloud MongoDB sources.',
+    },
+    invalidateKeys: [
+      dbKeys.engineMongoSource(),
+      dbKeys.engineStatus(),
+      dbKeys.schema({ provider: 'all', includeCounts: true }),
+    ],
   });
 }
 

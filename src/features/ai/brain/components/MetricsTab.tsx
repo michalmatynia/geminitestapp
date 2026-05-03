@@ -244,10 +244,13 @@ export function MetricsTab(): React.JSX.Element {
               const runsWithKernelParity = kernelParity?.runsWithKernelParity ?? 0;
               const sampledHistoryEntries = kernelParity?.sampledHistoryEntries ?? 0;
               const v3Entries = kernelParity?.strategyCounts.code_object_v3 ?? 0;
+              const compatibilityEntries = kernelParity?.strategyCounts.compatibility ?? 0;
               const kernelCoverage =
                 sampledRuns > 0 ? (runsWithKernelParity / sampledRuns) * 100 : 0;
               const v3Share =
                 sampledHistoryEntries > 0 ? (v3Entries / sampledHistoryEntries) * 100 : 0;
+              const compatibilityShare =
+                sampledHistoryEntries > 0 ? (compatibilityEntries / sampledHistoryEntries) * 100 : 0;
 
               return (
                 <>
@@ -256,6 +259,7 @@ export function MetricsTab(): React.JSX.Element {
                     value={`${runsWithKernelParity}/${sampledRuns} (${formatPercent(kernelCoverage)})`}
                   />
                   <MetadataItem label='Kernel v3 Share' value={formatPercent(v3Share)} />
+                  <MetadataItem label='Kernel Compat Share' value={formatPercent(compatibilityShare)} />
                 </>
               );
             })()}

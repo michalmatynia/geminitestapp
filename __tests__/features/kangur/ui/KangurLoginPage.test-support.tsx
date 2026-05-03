@@ -51,6 +51,12 @@ vi.mock('next/navigation', () => ({
   useSearchParams: useSearchParamsMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: usePathnameMock,
+  useRouter: useRouterMock,
+  useSearchParams: useSearchParamsMock,
+}));
+
 vi.mock('next-auth/react', () => ({
   signIn: signInMock,
   signOut: signOutMock,
@@ -60,10 +66,12 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: useOptionalKangurAuthMock,
+  useOptionalKangurAuthActions: () => useOptionalKangurAuthMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
@@ -165,7 +173,7 @@ export const setupKangurLoginPageTest = async () => {
     'fetch',
     vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-      if (url === '/api/kangur/auth/learner-signout') {
+      if (url === '/kangur-api/auth/learner-signout') {
         return {
           json: vi.fn().mockResolvedValue({ ok: true }),
           ok: true,
@@ -185,7 +193,7 @@ export const setupKangurLoginPageTest = async () => {
         };
       }
 
-      if (url === '/api/kangur/auth/parent-account/create') {
+      if (url === '/kangur-api/auth/parent-account/create') {
         return {
           json: vi.fn().mockResolvedValue({
             ok: true,
@@ -206,7 +214,7 @@ export const setupKangurLoginPageTest = async () => {
         };
       }
 
-      if (url === '/api/kangur/auth/parent-account/resend') {
+      if (url === '/kangur-api/auth/parent-account/resend') {
         return {
           json: vi.fn().mockResolvedValue({
             ok: true,
@@ -227,7 +235,7 @@ export const setupKangurLoginPageTest = async () => {
         };
       }
 
-      if (url === '/api/kangur/auth/parent-email/verify') {
+      if (url === '/kangur-api/auth/parent-email/verify') {
         return {
           json: vi.fn().mockResolvedValue({
             ok: true,
@@ -242,7 +250,7 @@ export const setupKangurLoginPageTest = async () => {
         };
       }
 
-      if (url === '/api/kangur/auth/learner-signin') {
+      if (url === '/kangur-api/auth/learner-signin') {
         return {
           json: vi.fn().mockResolvedValue({ learnerId: 'learner-7' }),
           ok: true,

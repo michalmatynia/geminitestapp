@@ -3,42 +3,20 @@ import { type CaseResolverOcrErrorCategory } from '@/features/case-resolver/serv
 export const classifyCaseResolverOcrError = (error: unknown): CaseResolverOcrErrorCategory => {
   const message =
     error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
-  if (message.includes('timed out') || message.includes('timeout')) {
-    return 'timeout';
-  }
-  if (
-    message.includes('rate limit') ||
-    message.includes('429') ||
-    message.includes('too many requests')
-  ) {
-    return 'rate_limit';
-  }
-  if (
-    message.includes('econnreset') ||
-    message.includes('econnrefused') ||
-    message.includes('socket hang up') ||
-    message.includes('network')
-  ) {
-    return 'network';
-  }
-  if (
-    message.includes('temporarily unavailable') ||
-    message.includes('503') ||
-    message.includes('502') ||
-    message.includes('504')
-  ) {
-    return 'provider';
-  }
-  if (
-    message.includes('invalid filepath') ||
-    message.includes('only image and pdf files are supported') ||
-    message.includes('filepath is required') ||
-    message.includes('ocr model is not configured')
-  ) {
-    return 'validation';
-  }
+  
+  if (isTimeoutError(message)) return 'timeout';
+  if (isRateLimitError(message)) return 'rate_limit';
+  if (isNetworkError(message)) return 'network';
+  if (isProviderError(message)) return 'provider';
+  if (isValidationError(message)) return 'validation';
   return 'unknown';
 };
+
+const isTimeoutError = (m: string) => m.includes('timed out') || m.includes('timeout');
+const isRateLimitError = (m: string) => m.includes('rate limit') || m.includes('429') || m.includes('too many requests');
+const isNetworkError = (m: string) => m.includes('econnreset') || m.includes('econnrefused') || m.includes('socket hang up') || m.includes('network');
+const isProviderError = (m: string) => m.includes('temporarily unavailable') || m.includes('503') || m.includes('502') || m.includes('504');
+const isValidationError = (m: string) => m.includes('invalid filepath') || m.includes('only image and pdf files are supported') || m.includes('filepath is required') || m.includes('ocr model is not configured');
 
 export const isRetryableCaseResolverOcrError = (error: unknown): boolean => {
   const category = classifyCaseResolverOcrError(error);

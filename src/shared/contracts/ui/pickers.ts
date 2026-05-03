@@ -20,9 +20,9 @@ export interface PickerOption {
 /**
  * Grouped options for structured pickers
  */
-export interface PickerGroup {
+export interface PickerGroup<T extends PickerOption = PickerOption> {
   label: string;
-  options: PickerOption[];
+  options: T[];
   description?: string;
 }
 
@@ -62,7 +62,7 @@ export interface PickerState<T = unknown> {
  * Props for GenericPickerDropdown component
  */
 export interface GenericPickerDropdownProps<T extends PickerOption = PickerOption> {
-  groups: PickerGroup[];
+  groups: PickerGroup<T>[];
   onSelect: (option: T) => void;
   selectedKey?: string | undefined;
   ariaLabel?: string | undefined;
@@ -121,7 +121,7 @@ export interface UsePickerSearchOptions<T> {
  * Generic selector props with multiple selection support
  */
 export interface GenericMultiSelectorProps<T extends PickerOption = PickerOption> {
-  groups: PickerGroup[];
+  groups: PickerGroup<T>[];
   selectedKeys?: Set<string> | undefined;
   onSelect: (option: T, selected: boolean) => void;
   ariaLabel?: string | undefined;

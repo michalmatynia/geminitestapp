@@ -55,7 +55,9 @@ type PlaywrightRuntime = {
   context: {
     setDefaultTimeout: ReturnType<typeof vi.fn>;
     setDefaultNavigationTimeout: ReturnType<typeof vi.fn>;
+    addInitScript: ReturnType<typeof vi.fn>;
     route: ReturnType<typeof vi.fn>;
+    storageState: ReturnType<typeof vi.fn>;
     newPage: ReturnType<typeof vi.fn>;
     close: ReturnType<typeof vi.fn>;
     on: ReturnType<typeof vi.fn>;
@@ -165,6 +167,7 @@ const createPlaywrightRuntime = async (options?: {
   const context = {
     setDefaultTimeout: vi.fn(),
     setDefaultNavigationTimeout: vi.fn(),
+    addInitScript: vi.fn(async () => undefined),
     route: vi.fn(async (_pattern: string, handler: (route: unknown) => Promise<void>) => {
       for (const probe of routes) {
         await handler({
@@ -176,6 +179,17 @@ const createPlaywrightRuntime = async (options?: {
         });
       }
     }),
+    storageState: vi.fn(async () => ({
+      cookies: [
+        {
+          name: 'session',
+          value: 'persisted-session',
+          domain: 'allowed.example.com',
+          path: '/',
+        },
+      ],
+      origins: [],
+    })),
     tracing: {
       start: vi.fn(async () => undefined),
       stop: vi.fn(async ({ path: tracePath }: { path: string }) => {
@@ -227,6 +241,8 @@ const writeStaleFixture = async (name: string, content: string): Promise<string>
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
+  delete process.env['PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS'];
+  delete process.env['PLAYWRIGHT_STARTUP_TIMEOUT_MS'];
   mocks.getSettingValueMock.mockResolvedValue(null);
   mocks.buildContextRegistryPromptMock.mockReturnValue('Context Registry Prompt');
   mocks.evaluateOutboundUrlPolicyMock.mockImplementation((url: string) =>
@@ -275,6 +291,13 @@ const loadRunner = async () =>
   import('@/features/ai/ai-paths/services/playwright-node-runner');
 
 describe('enqueuePlaywrightNodeRun', () => {
+  it('treats missing run state files as absent runs without logging an exception', async () => {
+    const { readPlaywrightNodeRun } = await loadRunner();
+
+    await expect(readPlaywrightNodeRun('missing-run-id')).resolves.toBeNull();
+    expect(mocks.captureExceptionMock).not.toHaveBeenCalled();
+  });
+
   it('executes a successful run, captures artifacts, and removes stale run fixtures', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeArtifact, readPlaywrightNodeRun } =
       await loadRunner();
@@ -389,6 +412,9 @@ describe('enqueuePlaywrightNodeRun', () => {
       expect.objectContaining({
         locale: 'en-US',
         userAgent: 'Desktop Chrome UA',
+        extraHTTPHeaders: {
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
         recordVideo: expect.objectContaining({
           size: {
             width: 1280,
@@ -402,6 +428,8 @@ describe('enqueuePlaywrightNodeRun', () => {
         headless: false,
         slowMo: 0,
         channel: 'chrome',
+        args: ['--disable-blink-features=AutomationControlled'],
+        ignoreDefaultArgs: ['--enable-automation'],
         proxy: {
           server: 'http://proxy.local:8080',
           username: 'proxy-user',
@@ -411,12 +439,17 @@ describe('enqueuePlaywrightNodeRun', () => {
     );
     expect(runtime.context.setDefaultTimeout).toHaveBeenCalledWith(2345);
     expect(runtime.context.setDefaultNavigationTimeout).toHaveBeenCalledWith(4321);
+    expect(runtime.context.addInitScript).toHaveBeenCalledTimes(1);
     expect(runtime.context.tracing.start).toHaveBeenCalledTimes(1);
     expect(runtime.context.tracing.stop).toHaveBeenCalledTimes(1);
-    expect(run.artifacts).toHaveLength(8);
+    expect(run.artifacts).toHaveLength(9);
     expect(run.logs).toEqual(
       expect.arrayContaining([
         expect.stringContaining('[runtime] Launching chromium browser.'),
+        expect.stringContaining(
+          '[runtime] Anti-detection posture: browser=Chrome, mode=headed, profile=default'
+        ),
+        expect.stringContaining('[runtime] Applied Chromium anti-detection defaults'),
         expect.stringContaining('[runtime] Trace capture started.'),
         expect.stringContaining('[policy] Blocked outbound URL: https://blocked.example.com/tracker.js'),
         expect.stringContaining('[context] Loaded Context Registry bundle with 1 refs'),
@@ -458,10 +491,32 @@ describe('enqueuePlaywrightNodeRun', () => {
       ],
       finalUrl: 'https://allowed.example.com/final',
       title: 'Final Title',
+      runtimePosture: {
+        browser: {
+          engine: 'chromium',
+          label: 'Chrome',
+          headless: false,
+        },
+        antiDetection: {
+          identityProfile: 'default',
+          locale: 'en-US',
+          proxy: {
+            enabled: true,
+            providerPreset: 'custom',
+            sessionAffinityEnabled: false,
+            reason: 'disabled',
+            serverHost: 'proxy.local:8080',
+          },
+        },
+      },
     });
 
     const notesArtifact = run.artifacts.find((artifact) => artifact.kind === 'note');
     expect(notesArtifact).toBeDefined();
+    const runtimePostureArtifact = run.artifacts.find(
+      (artifact) => artifact.name === 'runtime-posture'
+    );
+    expect(runtimePostureArtifact).toBeDefined();
 
     const artifactResult = await readPlaywrightNodeArtifact({
       runId: run.runId,
@@ -470,9 +525,38 @@ describe('enqueuePlaywrightNodeRun', () => {
 
     expect(artifactResult?.content.toString('utf8')).toBe('hello world');
 
+    const runtimePosture = JSON.parse(
+      (
+        await readPlaywrightNodeArtifact({
+          runId: run.runId,
+          fileName: path.basename(runtimePostureArtifact?.path ?? ''),
+        })
+      )?.content.toString('utf8') ?? '{}'
+    );
+
+    expect(runtimePosture).toMatchObject({
+      browser: {
+        engine: 'chromium',
+        label: 'Chrome',
+        headless: false,
+      },
+      antiDetection: {
+        identityProfile: 'default',
+        locale: 'en-US',
+        proxy: {
+          enabled: true,
+          providerPreset: 'custom',
+          sessionAffinityEnabled: false,
+          reason: 'disabled',
+          serverHost: 'proxy.local:8080',
+        },
+      },
+    });
+
     const persisted = await readPlaywrightNodeRun(run.runId);
     expect(persisted?.status).toBe('completed');
     expect(await fs.stat(staleFilePath).catch(() => null)).toBeNull();
+    expect(runtime.page.close).toHaveBeenCalledTimes(1);
     expect(runtime.context.close).toHaveBeenCalledTimes(1);
     expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
@@ -516,7 +600,8 @@ describe('enqueuePlaywrightNodeRun', () => {
             {
               name: '__Host-next-auth.csrf-token',
               value: 'csrf123',
-              url: 'https://kangur.app',
+              domain: 'kangur.app',
+              path: '/login',
               secure: true,
             },
             {
@@ -530,6 +615,62 @@ describe('enqueuePlaywrightNodeRun', () => {
         },
       })
     );
+  });
+
+  it('preserves runtime keys for managed script runs without treating them as runtime-only requests', async () => {
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+        runtimeKey: 'tradera_check_status',
+      },
+    });
+
+    expect(run.status).toBe('completed');
+
+    const persisted = await readPlaywrightNodeRun(run.runId);
+    expect(persisted?.requestSummary).toMatchObject({
+      runtimeKey: 'tradera_check_status',
+    });
+  });
+
+  it('redacts sensitive request summary input before retaining action-run history', async () => {
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+        input: {
+          username: 'buyer@example.com',
+          password: 'secret-password',
+          sourceUrl: 'https://shop.example.com/item/1',
+          nested: {
+            apiToken: 'secret-token',
+            note: 'Contact buyer@example.com',
+          },
+        },
+      },
+    });
+
+    expect(run.status).toBe('completed');
+
+    const persisted = await readPlaywrightNodeRun(run.runId);
+    expect(persisted?.requestSummary?.input).toEqual({
+      username: '[REDACTED]',
+      password: '[REDACTED]',
+      sourceUrl: 'https://shop.example.com/item/1',
+      nested: {
+        apiToken: '[REDACTED]',
+        note: 'Contact [REDACTED]',
+      },
+    });
   });
 
   it('fails when the start URL violates outbound policy', async () => {
@@ -600,6 +741,261 @@ describe('enqueuePlaywrightNodeRun', () => {
     );
   });
 
+  it('prewarms hostile search profiles on the origin root before the real start url', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        startUrl: 'https://allowed.example.com/search?q=lamp',
+        script: 'export default async () => ({ ok: true });',
+        settingsOverrides: {
+          identityProfile: 'search',
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+          inputDelayMin: 0,
+          inputDelayMax: 0,
+          prewarmWaitMs: 120,
+          postStartUrlWaitMs: 80,
+        },
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(runtime.page.goto).toHaveBeenNthCalledWith(1, 'https://allowed.example.com/', {
+      timeout: 30000,
+      waitUntil: 'domcontentloaded',
+    });
+    expect(runtime.page.goto).toHaveBeenNthCalledWith(
+      2,
+      'https://allowed.example.com/search?q=lamp',
+      {
+        timeout: 30000,
+        waitUntil: 'load',
+      }
+    );
+    expect(run.logs).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          '[runtime] Applied Chromium anti-detection defaults (profile: search).'
+        ),
+        expect.stringContaining(
+          '[runtime] Prewarming target origin: https://allowed.example.com/'
+        ),
+        expect.stringContaining('[runtime] Settled prewarm navigation for 120ms.'),
+        expect.stringContaining('[runtime] Settled start URL navigation for 80ms.'),
+      ])
+    );
+  });
+
+  it('reuses sticky hostile-profile storage state across runs for the same owner and origin', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const firstRuntime = await createPlaywrightRuntime({
+      pageUrl: 'https://allowed.example.com/final',
+    });
+    const secondRuntime = await createPlaywrightRuntime({
+      pageUrl: 'https://allowed.example.com/final-2',
+    });
+    mocks.chromiumLaunchMock
+      .mockResolvedValueOnce(firstRuntime.browser)
+      .mockResolvedValueOnce(secondRuntime.browser);
+
+    const firstRun = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      ownerUserId: 'user-sticky',
+      request: {
+        startUrl: 'https://allowed.example.com/search?q=lamp',
+        script: 'export default async () => ({ ok: true });',
+        settingsOverrides: {
+          identityProfile: 'search',
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+          inputDelayMin: 0,
+          inputDelayMax: 0,
+          launchCooldownMs: 0,
+          prewarmWaitMs: 0,
+          postStartUrlWaitMs: 0,
+        },
+      },
+    });
+
+    expect(firstRun.status).toBe('completed');
+    expect(firstRuntime.context.storageState).toHaveBeenCalledTimes(1);
+
+    const secondRun = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      ownerUserId: 'user-sticky',
+      request: {
+        startUrl: 'https://allowed.example.com/search?q=chair',
+        script: 'export default async () => ({ ok: true });',
+        settingsOverrides: {
+          identityProfile: 'search',
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+          inputDelayMin: 0,
+          inputDelayMax: 0,
+          launchCooldownMs: 0,
+          prewarmWaitMs: 0,
+          postStartUrlWaitMs: 0,
+        },
+      },
+    });
+
+    expect(secondRun.status).toBe('completed');
+    expect(secondRuntime.browser.newContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        storageState: {
+          cookies: [
+            expect.objectContaining({
+              name: 'session',
+              value: 'persisted-session',
+              domain: 'allowed.example.com',
+            }),
+          ],
+          origins: [],
+        },
+      })
+    );
+    expect(secondRun.logs).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          '[runtime] Loaded sticky storage state (search) for owner:user-sticky at https://allowed.example.com.'
+        ),
+      ])
+    );
+  });
+
+  it('applies proxy session affinity when the proxy config opts in with a session placeholder', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      ownerUserId: 'user-proxy',
+      request: {
+        startUrl: 'https://allowed.example.com/search?q=desk',
+        script: 'export default async () => ({ ok: true });',
+        settingsOverrides: {
+          identityProfile: 'search',
+          proxyEnabled: true,
+          proxyServer: 'http://proxy.local:8080?session={session}',
+          proxyUsername: 'zone-{session}',
+          proxyPassword: '__SESSION__',
+          proxySessionAffinity: true,
+          proxySessionMode: 'sticky',
+          proxyProviderPreset: 'custom',
+        },
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(mocks.chromiumLaunchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        proxy: {
+          server: expect.stringMatching(/^http:\/\/proxy\.local:8080\?session=pw[a-f0-9]{20}$/),
+          username: expect.stringMatching(/^zone-pw[a-f0-9]{20}$/),
+          password: expect.stringMatching(/^pw[a-f0-9]{20}$/),
+        },
+      })
+    );
+    expect(run.logs).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          '[runtime] Applied sticky proxy session (search) for owner:user-proxy at https://allowed.example.com.'
+        ),
+      ])
+    );
+  });
+
+  it('rotates proxy session placeholders per run when rotate mode is enabled', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const firstRuntime = await createPlaywrightRuntime();
+    const secondRuntime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock
+      .mockResolvedValueOnce(firstRuntime.browser)
+      .mockResolvedValueOnce(secondRuntime.browser);
+
+    await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      ownerUserId: 'user-rotate',
+      request: {
+        startUrl: 'https://allowed.example.com/search?q=desk',
+        script: 'export default async () => ({ ok: true });',
+        settingsOverrides: {
+          identityProfile: 'search',
+          proxyEnabled: true,
+          proxyServer: 'http://proxy.local:8080?session={session}',
+          proxySessionAffinity: true,
+          proxySessionMode: 'rotate',
+          proxyProviderPreset: 'custom',
+        },
+      },
+    });
+
+    await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      ownerUserId: 'user-rotate',
+      request: {
+        startUrl: 'https://allowed.example.com/search?q=desk-2',
+        script: 'export default async () => ({ ok: true });',
+        settingsOverrides: {
+          identityProfile: 'search',
+          proxyEnabled: true,
+          proxyServer: 'http://proxy.local:8080?session={session}',
+          proxySessionAffinity: true,
+          proxySessionMode: 'rotate',
+          proxyProviderPreset: 'custom',
+        },
+      },
+    });
+
+    const firstProxy =
+      mocks.chromiumLaunchMock.mock.calls[0]?.[0]?.proxy?.server;
+    const secondProxy =
+      mocks.chromiumLaunchMock.mock.calls[1]?.[0]?.proxy?.server;
+
+    expect(firstProxy).not.toEqual(secondProxy);
+  });
+
+  it('applies provider presets to proxy usernames when no placeholder is present', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      ownerUserId: 'user-provider',
+      request: {
+        startUrl: 'https://allowed.example.com/search?q=desk',
+        script: 'export default async () => ({ ok: true });',
+        settingsOverrides: {
+          identityProfile: 'search',
+          proxyEnabled: true,
+          proxyServer: 'http://brd.superproxy.io:33335',
+          proxyUsername: 'brd-customer-123-zone-retail',
+          proxySessionAffinity: true,
+          proxySessionMode: 'sticky',
+          proxyProviderPreset: 'brightdata',
+        },
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(mocks.chromiumLaunchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        proxy: {
+          server: 'http://brd.superproxy.io:33335',
+          username: expect.stringMatching(
+            /^brd-customer-123-zone-retail-session-pw[a-f0-9]{20}$/
+          ),
+        },
+      })
+    );
+  });
+
   it('returns queued state immediately for background runs and persists later failures', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
     const runtime = await createPlaywrightRuntime();
@@ -626,6 +1022,51 @@ describe('enqueuePlaywrightNodeRun', () => {
 
     const persisted = await readPlaywrightNodeRun(queued.runId);
     expect(persisted?.error).toContain('Playwright script must export a default async function');
+    expect(runtime.context.close).toHaveBeenCalledTimes(1);
+    expect(runtime.browser.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps background success runs running until browser cleanup completes', async () => {
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    let resolvePageCloseStarted!: () => void;
+    let resolvePageClose!: () => void;
+    const pageCloseStarted = new Promise<void>((resolve) => {
+      resolvePageCloseStarted = resolve;
+    });
+    const pageCloseReleased = new Promise<void>((resolve) => {
+      resolvePageClose = resolve;
+    });
+    runtime.page.close.mockImplementation(async () => {
+      resolvePageCloseStarted();
+      await pageCloseReleased;
+      await runtime.emitPageEvent('close');
+    });
+
+    const queued = await enqueuePlaywrightNodeRun({
+      waitForResult: false,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+      },
+    });
+
+    await pageCloseStarted;
+
+    const duringCleanup = await readPlaywrightNodeRun(queued.runId);
+    expect(duringCleanup?.status).toBe('running');
+
+    resolvePageClose();
+
+    await expect
+      .poll(async () => {
+        const current = await readPlaywrightNodeRun(queued.runId);
+        return current?.status ?? null;
+      })
+      .toBe('completed');
+
+    expect(runtime.page.close).toHaveBeenCalledTimes(1);
     expect(runtime.context.close).toHaveBeenCalledTimes(1);
     expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
@@ -657,6 +1098,7 @@ describe('enqueuePlaywrightNodeRun', () => {
 
     expect(run.status).toBe('failed');
     expect(run.error).toContain('AUTH_REQUIRED: Tradera login requires manual verification.');
+    expect(run.logs).toContain('[runtime] Holding headed browser open for 5ms after failure.');
     expect(run.artifacts).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: 'failure', kind: 'screenshot', mimeType: 'image/png' }),
@@ -687,6 +1129,40 @@ describe('enqueuePlaywrightNodeRun', () => {
       pageClosed: false,
       pageCrashed: false,
     });
+  });
+
+  it('does not hold headed browser open for publish verification failures', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime({
+      pageUrl: 'https://www.tradera.com/en/my/listings',
+      pageTitle: 'Active listings',
+    });
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: `
+          export default async function run() {
+            throw new Error('FAIL_PUBLISH_VERIFICATION: Published listing could not be confirmed in Active listings.');
+          };
+        `,
+        failureHoldOpenMs: 5,
+        settingsOverrides: {
+          headless: false,
+        },
+      },
+    });
+
+    expect(run.status).toBe('failed');
+    expect(run.error).toContain('FAIL_PUBLISH_VERIFICATION');
+    expect(run.logs).not.toContain('[runtime] Holding headed browser open for 5ms after failure.');
+    expect(run.logs).toContain('[runtime] Runner page closed.');
+    expect(run.logs).toContain('[runtime] Browser context closed.');
+    expect(run.logs).toContain('[runtime] Browser disconnected.');
+    expect(runtime.page.close).toHaveBeenCalledTimes(1);
+    expect(runtime.context.close).toHaveBeenCalledTimes(1);
+    expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
 
   it('records lifecycle close diagnostics in logs and failure-state artifacts', async () => {
@@ -796,6 +1272,80 @@ describe('enqueuePlaywrightNodeRun', () => {
         return current?.status ?? null;
       })
       .toBe('completed');
+  });
+
+  it('falls back to default persona settings when the settings lookup stalls', async () => {
+    process.env['PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS'] = '10';
+    mocks.getSettingValueMock.mockImplementation(() => new Promise(() => undefined));
+
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        personaId: 'persona-stalled',
+        script: `
+          export default async function run() {
+            return { ok: true };
+          };
+        `,
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(run.logs).toEqual(
+      expect.arrayContaining([
+        '[runtime][warn] Timed out resolving Playwright persona settings. Using defaults.',
+      ])
+    );
+    expect(runtime.context.close).toHaveBeenCalledTimes(1);
+    expect(runtime.browser.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails stalled browser launch runs instead of leaving them stuck in running', async () => {
+    process.env['PLAYWRIGHT_STARTUP_TIMEOUT_MS'] = '10';
+    mocks.chromiumLaunchMock.mockImplementation(() => new Promise(() => undefined));
+
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
+    const queued = await enqueuePlaywrightNodeRun({
+      waitForResult: false,
+      request: {
+        script: `
+          export default async function run() {
+            return { ok: true };
+          };
+        `,
+      },
+    });
+
+    await expect
+      .poll(async () => {
+        const current = await readPlaywrightNodeRun(queued.runId);
+        return current?.logs ?? [];
+      })
+      .toEqual(
+        expect.arrayContaining([
+          '[runtime] Prepared Playwright runtime configuration.',
+          '[runtime] Launching chromium browser.',
+        ])
+      );
+
+    await expect
+      .poll(async () => {
+        const current = await readPlaywrightNodeRun(queued.runId);
+        return current?.status ?? null;
+      })
+      .toBe('failed');
+
+    const finalRun = await readPlaywrightNodeRun(queued.runId);
+    expect(finalRun).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        error: 'Timed out launching chromium browser.',
+      })
+    );
   });
 
   it('exposes persona-aware interaction helpers for clicks and typing', async () => {
@@ -913,8 +1463,9 @@ describe('enqueuePlaywrightNodeRun', () => {
     expect(capturedPageListener).not.toBeNull();
 
     const closeMock = runtime.page.close;
+    const callsAfterCleanup = closeMock.mock.calls.length;
     await capturedPageListener!(runtime.page);
-    expect(closeMock).not.toHaveBeenCalled();
+    expect(closeMock).toHaveBeenCalledTimes(callsAfterCleanup);
   });
 
   it('does not register a page listener when preventNewPages is not set', async () => {

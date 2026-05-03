@@ -1,19 +1,36 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
-
-import { getProductIds } from '@/features/products/api';
-import { useBulkDeleteProductsMutation } from '@/features/products/hooks/useProductDataMutations';
-import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductFilters } from '@/shared/contracts/products/drafts';
-import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import { useToast } from '@/shared/ui/toast';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import {
+  useGlobalSelectionHandler,
+  usePageSelectionHandlers,
+  useProductListDeleteHandlers,
+} from './useProductListSelection.actions';
+import {
+  useProductListSelectionCache,
+  type RowSelectionState,
+  type SetStateAction,
+} from './useProductListSelection.cache';
 
-export type RowSelectionState = Record<string, boolean>;
+export type { RowSelectionState };
+
+export type ProductListSelectionResult = {
+  rowSelection: RowSelectionState;
+  setRowSelection: (action: SetStateAction<RowSelectionState>) => void;
+  handleSelectPage: () => void;
+  handleDeselectPage: () => void;
+  handleSelectAllGlobal: (filters: ProductFilters) => Promise<void>;
+  loadingGlobalSelection: boolean;
+  isMassDeleteConfirmOpen: boolean;
+  setIsMassDeleteConfirmOpen: (action: SetStateAction<boolean>) => void;
+  handleMassDelete: () => Promise<void>;
+  productToDelete: ProductWithImages | null;
+  setProductToDelete: (action: SetStateAction<ProductWithImages | null>) => void;
+  handleConfirmSingleDelete: () => Promise<void>;
+  bulkDeletePending: boolean;
+};
 
 export function useProductListSelection({
   data,
@@ -23,134 +40,36 @@ export function useProductListSelection({
   data: ProductWithImages[];
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
   setActionError: (error: string | null) => void;
-}) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [loadingGlobalSelection, setLoadingGlobalSelection] = useState(false);
-  const [isMassDeleteConfirmOpen, setIsMassDeleteConfirmOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<ProductWithImages | null>(null);
-
-  const bulkDeleteMutation = useBulkDeleteProductsMutation();
-
-  const handleSelectPage = useCallback(() => {
-    setRowSelection((previousSelection) => {
-      const nextSelection = { ...previousSelection };
-      data.forEach((item) => {
-        nextSelection[item.id] = true;
-      });
-      return nextSelection;
-    });
-  }, [data]);
-
-  const handleDeselectPage = useCallback(() => {
-    setRowSelection((previousSelection) => {
-      const nextSelection = { ...previousSelection };
-      data.forEach((item) => {
-        delete nextSelection[item.id];
-      });
-      return nextSelection;
-    });
-  }, [data]);
-
-  const handleSelectAllGlobal = useCallback(
-    async (filters: ProductFilters) => {
-      setLoadingGlobalSelection(true);
-      try {
-        const { page: _page, pageSize: _pageSize, ...selectionFilters } = filters;
-        const queryKey = normalizeQueryKey(['products', 'ids', { scope: 'all', ...selectionFilters }]);
-        const productIds = await fetchQueryV2<string[]>(queryClient, {
-          queryKey,
-          queryFn: () => getProductIds({ page: 1, pageSize: 20, ...selectionFilters }),
-          staleTime: 5000,
-          meta: {
-            source: 'products.hooks.useProductListSelection.selectAllGlobal',
-            operation: 'list',
-            resource: 'products.ids.all',
-            domain: 'products',
-            queryKey,
-            tags: ['products', 'ids', 'select-all'],
-            description: 'Loads matching product ids for global selection.',
-          },
-        })();
-
-        const newSelection: RowSelectionState = {};
-        productIds.forEach((id: string) => {
-          newSelection[id] = true;
-        });
-        setRowSelection(newSelection);
-        toast(`Selected ${productIds.length} products.`, { variant: 'success' });
-      } catch (error) {
-        logClientCatch(error, {
-          source: 'useProductListSelection',
-          action: 'selectAllGlobal',
-        });
-        toast('Failed to select all products', { variant: 'error' });
-      } finally {
-        setLoadingGlobalSelection(false);
-      }
-    },
-    [queryClient, toast]
+}): ProductListSelectionResult {
+  const selectionCache = useProductListSelectionCache();
+  const pageHandlers = usePageSelectionHandlers(data, selectionCache.setRowSelection);
+  const globalHandler = useGlobalSelectionHandler(
+    selectionCache.setRowSelection,
+    selectionCache.setLoadingGlobalSelection
   );
-
-  const handleMassDelete = useCallback(async () => {
-    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
-
-    if (selectedProductIds.length === 0) return;
-
-    try {
-      setIsMassDeleteConfirmOpen(false);
-      const result = await bulkDeleteMutation.mutateAsync(selectedProductIds);
-      const isQueued = result == null;
-      if (!isQueued) {
-        toast('Selected products deleted successfully.', { variant: 'success' });
-        setRowSelection({});
-        setRefreshTrigger((prev: number) => prev + 1);
-      }
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'useProductListSelection',
-        action: 'massDelete',
-        productIds: selectedProductIds,
-      });
-      setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
-    }
-  }, [rowSelection, setActionError, toast, bulkDeleteMutation, setRefreshTrigger]);
-
-  const handleConfirmSingleDelete = useCallback(async () => {
-    if (!productToDelete) return;
-    const targetId = productToDelete.id;
-    setProductToDelete(null);
-    try {
-      const result = await bulkDeleteMutation.mutateAsync([targetId]);
-      const isQueued = result == null;
-      if (!isQueued) {
-        toast('Product deleted successfully.', { variant: 'success' });
-        setRefreshTrigger((prev: number) => prev + 1);
-      }
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'useProductListSelection',
-        action: 'singleDelete',
-        productId: targetId,
-      });
-      setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
-    }
-  }, [productToDelete, setActionError, toast, bulkDeleteMutation, setRefreshTrigger]);
+  const deleteHandlers = useProductListDeleteHandlers({
+    rowSelection: selectionCache.rowSelection,
+    productToDelete: selectionCache.productToDelete,
+    setRowSelection: selectionCache.setRowSelection,
+    setProductToDelete: selectionCache.setProductToDelete,
+    setIsMassDeleteConfirmOpen: selectionCache.setIsMassDeleteConfirmOpen,
+    setRefreshTrigger,
+    setActionError,
+  });
 
   return {
-    rowSelection,
-    setRowSelection,
-    handleSelectPage,
-    handleDeselectPage,
-    handleSelectAllGlobal,
-    loadingGlobalSelection,
-    isMassDeleteConfirmOpen,
-    setIsMassDeleteConfirmOpen,
-    handleMassDelete,
-    productToDelete,
-    setProductToDelete,
-    handleConfirmSingleDelete,
-    bulkDeletePending: bulkDeleteMutation.isPending,
+    rowSelection: selectionCache.rowSelection,
+    setRowSelection: selectionCache.setRowSelection,
+    handleSelectPage: pageHandlers.handleSelectPage,
+    handleDeselectPage: pageHandlers.handleDeselectPage,
+    handleSelectAllGlobal: globalHandler.handleSelectAllGlobal,
+    loadingGlobalSelection: selectionCache.loadingGlobalSelection,
+    isMassDeleteConfirmOpen: selectionCache.isMassDeleteConfirmOpen,
+    setIsMassDeleteConfirmOpen: selectionCache.setIsMassDeleteConfirmOpen,
+    handleMassDelete: deleteHandlers.handleMassDelete,
+    productToDelete: selectionCache.productToDelete,
+    setProductToDelete: selectionCache.setProductToDelete,
+    handleConfirmSingleDelete: deleteHandlers.handleConfirmSingleDelete,
+    bulkDeletePending: deleteHandlers.bulkDeletePending,
   };
 }

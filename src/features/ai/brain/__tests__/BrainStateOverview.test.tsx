@@ -15,8 +15,13 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
+vi.mock('@/shared/ui/primitives.public', () => ({
+  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   StatusBadge: ({
     label,
     status,

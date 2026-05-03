@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
@@ -18,6 +18,7 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { parseUserPreferencesUpdatePayload } from '@/shared/validations/user-preferences';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 
 // For now, we'll use a hardcoded user ID
@@ -44,9 +45,9 @@ const normalizeProductListNameLocale = (
 };
 
 const withTimeout = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;
   const timeoutPromise = new Promise<T>((_, reject) => {
-    timeoutId = setTimeout(() => {
+    timeoutId = safeSetTimeout(() => {
       reject(
         new Error(
           `[user-preferences] ${label} timed out after ${USER_PREFERENCES_REPOSITORY_TIMEOUT_MS}ms`
@@ -58,7 +59,9 @@ const withTimeout = async <T>(label: string, fn: () => Promise<T>): Promise<T> =
   try {
     return await Promise.race([fn(), timeoutPromise]);
   } finally {
-    if (timeoutId) clearTimeout(timeoutId);
+    if (timeoutId !== null) {
+      safeClearTimeout(timeoutId);
+    }
   }
 };
 

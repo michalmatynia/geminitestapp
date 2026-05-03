@@ -17,22 +17,7 @@ const mocks = vi.hoisted(() => ({
   toastMock: vi.fn(),
 }));
 
-type ListPanelMockProps = {
-  header?: React.ReactNode;
-  filters?: React.ReactNode;
-  children?: React.ReactNode;
-};
-
-function MockListPanel(props: ListPanelMockProps): React.JSX.Element {
-  const { header, filters, children } = props;
-  return (
-    <div data-testid='list-panel'>
-      {header}
-      {filters}
-      {children}
-    </div>
-  );
-}
+import { MockListPanel } from '@/__tests__/mocks/MockListPanel';
 
 vi.mock('next/link', () => ({
   default: ({
@@ -48,6 +33,12 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
+  usePathname: mocks.usePathnameMock,
+  useRouter: mocks.useRouterMock,
+  useSearchParams: mocks.useSearchParamsMock,
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   usePathname: mocks.usePathnameMock,
   useRouter: mocks.useRouterMock,
   useSearchParams: mocks.useSearchParamsMock,
@@ -86,28 +77,59 @@ vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
     open ? <div data-testid='settings-panel-builder' /> : null,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/admin.public', () => ({
   AdminSectionBreadcrumbs: ({
     current,
   }: {
     current: string;
   }) => <div data-testid='validator-lists-breadcrumbs'>{current}</div>,
-  Badge: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
+  Badge: ({ children, className }: { children?: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
   Button: ({
     children,
     onClick,
     disabled,
+    className,
   }: {
     children?: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
+    className?: string;
   }) => (
-    <button type='button' onClick={onClick} disabled={disabled}>
+    <button type='button' onClick={onClick} disabled={disabled} className={className}>
       {children}
     </button>
   ),
   ClientOnly: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  Input: ({
+    value,
+    onChange,
+    placeholder,
+    'aria-label': ariaLabel,
+  }: {
+    value?: string;
+    onChange?: React.ChangeEventHandler<HTMLInputElement>;
+    placeholder?: string;
+    'aria-label'?: string;
+  }) => (
+    <input value={value} onChange={onChange} placeholder={placeholder} aria-label={ariaLabel} />
+  ),
+  useToast: () => ({
+    toast: mocks.toastMock,
+  }),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
+  ListPanel: MockListPanel,
+  LoadingState: ({ message }: { message: string }) => <div>{message}</div>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormSection: ({
     title,
     description,
@@ -126,20 +148,6 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </section>
   ),
-  Input: ({
-    value,
-    onChange,
-    placeholder,
-    'aria-label': ariaLabel,
-  }: {
-    value?: string;
-    onChange?: React.ChangeEventHandler<HTMLInputElement>;
-    placeholder?: string;
-    'aria-label'?: string;
-  }) => (
-    <input value={value} onChange={onChange} placeholder={placeholder} aria-label={ariaLabel} />
-  ),
-  ListPanel: MockListPanel,
   SearchInput: ({
     value,
     onChange,
@@ -166,9 +174,6 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
-  useToast: () => ({
-    toast: mocks.toastMock,
-  }),
 }));
 
 import { AdminValidatorPatternListsPage } from './AdminValidatorPatternListsPage';

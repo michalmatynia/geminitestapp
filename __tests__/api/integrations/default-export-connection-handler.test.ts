@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  GET_handler,
-  POST_handler,
+  getHandler,
+  postHandler,
 } from '@/app/api/v2/integrations/exports/base/default-connection/handler';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
@@ -43,7 +43,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
   });
 
   it('returns null when no default connection is stored', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
@@ -58,7 +58,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
   it('returns stored connection id as-is', async () => {
     getExportDefaultConnectionIdMock.mockResolvedValue('conn-valid');
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
@@ -74,7 +74,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
   it('normalizes empty stored connection id to null', async () => {
     getExportDefaultConnectionIdMock.mockResolvedValue('   ');
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
@@ -90,7 +90,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
   it('returns null when reading default connection setting throws unexpectedly', async () => {
     getExportDefaultConnectionIdMock.mockRejectedValue(new Error('settings read failed'));
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
@@ -103,7 +103,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
   });
 
   it('stores normalized connection id on POST and returns the centralized response', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       buildDefaultConnectionPostRequest('  conn-new  '),
       mockContext
     );
@@ -118,7 +118,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
   it('does not clear default inventory when saving the same connection id again', async () => {
     getExportDefaultConnectionIdMock.mockResolvedValue('conn-existing');
 
-    const response = await POST_handler(
+    const response = await postHandler(
       buildDefaultConnectionPostRequest('conn-existing'),
       mockContext
     );
@@ -133,7 +133,7 @@ describe('api/v2/integrations/exports/base/default-connection handler', () => {
   it('still stores the new connection when reading the previous value fails', async () => {
     getExportDefaultConnectionIdMock.mockRejectedValue(new Error('settings read failed'));
 
-    const response = await POST_handler(
+    const response = await postHandler(
       buildDefaultConnectionPostRequest('conn-new'),
       mockContext
     );

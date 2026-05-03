@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import { assertAiPathRunAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import {
@@ -12,11 +12,11 @@ import {
   resolvePathRunRepository,
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
-import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
+import { safeClearInterval, safeSetInterval, safeSetTimeout } from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled']);
 const normalizeLimit = (value: number, fallback: number): number => {
   if (!Number.isFinite(value) || value <= 0) return fallback;
   return Math.floor(value);
@@ -38,7 +38,7 @@ const STREAM_KEEPALIVE_INTERVAL_MS = 15_000;
 
 export const querySchema = aiPathRunStreamQuerySchema;
 
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => safeSetTimeout(resolve, ms));
 
 const toISOStringSafe = (value?: Date | string | null): string | null => {
   if (!value) return null;
@@ -326,10 +326,10 @@ export async function getAiPathRunStreamHandler(
   const { runId } = params;
   const access = await requireAiPathsRunAccess();
   const repoSelection = await resolvePathRunRepository();
-  let readRepo = repoSelection.repo;
-  let readProvider = repoSelection.provider;
+  const readRepo = repoSelection.repo;
+  const readProvider = repoSelection.provider;
   const readMode = 'selected' as const;
-  let initialRun = await readRepo.findRunById(runId);
+  const initialRun = await readRepo.findRunById(runId);
   if (!initialRun) {
     throw notFoundError('Run not found', { runId });
   }

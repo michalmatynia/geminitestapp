@@ -21,6 +21,7 @@ export { AdminNotesBreadcrumbs } from './admin-notes-breadcrumbs';
 export { AdminNotesPageLayout } from './admin-notes-page-layout';
 export { AdminProductsBreadcrumbs } from './admin-products-breadcrumbs';
 export { AdminProductsPageLayout } from './admin-products-page-layout';
+export { AdminPlaywrightBreadcrumbs } from './admin-playwright-breadcrumbs';
 export { AdminSettingsBreadcrumbs } from './admin-settings-breadcrumbs';
 export { AdminSettingsPageLayout } from './admin-settings-page-layout';
 export {

@@ -310,13 +310,13 @@ const toRunFallbackReport = (run: AiPathRunRecord): AiPathErrorReport | null => 
     error: message,
     code: 'AI_PATHS_RUN_FAILED',
     category: 'runtime',
-    severity: run.status === 'dead_lettered' ? 'fatal' : 'error',
+    severity: 'error',
     scope: 'run',
     timestamp: run.finishedAt ?? run.updatedAt ?? run.createdAt,
     runId: run.id,
     traceId:
       isRecord(run.meta) && typeof run.meta['traceId'] === 'string' ? run.meta['traceId'] : run.id,
-    retryable: run.status === 'dead_lettered' || Boolean(run.nextRetryAt),
+    retryable: false,
     retryAfterMs: null,
     metadata: null,
   });

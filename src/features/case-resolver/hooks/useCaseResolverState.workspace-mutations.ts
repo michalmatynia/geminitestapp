@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo } from 'react';
 
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import { normalizeCaseResolverWorkspace } from '../settings';
@@ -75,7 +77,7 @@ export function useCaseResolverStateWorkspaceMutations({
         const stampedWorkspace = stampCaseResolverWorkspaceMutation(normalizedUpdated, {
           baseRevision: getCaseResolverWorkspaceRevision(baseCurrent),
           mutationId,
-          normalizeWorkspace: options?.skipNormalization ? false : true,
+          normalizeWorkspace: !options?.skipNormalization,
         });
         logCaseResolverWorkspaceEvent({
           source: options?.source ?? 'case_view',
@@ -98,7 +100,7 @@ export function useCaseResolverStateWorkspaceMutations({
         return stampedWorkspace;
       });
       if (options?.persistToast || options?.persistNow) {
-        window.setTimeout((): void => {
+        safeSetTimeout((): void => {
           flushWorkspacePersist();
         }, 0);
       }
@@ -117,7 +119,7 @@ export function useCaseResolverStateWorkspaceMutations({
     return (): void => {
       clearConflictRetryTimer();
       if (persistWorkspaceTimerRef.current) {
-        window.clearTimeout(persistWorkspaceTimerRef.current);
+        safeClearTimeout(persistWorkspaceTimerRef.current);
         persistWorkspaceTimerRef.current = null;
       }
     };

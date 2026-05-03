@@ -574,18 +574,20 @@ export function SocialSettingsCaptureTab() {
             </div>
           )}
           <SocialCaptureBatchHistory
-            title='Recent preset capture runs'
-            description='Durable history for recent Settings Capture runs, including retry for failed presets and progress details.'
-            jobs={recentPresetCaptureJobs}
-            emptyMessage={
-              batchCaptureRecentJobsLoading
+            config={{
+              title: 'Recent preset capture runs',
+              description: 'Durable history for recent Settings Capture runs, including retry for failed presets and progress details.',
+              emptyMessage: batchCaptureRecentJobsLoading
                 ? 'Loading recent capture runs...'
-                : 'No recent preset capture runs yet.'
-            }
-            retryKind='preset'
-            retryDisabled={hasCaptureActionLock}
-            retryTitle={captureActionTitle}
-            onRetryFailed={(job) => { void handleRetryFailedPresetBatchCaptureJob(job); }}
+                : 'No recent preset capture runs yet.',
+              retryKind: 'preset',
+              retryDisabled: hasCaptureActionLock,
+              retryTitle: captureActionTitle,
+            }}
+            jobs={recentPresetCaptureJobs}
+            actions={{
+              onRetryFailed: (job) => { void handleRetryFailedPresetBatchCaptureJob(job); },
+            }}
           />
         </div>
       </KangurAdminCard>

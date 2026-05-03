@@ -1,4 +1,4 @@
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

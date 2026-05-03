@@ -35,7 +35,7 @@ export function CaseResolverRelationsWorkspaceProvider({
 }: {
   children: React.ReactNode;
   value: CaseResolverRelationsWorkspaceContextValue;
-}) {
+}): React.JSX.Element {
   return (
     <CaseResolverRelationsWorkspaceContext.Provider value={value}>
       {children}

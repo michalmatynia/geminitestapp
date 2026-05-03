@@ -14,7 +14,9 @@ interface QueryErrorBoundaryProps {
  * Automatically hooks into the query reset boundary and leverages
  * the standard AppErrorBoundary fallback UI and observability.
  */
-export function QueryErrorBoundary({ children }: QueryErrorBoundaryProps) {
+export function QueryErrorBoundary({
+  children,
+}: QueryErrorBoundaryProps): React.JSX.Element {
   return (
     <QueryErrorResetBoundary>
       {({ reset }) => (

@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
@@ -28,7 +28,7 @@ const createSubscriber = (): Redis | null => {
   });
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

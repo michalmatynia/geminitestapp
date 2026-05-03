@@ -1,4 +1,31 @@
 import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
+import { PRICE_GROUP_SOURCE_PRICE_FIELD } from '@/shared/contracts/products/catalogs';
+
+type PriceCalculationOptions = {
+  sourcePrice?: number | null | undefined;
+  sourcePriceCurrencyCode?: string | null | undefined;
+};
+
+type CalculatePriceForCurrencyArgs =
+  | [
+      basePrice: number | null,
+      defaultPriceGroupId: string | null,
+      targetCurrencyCode: string,
+      priceGroups: PriceGroupForCalculation[],
+    ]
+  | [
+      basePrice: number | null,
+      defaultPriceGroupId: string | null,
+      targetCurrencyCode: string,
+      priceGroups: PriceGroupForCalculation[],
+      options: PriceCalculationOptions,
+    ];
+
+type ProductPriceSources = {
+  basePrice: number | null;
+  sourcePrice: number | null;
+  sourcePriceCurrencyCode: string;
+};
 
 function normalizeCurrencyCode(code?: string | null): string {
   return (code ?? '').trim().toUpperCase();
@@ -6,34 +33,52 @@ function normalizeCurrencyCode(code?: string | null): string {
 
 const normalizePriceGroupIdentifier = (value?: string | null): string => (value ?? '').trim();
 
-const getPriceGroupKey = (group: PriceGroupForCalculation | undefined): string | null =>
-  group?.id || group?.groupId || null;
+const toFinitePrice = (value: number | null | undefined): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+const firstNonEmptyString = (values: Array<string | null | undefined>): string => {
+  for (const value of values) {
+    const normalized = normalizePriceGroupIdentifier(value);
+    if (normalized.length > 0) return normalized;
+  }
+  return '';
+};
+
+const getPriceGroupKey = (group: PriceGroupForCalculation | undefined): string | null => {
+  if (group === undefined) return null;
+  const key = firstNonEmptyString([group.id, group.groupId]);
+  return key.length > 0 ? key : null;
+};
 
 const findPriceGroupById = (
   priceGroups: PriceGroupForCalculation[],
   id?: string | null
-): PriceGroupForCalculation | undefined =>
-  id
-    ? priceGroups.find((g: PriceGroupForCalculation): boolean => g.id === id || g.groupId === id)
-    : undefined;
+): PriceGroupForCalculation | undefined => {
+  const normalizedId = normalizePriceGroupIdentifier(id);
+  if (normalizedId.length === 0) return undefined;
+  return priceGroups.find(
+    (group: PriceGroupForCalculation): boolean =>
+      group.id === normalizedId || group.groupId === normalizedId
+  );
+};
 
 const isSamePriceGroup = (
   left: PriceGroupForCalculation | undefined,
   right: PriceGroupForCalculation | undefined
 ): boolean => {
-  if (!left || !right) {
+  if (left === undefined || right === undefined) {
     return false;
   }
 
   const leftId = normalizePriceGroupIdentifier(left.id);
   const rightId = normalizePriceGroupIdentifier(right.id);
-  if (leftId && rightId && leftId === rightId) {
+  if (leftId.length > 0 && rightId.length > 0 && leftId === rightId) {
     return true;
   }
 
   const leftGroupId = normalizePriceGroupIdentifier(left.groupId);
   const rightGroupId = normalizePriceGroupIdentifier(right.groupId);
-  return Boolean(leftGroupId && rightGroupId && leftGroupId === rightGroupId);
+  return leftGroupId.length > 0 && rightGroupId.length > 0 && leftGroupId === rightGroupId;
 };
 
 const resolvePriceGroupAdjustment = (
@@ -51,23 +96,42 @@ const applyPriceGroupAdjustment = (
   return price * multiplier + addToPrice;
 };
 
+const resolveProductFieldPrice = (
+  group: PriceGroupForCalculation,
+  prices: ProductPriceSources
+): number | null => {
+  if (group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) return prices.sourcePrice;
+  if (prices.basePrice !== null) return prices.basePrice;
+  if (
+    prices.sourcePrice !== null &&
+    prices.sourcePriceCurrencyCode.length > 0 &&
+    getGroupCurrencyCode(group) === prices.sourcePriceCurrencyCode
+  ) {
+    return prices.sourcePrice;
+  }
+  return null;
+};
+
 const markVisitedPriceGroup = (
   group: PriceGroupForCalculation,
   visited: Set<string>
 ): boolean => {
   const key = getPriceGroupKey(group);
-  if (!key) return true;
+  if (key === null) return true;
   if (visited.has(key)) return false;
   visited.add(key);
   return true;
 };
 
 function getGroupCurrencyCode(group: PriceGroupForCalculation): string {
+  const currency = (group as { currency?: { code?: string | null } }).currency;
   return normalizeCurrencyCode(
-    group.currency?.code ||
-      group.currencyCode ||
-      (typeof group.currencyId === 'string' ? group.currencyId : undefined) ||
-      group.groupId
+    firstNonEmptyString([
+      currency?.code,
+      group.currencyCode,
+      typeof group.currencyId === 'string' ? group.currencyId : undefined,
+      group.groupId,
+    ])
   );
 }
 
@@ -82,106 +146,199 @@ const matchesTargetCurrency = (
   return (
     groupCode === normalizedTarget ||
     groupIdCode === normalizedTarget ||
-    Boolean(currencyIdCode && currencyIdCode === normalizedTarget)
+    (currencyIdCode.length > 0 && currencyIdCode === normalizedTarget)
   );
 };
 
-const resolvePriceForGroup = (input: {
+type ResolvePriceForGroupInput = {
   group: PriceGroupForCalculation | undefined;
   defaultGroup: PriceGroupForCalculation;
-  basePrice: number;
+  prices: ProductPriceSources;
   priceGroups: PriceGroupForCalculation[];
   visited?: Set<string>;
-}): number | null => {
-  const visited = input.visited ?? new Set<string>();
-  const group = input.group;
-  if (!group) return null;
-  if (!markVisitedPriceGroup(group, visited)) return null;
-  if (isSamePriceGroup(group, input.defaultGroup)) {
-    return input.basePrice;
-  }
-  if (group.type === 'standard') {
-    return applyPriceGroupAdjustment(input.basePrice, group);
-  }
-  if (group.type !== 'dependent' || !group.sourceGroupId) {
-    return null;
-  }
-  const sourcePrice = resolvePriceForGroup({
-    group: findPriceGroupById(input.priceGroups, group.sourceGroupId),
+};
+
+const resolveStandardPriceForGroup = (
+  group: PriceGroupForCalculation,
+  prices: ProductPriceSources
+): number | null => {
+  const productFieldPrice = resolveProductFieldPrice(group, prices);
+  return productFieldPrice === null ? null : applyPriceGroupAdjustment(productFieldPrice, group);
+};
+
+const resolveDependentSourcePrice = (
+  input: ResolvePriceForGroupInput,
+  group: PriceGroupForCalculation,
+  visited: Set<string>
+): number | null => {
+  const normalizedSourceGroupId =
+    typeof group.sourceGroupId === 'string' ? group.sourceGroupId.trim() : '';
+  if (normalizedSourceGroupId.length === 0) return resolveProductFieldPrice(group, input.prices);
+  return resolvePriceForGroup({
+    group: findPriceGroupById(input.priceGroups, normalizedSourceGroupId),
     defaultGroup: input.defaultGroup,
-    basePrice: input.basePrice,
+    prices: input.prices,
     priceGroups: input.priceGroups,
     visited,
   });
-  if (sourcePrice === null) {
-    return null;
-  }
-  return applyPriceGroupAdjustment(sourcePrice, group);
 };
 
-export { normalizeCurrencyCode };
+const resolveVisitedPriceForGroup = (
+  input: ResolvePriceForGroupInput,
+  group: PriceGroupForCalculation,
+  visited: Set<string>
+): number | null => {
+  if (
+    isSamePriceGroup(group, input.defaultGroup) &&
+    group.type !== 'dependent' &&
+    group.basePriceField !== PRICE_GROUP_SOURCE_PRICE_FIELD
+  ) {
+    return resolveProductFieldPrice(group, input.prices);
+  }
+  if (group.type === 'standard') return resolveStandardPriceForGroup(group, input.prices);
+  if (group.type !== 'dependent') return null;
 
-export function calculatePriceForCurrency(
-  basePrice: number | null,
+  const sourcePrice = resolveDependentSourcePrice(input, group, visited);
+  return sourcePrice === null ? null : applyPriceGroupAdjustment(sourcePrice, group);
+};
+
+const resolvePriceForGroup = (input: ResolvePriceForGroupInput): number | null => {
+  const visited = input.visited ?? new Set<string>();
+  const group = input.group;
+  if (group === undefined) return null;
+  if (!markVisitedPriceGroup(group, visited)) return null;
+  return resolveVisitedPriceForGroup(input, group, visited);
+};
+
+const resolveDefaultPriceGroup = (
   defaultPriceGroupId: string | null,
-  targetCurrencyCode: string,
   priceGroups: PriceGroupForCalculation[]
-): { price: number | null; currencyCode: string; baseCurrencyCode: string } {
-  if (basePrice === null || !priceGroups.length) {
-    return {
-      price: null,
-      currencyCode: targetCurrencyCode,
-      baseCurrencyCode: normalizeCurrencyCode(targetCurrencyCode),
-    };
-  }
+): PriceGroupForCalculation | undefined => {
+  const normalizedDefaultGroupId = normalizePriceGroupIdentifier(defaultPriceGroupId);
+  return (
+    findPriceGroupById(priceGroups, normalizedDefaultGroupId) ??
+    priceGroups.find((group: PriceGroupForCalculation): boolean => group.isDefault === true) ??
+    priceGroups[0]
+  );
+};
 
-  const normalizedTarget: string = normalizeCurrencyCode(targetCurrencyCode);
-
-  const defaultGroup: PriceGroupForCalculation | undefined =
-    (defaultPriceGroupId
-      ? priceGroups.find((g: PriceGroupForCalculation): boolean => g.id === defaultPriceGroupId)
-      : undefined) ??
-    priceGroups.find((g: PriceGroupForCalculation): boolean => !!g.isDefault) ??
-    priceGroups[0];
-
-  if (!defaultGroup) {
-    return {
-      price: basePrice,
-      currencyCode: targetCurrencyCode,
-      baseCurrencyCode: normalizedTarget,
-    };
-  }
-
-  const baseCurrencyCode: string = getGroupCurrencyCode(defaultGroup);
-
-  if (baseCurrencyCode && baseCurrencyCode === normalizedTarget) {
-    return { price: basePrice, currencyCode: targetCurrencyCode, baseCurrencyCode };
-  }
-
-  const targetCandidates: PriceGroupForCalculation[] = priceGroups.filter(
-    (group: PriceGroupForCalculation): boolean => matchesTargetCurrency(group, normalizedTarget)
+const resolveTargetPrice = ({
+  defaultGroup,
+  normalizedTarget,
+  prices,
+  priceGroups,
+}: {
+  defaultGroup: PriceGroupForCalculation;
+  normalizedTarget: string;
+  prices: ProductPriceSources;
+  priceGroups: PriceGroupForCalculation[];
+}): number | null => {
+  const targetCandidates = priceGroups.filter((group: PriceGroupForCalculation): boolean =>
+    matchesTargetCurrency(group, normalizedTarget)
   );
 
-  let resolved: number | null = null;
   for (const candidate of targetCandidates) {
     const candidateResolved = resolvePriceForGroup({
       group: candidate,
       defaultGroup,
-      basePrice,
+      prices,
       priceGroups,
     });
-    if (candidateResolved !== null) {
-      resolved = candidateResolved;
-      break;
-    }
-  }
-  if (resolved !== null) {
-    return { price: resolved, currencyCode: targetCurrencyCode, baseCurrencyCode };
+    if (candidateResolved !== null) return candidateResolved;
   }
 
-  return {
-    price: basePrice,
-    currencyCode: baseCurrencyCode || targetCurrencyCode,
-    baseCurrencyCode: baseCurrencyCode || normalizedTarget,
+  return null;
+};
+
+const buildPriceResult = ({
+  price,
+  currencyCode,
+  baseCurrencyCode,
+}: {
+  price: number | null;
+  currencyCode: string;
+  baseCurrencyCode: string;
+}): { price: number | null; currencyCode: string; baseCurrencyCode: string } => ({
+  price,
+  currencyCode,
+  baseCurrencyCode,
+});
+
+const hasNoPriceInputs = (prices: ProductPriceSources): boolean =>
+  prices.basePrice === null && prices.sourcePrice === null;
+
+const resolveFallbackCurrencyCode = (baseCurrencyCode: string, fallback: string): string =>
+  baseCurrencyCode.length > 0 ? baseCurrencyCode : fallback;
+
+export { normalizeCurrencyCode };
+
+export const resolveSourcePriceCurrencyCode = (
+  defaultPriceGroupId: string | null,
+  priceGroups: PriceGroupForCalculation[]
+): string => {
+  const defaultGroup = findPriceGroupById(priceGroups, defaultPriceGroupId);
+  if (defaultGroup?.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) {
+    return getGroupCurrencyCode(defaultGroup);
+  }
+
+  const sourcePriceGroup = priceGroups.find(
+    (group: PriceGroupForCalculation): boolean =>
+      group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD
+  );
+  return sourcePriceGroup === undefined ? '' : getGroupCurrencyCode(sourcePriceGroup);
+};
+
+export function calculatePriceForCurrency(
+  ...args: CalculatePriceForCurrencyArgs
+): { price: number | null; currencyCode: string; baseCurrencyCode: string } {
+  const [basePrice, defaultPriceGroupId, targetCurrencyCode, priceGroups, options = {}] = args;
+  const prices: ProductPriceSources = {
+    basePrice: toFinitePrice(basePrice),
+    sourcePrice: toFinitePrice(options.sourcePrice),
+    sourcePriceCurrencyCode: normalizeCurrencyCode(options.sourcePriceCurrencyCode),
   };
+
+  if (priceGroups.length === 0 || hasNoPriceInputs(prices)) {
+    return buildPriceResult({
+      price: null,
+      currencyCode: targetCurrencyCode,
+      baseCurrencyCode: normalizeCurrencyCode(targetCurrencyCode),
+    });
+  }
+
+  const normalizedTarget: string = normalizeCurrencyCode(targetCurrencyCode);
+  const defaultGroup = resolveDefaultPriceGroup(defaultPriceGroupId, priceGroups);
+  if (defaultGroup === undefined) {
+    return buildPriceResult({
+      price: prices.basePrice,
+      currencyCode: targetCurrencyCode,
+      baseCurrencyCode: normalizedTarget,
+    });
+  }
+
+  const baseCurrencyCode: string = getGroupCurrencyCode(defaultGroup);
+  if (baseCurrencyCode.length > 0 && baseCurrencyCode === normalizedTarget) {
+    const defaultGroupPrice = resolvePriceForGroup({
+      group: defaultGroup,
+      defaultGroup,
+      prices,
+      priceGroups,
+    });
+    return buildPriceResult({
+      price: defaultGroupPrice,
+      currencyCode: targetCurrencyCode,
+      baseCurrencyCode,
+    });
+  }
+
+  const resolved = resolveTargetPrice({ defaultGroup, normalizedTarget, prices, priceGroups });
+  if (resolved !== null) {
+    return buildPriceResult({ price: resolved, currencyCode: targetCurrencyCode, baseCurrencyCode });
+  }
+
+  return buildPriceResult({
+    price: prices.basePrice,
+    currencyCode: resolveFallbackCurrencyCode(baseCurrencyCode, targetCurrencyCode),
+    baseCurrencyCode: resolveFallbackCurrencyCode(baseCurrencyCode, normalizedTarget),
+  });
 }

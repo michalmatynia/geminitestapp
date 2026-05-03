@@ -1,10 +1,12 @@
+'use client';
+
 import type { ImageStudioModelsResponse } from '@/shared/contracts/image-studio/misc';
 import type { ImageStudioProjectRecord, StudioProjectsResponse } from '@/shared/contracts/image-studio/project';
 import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/slot';
 import { studioSlotsResponseSchema } from '@/shared/contracts/image-studio/slot';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { studioKeys } from '@/shared/lib/query-key-exports';
 
 export { studioKeys };
@@ -50,25 +52,26 @@ const normalizeProjectRecord = (entry: unknown): ImageStudioProjectRecord | null
   };
 };
 
+export async function fetchStudioProjects(): Promise<ImageStudioProjectRecord[]> {
+  const data = await api.get<StudioProjectsResponse>('/api/image-studio/projects');
+  if (!Array.isArray(data.projects)) return [];
+  const normalized = data.projects
+    .map((entry: unknown) => normalizeProjectRecord(entry))
+    .filter((entry): entry is ImageStudioProjectRecord => Boolean(entry));
+  const seen = new Set<string>();
+  return normalized.filter((project: ImageStudioProjectRecord) => {
+    if (seen.has(project.id)) return false;
+    seen.add(project.id);
+    return true;
+  });
+}
+
 export function useStudioProjects(): ListQuery<ImageStudioProjectRecord> {
   const queryKey = studioKeys.projects();
-  const queryFn = async (): Promise<ImageStudioProjectRecord[]> => {
-    const data = await api.get<StudioProjectsResponse>('/api/image-studio/projects');
-    if (!Array.isArray(data.projects)) return [];
-    const normalized = data.projects
-      .map((entry: unknown) => normalizeProjectRecord(entry))
-      .filter((entry): entry is ImageStudioProjectRecord => Boolean(entry));
-    const seen = new Set<string>();
-    return normalized.filter((project: ImageStudioProjectRecord) => {
-      if (seen.has(project.id)) return false;
-      seen.add(project.id);
-      return true;
-    });
-  };
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
-    queryFn,
+    queryFn: fetchStudioProjects,
     staleTime: 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -92,11 +95,11 @@ export function useStudioSlots(projectId: string): SingleQuery<StudioSlotsRespon
       await api.get<unknown>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`)
     );
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: projectId,
     queryKey,
     queryFn,
-    enabled: !!projectId,
+    enabled: Boolean(projectId),
     staleTime: 60_000,
     // Slot data is frequently mutated outside Studio (e.g. Product Modal sends),
     // but those mutations call invalidateImageStudioSlots() explicitly, so
@@ -121,7 +124,7 @@ export function useStudioImageModels(): SingleQuery<ImageStudioModelsResponse> {
   const queryFn = async (): Promise<ImageStudioModelsResponse> =>
     api.get<ImageStudioModelsResponse>('/api/image-studio/models');
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'models',
     queryKey,
     queryFn,

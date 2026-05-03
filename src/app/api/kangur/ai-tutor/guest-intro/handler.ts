@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { extractClientIp } from '@/features/auth/server';
 import { registerKangurGuestAiTutorIntroAppearance } from '@/features/kangur/server/guest-ai-tutor-intro';

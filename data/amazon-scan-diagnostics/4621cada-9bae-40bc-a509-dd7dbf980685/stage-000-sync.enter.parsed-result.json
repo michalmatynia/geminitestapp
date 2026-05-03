@@ -1,0 +1,326 @@
+{
+  "status": "matched",
+  "asin": "B07TWFYR7G",
+  "title": "Mighty Beanz 66621 Fortnite Collectors Tin, Multicolor",
+  "price": null,
+  "url": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+  "description": "About this item                     Fortnite falls in Mighty Beanz!     The Mighty Beanz Fortnite Collectors Tin stores up to 30 beanz     Take your Beanz with you wherever you go.     Be ready to get your game at any time!     Includes 2 exclusive Fortnite Mighty beanz       \n                     ›  See more product details",
+  "amazonDetails": {
+    "brand": null,
+    "manufacturer": null,
+    "modelNumber": null,
+    "partNumber": null,
+    "color": null,
+    "style": null,
+    "material": null,
+    "size": null,
+    "pattern": null,
+    "finish": null,
+    "itemDimensions": null,
+    "packageDimensions": null,
+    "itemWeight": null,
+    "packageWeight": null,
+    "bestSellersRank": null,
+    "ean": null,
+    "gtin": null,
+    "upc": null,
+    "isbn": null,
+    "bulletPoints": [
+      "Fortnite falls in Mighty Beanz!",
+      "The Mighty Beanz Fortnite Collectors Tin stores up to 30 beanz",
+      "Take your Beanz with you wherever you go.",
+      "Be ready to get your game at any time!",
+      "Includes 2 exclusive Fortnite Mighty beanz"
+    ],
+    "attributes": [],
+    "rankings": []
+  },
+  "amazonProbe": {
+    "asin": "B07TWFYR7G",
+    "pageTitle": "Mighty Beanz 66621 Fortnite Collectors Tin, Multicolor",
+    "descriptionSnippet": "About this item                     Fortnite falls in Mighty Beanz!     The Mighty Beanz Fortnite Collectors Tin stores up to 30 beanz     Take your Beanz with you wherever you go.     Be ready to get your game at any time!     Includes 2 exclusive Fortnite Mighty beanz       \n                     ›  See more product details",
+    "pageLanguage": "en-gb",
+    "pageLanguageSource": "html_lang",
+    "marketplaceDomain": "www.amazon.nl",
+    "candidateUrl": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+    "canonicalUrl": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+    "heroImageUrl": "https://m.media-amazon.com/images/I/81pP1wKYUnL._AC_SL1500_.jpg",
+    "heroImageAlt": "Mighty Beanz 66621 Fortnite Collectors Tin, Multicolor",
+    "heroImageArtifactName": "amazon-scan-probe-direct-candidate-attempt-1-rank-1-hero-1777019451432.png",
+    "artifactKey": "amazon-scan-probe-direct-candidate-attempt-1-rank-1",
+    "bulletPoints": [
+      "Fortnite falls in Mighty Beanz!",
+      "The Mighty Beanz Fortnite Collectors Tin stores up to 30 beanz",
+      "Take your Beanz with you wherever you go.",
+      "Be ready to get your game at any time!",
+      "Includes 2 exclusive Fortnite Mighty beanz"
+    ],
+    "bulletCount": 5,
+    "attributeCount": 0
+  },
+  "candidateUrls": [
+    "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G"
+  ],
+  "candidateResults": [
+    {
+      "url": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+      "score": null,
+      "asin": "B07TWFYR7G",
+      "marketplaceDomain": "www.amazon.nl",
+      "title": null,
+      "snippet": null,
+      "rank": 1
+    }
+  ],
+  "candidatePreviews": [
+    {
+      "id": "B07TWFYR7G",
+      "matchedImageId": "direct_candidate",
+      "url": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+      "asin": "B07TWFYR7G",
+      "marketplaceDomain": "www.amazon.nl",
+      "title": "Mighty Beanz 66621 Fortnite Collectors Tin, Multicolor",
+      "snippet": "About this item                     Fortnite falls in Mighty Beanz!     The Mighty Beanz Fortnite Collectors Tin stores up to 30 beanz     Take your Beanz with you wherever you go.     Be ready to get your game at any time!     Includes 2 exclusive Fortnite Mighty beanz       \n                     ›  See more product details",
+      "heroImageUrl": "https://m.media-amazon.com/images/I/81pP1wKYUnL._AC_SL1500_.jpg",
+      "heroImageAlt": "Mighty Beanz 66621 Fortnite Collectors Tin, Multicolor",
+      "heroImageArtifactName": "amazon-scan-probe-direct-candidate-attempt-1-rank-1-hero-1777019451432.png",
+      "artifactKey": "amazon-scan-probe-direct-candidate-attempt-1-rank-1",
+      "rank": 1
+    }
+  ],
+  "matchedImageId": null,
+  "message": "Amazon product details extracted.",
+  "currentUrl": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+  "stage": "amazon_extract",
+  "steps": [
+    {
+      "key": "validate",
+      "label": "Validate scan input",
+      "group": "input",
+      "attempt": 1,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": "about:blank",
+      "startedAt": "2026-04-24T08:30:48.224Z",
+      "completedAt": "2026-04-24T08:30:48.224Z",
+      "durationMs": 0
+    },
+    {
+      "key": "amazon_open",
+      "label": "Open Amazon candidate",
+      "group": "amazon",
+      "attempt": 1,
+      "candidateId": "direct_candidate",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Amazon product page opened.",
+      "warning": null,
+      "details": [],
+      "url": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+      "startedAt": "2026-04-24T08:30:48.224Z",
+      "completedAt": "2026-04-24T08:30:49.868Z",
+      "durationMs": 1644
+    },
+    {
+      "key": "amazon_overlays",
+      "label": "Dismiss Amazon overlays",
+      "group": "amazon",
+      "attempt": 1,
+      "candidateId": "direct_candidate",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Amazon overlays dismissed.",
+      "warning": null,
+      "details": [],
+      "url": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+      "startedAt": "2026-04-24T08:30:49.868Z",
+      "completedAt": "2026-04-24T08:30:50.048Z",
+      "durationMs": 180
+    },
+    {
+      "key": "amazon_content_ready",
+      "label": "Wait for Amazon product content",
+      "group": "amazon",
+      "attempt": 1,
+      "candidateId": "direct_candidate",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Amazon product content is visible.",
+      "warning": null,
+      "details": [],
+      "url": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+      "startedAt": "2026-04-24T08:30:50.048Z",
+      "completedAt": "2026-04-24T08:30:51.065Z",
+      "durationMs": 1017
+    },
+    {
+      "key": "amazon_probe",
+      "label": "Probe Amazon product page",
+      "group": "amazon",
+      "attempt": 1,
+      "candidateId": "direct_candidate",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "probe_ready",
+      "status": "completed",
+      "message": "Collected Amazon candidate page evidence before extraction.",
+      "warning": null,
+      "details": [
+        {
+          "label": "ASIN",
+          "value": "B07TWFYR7G"
+        },
+        {
+          "label": "Title",
+          "value": "Mighty Beanz 66621 Fortnite Collectors Tin, Multicolor"
+        },
+        {
+          "label": "Description",
+          "value": "About this item                     Fortnite falls in Mighty Beanz!     The Mighty Beanz Fortnite Collectors Tin stores up to 30 beanz     Take your Beanz with you wherever you go.     Be ready to get your game at any time!     Includes 2 exclusive Fortnite Mighty beanz       \n                     ›  See more product details"
+        },
+        {
+          "label": "Page language",
+          "value": "en-gb"
+        },
+        {
+          "label": "Language source",
+          "value": "html_lang"
+        },
+        {
+          "label": "Marketplace domain",
+          "value": "www.amazon.nl"
+        },
+        {
+          "label": "Canonical URL",
+          "value": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G"
+        },
+        {
+          "label": "Hero image URL",
+          "value": "https://m.media-amazon.com/images/I/81pP1wKYUnL._AC_SL1500_.jpg"
+        },
+        {
+          "label": "Hero image artifact",
+          "value": "amazon-scan-probe-direct-candidate-attempt-1-rank-1-hero-1777019451432.png"
+        },
+        {
+          "label": "Artifact key",
+          "value": "amazon-scan-probe-direct-candidate-attempt-1-rank-1"
+        },
+        {
+          "label": "Bullet count",
+          "value": "5"
+        },
+        {
+          "label": "Attribute count",
+          "value": "0"
+        }
+      ],
+      "url": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+      "startedAt": "2026-04-24T08:30:51.065Z",
+      "completedAt": "2026-04-24T08:30:51.699Z",
+      "durationMs": 634
+    },
+    {
+      "key": "amazon_extract",
+      "label": "Extract Amazon details",
+      "group": "amazon",
+      "attempt": 1,
+      "candidateId": "direct_candidate",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Amazon product details extracted.",
+      "warning": null,
+      "details": [
+        {
+          "label": "ASIN",
+          "value": "B07TWFYR7G"
+        },
+        {
+          "label": "Title",
+          "value": "Mighty Beanz 66621 Fortnite Collectors Tin, Multicolor"
+        }
+      ],
+      "url": "https://www.amazon.nl/-/en/Mighty-66621-Fortnite-Collectors-Multicolor/dp/B07TWFYR7G",
+      "startedAt": "2026-04-24T08:30:51.699Z",
+      "completedAt": "2026-04-24T08:34:51.819Z",
+      "durationMs": 240120
+    },
+    {
+      "key": "amazon_ai_evaluate",
+      "label": "Evaluate Amazon candidate match",
+      "group": "amazon",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    },
+    {
+      "key": "queue_scan",
+      "label": "Queue follow-up scan",
+      "group": "input",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    },
+    {
+      "key": "product_asin_update",
+      "label": "Update product ASIN",
+      "group": "product",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    }
+  ]
+}

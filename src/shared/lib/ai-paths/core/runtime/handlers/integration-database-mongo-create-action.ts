@@ -59,6 +59,7 @@ export async function handleDatabaseMongoCreateAction({
       templates: [{ name: 'insertTemplate', template: payloadTemplate }],
       templateContext: templateInputs,
       currentValue: templateInputValue,
+      allowEmptyArrays: true,
     });
     if (!templateGuardrail.ok) {
       const errorMessage = templateGuardrail.message;

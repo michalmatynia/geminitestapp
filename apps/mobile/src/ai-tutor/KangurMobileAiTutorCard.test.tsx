@@ -16,13 +16,11 @@ const { sendQuickActionMock, useKangurMobileAiTutorMock } = vi.hoisted(() => ({
 vi.mock('react-native', () => {
   const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
     return ({
-      accessibilityHint: _accessibilityHint,
       accessibilityLabel,
       accessibilityRole,
       children,
       disabled,
       onPress,
-      style: _style,
       testID,
       ...props
     }: React.PropsWithChildren<
@@ -70,7 +68,7 @@ import { KangurMobileAiTutorCard } from './KangurMobileAiTutorCard';
 const context = {
   contentId: 'lesson:test',
   focusId: 'focus-id',
-  focusKind: 'lesson',
+  focusKind: 'screen',
   surface: 'lesson',
   title: 'Test lesson',
 } as const;

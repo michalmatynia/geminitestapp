@@ -2,28 +2,28 @@ import { z } from 'zod';
 
 import type { SettingParams } from '@/app/api/v2/integrations/base/setting-params';
 import {
-  GET_handler as getActiveTemplateHandler,
-  POST_handler as postActiveTemplateHandler,
+  getHandler as getActiveTemplateHandler,
+  postHandler as postActiveTemplateHandler,
 } from '@/app/api/v2/integrations/exports/base/active-template/handler';
 import {
-  GET_handler as getDefaultConnectionHandler,
-  POST_handler as postDefaultConnectionHandler,
+  getHandler as getDefaultConnectionHandler,
+  postHandler as postDefaultConnectionHandler,
 } from '@/app/api/v2/integrations/exports/base/default-connection/handler';
 import {
-  GET_handler as getDefaultInventoryHandler,
-  POST_handler as postDefaultInventoryHandler,
+  getHandler as getDefaultInventoryHandler,
+  postHandler as postDefaultInventoryHandler,
 } from '@/app/api/v2/integrations/exports/base/default-inventory/handler';
 import {
-  GET_handler as getExportWarehouseHandler,
-  POST_handler as postExportWarehouseHandler,
+  getHandler as getExportWarehouseHandler,
+  postHandler as postExportWarehouseHandler,
 } from '@/app/api/v2/integrations/exports/base/export-warehouse/handler';
 import {
-  GET_handler as getImageRetryPresetsHandler,
-  POST_handler as postImageRetryPresetsHandler,
+  getHandler as getImageRetryPresetsHandler,
+  postHandler as postImageRetryPresetsHandler,
 } from '@/app/api/v2/integrations/exports/base/image-retry-presets/handler';
 import {
-  GET_handler as getStockFallbackHandler,
-  POST_handler as postStockFallbackHandler,
+  getHandler as getStockFallbackHandler,
+  postHandler as postStockFallbackHandler,
 } from '@/app/api/v2/integrations/exports/base/stock-fallback/handler';
 import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -77,7 +77,7 @@ const resolveHandlers = (setting: string): RouteHandlers => {
   return handlers;
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: SettingParams
@@ -85,7 +85,7 @@ export async function GET_handler(
   return resolveHandlers(params.setting).GET(req, ctx);
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: SettingParams

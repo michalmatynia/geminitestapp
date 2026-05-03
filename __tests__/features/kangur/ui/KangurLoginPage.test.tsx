@@ -174,7 +174,7 @@ describe('KangurLoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Zaloguj rodzica' }));
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/auth/learner-signout',
+      '/kangur-api/auth/learner-signout',
       expect.objectContaining({
         credentials: 'same-origin',
         method: 'POST',
@@ -236,7 +236,7 @@ describe('KangurLoginPage', () => {
       'fetch',
       vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-        if (url === '/api/kangur/auth/learner-signout') {
+        if (url === '/kangur-api/auth/learner-signout') {
           return {
             json: vi.fn().mockResolvedValue({ ok: true }),
             ok: true,
@@ -286,7 +286,7 @@ describe('KangurLoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/auth/parent-account/create',
+      '/kangur-api/auth/parent-account/create',
       expect.objectContaining({
         body: JSON.stringify({
           email: 'parent@example.com',
@@ -344,7 +344,7 @@ describe('KangurLoginPage', () => {
       await user.click(submitButton);
 
       const createCall = fetchMock.mock.calls.find(
-        ([url]) => url === '/api/kangur/auth/parent-account/create'
+        ([url]) => url === '/kangur-api/auth/parent-account/create'
       );
       expect(createCall).toBeTruthy();
       const body = JSON.parse((createCall?.[1] as RequestInit).body as string) as Record<
@@ -371,7 +371,7 @@ describe('KangurLoginPage', () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-      if (url === '/api/kangur/auth/parent-account/create') {
+      if (url === '/kangur-api/auth/parent-account/create') {
         return {
           json: vi.fn().mockResolvedValue({
             ok: true,
@@ -448,7 +448,7 @@ describe('KangurLoginPage', () => {
       vi.setSystemTime(new Date('2026-03-09T11:30:00.000Z'));
       const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-        if (url === '/api/kangur/auth/parent-account/create') {
+        if (url === '/kangur-api/auth/parent-account/create') {
           return {
             json: vi.fn().mockResolvedValue({
               ok: true,
@@ -469,7 +469,7 @@ describe('KangurLoginPage', () => {
           };
         }
 
-        if (url === '/api/kangur/auth/parent-account/resend') {
+        if (url === '/kangur-api/auth/parent-account/resend') {
           return {
             json: vi.fn().mockResolvedValue({
               ok: true,
@@ -527,7 +527,7 @@ describe('KangurLoginPage', () => {
         'https://example.com/kangur/login?callbackUrl=%2Ftests%3Ffocus%3Ddivision&verifyEmailToken=verify-resend-custom'
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        '/api/kangur/auth/parent-account/resend',
+        '/kangur-api/auth/parent-account/resend',
         expect.objectContaining({
           body: JSON.stringify({
             email: 'parent@example.com',
@@ -548,7 +548,7 @@ describe('KangurLoginPage', () => {
       vi.setSystemTime(new Date('2026-03-09T11:30:00.000Z'));
       const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-        if (url === '/api/kangur/auth/parent-account/create') {
+        if (url === '/kangur-api/auth/parent-account/create') {
           return {
             json: vi.fn().mockResolvedValue({
               ok: true,
@@ -565,7 +565,7 @@ describe('KangurLoginPage', () => {
           };
         }
 
-        if (url === '/api/kangur/auth/parent-account/resend') {
+        if (url === '/kangur-api/auth/parent-account/resend') {
           return {
             json: vi.fn().mockResolvedValue({
               error:
@@ -653,7 +653,7 @@ describe('KangurLoginPage', () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        '/api/kangur/auth/parent-account/resend',
+        '/kangur-api/auth/parent-account/resend',
         expect.objectContaining({
           body: JSON.stringify({
             email: 'parent@example.com',
@@ -686,7 +686,7 @@ describe('KangurLoginPage', () => {
       vi.setSystemTime(new Date('2026-03-09T11:30:00.000Z'));
       const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-        if (url === '/api/kangur/auth/parent-account/create') {
+        if (url === '/kangur-api/auth/parent-account/create') {
           return {
             json: vi.fn().mockResolvedValue({
               ok: true,
@@ -703,7 +703,7 @@ describe('KangurLoginPage', () => {
           };
         }
 
-        if (url === '/api/kangur/auth/parent-account/resend') {
+        if (url === '/kangur-api/auth/parent-account/resend') {
           return {
             json: vi.fn().mockResolvedValue({
               error:
@@ -764,7 +764,7 @@ describe('KangurLoginPage', () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-      if (url === '/api/kangur/auth/parent-account/create') {
+      if (url === '/kangur-api/auth/parent-account/create') {
         return {
           json: vi.fn().mockResolvedValue({
             error:
@@ -827,14 +827,14 @@ describe('KangurLoginPage', () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-      if (url === '/api/kangur/auth/learner-signout') {
+      if (url === '/kangur-api/auth/learner-signout') {
         return {
           json: vi.fn().mockResolvedValue({ ok: true }),
           ok: true,
           status: 200,
         };
       }
-      if (url === '/api/kangur/auth/learner-signin') {
+      if (url === '/kangur-api/auth/learner-signin') {
         return {
           json: vi.fn().mockResolvedValue({ learnerId: 'learner-7' }),
           ok: true,
@@ -854,7 +854,7 @@ describe('KangurLoginPage', () => {
     expect(signOutMock).toHaveBeenCalledWith({ redirect: false });
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      '/api/kangur/auth/learner-signin',
+      '/kangur-api/auth/learner-signin',
       expect.objectContaining({
         body: JSON.stringify({
           loginName: 'janek123',
@@ -887,7 +887,7 @@ describe('KangurLoginPage', () => {
     ).toBeVisible();
     expect(signOutMock).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalledWith(
-      '/api/kangur/auth/learner-signin',
+      '/kangur-api/auth/learner-signin',
       expect.anything()
     );
   });

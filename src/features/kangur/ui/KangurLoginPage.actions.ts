@@ -1,7 +1,7 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
+import { type useTranslations } from 'next-intl';
 import { useCallback, useMemo } from 'react';
 
 import {
@@ -9,13 +9,14 @@ import {
   KANGUR_PARENT_CAPTCHA_SITE_KEY,
 } from '@/features/kangur/ui/login-page/login-constants';
 import type { KangurLoginPageProps } from '@/features/kangur/ui/login-page/login-context';
-import { useKangurLoginPageState } from './KangurLoginPage.hooks';
+import { type useKangurLoginPageState } from './KangurLoginPage.hooks';
 import {
   isValidParentEmail,
   normalizeParentEmail,
   parseJsonResponse,
   resetSessionsBeforeParentLogin,
   resetSessionsBeforeStudentLogin,
+  resolveKangurClientEndpoint,
   resolveCredentialErrorTarget,
 } from './KangurLoginPage.utils';
 
@@ -53,7 +54,7 @@ const requestKangurParentAccountCreate = async ({
   email: string;
   password: string;
 }) =>
-  fetch('/api/kangur/auth/parent-account/create', {
+  fetch(resolveKangurClientEndpoint('/api/kangur/auth/parent-account/create'), {
     method: 'POST',
     credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
@@ -444,7 +445,7 @@ const requestKangurStudentLogin = async ({
   loginName: string;
   password: string;
 }) =>
-  fetch('/api/kangur/auth/learner-signin', {
+  fetch(resolveKangurClientEndpoint('/api/kangur/auth/learner-signin'), {
     method: 'POST',
     credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },

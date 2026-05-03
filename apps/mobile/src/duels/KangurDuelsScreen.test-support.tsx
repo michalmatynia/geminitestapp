@@ -1,4 +1,5 @@
 import React from 'react';
+import type { RenderResult } from '@testing-library/react';
 import { render } from '@testing-library/react';
 import { vi } from 'vitest';
 
@@ -35,60 +36,70 @@ export const {
   useKangurMobileLessonCheckpointsMock,
 } = duelsScreenTestMocks;
 
+type PrimitiveProps = {
+  accessibilityLabel?: string;
+  accessibilityLiveRegion?: string;
+  accessibilityRole?: string;
+  testID?: string;
+  [key: string]: unknown;
+};
+
+const getAccessibilityProps = (props: PrimitiveProps): Record<string, unknown> => {
+  const { testID, accessibilityLabel, accessibilityRole, accessibilityLiveRegion } = props;
+  const target: Record<string, unknown> = {};
+
+  const addProp = (val: string | undefined, key: string): void => {
+    if (typeof val === 'string' && val.length > 0) {
+      target[key] = val;
+    }
+  };
+
+  addProp(testID, 'data-testid');
+  addProp(accessibilityLabel, 'aria-label');
+  addProp(accessibilityRole, 'role');
+  addProp(accessibilityLiveRegion, 'aria-live');
+
+  return target;
+};
+
 vi.mock('react-native', () => {
-  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
-    return ({
-      accessibilityHint: _accessibilityHint,
+  const getMappedProps = (props: Record<string, unknown>): Record<string, unknown> => {
+    const {
       accessibilityLabel,
       accessibilityLiveRegion,
       accessibilityRole,
-      children,
-      contentContainerStyle: _contentContainerStyle,
-      editable: _editable,
-      keyboardShouldPersistTaps: _keyboardShouldPersistTaps,
-      multiline: _multiline,
-      onChangeText,
       onPress,
+      onChangeText,
       secureTextEntry,
       testID,
-      textContentType: _textContentType,
-      ...props
-    }: React.PropsWithChildren<
-      Record<string, unknown> & {
-        accessibilityHint?: string;
-        accessibilityLabel?: string;
-        accessibilityLiveRegion?: 'off' | 'none' | 'polite' | 'assertive';
-        accessibilityRole?: string;
-        contentContainerStyle?: unknown;
-        editable?: boolean;
-        keyboardShouldPersistTaps?: string;
-        multiline?: boolean;
-        onChangeText?: (value: string) => void;
-        onPress?: () => void;
-        secureTextEntry?: boolean;
-        testID?: string;
-        textContentType?: string;
-      }
-    >) =>
-      React.createElement(
-        tagName,
-        {
-          ...props,
-          ...(testID ? { 'data-testid': testID } : {}),
-          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
-          ...(accessibilityRole ? { role: accessibilityRole } : {}),
-          ...(accessibilityLiveRegion ? { 'aria-live': accessibilityLiveRegion } : {}),
-          ...(onPress ? { onClick: onPress } : {}),
-          ...(onChangeText
-            ? {
-                onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-                  onChangeText(event.target.value),
-              }
-            : {}),
-          ...(secureTextEntry ? { type: 'password' } : {}),
-        },
-        children
-      );
+      ...rest
+    } = props as PrimitiveProps;
+
+    const mapped: Record<string, unknown> = {
+      ...rest,
+      ...getAccessibilityProps({ testID, accessibilityLabel, accessibilityRole, accessibilityLiveRegion }),
+    };
+
+    if (typeof onPress === 'function') {
+      mapped.onClick = onPress;
+    }
+
+    if (typeof onChangeText === 'function') {
+      mapped.onChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        (onChangeText as (text: string) => void)(event.target.value);
+      };
+    }
+
+    if (secureTextEntry === true) {
+      mapped.type = 'password';
+    }
+
+    return mapped;
+  };
+
+  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
+    return ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
+      React.createElement(tagName, getMappedProps(props), children);
   };
 
   return {
@@ -109,25 +120,14 @@ vi.mock('react-native-safe-area-context', () => {
       children,
       testID,
       ...props
-    }: React.PropsWithChildren<
-      Record<string, unknown> & {
-        accessibilityLabel?: string;
-        accessibilityLiveRegion?: 'off' | 'none' | 'polite' | 'assertive';
-        accessibilityRole?: string;
-        testID?: string;
-      }
-    >) =>
-      React.createElement(
-        tagName,
-        {
-          ...props,
-          ...(testID ? { 'data-testid': testID } : {}),
-          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
-          ...(accessibilityRole ? { role: accessibilityRole } : {}),
-          ...(accessibilityLiveRegion ? { 'aria-live': accessibilityLiveRegion } : {}),
-        },
-        children
-      );
+    }: React.PropsWithChildren<PrimitiveProps>) => {
+      const elementProps: Record<string, unknown> = {
+        ...props,
+        ...getAccessibilityProps({ testID, accessibilityLabel, accessibilityRole, accessibilityLiveRegion }),
+      };
+
+      return React.createElement(tagName, elementProps, children);
+    };
   };
 
   return {
@@ -136,7 +136,8 @@ vi.mock('react-native-safe-area-context', () => {
 });
 
 vi.mock('expo-router', () => ({
-  Link: ({ children }: React.PropsWithChildren) => children,
+  Link: ({ children }: React.PropsWithChildren): React.JSX.Element | null =>
+    (children as React.JSX.Element | null) ?? null,
   useLocalSearchParams: duelsScreenTestMocks.useLocalSearchParamsMock,
   useRouter: duelsScreenTestMocks.useRouterMock,
 }));
@@ -182,7 +183,7 @@ vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
 
 import { KangurDuelsScreen } from './KangurDuelsScreen';
 
-export const renderDuelsScreen = (locale: 'pl' | 'en' | 'de' = 'pl') =>
+export const renderDuelsScreen = (locale: 'pl' | 'en' | 'de' = 'pl'): RenderResult =>
   render(
     <KangurMobileI18nProvider locale={locale}>
       <KangurDuelsScreen />
@@ -237,6 +238,13 @@ export const resetDuelsScreenMocks = (): void => {
   useRouterMock.mockReturnValue({
     replace: replaceMock,
   });
+  resetAuthMocks();
+  resetLobbyMocks();
+  resetSessionMocks();
+  resetLessonMocks();
+};
+
+const resetAuthMocks = (): void => {
   useKangurMobileAuthMock.mockReturnValue({
     isLoadingAuth: false,
     session: {
@@ -251,6 +259,9 @@ export const resetDuelsScreenMocks = (): void => {
     signIn: vi.fn(),
     supportsLearnerCredentials: true,
   });
+};
+
+const resetLobbyMocks = (): void => {
   useKangurMobileDuelLobbyChatMock.mockReturnValue({
     error: null,
     isAuthenticated: true,
@@ -263,6 +274,9 @@ export const resetDuelsScreenMocks = (): void => {
     sendMessage: vi.fn(),
   });
   useKangurMobileDuelsLobbyMock.mockReturnValue(createDefaultDuelsLobbyMock());
+};
+
+const resetSessionMocks = (): void => {
   useKangurMobileDuelSessionMock.mockReturnValue({
     actionError: null,
     currentQuestion: null,
@@ -280,6 +294,9 @@ export const resetDuelsScreenMocks = (): void => {
     spectatorCount: 0,
     submitAnswer: vi.fn(),
   });
+};
+
+const resetLessonMocks = (): void => {
   useKangurMobileLessonCheckpointsMock.mockReturnValue({
     recentCheckpoints: [],
   });

@@ -9,35 +9,9 @@ import { useOptionalMarkdownSplitEditorContext } from '../context/MarkdownSplitE
 import { useMarkdownPreviewDebounce } from '../hooks/useMarkdownPreviewDebounce';
 import { useMarkdownSplitResizer } from '../hooks/useMarkdownSplitResizer';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { MarkdownSplitEditorOptions } from '@/shared/contracts/document-editor';
 
-
-export interface MarkdownSplitEditorProps {
-  value?: string;
-  onChange?: (nextValue: string) => void;
-  readOnly?: boolean | undefined;
-  showPreview?: boolean;
-  renderPreviewHtml?: (value: string) => string;
-  sanitizePreviewHtml?: ((value: string) => string) | undefined;
-  isCodeMode?: boolean | undefined;
-  isPasting?: boolean | undefined;
-  onPaste?:
-    | ((event: React.ClipboardEvent<HTMLTextAreaElement>) => void | Promise<void>)
-    | undefined;
-  textareaRef?: React.RefObject<HTMLTextAreaElement | null> | undefined;
-  splitRef?: React.RefObject<HTMLDivElement | null> | undefined;
-  editorWidth?: number | null | undefined;
-  onEditorWidthChange?:
-    | ((next: number | null | ((prev: number | null) => number | null)) => void)
-    | undefined;
-  isDraggingSplitter?: boolean | undefined;
-  onDraggingSplitterChange?: ((dragging: boolean) => void) | undefined;
-  contentBackground?: string | undefined;
-  contentTextColor?: string | undefined;
-  previewTypographyStyle?: React.CSSProperties | undefined;
-  onPreviewImageClick?: ((src: string) => void) | undefined;
-  onCopyCodeFailure?: (() => void) | undefined;
-  placeholder?: string | undefined;
-  debounceMs?: number | undefined;
+export interface MarkdownSplitEditorProps extends MarkdownSplitEditorOptions {
   textareaClassName?: string | undefined;
 }
 

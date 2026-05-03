@@ -1,8 +1,8 @@
-import { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
-import { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
+import { type AiNode, type Edge, type RuntimePortValues } from '@/shared/contracts/ai-paths';
+import { type RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 
 import { cloneValue } from '../utils';
-import { EngineStateManager } from './engine-state-manager';
+import { type EngineStateManager } from './engine-state-manager';
 import {
   type EvaluateGraphOptions,
   type RuntimeValidationIssue,
@@ -285,7 +285,7 @@ export const applyValidationBlockedNodeState = async (
     status: 'blocked',
     skipReason: 'validation',
     blockedReason: 'validation',
-    message: message,
+    message,
     validationStage: stage,
     validationIssues: cloneValue(issues),
   };
@@ -307,7 +307,7 @@ export const applyValidationBlockedNodeState = async (
       nodeType: node.type,
       nodeTitle: node.title ?? null,
       status: 'blocked',
-      iteration: iteration,
+      iteration,
       attempt,
       inputs: cloneValue(nodeInputs),
       outputs: cloneValue(blockedOutputs),
@@ -329,7 +329,7 @@ export const applyValidationBlockedNodeState = async (
       runStartedAt: resolvedRunStartedAt,
       nodeId: node.id,
       nodeType: node.type,
-      iteration: iteration,
+      iteration,
       status: 'skipped',
       durationMs: nodeDurationMs,
       reason: 'validation',
@@ -342,12 +342,12 @@ export const applyValidationBlockedNodeState = async (
       runId: resolvedRunId,
       traceId: resolvedRunId,
       spanId,
-      node: node,
+      node,
       iteration,
       attempt,
       reason: 'validation',
       status: 'blocked',
-      message: message,
+      message,
       waitingOnPorts: [],
       waitingOnDetails: [],
       ...buildRuntimeTelemetryFields(runtimeTelemetry),

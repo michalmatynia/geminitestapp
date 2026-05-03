@@ -54,7 +54,7 @@ const loadBlockingHandler = async () => {
 
 describe('query telemetry ingestion', () => {
   it('deduplicates events and persists redacted/truncated telemetry metadata', async () => {
-    const { POST_handler, queryTelemetryTestUtils, mockedLogSystemEvent } =
+    const { postHandler, queryTelemetryTestUtils, mockedLogSystemEvent } =
       await loadBlockingHandler();
     queryTelemetryTestUtils.resetIngestionState();
     mockedLogSystemEvent.mockReset();
@@ -62,7 +62,7 @@ describe('query telemetry ingestion', () => {
 
     const event = createEvent('evt-1');
     const request = new NextRequest('http://localhost/api/query-telemetry', { method: 'POST' });
-    const response = await POST_handler(request, {
+    const response = await postHandler(request, {
       ...createRequestContext(),
       body: { events: [event, event] },
     });

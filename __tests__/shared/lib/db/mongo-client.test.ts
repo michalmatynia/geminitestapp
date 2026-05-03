@@ -12,11 +12,34 @@ type FakeMongoClientInstance = {
   options: Record<string, unknown>;
   connect: ReturnType<typeof vi.fn>;
   db: ReturnType<typeof vi.fn>;
+  close: ReturnType<typeof vi.fn>;
   on: ReturnType<typeof vi.fn>;
   emit: (event: string, payload: unknown) => void;
 };
 
+const MANAGED_ENV_KEYS = [
+  'MONGODB_URI',
+  'MONGODB_DB',
+  'MONGODB_LOCAL_URI',
+  'MONGODB_LOCAL_DB',
+  'MONGODB_CLOUD_URI',
+  'MONGODB_CLOUD_DB',
+  'MONGODB_ACTIVE_SOURCE',
+  'MONGODB_ACTIVE_SOURCE_DEFAULT',
+  'MONGODB_MAX_POOL_SIZE',
+  'MONGODB_MIN_POOL_SIZE',
+  'MONGODB_MAX_IDLE_TIME_MS',
+  'MONGODB_SERVER_SELECTION_TIMEOUT_MS',
+  'MONGODB_CONNECT_TIMEOUT_MS',
+  'MONGODB_SOCKET_TIMEOUT_MS',
+  'DEBUG_MONGODB_POOL',
+  'MONGODB_MONITOR_COMMANDS',
+  'MONGODB_SLOW_COMMAND_MS',
+] as const;
+
 const clearMongoGlobals = (): void => {
+  delete (globalThis as typeof globalThis & { __mongoClientByKey?: unknown }).__mongoClientByKey;
+  delete (globalThis as typeof globalThis & { __mongoClientPromiseByKey?: unknown }).__mongoClientPromiseByKey;
   delete (globalThis as typeof globalThis & { __mongoClient?: unknown }).__mongoClient;
   delete (globalThis as typeof globalThis & { __mongoClientPromise?: unknown }).__mongoClientPromise;
   delete (globalThis as typeof globalThis & { __mongoUri?: unknown }).__mongoUri;
@@ -34,6 +57,9 @@ const loadMongoClientModule = async (options?: {
   clearMongoGlobals();
 
   const env = options?.env ?? {};
+  for (const key of MANAGED_ENV_KEYS) {
+    delete process.env[key];
+  }
   for (const [key, value] of Object.entries(env)) {
     if (value === undefined) {
       delete process.env[key];
@@ -75,6 +101,7 @@ const loadMongoClientModule = async (options?: {
               name,
               clientUri: this.uri,
             }));
+            close = vi.fn(async () => undefined);
             on = vi.fn((event: string, listener: (payload: unknown) => void) => {
               const current = this.handlers.get(event) ?? [];
               current.push(listener);
@@ -90,6 +117,7 @@ const loadMongoClientModule = async (options?: {
                 options: this.options,
                 connect: this.connect,
                 db: this.db,
+                close: this.close,
                 on: this.on,
                 emit: (event: string, payload: unknown) => {
                   for (const listener of this.handlers.get(event) ?? []) {
@@ -149,17 +177,26 @@ describe('mongo-client', () => {
     const { module } = await loadMongoClientModule({
       env: {
         MONGODB_URI: undefined,
+        MONGODB_DB: undefined,
+        MONGODB_LOCAL_URI: undefined,
+        MONGODB_LOCAL_DB: undefined,
+        MONGODB_CLOUD_URI: undefined,
+        MONGODB_CLOUD_DB: undefined,
+        MONGODB_ACTIVE_SOURCE_DEFAULT: undefined,
       },
     });
 
-    await expect(module.getMongoClient()).rejects.toThrow('MONGODB_URI is not set.');
+    await expect(module.getMongoClient()).rejects.toThrow(
+      'No MongoDB source is configured. Set MONGODB_LOCAL_URI or MONGODB_CLOUD_URI.'
+    );
   });
 
   it('caches the connected client and resolves the configured database', async () => {
     const { module, instances } = await loadMongoClientModule({
       env: {
-        MONGODB_URI: 'mongodb://first-host:27017/app',
-        MONGODB_DB: 'warehouse',
+        MONGODB_CLOUD_URI: 'mongodb://first-host:27017/app',
+        MONGODB_CLOUD_DB: 'warehouse',
+        MONGODB_ACTIVE_SOURCE_DEFAULT: 'cloud',
         MONGODB_MAX_POOL_SIZE: '40',
         MONGODB_MIN_POOL_SIZE: '0',
         MONGODB_SERVER_SELECTION_TIMEOUT_MS: '9000',
@@ -188,16 +225,17 @@ describe('mongo-client', () => {
     });
   });
 
-  it('creates a new client when the configured URI changes', async () => {
+  it('creates a new client when the configured source changes', async () => {
     const { module, instances } = await loadMongoClientModule({
       env: {
-        MONGODB_URI: 'mongodb://first-host:27017/app',
+        MONGODB_LOCAL_URI: 'mongodb://first-host:27017/app',
+        MONGODB_CLOUD_URI: 'mongodb://second-host:27017/app',
+        MONGODB_ACTIVE_SOURCE_DEFAULT: 'local',
       },
     });
 
-    const firstClient = await module.getMongoClient();
-    process.env['MONGODB_URI'] = 'mongodb://second-host:27017/app';
-    const secondClient = await module.getMongoClient();
+    const firstClient = await module.getMongoClient('local');
+    const secondClient = await module.getMongoClient('cloud');
 
     expect(firstClient).not.toBe(secondClient);
     expect(instances).toHaveLength(2);
@@ -209,7 +247,9 @@ describe('mongo-client', () => {
     const connectError = new Error('connect failed');
     const { module, instances, reportRuntimeCatchMock } = await loadMongoClientModule({
       env: {
-        MONGODB_URI: 'mongodb://retry-host:27017/app',
+        MONGODB_CLOUD_URI: 'mongodb://retry-host:27017/app',
+        MONGODB_CLOUD_DB: 'app',
+        MONGODB_ACTIVE_SOURCE_DEFAULT: 'cloud',
       },
       connectOutcomes: [connectError, 'self'],
     });
@@ -244,7 +284,9 @@ describe('mongo-client', () => {
 
     const { module, instances, logSystemEventMock } = await loadMongoClientModule({
       env: {
-        MONGODB_URI: 'mongodb://observed-host:27017/app',
+        MONGODB_CLOUD_URI: 'mongodb://observed-host:27017/app',
+        MONGODB_CLOUD_DB: 'app',
+        MONGODB_ACTIVE_SOURCE_DEFAULT: 'cloud',
         DEBUG_MONGODB_POOL: 'true',
         MONGODB_MONITOR_COMMANDS: 'true',
         MONGODB_SLOW_COMMAND_MS: '2500',

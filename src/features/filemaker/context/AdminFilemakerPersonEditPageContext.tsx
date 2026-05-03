@@ -4,34 +4,18 @@ import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { type PickActions, type OmitState } from '@/shared/lib/react/types';
 
 import {
   useAdminFilemakerPersonEditPageState,
   type AdminFilemakerPersonEditPageContextValue,
 } from '../hooks/useAdminFilemakerPersonEditPageState';
 
-type AdminFilemakerPersonEditPageFunctionKeys = {
-  [Key in keyof AdminFilemakerPersonEditPageContextValue]-?: AdminFilemakerPersonEditPageContextValue[Key] extends (
-    ...args: never[]
-  ) => unknown
-    ? Key
-    : never;
-}[keyof AdminFilemakerPersonEditPageContextValue];
+export type AdminFilemakerPersonEditPageStateContextValue =
+  OmitState<AdminFilemakerPersonEditPageContextValue>;
 
-type AdminFilemakerPersonEditPageDataKeys = Exclude<
-  keyof AdminFilemakerPersonEditPageContextValue,
-  AdminFilemakerPersonEditPageFunctionKeys
->;
-
-export type AdminFilemakerPersonEditPageStateContextValue = Pick<
-  AdminFilemakerPersonEditPageContextValue,
-  AdminFilemakerPersonEditPageDataKeys
->;
-
-export type AdminFilemakerPersonEditPageActionsContextValue = Pick<
-  AdminFilemakerPersonEditPageContextValue,
-  AdminFilemakerPersonEditPageFunctionKeys
->;
+export type AdminFilemakerPersonEditPageActionsContextValue =
+  PickActions<AdminFilemakerPersonEditPageContextValue>;
 
 const {
   Context: AdminFilemakerPersonEditPageStateContext,
@@ -56,24 +40,14 @@ export function AdminFilemakerPersonEditPageProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const value = useAdminFilemakerPersonEditPageState();
-  const {
-    setPersonDraft,
-    setEditableAddresses,
-    setEmailExtractionText,
-    setPhoneNumberExtractionText,
-    handleSave,
-    handleExtractEmails,
-    ...stateValue
-  } = value;
-
-  const actionsValue: AdminFilemakerPersonEditPageActionsContextValue = {
-    setPersonDraft,
-    setEditableAddresses,
-    setEmailExtractionText,
-    setPhoneNumberExtractionText,
-    handleSave,
-    handleExtractEmails,
-  };
+  const stateValue = React.useMemo(
+    () => value as AdminFilemakerPersonEditPageStateContextValue,
+    [value]
+  );
+  const actionsValue = React.useMemo(
+    () => value as AdminFilemakerPersonEditPageActionsContextValue,
+    [value]
+  );
 
   return (
     <AdminFilemakerPersonEditPageActionsContext.Provider value={actionsValue}>

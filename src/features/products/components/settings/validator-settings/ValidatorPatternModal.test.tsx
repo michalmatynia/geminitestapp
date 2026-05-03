@@ -202,6 +202,7 @@ const buildController = (
     onCreateLatestPriceStockSequence: vi.fn(),
     handleCreateNameLengthMirrorPattern: vi.fn(),
     handleCreateNameCategoryMirrorPattern: vi.fn(),
+    handleCreateStarGaterProducerPattern: vi.fn(),
     handleCreateNameMirrorPolishSequence: vi.fn(),
     handleSaveSequenceGroup: vi.fn(),
     handleUngroup: vi.fn(),

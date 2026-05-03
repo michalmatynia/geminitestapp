@@ -39,7 +39,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -48,6 +48,9 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     label,
     description,
@@ -82,7 +85,9 @@ vi.mock('@/shared/ui', () => ({
       </div>
     ) : null;
   },
-  LoadingState: ({ message }: { message: string }) => <div>{message}</div>,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   SearchableList: (props: MockSearchableListProps<Slug>) => {
     latestSearchableListProps.current = props;
 
@@ -104,6 +109,10 @@ vi.mock('@/shared/ui', () => ({
       </div>
     );
   },
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  LoadingState: ({ message }: { message: string }) => <div>{message}</div>,
   UI_CENTER_ROW_SPACED_CLASSNAME: 'mock-row',
 }));
 

@@ -123,7 +123,7 @@ describe('engine-core runtime-kernel telemetry propagation', () => {
     ]);
   });
 
-  it('includes runtime-kernel telemetry in blocked/missing-input profile events', async () => {
+  it('includes canonical runtime-kernel telemetry in blocked/missing-input profile events', async () => {
     const blockedNode = buildNode({
       id: 'node-blocked',
       type: 'custom_blocked',
@@ -137,7 +137,7 @@ describe('engine-core runtime-kernel telemetry propagation', () => {
     await evaluateGraphInternal([blockedNode], [] satisfies Edge[], {
       resolveHandler: () => async () => ({ value: 'unused' }),
       resolveHandlerTelemetry: () => ({
-        runtimeStrategy: 'compatibility',
+        runtimeStrategy: 'code_object_v3',
         runtimeResolutionSource: 'registry',
         runtimeCodeObjectId: null,
       }),
@@ -155,12 +155,12 @@ describe('engine-core runtime-kernel telemetry propagation', () => {
     const blockedEvent = profileEvents.find(
       (event) => event['nodeId'] === 'node-blocked' && event['reason'] === 'missing_inputs'
     );
-    expect(blockedEvent?.['runtimeStrategy']).toBe('compatibility');
+    expect(blockedEvent?.['runtimeStrategy']).toBe('code_object_v3');
     expect(blockedEvent?.['runtimeResolutionSource']).toBe('registry');
     expect(blockedEvent?.['runtimeCodeObjectId']).toBeNull();
 
     const blockedCall = onNodeBlocked.mock.calls[0] as [Record<string, unknown>];
-    expect(blockedCall?.[0]?.['runtimeStrategy']).toBe('compatibility');
+    expect(blockedCall?.[0]?.['runtimeStrategy']).toBe('code_object_v3');
     expect(blockedCall?.[0]?.['runtimeResolutionSource']).toBe('registry');
     expect(blockedCall?.[0]?.['runtimeCodeObjectId']).toBeNull();
   });

@@ -21,7 +21,16 @@ vi.mock('@/features/products/performance', () => ({
   },
 }));
 
-import { GET_handler } from './handler';
+import { getHandler, querySchema } from './handler';
+
+const createContext = (query: unknown): ApiHandlerContext => ({
+  requestId: 'test-request',
+  traceId: 'test-trace',
+  correlationId: 'test-correlation',
+  startTime: 0,
+  getElapsedMs: () => 12,
+  query,
+});
 
 describe('products/paged handler', () => {
   beforeEach(() => {
@@ -35,17 +44,22 @@ describe('products/paged handler', () => {
       total: 1,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/paged?page=1&pageSize=12'),
-      {
-        query: { page: 1, pageSize: 12 },
-        getElapsedMs: () => 12,
-      } as ApiHandlerContext
+      createContext({ page: 1, pageSize: 12 })
     );
 
     expect(response.status).toBe(200);
     expect(getCachedProductsWithCountMock).toHaveBeenCalledWith({ page: 1, pageSize: 12 });
     expect(getProductsWithCountMock).not.toHaveBeenCalled();
+  });
+
+  it('parses fresh alongside transformed product filters', () => {
+    expect(querySchema.parse({ page: '1', pageSize: '96', fresh: '1' })).toMatchObject({
+      page: 1,
+      pageSize: 48,
+      fresh: true,
+    });
   });
 
   it('bypasses cache when fresh=1 is provided', async () => {
@@ -54,12 +68,9 @@ describe('products/paged handler', () => {
       total: 1,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/paged?page=1&pageSize=12&fresh=1'),
-      {
-        query: { page: 1, pageSize: 12 },
-        getElapsedMs: () => 12,
-      } as ApiHandlerContext
+      createContext({ page: 1, pageSize: 12 })
     );
 
     expect(response.status).toBe(200);
@@ -72,12 +83,9 @@ describe('products/paged handler', () => {
       total: 1,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/paged?page=1&pageSize=12'),
-      {
-        query: { page: 1, pageSize: 12 },
-        getElapsedMs: () => 12,
-      } as ApiHandlerContext
+      createContext({ page: 1, pageSize: 12 })
     );
 
     expect(response.status).toBe(200);

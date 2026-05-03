@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -136,9 +136,11 @@ describe('useProductListSelection', () => {
       catalogId: 'catalog-1',
       searchLanguage: 'name_en',
     });
-    expect(result.current.rowSelection).toEqual({
-      'product-2': true,
-      'product-5': true,
+    await waitFor(() => {
+      expect(result.current.rowSelection).toEqual({
+        'product-2': true,
+        'product-5': true,
+      });
     });
     expect(toastMock).toHaveBeenCalledWith('Selected 2 products.', { variant: 'success' });
   });

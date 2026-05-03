@@ -1,3 +1,12 @@
+---
+owner: 'Kangur Team'
+last_reviewed: '2026-04-17'
+status: 'active'
+doc_type: 'overview'
+scope: 'workspace:@kangur/mobile'
+canonical: true
+---
+
 # Kangur Mobile
 
 `apps/mobile` is the Expo Router application for Kangur's native learner experience. It renders the mobile versions of the learner home, lessons, tests, competition, duels, plan, profile, leaderboard, and results surfaces while reusing shared packages from `packages/*` and the `/api/kangur/*` backend served by the root Next.js app.
@@ -55,14 +64,24 @@
 
 ## Common commands
 
-- `npm run dev:mobile`: start the Expo development server through the shared mobile env wrapper.
-- `npm run dev:mobile:web`: run the Expo web preview for the native app shell.
-- `npm run dev:mobile:ios:local`: launch the local iOS simulator workflow.
-- `npm run dev:mobile:android:local`: launch the local Android emulator workflow.
-- `npm run dev:mobile:device:local`: prepare the local device workflow.
-- `npm run config:mobile`: print the resolved Expo public config.
-- `npm run init:mobile:env`: create or refresh the local mobile env files.
-- `npm run preview:mobile:web`: preview the exported Expo web bundle.
+| Command | What it runs internally | Use |
+| --- | --- | --- |
+| `npm run dev:mobile` | root alias -> `npm run dev --workspace @kangur/mobile` | Start the Expo development server through the shared mobile env wrapper. |
+| `npm run dev -w @kangur/mobile` | workspace `dev` | Start the same Expo development server directly from the workspace. |
+| `npm run dev:mobile:web` | root alias -> `npm run web --workspace @kangur/mobile` | Run the Expo web preview of the native shell. |
+| `npm run dev:mobile:ios:local` | shared local-launch wrapper | Launch the local iOS simulator workflow. |
+| `npm run dev:mobile:android:local` | shared local-launch wrapper | Launch the local Android emulator workflow. |
+| `npm run dev:mobile:device:local` | shared local-launch wrapper | Prepare the local device workflow. |
+| `npm run config:mobile` | root alias -> `npm run config --workspace @kangur/mobile` | Print the resolved Expo public config. |
+| `npm run init:mobile:env` | root alias -> `npm run init:env --workspace @kangur/mobile` | Create or refresh the local mobile env files. |
+| `npm run preview:mobile:web` | root alias -> `npm run preview:web --workspace @kangur/mobile` | Preview the exported Expo web bundle. |
+
+## Which Command To Run
+
+- Use `npm run dev:mobile` when you want the standard repo entrypoint for the native app.
+- Use `npm run dev -w @kangur/mobile` when you are working directly in the workspace and want the exact workspace script.
+- Use `npm run dev:mobile:web` only for Expo web parity checks, not as the canonical public web runtime.
+- Use the `dev:mobile:*:local` commands when you need a simulator, emulator, or attached-device launch path rather than the generic Expo server.
 
 ## Validation workflow
 

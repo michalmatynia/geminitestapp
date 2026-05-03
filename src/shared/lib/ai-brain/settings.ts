@@ -55,6 +55,8 @@ export const BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
   'ai_paths',
   'chatbot',
   'prompt_engine',
+  'playwright',
+  'job_board',
 ];
 
 export type AiBrainCapabilityPolicy = 'model-only' | 'agent-or-model';
@@ -144,6 +146,20 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
     label: 'Product Description Generation',
     policy: 'model-only',
     modelFamily: 'chat',
+  },
+  'product.scan.amazon_candidate_match': {
+    key: 'product.scan.amazon_candidate_match',
+    feature: 'products',
+    label: 'Product Scan Amazon Candidate Match',
+    policy: 'model-only',
+    modelFamily: 'vision_extract',
+  },
+  'product.scan.1688_supplier_match': {
+    key: 'product.scan.1688_supplier_match',
+    feature: 'products',
+    label: 'Product Scan 1688 Supplier Match',
+    policy: 'model-only',
+    modelFamily: 'vision_extract',
   },
   'product.translation': {
     key: 'product.translation',
@@ -327,6 +343,55 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
     policy: 'model-only',
     modelFamily: 'validation',
   },
+  'selector_registry.role_classification': {
+    key: 'selector_registry.role_classification',
+    feature: 'integrations',
+    label: 'Selector Registry Role Classification',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
+  'playwright.ai_evaluator_step': {
+    key: 'playwright.ai_evaluator_step',
+    feature: 'playwright',
+    label: 'Playwright AI Evaluator Step',
+    policy: 'model-only',
+    modelFamily: 'vision_extract',
+  },
+  'playwright.probe_suggestions': {
+    key: 'playwright.probe_suggestions',
+    feature: 'playwright',
+    label: 'Playwright Probe Suggestions',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
+  'playwright.ai_code_injector': {
+    key: 'playwright.ai_code_injector',
+    feature: 'playwright',
+    label: 'Playwright AI Code Injector',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
+  'job_board.offer_extraction': {
+    key: 'job_board.offer_extraction',
+    feature: 'job_board',
+    label: 'Job Board Offer Extraction',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
+  'job_board.vision_email_finder': {
+    key: 'job_board.vision_email_finder',
+    feature: 'job_board',
+    label: 'Job Board Vision Email Finder',
+    policy: 'model-only',
+    modelFamily: 'vision_extract',
+  },
+  'job_board.vision_navigation': {
+    key: 'job_board.vision_navigation',
+    feature: 'job_board',
+    label: 'Job Board Vision Navigation',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
 };
 
 export const BRAIN_CAPABILITY_KEYS = Object.keys(
@@ -349,6 +414,9 @@ export const DEFAULT_BRAIN_CAPABILITY_BY_FEATURE: Record<AiBrainFeature, AiBrain
   agent_runtime: 'agent_runtime.default',
   agent_teaching: 'agent_teaching.chat',
   prompt_engine: 'prompt_engine.prompt_exploder',
+  integrations: 'selector_registry.role_classification',
+  playwright: 'playwright.ai_evaluator_step',
+  job_board: 'job_board.offer_extraction',
 };
 
 export const defaultBrainAssignment: AiBrainAssignment = {
@@ -391,6 +459,9 @@ export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
     { pool: 'modelPresets', value: 'claude-3-5-haiku-20241022' },
     { pool: 'modelPresets', value: 'gemini-1.5-pro' },
     { pool: 'modelPresets', value: 'gemini-1.5-flash' },
+    { pool: 'paidModels', value: 'gpt-image-1' },
+    { pool: 'paidModels', value: 'dall-e-3' },
+    { pool: 'paidModels', value: 'dall-e-2' },
   ],
 };
 

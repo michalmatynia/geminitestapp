@@ -32,10 +32,10 @@ describe('analytics insights handler', () => {
   });
 
   it('lists analytics insights with shared limit query parsing', async () => {
-    const { GET_handler } = await import('./handler');
+    const { getHandler } = await import('./handler');
     listAiInsightsMock.mockResolvedValue([{ id: 'insight-list-1', type: 'analytics' }]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/analytics/insights?limit=5'),
       {} as never
     );
@@ -49,7 +49,7 @@ describe('analytics insights handler', () => {
   });
 
   it('resolves registry context before generating an analytics insight', async () => {
-    const { POST_handler } = await import('./handler');
+    const { postHandler } = await import('./handler');
 
     resolveAiInsightsContextRegistryEnvelopeMock.mockResolvedValue({
       refs: [
@@ -75,7 +75,7 @@ describe('analytics insights handler', () => {
       }),
     });
 
-    const response = await POST_handler(req, {} as never);
+    const response = await postHandler(req, {} as never);
     const data = await response.json();
 
     expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);

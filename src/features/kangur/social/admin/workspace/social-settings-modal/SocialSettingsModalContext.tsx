@@ -20,7 +20,11 @@ const {
 
 export { useSocialSettingsModalContext };
 
-export function SocialSettingsModalProvider({ children }: { children: React.ReactNode }) {
+export function SocialSettingsModalProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const context = useSocialPostContext();
   const state = useSocialSettingsModalState(context);
 

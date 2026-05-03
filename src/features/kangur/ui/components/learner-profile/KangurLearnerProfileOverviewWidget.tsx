@@ -2,6 +2,7 @@
 
 import { Award, BarChart2, Compass, Flame, Sparkles, Target } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import * as React from 'react';
 import { useMemo, useState } from 'react';
 
 import { KANGUR_AVATAR_OPTIONS, getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
@@ -222,13 +223,33 @@ function useKangurLearnerProfileOverviewAvatarState({
   };
 }
 
-function KangurLearnerProfileOverviewAvatarPreview({
-  selectedAvatar,
-  translations,
-}: {
+type KangurOverviewContextValue = {
+  activeLearner: KangurOverviewLearner;
+  avatarError: string | null;
+  handleAvatarSelect: (avatarId: string) => Promise<void>;
+  isCoarsePointer: boolean;
+  isSavingAvatar: boolean;
   selectedAvatar: ReturnType<typeof getKangurAvatarById>;
   translations: KangurOverviewTranslations;
-}): React.JSX.Element {
+  snapshot: KangurOverviewRuntime['snapshot'];
+  dailyQuest: KangurOverviewDailyQuest;
+  dailyQuestAccent: 'emerald' | 'amber' | 'indigo' | 'slate';
+  nextBadge: ReturnType<typeof getNextLockedBadge>;
+};
+
+const KangurOverviewContext = React.createContext<KangurOverviewContextValue | null>(null);
+
+function useKangurOverview() {
+  const context = React.useContext(KangurOverviewContext);
+  if (!context) {
+    throw new Error('useKangurOverview must be used within KangurOverviewContext.Provider');
+  }
+  return context;
+}
+
+function KangurLearnerProfileOverviewAvatarPreview(): React.JSX.Element {
+  const { selectedAvatar, translations } = useKangurOverview();
+
   return (
     <div className={KANGUR_CENTER_ROW_RELAXED_CLASSNAME}>
       <div className='h-16 w-16 overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm'>
@@ -252,30 +273,20 @@ function KangurLearnerProfileOverviewAvatarPreview({
   );
 }
 
-function KangurLearnerProfileOverviewAvatarPicker({
-  activeLearner,
-  avatarError,
-  handleAvatarSelect,
-  isCoarsePointer,
-  isSavingAvatar,
-  selectedAvatar,
-  translations,
-}: {
-  activeLearner: KangurOverviewLearner;
-  avatarError: string | null;
-  handleAvatarSelect: (avatarId: string) => Promise<void>;
-  isCoarsePointer: boolean;
-  isSavingAvatar: boolean;
-  selectedAvatar: ReturnType<typeof getKangurAvatarById>;
-  translations: KangurOverviewTranslations;
-}): React.JSX.Element {
+function KangurLearnerProfileOverviewAvatarPicker(): React.JSX.Element {
+  const {
+    activeLearner,
+    avatarError,
+    handleAvatarSelect,
+    isCoarsePointer,
+    isSavingAvatar,
+    translations,
+  } = useKangurOverview();
+
   return (
     <KangurGlassPanel className='flex w-full flex-col gap-4' padding='lg' surface='mist'>
       <div className={`${KANGUR_RELAXED_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
-        <KangurLearnerProfileOverviewAvatarPreview
-          selectedAvatar={selectedAvatar}
-          translations={translations}
-        />
+        <KangurLearnerProfileOverviewAvatarPreview />
         {avatarError ? <KangurMetaText className='text-rose-600'>{avatarError}</KangurMetaText> : null}
       </div>
       <div
@@ -312,13 +323,8 @@ function KangurLearnerProfileOverviewAvatarPicker({
   );
 }
 
-function KangurLearnerProfileOverviewGuidedRoundsMetric({
-  snapshot,
-  translations,
-}: {
-  snapshot: KangurOverviewRuntime['snapshot'];
-  translations: KangurOverviewTranslations;
-}): React.JSX.Element | null {
+function KangurLearnerProfileOverviewGuidedRoundsMetric(): React.JSX.Element | null {
+  const { snapshot, translations } = useKangurOverview();
   if (snapshot.recommendedSessionsCompleted <= 0) {
     return null;
   }
@@ -350,15 +356,9 @@ function KangurLearnerProfileOverviewGuidedRoundsMetric({
   );
 }
 
-function KangurLearnerProfileOverviewDailyQuestMetric({
-  dailyQuest,
-  dailyQuestAccent,
-  translations,
-}: {
-  dailyQuest: KangurOverviewDailyQuest;
-  dailyQuestAccent: 'emerald' | 'amber' | 'indigo' | 'slate';
-  translations: KangurOverviewTranslations;
-}): React.JSX.Element {
+function KangurLearnerProfileOverviewDailyQuestMetric(): React.JSX.Element {
+  const { dailyQuest, dailyQuestAccent, translations } = useKangurOverview();
+
   return (
     <KangurMetricCard
       accent={dailyQuestAccent}
@@ -388,19 +388,9 @@ function KangurLearnerProfileOverviewDailyQuestMetric({
   );
 }
 
-function KangurLearnerProfileOverviewMetrics({
-  dailyQuest,
-  dailyQuestAccent,
-  nextBadge,
-  snapshot,
-  translations,
-}: {
-  dailyQuest: KangurOverviewDailyQuest;
-  dailyQuestAccent: 'emerald' | 'amber' | 'indigo' | 'slate';
-  nextBadge: ReturnType<typeof getNextLockedBadge>;
-  snapshot: KangurOverviewRuntime['snapshot'];
-  translations: KangurOverviewTranslations;
-}): React.JSX.Element {
+function KangurLearnerProfileOverviewMetrics(): React.JSX.Element {
+  const { nextBadge, snapshot, translations } = useKangurOverview();
+
   return (
     <div
       className={`grid grid-cols-1 ${KANGUR_PANEL_GAP_CLASSNAME} min-[420px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6`}
@@ -441,16 +431,9 @@ function KangurLearnerProfileOverviewMetrics({
         value={`+${snapshot.todayXpEarned}`}
       />
 
-      <KangurLearnerProfileOverviewGuidedRoundsMetric
-        snapshot={snapshot}
-        translations={translations}
-      />
+      <KangurLearnerProfileOverviewGuidedRoundsMetric />
 
-      <KangurLearnerProfileOverviewDailyQuestMetric
-        dailyQuest={dailyQuest}
-        dailyQuestAccent={dailyQuestAccent}
-        translations={translations}
-      />
+      <KangurLearnerProfileOverviewDailyQuestMetric />
 
       <KangurMetricCard
         accent='teal'
@@ -481,10 +464,9 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.overview');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { progress, snapshot, user } = useKangurLearnerProfileRuntime();
-  const { checkAppState } = useKangurAuthActions();
   const { subject, subjectKey } = useKangurSubjectFocus();
+  const { checkAppState } = useKangurAuthActions();
   const { entry: overviewContent } = useKangurPageContentEntry('learner-profile-overview');
-  const nextBadge = getNextLockedBadge(progress, { translate: runtimeTranslations });
   const isCoarsePointer = useKangurCoarsePointer();
   const activeLearner = user?.activeLearner ?? null;
   const selectedAvatar = getKangurAvatarById(activeLearner?.avatarId);
@@ -492,6 +474,14 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
     overviewContent,
     translations,
   });
+
+  const { avatarError, handleAvatarSelect, isSavingAvatar } =
+    useKangurLearnerProfileOverviewAvatarState({
+      activeLearner,
+      checkAppState,
+      translations,
+    });
+
   const dailyQuest = useMemo<KangurDailyQuestState | null | undefined>(
     () =>
       getCurrentKangurDailyQuest(progress, {
@@ -502,36 +492,33 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
     [progress, runtimeTranslations, subject, subjectKey]
   );
   const dailyQuestAccent = resolveKangurOverviewDailyQuestAccent(dailyQuest);
-  const { avatarError, handleAvatarSelect, isSavingAvatar } =
-    useKangurLearnerProfileOverviewAvatarState({
-      activeLearner,
-      checkAppState,
-      translations,
-    });
+  const nextBadge = getNextLockedBadge(progress, { translate: runtimeTranslations });
+
+  const contextValue: KangurOverviewContextValue = {
+    activeLearner,
+    avatarError,
+    handleAvatarSelect,
+    isCoarsePointer,
+    isSavingAvatar,
+    selectedAvatar,
+    translations,
+    snapshot,
+    dailyQuest,
+    dailyQuestAccent,
+    nextBadge,
+  };
 
   return (
-    <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurPanelIntro
-        data-testid='learner-profile-overview-intro'
-        description={description}
-        eyebrow={title}
-      />
-      <KangurLearnerProfileOverviewAvatarPicker
-        activeLearner={activeLearner}
-        avatarError={avatarError}
-        handleAvatarSelect={handleAvatarSelect}
-        isCoarsePointer={isCoarsePointer}
-        isSavingAvatar={isSavingAvatar}
-        selectedAvatar={selectedAvatar}
-        translations={translations}
-      />
-      <KangurLearnerProfileOverviewMetrics
-        dailyQuest={dailyQuest}
-        dailyQuestAccent={dailyQuestAccent}
-        nextBadge={nextBadge}
-        snapshot={snapshot}
-        translations={translations}
-      />
-    </section>
+    <KangurOverviewContext.Provider value={contextValue}>
+      <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+        <KangurPanelIntro
+          data-testid='learner-profile-overview-intro'
+          description={description}
+          eyebrow={title}
+        />
+        <KangurLearnerProfileOverviewAvatarPicker />
+        <KangurLearnerProfileOverviewMetrics />
+      </section>
+    </KangurOverviewContext.Provider>
   );
 }

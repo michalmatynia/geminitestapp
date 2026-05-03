@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { SubgraphConfig } from '@/shared/lib/ai-paths';
+import type { SubgraphConfig } from '@/shared/contracts/ai-paths';
 import { Label, Input, Textarea } from '@/shared/ui/primitives.public';
 
 import {

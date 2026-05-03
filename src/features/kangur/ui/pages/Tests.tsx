@@ -17,9 +17,12 @@ import { KangurStandardPageLayout } from '@/features/kangur/ui/components/Kangur
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import { KangurTestsWordmark } from '@/features/kangur/ui/components/wordmarks/KangurTestsWordmark';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
@@ -38,6 +41,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import type { KangurUser } from '@kangur/platform';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
@@ -59,7 +63,12 @@ import {
 } from '@/features/kangur/test-suites/questions';
 
 const TESTS_MAIN_ID = 'kangur-tests-main';
+// ACTIVE_TESTS_SCROLL_MAX_FRAMES: number of rAF ticks used to scroll the
+// active test suite into view after selection. Multiple frames ensure the
+// layout has settled before the scroll fires.
 const ACTIVE_TESTS_SCROLL_MAX_FRAMES = 18;
+// ACTIVE_TESTS_ANCHOR_ID: DOM id of the active test intro card. Used as the
+// scroll target when a suite is selected.
 const ACTIVE_TESTS_ANCHOR_ID = 'kangur-tests-active-intro';
 
 type TestsTranslations = ReturnType<typeof useTranslations>;
@@ -68,6 +77,9 @@ type TestsEmptyStateCopy = {
   title: string;
 };
 
+// resolveFocusedSuiteId resolves a test suite ID from a URL focus token.
+// Tries matching by ID, title substring, category substring, and year in
+// order so deep-links can target suites by any of these identifiers.
 const resolveFocusedSuiteId = (
   focusToken: string,
   suites: KangurTestSuite[]
@@ -94,6 +106,9 @@ const resolveFocusedSuiteId = (
   return null;
 };
 
+// resolveVisibleTestSuites filters the raw suite list for display. Suites
+// are hidden until deferred content is ready (post-paint) and filtered by
+// age group focus when adult mode is active.
 const resolveVisibleTestSuites = ({
   isAdultFocus,
   isDeferredContentReady,
@@ -152,7 +167,7 @@ const resolveActiveQuestions = ({
   questionStore: ReturnType<typeof parseKangurTestQuestionStore>;
 }) => (activeSuite ? getQuestionsForSuite(questionStore, activeSuite.id) : []);
 
-const resolveLearnerId = (user: ReturnType<typeof useKangurAuth>['user']): string | null =>
+const resolveLearnerId = (user: KangurUser | null): string | null =>
   user?.activeLearner?.id ?? null;
 
 const resolveTestsNavigation = ({
@@ -168,7 +183,7 @@ const resolveTestsNavigation = ({
   logout: (redirect?: boolean) => Promise<void> | void;
   openLoginModal: () => void;
   setGuestPlayerName: (value: string) => void;
-  user: ReturnType<typeof useKangurAuth>['user'];
+  user: KangurUser | null;
 }) => ({
   basePath,
   canManageLearners: Boolean(user?.canManageLearners),
@@ -721,14 +736,22 @@ function TestsPageContent(props: {
   );
 }
 
+// Tests is the learner-facing test suites page. It owns:
+//  - Test suite list rendering (filtered by age group and deferred readiness)
+//  - Active suite selection driven by URL focus token or user interaction
+//  - Test player (KangurTestSuitePlayer) rendered inline when a suite is active
+//  - Scroll-to-active-suite after selection (multi-frame rAF loop)
+//  - Learner activity ping during active test sessions
+//  - Route page-ready signalling
+//  - Auth-gated suite access (login modal for unauthenticated learners)
 export default function Tests(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurTests');
   const routeNavigator = useKangurRouteNavigator();
   const { basePath } = useKangurRouting();
-  const auth = useKangurAuth();
-  const { user, logout } = auth;
-  const { openLoginModal } = useKangurLoginModal();
+  const { user } = useKangurAuthSessionState();
+  const { logout } = useKangurAuthActions();
+  const { openLoginModal } = useKangurLoginModalActions();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const prefersReducedMotion = useReducedMotion();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('tests');

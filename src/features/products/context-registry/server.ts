@@ -1,3 +1,6 @@
+// Context registry server helpers: helpers for resolving context registry refs
+// used by product editor pages. These functions perform server-side resolution
+// and bundle merging to produce consumer envelopes safe for page consumption.
 import type {
   ContextRegistryConsumerEnvelope,
   ContextRegistryRef,

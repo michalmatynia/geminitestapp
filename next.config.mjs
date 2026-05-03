@@ -5,6 +5,7 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const reactNativeWebShimPath = path.resolve(__dirname, 'src/shared/ui/react-native-web-shim.tsx');
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
@@ -122,6 +123,25 @@ const ensureFileCopy = async (sourcePath, targetPath) => {
 
 const nextConfig = {
   reactStrictMode: true,
+  reactCompiler: true,
+  cacheComponents: true,
+  cacheLife: {
+    swr60: {
+      stale: 60,
+      revalidate: 60,
+      expire: 300,
+    },
+    swr300: {
+      stale: 300,
+      revalidate: 300,
+      expire: 3600,
+    },
+    swr86400: {
+      stale: 300,
+      revalidate: 86400,
+      expire: 604800,
+    },
+  },
   devIndicators: false,
   ...(isDev
     ? {
@@ -166,6 +186,10 @@ const nextConfig = {
     // Turbopack is more stable in this repo when it resolves packages normally
     // instead of rewriting import graphs through optimizePackageImports.
     ...(isTurbopack ? {} : { optimizePackageImports }),
+    staleTimes: {
+      dynamic: 60,
+      static: 300,
+    },
   },
   serverExternalPackages: [
     'bcryptjs',
@@ -220,6 +244,12 @@ const nextConfig = {
     root: __dirname,
     resolveAlias: {
       '@docs': path.resolve(__dirname, 'docs'),
+      // Explicitly remap React Native entry variants to avoid bundling Metro/Flow
+      // sources in the web/Turbopack pipeline.
+      'react-native': reactNativeWebShimPath,
+      'react-native/index': reactNativeWebShimPath,
+      'react-native/index.js': reactNativeWebShimPath,
+      'react-native/index.ts': reactNativeWebShimPath,
       // Force a single three.js runtime even when transitive deps (e.g. stats-gl) ship nested copies.
       'stats-gl/node_modules/three': path.resolve(__dirname, 'node_modules/three'),
     },
@@ -259,6 +289,11 @@ const nextConfig = {
     config.resolve ??= {};
     config.resolve.alias ??= {};
     config.resolve.alias['@docs'] = path.resolve(__dirname, 'docs');
+    // Keep web bundlers on the shim for all React Native entry patterns.
+    config.resolve.alias['react-native'] = reactNativeWebShimPath;
+    config.resolve.alias['react-native/index'] = reactNativeWebShimPath;
+    config.resolve.alias['react-native/index.js'] = reactNativeWebShimPath;
+    config.resolve.alias['react-native/index.ts'] = reactNativeWebShimPath;
     config.resolve.alias['three'] = path.resolve(__dirname, 'node_modules/three');
     config.resolve.alias['stats-gl/node_modules/three'] = path.resolve(
       __dirname,
@@ -393,7 +428,7 @@ const nextConfig = {
 
 const withBundleAnalyzer =
   process.env.ANALYZE === 'true'
-    ? (await import(['@next', 'bundle-analyzer'].join('/'))).default({ enabled: true })
+    ? (await import('@next/bundle-analyzer')).default({ enabled: true })
     : (/** @type {import('next').NextConfig} */ config) => config;
 
 export default withBundleAnalyzer(withNextIntl(nextConfig));

@@ -1,8 +1,8 @@
 import {
-  PlanStep,
-  PlannerMeta,
-  AdaptivePlanReviewResult,
-  SelfCheckReviewResult,
+  type PlanStep,
+  type PlannerMeta,
+  type AdaptivePlanReviewResult,
+  type SelfCheckReviewResult,
   adaptivePlanReviewResultSchema,
   selfCheckReviewResultSchema,
 } from '@/shared/contracts/agent-runtime';
@@ -20,7 +20,6 @@ import {
 } from '../utils';
 import { runPlannerTask } from './core';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 export async function buildAdaptivePlanReview({
   prompt,

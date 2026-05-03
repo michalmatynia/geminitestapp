@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
+import { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-
 import {
   applyProductListAdvancedFilterState,
-  scheduleDeferredProductListDraftBootstrap,
+  applyProductListPageSizeChange,
   shouldEnableProductListBackgroundSync,
   shouldEnableProductListBackgroundSyncRuntime,
-  shouldAdoptIncomingEditProductDetail,
-} from './useProductListState';
+  scheduleDeferredProductListDraftBootstrap,
+} from './product-list/productListStateHelpers';
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
@@ -177,6 +177,44 @@ describe('applyProductListAdvancedFilterState', () => {
 
     expect(localCalls).toEqual([{ value: '', presetId: null }]);
     expect(persistedCalls).toEqual([{ advancedFilter: '', presetId: null }]);
+  });
+});
+
+describe('applyProductListPageSizeChange', () => {
+  it('updates local page size immediately and persists the same normalized value', () => {
+    const localCalls: number[] = [];
+    const persistedCalls: number[] = [];
+
+    applyProductListPageSizeChange({
+      size: 24,
+      setLocalPageSize: (size: number) => {
+        localCalls.push(size);
+      },
+      persistPageSize: async (size: number): Promise<void> => {
+        persistedCalls.push(size);
+      },
+    });
+
+    expect(localCalls).toEqual([24]);
+    expect(persistedCalls).toEqual([24]);
+  });
+
+  it('normalizes invalid page sizes before applying them locally or persisting them', () => {
+    const localCalls: number[] = [];
+    const persistedCalls: number[] = [];
+
+    applyProductListPageSizeChange({
+      size: 0,
+      setLocalPageSize: (size: number) => {
+        localCalls.push(size);
+      },
+      persistPageSize: async (size: number): Promise<void> => {
+        persistedCalls.push(size);
+      },
+    });
+
+    expect(localCalls).toEqual([12]);
+    expect(persistedCalls).toEqual([12]);
   });
 });
 

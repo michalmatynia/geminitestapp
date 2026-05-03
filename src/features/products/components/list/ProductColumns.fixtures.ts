@@ -4,8 +4,8 @@ type MockWithReturnValue = {
   mockReturnValue: (value: unknown) => unknown;
 };
 
-export const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
-  ({
+export const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages => {
+  const product: ProductWithImages = {
     id: 'product-1',
     sku: 'KEYCHA1212',
     baseProductId: null,
@@ -32,6 +32,7 @@ export const createProduct = (overrides: Partial<ProductWithImages> = {}): Produ
     weight: null,
     length: null,
     published: false,
+    archived: false,
     categoryId: 'category-1',
     catalogId: 'catalog-1',
     tags: [],
@@ -45,7 +46,9 @@ export const createProduct = (overrides: Partial<ProductWithImages> = {}): Produ
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
-  }) as ProductWithImages;
+  };
+  return product;
+};
 
 export const createRowVisualsContext = (
   overrides: Record<string, unknown> = {}
@@ -68,9 +71,14 @@ export const createRowRuntimeContext = (
   integrationStatus: 'not_started',
   showTraderaBadge: false,
   traderaStatus: 'not_started',
+  showVintedBadge: false,
+  vintedStatus: 'not_started',
+  showScrapedSourceBadge: false,
+  scrapedSourceStatus: 'not_started',
   showPlaywrightProgrammableBadge: false,
   playwrightProgrammableStatus: 'not_started',
   productAiRunFeedback: null,
+  productScanRunFeedback: null,
   ...overrides,
 });
 

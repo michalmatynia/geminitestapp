@@ -50,6 +50,9 @@ type ReferenceDetail = {
   semanticText?: LocalizedValue<string>;
 };
 
+// ROOT_DEFINITIONS describes the six top-level context roots that the AI
+// Tutor knowledge graph is built around. Each root maps to a flow ID that
+// the tutor uses to route learner questions to the correct context bucket.
 const ROOT_DEFINITIONS = {
   learnerSnapshot: {
     title: 'Learner snapshot',
@@ -91,11 +94,17 @@ const ROOT_DEFINITIONS = {
 
 const KANGUR_HOME_ROUTE = getKangurHomeHref('/');
 
+// toRelativeKangurPageRoute converts a page name (e.g. 'Game') to its
+// canonical relative route (e.g. '/game'). Falls back to the home route
+// when the page has no slug.
 const toRelativeKangurPageRoute = (pageName: string): string => {
   const slug = getKangurPageSlug(pageName).trim().replace(/^\/+/, '');
   return slug.length > 0 ? `/${slug}` : KANGUR_HOME_ROUTE;
 };
 
+// FLOW_TARGETS maps flow IDs to their canonical route + optional anchor ID.
+// Used by the tutor to generate deep-link suggestions when a learner asks
+// how to navigate to a specific feature.
 const FLOW_TARGETS: Partial<
   Record<
     string,
@@ -118,6 +127,8 @@ const FLOW_TARGETS: Partial<
   },
 };
 
+// SURFACE_ROUTES maps AI Tutor surface identifiers to their canonical routes.
+// Allows the tutor to link learners to the correct page for a given surface.
 const SURFACE_ROUTES: Partial<Record<string, string>> = {
   lesson: toRelativeKangurPageRoute('Lessons'),
   test: '/tests',
@@ -127,6 +138,10 @@ const SURFACE_ROUTES: Partial<Record<string, string>> = {
   auth: KANGUR_HOME_ROUTE,
 };
 
+// PAGE_CONTENT_PARENT_NODE_IDS maps Kangur page keys to the knowledge graph
+// node IDs that serve as parents for page-content nodes. CMS page content
+// is attached under these nodes so the tutor can scope answers to the
+// correct page context.
 const PAGE_CONTENT_PARENT_NODE_IDS: Partial<Record<string, string>> = {
   Game: 'page:kangur-game',
   Lessons: 'page:kangur-lessons',
@@ -468,6 +483,20 @@ const resolveNativeGuideDirectTarget = (entry: {
   };
 };
 
+// buildKangurKnowledgeGraph constructs the full AI Tutor knowledge graph
+// snapshot from the available content sources. The graph is a directed
+// node/edge structure where nodes represent app surfaces, flows, pages,
+// collections, actions, native guide entries, and CMS pages, and edges
+// encode relationships (HAS_FLOW, HAS_REFERENCE, HAS_CHILD, etc.).
+//
+// Sources consumed (all optional, fall back to defaults):
+//  tutorContent      – AI Tutor copy, moods, and coaching frames
+//  nativeGuideStore  – native guide entries (mobile deep-link flows)
+//  pageContentStore  – per-page AI Tutor content catalog
+//  cmsPages          – CMS page text content for semantic search
+//
+// The resulting snapshot is stored in the knowledge graph cache and served
+// to the AI Tutor API so it can retrieve relevant context for each query.
 export const buildKangurKnowledgeGraph = (
   options: BuildKangurKnowledgeGraphOptions = {}
 ): KangurKnowledgeGraphSnapshot => {

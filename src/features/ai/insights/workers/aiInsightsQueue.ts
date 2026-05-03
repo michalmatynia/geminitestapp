@@ -71,8 +71,10 @@ const queue = createManagedQueue<ScheduledTickJobData>({
     await tick();
   },
   onFailed: async (_jobId, error) => {
-    void ErrorSystem.captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'ai-insights-queue',
+    }).catch(() => {
+      // Ignore
     });
   },
 });
@@ -85,12 +87,13 @@ const shouldRegisterInsightsScheduler = async (): Promise<boolean> => {
     getBrainAssignmentForCapability('insights.system_logs'),
     getBrainAssignmentForCapability('ai_paths.model'),
   ]);
-  return (
-    (schedule.analyticsEnabled && analyticsBrain.enabled) ||
-    (schedule.runtimeAnalyticsEnabled && runtimeAnalyticsBrain.enabled && aiPathsBrain.enabled) ||
-    (schedule.logsEnabled && logsBrain.enabled) ||
-    (schedule.logsAutoOnError && logsBrain.enabled)
-  );
+
+  const analyticsReady = schedule.analyticsEnabled && analyticsBrain.enabled;
+  const runtimeReady =
+    schedule.runtimeAnalyticsEnabled && runtimeAnalyticsBrain.enabled && aiPathsBrain.enabled;
+  const logsReady = (schedule.logsEnabled || schedule.logsAutoOnError) && logsBrain.enabled;
+
+  return analyticsReady || runtimeReady || logsReady;
 };
 
 const hasRepeatableQueueApi = (
@@ -122,9 +125,11 @@ const removeInsightsTickRepeatJobs = async (): Promise<void> => {
 };
 
 const reportQueueActionError = (error: unknown, action: string): void => {
-  void ErrorSystem.captureException(error, {
+  ErrorSystem.captureException(error, {
     service: 'ai-insights-queue',
     action,
+  }).catch(() => {
+    // Ignore
   });
 };
 
@@ -142,7 +147,9 @@ export const startAiInsightsQueue = (): void => {
     try {
       shouldRegister = await shouldRegisterInsightsScheduler();
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      ErrorSystem.captureException(error).catch(() => {
+        // Ignore
+      });
       reportQueueActionError(error, 'validateScheduler');
       return;
     }
@@ -158,10 +165,8 @@ export const startAiInsightsQueue = (): void => {
       return;
     }
 
-    if (!aiInsightsQueueState.workerStarted) {
-      queue.startWorker();
-      aiInsightsQueueState.workerStarted = true;
-    }
+  aiInsightsQueueState.workerStarted = true;
+  queue.startWorker();
 
     if (aiInsightsQueueState.schedulerRegistered) return;
 
@@ -187,14 +192,14 @@ export const getAiInsightsQueueStatus = async (): Promise<AiInsightsQueueStatus>
 
   const health = await queue.getHealthStatus();
   return {
-    running: health.running ?? false,
-    healthy: health.healthy ?? false,
-    processing: health.processing ?? false,
-    activeJobs: health.activeCount ?? 0,
-    waitingJobs: health.waitingCount ?? 0,
-    failedJobs: health.failedCount ?? 0,
-    completedJobs: health.completedCount ?? 0,
-    lastPollTime: health.lastPollTime ?? 0,
-    timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
+    running: health.running,
+    healthy: health.healthy,
+    processing: health.processing,
+    activeJobs: health.activeCount,
+    waitingJobs: health.waitingCount,
+    failedJobs: health.failedCount,
+    completedJobs: health.completedCount,
+    lastPollTime: health.lastPollTime,
+    timeSinceLastPoll: health.timeSinceLastPoll,
   };
 };

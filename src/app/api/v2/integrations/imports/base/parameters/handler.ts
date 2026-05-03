@@ -1,9 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { callBaseApi } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { getImportParameterCache, setImportParameterCache } from '@/features/integrations/server';
+import {
+  BASE_MARKETPLACE_CHECKBOX_OPTIONS,
+  resolveBaseMarketplaceCheckboxValue,
+} from '@/shared/lib/integrations/base-marketplace-checkboxes';
 import { parseJsonBody } from '@/features/products/server';
 import { baseImportParametersPayloadSchema } from '@/shared/contracts/integrations/import-export';
 import { type BaseImportParametersClearResponse, type BaseImportParametersResponse } from '@/shared/contracts/integrations';
@@ -243,8 +247,9 @@ const toPreviewValue = (value: unknown): string | null => {
   return null;
 };
 
-const collectParameterKeys = (product: Record<string, unknown>) => {
+export const collectParameterKeys = (product: Record<string, unknown>) => {
   const keys = new Set<string>();
+  const normalizedMarketplaceValues = new Map<string, unknown>();
   // Explicitly add common identifiers
   keys.add('product_id');
   keys.add('inventory_id');
@@ -307,10 +312,19 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
   if (product['locations']) {
     collectPrefixedKeys(product['locations'], 'locations', keys, 0, 1);
   }
+
+  BASE_MARKETPLACE_CHECKBOX_OPTIONS.forEach((option) => {
+    const value = resolveBaseMarketplaceCheckboxValue(product, option.label);
+    if (value === null || value === undefined) return;
+    keys.add(option.label);
+    normalizedMarketplaceValues.set(option.label, value);
+  });
+
   const sortedKeys = Array.from(keys).sort((a, b) => a.localeCompare(b));
   const values: Record<string, string> = {};
   for (const key of sortedKeys) {
-    const directValue = product[key] ?? resolveValueByPath(product, key);
+    const directValue =
+      normalizedMarketplaceValues.get(key) ?? product[key] ?? resolveValueByPath(product, key);
     const fallbackBuckets = [
       product['parameters'],
       product['params'],

@@ -17,10 +17,10 @@ vi.mock('@/shared/lib/ai-paths/api', async () => {
   };
 });
 
-import { pollGraphJob } from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
 import { aiJobsApi } from '@/shared/lib/ai-paths/api';
+import { pollGraphJob } from '@/shared/lib/ai-paths/core/runtime/utils';
 
-describe('AiPathsSettingsUtils.pollGraphJob', () => {
+describe('pollGraphJob', () => {
   beforeEach(() => {
     pollMock.mockReset();
   });

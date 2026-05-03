@@ -3,13 +3,17 @@ import {
   ArrowRightIcon,
   Brain,
   Activity,
+  Clapperboard,
   MonitorPlay,
   RefreshCcw,
+  Search,
   Type,
   Palette,
   Folder,
   FileText,
   HardDrive,
+  ReceiptText,
+  Settings2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -23,7 +27,7 @@ type SettingsOption = {
   icon: typeof BellIcon;
   title: string;
   description: string;
-  color: string;
+  color: 'emerald' | 'blue' | 'amber' | 'violet' | 'cyan' | 'orange' | 'fuchsia';
   bgColor: string;
 };
 
@@ -93,6 +97,33 @@ const settings: SettingsOption[] = [
     bgColor: 'bg-orange-500/10',
   },
   {
+    id: 'playwright-ai',
+    href: '/admin/settings/playwright-ai',
+    icon: Brain,
+    title: 'Playwright AI',
+    description: 'AI model routing for step sequencer evaluation and live scripter probe suggestions.',
+    color: 'fuchsia',
+    bgColor: 'bg-fuchsia-500/10',
+  },
+  {
+    id: 'playwright-step-sequencer',
+    href: '/admin/playwright/step-sequencer',
+    icon: Clapperboard,
+    title: 'Step Sequencer',
+    description: 'Build and manage Playwright steps, step sets, and named action sequences.',
+    color: 'orange',
+    bgColor: 'bg-orange-500/10',
+  },
+  {
+    id: 'scanner',
+    href: '/admin/settings/scanner',
+    icon: Search,
+    title: 'Scanner',
+    description: 'Configure the global Playwright runtime used by product image scans.',
+    color: 'orange',
+    bgColor: 'bg-orange-500/10',
+  },
+  {
     id: 'recovery',
     href: '/admin/settings/recovery',
     icon: Activity,
@@ -118,6 +149,24 @@ const settings: SettingsOption[] = [
     description: 'Switch file source between local uploads and FastComet.',
     color: 'cyan',
     bgColor: 'bg-cyan-500/10',
+  },
+  {
+    id: 'filemaker',
+    href: '/admin/settings/filemaker',
+    icon: Settings2,
+    title: 'Filemaker',
+    description: 'Choose Filemaker workflow defaults for job applications.',
+    color: 'blue',
+    bgColor: 'bg-blue-500/10',
+  },
+  {
+    id: 'filemaker-invoice-pdf',
+    href: '/admin/settings/filemaker-invoice-pdf',
+    icon: ReceiptText,
+    title: 'Filemaker Invoice PDF',
+    description: 'Edit invoice PDF labels and default language.',
+    color: 'blue',
+    bgColor: 'bg-blue-500/10',
   },
 ];
 
@@ -146,6 +195,10 @@ const colorClasses: Record<string, { border: string; text: string }> = {
     border: 'group-hover:border-orange-500/50',
     text: 'text-orange-400',
   },
+  fuchsia: {
+    border: 'group-hover:border-fuchsia-500/50',
+    text: 'text-fuchsia-400',
+  },
 };
 
 export function AdminSettingsHomePage(): React.ReactNode {
@@ -162,7 +215,7 @@ export function AdminSettingsHomePage(): React.ReactNode {
       <NavigationCardGrid className='md:grid-cols-2'>
         {settings.map((setting: SettingsOption) => {
           const Icon = setting.icon;
-          const colors = colorClasses[setting['color']] || colorClasses['emerald']!;
+          const colors = colorClasses[setting.color];
 
           return (
             <NavigationCard

@@ -1,0 +1,59 @@
+{
+  "id": "example-shop",
+  "version": 1,
+  "siteHost": "shop.example",
+  "description": "Reference scripter mapping example-shop product cards into catalog drafts.",
+  "entryUrl": "https://shop.example/products",
+  "rateLimit": { "requestsPerMinute": 30 },
+  "steps": [
+    { "id": "open", "kind": "goto", "url": "https://shop.example/products" },
+    {
+      "id": "list",
+      "kind": "extractList",
+      "itemSelector": ".product-card[data-testid=\"product-card\"]",
+      "fields": {
+        "name": { "selector": ".product-title" },
+        "price_raw": { "selector": ".product-price" },
+        "sku_raw": { "selector": ".product-sku" },
+        "url": { "selector": ".product-link", "attribute": "href" },
+        "images": { "selector": ".product-image", "attribute": "src", "many": true }
+      }
+    }
+  ],
+  "fieldMap": {
+    "bindings": {
+      "title": { "path": "name", "transforms": [{ "name": "trim" }], "required": true },
+      "price": {
+        "path": "price_raw",
+        "transforms": [
+          { "name": "extractPattern", "args": { "pattern": "([\\d.,]+)" } },
+          { "name": "toNumber" },
+          { "name": "money" }
+        ],
+        "required": true
+      },
+      "currency": {
+        "path": "price_raw",
+        "transforms": [
+          { "name": "extractPattern", "args": { "pattern": "(zł|PLN|€|EUR|\\$|USD)" } },
+          { "name": "uppercase" }
+        ]
+      },
+      "sku": {
+        "path": "sku_raw",
+        "transforms": [{ "name": "extractPattern", "args": { "pattern": "SKU:\\s*(\\S+)" } }]
+      },
+      "sourceUrl": {
+        "path": "url",
+        "transforms": [
+          { "name": "absoluteUrl", "args": { "base": "https://shop.example/" } }
+        ]
+      },
+      "images": {
+        "path": "images",
+        "transforms": [{ "name": "toStringArray" }]
+      }
+    },
+    "defaults": { "brand": "Example Shop" }
+  }
+}

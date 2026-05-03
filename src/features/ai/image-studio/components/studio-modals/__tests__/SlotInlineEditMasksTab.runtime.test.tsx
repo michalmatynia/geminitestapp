@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/ui/primitives.public', async () => {
   const mocks = await import('./studioInlineEditRuntimeMockComponents');
   return {
     Hint: mocks.MockHint,

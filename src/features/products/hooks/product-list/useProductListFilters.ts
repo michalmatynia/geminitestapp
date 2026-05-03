@@ -1,8 +1,24 @@
 'use client';
 
+// useProductListFilters: centralizes filter state (search, sku, catalog,
+// category, tags, archived) with debouncing, normalization, and helpers to
+// generate query keys. Designed to be used by the ProductListProvider and
+// to drive query factories without leaking presentation concerns.
+
+// useProductListFilters: thin adapter that normalizes and persists filter
+// related preferences (page size, advanced filter state). Keeps normalization
+// rules (like page size bounds) centralized and returns stable callbacks for
+// the UI layer.
+
 import { useCallback } from 'react';
 
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
+
+type ProductListFilters = {
+  handleSetPageSize: (size: number) => void;
+  handleSetAdvancedFilter: (value: string) => void;
+  handleSetAdvancedFilterState: (value: string, presetId: string | null) => void;
+};
 
 export function useProductListFilters({
   updatePageSize,
@@ -13,7 +29,7 @@ export function useProductListFilters({
     advancedFilter: string;
     presetId: string | null;
   }) => Promise<void>;
-}) {
+}): ProductListFilters {
   const handleSetPageSize = useCallback(
     (size: number) => {
       const normalizedPageSize = normalizeProductPageSize(size, 12);

@@ -26,7 +26,7 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({
     toast: toastMock,
   }),

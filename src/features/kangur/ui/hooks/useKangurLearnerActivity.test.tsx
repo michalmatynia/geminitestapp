@@ -37,7 +37,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   reportKangurClientError: reportKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/services/progress', () => ({
   recordKangurOpenedTask: recordKangurOpenedTaskMock,
@@ -94,7 +95,7 @@ describe('useKangurLearnerActivityStatus', () => {
 
     await waitFor(() => {
       expect(eventSourceCtor).toHaveBeenCalledWith(
-        '/api/kangur/learner-activity/stream?learnerId=learner-1'
+        '/kangur-api/learner-activity/stream?learnerId=learner-1'
       );
     });
 
@@ -177,7 +178,7 @@ describe('useKangurLearnerActivityStatus', () => {
 
     expect(learnerActivityGetMock).not.toHaveBeenCalled();
     expect(eventSourceCtor).toHaveBeenCalledWith(
-      '/api/kangur/learner-activity/stream?learnerId=learner-1'
+      '/kangur-api/learner-activity/stream?learnerId=learner-1'
     );
   });
 

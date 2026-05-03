@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getAgentLongTermMemoryDelegate } from '@/features/ai/server';
 import { chatbotMemoryQuerySchema } from '@/shared/contracts/chatbot';
@@ -10,7 +10,7 @@ const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 export { chatbotMemoryQuerySchema as querySchema };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const agentLongTermMemory = getAgentLongTermMemoryDelegate();
   if (!agentLongTermMemory) {

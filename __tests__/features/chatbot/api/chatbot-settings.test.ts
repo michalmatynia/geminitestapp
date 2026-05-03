@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { GET_handler as GET, POST_handler as POST } from '@/app/api/chatbot/settings/handler';
+import { getHandler as GET, postHandler as POST } from '@/app/api/chatbot/settings/handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const {

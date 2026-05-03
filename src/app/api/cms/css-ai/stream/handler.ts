@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
 import { mergeContextRegistryResolutionBundles } from '@/features/ai/ai-context-registry/context/page-context-shared';
@@ -56,7 +56,7 @@ const toTeachingChatMessages = (messages: ChatMessage[]): AgentTeachingChatMessa
     content: message.content,
   }));
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseObjectJsonBody(req, {
     logPrefix: 'cms.css-ai.stream',
   });

@@ -24,67 +24,47 @@ export const DEFAULT_AGENT_SETTINGS: AgentPlanSettings = {
   loopBackoffMaxMs: LOOP_BACKOFF_MAX_MS,
 };
 
+function getNumericValue(value: unknown): number {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return Number(value);
+  return NaN;
+}
+
 export const clampInt = (value: unknown, min: number, max: number, fallback: number): number => {
-  const numeric =
-    typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+  const numeric = getNumericValue(value);
   if (!Number.isFinite(numeric)) return fallback;
   return Math.min(Math.max(Math.round(numeric), min), max);
 };
 
 export function resolveAgentPlanSettings(planState: unknown): AgentPlanSettings {
-  const rawSettings =
-    planState && typeof planState === 'object'
-      ? (planState as { settings?: Partial<AgentPlanSettings> }).settings
-      : null;
+  const isObject = planState !== null && typeof planState === 'object';
+  const raw = isObject
+    ? (planState as { settings?: Partial<AgentPlanSettings> }).settings
+    : null;
+  const settings = raw ?? {};
+  const s = DEFAULT_AGENT_SETTINGS;
+
   return {
-    maxSteps: clampInt(rawSettings?.maxSteps, 1, 20, DEFAULT_AGENT_SETTINGS.maxSteps),
-    maxStepAttempts: clampInt(
-      rawSettings?.maxStepAttempts,
-      1,
-      5,
-      DEFAULT_AGENT_SETTINGS.maxStepAttempts
-    ),
-    maxReplanCalls: clampInt(
-      rawSettings?.maxReplanCalls,
-      0,
-      6,
-      DEFAULT_AGENT_SETTINGS.maxReplanCalls
-    ),
-    replanEverySteps: clampInt(
-      rawSettings?.replanEverySteps,
-      1,
-      10,
-      DEFAULT_AGENT_SETTINGS.replanEverySteps
-    ),
-    maxSelfChecks: clampInt(rawSettings?.maxSelfChecks, 0, 8, DEFAULT_AGENT_SETTINGS.maxSelfChecks),
-    loopGuardThreshold: clampInt(
-      rawSettings?.loopGuardThreshold,
-      1,
-      5,
-      DEFAULT_AGENT_SETTINGS.loopGuardThreshold
-    ),
-    loopBackoffBaseMs: clampInt(
-      rawSettings?.loopBackoffBaseMs,
-      250,
-      20000,
-      DEFAULT_AGENT_SETTINGS.loopBackoffBaseMs
-    ),
-    loopBackoffMaxMs: clampInt(
-      rawSettings?.loopBackoffMaxMs,
-      1000,
-      60000,
-      DEFAULT_AGENT_SETTINGS.loopBackoffMaxMs
-    ),
+    maxSteps: clampInt(settings.maxSteps, 1, 20, s.maxSteps),
+    maxStepAttempts: clampInt(settings.maxStepAttempts, 1, 5, s.maxStepAttempts),
+    maxReplanCalls: clampInt(settings.maxReplanCalls, 0, 6, s.maxReplanCalls),
+    replanEverySteps: clampInt(settings.replanEverySteps, 1, 10, s.replanEverySteps),
+    maxSelfChecks: clampInt(settings.maxSelfChecks, 0, 8, s.maxSelfChecks),
+    loopGuardThreshold: clampInt(settings.loopGuardThreshold, 1, 5, s.loopGuardThreshold),
+    loopBackoffBaseMs: clampInt(settings.loopBackoffBaseMs, 250, 20000, s.loopBackoffBaseMs),
+    loopBackoffMaxMs: clampInt(settings.loopBackoffMaxMs, 1000, 60000, s.loopBackoffMaxMs),
   };
 }
 
 export function resolveAgentPreferences(planState: unknown): AgentRuntimeExecutionPreferences {
-  const rawPreferences =
-    planState && typeof planState === 'object'
-      ? (planState as { preferences?: AgentPlanPreferences }).preferences
-      : null;
+  const isObject = planState !== null && typeof planState === 'object';
+  const raw = isObject
+    ? (planState as { preferences?: AgentPlanPreferences }).preferences
+    : null;
+  const prefs = raw ?? {};
+
   return {
-    ignoreRobotsTxt: Boolean(rawPreferences?.ignoreRobotsTxt),
-    requireHumanApproval: Boolean(rawPreferences?.requireHumanApproval),
+    ignoreRobotsTxt: Boolean(prefs.ignoreRobotsTxt),
+    requireHumanApproval: Boolean(prefs.requireHumanApproval),
   };
 }

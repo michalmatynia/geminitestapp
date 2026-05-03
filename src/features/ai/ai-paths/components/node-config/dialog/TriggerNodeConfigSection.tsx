@@ -5,7 +5,8 @@ import { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import { TRIGGER_EVENTS, triggerButtonsApi } from '@/shared/lib/ai-paths';
+import { TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
+import { triggerButtonsApi } from '@/shared/lib/ai-paths/api';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
@@ -66,8 +67,10 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
   const triggerConfig = selectedNode.config?.trigger ?? {
     event: TRIGGER_EVENTS[0]?.id ?? 'manual',
     contextMode: 'trigger_only',
+    entitySnapshotMode: 'auto',
   };
   const isScheduled = triggerConfig.event === 'scheduled_run';
+  const entitySnapshotMode = triggerConfig.entitySnapshotMode ?? 'auto';
 
   if (!selectedNode.config) return null; // Added type guard
 
@@ -96,6 +99,43 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
           Trigger context mode is fixed to <span className='font-medium'>Trigger only</span>.
           Resolve entity context downstream with a Fetcher or Simulation node.
         </Card>
+      </FormField>
+
+      <FormField label='Entity Snapshot'>
+        <SelectSimple
+          size='sm'
+          variant='subtle'
+          value={entitySnapshotMode}
+          onValueChange={(value: string): void =>
+            updateSelectedNodeConfig({
+              trigger: {
+                ...triggerConfig,
+                entitySnapshotMode:
+                  value === 'always' || value === 'never' || value === 'auto' ? value : 'auto',
+              },
+            })
+          }
+          options={[
+            {
+              value: 'auto',
+              label: 'Auto',
+              description: 'Preserve legacy source-based embedding behavior.',
+            },
+            {
+              value: 'always',
+              label: 'Always Embed',
+              description: 'Always include a sanitized entity snapshot in trigger context.',
+            },
+            {
+              value: 'never',
+              label: 'Never Embed',
+              description: 'Do not include an entity snapshot; resolve entity downstream.',
+            },
+          ]}
+          placeholder='Select entity snapshot mode'
+          ariaLabel='Select entity snapshot mode'
+          title='Select entity snapshot mode'
+        />
       </FormField>
 
       {isScheduled ? (

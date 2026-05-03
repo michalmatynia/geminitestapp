@@ -1,6 +1,6 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
-import { AllegroListingManagementPage } from '@/features/integrations/public';
+import { AllegroListingManagementPage } from '@/features/integrations/admin.public';
 
 export default function Page(): JSX.Element {
   return <AllegroListingManagementPage />;

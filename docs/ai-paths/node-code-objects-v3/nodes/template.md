@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-05'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Template Migration Sheet (`template`)
 
-Generated at: 2026-04-05T14:57:58.017Z
+Generated at: 2026-04-12T04:59:57.716Z
 
 ## Status
 
@@ -25,18 +25,20 @@ Generated at: 2026-04-05T14:57:58.017Z
 ## Node Contract Files
 
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/template.json`
-- Semantic hash: `349143bb99ff84ec6f3ceba1c8d8a24e48682e23c0679ef6bc8ff3048636640c`
+- Semantic hash: `a61e6756bfbc5e139976478c63fa5ab3cf1c07342f9f33c74f9388079d857c4d`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/template.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/template.scaffold.json`
 - v3 object id: `node_obj_template_portable_v3`
-- v3 object hash: `e6b05a3de450f41b64caa07c9cb4e89d3e6c3a2716ee542cd6934184faeb876b`
+- v3 object hash: `4c05d105432fd3d87c3f9a46ec1165f490ebfcf14c37e72c803dcd07b8379554`
 
 ## Ports
 
 Inputs:
-- `bundle`
+- `template`
+- `context`
 - `value`
-- `productId`
+- `result`
+- `bundle`
 
 Outputs:
 - `prompt`

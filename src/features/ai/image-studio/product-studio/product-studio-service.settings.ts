@@ -11,7 +11,7 @@ import {
 } from '@/features/ai/image-studio/server';
 import { normalizeProductStudioSequenceGenerationMode } from '@/shared/contracts/products/studio';
 import { type ProductStudioSequenceGenerationMode, type ProductStudioSequencingConfig, type ProductStudioSequencingDiagnostics } from '@/shared/contracts/products';
-import { badRequestError } from '@/shared/errors/app-error';
+import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY } from '@/shared/lib/products/constants';
@@ -22,6 +22,37 @@ import {
   trimString,
 } from './product-studio-service.helpers';
 import { clampUpscaleScale } from './product-studio-service.io';
+
+type ProductStudioBrainModelResolution = {
+  modelId: string;
+  warning: string | null;
+};
+
+const isRecoverableProductStudioBrainConfigError = (error: unknown): error is Error =>
+  isAppError(error) &&
+  error.code === AppErrorCodes.configurationError &&
+  error.message.includes('Image Studio Image Generation');
+
+export const resolveProductStudioBrainModel = async (): Promise<ProductStudioBrainModelResolution> => {
+  try {
+    const generationConfig = await resolveBrainExecutionConfigForCapability('image_studio.general', {
+      runtimeKind: 'image_generation',
+    });
+    return {
+      modelId: trimString(generationConfig.modelId) ?? '',
+      warning: null,
+    };
+  } catch (error) {
+    if (!isRecoverableProductStudioBrainConfigError(error)) {
+      throw error;
+    }
+
+    return {
+      modelId: '',
+      warning: error.message,
+    };
+  }
+};
 
 export const resolveSequencingFromStudioSettings = (
   studioSettings: ImageStudioSettings,
@@ -93,20 +124,19 @@ export const resolveStudioSettingsBundle = async (
   sequencingDiagnostics: ProductStudioSequencingDiagnostics;
   sequenceGenerationMode: ProductStudioSequenceGenerationMode;
   modelId: string;
+  brainConfigWarning: string | null;
 }> => {
   const projectSettingsKey = getImageStudioProjectSettingsKey(projectId);
   if (!projectSettingsKey) {
     throw badRequestError('Invalid Image Studio project id for settings lookup.');
   }
 
-  const [projectSettingsRaw, globalSettingsRaw, sequenceGenerationModeRaw, generationConfig] =
+  const [projectSettingsRaw, globalSettingsRaw, sequenceGenerationModeRaw, brainModel] =
     await Promise.all([
       getSettingValue(projectSettingsKey),
       getSettingValue(IMAGE_STUDIO_SETTINGS_KEY),
       getSettingValue(PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY),
-      resolveBrainExecutionConfigForCapability('image_studio.general', {
-        runtimeKind: 'image_generation',
-      }),
+      resolveProductStudioBrainModel(),
     ]);
 
   const parsedSettings = hasPersistedSettingValue(projectSettingsRaw)
@@ -121,7 +151,7 @@ export const resolveStudioSettingsBundle = async (
   });
   const sequenceGenerationMode =
     normalizeProductStudioSequenceGenerationMode(sequenceGenerationModeRaw);
-  const modelId = trimString(generationConfig.modelId) ?? '';
+  const modelId = brainModel.modelId;
   return {
     parsedStudioSettings: parsedSettings,
     studioSettings: parsedSettings as Record<string, unknown>,
@@ -129,5 +159,6 @@ export const resolveStudioSettingsBundle = async (
     sequencingDiagnostics,
     sequenceGenerationMode,
     modelId,
+    brainConfigWarning: brainModel.warning,
   };
 };

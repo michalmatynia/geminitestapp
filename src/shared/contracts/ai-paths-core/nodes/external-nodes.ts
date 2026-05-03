@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { selectorRegistryRoleSchema } from '../../integrations/selector-registry';
 import { playwrightSettingsSchema } from '../../playwright';
 
 export const advancedApiMethodSchema = z.enum([
@@ -123,10 +124,11 @@ export const playwrightConfigCaptureRouteSchema = z.object({
   path: z.string().default('/'),
   description: z.string().default(''),
   selector: z.string().nullable().default(null),
+  selectorRole: selectorRegistryRoleSchema.nullable().default(null),
   waitForMs: z.number().nullable().default(null),
   waitForSelectorMs: z.number().nullable().default(15_000),
 });
-export type PlaywrightConfigCaptureRoute = z.infer<typeof playwrightConfigCaptureRouteSchema>;
+export type PlaywrightConfigCaptureRoute = z.input<typeof playwrightConfigCaptureRouteSchema>;
 
 export const playwrightConfigSchema = z.object({
   personaId: z.string().optional(),

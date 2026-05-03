@@ -186,6 +186,35 @@ const normalizeFieldRules = (rules: unknown): ProductSyncFieldRule[] => {
   }));
 };
 
+const normalizeDefaultProfileId = (
+  profiles: ProductSyncProfile[],
+  preferredDefaultId?: string | null
+): string | null => {
+  const normalizedPreferredDefaultId = toTrimmedString(preferredDefaultId);
+  if (
+    normalizedPreferredDefaultId &&
+    profiles.some((profile: ProductSyncProfile) => profile.id === normalizedPreferredDefaultId)
+  ) {
+    return normalizedPreferredDefaultId;
+  }
+
+  const currentDefault = profiles.find((profile: ProductSyncProfile) => profile.isDefault);
+  if (currentDefault) return currentDefault.id;
+
+  return profiles[0]?.id ?? null;
+};
+
+const enforceSingleDefaultProfile = (
+  profiles: ProductSyncProfile[],
+  preferredDefaultId?: string | null
+): ProductSyncProfile[] => {
+  const defaultProfileId = normalizeDefaultProfileId(profiles, preferredDefaultId);
+  return profiles.map((profile: ProductSyncProfile) => ({
+    ...profile,
+    isDefault: profile.id === defaultProfileId,
+  }));
+};
+
 const normalizeProfile = (
   value: unknown,
   fallbackName = 'Base Product Sync'
@@ -203,6 +232,7 @@ const normalizeProfile = (
   return {
     id,
     name: toTrimmedString(record['name']) || fallbackName,
+    isDefault: record['isDefault'] === true,
     enabled: record['enabled'] !== false,
     connectionId,
     inventoryId,
@@ -221,7 +251,7 @@ const readProfiles = async (): Promise<ProductSyncProfile[]> => {
   const raw = await readSettingValue(PROFILE_SETTINGS_KEY);
   const parsed = parseJson<unknown[]>(raw);
   const items = Array.isArray(parsed) ? parsed : [];
-  return items
+  const normalized = items
     .map((entry: unknown) => normalizeProfile(entry))
     .filter((entry: ProductSyncProfile | null): entry is ProductSyncProfile => Boolean(entry))
     .sort((a: ProductSyncProfile, b: ProductSyncProfile) => {
@@ -229,10 +259,16 @@ const readProfiles = async (): Promise<ProductSyncProfile[]> => {
       const aDate = a.updatedAt ?? '';
       return bDate.localeCompare(aDate);
     });
+
+  const defaultProfileId = normalized.find((profile: ProductSyncProfile) => profile.isDefault)?.id;
+  return enforceSingleDefaultProfile(normalized, defaultProfileId);
 };
 
 const writeProfiles = async (profiles: ProductSyncProfile[]): Promise<void> => {
-  await writeSettingValue(PROFILE_SETTINGS_KEY, JSON.stringify(profiles));
+  await writeSettingValue(
+    PROFILE_SETTINGS_KEY,
+    JSON.stringify(enforceSingleDefaultProfile(profiles))
+  );
 };
 
 export const listProductSyncProfiles = async (): Promise<ProductSyncProfile[]> => {
@@ -248,6 +284,12 @@ export const getProductSyncProfile = async (
   return profiles.find((profile: ProductSyncProfile) => profile.id === normalizedId) ?? null;
 };
 
+export const getDefaultProductSyncProfile = async (): Promise<ProductSyncProfile | null> => {
+  const profiles = await readProfiles();
+  if (profiles.length === 0) return null;
+  return profiles.find((profile: ProductSyncProfile) => profile.isDefault) ?? profiles[0] ?? null;
+};
+
 export const createProductSyncProfile = async (
   input: Partial<ProductSyncProfile>
 ): Promise<ProductSyncProfile> => {
@@ -256,6 +298,7 @@ export const createProductSyncProfile = async (
   const profile: ProductSyncProfile = {
     id: randomUUID(),
     name: toTrimmedString(input.name) || 'Base Product Sync',
+    isDefault: input.isDefault === true || profiles.length === 0,
     enabled: input.enabled !== false,
     connectionId: toTrimmedString(input.connectionId),
     inventoryId: toTrimmedString(input.inventoryId),
@@ -270,7 +313,7 @@ export const createProductSyncProfile = async (
   };
 
   profiles.unshift(profile);
-  await writeProfiles(profiles);
+  await writeProfiles(enforceSingleDefaultProfile(profiles, profile.isDefault ? profile.id : null));
   return profile;
 };
 
@@ -291,6 +334,7 @@ export const updateProductSyncProfile = async (
   const merged: ProductSyncProfile = {
     ...existing,
     ...(patch.name !== undefined ? { name: toTrimmedString(patch.name) || existing.name } : {}),
+    ...(patch.isDefault !== undefined ? { isDefault: Boolean(patch.isDefault) } : {}),
     ...(patch.enabled !== undefined ? { enabled: Boolean(patch.enabled) } : {}),
     ...(patch.connectionId !== undefined
       ? { connectionId: toTrimmedString(patch.connectionId) || existing.connectionId }
@@ -326,8 +370,15 @@ export const updateProductSyncProfile = async (
   };
 
   profiles[index] = merged;
-  await writeProfiles(profiles);
-  return merged;
+  const preferredDefaultId =
+    patch.isDefault === true
+      ? merged.id
+      : patch.isDefault === false && existing.isDefault
+        ? profiles.find((profile: ProductSyncProfile) => profile.id !== merged.id)?.id ?? merged.id
+        : profiles.find((profile: ProductSyncProfile) => profile.isDefault)?.id ?? null;
+  const normalizedProfiles = enforceSingleDefaultProfile(profiles, preferredDefaultId);
+  await writeProfiles(normalizedProfiles);
+  return normalizedProfiles.find((profile: ProductSyncProfile) => profile.id === normalizedId) ?? null;
 };
 
 export const deleteProductSyncProfile = async (profileId: string): Promise<boolean> => {
@@ -335,10 +386,13 @@ export const deleteProductSyncProfile = async (profileId: string): Promise<boole
   if (!normalizedId) return false;
 
   const profiles = await readProfiles();
+  const deletedProfile = profiles.find((profile: ProductSyncProfile) => profile.id === normalizedId);
   const next = profiles.filter((profile: ProductSyncProfile) => profile.id !== normalizedId);
   if (next.length === profiles.length) return false;
 
-  await writeProfiles(next);
+  const preferredDefaultId =
+    deletedProfile?.isDefault === true ? next[0]?.id ?? null : next.find((profile) => profile.isDefault)?.id ?? null;
+  await writeProfiles(enforceSingleDefaultProfile(next, preferredDefaultId));
   return true;
 };
 

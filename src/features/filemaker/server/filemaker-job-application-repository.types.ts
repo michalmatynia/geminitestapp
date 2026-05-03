@@ -1,0 +1,52 @@
+import type { Document } from 'mongodb';
+
+export type FilemakerJobApplicationMongoDocument = Document & {
+  _id: string;
+  activeArtifacts?: unknown;
+  activeApplicationEmailVersionId?: unknown;
+  activeCoverLetterVersionId?: unknown;
+  activeTailoredCvVersionId?: unknown;
+  applicationEmail?: unknown;
+  applicationLog?: unknown;
+  applicationNotes?: unknown;
+  artifactVersions?: unknown;
+  artifactKind?: unknown;
+  artifactVersionCreatedAt?: unknown;
+  artifactVersionId?: unknown;
+  canonicalApplicationKey?: unknown;
+  confidence?: unknown;
+  connectionId?: unknown;
+  coverLetter?: unknown;
+  createdAt?: unknown;
+  id?: unknown;
+  integrationId?: unknown;
+  integrationSlug?: unknown;
+  jobListingId?: unknown;
+  jobTitle?: unknown;
+  matchAnalysis?: unknown;
+  matchAnalysisHistory?: unknown;
+  matchAnalysisModelId?: unknown;
+  matchAnalysisSourceEntityId?: unknown;
+  matchAnalysisStatus?: unknown;
+  matchAnalysisUpdatedAt?: unknown;
+  missingInformation?: unknown;
+  organizationId?: unknown;
+  organizationName?: unknown;
+  personId?: unknown;
+  personName?: unknown;
+  persistedArtifactVersions?: unknown;
+  source?: unknown;
+  sourceApplicationContext?: unknown;
+  sourceEntityId?: unknown;
+  status?: unknown;
+  tailoredCv?: unknown;
+  tailoredCvId?: unknown;
+  updatedAt?: unknown;
+};
+
+export type ListMongoFilemakerJobApplicationsInput = {
+  jobListingId?: string | null;
+  limit?: number;
+  organizationId?: string | null;
+  personId?: string | null;
+};

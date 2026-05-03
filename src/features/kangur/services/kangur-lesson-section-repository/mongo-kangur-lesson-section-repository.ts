@@ -5,6 +5,7 @@ import type { Collection, Db, Document, Filter } from 'mongodb';
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 import type { KangurLessonSectionListInput, KangurLessonSectionRepository } from './types';
 import { normalizeKangurLessonSection } from './normalize-kangur-lesson-section';
@@ -24,6 +25,15 @@ let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
 let defaultsInitialized = false;
 let defaultsInFlight: Promise<void> | null = null;
+const READ_BOOTSTRAP_SOFT_TIMEOUT_MS = 250;
+
+const waitForBootstrapIfFast = async (task: Promise<void>): Promise<void> => {
+  const guardedTask = task.catch(() => undefined);
+  await Promise.race([
+    guardedTask,
+    new Promise((resolve) => safeSetTimeout(resolve, READ_BOOTSTRAP_SOFT_TIMEOUT_MS)),
+  ]);
+};
 
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
@@ -155,9 +165,9 @@ const ensureDefaultSections = async (
 export const mongoKangurLessonSectionRepository: KangurLessonSectionRepository = {
   async listSections(input?: KangurLessonSectionListInput): Promise<KangurLessonSection[]> {
     const db = await getMongoDb();
-    await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonSectionDocument>(COLLECTION);
-    await ensureDefaultSections(collection);
+    await waitForBootstrapIfFast(ensureIndexes(db));
+    await waitForBootstrapIfFast(ensureDefaultSections(collection));
     const docs = await collection
       .find(buildFilter(input))
       .sort({ sortOrder: 1, id: 1 })

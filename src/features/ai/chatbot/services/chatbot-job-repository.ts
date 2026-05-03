@@ -37,6 +37,20 @@ const normalizeNullableDate = (
   return value instanceof Date ? value : new Date(value);
 };
 
+function buildUpdateDoc(update: ChatbotJobUpdateInput): Partial<ChatbotJobDocument> {
+  const updateDoc: Partial<ChatbotJobDocument> = {};
+  if (update.status !== undefined) updateDoc.status = update.status;
+  if (update.model !== undefined) updateDoc.model = normalizeNullableString(update.model);
+  if (update.payload !== undefined) updateDoc.payload = update.payload;
+  if (update.resultText !== undefined)
+    updateDoc.resultText = normalizeNullableString(update.resultText);
+  if (update.errorMessage !== undefined)
+    updateDoc.errorMessage = normalizeNullableString(update.errorMessage);
+  if (update.startedAt !== undefined) updateDoc.startedAt = normalizeNullableDate(update.startedAt);
+  if (update.finishedAt !== undefined) updateDoc.finishedAt = normalizeNullableDate(update.finishedAt);
+  return updateDoc;
+}
+
 function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
   return {
     id: doc._id.toString(),
@@ -116,23 +130,7 @@ export const chatbotJobRepository: ChatbotJobRepository = {
   async update(id: string, update: ChatbotJobUpdateInput): Promise<ChatbotJob | null> {
     if (!ObjectId.isValid(id)) return null;
     const db = await getMongoDb();
-    const updateDoc: Partial<ChatbotJobDocument> = {};
-
-    if (update.status !== undefined) updateDoc.status = update.status;
-    if (update.model !== undefined) updateDoc.model = normalizeNullableString(update.model);
-    if (update.payload !== undefined) updateDoc.payload = update.payload;
-    if (update.resultText !== undefined) {
-      updateDoc.resultText = normalizeNullableString(update.resultText);
-    }
-    if (update.errorMessage !== undefined) {
-      updateDoc.errorMessage = normalizeNullableString(update.errorMessage);
-    }
-    if (update.startedAt !== undefined) {
-      updateDoc.startedAt = normalizeNullableDate(update.startedAt);
-    }
-    if (update.finishedAt !== undefined) {
-      updateDoc.finishedAt = normalizeNullableDate(update.finishedAt);
-    }
+    const updateDoc = buildUpdateDoc(update);
 
     if (Object.keys(updateDoc).length === 0) {
       return this.findById(id);

@@ -1,75 +1,68 @@
 {
-  "generatedAt": "2026-03-26T13:38:01.211Z",
+  "generatedAt": "2026-04-15T13:33:39.169Z",
   "status": "failed",
   "runtime": {
     "source": "broker",
     "reused": false,
-    "baseUrl": "http://127.0.0.1:60924",
-    "agentId": "019d2582-7462-72e1-b297-b5158752a775-route-crawl",
-    "leaseKey": "web-dev-webpack-019d2582-7462-72e1-b297-b5158752a775-route-crawl-ed58ad7e"
+    "baseUrl": "http://127.0.0.1:51688",
+    "agentId": "michalmatynia-route-crawl",
+    "leaseKey": "web-dev-webpack-michalmatynia-route-crawl-ed58ad7e"
   },
   "runtimes": [
     {
       "source": "broker",
       "reused": false,
-      "baseUrl": "http://127.0.0.1:60924",
-      "agentId": "019d2582-7462-72e1-b297-b5158752a775-route-crawl",
-      "leaseKey": "web-dev-webpack-019d2582-7462-72e1-b297-b5158752a775-route-crawl-ed58ad7e"
+      "baseUrl": "http://127.0.0.1:51688",
+      "agentId": "michalmatynia-route-crawl",
+      "leaseKey": "web-dev-webpack-michalmatynia-route-crawl-ed58ad7e"
     },
     {
       "source": "broker",
       "reused": false,
-      "baseUrl": "http://127.0.0.1:61333",
-      "agentId": "019d2582-7462-72e1-b297-b5158752a775-route-crawl",
-      "leaseKey": "web-dev-webpack-019d2582-7462-72e1-b297-b5158752a775-route-crawl-ed58ad7e"
+      "baseUrl": "http://127.0.0.1:51746",
+      "agentId": "michalmatynia-route-crawl",
+      "leaseKey": "web-dev-webpack-michalmatynia-route-crawl-ed58ad7e"
     },
     {
       "source": "broker",
       "reused": false,
-      "baseUrl": "http://127.0.0.1:62323",
-      "agentId": "019d2582-7462-72e1-b297-b5158752a775-route-crawl",
-      "leaseKey": "web-dev-webpack-019d2582-7462-72e1-b297-b5158752a775-route-crawl-ed58ad7e"
+      "baseUrl": "http://127.0.0.1:51786",
+      "agentId": "michalmatynia-route-crawl",
+      "leaseKey": "web-dev-webpack-michalmatynia-route-crawl-ed58ad7e"
     },
     {
       "source": "broker",
       "reused": false,
-      "baseUrl": "http://127.0.0.1:62893",
-      "agentId": "019d2582-7462-72e1-b297-b5158752a775-route-crawl",
-      "leaseKey": "web-dev-webpack-019d2582-7462-72e1-b297-b5158752a775-route-crawl-ed58ad7e"
+      "baseUrl": "http://127.0.0.1:51830",
+      "agentId": "michalmatynia-route-crawl",
+      "leaseKey": "web-dev-webpack-michalmatynia-route-crawl-ed58ad7e"
     },
     {
       "source": "broker",
       "reused": false,
-      "baseUrl": "http://127.0.0.1:63365",
-      "agentId": "019d2582-7462-72e1-b297-b5158752a775-route-crawl",
-      "leaseKey": "web-dev-webpack-019d2582-7462-72e1-b297-b5158752a775-route-crawl-ed58ad7e"
+      "baseUrl": "http://127.0.0.1:51864",
+      "agentId": "michalmatynia-route-crawl",
+      "leaseKey": "web-dev-webpack-michalmatynia-route-crawl-ed58ad7e"
     },
     {
       "source": "broker",
       "reused": false,
-      "baseUrl": "http://127.0.0.1:63995",
-      "agentId": "019d2582-7462-72e1-b297-b5158752a775-route-crawl",
-      "leaseKey": "web-dev-webpack-019d2582-7462-72e1-b297-b5158752a775-route-crawl-ed58ad7e"
-    },
-    {
-      "source": "broker",
-      "reused": false,
-      "baseUrl": "http://127.0.0.1:65076",
-      "agentId": "019d2582-7462-72e1-b297-b5158752a775-route-crawl",
-      "leaseKey": "web-dev-webpack-019d2582-7462-72e1-b297-b5158752a775-route-crawl-ed58ad7e"
+      "baseUrl": "http://127.0.0.1:51924",
+      "agentId": "michalmatynia-route-crawl",
+      "leaseKey": "web-dev-webpack-michalmatynia-route-crawl-ed58ad7e"
     }
   ],
   "summary": {
     "total": 32,
-    "passed": 30,
-    "failed": 2,
-    "durationMs": 1667021.328,
-    "unexpected": 1,
+    "passed": 0,
+    "failed": 32,
+    "durationMs": 6347.204,
+    "unexpected": 6,
     "flaky": 0,
-    "skipped": 1,
-    "errorCount": 1
+    "skipped": 26,
+    "errorCount": 6
   },
-  "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json",
+  "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json && /Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/accessibility-route-crawl.spec.ts --reporter=json",
   "externalErrors": [],
   "results": [
     {
@@ -82,9 +75,11 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[public-home] / passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 106887,
-      "errors": []
+      "status": "fail",
+      "durationMs": 1,
+      "errors": [
+        "Error: browserType.launch: Executable doesn't exist at /var/folders/g5/jgnr886174jbng29l_g_6fhw0000gn/T/cursor-sandbox-cache/3556ae86a5fd215677acf924b0bfe8bb/playwright/chromium_headless_shell-1208/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔═════════════════════════════════════════════════════════════════════════╗\n║ Looks like Playwright Test or Playwright was just installed or updated. ║\n║ Please run the following command to download new browsers:              ║\n║                                                                         ║\n║     npx playwright install                                              ║\n║                                                                         ║\n║ <3 Playwright Team                                                      ║\n╚═════════════════════════════════════════════════════════════════════════╝"
+      ]
     },
     {
       "id": "auth-signin",
@@ -96,8 +91,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[auth-signin] /auth/signin passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 9425,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -110,8 +105,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[auth-register] /auth/register passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 8439,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -125,10 +120,8 @@
       "navigationTimeoutMs": null,
       "title": "[kangur-login] /kangur/login passes the route-crawl accessibility scan",
       "status": "fail",
-      "durationMs": 52352,
-      "errors": [
-        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('#kangur-main-content')\nExpected: visible\nReceived: undefined\nTimeout:  30000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for locator('#kangur-main-content')\u001b[22m\n\n\n  48 |\n  49 |     const main = page.locator('#kangur-main-content');\n> 50 |     await expect(main).toBeVisible({ timeout: MAIN_READY_TIMEOUT_MS });\n     |                        ^\n  51 |     await expect(main).toHaveAttribute('tabindex', '-1', { timeout: MAIN_READY_TIMEOUT_MS });\n  52 |\n  53 |     const skipLink = page.getByRole('link', { name: 'Skip to content', includeHidden: true }).first();\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:50:24"
-      ]
+      "durationMs": 0,
+      "errors": []
     },
     {
       "id": "kangur-home",
@@ -154,8 +147,8 @@
       "navigationWaitUntil": "commit",
       "navigationTimeoutMs": null,
       "title": "[kangur-game] /kangur/game passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 70893,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -168,9 +161,11 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[kangur-lessons] /kangur/lessons passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 41644,
-      "errors": []
+      "status": "fail",
+      "durationMs": 1,
+      "errors": [
+        "Error: browserType.launch: Executable doesn't exist at /var/folders/g5/jgnr886174jbng29l_g_6fhw0000gn/T/cursor-sandbox-cache/3556ae86a5fd215677acf924b0bfe8bb/playwright/chromium_headless_shell-1208/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔═════════════════════════════════════════════════════════════════════════╗\n║ Looks like Playwright Test or Playwright was just installed or updated. ║\n║ Please run the following command to download new browsers:              ║\n║                                                                         ║\n║     npx playwright install                                              ║\n║                                                                         ║\n║ <3 Playwright Team                                                      ║\n╚═════════════════════════════════════════════════════════════════════════╝"
+      ]
     },
     {
       "id": "kangur-profile",
@@ -182,8 +177,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[kangur-profile] /kangur/profile passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 43656,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -196,8 +191,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[kangur-tests] /kangur/tests passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 118598,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -210,8 +205,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[kangur-parent-dashboard] /kangur/parent-dashboard passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 109303,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -224,8 +219,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[kangur-duels] /kangur/duels passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 83167,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -238,8 +233,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[kangur-social-updates] /kangur/social-updates passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 39676,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -252,9 +247,11 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[kangur-competition] /kangur/competition passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 32425,
-      "errors": []
+      "status": "fail",
+      "durationMs": 1,
+      "errors": [
+        "Error: browserType.launch: Executable doesn't exist at /var/folders/g5/jgnr886174jbng29l_g_6fhw0000gn/T/cursor-sandbox-cache/3556ae86a5fd215677acf924b0bfe8bb/playwright/chromium_headless_shell-1208/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔═════════════════════════════════════════════════════════════════════════╗\n║ Looks like Playwright Test or Playwright was just installed or updated. ║\n║ Please run the following command to download new browsers:              ║\n║                                                                         ║\n║     npx playwright install                                              ║\n║                                                                         ║\n║ <3 Playwright Team                                                      ║\n╚═════════════════════════════════════════════════════════════════════════╝"
+      ]
     },
     {
       "id": "admin-dashboard",
@@ -266,8 +263,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-dashboard] /admin passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 58301,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -280,8 +277,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-prompt-engine-validation] /admin/prompt-engine/validation passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 19515,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -294,8 +291,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-products] /admin/products passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 48325,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -308,8 +305,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-notes] /admin/notes passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 27012,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -322,8 +319,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-integrations] /admin/integrations passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 15743,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -336,9 +333,11 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-case-resolver] /admin/case-resolver passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 31889,
-      "errors": []
+      "status": "fail",
+      "durationMs": 1,
+      "errors": [
+        "Error: browserType.launch: Executable doesn't exist at /var/folders/g5/jgnr886174jbng29l_g_6fhw0000gn/T/cursor-sandbox-cache/3556ae86a5fd215677acf924b0bfe8bb/playwright/chromium_headless_shell-1208/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔═════════════════════════════════════════════════════════════════════════╗\n║ Looks like Playwright Test or Playwright was just installed or updated. ║\n║ Please run the following command to download new browsers:              ║\n║                                                                         ║\n║     npx playwright install                                              ║\n║                                                                         ║\n║ <3 Playwright Team                                                      ║\n╚═════════════════════════════════════════════════════════════════════════╝"
+      ]
     },
     {
       "id": "admin-cms",
@@ -350,8 +349,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-cms] /admin/cms passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 25443,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -364,8 +363,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-ai-paths] /admin/ai-paths passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 69608,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -378,8 +377,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-image-studio] /admin/image-studio passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 24828,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -392,8 +391,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-chatbot] /admin/chatbot passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 18839,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -406,8 +405,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-agentcreator] /admin/agentcreator passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 24875,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -420,9 +419,11 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-kangur] /admin/kangur passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 93652,
-      "errors": []
+      "status": "fail",
+      "durationMs": 1,
+      "errors": [
+        "Error: browserType.launch: Executable doesn't exist at /var/folders/g5/jgnr886174jbng29l_g_6fhw0000gn/T/cursor-sandbox-cache/3556ae86a5fd215677acf924b0bfe8bb/playwright/chromium_headless_shell-1208/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔═════════════════════════════════════════════════════════════════════════╗\n║ Looks like Playwright Test or Playwright was just installed or updated. ║\n║ Please run the following command to download new browsers:              ║\n║                                                                         ║\n║     npx playwright install                                              ║\n║                                                                         ║\n║ <3 Playwright Team                                                      ║\n╚═════════════════════════════════════════════════════════════════════════╝"
+      ]
     },
     {
       "id": "admin-kangur-builder",
@@ -434,8 +435,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-kangur-builder] /admin/kangur/builder passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 118742,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -448,8 +449,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-kangur-lessons] /admin/kangur/lessons-manager passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 67998,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -462,8 +463,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-kangur-observability] /admin/kangur/observability passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 51396,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -476,8 +477,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-kangur-appearance] /admin/kangur/appearance passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 152933,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -490,8 +491,8 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-kangur-settings] /admin/kangur/settings passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 33334,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     },
     {
@@ -504,9 +505,11 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-databases] /admin/databases/engine passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 40618,
-      "errors": []
+      "status": "fail",
+      "durationMs": 1,
+      "errors": [
+        "Error: browserType.launch: Executable doesn't exist at /var/folders/g5/jgnr886174jbng29l_g_6fhw0000gn/T/cursor-sandbox-cache/3556ae86a5fd215677acf924b0bfe8bb/playwright/chromium_headless_shell-1208/chrome-headless-shell-mac-arm64/chrome-headless-shell\n╔═════════════════════════════════════════════════════════════════════════╗\n║ Looks like Playwright Test or Playwright was just installed or updated. ║\n║ Please run the following command to download new browsers:              ║\n║                                                                         ║\n║     npx playwright install                                              ║\n║                                                                         ║\n║ <3 Playwright Team                                                      ║\n╚═════════════════════════════════════════════════════════════════════════╝"
+      ]
     },
     {
       "id": "admin-brain-settings",
@@ -518,12 +521,12 @@
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
       "title": "[admin-brain-settings] /admin/brain?tab=routing passes the route-crawl accessibility scan",
-      "status": "pass",
-      "durationMs": 14318,
+      "status": "fail",
+      "durationMs": 0,
       "errors": []
     }
   ],
   "stderr": "",
-  "durationMs": 1825283,
+  "durationMs": 91848,
   "exitCode": 1
 }

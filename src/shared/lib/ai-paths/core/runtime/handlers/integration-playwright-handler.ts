@@ -203,6 +203,7 @@ export const handlePlaywright: NodeHandler = async ({
         title: route.title,
         url: buildCaptureRouteUrl(baseUrl, route.path),
         selector: route.selector ?? null,
+        selectorRole: route.selectorRole ?? null,
         waitForMs: route.waitForMs ?? null,
         waitForSelectorMs: route.waitForSelectorMs ?? null,
       }));

@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useEffect, useMemo, startTransition } from 'react';
 
 import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
@@ -35,6 +35,14 @@ const AVAILABLE_INTEGRATIONS = [
     method: 'api',
   },
   {
+    name: 'Pracuj.pl',
+    slug: 'pracuj-pl',
+    description:
+      'Browser-based job-search platform connection for applying to Pracuj.pl offers with a reusable login session.',
+    type: 'job_search',
+    method: 'browser',
+  },
+  {
     name: 'Tradera',
     slug: 'tradera',
     description: 'Direct integration with Tradera marketplace.',
@@ -42,11 +50,20 @@ const AVAILABLE_INTEGRATIONS = [
     method: 'browser',
   },
   {
-    name: 'Tradera API',
-    slug: 'tradera-api',
-    description: 'Direct integration with Tradera API (App ID/App Key/User Token).',
+    name: 'Vinted.pl',
+    slug: 'vinted',
+    description:
+      'Browser-based Vinted.pl integration with reusable Playwright session storage.',
     type: 'marketplace',
-    method: 'api',
+    method: 'browser',
+  },
+  {
+    name: '1688',
+    slug: '1688',
+    description:
+      'Browser-based 1688 supplier scanning integration with reusable Playwright session storage.',
+    type: 'marketplace',
+    method: 'browser',
   },
 ] as const;
 
@@ -78,7 +95,7 @@ export default function AddIntegrationPage(): React.JSX.Element {
         name: integration.name,
         slug: integration.slug,
       });
-      router.push('/admin/integrations');
+      startTransition(() => { router.push('/admin/integrations'); });
     } catch (error: unknown) {
       logClientCatch(error, {
         source: 'AddIntegrationPage',
@@ -105,7 +122,7 @@ export default function AddIntegrationPage(): React.JSX.Element {
     <AdminIntegrationsPageLayout
       title='Add Integrations'
       current='Add'
-      description='Select a marketplace connection to add to your map.'
+      description='Select a marketplace or job-search connection to add to your map.'
     >
       <SimpleSettingsList
         items={AVAILABLE_INTEGRATIONS.map((integration) => ({
@@ -130,8 +147,20 @@ export default function AddIntegrationPage(): React.JSX.Element {
         renderCustomContent={(item) => (
           <div className='flex items-center gap-2 mt-2'>
             <StatusBadge
-              status={item.original.type === 'marketplace' ? 'Marketplace' : 'Platform'}
-              variant={item.original.type === 'marketplace' ? 'success' : 'processing'}
+              status={
+                item.original.type === 'marketplace'
+                  ? 'Marketplace'
+                  : item.original.type === 'job_search'
+                    ? 'Job Search'
+                    : 'Platform'
+              }
+              variant={
+                item.original.type === 'marketplace'
+                  ? 'success'
+                  : item.original.type === 'job_search'
+                    ? 'info'
+                    : 'processing'
+              }
               size='sm'
               className='font-semibold'
             />

@@ -3,7 +3,8 @@ import { type ImageFileRecord } from '../files';
 
 export type { ImageFileRecord };
 
-export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
+import { type Status as ImageStudioRunStatus } from '../base';
+export type { ImageStudioRunStatus };
 
 export type ImageStudioRunHistoryEventSource = 'api' | 'queue' | 'worker' | 'stream' | 'client';
 

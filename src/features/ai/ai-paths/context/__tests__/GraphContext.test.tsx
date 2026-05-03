@@ -4,9 +4,10 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
-import { GraphProvider, useGraphActions, useGraphState } from '../GraphContext';
+import { GraphProvider, useGraphActions, useGraphActionsBase, useGraphState } from '../GraphContext';
+import { PathConfigProvider } from '../PathConfigContext';
 
 const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
   ({
@@ -26,12 +27,12 @@ const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
 describe('GraphContext', () => {
   it('throws when state hook is used outside the provider', () => {
     expect(() => renderHook(() => useGraphState())).toThrow(
-      'useGraphState must be used within a GraphProvider'
+      'useGraphDataState must be used within a GraphProvider'
     );
   });
 
   it('throws when actions hook is used outside the provider', () => {
-    expect(() => renderHook(() => useGraphActions())).toThrow(
+    expect(() => renderHook(() => useGraphActionsBase())).toThrow(
       'useGraphActions must be used within a GraphProvider'
     );
   });
@@ -45,7 +46,7 @@ describe('GraphContext', () => {
         initialPathConfigs={{}}
         initialActivePathId={null}
       >
-        {children}
+        <PathConfigProvider>{children}</PathConfigProvider>
       </GraphProvider>
     );
 

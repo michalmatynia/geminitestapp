@@ -48,10 +48,9 @@ vi.mock('@/shared/lib/vector-drawing', () => ({
   VectorDrawingToolbar: (): React.JSX.Element => <div>Vector Toolbar</div>,
 }));
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/ui/forms-and-actions.public', async () => {
   const mocks = await import('./rightSidebarRuntimeMockComponents');
   return {
-    Button: mocks.MockButton,
     MultiSelect: ({
       onChange,
     }: {
@@ -62,6 +61,13 @@ vi.mock('@/shared/ui', async () => {
       </button>
     ),
     SelectSimple: mocks.MockSelectSimple,
+  };
+});
+
+vi.mock('@/shared/ui/primitives.public', async () => {
+  const mocks = await import('./rightSidebarRuntimeMockComponents');
+  return {
+    Button: mocks.MockButton,
   };
 });
 

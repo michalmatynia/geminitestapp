@@ -1,3 +1,4 @@
+import type { SelectorRegistryRole } from './integrations/selector-registry';
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
@@ -6,11 +7,28 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
  * Playwright DTOs
  */
 
+export const playwrightIdentityProfileSchema = z.enum(['default', 'search', 'marketplace']);
+export type PlaywrightIdentityProfile = z.infer<typeof playwrightIdentityProfileSchema>;
+export const playwrightProxySessionModeSchema = z.enum(['sticky', 'rotate']);
+export type PlaywrightProxySessionMode = z.infer<typeof playwrightProxySessionModeSchema>;
+export const playwrightProxyProviderPresetSchema = z.enum([
+  'custom',
+  'brightdata',
+  'oxylabs',
+  'decodo',
+]);
+export type PlaywrightProxyProviderPreset = z.infer<
+  typeof playwrightProxyProviderPresetSchema
+>;
+
 export const playwrightSettingsSchema = z.object({
+  identityProfile: playwrightIdentityProfileSchema,
   headless: z.boolean(),
   slowMo: z.number(),
   timeout: z.number(),
   navigationTimeout: z.number(),
+  locale: z.string().optional(),
+  timezoneId: z.string().optional(),
   humanizeMouse: z.boolean(),
   mouseJitter: z.number(),
   clickDelayMin: z.number(),
@@ -23,8 +41,16 @@ export const playwrightSettingsSchema = z.object({
   proxyServer: z.string().optional(),
   proxyUsername: z.string().optional(),
   proxyPassword: z.string().optional(),
+  proxySessionAffinity: z.boolean(),
+  proxySessionMode: playwrightProxySessionModeSchema,
+  proxyProviderPreset: playwrightProxyProviderPresetSchema,
   emulateDevice: z.boolean(),
   deviceName: z.string().optional(),
+  launchCooldownMs: z.number().optional(),
+  prewarmWaitMs: z.number().optional(),
+  postStartUrlWaitMs: z.number().optional(),
+  viewportJitterPx: z.number().optional(),
+  postLoadNudgeEnabled: z.boolean().optional(),
 });
 
 export type PlaywrightSettings = z.infer<typeof playwrightSettingsSchema>;
@@ -116,6 +142,7 @@ export type PlaywrightCaptureRoute = {
   path: string;
   description: string;
   selector: string | null;
+  selectorRole?: SelectorRegistryRole | null;
   waitForMs: number | null;
   waitForSelectorMs: number | null;
 };

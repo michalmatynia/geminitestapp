@@ -1,3 +1,6 @@
+'use client';
+'use no memo';
+
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -5,7 +8,8 @@ import {
   TRADERA_INTEGRATION_SLUGS,
   normalizeIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
-import type { ListingBadgesPayload, MarketplaceBadgeEntry, ProductListingCreatePayload, ProductListingCreateResponse, ProductListingCreateVariables, ProductListingDeleteFromBaseResponse, ProductListingDeleteFromBaseVariables, ProductListingInventoryUpdateVariables, ProductListingRelistResponse, ProductListingRelistVariables, ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables, ProductListingUpdateResponse, ProductListingWithDetails, TraderaProductLinkExistingPayload, TraderaProductLinkExistingResponse } from '@/shared/contracts/integrations/listings';
+import { buildQueuedTraderaStatusCheckMarketplaceData } from '@/features/integrations/utils/tradera-status-check';
+import type { ListingBadgesPayload, MarketplaceBadgeEntry, ProductListingCreatePayload, ProductListingCreateResponse, ProductListingCreateVariables, ProductListingDeleteFromBaseResponse, ProductListingDeleteFromBaseVariables, ProductListingInventoryUpdateVariables, ProductListingMoveToUnsoldResponse, ProductListingMoveToUnsoldVariables, ProductListingRelistResponse, ProductListingRelistVariables, ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables, ProductListingSyncResponse, ProductListingSyncVariables, ProductListingUpdateResponse, ProductListingWithDetails, TraderaProductLinkExistingPayload, TraderaProductLinkExistingResponse } from '@/shared/contracts/integrations/listings';
 import type { ProductJob } from '@/shared/contracts/integrations/domain';
 import type { ExportToBaseVariables, ExportResponse } from '@/shared/contracts/integrations/base-com';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
@@ -19,6 +23,7 @@ import {
   invalidateListingsBadgesAndQueues,
   invalidateProductListingsAndBadges,
   invalidateProducts,
+  invalidateProductsAndDetail,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -63,6 +68,13 @@ const toRecord = (value: unknown): Record<string, unknown> =>
 const toBadgeEntry = (value: unknown): MarketplaceBadgeEntry =>
   value && typeof value === 'object' ? (value as MarketplaceBadgeEntry) : {};
 
+type ListingQueueBrowserMode = ProductListingRelistVariables['browserMode'];
+
+const resolveQueuedTraderaListingStatus = (
+  action: 'relist' | 'sync' | 'move_to_unsold'
+): ProductListingWithDetails['status'] =>
+  action === 'sync' ? 'queued' : 'queued_relist';
+
 const patchQueuedPlaywrightRelist = (
   listing: ProductListingWithDetails,
   options: {
@@ -93,20 +105,26 @@ const patchQueuedPlaywrightRelist = (
   };
 };
 
-const patchQueuedTraderaRelist = (
+const patchQueuedTraderaAction = (
   listing: ProductListingWithDetails,
   options: {
-    browserMode?: ProductListingRelistVariables['browserMode'];
+    action?: 'relist' | 'sync' | 'move_to_unsold';
+    browserMode?: ListingQueueBrowserMode;
+    selectorProfile?: string;
+    skipImages?: boolean;
     requestId?: string | null;
     queuedAt?: string | null;
   }
 ): ProductListingWithDetails => {
   const previousMarketplaceData = toRecord(listing.marketplaceData);
   const previousTraderaData = toRecord(previousMarketplaceData['tradera']);
+  const hasSelectorProfile =
+    typeof options.selectorProfile === 'string' && options.selectorProfile.trim().length > 0;
+  const action = options.action ?? 'relist';
 
   return {
     ...listing,
-    status: 'queued_relist',
+    status: resolveQueuedTraderaListingStatus(action),
     failureReason: null,
     marketplaceData: {
       ...previousMarketplaceData,
@@ -114,13 +132,81 @@ const patchQueuedTraderaRelist = (
       tradera: {
         ...previousTraderaData,
         pendingExecution: {
+          action,
           requestedBrowserMode: options.browserMode ?? 'connection_default',
+          ...(hasSelectorProfile
+            ? { requestedSelectorProfile: options.selectorProfile }
+            : {}),
+          ...(options.skipImages === true ? { skipImages: true } : {}),
           requestId: options.requestId ?? null,
           queuedAt: options.queuedAt ?? null,
         },
       },
     },
   };
+};
+
+const patchQueuedTraderaStatusCheck = (
+  listing: ProductListingWithDetails,
+  options: {
+    browserMode?: ListingQueueBrowserMode;
+    selectorProfile?: string;
+    requestId?: string | null;
+    queuedAt?: string | null;
+  }
+): ProductListingWithDetails => {
+  const hasBrowserMode = typeof options.browserMode === 'string';
+  const hasSelectorProfile =
+    typeof options.selectorProfile === 'string' && options.selectorProfile.trim().length > 0;
+
+  return {
+    ...listing,
+    marketplaceData: buildQueuedTraderaStatusCheckMarketplaceData({
+      existingMarketplaceData: listing.marketplaceData,
+      requestId: options.requestId ?? `pending-check-status-${listing.id}`,
+      queuedAt: options.queuedAt ?? new Date().toISOString(),
+      ...(hasBrowserMode ? { requestedBrowserMode: options.browserMode } : {}),
+      ...(hasSelectorProfile
+        ? { requestedSelectorProfile: options.selectorProfile }
+        : {}),
+    }),
+  };
+};
+
+type DeletePatchableListing = {
+  status: string;
+  externalListingId: string | null;
+  inventoryId?: string | null;
+  failureReason?: string | null;
+  updatedAt?: string | null;
+  exportHistory?: ProductListingWithDetails['exportHistory'];
+};
+
+const patchDeletedBaseListing = <TListing extends DeletePatchableListing>(
+  listing: TListing,
+  options: {
+    deletedAt: string;
+    inventoryId?: string;
+  }
+): TListing => {
+  const previousExternalListingId = listing.externalListingId ?? null;
+
+  return {
+    ...listing,
+    status: 'removed',
+    externalListingId: null,
+    failureReason: null,
+    updatedAt: options.deletedAt,
+    exportHistory: [
+      {
+        exportedAt: options.deletedAt,
+        status: 'deleted',
+        inventoryId: options.inventoryId ?? listing.inventoryId ?? null,
+        externalListingId: previousExternalListingId,
+      },
+      ...(listing.exportHistory ?? []),
+    ].slice(0, 50),
+  } as TListing;
 };
 
 const getListingBadgesSnapshot = (
@@ -348,9 +434,37 @@ export function useDeleteFromBaseMutation(
         queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
       }
     },
-    invalidate: async (queryClient) => {
+    invalidate: async (queryClient, _data, vars) => {
+      const deletedAt = new Date().toISOString();
+      queryClient.setQueryData<ProductListingWithDetails[]>(
+        listingQueryKey,
+        (currentListings) =>
+          currentListings?.map((listing) =>
+            listing.id === vars.listingId
+              ? patchDeletedBaseListing(listing, {
+                  deletedAt,
+                  inventoryId: vars.inventoryId,
+                })
+              : listing
+          ) ?? currentListings
+      );
+      queryClient.setQueryData<ProductJob[]>(
+        integrationJobsQueryKey,
+        (currentJobs) =>
+          currentJobs?.map((job) => ({
+            ...job,
+            listings: job.listings.map((listing) =>
+              listing.id === vars.listingId
+                ? patchDeletedBaseListing(listing, {
+                    deletedAt,
+                    inventoryId: vars.inventoryId,
+                  })
+                : listing
+            ),
+          })) ?? currentJobs
+      );
       await invalidateListingsBadgesAndQueues(queryClient, productId);
-      await invalidateProducts(queryClient);
+      await invalidateProductsAndDetail(queryClient, productId);
     },
   });
 }
@@ -370,6 +484,7 @@ export function usePurgeListingMutation(productId: string): DeleteMutation {
       description: 'Deletes integrations listings purge.'},
     invalidate: async (queryClient) => {
       await invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProductsAndDetail(queryClient, productId);
     },
   });
 }
@@ -511,7 +626,7 @@ export function useCreateListingMutation(productId: string): CreateMutation<
     invalidate: async (queryClient, data) => {
       const queueName = data.queue?.name ?? null;
       if (queueName === 'tradera-listings') {
-        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
+        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
       }
       if (queueName === 'playwright-programmable-listings') {
         setListingBadgeStatus(queryClient, productId, 'playwrightProgrammable', 'queued');
@@ -559,11 +674,14 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
   const listingQueryKey = getProductListingsQueryKey(productId);
 
   return createCreateMutationV2({
-    mutationFn: ({ listingId, browserMode }: ProductListingRelistVariables) =>
+    mutationFn: ({ listingId, browserMode, selectorProfile }: ProductListingRelistVariables) =>
       api.post<ProductListingRelistResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/relist`,
         {
-          ...(browserMode ? { browserMode } : {}),
+          ...(typeof browserMode === 'string' ? { browserMode } : {}),
+          ...(typeof selectorProfile === 'string' && selectorProfile.trim().length > 0
+            ? { selectorProfile }
+            : {}),
         }
       ),
     mutationKey: getProductListingsQueryKey(productId),
@@ -594,7 +712,10 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
               return patchQueuedPlaywrightRelist(listing, { browserMode: vars.browserMode });
             }
             if (TRADERA_INTEGRATION_SLUGS.has(integrationSlug)) {
-              return patchQueuedTraderaRelist(listing, { browserMode: vars.browserMode });
+              return patchQueuedTraderaAction(listing, {
+                browserMode: vars.browserMode,
+                selectorProfile: vars.selectorProfile,
+              });
             }
 
             return { ...listing, status: 'queued_relist', failureReason: null };
@@ -638,8 +759,9 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
           (current) =>
             current?.map((listing) =>
               listing.id === vars.listingId
-                ? patchQueuedTraderaRelist(listing, {
+                ? patchQueuedTraderaAction(listing, {
                     browserMode: vars.browserMode,
+                    selectorProfile: vars.selectorProfile,
                     requestId,
                     queuedAt,
                   })
@@ -653,6 +775,270 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
       }
       if (queueName === 'playwright-programmable-listings') {
         setListingBadgeStatus(queryClient, productId, 'playwrightProgrammable', 'queued_relist');
+      }
+      await invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProducts(queryClient);
+    },
+  });
+}
+
+export function useMoveTraderaListingToUnsoldMutation(productId: string): UpdateMutation<
+  ProductListingMoveToUnsoldResponse,
+  ProductListingMoveToUnsoldVariables
+> {
+  const queryClient = useQueryClient();
+  const listingQueryKey = getProductListingsQueryKey(productId);
+
+  return createCreateMutationV2({
+    mutationFn: ({ listingId, browserMode, selectorProfile }: ProductListingMoveToUnsoldVariables) =>
+      api.post<ProductListingMoveToUnsoldResponse>(
+        `/api/v2/integrations/products/${productId}/listings/${listingId}/move-to-unsold`,
+        {
+          ...(typeof browserMode === 'string' ? { browserMode } : {}),
+          ...(typeof selectorProfile === 'string' && selectorProfile.trim().length > 0
+            ? { selectorProfile }
+            : {}),
+        }
+      ),
+    mutationKey: getProductListingsQueryKey(productId),
+    meta: {
+      source: 'integrations.hooks.useMoveTraderaListingToUnsoldMutation',
+      operation: 'create',
+      resource: 'integrations.listings.tradera-move-to-unsold',
+      domain: 'integrations',
+      mutationKey: listingQueryKey,
+      tags: ['integrations', 'listings', 'tradera', 'move-to-unsold'],
+      description: 'Creates integrations listings tradera move to unsold.',
+    },
+    onMutate: async (vars): Promise<ProductListingAndJobsContext> => {
+      await cancelProductListingsAndJobs(queryClient, productId);
+
+      const previousListings =
+        queryClient.getQueryData<ProductListingWithDetails[]>(listingQueryKey);
+      const previousIntegrationJobs =
+        queryClient.getQueryData<ProductJob[]>(integrationJobsQueryKey);
+
+      if (previousListings) {
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          previousListings.map((listing) =>
+            listing.id === vars.listingId
+              ? patchQueuedTraderaAction(listing, {
+                  action: 'move_to_unsold',
+                  browserMode: vars.browserMode,
+                  selectorProfile: vars.selectorProfile,
+                })
+              : listing
+          )
+        );
+      }
+
+      return { previousListings, previousIntegrationJobs };
+    },
+    onError: (_error, _vars, context: ProductListingAndJobsContext | undefined): void => {
+      if (context?.previousListings) {
+        queryClient.setQueryData(listingQueryKey, context.previousListings);
+      }
+      if (context?.previousIntegrationJobs) {
+        queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
+      }
+    },
+    invalidate: async (queryClient, data, vars) => {
+      if (data.queue?.name === 'tradera-listings') {
+        const queuedAt = data.queue.enqueuedAt ?? null;
+        const requestId = data.queue.jobId ?? null;
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          (current) =>
+            current?.map((listing) =>
+              listing.id === vars.listingId
+                ? patchQueuedTraderaAction(listing, {
+                    action: 'move_to_unsold',
+                    browserMode: vars.browserMode,
+                    selectorProfile: vars.selectorProfile,
+                    requestId,
+                    queuedAt,
+                  })
+                : listing
+            ) ?? current
+        );
+        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
+      }
+      await invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProducts(queryClient);
+    },
+  });
+}
+
+export function useSyncTraderaMutation(productId: string): UpdateMutation<
+  ProductListingSyncResponse,
+  ProductListingSyncVariables
+> {
+  const queryClient = useQueryClient();
+  const listingQueryKey = getProductListingsQueryKey(productId);
+
+  return createCreateMutationV2({
+    mutationFn: ({ listingId, browserMode, selectorProfile, skipImages }: ProductListingSyncVariables) =>
+      api.post<ProductListingSyncResponse>(
+        `/api/v2/integrations/products/${productId}/listings/${listingId}/sync`,
+        {
+          ...(typeof browserMode === 'string' ? { browserMode } : {}),
+          ...(typeof selectorProfile === 'string' && selectorProfile.trim().length > 0
+            ? { selectorProfile }
+            : {}),
+          ...(skipImages === true ? { skipImages } : {}),
+        }
+      ),
+    mutationKey: getProductListingsQueryKey(productId),
+    meta: {
+      source: 'integrations.hooks.useSyncTraderaMutation',
+      operation: 'create',
+      resource: 'integrations.listings.tradera-sync',
+      domain: 'integrations',
+      mutationKey: listingQueryKey,
+      tags: ['integrations', 'listings', 'tradera', 'sync'],
+      description: 'Creates integrations listings tradera sync.',
+    },
+    onMutate: async (vars): Promise<ProductListingAndJobsContext> => {
+      await cancelProductListingsAndJobs(queryClient, productId);
+
+      const previousListings =
+        queryClient.getQueryData<ProductListingWithDetails[]>(listingQueryKey);
+      const previousIntegrationJobs =
+        queryClient.getQueryData<ProductJob[]>(integrationJobsQueryKey);
+
+      if (previousListings) {
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          previousListings.map((listing) =>
+            listing.id === vars.listingId
+              ? patchQueuedTraderaAction(listing, {
+                  action: 'sync',
+                  browserMode: vars.browserMode,
+                  selectorProfile: vars.selectorProfile,
+                  skipImages: vars.skipImages,
+                })
+              : listing
+          )
+        );
+      }
+
+      return { previousListings, previousIntegrationJobs };
+    },
+    onError: (_error, _vars, context: ProductListingAndJobsContext | undefined): void => {
+      if (context?.previousListings) {
+        queryClient.setQueryData(listingQueryKey, context.previousListings);
+      }
+      if (context?.previousIntegrationJobs) {
+        queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
+      }
+    },
+    invalidate: async (queryClient, data, vars) => {
+      if (data.queue?.name === 'tradera-listings') {
+        const queuedAt = data.queue.enqueuedAt ?? null;
+        const requestId = data.queue.jobId ?? null;
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          (current) =>
+            current?.map((listing) =>
+              listing.id === vars.listingId
+                ? patchQueuedTraderaAction(listing, {
+                    action: 'sync',
+                    browserMode: vars.browserMode,
+                    selectorProfile: vars.selectorProfile,
+                    skipImages: vars.skipImages,
+                    requestId,
+                    queuedAt,
+                  })
+                : listing
+            ) ?? current
+        );
+        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
+      }
+      await invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProducts(queryClient);
+    },
+  });
+}
+
+export function useCheckTraderaStatusMutation(productId: string): UpdateMutation<
+  ProductListingSyncResponse,
+  ProductListingSyncVariables
+> {
+  const queryClient = useQueryClient();
+  const listingQueryKey = getProductListingsQueryKey(productId);
+
+  return createCreateMutationV2({
+    mutationFn: ({ listingId, browserMode, selectorProfile }: ProductListingSyncVariables) =>
+      api.post<ProductListingSyncResponse>(
+        `/api/v2/integrations/products/${productId}/listings/${listingId}/check-status`,
+        {
+          ...(typeof browserMode === 'string' ? { browserMode } : {}),
+          ...(typeof selectorProfile === 'string' && selectorProfile.trim().length > 0
+            ? { selectorProfile }
+            : {}),
+        }
+      ),
+    mutationKey: listingQueryKey,
+    meta: {
+      source: 'integrations.hooks.useCheckTraderaStatusMutation',
+      operation: 'create',
+      resource: 'integrations.listings.tradera-check-status',
+      domain: 'integrations',
+      mutationKey: listingQueryKey,
+      tags: ['integrations', 'listings', 'tradera', 'check-status'],
+      description: 'Creates integrations listings tradera check status.',
+    },
+    onMutate: async (vars): Promise<ProductListingAndJobsContext> => {
+      await cancelProductListingsAndJobs(queryClient, productId);
+
+      const previousListings =
+        queryClient.getQueryData<ProductListingWithDetails[]>(listingQueryKey);
+      const previousIntegrationJobs =
+        queryClient.getQueryData<ProductJob[]>(integrationJobsQueryKey);
+
+      if (previousListings) {
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          previousListings.map((listing) =>
+            listing.id === vars.listingId
+              ? patchQueuedTraderaStatusCheck(listing, {
+                  browserMode: vars.browserMode,
+                  selectorProfile: vars.selectorProfile,
+                })
+              : listing
+          )
+        );
+      }
+
+      return { previousListings, previousIntegrationJobs };
+    },
+    onError: (_error, _vars, context: ProductListingAndJobsContext | undefined): void => {
+      if (context?.previousListings) {
+        queryClient.setQueryData(listingQueryKey, context.previousListings);
+      }
+      if (context?.previousIntegrationJobs) {
+        queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
+      }
+    },
+    invalidate: async (queryClient, data, vars) => {
+      if (data.queue?.name === 'tradera-listings') {
+        const queuedAt = data.queue.enqueuedAt ?? null;
+        const requestId = data.queue.jobId ?? null;
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          (current) =>
+            current?.map((listing) =>
+              listing.id === vars.listingId
+                ? patchQueuedTraderaStatusCheck(listing, {
+                    browserMode: vars.browserMode,
+                    selectorProfile: vars.selectorProfile,
+                    requestId,
+                    queuedAt,
+                  })
+                : listing
+            ) ?? current
+        );
       }
       await invalidateProductListingsAndBadges(queryClient, productId);
       await invalidateProducts(queryClient);

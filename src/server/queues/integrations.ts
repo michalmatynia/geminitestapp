@@ -3,10 +3,24 @@ import 'server-only';
 export {
   startPlaywrightListingQueue,
   enqueuePlaywrightListingJob,
+} from '@/features/integrations/workers/playwrightListingQueue';
+export {
   startTraderaListingQueue,
   enqueueTraderaListingJob,
+  buildTraderaListingQueueJobId,
+  TRADERA_LISTING_QUEUE_NAMES,
+} from '@/features/integrations/workers/traderaListingQueue';
+export {
+  startVintedListingQueue,
+  enqueueVintedListingJob,
+} from '@/features/integrations/workers/vintedListingQueue';
+export {
   startTraderaRelistSchedulerQueue,
-} from '@/features/integrations/server';
+} from '@/features/integrations/workers/traderaRelistSchedulerQueue';
+export {
+  startBaseImportQueue,
+  enqueueBaseImportRunJob,
+} from '@/features/integrations/workers/baseImportQueue';
 export {
   startBaseExportQueue,
   enqueueBaseExportJob,

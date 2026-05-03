@@ -5,9 +5,10 @@ import { useState } from 'react';
 import {
   useListingSelection,
 } from '@/features/integrations/context/ListingSettingsContext';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import { FormModal } from '@/shared/ui/forms-and-actions.public';
-import { Alert } from '@/shared/ui/primitives.public';
+import { Alert, Button } from '@/shared/ui/primitives.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { ExportLogsPanel } from './ExportLogsPanel';
@@ -26,6 +27,7 @@ import { resolveIntegrationDisplayName } from './product-listings-labels';
 interface MassListProductModalProps extends EntityModalProps<string[]> {
   integrationId: string;
   connectionId: string;
+  products?: ProductWithImages[];
 }
 
 function MassListProductModalContent(): React.JSX.Element {
@@ -38,12 +40,36 @@ function MassListProductModalContent(): React.JSX.Element {
     isBaseComIntegration,
   } = useListingSelection();
 
-  const { error, progress, exportLogs, handleSubmit, submitting } = useMassListForm();
+  const {
+    error,
+    progress,
+    exportLogs,
+    authRequired,
+    authRequiredMarketplace,
+    loggingIn,
+    handleSubmit,
+    handleMarketplaceLogin,
+    submitting,
+  } = useMassListForm();
   const { modalTitle, saveText } = resolveMassListProductModalCopy({
     productCount: productIds.length,
-    selectedIntegrationName: resolveIntegrationDisplayName(selectedIntegration?.name),
+    selectedIntegrationName: resolveIntegrationDisplayName(
+      selectedIntegration?.name,
+      selectedIntegration?.slug
+    ),
+    selectedIntegrationSlug: selectedIntegration?.slug,
     isBaseComIntegration,
   });
+  const loginButtonLabel =
+    authRequiredMarketplace === 'vinted'
+      ? 'Login and continue on Vinted.pl'
+      : 'Login and continue on Tradera';
+  const waitingLabel =
+    authRequiredMarketplace === 'vinted'
+      ? 'Waiting for Vinted.pl login...'
+      : 'Waiting for login...';
+  const retryButtonLabel =
+    progress && progress.current > 1 ? 'Retry remaining products' : 'Retry';
 
   return (
     <FormModal
@@ -54,18 +80,52 @@ function MassListProductModalContent(): React.JSX.Element {
         void handleSubmit();
       }}
       isSaving={submitting}
+      isSaveDisabled={authRequired || loggingIn}
       saveText={saveText}
       cancelText='Cancel'
       size='md'
     >
       <div className='space-y-6'>
-        {error && <Alert variant='error'>{error}</Alert>}
+        {error && (
+          <Alert variant='error' className='p-3'>
+            <div className='flex flex-col gap-3'>
+              <span>{error}</span>
+              {authRequired ? (
+                <div className='flex flex-wrap items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    disabled={loggingIn || submitting}
+                    onClick={(): void => {
+                      void handleMarketplaceLogin();
+                    }}
+                  >
+                    {loggingIn ? waitingLabel : loginButtonLabel}
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    disabled={loggingIn || submitting}
+                    onClick={(): void => {
+                      void handleSubmit();
+                    }}
+                  >
+                    {retryButtonLabel}
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          </Alert>
+        )}
 
-        {submitting && progress && (
+        {progress && (submitting || authRequired) && (
           <MassListProgressPanel
             current={progress.current}
             total={progress.total}
             errors={progress.errors}
+            paused={authRequired && !submitting}
           />
         )}
 
@@ -84,14 +144,28 @@ function MassListProductModalContent(): React.JSX.Element {
           </>
         )}
 
-        <ExportLogsPanel logs={exportLogs} isOpen={logsOpen} onToggle={setLogsOpen} />
+        <ExportLogsPanel
+          logs={exportLogs}
+          config={{
+            isOpen: logsOpen,
+            onToggle: setLogsOpen,
+          }}
+        />
       </div>
     </FormModal>
   );
 }
 
 export function MassListProductModal(props: MassListProductModalProps): React.JSX.Element | null {
-  const { isOpen, integrationId, connectionId, item: productIds, onClose, onSuccess } = props;
+  const {
+    isOpen,
+    integrationId,
+    connectionId,
+    item: productIds,
+    products,
+    onClose,
+    onSuccess,
+  } = props;
 
   if (!productIds || !isOpen) return null;
 
@@ -103,6 +177,7 @@ export function MassListProductModal(props: MassListProductModalProps): React.JS
       <MassListProductModalViewProvider
         value={{
           productIds,
+          products: products ?? [],
           integrationId,
           connectionId,
           onClose,

@@ -1,8 +1,9 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import { type SafeTimeout } from '@/shared/lib/runtime/timeout';
+import { useQueryClient } from '@tanstack/react-query';
 
 
 interface QueryBatchConfig {
@@ -30,7 +31,7 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
           }
           >
           >(new Map());
-  const batchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const batchTimeout = useRef<SafeTimeout | null>(null);
 
   const maxBatchSize = config.maxBatchSize || 10;
   const batchDelay = config.batchDelay || 50;
@@ -122,14 +123,14 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
 
         // Clear existing timeout
         if (batchTimeout.current) {
-          clearTimeout(batchTimeout.current);
+          safeClearTimeout(batchTimeout.current);
         }
 
         // Process batch when full or after delay
         if (batchQueue.current.size >= maxBatchSize) {
           void processBatch();
         } else {
-          batchTimeout.current = setTimeout(() => {
+          batchTimeout.current = safeSetTimeout(() => {
             void processBatch();
           }, batchDelay);
         }
@@ -141,7 +142,7 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
   useEffect((): (() => void) => {
     return (): void => {
       if (batchTimeout.current) {
-        clearTimeout(batchTimeout.current);
+        safeClearTimeout(batchTimeout.current);
       }
     };
   }, []);

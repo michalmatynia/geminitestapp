@@ -229,6 +229,18 @@ describe('useProductFormValidator', () => {
 
     rerender();
 
+    // First change (e.g. auto-save ID assignment) preserves manual choice
+    expect(result.current.formatterEnabled).toBe(true);
+
+    hookMocks.draft = {
+      id: 'draft-3',
+      validatorEnabled: true,
+      formatterEnabled: true,
+    };
+
+    rerender();
+
+    // Second change (e.g. navigation to another draft) resets to defaults
     await waitFor(() => expect(result.current.formatterEnabled).toBe(false));
   });
 

@@ -26,6 +26,8 @@ describe('AdminFilemakerOrganizationEditPageContext', () => {
       emailExtractionText: '',
       handleExtractEmails: vi.fn(),
       handleSave: vi.fn(),
+      handleWebsiteSocialScrape: vi.fn(),
+      isWebsiteSocialScrapeRunning: false,
       linkedEventIds: [],
       orgDraft: {},
       phoneNumberExtractionText: '',
@@ -71,5 +73,6 @@ describe('AdminFilemakerOrganizationEditPageContext', () => {
     expect(result.current.actions.setOrgDraft).toBeTypeOf('function');
     expect(result.current.actions.setLinkedEventIds).toBeTypeOf('function');
     expect(result.current.actions.handleSave).toBeTypeOf('function');
+    expect(result.current.actions.handleWebsiteSocialScrape).toBeTypeOf('function');
   });
 });

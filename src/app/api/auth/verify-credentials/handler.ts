@@ -1,1 +1,1 @@
-export { POST_handler, payloadSchema } from './handler.impl';
+export { postHandler, payloadSchema } from './handler.impl';

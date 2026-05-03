@@ -2,7 +2,7 @@ import 'server-only';
 
 import { createHmac, timingSafeEqual } from 'crypto';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, type NextResponse } from 'next/server';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
@@ -15,6 +15,14 @@ type KangurLearnerSessionPayload = {
 const COOKIE_NAME = 'kangur.learner-session';
 const COOKIE_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 const DEV_FALLBACK_SIGNING_KEY = 'kangur-dev-signing-key-change-me';
+
+const resolveCookieDomain = (): string | undefined => {
+  const value = process.env['KANGUR_COOKIE_DOMAIN'];
+  if (!value || value.trim().length === 0) {
+    return undefined;
+  }
+  return value.trim();
+};
 
 const resolveSigningKey = (): string =>
   process.env['AUTH_SECRET'] ||
@@ -120,6 +128,10 @@ const buildCookieValue = (input: { value: string; maxAge: number }): string => {
   if (process.env['NODE_ENV'] === 'production') {
     parts.push('Secure');
   }
+  const domain = resolveCookieDomain();
+  if (domain) {
+    parts.push(`Domain=${domain}`);
+  }
   return parts.join('; ');
 };
 
@@ -150,6 +162,7 @@ export const setKangurLearnerSession = (
     exp: Date.now() + COOKIE_TTL_MS,
   });
   const maxAge = Math.floor(COOKIE_TTL_MS / 1000);
+  const domain = resolveCookieDomain();
   const cookies = (
     response as NextResponse & {
       cookies?: { set?: (value: Record<string, unknown>) => void };
@@ -164,6 +177,7 @@ export const setKangurLearnerSession = (
       secure: process.env['NODE_ENV'] === 'production',
       path: '/',
       maxAge,
+      ...(domain ? { domain } : {}),
     });
     return;
   }
@@ -178,6 +192,7 @@ export const setKangurLearnerSession = (
 };
 
 export const clearKangurLearnerSession = (response: NextResponse): void => {
+  const domain = resolveCookieDomain();
   const cookies = (
     response as NextResponse & {
       cookies?: { set?: (value: Record<string, unknown>) => void };
@@ -192,6 +207,7 @@ export const clearKangurLearnerSession = (response: NextResponse): void => {
       secure: process.env['NODE_ENV'] === 'production',
       path: '/',
       maxAge: 0,
+      ...(domain ? { domain } : {}),
     });
     return;
   }

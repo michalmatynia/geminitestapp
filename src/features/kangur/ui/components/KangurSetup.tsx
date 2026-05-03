@@ -107,6 +107,8 @@ function KangurSetupShell({ children, testId }: KangurSetupShellProps): React.JS
   );
 }
 
+// getKangurSetupCopy returns locale-specific copy for the Kangur competition
+// setup screen. Covers pl, en, uk, de with a Polish default.
 const getKangurSetupCopy = (
   locale: ReturnType<typeof normalizeSiteLocale>
 ): KangurSetupCopy => {
@@ -389,6 +391,12 @@ const getKangurSetupCopy = (
   };
 };
 
+// KangurSetup is the two-step Kangur competition mode setup screen:
+//  Step 1 – Edition selection: the learner picks a competition year/edition.
+//  Step 2 – Set selection: the learner picks a practice set or exam within
+//            the chosen edition.
+// An optional recommendation card is shown when a recommended mode is provided
+// (e.g. from the AI Tutor or progress-based suggestion).
 export default function KangurSetup({
   onStart,
   recommendedDescription,

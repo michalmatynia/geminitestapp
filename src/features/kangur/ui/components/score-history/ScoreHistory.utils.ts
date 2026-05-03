@@ -4,7 +4,7 @@ import {
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
 import {
-  buildKangurScoreInsights,
+  type buildKangurScoreInsights,
 } from '@/features/kangur/ui/services/score-insights';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { OP_ACCENTS } from './ScoreHistory.constants';

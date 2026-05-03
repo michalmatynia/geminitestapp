@@ -20,33 +20,42 @@ export const querySchema = z.object({
   resourceType: optionalTrimmedQueryString(),
 });
 
-export const GET_handler = async (_request: Request, ctx: ApiHandlerContext) => {
+export const getResourcesHandler = (
+  _request: Request,
+  ctx: ApiHandlerContext
+): Promise<Response> => {
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
   const resourceId = query.resourceId;
 
-  if (resourceId) {
+  if (typeof resourceId === 'string' && resourceId !== '') {
     const resource = getAgentResource(resourceId);
 
-    if (!resource) {
-      return NextResponse.json(
-        { error: `Unknown agent resource: ${resourceId}` },
-        { status: 404 },
+    if (resource === null) {
+      return Promise.resolve(
+        NextResponse.json(
+          { error: `Unknown agent resource: ${resourceId}` },
+          { status: 404 },
+        )
       );
     }
 
-    return NextResponse.json({
-      resource,
-      capabilities: listAgentCapabilities({ resourceId }),
-      ...getAgentDiscoverySummary(),
-    });
+    return Promise.resolve(
+      NextResponse.json({
+        resource,
+        capabilities: listAgentCapabilities({ resourceId }),
+        ...getAgentDiscoverySummary(),
+      })
+    );
   }
 
-  return NextResponse.json({
-    resources: listAgentResources({
-      mode: query.mode ?? null,
-      requiresLease: query.requiresLease,
-      resourceType: query.resourceType ?? null,
-    }),
-    ...getAgentDiscoverySummary(),
-  });
+  return Promise.resolve(
+    NextResponse.json({
+      resources: listAgentResources({
+        mode: query.mode ?? null,
+        requiresLease: query.requiresLease,
+        resourceType: query.resourceType ?? null,
+      }),
+      ...getAgentDiscoverySummary(),
+    })
+  );
 };

@@ -193,6 +193,69 @@ describe('executeMongoCollectionUpdate', () => {
     expect(toast).toHaveBeenCalledWith('No rows updated.', { variant: 'error' });
   });
 
+  it('reports warning metadata when the write outcome marks a zero-affected update as warning', async () => {
+    dbActionMock.mockResolvedValue({
+      ok: true,
+      data: { matchedCount: 1, modifiedCount: 0 },
+    });
+    evaluateWriteOutcomeMock.mockReturnValue({
+      isZeroAffected: true,
+      writeOutcome: {
+        status: 'warning',
+        operation: 'update',
+        code: 'zero_affected',
+        message: 'No rows updated.',
+      },
+    });
+
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+
+    const result = await executeMongoCollectionUpdate({
+      action: 'updateOne',
+      node: { id: 'node-update-warning' } as never,
+      nodeInputs: {},
+      executed: { updater: new Set<string>() } as never,
+      reportAiPathsError,
+      toast,
+      dbConfig: {} as never,
+      queryPayload: {},
+      collection: 'products',
+      idType: undefined,
+      debugPayload: { source: 'plan' },
+      parameterTargetPath: 'content_en',
+      updates: { content_en: 'Updated text' },
+      primaryTarget: 'content_en',
+      resolvedFilter: { id: 'prod-1' },
+      updateDoc: { $set: { content_en: 'Updated text' } },
+      aiPrompt: 'mongo prompt',
+    });
+
+    expect(reportAiPathsError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        action: 'dbWriteOutcome',
+        collection: 'products',
+        nodeId: 'node-update-warning',
+        errorCode: 'AI_PATHS_DB_WRITE_ZERO_AFFECTED',
+        errorCategory: 'database',
+        errorScope: 'node',
+        errorSeverity: 'warning',
+        writeOutcome: expect.objectContaining({
+          status: 'warning',
+          code: 'zero_affected',
+        }),
+      })
+    );
+    expect(toast).toHaveBeenCalledWith('No rows updated.', { variant: 'warning' });
+    expect(result.writeOutcome).toEqual(
+      expect.objectContaining({
+        status: 'warning',
+        code: 'zero_affected',
+      })
+    );
+  });
+
   it('returns update data, content, and debug write metadata on success', async () => {
     dbActionMock.mockResolvedValue({
       ok: true,

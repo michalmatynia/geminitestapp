@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getProductSyncRunDetail } from '@/features/product-sync/services/product-sync-repository';
@@ -17,7 +17,7 @@ export const querySchema = z.object({
     }),
 });
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { runId: string }

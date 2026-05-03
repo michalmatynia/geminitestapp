@@ -1,8 +1,9 @@
 'use client';
 
-import { CalendarDays, Database, Mail, Megaphone, ShieldAlert } from 'lucide-react';
-import React from 'react';
+import { BriefcaseBusiness, Building2, BookOpen, CalendarDays, Database, FileText, Globe, Mail, Megaphone, Settings2, ShieldAlert, Tags, Users } from 'lucide-react';
+import React, { startTransition } from 'react';
 
+import type { PanelAction } from '@/shared/contracts/ui/panels';
 import { PanelHeader } from '@/shared/ui/templates.public';
 
 import { FilemakerEmailsSection } from '../components/page/FilemakerEmailsSection';
@@ -15,6 +16,48 @@ import {
   useAdminFilemakerPageStateContext,
 } from '../context/AdminFilemakerPageContext';
 
+type FilemakerPageRouter = ReturnType<typeof useAdminFilemakerPageStateContext>['router'];
+
+const FILEMAKER_PAGE_ACTIONS = [
+  { key: 'persons', label: 'Persons Page', href: '/admin/filemaker/persons', Icon: Users },
+  {
+    key: 'organizations',
+    label: 'Organizations Page',
+    href: '/admin/filemaker/organizations',
+    Icon: Building2,
+  },
+  { key: 'mail', label: 'Email Client', href: '/admin/filemaker/mail-client', Icon: Mail },
+  { key: 'invoices', label: 'Invoices Page', href: '/admin/filemaker/invoices', Icon: FileText },
+  { key: 'campaigns', label: 'Campaigns Page', href: '/admin/filemaker/campaigns', Icon: Megaphone },
+  {
+    key: 'control-centre',
+    label: 'Control Centre',
+    href: '/admin/filemaker/campaigns/control-centre',
+    Icon: ShieldAlert,
+  },
+  {
+    key: 'job-listings',
+    label: 'Job Listings',
+    href: '/admin/filemaker/job-listings',
+    Icon: BriefcaseBusiness,
+  },
+  { key: 'events', label: 'Events Page', href: '/admin/filemaker/events', Icon: CalendarDays },
+  { key: 'values', label: 'Values Page', href: '/admin/filemaker/values', Icon: Tags },
+  { key: 'lexicon', label: 'Lexicon Page', href: '/admin/filemaker/lexicon', Icon: BookOpen },
+  { key: 'emails', label: 'Email Records', href: '/admin/filemaker/emails', Icon: Mail },
+  { key: 'websites', label: 'Websites', href: '/admin/filemaker/websites', Icon: Globe },
+  { key: 'settings', label: 'Settings', href: '/admin/settings/filemaker', Icon: Settings2 },
+] as const;
+
+const buildFilemakerPageActions = (router: FilemakerPageRouter): PanelAction[] =>
+  FILEMAKER_PAGE_ACTIONS.map((action) => ({
+    key: action.key,
+    label: action.label,
+    icon: <action.Icon className='size-4' />,
+    variant: 'outline',
+    onClick: () => startTransition(() => { router.push(action.href); }),
+  }));
+
 function AdminFilemakerPageInner(): React.JSX.Element {
   const { router } = useAdminFilemakerPageStateContext();
 
@@ -22,45 +65,9 @@ function AdminFilemakerPageInner(): React.JSX.Element {
     <div className='page-section-compact space-y-6'>
       <PanelHeader
         title='Filemaker'
-        description='Manage persons, organizations, events, and emails used in Case Resolver document addressing.'
+        description='Manage persons, organizations, events, invoices, and emails used in FileMaker workflows.'
         icon={<Database className='size-4' />}
-        actions={[
-          {
-            key: 'mail',
-            label: 'Mail',
-            icon: <Mail className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/mail'),
-          },
-          {
-            key: 'campaigns',
-            label: 'Campaigns Page',
-            icon: <Megaphone className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/campaigns'),
-          },
-          {
-            key: 'control-centre',
-            label: 'Control Centre',
-            icon: <ShieldAlert className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/campaigns/control-centre'),
-          },
-          {
-            key: 'events',
-            label: 'Events Page',
-            icon: <CalendarDays className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/events'),
-          },
-          {
-            key: 'emails',
-            label: 'Emails Page',
-            icon: <Mail className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/emails'),
-          },
-        ]}
+        actions={buildFilemakerPageActions(router)}
       />
 
       <FilemakerSummaryBadges />

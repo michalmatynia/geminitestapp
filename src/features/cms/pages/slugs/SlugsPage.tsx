@@ -2,8 +2,9 @@
 
 import { Link2 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useState, useCallback } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useMemo, useState, useCallback, startTransition } from 'react';
 
 import { AttachSlugModal } from '@/features/cms/components/slugs/AttachSlugModal';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
@@ -86,7 +87,7 @@ export default function SlugsPage(): React.JSX.Element {
       params.delete('domainId');
     }
     const next = params.toString();
-    router.replace(next ? `${pathname}?${next}` : pathname);
+    startTransition(() => { router.replace(next ? `${pathname}?${next}` : pathname); });
     setActiveDomainId(value || null);
   };
 
@@ -169,7 +170,7 @@ export default function SlugsPage(): React.JSX.Element {
               <DropdownMenuItem
                 onSelect={(event: Event): void => {
                   event.preventDefault();
-                  router.push(buildDomainHref(`/admin/cms/slugs/${row.original.id}/edit`));
+                  startTransition(() => { router.push(buildDomainHref(`/admin/cms/slugs/${row.original.id}/edit`)); });
                 }}
               >
                 Edit Settings
@@ -293,7 +294,7 @@ export default function SlugsPage(): React.JSX.Element {
       />
 
       <ConfirmModal
-        isOpen={!!slugToDelete}
+        isOpen={Boolean(slugToDelete)}
         onClose={() => setSlugToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Remove Slug from Zone'

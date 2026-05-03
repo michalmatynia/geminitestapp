@@ -90,8 +90,12 @@ vi.mock('next/navigation', () => ({
   useRouter: () => useRouterMock(),
 }));
 
-vi.mock('@/features/kangur/services/kangur-platform', () => ({
-  getKangurPlatform: () => ({
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => useRouterMock(),
+}));
+
+vi.mock('@/features/kangur/services/kangur-shell-session-client', () => ({
+  kangurShellSessionClient: {
     auth: {
       me: meMock,
       prepareLoginHref: prepareLoginHrefMock,
@@ -101,14 +105,15 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
     learners: {
       select: selectLearnerMock,
     },
-  }),
+  },
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { getKangurLoginHref } from '@/features/kangur/config/routing';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -272,11 +277,21 @@ describe('KangurAuthContext', () => {
     expect(meMock).toHaveBeenCalledTimes(1);
     firstRender.unmount();
 
+    vi.useFakeTimers();
     renderAuthHarness();
 
-    await waitFor(() => {
-      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
-      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+    expect(meMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_199);
+    });
+
+    expect(meMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
     });
 
     expect(meMock).toHaveBeenCalledTimes(2);

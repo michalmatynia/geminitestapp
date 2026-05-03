@@ -1,5 +1,6 @@
 import { kangurScoreSchema, type KangurScore } from '@kangur/contracts/kangur';
 import type { KangurClientStorageAdapter } from '@kangur/platform';
+import { normalizeKangurScore } from './score-normalization';
 
 const KANGUR_MOBILE_RECENT_RESULTS_STORAGE_KEY = 'kangur.mobile.scores.recent';
 const KANGUR_MOBILE_RECENT_RESULTS_SNAPSHOT_LIMIT = 3;
@@ -8,14 +9,15 @@ const parsePersistedRecentResultsStore = (
   rawSnapshot: string | null,
 ): Record<string, KangurScore[]> => {
   const normalizedRawSnapshot = rawSnapshot?.trim() ?? '';
-  if (!normalizedRawSnapshot) {
+  if (normalizedRawSnapshot === '') {
     return {};
   }
 
   try {
     const parsedSnapshot = JSON.parse(normalizedRawSnapshot) as unknown;
     if (
-      !parsedSnapshot ||
+      parsedSnapshot === null ||
+      parsedSnapshot === undefined ||
       typeof parsedSnapshot !== 'object' ||
       Array.isArray(parsedSnapshot)
     ) {
@@ -23,15 +25,22 @@ const parsePersistedRecentResultsStore = (
     }
 
     return Object.entries(parsedSnapshot).reduce<Record<string, KangurScore[]>>(
-      (snapshot, [identityKey, value]) => {
-        const parsedResults = kangurScoreSchema
-          .array()
-          .max(KANGUR_MOBILE_RECENT_RESULTS_SNAPSHOT_LIMIT)
-          .safeParse(value);
-        if (parsedResults.success) {
-          snapshot[identityKey] = parsedResults.data;
+      (acc, [identityKey, value]) => {
+        if (Array.isArray(value)) {
+            const normalized = value.map((v) => normalizeKangurScore(v));
+            const parsedResults = kangurScoreSchema
+              .array()
+              .max(KANGUR_MOBILE_RECENT_RESULTS_SNAPSHOT_LIMIT)
+              .safeParse(normalized);
+              
+            if (parsedResults.success) {
+              return {
+                ...acc,
+                [identityKey]: parsedResults.data,
+              };
+            }
         }
-        return snapshot;
+        return acc;
       },
       {},
     );
@@ -53,7 +62,7 @@ export const resolvePersistedKangurMobileRecentResults = ({
     storage.getItem(KANGUR_MOBILE_RECENT_RESULTS_STORAGE_KEY),
   );
   const persistedResults = store[identityKey];
-  if (!persistedResults) {
+  if (persistedResults === undefined) {
     return null;
   }
 

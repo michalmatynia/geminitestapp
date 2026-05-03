@@ -40,13 +40,25 @@ const AUTH_LOGGING_ENABLED = process.env['AUTH_LOGGING'] === 'true';
 
 const getClientIp = (req: Request): string | null => {
   const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) {
+  if (forwarded !== null) {
     const first = forwarded.split(',')[0];
-    if (first) return first.trim();
+    if (first !== undefined && first !== '') return first.trim();
   }
   const real = req.headers.get('x-real-ip');
-  if (real) return real;
+  if (real !== null) return real;
   return null;
+};
+
+const redactObject = (value: Record<string, unknown>, depth: number): Record<string, unknown> => {
+  const out: Record<string, unknown> = {};
+  Object.entries(value).forEach(([key, val]: [string, unknown]) => {
+    if (isSensitiveKey(key)) {
+      out[key] = REDACTED_VALUE;
+    } else {
+      out[key] = redactValue(val, depth + 1);
+    }
+  });
+  return out;
 };
 
 const redactValue = (value: unknown, depth: number): unknown => {
@@ -56,24 +68,16 @@ const redactValue = (value: unknown, depth: number): unknown => {
   if (Array.isArray(value)) {
     return value.slice(0, MAX_ARRAY).map((item: unknown) => redactValue(item, depth + 1));
   }
-  if (typeof value === 'object' && value) {
-    const out: Record<string, unknown> = {};
-    Object.entries(value as Record<string, unknown>).forEach(([key, val]: [string, unknown]) => {
-      if (isSensitiveKey(key)) {
-        out[key] = REDACTED_VALUE;
-      } else {
-        out[key] = redactValue(val, depth + 1);
-      }
-    });
-    return out;
+  if (typeof value === 'object' && value !== null) {
+    return redactObject(value as Record<string, unknown>, depth);
   }
   return '[Unknown]';
 };
 
 const redactBody = (body: unknown): Record<string, unknown> | null => {
-  if (!body) return null;
+  if (body === undefined || body === null || body === false) return null;
   const redacted = redactValue(body, 0);
-  if (redacted && typeof redacted === 'object' && !Array.isArray(redacted)) {
+  if (redacted !== null && typeof redacted === 'object' && !Array.isArray(redacted)) {
     return redacted as Record<string, unknown>;
   }
   return { value: redacted };
@@ -88,21 +92,36 @@ const extractHeaders = (req: Request): Record<string, string> => {
   return result;
 };
 
+const buildAuthContext = (input: AuthLogInput, url: URL): Record<string, unknown> => {
+  const context: Record<string, unknown> = {
+    stage: input.stage,
+    path: url.pathname,
+    method: input.req.method,
+    ip: getClientIp(input.req),
+    headers: extractHeaders(input.req),
+  };
+
+  if (typeof input.outcome === 'string' && input.outcome !== '') {
+    context['outcome'] = input.outcome;
+  }
+  if (typeof input.status === 'number') {
+    context['status'] = input.status;
+  }
+  if (input.body !== undefined && input.body !== null) {
+    context['body'] = redactBody(input.body);
+  }
+  if (input.extra !== undefined && input.extra !== null) {
+    context['extra'] = redactValue(input.extra, 0);
+  }
+
+  return context;
+};
+
 export async function logAuthEvent(input: AuthLogInput): Promise<void> {
   if (!AUTH_LOGGING_ENABLED) return;
   try {
     const url = new URL(input.req.url);
-    const context: Record<string, unknown> = {
-      stage: input.stage,
-      path: url.pathname,
-      method: input.req.method,
-      ip: getClientIp(input.req),
-      headers: extractHeaders(input.req),
-      ...(input.outcome ? { outcome: input.outcome } : {}),
-      ...(typeof input.status === 'number' ? { status: input.status } : {}),
-      ...(input.body ? { body: redactBody(input.body) } : {}),
-      ...(input.extra ? { extra: redactValue(input.extra, 0) } : {}),
-    };
+    const context = buildAuthContext(input, url);
 
     await logSystemEvent({
       level: input.stage === 'failure' ? 'warn' : 'info',
@@ -114,8 +133,6 @@ export async function logAuthEvent(input: AuthLogInput): Promise<void> {
       context,
     });
   } catch (error) {
-    void ErrorSystem.captureException(error);
-  
-    // Best-effort logging only
+    ErrorSystem.captureException(error).catch(() => {});
   }
 }

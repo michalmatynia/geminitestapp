@@ -4,6 +4,7 @@ import {
   __testOnly,
   buildFilemakerCampaignClickTrackingUrl,
   buildFilemakerCampaignManageAllPreferencesUrl,
+  buildFilemakerCampaignOneClickUnsubscribeUrl,
   buildFilemakerCampaignOpenTrackingUrl,
   buildFilemakerCampaignPreferencesUrl,
   buildFilemakerCampaignUnsubscribeUrl,
@@ -71,6 +72,33 @@ describe('filemaker campaign unsubscribe token', () => {
 
     expect(url.startsWith('https://app.example.com/admin/filemaker/campaigns/unsubscribe?token=')).toBe(true);
     expect(__testOnly.resolvePublicAppUrl()).toBe('https://app.example.com');
+  });
+
+  it('builds an API one-click unsubscribe url for List-Unsubscribe-Post', () => {
+    process.env['FILEMAKER_CAMPAIGN_UNSUBSCRIBE_SECRET'] = 'unsubscribe-secret';
+    process.env['NEXT_PUBLIC_APP_URL'] = 'https://app.example.com/';
+
+    const url = buildFilemakerCampaignOneClickUnsubscribeUrl({
+      emailAddress: 'jan@example.com',
+      campaignId: 'campaign-1',
+      runId: 'run-1',
+      deliveryId: 'delivery-1',
+      now: 1_000,
+      ttlMs: 5_000,
+    });
+
+    expect(
+      url.startsWith('https://app.example.com/api/filemaker/campaigns/unsubscribe?token=')
+    ).toBe(true);
+    const token = new URL(url).searchParams.get('token');
+    expect(parseFilemakerCampaignUnsubscribeToken(token, 2_000)).toEqual(
+      expect.objectContaining({
+        emailAddress: 'jan@example.com',
+        campaignId: 'campaign-1',
+        runId: 'run-1',
+        deliveryId: 'delivery-1',
+      })
+    );
   });
 
   it('builds an absolute open tracking url with the same signed recipient token', () => {

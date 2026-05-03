@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, ReactNode, useMemo, useEffect } from 'react';
+import React, { useState, type ReactNode, useMemo, useEffect } from 'react';
 
 import type {
   AgentAuditLogRecordDto as AgentAuditLogRecord,

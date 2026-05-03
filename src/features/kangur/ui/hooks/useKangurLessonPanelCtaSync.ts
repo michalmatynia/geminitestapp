@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurProgressUpdateContext } from '@kangur/platform';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurAuthSessionState } from '@/features/kangur/ui/context/KangurAuthContext';
 import { loadProgress } from '@/features/kangur/ui/services/progress';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import { useKangurOptionalSubjectKey } from '@/features/kangur/ui/hooks/useKangurOptionalSubjectKey';
@@ -16,7 +16,7 @@ const CTA_PROGRESS_CONTEXT: Required<Pick<KangurProgressUpdateContext, 'source'>
 };
 
 export const useKangurLessonPanelCtaSync = (): ((ctaId: string) => void) => {
-  const { isAuthenticated, user } = useKangurAuth();
+  const { isAuthenticated, user } = useKangurAuthSessionState();
   const subjectKey = useKangurOptionalSubjectKey();
 
   return useCallback(

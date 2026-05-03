@@ -5,12 +5,19 @@ import { Card } from '@/shared/ui/primitives.public';
 type BaseQuickExportFailureBannerProps = {
   status: string | null | undefined;
   runId: string | null | undefined;
+  failureReason?: string | null | undefined;
 };
 
 export function BaseQuickExportFailureBanner({
   status,
   runId,
+  failureReason,
 }: BaseQuickExportFailureBannerProps): React.JSX.Element {
+  const resolvedFailureReason =
+    typeof failureReason === 'string' && failureReason.trim().length > 0
+      ? failureReason.trim()
+      : null;
+
   return (
     <Card variant='subtle' padding='lg' className='bg-card/50 space-y-3'>
       <div className='space-y-1 text-center'>
@@ -34,6 +41,14 @@ export function BaseQuickExportFailureBanner({
           <div className='font-mono text-white'>{runId ?? 'Unavailable'}</div>
         </div>
       </div>
+      {resolvedFailureReason ? (
+        <div className='rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-left'>
+          <div className='text-[10px] font-semibold uppercase tracking-wide text-rose-200'>
+            Error message
+          </div>
+          <p className='mt-1 text-sm text-rose-50'>{resolvedFailureReason}</p>
+        </div>
+      ) : null}
     </Card>
   );
 }

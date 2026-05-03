@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { startAiPathRunQueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
@@ -48,7 +48,7 @@ const parseRuntimeAnalyticsRange = (
   throw new Error('Invalid range.');
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = resolveRuntimeAnalyticsQueryInput(req, _ctx);
   const rangeRaw = parseRuntimeAnalyticsRange(query);
   const { from, to } = resolveRuntimeAnalyticsRangeWindow(rangeRaw);
@@ -73,12 +73,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
             completed: 0,
             failed: 0,
             canceled: 0,
-            deadLettered: 0,
-            blockedOnLease: 0,
-            handoffReady: 0,
             successRate: 0,
             failureRate: 0,
-            deadLetterRate: 0,
             avgDurationMs: null,
             p95DurationMs: null,
           },

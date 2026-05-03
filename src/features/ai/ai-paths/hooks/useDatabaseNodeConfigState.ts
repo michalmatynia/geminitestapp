@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
@@ -6,8 +7,10 @@ import type { SchemaData } from '@/shared/contracts/database';
 import type { AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import type { DatabaseConfig, DbQueryConfig, DbQueryPreset, DatabaseActionCategory } from '@/shared/lib/ai-paths';
-import { createPresetId, extractJsonPathEntries, dbApi } from '@/shared/lib/ai-paths';
+import type { DatabaseConfig, DbQueryConfig, DbQueryPreset, DatabaseActionCategory } from '@/shared/contracts/ai-paths';
+import { extractJsonPathEntries } from '@/shared/lib/ai-paths/core/utils';
+import { createPresetId } from '@/shared/lib/ai-paths/core/utils';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 import { resolveDbActionProvider } from '@/shared/lib/ai-paths/core/utils/provider-actions';
 import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
 import {
@@ -27,6 +30,10 @@ import { useDatabaseActionConfig } from './database-node/useDatabaseActionConfig
 import { useDatabaseMappingState } from './database-node/useDatabaseMappingState';
 import { useDatabaseQueryExecution } from './database-node/useDatabaseQueryExecution';
 import { extractCodeSnippets } from '../components/node-config/database/database-constructor-tab-helpers';
+
+// This hook coordinates query state, schema fetches, prompt settings, and
+// nested database-node helpers. Keep it on the plain hook runtime so the
+// Canvas database dialog remains stable in dev under React Compiler.
 
 const DEFAULT_QUERY: DbQueryConfig = {
   provider: 'auto',
@@ -500,15 +507,17 @@ export function useDatabaseNodeConfigState() {
     []
   );
 
-  useEffect(() => {
-    if (!isDatabaseSelected || !selectedNodeId) return;
-    const runtimeInputs = runtimeState.inputs?.[selectedNodeId] ?? {};
-    const detectedId = (
+  const detectedId = useMemo(() => {
+    const runtimeInputs = runtimeState.inputs?.[selectedNodeId ?? ''] ?? {};
+    return (
       (runtimeInputs['entityId'] as string) ||
       (runtimeInputs['productId'] as string) ||
       (runtimeInputs['value'] as string)
     )?.trim?.();
-    if (!detectedId) return;
+  }, [runtimeState.inputs, selectedNodeId]);
+
+  useEffect(() => {
+    if (!isDatabaseSelected || !selectedNodeId || !detectedId) return;
 
     const queryCollection = databaseConfig.query?.collection ?? 'products';
     const fetchKey = `${queryCollection}:${detectedId}`;
@@ -523,7 +532,7 @@ export function useDatabaseNodeConfigState() {
     selectedNodeId,
     isDatabaseSelected,
     databaseConfig.query?.collection,
-    runtimeState,
+    detectedId,
     updaterSamples,
     handleFetchUpdaterSample,
   ]);

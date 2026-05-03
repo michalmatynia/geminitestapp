@@ -1,6 +1,6 @@
-import { AiNode } from '@/shared/contracts/ai-paths';
+import { type AiNode } from '@/shared/contracts/ai-paths';
 
-import { EngineStateManager } from './engine-state-manager';
+import { type EngineStateManager } from './engine-state-manager';
 import {
   checkContextMatchesSimulation,
   hasValuableSimulationContext,
@@ -19,7 +19,7 @@ export const checkTriggerProvenance = (ctx: TriggerProvenanceContext): boolean =
   const { scopedNodeIds, nodeById, state, triggerContext } = ctx;
   const simulationNodesInScope = Array.from(scopedNodeIds)
     .map((id) => nodeById.get(id))
-    .filter((n): n is AiNode => !!n && (n.type === 'simulation' || isSimulationCapableFetcher(n)));
+    .filter((n): n is AiNode => n != null && (n.type === 'simulation' || isSimulationCapableFetcher(n)));
   const finishedSimulationNodes = simulationNodesInScope.filter((n) =>
     state.finishedNodes.has(n.id)
   );

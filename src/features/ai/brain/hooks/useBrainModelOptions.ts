@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 
+import type { BrainModelDescriptor } from '@/shared/contracts/ai-brain';
 import {
   getBrainCapabilityModelFamilies,
   type AiBrainAssignment,
@@ -21,6 +22,7 @@ type UseBrainModelOptionsInput = {
 
 type UseBrainModelOptionsResult = {
   models: string[];
+  descriptors: Record<string, BrainModelDescriptor>;
   isLoading: boolean;
   assignment: AiBrainAssignment;
   effectiveModelId: string;
@@ -88,6 +90,7 @@ export function useBrainModelOptions({
 
   return {
     models,
+    descriptors: modelsQuery.data?.descriptors ?? {},
     isLoading: modelsQuery.isLoading || settingsStore.isLoading,
     assignment,
     effectiveModelId,

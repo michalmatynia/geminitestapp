@@ -23,7 +23,7 @@ test('notes workspace exposes list controls accessibly and passes the accessibil
   await expect(page.getByRole('button', { name: 'Filter pinned notes' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filter archived notes' })).toBeVisible();
 
-  const skipLink = page.getByRole('link', { name: 'Skip to content' });
+  const skipLink = page.getByRole('link', { name: /Skip to (main )?content/i });
   await skipLink.focus();
   await expect(skipLink).toBeFocused();
 

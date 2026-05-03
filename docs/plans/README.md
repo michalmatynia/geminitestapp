@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -16,6 +16,13 @@ Use this directory for cross-feature or repo-wide:
 - migration plans
 - closeout summaries
 
+## Open This Hub When
+
+- you need the current cross-feature execution baseline or closeout
+- you need to know whether a dated plan is still active or only retained history
+- a workstream spans multiple features and does not belong under a single feature-owned `plans/` folder
+- you need the planning counterpart to migration execution docs under [`docs/migrations/`](../migrations/README.md)
+
 ## Placement Rule
 
 - Feature-local plans should prefer `docs/<feature>/plans/` when that exists.
@@ -24,15 +31,26 @@ Use this directory for cross-feature or repo-wide:
 
 ## Current Docs
 
-- Active execution baselines:
+Current baseline and closeout:
+
 - [`repo-deep-scan-and-doc-refresh-plan-2026-03-25.md`](./repo-deep-scan-and-doc-refresh-plan-2026-03-25.md)
 - [`canonical-closeout-2026-04-17.md`](./canonical-closeout-2026-04-17.md)
-- Historical or retained plan records:
+
+Retained historical plan records:
+
 - [`fastcomet-storage-plan.md`](./fastcomet-storage-plan.md)
 - [`image-studio-object-layout-improvement-plan.md`](./image-studio-object-layout-improvement-plan.md)
 - [`bazel-bun-repo-integration-closeout-2026-03-11.md`](./bazel-bun-repo-integration-closeout-2026-03-11.md)
 - [`eslint-10-migration-completed-2026-03-10.md`](./eslint-10-migration-completed-2026-03-10.md)
 - [`site-wide-canonical-migration-plan-2026-03-05.md`](./site-wide-canonical-migration-plan-2026-03-05.md)
+
+## Which Doc To Use
+
+| Question | Canonical doc |
+| --- | --- |
+| What was the latest repo-wide doc refresh baseline? | [`repo-deep-scan-and-doc-refresh-plan-2026-03-25.md`](./repo-deep-scan-and-doc-refresh-plan-2026-03-25.md) |
+| What is the latest closeout for the canonical documentation/migration wave? | [`canonical-closeout-2026-04-17.md`](./canonical-closeout-2026-04-17.md) |
+| Where should active migration execution live instead of planning? | [`../migrations/README.md`](../migrations/README.md) |
 
 ## Structure Notes
 

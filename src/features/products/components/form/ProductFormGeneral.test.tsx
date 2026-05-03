@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,13 +9,17 @@ import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 
-const { useProductFormMetadataMock, useProductValidationStateMock, setValueSpy } = vi.hoisted(
-  () => ({
+const {
+  useProductFormMetadataMock,
+  useProductValidationStateMock,
+  useTitleTermsMock,
+  setValueSpy,
+} = vi.hoisted(() => ({
     useProductFormMetadataMock: vi.fn(),
     useProductValidationStateMock: vi.fn(),
+    useTitleTermsMock: vi.fn(),
     setValueSpy: vi.fn(),
-  })
-);
+  }));
 
 vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
   useProductFormMetadata: () => useProductFormMetadataMock(),
@@ -23,6 +27,10 @@ vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
 
 vi.mock('@/features/products/context/ProductValidationSettingsContext', () => ({
   useProductValidationState: () => useProductValidationStateMock(),
+}));
+
+vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
+  useTitleTerms: (...args: unknown[]) => useTitleTermsMock(...args),
 }));
 
 vi.mock('@/features/products/ui', () => ({
@@ -48,7 +56,11 @@ vi.mock('@/features/products/ui', () => ({
     options: Array<{ value: string; label: string }>;
     ariaLabel?: string;
   }) => (
-    <select aria-label={ariaLabel} value={value} onChange={(event) => onValueChange(event.target.value)}>
+    <select
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(event) => onValueChange(event.target.value)}
+    >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -79,10 +91,74 @@ vi.mock('@/features/products/ui', () => ({
   Skeleton: () => <div data-testid='skeleton' />,
 }));
 
-vi.mock('./ValidatedField', () => ({
-  ValidatedField: ({ label, name }: { label: string; name: string }) => (
-    <div data-testid={`validated-field-${name}`}>{label}</div>
+vi.mock('@/shared/ui/select-simple', () => ({
+  SelectSimple: ({
+    value,
+    onValueChange,
+    options,
+    ariaLabel,
+  }: {
+    value: string;
+    onValueChange: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+    ariaLabel?: string;
+  }) => (
+    <select
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(event) => onValueChange(event.target.value)}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   ),
+}));
+
+vi.mock('./ValidatedField', () => ({
+  ValidatedField: ({
+    label,
+    name,
+    type,
+  }: {
+    label: string;
+    name: string;
+    type?: string;
+  }) => {
+    const { register } = useFormContext<ProductFormData>();
+    if (type === 'textarea') {
+      return (
+        <label>
+          <span>{label}</span>
+          <textarea aria-label={label} data-testid={`validated-field-${name}`} {...register(name)} />
+        </label>
+      );
+    }
+    return (
+      <label>
+        <span>{label}</span>
+        <input aria-label={label} data-testid={`validated-field-${name}`} {...register(name)} />
+      </label>
+    );
+  },
+}));
+
+vi.mock('./StructuredProductNameField', () => ({
+  StructuredProductNameField: () => {
+    const { register } = useFormContext<ProductFormData>();
+    return (
+      <label>
+        <span>English Name</span>
+        <input aria-label='English Name' data-testid='structured-name-field' {...register('name_en')} />
+      </label>
+    );
+  },
+}));
+
+vi.mock('./ProductFormLatestAmazonExtraction', () => ({
+  default: () => null,
 }));
 
 import ProductFormGeneral from './ProductFormGeneral';
@@ -137,10 +213,16 @@ function ValueProbe(): React.JSX.Element {
   const { watch } = useFormContext<ProductFormData>();
   const skuValue = watch('sku') ?? '';
   const sizeLengthValue = watch('sizeLength') ?? '';
+  const eanValue = watch('ean') ?? '';
+  const gtinValue = watch('gtin') ?? '';
+  const asinValue = watch('asin') ?? '';
   return (
     <>
       <output data-testid='sku-value'>{String(skuValue)}</output>
       <output data-testid='size-length-value'>{String(sizeLengthValue)}</output>
+      <output data-testid='ean-value'>{String(eanValue)}</output>
+      <output data-testid='gtin-value'>{String(gtinValue)}</output>
+      <output data-testid='asin-value'>{String(asinValue)}</output>
     </>
   );
 }
@@ -148,23 +230,31 @@ function ValueProbe(): React.JSX.Element {
 function renderProductFormGeneral({
   defaultSku = 'AUTO',
   defaultSizeLength = 0,
+  defaultNameEn = '',
+  defaultEan = '',
+  defaultGtin = '',
+  defaultAsin = '',
 }: {
   defaultSku?: string;
   defaultSizeLength?: number;
+  defaultNameEn?: string;
+  defaultEan?: string;
+  defaultGtin?: string;
+  defaultAsin?: string;
 } = {}) {
   function Wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
     const methods = useForm<ProductFormData>({
       defaultValues: {
-        name_en: '',
+        name_en: defaultNameEn,
         name_pl: '',
         name_de: '',
         description_en: '',
         description_pl: '',
         description_de: '',
         sku: defaultSku,
-        ean: '',
-        gtin: '',
-        asin: '',
+        ean: defaultEan,
+        gtin: defaultGtin,
+        asin: defaultAsin,
         price: 0,
         stock: 0,
         weight: 0,
@@ -208,6 +298,10 @@ describe('ProductFormGeneral formatter auto-apply', () => {
     useProductFormMetadataMock.mockReturnValue({
       filteredLanguages: [],
     });
+    useTitleTermsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
     useProductValidationStateMock.mockReturnValue({
       validationInstanceScope: 'product_create',
       validatorEnabled: true,
@@ -215,6 +309,32 @@ describe('ProductFormGeneral formatter auto-apply', () => {
       validatorPatterns: [],
       latestProductValues: null,
     });
+  });
+
+  it('preserves EAN when switching the identifier input to ASIN', async () => {
+    renderProductFormGeneral({ defaultEan: '5901234567890' });
+
+    expect(screen.getByLabelText('Enter EAN')).toHaveValue('5901234567890');
+
+    fireEvent.change(screen.getByLabelText('Product identifier type'), {
+      target: { value: 'asin' },
+    });
+
+    expect(screen.getByTestId('ean-value')).toHaveTextContent('5901234567890');
+    expect(screen.getByLabelText('Enter ASIN')).toHaveValue('');
+
+    fireEvent.change(screen.getByLabelText('Enter ASIN'), {
+      target: { value: 'B000123456' },
+    });
+
+    expect(screen.getByTestId('ean-value')).toHaveTextContent('5901234567890');
+    expect(screen.getByTestId('asin-value')).toHaveTextContent('B000123456');
+
+    fireEvent.change(screen.getByLabelText('Product identifier type'), {
+      target: { value: 'ean' },
+    });
+
+    expect(screen.getByLabelText('Enter EAN')).toHaveValue('5901234567890');
   });
 
   it('auto-runs non-runtime SKU replacements configured for formatter auto-apply', async () => {
@@ -245,6 +365,7 @@ describe('ProductFormGeneral formatter auto-apply', () => {
       expect.objectContaining({
         shouldDirty: true,
         shouldTouch: true,
+        shouldValidate: true,
       })
     );
   });
@@ -277,6 +398,7 @@ describe('ProductFormGeneral formatter auto-apply', () => {
       expect.objectContaining({
         shouldDirty: true,
         shouldTouch: true,
+        shouldValidate: true,
       })
     );
   });
@@ -351,6 +473,126 @@ describe('ProductFormGeneral formatter auto-apply', () => {
     expect(setValueSpy).toHaveBeenCalledWith(
       'sku',
       'SKU-101',
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    );
+  });
+
+  it('waits until blur before auto-applying formatter changes to the field currently being edited', async () => {
+    const validationState = {
+      validationInstanceScope: 'product_create',
+      validatorEnabled: true,
+      formatterEnabled: false,
+      validatorPatterns: [
+        createPattern({
+          regex: '^AUTO$',
+          target: 'sku',
+          replacementAutoApply: true,
+          replacementValue: 'SKU-101',
+          replacementFields: ['sku'],
+        }),
+      ],
+      latestProductValues: null,
+    };
+    useProductValidationStateMock.mockImplementation(() => validationState);
+
+    const view = renderProductFormGeneral();
+    const skuInput = screen.getByLabelText('SKU');
+
+    await act(async () => {
+      skuInput.focus();
+    });
+
+    validationState.formatterEnabled = true;
+
+    await act(async () => {
+      view.rerenderForm();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sku-value')).toHaveTextContent('AUTO');
+    });
+    expect(setValueSpy).not.toHaveBeenCalledWith(
+      'sku',
+      'SKU-101',
+      expect.anything()
+    );
+
+    await act(async () => {
+      skuInput.blur();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sku-value')).toHaveTextContent('SKU-101');
+    });
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'sku',
+      'SKU-101',
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    );
+  });
+
+  it('does not rewrite name_en while the structured name field is focused', async () => {
+    useProductFormMetadataMock.mockReturnValue({
+      filteredLanguages: [{ code: 'en', name: 'English' }],
+    });
+
+    const validationState = {
+      validationInstanceScope: 'product_create',
+      validatorEnabled: true,
+      formatterEnabled: false,
+      validatorPatterns: [
+        createPattern({
+          regex: 'Lore$',
+          target: 'name',
+          replacementAutoApply: true,
+          replacementValue: 'Attack On Titan',
+          replacementFields: ['name_en'],
+        }),
+      ],
+      latestProductValues: null,
+    };
+    useProductValidationStateMock.mockImplementation(() => validationState);
+
+    const view = renderProductFormGeneral({
+      defaultNameEn: 'Scout Regiment | 4 cm | Metal | Anime Pin | Lore',
+    });
+    const nameInput = screen.getByLabelText('English Name');
+
+    await act(async () => {
+      nameInput.focus();
+    });
+
+    validationState.formatterEnabled = true;
+
+    await act(async () => {
+      view.rerenderForm();
+    });
+
+    await waitFor(() => {
+      expect(nameInput).toHaveValue('Scout Regiment | 4 cm | Metal | Anime Pin | Lore');
+    });
+    expect(setValueSpy).not.toHaveBeenCalledWith(
+      'name_en',
+      'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      expect.anything()
+    );
+
+    await act(async () => {
+      nameInput.blur();
+    });
+
+    await waitFor(() => {
+      expect(nameInput).toHaveValue('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
+    });
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'name_en',
+      'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
       expect.objectContaining({
         shouldDirty: true,
         shouldTouch: true,

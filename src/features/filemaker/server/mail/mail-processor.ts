@@ -19,6 +19,15 @@ import {
   upsertMailThread,
 } from './mail-storage';
 
+type ResolveOrCreateThreadInput = {
+  account: FilemakerMailAccount;
+  providerThreadId?: string | null;
+  normalizedSubject: string;
+  anchorAddress: string;
+  lastMessageAt: string;
+  snippet?: string | null;
+};
+
 export const getMailparserSimpleParser = (): MailparserSimpleParser => {
   const requireFn = createRequire(import.meta.url);
   const moduleRef = requireFn('mailparser') as { simpleParser?: MailparserSimpleParser };
@@ -35,45 +44,50 @@ export const parseMailSource = async (
   return await parser(source);
 };
 
-export const resolveOrCreateThread = async (input: {
-  account: FilemakerMailAccount;
-  providerThreadId?: string | null;
-  normalizedSubject: string;
-  anchorAddress: string;
-  lastMessageAt: string;
-  snippet?: string | null;
-}): Promise<FilemakerMailThread> => {
+const findExistingThread = async (
+  input: ResolveOrCreateThreadInput
+): Promise<FilemakerMailThread | null> => {
   let thread: FilemakerMailThread | null = null;
 
-  if (input.providerThreadId) {
+  if (input.providerThreadId !== null && input.providerThreadId !== undefined && input.providerThreadId !== '') {
     thread = await findMailThreadByProviderId(input.account.id, input.providerThreadId);
   }
 
-  if (!thread) {
-    thread = await findMailThreadBySubjectAndAnchor(
-      input.account.id,
-      input.normalizedSubject,
-      input.anchorAddress
-    );
-  }
+  thread ??= await findMailThreadBySubjectAndAnchor(
+    input.account.id,
+    input.normalizedSubject,
+    input.anchorAddress
+  );
+  return thread;
+};
 
-  if (thread) {
-    const threadLastAt = Date.parse(thread.lastMessageAt);
-    const incomingLastAt = Date.parse(input.lastMessageAt);
-    if (!Number.isNaN(incomingLastAt) && (Number.isNaN(threadLastAt) || incomingLastAt > threadLastAt)) {
-      const updatedThread: FilemakerMailThread = {
-        ...thread,
-        lastMessageAt: input.lastMessageAt,
-        snippet: input.snippet ?? thread.snippet,
-        updatedAt: new Date().toISOString(),
-      };
-      await upsertMailThread(updatedThread);
-      return updatedThread;
-    }
-    return thread;
-  }
+const shouldUpdateThreadActivity = (
+  thread: FilemakerMailThread,
+  incomingLastMessageAt: string
+): boolean => {
+  const threadLastAt = Date.parse(thread.lastMessageAt);
+  const incomingLastAt = Date.parse(incomingLastMessageAt);
+  return !Number.isNaN(incomingLastAt) && (Number.isNaN(threadLastAt) || incomingLastAt > threadLastAt);
+};
 
-  const newThread: FilemakerMailThread = {
+const updateThreadActivity = async (
+  thread: FilemakerMailThread,
+  input: ResolveOrCreateThreadInput
+): Promise<FilemakerMailThread> => {
+  const updatedThread: FilemakerMailThread = {
+    ...thread,
+    lastMessageAt: input.lastMessageAt,
+    snippet: input.snippet ?? thread.snippet,
+    updatedAt: new Date().toISOString(),
+  };
+  await upsertMailThread(updatedThread);
+  return updatedThread;
+};
+
+const createThread = async (
+  input: ResolveOrCreateThreadInput
+): Promise<FilemakerMailThread> => {
+  const thread: FilemakerMailThread = {
     id: buildThreadId({
       accountId: input.account.id,
       providerThreadId: input.providerThreadId ?? null,
@@ -86,6 +100,7 @@ export const resolveOrCreateThread = async (input: {
     providerThreadId: input.providerThreadId ?? null,
     subject: input.normalizedSubject,
     normalizedSubject: input.normalizedSubject,
+    anchorAddress: input.anchorAddress,
     lastMessageAt: input.lastMessageAt,
     snippet: input.snippet ?? null,
     participantSummary: [],
@@ -97,6 +112,17 @@ export const resolveOrCreateThread = async (input: {
     updatedAt: new Date().toISOString(),
   };
 
-  await upsertMailThread(newThread);
-  return newThread;
+  await upsertMailThread(thread);
+  return thread;
+};
+
+export const resolveOrCreateThread = async (
+  input: ResolveOrCreateThreadInput
+): Promise<FilemakerMailThread> => {
+  const thread = await findExistingThread(input);
+  if (thread === null) return createThread(input);
+  if (shouldUpdateThreadActivity(thread, input.lastMessageAt)) {
+    return updateThreadActivity(thread, input);
+  }
+  return thread;
 };

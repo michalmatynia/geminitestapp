@@ -1,11 +1,14 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import { persistVintedQuickListFeedback } from '@/features/integrations/utils/vintedQuickListFeedback';
 
 const {
   handleOpenTraderaLoginMock,
+  handleOpenVintedLoginMock,
+  handleSyncTraderaMock,
   onStartListingMock,
   useProductListingsDataMock,
   useProductListingsModalsMock,
@@ -13,6 +16,8 @@ const {
   useProductListingsUIStateMock,
 } = vi.hoisted(() => ({
   handleOpenTraderaLoginMock: vi.fn(),
+  handleOpenVintedLoginMock: vi.fn(),
+  handleSyncTraderaMock: vi.fn(),
   onStartListingMock: vi.fn(),
   useProductListingsDataMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
@@ -51,6 +56,8 @@ describe('ProductListingsEmpty', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     handleOpenTraderaLoginMock.mockResolvedValue(true);
+    handleOpenVintedLoginMock.mockResolvedValue(true);
+    handleSyncTraderaMock.mockResolvedValue(undefined);
     useProductListingsDataMock.mockReturnValue({
       product: { id: 'product-1' },
     });
@@ -60,9 +67,13 @@ describe('ProductListingsEmpty', () => {
     });
     useProductListingsActionsMock.mockReturnValue({
       handleOpenTraderaLogin: handleOpenTraderaLoginMock,
+      handleOpenVintedLogin: handleOpenVintedLoginMock,
+      handleSyncTradera: handleSyncTraderaMock,
     });
     useProductListingsUIStateMock.mockReturnValue({
       openingTraderaLogin: null,
+      openingVintedLogin: null,
+      syncingTraderaListing: null,
     });
   });
 
@@ -74,6 +85,8 @@ describe('ProductListingsEmpty', () => {
         integrationSlug: 'baselinker',
         status: 'failed',
         runId: 'run-base-failed-99',
+        failureReason:
+          'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.',
       },
     });
 
@@ -91,6 +104,31 @@ describe('ProductListingsEmpty', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('failed')).toBeInTheDocument();
     expect(screen.getByText('run-base-failed-99')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No Base.com category mapping found for internal category "69da99b1855cd0bfc9a2ab81". Map this category in Category Mapper first.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('shows the Base sync panel in the empty BL modal state when scoped to Base.com', () => {
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'base-com',
+          isScopedMarketplaceFlow: true,
+          isBaseFilter: true,
+          showSync: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Base.com status')).toBeInTheDocument();
+    expect(screen.getByText('Not connected.')).toBeInTheDocument();
+    expect(screen.getByTestId('sync-panel')).toBeInTheDocument();
   });
 
   it('renders Tradera quick-export recovery details when no listing record exists yet', async () => {
@@ -116,24 +154,20 @@ describe('ProductListingsEmpty', () => {
     expect(screen.getByText('Tradera quick export needs recovery')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then continue directly into the Tradera listing flow from this modal.'
+        'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then choose whether to relist or sync from this modal.'
       )
     ).toBeInTheDocument();
     expect(screen.getByText('auth_required')).toBeInTheDocument();
     expect(screen.getByText('job-tradera-1')).toBeInTheDocument();
     expect(screen.getByText('Queue job')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
       'recovery',
       'integration-tradera-1',
       'conn-tradera-1'
     );
-    expect(onStartListingMock).toHaveBeenCalledWith(
-      'integration-tradera-1',
-      'conn-tradera-1',
-      { autoSubmit: true }
-    );
+    expect(onStartListingMock).not.toHaveBeenCalled();
   });
 
   it('does not continue into listing flow when Tradera manual login fails', async () => {
@@ -157,7 +191,7 @@ describe('ProductListingsEmpty', () => {
       </ProductListingsViewProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
 
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
@@ -196,7 +230,7 @@ describe('ProductListingsEmpty', () => {
         'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Login and continue listing' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Login to Tradera' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
       'href',
       '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
@@ -230,7 +264,7 @@ describe('ProductListingsEmpty', () => {
         'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Login and continue listing' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Login to Tradera' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Shipping Groups' })).toHaveAttribute(
       'href',
       '/admin/products/settings?section=shipping-groups'
@@ -239,6 +273,9 @@ describe('ProductListingsEmpty', () => {
 
   it('renders a Tradera quick-export success banner when the row has not synced yet', () => {
     persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
       listingUrl: 'https://www.tradera.com/item/123',
       externalListingId: '123',
       completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
@@ -265,6 +302,71 @@ describe('ProductListingsEmpty', () => {
     );
     expect(screen.queryByText('No listings found')).toBeNull();
     expect(screen.queryByText('Not connected.')).toBeNull();
+  });
+
+  it('updates the empty-state success banner immediately when quicklist feedback changes in the same tab', () => {
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.queryByText('Tradera quick export completed')).toBeNull();
+
+    act(() => {
+      persistTraderaQuickListFeedback('product-1', 'completed', {
+        listingId: 'listing-2',
+        listingUrl: 'https://www.tradera.com/item/789',
+        externalListingId: '789',
+      });
+    });
+
+    expect(screen.getByText('Tradera quick export completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.tradera.com/item/789'
+    );
+  });
+
+  it('queues a Tradera sync from the empty-state success banner when feedback includes listing ids', async () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+      listingUrl: 'https://www.tradera.com/item/123',
+      externalListingId: '123',
+      completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sync with Tradera' }));
+    await Promise.resolve();
+
+    expect(handleSyncTraderaMock).toHaveBeenCalledWith('listing-1', {
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
   });
 
   it('renders duplicate-linked Tradera quick-export success copy when the row has not synced yet', () => {
@@ -301,5 +403,186 @@ describe('ProductListingsEmpty', () => {
       'href',
       'https://www.tradera.com/item/725447805'
     );
+  });
+
+  it('renders exact-title relist success copy when persisted feedback records the duplicate strategy', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      externalListingId: '725447805',
+      completedAt: Date.parse('2026-04-06T09:15:00.000Z'),
+      metadata: {
+        duplicateMatchStrategy: 'exact-title-single-candidate',
+      },
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera relist matched an existing listing')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Relist found one exact-title Tradera candidate and linked it instead of creating a new listing. Use the link below to open the matched Tradera item.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.tradera.com/item/725447805'
+    );
+  });
+
+  it('renders exact-title relist success copy when persisted feedback only preserves duplicate strategy in rawResult', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingUrl: 'https://www.tradera.com/item/725447805',
+      externalListingId: '725447805',
+      completedAt: Date.parse('2026-04-06T09:15:00.000Z'),
+      metadata: {
+        rawResult: {
+          duplicateMatchStrategy: 'exact-title-single-candidate',
+        },
+      },
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera relist matched an existing listing')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Relist found one exact-title Tradera candidate and linked it instead of creating a new listing. Use the link below to open the matched Tradera item.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.tradera.com/item/725447805'
+    );
+  });
+
+  it('renders a Vinted quick-export success banner when the row has not synced yet', () => {
+    persistVintedQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-vinted-1',
+      integrationId: 'integration-vinted-1',
+      connectionId: 'conn-vinted-1',
+      listingUrl: 'https://www.vinted.pl/items/456',
+      externalListingId: '456',
+      completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'vinted',
+          integrationScopeLabel: 'Vinted.pl',
+          statusTargetLabel: 'Vinted.pl',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Vinted.pl quick export completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.vinted.pl/items/456'
+    );
+    expect(screen.queryByText('No listings found')).toBeNull();
+  });
+
+  it('renders Vinted quick-export recovery details with a Vinted login action when no listing exists yet', async () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+        requestId: 'job-vinted-1',
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      },
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'vinted',
+          integrationScopeLabel: 'Vinted.pl',
+          statusTargetLabel: 'Vinted.pl',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Vinted.pl quick export needs recovery')).toBeInTheDocument();
+    expect(screen.getByText('auth_required')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Login to Vinted.pl' }));
+    await Promise.resolve();
+    expect(handleOpenVintedLoginMock).toHaveBeenCalledWith(
+      'recovery',
+      'integration-vinted-1',
+      'conn-vinted-1'
+    );
+  });
+
+  it('suppresses Vinted recovery UI when the empty state is explicitly scoped to Tradera', () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'vinted_quick_export_auth_required',
+        integrationSlug: 'vinted',
+        status: 'auth_required',
+        runId: null,
+        requestId: 'job-vinted-1',
+        integrationId: 'integration-vinted-1',
+        connectionId: 'conn-vinted-1',
+      },
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(
+      screen.queryByText(/Vinted\.pl quick export needs recovery/i)
+    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Login to Vinted.pl' })).toBeNull();
+    expect(screen.getByText('Tradera status')).toBeInTheDocument();
+    expect(screen.getByText('Not connected.')).toBeInTheDocument();
   });
 });

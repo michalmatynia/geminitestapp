@@ -118,7 +118,9 @@ export type CaseSortKey =
   | 'signature'
   | 'locked'
   | 'sent';
-export type CaseSortOrder = 'asc' | 'desc';
+import { type SortOrder } from '../base';
+
+export type CaseSortOrder = SortOrder;
 export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
 export type CaseFileTypeFilter = 'all' | 'case' | 'document' | 'scanfile' | 'note';
 export type CaseStatusFilter = 'all' | 'pending' | 'completed';

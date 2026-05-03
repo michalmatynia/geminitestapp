@@ -5,7 +5,8 @@ import React from 'react';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
-import type { AiNode, AiPathRuntimeNodeStatusMap, Edge, PathFlowIntensity, RuntimeState, SvgDetailLevel } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PathFlowIntensity, SvgDetailLevel } from '@/shared/contracts/ai-paths';
+import type { RuntimeState, AiPathRuntimeNodeStatusMap } from '@/shared/contracts/ai-paths-runtime';
 
 import type { ConnectorInfo } from './canvas-board-connectors';
 import type { RuntimeRunStatus, TriggerPreflightHint } from './CanvasBoard.types';
@@ -118,7 +119,7 @@ export function CanvasBoardUIProvider({
 }: {
   children: React.ReactNode;
   value: CanvasBoardUIContextValue;
-}) {
+}): React.JSX.Element {
   return <CanvasBoardUIContext.Provider value={value}>{children}</CanvasBoardUIContext.Provider>;
 }
 export { useCanvasBoardUI };

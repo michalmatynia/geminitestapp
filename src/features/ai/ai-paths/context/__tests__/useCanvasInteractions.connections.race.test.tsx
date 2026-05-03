@@ -1,7 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 import { useCanvasInteractionsConnections } from '@/features/ai/ai-paths/context/hooks/useCanvasInteractions.connections';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>

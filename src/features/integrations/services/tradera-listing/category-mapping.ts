@@ -1,6 +1,8 @@
 import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ExternalCategoryRepository } from '@/shared/contracts/integrations/repositories';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getCategoryMappingRepository } from '../category-mapping-repository';
 
@@ -288,31 +290,83 @@ export const resolveTraderaCategoryMappingResolutionForProduct = async ({
   const categoryMappingRepository = getCategoryMappingRepository();
   const mappings = await categoryMappingRepository.listByConnection(connectionId);
 
-  // First try without parent walk for the fast path
-  const directResult = selectPreferredTraderaCategoryMappingResolution({ mappings, product });
-  if (directResult.reason !== 'no_active_mapping') {
-    return directResult;
-  }
-
   // No direct mapping — load product categories for parent-chain inheritance
   const catalogId = toTrimmedString(product.catalogId);
-  if (!catalogId) {
-    return directResult;
-  }
+  let resolvedCategoryCatalogId: string | null = null;
+  let internalCategories: ProductCategory[] | undefined;
 
   try {
     const { getCategoryRepository } = await import(
       '@/shared/lib/products/services/category-repository'
     );
     const categoryRepository = await getCategoryRepository();
-    const internalCategories = await categoryRepository.listCategories({ catalogId });
-    return selectPreferredTraderaCategoryMappingResolution({
+    const internalCategoryId = toTrimmedString(product.categoryId);
+    const internalCategory =
+      internalCategoryId && typeof categoryRepository.getCategoryById === 'function'
+        ? await categoryRepository.getCategoryById(internalCategoryId)
+        : null;
+    const categoryCatalogId =
+      toTrimmedString(internalCategory?.catalogId) ||
+      catalogId ||
+      resolveProductCatalogIds(product)[0] ||
+      '';
+    resolvedCategoryCatalogId = categoryCatalogId || null;
+
+    if (!categoryCatalogId) {
+      const currentResult = selectPreferredTraderaCategoryMappingResolution({
+        mappings,
+        product,
+      });
+      if (currentResult.reason !== 'no_active_mapping') {
+        return currentResult;
+      }
+      return currentResult;
+    }
+
+    internalCategories = await categoryRepository.listCategories({
+      catalogId: categoryCatalogId,
+    });
+    const currentResult = selectPreferredTraderaCategoryMappingResolution({
       mappings,
       product,
       internalCategories,
     });
-  } catch {
-    return directResult;
+    if (currentResult.reason !== 'no_active_mapping') {
+      return currentResult;
+    }
+
+    const requestedInternalCategoryId = toTrimmedString(product.categoryId);
+    if (!requestedInternalCategoryId) {
+      return currentResult;
+    }
+
+    return currentResult;
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'tradera-category-mapping',
+      action: 'resolveTraderaCategoryMappingResolutionForProduct',
+      connectionId,
+      productId: toTrimmedString(product.id) || null,
+      productCategoryId: toTrimmedString(product.categoryId) || null,
+      productCatalogIds: resolveProductCatalogIds(product),
+      requestedCatalogId: catalogId || null,
+      resolvedCategoryCatalogId,
+    });
+    const fallbackResult = selectPreferredTraderaCategoryMappingResolution({
+      mappings,
+      product,
+      internalCategories,
+    });
+    if (fallbackResult.reason !== 'no_active_mapping') {
+      return fallbackResult;
+    }
+
+    const internalCategoryId = toTrimmedString(product.categoryId);
+    if (!internalCategoryId) {
+      return fallbackResult;
+    }
+
+    return fallbackResult;
   }
 };
 
@@ -324,4 +378,75 @@ export const resolveTraderaCategoryMappingForProduct = async ({
   product: ProductWithImages;
 }): Promise<ResolvedTraderaCategoryMapping | null> => {
   return (await resolveTraderaCategoryMappingResolutionForProduct({ connectionId, product })).mapping;
+};
+
+export type LeafCategoryResolution = {
+  /** The resolved external category ID (may be the original if already a leaf or no leaf found) */
+  resolvedExternalCategoryId: string;
+  /** True when a deeper leaf was found and the original category was a non-leaf parent */
+  autoResolved: boolean;
+  /** The name of the resolved category */
+  resolvedName: string | null;
+  /** The full path of the resolved category */
+  resolvedPath: string | null;
+  /** The original non-leaf category ID, if auto-resolution occurred */
+  originalExternalCategoryId: string | null;
+};
+
+/**
+ * When a resolved category is a non-leaf (it has child categories), automatically
+ * selects the first available leaf descendant.
+ *
+ * Resolution order:
+ * 1. Local DB leaf descendants (sorted alphabetically by path)
+ * 2. Original category unchanged (best-effort fallback)
+ */
+export const resolveToLeafCategory = async ({
+  connectionId,
+  externalCategoryId,
+  externalCategoryRepo,
+}: {
+  connectionId: string;
+  externalCategoryId: string;
+  externalCategoryRepo: ExternalCategoryRepository;
+}): Promise<LeafCategoryResolution> => {
+  const noChange: LeafCategoryResolution = {
+    resolvedExternalCategoryId: externalCategoryId,
+    autoResolved: false,
+    resolvedName: null,
+    resolvedPath: null,
+    originalExternalCategoryId: null,
+  };
+
+  // Check if this category is stored and whether it's a leaf
+  const category = await externalCategoryRepo.getByExternalId(connectionId, externalCategoryId);
+  if (!category) return noChange;
+  if (category.isLeaf !== false) {
+    // Already a leaf (or isLeaf is true/undefined) — no resolution needed
+    return {
+      ...noChange,
+      resolvedName: category.name,
+      resolvedPath: category.path,
+    };
+  }
+
+  // Non-leaf: try local leaf descendants first
+  const leafDescendants = await externalCategoryRepo.getLeafDescendants(connectionId, externalCategoryId);
+  if (leafDescendants.length > 0) {
+    const first = leafDescendants[0]!;
+    return {
+      resolvedExternalCategoryId: first.externalId,
+      autoResolved: true,
+      resolvedName: first.name,
+      resolvedPath: first.path,
+      originalExternalCategoryId: externalCategoryId,
+    };
+  }
+
+  // Best-effort fallback — use original non-leaf
+  return {
+    ...noChange,
+    resolvedName: category.name,
+    resolvedPath: category.path,
+  };
 };

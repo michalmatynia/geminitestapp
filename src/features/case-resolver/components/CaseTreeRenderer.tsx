@@ -12,8 +12,8 @@ import {
   Star,
   Copy,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { startTransition } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
@@ -28,7 +28,7 @@ import {
   useAdminCaseResolverCasesStateContext,
 } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
-import { CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
+import { type CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
 import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -100,7 +100,7 @@ export function CaseTreeRenderer({
   };
 
   const handleViewCase = (caseId: string): void => {
-    router.push(buildCaseResolverCaseHref(caseId));
+    startTransition(() => { router.push(buildCaseResolverCaseHref(caseId)); });
   };
 
   const handleCopyCaseId = async (caseId: string): Promise<void> => {

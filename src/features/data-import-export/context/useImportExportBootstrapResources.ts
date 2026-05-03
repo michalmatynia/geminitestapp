@@ -9,8 +9,10 @@ import { useIntegrationsWithConnections } from '@/shared/hooks/useIntegrationQue
 
 interface ImportExportBootstrapResourcesParams {
   catalogId: string;
+  catalogIdRef: MutableRefObject<string>;
   hasInitializedCatalog: MutableRefObject<boolean>;
   selectedBaseConnectionId: string;
+  selectedBaseConnectionIdRef: MutableRefObject<string>;
   setBaseConnections: (connections: IntegrationConnectionBasic[]) => void;
   setCatalogId: (id: string) => void;
   setIsBaseConnected: (connected: boolean) => void;
@@ -28,8 +30,10 @@ interface ImportExportBootstrapResourcesResult {
 
 export function useImportExportBootstrapResources({
   catalogId,
+  catalogIdRef,
   hasInitializedCatalog,
   selectedBaseConnectionId,
+  selectedBaseConnectionIdRef,
   setBaseConnections,
   setCatalogId,
   setIsBaseConnected,
@@ -62,14 +66,20 @@ export function useImportExportBootstrapResources({
     timer = setTimeout(() => {
       setBaseConnections(baseConnections);
       setIsBaseConnected(isBaseConnected);
+      const liveSelectedBaseConnectionId = selectedBaseConnectionIdRef.current.trim();
+      if (checkingIntegration) {
+        return;
+      }
       if (baseConnections.length === 0) {
-        setSelectedBaseConnectionId('');
+        if (liveSelectedBaseConnectionId) {
+          setSelectedBaseConnectionId('');
+        }
         return;
       }
       const hasSelected = baseConnections.some(
-        (connection: IntegrationConnectionBasic) => connection.id === selectedBaseConnectionId
+        (connection: IntegrationConnectionBasic) => connection.id === liveSelectedBaseConnectionId
       );
-      if (!selectedBaseConnectionId || !hasSelected) {
+      if (!liveSelectedBaseConnectionId || !hasSelected) {
         setSelectedBaseConnectionId(baseConnections[0]?.id || '');
       }
     }, 0);
@@ -78,8 +88,10 @@ export function useImportExportBootstrapResources({
     };
   }, [
     baseConnections,
+    checkingIntegration,
     isBaseConnected,
     selectedBaseConnectionId,
+    selectedBaseConnectionIdRef,
     setBaseConnections,
     setIsBaseConnected,
     setSelectedBaseConnectionId,
@@ -94,19 +106,22 @@ export function useImportExportBootstrapResources({
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    if (catalogsData.length > 0 && !catalogId && !hasInitializedCatalog.current) {
+    if (catalogsData.length > 0 && !catalogId) {
       const defaultCatalog = catalogsData.find((catalog: CatalogOption) => catalog.isDefault);
-      if (defaultCatalog) {
+      const fallbackCatalog = defaultCatalog ?? catalogsData[0];
+      if (fallbackCatalog) {
         timer = setTimeout(() => {
-          setCatalogId(defaultCatalog.id);
-          hasInitializedCatalog.current = true;
+          if (!catalogIdRef.current.trim()) {
+            setCatalogId(fallbackCatalog.id);
+            hasInitializedCatalog.current = true;
+          }
         }, 0);
       }
     }
     return (): void => {
       if (timer) clearTimeout(timer);
     };
-  }, [catalogId, catalogsData, hasInitializedCatalog, setCatalogId]);
+  }, [catalogId, catalogIdRef, catalogsData, hasInitializedCatalog, setCatalogId]);
 
   return {
     baseConnections,

@@ -5,6 +5,7 @@ export {
   enforceAiPathsActionRateLimit,
   enforceAiPathsRunRateLimit,
   ensureAiPathsPermission,
+  isAiPathsInternalRequest,
   requireAiPathsAccess,
   requireAiPathsAccessOrInternal,
   requireAiPathsRunAccess,
@@ -15,6 +16,7 @@ export {
   deleteAiPathsSettings,
   getAiPathsSetting,
   getAiPathsSettings,
+  ensureCanonicalStarterWorkflowSettingsForPathIds,
   inspectAiPathsSettingsMaintenance,
   listAiPathsSettings,
   upsertAiPathsSetting,
@@ -27,16 +29,8 @@ export {
   cancelPathRunWithRepository,
   deletePathRunWithRepository,
   deletePathRunsWithRepository,
-  markPathRunHandoffReady,
-  resumePathRun,
-  retryPathRunNode,
 } from './services/path-run-management-service';
 export {
   getRuntimeAnalyticsSummary,
   resolveRuntimeAnalyticsRangeWindow,
 } from './services/runtime-analytics-service';
-export {
-  recoverStaleRunningRuns,
-  resolveAiPathsStaleRunningCleanupIntervalMs,
-  resolveAiPathsStaleRunningMaxAgeMs,
-} from './services/path-run-recovery-service';

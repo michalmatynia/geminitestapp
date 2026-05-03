@@ -83,6 +83,34 @@
       "mode": "complete_direct_files"
     },
     {
+      "path": "docs/build/improvements",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/application-performance",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/products-category-schema-normalization",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/products-parameter-integrity",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/repo-quality-baseline",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/testing-quality-baseline",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/build/improvements/ui-consolidation",
+      "mode": "complete_direct_files"
+    },
+    {
       "path": "docs/plans",
       "mode": "complete_direct_files"
     },
@@ -92,6 +120,10 @@
     },
     {
       "path": "docs/runbooks",
+      "mode": "complete_direct_files"
+    },
+    {
+      "path": "docs/playwright",
       "mode": "complete_direct_files"
     },
     {
@@ -137,7 +169,7 @@
         "ai-paths-modernization-playbook-2026-03-04.md",
         "kernel-engine-transition-plan-2026-03-05.md",
         "parameter-inference-workflow.md",
-        "portable-engine-receiver-runbook.md",
+        "portable-engine-scaffolding.md",
         "node-code-objects-v3.md",
         "node-code-objects-v3/README.md",
         "node-code-objects-v3/MIGRATION_GUIDE.md",
@@ -253,10 +285,13 @@
     "docs/CLAUDE.md",
     "docs/COPILOT.md",
     "docs/documentation/README.md",
+    "docs/documentation/repo-documentation-map.md",
     "docs/platform/README.md",
     "docs/platform/bun-support.md",
     "docs/platform/testing-policy.md",
     "docs/build/README.md",
+    "docs/build/application-workspaces-and-commands.md",
+    "docs/build/scanner-smoke-tests.md",
     "docs/build/agentic-ci.md",
     "docs/build/agentic-engineering.md",
     "docs/build/bazel-buildbuddy.md",
@@ -265,9 +300,28 @@
     "docs/build/vercel-deployment.md",
     "docs/build/codeql.md",
     "docs/build/general-improvements.md",
+    "docs/build/improvements/README.md",
+    "docs/build/improvements/scan-latest.md",
+    "docs/build/improvements/application-performance/README.md",
+    "docs/build/improvements/application-performance/scan-latest.md",
+    "docs/build/improvements/products-category-schema-normalization/README.md",
+    "docs/build/improvements/products-category-schema-normalization/scan-latest.md",
+    "docs/build/improvements/products-parameter-integrity/README.md",
+    "docs/build/improvements/products-parameter-integrity/scan-latest.md",
+    "docs/build/improvements/repo-quality-baseline/README.md",
+    "docs/build/improvements/repo-quality-baseline/scan-latest.md",
+    "docs/build/improvements/testing-quality-baseline/README.md",
+    "docs/build/improvements/testing-quality-baseline/scan-latest.md",
+    "docs/build/improvements/ui-consolidation/README.md",
+    "docs/build/improvements/ui-consolidation/scan-latest.md",
     "docs/plans/README.md",
     "docs/decisions/README.md",
     "docs/runbooks/README.md",
+    "docs/playwright/README.md",
+    "docs/playwright/action-run-history.md",
+    "docs/playwright/action-run-history-schema.md",
+    "docs/playwright/step-code-modularity.md",
+    "docs/playwright/step-sequencer-integration-checklist.md",
     "docs/metrics/accessibility-component-policies-latest.md",
     "docs/metrics/accessibility-route-crawl-latest.md",
     "docs/metrics/accessibility-smoke-latest.md",
@@ -276,6 +330,7 @@
     "docs/metrics/api-input-validation-latest.md",
     "docs/metrics/baseline-latest.md",
     "docs/metrics/bundle-budgets-latest.md",
+    "docs/metrics/client-boundaries-latest.md",
     "docs/metrics/context-health-latest.md",
     "docs/metrics/critical-flow-tests-latest.md",
     "docs/metrics/critical-path-performance-latest.md",
@@ -286,6 +341,7 @@
     "docs/metrics/domain-scans/type-clusters-shared-contracts-latest.md",
     "docs/metrics/domain-scans/type-clusters-shared-latest.md",
     "docs/metrics/env-contract-latest.md",
+    "docs/metrics/external-rule-parity-latest.md",
     "docs/metrics/high-risk-coverage-latest.md",
     "docs/metrics/import-boundaries-latest.md",
     "docs/metrics/integration-mongo-latest.md",
@@ -303,9 +359,9 @@
     "docs/metrics/security-static-latest.md",
     "docs/metrics/storage-and-files-latest.md",
     "docs/metrics/test-distribution-latest.md",
+    "docs/metrics/testing-quality-snapshot-latest.md",
     "docs/metrics/testing-run-ledger-latest.md",
     "docs/metrics/testing-suite-inventory-latest.md",
-    "docs/metrics/testing-quality-snapshot-latest.md",
     "docs/metrics/timer-cleanup-latest.md",
     "docs/metrics/trend-index-latest.md",
     "docs/metrics/type-clusters-domain-scan-latest.md",
@@ -337,7 +393,6 @@
     "docs/platform/tooltip-documentation-platform.md",
     "docs/platform/migration-checklist.md",
     "docs/platform/repo-deep-scan-2026-03-25.md",
-    "docs/platform/ai-paths-resume-vs-handoff.md",
     "docs/platform/agentic-coding-overview.md",
     "docs/platform/resource-leasing.md",
     "docs/platform/forward-only-execution.md",
@@ -398,7 +453,6 @@
     "docs/ai-paths/playwright-node.md",
     "docs/ai-paths/port-contract-validation-ownership-2026-03-06.md",
     "docs/ai-paths/port-contracts-v3-design-2026-03-06.md",
-    "docs/ai-paths/portable-engine-receiver-runbook.md",
     "docs/ai-paths/portable-engine-scaffolding.md",
     "docs/ai-paths/replay-ledger-identifier-strategy-2026-03-06.md",
     "docs/ai-paths/semantic-grammar/README.md",

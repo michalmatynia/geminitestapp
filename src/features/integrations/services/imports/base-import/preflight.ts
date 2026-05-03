@@ -4,9 +4,10 @@ import { getProductDataProvider } from '@/shared/lib/products/services/product-p
 
 import { resolvePriceGroupContext } from '../base-import-service-context';
 import {
-  StartBaseImportRunInput,
-  BaseConnectionContext,
+  type StartBaseImportRunInput,
+  type BaseConnectionContext,
   nowIso,
+  normalizeDirectTarget,
   normalizeSelectedIds,
 } from '../base-import-service-shared';
 
@@ -62,6 +63,15 @@ export const buildPreflight = async (
       code: 'PRECHECK_FAILED',
       severity: 'error',
       message: 'Select at least one Base product before importing.',
+    });
+  }
+
+  const directTarget = normalizeDirectTarget(input.directTarget);
+  if (directTarget && normalizeSelectedIds(input.selectedIds).length > 0) {
+    issues.push({
+      code: 'PRECHECK_FAILED',
+      severity: 'error',
+      message: 'Choose either selected Base products or an exact Product ID/SKU target, not both.',
     });
   }
 

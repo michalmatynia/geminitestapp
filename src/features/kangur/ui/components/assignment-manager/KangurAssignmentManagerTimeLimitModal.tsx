@@ -20,43 +20,38 @@ import { KangurDialogCloseButton } from '@/features/kangur/ui/components/KangurD
 import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
-type KangurAssignmentManagerTimeLimitModalTarget = {
-  title: string;
-  description?: string | null;
-};
+import { useKangurAssignmentManagerContext } from './KangurAssignmentManager.context';
+import {
+  TIME_LIMIT_MINUTES_MAX,
+  TIME_LIMIT_MINUTES_MIN,
+} from './KangurAssignmentManager.helpers';
 
-type KangurAssignmentManagerTimeLimitModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: () => void;
-  timeLimitDraft: string;
-  onTimeLimitDraftChange: (value: string) => void;
-  timeLimitTarget: KangurAssignmentManagerTimeLimitModalTarget | null;
-  timeLimitPreview: string | null;
-  timeLimitParsedError: string | null;
-  isSaveDisabled: boolean;
-  saveLabel: string;
-  minMinutes: number;
-  maxMinutes: number;
-};
-
-export function renderKangurAssignmentManagerTimeLimitModal(
-  props: KangurAssignmentManagerTimeLimitModalProps
-): React.JSX.Element {
+export function KangurAssignmentManagerTimeLimitModal(): React.JSX.Element {
   const {
-    isOpen,
-    onClose,
-    onSave,
+    isTimeLimitModalOpen: isOpen,
+    handleCloseTimeLimitModal: onClose,
+    handleSaveTimeLimit,
     timeLimitDraft,
-    onTimeLimitDraftChange,
-    timeLimitTarget,
+    setTimeLimitDraft: onTimeLimitDraftChange,
+    timeLimitTarget: rawTarget,
     timeLimitPreview,
     timeLimitParsedError,
-    isSaveDisabled,
-    saveLabel,
-    minMinutes,
-    maxMinutes,
-  } = props;
+    isTimeLimitSaveDisabled: isSaveDisabled,
+    timeLimitSaveLabel: saveLabel,
+  } = useKangurAssignmentManagerContext();
+
+  const timeLimitTarget = rawTarget
+    ? {
+        title: rawTarget.title,
+        description: rawTarget.description ?? null,
+      }
+    : null;
+
+  const minMinutes = TIME_LIMIT_MINUTES_MIN;
+  const maxMinutes = TIME_LIMIT_MINUTES_MAX;
+
+  const onSave = () => void handleSaveTimeLimit();
+
   const translations = useTranslations('KangurAssignmentManager');
   const isCoarsePointer = useKangurCoarsePointer();
   const actionClassName = isCoarsePointer

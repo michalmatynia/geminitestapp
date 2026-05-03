@@ -79,6 +79,21 @@ const filters = [
 ];
 
 describe('PanelFilters layout contract', () => {
+  it('renders a non-submit clear search button', () => {
+    render(
+      <PanelFilters
+        filters={filters}
+        values={{ sku: 'sku-1' }}
+        search='sku-1'
+        searchPlaceholder='Search by product name...'
+        onFilterChange={vi.fn()}
+        onSearchChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Clear search' })).toHaveAttribute('type', 'button');
+  });
+
   it('keeps the toggle button width and alignment stable across collapsed states', async () => {
     const onFilterChange = vi.fn();
     const onSearchChange = vi.fn();

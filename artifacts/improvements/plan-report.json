@@ -1,59 +1,27 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-04-02T21:21:20.591Z",
+  "generatedAt": "2026-04-30T09:41:39.533Z",
   "phase": "plan",
   "executionMode": "planned",
   "allowWrite": false,
   "selectedTrackIds": [
-    "products-parameter-integrity",
-    "products-category-schema-normalization",
-    "repo-quality-baseline"
+    "image-studio-product-integration"
   ],
   "reportPath": "artifacts/improvements/plan-report.json",
   "steps": [
     {
-      "id": "products-parameter-integrity-plan-review",
-      "title": "Review the refreshed parameter recovery workspace",
-      "trackId": "products-parameter-integrity",
+      "id": "image-studio-product-integration-plan",
+      "title": "Plan Product modal Image Studio recovery work",
+      "trackId": "image-studio-product-integration",
       "phase": "plan",
       "mode": "manual",
       "writes": false,
       "status": "manual",
       "outputs": [],
       "instructions": [
-        "Confirm the latest unresolved count from /tmp/product-parameter-source-recovery-summary-latest.json.",
-        "Review the generated batch manifest and family mapping checklist before any write-side recovery step."
-      ]
-    },
-    {
-      "id": "products-category-schema-plan",
-      "title": "Plan category and schema normalization decisions",
-      "trackId": "products-category-schema-normalization",
-      "phase": "plan",
-      "mode": "manual",
-      "writes": false,
-      "status": "manual",
-      "outputs": [],
-      "instructions": [
-        "Assign missing categories only when a defensible family/category match exists.",
-        "Choose final parameter ids for the unresolved families before generating any curated override file.",
-        "Treat FIGANI, FOASW, and SPEFA as source/manual recovery until a real category/schema mapping is approved.",
-        "Use /tmp/product-parameter-source-recovery-batches/*-mapping-pack.json as the curation source of truth.",
-        "Use /tmp/product-parameter-curated-build-latest.json to see which family packs are actually ready for apply."
-      ]
-    },
-    {
-      "id": "repo-quality-baseline-plan",
-      "title": "Review baseline results and decide follow-up validation",
-      "trackId": "repo-quality-baseline",
-      "phase": "plan",
-      "mode": "manual",
-      "writes": false,
-      "status": "manual",
-      "outputs": [],
-      "instructions": [
-        "Use the lint and typecheck outputs to decide whether a wider repo quality sweep is needed.",
-        "Escalate to bazel:smoke or bazel:ci only when the baseline checks indicate broader instability."
+        "Start with idempotent state updates in Product modal and Studio project synchronization.",
+        "Keep shared primitive changes API-compatible with current Product form usage.",
+        "Validate with npm run test:image-studio-product plus the focused shared primitive tests before broader app checks."
       ]
     }
   ]

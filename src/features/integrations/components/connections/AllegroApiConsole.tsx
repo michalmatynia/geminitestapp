@@ -22,8 +22,8 @@ export function AllegroApiConsole(): React.JSX.Element {
   } = useIntegrationsApiConsole();
   const { handleAllegroApiRequest } = useIntegrationsActions();
 
-  const activeConnection = connections[0] || null;
-  const isConnected = Boolean(activeConnection?.hasAllegroAccessToken);
+  const activeConnection = connections[0] ?? null;
+  const isConnected = activeConnection?.hasAllegroAccessToken === true;
 
   const allegroApiPresets: ApiPreset[] = [
     { label: 'Categories', method: 'GET', path: '/sale/categories' },
@@ -35,14 +35,16 @@ export function AllegroApiConsole(): React.JSX.Element {
     { label: 'Implied Warranties', method: 'GET', path: '/after-sales-service-conditions' },
   ];
 
+  const baseUrl = (activeConnection?.allegroUseSandbox === true)
+    ? 'https://api.allegro.pl.allegrosandbox.pl'
+    : 'https://api.allegro.pl';
+
   return (
     <GenericApiConsole
       config={{
         title: 'Allegro API Console',
         description: 'Send requests using the active Allegro connection token.',
-        baseUrl: activeConnection?.allegroUseSandbox
-          ? 'https://api.allegro.pl.allegrosandbox.pl'
-          : 'https://api.allegro.pl',
+        baseUrl,
         methodType: 'select',
         bodyOrParamsLabel: 'JSON body',
         connectionWarning: 'Connect Allegro to enable API requests.',
@@ -72,7 +74,7 @@ export function AllegroApiConsole(): React.JSX.Element {
       onSetPath={setAllegroApiPath}
       onSetBodyOrParams={setAllegroApiBody}
       onRequest={() => {
-        void handleAllegroApiRequest();
+        handleAllegroApiRequest().catch(() => {});
       }}
     />
   );

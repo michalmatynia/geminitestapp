@@ -1,6 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
+import {
+  safeCancelAnimationFrame,
+  safeClearTimeout,
+  safeRequestAnimationFrame,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 export type KangurTextHighlightResult = {
@@ -387,16 +393,16 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
     clearBrowserSelection(clearToken, selectionClearTokenRef);
     if (typeof window !== 'undefined') {
       if (clearSelectionTimeoutRef.current !== null) {
-        window.clearTimeout(clearSelectionTimeoutRef.current);
+        safeClearTimeout(clearSelectionTimeoutRef.current);
       }
-      clearSelectionTimeoutRef.current = window.setTimeout(() => {
+      clearSelectionTimeoutRef.current = safeSetTimeout(() => {
         clearSelectionTimeoutRef.current = null;
         clearBrowserSelection(clearToken, selectionClearTokenRef);
       }, 0);
       if (clearSelectionRafRef.current !== null) {
-        window.cancelAnimationFrame(clearSelectionRafRef.current);
+        safeCancelAnimationFrame(clearSelectionRafRef.current);
       }
-      clearSelectionRafRef.current = window.requestAnimationFrame(() => {
+      clearSelectionRafRef.current = safeRequestAnimationFrame(() => {
         clearSelectionRafRef.current = null;
         clearBrowserSelection(clearToken, selectionClearTokenRef);
       });

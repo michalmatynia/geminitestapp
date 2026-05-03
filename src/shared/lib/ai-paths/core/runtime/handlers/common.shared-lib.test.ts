@@ -683,26 +683,31 @@ describe('common.shared-lib', () => {
   });
 
   describe('handleViewer', () => {
-    it('returns previous outputs for both empty and non-empty output configurations', () => {
-      const prevOutputs = { value: 'ready', valid: true };
+    it('passes through nodeInputs so the viewer displays upstream data', () => {
+      const nodeInputs = { result: 'normalized', confidence: 0.95 };
+      const prevOutputs = { value: 'stale' };
 
-      expect(
-        handleViewer(
-          createMockContext({
-            node: { id: 'n1', type: 'viewer', outputs: [] } as any,
-            prevOutputs,
-          })
-        )
-      ).toBe(prevOutputs);
+      const result = handleViewer(
+        createMockContext({
+          node: { id: 'n1', type: 'viewer', outputs: [] } as any,
+          nodeInputs,
+          prevOutputs,
+        })
+      );
 
-      expect(
-        handleViewer(
-          createMockContext({
-            node: { id: 'n2', type: 'viewer', outputs: ['value'] } as any,
-            prevOutputs,
-          })
-        )
-      ).toBe(prevOutputs);
+      expect(result).toEqual(nodeInputs);
+    });
+
+    it('returns empty object when nodeInputs is empty', () => {
+      const result = handleViewer(
+        createMockContext({
+          node: { id: 'n2', type: 'viewer', outputs: ['value'] } as any,
+          nodeInputs: {},
+          prevOutputs: { value: 'stale' },
+        })
+      );
+
+      expect(result).toEqual({});
     });
   });
 });

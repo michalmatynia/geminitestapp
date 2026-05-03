@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import {
   CMS_SECTION_BLOCK_TYPE_SET,
   DEFAULT_BLOCK_MIN_HEIGHT,

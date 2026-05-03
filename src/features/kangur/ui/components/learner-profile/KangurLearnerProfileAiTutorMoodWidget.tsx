@@ -109,16 +109,17 @@ const resolveKangurAiTutorMoodUpdatedLabel = ({
     : tutorContent.profileMoodWidget.updatedFallback;
 
 function KangurLearnerProfileAiTutorMoodStats({
-  baselineLabel,
-  confidenceLabel,
-  tutorContent,
-  updatedLabel,
+  stats,
 }: {
-  baselineLabel: string;
-  confidenceLabel: string;
-  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
-  updatedLabel: string;
+  stats: {
+    baselineLabel: string;
+    confidenceLabel: string;
+    updatedLabel: string;
+  };
 }): React.JSX.Element {
+  const tutorContent = useKangurAiTutorContent();
+  const { baselineLabel, confidenceLabel, updatedLabel } = stats;
+
   return (
     <div className='grid w-full kangur-panel-gap min-[420px]:grid-cols-2 xl:max-w-3xl xl:grid-cols-3'>
       <KangurLabeledValueSummary
@@ -227,10 +228,11 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
         </div>
 
         <KangurLearnerProfileAiTutorMoodStats
-          baselineLabel={baselinePreset.label}
-          confidenceLabel={formatMoodConfidence(learnerMood.confidence)}
-          tutorContent={tutorContent}
-          updatedLabel={updatedLabel}
+          stats={{
+            baselineLabel: baselinePreset.label,
+            confidenceLabel: formatMoodConfidence(learnerMood.confidence),
+            updatedLabel,
+          }}
         />
       </div>
     </KangurGlassPanel>

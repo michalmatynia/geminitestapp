@@ -1,9 +1,11 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
 import type { BaseActiveTemplatePreferencePayload, BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferencePayload, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferencePayload, BaseDefaultInventoryPreferenceResponse, BaseImageRetryPresetsPayload, BaseImageRetryPresetsResponse, BaseSampleProductPayload, BaseSampleProductResponse, BaseStockFallbackPreferencePayload, BaseStockFallbackPreferenceResponse } from '@/shared/contracts/integrations/preferences';
 import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse, BaseImportListPayload, BaseImportListResponse, BaseImportParametersClearResponse, BaseImportParametersPayload, BaseImportParametersResponse, BaseImportWarehousesPayload, BaseImportWarehousesResponse, CatalogOption as CatalogRecord, ImportExportTemplateCreateInput } from '@/shared/contracts/integrations/import-export';
-import type { BaseImportRunDetailResponse, BaseImportRunResumePayload, BaseImportRunStartPayload, BaseImportStartResponse, BaseImportItemStatus, ImportParameterCacheResponse, BaseInventory, BaseImportStartResponse as ImportResponse } from '@/shared/contracts/integrations/base-com';
+import type { BaseImportDirectTarget, BaseImportRunDetailResponse, BaseImportRunResumePayload, BaseImportRunStartPayload, BaseImportStartResponse, BaseImportItemStatus, ImportParameterCacheResponse, BaseInventory, BaseImportStartResponse as ImportResponse } from '@/shared/contracts/integrations/base-com';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { IntegrationTemplate as Template } from '@/shared/contracts/integrations';
+import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { ProductParameter, ProductSimpleParameter } from '@/shared/contracts/products/parameters';
 import type { DeleteResponse } from '@/shared/contracts/ui/api';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
@@ -105,6 +107,26 @@ export function useProductSimpleParameters(
       queryKey,
       tags: ['import-export', 'products', 'simple-parameters'],
       description: 'Loads products metadata simple parameters for import export.'},
+  });
+}
+
+export function useProductCustomFields(): ListQuery<ProductCustomFieldDefinition> {
+  const queryKey = productMetadataKeys.customFields();
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<ProductCustomFieldDefinition[]> =>
+      await api.get<ProductCustomFieldDefinition[]>('/api/v2/products/custom-fields', {
+        cache: 'no-store',
+      }),
+    meta: {
+      source: 'importExport.hooks.useProductCustomFields',
+      operation: 'list',
+      resource: 'products.metadata.custom-fields',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'products', 'custom-fields'],
+      description: 'Loads products metadata custom fields for import export.',
+    },
   });
 }
 
@@ -257,7 +279,7 @@ export function useInventories(
       );
       return data.inventories;
     },
-    enabled: enabled && !!connectionId.trim(),
+    enabled: enabled && Boolean(connectionId.trim()),
     meta: {
       source: 'importExport.hooks.useInventories',
       operation: 'list',
@@ -294,7 +316,7 @@ export function useWarehouses(
         } satisfies BaseImportWarehousesPayload
       );
     },
-    enabled: enabled && !!inventoryId && !!connectionId.trim(),
+    enabled: enabled && Boolean(inventoryId) && Boolean(connectionId.trim()),
     meta: {
       source: 'importExport.hooks.useWarehouses',
       operation: 'detail',
@@ -385,6 +407,7 @@ export function useImportList(
     pageSize?: number;
     searchName?: string;
     searchSku?: string;
+    directTarget?: BaseImportDirectTarget;
   },
   enabled: boolean = true
 ): SingleQuery<BaseImportListResponse> {
@@ -393,7 +416,17 @@ export function useImportList(
     id: inventoryId || null,
     queryKey,
     queryFn: () => {
-      const { connectionId, catalogId, limit, uniqueOnly, page, pageSize, searchName, searchSku } =
+      const {
+        connectionId,
+        catalogId,
+        limit,
+        uniqueOnly,
+        page,
+        pageSize,
+        searchName,
+        searchSku,
+        directTarget,
+      } =
         params;
       const normalizedConnectionId = connectionId.trim();
       if (!normalizedConnectionId) {
@@ -412,10 +445,11 @@ export function useImportList(
           pageSize,
           searchName,
           searchSku,
+          directTarget,
         } satisfies BaseImportListPayload
       );
     },
-    enabled: enabled && !!inventoryId && !!params.connectionId.trim(),
+    enabled: enabled && Boolean(inventoryId) && Boolean(params.connectionId.trim()),
     meta: {
       source: 'importExport.hooks.useImportList',
       operation: 'detail',
@@ -495,7 +529,7 @@ export function useImportRun(
       const endpoint = `/api/v2/integrations/imports/base/runs/${encodeURIComponent(runId)}${query ? `?${query}` : ''}`;
       return api.get<BaseImportRunDetailResponse>(endpoint, { cache: 'no-store' });
     },
-    enabled: (options?.enabled ?? true) && !!runId,
+    enabled: (options?.enabled ?? true) && Boolean(runId),
     refetchInterval: options?.refetchInterval ?? false,
     meta: {
       source: 'importExport.hooks.useImportRun',

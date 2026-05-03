@@ -39,7 +39,7 @@ export function updateProposal(
 // ─── Test utility ─────────────────────────────────────────────────────────────
 
 /** Only for use in tests — clears the proposal store between test runs. */
-export const __testOnly = {
+export const testOnly = {
   clearProposals(): void {
     proposals.clear();
   },

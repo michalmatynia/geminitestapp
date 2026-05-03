@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getTagMappingRepository } from '@/features/integrations/server';
 import { bulkTagMappingRequestSchema } from '@/shared/contracts/integrations/listings';
@@ -10,7 +10,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
  * POST /api/marketplace/tag-mappings/bulk
  * Creates or updates multiple tag mappings at once.
  */
-export async function POST_handler(
+export async function postHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

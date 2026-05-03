@@ -1,5 +1,5 @@
 import type { AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
 type ReadCountsResult = {
   matchedCount: number | null;

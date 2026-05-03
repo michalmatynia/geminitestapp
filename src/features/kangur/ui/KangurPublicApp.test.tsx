@@ -107,7 +107,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { KangurPublicApp } from '@/features/kangur/ui/KangurPublicApp';
 

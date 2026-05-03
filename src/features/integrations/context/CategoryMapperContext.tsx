@@ -1,12 +1,8 @@
 'use client';
 
-import React, {
-  useState,
-  useMemo,
-  useEffect,
-  useRef,
-  useCallback,
-} from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 
 import {
   useIntegrationCatalogs,
@@ -26,134 +22,69 @@ import {
 } from '@/features/integrations/components/marketplaces/category-mapper/category-table/auto-match-by-name';
 import { buildCategoryTree } from '@/features/integrations/components/marketplaces/category-mapper/category-table/utils';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type {
+  MarketplaceFetchResponse,
+  TraderaCategoryFetchBrowserMode,
+} from '@/shared/contracts/integrations/marketplace';
 import type { InternalCategoryOption, CategoryMapperData, CategoryMapperActions } from '@/shared/contracts/integrations/context';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
-import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { createStrictContext } from './createStrictContext';
+import {
+  buildInternalCategoryOptions,
+} from './CategoryMapperContext.utils';
+import {
+  buildCategoryMapperStats,
+  type CategoryMapperConfig,
+  buildInitialExpandedIds,
+  buildNonLeafMappings,
+  buildStaleMappings,
+  extractTraderaFetchWarning,
+  type CategoryMapperFetchWarning,
+  type CategoryMapperUIState,
+} from './CategoryMapperContext.helpers';
 
 // --- Granular Contexts ---
 
-export interface CategoryMapperConfig {
-  connectionId: string;
-  connectionName: string;
-  integrationId?: string | undefined;
-  integrationSlug?: string | undefined;
-}
+const createCategoryMapperScopedContext = <T,>(displayName: string, errorMessage: string) =>
+  createStrictContext<T>({ displayName, errorMessage });
+
+const TRADERA_CATEGORY_FETCH_BROWSER_MODE_STORAGE_KEY =
+  'tradera.categoryMapper.fetchBrowserMode';
+
+const readInitialTraderaCategoryFetchBrowserMode = (): TraderaCategoryFetchBrowserMode => {
+  if (typeof window === 'undefined') {
+    return 'headed';
+  }
+
+  const stored = window.localStorage.getItem(TRADERA_CATEGORY_FETCH_BROWSER_MODE_STORAGE_KEY);
+  return stored === 'headless' ? 'headless' : 'headed';
+};
+
 export const { Context: ConfigContext, useValue: useCategoryMapperConfig } =
-  createStrictContext<CategoryMapperConfig>({
-    displayName: 'CategoryMapperConfigContext',
-    errorMessage: 'useCategoryMapperConfig must be used within CategoryMapperProvider',
-  });
+  createCategoryMapperScopedContext<CategoryMapperConfig>(
+    'CategoryMapperConfigContext',
+    'useCategoryMapperConfig must be used within CategoryMapperProvider'
+  );
 
 export const { Context: DataContext, useValue: useCategoryMapperData } =
-  createStrictContext<CategoryMapperData>({
-    displayName: 'CategoryMapperDataContext',
-    errorMessage: 'useCategoryMapperData must be used within CategoryMapperProvider',
-  });
+  createCategoryMapperScopedContext<CategoryMapperData>(
+    'CategoryMapperDataContext',
+    'useCategoryMapperData must be used within CategoryMapperProvider'
+  );
 
-export interface CategoryMapperUIState {
-  pendingMappings: Map<string, string | null>;
-  expandedIds: Set<string>;
-  toggleExpand: (categoryId: string) => void;
-  staleMappings: Array<{
-    externalCategoryId: string;
-    externalCategoryName: string;
-    externalCategoryPath: string | null;
-    internalCategoryLabel: string | null;
-  }>;
-  stats: { total: number; mapped: number; unmapped: number; pending: number; stale: number };
-}
 export const { Context: UIStateContext, useValue: useCategoryMapperUIState } =
-  createStrictContext<CategoryMapperUIState>({
-    displayName: 'CategoryMapperUIStateContext',
-    errorMessage: 'useCategoryMapperUIState must be used within CategoryMapperProvider',
-  });
+  createCategoryMapperScopedContext<CategoryMapperUIState>(
+    'CategoryMapperUIStateContext',
+    'useCategoryMapperUIState must be used within CategoryMapperProvider'
+  );
 
 export const { Context: ActionsContext, useValue: useCategoryMapperActions } =
-  createStrictContext<CategoryMapperActions>({
-    displayName: 'CategoryMapperActionsContext',
-    errorMessage: 'useCategoryMapperActions must be used within CategoryMapperProvider',
-  });
-
-const normalizeParentExternalId = (value: string | null | undefined): string | null => {
-  const candidate = typeof value === 'string' ? value.trim() : '';
-  if (!candidate || candidate === '0' || candidate.toLowerCase() === 'null') {
-    return null;
-  }
-  return candidate;
-};
-
-const isMissingExternalCategoryName = (value: string | null | undefined): boolean => {
-  const candidate = typeof value === 'string' ? value.trim() : '';
-  return candidate.startsWith('[Missing external category:');
-};
-
-const buildInternalCategoryOptions = (categories: ProductCategory[]): InternalCategoryOption[] => {
-  if (categories.length === 0) return [];
-
-  const byId = new Map<string, ProductCategory>(
-    categories.map((category: ProductCategory): [string, ProductCategory] => [
-      category.id,
-      category,
-    ])
+  createCategoryMapperScopedContext<CategoryMapperActions>(
+    'CategoryMapperActionsContext',
+    'useCategoryMapperActions must be used within CategoryMapperProvider'
   );
-  const childrenByParentId = new Map<string | null, ProductCategory[]>();
-
-  const pushChild = (parentId: string | null, category: ProductCategory): void => {
-    const current = childrenByParentId.get(parentId) ?? [];
-    current.push(category);
-    childrenByParentId.set(parentId, current);
-  };
-
-  for (const category of categories) {
-    const rawParentId = typeof category.parentId === 'string' ? category.parentId.trim() : '';
-    const normalizedParentId =
-      rawParentId.length > 0 && rawParentId !== category.id && byId.has(rawParentId)
-        ? rawParentId
-        : null;
-    pushChild(normalizedParentId, category);
-  }
-
-  for (const [, children] of childrenByParentId) {
-    children.sort((a: ProductCategory, b: ProductCategory): number => a.name.localeCompare(b.name));
-  }
-
-  const visited = new Set<string>();
-  const options: InternalCategoryOption[] = [];
-
-  const visit = (parentId: string | null, depth: number, ancestry: string[]): void => {
-    const children = childrenByParentId.get(parentId) ?? [];
-    for (const child of children) {
-      if (visited.has(child.id)) continue;
-      visited.add(child.id);
-      const path = [...ancestry, child.name];
-      const indent = depth > 0 ? `${'\u00A0\u00A0'.repeat(depth)}↳ ` : '';
-      options.push({
-        value: child.id,
-        label: `${indent}${path.join(' / ')}`,
-      });
-      visit(child.id, depth + 1, path);
-    }
-  };
-
-  visit(null, 0, []);
-
-  const unvisited = categories
-    .filter((category: ProductCategory): boolean => !visited.has(category.id))
-    .sort((a: ProductCategory, b: ProductCategory): number => a.name.localeCompare(b.name));
-
-  for (const category of unvisited) {
-    if (visited.has(category.id)) continue;
-    visited.add(category.id);
-    options.push({ value: category.id, label: category.name });
-    visit(category.id, 1, [category.name]);
-  }
-
-  return options;
-};
-
 
 export function CategoryMapperProvider({
   connectionId,
@@ -177,21 +108,23 @@ export function CategoryMapperProvider({
 
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
   const hasInitializedCatalog = useRef(false);
+  const normalizedIntegrationSlug = (integrationSlug ?? '').trim().toLowerCase();
+  const isTraderaConnection = normalizedIntegrationSlug === 'tradera';
 
   // Auto-select default catalog
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    let timer: ReturnType<typeof safeSetTimeout> | null = null;
     if (!selectedCatalogId && catalogs.length > 0 && !hasInitializedCatalog.current) {
       const defaultCatalog = catalogs.find((c: CatalogRecord) => c.isDefault) ?? catalogs[0];
       if (defaultCatalog) {
-        timer = setTimeout(() => {
+        timer = safeSetTimeout(() => {
           setSelectedCatalogId(defaultCatalog.id);
           hasInitializedCatalog.current = true;
         }, 0);
       }
     }
     return (): void => {
-      if (timer) clearTimeout(timer);
+      if (timer) safeClearTimeout(timer);
     };
   }, [catalogs, selectedCatalogId]);
 
@@ -207,6 +140,16 @@ export function CategoryMapperProvider({
   const externalCategories = useMemo(
     () => externalCategoriesQuery.data ?? [],
     [externalCategoriesQuery.data]
+  );
+  const externalCategoriesByExternalId = useMemo(
+    () =>
+      new Map(
+        externalCategories.map((category: ExternalCategory): [string, ExternalCategory] => [
+          category.externalId,
+          category,
+        ])
+      ),
+    [externalCategories]
   );
   const externalCategoriesLoading = externalCategoriesQuery.isLoading;
   const externalIds = useMemo(
@@ -229,30 +172,37 @@ export function CategoryMapperProvider({
 
   const [pendingMappings, setPendingMappings] = useState<Map<string, string | null>>(new Map());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [lastFetchResult, setLastFetchResult] = useState<MarketplaceFetchResponse | null>(null);
+  const [lastFetchWarning, setLastFetchWarning] = useState<CategoryMapperFetchWarning | null>(null);
+  const [
+    traderaCategoryFetchBrowserMode,
+    setTraderaCategoryFetchBrowserModeState,
+  ] = useState<TraderaCategoryFetchBrowserMode>(readInitialTraderaCategoryFetchBrowserMode);
   const hasInitializedExpansion = useRef(false);
 
-  const isRootCategory = useCallback(
-    (category: ExternalCategory): boolean => {
-      const parentExternalId = normalizeParentExternalId(category.parentExternalId);
-      if (!parentExternalId) return true;
-      if (parentExternalId === category.externalId) return true;
-      return !externalIds.has(parentExternalId);
+  const setTraderaCategoryFetchBrowserMode = useCallback(
+    (mode: TraderaCategoryFetchBrowserMode): void => {
+      setTraderaCategoryFetchBrowserModeState(mode);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(TRADERA_CATEGORY_FETCH_BROWSER_MODE_STORAGE_KEY, mode);
+      }
     },
-    [externalIds]
+    []
   );
+
+  useEffect(() => {
+    setLastFetchResult(null);
+    setLastFetchWarning(null);
+  }, [connectionId]);
 
   // Initialize expansion state
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    let timer: ReturnType<typeof safeSetTimeout> | null = null;
     if (externalCategories.length > 0 && !hasInitializedExpansion.current) {
-      timer = setTimeout(() => {
+      timer = safeSetTimeout(() => {
         setExpandedIds((prev: Set<string>) => {
           if (prev.size === 0) {
-            return new Set(
-              externalCategories
-                .filter((c: ExternalCategory) => isRootCategory(c))
-                .map((c: ExternalCategory) => c.id)
-            );
+            return buildInitialExpandedIds(externalCategories, externalIds);
           }
           return prev;
         });
@@ -260,23 +210,47 @@ export function CategoryMapperProvider({
       }, 0);
     }
     return (): void => {
-      if (timer) clearTimeout(timer);
+      if (timer) safeClearTimeout(timer);
     };
-  }, [externalCategories, isRootCategory]);
+  }, [externalCategories, externalIds]);
 
   // Reset pending mappings when catalog changes
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = safeSetTimeout(() => {
       setPendingMappings(new Map());
     }, 0);
-    return (): void => clearTimeout(timer);
+    return (): void => safeClearTimeout(timer);
   }, [selectedCatalogId]);
 
   const handleFetchExternalCategories = useCallback(async (): Promise<void> => {
     try {
-      const result = await fetchMutation.mutateAsync({ connectionId });
-      toast(result.message, { variant: 'success' });
+      const result = await fetchMutation.mutateAsync({
+        connectionId,
+        ...(isTraderaConnection ? { browserMode: traderaCategoryFetchBrowserMode } : {}),
+      });
+      setLastFetchResult(result);
+      const shallowDepth =
+        isTraderaConnection &&
+        result.fetched > 0 &&
+        (result.categoryStats?.maxDepth ?? 0) < 3;
+      if (shallowDepth) {
+        const message =
+          'Tradera category fetch returned a shallow tree (depth < 3). Re-authenticate the Tradera browser session and retry to capture the full picker depth.';
+        setLastFetchWarning({
+          message,
+          sourceName: result.source ?? null,
+          existingTotal: null,
+          existingMaxDepth: null,
+          fetchedTotal: result.fetched,
+          fetchedMaxDepth: result.categoryStats?.maxDepth ?? null,
+        });
+        toast(message, { variant: 'error' });
+      } else {
+        setLastFetchWarning(null);
+        toast(result.message, { variant: 'success' });
+      }
     } catch (error: unknown) {
+      setLastFetchWarning(extractTraderaFetchWarning(error));
       logClientCatch(error, {
         source: 'CategoryMapper',
         action: 'fetchExternalCategories',
@@ -286,7 +260,14 @@ export function CategoryMapperProvider({
       const message = error instanceof Error ? error.message : 'Failed to fetch categories';
       toast(message, { variant: 'error' });
     }
-  }, [connectionId, fetchMutation, integrationId, toast]);
+  }, [
+    connectionId,
+    fetchMutation,
+    integrationId,
+    isTraderaConnection,
+    toast,
+    traderaCategoryFetchBrowserMode,
+  ]);
 
   const getMappingForExternal = useCallback(
     (externalCategoryId: string): string | null => {
@@ -328,8 +309,12 @@ export function CategoryMapperProvider({
       return;
     }
 
+    const autoMatchEligibleExternalCategories = isTraderaConnection
+      ? externalCategories.filter((category: ExternalCategory) => category.isLeaf !== false)
+      : externalCategories;
+
     const result = autoMatchCategoryMappingsByName({
-      externalCategories,
+      externalCategories: autoMatchEligibleExternalCategories,
       internalCategories,
       pendingMappings,
       getCurrentMapping: getMappingForExternal,
@@ -352,6 +337,7 @@ export function CategoryMapperProvider({
     externalCategories,
     getMappingForExternal,
     internalCategories,
+    isTraderaConnection,
     pendingMappings,
     selectedCatalogId,
     toast,
@@ -361,6 +347,26 @@ export function CategoryMapperProvider({
     if (pendingMappings.size === 0 || !selectedCatalogId) {
       toast('No changes to save', { variant: 'info' });
       return;
+    }
+
+    if (isTraderaConnection) {
+      const invalidNonLeafMapping = Array.from(pendingMappings.entries()).find(
+        ([externalCategoryId, internalCategoryId]: [string, string | null]) => {
+          if (!internalCategoryId) return false;
+          return externalCategoriesByExternalId.get(externalCategoryId)?.isLeaf === false;
+        }
+      );
+
+      if (invalidNonLeafMapping) {
+        const [externalCategoryId] = invalidNonLeafMapping;
+        const category = externalCategoriesByExternalId.get(externalCategoryId) ?? null;
+        const categoryLabel = category?.path?.trim() || category?.name?.trim() || externalCategoryId;
+        toast(
+          `Tradera mappings must target the deepest category. "${categoryLabel}" still has child categories. Choose a leaf Tradera category and save again.`,
+          { variant: 'error' }
+        );
+        return;
+      }
     }
 
     try {
@@ -405,53 +411,38 @@ export function CategoryMapperProvider({
 
   const categoryTree = useMemo(() => buildCategoryTree(externalCategories), [externalCategories]);
 
-  const stats = useMemo((): { total: number; mapped: number; unmapped: number; pending: number; stale: number } => {
-    const staleMappings = mappings.filter((mapping: CategoryMappingWithDetails): boolean => {
-      if (!mapping.isActive) return false;
-      const externalCategoryId = mapping.externalCategoryId.trim();
-      if (!externalCategoryId) return false;
-      return (
-        !externalIds.has(externalCategoryId) ||
-        isMissingExternalCategoryName(mapping.externalCategory?.name)
-      );
-    });
-    const total = externalCategories.length;
-    const mapped = externalCategories.filter(
-      (c: ExternalCategory) => getMappingForExternal(c.externalId) !== null
-    ).length;
-    const unmapped = Math.max(0, total - mapped);
-    const pending = pendingMappings.size;
-    return { total, mapped, unmapped, pending, stale: staleMappings.length };
-  }, [externalCategories, externalIds, getMappingForExternal, mappings, pendingMappings.size]);
-
   const staleMappings = useMemo(
-    (): Array<{
-      externalCategoryId: string;
-      externalCategoryName: string;
-      externalCategoryPath: string | null;
-      internalCategoryLabel: string | null;
-    }> =>
-      mappings
-        .filter((mapping: CategoryMappingWithDetails): boolean => {
-          if (!mapping.isActive) return false;
-          const externalCategoryId = mapping.externalCategoryId.trim();
-          if (!externalCategoryId) return false;
-          return (
-            !externalIds.has(externalCategoryId) ||
-            isMissingExternalCategoryName(mapping.externalCategory?.name)
-          );
-        })
-        .map((mapping: CategoryMappingWithDetails) => ({
-          externalCategoryId: mapping.externalCategoryId,
-          externalCategoryName:
-            mapping.externalCategory?.name?.trim() || mapping.externalCategoryId,
-          externalCategoryPath:
-            mapping.externalCategory?.path?.trim() || null,
-          internalCategoryLabel:
-            mapping.internalCategory?.name?.trim() || mapping.internalCategoryId || null,
-        })),
+    () => buildStaleMappings(mappings, externalIds),
     [externalIds, mappings]
   );
+
+  const nonLeafMappings = useMemo(
+    () => buildNonLeafMappings(mappings, externalIds, isTraderaConnection),
+    [externalIds, isTraderaConnection, mappings]
+  );
+
+  const stats = useMemo((): {
+    total: number;
+    mapped: number;
+    unmapped: number;
+    pending: number;
+    stale: number;
+    nonLeaf: number;
+  } =>
+    buildCategoryMapperStats({
+      externalCategories,
+      getMappingForExternal,
+      pendingMappingsSize: pendingMappings.size,
+      staleMappingsLength: staleMappings.length,
+      nonLeafMappingsLength: nonLeafMappings.length,
+    }),
+  [
+    externalCategories,
+    getMappingForExternal,
+    nonLeafMappings.length,
+    pendingMappings.size,
+    staleMappings.length,
+  ]);
 
   const configValue = useMemo<CategoryMapperConfig>(
     () => ({
@@ -500,10 +491,26 @@ export function CategoryMapperProvider({
       pendingMappings,
       expandedIds,
       toggleExpand,
+      lastFetchResult,
+      lastFetchWarning,
+      traderaCategoryFetchBrowserMode,
+      setTraderaCategoryFetchBrowserMode,
       staleMappings,
+      nonLeafMappings,
       stats,
     }),
-    [pendingMappings, expandedIds, toggleExpand, staleMappings, stats]
+    [
+      pendingMappings,
+      expandedIds,
+      toggleExpand,
+      lastFetchResult,
+      lastFetchWarning,
+      traderaCategoryFetchBrowserMode,
+      setTraderaCategoryFetchBrowserMode,
+      staleMappings,
+      nonLeafMappings,
+      stats,
+    ]
   );
 
   const actionsValue = useMemo<CategoryMapperActions>(

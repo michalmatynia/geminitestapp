@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   readOptionalServerAuthSessionMock: vi.fn(),
   findProductListingByIdAcrossProvidersMock: vi.fn(),
+  listProductListingsByProductIdAcrossProvidersMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   deleteBaseProductMock: vi.fn(),
   resolveBaseConnectionTokenMock: vi.fn(),
@@ -22,6 +23,8 @@ vi.mock('@/features/auth/server', () => ({
 vi.mock('@/features/integrations/server', () => ({
   findProductListingByIdAcrossProviders: (...args: unknown[]) =>
     mocks.findProductListingByIdAcrossProvidersMock(...args),
+  listProductListingsByProductIdAcrossProviders: (...args: unknown[]) =>
+    mocks.listProductListingsByProductIdAcrossProvidersMock(...args),
   getIntegrationRepository: () => ({
     getConnectionById: (...args: unknown[]) => mocks.getConnectionByIdMock(...args),
   }),
@@ -42,7 +45,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   }),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('integration listing delete-from-base handler', () => {
   beforeEach(() => {
@@ -66,6 +69,17 @@ describe('integration listing delete-from-base handler', () => {
         updateListingExternalId: vi.fn().mockResolvedValue(undefined),
       },
     });
+    mocks.listProductListingsByProductIdAcrossProvidersMock.mockResolvedValue([
+      {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        externalListingId: null,
+        integration: {
+          slug: 'baselinker',
+        },
+      },
+    ]);
     mocks.getConnectionByIdMock.mockResolvedValue({
       id: 'connection-1',
       baseApiToken: 'token-1',
@@ -85,7 +99,7 @@ describe('integration listing delete-from-base handler', () => {
   });
 
   it('clears stale Base ids after successful deletion so re-export can create a new product', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/integrations/products/product-1/listings/listing-1/delete-from-base', {
         method: 'POST',
       }),
@@ -122,16 +136,16 @@ describe('integration listing delete-from-base handler', () => {
     });
   });
 
-  it('does not clear an unrelated product.baseProductId when it does not match the deleted listing id', async () => {
+  it('clears a stale product.baseProductId when no canonical Base listing remains after deletion', async () => {
     mocks.getProductRepositoryMock.mockResolvedValue({
       getProductById: vi.fn().mockResolvedValue({
         id: 'product-1',
         baseProductId: 'other-base-id',
       }),
-      updateProduct: vi.fn().mockResolvedValue({ id: 'product-1', baseProductId: 'other-base-id' }),
+      updateProduct: vi.fn().mockResolvedValue({ id: 'product-1', baseProductId: null }),
     });
 
-    await POST_handler(
+    await postHandler(
       new NextRequest('http://localhost/api/v2/integrations/products/product-1/listings/listing-1/delete-from-base', {
         method: 'POST',
       }),
@@ -140,6 +154,54 @@ describe('integration listing delete-from-base handler', () => {
     );
 
     const productRepository = await mocks.getProductRepositoryMock.mock.results[0]?.value;
-    expect(productRepository.updateProduct).not.toHaveBeenCalled();
+    expect(productRepository.updateProduct).toHaveBeenCalledWith('product-1', {
+      baseProductId: null,
+    });
+  });
+
+  it('repoints product.baseProductId to the one remaining Base listing after deletion', async () => {
+    mocks.listProductListingsByProductIdAcrossProvidersMock.mockResolvedValue([
+      {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        externalListingId: null,
+        integration: {
+          slug: 'baselinker',
+        },
+      },
+      {
+        id: 'listing-2',
+        productId: 'product-1',
+        connectionId: 'connection-2',
+        externalListingId: 'base-remaining-2',
+        integration: {
+          slug: 'base',
+        },
+      },
+    ]);
+    mocks.getProductRepositoryMock.mockResolvedValue({
+      getProductById: vi.fn().mockResolvedValue({
+        id: 'product-1',
+        baseProductId: '531482664',
+      }),
+      updateProduct: vi.fn().mockResolvedValue({
+        id: 'product-1',
+        baseProductId: 'base-remaining-2',
+      }),
+    });
+
+    await postHandler(
+      new NextRequest('http://localhost/api/v2/integrations/products/product-1/listings/listing-1/delete-from-base', {
+        method: 'POST',
+      }),
+      {} as never,
+      { id: 'product-1', listingId: 'listing-1' }
+    );
+
+    const productRepository = await mocks.getProductRepositoryMock.mock.results[0]?.value;
+    expect(productRepository.updateProduct).toHaveBeenCalledWith('product-1', {
+      baseProductId: 'base-remaining-2',
+    });
   });
 });

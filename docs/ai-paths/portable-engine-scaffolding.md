@@ -109,9 +109,6 @@ npm run docs:ai-paths:node-docs:ci
   - `src/shared/lib/ai-paths/portable-engine/sinks-environment.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-shared.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-settings-store.server.ts`
-  - `src/shared/lib/ai-paths/portable-engine/sinks-auto-remediation-config.server.ts`
-  - `src/shared/lib/ai-paths/portable-engine/sinks-auto-remediation-dead-letters.server.ts`
-  - `src/shared/lib/ai-paths/portable-engine/sinks-auto-remediation-delivery.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-bootstrap-config.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-trend-reporter-config.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-trend-reporter.server.ts`
@@ -119,8 +116,6 @@ npm run docs:ai-paths:node-docs:ci
   - `src/shared/lib/ai-paths/portable-engine/sinks-creators.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-trend-state.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-trends.server.ts`
-  - `src/shared/lib/ai-paths/portable-engine/sinks-auto-remediation-state.server.ts`
-  - `src/shared/lib/ai-paths/portable-engine/sinks-auto-remediation.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-bootstrap.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` is now the public sink barrel.
 
@@ -279,42 +274,10 @@ Resolver behavior:
     - `loadPortablePathSigningPolicyTrendSnapshots({ maxSnapshots? })`
     - `appendPortablePathSigningPolicyTrendSnapshot(snapshot, { maxSnapshots? })`
     - Snapshots are stored in `settings` under key `ai_paths_portable_signing_policy_trend_history_v1`.
-  - Startup health auto-remediation APIs:
-    - `loadPortablePathAuditSinkStartupHealthState()`
-    - `savePortablePathAuditSinkStartupHealthState(state)`
-    - `runPortablePathAuditSinkAutoRemediation(summary, { ... })`
-    - Repeated `degraded`/`failed` startup health outcomes can trigger `unregister_all` remediation.
-  - Auto-remediation environment controls:
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_ENABLED` (`true`/`false`)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_THRESHOLD` (consecutive degraded/failed startups before remediation)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_STRATEGY` (`none` | `unregister_all` | `degrade_to_log_only`)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_COOLDOWN_SECONDS` (minimum seconds between remediation actions)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_RATE_LIMIT_WINDOW_SECONDS` (rolling window length for remediation rate limiting)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS` (max remediation actions per window)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_NOTIFICATIONS_ENABLED` (`true`/`false`)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_URL` (JSON webhook for remediation alerts)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_SECRET` (optional HMAC secret for webhook signing)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_SIGNATURE_KEY_ID` (optional webhook signature key-id hint)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_URL` (email-relay webhook endpoint)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_SECRET` (optional HMAC secret for email webhook signing)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_SIGNATURE_KEY_ID` (optional email webhook signature key-id hint)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_RECIPIENTS` (comma-delimited recipients)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS` (notification webhook timeout)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES` (max persisted failed notification deliveries)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_WINDOW_SECONDS` (max age window for dead-letter replay attempts)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_ENDPOINT_ALLOWLIST` (comma-delimited replay endpoint URL allowlist)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_SECRET` (optional HMAC secret for replay-history export signatures)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_KEY_ID` (optional replay-history export signature key-id hint)
-    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_REDACTION_MODE` (`off` or `sensitive`; `sensitive` redacts endpoint/error fields for lower-trust exports)
-  - Auto-remediation fan-out API:
-    - `notifyPortablePathAuditSinkAutoRemediation(input, { ... })`
-    - Supports webhook and email-relay webhook channels with retry/circuit protection.
-    - Includes channel delivery receipts and optional HMAC request signing headers (`x-ai-paths-signature*`).
-    - Failed deliveries are persisted to a dead-letter queue for replay/inspection.
-  - Dead-letter persistence APIs:
-    - `loadPortablePathAuditSinkAutoRemediationDeadLetters({ maxEntries? })`
-    - `savePortablePathAuditSinkAutoRemediationDeadLetters(entries, { maxEntries? })`
-    - `enqueuePortablePathAuditSinkAutoRemediationDeadLetter(entry, { maxEntries? })`
+  - Startup health behavior:
+    - `bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment({ env?, emitSystemLog? })`
+    - Repeated degraded or failed startup summaries are observed and logged only.
+    - The portable-engine sink bootstrap is forward-only: no replay, receiver, retry, or mitigation channel is mounted through AI Paths.
   - Built-in server sink factories:
     - `createPortablePathEnvelopeVerificationLogForwardingSink(...)`
     - `createPortablePathEnvelopeVerificationMongoSink(...)`
@@ -373,56 +336,9 @@ These allow stable package integrity tagging across copy/paste surfaces.
 - Trend snapshot response includes:
   - persisted signing-policy trend snapshots
   - aggregate drift/sink-failure summary
+  - run execution telemetry summary
   - applied filter metadata + matched snapshot count
   - pagination metadata (`hasMore`, `nextCursor`, accepted `cursor`)
-  - auto-remediation runtime config (strategy/cooldown/rate-limit/notification channels) + persisted remediation state
-- Remediation dead-letter API: `GET /api/ai-paths/portable-engine/remediation-dead-letters`
-- Remediation dead-letter query:
-  - `limit=1..500` (default `50`)
-  - `channel=webhook|email` (optional)
-  - `endpoint=<exact URL>` (optional)
-- Remediation dead-letter replay API: `POST /api/ai-paths/portable-engine/remediation-dead-letters`
-- Replay request payload:
-  - `action: "replay"` (required)
-  - `dryRun: boolean` (default `true`)
-  - `limit: 1..200` (default `20`)
-  - `channel: webhook|email` (optional)
-  - `endpoint: string` (optional exact-match filter)
-  - `timeoutMs: number` (optional per-attempt timeout override)
-- Replay response includes:
-  - selected/attempted/delivered/failed/retained counters
-  - persisted status
-  - replay policy metadata (window and allowlist counters)
-  - per-entry replay attempts (status/error/signature metadata)
-  - policy-enforced skips are retained with explicit dead-letter error reasons
-- Replay history export API: `GET /api/ai-paths/portable-engine/remediation-dead-letters/replay-history`
-- Replay history query:
-  - `limit=1..200` (default `50`)
-  - `from=<ISO timestamp>` (optional)
-  - `to=<ISO timestamp>` (optional)
-  - `includeAttempts=true|false` (default `false`)
-  - `signed=true|false` (default `true`)
-  - `format=json|ndjson|csv` (default `json`)
-  - `cursor=<opaque>` (optional, filter-bound cursor for paging older replay entries)
-  - `Accept-Encoding: gzip` (optional request header; enables compressed `ndjson`/`csv` exports for large payloads)
-- Replay history export response includes:
-  - replay run counters and filters derived from replay audit logs
-  - optional replay attempt details (`includeAttempts=true`)
-  - redaction metadata (`redaction.mode`, `redaction.applied`)
-  - pagination metadata (`hasMore`, `nextCursor`, accepted `cursor`, `scanTruncated`)
-  - optional HMAC export signature payload (`signature`) when signing secret is configured
-  - for `ndjson`/`csv`, pagination and signature are emitted via `x-ai-paths-pagination*` and `x-ai-paths-export-signature*` headers
-  - response includes `x-ai-paths-export-redaction-mode`
-  - for `ndjson`/`csv`, response includes `Vary: Accept-Encoding` and `x-ai-paths-export-size-bytes`
-  - when compressed, response also includes `Content-Encoding: gzip`, `x-ai-paths-export-compression: gzip`, and `x-ai-paths-export-size-compressed-bytes`
-- Receiver verification endpoint: `POST /api/ai-paths/portable-engine/remediation-webhook`
-- Receiver verification query:
-  - `channel=webhook|email` (default `webhook`)
-  - `maxSkewSeconds=1..3600` (default `300`)
-- Receiver verification response includes:
-  - accepted flag
-  - replay key hash (when signature verified)
-  - parsed payload echo for verification/debugging
 - Cache support: deterministic `ETag` + `If-None-Match` (`304 Not Modified`) with private SWR cache headers.
 - CI guardrail: `npm run ai-paths:check:portable-schema-diff -- --strict`
   - Uses `scripts/ai-paths/portable-schema-diff-allowlist.json`.
@@ -550,10 +466,6 @@ Portable receiver helper (clock-skew + replay checks):
 - `verifyPortablePathWebhookSignature(...)`
 - Source: `src/shared/lib/ai-paths/portable-engine/receiver-signature.ts`
 - Tests: `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine-receiver-signature.test.ts`
-
-Receiver operations runbook:
-
-- `docs/ai-paths/portable-engine-receiver-runbook.md`
 
 ## Next Hardening Steps
 

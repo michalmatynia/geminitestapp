@@ -40,7 +40,7 @@ function AdminAppEmbedsContent(): React.ReactNode {
         actions={
           <Button
             onClick={() => {
-              void save();
+              save().catch(() => {});
             }}
             disabled={isSaving}
           >

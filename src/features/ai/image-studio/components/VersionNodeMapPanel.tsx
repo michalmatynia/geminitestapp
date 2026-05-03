@@ -444,7 +444,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     filterTypes,
     filterHasMask,
     filterLeafOnly,
-    hasActiveFilters: !!hasActiveFilters,
+    hasActiveFilters: Boolean(hasActiveFilters),
     onSetFilterQuery: setFilterQuery,
     onToggleFilterType: toggleFilterType,
     onSetFilterHasMask: setFilterHasMask,

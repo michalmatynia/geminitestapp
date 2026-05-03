@@ -2,6 +2,10 @@ import type { AiNode, Edge, RuntimeHistoryLink } from '@/shared/contracts/ai-pat
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import { getNodeInputPortContract, coerceInput, normalizePortName } from '../../utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+const AI_PATHS_TRACE_INPUT_COLLECTION =
+  typeof process !== 'undefined' && process.env?.['AI_PATHS_TRACE_INPUT_COLLECTION'] === 'true';
 
 type NodeInputReadiness = {
   ready: boolean;
@@ -223,6 +227,13 @@ const extractPromptTemplateTokens = (template: string): string[] =>
   Array.from(template.matchAll(createPromptTemplateTokenPattern()))
     .map((match) => String(match[1] ?? match[2] ?? '').trim())
     .filter((token: string): boolean => token.length > 0);
+
+const resolveTemplateRootPorts = (template: string, connectedPorts: Set<string>): string[] => {
+  const roots = extractPromptTemplateTokens(template)
+    .map((token: string): string => token.split(/[.\[\]:]/)[0]?.trim() ?? '')
+    .filter((root: string): boolean => root.length > 0 && connectedPorts.has(root));
+  return Array.from(new Set(roots));
+};
 
 const resolvePromptTemplateTopLevelPort = (token: string): string =>
   normalizePortName(token.split('.')[0] ?? token);
@@ -561,8 +572,15 @@ export const evaluateInputReadiness = (
   }
 
   if (operation === 'insert') {
-    const hasTemplatePayload = Boolean(dbConfig.query?.queryTemplate?.trim());
+    const templatePayload =
+      typeof dbConfig.query?.queryTemplate === 'string' ? dbConfig.query.queryTemplate.trim() : '';
+    const hasTemplatePayload = templatePayload.length > 0;
     if (hasTemplatePayload) {
+      const templateRequiredPorts = resolveTemplateRootPorts(templatePayload, connectedPorts);
+      if (templateRequiredPorts.length > 0) {
+        markWaitingPorts(templateRequiredPorts, false);
+        return toReadiness(waitingOnPorts.size === 0);
+      }
       return toReadiness(true);
     }
     const payloadPorts = ['value', 'payload'];
@@ -608,6 +626,37 @@ export function collectNodeInputs(
     const out = outputs[fromId];
     if (out?.[fromPort] !== undefined) {
       collected[toPort] = out[fromPort];
+    } else if (out && !edge.fromPort) {
+      // Heuristic fallback: when no explicit fromPort was specified and the default 'result'
+      // missed, try a fallback ONLY when the source has exactly one non-metadata output key
+      // (unambiguous case). This handles handlers that output on ports like 'trigger', 'context',
+      // 'prompt' instead of 'result'.
+      const STATUS_KEYS = new Set(['status', 'skipReason', 'blockedReason', 'message', 'error']);
+      const candidateKeys = Object.keys(out).filter((k) => !STATUS_KEYS.has(k) && out[k] !== undefined);
+      if (candidateKeys.length === 1) {
+        collected[toPort] = out[candidateKeys[0]!];
+        if (AI_PATHS_TRACE_INPUT_COLLECTION) {
+          logClientError(
+            new Error(
+              `[ai-paths:input-collection] Port fallback: node=${toNodeId} fromNode=${fromId} defaultPort=result -> fallbackPort=${candidateKeys[0]} toPort=${toPort}`
+            )
+          );
+        }
+      } else if (AI_PATHS_TRACE_INPUT_COLLECTION) {
+        const availableKeys = Object.keys(out).join(', ');
+        logClientError(
+          new Error(
+            `[ai-paths:input-collection] Edge miss (ambiguous fallback, ${candidateKeys.length} candidates): node=${toNodeId} fromNode=${fromId} fromPort=${fromPort} toPort=${toPort}. Available output keys: ${availableKeys}`
+          )
+        );
+      }
+    } else if (AI_PATHS_TRACE_INPUT_COLLECTION) {
+      const availableKeys = out ? Object.keys(out).join(', ') : '(no outputs)';
+      logClientError(
+        new Error(
+          `[ai-paths:input-collection] Edge miss: node=${toNodeId} fromNode=${fromId} fromPort=${fromPort} toPort=${toPort}. Available output keys: ${availableKeys}`
+        )
+      );
     }
   });
   return collected;

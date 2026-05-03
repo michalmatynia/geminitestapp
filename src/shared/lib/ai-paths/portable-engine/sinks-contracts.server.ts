@@ -20,7 +20,3 @@ export type { PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary } fr
 
 export type PortablePathSigningPolicyAlertLevel =
   PortablePathEnvelopeVerificationAuditSinkHealthPolicy;
-
-export type PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode =
-  | 'off'
-  | 'sensitive';

@@ -116,19 +116,18 @@ const isKangurFeaturePageSkipKey = (
 function useKangurFeaturePageSocialUpdatesHref(input: {
   basePath: string;
   locale: string;
-  requestedPath: string | null | undefined;
+  requestedHref: string | null | undefined;
 }): string {
-  const { basePath, locale, requestedPath } = input;
-  const browserPathname = resolveKangurFeaturePageShellBrowserPathname();
+  const { basePath, locale, requestedHref } = input;
 
   return useMemo(
     () =>
       localizeManagedKangurHref({
         href: getKangurPageHref('SocialUpdates', basePath),
         locale,
-        pathname: browserPathname ?? requestedPath ?? null,
+        pathname: requestedHref ?? null,
       }),
-    [basePath, browserPathname, locale, requestedPath]
+    [basePath, locale, requestedHref]
   );
 }
 
@@ -295,7 +294,7 @@ function useKangurFeaturePageShellRuntime(forceBodyScrollLock: boolean) {
   const commonTranslations = useTranslations('Common');
   const shellTranslations = useTranslations('KangurShell');
   const appearance = useOptionalCmsStorefrontAppearance();
-  const { embedded, pageKey, requestedPath, basePath } = useKangurRoutingState();
+  const { embedded, pageKey, requestedHref, requestedPath, basePath } = useKangurRoutingState();
   const resolvedPageKey = pageKey ?? KANGUR_MAIN_PAGE_KEY;
   const appearanceMode = appearance?.mode ?? 'default';
   const showFooter = resolveKangurFeaturePageShowFooter(embedded, resolvedPageKey);
@@ -303,7 +302,7 @@ function useKangurFeaturePageShellRuntime(forceBodyScrollLock: boolean) {
   const socialUpdatesHref = useKangurFeaturePageSocialUpdatesHref({
     basePath,
     locale,
-    requestedPath,
+    requestedHref,
   });
   const { focusSkipTarget, handleSkipKeyDown } = useKangurFeaturePageSkipLink();
   const shellStyle = resolveKangurFeaturePageShellStyle(kangurAppearance.vars);

@@ -7,7 +7,7 @@ import type {
 
 import { resolveNodeCodeObjectV3ContractByCodeObjectId } from './node-code-object-v3-legacy-bridge';
 
-export const NODE_RUNTIME_KERNEL_STRATEGIES = ['compatibility', 'code_object_v3'] as const;
+export const NODE_RUNTIME_KERNEL_STRATEGIES = ['code_object_v3'] as const;
 export type NodeRuntimeKernelStrategy = (typeof NODE_RUNTIME_KERNEL_STRATEGIES)[number];
 
 export const NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES = [
@@ -80,9 +80,7 @@ const normalizeNodeType = (nodeType: string): string =>
 const buildV3CodeObjectId = (nodeType: string): string =>
   `ai-paths.node-code-object.${nodeType}.v3`;
 
-const toPublicRuntimeStrategy = (
-  strategy: NodeRuntimeKernelStrategy
-): NodeRuntimeResolutionStrategy => strategy;
+const toPublicRuntimeStrategy = (): NodeRuntimeResolutionStrategy => 'code_object_v3';
 
 export const isNodeRuntimeKernelCanonicalType = ({
   nodeType,
@@ -92,16 +90,24 @@ export const isNodeRuntimeKernelCanonicalType = ({
   runtimeKernelNodeTypes: Set<string>;
 }): boolean => runtimeKernelNodeTypes.has(nodeType);
 
-const resolveStrategy = ({
+const isCodeObjectResolutionEnabled = ({
   nodeType,
   runtimeKernelNodeTypes,
 }: {
   nodeType: string;
   runtimeKernelNodeTypes: Set<string>;
-}): NodeRuntimeKernelStrategy =>
-  isNodeRuntimeKernelCanonicalType({ nodeType, runtimeKernelNodeTypes })
-    ? 'code_object_v3'
-    : 'compatibility';
+}): boolean => isNodeRuntimeKernelCanonicalType({ nodeType, runtimeKernelNodeTypes });
+
+const resolveCodeObjectId = ({
+  nodeType,
+  runtimeKernelNodeTypes,
+}: {
+  nodeType: string;
+  runtimeKernelNodeTypes: Set<string>;
+}): string | null =>
+  isCodeObjectResolutionEnabled({ nodeType, runtimeKernelNodeTypes })
+    ? buildV3CodeObjectId(nodeType)
+    : null;
 
 const buildDescriptor = ({
   nodeType,
@@ -114,12 +120,11 @@ const buildDescriptor = ({
   source: NodeRuntimeResolutionSource;
   runtimeKernelNodeTypes: Set<string>;
 }): NodeRuntimeKernelDescriptor => {
-  const strategy = resolveStrategy({ nodeType, runtimeKernelNodeTypes });
   return {
     nodeType,
-    strategy,
+    strategy: 'code_object_v3',
     source,
-    codeObjectId: strategy === 'code_object_v3' ? buildV3CodeObjectId(nodeType) : null,
+    codeObjectId: resolveCodeObjectId({ nodeType, runtimeKernelNodeTypes }),
     handler,
   };
 };
@@ -127,7 +132,7 @@ const buildDescriptor = ({
 export const toNodeRuntimeResolutionTelemetry = (
   descriptor: NodeRuntimeKernelDescriptor
 ): NodeRuntimeResolutionTelemetry => ({
-  runtimeStrategy: toPublicRuntimeStrategy(descriptor.strategy),
+  runtimeStrategy: toPublicRuntimeStrategy(),
   runtimeResolutionSource: descriptor.source,
   runtimeCodeObjectId: descriptor.codeObjectId,
 });
@@ -195,12 +200,12 @@ const resolveCodeObjectDescriptor = ({
   resolveCodeObjectHandler?: CreateNodeRuntimeKernelArgs['resolveCodeObjectHandler'];
   runtimeKernelNodeTypes: Set<string>;
 }): NodeRuntimeKernelDescriptor | null => {
-  const strategy = resolveStrategy({
-    nodeType,
-    runtimeKernelNodeTypes,
-  });
-
-  if (strategy !== 'code_object_v3') {
+  if (
+    !isCodeObjectResolutionEnabled({
+      nodeType,
+      runtimeKernelNodeTypes,
+    })
+  ) {
     return null;
   }
 

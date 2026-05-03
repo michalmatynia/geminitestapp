@@ -11,7 +11,8 @@ import { useSectionBlockData } from './SectionBlockContext';
 export function FrontendButtonElementSection(): React.ReactNode {
   const { settings } = useSectionBlockData();
   const blockSettings = useMemo(() => {
-    const { gsapAnimation: _gsapAnimation, ...rest } = settings;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { gsapAnimation, ...rest } = settings;
     return rest;
   }, [settings]);
 

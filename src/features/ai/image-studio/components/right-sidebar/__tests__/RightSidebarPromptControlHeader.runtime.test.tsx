@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   onSave: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/ui/primitives.public', async () => {
   const mocks = await import('./rightSidebarRuntimeMockComponents');
   return {
     Button: mocks.MockButton,

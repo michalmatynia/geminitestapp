@@ -10,6 +10,7 @@ const {
   withKangurClientError,
   withKangurClientErrorSync,
   useKangurAuthMock,
+  useKangurDeferredStandaloneHomeReadyMock,
   useKangurRoutingMock,
   useKangurAssignmentsMock,
   useKangurProgressStateMock,
@@ -19,6 +20,7 @@ const {
   withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
   withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
   useKangurAuthMock: vi.fn(),
+  useKangurDeferredStandaloneHomeReadyMock: vi.fn(),
   useKangurRoutingMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
@@ -36,14 +38,47 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
+  useKangurAuthSessionState: () => {
+    const auth = useKangurAuthMock();
+    return {
+      user: auth.user ?? null,
+      isAuthenticated: auth.isAuthenticated ?? false,
+      hasResolvedAuth: auth.hasResolvedAuth ?? true,
+      canAccessParentAssignments: auth.canAccessParentAssignments ?? false,
+    };
+  },
+  useKangurAuthStatusState: () => {
+    const auth = useKangurAuthMock();
+    return {
+      isLoadingAuth: auth.isLoadingAuth ?? false,
+      isLoadingPublicSettings: auth.isLoadingPublicSettings ?? false,
+      isLoggingOut: auth.isLoggingOut ?? false,
+      authError: auth.authError ?? null,
+      appPublicSettings: auth.appPublicSettings ?? null,
+    };
+  },
+  useKangurAuthActions: () => {
+    const auth = useKangurAuthMock();
+    return {
+      logout: auth.logout ?? vi.fn(),
+      navigateToLogin: auth.navigateToLogin ?? vi.fn(),
+      checkAppState: auth.checkAppState ?? vi.fn(),
+      selectLearner: auth.selectLearner ?? vi.fn(),
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: useKangurRoutingMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: useKangurSubjectFocusMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady', () => ({
+  useKangurDeferredStandaloneHomeReady: useKangurDeferredStandaloneHomeReadyMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
@@ -58,7 +93,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: vi.fn(),
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import {
   KangurGameRuntimeProvider,
@@ -95,7 +131,10 @@ describe('KangurGameRuntimeContext', () => {
     window.history.replaceState({}, '', '/kangur/game');
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Game',
     });
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
       setSubject: vi.fn(),
@@ -126,6 +165,53 @@ describe('KangurGameRuntimeContext', () => {
       lastActivityDate: null,
     });
     scoreCreateMock.mockResolvedValue(null);
+  });
+
+  it('defers delegated assignments until the standalone home idle gate is ready', () => {
+    useKangurAuthMock.mockReturnValue({
+      user: {
+        actorType: 'parent',
+        activeLearner: { id: 'learner-1' },
+      },
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      canAccessParentAssignments: true,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+    });
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(false);
+
+    const { rerender } = render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    expect(useKangurAssignmentsMock).toHaveBeenLastCalledWith({
+      enabled: false,
+      query: {
+        includeArchived: false,
+      },
+    });
+
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
+
+    rerender(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    expect(useKangurAssignmentsMock).toHaveBeenLastCalledWith({
+      enabled: true,
+      query: {
+        includeArchived: false,
+      },
+    });
   });
 
   it('keeps home game actions available in anonymous mode', () => {

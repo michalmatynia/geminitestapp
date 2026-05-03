@@ -78,7 +78,23 @@
       "Bash(xxd:*)",
       "Bash(npm run:*)",
       "Bash(for file:*)",
-      "Bash(do echo:*)"
+      "Bash(do echo:*)",
+      "Bash(npm test:*)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx tsc --noEmit)",
+      "Bash(git -C \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\" diff --name-only HEAD)",
+      "Bash(git -C \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\" stash list)",
+      "Bash(git -C \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\" diff HEAD -- \"src/features/playwright/components/programmable-integration/PlaywrightProgrammableEditorsSection.tsx\")",
+      "Bash(git *)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx tsc --noEmit --skipLibCheck)",
+      "Bash(wait)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx tsc --noEmit -p tsconfig.json)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/app/api/v2/products/sync/bulk)",
+      "Bash(pnpm vitest *)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx vitest run src/features/ai/ai-paths/context/__tests__/AiPathsProvider.integration.test.tsx)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/features/ai/ai-paths/context/ src/features/ai/ai-paths/services/__tests__/path-run-executor.callbacks.test.ts src/shared/lib/ai-paths/core/__tests__/node-handler-registry.test.ts)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionLoop.runtime-kernel.test.ts src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.logic.test.ts)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/features/ai/ai-paths/context/ src/shared/lib/ai-paths/core/__tests__/node-handler-registry.test.ts src/features/ai/ai-paths/services/__tests__/path-run-executor.callbacks.test.ts)",
+      "Bash(vitest run *)"
     ]
   }
 }

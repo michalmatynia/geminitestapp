@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { NextRequest } from 'next/server';
 import { vi, MockInstance, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { GET_handler, POST_handler } from '@/app/api/chatbot/handler';
+import { getHandler, postHandler } from '@/app/api/chatbot/handler';
 import { server } from '@/mocks/server';
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
@@ -51,11 +51,11 @@ describe('Chatbot API', () => {
   });
 
   const invokeGet = (req: NextRequest): Promise<Response> =>
-    GET_handler(req, createApiContext() as never);
+    getHandler(req, createApiContext() as never);
 
   const invokePost = async (req: NextRequest): Promise<Response> => {
     try {
-      return await POST_handler(req, createApiContext() as never);
+      return await postHandler(req, createApiContext() as never);
     } catch (error: unknown) {
       const err = error as {
         name?: string;

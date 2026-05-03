@@ -92,7 +92,7 @@ export function ComponentSettingsProvider({
     return 'Settings';
   }, [selectedSection, selectedBlock, selectedColumn, selectedLabel]);
 
-  const hasSelection = !!(selectedSection || selectedBlock || selectedColumn);
+  const hasSelection = Boolean(selectedSection || selectedBlock || selectedColumn);
 
   // --- Handlers ---
   const handleSectionSettingChange = useCallback(

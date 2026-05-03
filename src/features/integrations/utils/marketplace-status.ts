@@ -1,0 +1,30 @@
+export const normalizeMarketplaceStatus = (value: string): string => value.trim().toLowerCase();
+
+export const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok', 'linked']);
+export const CLOSED_STATUSES = new Set(['closed']);
+export const PENDING_STATUSES = new Set([
+  'warning',
+  'pending',
+  'queued',
+  'queued_relist',
+  'review_required',
+  'purchase_review_required',
+  'purchase_queued',
+]);
+export const PROCESSING_STATUSES = new Set([
+  'processing',
+  'in_progress',
+  'running',
+]);
+export const FAILURE_STATUSES = new Set([
+  'failed',
+  'check_failed',
+  'error',
+  'auth_required',
+  'needs_login',
+  'ended',
+  'unsold',
+  'removed',
+  'archived',
+  'unavailable',
+]);

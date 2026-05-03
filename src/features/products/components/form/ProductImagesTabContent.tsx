@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
-import { internalError } from '@/shared/errors/app-error';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import { Button } from '@/shared/ui/button';
 import { FormSection } from '@/shared/ui/form-section';
 import { ProductImageManager, ProductImageManagerControllerProvider } from '@/shared/ui/image-slot-manager';
@@ -14,34 +14,116 @@ import type { ProductImageManagerController } from '@/shared/ui/image-slot-manag
 import {
   useOptionalProductImagesTabActionsContext,
   useOptionalProductImagesTabStateContext,
+  type ProductImagesTabActionsContextValue,
+  type ProductImagesTabStateContextValue,
 } from './ProductImagesTabContext';
 
-const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
+const FileManager = dynamic(() => import('@/features/files/public').then((mod) => mod.default), {
   ssr: false,
 });
 
-export function ProductImagesTabContent(): React.JSX.Element {
-  const formImages = useProductFormImages();
-  const { imageExternalBaseUrl } = useProductSettings();
-  const imagesTabStateContext = useOptionalProductImagesTabStateContext();
-  const imagesTabActionsContext = useOptionalProductImagesTabActionsContext();
-  const showFileManager =
-    imagesTabStateContext?.showFileManager ?? formImages?.showFileManager ?? false;
-  const onShowFileManager =
-    imagesTabActionsContext?.onShowFileManager ?? formImages?.setShowFileManager ?? null;
-  const resolvedOnSelectFiles = imagesTabActionsContext?.onSelectFiles;
-  const resolvedImageManagerController = imagesTabStateContext?.imageManagerController;
-  const inlineFileManager = imagesTabStateContext?.inlineFileManager ?? false;
-  const sectionTitle = imagesTabStateContext?.sectionTitle ?? 'Image Source';
-  const sectionDescription =
-    imagesTabStateContext?.sectionDescription ??
-    'Upload directly from any slot (single or multi-select), or pick existing files from the platform library.';
-  const chooseButtonLabel = imagesTabStateContext?.chooseButtonLabel ?? 'Choose from File Manager';
-  const chooseButtonAriaLabel =
-    imagesTabStateContext?.chooseButtonAriaLabel ??
-    'Choose multiple existing images for the product';
+type ProductFormImagesContextValue = ReturnType<typeof useProductFormImages>;
+type OnSelectFiles = NonNullable<ProductImagesTabActionsContextValue['onSelectFiles']>;
 
-  const fallbackImageManagerController = useMemo<ProductImageManagerController>(
+interface ProductImagesTabModel {
+  chooseButtonAriaLabel: string;
+  chooseButtonLabel: string;
+  imageExternalBaseUrl: string | null;
+  imageManagerController: ProductImageManagerController;
+  inlineFileManager: boolean;
+  onSelectFiles?: OnSelectFiles | undefined;
+  onShowFileManager: (show: boolean) => void;
+  productId: string | undefined;
+  sectionDescription: string;
+  sectionTitle: string;
+  showFileManager: boolean;
+}
+
+type ProductImagesTabTextOptions = Pick<
+  ProductImagesTabModel,
+  'chooseButtonAriaLabel' | 'chooseButtonLabel' | 'sectionDescription' | 'sectionTitle'
+>;
+
+const resolveChooseButtonAriaLabel = (
+  stateContext: ProductImagesTabStateContextValue | null
+): string =>
+  stateContext?.chooseButtonAriaLabel ?? 'Choose multiple existing images for the product';
+
+const resolveChooseButtonLabel = (
+  stateContext: ProductImagesTabStateContextValue | null
+): string => stateContext?.chooseButtonLabel ?? 'Choose from File Manager';
+
+const resolveSectionDescription = (
+  stateContext: ProductImagesTabStateContextValue | null
+): string =>
+  stateContext?.sectionDescription ??
+  'Upload directly from any slot (single or multi-select), or pick existing files from the platform library.';
+
+const resolveSectionTitle = (stateContext: ProductImagesTabStateContextValue | null): string =>
+  stateContext?.sectionTitle ?? 'Image Source';
+
+const resolveTextOptions = (
+  stateContext: ProductImagesTabStateContextValue | null
+): ProductImagesTabTextOptions => ({
+  chooseButtonAriaLabel: resolveChooseButtonAriaLabel(stateContext),
+  chooseButtonLabel: resolveChooseButtonLabel(stateContext),
+  sectionDescription: resolveSectionDescription(stateContext),
+  sectionTitle: resolveSectionTitle(stateContext),
+});
+
+const resolveImageManagerController = (
+  stateContext: ProductImagesTabStateContextValue | null,
+  fallbackImageManagerController: ProductImageManagerController
+): ProductImageManagerController =>
+  stateContext?.imageManagerController ?? fallbackImageManagerController;
+
+const resolveInlineFileManager = (
+  stateContext: ProductImagesTabStateContextValue | null
+): boolean => stateContext?.inlineFileManager ?? false;
+
+const resolveOnSelectFiles = (
+  actionsContext: ProductImagesTabActionsContextValue | null
+): OnSelectFiles | undefined => actionsContext?.onSelectFiles;
+
+const resolveOnShowFileManager = (
+  actionsContext: ProductImagesTabActionsContextValue | null,
+  formImages: ProductFormImagesContextValue
+): ((show: boolean) => void) => actionsContext?.onShowFileManager ?? formImages.setShowFileManager;
+
+const resolveShowFileManager = (
+  stateContext: ProductImagesTabStateContextValue | null,
+  formImages: ProductFormImagesContextValue
+): boolean => stateContext?.showFileManager ?? formImages.showFileManager;
+
+const resolveControllerOptions = ({
+  actionsContext,
+  fallbackImageManagerController,
+  formImages,
+  imageExternalBaseUrl,
+  stateContext,
+}: {
+  actionsContext: ProductImagesTabActionsContextValue | null;
+  fallbackImageManagerController: ProductImageManagerController;
+  formImages: ProductFormImagesContextValue;
+  imageExternalBaseUrl: string | null;
+  stateContext: ProductImagesTabStateContextValue | null;
+}): Omit<ProductImagesTabModel, keyof ProductImagesTabTextOptions> => ({
+  imageExternalBaseUrl,
+  imageManagerController: resolveImageManagerController(
+    stateContext,
+    fallbackImageManagerController
+  ),
+  inlineFileManager: resolveInlineFileManager(stateContext),
+  onSelectFiles: resolveOnSelectFiles(actionsContext),
+  onShowFileManager: resolveOnShowFileManager(actionsContext, formImages),
+  productId: formImages.productId,
+  showFileManager: resolveShowFileManager(stateContext, formImages),
+});
+
+const useFallbackImageManagerController = (
+  formImages: ProductFormImagesContextValue
+): ProductImageManagerController =>
+  useMemo<ProductImageManagerController>(
     () => ({
       imageSlots: formImages.imageSlots,
       imageLinks: formImages.imageLinks,
@@ -72,47 +154,95 @@ export function ProductImagesTabContent(): React.JSX.Element {
       formImages.uploadError,
     ]
   );
-  const imageManagerController = resolvedImageManagerController ?? fallbackImageManagerController;
 
-  if (!onShowFileManager) {
-    throw internalError(
-      'ProductImagesTabContent requires ProductFormContext or ProductImagesTabProvider.'
-    );
-  }
+function useProductImagesTabModel(): ProductImagesTabModel {
+  const formImages = useProductFormImages();
+  const { imageExternalBaseUrl } = useProductSettings();
+  const imagesTabStateContext = useOptionalProductImagesTabStateContext();
+  const imagesTabActionsContext = useOptionalProductImagesTabActionsContext();
+  const fallbackImageManagerController = useFallbackImageManagerController(formImages);
 
-  if (inlineFileManager && showFileManager && resolvedOnSelectFiles) {
-    return (
-      <div className='space-y-4'>
-        <div className='flex justify-end'>
-          <Button type='button' variant='outline' onClick={(): void => onShowFileManager(false)}>
-            Back to Images
-          </Button>
-        </div>
-        <FileManager onSelectFile={resolvedOnSelectFiles} />
+  return {
+    ...resolveTextOptions(imagesTabStateContext),
+    ...resolveControllerOptions({
+      actionsContext: imagesTabActionsContext,
+      fallbackImageManagerController,
+      formImages,
+      imageExternalBaseUrl,
+      stateContext: imagesTabStateContext,
+    }),
+  };
+}
+
+function InlineFileManagerView({
+  onSelectFiles,
+  onShowFileManager,
+}: {
+  onSelectFiles: (files: ImageFileSelection[]) => void;
+  onShowFileManager: (show: boolean) => void;
+}): React.JSX.Element {
+  return (
+    <div className='space-y-4'>
+      <div className='flex justify-end'>
+        <Button type='button' variant='outline' onClick={(): void => onShowFileManager(false)}>
+          Back to Images
+        </Button>
       </div>
-    );
-  }
+      <FileManager onSelectFile={onSelectFiles} />
+    </div>
+  );
+}
 
+function ImageSourceSection({
+  model,
+}: {
+  model: ProductImagesTabModel;
+}): React.JSX.Element {
+  return (
+    <FormSection title={model.sectionTitle} description={model.sectionDescription}>
+      <div className='flex space-x-4'>
+        <Button
+          type='button'
+          variant='outline'
+          onClick={(): void => model.onShowFileManager(true)}
+          aria-label={model.chooseButtonAriaLabel}
+        >
+          {model.chooseButtonLabel}
+        </Button>
+      </div>
+    </FormSection>
+  );
+}
+
+function ProductImagesDefaultView({ model }: { model: ProductImagesTabModel }): React.JSX.Element {
   return (
     <div className='space-y-6'>
-      <FormSection title={sectionTitle} description={sectionDescription}>
-        <div className='flex space-x-4'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={(): void => onShowFileManager(true)}
-            aria-label={chooseButtonAriaLabel}
-          >
-            {chooseButtonLabel}
-          </Button>
-        </div>
-      </FormSection>
-      <ProductImageManagerControllerProvider value={imageManagerController}>
+      <ImageSourceSection model={model} />
+      <ProductImageManagerControllerProvider value={model.imageManagerController}>
         <ProductImageManager
-          externalBaseUrl={imageExternalBaseUrl}
-          productId={formImages?.productId}
+          externalBaseUrl={model.imageExternalBaseUrl}
+          productId={model.productId}
         />
       </ProductImageManagerControllerProvider>
     </div>
   );
+}
+
+export function ProductImagesTabContent(): React.JSX.Element {
+  const model = useProductImagesTabModel();
+
+  if (
+    model.inlineFileManager === true &&
+    model.showFileManager === true &&
+    model.onSelectFiles !== undefined
+  ) {
+    return (
+      <InlineFileManagerView
+        onSelectFiles={model.onSelectFiles}
+        onShowFileManager={model.onShowFileManager}
+      />
+    );
+  }
+
+  return <ProductImagesDefaultView model={model} />;
 }

@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import type { CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver/workspace';

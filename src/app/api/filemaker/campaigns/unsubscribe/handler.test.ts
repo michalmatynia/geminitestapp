@@ -16,7 +16,7 @@ vi.mock('@/features/filemaker/server/campaign-settings-store', () => ({
   upsertFilemakerCampaignSettingValue: upsertFilemakerCampaignSettingValueMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('filemaker campaign unsubscribe handler', () => {
   beforeEach(() => {
@@ -88,7 +88,7 @@ describe('filemaker campaign unsubscribe handler', () => {
       ttlMs: 1000 * 60 * 60,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/unsubscribe', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -96,7 +96,7 @@ describe('filemaker campaign unsubscribe handler', () => {
           token,
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     const suppressionWrite = upsertFilemakerCampaignSettingValueMock.mock.calls.find(
@@ -116,7 +116,7 @@ describe('filemaker campaign unsubscribe handler', () => {
   });
 
   it('adds an unsubscribed suppression entry and records a campaign event', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/unsubscribe', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -126,7 +126,7 @@ describe('filemaker campaign unsubscribe handler', () => {
           source: 'footer-link',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(upsertFilemakerCampaignSettingValueMock).toHaveBeenCalledTimes(2);
@@ -155,7 +155,7 @@ describe('filemaker campaign unsubscribe handler', () => {
 
   it('rejects invalid signed unsubscribe tokens', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         new NextRequest('http://localhost/api/filemaker/campaigns/unsubscribe', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -163,7 +163,7 @@ describe('filemaker campaign unsubscribe handler', () => {
             token: 'invalid.token',
           }),
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Invalid or expired unsubscribe token.');
     expect(upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
@@ -201,7 +201,7 @@ describe('filemaker campaign unsubscribe handler', () => {
       return null;
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/unsubscribe', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -210,7 +210,7 @@ describe('filemaker campaign unsubscribe handler', () => {
           campaignId: 'campaign-missing',
         }),
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(upsertFilemakerCampaignSettingValueMock).toHaveBeenCalledTimes(1);

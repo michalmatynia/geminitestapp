@@ -1,0 +1,180 @@
+#!/usr/bin/env node
+
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+const outputDir = path.resolve(process.cwd(), process.argv[2] ?? '.vercel/output');
+const configPath = path.join(outputDir, 'config.json');
+const functionsDir = path.join(outputDir, 'functions');
+const TARGET_NODE_RUNTIME = 'nodejs22.x';
+const LEGACY_NODE_RUNTIME = 'nodejs24.x';
+
+const requestPrefixRoute = {
+  src: '^/(?!(?:_vercel|api|kangur\\-api|apps/studiq-web)(?:/|$))(?<path>.*)$',
+  dest: '/apps/studiq-web/$path',
+  continue: true,
+};
+
+const legacyRequestPrefixRoute = {
+  src: '^/(?!(?:_vercel|apps/studiq-web)(?:/|$))(?<path>.*)$',
+  dest: '/apps/studiq-web/$path',
+};
+
+const legacyApiAwareRequestPrefixRoute = {
+  src: '^/(?!(?:_vercel|api(?:/|$)|apps/studiq-web)(?:/|$))(?<path>.*)$',
+  dest: '/apps/studiq-web/$path',
+};
+
+const legacyKangurApiAwareRequestPrefixRoute = {
+  src: '^/(?!(?:_vercel|api(?:/|$)|kangur\\-api(?:/|$)|apps/studiq-web)(?:/|$))(?<path>.*)$',
+  dest: '/apps/studiq-web/$path',
+};
+
+const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
+const routes = Array.isArray(config.routes) ? config.routes : null;
+
+if (!routes) {
+  throw new Error(`Missing routes array in ${configPath}`);
+}
+
+const middlewareExcludePattern = /\(\?:api\|apps\/studiq-web\/api\)/g;
+const middlewareExcludeReplacement =
+  '(?:api|kangur-api|apps/studiq-web/api|apps/studiq-web/kangur-api)';
+const middlewareExcludeNeedleEscaped = '(?:api|apps\\/studiq-web\\/api)';
+const middlewareExcludeReplacementEscaped =
+  '(?:api|kangur\\-api|apps\\/studiq-web\\/api|apps\\/studiq-web\\/kangur\\-api)';
+
+for (const route of routes) {
+  if (route?.middlewarePath !== '/_middleware') {
+    continue;
+  }
+
+  if (typeof route.src === 'string') {
+    route.src = route.src.replace(
+      middlewareExcludeNeedleEscaped,
+      middlewareExcludeReplacementEscaped,
+    );
+  }
+
+  if (Array.isArray(route.middlewareRawSrc)) {
+    route.middlewareRawSrc = route.middlewareRawSrc.map((value) =>
+      typeof value === 'string'
+        ? value.replace(middlewareExcludePattern, middlewareExcludeReplacement)
+        : value
+    );
+  }
+}
+
+const internalApiRoutePrefix = '^/apps/studiq-web/api';
+const rootApiRoutePrefix = '^/api';
+const rootApiRoutes = routes
+  .filter((route) => typeof route?.src === 'string' && route.src.startsWith(internalApiRoutePrefix))
+  .map((route) => ({
+    ...route,
+    src: route.src.replace(internalApiRoutePrefix, rootApiRoutePrefix),
+  }));
+
+const internalKangurApiRoutePrefix = '^/apps/studiq-web/kangur\\-api';
+const rootKangurApiRoutePrefix = '^/kangur\\-api';
+const rootKangurApiRoutes = routes
+  .filter(
+    (route) =>
+      typeof route?.src === 'string' && route.src.startsWith(internalKangurApiRoutePrefix)
+  )
+  .map((route) => ({
+    ...route,
+    src: route.src.replace(internalKangurApiRoutePrefix, rootKangurApiRoutePrefix),
+  }));
+
+for (let index = routes.length - 1; index >= 0; index -= 1) {
+  const route = routes[index];
+  if (
+    ((route?.src === legacyRequestPrefixRoute.src &&
+      route?.dest === legacyRequestPrefixRoute.dest) ||
+      (route?.src === legacyApiAwareRequestPrefixRoute.src &&
+        route?.dest === legacyApiAwareRequestPrefixRoute.dest) ||
+      (route?.src === legacyKangurApiAwareRequestPrefixRoute.src &&
+        route?.dest === legacyKangurApiAwareRequestPrefixRoute.dest) ||
+      (route?.dest === requestPrefixRoute.dest && route?.src !== requestPrefixRoute.src) ||
+      (typeof route?.src === 'string' &&
+        route.src.startsWith(rootApiRoutePrefix) &&
+        typeof route?.dest === 'string' &&
+        route.dest.startsWith('/apps/studiq-web/api')) ||
+      (typeof route?.src === 'string' &&
+        route.src.startsWith(rootKangurApiRoutePrefix) &&
+        typeof route?.dest === 'string' &&
+        route.dest.startsWith('/apps/studiq-web/kangur-api')))
+  ) {
+    routes.splice(index, 1);
+  }
+}
+
+const existingRouteIndex = routes.findIndex((route) =>
+  route?.src === requestPrefixRoute.src && route?.dest === requestPrefixRoute.dest,
+);
+
+if (existingRouteIndex === -1) {
+  const middlewareRouteIndex = routes.findIndex(
+    (route) => route?.middlewarePath === '/_middleware',
+  );
+
+  if (middlewareRouteIndex === -1) {
+    throw new Error(`Unable to locate middleware route in ${configPath}`);
+  }
+
+  routes.splice(middlewareRouteIndex + 1, 0, requestPrefixRoute);
+}
+
+if (rootApiRoutes.length > 0 || rootKangurApiRoutes.length > 0) {
+  const filesystemHandleIndex = routes.findIndex((route) => route?.handle === 'filesystem');
+
+  if (filesystemHandleIndex === -1) {
+    throw new Error(`Unable to locate filesystem handle in ${configPath}`);
+  }
+
+  routes.splice(filesystemHandleIndex, 0, ...rootApiRoutes, ...rootKangurApiRoutes);
+}
+
+await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);
+
+const patchFunctionRuntimes = async (root) => {
+  const stack = [root];
+  let patchedCount = 0;
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    const entries = await fs.readdir(current, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const absolutePath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(absolutePath);
+        continue;
+      }
+
+      if (entry.name !== '.vc-config.json') {
+        continue;
+      }
+
+      const raw = await fs.readFile(absolutePath, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (parsed?.runtime !== LEGACY_NODE_RUNTIME) {
+        continue;
+      }
+
+      parsed.runtime = TARGET_NODE_RUNTIME;
+      await fs.writeFile(absolutePath, `${JSON.stringify(parsed, null, 2)}\n`);
+      patchedCount += 1;
+    }
+  }
+
+  return patchedCount;
+};
+
+const patchedRuntimeCount = await patchFunctionRuntimes(functionsDir);
+
+console.log(
+  existingRouteIndex === -1
+    ? `Patched StudiQ prebuilt config: ${configPath} (updated ${patchedRuntimeCount} function runtimes to ${TARGET_NODE_RUNTIME})`
+    : `StudiQ prebuilt config already patched: ${configPath} (updated ${patchedRuntimeCount} function runtimes to ${TARGET_NODE_RUNTIME})`,
+);

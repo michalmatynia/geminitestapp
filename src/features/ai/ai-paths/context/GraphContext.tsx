@@ -1,68 +1,87 @@
 'use client';
 
-import {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type { AiNode, AiPathsValidationConfig, Edge, NodeConfig, PathBlockedRunPolicy, PathConfig, PathExecutionMode, PathFlowIntensity, PathMeta, PathRunMode } from '@/shared/lib/ai-paths';
-import { initialNodes, initialEdges, normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, NodeConfig, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import { initialNodes, initialEdges } from '@/shared/lib/ai-paths/core/constants';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-import {
-  DEFAULT_AI_PATHS_VALIDATION,
-  DEFAULT_BLOCKED_RUN_POLICY,
-  DEFAULT_EXECUTION_MODE,
-  DEFAULT_FLOW_INTENSITY,
-  DEFAULT_HISTORY_RETENTION_OPTIONS_MAX,
-  DEFAULT_HISTORY_RETENTION_PASSES,
-  DEFAULT_PATH_DESCRIPTION,
-  DEFAULT_PATH_NAME,
-  DEFAULT_RUN_MODE,
-  DEFAULT_STRICT_FLOW_MODE,
-  DEFAULT_TRIGGER,
-} from './GraphContext.shared';
 
 import type {
   GraphActions,
+  GraphDataState,
   GraphMutationMeta,
   GraphMutationReason,
   GraphMutationRecord,
   GraphProviderProps,
-  GraphState,
 } from './GraphContext.shared';
+import {
+  usePathConfigActions,
+  usePathConfigState,
+} from './PathConfigContext';
+import type {
+  PathConfigActions,
+  PathConfigState,
+} from './PathConfigContext.shared';
 
 export type {
   GraphActions,
+  GraphDataState,
   GraphMutationMeta,
   GraphMutationReason,
   GraphMutationRecord,
-  GraphState,
+  PathMetadataState,
 } from './GraphContext.shared';
 
+/** Combined graph data + active-path config. */
+export type GraphState = GraphDataState & PathConfigState;
+
+const createGraphStrictContext = <T,>(hookName: string) =>
+  createStrictContext<T>({
+    hookName,
+    providerName: 'a GraphProvider',
+    errorFactory: internalError,
+  });
+
 const {
-  Context: GraphStateContext,
-  useStrictContext: useGraphState,
-} = createStrictContext<GraphState>({
-  hookName: 'useGraphState',
-  providerName: 'a GraphProvider',
-  errorFactory: internalError,
-});
+  Context: GraphDataStateContext,
+  useStrictContext: useGraphDataState,
+} = createGraphStrictContext<GraphDataState>('useGraphDataState');
 
 const {
   Context: GraphActionsContext,
-  useStrictContext: useGraphActions,
-} = createStrictContext<GraphActions>({
-  hookName: 'useGraphActions',
-  providerName: 'a GraphProvider',
-  errorFactory: internalError,
-});
+  useStrictContext: useGraphActionsBase,
+} = createGraphStrictContext<GraphActions>('useGraphActions');
 
-export { useGraphState, useGraphActions };
+export { useGraphDataState, useGraphActionsBase };
+
+/**
+ * Combined graph + path-config actions.
+ *
+ * Prefer the narrower `useGraphActionsBase()` (graph CRUD) and
+ * `usePathConfigActions()` (active-path config) for re-render isolation.
+ */
+export function useGraphActions(): GraphActions & PathConfigActions {
+  const graph = useGraphActionsBase();
+  const config = usePathConfigActions();
+  return useMemo(() => ({ ...graph, ...config }), [graph, config]);
+}
+
+/**
+ * @deprecated Use `usePathConfigState()` (active-path config) plus
+ * `useGraphDataState()` (paths/pathConfigs/activePathId) directly.
+ */
+export function usePathMetadataState(): GraphDataState & PathConfigState {
+  const data = useGraphDataState();
+  const config = usePathConfigState();
+  return useMemo(() => ({ ...data, ...config }), [data, config]);
+}
+
+/** @deprecated Combined view; prefer narrower `useGraphDataState` / `usePathConfigState`. */
+export const useGraphState = usePathMetadataState;
 
 export function GraphProvider({
   children,
@@ -72,42 +91,14 @@ export function GraphProvider({
   initialPathConfigs = {},
   initialActivePathId = null,
 }: GraphProviderProps): React.ReactNode {
-  // Core graph data
   const [nodes, setNodesInternal] = useState<AiNode[]>(initialNodesData);
   const [edges, setEdgesInternal] = useState<Edge[]>(initialEdgesData);
 
-  // Path management
   const [paths, setPathsInternal] = useState<PathMeta[]>(initialPaths);
   const [pathConfigs, setPathConfigsInternal] =
     useState<Record<string, PathConfig>>(initialPathConfigs);
   const [activePathId, setActivePathIdInternal] = useState<string | null>(initialActivePathId);
 
-  // Active path metadata
-  const [pathName, setPathNameInternal] = useState(DEFAULT_PATH_NAME);
-  const [pathDescription, setPathDescriptionInternal] = useState(DEFAULT_PATH_DESCRIPTION);
-  const [activeTrigger, setActiveTriggerInternal] = useState(DEFAULT_TRIGGER);
-  const [executionMode, setExecutionModeInternal] =
-    useState<PathExecutionMode>(DEFAULT_EXECUTION_MODE);
-  const [flowIntensity, setFlowIntensityInternal] =
-    useState<PathFlowIntensity>(DEFAULT_FLOW_INTENSITY);
-  const [runMode, setRunModeInternal] = useState<PathRunMode>(DEFAULT_RUN_MODE);
-  const [strictFlowMode, setStrictFlowModeInternal] = useState<boolean>(DEFAULT_STRICT_FLOW_MODE);
-  const [blockedRunPolicy, setBlockedRunPolicyInternal] = useState<PathBlockedRunPolicy>(
-    DEFAULT_BLOCKED_RUN_POLICY
-  );
-  const [aiPathsValidation, setAiPathsValidationInternal] = useState<AiPathsValidationConfig>(
-    DEFAULT_AI_PATHS_VALIDATION
-  );
-  const [historyRetentionPasses, setHistoryRetentionPassesInternal] = useState<number>(
-    DEFAULT_HISTORY_RETENTION_PASSES
-  );
-  const [historyRetentionOptionsMax, setHistoryRetentionOptionsMaxInternal] = useState<number>(
-    DEFAULT_HISTORY_RETENTION_OPTIONS_MAX
-  );
-
-  // Path flags
-  const [isPathLocked, setIsPathLockedInternal] = useState(false);
-  const [isPathActive, setIsPathActiveInternal] = useState(true);
   const [graphRevision, setGraphRevision] = useState(0);
   const [lastMutation, setLastMutation] = useState<GraphMutationRecord | null>(null);
 
@@ -174,7 +165,8 @@ export function GraphProvider({
               revision: graphRevisionRef.current,
             },
           });
-          pendingMutationMetaRef.current = null;          return prev;
+          pendingMutationMetaRef.current = null;
+          return prev;
         }
         changedNodes =
           normalized.length !== prev.length ||
@@ -219,7 +211,6 @@ export function GraphProvider({
     [registerGraphMutation]
   );
 
-  // Memoized node operations
   const addNode = useCallback(
     (node: AiNode) => {
       setNodes((prev) => [...prev, node], { reason: 'drop', source: 'graph.addNode' });
@@ -254,7 +245,6 @@ export function GraphProvider({
         source: 'graph.removeNode',
         allowNodeCountDecrease: true,
       });
-      // Also remove connected edges
       setEdges((prev) => prev.filter((edge) => edge.from !== nodeId && edge.to !== nodeId), {
         reason: 'delete',
         source: 'graph.removeNode',
@@ -263,7 +253,6 @@ export function GraphProvider({
     [setEdges, setNodes]
   );
 
-  // Memoized edge operations
   const addEdge = useCallback(
     (edge: Edge) => {
       setEdges((prev) => [...prev, edge], { reason: 'update', source: 'graph.addEdge' });
@@ -285,25 +274,8 @@ export function GraphProvider({
     setEdges([], { reason: 'delete', source: 'graph.clearEdges' });
   }, [setEdges]);
 
-  // Bulk operations
   const loadGraph = useCallback(
-    (data: {
-      nodes: AiNode[];
-      edges: Edge[];
-      pathName?: string | undefined;
-      pathDescription?: string | undefined;
-      activeTrigger?: string | undefined;
-      executionMode?: PathExecutionMode | undefined;
-      flowIntensity?: PathFlowIntensity | undefined;
-      runMode?: PathRunMode | undefined;
-      strictFlowMode?: boolean | undefined;
-      blockedRunPolicy?: PathBlockedRunPolicy | undefined;
-      aiPathsValidation?: AiPathsValidationConfig | undefined;
-      historyRetentionPasses?: number | undefined;
-      historyRetentionOptionsMax?: number | undefined;
-      isPathLocked?: boolean | undefined;
-      isPathActive?: boolean | undefined;
-    }) => {
+    (data: { nodes: AiNode[]; edges: Edge[] }) => {
       const normalizedNodes = normalizeNodes(data.nodes);
       const sanitizedEdges = sanitizeEdges(normalizedNodes, data.edges);
       setNodes(normalizedNodes, {
@@ -312,24 +284,6 @@ export function GraphProvider({
         allowNodeCountDecrease: true,
       });
       setEdges(sanitizedEdges, { reason: 'load_path', source: 'graph.loadGraph' });
-      if (data.pathName !== undefined) setPathNameInternal(data.pathName);
-      if (data.pathDescription !== undefined) setPathDescriptionInternal(data.pathDescription);
-      if (data.activeTrigger !== undefined) setActiveTriggerInternal(data.activeTrigger);
-      if (data.executionMode !== undefined) setExecutionModeInternal(data.executionMode);
-      if (data.flowIntensity !== undefined) setFlowIntensityInternal(data.flowIntensity);
-      if (data.runMode !== undefined) setRunModeInternal(data.runMode);
-      if (data.strictFlowMode !== undefined) setStrictFlowModeInternal(data.strictFlowMode);
-      if (data.blockedRunPolicy !== undefined) setBlockedRunPolicyInternal(data.blockedRunPolicy);
-      if (data.aiPathsValidation !== undefined)
-        setAiPathsValidationInternal(data.aiPathsValidation);
-      if (data.historyRetentionPasses !== undefined) {
-        setHistoryRetentionPassesInternal(data.historyRetentionPasses);
-      }
-      if (data.historyRetentionOptionsMax !== undefined) {
-        setHistoryRetentionOptionsMaxInternal(data.historyRetentionOptionsMax);
-      }
-      if (data.isPathLocked !== undefined) setIsPathLockedInternal(data.isPathLocked);
-      if (data.isPathActive !== undefined) setIsPathActiveInternal(data.isPathActive);
     },
     [setEdges, setNodes]
   );
@@ -341,62 +295,22 @@ export function GraphProvider({
       allowNodeCountDecrease: true,
     });
     setEdges(initialEdges, { reason: 'load_path', source: 'graph.resetGraph' });
-    setPathNameInternal(DEFAULT_PATH_NAME);
-    setPathDescriptionInternal(DEFAULT_PATH_DESCRIPTION);
-    setActiveTriggerInternal(DEFAULT_TRIGGER);
-    setExecutionModeInternal(DEFAULT_EXECUTION_MODE);
-    setFlowIntensityInternal(DEFAULT_FLOW_INTENSITY);
-    setRunModeInternal(DEFAULT_RUN_MODE);
-    setStrictFlowModeInternal(DEFAULT_STRICT_FLOW_MODE);
-    setBlockedRunPolicyInternal(DEFAULT_BLOCKED_RUN_POLICY);
-    setAiPathsValidationInternal(DEFAULT_AI_PATHS_VALIDATION);
-    setHistoryRetentionPassesInternal(DEFAULT_HISTORY_RETENTION_PASSES);
-    setHistoryRetentionOptionsMaxInternal(DEFAULT_HISTORY_RETENTION_OPTIONS_MAX);
-    setIsPathLockedInternal(false);
-    setIsPathActiveInternal(true);
   }, [setEdges, setNodes]);
 
-  // Actions are stable
   const actions = useMemo<GraphActions>(
     () => ({
-      // Node actions
       setNodes,
       addNode,
       updateNode,
       updateNodeConfig,
       removeNode,
-
-      // Edge actions
       setEdges,
       addEdge,
       removeEdge,
       clearEdges,
-
-      // Path management
       setPaths: setPathsInternal,
       setPathConfigs: setPathConfigsInternal,
       setActivePathId: setActivePathIdInternal,
-
-      // Path metadata
-      setPathName: setPathNameInternal,
-      setPathDescription: setPathDescriptionInternal,
-      setActiveTrigger: setActiveTriggerInternal,
-      setExecutionMode: setExecutionModeInternal,
-      setFlowIntensity: setFlowIntensityInternal,
-      setRunMode: setRunModeInternal,
-      setStrictFlowMode: setStrictFlowModeInternal,
-      setBlockedRunPolicy: setBlockedRunPolicyInternal,
-      setAiPathsValidation: setAiPathsValidationInternal,
-      setHistoryRetentionPasses: setHistoryRetentionPassesInternal,
-      setHistoryRetentionOptionsMax: setHistoryRetentionOptionsMaxInternal,
-
-      // Path flags
-      setIsPathLocked: setIsPathLockedInternal,
-      togglePathLock: () => setIsPathLockedInternal((prev) => !prev),
-      setIsPathActive: setIsPathActiveInternal,
-      togglePathActive: () => setIsPathActiveInternal((prev) => !prev),
-
-      // Bulk operations
       loadGraph,
       resetGraph,
     }),
@@ -415,60 +329,24 @@ export function GraphProvider({
     ]
   );
 
-  const state = useMemo<GraphState>(
+  const graphDataState = useMemo<GraphDataState>(
     () => ({
       nodes,
       edges,
+      graphRevision,
+      lastMutation,
       paths,
       pathConfigs,
       activePathId,
-      pathName,
-      pathDescription,
-      activeTrigger,
-      executionMode,
-      flowIntensity,
-      runMode,
-      strictFlowMode,
-      blockedRunPolicy,
-      aiPathsValidation,
-      historyRetentionPasses,
-      historyRetentionOptionsMax,
-      isPathLocked,
-      isPathActive,
-      graphRevision,
-      lastMutation,
     }),
-    [
-      nodes,
-      edges,
-      paths,
-      pathConfigs,
-      activePathId,
-      pathName,
-      pathDescription,
-      activeTrigger,
-      executionMode,
-      flowIntensity,
-      runMode,
-      strictFlowMode,
-      blockedRunPolicy,
-      aiPathsValidation,
-      historyRetentionPasses,
-      historyRetentionOptionsMax,
-      isPathLocked,
-      isPathActive,
-      graphRevision,
-      lastMutation,
-    ]
+    [nodes, edges, graphRevision, lastMutation, paths, pathConfigs, activePathId]
   );
 
   return (
     <GraphActionsContext.Provider value={actions}>
-      <GraphStateContext.Provider value={state}>{children}</GraphStateContext.Provider>
+      <GraphDataStateContext.Provider value={graphDataState}>
+        {children}
+      </GraphDataStateContext.Provider>
     </GraphActionsContext.Provider>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Consumer Hooks
-// ---------------------------------------------------------------------------

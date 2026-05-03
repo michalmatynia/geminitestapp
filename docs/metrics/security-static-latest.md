@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-30'
+last_reviewed: '2026-04-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,29 +8,24 @@ canonical: true
 ---
 # Static Security Review
 
-Generated at: 2026-03-30T15:09:33.268Z
+Generated at: 2026-04-15T09:38:25.798Z
 
 ## Summary
 
-- Status: WARN
-- Files scanned: 6673
+- Status: PASSED
+- Files scanned: 7350
 - Errors: 0
-- Warnings: 2
+- Warnings: 0
 - Info: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| dangerouslysetinnerhtml-review | 0 | 1 | 0 |
-| document-cookie-review | 0 | 1 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | dangerouslysetinnerhtml-review | src/features/kangur/ui/components/KangurAppLoader.tsx:394:14 | dangerouslySetInnerHTML is used without an obvious sanitize/safe marker in the inline expression. |
-| WARN | document-cookie-review | src/features/kangur/ui/components/KangurPrimaryNavigation.test-support.tsx:554:14 | Direct document.cookie access should stay isolated to reviewed helpers/components. |
+No static security review issues detected.
 
 ## Notes
 

@@ -3,13 +3,9 @@ import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 export const UPDATE_ELIGIBLE_RUN_STATUSES: AiPathRunStatus[] = [
   'queued',
   'running',
-  'blocked_on_lease',
-  'handoff_ready',
-  'paused',
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ];
 
 export const LOG_NODE_START_EVENTS = process.env['AI_PATHS_LOG_NODE_START_EVENTS'] === 'true';
@@ -23,6 +19,17 @@ export const resolveCancellationPollIntervalMs = (): number => {
   const parsed = Number.parseInt(process.env['AI_PATHS_CANCEL_POLL_INTERVAL_MS'] ?? '', 10);
   if (!Number.isFinite(parsed)) return 750;
   return Math.max(100, Math.min(5000, Math.trunc(parsed)));
+};
+
+export const resolveGraphExecutionMaxDurationMs = (): number => {
+  const explicit = Number.parseInt(process.env['AI_PATHS_GRAPH_MAX_DURATION_MS'] ?? '', 10);
+  if (Number.isFinite(explicit) && explicit > 0) {
+    return Math.max(5_000, explicit);
+  }
+
+  const jobTimeoutMs =
+    Number.parseInt(process.env['AI_PATHS_JOB_TIMEOUT_MS'] ?? '', 10) || 10 * 60 * 1000;
+  return Math.max(30_000, jobTimeoutMs - 15_000);
 };
 
 export const isMissingRunUpdateError = (error: unknown): boolean => {

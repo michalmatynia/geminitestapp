@@ -36,6 +36,7 @@ import {
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { safeHtml } from '@/shared/lib/security/safe-html';
 
 export const renderSharedPrimitivesShowcase = (): void => {
   render(
@@ -217,7 +218,7 @@ export const renderSharedPrimitivesShowcase = (): void => {
         accent='indigo'
         data-testid='kangur-prose'
         dangerouslySetInnerHTML={{
-          __html: '<p>Shared <a href="#">content</a></p><blockquote>Quote</blockquote>',
+          __html: safeHtml('<p>Shared <a href="#">content</a></p><blockquote>Quote</blockquote>'),
         }}
       />
       <KangurTextField

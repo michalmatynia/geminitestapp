@@ -1,16 +1,16 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from './route';
-import { GET_handler as getCategoriesHandler } from '../categories/handler';
+import { getHandler as getCategoriesHandler } from '../categories/handler';
 
 vi.mock('../categories/handler', () => ({
-  GET_handler: vi.fn(),
+  getHandler: vi.fn(),
 }));
 vi.mock('../producers/handler', () => ({
-  GET_handler: vi.fn(),
+  getHandler: vi.fn(),
 }));
 vi.mock('../tags/handler', () => ({
-  GET_handler: vi.fn(),
+  getHandler: vi.fn(),
 }));
 
 describe('marketplace/[resource] GET', () => {

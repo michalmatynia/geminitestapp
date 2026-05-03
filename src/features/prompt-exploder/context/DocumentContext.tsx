@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
+import { useSearchParams } from 'next/navigation';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';

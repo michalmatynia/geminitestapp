@@ -1,3 +1,4 @@
+import React from 'react';
 import { Slot } from 'expo-router';
 
 import { KangurAppBootstrapGate } from '../src/boot/KangurAppBootstrapGate';

@@ -31,15 +31,13 @@ import {
 } from './KangurAssignmentManager.cards';
 import {
   FILTER_OPTION_VALUES,
-  TIME_LIMIT_MINUTES_MAX,
-  TIME_LIMIT_MINUTES_MIN,
 } from './KangurAssignmentManager.helpers';
-import { useKangurAssignmentManagerState } from './KangurAssignmentManager.hooks';
 import { KangurAssignmentManagerProvider, useKangurAssignmentManagerContext } from './KangurAssignmentManager.context';
-import { renderKangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
+import { KangurAssignmentItemProvider, useKangurAssignmentItem } from './KangurAssignmentItemContext';
+import { KangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
 import type { KangurAssignmentManagerProps } from './KangurAssignmentManager.types';
 
-type AssignmentManagerState = ReturnType<typeof useKangurAssignmentManagerState>;
+type AssignmentManagerState = ReturnType<typeof useKangurAssignmentManagerContext>;
 
 const resolveSegmentedButtonClassName = (isCoarsePointer: boolean): string =>
   isCoarsePointer
@@ -90,10 +88,13 @@ function KangurAssignmentManagerCatalogActions({
   item,
 }: {
   assignLabel: string;
-  item:
+  item?:
     | AssignmentManagerState['filteredCatalog'][number]
     | AssignmentManagerState['recommendedCatalog'][number];
 }): React.JSX.Element {
+  const contextItem = useKangurAssignmentItem();
+  const effectiveItem = item ?? contextItem;
+
   const {
     assignedAssignmentsByKey,
     handleAssign,
@@ -104,9 +105,13 @@ function KangurAssignmentManagerCatalogActions({
     translations,
   } = useKangurAssignmentManagerContext();
 
+  if (!effectiveItem) {
+    return <></>;
+  }
+
   const { assignedAssignment, isAssigned, isPending } = resolveCatalogItemState({
     assignedAssignmentsByKey,
-    item,
+    item: effectiveItem,
     pendingActionId,
   });
 
@@ -116,7 +121,7 @@ function KangurAssignmentManagerCatalogActions({
         <KangurButton
           className='w-full sm:w-auto'
           type='button'
-          onClick={() => assignedAssignment && void handleUnassign(assignedAssignment.id, item.title)}
+          onClick={() => assignedAssignment && void handleUnassign(assignedAssignment.id, effectiveItem.title)}
           disabled={isPending}
           size='sm'
           variant='ghost'
@@ -127,7 +132,7 @@ function KangurAssignmentManagerCatalogActions({
         <KangurButton
           className='w-full sm:w-auto'
           type='button'
-          onClick={() => void handleAssign(item.id)}
+          onClick={() => void handleAssign(effectiveItem.id)}
           disabled={isPending}
           size='sm'
           variant='surface'
@@ -140,7 +145,7 @@ function KangurAssignmentManagerCatalogActions({
         title={translations('actions.setTime')}
         className={resolveCatalogTimeButtonClassName(isCoarsePointer)}
         type='button'
-        onClick={() => handleOpenTimeLimitModalForCatalog(item.id)}
+        onClick={() => handleOpenTimeLimitModalForCatalog(effectiveItem.id)}
         disabled={isAssigned || isPending}
         size='sm'
         variant='ghost'
@@ -151,45 +156,34 @@ function KangurAssignmentManagerCatalogActions({
   );
 }
 
-function KangurAssignmentManagerSuggestedCard({
-  item,
-}: {
-  item: AssignmentManagerState['recommendedCatalog'][number];
-}): React.JSX.Element {
+function KangurAssignmentManagerSuggestedCard(): React.JSX.Element {
   const { translations } = useKangurAssignmentManagerContext();
+  const item = useKangurAssignmentItem();
 
   return (
     <KangurAssignmentManagerItemCard
       testId={`assignment-manager-recommended-card-${item.id}`}
     >
-      <KangurAssignmentManagerCardHeader
-        title={item.title}
-        description={item.description}
-        priority={item.createInput.priority}
-      />
+      <KangurAssignmentManagerCardHeader />
       <KangurAssignmentManagerCardFooter>
         <KangurStatusChip accent='slate' className='w-fit' labelStyle='compact'>
           {item.badge}
         </KangurStatusChip>
         <KangurAssignmentManagerCatalogActions
           assignLabel={translations('actions.assignSuggested')}
-          item={item}
         />
       </KangurAssignmentManagerCardFooter>
     </KangurAssignmentManagerItemCard>
   );
 }
 
-function KangurAssignmentManagerCatalogCard({
-  item,
-}: {
-  item: AssignmentManagerState['filteredCatalog'][number];
-}): React.JSX.Element {
+function KangurAssignmentManagerCatalogCard(): React.JSX.Element {
   const { translations } = useKangurAssignmentManagerContext();
+  const item = useKangurAssignmentItem();
 
   return (
     <KangurAssignmentManagerItemCard testId={`assignment-manager-catalog-card-${item.id}`}>
-      <KangurAssignmentManagerCardHeader title={item.title} description={item.description} />
+      <KangurAssignmentManagerCardHeader />
       <div className='mt-2 flex flex-wrap items-center gap-2'>
         <KangurStatusChip accent='slate' labelStyle='compact'>
           {item.badge}
@@ -199,7 +193,6 @@ function KangurAssignmentManagerCatalogCard({
       <KangurAssignmentManagerCardFooter>
         <KangurAssignmentManagerCatalogActions
           assignLabel={translations('actions.assign')}
-          item={item}
         />
       </KangurAssignmentManagerCardFooter>
     </KangurAssignmentManagerItemCard>
@@ -259,10 +252,9 @@ function KangurAssignmentManagerCatalogSection(): React.JSX.Element | null {
         >
           <div className='mt-3 grid grid-cols-1 kangur-panel-gap xl:grid-cols-2'>
             {recommendedCatalog.map((item: AssignmentManagerState['recommendedCatalog'][number]) => (
-              <KangurAssignmentManagerSuggestedCard
-                key={item.id}
-                item={item}
-              />
+              <KangurAssignmentItemProvider key={item.id} item={item}>
+                <KangurAssignmentManagerSuggestedCard />
+              </KangurAssignmentItemProvider>
             ))}
           </div>
         </KangurSummaryPanel>
@@ -326,10 +318,9 @@ function KangurAssignmentManagerCatalogSection(): React.JSX.Element | null {
 
       <div className='mt-5 grid grid-cols-1 kangur-panel-gap xl:grid-cols-2'>
         {filteredCatalog.map((item: AssignmentManagerState['filteredCatalog'][number]) => (
-          <KangurAssignmentManagerCatalogCard
-            key={item.id}
-            item={item}
-          />
+          <KangurAssignmentItemProvider key={item.id} item={item}>
+            <KangurAssignmentManagerCatalogCard />
+          </KangurAssignmentItemProvider>
         ))}
       </div>
 
@@ -493,29 +484,9 @@ function KangurAssignmentManagerListsSection(): React.JSX.Element | null {
 }
 
 function KangurAssignmentManagerContent(): React.JSX.Element {
-  const state = useKangurAssignmentManagerContext();
-
   return (
     <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      {renderKangurAssignmentManagerTimeLimitModal({
-        isOpen: state.isTimeLimitModalOpen,
-        onClose: state.handleCloseTimeLimitModal,
-        onSave: () => void state.handleSaveTimeLimit(),
-        timeLimitDraft: state.timeLimitDraft,
-        onTimeLimitDraftChange: state.setTimeLimitDraft,
-        timeLimitTarget: state.timeLimitTarget
-          ? {
-              title: state.timeLimitTarget.title,
-              description: state.timeLimitTarget.description ?? null,
-            }
-          : null,
-        timeLimitPreview: state.timeLimitPreview,
-        timeLimitParsedError: state.timeLimitParsedError,
-        isSaveDisabled: state.isTimeLimitSaveDisabled,
-        saveLabel: state.timeLimitSaveLabel,
-        minMinutes: TIME_LIMIT_MINUTES_MIN,
-        maxMinutes: TIME_LIMIT_MINUTES_MAX,
-      })}
+      <KangurAssignmentManagerTimeLimitModal />
 
       <KangurAssignmentManagerCatalogSection />
 
@@ -526,9 +497,9 @@ function KangurAssignmentManagerContent(): React.JSX.Element {
   );
 }
 
-export const KangurAssignmentManager = memo(function KangurAssignmentManager(
+export const KangurAssignmentManager = memo((
   props: KangurAssignmentManagerProps
-): React.JSX.Element {
+): React.JSX.Element => {
   return (
     <KangurAssignmentManagerProvider {...props}>
       <KangurAssignmentManagerContent />

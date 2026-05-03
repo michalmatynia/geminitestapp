@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import {
   IMAGE_STUDIO_UPSCALE_ERROR_CODES,
@@ -10,7 +10,7 @@ import {
 import { resolveUpscaleStrategyFromRequest } from '@/features/ai/image-studio/server/upscale-utils';
 import { badRequestError } from '@/shared/errors/app-error';
 
-import { ResolvedUpscaleRequest, UploadedClientUpscaleImage } from './types';
+import { type ResolvedUpscaleRequest, type UploadedClientUpscaleImage } from './types';
 
 export const upscaleBadRequest = (
   upscaleErrorCode: ImageStudioUpscaleErrorCode,

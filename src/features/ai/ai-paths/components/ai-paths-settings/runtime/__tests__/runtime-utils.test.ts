@@ -6,7 +6,7 @@ import {
   resolveRuntimeNodeDisplayStatus,
 } from '../utils';
 
-import type { RuntimeState } from '@/shared/lib/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 describe('mergeRuntimeNodeOutputsForStatus', () => {
   it('maps blocked missing-input updates to waiting_callback', () => {
@@ -138,14 +138,14 @@ describe('mergeRuntimeNodeOutputsForStatus', () => {
         status: 'running',
       },
       next: {
-        status: 'dead_lettered',
-        message: 'run reached dead-letter queue',
+        status: 'legacy_server_status',
+        message: 'run hit a legacy server-only status',
       },
-      status: 'dead_lettered',
+      status: 'legacy_server_status',
     });
 
     expect(merged['status']).toBe('running');
-    expect(merged['message']).toBe('run reached dead-letter queue');
+    expect(merged['message']).toBe('run hit a legacy server-only status');
   });
 
   it('drops unknown status when there is no previous canonical status', () => {

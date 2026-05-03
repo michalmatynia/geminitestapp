@@ -29,7 +29,7 @@ export function ProducerMultiSelectField(props: ProducerMultiSelectFieldProps): 
       contextLoadingKey='producersLoading'
       contextOnChangeKey='onProducersChange'
       formContextToggleName='toggleProducer'
-      placeholder={placeholder || 'Select producers'}
+      placeholder={placeholder ?? 'Select producers'}
       searchPlaceholder='Search producers...'
     />
   );

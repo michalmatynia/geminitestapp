@@ -1,8 +1,8 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { Trophy, User, Ghost } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
 
 import {
   KangurButton,
@@ -24,8 +24,12 @@ import {
   useKangurLeaderboardState,
   type KangurLeaderboardUserFilterIcon,
 } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
+import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { GAME_HOME_LEADERBOARD_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
+import {
+  GAME_HOME_LEADERBOARD_SHELL_CLASSNAME,
+  GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+} from '@/features/kangur/ui/pages/GameHome.constants';
 
 const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.ReactNode => {
   if (icon === 'user') {
@@ -39,31 +43,69 @@ const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.Reac
   return null;
 };
 
-const LEADERBOARD_LOAD_DEFER_MS = 0;
-
-export default function Leaderboard(): React.JSX.Element {
+export default function Leaderboard({
+  deferUntilVisible = false,
+}: {
+  deferUntilVisible?: boolean;
+}): React.JSX.Element {
   const translations = useTranslations('KangurGameWidgets.leaderboard');
   const isCoarsePointer = useKangurCoarsePointer();
-  const { entry: leaderboardContent } = useKangurPageContentEntry('game-home-leaderboard');
-  const [isLeaderboardQueryReady, setIsLeaderboardQueryReady] = useState(false);
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setIsLeaderboardQueryReady(true);
-    }, LEADERBOARD_LOAD_DEFER_MS);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, []);
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const [isVisible, setIsVisible] = useState(!deferUntilVisible);
+  const isLeaderboardIdleReady = useKangurIdleReady({
+    minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+  });
+  const isLeaderboardReady = isLeaderboardIdleReady && isVisible;
+  const { entry: leaderboardContent } = useKangurPageContentEntry(
+    'game-home-leaderboard',
+    undefined,
+    {
+      enabled: isLeaderboardReady,
+    }
+  );
   const { emptyStateLabel, items, loading: isLeaderboardLoading, operationFilters, userFilters } =
-    useKangurLeaderboardState({ enabled: isLeaderboardQueryReady });
-  const loading = !isLeaderboardQueryReady || isLeaderboardLoading;
+    useKangurLeaderboardState({ enabled: isLeaderboardReady });
+  const loading = !isLeaderboardReady || isLeaderboardLoading;
   const segmentedItemClassName = isCoarsePointer
     ? 'min-h-12 min-w-[4.75rem] flex-1 justify-center px-4 text-xs touch-manipulation select-none active:scale-[0.985] sm:flex-none'
     : 'h-10 flex-1 justify-center px-3 text-xs sm:flex-none';
 
+  useEffect(() => {
+    if (!deferUntilVisible) {
+      setIsVisible(true);
+      return;
+    }
+
+    if (!shellRef.current) {
+      return;
+    }
+
+    if (typeof window === 'undefined' || typeof window.IntersectionObserver !== 'function') {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new window.IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) {
+          return;
+        }
+
+        setIsVisible(true);
+        observer.disconnect();
+      },
+      { rootMargin: '240px 0px' }
+    );
+
+    observer.observe(shellRef.current);
+    return () => {
+      observer.disconnect();
+    };
+  }, [deferUntilVisible]);
+
   return (
     <KangurGlassPanel
+      ref={shellRef}
       className={GAME_HOME_LEADERBOARD_SHELL_CLASSNAME}
       data-testid='leaderboard-shell'
       padding='lg'

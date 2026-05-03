@@ -239,6 +239,74 @@ describe('executeMongoEntityUpdate', () => {
     });
   });
 
+  it('reports warning metadata when the entity update affects 0 records under warn policy', async () => {
+    entityUpdateMock.mockResolvedValue({
+      ok: true,
+      data: {
+        matchedCount: 1,
+        modifiedCount: 0,
+        acknowledged: true,
+      },
+    });
+    evaluateWriteOutcomeMock.mockReturnValue({
+      isZeroAffected: true,
+      writeOutcome: {
+        status: 'warning',
+        operation: 'update',
+        code: 'zero_affected',
+        message: 'No rows updated.',
+      },
+    });
+
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+
+    const result = await executeMongoEntityUpdate({
+      action: 'updateOne',
+      node: { id: 'node-update-warning' } as never,
+      nodeInputs: {},
+      prevOutputs: {},
+      executed: { updater: new Set<string>() } as never,
+      reportAiPathsError,
+      toast,
+      dbConfig: {} as never,
+      queryPayload: {},
+      collection: 'products',
+      templateInputs: {},
+      debugPayload: { source: 'plan' },
+      parameterTargetPath: 'content_en',
+      updates: { content_en: 'Updated text' },
+      primaryTarget: 'content_en',
+      updateDoc: { $set: { content_en: 'Updated text' } },
+      resolveEntityId: vi.fn(() => 'prod-1'),
+      aiPrompt: 'mongo prompt',
+    });
+
+    expect(reportAiPathsError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        action: 'dbWriteOutcome',
+        collection: 'products',
+        nodeId: 'node-update-warning',
+        errorCode: 'AI_PATHS_DB_WRITE_ZERO_AFFECTED',
+        errorCategory: 'database',
+        errorScope: 'node',
+        errorSeverity: 'warning',
+        writeOutcome: expect.objectContaining({
+          status: 'warning',
+          code: 'zero_affected',
+        }),
+      })
+    );
+    expect(toast).toHaveBeenCalledWith('No rows updated.', { variant: 'warning' });
+    expect(result.writeOutcome).toEqual(
+      expect.objectContaining({
+        status: 'warning',
+        code: 'zero_affected',
+      })
+    );
+  });
+
   it('returns updated content, writeOutcome, and parameter inference metadata on success', async () => {
     mergeParameterInferenceUpdatesMock.mockReturnValue({
       applied: true,

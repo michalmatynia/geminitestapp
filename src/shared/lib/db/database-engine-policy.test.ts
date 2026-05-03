@@ -1,12 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getMongoDbMock, reportRuntimeCatchMock } = vi.hoisted(() => ({
+const { getMongoDbMock, reportRuntimeCatchMock, applyActiveMongoSourceEnvMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
   reportRuntimeCatchMock: vi.fn(),
+  applyActiveMongoSourceEnvMock: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
+}));
+
+vi.mock('@/shared/lib/db/mongo-source', () => ({
+  applyActiveMongoSourceEnv: applyActiveMongoSourceEnvMock,
 }));
 
 vi.mock('@/shared/utils/observability/runtime-error-reporting', () => ({

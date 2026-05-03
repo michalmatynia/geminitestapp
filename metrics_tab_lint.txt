@@ -1,0 +1,30 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/MetricsTab.tsx
+   17:8   error  Unexpected value in conditional. A boolean expression is required                                   @typescript-eslint/strict-boolean-expressions
+   39:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required          @typescript-eslint/strict-boolean-expressions
+   48:8   error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+   52:8   error  Function 'MetricsTab' has too many lines (248). Maximum allowed is 60                               max-lines-per-function
+   52:8   error  Function 'MetricsTab' has a complexity of 29. Maximum allowed is 8                                  complexity
+   63:57  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+   64:62  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+   66:47  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+   81:12  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  119:12  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  134:24  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+  232:10  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  237:13  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  241:18  error  Arrow function has a complexity of 15. Maximum allowed is 8                                         complexity
+  242:62  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  243:35  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  243:47  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  244:44  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  244:56  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  245:45  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  245:57  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  246:33  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  246:45  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  247:44  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  247:56  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+
+✖ 25 problems (25 errors, 0 warnings)
+

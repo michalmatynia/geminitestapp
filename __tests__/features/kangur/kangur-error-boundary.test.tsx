@@ -37,7 +37,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import KangurErrorBoundary from '@/app/(frontend)/kangur/error';
 

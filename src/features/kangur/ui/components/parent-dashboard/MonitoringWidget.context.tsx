@@ -7,7 +7,11 @@ type MonitoringWidgetState = ReturnType<typeof useMonitoringWidgetState>;
 
 const MonitoringWidgetContext = createContext<MonitoringWidgetState | null>(null);
 
-export function MonitoringWidgetProvider({ children }: { children: React.ReactNode }) {
+export function MonitoringWidgetProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const state = useMonitoringWidgetState();
   return (
     <MonitoringWidgetContext.Provider value={state}>
@@ -16,10 +20,12 @@ export function MonitoringWidgetProvider({ children }: { children: React.ReactNo
   );
 }
 
+import { internalError } from '@/shared/errors/app-error';
+
 export function useMonitoringWidgetContext(): MonitoringWidgetState {
   const context = useContext(MonitoringWidgetContext);
   if (!context) {
-    throw new Error('useMonitoringWidgetContext must be used within a MonitoringWidgetProvider');
+    throw internalError('useMonitoringWidgetContext must be used within a MonitoringWidgetProvider');
   }
   return context;
 }

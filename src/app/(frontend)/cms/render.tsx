@@ -1,10 +1,10 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import {
   CmsPageShell,
   CmsPageRenderer,
   ThemeProvider,
-} from '@/features/cms/public';
+} from '@/features/cms/frontend/public';
 
 import type { SlugRenderData } from './slug-page-data';
 

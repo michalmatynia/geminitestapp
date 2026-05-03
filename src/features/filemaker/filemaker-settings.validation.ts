@@ -30,6 +30,16 @@ type FilemakerPhoneValidationRuntimeRule = {
   sequence: number;
 };
 
+type ParsedPromptRegexRule = {
+  id: string;
+  pattern: string;
+  flags: string;
+  sequence: number;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
 const normalizeRegexFlags = (
   value: unknown,
   options?: {
@@ -43,7 +53,7 @@ const normalizeRegexFlags = (
       unique.add(flag);
     }
   });
-  if (options?.forceGlobal) {
+  if (options?.forceGlobal === true) {
     unique.add('g');
   }
   return Array.from(unique).join('');
@@ -57,7 +67,7 @@ const normalizePhoneValidationFlags = (value: unknown): string =>
 
 const sanitizeEmailCandidate = (value: string): string => {
   let current = value.trim().replace(/^mailto:\s*/i, '');
-  if (!current) return '';
+  if (current.length === 0) return '';
 
   const leadingWrapperRe = /^[<([{'"`]+/;
   const trailingWrapperRe = /[>\])}"'`.,;:!?]+$/;
@@ -100,10 +110,11 @@ const compileFilemakerEmailParserRules = (
   sortFilemakerEmailParserRules(rules)
     .map((rule: FilemakerEmailParserRule): FilemakerEmailParserRuntimeRule | null => {
       const pattern = normalizeString(rule.pattern);
-      if (!pattern) return null;
+      if (pattern.length === 0) return null;
       try {
+        const id = normalizeString(rule.id);
         return {
-          id: normalizeString(rule.id) || FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
+          id: id.length > 0 ? id : FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
           regex: new RegExp(pattern, normalizeEmailParserFlags(rule.flags)),
           sequence: toParserRuleSequence(rule.sequence),
         };
@@ -114,7 +125,7 @@ const compileFilemakerEmailParserRules = (
     })
     .filter(
       (entry: FilemakerEmailParserRuntimeRule | null): entry is FilemakerEmailParserRuntimeRule =>
-        Boolean(entry)
+        entry !== null
     );
 
 const compileFilemakerPhoneValidationRules = (
@@ -123,10 +134,11 @@ const compileFilemakerPhoneValidationRules = (
   sortFilemakerPhoneValidationRules(rules)
     .map((rule: FilemakerPhoneValidationRule): FilemakerPhoneValidationRuntimeRule | null => {
       const pattern = normalizeString(rule.pattern);
-      if (!pattern) return null;
+      if (pattern.length === 0) return null;
       try {
+        const id = normalizeString(rule.id);
         return {
-          id: normalizeString(rule.id) || FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
+          id: id.length > 0 ? id : FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
           regex: new RegExp(pattern, normalizePhoneValidationFlags(rule.flags)),
           sequence: toParserRuleSequence(rule.sequence),
         };
@@ -138,28 +150,18 @@ const compileFilemakerPhoneValidationRules = (
     .filter(
       (
         entry: FilemakerPhoneValidationRuntimeRule | null
-      ): entry is FilemakerPhoneValidationRuntimeRule => Boolean(entry)
+      ): entry is FilemakerPhoneValidationRuntimeRule => entry !== null
     );
 
 const parseRegexRulesFromPromptSettings = (
   rawPromptSettings: string | null | undefined,
   rulePrefix: string
-): Array<{
-  id: string;
-  pattern: string;
-  flags: string;
-  sequence: number;
-}> => {
+): ParsedPromptRegexRule[] => {
   const parsed = parseJsonSetting<Record<string, unknown> | null>(rawPromptSettings, null);
-  if (!parsed || typeof parsed !== 'object') return [];
+  if (!isRecord(parsed)) return [];
 
-  const promptValidation =
-    parsed['promptValidation'] &&
-    typeof parsed['promptValidation'] === 'object' &&
-    !Array.isArray(parsed['promptValidation'])
-      ? (parsed['promptValidation'] as Record<string, unknown>)
-      : null;
-  if (!promptValidation) return [];
+  const promptValidation = isRecord(parsed['promptValidation']) ? parsed['promptValidation'] : null;
+  if (promptValidation === null) return [];
 
   const rawRules = Array.isArray(promptValidation['rules'])
     ? (promptValidation['rules'] as unknown[])
@@ -167,19 +169,19 @@ const parseRegexRulesFromPromptSettings = (
   return rawRules
     .filter(
       (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+        entry !== null && typeof entry === 'object' && !Array.isArray(entry)
     )
     .map(
       (
         entry: Record<string, unknown>
-      ): { id: string; pattern: string; flags: string; sequence: number } | null => {
+      ): ParsedPromptRegexRule | null => {
         const id = normalizeString(entry['id']);
         if (!id.startsWith(rulePrefix)) return null;
         if (normalizeString(entry['kind']).toLowerCase() !== 'regex') return null;
         if (entry['enabled'] === false) return null;
 
         const pattern = normalizeString(entry['pattern']);
-        if (!pattern) return null;
+        if (pattern.length === 0) return null;
 
         return {
           id,
@@ -191,8 +193,8 @@ const parseRegexRulesFromPromptSettings = (
     )
     .filter(
       (
-        entry: { id: string; pattern: string; flags: string; sequence: number } | null
-      ): entry is { id: string; pattern: string; flags: string; sequence: number } => Boolean(entry)
+        entry: ParsedPromptRegexRule | null
+      ): entry is ParsedPromptRegexRule => entry !== null
     );
 };
 
@@ -212,6 +214,25 @@ export const parseFilemakerPhoneValidationRulesFromPromptSettings = (
   );
 };
 
+const resolvePhoneValidationRules = (
+  rules: FilemakerPhoneValidationRule[] | null | undefined
+): {
+  rules: FilemakerPhoneValidationRule[];
+  usedDefaultRules: boolean;
+} => {
+  const customRules = sortFilemakerPhoneValidationRules(rules ?? []);
+  if (customRules.length > 0) return { rules: customRules, usedDefaultRules: false };
+  return { rules: DEFAULT_FILEMAKER_PHONE_VALIDATION_RULES, usedDefaultRules: true };
+};
+
+const findMatchingPhoneValidationRule = (
+  normalizedPhoneNumber: string,
+  runtimeRules: FilemakerPhoneValidationRuntimeRule[]
+): FilemakerPhoneValidationRuntimeRule | null =>
+  runtimeRules.find((rule: FilemakerPhoneValidationRuntimeRule): boolean =>
+    new RegExp(rule.regex.source, rule.regex.flags).test(normalizedPhoneNumber)
+  ) ?? null;
+
 export const validateFilemakerPhoneNumber = (
   rawPhoneNumber: string,
   options?: {
@@ -219,30 +240,24 @@ export const validateFilemakerPhoneNumber = (
   }
 ): FilemakerPhoneValidationResult => {
   const normalizedPhoneNumber = sanitizePhoneCandidate(normalizeString(rawPhoneNumber));
-  const customRules = sortFilemakerPhoneValidationRules(options?.validationRules ?? []);
-  const fallbackRules =
-    customRules.length > 0 ? customRules : DEFAULT_FILEMAKER_PHONE_VALIDATION_RULES;
-  const runtimeRules = compileFilemakerPhoneValidationRules(fallbackRules);
-  if (!normalizedPhoneNumber || runtimeRules.length === 0) {
+  const resolvedRules = resolvePhoneValidationRules(options?.validationRules);
+  const runtimeRules = compileFilemakerPhoneValidationRules(resolvedRules.rules);
+  if (normalizedPhoneNumber.length === 0 || runtimeRules.length === 0) {
     return {
       isValid: false,
       normalizedPhoneNumber,
       matchedRuleId: null,
-      usedDefaultRules: customRules.length === 0,
+      usedDefaultRules: resolvedRules.usedDefaultRules,
     };
   }
 
-  const matchedRule =
-    runtimeRules.find((rule: FilemakerPhoneValidationRuntimeRule): boolean => {
-      rule.regex.lastIndex = 0;
-      return rule.regex.test(normalizedPhoneNumber);
-    }) ?? null;
+  const matchedRule = findMatchingPhoneValidationRule(normalizedPhoneNumber, runtimeRules);
 
   return {
-    isValid: Boolean(matchedRule),
+    isValid: matchedRule !== null,
     normalizedPhoneNumber,
     matchedRuleId: matchedRule?.id ?? null,
-    usedDefaultRules: customRules.length === 0,
+    usedDefaultRules: resolvedRules.usedDefaultRules,
   };
 };
 
@@ -256,7 +271,7 @@ export const extractFilemakerEmailsFromText = (
   const customRules = sortFilemakerEmailParserRules(options?.parserRules ?? []);
   const fallbackRules = customRules.length > 0 ? customRules : DEFAULT_FILEMAKER_EMAIL_PARSER_RULES;
   const runtimeRules = compileFilemakerEmailParserRules(fallbackRules);
-  if (!source || runtimeRules.length === 0) {
+  if (source.length === 0 || runtimeRules.length === 0) {
     return {
       emails: [],
       totalMatches: 0,
@@ -282,9 +297,7 @@ export const extractFilemakerEmailsFromText = (
           .find(
             (entry: string | undefined): entry is string =>
               typeof entry === 'string' && entry.trim().length > 0
-          ) ??
-        match[0] ??
-        '';
+          ) ?? match[0];
 
       const normalizedEmail = sanitizeEmailCandidate(captured).toLowerCase();
 
@@ -295,7 +308,7 @@ export const extractFilemakerEmailsFromText = (
         extracted.push(normalizedEmail);
       }
 
-      if ((match[0] ?? '').length === 0) {
+      if (match[0].length === 0) {
         regex.lastIndex += 1;
       }
       match = regex.exec(source);

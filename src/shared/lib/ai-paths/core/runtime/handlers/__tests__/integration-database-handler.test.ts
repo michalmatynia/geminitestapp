@@ -283,13 +283,13 @@ describe('handleDatabase', () => {
       result: null,
       bundle: {
         error:
-          'Translation update blocked. No safe description or parameter translation updates were resolved.',
-        guardrail: 'translation-no-updates',
+          'Database update blocked. No safe write candidates were resolved after applying the configured write policies.',
+        guardrail: 'no-safe-updates',
         guardrailMeta: {
-          code: 'translation-no-updates',
+          code: 'no-safe-updates',
           severity: 'error',
           message:
-            'Translation update blocked. No safe description or parameter translation updates were resolved.',
+            'Database update blocked. No safe write candidates were resolved after applying the configured write policies.',
           unresolvedSourcePorts: ['value', 'result'],
         },
       },
@@ -324,7 +324,7 @@ describe('handleDatabase', () => {
     }
 
     expect(caughtError).toBeInstanceOf(Error);
-    expect((caughtError as Error).message).toContain('Translation update blocked');
+    expect((caughtError as Error).message).toContain('No safe write candidates were resolved');
     expect((caughtError as { nodeOutput?: unknown }).nodeOutput).toEqual(mongoResult);
   });
 

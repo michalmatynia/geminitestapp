@@ -28,7 +28,7 @@ vi.mock('@/features/filemaker/server', () => ({
   deleteFilemakerMailThread: deleteFilemakerMailThreadMock,
 }));
 
-import { DELETE_handler, GET_handler, PATCH_handler } from './handler';
+import { deleteHandler, getHandler, patchHandler } from './handler';
 
 describe('filemaker mail thread detail handler', () => {
   beforeEach(() => {
@@ -59,9 +59,9 @@ describe('filemaker mail thread detail handler', () => {
       inReplyTo: null,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/filemaker/mail/threads/thread%201'),
-      { params: { threadId: 'thread%201' } } as Parameters<typeof GET_handler>[1]
+      { params: { threadId: 'thread%201' } } as Parameters<typeof getHandler>[1]
     );
 
     expect(getFilemakerMailThreadDetailMock).toHaveBeenCalledWith('thread 1');
@@ -92,9 +92,9 @@ describe('filemaker mail thread detail handler', () => {
     getFilemakerMailThreadDetailMock.mockResolvedValue(null);
 
     await expect(
-      GET_handler(new NextRequest('http://localhost/api/filemaker/mail/threads/missing'), {
+      getHandler(new NextRequest('http://localhost/api/filemaker/mail/threads/missing'), {
         params: { threadId: 'missing' },
-      } as Parameters<typeof GET_handler>[1])
+      } as Parameters<typeof getHandler>[1])
     ).rejects.toMatchObject(notFoundError('Filemaker mail thread was not found.'));
   });
 
@@ -104,12 +104,12 @@ describe('filemaker mail thread detail handler', () => {
       unreadCount: 0,
     });
 
-    const response = await PATCH_handler(
+    const response = await patchHandler(
       new NextRequest('http://localhost/api/filemaker/mail/threads/thread%201', {
         method: 'PATCH',
         body: JSON.stringify({ read: true }),
       }),
-      { params: { threadId: 'thread%201' } } as Parameters<typeof PATCH_handler>[1]
+      { params: { threadId: 'thread%201' } } as Parameters<typeof patchHandler>[1]
     );
 
     expect(markFilemakerMailThreadReadMock).toHaveBeenCalledWith('thread 1', true);
@@ -122,11 +122,11 @@ describe('filemaker mail thread detail handler', () => {
   });
 
   it('deletes a thread via delete', async () => {
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/filemaker/mail/threads/thread%201', {
         method: 'DELETE',
       }),
-      { params: { threadId: 'thread%201' } } as Parameters<typeof DELETE_handler>[1]
+      { params: { threadId: 'thread%201' } } as Parameters<typeof deleteHandler>[1]
     );
 
     expect(deleteFilemakerMailThreadMock).toHaveBeenCalledWith('thread 1');

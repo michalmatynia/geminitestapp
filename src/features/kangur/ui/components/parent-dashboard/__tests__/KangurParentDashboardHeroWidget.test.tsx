@@ -52,6 +52,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: useKangurLoginModalMock,
+  useKangurLoginModalActions: useKangurLoginModalMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({

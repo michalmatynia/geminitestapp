@@ -1,11 +1,11 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_RUN_ENQUEUED_EVENT_NAME } from '@/shared/contracts/ai-paths';
-import type { AiPathRunListResult, AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import {
   listOptimisticAiPathRuns,
   rememberOptimisticAiPathRun,
@@ -23,9 +23,6 @@ const mocks = vi.hoisted(() => ({
   createMutationV2Mock: vi.fn(),
   createDeleteMutationV2Mock: vi.fn(),
   getAiPathRunMock: vi.fn(),
-  handoffAiPathRunMock: vi.fn(),
-  resumeAiPathRunMock: vi.fn(),
-  retryAiPathRunNodeMock: vi.fn(),
   refetchSettingsMock: vi.fn(),
   refetchRunsMock: vi.fn(),
   refetchQueueStatusMock: vi.fn(),
@@ -33,12 +30,22 @@ const mocks = vi.hoisted(() => ({
 
 let JobQueueProvider: typeof import('../JobQueueContext').JobQueueProvider;
 let useJobQueueState: typeof import('../JobQueueContext').useJobQueueState;
+let eventSourceUrls: string[] = [];
+let eventSourceInstances: Array<{
+  close: ReturnType<typeof vi.fn>;
+  emit: (type: string, event: Event) => void;
+  readyState: number;
+}> = [];
 
 vi.mock('next/navigation', () => ({
   usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
+}));
+
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mocks.toastMock }),
 }));
 
@@ -53,9 +60,6 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
 
 vi.mock('@/shared/lib/ai-paths', () => ({
   getAiPathRun: (...args: unknown[]) => mocks.getAiPathRunMock(...args),
-  handoffAiPathRun: (...args: unknown[]) => mocks.handoffAiPathRunMock(...args),
-  resumeAiPathRun: (...args: unknown[]) => mocks.resumeAiPathRunMock(...args),
-  retryAiPathRunNode: (...args: unknown[]) => mocks.retryAiPathRunNodeMock(...args),
 }));
 
 let jobQueueRunsData: AiPathRunListResult = { runs: [], total: 0 };
@@ -108,24 +112,67 @@ function ExpandedRunProbe(): React.JSX.Element {
   return <div data-testid='expanded-runs'>{Array.from(expandedRunIds).sort().join(',') || 'empty'}</div>;
 }
 
+function StreamStatusProbe({ runId }: { runId: string }): React.JSX.Element {
+  const { expandedRunIds, streamStatuses } = useJobQueueState();
+
+  return (
+    <div data-testid='stream-status'>
+      {`${expandedRunIds.has(runId) ? 'expanded' : 'collapsed'}:${streamStatuses[runId] ?? 'unset'}`}
+    </div>
+  );
+}
+
 describe('JobQueueProvider enqueue event listeners', () => {
   beforeEach(async () => {
     class MockEventSource {
-      close(): void {}
-      addEventListener(): void {}
-      removeEventListener(): void {}
+      static CONNECTING = 0;
+      static OPEN = 1;
+      static CLOSED = 2;
+
+      private readonly listeners = new Map<string, Set<(event: Event) => void>>();
+      readyState = MockEventSource.CONNECTING;
+
+      constructor(url: string) {
+        eventSourceUrls.push(url);
+        eventSourceInstances.push(this);
+      }
+
+      close = vi.fn((): void => {
+        this.readyState = MockEventSource.CLOSED;
+      });
+
+      addEventListener(type: string, listener: EventListenerOrEventListenerObject): void {
+        const listeners = this.listeners.get(type) ?? new Set<(event: Event) => void>();
+        if (typeof listener === 'function') {
+          listeners.add(listener);
+        } else {
+          listeners.add((event: Event): void => listener.handleEvent(event));
+        }
+        this.listeners.set(type, listeners);
+      }
+
+      removeEventListener(type: string, listener: EventListenerOrEventListenerObject): void {
+        const listeners = this.listeners.get(type);
+        if (!listeners) return;
+        if (typeof listener === 'function') {
+          listeners.delete(listener);
+        }
+      }
+
+      emit(type: string, event: Event): void {
+        this.listeners.get(type)?.forEach((listener) => listener(event));
+      }
     }
 
     resetOptimisticQueue();
+    eventSourceUrls = [];
+    eventSourceInstances = [];
     mocks.usePathnameMock.mockReset();
     mocks.toastMock.mockReset();
     mocks.createListQueryV2Mock.mockReset();
     mocks.createMutationV2Mock.mockReset();
     mocks.createDeleteMutationV2Mock.mockReset();
     mocks.getAiPathRunMock.mockReset();
-    mocks.handoffAiPathRunMock.mockReset();
-    mocks.resumeAiPathRunMock.mockReset();
-    mocks.retryAiPathRunNodeMock.mockReset();
     mocks.refetchSettingsMock.mockReset();
     mocks.refetchRunsMock.mockReset();
     mocks.refetchQueueStatusMock.mockReset();
@@ -150,9 +197,6 @@ describe('JobQueueProvider enqueue event listeners', () => {
         events: [],
       },
     });
-    mocks.handoffAiPathRunMock.mockResolvedValue({ ok: true, data: { run: {} } });
-    mocks.resumeAiPathRunMock.mockResolvedValue({ ok: true, data: { run: {} } });
-    mocks.retryAiPathRunNodeMock.mockResolvedValue({ ok: true, data: { run: {} } });
     ({ JobQueueProvider, useJobQueueState } = await vi.importActual<typeof import('../JobQueueContext')>(
       '../JobQueueContext'
     ));
@@ -292,7 +336,90 @@ describe('JobQueueProvider enqueue event listeners', () => {
     });
 
     expect(screen.getByTestId('expanded-runs')).toHaveTextContent('run-from-link');
-    expect(mocks.getAiPathRunMock).toHaveBeenCalledWith('run-from-link');
+    expect(mocks.getAiPathRunMock).not.toHaveBeenCalled();
+  });
+
+  it('does not open a live stream for an already terminal expanded run', async () => {
+    jobQueueRunsData = {
+      runs: [
+        {
+          id: 'terminal-run',
+          status: 'completed',
+          pathId: 'path-1',
+          pathName: 'Path 1',
+          createdAt: '2026-03-09T12:00:00.000Z',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+          finishedAt: '2026-03-09T12:00:05.000Z',
+        } as AiPathRunRecord,
+      ],
+      total: 1,
+    };
+
+    await act(async () => {
+      render(
+        <JobQueueProvider initialSearchQuery='terminal-run' initialExpandedRunId='terminal-run'>
+          <StreamStatusProbe runId='terminal-run' />
+        </JobQueueProvider>
+      );
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:stopped');
+    });
+    expect(eventSourceUrls).toEqual([]);
+  });
+
+  it('keeps an active stream reconnecting on transient EventSource errors', async () => {
+    jobQueueRunsData = {
+      runs: [
+        {
+          id: 'active-run',
+          status: 'running',
+          pathId: 'path-1',
+          pathName: 'Path 1',
+          createdAt: '2026-03-09T12:00:00.000Z',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+        } as AiPathRunRecord,
+      ],
+      total: 1,
+    };
+
+    await act(async () => {
+      render(
+        <JobQueueProvider initialSearchQuery='active-run' initialExpandedRunId='active-run'>
+          <StreamStatusProbe runId='active-run' />
+        </JobQueueProvider>
+      );
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:connecting');
+    });
+    expect(eventSourceInstances).toHaveLength(1);
+
+    act(() => {
+      eventSourceInstances[0]?.emit('ready', new Event('ready'));
+    });
+    expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:live');
+
+    act(() => {
+      eventSourceInstances[0]?.emit('error', new Event('error'));
+    });
+
+    expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:connecting');
+    expect(eventSourceInstances[0]?.close).not.toHaveBeenCalled();
+
+    act(() => {
+      eventSourceInstances[0]?.emit(
+        'error',
+        new MessageEvent('error', { data: JSON.stringify({ error: 'Run failed.' }) })
+      );
+    });
+
+    expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:stopped');
+    expect(eventSourceInstances[0]?.close).toHaveBeenCalledTimes(1);
   });
 
   it('refreshes queue only for valid window enqueue events', () => {

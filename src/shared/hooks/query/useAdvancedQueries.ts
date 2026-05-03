@@ -39,7 +39,7 @@ export function useDependentQueries<T1, T2, T3>(
   const second = createListQueryV2<T2, T2>({
     queryKey: normalizeQueryKey([...secondQuery.queryKey, first.data]),
     queryFn: () => secondQuery.queryFn(first.data!),
-    enabled: !!first.data && first.isSuccess,
+    enabled: Boolean(first.data) && first.isSuccess,
     meta: {
       source: 'shared.hooks.query.useDependentQueries.second',
       operation: 'list',
@@ -56,7 +56,7 @@ export function useDependentQueries<T1, T2, T3>(
     queryFn: thirdQuery
       ? () => thirdQuery.queryFn(second.data!)
       : () => Promise.resolve(null as T3),
-    enabled: !!thirdQuery && !!second.data && second.isSuccess,
+    enabled: Boolean(thirdQuery) && Boolean(second.data) && second.isSuccess,
     meta: {
       source: 'shared.hooks.query.useDependentQueries.third',
       operation: 'list',

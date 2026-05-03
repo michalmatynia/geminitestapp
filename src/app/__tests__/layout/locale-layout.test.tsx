@@ -6,23 +6,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactElement, ReactNode } from 'react';
 
 const {
+  appIntlProviderMock,
   getTranslationsMock,
   htmlLangSyncMock,
   loadSiteMessagesMock,
-  nextIntlClientProviderMock,
   notFoundMock,
   setRequestLocaleMock,
 } = vi.hoisted(() => ({
+  appIntlProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   getTranslationsMock: vi.fn(),
   htmlLangSyncMock: vi.fn(() => null),
   loadSiteMessagesMock: vi.fn(),
-  nextIntlClientProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   notFoundMock: vi.fn(),
   setRequestLocaleMock: vi.fn(),
 }));
 
-vi.mock('next-intl', () => ({
-  NextIntlClientProvider: nextIntlClientProviderMock,
+vi.mock('@/shared/providers/AppIntlProvider', () => ({
+  AppIntlProvider: appIntlProviderMock,
 }));
 
 vi.mock('next-intl/server', () => ({
@@ -31,6 +31,10 @@ vi.mock('next-intl/server', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
+  notFound: notFoundMock,
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
   notFound: notFoundMock,
 }));
 

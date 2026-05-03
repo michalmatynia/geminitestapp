@@ -16,6 +16,7 @@ import {
 import { useAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.access';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 type KangurTopNavigationRegistration = {
   ownerId: string;
@@ -75,7 +76,7 @@ export function KangurTopNavigationProvider({
         return;
       }
 
-      clearTimeoutRef.current = window.setTimeout(() => {
+      clearTimeoutRef.current = safeSetTimeout(() => {
         clearTimeoutRef.current = null;
         applyClearNavigation(ownerId);
       }, TOP_NAVIGATION_CLEAR_DELAY_MS);
@@ -85,8 +86,8 @@ export function KangurTopNavigationProvider({
 
   const setNavigation = useCallback(
     (ownerId: string, navigation: KangurPrimaryNavigationProps): void => {
-      if (clearTimeoutRef.current !== null && typeof window !== 'undefined') {
-        window.clearTimeout(clearTimeoutRef.current);
+      if (clearTimeoutRef.current !== null) {
+        safeClearTimeout(clearTimeoutRef.current);
         clearTimeoutRef.current = null;
       }
 

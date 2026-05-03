@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { pathConfigSchema } from '@/shared/contracts/ai-paths';
 import { parseAndDeserializeSemanticCanvas } from '@/shared/lib/ai-paths/core/semantic-grammar';
@@ -7,7 +7,8 @@ import {
   formatRemovedLegacyAiPathNodesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-node-removal';
 import {
-  normalizeRemovedTriggerContextModesInDocument,
+  findRemovedLegacyTriggerContextModesInDocument,
+  formatRemovedLegacyTriggerContextModesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 
 import { aiPathPortablePackageVersionedSchema } from './portable-engine-contract';
@@ -34,6 +35,24 @@ const formatZodError = (error: z.ZodError): string =>
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const hasNonCanonicalPathConfigEdgeAliases = (input: unknown): boolean => {
+  if (!isRecord(input) || !Array.isArray(input['edges'])) {
+    return false;
+  }
+
+  return input['edges'].some((entry: unknown): boolean => {
+    if (!isRecord(entry)) return false;
+    return (
+      entry['source'] !== undefined ||
+      entry['target'] !== undefined ||
+      entry['sourceHandle'] !== undefined ||
+      entry['targetHandle'] !== undefined ||
+      entry['fromNodeId'] !== undefined ||
+      entry['toNodeId'] !== undefined
+    );
+  });
+};
 
 const normalizeLegacyWriteOutcomePolicy = (input: unknown): unknown => {
   if (Array.isArray(input)) {
@@ -81,18 +100,18 @@ export const migratePortablePathInput = (
       }),
     };
   }
-  const triggerContextModeRemediation = normalizeRemovedTriggerContextModesInDocument(input);
-  const migrationWarnings: PortablePathMigrationWarning[] =
-    triggerContextModeRemediation.changed
-      ? [
-        {
-          code: 'removed_trigger_context_modes_normalized',
-          message:
-              'Portable payload normalized removed Trigger.contextMode values to trigger_only.',
-        },
-      ]
-      : [];
-  const migratedInput = normalizeLegacyWriteOutcomePolicy(triggerContextModeRemediation.value);
+  const removedTriggerContextModes = findRemovedLegacyTriggerContextModesInDocument(input);
+  if (removedTriggerContextModes.length > 0) {
+    return {
+      ok: false,
+      error: formatRemovedLegacyTriggerContextModesMessage(removedTriggerContextModes, {
+        surface: 'portable payload',
+      }),
+    };
+  }
+
+  const migrationWarnings: PortablePathMigrationWarning[] = [];
+  const migratedInput = normalizeLegacyWriteOutcomePolicy(input);
 
   const packageParsed = aiPathPortablePackageVersionedSchema.safeParse(migratedInput);
   if (packageParsed.success) {
@@ -161,6 +180,13 @@ export const migratePortablePathInput = (
           },
         ],
       },
+    };
+  }
+
+  if (hasNonCanonicalPathConfigEdgeAliases(migratedInput)) {
+    return {
+      ok: false,
+      error: 'Path config payload contains unsupported legacy edge alias fields.',
     };
   }
 

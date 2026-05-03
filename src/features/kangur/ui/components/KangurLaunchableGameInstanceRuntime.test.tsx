@@ -32,7 +32,8 @@ vi.mock('@/features/kangur/ui/hooks/useKangurGameContentSets', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: (...args: unknown[]) => trackKangurClientEventMock(...args),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/components/KangurLaunchableGameRuntime', () => ({
   __esModule: true,
@@ -44,7 +45,7 @@ vi.mock('@/features/kangur/ui/components/KangurLaunchableGameRuntime', () => ({
 
 vi.mock('@/features/kangur/ui/components/KangurLessonActivityInstanceRuntime', () => ({
   __esModule: true,
-  default: (props: { gameId: string; instanceId: string; onFinish: () => void }) => {
+  default: (props: { config: { gameId: string; instanceId: string; onFinish: () => void } }) => {
     kangurLessonActivityInstanceRuntimeMock(props);
     return <div data-testid='kangur-lesson-activity-instance-runtime' />;
   },
@@ -355,8 +356,10 @@ describe('KangurLaunchableGameInstanceRuntime', () => {
     ).toBeInTheDocument();
     expect(kangurLessonActivityInstanceRuntimeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        gameId: 'clock_training',
-        instanceId: 'clock_training:instance:clock-hours',
+        config: expect.objectContaining({
+          gameId: 'clock_training',
+          instanceId: 'clock_training:instance:clock-hours',
+        }),
       })
     );
     expect(kangurLaunchableGameRuntimeMock).not.toHaveBeenCalled();

@@ -1,11 +1,16 @@
 'use client';
+'use no memo';
 
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { getProductListQueryKey } from '@/shared/lib/product-query-keys';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+
+// This sync helper relies on ref-backed callbacks and effect wiring that is
+// stable at runtime, but has been tripping React Compiler dev cache sizing on
+// /admin/products. Keep it on the plain hook runtime for now.
 
 interface BackgroundSyncOptions {
   queryKey: QueryKey;
@@ -40,41 +45,46 @@ export function useBackgroundSync({
   const previousDataRef = useRef<unknown>(undefined);
   const isVisibleRef = useRef(true);
   const lastSyncAtRef = useRef<number>(0);
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
   const queryKeyRef = useRef(queryKey);
   queryKeyRef.current = queryKey;
   const onUpdateRef = useRef(onUpdate);
   onUpdateRef.current = onUpdate;
   const onSyncEventRef = useRef(onSyncEvent);
   onSyncEventRef.current = onSyncEvent;
+  const syncDataRef = useRef<
+    (
+      reason: BackgroundSyncEvent['reason'],
+      options?: { ignoreVisibility?: boolean; ignoreEnabled?: boolean }
+    ) => Promise<void>
+  >(async () => undefined);
 
-  const emitSyncEvent = useCallback(
-    (event: BackgroundSyncEvent): void => {
-      try {
-        onSyncEventRef.current?.(event);
-      } catch (error: unknown) {
-        logClientCatch(error, {
-          source: 'useBackgroundSync',
-          action: 'emitSyncEvent',
-          level: 'warn',
-        });
-      }
-    },
-    []
-  );
+  const emitSyncEvent = (event: BackgroundSyncEvent): void => {
+    try {
+      onSyncEventRef.current?.(event);
+    } catch (error: unknown) {
+      logClientCatch(error, {
+        source: 'useBackgroundSync',
+        action: 'emitSyncEvent',
+        level: 'warn',
+      });
+    }
+  };
 
-  const syncData = useCallback(
+  syncDataRef.current =
     async (
       reason: BackgroundSyncEvent['reason'],
       options?: { ignoreVisibility?: boolean; ignoreEnabled?: boolean }
     ): Promise<void> => {
       const shouldSkipForVisibility = !options?.ignoreVisibility && !isVisibleRef.current;
-      const shouldSkipForEnabled = !options?.ignoreEnabled && !enabled;
+      const shouldSkipForEnabled = !options?.ignoreEnabled && !enabledRef.current;
 
       if (shouldSkipForVisibility || shouldSkipForEnabled) {
         emitSyncEvent({
           reason,
           status: 'skipped',
-          enabled,
+          enabled: enabledRef.current,
           isVisible: isVisibleRef.current,
           queryKey: queryKeyRef.current,
         });
@@ -95,7 +105,7 @@ export function useBackgroundSync({
         emitSyncEvent({
           reason,
           status: 'completed',
-          enabled,
+          enabled: enabledRef.current,
           isVisible: isVisibleRef.current,
           dataChanged,
           queryKey: queryKeyRef.current,
@@ -104,7 +114,7 @@ export function useBackgroundSync({
         emitSyncEvent({
           reason,
           status: 'error',
-          enabled,
+          enabled: enabledRef.current,
           isVisible: isVisibleRef.current,
           queryKey: queryKeyRef.current,
           errorMessage: error instanceof Error ? error.message : String(error),
@@ -115,9 +125,7 @@ export function useBackgroundSync({
           level: 'warn',
         });
       }
-    },
-    [emitSyncEvent, enabled, queryClient]
-  );
+    };
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -125,11 +133,11 @@ export function useBackgroundSync({
     const handleVisibilityChange = (): void => {
       try {
         isVisibleRef.current = document.visibilityState === 'visible';
-        if (isVisibleRef.current && enabled) {
+        if (isVisibleRef.current && enabledRef.current) {
           // Only sync if enough time has passed since the last sync
           const elapsed = Date.now() - lastSyncAtRef.current;
           if (elapsed >= VISIBILITY_SYNC_DEBOUNCE_MS) {
-            void syncData('visibility');
+            void syncDataRef.current('visibility');
           }
         }
       } catch (error: unknown) {
@@ -145,13 +153,13 @@ export function useBackgroundSync({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [enabled, syncData]);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
 
     intervalRef.current = safeSetInterval(() => {
-      void syncData('interval');
+      void syncDataRef.current('interval');
     }, interval);
 
     return (): void => {
@@ -159,11 +167,11 @@ export function useBackgroundSync({
         safeClearInterval(intervalRef.current);
       }
     };
-  }, [interval, enabled, syncData]);
+  }, [interval, enabled]);
 
   return {
     forceSync: async (): Promise<void> => {
-      await syncData('force', { ignoreVisibility: true, ignoreEnabled: true });
+      await syncDataRef.current('force', { ignoreVisibility: true, ignoreEnabled: true });
     },
   };
 }

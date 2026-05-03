@@ -46,7 +46,7 @@ export function useCurrencyForm({ currency }: UseCurrencyFormProps): UseCurrency
   }, [currency]);
 
   const handleSubmit = async (): Promise<void> => {
-    if (!form.code.trim() || !form.name.trim()) {
+    if (form.code.trim() === '' || form.name.trim() === '') {
       toast('Required fields missing.', { variant: 'error' });
       return;
     }
@@ -59,19 +59,15 @@ export function useCurrencyForm({ currency }: UseCurrencyFormProps): UseCurrency
           symbol: form.symbol.trim(),
         },
       };
-      if (currency?.id) {
+
+      if (currency?.id !== undefined && currency.id !== '') {
         payload.id = currency.id;
       }
 
       await saveMutation.mutateAsync(payload);
-
       toast('Currency saved.', { variant: 'success' });
     } catch (err) {
-      logClientCatch(err, {
-        source: 'CurrencyModal',
-        action: 'saveCurrency',
-        currencyId: currency?.id,
-      });
+      logClientCatch(err, { source: 'CurrencyModal', action: 'saveCurrency', currencyId: currency?.id });
       toast('Failed to save currency.', { variant: 'error' });
     }
   };

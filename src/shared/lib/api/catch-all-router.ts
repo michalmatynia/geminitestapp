@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import type { StringRecord } from '@/shared/contracts/base';
 import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
@@ -26,7 +26,8 @@ export type CatchAllRouteDefinition<
   TModule extends CatchAllRouteModule = CatchAllRouteModule,
 > = {
   pattern: TPatternToken[];
-  module: TModule;
+  module?: TModule;
+  loader?: () => Promise<TModule>;
 };
 
 const HTTP_METHODS: CatchAllRouteMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
@@ -54,11 +55,12 @@ const getAllowedMethods = (module: CatchAllRouteModule): CatchAllRouteMethod[] =
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
 const dispatch = async (
-  module: CatchAllRouteModule,
+  moduleOrLoader: CatchAllRouteModule | (() => Promise<CatchAllRouteModule>),
   method: CatchAllRouteMethod,
   request: NextRequest,
   params?: CatchAllRouteParams
 ): Promise<Response> => {
+  const module = typeof moduleOrLoader === 'function' ? await moduleOrLoader() : moduleOrLoader;
   const handler = module[method];
   if (typeof handler !== 'function') {
     const allowed = getAllowedMethods(module);
@@ -225,7 +227,11 @@ export const handleCatchAllRequest = async (
     if (!params) {
       continue;
     }
-    return dispatch(route.module, method, request, params);
+    const moduleOrLoader = route.loader ?? route.module;
+    if (!moduleOrLoader) {
+      continue;
+    }
+    return dispatch(moduleOrLoader, method, request, params);
   }
 
   return createNotFound(request, source);

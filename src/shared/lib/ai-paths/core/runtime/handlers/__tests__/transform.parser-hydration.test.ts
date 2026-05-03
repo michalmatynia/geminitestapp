@@ -156,6 +156,38 @@ describe('handleParser strict context hydration', () => {
     expect(Array.isArray(output['images'])).toBe(true);
   });
 
+  it('preserves embedded categoryContext in bundle mode when mappings are selective', async () => {
+    const categoryContext = {
+      catalogId: 'catalog-a',
+      currentCategoryId: 'leaf-anime-pins',
+      leafCategories: [
+        {
+          id: 'leaf-anime-pins',
+          label: 'Anime Pins',
+          fullPath: 'Pins > Anime Pins',
+        },
+      ],
+      allowedLeafLabels: ['Anime Pins'],
+    };
+    const ctx = buildContext({
+      nodeInputs: {
+        entityJson: {
+          title: 'Desk Lamp',
+          content_en: 'Metal desk lamp.',
+          categoryContext,
+        },
+      },
+    });
+
+    const output = await handleParser(ctx);
+
+    expect(output['bundle']).toMatchObject({
+      title: 'Desk Lamp',
+      content_en: 'Metal desk lamp.',
+      categoryContext,
+    });
+  });
+
   it('hydrates declared outputs from full bundle when mappings are empty in bundle mode', async () => {
     const ctx = buildContext({
       node: {

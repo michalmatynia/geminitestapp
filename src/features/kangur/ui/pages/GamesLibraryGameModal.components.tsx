@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import React from 'react';
-import type { useTranslations } from 'next-intl';
 
 import { cn } from '@/features/kangur/shared/utils';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
@@ -12,9 +11,8 @@ import {
   KangurButton,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
-import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 
+import { useGamesLibraryGameModalContext } from './GamesLibraryGameModal.context';
 import type { SegmentedFilterOption } from './GamesLibraryGameModal.types';
 import {
   GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME,
@@ -24,17 +22,13 @@ import {
 
 export function GamesLibraryGameDialog({
   children,
-  description,
-  onOpenChange,
-  open,
-  title,
 }: {
   children: React.ReactNode;
-  description?: React.ReactNode;
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
-  title: React.ReactNode;
 }): React.JSX.Element {
+  const { game, open, onOpenChange } = useGamesLibraryGameModalContext();
+  const title = game?.title;
+  const description = game?.description;
+
   return (
     <KangurDialog
       open={open}
@@ -60,33 +54,22 @@ export function GamesLibraryGameDialog({
   );
 }
 
-export function GameHeader({
-  game,
-  translations,
-  settingsOpen,
-  setSettingsOpen,
-  handleCloseModal,
-  supportsPreviewSettings,
-  isPending,
-  gameHref,
-  subjectLabel,
-  resolvedAgeGroupLabel,
-  resolveModalAgeGroupAccent,
-  resolveModalStatusAccent,
-}: {
-  game: KangurGameDefinition;
-  translations: ReturnType<typeof useTranslations<'KangurGamesLibraryPage'>>;
-  settingsOpen: boolean;
-  setSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  handleCloseModal: () => void;
-  supportsPreviewSettings: boolean;
-  isPending: boolean;
-  gameHref: string | null;
-  subjectLabel: string;
-  resolvedAgeGroupLabel: string;
-  resolveModalAgeGroupAccent: (ageGroup: KangurGameDefinition['ageGroup']) => KangurAccent;
-  resolveModalStatusAccent: (status: KangurGameDefinition['status']) => KangurAccent;
-}) {
+export function GameHeader() {
+  const {
+    game,
+    translations,
+    settingsOpen,
+    setSettingsOpen,
+    handleCloseModal,
+    supportsPreviewSettings,
+    isPending,
+    gameHref,
+    subjectLabel,
+    resolvedAgeGroupLabel,
+    resolveModalAgeGroupAccent,
+    resolveModalStatusAccent,
+  } = useGamesLibraryGameModalContext();
+
   return (
     <div className='relative border-b border-[color:var(--kangur-page-border)] bg-[var(--kangur-soft-card-background,#ffffff)] px-5 py-5 sm:px-6 sm:py-6'>
       <KangurPanelCloseButton
@@ -181,21 +164,16 @@ export function GameHeader({
   );
 }
 
-export function GameStats({
-  game,
-  translations,
-  resolvedAgeGroupLabel,
-  linkedLessonCount,
-  resolveModalAgeGroupAccent,
-  resolveModalStatusAccent,
-}: {
-  game: KangurGameDefinition;
-  translations: ReturnType<typeof useTranslations<'KangurGamesLibraryPage'>>;
-  resolvedAgeGroupLabel: string;
-  linkedLessonCount: number;
-  resolveModalAgeGroupAccent: (ageGroup: KangurGameDefinition['ageGroup']) => KangurAccent;
-  resolveModalStatusAccent: (status: KangurGameDefinition['status']) => KangurAccent;
-}) {
+export function GameStats() {
+  const {
+    game,
+    translations,
+    resolvedAgeGroupLabel,
+    linkedLessonCount,
+    resolveModalAgeGroupAccent,
+    resolveModalStatusAccent,
+  } = useGamesLibraryGameModalContext();
+
   return (
     <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
       <div className={GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME}>

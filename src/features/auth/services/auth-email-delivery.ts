@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
 import 'server-only';
 
 import { createTransport, type Transporter } from 'nodemailer';
@@ -23,13 +24,13 @@ let smtpTransport: Transporter | null = null;
 let smtpTransportKey: string | null = null;
 
 const getSmtpTransport = (config: SmtpConfig | null): Transporter | null => {
-  if (!config) {
+  if (config === null) {
     smtpTransport = null;
     smtpTransportKey = null;
     return null;
   }
   const nextKey = `${config.host}:${config.port}:${config.user}:${config.pass}:${config.from}`;
-  if (smtpTransport && smtpTransportKey === nextKey) return smtpTransport;
+  if (smtpTransport !== null && smtpTransportKey === nextKey) return smtpTransport;
   smtpTransport = createTransport({
     host: config.host,
     port: config.port,
@@ -40,12 +41,61 @@ const getSmtpTransport = (config: SmtpConfig | null): Transporter | null => {
   return smtpTransport;
 };
 
-const shouldPersistOutboxRecord = (): boolean =>
+const shouldPersist = (): boolean =>
   process.env['NODE_ENV'] === 'test' ||
   process.env['AUTH_MAGIC_LINK_DEBUG'] === 'true' ||
-  Boolean(process.env['PLAYWRIGHT_RUNTIME_RUN_ID']);
+  process.env['PLAYWRIGHT_RUNTIME_RUN_ID'] !== undefined;
 
-export const shouldExposeAuthEmailDebug = (): boolean => shouldPersistOutboxRecord();
+export const shouldExposeAuthEmailDebug = (): boolean => shouldPersist();
+
+async function sendViaWebhook(url: string, secret: string | undefined, record: AuthEmailDeliveryRecord): Promise<void> {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(secret !== undefined ? { 'x-auth-email-secret': secret } : {}),
+    },
+    body: JSON.stringify(record),
+  });
+  if (!res.ok) throw new Error(`Auth email webhook failed with status ${res.status}.`);
+}
+
+async function sendViaSmtp(config: SmtpConfig, record: AuthEmailDeliveryRecord): Promise<void> {
+  const transport = getSmtpTransport(config);
+  if (transport !== null) {
+    await transport.sendMail({
+      from: config.from,
+      to: record.to,
+      subject: record.subject,
+      text: record.text,
+      ...(record.html !== null ? { html: record.html } : {}),
+    });
+  }
+}
+
+async function handleEmailDelivery(record: AuthEmailDeliveryRecord): Promise<void> {
+  const secrets = await getAuthEmailSecrets();
+  const wh = secrets.webhookUrl;
+  const st = secrets.smtp;
+
+  if (wh !== undefined && wh !== '') {
+    await sendViaWebhook(wh, secrets.webhookSecret, record);
+    return;
+  }
+
+  if (st !== undefined) {
+    await sendViaSmtp(st, record);
+    return;
+  }
+
+  await logSystemEvent({
+    level: 'warn',
+    message: 'Auth email not sent — no delivery provider configured.',
+    source: 'auth.email',
+    service: 'auth',
+    context: { to: record.to, subject: record.subject, purpose: record.purpose, metadata: record.metadata ?? null },
+  });
+}
 
 export const sendAuthEmail = async (input: {
   to: string;
@@ -59,73 +109,15 @@ export const sendAuthEmail = async (input: {
     to: input.to.trim().toLowerCase(),
     subject: input.subject.trim(),
     text: input.text,
-    html: input.html?.trim() || null,
+    html: (input.html ?? null)?.trim() || null,
     purpose: input.purpose,
     metadata: input.metadata,
     sentAt: new Date().toISOString(),
   };
 
-  if (shouldPersistOutboxRecord()) {
-    deliveredAuthEmails.push(record);
-  }
-
-  // Priority 1: Webhook delivery
-  const emailSecrets = await getAuthEmailSecrets();
-  const webhookUrl = emailSecrets.webhookUrl;
-  if (webhookUrl) {
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(emailSecrets.webhookSecret
-          ? {
-            'x-auth-email-secret': emailSecrets.webhookSecret,
-          }
-          : {}),
-      },
-      body: JSON.stringify(record),
-    });
-
-    if (response.ok) {
-      return;
-    }
-
-    throw new Error(`Auth email webhook failed with status ${response.status}.`);
-  }
-
-  // Priority 2: SMTP delivery (e.g. Gmail)
-  const transport = getSmtpTransport(emailSecrets.smtp);
-  if (transport) {
-    const smtpConfig = emailSecrets.smtp!;
-    await transport.sendMail({
-      from: smtpConfig.from,
-      to: record.to,
-      subject: record.subject,
-      text: record.text,
-      ...(record.html ? { html: record.html } : {}),
-    });
-    return;
-  }
-
-  // No delivery provider configured
-  await logSystemEvent({
-    level: 'warn',
-    message:
-      'Auth email not sent — no delivery provider configured (set auth_email_webhook_url or auth_smtp_host in Mongo settings).',
-    source: 'auth.email',
-    service: 'auth',
-    context: {
-      to: record.to,
-      subject: record.subject,
-      purpose: record.purpose,
-      metadata: record.metadata ?? null,
-    },
-  });
+  if (shouldPersist()) deliveredAuthEmails.push(record);
+  await handleEmailDelivery(record);
 };
 
-export const __resetDeliveredAuthEmails = (): void => {
-  deliveredAuthEmails.length = 0;
-};
-
-export const __getDeliveredAuthEmails = (): AuthEmailDeliveryRecord[] =>
-  deliveredAuthEmails.map((record) => ({ ...record }));
+export const resetDeliveredAuthEmails = (): void => { deliveredAuthEmails.length = 0; };
+export const getDeliveredAuthEmails = (): AuthEmailDeliveryRecord[] => deliveredAuthEmails.map((r) => ({ ...r }));

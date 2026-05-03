@@ -11,6 +11,25 @@ export interface ProductFormFooterProps {
   entityId: string | null;
 }
 
+const copyTextToClipboard = async (value: string): Promise<void> => {
+  if (typeof navigator !== 'undefined') {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  if (typeof document === 'undefined') return;
+
+  const fallbackInput = document.createElement('textarea');
+  fallbackInput.value = value;
+  fallbackInput.setAttribute('readonly', '');
+  fallbackInput.style.position = 'absolute';
+  fallbackInput.style.left = '-9999px';
+  document.body.appendChild(fallbackInput);
+  fallbackInput.select();
+  document.execCommand('copy');
+  document.body.removeChild(fallbackInput);
+};
+
 export function ProductFormFooter({ entityId }: ProductFormFooterProps): React.JSX.Element | null {
   const { toast } = useToast();
   const [isCopyHighlightActive, setIsCopyHighlightActive] = useState(false);
@@ -18,7 +37,7 @@ export function ProductFormFooter({ entityId }: ProductFormFooterProps): React.J
 
   useEffect(() => {
     return (): void => {
-      if (copyHighlightTimeoutRef.current) {
+      if (copyHighlightTimeoutRef.current !== null) {
         clearTimeout(copyHighlightTimeoutRef.current);
         copyHighlightTimeoutRef.current = null;
       }
@@ -26,24 +45,12 @@ export function ProductFormFooter({ entityId }: ProductFormFooterProps): React.J
   }, []);
 
   const handleCopyProductId = useCallback(async (): Promise<void> => {
-    if (!entityId) return;
+    if (entityId === null || entityId === '') return;
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(entityId);
-      } else if (typeof document !== 'undefined') {
-        const fallbackInput = document.createElement('textarea');
-        fallbackInput.value = entityId;
-        fallbackInput.setAttribute('readonly', '');
-        fallbackInput.style.position = 'absolute';
-        fallbackInput.style.left = '-9999px';
-        document.body.appendChild(fallbackInput);
-        fallbackInput.select();
-        document.execCommand('copy');
-        document.body.removeChild(fallbackInput);
-      }
+      await copyTextToClipboard(entityId);
       toast('Product ID copied to clipboard.', { variant: 'success' });
       setIsCopyHighlightActive(true);
-      if (copyHighlightTimeoutRef.current) {
+      if (copyHighlightTimeoutRef.current !== null) {
         clearTimeout(copyHighlightTimeoutRef.current);
       }
       copyHighlightTimeoutRef.current = setTimeout(() => {
@@ -56,7 +63,7 @@ export function ProductFormFooter({ entityId }: ProductFormFooterProps): React.J
     }
   }, [entityId, toast]);
 
-  if (!entityId) return null;
+  if (entityId === null || entityId === '') return null;
 
   return (
     <Button

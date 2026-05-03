@@ -1,15 +1,14 @@
 import { z } from 'zod';
 
+import {
+  optionalBooleanQuerySchema,
+  optionalIntegerQuerySchema,
+} from '@/shared/lib/api/query-schema';
+
 export const querySchema = z.object({
-  page: z.coerce.number().int().min(1).optional(),
-  pageSize: z.coerce.number().int().min(1).max(2_000).optional(),
-  includeItems: z
-    .enum(['true', 'false'])
-    .optional()
-    .transform((value: 'true' | 'false' | undefined): boolean | undefined => {
-      if (value === undefined) return undefined;
-      return value === 'true';
-    }),
+  page: optionalIntegerQuerySchema(z.number().int().min(1)),
+  pageSize: optionalIntegerQuerySchema(z.number().int().min(1).max(2_000)),
+  includeItems: optionalBooleanQuerySchema(),
 });
 
 export type ProductSyncRunDetailQuery = z.infer<typeof querySchema>;

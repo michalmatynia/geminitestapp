@@ -10,16 +10,16 @@ import type {
 } from './types';
 
 export const BALL_COLORS = [
-  'bg-red-400',
-  'bg-blue-400',
-  'bg-green-400',
-  'bg-yellow-400',
-  'bg-purple-400',
-  'bg-pink-400',
-  'bg-orange-400',
-  'bg-teal-400',
-  'bg-indigo-400',
-  'bg-rose-400',
+  '#f87171',
+  '#60a5fa',
+  '#4ade80',
+  '#facc15',
+  '#c084fc',
+  '#f472b6',
+  '#fb923c',
+  '#2dd4bf',
+  '#818cf8',
+  '#fb7185',
 ] as const;
 
 export const MODES: RoundMode[] = ['complete_equation', 'group_sum', 'pick_answer'];

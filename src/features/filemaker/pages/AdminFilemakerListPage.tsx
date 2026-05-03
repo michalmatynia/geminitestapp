@@ -1,8 +1,10 @@
 'use client';
 
-import { Edit2, LayoutList, Users, Building2, CalendarDays, Database, Mail } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React, { useDeferredValue, useMemo, useState } from 'react';
+/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
+
+import { Edit2, LayoutList, Users, Building2, CalendarDays, Database, Globe, Mail } from 'lucide-react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { useDeferredValue, useMemo, useState, startTransition } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Badge, Button, Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/primitives.public';
@@ -154,7 +156,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
               variant='outline'
               size='xs'
               onClick={() =>
-                router.push(`/admin/filemaker/persons/${encodeURIComponent(row.original.id)}`)
+                startTransition(() => { router.push(`/admin/filemaker/persons/${encodeURIComponent(row.original.id)}`); })
               }
             >
               <Edit2 className='mr-1.5 size-3.5' />
@@ -192,7 +194,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
               variant='outline'
               size='xs'
               onClick={() =>
-                router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`)
+                startTransition(() => { router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`); })
               }
             >
               <Edit2 className='mr-1.5 size-3.5' />
@@ -230,7 +232,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
               variant='outline'
               size='xs'
               onClick={() =>
-                router.push(`/admin/filemaker/events/${encodeURIComponent(row.original.id)}`)
+                startTransition(() => { router.push(`/admin/filemaker/events/${encodeURIComponent(row.original.id)}`); })
               }
             >
               <Edit2 className='mr-1.5 size-3.5' />
@@ -283,34 +285,41 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             label: 'Persons Page',
             icon: <Users className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/persons'),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/persons'); }),
           },
           {
             key: 'organizations',
             label: 'Organizations Page',
             icon: <Building2 className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/organizations'),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/organizations'); }),
           },
           {
             key: 'emails',
-            label: 'Emails Page',
+            label: 'Email Records',
             icon: <Mail className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/emails'),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/emails'); }),
+          },
+          {
+            key: 'websites',
+            label: 'Websites',
+            icon: <Globe className='size-4' />,
+            variant: 'outline',
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/websites'); }),
           },
           {
             key: 'events',
             label: 'Events Page',
             icon: <CalendarDays className='size-4' />,
             variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/events'),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/events'); }),
           },
           {
             key: 'manage',
             label: 'Manage Database',
             icon: <Database className='size-4' />,
-            onClick: () => router.push('/admin/filemaker'),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker'); }),
           },
         ]}
       />

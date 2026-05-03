@@ -19,7 +19,7 @@ export const createDomain = async (
     return { ok: true, payload };
   } catch (_error) {
     logClientError(_error);
-    return { ok: false, payload: {} as CmsDomain };
+    return { ok: false, payload: {} as unknown as CmsDomain };
   }
 };
 
@@ -42,6 +42,6 @@ export const updateDomain = async (
     return { ok: true, payload };
   } catch (_error) {
     logClientError(_error);
-    return { ok: false, payload: {} as CmsDomain };
+    return { ok: false, payload: {} as unknown as CmsDomain };
   }
 };

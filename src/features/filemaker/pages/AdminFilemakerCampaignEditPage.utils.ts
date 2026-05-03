@@ -93,11 +93,13 @@ export const buildCampaignIdFromName = (name: string): string => {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+/g, '')
     .replace(/-+$/g, '');
-  return `filemaker-email-campaign-${token || 'draft'}`;
+  return `filemaker-email-campaign-${token !== '' ? token : 'draft'}`;
 };
 
-const normalizeCampaignName = (value: string | null | undefined): string =>
-  value?.trim() || 'Untitled campaign';
+const normalizeCampaignName = (value: string | null | undefined): string => {
+  const normalized = value?.trim() ?? '';
+  return normalized !== '' ? normalized : 'Untitled campaign';
+};
 
 export const createDuplicatedCampaignDraft = (input: {
   campaign: FilemakerEmailCampaign;
@@ -213,14 +215,14 @@ export const parseCommaSeparatedValues = (value: string): string[] =>
       value
         .split(',')
         .map((entry: string) => entry.trim())
-        .filter(Boolean)
+        .filter((entry: string): boolean => entry !== '')
     )
   );
 
 export const formatCommaSeparatedValues = (values: string[]): string => values.join(', ');
 
 export const toDateTimeLocalValue = (value: string | null | undefined): string => {
-  if (!value) return '';
+  if (value === null || value === undefined || value === '') return '';
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return value;
   const date = new Date(parsed);
@@ -233,52 +235,53 @@ export const toDateTimeLocalValue = (value: string | null | undefined): string =
 };
 
 export type FilemakerCampaignRunActionId = 'process' | 'retry' | 'cancel';
+type FilemakerCampaignRunAction = {
+  action: FilemakerCampaignRunActionId;
+  label: string;
+};
+
+const canProcessQueuedRun = (
+  run: FilemakerEmailCampaignRun,
+  queuedCount: number
+): boolean =>
+  queuedCount > 0 && (run.status === 'pending' || run.status === 'queued');
+
+const canRetryRun = (run: FilemakerEmailCampaignRun, retryableCount: number): boolean =>
+  run.mode === 'live' &&
+  retryableCount > 0 &&
+  run.status !== 'running' &&
+  run.status !== 'cancelled';
+
+const canCancelRun = (run: FilemakerEmailCampaignRun): boolean =>
+  run.status === 'pending' || run.status === 'queued' || run.status === 'running';
 
 export const getRunActions = (input: {
   run: FilemakerEmailCampaignRun;
   deliveries: FilemakerEmailCampaignDelivery[];
   attemptRegistry: FilemakerEmailCampaignDeliveryAttemptRegistry;
-}): Array<{
-  action: FilemakerCampaignRunActionId;
-  label: string;
-}> => {
+}): FilemakerCampaignRunAction[] => {
   const queuedCount = input.deliveries.filter((delivery) => delivery.status === 'queued').length;
   const retryableCount = resolveFilemakerEmailCampaignRetryableDeliveries({
     deliveries: input.deliveries,
     attemptRegistry: input.attemptRegistry,
   }).retryableDeliveries.length;
-  const actions: Array<{
-    action: FilemakerCampaignRunActionId;
-    label: string;
-  }> = [];
+  const actions: FilemakerCampaignRunAction[] = [];
 
-  if (
-    queuedCount > 0 &&
-    (input.run.status === 'pending' || input.run.status === 'queued')
-  ) {
+  if (canProcessQueuedRun(input.run, queuedCount)) {
     actions.push({
       action: 'process',
       label: queuedCount === 1 ? 'Process queued (1)' : `Process queued (${queuedCount})`,
     });
   }
 
-  if (
-    input.run.mode === 'live' &&
-    retryableCount > 0 &&
-    input.run.status !== 'running' &&
-    input.run.status !== 'cancelled'
-  ) {
+  if (canRetryRun(input.run, retryableCount)) {
     actions.push({
       action: 'retry',
       label: retryableCount === 1 ? 'Retry failed (1)' : `Retry failed (${retryableCount})`,
     });
   }
 
-  if (
-    input.run.status === 'pending' ||
-    input.run.status === 'queued' ||
-    input.run.status === 'running'
-  ) {
+  if (canCancelRun(input.run)) {
     actions.push({
       action: 'cancel',
       label: 'Cancel run',

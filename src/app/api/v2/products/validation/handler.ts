@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -6,7 +6,7 @@ import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { validateProductsBatch } from '@/shared/lib/products/validations';
 
 // POST /api/v2/products/validation - Batch validation
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseObjectJsonBody(req, {
     logPrefix: 'products.validation',
   });
@@ -18,7 +18,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const products = data.products;
 
   if (!Array.isArray(products)) {
-    throw badRequestError('Products must be an array');
+    throw badRequestError('Products must be an array', {
+      receivedType: typeof products,
+    });
   }
 
   const result = await validateProductsBatch(products, 'create');
@@ -35,7 +37,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 }
 
 // GET /api/v2/products/validation - Health check
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   return NextResponse.json({
     status: 'ok',
     validation: { engine: 'zod-schema' },

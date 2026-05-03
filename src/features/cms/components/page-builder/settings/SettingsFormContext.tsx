@@ -21,7 +21,7 @@ export function SettingsFormProvider({
   values: Record<string, unknown>;
   onChange: (key: string, value: unknown) => void;
   children: React.ReactNode;
-}) {
+}): React.JSX.Element {
   const stateValue = useMemo((): SettingsFormStateContextValue => ({ values }), [values]);
   const actionsValue = useMemo((): SettingsFormActionsContextValue => ({ onChange }), [onChange]);
   return (

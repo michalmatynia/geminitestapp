@@ -48,27 +48,56 @@ type MockedAuthStateInput = Partial<MockedAuthState> &
 type MockedQueryClient = Pick<QueryClient, 'prefetchQuery'>;
 
 const {
+  kangurAiTutorWidgetRenderSpyMock,
+  kangurAppLoaderRenderSpyMock,
   authStateMock,
+  kangurLazyAnimatePresenceLoadMotionSpyMock,
+  kangurLazyMotionDivLoadMotionSpyMock,
+  kangurLoginModalRenderSpyMock,
+  kangurPageRenderSpyMock,
+  kangurProgressSyncProviderRenderSpyMock,
+  kangurPageTransitionSkeletonRenderSpyMock,
+  kangurRouteContentRenderSpyMock,
+  kangurRouteAccessibilityAnnouncerRenderSpyMock,
+  kangurScoreSyncProviderRenderSpyMock,
+  kangurTopNavigationHostRenderSpyMock,
   loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
   prefetchKangurPageContentStoreMock,
+  progressSyncProviderVisibleMock,
   routingStateMock,
   routeTransitionStateMock,
   routeNavigatorMock,
   queryClientMock,
+  scoreSyncProviderVisibleMock,
   sessionMock,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
+  useKangurCoarsePointerMock,
+  useKangurDeferredStandaloneHomeReadyMock,
   preloadKangurPageMock,
   useLocaleMock,
 } = vi.hoisted(() => ({
+  kangurAiTutorWidgetRenderSpyMock: vi.fn<() => void>(),
+  kangurAppLoaderRenderSpyMock: vi.fn<() => void>(),
   authStateMock: vi.fn<() => MockedAuthStateInput>(),
+  kangurLazyAnimatePresenceLoadMotionSpyMock: vi.fn<(loadMotion: boolean) => void>(),
+  kangurLazyMotionDivLoadMotionSpyMock: vi.fn<(loadMotion: boolean) => void>(),
+  kangurLoginModalRenderSpyMock: vi.fn<() => void>(),
+  kangurPageRenderSpyMock: vi.fn<(pageKey: string) => void>(),
+  kangurPageTransitionSkeletonRenderSpyMock: vi.fn<() => void>(),
+  kangurProgressSyncProviderRenderSpyMock: vi.fn<() => void>(),
+  kangurRouteContentRenderSpyMock: vi.fn<() => void>(),
+  kangurRouteAccessibilityAnnouncerRenderSpyMock: vi.fn<() => void>(),
+  kangurScoreSyncProviderRenderSpyMock: vi.fn<() => void>(),
+  kangurTopNavigationHostRenderSpyMock: vi.fn<() => void>(),
   loginModalStateMock: vi.fn<() => MockedLoginModalState>(),
   pendingRouteLoadingSnapshotMock: vi.fn<() => MockedPendingRouteLoadingSnapshot>(),
   preloadKangurPageMock: vi.fn<(pageKey: string) => void>(),
   prefetchKangurPageContentStoreMock: vi.fn<
-    (queryClient: QueryClient | null | undefined, locale?: string | null) => Promise<void>
+    (queryClient: QueryClient | null | undefined, locale?: string | null) => Promise<boolean>
   >(),
+  progressSyncProviderVisibleMock: vi.fn<() => boolean>(),
   queryClientMock: vi.fn<() => MockedQueryClient>(),
   routingStateMock: vi.fn<() => MockedRoutingState>(),
   routeTransitionStateMock: vi.fn<() => MockedRouteTransitionStateInput>(),
@@ -78,9 +107,12 @@ const {
     push: vi.fn(),
     replace: vi.fn(),
   },
+  scoreSyncProviderVisibleMock: vi.fn<() => boolean>(),
   sessionMock: vi.fn<() => MockedSessionState>(),
   settingsStoreStateMock: vi.fn<() => MockedSettingsStore>(),
   topNavigationHostVisibleMock: vi.fn(),
+  useKangurCoarsePointerMock: vi.fn<() => boolean>(),
+  useKangurDeferredStandaloneHomeReadyMock: vi.fn<() => boolean>(),
   useLocaleMock: vi.fn<() => string>(),
 }));
 
@@ -157,11 +189,17 @@ vi.mock('next/dynamic', () => ({
     const signature = typeof loader === 'function' ? loader.toString() : '';
 
     if (signature.includes('KangurAiTutorWidget')) {
-      return () => <div data-testid='kangur-ai-tutor-widget' />;
+      return () => {
+        kangurAiTutorWidgetRenderSpyMock();
+        return <div data-testid='kangur-ai-tutor-widget' />;
+      };
     }
 
     if (signature.includes('KangurLoginModal')) {
-      return () => <div data-testid='kangur-login-modal' />;
+      return () => {
+        kangurLoginModalRenderSpyMock();
+        return <div data-testid='kangur-login-modal' />;
+      };
     }
 
     if (signature.includes('PageNotFound')) {
@@ -172,35 +210,66 @@ vi.mock('next/dynamic', () => ({
       return () => <div data-testid='kangur-user-not-registered-error' />;
     }
 
+    if (signature.includes('KangurDeferredSyncEffectsClient')) {
+      return () => {
+        kangurProgressSyncProviderRenderSpyMock();
+        kangurScoreSyncProviderRenderSpyMock();
+        return (
+          <>
+            <div data-testid='kangur-progress-sync-provider' />
+            <div data-testid='kangur-score-sync-provider' />
+          </>
+        );
+      };
+    }
+
     return () => null;
   },
 }));
 
 vi.mock('@/features/kangur/ui/components/LazyAnimatePresence', () => ({
-  LazyAnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+  LazyAnimatePresence: ({
+    children,
+    loadMotion = true,
+  }: {
+    children: ReactNode;
+    loadMotion?: boolean;
+  }) => {
+    kangurLazyAnimatePresenceLoadMotionSpyMock(loadMotion);
+    return <>{children}</>;
+  },
   LazyMotionDiv: ({
     animate,
     children,
     exit,
     initial,
+    loadMotion = true,
     transition,
     ...props
   }: React.ComponentProps<'div'> & {
     animate?: unknown;
     exit?: unknown;
     initial?: unknown;
+    loadMotion?: boolean;
     transition?: unknown;
-  }) => (
-    <div
-      data-motion-animate={serializeMotionProp(animate)}
-      data-motion-exit={serializeMotionProp(exit)}
-      data-motion-initial={serializeMotionProp(initial)}
-      data-motion-transition={serializeMotionProp(transition)}
-      {...props}
-    >
-      {children}
-    </div>
-  ),
+  }) => {
+    kangurLazyMotionDivLoadMotionSpyMock(loadMotion);
+    if (props['data-testid'] === 'kangur-route-content') {
+      kangurRouteContentRenderSpyMock();
+    }
+
+    return (
+      <div
+        data-motion-animate={serializeMotionProp(animate)}
+        data-motion-exit={serializeMotionProp(exit)}
+        data-motion-initial={serializeMotionProp(initial)}
+        data-motion-transition={serializeMotionProp(transition)}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  },
   usePrefersReducedMotion: () => false,
 }));
 
@@ -263,21 +332,24 @@ vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
     renderInlineTopNavigationSkeleton?: boolean;
     topBarHeightCssValue?: string | null;
     variant?: string | null;
-  }) => (
-    <div
-      data-embedded-override={
-        typeof embeddedOverride === 'boolean' ? String(embeddedOverride) : ''
-      }
-      data-inline-top-navigation-skeleton={renderInlineTopNavigationSkeleton ? 'true' : 'false'}
-      data-top-bar-height={topBarHeightCssValue ?? ''}
-      data-testid='kangur-page-transition-skeleton'
-    >
-      {renderInlineTopNavigationSkeleton ? (
-        <div data-testid='kangur-page-transition-skeleton-inline-top-navigation' />
-      ) : null}
-      {pageKey ?? 'none'}:{variant ?? 'default'}
-    </div>
-  ),
+  }) => {
+    kangurPageTransitionSkeletonRenderSpyMock();
+    return (
+      <div
+        data-embedded-override={
+          typeof embeddedOverride === 'boolean' ? String(embeddedOverride) : ''
+        }
+        data-inline-top-navigation-skeleton={renderInlineTopNavigationSkeleton ? 'true' : 'false'}
+        data-top-bar-height={topBarHeightCssValue ?? ''}
+        data-testid='kangur-page-transition-skeleton'
+      >
+        {renderInlineTopNavigationSkeleton ? (
+          <div data-testid='kangur-page-transition-skeleton-inline-top-navigation' />
+        ) : null}
+        {pageKey ?? 'none'}:{variant ?? 'default'}
+      </div>
+    );
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAppLoader', () => ({
@@ -287,13 +359,15 @@ vi.mock('@/features/kangur/ui/components/KangurAppLoader', () => ({
   }: {
     offsetTopBar?: boolean;
     visible: boolean;
-  }) =>
-    visible ? (
+  }) => {
+    kangurAppLoaderRenderSpyMock();
+    return visible ? (
       <div
         data-loader-offset-top-bar={offsetTopBar ? 'true' : 'false'}
         data-testid='kangur-app-loader'
       />
-    ) : null,
+    ) : null;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/PageNotFound', () => ({
@@ -305,21 +379,33 @@ vi.mock('@/features/kangur/ui/components/UserNotRegisteredError', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget', () => ({
-  KangurAiTutorWidget: () => <div data-testid='kangur-ai-tutor-widget' />,
+  KangurAiTutorWidget: () => {
+    kangurAiTutorWidgetRenderSpyMock();
+    return <div data-testid='kangur-ai-tutor-widget' />;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLoginModal', () => ({
-  KangurLoginModal: () => <div data-testid='kangur-login-modal' />,
+  KangurLoginModal: () => {
+    kangurLoginModalRenderSpyMock();
+    return <div data-testid='kangur-login-modal' />;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer', () => ({
-  KangurRouteAccessibilityAnnouncer: () => null,
+  KangurRouteAccessibilityAnnouncer: () => {
+    kangurRouteAccessibilityAnnouncerRenderSpyMock();
+    return null;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurTopNavigationContext', () => ({
   KangurTopNavigationHost: ({ fallback }: { fallback?: ReactNode }) =>
     topNavigationHostVisibleMock() ? (
-      <div data-testid='kangur-top-navigation-host' />
+      <>
+        {kangurTopNavigationHostRenderSpyMock()}
+        <div data-testid='kangur-top-navigation-host' />
+      </>
     ) : (
       <>{fallback ?? null}</>
     ),
@@ -333,6 +419,11 @@ vi.mock('@/features/kangur/ui/context/KangurTutorAnchorContext', () => ({
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   KangurLoginModalProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useKangurLoginModalState: () => loginModalStateMock(),
+  useKangurLoginModalActions: () => ({
+    closeLoginModal: vi.fn(),
+    dismissLoginModal: vi.fn(),
+    openLoginModal: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
@@ -341,16 +432,53 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurProgressSyncProvider', () => ({
-  KangurProgressSyncProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  KangurProgressSyncProvider: ({ children }: { children?: ReactNode }) => (
+    <>
+      {kangurProgressSyncProviderRenderSpyMock()}
+      <div data-testid='kangur-progress-sync-provider'>
+        {progressSyncProviderVisibleMock() ? children : null}
+      </div>
+    </>
+  ),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurScoreSyncProvider', () => ({
-  KangurScoreSyncProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  KangurScoreSyncProvider: ({ children }: { children?: ReactNode }) => (
+    <>
+      {kangurScoreSyncProviderRenderSpyMock()}
+      <div data-testid='kangur-score-sync-provider'>
+        {scoreSyncProviderVisibleMock() ? children : null}
+      </div>
+    </>
+  ),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady', () => ({
+  useKangurDeferredStandaloneHomeReady: () => useKangurDeferredStandaloneHomeReadyMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   KangurAuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useKangurAuth: () => createMockedAuthState(authStateMock()),
+  useKangurAuthSessionState: () => {
+    const authState = createMockedAuthState(authStateMock());
+    return {
+      user: authState.user,
+      isAuthenticated: authState.isAuthenticated,
+      hasResolvedAuth: authState.hasResolvedAuth,
+      canAccessParentAssignments: authState.canAccessParentAssignments,
+    };
+  },
+  useKangurAuthStatusState: () => {
+    const authState = createMockedAuthState(authStateMock());
+    return {
+      isLoadingAuth: authState.isLoadingAuth,
+      isLoadingPublicSettings: authState.isLoadingPublicSettings,
+      isLoggingOut: false,
+      authError: authState.authError,
+      appPublicSettings: authState.appPublicSettings,
+    };
+  },
   useKangurAuthState: () => createMockedAuthState(authStateMock()),
   useKangurAuthActions: () => ({
     logout: vi.fn(),
@@ -363,6 +491,7 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => routingStateMock(),
+  useOptionalKangurRouting: () => routingStateMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
@@ -374,6 +503,10 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
   useKangurRouteNavigator: () => routeNavigatorMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -396,12 +529,22 @@ vi.mock('@/features/kangur/ui/routing/pending-route-loading-snapshot', async (im
 vi.mock('@/features/kangur/config/pages', () => ({
   KANGUR_MAIN_PAGE: 'Game',
   kangurPages: {
-    Game: () => <div data-testid='kangur-page-game'>Game</div>,
-    GamesLibrary: () => <div data-testid='kangur-page-games-library'>GamesLibrary</div>,
-    Lessons: () => <div data-testid='kangur-page-lessons'>Lessons</div>,
-    ParentDashboard: () => (
-      <div data-testid='kangur-page-parent-dashboard'>ParentDashboard</div>
-    ),
+    Game: () => {
+      kangurPageRenderSpyMock('Game');
+      return <div data-testid='kangur-page-game'>Game</div>;
+    },
+    GamesLibrary: () => {
+      kangurPageRenderSpyMock('GamesLibrary');
+      return <div data-testid='kangur-page-games-library'>GamesLibrary</div>;
+    },
+    Lessons: () => {
+      kangurPageRenderSpyMock('Lessons');
+      return <div data-testid='kangur-page-lessons'>Lessons</div>;
+    },
+    ParentDashboard: () => {
+      kangurPageRenderSpyMock('ParentDashboard');
+      return <div data-testid='kangur-page-parent-dashboard'>ParentDashboard</div>;
+    },
   },
   preloadKangurPage: (pageKey: string) => preloadKangurPageMock(pageKey),
 }));
@@ -429,27 +572,40 @@ vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/kangur/cms-builder/KangurCmsRuntimeScreen', () => ({
-  KangurCmsRuntimeScreen: ({ fallback }: { fallback: ReactNode }) => <>{fallback}</>,
-}));
-
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreStateMock(),
+  useSettingsStoreLoading: () => settingsStoreStateMock().isLoading,
 }));
 
 export {
+  kangurAiTutorWidgetRenderSpyMock,
+  kangurAppLoaderRenderSpyMock,
   authStateMock,
+  kangurLazyAnimatePresenceLoadMotionSpyMock,
+  kangurLazyMotionDivLoadMotionSpyMock,
+  kangurLoginModalRenderSpyMock,
+  kangurPageRenderSpyMock,
+  kangurPageTransitionSkeletonRenderSpyMock,
+  kangurProgressSyncProviderRenderSpyMock,
+  kangurRouteContentRenderSpyMock,
+  kangurRouteAccessibilityAnnouncerRenderSpyMock,
+  kangurScoreSyncProviderRenderSpyMock,
+  kangurTopNavigationHostRenderSpyMock,
   loginModalStateMock,
   pendingRouteLoadingSnapshotMock,
   preloadKangurPageMock,
   prefetchKangurPageContentStoreMock,
+  progressSyncProviderVisibleMock,
   queryClientMock,
   routingStateMock,
   routeNavigatorMock,
   routeTransitionStateMock,
+  scoreSyncProviderVisibleMock,
   sessionMock,
   settingsStoreStateMock,
   topNavigationHostVisibleMock,
+  useKangurCoarsePointerMock,
+  useKangurDeferredStandaloneHomeReadyMock,
   useLocaleMock,
 };
 
@@ -513,9 +669,25 @@ export async function setupKangurFeatureAppTest() {
     pendingPageKey: null,
   });
   topNavigationHostVisibleMock.mockReturnValue(true);
+  useKangurCoarsePointerMock.mockReturnValue(false);
+  useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
+  progressSyncProviderVisibleMock.mockReturnValue(true);
+  scoreSyncProviderVisibleMock.mockReturnValue(true);
+  kangurAiTutorWidgetRenderSpyMock.mockReset();
+  kangurAppLoaderRenderSpyMock.mockReset();
+  kangurLazyAnimatePresenceLoadMotionSpyMock.mockReset();
+  kangurLazyMotionDivLoadMotionSpyMock.mockReset();
+  kangurLoginModalRenderSpyMock.mockReset();
+  kangurPageRenderSpyMock.mockReset();
+  kangurPageTransitionSkeletonRenderSpyMock.mockReset();
+  kangurProgressSyncProviderRenderSpyMock.mockReset();
+  kangurRouteAccessibilityAnnouncerRenderSpyMock.mockReset();
+  kangurRouteContentRenderSpyMock.mockReset();
+  kangurScoreSyncProviderRenderSpyMock.mockReset();
+  kangurTopNavigationHostRenderSpyMock.mockReset();
   preloadKangurPageMock.mockReset();
   prefetchKangurPageContentStoreMock.mockReset();
-  prefetchKangurPageContentStoreMock.mockResolvedValue(undefined);
+  prefetchKangurPageContentStoreMock.mockResolvedValue(true);
   queryClientMock.mockReturnValue({
     prefetchQuery: vi.fn() as QueryClient['prefetchQuery'],
   });

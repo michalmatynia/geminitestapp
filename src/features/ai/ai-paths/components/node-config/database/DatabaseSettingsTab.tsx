@@ -4,8 +4,8 @@ import React, { useCallback, useEffect } from 'react';
 
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { DatabaseConfig } from '@/shared/lib/ai-paths';
-import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
+import type { DatabaseConfig } from '@/shared/contracts/ai-paths';
+import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths/core/constants';
 import { Button, Input, Label } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
@@ -18,6 +18,7 @@ import {
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const CANONICAL_PARAMETER_INFERENCE_TARGET_PATH = 'parameters';
+const CANONICAL_LOCALIZED_PARAMETER_MERGE_TARGET_PATH = 'parameters';
 
 const WRITE_MODE_OPTIONS = [
   { value: 'replace', label: 'Replace' },
@@ -45,6 +46,15 @@ const normalizeParameterInferenceTargetPath = (value: unknown): string | undefin
   return trimmed === CANONICAL_PARAMETER_INFERENCE_TARGET_PATH
     ? trimmed
     : CANONICAL_PARAMETER_INFERENCE_TARGET_PATH;
+};
+
+const normalizeLocalizedParameterMergeTargetPath = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed === CANONICAL_LOCALIZED_PARAMETER_MERGE_TARGET_PATH
+    ? trimmed
+    : CANONICAL_LOCALIZED_PARAMETER_MERGE_TARGET_PATH;
 };
 
 type DatabaseSettingsSectionProps = {
@@ -102,6 +112,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
   const targetPathSuggestions = uniqueTargetPathOptions.map((entry) => entry.value);
   const targetPathDatalistId = `database-target-paths-${selectedNode.id}`;
   const guard = databaseConfig.parameterInferenceGuard ?? {};
+  const localizedMerge = databaseConfig.localizedParameterMerge ?? {};
   const updateGuard = useCallback(
     (patch: Partial<NonNullable<DatabaseConfig['parameterInferenceGuard']>>): void => {
       const nextTargetPath = normalizeParameterInferenceTargetPath(patch.targetPath);
@@ -118,13 +129,42 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
     },
     [databaseConfig, guard, updateSelectedNodeConfig]
   );
+  const updateLocalizedMerge = useCallback(
+    (patch: Partial<NonNullable<DatabaseConfig['localizedParameterMerge']>>): void => {
+      const nextTargetPath = normalizeLocalizedParameterMergeTargetPath(patch.targetPath);
+      updateSelectedNodeConfig({
+        database: {
+          ...databaseConfig,
+          localizedParameterMerge: {
+            ...localizedMerge,
+            ...patch,
+            ...(patch.targetPath !== undefined ? { targetPath: nextTargetPath } : {}),
+          },
+        },
+      });
+    },
+    [databaseConfig, localizedMerge, updateSelectedNodeConfig]
+  );
   const normalizedGuardTargetPath = normalizeParameterInferenceTargetPath(guard.targetPath);
+  const normalizedLocalizedMergeTargetPath = normalizeLocalizedParameterMergeTargetPath(
+    localizedMerge.targetPath
+  );
 
   useEffect((): void => {
     if (!guard.enabled) return;
     if (normalizedGuardTargetPath === CANONICAL_PARAMETER_INFERENCE_TARGET_PATH) return;
     updateGuard({ targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH });
   }, [guard.enabled, normalizedGuardTargetPath, updateGuard]);
+
+  useEffect((): void => {
+    if (!localizedMerge.enabled) return;
+    if (
+      normalizedLocalizedMergeTargetPath === CANONICAL_LOCALIZED_PARAMETER_MERGE_TARGET_PATH
+    ) {
+      return;
+    }
+    updateLocalizedMerge({ targetPath: CANONICAL_LOCALIZED_PARAMETER_MERGE_TARGET_PATH });
+  }, [localizedMerge.enabled, normalizedLocalizedMergeTargetPath, updateLocalizedMerge]);
 
   return (
     <div className='space-y-4'>
@@ -371,6 +411,50 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
 
       {operation === 'update' && (
         <DatabaseSettingsSection>
+          <Label className='text-xs text-gray-400'>Write Value Policies</Label>
+
+          <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
+            <span>Trim strings before write</span>
+            <Button
+              type='button'
+              variant={databaseConfig.trimStrings ? 'success' : 'default'}
+              size='xs'
+              onClick={(): void =>
+                updateSelectedNodeConfig({
+                  database: {
+                    ...databaseConfig,
+                    trimStrings: !databaseConfig.trimStrings,
+                  },
+                })
+              }
+            >
+              {databaseConfig.trimStrings ? 'Enabled' : 'Disabled'}
+            </Button>
+          </div>
+
+          <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
+            <span>Skip empty top-level writes</span>
+            <Button
+              type='button'
+              variant={databaseConfig.skipEmpty ? 'success' : 'default'}
+              size='xs'
+              onClick={(): void =>
+                updateSelectedNodeConfig({
+                  database: {
+                    ...databaseConfig,
+                    skipEmpty: !databaseConfig.skipEmpty,
+                  },
+                })
+              }
+            >
+              {databaseConfig.skipEmpty ? 'Enabled' : 'Disabled'}
+            </Button>
+          </div>
+        </DatabaseSettingsSection>
+      )}
+
+      {operation === 'update' && (
+        <DatabaseSettingsSection>
           <div className='flex items-center justify-between'>
             <Label className='text-xs text-gray-400'>Parameter Inference Guard</Label>
             <Button
@@ -458,6 +542,82 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   }
                 >
                   {guard.allowUnknownParameterIds ? 'Enabled' : 'Disabled'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DatabaseSettingsSection>
+      )}
+
+      {operation === 'update' && (
+        <DatabaseSettingsSection>
+          <div className='flex items-center justify-between'>
+            <Label className='text-xs text-gray-400'>Localized Parameter Merge</Label>
+            <Button
+              type='button'
+              variant={localizedMerge.enabled ? 'success' : 'default'}
+              size='xs'
+              onClick={(): void =>
+                updateLocalizedMerge(
+                  localizedMerge.enabled
+                    ? { enabled: false }
+                    : {
+                        enabled: true,
+                        targetPath: CANONICAL_LOCALIZED_PARAMETER_MERGE_TARGET_PATH,
+                      }
+                )
+              }
+            >
+              {localizedMerge.enabled ? 'Enabled' : 'Disabled'}
+            </Button>
+          </div>
+
+          {localizedMerge.enabled && (
+            <div className='space-y-3'>
+              <FormField
+                label='Target field path'
+                description='The array field whose localized values should merge into existing records.'
+              >
+                <Input
+                  variant='subtle'
+                  size='sm'
+                  value={
+                    normalizedLocalizedMergeTargetPath ??
+                    CANONICAL_LOCALIZED_PARAMETER_MERGE_TARGET_PATH
+                  }
+                  placeholder='parameters'
+                  readOnly
+                 aria-label='parameters' title='parameters'/>
+              </FormField>
+
+              <FormField
+                label='Language code'
+                description='Localized values will be written under valuesByLanguage[languageCode].'
+              >
+                <Input
+                  variant='subtle'
+                  size='sm'
+                  value={localizedMerge.languageCode ?? ''}
+                  placeholder='e.g. pl'
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateLocalizedMerge({ languageCode: e.target.value || undefined })
+                  }
+                 aria-label='e.g. pl' title='e.g. pl'/>
+              </FormField>
+
+              <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
+                <span>Require full coverage</span>
+                <Button
+                  type='button'
+                  variant={localizedMerge.requireFullCoverage ? 'success' : 'default'}
+                  size='xs'
+                  onClick={(): void =>
+                    updateLocalizedMerge({
+                      requireFullCoverage: !localizedMerge.requireFullCoverage,
+                    })
+                  }
+                >
+                  {localizedMerge.requireFullCoverage ? 'Enabled' : 'Disabled'}
                 </Button>
               </div>
             </div>

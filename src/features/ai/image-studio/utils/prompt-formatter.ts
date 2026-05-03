@@ -7,11 +7,8 @@ import type {
   PromptValidationSettings,
 } from '@/shared/contracts/prompt-engine';
 import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-validator';
-import {
-  findMatchingBrace,
-  segmentizeJsLikeText,
-  type Segment,
-} from '@/shared/utils/prompt-params/scanner';
+import { findMatchingBrace } from '@/shared/utils/prompt-params/scanner-utils';
+import { segmentizeJsLikeText, type Segment } from '@/shared/utils/prompt-params/scanner';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type AppliedFix = PromptAppliedFix;
@@ -27,7 +24,7 @@ function normalizeParamsObject(rawObjectText: string): string {
       const inner = segment.text.slice(1, -1);
       // Best-effort safety: only convert simple single-quoted strings.
       if (
-        !inner ||
+        inner.length === 0 ||
         inner.includes('\n') ||
         inner.includes('\r') ||
         inner.includes('\\') ||
@@ -99,7 +96,7 @@ const extractReplacementFromSuggestion = (suggestion: string): string | null => 
 
 function applySuggestionFix(prompt: string, suggestion: PromptValidationSimilarPattern): string {
   const replacement = extractReplacementFromSuggestion(suggestion.suggestion);
-  if (!replacement) return prompt;
+  if (replacement === null || replacement.length === 0) return prompt;
   const flags = normalizeRegexFlags(suggestion.flags, true);
   try {
     const re = new RegExp(suggestion.pattern, flags);
@@ -114,6 +111,65 @@ function applySuggestionFix(prompt: string, suggestion: PromptValidationSimilarP
 function getRuleById(rules: PromptValidationRule[], id: string): PromptValidationRule | null {
   return rules.find((rule: PromptValidationRule) => rule.id === id) ?? null;
 }
+
+type PromptFixResult = {
+  prompt: string;
+  applied: AppliedFix[];
+  changed: boolean;
+};
+
+const emptyFixResult = (prompt: string): PromptFixResult => ({
+  prompt,
+  applied: [],
+  changed: false,
+});
+
+const getAutofixOperations = (rule: PromptValidationRule): PromptAutofixOperation[] => {
+  const operations = rule.autofix?.operations;
+  if (rule.autofix?.enabled !== true || !Array.isArray(operations)) return [];
+  return operations;
+};
+
+const applyRuleAutofixes = (prompt: string, rule: PromptValidationRule): PromptFixResult => {
+  const operations = getAutofixOperations(rule);
+  if (operations.length === 0) return emptyFixResult(prompt);
+
+  let nextPrompt = prompt;
+  const applied: AppliedFix[] = [];
+  for (const operation of operations) {
+    const before = nextPrompt;
+    nextPrompt = applyAutofixOperation(nextPrompt, operation);
+    if (nextPrompt !== before) {
+      applied.push({ ruleId: rule.id, operationKind: operation.kind });
+    }
+  }
+
+  return { prompt: nextPrompt, applied, changed: applied.length > 0 };
+};
+
+const applyRuleSuggestionFixes = (prompt: string, rule: PromptValidationRule): PromptFixResult => {
+  const similarPatterns = Array.isArray(rule.similar) ? rule.similar : [];
+  if (similarPatterns.length === 0) return emptyFixResult(prompt);
+
+  let nextPrompt = prompt;
+  const applied: AppliedFix[] = [];
+  for (const similarPattern of similarPatterns) {
+    const before = nextPrompt;
+    nextPrompt = applySuggestionFix(nextPrompt, similarPattern);
+    if (nextPrompt !== before) {
+      applied.push({ ruleId: rule.id, operationKind: 'replace' });
+    }
+  }
+
+  return { prompt: nextPrompt, applied, changed: applied.length > 0 };
+};
+
+const applyRuleFixes = (prompt: string, rule: PromptValidationRule | null): PromptFixResult => {
+  if (rule === null) return emptyFixResult(prompt);
+
+  const autofixResult = applyRuleAutofixes(prompt, rule);
+  return autofixResult.changed ? autofixResult : applyRuleSuggestionFixes(prompt, rule);
+};
 
 export function formatProgrammaticPrompt(
   prompt: string,
@@ -132,35 +188,9 @@ export function formatProgrammaticPrompt(
 
   for (const issue of issuesBeforeList) {
     const rule = getRuleById(mergedRules, issue.ruleId);
-    const autofix = rule?.autofix;
-    let appliedFix = false;
-    if (
-      rule &&
-      autofix?.enabled &&
-      Array.isArray(autofix.operations) &&
-      autofix.operations.length > 0
-    ) {
-      for (const op of autofix.operations) {
-        const before = nextPrompt;
-        nextPrompt = applyAutofixOperation(nextPrompt, op);
-        if (nextPrompt !== before) {
-          applied.push({ ruleId: rule.id, operationKind: op.kind });
-          appliedFix = true;
-        }
-      }
-    }
-
-    if (!rule || appliedFix) continue;
-
-    if (Array.isArray(rule.similar) && rule.similar.length > 0) {
-      for (const sim of rule.similar) {
-        const before = nextPrompt;
-        nextPrompt = applySuggestionFix(nextPrompt, sim);
-        if (nextPrompt !== before) {
-          applied.push({ ruleId: rule.id, operationKind: 'replace' });
-        }
-      }
-    }
+    const result = applyRuleFixes(nextPrompt, rule);
+    nextPrompt = result.prompt;
+    applied.push(...result.applied);
   }
 
   const issuesAfter = validateProgrammaticPrompt(nextPrompt, validationSettings).length;

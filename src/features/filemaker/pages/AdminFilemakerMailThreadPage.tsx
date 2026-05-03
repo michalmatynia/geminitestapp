@@ -1,8 +1,9 @@
 'use client';
 
-import { ArrowLeft, Eye, EyeOff, Forward, Reply, Trash2 } from 'lucide-react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Archive, ArrowLeft, Eye, EyeOff, Forward, Paperclip, Reply, Star, StarOff, Trash2 } from 'lucide-react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useParams, useSearchParams } from 'next/navigation';
+import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
@@ -16,6 +17,7 @@ import type { FilemakerMailParticipant, FilemakerMailThreadDetail } from '../typ
 import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
 import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { PanelHeader } from '@/shared/ui/templates.public';
+import { FilemakerCampaignContextLinks } from './FilemakerCampaignMailLinks';
 
 type ThreadResponse = {
   detail: FilemakerMailThreadDetail;
@@ -92,20 +94,36 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const rawRecentMailboxFilter = searchParams.get('recentMailbox');
   const rawRecentUnreadOnly = searchParams.get('recentUnread') === '1';
   const rawRecentQuery = searchParams.get('recentQuery');
+  const rawRecentCampaignId = searchParams.get('campaignId');
+  const rawRecentRunId = searchParams.get('runId');
+  const rawRecentDeliveryId = searchParams.get('deliveryId');
   const rawSearchQuery = searchParams.get('searchQuery');
   const rawSearchAccountId = searchParams.get('searchAccountId');
+  const rawSearchContextAccountId = searchParams.get('searchContextAccountId');
   const recentMailboxFilter =
     originPanel === 'recent' && rawRecentMailboxFilter ? rawRecentMailboxFilter : null;
   const recentUnreadOnly = originPanel === 'recent' ? rawRecentUnreadOnly : false;
   const recentQuery = originPanel === 'recent' && rawRecentQuery ? rawRecentQuery : null;
+  const recentCampaignId =
+    originPanel === 'recent' && rawRecentCampaignId ? rawRecentCampaignId : null;
+  const recentRunId = originPanel === 'recent' && rawRecentRunId ? rawRecentRunId : null;
+  const recentDeliveryId =
+    originPanel === 'recent' && rawRecentDeliveryId ? rawRecentDeliveryId : null;
   const searchQuery = originPanel === 'search' && rawSearchQuery ? rawSearchQuery : null;
   const searchAccountId =
     originPanel === 'search' && rawSearchAccountId === 'all' ? 'all' : null;
   const isGlobalSearchContext = searchAccountId === 'all';
+  const persistedSearchContextAccountId =
+    originPanel === 'search' &&
+    !isGlobalSearchContext &&
+    rawSearchContextAccountId &&
+    rawSearchContextAccountId !== accountId
+      ? rawSearchContextAccountId
+      : null;
   const searchContextAccountId = originPanel === 'search'
     ? isGlobalSearchContext
       ? null
-      : accountId
+      : persistedSearchContextAccountId ?? accountId
     : null;
   const backLabel =
     originPanel === 'recent'
@@ -121,14 +139,20 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       recentMailboxFilter: originPanel === 'recent' ? recentMailboxFilter : null,
       recentUnreadOnly: originPanel === 'recent' ? recentUnreadOnly : false,
       recentQuery: originPanel === 'recent' ? recentQuery : null,
+      recentCampaignId: originPanel === 'recent' ? recentCampaignId : null,
+      recentRunId: originPanel === 'recent' ? recentRunId : null,
+      recentDeliveryId: originPanel === 'recent' ? recentDeliveryId : null,
       searchQuery: originPanel === 'search' ? searchQuery : null,
     });
   }, [
     accountId,
     mailboxPath,
     originPanel,
+    recentCampaignId,
+    recentDeliveryId,
     recentMailboxFilter,
     recentQuery,
+    recentRunId,
     recentUnreadOnly,
     searchContextAccountId,
     searchQuery,
@@ -139,38 +163,54 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       (rawRecentMailboxFilter ?? null) === recentMailboxFilter &&
       rawRecentUnreadOnly === recentUnreadOnly &&
       (rawRecentQuery ?? null) === recentQuery &&
+      (rawRecentCampaignId ?? null) === recentCampaignId &&
+      (rawRecentRunId ?? null) === recentRunId &&
+      (rawRecentDeliveryId ?? null) === recentDeliveryId &&
       (rawSearchQuery ?? null) === searchQuery &&
-      (rawSearchAccountId ?? null) === searchAccountId
+      (rawSearchAccountId ?? null) === searchAccountId &&
+      (rawSearchContextAccountId ?? null) === persistedSearchContextAccountId
     ) {
       return;
     }
 
-    router.replace(
-      buildThreadHref({
-        threadId,
-        accountId,
-        mailboxPath,
-        originPanel,
-        recentMailboxFilter,
-        recentUnreadOnly,
-        recentQuery,
-        searchAccountId,
-        searchQuery,
-      })
-    );
+    startTransition(() => { router.replace(
+            buildThreadHref({
+              threadId,
+              accountId,
+              mailboxPath,
+              originPanel,
+              recentMailboxFilter,
+              recentUnreadOnly,
+              recentQuery,
+              recentCampaignId,
+              recentRunId,
+              recentDeliveryId,
+              searchContextAccountId: persistedSearchContextAccountId,
+              searchAccountId,
+              searchQuery,
+            })
+          ); });
   }, [
     accountId,
     mailboxPath,
     originPanel,
     rawOriginPanel,
+    rawRecentCampaignId,
+    rawRecentDeliveryId,
     rawRecentMailboxFilter,
     rawRecentQuery,
+    rawRecentRunId,
     rawRecentUnreadOnly,
     rawSearchAccountId,
+    rawSearchContextAccountId,
     rawSearchQuery,
+    recentCampaignId,
+    recentDeliveryId,
     recentMailboxFilter,
     recentQuery,
+    recentRunId,
     recentUnreadOnly,
+    persistedSearchContextAccountId,
     router,
     searchAccountId,
     searchQuery,
@@ -266,7 +306,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
         { method: 'DELETE' }
       );
       toast('Thread deleted.', { variant: 'success' });
-      router.push(backHref);
+      startTransition(() => { router.push(backHref); });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to delete thread.', {
         variant: 'error',
@@ -276,20 +316,65 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
     }
   };
 
+  const [pendingMessageAction, setPendingMessageAction] = useState<string | null>(null);
+
+  const handleToggleFlag = useCallback(async (messageId: string, flagged: boolean): Promise<void> => {
+    setPendingMessageAction(`${messageId}:flag`);
+    try {
+      await fetchJson(`/api/filemaker/mail/messages/${encodeURIComponent(messageId)}/flags`, {
+        method: 'PATCH',
+        body: JSON.stringify({ flagged }),
+      });
+      await load({ preserveReplyDraft: true });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to update flag.', {
+        variant: 'error',
+      });
+    } finally {
+      setPendingMessageAction(null);
+    }
+  }, [load, toast]);
+
+  const handleMoveMessage = useCallback(async (
+    messageId: string,
+    targetRole: 'archive' | 'trash'
+  ): Promise<void> => {
+    setPendingMessageAction(`${messageId}:${targetRole}`);
+    try {
+      await fetchJson(`/api/filemaker/mail/messages/${encodeURIComponent(messageId)}/move`, {
+        method: 'POST',
+        body: JSON.stringify({ targetRole }),
+      });
+      toast(targetRole === 'archive' ? 'Archived.' : 'Moved to trash.', { variant: 'success' });
+      await load({ preserveReplyDraft: true });
+      setSidebarRefreshKey((current) => current + 1);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to move message.', {
+        variant: 'error',
+      });
+    } finally {
+      setPendingMessageAction(null);
+    }
+  }, [load, toast]);
+
   const isThreadUnread = (detail?.thread.unreadCount ?? 0) > 0;
 
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
       <FilemakerMailSidebar
-        selectedAccountId={accountId}
-        selectedMailboxPath={mailboxPath}
-        selectedThreadId={threadId}
-        originPanel={originPanel}
-        recentMailboxFilter={recentMailboxFilter}
-        recentUnreadOnly={recentUnreadOnly}
-        recentQuery={recentQuery}
-        searchContextAccountId={searchContextAccountId}
-        searchQuery={searchQuery}
+        selection={{
+          accountId,
+          mailboxPath,
+          threadId,
+          originPanel,
+        }}
+        filters={{
+          recentMailboxFilter,
+          recentUnreadOnly,
+          recentQuery,
+          searchContextAccountId,
+          searchQuery,
+        }}
         refreshKey={sidebarRefreshKey}
       />
 
@@ -304,7 +389,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
               label: backLabel,
               icon: <ArrowLeft className='size-4' />,
               variant: 'outline',
-              onClick: () => router.push(backHref),
+              onClick: () => startTransition(() => { router.push(backHref); }),
             },
             ...(detail
               ? [
@@ -330,19 +415,20 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                     onClick: () => {
                       const lastMessage = detail.messages[detail.messages.length - 1];
                       if (!lastMessage) return;
-                      router.push(
-                        buildComposeHref({
-                          accountId: detail.thread.accountId,
-                          forwardThreadId: threadId,
-                          mailboxPath: mailboxPath ?? detail.thread.mailboxPath,
-                          originPanel,
-                          recentMailboxFilter,
-                          recentUnreadOnly,
-                          recentQuery,
-                          searchAccountId: isGlobalSearchContext ? 'all' : null,
-                          searchQuery,
-                        })
-                      );
+                      startTransition(() => { router.push(
+                                                buildComposeHref({
+                                                  accountId: detail.thread.accountId,
+                                                  forwardThreadId: threadId,
+                                                  mailboxPath: mailboxPath ?? detail.thread.mailboxPath,
+                                                  originPanel,
+                                                  recentMailboxFilter,
+                                                  recentUnreadOnly,
+                                                  recentQuery,
+                                                  searchContextAccountId: persistedSearchContextAccountId,
+                                                  searchAccountId: isGlobalSearchContext ? 'all' : null,
+                                                  searchQuery,
+                                                })
+                                              ); });
                     },
                   },
                   {
@@ -370,6 +456,12 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
               <Badge variant='outline' className='text-[10px]'>
                 Mailbox: {detail.thread.mailboxPath}
               </Badge>
+              {detail.thread.campaignContext ? (
+                <FilemakerCampaignContextLinks
+                  context={detail.thread.campaignContext}
+                  className='flex flex-wrap gap-2'
+                />
+              ) : null}
             </div>
 
             <div className='space-y-3'>
@@ -386,11 +478,59 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                       <div className='text-[11px] text-gray-500'>
                         To: {formatParticipants(message.to)}
                       </div>
+                      {message.campaignContext ? (
+                        <FilemakerCampaignContextLinks
+                          context={message.campaignContext}
+                          className='mt-2 flex flex-wrap gap-2'
+                        />
+                      ) : null}
                     </div>
-                    <div className='text-[11px] text-gray-500'>
-                      {(message.receivedAt ?? message.sentAt)
-                        ? new Date(message.receivedAt ?? message.sentAt ?? '').toLocaleString()
-                        : 'Unknown time'}
+                    <div className='flex items-center gap-2'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        disabled={pendingMessageAction === `${message.id}:flag`}
+                        onClick={(): void => {
+                          void handleToggleFlag(message.id, message.flags?.flagged !== true);
+                        }}
+                        aria-label={message.flags?.flagged === true ? 'Unstar message' : 'Star message'}
+                      >
+                        {message.flags?.flagged === true ? (
+                          <Star className='size-4 fill-yellow-300 text-yellow-300' />
+                        ) : (
+                          <StarOff className='size-4' />
+                        )}
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        disabled={pendingMessageAction === `${message.id}:archive`}
+                        onClick={(): void => {
+                          void handleMoveMessage(message.id, 'archive');
+                        }}
+                        aria-label='Archive message'
+                      >
+                        <Archive className='size-4' />
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        disabled={pendingMessageAction === `${message.id}:trash`}
+                        onClick={(): void => {
+                          void handleMoveMessage(message.id, 'trash');
+                        }}
+                        aria-label='Move message to trash'
+                      >
+                        <Trash2 className='size-4' />
+                      </Button>
+                      <div className='text-[11px] text-gray-500'>
+                        {(message.receivedAt ?? message.sentAt)
+                          ? new Date(message.receivedAt ?? message.sentAt ?? '').toLocaleString()
+                          : 'Unknown time'}
+                      </div>
                     </div>
                   </div>
                   {message.htmlBody ? (
@@ -403,6 +543,24 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                       {message.textBody ?? '(no content)'}
                     </pre>
                   )}
+                  {(message.attachments ?? []).length > 0 ? (
+                    <div className='mt-3 flex flex-wrap gap-2 border-t border-border/40 pt-2'>
+                      {(message.attachments ?? []).map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className='inline-flex items-center gap-2 rounded-md border border-border/60 bg-background/40 px-2 py-1 text-[11px] text-gray-300'
+                        >
+                          <Paperclip className='size-3' />
+                          <span className='font-mono'>{attachment.fileName ?? 'attachment'}</span>
+                          {typeof attachment.sizeBytes === 'number' ? (
+                            <span className='text-gray-500'>
+                              {(attachment.sizeBytes / 1024).toFixed(1)} KB
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>

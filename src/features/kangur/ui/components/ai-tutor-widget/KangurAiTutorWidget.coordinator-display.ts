@@ -17,7 +17,7 @@ import {
   useKangurAiTutorGuidanceCompletionEffects,
   useKangurAiTutorNarrationObserverEffect,
 } from './KangurAiTutorWidget.effects';
-import { useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
+import { type useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
 import {
   getTutorBubblePlacement,
   useKangurAiTutorBubblePlacementState,
@@ -35,6 +35,13 @@ import { useKangurAiTutorPanelShellState } from './KangurAiTutorWidget.panel-she
 
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
 
+// TutorSurfaceMode describes the current high-level UI mode of the widget:
+//  idle_avatar      – avatar visible, panel closed, no active flow
+//  onboarding       – home onboarding or guest intro sequence active
+//  auth_guided      – guided auth handoff flow (login prompt)
+//  selection_guided – learner has selected text; explain callout visible
+//  section_guided   – avatar is attached to a page section
+//  chat             – full chat panel is open
 type TutorSurfaceMode =
   | 'idle_avatar'
   | 'onboarding'
@@ -65,6 +72,20 @@ type UseKangurAiTutorWidgetCoordinatorDisplayInput = {
   widgetState: KangurAiTutorWidgetState;
 };
 
+// useKangurAiTutorWidgetCoordinatorDisplayState derives all display state
+// for the AI Tutor widget from the runtime, environment, and widget state.
+// It composes several focused sub-hooks and returns a flat object of display
+// values consumed by the coordinator and portal renderer:
+//
+//  conversation-view  – message list, empty state, input placeholder
+//  guided-display     – guided callout layout, arrowhead, avatar position
+//  guided-shell       – guided mode flag, callout content, step labels
+//  bubble-placement   – bubble tail placement and panel bubble style
+//  focus-layout       – active focus rect, selection rect, section rect
+//  panel-derived      – panel position, snap state, chrome variant
+//  panel-shell        – panel open animation, compact docked mode
+//  guidance-completion effects – fires when a guided step completes
+//  narration observer – triggers narrator when new messages arrive
 export function useKangurAiTutorWidgetCoordinatorDisplayState({
   authIsAuthenticated,
   enabled,

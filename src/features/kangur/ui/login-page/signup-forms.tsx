@@ -1,7 +1,29 @@
 'use client';
 
-import { type FormEvent, type JSX, useState, useRef } from 'react';
+import { createContext, useContext, type FormEvent, type JSX, useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+
+type SignupFormContextValue = {
+  isLoading: boolean;
+  translations: ReturnType<typeof useTranslations>;
+  password: string;
+  setPassword: (value: string) => void;
+  showPassword: boolean;
+  setShowPassword: React.Dispatch<React.SetStateAction<boolean>>;
+  captchaContainerRef: React.RefObject<HTMLDivElement | null>;
+  captchaError?: string | null;
+  isCaptchaRequired: boolean;
+};
+
+const SignupFormContext = createContext<SignupFormContextValue | null>(null);
+
+function useSignupFormContext(): SignupFormContextValue {
+  const context = useContext(SignupFormContext);
+  if (!context) {
+    throw new Error('useSignupFormContext must be used within SignupForm');
+  }
+  return context;
+}
 import { Eye, EyeOff } from 'lucide-react';
 import { kangurButtonVariants } from '@/features/kangur/ui/design/primitives/KangurButton';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
@@ -41,14 +63,7 @@ const resolveKangurSignupSubmitDisabled = ({
 }): boolean =>
   isLoading || !password.trim() || (isCaptchaRequired && !captchaToken);
 
-function SignupPasswordField(props: {
-  isLoading: boolean;
-  password: string;
-  setPassword: (value: string) => void;
-  setShowPassword: React.Dispatch<React.SetStateAction<boolean>>;
-  showPassword: boolean;
-  translations: ReturnType<typeof useTranslations>;
-}): JSX.Element {
+function SignupPasswordField(): JSX.Element {
   const {
     isLoading,
     password,
@@ -56,7 +71,7 @@ function SignupPasswordField(props: {
     setShowPassword,
     showPassword,
     translations,
-  } = props;
+  } = useSignupFormContext();
 
   return (
     <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
@@ -98,18 +113,13 @@ function SignupPasswordField(props: {
   );
 }
 
-function SignupCaptchaSection(props: {
-  captchaContainerRef: React.RefObject<HTMLDivElement | null>;
-  captchaError?: string | null;
-  isCaptchaRequired: boolean;
-  translations: ReturnType<typeof useTranslations>;
-}): JSX.Element | null {
+function SignupCaptchaSection(): JSX.Element | null {
   const {
     captchaContainerRef,
     captchaError,
     isCaptchaRequired,
     translations,
-  } = props;
+  } = useSignupFormContext();
 
   if (!isCaptchaRequired || !KANGUR_PARENT_CAPTCHA_SITE_KEY) {
     return null;
@@ -154,11 +164,8 @@ function SignupFormFeedback({
   return null;
 }
 
-function VerificationDebugLink(props: {
-  debugUrl?: string | null;
-  translations: ReturnType<typeof useTranslations>;
-}): JSX.Element | null {
-  const { debugUrl, translations } = props;
+function VerificationDebugLink({ debugUrl }: { debugUrl?: string | null }): JSX.Element | null {
+  const { translations } = useSignupFormContext();
   if (!debugUrl || process.env.NODE_ENV === 'production') {
     return null;
   }
@@ -229,49 +236,53 @@ export function SignupForm({
     password,
   });
 
+  const contextValue: SignupFormContextValue = {
+    isLoading,
+    translations,
+    password,
+    setPassword,
+    showPassword,
+    setShowPassword,
+    captchaContainerRef,
+    captchaError,
+    isCaptchaRequired,
+  };
+
   return (
-    <form
-      ref={formRef}
-      onSubmit={handleSubmit}
-      className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
-      aria-label={translations('signupFormAriaLabel')}
-    >
-      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
-        <div className='text-sm font-medium text-slate-700'>{translations('parentEmailLabel')}</div>
-        <div className='rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500'>
-          {email}
-        </div>
-      </div>
-
-      <SignupPasswordField
-        isLoading={isLoading}
-        password={password}
-        setPassword={setPassword}
-        setShowPassword={setShowPassword}
-        showPassword={showPassword}
-        translations={translations}
-      />
-
-      <SignupCaptchaSection
-        captchaContainerRef={captchaContainerRef}
-        captchaError={captchaError}
-        isCaptchaRequired={isCaptchaRequired}
-        translations={translations}
-      />
-
-      <SignupFormFeedback error={error} notice={notice} />
-
-      <button
-        type='submit'
-        disabled={submitDisabled}
-        className={cn(
-          kangurButtonVariants({ variant: 'primary', size: 'lg', fullWidth: true }),
-          'mt-2 justify-center rounded-xl font-bold'
-        )}
+    <SignupFormContext.Provider value={contextValue}>
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
+        aria-label={translations('signupFormAriaLabel')}
       >
-        {isLoading ? translations('createAccountSubmitting') : translations('createAccount')}
-      </button>
-    </form>
+        <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
+          <div className='text-sm font-medium text-slate-700'>
+            {translations('parentEmailLabel')}
+          </div>
+          <div className='rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500'>
+            {email}
+          </div>
+        </div>
+
+        <SignupPasswordField />
+
+        <SignupCaptchaSection />
+
+        <SignupFormFeedback error={error} notice={notice} />
+
+        <button
+          type='submit'
+          disabled={submitDisabled}
+          className={cn(
+            kangurButtonVariants({ variant: 'primary', size: 'lg', fullWidth: true }),
+            'mt-2 justify-center rounded-xl font-bold'
+          )}
+        >
+          {isLoading ? translations('createAccountSubmitting') : translations('createAccount')}
+        </button>
+      </form>
+    </SignupFormContext.Provider>
   );
 }
 
@@ -293,39 +304,48 @@ export function VerificationView({
   const translations = useTranslations('KangurLogin');
 
   return (
-    <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full text-center`}>
-      <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-        <h3 className='text-xl font-bold text-slate-900'>{translations('checkInboxTitle')}</h3>
-        <p className='text-sm text-slate-600'>
-          {translations('verificationSentTo')}
-          <br />
-          <span className='font-semibold text-slate-900'>{email}</span>
-        </p>
-      </div>
-
-      <div className='rounded-xl bg-indigo-50 px-6 py-4'>
-        <p className='text-sm font-medium text-indigo-900'>
-          {translations('verificationAction')}
-        </p>
-      </div>
-
-      {notice && (
-        <div className='rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-600' role='status'>
-          {notice}
+    <SignupFormContext.Provider
+      value={
+        {
+          translations,
+          // Other values are not needed for VerificationDebugLink
+        } as SignupFormContextValue
+      }
+    >
+      <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full text-center`}>
+        <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
+          <h3 className='text-xl font-bold text-slate-900'>{translations('checkInboxTitle')}</h3>
+          <p className='text-sm text-slate-600'>
+            {translations('verificationSentTo')}
+            <br />
+            <span className='font-semibold text-slate-900'>{email}</span>
+          </p>
         </div>
-      )}
 
-      <div className={KANGUR_STACK_SPACED_CLASSNAME}>
-        <button
-          type='button'
-          onClick={onResend}
-          disabled={isResendDisabled}
-          className='text-sm font-semibold text-indigo-600 hover:text-indigo-700 disabled:opacity-50'
-        >
-          {resendButtonLabel}
-        </button>
-        <VerificationDebugLink debugUrl={debugUrl} translations={translations} />
+        <div className='rounded-xl bg-indigo-50 px-6 py-4'>
+          <p className='text-sm font-medium text-indigo-900'>
+            {translations('verificationAction')}
+          </p>
+        </div>
+
+        {notice && (
+          <div className='rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-600' role='status'>
+            {notice}
+          </div>
+        )}
+
+        <div className={KANGUR_STACK_SPACED_CLASSNAME}>
+          <button
+            type='button'
+            onClick={onResend}
+            disabled={isResendDisabled}
+            className='text-sm font-semibold text-indigo-600 hover:text-indigo-700 disabled:opacity-50'
+          >
+            {resendButtonLabel}
+          </button>
+          <VerificationDebugLink debugUrl={debugUrl} />
+        </div>
       </div>
-    </div>
+    </SignupFormContext.Provider>
   );
 }

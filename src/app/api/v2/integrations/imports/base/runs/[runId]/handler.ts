@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getBaseImportRunDetailOrThrow } from '@/features/integrations/server';
 import type { BaseImportItemStatus, BaseImportRunDetailResponse } from '@/shared/contracts/integrations/base-com';
@@ -7,7 +7,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const querySchema = baseImportRunDetailQuerySchema;
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { runId: string }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { buildKangurKnowledgeGraphFromRepositories } from '@/features/kangur/server/knowledge-graph/source-loader';
 import { syncKangurKnowledgeGraphToNeo4j } from '@/features/kangur/server/knowledge-graph/neo4j-repository';
@@ -10,7 +10,7 @@ import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
 
   if (!isNeo4jEnabled()) {

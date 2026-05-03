@@ -1,615 +1,95 @@
 'use client';
 
-import { memo, useCallback, useMemo } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
-import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
-import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
-import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
-import {
-  useProductValidationActions,
-  useProductValidationState,
-} from '@/features/products/context/ProductValidationSettingsContext';
-import {
-  getIssueReplacementPreview,
-  type FieldValidatorIssue,
-} from '@/features/products/validation-engine/core';
-import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
-import { resolveValidatorFieldReplacement } from '@/features/products/lib/resolveValidatorFieldReplacement';
-import { ProductFormData } from '@/shared/contracts/products/drafts';
-import { CatalogRecord } from '@/shared/contracts/products/catalogs';
-import { PriceGroupWithDetails } from '@/shared/contracts/products/product';
-import { ProductCategory } from '@/shared/contracts/products/categories';
-import { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
-import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { resolveEffectiveShippingGroup } from '@/shared/lib/products/utils/effective-shipping-group';
-import {
-  buildCategoryPathLabelMap,
-  formatCategoryRuleSummary,
-} from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
+import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { PriceGroupWithDetails } from '@/shared/contracts/products/product';
+import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import { Alert } from '@/shared/ui/alert';
-import { Button } from '@/shared/ui/button';
-import { FormSection, FormField } from '@/shared/ui/form-section';
-import { SelectSimple } from '@/shared/ui/select-simple';
-import { StatusBadge } from '@/shared/ui/status-badge';
-import { StandardDataTablePanel } from '@/shared/ui/templates/StandardDataTablePanel';
+import { FormSection } from '@/shared/ui/form-section';
 
+import { ProductFormOtherPricingSection } from './ProductFormOther.pricing';
+import { ProductFormOtherRelationshipsSection } from './ProductFormOther.relationships';
 import { ValidatedField } from './ValidatedField';
-import { ValidatorIssueHint } from './ValidatorIssueHint';
 
-interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
-  calculatedPrice: number | null;
-  isCalculated: boolean;
-  sourceGroupName: string | undefined;
-}
+const readArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
 
-// ── Category issue hint ───────────────────────────────────────────────────────
-// Owns stable onReplace/onDeny callbacks so parent re-renders don't cause
-// unnecessary re-renders of category issue hints.
+const readString = (value: unknown): string => (typeof value === 'string' ? value : '');
 
-type CategoryIssueHintRowProps = {
-  issue: FieldValidatorIssue;
-  currentCategoryLabel: string;
-  proposedCategoryLabel: string | null;
-  selectedCategoryId: string | null;
-  canApplyReplacement: boolean;
+const readNullableString = (value: unknown): string | null => {
+  const normalized = readString(value);
+  return normalized !== '' ? normalized : null;
 };
 
-const CategoryIssueHintRow = memo(function CategoryIssueHintRow(
-  props: CategoryIssueHintRowProps
-): React.JSX.Element {
-  const {
-    issue,
-    currentCategoryLabel,
-    proposedCategoryLabel,
-    selectedCategoryId,
-    canApplyReplacement,
-  } = props;
+const readNumber = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
 
-  const { categories, setCategoryId } = useProductFormMetadata();
-  const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
+const readNullableNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
 
-  const onReplace = useCallback((): void => {
-    const currentValue = selectedCategoryId ?? '';
-    const nextValue = getIssueReplacementPreview(currentValue, issue).trim();
-    const applied = applyValidatorFieldReplacement({
-      fieldName: 'categoryId',
-      replacementValue: nextValue,
-      categories,
-      getCurrentFieldValue: (fieldName: keyof ProductFormData) => {
-        if (fieldName === 'categoryId') return selectedCategoryId ?? '';
-        return '';
-      },
-      setFormFieldValue: () => {},
-      setCategoryId,
-    });
-    if (!applied) return;
-    void acceptIssue({
-      fieldName: 'categoryId',
-      patternId: issue.patternId,
-      postAcceptBehavior: issue.postAcceptBehavior,
-      message: issue.message,
-      replacementValue: issue.replacementValue,
-    });
-  }, [acceptIssue, categories, issue, selectedCategoryId, setCategoryId]);
-
-  const onDeny = useCallback((): void => {
-    void denyIssue({
-      fieldName: 'categoryId',
-      patternId: issue.patternId,
-      message: issue.message,
-      replacementValue: issue.replacementValue,
-    });
-  }, [denyIssue, issue.message, issue.patternId, issue.replacementValue]);
-  return (
-    <ValidatorIssueHint
-      issue={issue}
-      value={currentCategoryLabel}
-      proposedValueOverride={proposedCategoryLabel}
-      hideMatchSnippet
-      onReplace={issue.replacementValue && canApplyReplacement ? onReplace : undefined}
-      onDeny={onDeny}
-      denyLabel={getDenyActionLabel(issue.patternId)}
-    />
-  );
-});
-
-// ── Main component ────────────────────────────────────────────────────────────
+const isMissingProduct = (product: unknown): boolean => product === null || product === undefined;
 
 export default function ProductFormOther(): React.JSX.Element {
-  const {
-    catalogs,
-    catalogsError,
-    selectedCatalogIds,
-    categories,
-    selectedCategoryId,
-    setCategoryId,
-    shippingGroups,
-    shippingGroupsLoading,
-    filteredPriceGroups,
-  } = useProductFormMetadata();
-
+  const metadata = useProductFormMetadata();
   const { product } = useProductFormCore();
-
-  // Subscribe only to the fields this component needs — avoids cascade re-renders
-  // triggered by unrelated fields (name, description, etc.).
   const { validatorEnabled, visibleFieldIssues } = useProductValidationState();
-
   const { setValue, watch } = useFormContext<ProductFormData>();
-  const basePrice = watch('price') || 0;
-  const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
-  const selectedShippingGroupId = watch('shippingGroupId') || '';
-
-  const selectedCategoryName = useMemo((): string => {
-    if (!selectedCategoryId) return '';
-    const category =
-      categories.find((item: ProductCategory) => item.id === selectedCategoryId) ?? null;
-    return category?.name?.trim() ?? '';
-  }, [categories, selectedCategoryId]);
-
+  const selectedCatalogIds = readArray<string>(metadata.selectedCatalogIds);
   const hasCatalogs = selectedCatalogIds.length > 0;
-
-  const getIssueList = (fieldName: string): FieldValidatorIssue[] => {
-    if (!validatorEnabled) return [];
-    const issueList = visibleFieldIssues[fieldName];
-    return Array.isArray(issueList) ? issueList : [];
-  };
-  const categoryIssueList = getIssueList('categoryId');
-
-  const categoryNameById = useMemo((): Map<string, string> => {
-    const map = new Map<string, string>();
-    for (const category of categories) {
-      const id = typeof category.id === 'string' ? category.id.trim() : '';
-      if (!id) continue;
-      const name = typeof category.name === 'string' ? category.name.trim() : '';
-      map.set(id, name || id);
-    }
-    return map;
-  }, [categories]);
-  const categoryPathLabelById = useMemo(
-    () => buildCategoryPathLabelMap(categories),
-    [categories]
-  );
-
-  // Check if price group is auto-assigned from catalog (for new products only)
-  const isNewProduct = !product;
-  const selectedCatalog = catalogs.find((c: CatalogRecord) => selectedCatalogIds.includes(c.id));
-  const isPriceGroupAutoAssigned = !!(isNewProduct && selectedCatalog?.defaultPriceGroupId);
-
-  // Calculate prices for all price groups
-  const priceGroupPrices = filteredPriceGroups.map((group: PriceGroupWithDetails) => {
-    if (!group.sourceGroupId || !group.priceMultiplier) {
-      return {
-        ...group,
-        calculatedPrice: group.id === selectedDefaultPriceGroupId ? basePrice : null,
-        isCalculated: false,
-        sourceGroupName: undefined,
-      };
-    }
-
-    const sourceGroup = filteredPriceGroups.find(
-      (g: PriceGroupWithDetails) => g.id === group.sourceGroupId
-    );
-    if (!sourceGroup) {
-      return {
-        ...group,
-        calculatedPrice: null,
-        isCalculated: true,
-        sourceGroupName: undefined,
-      };
-    }
-
-    const sourcePrice = sourceGroup.id === selectedDefaultPriceGroupId ? basePrice : null;
-    const calculatedPrice = sourcePrice ? sourcePrice * group.priceMultiplier : null;
-
-    return {
-      ...group,
-      calculatedPrice,
-      isCalculated: true,
-      sourceGroupName: sourceGroup.name,
-    };
-  });
-  const priceGroupOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () =>
-      filteredPriceGroups.map((group: PriceGroupWithDetails) => ({
-        value: group.id,
-        label: `${group.name}${group.isDefault ? ' (Default)' : ''} (${group.currency?.code ?? group.currencyCode})`,
-      })),
-    [filteredPriceGroups]
-  );
-  const shippingGroupOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () => [
-      { value: '', label: 'No shipping group' },
-      ...shippingGroups.map((shippingGroup: ProductShippingGroup) => ({
-        value: shippingGroup.id,
-        label: shippingGroup.name,
-      })),
-    ],
-    [shippingGroups]
-  );
-  const selectedShippingGroup = useMemo(
-    () =>
-      shippingGroups.find(
-        (shippingGroup: ProductShippingGroup) => shippingGroup.id === selectedShippingGroupId
-      ) ?? null,
-    [selectedShippingGroupId, shippingGroups]
-  );
-  const effectiveShippingGroupResolution = useMemo(
-    () =>
-      resolveEffectiveShippingGroup({
-        product: {
-          shippingGroupId: selectedShippingGroupId || null,
-          categoryId: selectedCategoryId,
-          catalogId: selectedCatalogIds[0] || null,
-        },
-        shippingGroups,
-        categories,
-        manualShippingGroup: selectedShippingGroup,
-      }),
-    [categories, selectedCategoryId, selectedCatalogIds, selectedShippingGroup, selectedShippingGroupId, shippingGroups]
-  );
-  const automaticShippingGroupResolution = useMemo(
-    () =>
-      resolveEffectiveShippingGroup({
-        product: {
-          shippingGroupId: null,
-          categoryId: selectedCategoryId,
-          catalogId: selectedCatalogIds[0] || null,
-        },
-        shippingGroups,
-        categories,
-        manualShippingGroup: null,
-      }),
-    [categories, selectedCategoryId, selectedCatalogIds, shippingGroups]
-  );
-  const autoAssignedShippingGroup = useMemo(
-    () =>
-      !selectedShippingGroupId && effectiveShippingGroupResolution.source === 'category_rule'
-        ? effectiveShippingGroupResolution.shippingGroup
-        : null,
-    [effectiveShippingGroupResolution, selectedShippingGroupId]
-  );
-  const automaticCategoryRuleShippingGroup = useMemo(
-    () =>
-      automaticShippingGroupResolution.source === 'category_rule'
-        ? automaticShippingGroupResolution.shippingGroup
-        : null,
-    [automaticShippingGroupResolution]
-  );
-  const matchingAutoAssignedShippingGroups = useMemo(
-    () =>
-      effectiveShippingGroupResolution.reason === 'multiple_category_rules'
-        ? shippingGroups.filter((shippingGroup: ProductShippingGroup) =>
-            effectiveShippingGroupResolution.matchingShippingGroupIds.includes(shippingGroup.id)
-          )
-        : [],
-    [effectiveShippingGroupResolution, shippingGroups]
-  );
-  const matchingAutomaticCategoryRuleShippingGroups = useMemo(
-    () =>
-      automaticShippingGroupResolution.reason === 'multiple_category_rules'
-        ? shippingGroups.filter((shippingGroup: ProductShippingGroup) =>
-            automaticShippingGroupResolution.matchingShippingGroupIds.includes(shippingGroup.id)
-          )
-        : [],
-    [automaticShippingGroupResolution, shippingGroups]
-  );
-  const effectiveCategoryRuleSummary = useMemo(
-    () =>
-      formatCategoryRuleSummary({
-        categoryIds: effectiveShippingGroupResolution.matchedCategoryRuleIds,
-        categoryLabelById: categoryPathLabelById,
-      }),
-    [categoryPathLabelById, effectiveShippingGroupResolution.matchedCategoryRuleIds]
-  );
-  const automaticCategoryRuleSummary = useMemo(
-    () =>
-      formatCategoryRuleSummary({
-        categoryIds: automaticShippingGroupResolution.matchedCategoryRuleIds,
-        categoryLabelById: categoryPathLabelById,
-      }),
-    [automaticShippingGroupResolution.matchedCategoryRuleIds, categoryPathLabelById]
-  );
-  const isManualShippingGroupOverridingAutomaticCategoryRule =
-    Boolean(selectedShippingGroupId) &&
-    Boolean(selectedShippingGroup) &&
-    Boolean(automaticCategoryRuleShippingGroup) &&
-    automaticCategoryRuleShippingGroup?.id !== selectedShippingGroup?.id;
-  const isManualShippingGroupMissing =
-    Boolean(selectedShippingGroupId) && effectiveShippingGroupResolution.reason === 'manual_missing';
-  const isManualShippingGroupResolvingAutomaticRuleConflict =
-    Boolean(selectedShippingGroupId) &&
-    Boolean(selectedShippingGroup) &&
-    automaticShippingGroupResolution.reason === 'multiple_category_rules' &&
-    matchingAutomaticCategoryRuleShippingGroups.length > 0;
+  const selectedShippingGroupId = readString(watch('shippingGroupId'));
+  const selectedDefaultPriceGroupId = readString(watch('defaultPriceGroupId'));
 
   return (
     <div className='space-y-6'>
-      {!hasCatalogs && (
+      {hasCatalogs === false ? (
         <Alert variant='warning' className='mb-6'>
           <p className='text-sm'>Select a catalog to set pricing and price groups.</p>
         </Alert>
-      )}
-
-      {hasCatalogs && (
-        <FormSection title='Pricing' gridClassName='md:grid-cols-2'>
-          <ValidatedField
-            name='price'
-            label='Base Price'
-            type='number'
-            step='0.01'
-            placeholder='0.00'
-          />
-
-          <FormField
-            label='Default Price Group'
-            id='defaultPriceGroupId'
-            description={isPriceGroupAutoAssigned ? 'Auto-assigned from catalog' : undefined}
-          >
-            <SelectSimple
-              size='sm'
-              onValueChange={(value: string) =>
-                setValue('defaultPriceGroupId', value, {
-                  shouldDirty: true,
-                  shouldTouch: true,
-                })
-              }
-              value={selectedDefaultPriceGroupId || ''}
-              disabled={isPriceGroupAutoAssigned}
-              ariaLabel='Default price group'
-              options={priceGroupOptions}
-              placeholder='Select default price group'
-              triggerClassName={isPriceGroupAutoAssigned ? 'cursor-not-allowed opacity-60' : ''}
-             title='Select default price group'/>
-          </FormField>
-
-          {selectedDefaultPriceGroupId && filteredPriceGroups.length > 0 && (
-            <div className='md:col-span-2 space-y-2'>
-              <StandardDataTablePanel
-                title='Price Groups Overview'
-                description='Blue prices are automatically calculated based on the default group.'
-                columns={[
-                  {
-                    accessorKey: 'name',
-                    header: 'Price Group',
-                    cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
-                      <div className='flex items-center gap-2'>
-                        <span
-                          className={
-                            row.original.id === selectedDefaultPriceGroupId
-                              ? 'font-semibold text-white'
-                              : 'text-gray-300'
-                          }
-                        >
-                          {row.original.name}
-                        </span>
-                        {row.original.id === selectedDefaultPriceGroupId && (
-                          <StatusBadge
-                            status='Selected'
-                            variant='active'
-                            size='sm'
-                            className='font-bold'
-                          />
-                        )}
-                        {row.original.isCalculated && row.original.sourceGroupName && (
-                          <span className='text-[10px] text-gray-500 italic'>
-                            ({row.original.sourceGroupName} × {row.original.priceMultiplier})
-                          </span>
-                        )}
-                      </div>
-                    ),
-                  },
-                  {
-                    accessorKey: 'currencyCode',
-                    header: 'Currency',
-                    cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
-                      <span className='text-gray-500'>
-                        {row.original.currency?.code ?? row.original.currencyCode}
-                      </span>
-                    ),
-                  },
-                  {
-                    accessorKey: 'calculatedPrice',
-                    header: () => <div className='text-right'>Price</div>,
-                    cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
-                      <div className='text-right font-mono'>
-                        {row.original.calculatedPrice !== null ? (
-                          <span
-                            className={row.original.isCalculated ? 'text-blue-400' : 'text-white'}
-                          >
-                            {row.original.calculatedPrice.toFixed(2)}
-                          </span>
-                        ) : (
-                          <span className='text-gray-600'>-</span>
-                        )}
-                      </div>
-                    ),
-                  },
-                ]}
-                data={priceGroupPrices}
-                variant='flat'
-              />
-            </div>
-          )}
-        </FormSection>
-      )}
-
+      ) : null}
+      <ProductFormOtherPricingSection
+        hasCatalogs={hasCatalogs}
+        isNewProduct={isMissingProduct(product)}
+        catalogs={readArray<CatalogRecord>(metadata.catalogs)}
+        selectedCatalogIds={selectedCatalogIds}
+        basePrice={readNumber(watch('price'))}
+        sourcePrice={readNullableNumber(watch('sourcePrice'))}
+        sourcePriceCurrencyCode={readNullableString(watch('sourcePriceCurrencyCode'))}
+        selectedDefaultPriceGroupId={selectedDefaultPriceGroupId}
+        filteredPriceGroups={readArray<PriceGroupWithDetails>(metadata.filteredPriceGroups)}
+        setValue={setValue}
+      />
       <FormSection title='Organization' gridClassName='md:grid-cols-2'>
         <ValidatedField name='supplierName' label='Supplier Name' placeholder='e.g. Acme Corp' />
-
         <ValidatedField name='supplierLink' label='Supplier Link' placeholder='https://...' />
-
         <ValidatedField
           name='priceComment'
           label='Price Comment'
           placeholder='Internal notes about pricing'
         />
-
         <ValidatedField name='stock' label='Stock' type='number' placeholder='0' />
       </FormSection>
-
-      <FormSection title='Relationships' gridClassName='md:grid-cols-2'>
-        <div className='space-y-4 md:col-span-2'>
-          <CatalogMultiSelectField emptyMessage={catalogsError || 'No catalogs found'} />
-
-          <CategorySingleSelectField
-            disabled={!hasCatalogs}
-            placeholder={hasCatalogs ? 'Select category' : 'Select a catalog first'}
-          />
-          {validatorEnabled &&
-            categoryIssueList.map((issue: FieldValidatorIssue) => {
-              const currentCategoryLabel =
-                selectedCategoryName ||
-                (selectedCategoryId
-                  ? (categoryNameById.get(selectedCategoryId) ?? selectedCategoryId)
-                  : '(none)');
-              const replacementId = issue.replacementValue?.trim() ?? '';
-              const resolvedReplacement = resolveValidatorFieldReplacement({
-                fieldName: 'categoryId',
-                replacementValue: replacementId,
-                categories,
-                categoryNameById,
-              });
-              const proposedCategoryLabel = resolvedReplacement?.displayValue ?? null;
-              return (
-                <CategoryIssueHintRow
-                  key={issue.patternId}
-                  issue={issue}
-                  currentCategoryLabel={currentCategoryLabel}
-                  proposedCategoryLabel={proposedCategoryLabel}
-                  selectedCategoryId={selectedCategoryId}
-                  canApplyReplacement={Boolean(resolvedReplacement)}
-                />
-              );
-            })}
-          {selectedCategoryId ? (
-            <div className='-mt-2 flex justify-end'>
-              <Button
-                type='button'
-                variant='ghost'
-                className='h-7 px-2 text-xs text-gray-300 hover:text-white'
-                onClick={(): void => setCategoryId(null)}
-              >
-                Clear category
-              </Button>
-            </div>
-          ) : null}
-
-          <FormField
-            label='Shipping Group'
-            description={
-              autoAssignedShippingGroup
-                ? `Auto-assigned from category rule: ${autoAssignedShippingGroup.name}${
-                    effectiveCategoryRuleSummary ? ` via ${effectiveCategoryRuleSummary}` : ''
-                  }. Select a shipping group manually to override it.`
-                : 'Assign an internal shipping group to control marketplace delivery behavior later.'
-            }
-          >
-            <SelectSimple
-              size='sm'
-              value={selectedShippingGroupId}
-              onValueChange={(value: string): void =>
-                setValue('shippingGroupId', value, {
-                  shouldDirty: true,
-                  shouldTouch: true,
-                })
-              }
-              options={shippingGroupOptions}
-              placeholder={hasCatalogs ? 'Select shipping group' : 'Select a catalog first'}
-              disabled={!hasCatalogs || shippingGroupsLoading}
-              ariaLabel='Shipping group'
-              title='Shipping group'
-            />
-          </FormField>
-
-          {isManualShippingGroupMissing ? (
-            <Alert variant='warning' className='-mt-2'>
-              <p className='text-sm'>
-                The manually assigned shipping group no longer exists. Clear it or select a valid
-                shipping group.
-              </p>
-            </Alert>
-          ) : null}
-
-          {!selectedShippingGroupId && autoAssignedShippingGroup ? (
-            <Alert variant='info' className='-mt-2'>
-              <p className='text-sm'>
-                Products in this category currently resolve to{' '}
-                <strong>{autoAssignedShippingGroup.name}</strong> automatically
-                {effectiveCategoryRuleSummary ? (
-                  <>
-                    {' '}
-                    via <strong>{effectiveCategoryRuleSummary}</strong>
-                  </>
-                ) : null}
-                .
-              </p>
-            </Alert>
-          ) : null}
-
-          {!selectedShippingGroupId &&
-          effectiveShippingGroupResolution.reason === 'multiple_category_rules' &&
-          matchingAutoAssignedShippingGroups.length > 0 ? (
-            <Alert variant='warning' className='-mt-2'>
-              <p className='text-sm'>
-                Multiple shipping-group category rules match this product:{' '}
-                <strong>
-                  {matchingAutoAssignedShippingGroups
-                    .map((shippingGroup: ProductShippingGroup) => shippingGroup.name)
-                    .join(', ')}
-                </strong>
-                . Select a manual shipping group to break the tie.
-              </p>
-            </Alert>
-          ) : null}
-
-          {selectedShippingGroupId &&
-          selectedShippingGroup &&
-          isManualShippingGroupOverridingAutomaticCategoryRule &&
-          automaticCategoryRuleShippingGroup ? (
-            <Alert variant='info' className='-mt-2'>
-              <p className='text-sm'>
-                Manual shipping group <strong>{selectedShippingGroup.name}</strong> overrides the
-                category-based default <strong>{automaticCategoryRuleShippingGroup.name}</strong>
-                {automaticCategoryRuleSummary ? (
-                  <>
-                    {' '}
-                    from <strong>{automaticCategoryRuleSummary}</strong>
-                  </>
-                ) : null}
-                .
-              </p>
-            </Alert>
-          ) : null}
-
-          {selectedShippingGroupId &&
-          selectedShippingGroup &&
-          isManualShippingGroupResolvingAutomaticRuleConflict ? (
-            <Alert variant='info' className='-mt-2'>
-              <p className='text-sm'>
-                Manual shipping group <strong>{selectedShippingGroup.name}</strong> resolves
-                multiple matching category rules:{' '}
-                <strong>
-                  {matchingAutomaticCategoryRuleShippingGroups
-                    .map((shippingGroup: ProductShippingGroup) => shippingGroup.name)
-                    .join(', ')}
-                </strong>
-                .
-              </p>
-            </Alert>
-          ) : null}
-
-          <TagMultiSelectField
-            disabled={!hasCatalogs}
-            placeholder={hasCatalogs ? 'Select tags' : 'Select a catalog first'}
-          />
-
-          <ProducerMultiSelectField />
-        </div>
-      </FormSection>
+      <ProductFormOtherRelationshipsSection
+        catalogsError={readNullableString(metadata.catalogsError)}
+        hasCatalogs={hasCatalogs}
+        validatorEnabled={validatorEnabled}
+        visibleFieldIssues={visibleFieldIssues}
+        selectedCatalogIds={selectedCatalogIds}
+        categories={readArray<ProductCategory>(metadata.categories)}
+        producers={readArray<{ id: string; name: string }>(metadata.producers)}
+        selectedCategoryId={metadata.selectedCategoryId}
+        selectedProducerIds={readArray<string>(metadata.selectedProducerIds)}
+        setCategoryId={metadata.setCategoryId}
+        shippingGroups={readArray<ProductShippingGroup>(metadata.shippingGroups)}
+        shippingGroupsLoading={metadata.shippingGroupsLoading === true}
+        selectedShippingGroupId={selectedShippingGroupId}
+        setValue={setValue}
+      />
     </div>
   );
 }

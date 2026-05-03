@@ -10,7 +10,7 @@ const mockState = vi.hoisted(() => ({
 }));
 
 vi.mock('@/shared/lib/ai-paths', () => ({
-  AI_PATHS_UI_STATE_KEY: 'ai-paths-ui-state',
+  AI_PATHS_UI_STATE_KEY: 'ai_paths_ui_state',
 }));
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
@@ -48,6 +48,7 @@ describe('usePreferencePersistence', () => {
         activePathId: 'path-1',
         expandedGroups: ['group-a'],
         paletteCollapsed: true,
+        pathTreeVisible: false,
       });
       await result.current.persistUserPreferences('path-2');
     });
@@ -55,8 +56,9 @@ describe('usePreferencePersistence', () => {
     expect(core.enqueueSettingsWrite).toHaveBeenCalledTimes(2);
     expect(mockState.updateAiPathsSettingsBulk).toHaveBeenNthCalledWith(1, [
       {
-        key: 'ai-paths-ui-state',
-        value: '{"activePathId":"path-1","expandedGroups":["group-a"],"paletteCollapsed":true}',
+        key: 'ai_paths_ui_state',
+        value:
+          '{"activePathId":"path-1","expandedGroups":["group-a"],"paletteCollapsed":true,"pathTreeVisible":false}',
       },
     ]);
     expect(mockState.updateAiPathsSettingsBulk).toHaveBeenNthCalledWith(2, [
@@ -112,6 +114,26 @@ describe('usePreferencePersistence', () => {
     expect(missing).toBeNull();
   });
 
+  it('normalizes stored UI state payloads', () => {
+    const core = createCore();
+    const { result } = renderHook(() => usePreferencePersistence({} as never, core));
+
+    const resolved = result.current.resolveUiState([
+      {
+        key: 'ai_paths_ui_state',
+        value:
+          '{"activePathId":" path-a ","expandedGroups":[" Ops ","Templates","Ops",""],"paletteCollapsed":true,"pathTreeVisible":false}',
+      },
+    ] as never);
+
+    expect(resolved).toEqual({
+      activePathId: 'path-a',
+      expandedGroups: ['Ops', 'Templates'],
+      paletteCollapsed: true,
+      pathTreeVisible: false,
+    });
+  });
+
   it('returns null and logs when stored user preferences are invalid JSON', () => {
     const core = createCore();
     const { result } = renderHook(() => usePreferencePersistence({} as never, core));
@@ -119,6 +141,22 @@ describe('usePreferencePersistence', () => {
     const resolved = result.current.resolveUserPreferences([
       {
         key: 'user_preferences',
+        value: '{bad json',
+      },
+    ] as never);
+
+    expect(resolved).toBeNull();
+    expect(mockState.logClientError).toHaveBeenCalledTimes(1);
+    expect(mockState.logClientError.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+  });
+
+  it('returns null and logs when stored UI state is invalid JSON', () => {
+    const core = createCore();
+    const { result } = renderHook(() => usePreferencePersistence({} as never, core));
+
+    const resolved = result.current.resolveUiState([
+      {
+        key: 'ai_paths_ui_state',
         value: '{bad json',
       },
     ] as never);

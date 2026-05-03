@@ -32,7 +32,7 @@ vi.mock('@/features/kangur/social/workers/kangurSocialPipelineQueue', () => ({
     getKangurSocialPipelineQueueMock(...args),
 }));
 
-import { DELETE_handler, GET_handler } from './handler';
+import { deleteHandler, getHandler } from './handler';
 
 const createContext = (query: Record<string, unknown>): ApiHandlerContext =>
   ({
@@ -138,7 +138,7 @@ describe('social pipeline jobs handler', () => {
       }),
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/jobs', {
         method: 'GET',
       }),
@@ -248,7 +248,7 @@ describe('social pipeline jobs handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/jobs?id=job-1', {
         method: 'GET',
       }),
@@ -317,7 +317,7 @@ describe('social pipeline jobs handler', () => {
   });
 
   it('deletes a completed pipeline job', async () => {
-    const response = await DELETE_handler(
+    const response = await deleteHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/jobs?id=job-1', {
         method: 'DELETE',
       }),
@@ -342,7 +342,7 @@ describe('social pipeline jobs handler', () => {
     });
 
     await expect(
-      DELETE_handler(
+      deleteHandler(
         new NextRequest('http://localhost/api/kangur/social-pipeline/jobs?id=job-1', {
           method: 'DELETE',
         }),
@@ -355,7 +355,7 @@ describe('social pipeline jobs handler', () => {
     jobGetStateMock.mockResolvedValue('active');
 
     await expect(
-      DELETE_handler(
+      deleteHandler(
         new NextRequest('http://localhost/api/kangur/social-pipeline/jobs?id=job-1', {
           method: 'DELETE',
         }),
@@ -370,7 +370,7 @@ describe('social pipeline jobs handler', () => {
     getJobMock.mockResolvedValue(null);
 
     await expect(
-      DELETE_handler(
+      deleteHandler(
         new NextRequest('http://localhost/api/kangur/social-pipeline/jobs?id=missing-job', {
           method: 'DELETE',
         }),
@@ -445,7 +445,7 @@ describe('social pipeline jobs handler', () => {
       }),
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/jobs', {
         method: 'GET',
       }),
@@ -545,7 +545,7 @@ describe('social pipeline jobs handler', () => {
       })
     );
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/kangur/social-pipeline/jobs?id=job-1', {
         method: 'GET',
       }),

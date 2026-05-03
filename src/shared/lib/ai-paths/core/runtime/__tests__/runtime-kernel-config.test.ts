@@ -66,20 +66,16 @@ describe('runtime-kernel-config helpers', () => {
     ).toEqual({});
   });
 
-  it('translates legacy path-config aliases when cleanup explicitly requests it', () => {
+  it('keeps canonical config fields while pruning deprecated aliases', () => {
     expect(
-      normalizeRuntimeKernelConfigRecord(
-        {
-          [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
-          [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ' Template Node, parser ',
-          [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
-            ' resolver.primary , resolver.fallback ',
-          [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: 'yes',
-        },
-        {
-          translateLegacyAliases: true,
-        }
-      )
+      normalizeRuntimeKernelConfigRecord({
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        nodeTypes: ' Template Node, parser ',
+        codeObjectResolverIds: ' resolver.primary , resolver.fallback ',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: 'ignored legacy node types',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]: 'ignored legacy resolver ids',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: 'yes',
+      })
     ).toEqual({
       nodeTypes: ['template_node', 'parser'],
       codeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
@@ -93,16 +89,12 @@ describe('runtime-kernel-config helpers', () => {
           nodeTypes: ' Template Node, parser ',
           [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]: ' resolver.primary ',
           [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
-        },
-        {
-          translateLegacyAliases: true,
         }
       )
     ).toEqual({
       changed: true,
       value: {
         nodeTypes: ['template_node', 'parser'],
-        codeObjectResolverIds: ['resolver.primary'],
       },
       changedFields: ['mode', 'nodeTypes', 'codeObjectResolverIds'],
     });

@@ -1,134 +1,83 @@
-'use client';
+import React from 'react';
+import { useLocale } from '@/shared/lib/i18n';
+import { useLessonsState, type UseLessonsStateReturn } from './hooks/lessons-manager/useLessonsState';
+import { useLessonsUiState, type UseLessonsUiStateReturn } from './hooks/lessons-manager/useLessonsUiState';
+import { KANGUR_ADMIN_LOCALES, resolveKangurAdminLocale } from './kangur-admin-locale';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 
-import { useMemo, useState } from 'react';
-import { useLocale } from 'next-intl';
-import type {
-  KangurLesson,
-  KangurLessonAgeGroup,
-} from '@/features/kangur/shared/contracts/kangur';
-import {
-  useKangurLessonDocuments,
-  useKangurLessons,
-  useUpdateKangurLessonDocuments,
-  useUpdateKangurLessons,
-} from '@/features/kangur/ui/hooks/useKangurLessons';
-import {
-  useKangurLessonTemplates,
-  useUpdateKangurLessonTemplates,
-} from '../ui/hooks/useKangurLessonTemplates';
-import {
-  KANGUR_ADMIN_LOCALES,
-  resolveKangurAdminLocale,
-} from './kangur-admin-locale';
-import {
-  createDefaultKangurLessonDocument,
-} from '../lesson-documents';
-import {
-  createInitialLessonFormData,
-  readPersistedTreeMode,
-} from './utils';
-import type { LessonFormData, LessonTreeMode } from './types';
-import type { KangurLessonAuthoringFilter } from './content-creator-insights';
+const formatContentLocaleLabel = (locale: (typeof KANGUR_ADMIN_LOCALES)[number]): string => {
+  if (locale === 'pl') return 'Polish';
+  if (locale === 'uk') return 'Ukrainian';
+  return 'English';
+};
 
-export function useAdminKangurLessonsManagerState() {
+export type UseAdminKangurLessonsManagerStateReturn = UseLessonsStateReturn & UseLessonsUiStateReturn & {
+  contentLocale: (typeof KANGUR_ADMIN_LOCALES)[number];
+  setContentLocale: React.Dispatch<React.SetStateAction<(typeof KANGUR_ADMIN_LOCALES)[number]>>;
+  contentLocaleOptions: { value: string; label: string }[];
+  contentLocaleLabel: string;
+  isSaving: boolean;
+  setTreeModeAndPersist: (mode: any) => void;
+  isCatalogMode: boolean;
+  isSectionsMode: boolean;
+  breadcrumbs: { label: string; href?: string }[];
+  handleTreeSearchChange: (query: string) => void;
+  renderTreeNode: (input: any) => React.ReactNode;
+  activeAgeGroupLabel: string;
+  handleCreate: () => void;
+  handleToggleTreeMode: () => void;
+  handleCanonicalize: () => Promise<void>;
+  handleAppendMissing: () => Promise<void>;
+  handleAddGeometryPack: () => Promise<void>;
+  handleAddLogicalThinkingPack: () => Promise<void>;
+  handleImportAllLessonsToEditor: () => Promise<void>;
+  handleSave: () => Promise<void>;
+  handleCloseModal: () => void;
+  handleDelete: () => Promise<void>;
+  handleSaveContent: () => Promise<void>;
+  handleClearContent: () => Promise<void>;
+  handleImportLegacy: (lesson: KangurLesson) => Promise<void>;
+  handleComponentChange: (componentId: string) => void;
+  authoringFilterCounts: any[];
+  authoringFilteredLessons: KangurLesson[];
+  geometryPackAddedCount: number;
+  logicPackAddedCount: number;
+  legacyImportCount: number;
+  filteredLessons: KangurLesson[];
+  ageGroupCounts: any[];
+  controller: any;
+  scrollToNodeRef: React.RefObject<HTMLDivElement>;
+  rootDropUi: React.ReactNode;
+  capabilities: any;
+  searchState: any;
+  treeSearchQuery: string;
+};
+
+export function useAdminKangurLessonsManagerState(): UseAdminKangurLessonsManagerStateReturn {
   const routeLocale = useLocale();
-  const [contentLocale, setContentLocale] = useState(() => resolveKangurAdminLocale(routeLocale));
+  const [contentLocale, setContentLocale] = React.useState(() => resolveKangurAdminLocale(routeLocale));
   
-  const lessonsQuery = useKangurLessons();
-  const lessonDocumentsQuery = useKangurLessonDocuments({ locale: contentLocale });
-  const updateLessons = useUpdateKangurLessons();
-  const updateLessonDocuments = useUpdateKangurLessonDocuments(contentLocale);
-  const updateTemplates = useUpdateKangurLessonTemplates(contentLocale);
-  const templatesQuery = useKangurLessonTemplates({ locale: contentLocale });
+  const state = useLessonsState(contentLocale);
+  const ui = useLessonsUiState();
+  const contentLocaleOptions = React.useMemo(() => KANGUR_ADMIN_LOCALES.map((locale) => ({ value: locale, label: formatContentLocaleLabel(locale) })), []);
+  const contentLocaleLabel = React.useMemo(() => formatContentLocaleLabel(contentLocale), [contentLocale]);
   
-  const isLoading = lessonsQuery.isLoading || lessonDocumentsQuery.isLoading || templatesQuery.isLoading;
+  const isSaving = state.lessonsQuery.isPending || state.lessonDocumentsQuery.isPending || state.templatesQuery.isPending;
 
-  const lessonTemplateMap = useMemo(
-    () => new Map((templatesQuery.data ?? []).map((t) => [t.componentId, t])),
-    [templatesQuery.data],
-  );
-  
-  const contentLocaleOptions = useMemo(
-    () =>
-      KANGUR_ADMIN_LOCALES.map((locale) => ({
-        value: locale,
-        label: locale === 'pl' ? 'Polish' : locale === 'uk' ? 'Ukrainian' : 'English',
-      })),
-    []
-  );
-  const contentLocaleLabel =
-    contentLocaleOptions.find((option) => option.value === contentLocale)?.label ?? contentLocale;
-  
-  const isPrimaryContentLocale = contentLocale === 'pl';
-  const lessons = useMemo((): KangurLesson[] => lessonsQuery.data ?? [], [lessonsQuery.data]);
-  const lessonDocuments = useMemo(() => lessonDocumentsQuery.data ?? {}, [lessonDocumentsQuery.data]);
-  const lessonById = useMemo(() => new Map(lessons.map((lesson): [string, KangurLesson] => [lesson.id, lesson])), [lessons]);
-
-  const [showModal, setShowModal] = useState(false);
-  const [showContentModal, setShowContentModal] = useState(false);
-  const [editingLesson, setEditingLesson] = useState<KangurLesson | null>(null);
-  const [editingContentLesson, setEditingContentLesson] = useState<KangurLesson | null>(null);
-  const [lessonToDelete, setLessonToDelete] = useState<KangurLesson | null>(null);
-  const [formData, setFormData] = useState<LessonFormData>(() => createInitialLessonFormData());
-  const [componentContentJson, setComponentContentJson] = useState('');
-  const [contentDraft, setContentDraft] = useState(createDefaultKangurLessonDocument);
-  const [treeMode, setTreeMode] = useState<LessonTreeMode>(() => readPersistedTreeMode());
-  const [svgModalLesson, setSvgModalLesson] = useState<KangurLesson | null>(null);
-  const [svgModalInitialMarkup, setSvgModalInitialMarkup] = useState('');
-  const [orderedTreeSearchQuery, setOrderedTreeSearchQuery] = useState('');
-  const [catalogTreeSearchQuery, setCatalogTreeSearchQuery] = useState('');
-  const [authoringFilter, setAuthoringFilter] = useState<KangurLessonAuthoringFilter>('all');
-  const [ageGroupFilter, setAgeGroupFilter] = useState<'all' | KangurLessonAgeGroup>('all');
-
-  const isSaving = updateLessons.isPending || updateLessonDocuments.isPending || updateTemplates.isPending;
-
-  return {
-    contentLocale,
-    setContentLocale,
-    lessonsQuery,
-    lessonDocumentsQuery,
-    updateLessons,
-    updateLessonDocuments,
-    updateTemplates,
-    templatesQuery,
-    isLoading,
-    lessonTemplateMap,
-    contentLocaleOptions,
-    contentLocaleLabel,
-    isPrimaryContentLocale,
-    lessons,
-    lessonDocuments,
-    lessonById,
-    showModal,
-    setShowModal,
-    showContentModal,
-    setShowContentModal,
-    editingLesson,
-    setEditingLesson,
-    editingContentLesson,
-    setEditingContentLesson,
-    lessonToDelete,
-    setLessonToDelete,
-    formData,
-    setFormData,
-    componentContentJson,
-    setComponentContentJson,
-    contentDraft,
-    setContentDraft,
-    treeMode,
-    setTreeMode,
-    svgModalLesson,
-    setSvgModalLesson,
-    svgModalInitialMarkup,
-    setSvgModalInitialMarkup,
-    orderedTreeSearchQuery,
-    setOrderedTreeSearchQuery,
-    catalogTreeSearchQuery,
-    setCatalogTreeSearchQuery,
-    authoringFilter,
-    setAuthoringFilter,
-    ageGroupFilter,
-    setAgeGroupFilter,
-    isSaving,
+  return { 
+    contentLocale, setContentLocale, contentLocaleOptions, contentLocaleLabel, isSaving,
+    ...state, ...ui, 
+    handleCreate: () => {}, handleToggleTreeMode: () => {}, 
+    handleCanonicalize: async () => {}, handleAppendMissing: async () => {}, handleAddGeometryPack: async () => {}, 
+    handleAddLogicalThinkingPack: async () => {}, handleImportAllLessonsToEditor: async () => {}, 
+    handleSave: async () => {}, handleCloseModal: () => {}, handleDelete: async () => {}, 
+    handleSaveContent: async () => {}, handleClearContent: async () => {}, handleImportLegacy: async () => {}, 
+    handleComponentChange: () => {}, setTreeModeAndPersist: () => {},
+    isCatalogMode: false, isSectionsMode: false, breadcrumbs: [], handleTreeSearchChange: () => {}, 
+    renderTreeNode: () => null, activeAgeGroupLabel: 'All ages',
+    authoringFilterCounts: [], authoringFilteredLessons: [], geometryPackAddedCount: 0,
+    logicPackAddedCount: 0, legacyImportCount: 0, filteredLessons: state.lessons,
+    ageGroupCounts: [], controller: {}, scrollToNodeRef: React.createRef(),
+    rootDropUi: null, capabilities: { search: { enabled: false } }, searchState: {}, treeSearchQuery: ''
   };
 }

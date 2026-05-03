@@ -1,11 +1,13 @@
+'use client';
+
 import { type VariantProps } from 'class-variance-authority';
-import React, { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 import type { StatusVariant } from '@/shared/contracts/ui/base';
 
 import { cn } from '@/shared/utils/ui-utils';
 
-import { Badge, badgeVariants } from './badge';
+import { Badge, type badgeVariants } from './badge';
 
 export type { StatusVariant };
 
@@ -21,37 +23,71 @@ interface StatusBadgeProps {
   onClick?: () => void;
 }
 
+const normalizeStatusLabel = (status: unknown): string => {
+  if (typeof status === 'string') return status;
+  if (
+    typeof status === 'number' ||
+    typeof status === 'boolean' ||
+    typeof status === 'bigint'
+  ) {
+    return String(status);
+  }
+  return 'Unknown';
+};
+
+const STATUS_VARIANT_ENTRIES: Array<{
+  statuses: readonly string[];
+  variant: StatusVariant;
+}> = [
+  {
+    statuses: [
+      'pending',
+      'queued',
+      'waiting',
+      'not tested',
+      'not_tested',
+      'not connected',
+      'not_connected',
+      'disconnected',
+    ],
+    variant: 'pending',
+  },
+  {
+    statuses: ['active', 'success', 'completed', 'listed', 'healthy', 'connected', 'ok'],
+    variant: 'active',
+  },
+  {
+    statuses: ['failed', 'error', 'critical', 'canceled'],
+    variant: 'error',
+  },
+  {
+    statuses: ['removed', 'archived', 'deleted', 'ended', 'unsold'],
+    variant: 'removed',
+  },
+  {
+    statuses: ['processing', 'in_progress', 'running', 'stepping'],
+    variant: 'processing',
+  },
+  {
+    statuses: ['info', 'closed'],
+    variant: 'info',
+  },
+  {
+    statuses: ['warning'],
+    variant: 'warning',
+  },
+];
+
+const STATUS_VARIANT_LOOKUP = new Map<string, StatusVariant>(
+  STATUS_VARIANT_ENTRIES.flatMap(({ statuses, variant }) =>
+    statuses.map((status) => [status, variant] as const)
+  )
+);
+
 // Map common statuses to variants
-export const resolveStatusBadgeVariant = (status: string): StatusVariant => {
-  const s = status.toLowerCase();
-  if (
-    s === 'pending' ||
-    s === 'queued' ||
-    s === 'waiting' ||
-    s === 'not tested' ||
-    s === 'not_tested' ||
-    s === 'not connected' ||
-    s === 'not_connected' ||
-    s === 'disconnected'
-  )
-    return 'pending';
-  if (
-    s === 'active' ||
-    s === 'success' ||
-    s === 'completed' ||
-    s === 'listed' ||
-    s === 'healthy' ||
-    s === 'connected' ||
-    s === 'ok'
-  )
-    return 'active';
-  if (s === 'failed' || s === 'error' || s === 'critical' || s === 'canceled') return 'error';
-  if (s === 'removed' || s === 'archived' || s === 'deleted') return 'removed';
-  if (s === 'processing' || s === 'in_progress' || s === 'running' || s === 'stepping')
-    return 'processing';
-  if (s === 'info') return 'info';
-  if (s === 'warning') return 'warning';
-  return 'neutral';
+export const resolveStatusBadgeVariant = (status: string | null | undefined): StatusVariant => {
+  if (typeof status !== 'string') return 'neutral';
+  return STATUS_VARIANT_LOOKUP.get(status.toLowerCase()) ?? 'neutral';
 };
 
 /**
@@ -61,10 +97,12 @@ export const resolveStatusBadgeVariant = (status: string): StatusVariant => {
  */
 export function StatusBadge(props: StatusBadgeProps): React.JSX.Element {
   const { status, label, variant, size = 'md', icon, hideLabel, className, title, onClick } = props;
+  const normalizedStatus = normalizeStatusLabel(status as unknown);
 
   const resolvedVariant: VariantProps<typeof badgeVariants>['variant'] =
-    variant || resolveStatusBadgeVariant(status);
-  const displayLabel = (label || status).trim();
+    variant ?? resolveStatusBadgeVariant(normalizedStatus);
+  const displayLabel = (label ?? normalizedStatus).trim();
+  const shouldRenderLabel = hideLabel !== true && displayLabel !== '';
 
   return (
     <Badge
@@ -78,7 +116,7 @@ export function StatusBadge(props: StatusBadgeProps): React.JSX.Element {
       onClick={onClick}
       icon={icon}
     >
-      {!hideLabel && displayLabel ? <span>{displayLabel}</span> : null}
+      {shouldRenderLabel ? <span>{displayLabel}</span> : null}
     </Badge>
   );
 }

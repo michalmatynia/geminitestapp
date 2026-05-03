@@ -17,7 +17,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -60,7 +60,7 @@ describe('client errors handler', () => {
   });
 
   it('drops oversized payloads before parsing the body', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       createRequest(
         { message: 'ignored' },
         {
@@ -82,7 +82,7 @@ describe('client errors handler', () => {
   });
 
   it('drops empty or unparsable payloads as invalid', async () => {
-    const emptyResponse = await POST_handler(createRequest({}), createRequestContext());
+    const emptyResponse = await postHandler(createRequest({}), createRequestContext());
     await expect(emptyResponse.json()).resolves.toEqual({
       ok: true,
       success: true,
@@ -90,7 +90,7 @@ describe('client errors handler', () => {
       reason: 'invalid_payload',
     });
 
-    const invalidJsonResponse = await POST_handler(createRejectingRequest(), createRequestContext());
+    const invalidJsonResponse = await postHandler(createRejectingRequest(), createRequestContext());
     await expect(invalidJsonResponse.json()).resolves.toEqual({
       ok: true,
       success: true,
@@ -101,7 +101,7 @@ describe('client errors handler', () => {
   });
 
   it('drops abort-like client errors without reporting them', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       createRequest({
         name: 'AbortError',
         message: 'Request aborted by navigation',
@@ -121,7 +121,7 @@ describe('client errors handler', () => {
   it('drops noisy development fetch failures for GET api requests', async () => {
     process.env['NODE_ENV'] = 'development';
 
-    const response = await POST_handler(
+    const response = await postHandler(
       createRequest({
         message: 'Failed to fetch',
         context: {
@@ -142,7 +142,7 @@ describe('client errors handler', () => {
   });
 
   it('logs info-level reports with normalized client context', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       createRequest({
         message: 'Hydration mismatch observed',
         url: '/home',
@@ -176,7 +176,7 @@ describe('client errors handler', () => {
   });
 
   it('logs warn-level reports when the payload requests it', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       createRequest({
         message: 'Recoverable rendering issue',
         context: {
@@ -201,7 +201,7 @@ describe('client errors handler', () => {
   });
 
   it('captures invalid but meaningful payloads and flags them as payloadInvalid', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       createRequest({
         message: 'x'.repeat(2105),
         stack: 'stack trace from the browser',
@@ -226,7 +226,7 @@ describe('client errors handler', () => {
   });
 
   it('captures error-level reports and redacts sensitive context keys', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       createRequest({
         name: 'TypeError',
         message: 'Unhandled client exception',

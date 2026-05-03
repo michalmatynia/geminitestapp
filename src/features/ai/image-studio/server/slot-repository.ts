@@ -3,8 +3,8 @@ import 'server-only';
 import fs from 'fs/promises';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import { SlotGenerationMetadata } from '@/shared/contracts/image-studio/slot';
-import { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { type SlotGenerationMetadata } from '@/shared/contracts/image-studio/slot';
+import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
@@ -785,7 +785,7 @@ export async function deleteImageStudioSlotCascade(
   // Orphan sweep: catch child slots that escaped metadata-based cascade detection.
   // Collects imageFileIds deleted above, then finds any surviving slots in the same
   // project whose imageFileId/screenshotFileId points to a now-deleted file.
-  let sweepProjectId: string | undefined = rootDocs[0]?.projectId;
+  const sweepProjectId: string | undefined = rootDocs[0]?.projectId;
   {
     const deletedFileIds = new Set<string>();
     const deletedIdSet = new Set(deletedSlotIds);

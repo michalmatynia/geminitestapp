@@ -1,7 +1,7 @@
-import { RuntimePortValues, AdvancedApiConfig } from '@/shared/contracts/ai-paths';
-import { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import { type RuntimePortValues, type AdvancedApiConfig } from '@/shared/contracts/ai-paths';
+import { type NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-import { JsonRecord } from './config';
+import { type JsonRecord } from './config';
 import { getValueAtMappingPath, safeStringify } from '../../utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

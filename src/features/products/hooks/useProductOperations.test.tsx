@@ -16,7 +16,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => useQueryClientMock(),
 }));
 
-vi.mock('next/navigation', () => ({
+vi.mock('nextjs-toploader/app', () => ({
   useRouter: () => useRouterMock(),
 }));
 

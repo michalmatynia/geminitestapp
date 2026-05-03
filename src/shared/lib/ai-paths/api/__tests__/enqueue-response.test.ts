@@ -9,10 +9,6 @@ import {
 } from '@/shared/lib/ai-paths/api/client';
 
 describe('AI Paths enqueue response normalization', () => {
-  it('extracts run id from legacy string payload', () => {
-    expect(extractAiPathRunIdFromEnqueueResponseData({ run: ' run_123 ' })).toBe('run_123');
-  });
-
   it('extracts run id from canonical object payload', () => {
     expect(
       extractAiPathRunIdFromEnqueueResponseData({ run: { id: 'run_456', status: 'queued' } })
@@ -25,28 +21,18 @@ describe('AI Paths enqueue response normalization', () => {
     expect(extractAiPathRunIdFromEnqueueResponseData(null)).toBeNull();
   });
 
-  it('extracts run id from alternate run keys and nested data payloads', () => {
-    expect(extractAiPathRunIdFromEnqueueResponseData({ runId: 'run_top_level' })).toBe(
-      'run_top_level'
-    );
-    expect(extractAiPathRunIdFromEnqueueResponseData({ id: 'run_top_level_id' })).toBe(
-      'run_top_level_id'
-    );
-    expect(extractAiPathRunIdFromEnqueueResponseData({ data: { run: { id: 'run_nested' } } })).toBe(
-      'run_nested'
-    );
-    expect(
-      extractAiPathRunIdFromEnqueueResponseData({ data: { run: { runId: 'run_nested_alt' } } })
-    ).toBe('run_nested_alt');
-    expect(extractAiPathRunIdFromEnqueueResponseData({ run: { _id: 'run_mongo' } })).toBe(
-      'run_mongo'
-    );
+  it('rejects legacy enqueue envelope shapes', () => {
+    expect(extractAiPathRunIdFromEnqueueResponseData({ run: ' run_123 ' })).toBeNull();
+    expect(extractAiPathRunIdFromEnqueueResponseData({ runId: 'run_top_level' })).toBeNull();
+    expect(extractAiPathRunIdFromEnqueueResponseData({ id: 'run_top_level_id' })).toBeNull();
+    expect(extractAiPathRunIdFromEnqueueResponseData({ data: { run: { id: 'run_nested' } } })).toBeNull();
+    expect(extractAiPathRunIdFromEnqueueResponseData({ run: { _id: 'run_mongo' } })).toBeNull();
     expect(
       extractAiPathRunIdFromEnqueueResponseData({
         run: { status: 'queued' },
         runId: 'run_mixed_payload',
       })
-    ).toBe('run_mixed_payload');
+    ).toBeNull();
   });
 
   it('does not treat generic wrapper ids as run ids', () => {
@@ -65,21 +51,18 @@ describe('AI Paths enqueue response normalization', () => {
     expect(extractAiPathRunRecordFromEnqueueResponseData({ run: 'run_789' })).toBeNull();
   });
 
-  it('normalizes run records that expose runId only', () => {
+  it('rejects non-canonical run record payloads', () => {
     expect(
       extractAiPathRunRecordFromEnqueueResponseData({
         run: { runId: 'run_only_runId', status: 'queued' },
       })
-    ).toEqual({ id: 'run_only_runId', runId: 'run_only_runId', status: 'queued' });
-  });
-
-  it('normalizes mixed payloads where runId is outside run object', () => {
+    ).toBeNull();
     expect(
       extractAiPathRunRecordFromEnqueueResponseData({
         run: { status: 'running', pathId: 'path-mixed' },
         runId: 'run_mixed_record',
       })
-    ).toEqual({ id: 'run_mixed_record', status: 'running', pathId: 'path-mixed' });
+    ).toBeNull();
   });
 
   it('resolves run id and record for canonical payload', () => {
@@ -90,21 +73,18 @@ describe('AI Paths enqueue response normalization', () => {
     });
   });
 
-  it('resolves run id and null record for legacy string payload', () => {
+  it('returns null resolution for legacy fallback payloads', () => {
     expect(resolveAiPathRunFromEnqueueResponseData({ run: 'run_901' })).toEqual({
-      runId: 'run_901',
+      runId: null,
       runRecord: null,
     });
-  });
-
-  it('resolves run id for top-level fallback payloads', () => {
     expect(resolveAiPathRunFromEnqueueResponseData({ runId: 'run_fallback_1' })).toEqual({
-      runId: 'run_fallback_1',
-      runRecord: { id: 'run_fallback_1', runId: 'run_fallback_1', status: 'queued' },
+      runId: null,
+      runRecord: null,
     });
     expect(resolveAiPathRunFromEnqueueResponseData({ data: { id: 'run_fallback_2' } })).toEqual({
-      runId: 'run_fallback_2',
-      runRecord: { id: 'run_fallback_2', status: 'queued' },
+      runId: null,
+      runRecord: null,
     });
   });
 

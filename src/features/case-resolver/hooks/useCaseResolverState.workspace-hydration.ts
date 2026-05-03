@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import { logCaseResolverDurationMetric } from '../runtime/metrics';
@@ -133,12 +135,12 @@ export function useCaseResolverStateWorkspaceHydration({
           return;
         }
         if (bootstrapRefreshRetryTimerRef.current !== null) {
-          window.clearTimeout(bootstrapRefreshRetryTimerRef.current);
+          safeClearTimeout(bootstrapRefreshRetryTimerRef.current);
         }
         const nextAttempt = bootstrapRefreshRetryAttemptRef.current + 1;
         bootstrapRefreshRetryAttemptRef.current = nextAttempt;
         const retryDelayMs = Math.min(10_000, 700 * nextAttempt);
-        bootstrapRefreshRetryTimerRef.current = window.setTimeout((): void => {
+        bootstrapRefreshRetryTimerRef.current = safeSetTimeout((): void => {
           bootstrapRefreshRetryTimerRef.current = null;
           setBootstrapRefreshRetryTick((current: number): number => current + 1);
         }, retryDelayMs);
@@ -152,7 +154,7 @@ export function useCaseResolverStateWorkspaceHydration({
       finishBootstrap(`snapshot_revision=${getCaseResolverWorkspaceRevision(snapshot)}`);
       bootstrapRefreshRetryAttemptRef.current = 0;
       if (bootstrapRefreshRetryTimerRef.current !== null) {
-        window.clearTimeout(bootstrapRefreshRetryTimerRef.current);
+        safeClearTimeout(bootstrapRefreshRetryTimerRef.current);
         bootstrapRefreshRetryTimerRef.current = null;
       }
       setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
@@ -229,7 +231,7 @@ export function useCaseResolverStateWorkspaceHydration({
   useEffect(() => {
     return (): void => {
       if (bootstrapRefreshRetryTimerRef.current) {
-        window.clearTimeout(bootstrapRefreshRetryTimerRef.current);
+        safeClearTimeout(bootstrapRefreshRetryTimerRef.current);
         bootstrapRefreshRetryTimerRef.current = null;
       }
     };

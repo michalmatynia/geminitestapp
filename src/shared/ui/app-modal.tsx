@@ -33,6 +33,7 @@ type AppModalProps = {
   className?: string | undefined;
   contentClassName?: string | undefined;
   bodyClassName?: string | undefined;
+  style?: React.CSSProperties | undefined;
 };
 
 const sizeClasses = {
@@ -63,6 +64,7 @@ type AppModalResolvedProps = {
   bodyHeightClass: string;
   padding: 'default' | 'none';
   bodyClassName?: string;
+  style?: React.CSSProperties;
   children: React.ReactNode;
   footer?: React.ReactNode;
 };
@@ -89,6 +91,7 @@ const renderAppModal = (resolvedProps: AppModalResolvedProps): React.JSX.Element
     bodyHeightClass,
     padding,
     bodyClassName,
+    style,
     children,
     footer,
   } = resolvedProps;
@@ -112,6 +115,7 @@ const renderAppModal = (resolvedProps: AppModalResolvedProps): React.JSX.Element
             sizeClasses[size],
             className
           )}
+          style={style}
         >
           <div className='p-6 pb-4 border-b border-white/5'>
             {header ? (
@@ -190,6 +194,7 @@ export function AppModal(props: AppModalProps): React.JSX.Element {
     className,
     contentClassName: modalContentClassName,
     bodyClassName,
+    style,
   } = props;
   const isCurrentlyOpen = isOpen ?? open ?? false;
   const canClose = !lockClose;
@@ -259,6 +264,7 @@ export function AppModal(props: AppModalProps): React.JSX.Element {
     bodyHeightClass,
     padding,
     bodyClassName,
+    style,
     children,
     footer,
   });

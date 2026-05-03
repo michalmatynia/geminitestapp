@@ -36,7 +36,6 @@ import {
   resolveAddingSynthesisLanePresentation, 
   resolveAddingSynthesisSummaryMessage 
 } from './adding-synthesis/AddingSynthesisGame.utils';
-import type { AddingSynthesisLocalizedStages } from './adding-synthesis/AddingSynthesisGame.types';
 
 // --- Context ---
 
@@ -68,11 +67,9 @@ function useAddingSynthesisContext() {
 
 // --- Views ---
 
-function AddingSynthesisIntroStages({
-  localizedStages,
-}: {
-  localizedStages: AddingSynthesisLocalizedStages;
-}): React.JSX.Element {
+function AddingSynthesisIntroStages(): React.JSX.Element {
+  const { localizedStages } = useAddingSynthesisContext();
+
   return (
     <div className='grid kangur-panel-gap md:grid-cols-2 xl:grid-cols-3'>
       {localizedStages.map((stage) => (
@@ -105,7 +102,6 @@ function AddingSynthesisIntroView(): React.JSX.Element {
     exitLabel,
     introNoteCount,
     laneCount,
-    localizedStages,
     onFinish,
     startSession,
     t,
@@ -171,7 +167,7 @@ function AddingSynthesisIntroView(): React.JSX.Element {
             </KangurInfoCard>
           </div>
 
-          <AddingSynthesisIntroStages localizedStages={localizedStages} />
+          <AddingSynthesisIntroStages />
 
           <KangurSummaryPanel
             accent='slate'
@@ -510,13 +506,12 @@ function AddingSynthesisCurrentNoteCard(): React.JSX.Element | null {
 function AddingSynthesisLaneChoiceCard({
   choice,
   laneIndex,
-  noteId,
 }: {
   choice: number;
   laneIndex: number;
-  noteId: string;
 }): React.JSX.Element {
   const {
+    currentNote,
     feedback,
     isCoarsePointer,
     resolveChoice: onChoose,
@@ -531,7 +526,7 @@ function AddingSynthesisLaneChoiceCard({
 
   return (
     <KangurAnswerChoiceCard
-      key={`${noteId}-${choice}`}
+      key={`${currentNote?.id}-${choice}`}
       accent={presentation.accent}
       aria-disabled={feedback ? 'true' : 'false'}
       aria-label={t(
@@ -577,7 +572,6 @@ function AddingSynthesisLaneChoices(): React.JSX.Element | null {
           key={`${currentNote.id}-${choice}`}
           choice={choice}
           laneIndex={laneIndex}
-          noteId={currentNote.id}
         />
       ))}
     </div>

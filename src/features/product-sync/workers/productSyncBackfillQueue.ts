@@ -12,6 +12,11 @@ type ProductSyncBackfillJobData = {
   source?: string;
 };
 
+const encodeJobIdPart = (value: string | null | undefined, fallback: string): string => {
+  const normalized = value?.trim();
+  return normalized && normalized.length > 0 ? encodeURIComponent(normalized) : fallback;
+};
+
 const queue = createManagedQueue<ProductSyncBackfillJobData>({
   name: 'product-sync-backfill',
   concurrency: 1,
@@ -51,6 +56,12 @@ export const enqueueProductSyncBackfillJob = async (
   data: ProductSyncBackfillJobData
 ): Promise<string> => {
   const dedupeBucket = Math.floor(Date.now() / 30_000);
-  const jobId = `product-sync-backfill:${dedupeBucket}:${data.connectionId ?? 'default'}:${data.catalogId ?? 'all'}`;
+  // BullMQ rejects custom job IDs containing ":".
+  const jobId = [
+    'product-sync-backfill',
+    String(dedupeBucket),
+    encodeJobIdPart(data.connectionId, 'default'),
+    encodeJobIdPart(data.catalogId, 'all'),
+  ].join('__');
   return queue.enqueue(data, { jobId });
 };

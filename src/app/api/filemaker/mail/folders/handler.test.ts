@@ -14,7 +14,7 @@ vi.mock('@/features/filemaker/server', () => ({
   listFilemakerMailFolderSummaries: listFilemakerMailFolderSummariesMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('filemaker mail folders handler', () => {
   beforeEach(() => {
@@ -35,9 +35,9 @@ describe('filemaker mail folders handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/filemaker/mail/folders?accountId=account-1'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(requireFilemakerMailAdminSessionMock).toHaveBeenCalled();

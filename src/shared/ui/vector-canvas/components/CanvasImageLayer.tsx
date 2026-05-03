@@ -6,7 +6,7 @@ export const CanvasImageLayer = forwardRef<HTMLImageElement>(
   (_props, ref): React.JSX.Element | null => {
     const { src, canvasRenderSize, resolvedImageOffset, syncCanvasSize } = useVectorCanvasContext();
 
-    if (!src) return null;
+    if (src === undefined || src === null || src.length === 0) return null;
 
     return (
       <img

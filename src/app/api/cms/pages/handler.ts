@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsPageCreateSchema } from '@/features/cms/server';
@@ -7,6 +7,7 @@ import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 
 import type { z } from 'zod';
@@ -37,20 +38,26 @@ const parseBody = async (
  * GET /api/cms/pages
  * Fetches a list of pages.
  */
-export async function GET_handler(
+async function getCmsPagesCached() {
+  'use cache';
+  applyCacheLife('swr300');
+
+  const cmsRepository = await getCmsRepository();
+  return cmsRepository.getPages();
+}
+
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<NextResponse | Response> {
-  const cmsRepository = await getCmsRepository();
-  const pages = await cmsRepository.getPages();
-  return NextResponse.json(pages);
+  return NextResponse.json(await getCmsPagesCached());
 }
 
 /**
  * POST /api/cms/pages
  * Creates a new page.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<NextResponse | Response> {

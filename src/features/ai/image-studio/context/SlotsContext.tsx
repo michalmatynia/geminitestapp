@@ -23,7 +23,7 @@ import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
-import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useCreateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import { isTreePathWithin, normalizeTreePath } from '@/shared/utils/tree-operations';
 
@@ -234,7 +234,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     [updateSlotMutation]
   );
 
-  const createFolderMutation: StudioFolderMutation = createCreateMutationV2<string, string>({
+  const createFolderMutation: StudioFolderMutation = useCreateMutationV2<string, string>({
     mutationKey: studioKeys.mutation('folders.create'),
     mutationFn: async (folder: string) => {
       const expanded = expandFolderPath(folder);

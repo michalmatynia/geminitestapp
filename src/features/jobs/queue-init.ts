@@ -1,5 +1,36 @@
 import 'server-only';
 
+import {
+  startAgentQueue,
+  startAiInsightsQueue,
+  startAiPathRunQueue,
+  startChatbotJobQueue,
+  startImageStudioRunQueue,
+  startImageStudioSequenceQueue,
+} from '@/server/queues/ai';
+import { startCaseResolverOcrQueue } from '@/server/queues/case-resolver-ocr';
+import { startFilemakerEmailCampaignSchedulerQueue } from '@/server/queues/filemaker';
+import { startFilemakerMailSyncSchedulerQueue } from '@/features/filemaker/workers/filemakerMailSyncSchedulerQueue';
+import { startFilemakerMailIdleManager } from '@/features/filemaker/workers/filemakerMailIdleManager';
+import { startFilemakerCampaignColdPruneSchedulerQueue } from '@/features/filemaker/workers/filemakerCampaignColdPruneSchedulerQueue';
+import { startFilemakerJobBoardScrapeQueue } from '@/features/filemaker/server/filemaker-job-board-scrape-runtime';
+import {
+  startPlaywrightListingQueue,
+  startTraderaListingQueue,
+  startVintedListingQueue,
+} from '@/server/queues/integrations';
+import {
+  startTraderaRelistSchedulerQueue,
+} from '@/features/integrations/workers/traderaRelistSchedulerQueue';
+import {
+  startKangurSocialPipelineQueue,
+  startKangurSocialSchedulerQueue,
+} from '@/server/queues/kangur';
+import { startProductAiJobQueue } from '@/server/queues/product-ai';
+import { startProductMarketplaceCopyDebrandBatchQueue } from '@/server/queues/products';
+import { startProductSyncSchedulerQueue } from '@/server/queues/product-sync';
+import { startDatabaseBackupSchedulerQueue } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
+import { startSystemLogAlertsQueue } from '@/shared/lib/observability/workers/systemLogAlertsQueue';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue/redis-connection';
 import { startAllWorkers } from '@/shared/lib/queue/registry';
@@ -7,7 +38,9 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 let initialized = false;
+let initializing = false;
 const LOG_SOURCE = 'queue-init';
+type QueueStarter = () => void;
 const STARTUP_GATED_QUEUE_NAMES = [
   'product-ai',
   'ai-path-run',
@@ -18,11 +51,40 @@ const STARTUP_GATED_QUEUE_NAMES = [
   'case-resolver-ocr',
   'ai-insights',
   'tradera-relist-scheduler',
+  'product-marketplace-copy-debrand-batch',
 ] as const;
 const KANGUR_SOCIAL_QUEUE_NAMES = [
   'kangur-social-scheduler',
   'kangur-social-pipeline',
 ] as const;
+const SPECIALIZED_STARTERS = [
+  startDatabaseBackupSchedulerQueue,
+  startTraderaRelistSchedulerQueue,
+  startProductSyncSchedulerQueue,
+  startSystemLogAlertsQueue,
+  startFilemakerEmailCampaignSchedulerQueue,
+  startFilemakerMailSyncSchedulerQueue,
+  startFilemakerMailIdleManager,
+  startFilemakerCampaignColdPruneSchedulerQueue,
+] as const satisfies readonly QueueStarter[];
+const KANGUR_SOCIAL_STARTERS = [
+  startKangurSocialSchedulerQueue,
+  startKangurSocialPipelineQueue,
+] as const satisfies readonly QueueStarter[];
+const FEATURE_AWARE_STARTERS = [
+  startPlaywrightListingQueue,
+  startTraderaListingQueue,
+  startVintedListingQueue,
+  startProductAiJobQueue,
+  startAiPathRunQueue,
+  startChatbotJobQueue,
+  startAgentQueue,
+  startImageStudioRunQueue,
+  startImageStudioSequenceQueue,
+  startCaseResolverOcrQueue,
+  startFilemakerJobBoardScrapeQueue,
+  startProductMarketplaceCopyDebrandBatchQueue,
+] as const satisfies readonly QueueStarter[];
 
 const parseEnvBoolean = (value: string | undefined): boolean | null => {
   if (typeof value !== 'string') return null;
@@ -48,186 +110,108 @@ export const shouldStartKangurSocialQueues = (
 };
 
 const runStartupBackupSchedulerCatchup = (): void => {
-  void (async (): Promise<void> => {
+  (async (): Promise<void> => {
     try {
       const { tickDatabaseBackupScheduler } =
         await import('@/shared/lib/db/services/database-backup-scheduler');
       await tickDatabaseBackupScheduler();
     } catch (error) {
-      void ErrorSystem.captureException(error);
-      void logSystemEvent({
+      ErrorSystem.captureException(error).catch(() => {});
+      logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
         message: 'Startup backup scheduler catch-up tick failed',
         error,
-      });
+      }).catch(() => {});
     }
-  })();
+  })().catch(() => {});
+};
+
+const isQueueStarter = (value: unknown): value is QueueStarter =>
+  typeof value === 'function';
+
+const callSpecializedStartup = (
+  shouldStartKangurSocial: boolean
+): void => {
+  for (const starter of SPECIALIZED_STARTERS) {
+    starter();
+  }
+
+  if (shouldStartKangurSocial) {
+    for (const starter of KANGUR_SOCIAL_STARTERS) {
+      starter();
+    }
+  } else {
+    logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: 'Kangur social workers are disabled for this environment. Set ENABLE_KANGUR_SOCIAL_WORKERS=true to enable them.',
+      context: { queueNames: [...KANGUR_SOCIAL_QUEUE_NAMES] },
+    }).catch(() => {});
+  }
+};
+
+const startFeatureAwareWorkers = (): void => {
+  for (const starter of FEATURE_AWARE_STARTERS) {
+    starter();
+  }
 };
 
 export const initializeQueues = (): void => {
-  if (initialized) return;
-  initialized = true;
+  if (initialized || initializing) return;
 
   if (process.env['DISABLE_QUEUE_WORKERS'] === 'true') {
-    void logSystemEvent({
-      level: 'info',
-      source: LOG_SOURCE,
-      message: 'Worker startup disabled by DISABLE_QUEUE_WORKERS',
-    });
+    initialized = true;
+    logSystemEvent({ level: 'info', source: LOG_SOURCE, message: 'Worker startup disabled by DISABLE_QUEUE_WORKERS' }).catch(() => {});
     runStartupBackupSchedulerCatchup();
     return;
   }
 
   if (!isRedisAvailable()) {
-    void logSystemEvent({
-      level: 'info',
-      source: LOG_SOURCE,
-      message: 'Redis not available, using inline processing mode',
-    });
+    logSystemEvent({ level: 'info', source: LOG_SOURCE, message: 'Redis not available, using inline processing mode' }).catch(() => {});
     runStartupBackupSchedulerCatchup();
     return;
   }
 
-  void (async (): Promise<void> => {
-    const redisReachable = await isRedisReachable();
-    if (!redisReachable) {
-      void logSystemEvent({
+  initializing = true;
+  (async (): Promise<void> => {
+    try {
+      if (await isRedisReachable() === false) {
+        logSystemEvent({ level: 'warn', source: LOG_SOURCE, message: 'Redis unreachable, skipping BullMQ workers' }).catch(() => {});
+        runStartupBackupSchedulerCatchup();
+        return;
+      }
+
+      const shouldStartKangurSocial = shouldStartKangurSocialQueues();
+      const excludedQueueNames = shouldStartKangurSocial ? [...STARTUP_GATED_QUEUE_NAMES] : [...STARTUP_GATED_QUEUE_NAMES, ...KANGUR_SOCIAL_QUEUE_NAMES];
+
+      callSpecializedStartup(shouldStartKangurSocial);
+      logSystemEvent({ level: 'info', source: LOG_SOURCE, message: 'Starting BullMQ workers...' }).catch(() => {});
+      startAllWorkers({ excludeQueueNames: excludedQueueNames });
+      startFeatureAwareWorkers();
+
+      if (isQueueStarter(startAiInsightsQueue)) {
+        startAiInsightsQueue();
+      }
+
+      initialized = true;
+    } catch (error) {
+      ErrorSystem.captureException(error).catch(() => {});
+      logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
-        message: 'Redis unreachable, skipping BullMQ workers',
-      });
-      runStartupBackupSchedulerCatchup();
-      return;
+        message: 'BullMQ worker startup failed',
+        error,
+      }).catch(() => {});
+    } finally {
+      initializing = false;
     }
-
-    const shouldStartKangurSocial = shouldStartKangurSocialQueues();
-    const excludedQueueNames = shouldStartKangurSocial
-      ? [...STARTUP_GATED_QUEUE_NAMES]
-      : [...STARTUP_GATED_QUEUE_NAMES, ...KANGUR_SOCIAL_QUEUE_NAMES];
-
-    // Import all queue modules to trigger registration via createManagedQueue
-    const queueModules = await Promise.all([
-      import('@/server/queues/product-ai'),
-      import('@/server/queues/ai'),
-      import('@/server/queues/ai'),
-      import('@/server/queues/ai'),
-      import('@/shared/lib/db/workers/databaseBackupSchedulerQueue'),
-      import('@/server/queues/ai'),
-      import('@/server/queues/ai'),
-      import('@/server/queues/integrations'),
-      import('@/server/queues/integrations'),
-      import('@/server/queues/integrations'),
-      import('@/server/queues/product-sync'),
-      import('@/server/queues/product-sync'),
-      import('@/server/queues/product-sync'),
-      import('@/server/queues/case-resolver-ocr'),
-      import('@/shared/lib/observability/workers/systemLogAlertsQueue'),
-      import('@/server/queues/kangur'),
-      import('@/server/queues/filemaker'),
-    ]);
-
-    // Call specialized startup functions if they exist (to enqueue repeat jobs, etc.)
-    (
-      (queueModules[4] as Record<string, unknown>)['startDatabaseBackupSchedulerQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[8] as Record<string, unknown>)['startTraderaRelistSchedulerQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[12] as Record<string, unknown>)['startProductSyncSchedulerQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[14] as Record<string, unknown>)['startSystemLogAlertsQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[16] as Record<string, unknown>)['startFilemakerEmailCampaignSchedulerQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    if (shouldStartKangurSocial) {
-      (
-        (queueModules[15] as Record<string, unknown>)['startKangurSocialSchedulerQueue'] as
-          | (() => void)
-          | undefined
-      )?.();
-      (
-        (queueModules[15] as Record<string, unknown>)['startKangurSocialPipelineQueue'] as
-          | (() => void)
-          | undefined
-      )?.();
-    } else {
-      void logSystemEvent({
-        level: 'info',
-        source: LOG_SOURCE,
-        message:
-          'Kangur social workers are disabled for this environment. Set ENABLE_KANGUR_SOCIAL_WORKERS=true to enable them.',
-        context: {
-          queueNames: [...KANGUR_SOCIAL_QUEUE_NAMES],
-        },
-      });
-    }
-
-    void logSystemEvent({
-      level: 'info',
-      source: LOG_SOURCE,
-      message: 'Starting BullMQ workers...',
-    });
-    startAllWorkers({ excludeQueueNames: excludedQueueNames });
-
-    // AI workers are started with feature-aware gates to avoid running disabled capabilities.
-    (
-      (queueModules[0] as Record<string, unknown>)['startProductAiJobQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[1] as Record<string, unknown>)['startAiPathRunQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[2] as Record<string, unknown>)['startChatbotJobQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[3] as Record<string, unknown>)['startAgentQueue'] as (() => void) | undefined
-    )?.();
-    (
-      (queueModules[5] as Record<string, unknown>)['startImageStudioRunQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[6] as Record<string, unknown>)['startImageStudioSequenceQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[13] as Record<string, unknown>)['startCaseResolverOcrQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-
-    // AI Insights queue is started separately after the generic startup pass so Brain gating
-    // can decide whether the worker should run at all.
-    const startAiInsightsQueue = (await import('@/server/queues/ai'))
-      .startAiInsightsQueue as (() => void) | undefined;
-    startAiInsightsQueue?.();
-  })();
+  })().catch(() => {});
 };
 
-export const __testOnly = {
+export const testOnly = {
   resetInitialized(): void {
     initialized = false;
+    initializing = false;
   },
 };

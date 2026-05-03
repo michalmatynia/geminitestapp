@@ -54,6 +54,18 @@ export const setBlockDragData = (
   );
 };
 
+const getFallbackIndexString = (fallback?: Partial<SectionDragData>): string | null => {
+  if (fallback?.index === undefined || fallback.index === null) return null;
+  return String(fallback.index);
+};
+
+const resolveZone = (rawZone: string | null, fallbackZone: PageZone | null): PageZone | null => {
+  if (rawZone === 'header' || rawZone === 'template' || rawZone === 'footer') {
+    return rawZone;
+  }
+  return fallbackZone;
+};
+
 export const readSectionDragData = (
   dataTransfer: DataTransfer,
   fallback?: Partial<SectionDragData>
@@ -61,16 +73,19 @@ export const readSectionDragData = (
   const id = getFirstDragValue(dataTransfer, [DRAG_KEYS.SECTION_ID], fallback?.id ?? null);
   const type = getFirstDragValue(dataTransfer, [DRAG_KEYS.SECTION_TYPE], fallback?.type ?? null);
   const rawZone = getFirstDragValue(dataTransfer, [DRAG_KEYS.SECTION_ZONE], fallback?.zone ?? null);
-  const zone: PageZone | null =
-    rawZone === 'header' || rawZone === 'template' || rawZone === 'footer'
-      ? rawZone
-      : (fallback?.zone ?? null);
+  const zone = resolveZone(rawZone, fallback?.zone ?? null);
+
   const rawIndex = getFirstDragValue(
     dataTransfer,
     [DRAG_KEYS.SECTION_INDEX],
-    fallback?.index !== undefined && fallback?.index !== null ? String(fallback.index) : null
+    getFallbackIndexString(fallback)
   );
-  const index = rawIndex ? parseDragIndex(rawIndex) : (fallback?.index ?? null);
+
+  const index =
+    typeof rawIndex === 'string' && rawIndex !== ''
+      ? parseDragIndex(rawIndex)
+      : (fallback?.index ?? null);
+
   return { id, type, zone, index };
 };
 
@@ -80,20 +95,24 @@ export const readBlockDragData = (
 ): BlockDragData => {
   const id = getFirstDragValue(dataTransfer, [DRAG_KEYS.BLOCK_ID], fallback?.id ?? null);
   const type = getFirstDragValue(dataTransfer, [DRAG_KEYS.BLOCK_TYPE], fallback?.type ?? null);
+
   const fromSectionId = getFirstDragValue(
     dataTransfer,
     [DRAG_KEYS.FROM_SECTION_ID],
     fallback?.fromSectionId ?? null
   );
+
   const fromColumnId = getFirstDragValue(
     dataTransfer,
     [DRAG_KEYS.FROM_COLUMN_ID],
     fallback?.fromColumnId ?? null
   );
+
   const fromParentBlockId = getFirstDragValue(
     dataTransfer,
     [DRAG_KEYS.FROM_PARENT_BLOCK_ID],
     fallback?.fromParentBlockId ?? null
   );
+
   return { id, type, fromSectionId, fromColumnId, fromParentBlockId };
 };

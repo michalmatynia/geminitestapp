@@ -1,5 +1,5 @@
 import mime from 'mime-types';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import { z } from 'zod';
 
@@ -14,7 +14,7 @@ export const querySchema = z.object({
   filename: optionalTrimmedQueryString(),
 });
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

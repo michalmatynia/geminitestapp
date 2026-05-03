@@ -102,8 +102,8 @@ export function useFlattenedInfiniteData<T>(
     isError: infiniteQuery.isError,
     error: infiniteQuery.error,
     fetchNextPage: async (): Promise<unknown> => await infiniteQuery.fetchNextPage(),
-    hasNextPage: !!infiniteQuery.hasNextPage,
-    isFetchingNextPage: !!infiniteQuery.isFetchingNextPage,
+    hasNextPage: Boolean(infiniteQuery.hasNextPage),
+    isFetchingNextPage: Boolean(infiniteQuery.isFetchingNextPage),
     refetch: async (): Promise<unknown> => await infiniteQuery.refetch(),
   };
 }

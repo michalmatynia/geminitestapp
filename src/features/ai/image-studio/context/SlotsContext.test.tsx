@@ -93,7 +93,7 @@ vi.mock('@/shared/hooks/use-settings', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createCreateMutationV2: (config: { mutationFn: (input: string) => Promise<string> }) => ({
+  useCreateMutationV2: (config: { mutationFn: (input: string) => Promise<string> }) => ({
     mutateAsync: config.mutationFn,
     isPending: false,
   }),

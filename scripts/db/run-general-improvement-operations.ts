@@ -9,6 +9,7 @@ import {
   type ImprovementPhase,
   type ImprovementStep,
 } from './general-improvement-operations';
+import { refreshImprovementDocs } from './generate-improvement-docs';
 
 type StepStatus =
   | 'planned'
@@ -270,7 +271,9 @@ async function main(): Promise<void> {
   };
 
   await writeReport(reportPath, executionReport);
+  await refreshImprovementDocs(repoRoot);
   process.stdout.write(`General improvement report wrote ${reportPath}\n`);
+  process.stdout.write('Improvement docs refreshed.\n');
 
   if (hasFailure) {
     process.exitCode = 1;

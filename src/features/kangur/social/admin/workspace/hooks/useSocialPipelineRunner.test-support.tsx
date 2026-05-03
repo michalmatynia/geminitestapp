@@ -48,7 +48,8 @@ vi.mock('@/features/kangur/shared/ui', () => ({
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: socialPipelineRunnerTestHoisted.runLogKangurClientErrorMock,
   trackKangurClientEvent: socialPipelineRunnerTestHoisted.runTrackKangurClientEventMock,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { useSocialPipelineRunner as importedUseSocialPipelineRunner } from './useSocialPipelineRunner';
 

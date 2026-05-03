@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { uploadFile } from '@/features/files/server';
@@ -11,7 +11,7 @@ const isFileLike = (entry: FormDataEntryValue): entry is File => {
   return typeof entry === 'object' && entry !== null && 'arrayBuffer' in entry && 'size' in entry;
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let formData: FormData;
   try {
     formData = await req.formData();

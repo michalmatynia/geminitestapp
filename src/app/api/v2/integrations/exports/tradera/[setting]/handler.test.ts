@@ -7,11 +7,11 @@ const { getDefaultConnectionHandlerMock, postDefaultConnectionHandlerMock } = vi
 }));
 
 vi.mock('@/app/api/v2/integrations/exports/tradera/default-connection/handler', () => ({
-  GET_handler: (...args: unknown[]) => getDefaultConnectionHandlerMock(...args),
-  POST_handler: (...args: unknown[]) => postDefaultConnectionHandlerMock(...args),
+  getHandler: (...args: unknown[]) => getDefaultConnectionHandlerMock(...args),
+  postHandler: (...args: unknown[]) => postDefaultConnectionHandlerMock(...args),
 }));
 
-import { GET_handler, POST_handler, querySchema } from './handler';
+import { getHandler, postHandler, querySchema } from './handler';
 
 describe('tradera export setting handler', () => {
   beforeEach(() => {
@@ -24,7 +24,7 @@ describe('tradera export setting handler', () => {
     const delegatedResponse = NextResponse.json({ source: 'tradera-default-connection-get' });
     getDefaultConnectionHandlerMock.mockResolvedValue(delegatedResponse);
 
-    const response = await GET_handler(request, context, { setting: 'default-connection' });
+    const response = await getHandler(request, context, { setting: 'default-connection' });
 
     expect(getDefaultConnectionHandlerMock).toHaveBeenCalledWith(request, context);
     expect(response).toBe(delegatedResponse);
@@ -36,14 +36,14 @@ describe('tradera export setting handler', () => {
     const delegatedResponse = NextResponse.json({ source: 'tradera-default-connection-post' });
     postDefaultConnectionHandlerMock.mockResolvedValue(delegatedResponse);
 
-    const response = await POST_handler(request, context, { setting: 'default-connection' });
+    const response = await postHandler(request, context, { setting: 'default-connection' });
 
     expect(postDefaultConnectionHandlerMock).toHaveBeenCalledWith(request, context);
     expect(response).toBe(delegatedResponse);
   });
 
   it('rejects unknown Tradera export setting names', async () => {
-    await expect(POST_handler({} as never, {} as never, { setting: 'unknown' })).rejects.toThrow(
+    await expect(postHandler({} as never, {} as never, { setting: 'unknown' })).rejects.toThrow(
       'Unknown exports/tradera setting: unknown'
     );
   });

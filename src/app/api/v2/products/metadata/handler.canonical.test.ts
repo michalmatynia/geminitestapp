@@ -9,7 +9,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-import { GET_products_metadata_handler, POST_products_metadata_handler } from './handler';
+import { getProductsMetadataHandler, postProductsMetadataHandler } from './handler';
 
 const createMongoMock = (collections: Record<string, Record<string, unknown>>) => ({
   collection: vi.fn((name: string) => {
@@ -67,9 +67,9 @@ describe('v2 products metadata handler canonical contract', () => {
       })
     );
 
-    const response = await GET_products_metadata_handler(
+    const response = await getProductsMetadataHandler(
       new NextRequest('http://localhost/api/v2/products/metadata/price-groups'),
-      {} as Parameters<typeof GET_products_metadata_handler>[1],
+      {} as Parameters<typeof getProductsMetadataHandler>[1],
       { type: 'price-groups' }
     );
 
@@ -118,9 +118,9 @@ describe('v2 products metadata handler canonical contract', () => {
       }),
     });
 
-    const response = await POST_products_metadata_handler(
+    const response = await postProductsMetadataHandler(
       request,
-      {} as Parameters<typeof POST_products_metadata_handler>[1],
+      {} as Parameters<typeof postProductsMetadataHandler>[1],
       { type: 'price-groups' }
     );
     const payload = (await response.json()) as Record<string, unknown>;
@@ -177,9 +177,9 @@ describe('v2 products metadata handler canonical contract', () => {
       }),
     });
 
-    await POST_products_metadata_handler(
+    await postProductsMetadataHandler(
       request,
-      {} as Parameters<typeof POST_products_metadata_handler>[1],
+      {} as Parameters<typeof postProductsMetadataHandler>[1],
       { type: 'price-groups' }
     );
 
@@ -187,6 +187,60 @@ describe('v2 products metadata handler canonical contract', () => {
       expect.objectContaining({
         sourceGroupId: 'BASE',
         type: 'dependent',
+      })
+    );
+  });
+
+  it('creates sourcePrice-backed dependent price groups without a sourceGroupId', async () => {
+    const currencyFindOneMock = vi.fn().mockResolvedValue({
+      id: 'PLN',
+      code: 'PLN',
+      name: 'Polish Zloty',
+      symbol: 'zł',
+    });
+    const priceGroupsFindOneMock = vi.fn().mockResolvedValue(null);
+    const priceGroupsInsertOneMock = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      insertedId: 'mongo-price-group-3',
+    });
+
+    getMongoDbMock.mockResolvedValue(
+      createMongoMock({
+        currencies: {
+          findOne: currencyFindOneMock,
+        },
+        price_groups: {
+          findOne: priceGroupsFindOneMock,
+          insertOne: priceGroupsInsertOneMock,
+        },
+      })
+    );
+
+    const request = new NextRequest('http://localhost/api/v2/products/metadata/price-groups', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Retail from Source',
+        currencyCode: 'PLN',
+        type: 'dependent',
+        basePriceField: 'sourcePrice',
+        priceMultiplier: 2,
+      }),
+    });
+
+    await postProductsMetadataHandler(
+      request,
+      {} as Parameters<typeof postProductsMetadataHandler>[1],
+      { type: 'price-groups' }
+    );
+
+    expect(priceGroupsInsertOneMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Retail from Source',
+        sourceGroupId: null,
+        basePriceField: 'sourcePrice',
+        type: 'dependent',
+        priceMultiplier: 2,
       })
     );
   });
@@ -232,9 +286,9 @@ describe('v2 products metadata handler canonical contract', () => {
       })
     );
 
-    const response = await GET_products_metadata_handler(
+    const response = await getProductsMetadataHandler(
       new NextRequest('http://localhost/api/v2/products/metadata/price-groups'),
-      {} as Parameters<typeof GET_products_metadata_handler>[1],
+      {} as Parameters<typeof getProductsMetadataHandler>[1],
       { type: 'price-groups' }
     );
 

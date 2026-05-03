@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository, checkBaseSkuExists } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
@@ -22,7 +22,7 @@ const isBaseIntegrationSlug = (value: string | null | undefined): boolean => {
  * POST /api/v2/integrations/products/[id]/base/sku-check
  * Checks if the current product SKU exists in the target Base.com inventory.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

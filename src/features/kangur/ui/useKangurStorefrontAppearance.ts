@@ -30,7 +30,11 @@ const readHydratedThemeSetting = ({
   (hydrated ? settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode(mode)) : null) ??
   initialValue;
 
-export const useKangurStorefrontAppearance = () => {
+type KangurStorefrontAppearance = ReturnType<typeof resolveKangurStorefrontAppearance> & {
+  theme: ReturnType<typeof resolveKangurStoredThemeForAppearanceMode>;
+};
+
+export const useKangurStorefrontAppearance = (): KangurStorefrontAppearance => {
   const settingsStore = useSettingsStore();
   const appearance = useOptionalCmsStorefrontAppearance();
   const hydrated = useKangurStorefrontAppearanceHydrated();

@@ -34,7 +34,6 @@ export const ensureMongoIndexes = async (timeoutMs: number): Promise<void> => {
 export const listMongoAiPathsSettings = async (
   timeoutMs: number
 ): Promise<AiPathsSettingRecord[]> => {
-  await ensureMongoIndexes(timeoutMs);
   const mongo = await withMongoOperationTimeout(getMongoDb(), timeoutMs);
   const docs = await withMongoOperationTimeout(
     mongo
@@ -81,7 +80,6 @@ export const fetchMongoAiPathsSettings = async (
   timeoutMs: number
 ): Promise<AiPathsSettingRecord[]> => {
   if (keys.length === 0) return [];
-  await ensureMongoIndexes(timeoutMs);
   const mongo = await withMongoOperationTimeout(getMongoDb(), timeoutMs);
   const docs = await withMongoOperationTimeout(
     mongo

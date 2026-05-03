@@ -191,7 +191,7 @@ const resolveGeometryBasicsDraggedTile = ({
   slot: LabelTile | null;
 } => {
   const pool = [...current.pool];
-  let slot = current.slot;
+  const slot = current.slot;
 
   if (source.droppableId === 'pool') {
     return {

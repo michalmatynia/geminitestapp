@@ -11,8 +11,6 @@ import {
 } from '@/shared/utils/folder-tree-profiles-v2';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-
 export { FOLDER_TREE_UI_STATE_V2_KEY_PREFIX, FOLDER_TREE_PROFILE_V2_KEY_PREFIX };
 
 export const getFolderTreeUiStateV2Key = (instance: FolderTreeInstance): string =>
@@ -20,6 +18,94 @@ export const getFolderTreeUiStateV2Key = (instance: FolderTreeInstance): string 
 
 export const getFolderTreeProfileV2Key = (instance: FolderTreeInstance): string =>
   `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}${instance}`;
+
+const normalizeRuleKinds = (values: string[]): string[] =>
+  Array.from(
+    new Set(values.map((value: string) => value.trim().toLowerCase()).filter(Boolean))
+  );
+
+const upsertRequiredNestingRule = (
+  profile: FolderTreeProfileV2,
+  nextRule: NonNullable<FolderTreeProfileV2['nesting']['rules']>[number]
+): FolderTreeProfileV2 => {
+  const nextChildKinds = normalizeRuleKinds(nextRule.childKinds);
+  const nextTargetKinds = normalizeRuleKinds(nextRule.targetKinds);
+
+  const rules = [...profile.nesting.rules];
+  const existingRuleIndex = rules.findIndex((rule) => {
+    if (rule.childType !== nextRule.childType) return false;
+    if (rule.targetType !== nextRule.targetType) return false;
+
+    const ruleChildKinds = normalizeRuleKinds(rule.childKinds);
+    const ruleTargetKinds = normalizeRuleKinds(rule.targetKinds);
+    return (
+      ruleChildKinds.length === nextChildKinds.length &&
+      ruleTargetKinds.length === nextTargetKinds.length &&
+      ruleChildKinds.every(
+        (kind: string, index: number): boolean => kind === nextChildKinds[index]
+      ) &&
+      ruleTargetKinds.every(
+        (kind: string, index: number): boolean => kind === nextTargetKinds[index]
+      )
+    );
+  });
+
+  if (existingRuleIndex >= 0) {
+    rules[existingRuleIndex] = nextRule;
+  } else {
+    rules.push(nextRule);
+  }
+
+  return {
+    ...profile,
+    nesting: {
+      ...profile.nesting,
+      rules,
+    },
+  };
+};
+
+const enforceFolderTreeProfileInstanceInvariants = (
+  instance: FolderTreeInstance,
+  profile: FolderTreeProfileV2
+): FolderTreeProfileV2 => {
+  if (instance !== 'product_categories') {
+    return profile;
+  }
+
+  const sanitizedBlockedTargetKinds = profile.nesting.blockedTargetKinds.filter(
+    (kind: string): boolean => kind.trim().toLowerCase() !== 'category'
+  );
+
+  let nextProfile: FolderTreeProfileV2 =
+    sanitizedBlockedTargetKinds.length === profile.nesting.blockedTargetKinds.length
+      ? profile
+      : {
+          ...profile,
+          nesting: {
+            ...profile.nesting,
+            blockedTargetKinds: sanitizedBlockedTargetKinds,
+          },
+        };
+
+  nextProfile = upsertRequiredNestingRule(nextProfile, {
+    childType: 'folder',
+    childKinds: ['*'],
+    targetType: 'folder',
+    targetKinds: ['*'],
+    allow: true,
+  });
+
+  nextProfile = upsertRequiredNestingRule(nextProfile, {
+    childType: 'folder',
+    childKinds: ['*'],
+    targetType: 'root',
+    targetKinds: ['root'],
+    allow: true,
+  });
+
+  return nextProfile;
+};
 
 export type FolderTreeUiStateV2Entry = {
   expandedNodeIds: string[];
@@ -90,7 +176,12 @@ export const parseFolderTreeProfileV2Entry = (
   instance: FolderTreeInstance,
   raw: string | null | undefined
 ): FolderTreeProfileV2 => {
-  if (!raw) return defaultFolderTreeProfilesV2[instance];
+  if (!raw) {
+    return enforceFolderTreeProfileInstanceInvariants(
+      instance,
+      defaultFolderTreeProfilesV2[instance]
+    );
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
@@ -107,7 +198,10 @@ export const parseFolderTreeProfileV2Entry = (
       reason: 'invalid_shape',
     });
   }
-  return parseFolderTreeProfileV2Strict(parsed, defaultFolderTreeProfilesV2[instance]);
+  return enforceFolderTreeProfileInstanceInvariants(
+    instance,
+    parseFolderTreeProfileV2Strict(parsed, defaultFolderTreeProfilesV2[instance])
+  );
 };
 
 export const serializeFolderTreeUiStateV2Entry = (value: FolderTreeUiStateV2Entry): string =>

@@ -25,9 +25,9 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
       ...props
     },
     ref
-  ) => {
+  ): React.JSX.Element => {
     const [isVisible, setIsVisible] = React.useState(defaultVisible);
-    const toggleVisibility = () => setIsVisible((prev) => !prev);
+    const toggleVisibility = (): void => setIsVisible((prev) => !prev);
     const toggleLabel = isVisible ? 'Hide password' : 'Show password';
 
     return (

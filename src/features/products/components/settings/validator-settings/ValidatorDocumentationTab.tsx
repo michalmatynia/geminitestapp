@@ -7,14 +7,13 @@ import { VALIDATOR_FUNCTION_DOCS, VALIDATOR_UI_DOCS } from './validator-docs-cat
 import { buildFullValidatorDocumentationClipboardText } from './validator-documentation-clipboard';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+type ValidatorFunctionDoc = (typeof VALIDATOR_FUNCTION_DOCS)[number];
+type ValidatorUiDoc = (typeof VALIDATOR_UI_DOCS)[number];
+
 export function ValidatorDocumentationTab(): React.JSX.Element {
   const { toast } = useToast();
 
   const handleCopyFullDocumentation = async (): Promise<void> => {
-    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-      toast('Clipboard API is not available in this browser.', { variant: 'error' });
-      return;
-    }
     try {
       await navigator.clipboard.writeText(buildFullValidatorDocumentationClipboardText());
       toast('Full validator documentation copied (including JSON snippets).', {
@@ -28,22 +27,7 @@ export function ValidatorDocumentationTab(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <div className='flex flex-wrap items-center justify-between gap-2 rounded border border-border/60 bg-black/20 p-3'>
-        <p className='text-xs text-gray-400'>
-          Copy all validator docs sections and JSON snippets in one click.
-        </p>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={() => {
-            void handleCopyFullDocumentation();
-          }}
-          className='border-sky-500/40 text-sky-200 hover:bg-sky-500/10'
-          title='Copy all validation docs sections including JSON snippets'
-        >
-          Copy Full Validation Docs
-        </Button>
-      </div>
+      <ValidatorDocumentationToolbar onCopyFullDocumentation={handleCopyFullDocumentation} />
 
       <DocumentationSection title='Validation Pattern Tool Documentation'>
         <p className='text-sm leading-relaxed text-gray-300'>
@@ -53,52 +37,99 @@ export function ValidatorDocumentationTab(): React.JSX.Element {
         </p>
       </DocumentationSection>
 
-      <DocumentationSection title='Function Reference'>
-        <div className='space-y-3'>
-          {VALIDATOR_FUNCTION_DOCS.map((doc) => (
-            <div key={doc.id} className='rounded border border-border/60 bg-black/20 p-3'>
-              <div className='flex flex-wrap items-center justify-between gap-2'>
-                <p className='font-mono text-xs text-cyan-200'>{doc.id}</p>
-                <p className='font-mono text-[11px] text-gray-500'>{doc.file}</p>
-              </div>
-              <p className='mt-1 text-sm text-gray-200'>
-                <span className='font-semibold text-white'>{doc.symbol}</span>: {doc.purpose}
-              </p>
-              <p className='mt-1 text-xs text-gray-400'>
-                <span className='font-semibold text-gray-300'>Params:</span> {doc.params.join(' ')}
-              </p>
-              <p className='mt-1 text-xs text-gray-400'>
-                <span className='font-semibold text-gray-300'>Returns:</span> {doc.returns}
-              </p>
-              <p className='mt-1 text-xs text-gray-400'>
-                <span className='font-semibold text-gray-300'>Errors:</span> {doc.errors.join(' ')}
-              </p>
-              <p className='mt-1 text-xs text-gray-400'>
-                <span className='font-semibold text-gray-300'>Edge cases:</span>{' '}
-                {doc.edgeCases.join(' ')}
-              </p>
-              <p className='mt-1 font-mono text-[11px] text-emerald-200'>Example: {doc.example}</p>
-            </div>
-          ))}
-        </div>
-      </DocumentationSection>
+      <ValidatorFunctionReferenceSection />
+      <ValidatorUiControlsSection />
+    </div>
+  );
+}
 
-      <DocumentationSection title='UI Controls & Tooltips'>
-        <div className='space-y-3'>
-          {VALIDATOR_UI_DOCS.map((doc) => (
-            <div key={doc.id} className='rounded border border-border/60 bg-black/20 p-3'>
-              <p className='font-mono text-xs text-fuchsia-200'>{doc.id}</p>
-              <p className='mt-1 text-sm text-gray-200'>
-                <span className='font-semibold text-white'>{doc.title}</span>: {doc.description}
-              </p>
-              <p className='mt-1 text-xs text-gray-400'>
-                <span className='font-semibold text-gray-300'>Related functions:</span>{' '}
-                {doc.relatedFunctions.join(', ')}
-              </p>
-            </div>
-          ))}
-        </div>
-      </DocumentationSection>
+function ValidatorDocumentationToolbar({
+  onCopyFullDocumentation,
+}: {
+  onCopyFullDocumentation: () => Promise<void>;
+}): React.JSX.Element {
+  return (
+    <div className='flex flex-wrap items-center justify-between gap-2 rounded border border-border/60 bg-black/20 p-3'>
+      <p className='text-xs text-gray-400'>
+        Copy all validator docs sections and JSON snippets in one click.
+      </p>
+      <Button
+        type='button'
+        variant='outline'
+        onClick={() => {
+          void onCopyFullDocumentation();
+        }}
+        className='border-sky-500/40 text-sky-200 hover:bg-sky-500/10'
+        title='Copy all validation docs sections including JSON snippets'
+      >
+        Copy Full Validation Docs
+      </Button>
+    </div>
+  );
+}
+
+function ValidatorFunctionReferenceSection(): React.JSX.Element {
+  return (
+    <DocumentationSection title='Function Reference'>
+      <div className='space-y-3'>
+        {VALIDATOR_FUNCTION_DOCS.map((doc) => (
+          <ValidatorFunctionDocCard key={doc.id} doc={doc} />
+        ))}
+      </div>
+    </DocumentationSection>
+  );
+}
+
+function ValidatorFunctionDocCard({ doc }: { doc: ValidatorFunctionDoc }): React.JSX.Element {
+  return (
+    <div className='rounded border border-border/60 bg-black/20 p-3'>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <p className='font-mono text-xs text-cyan-200'>{doc.id}</p>
+        <p className='font-mono text-[11px] text-gray-500'>{doc.file}</p>
+      </div>
+      <p className='mt-1 text-sm text-gray-200'>
+        <span className='font-semibold text-white'>{doc.symbol}</span>: {doc.purpose}
+      </p>
+      <p className='mt-1 text-xs text-gray-400'>
+        <span className='font-semibold text-gray-300'>Params:</span> {doc.params.join(' ')}
+      </p>
+      <p className='mt-1 text-xs text-gray-400'>
+        <span className='font-semibold text-gray-300'>Returns:</span> {doc.returns}
+      </p>
+      <p className='mt-1 text-xs text-gray-400'>
+        <span className='font-semibold text-gray-300'>Errors:</span> {doc.errors.join(' ')}
+      </p>
+      <p className='mt-1 text-xs text-gray-400'>
+        <span className='font-semibold text-gray-300'>Edge cases:</span> {doc.edgeCases.join(' ')}
+      </p>
+      <p className='mt-1 font-mono text-[11px] text-emerald-200'>Example: {doc.example}</p>
+    </div>
+  );
+}
+
+function ValidatorUiControlsSection(): React.JSX.Element {
+  return (
+    <DocumentationSection title='UI Controls & Tooltips'>
+      <div className='space-y-3'>
+        {VALIDATOR_UI_DOCS.map((doc) => (
+          <ValidatorUiDocCard key={doc.id} doc={doc} />
+        ))}
+      </div>
+    </DocumentationSection>
+  );
+}
+
+function ValidatorUiDocCard({ doc }: { doc: ValidatorUiDoc }): React.JSX.Element {
+  return (
+    <div className='rounded border border-border/60 bg-black/20 p-3'>
+      <p className='font-mono text-xs text-fuchsia-200'>{doc.id}</p>
+      <p className='mt-1 text-sm text-gray-200'>
+        <span className='font-semibold text-white'>{doc.title}</span>: {doc.description}
+      </p>
+      <p className='mt-1 text-xs text-gray-400'>
+        <span className='font-semibold text-gray-300'>Related functions:</span>{' '}
+        {doc.relatedFunctions.join(', ')}
+      </p>
     </div>
   );
 }

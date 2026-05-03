@@ -172,7 +172,7 @@ export const getCentralLoggingRuntimeStats = (): CentralLoggingRuntimeStats => {
     lastDeadLetterPersistFailedAt: centralLoggingRuntimeState.lastDeadLetterPersistFailedAt,
     deadLetterBacklog: centralLogDeadLetterQueue.length,
     deadLetterMax: CENTRAL_LOG_DEAD_LETTER_MAX,
-    deadLetterReplayInProgress: deadLetterReplayInProgress,
+    deadLetterReplayInProgress,
     deadLetterStoreHydrated,
     deadLetterStoreHydrationInProgress: deadLetterStoreHydrationPromise !== null,
     deadLetterPersistInProgress,

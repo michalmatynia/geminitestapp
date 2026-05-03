@@ -18,18 +18,12 @@ const TERMINAL_RUN_STATUSES = new Set<AiPathRunRecord['status']>([
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ]);
 
 const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {
   queued: 'queued',
   queue: 'queued',
   running: 'running',
-  blocked_on_lease: 'blocked_on_lease',
-  blocked: 'blocked_on_lease',
-  paused: 'paused',
-  handoff_ready: 'handoff_ready',
-  handoff: 'handoff_ready',
   completed: 'completed',
   complete: 'completed',
   success: 'completed',
@@ -38,8 +32,6 @@ const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {
   error: 'failed',
   canceled: 'canceled',
   cancelled: 'canceled',
-  dead_lettered: 'dead_lettered',
-  deadlettered: 'dead_lettered',
 };
 
 export type TrackedAiPathRunSnapshot = {
@@ -50,6 +42,7 @@ export type TrackedAiPathRunSnapshot = {
   errorMessage: string | null;
   entityId: string | null;
   entityType: string | null;
+  run?: AiPathRunRecord | null;
   trackingState: 'active' | 'stopped';
 };
 
@@ -94,7 +87,7 @@ const asIsoTimestamp = (value: unknown): string | null => {
 const normalizeRunStatus = (value: unknown): AiPathRunRecord['status'] | null => {
   const normalized = asTrimmedString(value)?.toLowerCase();
   if (!normalized) return null;
-  return RUN_STATUS_ALIASES[normalized] ?? null;
+  return RUN_STATUS_ALIASES[normalized] ?? 'failed';
 };
 
 const coerceAiPathRunRecord = (value: unknown): AiPathRunRecord | null => {
@@ -153,6 +146,7 @@ const createInitialSnapshot = (
   errorMessage: initial?.errorMessage ?? null,
   entityId: initial?.entityId ?? null,
   entityType: initial?.entityType ?? null,
+  run: initial?.run ?? null,
   trackingState: initial?.trackingState ?? 'active',
 });
 
@@ -162,6 +156,22 @@ const cloneSnapshot = (snapshot: TrackedAiPathRunSnapshot): TrackedAiPathRunSnap
 
 const isTerminalStatus = (status: AiPathRunRecord['status']): boolean =>
   TERMINAL_RUN_STATUSES.has(status);
+
+const shouldFinalizeTerminalSnapshotWithoutDetail = (
+  snapshot: TrackedAiPathRunSnapshot
+): boolean => {
+  if (snapshot.status === 'completed' || snapshot.status === 'canceled') {
+    return true;
+  }
+  if (
+    snapshot.status === 'failed' &&
+    typeof snapshot.errorMessage === 'string' &&
+    snapshot.errorMessage.trim().length > 0
+  ) {
+    return true;
+  }
+  return false;
+};
 
 const isTransientRunDetailError = (message: string | null | undefined): boolean => {
   if (typeof message !== 'string') return false;
@@ -277,6 +287,7 @@ const mergeInitialSnapshot = (
     ...current,
     ...(current.entityId ? {} : { entityId: initial.entityId ?? current.entityId }),
     ...(current.entityType ? {} : { entityType: initial.entityType ?? current.entityType }),
+    ...(current.run ? {} : { run: initial.run ?? current.run }),
   };
 };
 
@@ -310,6 +321,7 @@ const resolveSnapshotFromDetailPayload = (
     errorMessage: isTerminalStatus(status) ? errorMessage : null,
     entityId: run?.entityId ?? previous.entityId ?? null,
     entityType: run?.entityType ?? previous.entityType ?? null,
+    run: run ?? previous.run ?? null,
     trackingState: previous.trackingState,
   };
 };
@@ -325,6 +337,7 @@ const resolveSnapshotFromRunRecord = (
   errorMessage: isTerminalStatus(run.status) ? (run.errorMessage ?? previous.errorMessage) : null,
   entityId: run.entityId ?? previous.entityId ?? null,
   entityType: run.entityType ?? previous.entityType ?? null,
+  run,
   trackingState: previous.trackingState,
 });
 
@@ -491,6 +504,10 @@ const startStreaming = (record: TrackRecord): void => {
       if (!run) return;
       const nextSnapshot = resolveSnapshotFromRunRecord(run, record.snapshot);
       if (isTerminalStatus(nextSnapshot.status)) {
+        if (shouldFinalizeTerminalSnapshotWithoutDetail(nextSnapshot)) {
+          finalizeRecord(record, nextSnapshot);
+          return;
+        }
         void syncTerminalDetail(record, nextSnapshot);
         return;
       }
@@ -498,6 +515,10 @@ const startStreaming = (record: TrackRecord): void => {
     };
 
     const handleDoneEvent = (): void => {
+      if (shouldFinalizeTerminalSnapshotWithoutDetail(record.snapshot)) {
+        finalizeRecord(record, record.snapshot);
+        return;
+      }
       void syncTerminalDetail(record, record.snapshot);
     };
 

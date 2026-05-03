@@ -21,7 +21,7 @@ export const updateAuthUserRoles = async (input: {
       payload: {
         roles: [],
         permissions: [],
-        userRoles: input.userRoles ?? {},
+        userRoles: input.userRoles,
         defaultRoleId: null,
       },
     };

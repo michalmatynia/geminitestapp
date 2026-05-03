@@ -81,29 +81,18 @@ describe('kangur server launch route', () => {
     expect(localizeFallbackHref).not.toHaveBeenCalled();
   });
 
-  it('reuses the cached launch route between hot reads and refreshes it after the ttl', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-03-26T09:00:00.000Z'));
-    vi.doMock('react', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('react')>();
-      return {
-        ...actual,
-        cache: <T extends (...args: never[]) => unknown>(fn: T): T => fn,
-      };
-    });
+  it('reuses a primed runtime launch route without touching the settings repository', async () => {
+    readKangurSettingValueMock.mockResolvedValue(JSON.stringify({ route: 'web_mobile_view' }));
 
-    readKangurSettingValueMock.mockResolvedValue(JSON.stringify({ route: 'dedicated_app' }));
+    const { getKangurConfiguredLaunchRoute, primeKangurLaunchRouteRuntime } = await import(
+      './launch-route'
+    );
 
-    const { getKangurConfiguredLaunchRoute } = await import('./launch-route');
-
+    expect(primeKangurLaunchRouteRuntime(JSON.stringify({ route: 'dedicated_app' }))).toBe(
+      'dedicated_app'
+    );
     await expect(getKangurConfiguredLaunchRoute()).resolves.toBe('dedicated_app');
-    await expect(getKangurConfiguredLaunchRoute()).resolves.toBe('dedicated_app');
-    expect(readKangurSettingValueMock).toHaveBeenCalledTimes(1);
-
-    vi.setSystemTime(new Date('2026-03-26T09:00:31.000Z'));
-
-    await expect(getKangurConfiguredLaunchRoute()).resolves.toBe('dedicated_app');
-    expect(readKangurSettingValueMock).toHaveBeenCalledTimes(2);
+    expect(readKangurSettingValueMock).not.toHaveBeenCalled();
   });
 
   it('reuses the bootstrapped lite launch route without touching the settings repository', async () => {
@@ -131,28 +120,19 @@ describe('kangur server launch route', () => {
     expect(readKangurSettingValueMock).not.toHaveBeenCalled();
   });
 
-  it('keeps the cached launch route on the fast path in development after the ttl', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-03-26T09:00:00.000Z'));
+  it('keeps the primed launch route on the fast path in development after later reads', async () => {
     process.env['NODE_ENV'] = 'development';
-    vi.doMock('react', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('react')>();
-      return {
-        ...actual,
-        cache: <T extends (...args: never[]) => unknown>(fn: T): T => fn,
-      };
-    });
+    readKangurSettingValueMock.mockResolvedValue(JSON.stringify({ route: 'web_mobile_view' }));
 
-    readKangurSettingValueMock.mockResolvedValue(JSON.stringify({ route: 'dedicated_app' }));
+    const { getKangurConfiguredLaunchRoute, primeKangurLaunchRouteRuntime } = await import(
+      './launch-route'
+    );
 
-    const { getKangurConfiguredLaunchRoute } = await import('./launch-route');
-
+    expect(primeKangurLaunchRouteRuntime(JSON.stringify({ route: 'dedicated_app' }))).toBe(
+      'dedicated_app'
+    );
     await expect(getKangurConfiguredLaunchRoute()).resolves.toBe('dedicated_app');
-    expect(readKangurSettingValueMock).toHaveBeenCalledTimes(1);
-
-    vi.setSystemTime(new Date('2026-03-26T09:00:31.000Z'));
-
     await expect(getKangurConfiguredLaunchRoute()).resolves.toBe('dedicated_app');
-    expect(readKangurSettingValueMock).toHaveBeenCalledTimes(1);
+    expect(readKangurSettingValueMock).not.toHaveBeenCalled();
   });
 });

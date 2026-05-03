@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, max-lines-per-function */
 'use client';
 
 import { Sun, Moon, Sparkles, Eye } from 'lucide-react';

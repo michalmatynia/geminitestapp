@@ -13,14 +13,14 @@ describe('ai trigger buttons contract runtime', () => {
         name: 'Run Path',
         iconId: null,
         pathId: 'path-1',
-        locations: ['product_row'],
+        locations: ['product_marketplace_copy_row'],
       })
     ).toMatchObject({
       name: 'Run Path',
       iconId: null,
       pathId: 'path-1',
       enabled: true,
-      locations: ['product_row'],
+      locations: ['product_marketplace_copy_row'],
       mode: 'click',
       display: 'icon_label',
     });

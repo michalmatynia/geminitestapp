@@ -107,7 +107,7 @@ export const filterKangurMobileScores = (
   const operation = filters.operation?.trim() ?? '';
 
   return scores.filter((score) => {
-    if (operation && score.operation !== operation) {
+    if (operation !== '' && score.operation !== operation) {
       return false;
     }
 
@@ -135,7 +135,7 @@ export const listKangurMobileScoreOperations = (
 
   scores.forEach((score) => {
     const operation = score.operation.trim();
-    if (!operation || seen.has(operation)) {
+    if (operation === '' || seen.has(operation)) {
       return;
     }
 
@@ -161,7 +161,7 @@ export const buildKangurMobileOperationPerformance = (
 
   scores.forEach((score) => {
     const operation = score.operation.trim();
-    if (!operation) {
+    if (operation === '') {
       return;
     }
 

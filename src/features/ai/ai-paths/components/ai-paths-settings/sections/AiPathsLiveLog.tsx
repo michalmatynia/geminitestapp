@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { useRuntimeState } from '@/features/ai/ai-paths/context';
+import { useRuntimeDataState } from '@/features/ai/ai-paths/context';
 
 import { AiPathsRuntimeEventLog } from '../AiPathsRuntimeEventLog';
 
 export function AiPathsLiveLog(): React.JSX.Element {
-  const { runtimeEvents } = useRuntimeState();
+  const { runtimeEvents } = useRuntimeDataState();
 
   return <AiPathsRuntimeEventLog events={runtimeEvents} />;
 }

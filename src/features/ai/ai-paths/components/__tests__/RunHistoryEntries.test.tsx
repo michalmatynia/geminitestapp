@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
+import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 
 import { RunHistoryEntries } from '../RunHistoryEntries';
 
 describe('RunHistoryEntries', () => {
-  it('renders replay and effect metadata chips when present', () => {
+  it('renders rerun and effect metadata chips when present', () => {
     const entries: RuntimeHistoryEntry[] = [
       {
         timestamp: '2026-03-07T10:00:00.000Z',
@@ -35,11 +35,6 @@ describe('RunHistoryEntries', () => {
         effectSourceSpanId: 'node-origin:1:1',
         activationHash: 'activation-hash-1',
         idempotencyKey: 'idempotency-key-1',
-        resumeMode: 'resume',
-        resumeDecision: 'reused',
-        resumeReason: 'completed_upstream',
-        resumeSourceSpanId: 'node-upstream:1:1',
-        resumeSourceStatus: 'completed',
       },
     ];
 
@@ -59,19 +54,12 @@ describe('RunHistoryEntries', () => {
     expect(screen.getByText('sourceSpan=node-origin:1:1')).toBeInTheDocument();
     expect(screen.getByText('activation=activation-hash-1')).toBeInTheDocument();
     expect(screen.getByText('idempotency=idempotency-key-1')).toBeInTheDocument();
-    expect(screen.getByText('resume=reused')).toBeInTheDocument();
-    expect(screen.getByText('resumeMode=resume')).toBeInTheDocument();
-    expect(screen.getByText('resumeReason=completed_upstream')).toBeInTheDocument();
-    expect(screen.getByText('resumeSource=node-upstream:1:1')).toBeInTheDocument();
-    expect(screen.getByText('resumeStatus=completed')).toBeInTheDocument();
-    expect(
-      screen.getByText('Resume metadata present; reuses recorded upstream outputs.')
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Resume run' }));
+    expect(screen.getByText('Forward-only mode starts a fresh run from recorded inputs.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Run again' }));
     expect(onReplayFromEntry).toHaveBeenCalledWith(entries[0]);
   });
 
-  it('labels failed history entries as node retries', () => {
+  it('keeps failed history entries rerunnable in forward-only mode', () => {
     const entries: RuntimeHistoryEntry[] = [
       {
         timestamp: '2026-03-07T10:05:00.000Z',
@@ -99,7 +87,7 @@ describe('RunHistoryEntries', () => {
 
     render(<RunHistoryEntries entries={entries} onReplayFromEntry={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Retry node' })).toBeInTheDocument();
-    expect(screen.getByText('Failed node entry; queues a node-only retry.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Run again' })).toBeInTheDocument();
+    expect(screen.getByText('Forward-only mode starts a fresh run from recorded inputs.')).toBeInTheDocument();
   });
 });

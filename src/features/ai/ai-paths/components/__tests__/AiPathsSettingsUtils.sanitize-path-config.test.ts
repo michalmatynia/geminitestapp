@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '@/dev/ai-paths-runtime-compatibility-normalization';
-
 import {
   buildPersistedRuntimeState,
-  parseRuntimeState,
   sanitizePathConfig,
-} from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
+} from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import { parseRuntimeState } from '@/shared/lib/ai-paths/core/utils/runtime-state';
+
 import type { AiNode, Edge, PathConfig, RuntimeState } from '@/shared/contracts/ai-paths';
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { resolveNodeTypeId } from '@/shared/lib/ai-paths/core/utils/node-identity';
+
+const HISTORICAL_RUNTIME_STRATEGY_ALIAS = 'compatibility';
 
 const buildNode = (patch: Partial<AiNode>): AiNode => {
   const baseNode = createDefaultPathConfig('path-node-fixture').nodes[0] as AiNode;
@@ -122,7 +123,7 @@ const HISTORICAL_RUNTIME_STRATEGY_STATE = {
         inputs: {},
         outputs: {},
         inputHash: null,
-        runtimeStrategy: HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS,
+        runtimeStrategy: HISTORICAL_RUNTIME_STRATEGY_ALIAS,
         runtimeResolutionSource: 'registry',
         runtimeCodeObjectId: null,
       },
@@ -383,7 +384,7 @@ describe('sanitizePathConfig', () => {
   );
 
   it.each(['simulation_required', 'simulation_preferred'] as const)(
-    'remediates removed legacy trigger context mode %s',
+    'rejects removed legacy trigger context mode %s',
     (contextMode) => {
       const config = createDefaultPathConfig(`path-legacy-trigger-context-${contextMode}`);
       const seedNode = config.nodes[0] as AiNode | undefined;
@@ -407,8 +408,9 @@ describe('sanitizePathConfig', () => {
       ];
       config.edges = [];
 
-      const sanitized = sanitizePathConfig(config);
-      expect(sanitized.nodes[0]?.config?.trigger?.contextMode).toBe('trigger_only');
+      expect(() => sanitizePathConfig(config)).toThrowError(
+        /removed legacy Trigger context modes/i
+      );
     }
   );
 
@@ -513,10 +515,14 @@ describe('sanitizePathConfig', () => {
     );
   });
 
-  it('rejects historical legacy runtime strategies inside runtime history', () => {
-    expect(() =>
-      parseRuntimeState(JSON.stringify(HISTORICAL_RUNTIME_STRATEGY_STATE))
-    ).toThrowError(/Invalid AI Paths runtime state payload\./i);
+  it('prunes historical runtime strategies inside runtime history', () => {
+    const parsed = parseRuntimeState(JSON.stringify(HISTORICAL_RUNTIME_STRATEGY_STATE));
+
+    expect(parsed.history?.['node-1']?.[0]).toMatchObject({
+      runtimeResolutionSource: 'registry',
+      runtimeCodeObjectId: null,
+    });
+    expect(parsed.history?.['node-1']?.[0]?.runtimeStrategy).toBeUndefined();
   });
 
   it('rejects malformed runtime payloads while sanitizing path configs', () => {

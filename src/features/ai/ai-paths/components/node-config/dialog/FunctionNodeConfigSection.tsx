@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { FunctionConfig } from '@/shared/lib/ai-paths';
+import type { FunctionConfig } from '@/shared/contracts/ai-paths';
 import { Textarea, Label, Input } from '@/shared/ui/primitives.public';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';

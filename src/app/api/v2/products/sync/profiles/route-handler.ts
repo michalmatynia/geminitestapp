@@ -2,20 +2,20 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 import {
-  GET_handler,
-  POST_handler,
+  getHandler,
+  postHandler,
   createProfileSchema,
 } from '@/app/api/v2/products/sync/profiles/handler';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
 
-export const GET = apiHandler(GET_handler, {
+export const GET = apiHandler(getHandler, {
   source: 'v2.products.sync.profiles.GET',
   cacheControl: 'no-store',
   requireAuth: true,
 });
 
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(postHandler, {
   source: 'v2.products.sync.profiles.POST',
   parseJsonBody: true,
   bodySchema: createProfileSchema,

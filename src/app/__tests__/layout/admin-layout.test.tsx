@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   adminLayoutMock,
   captureExceptionMock,
+  connectionMock,
   readOptionalRequestHeadersMock,
   readOptionalServerAuthSessionMock,
   readOptionalRequestCookiesMock,
@@ -16,6 +17,7 @@ const {
 } = vi.hoisted(() => ({
   adminLayoutMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   captureExceptionMock: vi.fn(),
+  connectionMock: vi.fn(),
   readOptionalRequestHeadersMock: vi.fn(),
   readOptionalServerAuthSessionMock: vi.fn(),
   readOptionalRequestCookiesMock: vi.fn(),
@@ -26,8 +28,17 @@ vi.mock('next/navigation', () => ({
   redirect: redirectMock,
 }));
 
+vi.mock('next/server', () => ({
+  connection: connectionMock,
+}));
+
+vi.mock('nextjs-toploader/app', () => ({
+  redirect: redirectMock,
+}));
+
 vi.mock('@/features/admin/public', () => ({
   AdminLayout: adminLayoutMock,
+  AdminRouteLoading: () => <div>Loading...</div>,
 }));
 
 vi.mock('@/features/auth/server', () => ({
@@ -53,6 +64,7 @@ describe('admin app layout', () => {
     vi.resetModules();
     vi.clearAllMocks();
     adminLayoutMock.mockImplementation(({ children }: { children: ReactNode }) => <>{children}</>);
+    connectionMock.mockResolvedValue(undefined);
     readOptionalRequestHeadersMock.mockResolvedValue(null);
     readOptionalServerAuthSessionMock.mockResolvedValue({
       user: {
@@ -75,9 +87,9 @@ describe('admin app layout', () => {
       get: vi.fn().mockReturnValue({ value: 'true' }),
     });
 
-    const { default: Layout } = await import('@/app/(admin)/layout');
+    const { AdminLayoutResolver } = await import('@/app/(admin)/layout');
 
-    const layout = await Layout({
+    const layout = await AdminLayoutResolver({
       children: <div data-testid='admin-content'>admin</div>,
     });
     render(layout);
@@ -106,9 +118,9 @@ describe('admin app layout', () => {
       })
     );
 
-    const { default: Layout } = await import('@/app/(admin)/layout');
+    const { AdminLayoutResolver } = await import('@/app/(admin)/layout');
 
-    const layout = await Layout({
+    const layout = await AdminLayoutResolver({
       children: <div data-testid='admin-content'>admin</div>,
     });
     render(layout);
@@ -130,11 +142,13 @@ describe('admin app layout', () => {
 
   it('captures cookie read errors and falls back to the default menu state', async () => {
     const error = new Error('cookie store unavailable');
-    readOptionalRequestCookiesMock.mockRejectedValue(error);
+    readOptionalRequestCookiesMock.mockResolvedValue({
+      get: vi.fn().mockImplementation(() => { throw error; }),
+    });
 
-    const { default: Layout } = await import('@/app/(admin)/layout');
+    const { AdminLayoutResolver } = await import('@/app/(admin)/layout');
 
-    const layout = await Layout({
+    const layout = await AdminLayoutResolver({
       children: <div data-testid='admin-content'>admin</div>,
     });
     render(layout);
@@ -158,10 +172,10 @@ describe('admin app layout', () => {
   it('redirects anonymous users to signin without capturing a request-scope error', async () => {
     readOptionalServerAuthSessionMock.mockResolvedValue(null);
 
-    const { default: Layout } = await import('@/app/(admin)/layout');
+    const { AdminLayoutResolver } = await import('@/app/(admin)/layout');
 
     await expect(
-      Layout({
+      AdminLayoutResolver({
         children: <div data-testid='admin-content'>admin</div>,
       })
     ).rejects.toThrow('redirect:/auth/signin');
@@ -181,9 +195,9 @@ describe('admin app layout', () => {
       },
     });
 
-    const { default: Layout } = await import('@/app/(admin)/layout');
+    const { AdminLayoutResolver } = await import('@/app/(admin)/layout');
 
-    const layout = await Layout({
+    const layout = await AdminLayoutResolver({
       children: <div data-testid='admin-content'>admin</div>,
     });
     render(layout);

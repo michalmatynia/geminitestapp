@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getAiPathRunQueueStatus } from '@/features/ai/ai-paths/workers/ai-path-run-queue/status';
 import { canAccessGlobalAiPathRuns, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
@@ -33,7 +33,7 @@ const resolveQueueStatusQueryInput = (
   ...((ctx.query ?? {}) as Record<string, unknown>),
 });
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsRunAccess();
   const query = querySchema.parse(resolveQueueStatusQueryInput(req, _ctx));
   const visibility = query.visibility;

@@ -27,13 +27,13 @@ const isMissingAgentRunStoreError = (error: unknown): error is AgentRunStoreErro
   return code === 'P2021' || code === 'P2022';
 };
 
-const logMissingAgentRunSchemaOnce = (error: AgentRunStoreError): void => {
+const logMissingAgentRunSchemaOnce = async (error: AgentRunStoreError): Promise<void> => {
   if (hasLoggedMissingAgentRunSchema) {
     return;
   }
 
   hasLoggedMissingAgentRunSchema = true;
-  void ErrorSystem.logWarning('Agent run storage not available; queue worker disabled.', {
+  await ErrorSystem.logWarning('Agent run storage not available; queue worker disabled.', {
     service: 'agent-queue',
     errorCode: error.code ?? 'UNKNOWN',
   });
@@ -43,9 +43,9 @@ const withAgentRunSchemaGuard = async <T>(operation: () => Promise<T>, fallback:
   try {
     return await operation();
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error);
     if (isMissingAgentRunStoreError(error)) {
-      logMissingAgentRunSchemaOnce(error);
+      await logMissingAgentRunSchemaOnce(error);
       return fallback;
     }
 
@@ -59,7 +59,7 @@ export async function processAgentRun(runId: string): Promise<void> {
 
   if (!chatbotAgentRun) {
     if (debugEnabled) {
-      void ErrorSystem.logWarning('Agent tables not initialized.', { service: 'agent-processor' });
+      await ErrorSystem.logWarning('Agent tables not initialized.', { service: 'agent-processor' });
     }
     return;
   }
@@ -95,8 +95,8 @@ export async function processAgentRun(runId: string): Promise<void> {
   try {
     await runAgentControlLoop(nextRun.id);
   } catch (error: unknown) {
-    void ErrorSystem.captureException(error);
-    void ErrorSystem.captureException(error, {
+    await ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error, {
       service: 'agent-queue',
       runId: nextRun.id,
     });
@@ -146,38 +146,43 @@ export async function recoverStuckRuns(): Promise<void> {
       }),
     []
   );
-  if (stuckRuns.length === 0) return;
-  for (const run of stuckRuns) {
-    const resumePlanState =
-      run.planState && typeof run.planState === 'object'
-        ? {
-          ...(run.planState as Record<string, unknown>),
-          resumeRequestedAt: new Date().toISOString(),
-        }
-        : { resumeRequestedAt: new Date().toISOString() };
-    const updatedRun = await withAgentRunSchemaGuard(
-      async () =>
-        await chatbotAgentRun.update({
-          where: { id: run.id },
-          data: {
-            status: 'queued',
-            requiresHumanIntervention: false,
-            errorMessage: null,
-            finishedAt: null,
-            checkpointedAt: new Date(),
-            planState: resumePlanState,
-            logLines: {
-              push: `[${new Date().toISOString()}] Auto-resume queued for stuck run.`,
+  const rawStuckRuns = stuckRuns as unknown[];
+  if (Array.isArray(rawStuckRuns) && rawStuckRuns.length > 0) {
+    const typedRuns = stuckRuns as any[];
+    await Promise.all(typedRuns.map(async (run) => {
+      const resumePlanState =
+        run.planState !== null && typeof run.planState === 'object'
+          ? {
+            ...(run.planState as Record<string, unknown>),
+            resumeRequestedAt: new Date().toISOString(),
+          }
+          : { resumeRequestedAt: new Date().toISOString() };
+      
+      const updatedRun = await withAgentRunSchemaGuard(
+        async () =>
+          await chatbotAgentRun.update({
+            where: { id: run.id },
+            data: {
+              status: 'queued',
+              requiresHumanIntervention: false,
+              errorMessage: null,
+              finishedAt: null,
+              checkpointedAt: new Date(),
+              planState: resumePlanState,
+              logLines: {
+                push: `[${new Date().toISOString()}] Auto-resume queued for stuck run.`,
+              },
             },
-          },
-        }),
-      null
-    );
-    if (!updatedRun) return;
-    await logAgentAudit(run.id, 'warning', 'Auto-resume queued for stuck run.', {
-      reason: 'stale-running',
-      thresholdMs: STUCK_RUN_THRESHOLD_MS,
-    });
+          }),
+        null
+      );
+      if (updatedRun !== null) {
+        await logAgentAudit(run.id, 'warning', 'Auto-resume queued for stuck run.', {
+          reason: 'stale-running',
+          thresholdMs: STUCK_RUN_THRESHOLD_MS,
+        });
+      }
+    }));
   }
 }
 

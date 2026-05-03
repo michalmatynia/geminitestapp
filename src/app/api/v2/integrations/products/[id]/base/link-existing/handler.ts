@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   findProductListingByProductAndConnectionAcrossProviders,
@@ -25,7 +25,7 @@ const isBaseIntegrationSlug = (value: string | null | undefined): boolean => {
  * POST /api/v2/integrations/products/[id]/base/link-existing
  * Links product to an already existing Base.com product_id without exporting.
  */
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

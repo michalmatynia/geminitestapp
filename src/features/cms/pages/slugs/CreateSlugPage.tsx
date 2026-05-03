@@ -1,7 +1,8 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useSearchParams } from 'next/navigation';
+import { useMemo, useState, startTransition } from 'react';
 
 import { SlugForm, type SlugFormSubmitData } from '@/features/cms/components/SlugForm';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
@@ -44,7 +45,7 @@ export default function CreateSlugPage(): React.JSX.Element {
       const next = domainId
         ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}`
         : '/admin/cms/slugs';
-      router.push(next);
+      startTransition(() => { router.push(next); });
     } catch (err: unknown) {
       logClientCatch(err, {
         source: 'CreateSlugPage',

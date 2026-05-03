@@ -8,7 +8,10 @@ type ProductsEntityReadType = 'drafts';
 type ProductsEntityUpdateType = 'catalogs';
 type ProductsEntityDeleteType = 'catalogs' | 'drafts';
 
-const invalidProductsEntityTypeError = (method: 'GET' | 'POST' | 'PUT' | 'DELETE', type: string) =>
+const invalidProductsEntityTypeError = (
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  type: string
+): ReturnType<typeof badRequestError> =>
   badRequestError(`Invalid products entity type for ${method}: ${type}`);
 
 export const resolveProductsEntityCollectionType = (

@@ -13,20 +13,7 @@ const AGENT_BROWSER_OPTIONS = [
 ] as const satisfies ReadonlyArray<LabeledOptionDto<'chromium' | 'firefox' | 'webkit'>>;
 
 export function AgentCreatorSettingsSection(): React.ReactElement {
-  const {
-    agentModeEnabled,
-    setAgentModeEnabled,
-    agentBrowser,
-    setAgentBrowser,
-    agentMaxSteps,
-    setAgentMaxSteps,
-    agentRunHeadless,
-    setAgentRunHeadless,
-    agentIgnoreRobotsTxt,
-    setAgentIgnoreRobotsTxt,
-    agentRequireHumanApproval,
-    setAgentRequireHumanApproval,
-  } = useAgentCreatorSettings();
+  const settings = useAgentCreatorSettings();
 
   return (
     <FormSection title='Agent Settings' variant='subtle' className='p-4'>
@@ -35,61 +22,73 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
           id='agent-mode-enabled'
           label='Enable Agent Mode'
           description='Allow the chatbot to use automated browser agents.'
-          checked={agentModeEnabled}
-          onCheckedChange={setAgentModeEnabled}
+          checked={settings.agentModeEnabled}
+          onCheckedChange={settings.setAgentModeEnabled}
           variant='switch'
         />
       </div>
 
-      {agentModeEnabled && (
-        <div className='space-y-4 mt-4'>
-          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
-            <FormField label='Browser'>
-              <SelectSimple
-                size='sm'
-                value={agentBrowser}
-                onValueChange={setAgentBrowser}
-                options={AGENT_BROWSER_OPTIONS}
-               ariaLabel='Browser' title='Browser'/>
-            </FormField>
-
-            <FormField label='Max Steps' id='agent-max-steps'>
-              <Input
-                id='agent-max-steps'
-                type='number'
-                value={agentMaxSteps}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setAgentMaxSteps(Number(e.target.value))
-                }
-               aria-label='Max Steps' title='Max Steps'/>
-            </FormField>
-          </div>
-
-          <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-            <ToggleRow
-              id='agent-run-headless'
-              label='Run Headless'
-              description="Don't show browser window"
-              checked={agentRunHeadless ?? false}
-              onCheckedChange={setAgentRunHeadless}
-            />
-            <ToggleRow
-              id='agent-ignore-robots'
-              label='Ignore robots.txt'
-              description='Bypass scraping restrictions'
-              checked={agentIgnoreRobotsTxt ?? false}
-              onCheckedChange={setAgentIgnoreRobotsTxt}
-            />
-            <ToggleRow
-              id='agent-require-approval'
-              label='Require Approval'
-              description='Ask before critical actions'
-              checked={agentRequireHumanApproval ?? false}
-              onCheckedChange={setAgentRequireHumanApproval}
-            />
-          </div>
-        </div>
-      )}
+      {settings.agentModeEnabled && <AgentConfigFields settings={settings} />}
     </FormSection>
+  );
+}
+
+function AgentConfigFields({
+  settings,
+}: {
+  settings: ReturnType<typeof useAgentCreatorSettings>;
+}): React.ReactElement {
+  return (
+    <div className='space-y-4 mt-4'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+        <FormField label='Browser'>
+          <SelectSimple
+            size='sm'
+            value={settings.agentBrowser}
+            onValueChange={settings.setAgentBrowser}
+            options={AGENT_BROWSER_OPTIONS}
+            ariaLabel='Browser'
+            title='Browser'
+          />
+        </FormField>
+
+        <FormField label='Max Steps' id='agent-max-steps'>
+          <Input
+            id='agent-max-steps'
+            type='number'
+            value={settings.agentMaxSteps}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              settings.setAgentMaxSteps(Number(e.target.value))
+            }
+            aria-label='Max Steps'
+            title='Max Steps'
+          />
+        </FormField>
+      </div>
+
+      <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+        <ToggleRow
+          id='agent-run-headless'
+          label='Run Headless'
+          description="Don't show browser window"
+          checked={settings.agentRunHeadless ?? false}
+          onCheckedChange={settings.setAgentRunHeadless}
+        />
+        <ToggleRow
+          id='agent-ignore-robots'
+          label='Ignore robots.txt'
+          description='Bypass scraping restrictions'
+          checked={settings.agentIgnoreRobotsTxt ?? false}
+          onCheckedChange={settings.setAgentIgnoreRobotsTxt}
+        />
+        <ToggleRow
+          id='agent-require-approval'
+          label='Require Approval'
+          description='Ask before critical actions'
+          checked={settings.agentRequireHumanApproval ?? false}
+          onCheckedChange={settings.setAgentRequireHumanApproval}
+        />
+      </div>
+    </div>
   );
 }

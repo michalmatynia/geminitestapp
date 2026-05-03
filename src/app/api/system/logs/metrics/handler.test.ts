@@ -16,7 +16,7 @@ vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   getSystemLogMetrics: getSystemLogMetricsMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -44,7 +44,7 @@ describe('system log metrics handler', () => {
   });
 
   it('parses shared metrics query DTOs before loading metrics', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/system/logs/metrics?level=warn&source=%20worker%20&minDurationMs=150&to=2026-03-22T10:00:00.000Z'
       ),

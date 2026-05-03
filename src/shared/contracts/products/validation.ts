@@ -8,6 +8,7 @@ export const productValidationTargetSchema = z.enum([
   'price',
   'stock',
   'category',
+  'producer',
   'size_length',
   'size_width',
   'length',

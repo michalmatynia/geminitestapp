@@ -1,29 +1,28 @@
-import { ClipboardList, Download, Upload } from 'lucide-react';
-import Link from 'next/link';
+'use client';
+
+import { ClipboardList, ListChecks, SlidersHorizontal } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import React from 'react';
 
 import {
   ImportExportProvider,
   useImportExportData,
+  useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
+import { AdminProductsBreadcrumbs } from '@/shared/ui/admin-products-breadcrumbs';
+import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 import { Card, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
-import { DocumentationSection, LoadingState, SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { TemplatesTabContent } from './imports/TemplatesTabContent';
 import { ImportBaseConnectionSection } from './imports-page/Import.BaseConnection';
 import { ImportListPreviewSection } from './imports-page/Import.List';
 import { ImportRunStatusSection } from './imports-page/Import.RunStatus';
 import { ImportLastResultSection } from './imports-page/Import.LastResult';
-import { ExportCategoryStatusSection } from './imports-page/Export.CategoryStatus';
-import { ExportWarehouseConfigSection } from './imports-page/Export.WarehouseConfig';
-import { ExportImageRetryPresetsSection } from './imports-page/Export.ImageRetryPresets';
-import { ExportQuickActionsSection } from './imports-page/Export.QuickActions';
-import { ExportBaseConfigSection } from '@/features/data-import-export/components/imports/sections/ExportBaseConfigSection';
 
-function ImportTab(): React.JSX.Element {
+function ImportListTab(): React.JSX.Element {
   return (
     <div className='space-y-4'>
-      <ImportBaseConnectionSection />
       <ImportListPreviewSection />
       <ImportRunStatusSection />
       <ImportLastResultSection />
@@ -31,140 +30,94 @@ function ImportTab(): React.JSX.Element {
   );
 }
 
-function ExportTab(): React.JSX.Element {
+function ImportSettingsTab(): React.JSX.Element {
   return (
-    <Card className='border-border/60 bg-card/40 p-4'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <h2 className='text-lg font-semibold text-white'>Base.com Export Settings</h2>
-          <p className='mt-1 text-sm text-gray-400'>
-            Configure default export settings for Base.com product listings
-          </p>
-        </div>
-        <div className='flex items-center gap-2'>
-          <span className='flex h-2 w-2 rounded-full bg-green-500'></span>
-          <span className='text-xs text-green-400'>Connected</span>
-        </div>
-      </div>
-
-      <div className='mt-6 space-y-4'>
-        <ExportBaseConfigSection />
-
-        <ExportCategoryStatusSection />
-
-        <ExportWarehouseConfigSection />
-
-        <ExportImageRetryPresetsSection />
-
-        <DocumentationSection
-          title='Export Guidelines'
-          className='border-blue-900/50 bg-blue-900/20'
-        >
-          <ul className='list-disc space-y-1 pl-5 text-xs text-blue-300/70'>
-            <li>Exports use templates to map internal product fields to Base.com API parameters</li>
-            <li>
-              Without a template, default field mappings are used (SKU, Name, Price, Stock, etc.)
-            </li>
-            <li>Import and export templates are managed separately in the Templates tab</li>
-            <li>
-              Export to Base.com from Product List → Integrations → List Products → Select Base.com
-            </li>
-            <li>
-              Track export jobs in the{' '}
-              <Link
-                href='/admin/ai-paths/queue?tab=paths-external#export-jobs'
-                className='text-blue-400 underline'
-              >
-                Job Queue → External Runs
-              </Link>{' '}
-              tab
-            </li>
-          </ul>
-        </DocumentationSection>
-
-        <ExportQuickActionsSection />
-      </div>
-    </Card>
+    <div className='space-y-4'>
+      <ImportBaseConnectionSection />
+    </div>
   );
 }
 
 function ImportsPageContent(): React.JSX.Element {
+  const searchParams = useSearchParams();
+  const requestedRunId = searchParams?.get('runId')?.trim() ?? '';
   const { checkingIntegration, isBaseConnected } = useImportExportData();
+  const { importsPageTab, setImportsPageTab, setActiveImportRunId } = useImportExportState();
 
-  if (checkingIntegration) {
-    return (
-      <div className='page-section w-full'>
-        <LoadingState
-          message='Checking Base.com integration status...'
-          className='bg-card/40 border border-border/60 rounded-lg h-64'
-        />
-      </div>
-    );
-  }
-  if (!isBaseConnected) {
-    return (
-      <div className='page-section w-full'>
-        <Card variant='warning' padding='lg'>
-          <h3 className='text-lg font-bold mb-2 text-amber-300'>Base.com integration required</h3>
-          <p className='text-sm text-amber-300'>
-            Please configure your Base.com API connection in the Integrations settings before using
-            import/export tools.
-          </p>
-        </Card>
-      </div>
-    );
-  }
+  React.useEffect(() => {
+    if (!requestedRunId) return;
+    setImportsPageTab('import-list');
+    setActiveImportRunId(requestedRunId);
+  }, [requestedRunId, setActiveImportRunId, setImportsPageTab]);
+
+  const handleImportsTabChange = (value: string): void => {
+    if (
+      value === 'import-list' ||
+      value === 'import-settings' ||
+      value === 'import-template'
+    ) {
+      setImportsPageTab(value);
+    }
+  };
 
   return (
-    <div className='page-section space-y-6'>
-      <SectionHeader
-        title='Product Import/Export'
-        subtitle={
-          <nav
-            aria-label='Breadcrumb'
-            className='flex flex-wrap items-center gap-1 text-xs text-gray-400'
-          >
-            <Link href='/admin' className='hover:text-gray-200 transition-colors'>
-              Admin
-            </Link>
-            <span>/</span>
-            <Link href='/admin/integrations' className='hover:text-gray-200 transition-colors'>
-              Integrations
-            </Link>
-            <span>/</span>
-            <span className='text-gray-300'>Imports</span>
-          </nav>
-        }
+    <div data-testid='imports-page-shell' className='page-section-tight space-y-4'>
+      <AdminTitleBreadcrumbHeader
+        title={<h1 className='text-3xl font-bold tracking-tight text-white'>Product Import</h1>}
+        breadcrumb={<AdminProductsBreadcrumbs current='Import' />}
       />
+      <p className='text-sm text-muted-foreground'>
+        Import products from Base.com and manage import templates.
+      </p>
+      <div className='space-y-4'>
+        {checkingIntegration ? (
+          <LoadingState
+            message='Checking Base.com integration status...'
+            className='h-64 rounded-lg border border-border/60 bg-card/40'
+          />
+        ) : !isBaseConnected ? (
+          <Card variant='warning' padding='lg'>
+            <h3 className='mb-2 text-lg font-bold text-amber-300'>Base.com integration required</h3>
+            <p className='text-sm text-amber-300'>
+              Please configure your Base.com API connection in the Integrations settings before
+              using import tools.
+            </p>
+          </Card>
+        ) : (
+          <Tabs
+            value={importsPageTab}
+            onValueChange={handleImportsTabChange}
+            className='w-full space-y-4'
+          >
+            <TabsList className='bg-muted/40 p-1' aria-label='Product import tabs'>
+              <TabsTrigger value='import-list' className='gap-2'>
+                <ListChecks className='size-3.5' />
+                Import List Preview
+              </TabsTrigger>
+              <TabsTrigger value='import-settings' className='gap-2'>
+                <SlidersHorizontal className='size-3.5' />
+                Import Settings
+              </TabsTrigger>
+              <TabsTrigger value='import-template' className='gap-2'>
+                <ClipboardList className='size-3.5' />
+                Import Template
+              </TabsTrigger>
+            </TabsList>
 
-      <Tabs defaultValue='imports' className='w-full'>
-        <TabsList className='bg-muted/40 p-1' aria-label='Import export tabs'>
-          <TabsTrigger value='imports' className='gap-2'>
-            <Download className='size-3.5' />
-            Imports
-          </TabsTrigger>
-          <TabsTrigger value='exports' className='gap-2'>
-            <Upload className='size-3.5' />
-            Exports
-          </TabsTrigger>
-          <TabsTrigger value='templates' className='gap-2'>
-            <ClipboardList className='size-3.5' />
-            Templates
-          </TabsTrigger>
-        </TabsList>
+            <TabsContent value='import-list' className='mt-0 outline-none'>
+              <ImportListTab />
+            </TabsContent>
 
-        <TabsContent value='imports' className='mt-6 outline-none'>
-          <ImportTab />
-        </TabsContent>
+            <TabsContent value='import-settings' className='mt-0 outline-none'>
+              <ImportSettingsTab />
+            </TabsContent>
 
-        <TabsContent value='exports' className='mt-6 outline-none'>
-          <ExportTab />
-        </TabsContent>
-
-        <TabsContent value='templates' className='mt-6 outline-none'>
-          <TemplatesTabContent />
-        </TabsContent>
-      </Tabs>
+            <TabsContent value='import-template' className='mt-0 outline-none'>
+              <TemplatesTabContent scope='import' />
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
     </div>
   );
 }

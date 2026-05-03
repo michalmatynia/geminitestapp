@@ -11,8 +11,8 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import {
-  NodeFileDocumentSearchScope,
-  NodeFileDocumentSearchRow,
+  type NodeFileDocumentSearchScope,
+  type NodeFileDocumentSearchRow,
 } from './CaseResolverNodeFileUtils';
 
 import type { RelationTreeLookup } from '../relation-search/types';

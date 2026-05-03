@@ -28,7 +28,7 @@ vi.mock('@/features/integrations/server', () => ({
   resolveBaseConnectionToken: resolveBaseConnectionTokenMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createContext = (): ApiHandlerContext =>
   ({
@@ -80,7 +80,7 @@ describe('marketplace producers fetch handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createContext());
+    const response = await postHandler(request, createContext());
 
     expect(response.status).toBe(200);
     expect(fetchBaseProducersMock).toHaveBeenCalledWith('base-token', {
@@ -110,7 +110,7 @@ describe('marketplace producers fetch handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createContext());
+    const response = await postHandler(request, createContext());
 
     expect(response.status).toBe(200);
     expect(syncFromBaseMock).not.toHaveBeenCalled();
@@ -137,7 +137,7 @@ describe('marketplace producers fetch handler', () => {
       },
     });
 
-    await expect(POST_handler(request, createContext())).rejects.toThrow(
+    await expect(postHandler(request, createContext())).rejects.toThrow(
       'Only Base.com connections are supported for producer fetch'
     );
 

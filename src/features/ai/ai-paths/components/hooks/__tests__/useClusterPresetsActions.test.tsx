@@ -63,9 +63,11 @@ const mockState = vi.hoisted(() => ({
   updateView: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mockState.toast }),
 }));
+
+vi.mock('@/shared/ui', () => ({}));
 
 vi.mock('@/shared/hooks/ui/useConfirm', () => ({
   useConfirm: () => ({
@@ -74,13 +76,16 @@ vi.mock('@/shared/hooks/ui/useConfirm', () => ({
   }),
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/constants', () => ({
   BUNDLE_INPUT_PORTS: ['bundle', 'context'],
   TEMPLATE_INPUT_PORTS: ['bundle'],
-  CLUSTER_PRESETS_KEY: 'cluster-presets',
+  CLUSTER_PRESETS_KEY: 'ai_paths_cluster_presets',
   NODE_MIN_HEIGHT: 50,
   NODE_WIDTH: 100,
   VIEW_MARGIN: 10,
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/utils', () => ({
   createPresetId: () => mockState.createPresetId(),
   parsePathList: (value: string) => mockState.parsePathList(value),
 }));
@@ -105,6 +110,8 @@ vi.mock('@/features/ai/ai-paths/context/CanvasContext', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
+  useGraphDataState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
   useGraphState: () => mockState.graphState,
   useGraphActions: () => mockState.graphActions,
 }));
@@ -404,7 +411,7 @@ describe('useClusterPresetsActions', () => {
       },
     ]);
     expect(mockState.updateAiPathsSetting).toHaveBeenCalledWith(
-      'cluster-presets',
+      'ai_paths_cluster_presets',
       JSON.stringify(nextPresets)
     );
     expect(mockState.presetsActions.setEditingPresetId).toHaveBeenCalledWith(null);
@@ -515,7 +522,7 @@ describe('useClusterPresetsActions', () => {
       expect.objectContaining({ id: 'preset-2', name: 'Keep Me' }),
     ]);
     expect(mockState.updateAiPathsSetting).toHaveBeenCalledWith(
-      'cluster-presets',
+      'ai_paths_cluster_presets',
       JSON.stringify(nextPresets)
     );
     expect(mockState.toast).toHaveBeenCalledWith('Preset deleted.', { variant: 'success' });

@@ -321,6 +321,14 @@ export type AgentToolLog = (
   metadata?: Record<string, unknown>
 ) => Promise<void>;
 
+export type AgentLlmContext = {
+  model: string;
+  runId: string;
+  log: AgentToolLog;
+  activeStepId?: string | null;
+  stepLabel?: string | null;
+};
+
 export const agentRunStatusTypeSchema = z.enum([
   'queued',
   'running',
@@ -337,6 +345,7 @@ export const agentRunRecordSchema = dtoBaseSchema.extend({
   tools: z.array(z.string()),
   searchProvider: z.string().nullable().optional(),
   agentBrowser: z.string().nullable().optional(),
+  personaId: z.string().nullable().optional(),
   runHeadless: z.boolean(),
   status: agentRunStatusTypeSchema,
   logLines: z.array(z.string()),
@@ -369,12 +378,15 @@ export const agentRunEnqueueResponseSchema = z.object({
 export type AgentRunEnqueueResponseDto = z.infer<typeof agentRunEnqueueResponseSchema>;
 export type AgentRunEnqueueResponse = AgentRunEnqueueResponseDto;
 
+import { type BatchDeleteResponse } from './base';
+
 export const agentRunsDeleteResponseSchema = z.object({
-  deleted: z.number(),
+  success: z.boolean(),
+  deletedCount: z.number(),
+  deleted: z.number().optional(), // Legacy alias
 });
 
-export type AgentRunsDeleteResponseDto = z.infer<typeof agentRunsDeleteResponseSchema>;
-export type AgentRunsDeleteResponse = AgentRunsDeleteResponseDto;
+export type AgentRunsDeleteResponse = BatchDeleteResponse & { deleted?: number };
 
 export const agentRunDeleteResponseSchema = z.object({
   deleted: z.boolean(),
@@ -532,6 +544,7 @@ export const agentExecutionContextSchema = z.object({
       uiInventory: z.unknown().optional(),
     })
     .nullable(),
+  configs: z.record(z.string(), z.any()).optional(),
 });
 
 export type AgentExecutionContext = z.infer<typeof agentExecutionContextSchema>;
@@ -566,3 +579,12 @@ export const selfCheckReviewResultSchema = z.object({
 });
 
 export type SelfCheckReviewResult = z.infer<typeof selfCheckReviewResultSchema>;
+
+export const agentVerificationSchema = z.object({
+  verdict: z.string().optional(),
+  evidence: z.array(z.string()).optional(),
+  missing: z.array(z.string()).optional(),
+  followUp: z.string().nullable().optional(),
+});
+
+export type AgentVerification = z.infer<typeof agentVerificationSchema>;

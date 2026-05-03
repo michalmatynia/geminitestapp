@@ -237,6 +237,19 @@ export interface MongoProducerDoc {
   updatedAt?: Date | string;
 }
 
+export interface MongoProductTitleTermDoc {
+  _id?: ObjectId | string;
+  id?: string;
+  catalogId?: string;
+  type?: 'size' | 'material' | 'theme';
+  name?: string;
+  name_en?: string;
+  name_pl?: string | null;
+  normalizedNameEn?: string;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
 export interface MongoImageFileDoc {
   _id?: ObjectId;
   id?: string;
@@ -366,7 +379,6 @@ export interface MongoAiPathRunDoc {
   retryCount?: number | null;
   maxAttempts?: number | null;
   nextRetryAt?: Date | string | null;
-  deadLetteredAt?: Date | string | null;
   startedAt?: Date | string | null;
   finishedAt?: Date | string | null;
   createdAt?: Date;

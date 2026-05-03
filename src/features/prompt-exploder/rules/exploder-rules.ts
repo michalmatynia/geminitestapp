@@ -1,4 +1,4 @@
-import { PromptValidationRule } from '@/shared/contracts/prompt-engine';
+import { type PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
 import { createRegexRule } from './base';
 

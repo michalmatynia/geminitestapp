@@ -28,7 +28,9 @@ const EMPTY_NATIVE_SELECT_STATE: Pick<NativeSelectContextValue, 'options' | 'pla
 export const shouldUseNativeSelectMode = (pathname: string | null | undefined): boolean =>
   Boolean(
     pathname &&
-    (pathname.startsWith('/admin/image-studio') || pathname.startsWith('/admin/ai-paths/queue'))
+    (pathname.startsWith('/admin/image-studio') ||
+      pathname.startsWith('/admin/ai-paths/queue') ||
+      pathname.startsWith('/admin/products'))
   );
 
 const useNativeSelectMode = (): boolean => {
@@ -207,10 +209,21 @@ const SelectTrigger = React.forwardRef<
   const useNativeSelect = useNativeSelectMode();
   const context = React.useContext(NativeSelectContext);
   const nativeTriggerProps = React.useMemo(() => getNativeSelectTriggerProps(props), [props]);
-  const inferredAriaLabel =
-    !nativeTriggerProps['aria-labelledby'] && !nativeTriggerProps['aria-label']
-      ? nativeTriggerProps.title
-      : nativeTriggerProps['aria-label'];
+  const inferredAriaLabel = React.useMemo(() => {
+    if (nativeTriggerProps['aria-labelledby']) {
+      return undefined;
+    }
+    if (typeof nativeTriggerProps['aria-label'] === 'string' && nativeTriggerProps['aria-label']) {
+      return nativeTriggerProps['aria-label'];
+    }
+    if (context?.placeholder) {
+      return context.placeholder;
+    }
+    if (typeof nativeTriggerProps.title === 'string' && nativeTriggerProps.title) {
+      return nativeTriggerProps.title;
+    }
+    return 'Select option';
+  }, [context?.placeholder, nativeTriggerProps]);
 
   if (!useNativeSelect) {
     return (
@@ -339,7 +352,7 @@ const SelectItem = React.forwardRef<
   return (
     <SelectPrimitive.Item
       className={cn(
-        'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-foreground/10 focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+        'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-foreground/10 focus:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         className
       )}
       {...props}

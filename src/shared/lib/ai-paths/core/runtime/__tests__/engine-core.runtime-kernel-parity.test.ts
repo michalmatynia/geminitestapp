@@ -6,99 +6,99 @@ import {
   stripRuntimeTelemetry,
 } from './engine-core.runtime-kernel-parity.builders';
 
-describe('engine-core runtime-kernel dual-run parity', () => {
-  it('keeps outputs and node statuses identical for numeric runtime-kernel path', async () => {
-    const legacy = await runKernelPath('compatibility', 7);
-    const v3 = await runKernelPath('code_object_v3', 7);
+describe('engine-core runtime-kernel canonical parity', () => {
+  it('keeps outputs and node statuses identical for default and explicit numeric runtime-kernel paths', async () => {
+    const implicit = await runKernelPath('default', 7);
+    const explicit = await runKernelPath('explicit', 7);
 
-    expect(legacy.result.status).toBe('completed');
-    expect(v3.result.status).toBe('completed');
-    expect(legacy.result.outputs).toEqual(v3.result.outputs);
-    expect(legacy.result.nodeStatuses).toEqual(v3.result.nodeStatuses);
-    expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(
-      stripRuntimeTelemetry(v3.result.history)
+    expect(implicit.result.status).toBe('completed');
+    expect(explicit.result.status).toBe('completed');
+    expect(implicit.result.outputs).toEqual(explicit.result.outputs);
+    expect(implicit.result.nodeStatuses).toEqual(explicit.result.nodeStatuses);
+    expect(stripRuntimeTelemetry(implicit.result.history)).toEqual(
+      stripRuntimeTelemetry(explicit.result.history)
     );
 
-    const legacyNodeEvents = legacy.profileNodeEvents.filter(
+    const implicitNodeEvents = implicit.profileNodeEvents.filter(
       (event) =>
         event['type'] === 'node' &&
         event['status'] === 'executed' &&
         typeof event['nodeId'] === 'string'
     );
-    const v3NodeEvents = v3.profileNodeEvents.filter(
+    const explicitNodeEvents = explicit.profileNodeEvents.filter(
       (event) =>
         event['type'] === 'node' &&
         event['status'] === 'executed' &&
         typeof event['nodeId'] === 'string'
     );
 
-    expect(legacyNodeEvents).toHaveLength(3);
-    expect(v3NodeEvents).toHaveLength(3);
-    legacyNodeEvents.forEach((event) => {
-      expect(event['runtimeStrategy']).toBe('compatibility');
-      expect(event['runtimeCodeObjectId']).toBeNull();
+    expect(implicitNodeEvents).toHaveLength(3);
+    expect(explicitNodeEvents).toHaveLength(3);
+    implicitNodeEvents.forEach((event) => {
+      expect(event['runtimeStrategy']).toBe('code_object_v3');
+      expect(typeof event['runtimeCodeObjectId']).toBe('string');
     });
-    v3NodeEvents.forEach((event) => {
+    explicitNodeEvents.forEach((event) => {
       expect(event['runtimeStrategy']).toBe('code_object_v3');
       expect(typeof event['runtimeCodeObjectId']).toBe('string');
     });
   });
 
-  it('keeps outputs and node statuses identical for non-numeric fallback path', async () => {
-    const legacy = await runKernelPath('compatibility', 'abc');
-    const v3 = await runKernelPath('code_object_v3', 'abc');
+  it('keeps outputs and node statuses identical for default and explicit non-numeric paths', async () => {
+    const implicit = await runKernelPath('default', 'abc');
+    const explicit = await runKernelPath('explicit', 'abc');
 
-    expect(legacy.result.status).toBe('completed');
-    expect(v3.result.status).toBe('completed');
-    expect(legacy.result.outputs).toEqual(v3.result.outputs);
-    expect(legacy.result.nodeStatuses).toEqual(v3.result.nodeStatuses);
-    expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(
-      stripRuntimeTelemetry(v3.result.history)
+    expect(implicit.result.status).toBe('completed');
+    expect(explicit.result.status).toBe('completed');
+    expect(implicit.result.outputs).toEqual(explicit.result.outputs);
+    expect(implicit.result.nodeStatuses).toEqual(explicit.result.nodeStatuses);
+    expect(stripRuntimeTelemetry(implicit.result.history)).toEqual(
+      stripRuntimeTelemetry(explicit.result.history)
     );
 
-    expect(legacy.result.outputs['node-template']?.['prompt']).toBe('sum=abc');
-    expect(v3.result.outputs['node-template']?.['prompt']).toBe('sum=abc');
+    expect(implicit.result.outputs['node-template']?.['prompt']).toBe('sum=abc');
+    expect(explicit.result.outputs['node-template']?.['prompt']).toBe('sum=abc');
   });
 
-  it('keeps outputs, statuses, and strategy telemetry identical for transform runtime-kernel path', async () => {
-    const legacy = await runTransformKernelPath('compatibility', 'Wave A Kernel');
-    const v3 = await runTransformKernelPath('code_object_v3', 'Wave A Kernel');
+  it('keeps outputs, statuses, and strategy telemetry identical for default and explicit transform paths', async () => {
+    const implicit = await runTransformKernelPath('default', 'Wave A Kernel');
+    const explicit = await runTransformKernelPath('explicit', 'Wave A Kernel');
 
-    expect(legacy.result.status).toBe('completed');
-    expect(v3.result.status).toBe('completed');
-    expect(legacy.result.outputs).toEqual(v3.result.outputs);
-    expect(legacy.result.nodeStatuses).toEqual(v3.result.nodeStatuses);
-    expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(
-      stripRuntimeTelemetry(v3.result.history)
+    expect(implicit.result.status).toBe('completed');
+    expect(explicit.result.status).toBe('completed');
+    expect(implicit.result.outputs).toEqual(explicit.result.outputs);
+    expect(implicit.result.nodeStatuses).toEqual(explicit.result.nodeStatuses);
+    expect(stripRuntimeTelemetry(implicit.result.history)).toEqual(
+      stripRuntimeTelemetry(explicit.result.history)
     );
 
-    const legacyPrompt = legacy.result.outputs['node-template']?.['prompt'];
-    const v3Prompt = v3.result.outputs['node-template']?.['prompt'];
-    expect(typeof legacyPrompt).toBe('string');
-    expect(legacyPrompt).toBe(v3Prompt);
-    expect(String(legacyPrompt)).toContain('-mutated-v3');
+    const implicitPrompt = implicit.result.outputs['node-template']?.['prompt'];
+    const explicitPrompt = explicit.result.outputs['node-template']?.['prompt'];
+    expect(typeof implicitPrompt).toBe('string');
+    expect(implicitPrompt).toBe(explicitPrompt);
+    expect(String(implicitPrompt)).toContain('-mutated-v3');
 
-    const legacyNodeEvents = legacy.profileNodeEvents.filter(
+    const implicitNodeEvents = implicit.profileNodeEvents.filter(
       (event) =>
         event['type'] === 'node' &&
         event['status'] === 'executed' &&
         typeof event['nodeId'] === 'string'
     );
-    const v3NodeEvents = v3.profileNodeEvents.filter(
+    const explicitNodeEvents = explicit.profileNodeEvents.filter(
       (event) =>
         event['type'] === 'node' &&
         event['status'] === 'executed' &&
         typeof event['nodeId'] === 'string'
     );
 
-    expect(legacyNodeEvents).toHaveLength(3);
-    expect(v3NodeEvents).toHaveLength(3);
+    expect(implicitNodeEvents).toHaveLength(3);
+    expect(explicitNodeEvents).toHaveLength(3);
 
-    legacyNodeEvents.forEach((event) => {
-      expect(event['runtimeStrategy']).toBe('compatibility');
-      expect(event['runtimeCodeObjectId']).toBeNull();
+    implicitNodeEvents.forEach((event) => {
+      expect(event['runtimeStrategy']).toBe('code_object_v3');
+      expect(typeof event['runtimeCodeObjectId']).toBe('string');
     });
-    v3NodeEvents.forEach((event) => {
+    explicitNodeEvents.forEach((event) => {
       expect(event['runtimeStrategy']).toBe('code_object_v3');
       expect(typeof event['runtimeCodeObjectId']).toBe('string');
     });

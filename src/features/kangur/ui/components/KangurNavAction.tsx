@@ -371,9 +371,9 @@ function KangurNavActionButton({
   );
 }
 
-export const KangurNavAction = memo(function KangurNavAction(
+export const KangurNavAction = memo((
   props: KangurNavActionProps
-): React.JSX.Element {
+): React.JSX.Element => {
   const { children } = props;
   const { buttonProps, resolvedAction } = useKangurNavActionPresentation(props);
 

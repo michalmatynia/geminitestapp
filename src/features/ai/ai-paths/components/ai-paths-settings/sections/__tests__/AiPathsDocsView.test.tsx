@@ -14,6 +14,9 @@ vi.mock('@/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsPage
   useAiPathsSettingsPageContext: () => ({
     activeTab: mockState.activeTab,
   }),
+  useAiPathsSettingsPageWorkspaceContext: () => ({
+    activeTab: mockState.activeTab,
+  }),
 }));
 
 import { AiPathsDocsView } from '../AiPathsDocsView';

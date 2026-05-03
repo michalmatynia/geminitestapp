@@ -35,6 +35,12 @@ vi.mock('@/features/kangur/lesson-documents', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => authState.value,
+  useKangurAuthSessionState: () => ({
+    user: authState.value.user,
+    isAuthenticated: authState.value.user !== null,
+    hasResolvedAuth: true,
+    canAccessParentAssignments: authState.value.canAccessParentAssignments ?? false,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({

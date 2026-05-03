@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import {
@@ -12,9 +13,14 @@ import {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductParameterValue } from '@/shared/contracts/products/product';
-import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
-import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
+import {
+  PRODUCT_DRAFT_KIND_OPTIONS,
+  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
+} from '@/shared/contracts/products/drafts';
+import { type ProductDraftKind, type ProductDraftOpenFormTab } from '@/shared/contracts/products';
+import type { ProductScrapeProfilesListResponse } from '@/shared/contracts/products/scrape-profiles';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
+import { api } from '@/shared/lib/api-client';
 import { Button, Input, Textarea, Card } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField, FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { CompactEmptyState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
@@ -25,6 +31,9 @@ import {
   useDraftCreatorMetadata,
   useDraftCreatorParameters,
 } from './DraftCreatorFormContext';
+import { DraftCreatorParameterDefinitionModal } from './DraftCreatorParameterDefinitionModal';
+import { DraftPlaceholderTextInput } from './DraftPlaceholderTextInput';
+import { DraftStructuredProductNameInput } from './DraftStructuredProductNameInput';
 
 const DEFAULT_ICON_COLOR = '#60a5fa';
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
@@ -38,11 +47,15 @@ const normalizeIconColor = (value: string | null | undefined): string | null => 
 
 const OPEN_PRODUCT_FORM_TAB_LABELS: Record<ProductDraftOpenFormTab, string> = {
   general: 'General',
+  'marketplace-copy': 'Marketplace Copy',
   other: 'Other',
+  'custom-fields': 'Custom Fields',
   parameters: 'Parameters',
   images: 'Images',
+  scans: 'Scans',
   studio: 'Studio',
   'import-info': 'Import Info',
+  notes: 'Notes',
   'note-link': 'Note Link',
   validation: 'Validation',
 };
@@ -58,6 +71,23 @@ const ICON_COLOR_MODE_OPTIONS: Array<LabeledOptionDto<'theme' | 'custom'>> = [
   { value: 'custom', label: 'Custom Color' },
 ];
 
+const DRAFT_KIND_SELECT_OPTIONS: Array<LabeledOptionDto<ProductDraftKind>> =
+  PRODUCT_DRAFT_KIND_OPTIONS.map((value) => ({
+    value,
+    label: value === 'scrape_template' ? 'Scrape Template' : 'Standard Draft',
+  }));
+
+const SCRAPE_PROFILES_QUERY_KEY = ['products', 'scrape-profiles'] as const;
+const ANY_SCRAPE_PROFILE_VALUE = '__any_scrape_profile__';
+
+const useScrapeProfiles = () =>
+  useQuery({
+    queryKey: SCRAPE_PROFILES_QUERY_KEY,
+    queryFn: async () =>
+      await api.get<ProductScrapeProfilesListResponse>('/api/v2/products/scrape-profiles'),
+    staleTime: 60_000,
+  });
+
 const PRODUCT_IDENTIFIER_OPTIONS: Array<LabeledOptionDto<'ean' | 'gtin' | 'asin'>> = [
   { value: 'ean', label: 'EAN' },
   { value: 'gtin', label: 'GTIN' },
@@ -67,6 +97,16 @@ const PRODUCT_IDENTIFIER_OPTIONS: Array<LabeledOptionDto<'ean' | 'gtin' | 'asin'
 const getParameterLabel = (parameter: ProductParameter): string =>
   parameter.name_en || parameter.name_pl || parameter.name_de || 'Unnamed parameter';
 
+const getLinkedTitleTermLabel = (
+  value: ProductParameter['linkedTitleTermType']
+): string | null => {
+  if (value === null) return null;
+  if (value === 'size') return 'Size';
+  if (value === 'material') return 'Material';
+  if (value === 'theme') return 'Theme';
+  return value;
+};
+
 const buildParameterOptions = (
   parameters: ProductParameter[]
 ): Array<LabeledOptionDto<string>> =>
@@ -75,10 +115,19 @@ const buildParameterOptions = (
     label: getParameterLabel(parameter),
   }));
 
+const resolveCategoryPlaceholder = (loading: boolean, categoryCount: number): string => {
+  if (loading) return 'Loading categories...';
+  return categoryCount > 0 ? 'Select category' : 'No categories available';
+};
+
 export function DraftCreatorDraftInfoSection(): React.JSX.Element {
   const {
     name,
     setName,
+    draftKind,
+    setDraftKind,
+    scrapeProfileId,
+    setScrapeProfileId,
     description,
     setDescription,
     validatorEnabled,
@@ -96,6 +145,14 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
     resolvedIconColor,
     openIconLibrary,
   } = useDraftCreatorBasicInfo();
+  const scrapeProfilesQuery = useScrapeProfiles();
+  const scrapeProfileOptions: Array<LabeledOptionDto<string>> = [
+    { value: ANY_SCRAPE_PROFILE_VALUE, label: 'Any scrape profile' },
+    ...(scrapeProfilesQuery.data?.profiles ?? []).map((profile) => ({
+      value: profile.id,
+      label: profile.label,
+    })),
+  ];
   const SelectedIcon = icon ? ICON_LIBRARY_MAP[icon] : null;
 
   return (
@@ -108,6 +165,41 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
           placeholder='e.g., Standard Product Template'
          aria-label='e.g., Standard Product Template' title='e.g., Standard Product Template'/>
       </FormField>
+
+      <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
+        <FormField label='Draft Type' id='draftKind'>
+          <SelectSimple
+            size='sm'
+            options={DRAFT_KIND_SELECT_OPTIONS}
+            value={draftKind}
+            onValueChange={(value: string): void => {
+              const nextKind = value === 'scrape_template' ? 'scrape_template' : 'standard';
+              setDraftKind(nextKind);
+              if (nextKind === 'standard') setScrapeProfileId(null);
+            }}
+            placeholder='Select draft type'
+            ariaLabel='Select draft type'
+            title='Select draft type'
+          />
+        </FormField>
+        {draftKind === 'scrape_template' ? (
+          <FormField label='Scrape Profile' id='scrapeProfileId'>
+            <SelectSimple
+              size='sm'
+              options={scrapeProfileOptions}
+              value={scrapeProfileId ?? ANY_SCRAPE_PROFILE_VALUE}
+              onValueChange={(value: string): void =>
+                setScrapeProfileId(value === ANY_SCRAPE_PROFILE_VALUE ? null : value)
+              }
+              placeholder={
+                scrapeProfilesQuery.isLoading ? 'Loading scrape profiles...' : 'Any scrape profile'
+              }
+              ariaLabel='Select scrape profile'
+              title='Select scrape profile'
+            />
+          </FormField>
+        ) : null}
+      </div>
 
       <FormField label='Draft Description' id='description'>
         <Textarea
@@ -240,6 +332,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
 }
 
 export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
+  const { draftKind } = useDraftCreatorBasicInfo();
   const {
     sku,
     setSku,
@@ -251,6 +344,8 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
     setGtin,
     asin,
     setAsin,
+    stock,
+    setStock,
     weight,
     setWeight,
     sizeLength,
@@ -272,18 +367,22 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
     descDe,
     setDescDe,
   } = useDraftCreatorProductData();
+  const placeholderDropdownEnabled = draftKind === 'scrape_template';
 
   return (
     <FormSection title='Default Product Values' className='p-4'>
       <div className='space-y-6'>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <FormField label='SKU' id='sku'>
-            <Input
+            <DraftPlaceholderTextInput
               id='sku'
               value={sku}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSku(e.target.value)}
+              onValueChange={setSku}
               placeholder='Product SKU'
-             aria-label='Product SKU' title='Product SKU'/>
+              ariaLabel='Product SKU'
+              title='Product SKU'
+              placeholderDropdownEnabled={placeholderDropdownEnabled}
+            />
           </FormField>
           <FormField label='Product Identifier'>
             <div className='flex gap-2'>
@@ -331,7 +430,19 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
           </FormField>
         </div>
 
-        <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+        <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
+          <FormField label='Stock' id='stock'>
+            <Input
+              id='stock'
+              type='number'
+              min='0'
+              step='1'
+              inputMode='numeric'
+              value={stock}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setStock(e.target.value)}
+              placeholder='0'
+            />
+          </FormField>
           <FormField label='Weight (kg)' id='weight'>
             <Input
               id='weight'
@@ -380,64 +491,79 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
 
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
           <FormField label='Name (English)' id='nameEn'>
-            <Input
+            <DraftStructuredProductNameInput
               id='nameEn'
               value={nameEn}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameEn(e.target.value)}
+              onValueChange={setNameEn}
               placeholder='Product name'
-             aria-label='Product name' title='Product name'/>
+              ariaLabel='Product name'
+              title='Product name'
+              placeholderDropdownEnabled={placeholderDropdownEnabled}
+            />
           </FormField>
           <FormField label='Name (Polish)' id='namePl'>
-            <Input
+            <DraftPlaceholderTextInput
               id='namePl'
               value={namePl}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNamePl(e.target.value)}
+              onValueChange={setNamePl}
               placeholder='Nazwa produktu'
-             aria-label='Nazwa produktu' title='Nazwa produktu'/>
+              ariaLabel='Nazwa produktu'
+              title='Nazwa produktu'
+              placeholderDropdownEnabled={placeholderDropdownEnabled}
+            />
           </FormField>
           <FormField label='Name (German)' id='nameDe'>
-            <Input
+            <DraftPlaceholderTextInput
               id='nameDe'
               value={nameDe}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameDe(e.target.value)}
+              onValueChange={setNameDe}
               placeholder='Produktname'
-             aria-label='Produktname' title='Produktname'/>
+              ariaLabel='Produktname'
+              title='Produktname'
+              placeholderDropdownEnabled={placeholderDropdownEnabled}
+            />
           </FormField>
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
           <FormField label='Description (English)' id='descEn'>
-            <Textarea
+            <DraftPlaceholderTextInput
               id='descEn'
               value={descEn}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                setDescEn(e.target.value)
-              }
+              onValueChange={setDescEn}
               placeholder='Product description'
+              multiline
               rows={3}
-             aria-label='Product description' title='Product description'/>
+              ariaLabel='Product description'
+              title='Product description'
+              placeholderDropdownEnabled={placeholderDropdownEnabled}
+            />
           </FormField>
           <FormField label='Description (Polish)' id='descPl'>
-            <Textarea
+            <DraftPlaceholderTextInput
               id='descPl'
               value={descPl}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                setDescPl(e.target.value)
-              }
+              onValueChange={setDescPl}
               placeholder='Opis produktu'
+              multiline
               rows={3}
-             aria-label='Opis produktu' title='Opis produktu'/>
+              ariaLabel='Opis produktu'
+              title='Opis produktu'
+              placeholderDropdownEnabled={placeholderDropdownEnabled}
+            />
           </FormField>
           <FormField label='Description (German)' id='descDe'>
-            <Textarea
+            <DraftPlaceholderTextInput
               id='descDe'
               value={descDe}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                setDescDe(e.target.value)
-              }
+              onValueChange={setDescDe}
               placeholder='Produktbeschreibung'
+              multiline
               rows={3}
-             aria-label='Produktbeschreibung' title='Produktbeschreibung'/>
+              ariaLabel='Produktbeschreibung'
+              title='Produktbeschreibung'
+              placeholderDropdownEnabled={placeholderDropdownEnabled}
+            />
           </FormField>
         </div>
       </div>
@@ -446,11 +572,10 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
 }
 
 export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
+  const { draftKind } = useDraftCreatorBasicInfo();
   const {
     price,
     setPrice,
-    stock,
-    setStock,
     supplierName,
     setSupplierName,
     supplierLink,
@@ -458,62 +583,55 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
     priceComment,
     setPriceComment,
   } = useDraftCreatorProductData();
+  const placeholderDropdownEnabled = draftKind === 'scrape_template';
 
   return (
     <FormSection title='Pricing & Supplier Information' className='p-4'>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-        <FormField label='Base Price' id='price'>
-          <Input
-            id='price'
-            type='number'
-            step='0.01'
-            value={price}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPrice(e.target.value)}
-            placeholder='0.00'
-           aria-label='0.00' title='0.00'/>
-        </FormField>
-        <FormField label='Stock' id='stock'>
-          <Input
-            id='stock'
-            type='number'
-            value={stock}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setStock(e.target.value)}
-            placeholder='0'
-           aria-label='0' title='0'/>
-        </FormField>
-      </div>
+      <FormField label='Base Price' id='price'>
+        <Input
+          id='price'
+          type='number'
+          step='0.01'
+          value={price}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPrice(e.target.value)}
+          placeholder='0.00'
+         aria-label='0.00' title='0.00'/>
+      </FormField>
 
       <FormField label='Supplier Name' id='supplierName'>
-        <Input
+        <DraftPlaceholderTextInput
           id='supplierName'
           value={supplierName}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-            setSupplierName(e.target.value)
-          }
+          onValueChange={setSupplierName}
           placeholder='Supplier name'
-         aria-label='Supplier name' title='Supplier name'/>
+          ariaLabel='Supplier name'
+          title='Supplier name'
+          placeholderDropdownEnabled={placeholderDropdownEnabled}
+        />
       </FormField>
 
       <FormField label='Supplier Link' id='supplierLink'>
-        <Input
+        <DraftPlaceholderTextInput
           id='supplierLink'
           value={supplierLink}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-            setSupplierLink(e.target.value)
-          }
+          onValueChange={setSupplierLink}
           placeholder='https://...'
-         aria-label='https://...' title='https://...'/>
+          ariaLabel='https://...'
+          title='https://...'
+          placeholderDropdownEnabled={placeholderDropdownEnabled}
+        />
       </FormField>
 
       <FormField label='Price Comment' id='priceComment'>
-        <Input
+        <DraftPlaceholderTextInput
           id='priceComment'
           value={priceComment}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-            setPriceComment(e.target.value)
-          }
+          onValueChange={setPriceComment}
           placeholder='Additional price information'
-         aria-label='Additional price information' title='Additional price information'/>
+          ariaLabel='Additional price information'
+          title='Additional price information'
+          placeholderDropdownEnabled={placeholderDropdownEnabled}
+        />
       </FormField>
     </FormSection>
   );
@@ -590,16 +708,14 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
           <CatalogMultiSelectField />
         </FormSection>
 
-        {categories.length > 0 ? (
-          <FormSection title='Categories' className='p-4'>
-            <CategorySingleSelectField
-              disabled={selectedCatalogIds.length === 0}
-              placeholder={
-                selectedCatalogIds.length > 0 ? 'Select category' : 'Select a catalog first'
-              }
-            />
-          </FormSection>
-        ) : null}
+        <FormSection title='Categories' className='p-4'>
+          <CategorySingleSelectField
+            disabled={categoryLoading || categories.length === 0}
+            loading={categoryLoading}
+            placeholder={resolveCategoryPlaceholder(categoryLoading, categories.length)}
+            emptyMessage='No categories available.'
+          />
+        </FormSection>
 
         {tags.length > 0 ? (
           <FormSection title='Tags' className='p-4'>
@@ -635,6 +751,7 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
 }
 
 export function DraftCreatorParametersTab(): React.JSX.Element {
+  const { draftKind } = useDraftCreatorBasicInfo();
   const {
     parameters,
     parametersLoading,
@@ -644,6 +761,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
     updateParameterValue,
     removeParameterValue,
   } = useDraftCreatorParameters();
+  const placeholderDropdownEnabled = draftKind === 'scrape_template';
 
   const selectedParameterIds = useMemo(
     (): (string | undefined)[] =>
@@ -659,14 +777,17 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
       description='Set default parameter values for products created from this draft.'
       className='p-4'
       actions={
-        <Button
-          type='button'
-          variant='outline'
-          onClick={addParameterValue}
-          disabled={parametersLoading || parameters.length === 0}
-        >
-          Add parameter
-        </Button>
+        <div className='flex flex-wrap justify-end gap-2'>
+          <DraftCreatorParameterDefinitionModal />
+          <Button
+            type='button'
+            variant='outline'
+            onClick={addParameterValue}
+            disabled={parametersLoading || parameters.length === 0}
+          >
+            Add parameter
+          </Button>
+        </div>
       }
     >
       {parametersLoading ? (
@@ -677,7 +798,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
       ) : parameters.length === 0 ? (
         <CompactEmptyState
           title='No parameters'
-          description='No parameters available for the selected catalog(s).'
+          description='No parameters available yet.'
           className='border-dashed border-border/60 py-8'
          />
       ) : parameterValues.length === 0 ? (
@@ -689,9 +810,21 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
       ) : (
         <div className='space-y-3'>
           {parameterValues.map((entry: ProductParameterValue, index: number): React.JSX.Element => {
+            const selectedParameter =
+              entry.parameterId !== undefined && entry.parameterId !== ''
+                ? (parameters.find(
+                    (parameter: ProductParameter): boolean => parameter.id === entry.parameterId
+                  ) ?? null)
+                : null;
+            const isLinkedParameter = selectedParameter?.linkedTitleTermType !== null &&
+              selectedParameter?.linkedTitleTermType !== undefined;
+            const linkedTitleTermLabel = getLinkedTitleTermLabel(
+              selectedParameter?.linkedTitleTermType ?? null
+            );
             const availableOptions: ProductParameter[] = parameters.filter(
               (parameter: ProductParameter): boolean =>
-                !selectedParameterIds.includes(parameter.id) || parameter.id === entry.parameterId
+                (!selectedParameterIds.includes(parameter.id) || parameter.id === entry.parameterId) &&
+                (!parameter.linkedTitleTermType || parameter.id === entry.parameterId)
             );
             return (
               <Card
@@ -707,22 +840,40 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
                     value={entry.parameterId}
                     onValueChange={(value: string): void => updateParameterId(index, value)}
                     placeholder='Select parameter'
-                   ariaLabel='Select parameter' title='Select parameter'/>
+                    disabled={isLinkedParameter}
+                    ariaLabel='Select parameter'
+                    title='Select parameter'
+                  />
                 </div>
-                <div className='flex-1'>
-                  <Input
+                <div className='flex-1 space-y-2'>
+                  {isLinkedParameter && linkedTitleTermLabel !== null ? (
+                    <div className='flex items-center gap-2 text-xs text-emerald-300'>
+                      <span className='rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 font-medium'>
+                        Synced from English Title
+                      </span>
+                      <span>{linkedTitleTermLabel} term</span>
+                    </div>
+                  ) : null}
+                  <DraftPlaceholderTextInput
                     value={entry.value ?? ''}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                      updateParameterValue(index, event.target.value)
-                    }
+                    onValueChange={(value): void => updateParameterValue(index, value)}
                     placeholder='Value'
-                    disabled={!entry.parameterId}
-                   aria-label='Value' title='Value'/>
+                    disabled={!entry.parameterId || isLinkedParameter}
+                    ariaLabel='Value'
+                    title='Value'
+                    placeholderDropdownEnabled={placeholderDropdownEnabled}
+                  />
                 </div>
                 <Button
                   type='button'
                   variant='ghost'
                   onClick={(): void => removeParameterValue(index)}
+                  disabled={isLinkedParameter}
+                  title={
+                    isLinkedParameter
+                      ? 'Linked parameters are synced from English Title'
+                      : 'Remove parameter'
+                  }
                 >
                   Remove
                 </Button>

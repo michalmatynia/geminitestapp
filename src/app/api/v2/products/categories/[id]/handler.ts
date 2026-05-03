@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
@@ -17,7 +17,7 @@ export const paramsSchema = z.object({
  * GET /api/v2/products/categories/[id]
  * Fetches a single product category by ID.
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -36,7 +36,7 @@ export async function GET_handler(
  * PUT /api/v2/products/categories/[id]
  * Updates a product category.
  */
-export async function PUT_handler(
+export async function putHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
   params: { id: string }
@@ -102,6 +102,7 @@ export async function PUT_handler(
 
   const updatePayload = {
     ...(normalizedName !== undefined ? { name: normalizedName } : {}),
+    ...(data.name_pl !== undefined ? { name_pl: data.name_pl } : {}),
     ...(data.description !== undefined ? { description: data.description } : {}),
     ...(data.color !== undefined ? { color: data.color } : {}),
     ...(parentId !== undefined || placementChanged ? { parentId: nextParentId } : {}),
@@ -120,7 +121,7 @@ export async function PUT_handler(
  * DELETE /api/v2/products/categories/[id]
  * Deletes a product category and all its children (cascade).
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _request: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getNumberBalanceMatchState } from '@/features/kangur/number-balance';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';

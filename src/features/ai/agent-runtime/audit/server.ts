@@ -16,28 +16,120 @@ const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 function toInputJsonValue(
   value: Record<string, unknown> | undefined
 ): InputJsonValue | undefined {
-  if (!value) return undefined;
+  if (value === undefined) return undefined;
 
-  // JSON.stringify will:
-  // - convert Date to ISO (via toJSON)
-  // - remove undefined/functions/symbols
-  // - throw on BigInt unless we handle it
   const jsonString = JSON.stringify(value, (_key: string, v: unknown) => {
     if (typeof v === 'bigint') return v.toString();
     return v;
   });
-  if (!jsonString) return undefined;
 
   return JSON.parse(jsonString) as InputJsonValue;
 }
 
 const isRunIdForeignKeyViolation = (error: unknown): boolean => {
-  if (!error || typeof error !== 'object') return false;
+  if (error === null || typeof error !== 'object') return false;
   const maybe = error as { code?: unknown; meta?: unknown };
   if (maybe.code !== 'P2003') return false;
   const metaText = JSON.stringify(maybe.meta ?? {});
   return metaText.includes('runId') || metaText.includes('AgentAuditLog_runId_fkey');
 };
+
+async function reportError(
+  error: unknown,
+  runId: string | null,
+  level: string,
+  message: string
+): Promise<void> {
+  await ErrorSystem.captureException(error, {
+    service: 'agent-audit',
+    action: 'logAgentAudit',
+    originalMessage: message,
+    auditLevel: level,
+    targetRunId: runId,
+  });
+}
+
+interface RetryOptions {
+  agentAuditLog: { create(args: Record<string, unknown>): Promise<unknown> };
+  runId: string;
+  level: AuditLevel;
+  message: string;
+  metadata?: Record<string, unknown>;
+}
+
+async function retryLogWithoutRunId(options: RetryOptions): Promise<void> {
+  const { agentAuditLog, runId, level, message, metadata } = options;
+  const fallbackMetadata = toInputJsonValue({
+    ...(metadata ?? {}),
+    orphanedRunId: runId,
+    runLinkMissing: true,
+  });
+  await agentAuditLog.create({
+    data: {
+      runId: null,
+      level,
+      message,
+      ...(fallbackMetadata !== undefined && { metadata: fallbackMetadata }),
+    },
+  });
+}
+
+async function handleStorageUnavailable(): Promise<void> {
+  await logSystemEvent({
+    level: 'info',
+    source: 'agent-audit',
+    message: 'agentAuditLog storage unavailable',
+  });
+  if (DEBUG_CHATBOT) {
+    await logSystemEvent({
+      level: 'warn',
+      source: 'agent-audit',
+      message: 'Audit table not initialized',
+    });
+  }
+}
+
+async function saveAuditLog(options: {
+  agentAuditLog: { create: (args: Record<string, unknown>) => Promise<unknown> };
+  runId: string | null;
+  level: AuditLevel;
+  message: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const { agentAuditLog, runId, level, message, metadata } = options;
+  const serializedMetadata = toInputJsonValue(metadata);
+  await agentAuditLog.create({
+    data: {
+      runId,
+      level,
+      message,
+      ...(serializedMetadata !== undefined && { metadata: serializedMetadata }),
+    },
+  });
+}
+
+async function handleAuditError(options: {
+  error: unknown;
+  agentAuditLog: { create: (args: Record<string, unknown>) => Promise<unknown> };
+  runId: string | null;
+  level: AuditLevel;
+  message: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const { error, agentAuditLog, runId, level, message, metadata } = options;
+  await ErrorSystem.captureException(error);
+  if (runId !== null && runId !== '' && isRunIdForeignKeyViolation(error)) {
+    try {
+      await retryLogWithoutRunId({ agentAuditLog, runId, level, message, metadata });
+      return;
+    } catch (fallbackError) {
+      await ErrorSystem.captureException(fallbackError);
+      await reportError(fallbackError, runId, level, message);
+      return;
+    }
+  }
+  await reportError(error, runId, level, message);
+}
 
 export async function logAgentAudit(
   runId: string | null,
@@ -46,74 +138,14 @@ export async function logAgentAudit(
   metadata?: Record<string, unknown>
 ): Promise<void> {
   const agentAuditLog = getAgentAuditLogDelegate();
-  if (!agentAuditLog) {
-    void logSystemEvent({
-      level: 'info',
-      source: 'agent-audit',
-      message: 'agentAuditLog storage unavailable',
-    });
-    if (DEBUG_CHATBOT) {
-      void logSystemEvent({
-        level: 'warn',
-        source: 'agent-audit',
-        message: 'Audit table not initialized',
-      });
-    }
+  if (agentAuditLog === null) {
+    await handleStorageUnavailable();
     return;
   }
 
-  const serializedMetadata = toInputJsonValue(metadata);
-
   try {
-    await agentAuditLog.create({
-      data: {
-        runId,
-        level,
-        message,
-        ...(serializedMetadata !== undefined && { metadata: serializedMetadata }),
-      },
-    });
+    await saveAuditLog({ agentAuditLog, runId, level, message, metadata });
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    if (runId && isRunIdForeignKeyViolation(error)) {
-      try {
-        const fallbackMetadata = toInputJsonValue({
-          ...(metadata ?? {}),
-          orphanedRunId: runId,
-          runLinkMissing: true,
-        });
-        await agentAuditLog.create({
-          data: {
-            runId: null,
-            level,
-            message,
-            ...(fallbackMetadata !== undefined && { metadata: fallbackMetadata }),
-          },
-        });
-        return;
-      } catch (fallbackError) {
-        void ErrorSystem.captureException(fallbackError);
-        // Report the fallback failure instead of the original FK violation
-        // We re-use the reporting block below
-        void reportError(fallbackError, runId, level, message);
-        return;
-      }
-    }
-    void reportError(error, runId, level, message);
+    await handleAuditError({ error, agentAuditLog, runId, level, message, metadata });
   }
-}
-
-async function reportError(
-  error: unknown,
-  runId: string | null,
-  level: string,
-  message: string
-): Promise<void> {
-  void ErrorSystem.captureException(error, {
-    service: 'agent-audit',
-    action: 'logAgentAudit',
-    originalMessage: message,
-    auditLevel: level,
-    targetRunId: runId,
-  });
 }

@@ -1,31 +1,22 @@
-import { z } from 'zod';
-
 import { badRequestError } from '@/shared/errors/app-error';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-const marketplaceConnectionListQuerySchema = z.object({
-  connectionId: optionalTrimmedQueryString(),
-});
+import {
+  connectionIdQuerySchema,
+  type ConnectionIdQuery as MarketplaceConnectionListQuery,
+} from '@/shared/validations/product-metadata-api-schemas';
 
-export type MarketplaceConnectionListQuery = {
-  connectionId: string;
-};
+export type { MarketplaceConnectionListQuery };
 
 export const parseMarketplaceConnectionListQuery = (
   rawQuery: unknown,
   invalidMessage: string
 ): MarketplaceConnectionListQuery => {
-  const query = marketplaceConnectionListQuerySchema.safeParse(rawQuery);
+  const query = connectionIdQuerySchema.safeParse(rawQuery);
   if (!query.success) {
     throw badRequestError(invalidMessage, {
       errors: query.error.flatten(),
     });
   }
 
-  const { connectionId } = query.data;
-  if (!connectionId) {
-    throw badRequestError('connectionId is required');
-  }
-
-  return { connectionId };
+  return query.data;
 };

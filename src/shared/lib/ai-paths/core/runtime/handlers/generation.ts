@@ -458,16 +458,19 @@ export const handleModel: NodeHandler = async ({
     nodeInputs['entityJson'] ??
     nodeInputs['value'] ??
     nodeInputs['result'];
-  const imageUrls = filterImageUrlsByOutboundPolicy({
-    imageUrls: extractImageUrls(imageSource),
-    nodeId: node.id,
-    action: 'graphModel',
-    reportAiPathsError,
-    toast,
-  });
+  const imageUrls =
+    modelConfig.vision === true
+      ? filterImageUrlsByOutboundPolicy({
+          imageUrls: extractImageUrls(imageSource),
+          nodeId: node.id,
+          action: 'graphModel',
+          reportAiPathsError,
+          toast,
+        })
+      : [];
   const payload = buildGraphModelJobPayload({
     prompt,
-    imageUrls,
+    ...(imageUrls.length > 0 ? { imageUrls } : {}),
     modelId: modelConfig.modelId?.trim() ?? null,
     temperature: modelConfig.temperature,
     maxTokens: modelConfig.maxTokens,

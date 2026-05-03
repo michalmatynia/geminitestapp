@@ -32,7 +32,7 @@ vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
   removePathRunQueueEntries: removePathRunQueueEntriesMock,
 }));
 
-import { POST_handler } from '@/app/api/ai-paths/runs/[runId]/cancel/handler';
+import { postHandler } from '@/app/api/ai-paths/runs/[runId]/cancel/handler';
 
 const mockContext: ApiHandlerContext = {
   requestId: 'test-req-id',
@@ -60,7 +60,7 @@ describe('AI Paths run cancel handler', () => {
   it('removes queue entry when run is missing', async () => {
     findRunByIdMock.mockResolvedValue(null);
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/run-missing/cancel', {
         method: 'POST',
       }),
@@ -90,7 +90,7 @@ describe('AI Paths run cancel handler', () => {
       status: 'completed',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/run-terminal/cancel', {
         method: 'POST',
       }),
@@ -122,7 +122,7 @@ describe('AI Paths run cancel handler', () => {
       status: 'canceled',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/run-active/cancel', {
         method: 'POST',
       }),

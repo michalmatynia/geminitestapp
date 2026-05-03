@@ -1,23 +1,27 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   useAiPathRuntimeAnalyticsMock,
-  useRuntimeStateMock,
-  useGraphStateMock,
+  useRuntimeStatusStateMock,
+  useGraphDataStateMock,
+  usePathMetadataStateMock,
   useAiPathsErrorStateMock,
   useRunHistoryActionsMock,
   useBrainAssignmentMock,
+  useBrainModelOptionsMock,
   toastMock,
 } = vi.hoisted(() => ({
   useAiPathRuntimeAnalyticsMock: vi.fn(),
-  useRuntimeStateMock: vi.fn(),
-  useGraphStateMock: vi.fn(),
+  useRuntimeStatusStateMock: vi.fn(),
+  useGraphDataStateMock: vi.fn(),
+  usePathMetadataStateMock: vi.fn(),
   useAiPathsErrorStateMock: vi.fn(),
   useRunHistoryActionsMock: vi.fn(),
   useBrainAssignmentMock: vi.fn(),
+  useBrainModelOptionsMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
@@ -27,8 +31,9 @@ vi.mock('@/shared/lib/ai-paths/hooks/useAiPathQueries', () => ({
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
   useRunHistoryActions: useRunHistoryActionsMock,
-  useRuntimeState: useRuntimeStateMock,
-  useGraphState: useGraphStateMock,
+  useRuntimeStatusState: useRuntimeStatusStateMock,
+  useGraphDataState: useGraphDataStateMock,
+  usePathMetadataState: usePathMetadataStateMock,
 }));
 
 vi.mock(
@@ -42,7 +47,11 @@ vi.mock('@/shared/lib/ai-brain/hooks/useBrainAssignment', () => ({
   useBrainAssignment: useBrainAssignmentMock,
 }));
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
+  useBrainModelOptions: useBrainModelOptionsMock,
+}));
+
+vi.mock('@/shared/ui/primitives.public', async () => {
   const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
   return {
     ...actual,
@@ -54,9 +63,22 @@ import { AiPathsRuntimeAnalysis } from '@/features/ai/ai-paths/components/ai-pat
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 describe('AiPathsRuntimeAnalysis', () => {
+  beforeEach(() => {
+    useBrainModelOptionsMock.mockReturnValue({
+      models: [],
+      descriptors: {},
+      isLoading: false,
+      assignment: { enabled: true },
+      effectiveModelId: '',
+      sourceWarnings: [],
+      refresh: vi.fn(),
+    });
+  });
+
   it('has no obvious accessibility violations in the disabled analytics state', async () => {
-    useRuntimeStateMock.mockReturnValue({ runtimeRunStatus: 'idle', runtimeNodeStatuses: {} });
-    useGraphStateMock.mockReturnValue({ activePathId: null, nodes: [] });
+    useRuntimeStatusStateMock.mockReturnValue({ runtimeRunStatus: 'idle', runtimeNodeStatuses: {} });
+    useGraphDataStateMock.mockReturnValue({ nodes: [] });
+    usePathMetadataStateMock.mockReturnValue({ activePathId: null });
     useAiPathsErrorStateMock.mockReturnValue({ reportAiPathsError: vi.fn() });
     useRunHistoryActionsMock.mockReturnValue({
       setRunHistoryNodeId: vi.fn(),
@@ -83,8 +105,9 @@ describe('AiPathsRuntimeAnalysis', () => {
   });
 
   it('shows a disabled state and does not enable the runtime analytics query when the capability is off', () => {
-    useRuntimeStateMock.mockReturnValue({ runtimeRunStatus: 'idle', runtimeNodeStatuses: {} });
-    useGraphStateMock.mockReturnValue({ activePathId: null, nodes: [] });
+    useRuntimeStatusStateMock.mockReturnValue({ runtimeRunStatus: 'idle', runtimeNodeStatuses: {} });
+    useGraphDataStateMock.mockReturnValue({ nodes: [] });
+    usePathMetadataStateMock.mockReturnValue({ activePathId: null });
     useAiPathsErrorStateMock.mockReturnValue({ reportAiPathsError: vi.fn() });
     useRunHistoryActionsMock.mockReturnValue({
       setRunHistoryNodeId: vi.fn(),
@@ -116,8 +139,9 @@ describe('AiPathsRuntimeAnalysis', () => {
     const user = userEvent.setup();
     const refetchMock = vi.fn().mockResolvedValue(undefined);
 
-    useRuntimeStateMock.mockReturnValue({ runtimeRunStatus: 'idle', runtimeNodeStatuses: {} });
-    useGraphStateMock.mockReturnValue({ activePathId: null, nodes: [] });
+    useRuntimeStatusStateMock.mockReturnValue({ runtimeRunStatus: 'idle', runtimeNodeStatuses: {} });
+    useGraphDataStateMock.mockReturnValue({ nodes: [] });
+    usePathMetadataStateMock.mockReturnValue({ activePathId: null });
     useAiPathsErrorStateMock.mockReturnValue({ reportAiPathsError: vi.fn() });
     useRunHistoryActionsMock.mockReturnValue({
       setRunHistoryNodeId: vi.fn(),
@@ -152,9 +176,8 @@ describe('AiPathsRuntimeAnalysis', () => {
             runsWithKernelParity: 1,
             sampledHistoryEntries: 2,
             strategyCounts: {
-              compatibility: 1,
               code_object_v3: 1,
-              unknown: 0,
+              unknown: 1,
             },
             resolutionSourceCounts: {
               override: 1,
@@ -181,8 +204,9 @@ describe('AiPathsRuntimeAnalysis', () => {
   });
 
   it('renders portable engine analytics details when provided by runtime summary', () => {
-    useRuntimeStateMock.mockReturnValue({ runtimeRunStatus: 'running', runtimeNodeStatuses: {} });
-    useGraphStateMock.mockReturnValue({ activePathId: null, nodes: [] });
+    useRuntimeStatusStateMock.mockReturnValue({ runtimeRunStatus: 'running', runtimeNodeStatuses: {} });
+    useGraphDataStateMock.mockReturnValue({ nodes: [] });
+    usePathMetadataStateMock.mockReturnValue({ activePathId: null });
     useAiPathsErrorStateMock.mockReturnValue({ reportAiPathsError: vi.fn() });
     useRunHistoryActionsMock.mockReturnValue({
       setRunHistoryNodeId: vi.fn(),
@@ -217,9 +241,8 @@ describe('AiPathsRuntimeAnalysis', () => {
             runsWithKernelParity: 2,
             sampledHistoryEntries: 5,
             strategyCounts: {
-              compatibility: 2,
               code_object_v3: 3,
-              unknown: 0,
+              unknown: 2,
             },
             resolutionSourceCounts: {
               override: 3,
@@ -291,10 +314,75 @@ describe('AiPathsRuntimeAnalysis', () => {
     expect(screen.getByText('Kernel coverage (24h)')).toBeInTheDocument();
     expect(screen.getByText(/Coverage 2\/2 \(100.0%\)/i)).toBeInTheDocument();
     expect(screen.getByText(/History entries 5/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/compatibility traces are historical rollout evidence only/i)
-    ).toBeInTheDocument();
     expect(screen.getByText(/Resolution O\/R\/M\/U: 3\/2\/0\/0/i)).toBeInTheDocument();
     expect(screen.getByText('ai-paths.node-code-object.constant.v3')).toBeInTheDocument();
+  });
+
+  it('surfaces AI Brain model capability issues for vision-enabled nodes before run time', () => {
+    useRuntimeStatusStateMock.mockReturnValue({ runtimeRunStatus: 'idle', runtimeNodeStatuses: {} });
+    useGraphDataStateMock.mockReturnValue({
+      nodes: [
+        {
+          id: 'node-model',
+          type: 'model',
+          title: 'Normalize Model',
+          description: '',
+          inputs: [],
+          outputs: [],
+          position: { x: 0, y: 0 },
+          data: {},
+          config: {
+            model: {
+              vision: true,
+              temperature: 0.2,
+              maxTokens: 500,
+              waitForResult: true,
+            },
+          },
+        },
+      ],
+    });
+    usePathMetadataStateMock.mockReturnValue({
+      activePathId: 'path-normalize',
+    });
+    useAiPathsErrorStateMock.mockReturnValue({ reportAiPathsError: vi.fn() });
+    useRunHistoryActionsMock.mockReturnValue({
+      setRunHistoryNodeId: vi.fn(),
+      setRunFilter: vi.fn(),
+      openRunDetail: vi.fn(),
+    });
+    useBrainAssignmentMock.mockImplementation(() => ({
+      assignment: {
+        enabled: true,
+      },
+      effectiveModelId: '',
+    }));
+    useBrainModelOptionsMock.mockReturnValue({
+      models: ['brain-default-text'],
+      descriptors: {
+        'brain-default-text': {
+          id: 'brain-default-text',
+          modality: 'text',
+        },
+      },
+      isLoading: false,
+      assignment: { enabled: true },
+      effectiveModelId: 'brain-default-text',
+      sourceWarnings: [],
+      refresh: vi.fn(),
+    });
+    useAiPathRuntimeAnalyticsMock.mockReturnValue({
+      data: undefined,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+
+    render(<AiPathsRuntimeAnalysis />);
+
+    expect(screen.getByText('Model Capability')).toBeInTheDocument();
+    expect(screen.getByText(/1 node will be blocked by AI Brain preflight/i)).toBeInTheDocument();
+    expect(screen.getByText(/Normalize Model/)).toBeInTheDocument();
+    expect(screen.getByText(/brain-default-text/)).toBeInTheDocument();
+    expect(screen.getByText(/Accepts Images enabled/i)).toBeInTheDocument();
   });
 });

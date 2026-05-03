@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/consistent-type-assertions, @typescript-eslint/consistent-type-imports, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -7,8 +8,11 @@ import { createProduct, createRowVisualsContext, createRowRuntimeContext, setupP
 const {
   baseQuickExportButtonMock,
   playwrightStatusButtonMock,
+  productImageCellMock,
   traderaQuickListButtonMock,
   traderaStatusButtonMock,
+  vintedQuickListButtonMock,
+  vintedStatusButtonMock,
   triggerButtonBarMock,
   useProductListActionsContextMock,
   useProductListHeaderActionsContextMock,
@@ -18,8 +22,11 @@ const {
 } = vi.hoisted(() => ({
   baseQuickExportButtonMock: vi.fn(),
   playwrightStatusButtonMock: vi.fn(),
+  productImageCellMock: vi.fn(),
   traderaQuickListButtonMock: vi.fn(),
   traderaStatusButtonMock: vi.fn(),
+  vintedQuickListButtonMock: vi.fn(),
+  vintedStatusButtonMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
   useProductListActionsContextMock: vi.fn(),
   useProductListHeaderActionsContextMock: vi.fn(),
@@ -66,7 +73,20 @@ vi.mock('./columns/buttons/BaseQuickExportButton', () => ({
 vi.mock('./columns/buttons/TraderaQuickListButton', () => ({
   TraderaQuickListButton: (props: Record<string, unknown>) => {
     traderaQuickListButtonMock(props);
+    if (props.showTraderaBadge) {
+      return null;
+    }
     return <button type='button'>T+</button>;
+  },
+}));
+
+vi.mock('./columns/buttons/VintedQuickListButton', () => ({
+  VintedQuickListButton: (props: Record<string, unknown>) => {
+    vintedQuickListButtonMock(props);
+    if (props.showVintedBadge) {
+      return null;
+    }
+    return <button type='button'>V+</button>;
   },
 }));
 
@@ -81,6 +101,20 @@ vi.mock('./columns/buttons/TraderaStatusButton', () => ({
   TraderaStatusButton: (props: Record<string, unknown>) => {
     traderaStatusButtonMock(props);
     return <button type='button'>TR</button>;
+  },
+}));
+
+vi.mock('./columns/buttons/VintedStatusButton', () => ({
+  VintedStatusButton: (props: Record<string, unknown>) => {
+    vintedStatusButtonMock(props);
+    return <button type='button'>VR</button>;
+  },
+}));
+
+vi.mock('@/features/products/components/cells/ProductImageCell', () => ({
+  ProductImageCell: (props: { productName: string; note?: unknown }) => {
+    productImageCellMock(props);
+    return <div>{props.productName}</div>;
   },
 }));
 
@@ -110,6 +144,63 @@ describe('ProductColumns queued badge', () => {
     ({ getProductColumns } = await import('./ProductColumns'));
   });
 
+  it('uses a pointer cursor for product-list selection checkboxes', () => {
+    const selectColumn = getProductColumns().find((column) => column.id === 'select');
+    if (
+      !selectColumn ||
+      typeof selectColumn.header !== 'function' ||
+      typeof selectColumn.cell !== 'function'
+    ) {
+      throw new Error('Select column was not found.');
+    }
+
+    const header = selectColumn.header({
+      table: {
+        getIsAllPageRowsSelected: () => false,
+        getIsSomePageRowsSelected: () => false,
+        toggleAllPageRowsSelected: vi.fn(),
+      } as never,
+    });
+    const cell = selectColumn.cell({
+      row: {
+        original: createProduct(),
+        getIsSelected: () => false,
+        toggleSelected: vi.fn(),
+      } as never,
+    });
+
+    render(
+      <>
+        {header}
+        {cell}
+      </>
+    );
+
+    expect(screen.getByLabelText('Select all').className).toContain('cursor-pointer');
+    expect(screen.getByLabelText('Select row').className).toContain('cursor-pointer');
+  });
+
+  it('renders a duplicate SKU marker in the name summary when the SKU is reused', () => {
+    const product = createProduct({
+      duplicateSkuCount: 2,
+    });
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByText('Duplicate SKU')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate SKU')).toHaveAttribute('title', 'SKU used by 2 products');
+  });
+
   it('renders the queued badge when the product id is currently queued', () => {
     const product = createProduct();
     setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
@@ -136,7 +227,77 @@ describe('ProductColumns queued badge', () => {
     const cell = nameColumn.cell({ row: { original: product } } as never);
     render(cell);
 
-    expect(screen.getByText('Queued')).toBeInTheDocument();
+    const pill = screen.getByText('Queued');
+    expect(pill).toBeInTheDocument();
+    expect(pill.closest('[data-activity-kind]')).toHaveAttribute(
+      'data-activity-kind',
+      'trigger-button'
+    );
+  });
+
+  it('passes product notes into the desktop thumbnail cell', () => {
+    const product = createProduct({
+      notes: {
+        text: 'Use the category-mapped insert.',
+        color: '#bbf7d0',
+      },
+    });
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+
+    const imageColumn = getProductColumns().find((column) => column.accessorKey === 'images');
+    if (!imageColumn || typeof imageColumn.cell !== 'function') {
+      throw new Error('Image column cell was not found.');
+    }
+
+    render(imageColumn.cell({ row: { original: product } } as never));
+
+    expect(productImageCellMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        note: {
+          text: 'Use the category-mapped insert.',
+          color: '#bbf7d0',
+        },
+      })
+    );
+  });
+
+  it('renders the scan feedback pill with the scan activity kind', () => {
+    const product = createProduct();
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        productScanRunFeedback: {
+          scanId: 'scan-1',
+          status: 'running',
+          updatedAt: '2026-04-11T12:00:00.000Z',
+          label: 'Running',
+          variant: 'processing',
+          badgeClassName:
+            'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
+        },
+      })
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    const pill = screen.getByText('Running');
+    expect(pill.closest('[data-activity-kind]')).toHaveAttribute(
+      'data-activity-kind',
+      'scan'
+    );
   });
 
   it('passes Tradera badge runtime into the quick export button', async () => {
@@ -167,6 +328,110 @@ describe('ProductColumns queued badge', () => {
         })
       );
     });
+  });
+
+  it('keeps the integrations button order stable when quick-list buttons are visible', async () => {
+    const product = createProduct();
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'T+' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'V+' })).toBeInTheDocument();
+    });
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Integrations button row was not found.');
+    }
+
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'T+',
+      'V+',
+    ]);
+  });
+
+  it('keeps the integrations button order stable when Tradera and Vinted badges replace quick-list buttons', async () => {
+    const product = createProduct();
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showTraderaBadge: true,
+        traderaStatus: 'auth_required',
+        showVintedBadge: true,
+        vintedStatus: 'auth_required',
+      })
+    );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'TR' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'VR' })).toBeInTheDocument();
+    });
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Integrations button row was not found.');
+    }
+
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'TR',
+      'VR',
+    ]);
+  });
+
+  it('shows only the closed Tradera status button when the Tradera badge status is closed', async () => {
+    const product = createProduct();
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showTraderaBadge: true,
+        traderaStatus: 'closed',
+      })
+    );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'TR' })).toBeInTheDocument();
+    });
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Integrations button row was not found.');
+    }
+
+    expect(traderaStatusButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: 'product-1',
+        status: 'closed',
+      })
+    );
+    expect(within(buttonRow).queryByRole('button', { name: 'T+' })).toBeNull();
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'TR',
+      'V+',
+    ]);
   });
 
   it('scopes Base quick export recovery to the Base listings modal', async () => {
@@ -253,6 +518,34 @@ describe('ProductColumns queued badge', () => {
 
     await waitFor(() => {
       expect(traderaStatusButtonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          status: 'auth_required',
+          prefetchListings: expect.any(Function),
+          onOpenListings: expect.any(Function),
+        })
+      );
+    });
+  });
+
+  it('passes productId into the Vinted status button when the badge is visible', async () => {
+    const product = createProduct();
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showVintedBadge: true,
+        vintedStatus: 'auth_required',
+      })
+    );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(vintedStatusButtonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           productId: 'product-1',
           status: 'auth_required',
@@ -673,6 +966,35 @@ describe('ProductColumns queued badge', () => {
     expect(screen.queryByText('507f1f77bcf86cd799439011')).not.toBeInTheDocument();
   });
 
+  it('renders unassigned category labels with a subtle warning tint', () => {
+    const product = createProduct({
+      categoryId: null,
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map<string, string>(),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map<string, string>(),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByRole('button', { name: 'Unassigned' })).toHaveClass('text-rose-300/80');
+  });
+
   it('renders the embedded category label when the row exposes a nested category object', () => {
     const product = {
       ...createProduct({
@@ -826,6 +1148,104 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
   });
 
+  it('renders a distinct scraped badge for scraped products', () => {
+    const product = createProduct({
+      baseProductId: null,
+      importSource: 'scrape',
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByLabelText('Scraped product')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Imported product')).not.toBeInTheDocument();
+  });
+
+  it('renders product status icons below the name summary row', () => {
+    const product = createProduct({
+      baseProductId: 'base-123',
+      importSource: 'base',
+      description_en: 'English description',
+      name_pl: 'Wisiorek Gamingowy',
+      description_pl: 'Polski opis',
+      shippingGroupSource: 'category_rule',
+      shippingGroupMatchedCategoryRuleIds: ['category-1'],
+      shippingGroup: {
+        id: 'shipping-group-1',
+        name: 'Jewellery 7 EUR',
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 7,
+        autoAssignCategoryIds: ['category-1'],
+      },
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['tradera'],
+          title: 'Marketplace title',
+          description: 'Marketplace description',
+        },
+      ],
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const { container } = render(nameColumn.cell({ row: { original: product } } as never));
+
+    const summaryRow = container.querySelector('[data-product-list-summary-row]');
+    const statusRow = container.querySelector('[data-product-list-status-icons]');
+
+    expect(screen.getByText('Auto ship: Jewellery 7 EUR')).toBeInTheDocument();
+    expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
+    expect(screen.getByLabelText('Marketplace copy filled')).toBeInTheDocument();
+    expect(screen.getByLabelText('English title and description filled')).toHaveTextContent('EN');
+    expect(screen.getByLabelText('Polish title and description filled')).toHaveTextContent('PL');
+    expect(summaryRow).not.toBeNull();
+    expect(statusRow).not.toBeNull();
+    expect(summaryRow?.nextElementSibling).toBe(statusRow);
+  });
+
+  it('renders the imported badge for detached Base imports without sync linkage', () => {
+    const product = createProduct({
+      baseProductId: null,
+      importSource: 'base',
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
+  });
+
+  it('renders an archived badge for archived products', () => {
+    const product = createProduct({
+      archived: true,
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByText('Archived')).toBeInTheDocument();
+  });
+
   it('renders a global trigger run feedback toggle in the integrations header', () => {
     const setShowTriggerRunFeedback = vi.fn();
     useProductListHeaderActionsContextMock.mockReturnValue({
@@ -845,6 +1265,24 @@ describe('ProductColumns queued badge', () => {
 
     expect(setShowTriggerRunFeedback).toHaveBeenCalledWith(false);
     expect(screen.getByText('Hide Statuses')).toBeInTheDocument();
+  });
+
+  it('renders a disabled fallback trigger run feedback toggle when the header context is unavailable', () => {
+    useProductListHeaderActionsContextMock.mockImplementation(() => {
+      throw new Error('useProductListHeaderActionsContext must be used within a ProductListProvider');
+    });
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.header !== 'function') {
+      throw new Error('Integrations column header was not found.');
+    }
+
+    const header = integrationsColumn.header({} as never);
+    render(header);
+
+    const button = screen.getByRole('button', { name: 'Show trigger run pills' });
+    expect(button).toBeDisabled();
+    expect(screen.getByText('Show Statuses')).toBeInTheDocument();
   });
 
   it('pins fixed widths for the columns that must stay uniform across pages', () => {

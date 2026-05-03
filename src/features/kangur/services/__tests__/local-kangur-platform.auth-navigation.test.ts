@@ -236,7 +236,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
     await expect(platform.auth.me()).rejects.toMatchObject({ status: 401 });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/auth/me',
+      '/kangur-api/auth/me',
       expect.objectContaining({
         cache: 'no-store',
         method: 'GET',
@@ -318,7 +318,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
     expect(hasGuestKangurScores()).toBe(false);
     expect(getGuestKangurScoreSessionKey()).not.toBe(previousSessionKey);
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/auth/logout',
+      '/kangur-api/auth/logout',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',
@@ -357,7 +357,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
     await platform.auth.logout(window.location.href);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/auth/logout',
+      '/kangur-api/auth/logout',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',

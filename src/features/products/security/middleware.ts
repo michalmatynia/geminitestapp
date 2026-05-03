@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, type NextResponse } from 'next/server';
 
 import { AppError } from '@/shared/errors/app-error';
 
@@ -26,86 +26,105 @@ interface SanitizedFile {
   hash: string;
 }
 
+type RequestValidationResult = {
+  allowed: boolean;
+  headers?: Record<string, string> | undefined;
+  status?: number | undefined;
+  message?: string | undefined;
+  sanitizedData?: unknown;
+};
+
+type FileUploadValidationResult = {
+  allowed: boolean;
+  headers?: Record<string, string> | undefined;
+  status?: number | undefined;
+  message?: string | undefined;
+  files?: SanitizedFile[] | undefined;
+};
+
+const createRequestDeniedResult = (
+  status: number,
+  message: string,
+  headers?: Record<string, string>
+): RequestValidationResult => ({
+  allowed: false,
+  headers,
+  status,
+  message,
+});
+
+const validateRequestRateLimit = async (
+  req: NextRequest,
+  config: SecurityConfig
+): Promise<RequestValidationResult | null> => {
+  if (config.enableRateLimit === false) return null;
+
+  const limiter = rateLimiters[config.rateLimiter ?? 'api'];
+  const rateLimitResult = await withRateLimit(limiter)(req);
+
+  if (rateLimitResult.allowed) return null;
+
+  return createRequestDeniedResult(
+    rateLimitResult.status ?? 429,
+    rateLimitResult.message ?? 'Too many requests',
+    rateLimitResult.headers
+  );
+};
+
+const sanitizeJsonRequestBody = async (
+  req: NextRequest,
+  config: SecurityConfig
+): Promise<RequestValidationResult> => {
+  try {
+    const contentType = req.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json')) return { allowed: true };
+
+    const body = (await req.json()) as Record<string, unknown>;
+    const rules = config.customSanitizationRules ?? ProductSanitizationRules;
+    const sanitizedData = InputSanitizer.sanitizeObject(
+      body,
+      rules as Partial<Record<string, SanitizationOptions>>
+    );
+    const validation = validateProductInput(sanitizedData);
+
+    if (validation.isValid) {
+      return {
+        allowed: true,
+        sanitizedData,
+      };
+    }
+
+    return createRequestDeniedResult(
+      400,
+      `Validation failed: ${validation.errors.join(', ')}`
+    );
+  } catch (error) {
+    logClientError(error);
+    return createRequestDeniedResult(400, 'Invalid request body');
+  }
+};
+
+const hasSanitizedData = (
+  validation: RequestValidationResult
+): validation is RequestValidationResult & { sanitizedData: unknown } =>
+  Object.prototype.hasOwnProperty.call(validation, 'sanitizedData');
+
 export class SecurityMiddleware {
   static async validateRequest(
     req: NextRequest,
     config: SecurityConfig = {}
-  ): Promise<{
-    allowed: boolean;
-    headers?: Record<string, string> | undefined;
-    status?: number | undefined;
-    message?: string | undefined;
-    sanitizedData?: unknown;
-  }> {
-    const { enableRateLimit = true, enableInputSanitization = true, rateLimiter = 'api' } = config;
+  ): Promise<RequestValidationResult> {
+    const rateLimitFailure = await validateRequestRateLimit(req, config);
+    if (rateLimitFailure !== null) return rateLimitFailure;
 
-    // Rate limiting check
-    if (enableRateLimit) {
-      // With `noUncheckedIndexedAccess`, bracket access can be `T | undefined`, so keep a safe fallback.
-      const limiter = rateLimiters[rateLimiter ?? 'api'] ?? rateLimiters.api;
-      const rateLimitResult = await withRateLimit(limiter)(req);
-
-      if (!rateLimitResult.allowed) {
-        return {
-          allowed: false,
-          headers: rateLimitResult.headers,
-          status: rateLimitResult.status,
-          message: rateLimitResult.message,
-        };
-      }
-    }
-
-    // Input sanitization
-    let sanitizedData: unknown = undefined;
-    if (enableInputSanitization) {
-      try {
-        const contentType = req.headers.get('content-type') || '';
-
-        if (contentType.includes('application/json')) {
-          const body = (await req.json()) as Record<string, unknown>;
-          sanitizedData = InputSanitizer.sanitizeObject(
-            body,
-            (config.customSanitizationRules || ProductSanitizationRules) as Partial<
-              Record<string, SanitizationOptions>
-            >
-          );
-
-          // Validate sanitized data
-          const validation = validateProductInput(sanitizedData as Record<string, unknown>);
-          if (!validation.isValid) {
-            return {
-              allowed: false,
-              status: 400,
-              message: `Validation failed: ${validation.errors.join(', ')}`,
-            };
-          }
-        }
-      } catch (error) {
-        logClientError(error);
-        return {
-          allowed: false,
-          status: 400,
-          message: 'Invalid request body',
-        };
-      }
-    }
-
-    return {
-      allowed: true,
-      sanitizedData,
-    };
+    if (config.enableInputSanitization === false) return { allowed: true };
+    return await sanitizeJsonRequestBody(req, config);
   }
 
   static async validateFileUpload(
     req: NextRequest,
     config: SecurityConfig = {}
-  ): Promise<{
-    allowed: boolean;
-    headers?: Record<string, string> | undefined;
-    status?: number | undefined;
-    message?: string | undefined;
-    files?: SanitizedFile[] | undefined;
-  }> {
+  ): Promise<FileUploadValidationResult> {
     // Rate limiting for file uploads
     if (config.enableRateLimit !== false) {
       const rateLimitResult = await withRateLimit(rateLimiters.imageUpload)(req);
@@ -176,15 +195,15 @@ export function withSecurity(
       const validation = await SecurityMiddleware.validateRequest(req, config);
 
       if (!validation.allowed) {
-        throw new AppError(validation.message || 'Request not allowed', {
+        throw new AppError(validation.message ?? 'Request not allowed', {
           code: 'SECURITY_VALIDATION_FAILED',
-          httpStatus: validation.status || 403,
+          httpStatus: validation.status ?? 403,
           meta: validation.headers,
         });
       }
 
       // Call original handler with sanitized data
-      const modifiedReq = validation.sanitizedData
+      const modifiedReq = hasSanitizedData(validation)
         ? new NextRequest(req.url, {
           ...req,
           body: JSON.stringify(validation.sanitizedData),
@@ -224,14 +243,14 @@ export function withFileUploadSecurity(
       const validation = await SecurityMiddleware.validateFileUpload(req, config);
 
       if (!validation.allowed) {
-        throw new AppError(validation.message || 'File upload not allowed', {
+        throw new AppError(validation.message ?? 'File upload not allowed', {
           code: 'FILE_UPLOAD_SECURITY_FAILED',
-          httpStatus: validation.status || 403,
+          httpStatus: validation.status ?? 403,
           meta: validation.headers,
         });
       }
 
-      const response = await handler(req, validation.files || [], ...args);
+      const response = await handler(req, validation.files ?? [], ...args);
       return addSecurityHeaders(response as NextResponse);
     } catch (error) {
       logClientError(error);

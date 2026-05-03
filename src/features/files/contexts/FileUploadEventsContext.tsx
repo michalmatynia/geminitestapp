@@ -4,7 +4,7 @@ import React, {
   useState,
   useMemo,
   useEffect,
-  ReactNode,
+  type ReactNode,
   useCallback,
 } from 'react';
 

@@ -22,6 +22,7 @@ export type NodeConfigDocField = {
 
 export type AiPathsNodeDoc = {
   type: NodeType;
+  nodeDocVersion?: string;
   title: string;
   purpose: string;
   inputs: string[];

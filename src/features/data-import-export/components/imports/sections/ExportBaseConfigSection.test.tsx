@@ -35,10 +35,13 @@ vi.mock('@/features/data-import-export/context/ImportExportContext', () => ({
   useImportExportState: () => useImportExportStateMock(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Label: ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
     <label {...props}>{children}</label>
   ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     value,
     onValueChange,

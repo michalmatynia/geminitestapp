@@ -108,6 +108,19 @@ type UseKangurAiTutorPanelActionsInput = {
   >;
 };
 
+// useKangurAiTutorPanelActions produces all stable action callbacks for the
+// AI Tutor panel. Responsibilities:
+//  handleSend          – validates input, detects guest login intent, sends
+//                        the message with full focus/selection context
+//  handleKeyDown       – submits on Enter (without Shift)
+//  handleWebsiteHelpTargetClick – tracks and navigates to knowledge graph
+//                        reference links, persisting follow-up state
+//  handleFollowUpAction – executes a follow-up action (navigate, explain,
+//                        hint, etc.) from an assistant message
+//  handleMessageFeedback – records thumbs-up/down feedback per message
+//  handleDrawing*      – opens/closes the drawing panel and clears drafts
+//  handleSectionExplain – triggers a guided section explanation from a
+//                        highlighted page section
 export function useKangurAiTutorPanelActions({
   activeFocus,
   activeSectionRect,
@@ -159,6 +172,9 @@ export function useKangurAiTutorPanelActions({
     setSelectionResponseComplete,
   } = widgetState;
 
+  // handleSend: validates the input, checks for guest login intent (redirects
+  // to guided login instead of sending), then dispatches the message with the
+  // full conversation focus context (contentId, focusKind, selection, drawing).
   const handleSend = useCallback(async (): Promise<void> => {
     const text = inputValue.trim();
     if ((!text && !drawingImageData) || isLoading || !canSendMessages) {
@@ -242,6 +258,9 @@ export function useKangurAiTutorPanelActions({
     [handleSend]
   );
 
+  // handleWebsiteHelpTargetClick: tracks the click event, then either
+  // navigates to the target route (persisting a follow-up if the destination
+  // is a different page) or scrolls to the anchor on the current page.
   const handleWebsiteHelpTargetClick = useCallback(
     (target: KangurAiTutorWebsiteHelpTarget, messageIndex: number, href: string): void => {
       trackKangurClientEvent('kangur_ai_tutor_website_help_target_clicked', {
@@ -300,7 +319,7 @@ export function useKangurAiTutorPanelActions({
           nodeId: target.nodeId,
           label: target.label,
           route: target.route ?? null,
-          anchorId: anchorId,
+          anchorId,
           messageIndex,
           sourcePathname: currentLocation.pathname,
           sourceSearch: currentLocation.search,

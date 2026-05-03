@@ -53,17 +53,17 @@ const resolveFocusedMode = (
   items: KangurMobileCompetitionModeItem[],
 ): KangurMobileCompetitionMode | null => {
   const normalizedToken = modeToken.trim().toLowerCase();
-  if (!normalizedToken) {
+  if (normalizedToken === '') {
     return null;
   }
 
   const aliasedMode = FOCUS_ALIASES[normalizedToken];
-  if (aliasedMode) {
+  if (aliasedMode !== undefined) {
     return aliasedMode;
   }
 
   const byId = items.find((item) => item.mode === normalizedToken);
-  if (byId) {
+  if (byId !== undefined) {
     return byId.mode;
   }
 
@@ -73,12 +73,12 @@ const resolveFocusedMode = (
 export const useKangurMobileCompetition = (
   rawModeToken: string | null,
 ): UseKangurMobileCompetitionResult => {
-  const modeToken = rawModeToken?.trim().toLowerCase() || null;
+  const modeToken = rawModeToken !== null ? rawModeToken.trim().toLowerCase() : null;
 
   const modes = useMemo<KangurMobileCompetitionModeItem[]>(
     () =>
       MODE_ORDER.map((mode) => {
-        const questions = getKangurCompetitionQuestions(mode) as KangurExamQuestion[];
+        const questions = getKangurCompetitionQuestions(mode);
         return {
           mode,
           pointTier: MODE_POINT_TIERS[mode],
@@ -91,7 +91,7 @@ export const useKangurMobileCompetition = (
 
   return {
     focusedMode:
-      modeToken && modes.length > 0 ? resolveFocusedMode(modeToken, modes) : null,
+      modeToken !== null && modes.length > 0 ? resolveFocusedMode(modeToken, modes) : null,
     modeToken,
     modes,
   };

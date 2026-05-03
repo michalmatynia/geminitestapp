@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 import { listFileUploadEvents } from '@/features/files/server';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 
@@ -12,7 +12,7 @@ vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
 }));
 
-describe('system/upload-events GET_handler', () => {
+describe('system/upload-events getHandler', () => {
   const mockContext = { source: 'test', query: {} } as any;
 
   beforeEach(() => {
@@ -21,7 +21,7 @@ describe('system/upload-events GET_handler', () => {
 
   it('calls assertSettingsManageAccess', async () => {
     const req = new NextRequest('http://localhost/api/system/upload-events');
-    await GET_handler(req, mockContext);
+    await getHandler(req, mockContext);
     expect(assertSettingsManageAccess).toHaveBeenCalled();
   });
 
@@ -38,7 +38,7 @@ describe('system/upload-events GET_handler', () => {
       } 
     };
     const req = new NextRequest('http://localhost/api/system/upload-events?page=2&status=success&from=2026-01-01');
-    const response = await GET_handler(req, contextWithQuery);
+    const response = await getHandler(req, contextWithQuery);
     const data = await response.json();
 
     expect(data).toEqual(mockResult);

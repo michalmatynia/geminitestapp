@@ -1,10 +1,10 @@
 import React from 'react';
 
 import { DocsTabPanel } from '../../ui-panels';
-import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
+import { useAiPathsSettingsPageWorkspaceContext } from '../AiPathsSettingsPageContext';
 
 export function AiPathsDocsView(): React.JSX.Element | null {
-  const { activeTab } = useAiPathsSettingsPageContext();
+  const { activeTab } = useAiPathsSettingsPageWorkspaceContext();
 
   if (activeTab !== 'docs') return null;
 

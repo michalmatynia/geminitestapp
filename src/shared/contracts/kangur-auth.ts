@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { KangurUser } from '@kangur/platform';
+
 const nonEmptyTrimmedStringSchema = z.string().trim().min(1);
 const kangurParentEmailSchema = z.string().trim().email();
 const kangurParentCallbackUrlSchema = nonEmptyTrimmedStringSchema.optional();
@@ -8,6 +10,64 @@ const kangurCaptchaTokenSchema = z.string().trim().min(1);
 
 export const kangurAuthModeSchema = z.enum(['sign-in', 'create-account']);
 export type KangurAuthMode = z.infer<typeof kangurAuthModeSchema>;
+
+export type KangurAuthError = {
+  type: 'unknown' | 'auth_required' | 'user_not_registered';
+  message: string;
+};
+
+export type KangurAuthContextValue = {
+  user: KangurUser | null;
+  isAuthenticated: boolean;
+  hasResolvedAuth: boolean;
+  canAccessParentAssignments: boolean;
+  isLoadingAuth: boolean;
+  isLoggingOut?: boolean;
+  isLoadingPublicSettings: boolean;
+  authError: KangurAuthError | null;
+  appPublicSettings: null;
+  logout: (shouldRedirect?: boolean) => void;
+  navigateToLogin: (options?: { authMode?: KangurAuthMode }) => void;
+  checkAppState: (options?: {
+    timeoutMs?: number | null;
+    useBootstrapCache?: boolean;
+  }) => Promise<KangurUser | null>;
+  selectLearner: (learnerId: string) => Promise<void>;
+};
+
+export type KangurAuthStateContextValue = Pick<
+  KangurAuthContextValue,
+  | 'user'
+  | 'isAuthenticated'
+  | 'hasResolvedAuth'
+  | 'canAccessParentAssignments'
+  | 'isLoadingAuth'
+  | 'isLoadingPublicSettings'
+  | 'authError'
+  | 'appPublicSettings'
+>;
+
+export type KangurAuthActionsContextValue = Pick<
+  KangurAuthContextValue,
+  'logout' | 'navigateToLogin' | 'checkAppState' | 'selectLearner'
+>;
+
+export type KangurAuthBootstrapSnapshot = {
+  cachedUser: KangurUser | null | undefined;
+  hasResolvedAuth: boolean;
+  isAuthenticated: boolean;
+  isLoadingAuth: boolean;
+  user: KangurUser | null;
+};
+
+export type KangurAuthRuntimeSetters = {
+  authRequestVersionRef: { current: number };
+  setAuthError: (value: KangurAuthError | null) => void;
+  setHasResolvedAuth: (value: boolean) => void;
+  setIsAuthenticated: (value: boolean) => void;
+  setIsLoadingAuth: (value: boolean) => void;
+  setUser: (value: KangurUser | null) => void;
+};
 
 export const kangurParentAccountCreateSchema = z.object({
   email: kangurParentEmailSchema,

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { validationError } from '@/shared/errors/app-error';
+import type * as ValidatorDecisionLogService from '@/shared/lib/products/services/validator-decision-log-service';
 
 const decisionItemSchema = z.object({
   action: z.enum(['deny', 'replace', 'accept']).default('accept'),
@@ -19,6 +20,9 @@ export const batchDecisionSchema = z.object({
 });
 
 export type BatchDecisionBody = z.infer<typeof batchDecisionSchema>;
+type BatchProductValidationDecisionInput = Parameters<
+  typeof ValidatorDecisionLogService.appendProductValidationDecisionsBatch
+>[0][number];
 
 export const parseBatchDecisionBody = (raw: unknown): BatchDecisionBody => {
   const parsed = batchDecisionSchema.safeParse(raw);
@@ -34,7 +38,7 @@ export const parseBatchDecisionBody = (raw: unknown): BatchDecisionBody => {
 export const buildBatchProductValidationDecisionInputs = (
   body: BatchDecisionBody,
   userId: string | null | undefined
-) =>
+): BatchProductValidationDecisionInput[] =>
   body.decisions.map((decision) => ({
     action: decision.action,
     productId: decision.productId ?? null,

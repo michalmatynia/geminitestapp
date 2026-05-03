@@ -120,7 +120,7 @@ export function reduceSectionActions(
         sectionId: moved.id,
         toZone: zone,
         toParentSectionId: null,
-        toIndex: toIndex,
+        toIndex,
       });
       if (!result.ok) return state;
       return { ...state, sections: result.sections };

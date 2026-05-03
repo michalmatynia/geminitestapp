@@ -1,24 +1,31 @@
-import { render, screen } from '@testing-library/react';
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/consistent-type-assertions, @typescript-eslint/consistent-type-imports, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
+import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const {
   baseQuickExportButtonMock,
+  productImageCellMock,
   playwrightStatusButtonMock,
   traderaQuickListButtonMock,
+  vintedQuickListButtonMock,
   triggerButtonBarMock,
   traderaStatusButtonMock,
+  vintedStatusButtonMock,
   useProductListRowActionsContextMock,
   useProductListRowRuntimeMock,
   useProductListRowVisualsContextMock,
   useProductListSelectionContextMock,
 } = vi.hoisted(() => ({
   baseQuickExportButtonMock: vi.fn(),
+  productImageCellMock: vi.fn(),
   playwrightStatusButtonMock: vi.fn(),
   traderaQuickListButtonMock: vi.fn(),
+  vintedQuickListButtonMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
   traderaStatusButtonMock: vi.fn(),
+  vintedStatusButtonMock: vi.fn(),
   useProductListRowActionsContextMock: vi.fn(),
   useProductListRowRuntimeMock: vi.fn(),
   useProductListRowVisualsContextMock: vi.fn(),
@@ -59,11 +66,25 @@ vi.mock('next/dynamic', () => ({
       }
       if (loaderSource.includes('TraderaQuickListButton')) {
         traderaQuickListButtonMock(props);
+        if (props.showTraderaBadge) {
+          return null;
+        }
         return <button type='button'>T+</button>;
+      }
+      if (loaderSource.includes('VintedQuickListButton')) {
+        vintedQuickListButtonMock(props);
+        if (props.showVintedBadge) {
+          return null;
+        }
+        return <button type='button'>V+</button>;
       }
       if (loaderSource.includes('TraderaStatusButton')) {
         traderaStatusButtonMock(props);
         return <button type='button'>TR</button>;
+      }
+      if (loaderSource.includes('VintedStatusButton')) {
+        vintedStatusButtonMock(props);
+        return <button type='button'>VR</button>;
       }
       if (loaderSource.includes('PlaywrightStatusButton')) {
         playwrightStatusButtonMock(props);
@@ -73,6 +94,16 @@ vi.mock('next/dynamic', () => ({
     };
 
     return DynamicStub;
+  },
+}));
+
+vi.mock('./columns/buttons/TraderaQuickListButton', () => ({
+  TraderaQuickListButton: (props: Record<string, unknown>) => {
+    traderaQuickListButtonMock(props);
+    if (props.showTraderaBadge) {
+      return null;
+    }
+    return <button type='button'>T+</button>;
   },
 }));
 
@@ -127,7 +158,10 @@ vi.mock('@/features/products/ui', () => ({
 }));
 
 vi.mock('@/features/products/components/cells/ProductImageCell', () => ({
-  ProductImageCell: ({ productName }: { productName: string }) => <div>{productName}</div>,
+  ProductImageCell: (props: { productName: string; note?: unknown }) => {
+    productImageCellMock(props);
+    return <div>{props.productName}</div>;
+  },
 }));
 
 let ProductListMobileCards: typeof import('./ProductListMobileCards').ProductListMobileCards;
@@ -160,6 +194,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     weight: null,
     length: null,
     published: false,
+    archived: false,
     categoryId: 'category-1',
     catalogId: 'catalog-1',
     tags: [],
@@ -209,9 +244,14 @@ describe('ProductListMobileCards', () => {
       integrationStatus: 'completed',
       showTraderaBadge: false,
       traderaStatus: 'not_started',
+      showVintedBadge: false,
+      vintedStatus: 'not_started',
+      showScrapedSourceBadge: false,
+      scrapedSourceStatus: 'not_started',
       showPlaywrightProgrammableBadge: false,
       playwrightProgrammableStatus: 'not_started',
       productAiRunFeedback: null,
+      productScanRunFeedback: null,
     });
 
     ({ ProductListMobileCards } = await import('./ProductListMobileCards'));
@@ -230,6 +270,124 @@ describe('ProductListMobileCards', () => {
         prefetchListings: expect.any(Function),
       })
     );
+  });
+
+  it('uses a pointer cursor for mobile product-list selection checkboxes', () => {
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByLabelText('Select Keychain').className).toContain('cursor-pointer');
+  });
+
+  it('renders source price on mobile cards for scraped products', () => {
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      priceGroups: [
+        {
+          id: 'group-retail',
+          groupId: 'RETAIL',
+          currencyId: 'PLN',
+          type: 'standard',
+          basePriceField: 'sourcePrice',
+          isDefault: true,
+          sourceGroupId: null,
+          priceMultiplier: 1,
+          addToPrice: 0,
+          currency: { code: 'PLN' },
+          currencyCode: 'PLN',
+        },
+      ],
+      currencyCode: 'USD',
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+      thumbnailSource: 'file',
+      showTriggerRunFeedback: true,
+      triggerButtonsReady: true,
+      imageExternalBaseUrl: null,
+    });
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          defaultPriceGroupId: 'group-retail',
+          importSource: 'scrape',
+          price: 120,
+          sourcePrice: 60,
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Source: 60.00 PLN')).toBeInTheDocument();
+  });
+
+  it('passes product notes into the shared thumbnail cell', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          notes: {
+            text: 'Check bundle insert.',
+            color: '#fde68a',
+          },
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(productImageCellMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        note: {
+          text: 'Check bundle insert.',
+          color: '#fde68a',
+        },
+      })
+    );
+  });
+
+  it('renders a duplicate SKU marker on mobile cards when the SKU is reused', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          duplicateSkuCount: 2,
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Duplicate SKU')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate SKU')).toHaveAttribute('title', 'SKU used by 2 products');
+  });
+
+  it('renders unassigned categories with a slight reddish tint on mobile cards', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          categoryId: null,
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      priceGroups: [],
+      currencyCode: 'USD',
+      categoryNameById: new Map<string, string>(),
+      thumbnailSource: 'file',
+      showTriggerRunFeedback: true,
+      triggerButtonsReady: true,
+      imageExternalBaseUrl: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Unassigned')).toHaveClass('text-rose-300/80');
   });
 
   it('passes Tradera badge runtime into the mobile quick export button', () => {
@@ -255,6 +413,85 @@ describe('ProductListMobileCards', () => {
         onOpenIntegrations: expect.any(Function),
       })
     );
+  });
+
+  it('keeps the mobile integrations button order stable when quick-list buttons are visible', () => {
+    render(<ProductListMobileCards />);
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Mobile integrations button row was not found.');
+    }
+
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'T+',
+      'V+',
+    ]);
+  });
+
+  it('keeps the mobile integrations button order stable when Tradera and Vinted badges replace quick-list buttons', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: true,
+      traderaStatus: 'auth_required',
+      showVintedBadge: true,
+      vintedStatus: 'auth_required',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
+      productAiRunFeedback: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Mobile integrations button row was not found.');
+    }
+
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'TR',
+      'VR',
+    ]);
+  });
+
+  it('shows only the closed Tradera status button on mobile when the Tradera badge status is closed', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: true,
+      traderaStatus: 'closed',
+      showVintedBadge: false,
+      vintedStatus: 'not_started',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
+      productAiRunFeedback: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Mobile integrations button row was not found.');
+    }
+
+    expect(traderaStatusButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: 'product-1',
+        status: 'closed',
+      })
+    );
+    expect(within(buttonRow).queryByRole('button', { name: 'T+' })).toBeNull();
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'TR',
+      'V+',
+    ]);
   });
 
   it('scopes mobile Base quick export recovery to the Base listings modal', () => {
@@ -334,12 +571,39 @@ describe('ProductListMobileCards', () => {
     );
   });
 
+  it('passes productId into the mobile Vinted status button when the badge is visible', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: false,
+      traderaStatus: 'not_started',
+      showVintedBadge: true,
+      vintedStatus: 'auth_required',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
+      productAiRunFeedback: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(vintedStatusButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: 'product-1',
+        status: 'auth_required',
+        prefetchListings: expect.any(Function),
+        onOpenListings: expect.any(Function),
+      })
+    );
+  });
+
   it('renders the terminal completed run badge on mobile cards', () => {
     useProductListRowRuntimeMock.mockReturnValue({
       showMarketplaceBadge: true,
       integrationStatus: 'completed',
       showTraderaBadge: false,
       traderaStatus: 'not_started',
+      showVintedBadge: false,
+      vintedStatus: 'not_started',
       showPlaywrightProgrammableBadge: false,
       playwrightProgrammableStatus: 'not_started',
       productAiRunFeedback: {
@@ -351,12 +615,49 @@ describe('ProductListMobileCards', () => {
         badgeClassName:
           'border-emerald-500/40 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/25',
       },
+      productScanRunFeedback: null,
     });
 
     render(<ProductListMobileCards />);
 
-    expect(screen.getByText('Completed')).toBeInTheDocument();
+    const pill = screen.getByText('Completed');
+    expect(pill).toBeInTheDocument();
+    expect(pill.closest('[data-activity-kind]')).toHaveAttribute(
+      'data-activity-kind',
+      'trigger-button'
+    );
     expect(screen.queryByText('Queued')).not.toBeInTheDocument();
+  });
+
+  it('renders the scan feedback pill on mobile cards', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: false,
+      traderaStatus: 'not_started',
+      showVintedBadge: false,
+      vintedStatus: 'not_started',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
+      productAiRunFeedback: null,
+      productScanRunFeedback: {
+        scanId: 'scan-1',
+        status: 'running',
+        updatedAt: '2026-04-11T12:00:00.000Z',
+        label: 'Running',
+        variant: 'processing',
+        badgeClassName:
+          'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
+      },
+    });
+
+    render(<ProductListMobileCards />);
+
+    const pill = screen.getByText('Running');
+    expect(pill.closest('[data-activity-kind]')).toHaveAttribute(
+      'data-activity-kind',
+      'scan'
+    );
   });
 
   it('does not render the imported badge when a product only has Base linkage', () => {
@@ -373,7 +674,7 @@ describe('ProductListMobileCards', () => {
 
     render(<ProductListMobileCards />);
 
-    expect(screen.queryByText('Imported')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Imported product')).not.toBeInTheDocument();
   });
 
   it('renders the imported badge for products with explicit import provenance', () => {
@@ -390,7 +691,67 @@ describe('ProductListMobileCards', () => {
 
     render(<ProductListMobileCards />);
 
-    expect(screen.getByText('Imported')).toBeInTheDocument();
+    expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
+  });
+
+  it('renders the imported badge for detached Base imports without a linked Base id', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          baseProductId: null,
+          importSource: 'base',
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
+  });
+
+  it('renders marketplace copy and Polish title icons on mobile cards', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          description_en: 'English description',
+          name_pl: 'Brelok',
+          description_pl: 'Polski opis',
+          marketplaceContentOverrides: [
+            {
+              integrationIds: ['tradera'],
+              title: 'Marketplace title',
+              description: 'Marketplace description',
+            },
+          ],
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByLabelText('Marketplace copy filled')).toBeInTheDocument();
+    expect(screen.getByLabelText('English title and description filled')).toHaveTextContent('EN');
+    expect(screen.getByLabelText('Polish title and description filled')).toHaveTextContent('PL');
+  });
+
+  it('renders the archived badge for archived products', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          archived: true,
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Archived')).toBeInTheDocument();
   });
 
   it('shows the auto-assigned shipping group on mobile cards', () => {

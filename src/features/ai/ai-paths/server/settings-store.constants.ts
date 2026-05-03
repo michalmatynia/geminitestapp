@@ -21,6 +21,7 @@ export const INFER_FIELDS_TRIGGER_BUTTON_ID = 'c5288f60-3a78-4415-891c-8953c3187
 export type ParsedPathMeta = {
   id: string;
   name: string;
+  folderPath?: string;
   version?: number;
   createdAt: string;
   updatedAt: string;

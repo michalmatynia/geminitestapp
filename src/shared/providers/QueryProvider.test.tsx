@@ -7,6 +7,7 @@ import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const useQueryPersistenceMock = vi.fn(() => ({ clearPersisted: vi.fn() }));
+const setupOfflineSupportMock = vi.fn();
 
 vi.mock('@/shared/hooks/query/useQueryPersistence', () => ({
   useQueryPersistence: (config: unknown) => useQueryPersistenceMock(config),
@@ -58,12 +59,13 @@ vi.mock('@/shared/hooks/useQueryAnalytics', () => ({
 }));
 
 vi.mock('@/shared/lib/offline-support', () => ({
-  setupOfflineSupport: () => undefined,
+  setupOfflineSupport: (...args: unknown[]) => setupOfflineSupportMock(...args),
 }));
 
 describe('QueryProvider', () => {
   beforeEach(() => {
     useQueryPersistenceMock.mockClear();
+    setupOfflineSupportMock.mockClear();
   });
 
   it('does not force lite settings revalidation on load when persistence restores cached data', async () => {
@@ -98,5 +100,22 @@ describe('QueryProvider', () => {
       (settingsPersistenceCall?.[0] as { revalidateOnLoad?: boolean } | undefined)
         ?.revalidateOnLoad
     ).toBeUndefined();
+  });
+
+  it('skips persistence and offline boot in light mode', async () => {
+    render(
+      <QueryProvider mode='light'>
+        <div>light-query-provider-child</div>
+      </QueryProvider>
+    );
+
+    expect(screen.getByText('light-query-provider-child')).toBeInTheDocument();
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+
+    expect(useQueryPersistenceMock).not.toHaveBeenCalled();
+    expect(setupOfflineSupportMock).not.toHaveBeenCalled();
   });
 });

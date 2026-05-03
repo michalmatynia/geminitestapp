@@ -177,6 +177,17 @@ vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+  }),
+  usePathname: () => '/kangur/lessons',
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+}));
+
 // --- JSDOM Fixes ---
 if (typeof window !== 'undefined') {
   window.requestAnimationFrame = (cb) => {

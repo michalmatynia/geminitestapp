@@ -39,7 +39,7 @@ vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('agentcreator teaching chat handler module', () => {
   const requestContext = {
@@ -103,7 +103,7 @@ describe('agentcreator teaching chat handler module', () => {
       response: parseErrorResponse,
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/agentcreator/teaching/chat', {
         method: 'POST',
       }),
@@ -120,7 +120,7 @@ describe('agentcreator teaching chat handler module', () => {
       method: 'POST',
     });
 
-    const response = await POST_handler(request, requestContext);
+    const response = await postHandler(request, requestContext);
 
     expect(parseJsonBodyMock).toHaveBeenCalledTimes(1);
     expect(resolveRefsMock).toHaveBeenCalledWith({
@@ -180,7 +180,7 @@ describe('agentcreator teaching chat handler module', () => {
     mergeBundlesMock.mockReturnValue(null);
     buildPromptMock.mockReturnValue('');
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/agentcreator/teaching/chat', {
         method: 'POST',
       }),

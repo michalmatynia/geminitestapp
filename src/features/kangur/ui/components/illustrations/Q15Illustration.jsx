@@ -1,3 +1,4 @@
+ 
 export function Q15Illustration() {
   const cx1 = 30,
     cx2 = 65,

@@ -47,6 +47,9 @@ describe('Kangur lesson primitives', () => {
     );
     expect(screen.getByTestId('lesson-lead')).toHaveClass('text-center', '[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('lesson-caption')).toHaveClass(
+      'max-w-full',
+      'whitespace-normal',
+      'break-words',
       'text-sm',
       'text-left',
       '[color:var(--kangur-page-muted-text)]'

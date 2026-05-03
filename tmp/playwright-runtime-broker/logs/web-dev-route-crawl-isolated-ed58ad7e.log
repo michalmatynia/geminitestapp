@@ -202,7 +202,7 @@ Ready on http://localhost:50236 { port: 50236, host: '127.0.0.1' }
 [api/settings] [api/settings] [settings] cache fallback {
   service: 'api/settings',
   scope: 'heavy',
-  status: 'timeout-prisma-fallback',
+  status: 'timeout-removedOrm-fallback',
   reason: '[settings] cache miss fetch timed out after 3000ms',
   category: 'SYSTEM',
   otelTraceId: 'ad0323a1d3244f300813c0ec5b63c900',
@@ -1227,31 +1227,31 @@ Ready on http://localhost:50236 { port: 50236, host: '127.0.0.1' }
   expected: false,
   critical: true,
   retryable: false,
-  meta: { prismaCode: 'P2022' },
+  meta: { removedOrmCode: 'P2022' },
   error: {
     message: '\n' +
-      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
       '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_features_ai_fb9d506a._.js:188:193\n' +
       '\n' +
       '  185 };\n' +
       '  186 const chatbotSessionRepository = {\n' +
       '  187     async findAll () {\n' +
-      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
+      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
       'The column `(not available)` does not exist in the current database.',
-    stack: 'PrismaClientKnownRequestError: \n' +
-      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
+    stack: 'removedOrmClientKnownRequestError: \n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
       '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_features_ai_fb9d506a._.js:188:193\n' +
       '\n' +
       '  185 };\n' +
       '  186 const chatbotSessionRepository = {\n' +
       '  187     async findAll () {\n' +
-      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
+      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
       'The column `(not available)` does not exist in the current database.\n' +
-      '    at zr.handleRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:8286)\n' +
-      '    at zr.handleAndLogRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7581)\n' +
-      '    at zr.request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7288)\n' +
+      '    at zr.handleRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:8286)\n' +
+      '    at zr.handleAndLogRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:7581)\n' +
+      '    at zr.request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:7288)\n' +
       '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
-      '    at async a (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:75:5816)\n' +
+      '    at async a (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:75:5816)\n' +
       '    at async Object.findAll (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_features_ai_fb9d506a._.js:188:26)\n' +
       '    at async GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_app_api_chatbot_sessions_9c02182a._.js:119:22)\n' +
       '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_shared_fdaf7903._.js:2352:34\n' +
@@ -1273,12 +1273,12 @@ Ready on http://localhost:50236 { port: 50236, host: '127.0.0.1' }
       '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
       '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
       '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
-    name: 'PrismaClientKnownRequestError',
+    name: 'removedOrmClientKnownRequestError',
     code: 'P2022',
     meta: { modelName: 'ChatbotSession', driverAdapterError: [Object] }
   },
   errorCode: 'P2022',
-  errorName: 'PrismaClientKnownRequestError',
+  errorName: 'removedOrmClientKnownRequestError',
   fingerprint: '55fb71d6b83afd2a'
 }
  GET /api/chatbot/sessions 500 in 1314ms (compile: 959ms, proxy.ts: 6ms, render: 350ms)
@@ -1355,31 +1355,31 @@ Ready on http://localhost:50236 { port: 50236, host: '127.0.0.1' }
   expected: false,
   critical: true,
   retryable: false,
-  meta: { prismaCode: 'P2022' },
+  meta: { removedOrmCode: 'P2022' },
   error: {
     message: '\n' +
-      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
       '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_features_ai_fb9d506a._.js:188:193\n' +
       '\n' +
       '  185 };\n' +
       '  186 const chatbotSessionRepository = {\n' +
       '  187     async findAll () {\n' +
-      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
+      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
       'The column `(not available)` does not exist in the current database.',
-    stack: 'PrismaClientKnownRequestError: \n' +
-      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
+    stack: 'removedOrmClientKnownRequestError: \n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
       '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_features_ai_fb9d506a._.js:188:193\n' +
       '\n' +
       '  185 };\n' +
       '  186 const chatbotSessionRepository = {\n' +
       '  187     async findAll () {\n' +
-      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
+      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
       'The column `(not available)` does not exist in the current database.\n' +
-      '    at zr.handleRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:8286)\n' +
-      '    at zr.handleAndLogRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7581)\n' +
-      '    at zr.request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7288)\n' +
+      '    at zr.handleRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:8286)\n' +
+      '    at zr.handleAndLogRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:7581)\n' +
+      '    at zr.request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:7288)\n' +
       '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
-      '    at async a (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:75:5816)\n' +
+      '    at async a (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:75:5816)\n' +
       '    at async Object.findAll (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_features_ai_fb9d506a._.js:188:26)\n' +
       '    at async GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_app_api_chatbot_sessions_9c02182a._.js:119:22)\n' +
       '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_shared_fdaf7903._.js:2352:34\n' +
@@ -1401,12 +1401,12 @@ Ready on http://localhost:50236 { port: 50236, host: '127.0.0.1' }
       '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
       '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
       '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
-    name: 'PrismaClientKnownRequestError',
+    name: 'removedOrmClientKnownRequestError',
     code: 'P2022',
     meta: { modelName: 'ChatbotSession', driverAdapterError: [Object] }
   },
   errorCode: 'P2022',
-  errorName: 'PrismaClientKnownRequestError',
+  errorName: 'removedOrmClientKnownRequestError',
   fingerprint: '55fb71d6b83afd2a'
 }
  GET /api/chatbot/sessions 500 in 200ms (compile: 39ms, proxy.ts: 135ms, render: 26ms)
@@ -1527,31 +1527,31 @@ Ready on http://localhost:50236 { port: 50236, host: '127.0.0.1' }
   expected: false,
   critical: true,
   retryable: false,
-  meta: { prismaCode: 'P2022' },
+  meta: { removedOrmCode: 'P2022' },
   error: {
     message: '\n' +
-      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
       '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_features_ai_fb9d506a._.js:188:193\n' +
       '\n' +
       '  185 };\n' +
       '  186 const chatbotSessionRepository = {\n' +
       '  187     async findAll () {\n' +
-      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
+      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
       'The column `(not available)` does not exist in the current database.',
-    stack: 'PrismaClientKnownRequestError: \n' +
-      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
+    stack: 'removedOrmClientKnownRequestError: \n' +
+      'Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany()` invocation in\n' +
       '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_features_ai_fb9d506a._.js:188:193\n' +
       '\n' +
       '  185 };\n' +
       '  186 const chatbotSessionRepository = {\n' +
       '  187     async findAll () {\n' +
-      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
+      '→ 188         const sessions = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$shared$2f$lib$2f$db$2f$removedOrm$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].chatbotSession.findMany(\n' +
       'The column `(not available)` does not exist in the current database.\n' +
-      '    at zr.handleRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:8286)\n' +
-      '    at zr.handleAndLogRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7581)\n' +
-      '    at zr.request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:65:7288)\n' +
+      '    at zr.handleRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:8286)\n' +
+      '    at zr.handleAndLogRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:7581)\n' +
+      '    at zr.request (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:65:7288)\n' +
       '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
-      '    at async a (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@prisma/client/runtime/client.js:75:5816)\n' +
+      '    at async a (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@removedOrm/client/runtime/client.js:75:5816)\n' +
       '    at async Object.findAll (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_features_ai_fb9d506a._.js:188:26)\n' +
       '    at async GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_app_api_chatbot_sessions_9c02182a._.js:119:22)\n' +
       '    at async /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev-web-dev-route-crawl-isolated/dev/server/chunks/src_shared_fdaf7903._.js:2352:34\n' +
@@ -1573,12 +1573,12 @@ Ready on http://localhost:50236 { port: 50236, host: '127.0.0.1' }
       '    at async invokeRender (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:248:21)\n' +
       '    at async handleRequest (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:447:24)\n' +
       '    at async NextCustomServer.requestHandlerImpl (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/router-server.js:496:13)',
-    name: 'PrismaClientKnownRequestError',
+    name: 'removedOrmClientKnownRequestError',
     code: 'P2022',
     meta: { modelName: 'ChatbotSession', driverAdapterError: [Object] }
   },
   errorCode: 'P2022',
-  errorName: 'PrismaClientKnownRequestError',
+  errorName: 'removedOrmClientKnownRequestError',
   fingerprint: '55fb71d6b83afd2a'
 }
  GET /api/chatbot/sessions 500 in 824ms (compile: 247ms, proxy.ts: 179ms, render: 398ms)
@@ -2000,7 +2000,7 @@ Ready on http://localhost:50236 { port: 50236, host: '127.0.0.1' }
 [api/settings] [api/settings] [settings] cache fallback {
   service: 'api/settings',
   scope: 'heavy',
-  status: 'timeout-prisma-fallback',
+  status: 'timeout-removedOrm-fallback',
   reason: '[settings] cache miss fetch timed out after 3000ms',
   category: 'SYSTEM',
   otelTraceId: 'bad38212ecef54e9a05e97ecdf54f927',

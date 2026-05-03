@@ -64,12 +64,18 @@ export const persistKangurMobileHomeDuelInvites = ({
   learnerIdentity: string;
   storage: KangurClientStorageAdapter;
 }): void => {
-  const store = parsePersistedHomeDuelInvitesStore(
+  if (!learnerIdentity) {
+    return;
+  }
+  const currentStore = parsePersistedHomeDuelInvitesStore(
     storage.getItem(KANGUR_MOBILE_HOME_DUEL_INVITES_STORAGE_KEY),
   );
-  store[learnerIdentity] = entries.slice(0, MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT);
+  const updatedStore = {
+    ...currentStore,
+    [learnerIdentity]: entries.slice(0, MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT),
+  };
   storage.setItem(
     KANGUR_MOBILE_HOME_DUEL_INVITES_STORAGE_KEY,
-    JSON.stringify(store),
+    JSON.stringify(updatedStore),
   );
 };

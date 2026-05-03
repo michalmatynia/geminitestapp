@@ -2,7 +2,8 @@ import { act, renderHook } from '@testing-library/react';
 import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import { useCanvasSidebarActions } from '../useCanvasSidebarActions';
 
@@ -36,7 +37,7 @@ const graphActionsMock = {
   setEdges: mockState.setEdges,
 };
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: mockState.toast }),
 }));
 
@@ -53,7 +54,8 @@ vi.mock('@/shared/utils/drag-drop', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
-  useGraphState: () => mockState.graphState,
+  useGraphDataState: () => mockState.graphState,
+  usePathMetadataState: () => mockState.graphState,
   useGraphActions: () => graphActionsMock,
   useRuntimeActions: () => ({
     setRuntimeState: mockState.setRuntimeState,

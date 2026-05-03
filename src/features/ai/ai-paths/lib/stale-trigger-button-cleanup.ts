@@ -43,7 +43,7 @@ export const buildStaleTriggerButtonCleanupPlan = (args: {
   const nextTriggerButtons = triggerButtons
     .filter((button) => {
       const pathId = normalizePathId(button.pathId);
-      if (!pathId) {
+      if (pathId === null) {
         return true;
       }
       if (indexedPathIds.has(pathId) && configuredPathIds.has(pathId)) {

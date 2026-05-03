@@ -28,7 +28,7 @@ type SimpleParameterUpdateInput = {
 };
 
 type ListSimpleParametersInput = {
-  catalogId: string;
+  catalogId?: string | null;
   search?: string;
 };
 
@@ -135,12 +135,11 @@ export async function listSimpleParameters(
   input: ListSimpleParametersInput
 ): Promise<ProductSimpleParameter[]> {
   const catalogId = toTrimmedString(input.catalogId);
-  if (!catalogId) return [];
   const search = toTrimmedString(input.search).toLowerCase();
 
   const all = await readSimpleParameters();
   const filtered = all.filter((parameter: ProductSimpleParameter) => {
-    if (parameter.catalogId !== catalogId) return false;
+    if (catalogId.length > 0 && parameter.catalogId !== catalogId) return false;
     if (!search) return true;
     const values = [parameter.name_en || '', parameter.name_pl ?? '', parameter.name_de ?? ''];
     return values.some((value: string) => value.toLowerCase().includes(search));

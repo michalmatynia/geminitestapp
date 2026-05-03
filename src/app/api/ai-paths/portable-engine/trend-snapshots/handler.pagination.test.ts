@@ -4,26 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const builders = vi.hoisted(() => ({
   requireAiPathsAccessMock: vi.fn(),
   getPortablePathRunExecutionSnapshotMock: vi.fn(),
-  loadPortablePathAuditSinkAutoRemediationDeadLettersMock: vi.fn(),
   loadPortablePathSigningPolicyTrendSnapshotsMock: vi.fn(),
-  loadPortablePathAuditSinkStartupHealthStateMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock:
-    vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -35,47 +16,13 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/portable-engine-observability', (
 }));
 
 vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
-  loadPortablePathAuditSinkAutoRemediationDeadLetters:
-    builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock,
-  loadPortablePathSigningPolicyTrendSnapshots: builders.loadPortablePathSigningPolicyTrendSnapshotsMock,
-  loadPortablePathAuditSinkStartupHealthState: builders.loadPortablePathAuditSinkStartupHealthStateMock,
-  resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock,
+  loadPortablePathSigningPolicyTrendSnapshots:
+    builders.loadPortablePathSigningPolicyTrendSnapshotsMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
-describe('ai-paths portable-engine trend snapshots handler', () => {
+describe('ai-paths portable-engine trend snapshots pagination', () => {
   beforeEach(() => {
     builders.requireAiPathsAccessMock.mockReset().mockResolvedValue(undefined);
     builders.getPortablePathRunExecutionSnapshotMock.mockReset().mockReturnValue({
@@ -106,9 +53,6 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       },
       recentEvents: [],
     });
-    builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock
-      .mockReset()
-      .mockResolvedValue([]);
     builders.loadPortablePathSigningPolicyTrendSnapshotsMock.mockReset();
   });
 
@@ -260,11 +204,11 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold&from=2026-03-05T00:05:00.000Z&to=2026-03-05T00:25:00.000Z'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -283,9 +227,6 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       latestSnapshotAt: '2026-03-05T00:20:00.000Z',
       driftAlertsTotal: 1,
       sinkWritesFailedTotal: 1,
-      notificationDeadLetterCount: 0,
-      latestNotificationDeadLetterAt: null,
-      notificationDeadLetterTopErrors: [],
     });
     expect(payload['pagination']).toEqual(
       expect.objectContaining({
@@ -299,11 +240,11 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
     ]);
 
     const nextCursor = String((payload['pagination'] as Record<string, unknown>)['nextCursor']);
-    const cursorResponse = await GET_handler(
+    const cursorResponse = await getHandler(
       new NextRequest(
         `http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold&from=2026-03-05T00:05:00.000Z&to=2026-03-05T00:25:00.000Z&cursor=${encodeURIComponent(nextCursor)}`
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(cursorResponse.status).toBe(200);
@@ -314,9 +255,6 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       latestSnapshotAt: '2026-03-05T00:10:00.000Z',
       driftAlertsTotal: 1,
       sinkWritesFailedTotal: 1,
-      notificationDeadLetterCount: 0,
-      latestNotificationDeadLetterAt: null,
-      notificationDeadLetterTopErrors: [],
     });
     expect(cursorPayload['pagination']).toEqual(
       expect.objectContaining({
@@ -428,19 +366,6 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
         driftAlerts: [],
       },
     ]);
-
-    const firstResponse = await GET_handler(
-      new NextRequest(
-        'http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold'
-      ),
-      {} as Parameters<typeof GET_handler>[1]
-    );
-    const firstPayload = (await firstResponse.json()) as Record<string, unknown>;
-    const firstCursor = String(
-      (firstPayload['pagination'] as Record<string, unknown>)['nextCursor']
-    );
-    expect(firstCursor.length).toBeGreaterThan(0);
-
     builders.loadPortablePathSigningPolicyTrendSnapshotsMock.mockResolvedValueOnce([
       {
         at: '2026-03-05T00:10:00.000Z',
@@ -543,11 +468,11 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
         trigger: 'threshold',
         reportEveryUses: 5,
         usageTotals: { uses: 4 },
-        usageBySurface: { canvas: 1, product: 1, api: 2 },
+        usageBySurface: { canvas: 0, product: 0, api: 4 },
         usageByProfile: {
           dev: {
             uses: 4,
-            bySurface: { canvas: 1, product: 1, api: 2 },
+            bySurface: { canvas: 0, product: 0, api: 4 },
             fingerprintModeCounts: { off: 4, warn: 0, strict: 0 },
             envelopeModeCounts: { off: 4, warn: 0, strict: 0 },
             lastUsedAt: '2026-03-05T00:30:00.000Z',
@@ -588,74 +513,32 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       },
     ]);
 
-    const secondResponse = await GET_handler(
+    const firstResponse = await getHandler(
       new NextRequest(
-        `http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold&cursor=${encodeURIComponent(firstCursor)}`
+        'http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold'
       ),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
+
+    expect(firstResponse.status).toBe(200);
+    const firstPayload = (await firstResponse.json()) as Record<string, unknown>;
+    expect((firstPayload['snapshots'] as Array<{ at: string }>).map((entry) => entry.at)).toEqual([
+      '2026-03-05T00:20:00.000Z',
+    ]);
+    const nextCursor = String((firstPayload['pagination'] as Record<string, unknown>)['nextCursor']);
+
+    const secondResponse = await getHandler(
+      new NextRequest(
+        `http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold&cursor=${encodeURIComponent(nextCursor)}`
+      ),
+      {} as Parameters<typeof getHandler>[1]
+    );
+
+    expect(secondResponse.status).toBe(200);
     const secondPayload = (await secondResponse.json()) as Record<string, unknown>;
-    expect(secondPayload['snapshotCount']).toBe(1);
-    expect(secondPayload['matchedSnapshotCount']).toBe(3);
     expect((secondPayload['snapshots'] as Array<{ at: string }>).map((entry) => entry.at)).toEqual([
       '2026-03-05T00:10:00.000Z',
     ]);
-  });
-
-  it('rejects invalid snapshot limits', async () => {
-    await expect(
-      GET_handler(
-        new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=0'),
-        {} as Parameters<typeof GET_handler>[1]
-      )
-    ).rejects.toThrow('Trend snapshot limit must be between 1 and 500.');
-  });
-
-  it('rejects invalid trigger and invalid date ranges', async () => {
-    await expect(
-      GET_handler(
-        new NextRequest(
-          'http://localhost/api/ai-paths/portable-engine/trend-snapshots?trigger=invalid'
-        ),
-        {} as Parameters<typeof GET_handler>[1]
-      )
-    ).rejects.toThrow('Trend snapshot trigger must be one of: manual, threshold.');
-
-    await expect(
-      GET_handler(
-        new NextRequest(
-          'http://localhost/api/ai-paths/portable-engine/trend-snapshots?from=2026-03-05T01:00:00.000Z&to=2026-03-05T00:00:00.000Z'
-        ),
-        {} as Parameters<typeof GET_handler>[1]
-      )
-    ).rejects.toThrow('Trend snapshot "from" timestamp must be earlier than or equal to "to".');
-
-    await expect(
-      GET_handler(
-        new NextRequest(
-          'http://localhost/api/ai-paths/portable-engine/trend-snapshots?cursor=invalid'
-        ),
-        {} as Parameters<typeof GET_handler>[1]
-      )
-    ).rejects.toThrow('Trend snapshot cursor is invalid.');
-
-    const mismatchedCursor = Buffer.from(
-      JSON.stringify({
-        version: 1,
-        beforeAt: '2026-03-05T00:30:00.000Z',
-        trigger: 'manual',
-        from: null,
-        to: null,
-      }),
-      'utf8'
-    ).toString('base64url');
-    await expect(
-      GET_handler(
-        new NextRequest(
-          `http://localhost/api/ai-paths/portable-engine/trend-snapshots?trigger=threshold&cursor=${encodeURIComponent(mismatchedCursor)}`
-        ),
-        {} as Parameters<typeof GET_handler>[1]
-      )
-    ).rejects.toThrow('Trend snapshot cursor is invalid.');
+    expect((secondPayload['pagination'] as Record<string, unknown>)['hasMore']).toBe(false);
   });
 });

@@ -26,7 +26,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -74,7 +74,7 @@ describe('auth nextauth wrapper handler', () => {
     const nowSpy = vi.spyOn(Date, 'now');
     nowSpy.mockReturnValue(10_000);
 
-    const firstResponse = await GET_handler(
+    const firstResponse = await getHandler(
       new NextRequest('http://localhost/api/auth/session'),
       createRequestContext()
     );
@@ -87,7 +87,7 @@ describe('auth nextauth wrapper handler', () => {
 
     nowSpy.mockReturnValue(10_500);
 
-    const secondResponse = await GET_handler(
+    const secondResponse = await getHandler(
       new NextRequest('http://localhost/api/auth/session'),
       createRequestContext()
     );
@@ -113,7 +113,7 @@ describe('auth nextauth wrapper handler', () => {
       },
     });
 
-    const response = await GET_handler(request, createRequestContext());
+    const response = await getHandler(request, createRequestContext());
 
     expect(handlersGetMock).toHaveBeenCalledWith(request);
     expect(logAuthEventMock).toHaveBeenNthCalledWith(
@@ -141,7 +141,7 @@ describe('auth nextauth wrapper handler', () => {
     const error = new Error('session lookup failed');
     handlersGetMock.mockRejectedValue(error);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/auth/session', {
         headers: {
           cookie: 'next-auth.session-token=session-token-2',
@@ -171,7 +171,7 @@ describe('auth nextauth wrapper handler', () => {
     handlersGetMock.mockRejectedValue(error);
 
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/auth/providers'),
         createRequestContext()
       )
@@ -203,7 +203,7 @@ describe('auth nextauth wrapper handler', () => {
       },
     });
 
-    const response = await POST_handler(request, createRequestContext());
+    const response = await postHandler(request, createRequestContext());
 
     expect(handlersPostMock).toHaveBeenCalledWith(request);
     expect(response.status).toBe(201);

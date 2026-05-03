@@ -31,6 +31,9 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: () => ({
     openLoginModal: openLoginModalMock,
   }),
+  useKangurLoginModalActions: () => ({
+    openLoginModal: openLoginModalMock,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({

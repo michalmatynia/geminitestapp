@@ -1,3 +1,5 @@
+'use client';
+
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 import { getBlockTypographyStyles } from '../theme-styles';

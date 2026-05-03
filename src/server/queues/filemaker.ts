@@ -6,3 +6,10 @@ export {
   stopFilemakerEmailCampaignQueue,
 } from '@/features/filemaker/workers/filemakerEmailCampaignQueue';
 export { startFilemakerEmailCampaignSchedulerQueue } from '@/features/filemaker/workers/filemakerEmailCampaignSchedulerQueue';
+export {
+  enqueueFilemakerMailSyncJob,
+  startFilemakerMailSyncQueue,
+  stopFilemakerMailSyncQueue,
+} from '@/features/filemaker/workers/filemakerMailSyncQueue';
+export { startFilemakerMailSyncSchedulerQueue } from '@/features/filemaker/workers/filemakerMailSyncSchedulerQueue';
+export { startFilemakerCampaignColdPruneSchedulerQueue } from '@/features/filemaker/workers/filemakerCampaignColdPruneSchedulerQueue';

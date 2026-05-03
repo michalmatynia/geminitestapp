@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import { bulkCategoryMappingRequestSchema } from '@/shared/contracts/integrations/base-com';
@@ -6,11 +6,13 @@ import { type MarketplaceBulkUpsertResponse } from '@/shared/contracts/integrati
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
+import { assertCategoryMappingsCanBeSaved } from '../validation';
+
 /**
  * POST /api/marketplace/mappings/bulk
  * Creates or updates multiple category mappings at once.
  */
-export async function POST_handler(
+export async function postHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
@@ -21,6 +23,11 @@ export async function POST_handler(
     return parsed.response;
   }
   const { connectionId, catalogId, mappings } = parsed.data;
+
+  await assertCategoryMappingsCanBeSaved({
+    connectionId,
+    mappings,
+  });
 
   const repo = getCategoryMappingRepository();
   const upsertedCount = await repo.bulkUpsert(connectionId, catalogId, mappings);

@@ -1,3 +1,9 @@
+/* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-nested-ternary, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
+// Validation engine core: deterministic helpers for validator pattern handling.
+// This module implements pattern normalization, sequence grouping, replacement
+// resolution, and safe execution guards used by both the simulator and runtime
+// validation paths. It is intentionally side-effect-free — do not add DB or
+// network operations here; keep logic pure for testability and reuse.
 import type { ProductValidationInstanceScope, ProductValidationPattern, ProductValidationPostAcceptBehavior, ProductValidationTarget, FieldValidatorIssue } from '@/shared/contracts/products/validation';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
@@ -42,6 +48,16 @@ type ResolvedReplacement = {
 } | null;
 
 const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
+const FIELD_VALIDATION_HIDDEN_SEMANTIC_OPERATIONS = new Set<string>([
+  'parse_marketplace_listing_text',
+]);
+
+const isPatternHiddenFromFieldValidation = (pattern: ProductValidationPattern): boolean => {
+  const semanticState = getProductValidationSemanticState(pattern);
+  if (semanticState === null) return false;
+  if (FIELD_VALIDATION_HIDDEN_SEMANTIC_OPERATIONS.has(semanticState.operation)) return true;
+  return semanticState.metadata?.['fieldValidation'] === 'disabled';
+};
 
 /**
  * Validator docs: see docs/validator/function-reference.md#core.normalizevalidationdebouncems
@@ -165,6 +181,8 @@ export const resolveFieldTargetAndLocale = (
     target = 'stock';
   } else if (fieldName === 'categoryId') {
     target = 'category';
+  } else if (fieldName === 'producerIds') {
+    target = 'producer';
   } else if (fieldName === 'sizeLength') {
     target = 'size_length';
   } else if (fieldName === 'sizeWidth') {
@@ -489,6 +507,156 @@ type StaticPatternPlan = {
   allowWithoutRegexMatch: boolean;
 };
 
+export type ProductValidationPatternRegexMatch = {
+  pattern: ProductValidationPattern;
+  patternId: string;
+  matchText: string;
+  index: number;
+  length: number;
+  captures: string[];
+  groups: Record<string, string>;
+};
+
+const normalizeRegexMatchGroups = (
+  groups: Record<string, string> | undefined
+): Record<string, string> => (groups === undefined ? {} : { ...groups });
+
+const shouldCollectPatternMatch = ({
+  pattern,
+  target,
+  validationScope,
+}: {
+  pattern: ProductValidationPattern;
+  target?: ProductValidationTarget | undefined;
+  validationScope: ProductValidationInstanceScope;
+}): boolean => {
+  if (!pattern.enabled) return false;
+  if (target !== undefined && pattern.target !== target) return false;
+  if (isRuntimePatternEnabled(pattern)) return false;
+  return isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope);
+};
+
+const shouldRunPatternAgainstValue = ({
+  value,
+  pattern,
+  validationScope,
+}: {
+  value: string;
+  pattern: ProductValidationPattern;
+  validationScope: ProductValidationInstanceScope;
+}): boolean =>
+  shouldLaunchPattern({
+    pattern,
+    validationScope,
+    fieldValue: value,
+    values: {},
+    latestProductValues: null,
+  });
+
+const compileValidationPatternRegex = (pattern: ProductValidationPattern): RegExp | null => {
+  try {
+    return new RegExp(pattern.regex, pattern.flags ?? undefined);
+  } catch (error) {
+    logClientError(error);
+    return null;
+  }
+};
+
+const toValidationPatternRegexMatch = (
+  pattern: ProductValidationPattern,
+  match: RegExpExecArray
+): ProductValidationPatternRegexMatch => {
+  const matchText = match[0];
+  return {
+    pattern,
+    patternId: pattern.id,
+    matchText,
+    index: match.index,
+    length: matchText.length,
+    captures: Array.from(match).slice(1),
+    groups: normalizeRegexMatchGroups(match.groups),
+  };
+};
+
+const collectCompiledRegexMatches = ({
+  value,
+  pattern,
+  regex,
+  maxMatches,
+}: {
+  value: string;
+  pattern: ProductValidationPattern;
+  regex: RegExp;
+  maxMatches: number;
+}): ProductValidationPatternRegexMatch[] => {
+  const matches: ProductValidationPatternRegexMatch[] = [];
+  const runtimeRegex = regex;
+  const canIterate = runtimeRegex.global || runtimeRegex.sticky;
+  let match: RegExpExecArray | null = null;
+  do {
+    match = runtimeRegex.exec(value);
+    if (match === null) break;
+    const nextMatch = toValidationPatternRegexMatch(pattern, match);
+    matches.push(nextMatch);
+    if (!canIterate) break;
+    if (nextMatch.matchText.length === 0) {
+      runtimeRegex.lastIndex += 1;
+    }
+  } while (matches.length < maxMatches);
+
+  return matches;
+};
+
+const collectMatchesForPattern = ({
+  value,
+  pattern,
+  validationScope,
+  maxMatches,
+}: {
+  value: string;
+  pattern: ProductValidationPattern;
+  validationScope: ProductValidationInstanceScope;
+  maxMatches: number;
+}): ProductValidationPatternRegexMatch[] => {
+  if (!shouldRunPatternAgainstValue({ value, pattern, validationScope })) return [];
+
+  const regex = compileValidationPatternRegex(pattern);
+  if (regex === null) return [];
+
+  return collectCompiledRegexMatches({ value, pattern, regex, maxMatches });
+};
+
+export const collectValidationPatternRegexMatches = ({
+  value,
+  patterns,
+  validationScope = 'product_create',
+  target,
+  maxMatchesPerPattern,
+}: {
+  value: string;
+  patterns: ProductValidationPattern[];
+  validationScope?: ProductValidationInstanceScope;
+  target?: ProductValidationTarget;
+  maxMatchesPerPattern?: number;
+}): ProductValidationPatternRegexMatch[] => {
+  if (value.length === 0 || patterns.length === 0) return [];
+
+  const orderedPatterns = sortValidatorPatterns(patterns);
+  return orderedPatterns.flatMap((pattern: ProductValidationPattern): ProductValidationPatternRegexMatch[] => {
+    if (!shouldCollectPatternMatch({ pattern, target, validationScope })) return [];
+    const maxMatches =
+      typeof maxMatchesPerPattern === 'number' && Number.isFinite(maxMatchesPerPattern)
+        ? Math.max(1, Math.floor(maxMatchesPerPattern))
+        : normalizePatternMaxExecutions(pattern);
+    return collectMatchesForPattern({
+      value,
+      pattern,
+      validationScope,
+      maxMatches,
+    });
+  });
+};
+
 const buildStaticPatternPlans = ({
   orderedPatterns,
   validationScope,
@@ -501,6 +669,7 @@ const buildStaticPatternPlans = ({
   const byTarget = new Map<ProductValidationTarget, StaticPatternPlan[]>();
   for (const pattern of orderedPatterns) {
     if (!pattern.enabled) continue;
+    if (isPatternHiddenFromFieldValidation(pattern)) continue;
     if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope)) continue;
     if (isRuntimePatternEnabled(pattern)) continue;
     const inSequenceGroup = isPatternInSequenceGroup(pattern, sequenceGroupCounts);
@@ -736,6 +905,29 @@ function applyPatternPlansToField({
   return localIssues;
 }
 
+const canFieldPlansEvaluateEmptyValue = (fieldPlans: StaticPatternPlan[]): boolean => {
+  for (const plan of fieldPlans) {
+    if (plan.allowWithoutRegexMatch) {
+      return true;
+    }
+    if (plan.pattern.launchEnabled && plan.pattern.launchSourceMode !== 'current_field') {
+      return true;
+    }
+    if (!plan.pattern.replacementEnabled || !plan.pattern.replacementValue) {
+      continue;
+    }
+    try {
+      if (new RegExp(plan.pattern.regex, plan.pattern.flags ?? undefined).test('')) {
+        return true;
+      }
+    } catch (error) {
+      logClientError(error);
+    }
+  }
+
+  return false;
+};
+
 /**
  * Validator docs: see docs/validator/function-reference.md#core.buildfieldissues
  */
@@ -785,7 +977,15 @@ export const buildFieldIssues = ({
     const hasLatestPriceStockMirror = fieldPlans.some(
       (plan: StaticPatternPlan): boolean => plan.allowWithoutRegexMatch
     );
-    if (!normalizedRawValue && !hasExternalLaunchSource && !hasLatestPriceStockMirror) continue;
+    const canEvaluateEmptyValue = canFieldPlansEvaluateEmptyValue(fieldPlans);
+    if (
+      !normalizedRawValue &&
+      !hasExternalLaunchSource &&
+      !hasLatestPriceStockMirror &&
+      !canEvaluateEmptyValue
+    ) {
+      continue;
+    }
 
     const fieldIssues = applyPatternPlansToField({
       fieldName,

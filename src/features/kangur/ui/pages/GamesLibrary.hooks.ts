@@ -22,9 +22,12 @@ import {
   getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurGameLibraryPage } from '@/features/kangur/ui/hooks/useKangurGameLibraryPage';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -318,8 +321,8 @@ function useGamesLibraryContextState() {
   const searchParams = useSearchParams();
   const { replace: replaceRoute } = useKangurRouteNavigator();
   const { basePath, requestedHref } = useKangurRouting();
-  const auth = useKangurAuth();
-  const { user, logout } = auth;
+  const { user } = useKangurAuthSessionState();
+  const { logout } = useKangurAuthActions();
   const { openLoginModal } = useLoginModalSafe();
   const { guestPlayerName, setGuestPlayerName } = useGuestPlayerSafe();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -714,7 +717,7 @@ export function useGamesLibraryState() {
 
 function useLoginModalSafe(): GamesLibraryLoginModalState {
   try {
-    return useKangurLoginModal();
+    return useKangurLoginModalActions();
   } catch {
     return { openLoginModal: () => {} };
   }

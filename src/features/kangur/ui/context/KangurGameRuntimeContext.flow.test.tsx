@@ -12,6 +12,7 @@ const {
   trackKangurClientEventMock,
   useKangurAssignmentsMock,
   useKangurAuthMock,
+  useKangurDeferredStandaloneHomeReadyMock,
   useKangurProgressStateMock,
   useKangurRoutingMock,
   useKangurSubjectFocusMock,
@@ -22,6 +23,7 @@ const {
   trackKangurClientEventMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
+  useKangurDeferredStandaloneHomeReadyMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useKangurRoutingMock: vi.fn(),
   useKangurSubjectFocusMock: vi.fn(),
@@ -47,18 +49,52 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
+  useKangurAuthSessionState: () => {
+    const auth = useKangurAuthMock();
+    return {
+      user: auth.user ?? null,
+      isAuthenticated: auth.isAuthenticated ?? false,
+      hasResolvedAuth: auth.hasResolvedAuth ?? true,
+      canAccessParentAssignments: auth.canAccessParentAssignments ?? false,
+    };
+  },
+  useKangurAuthStatusState: () => {
+    const auth = useKangurAuthMock();
+    return {
+      isLoadingAuth: auth.isLoadingAuth ?? false,
+      isLoadingPublicSettings: auth.isLoadingPublicSettings ?? false,
+      isLoggingOut: auth.isLoggingOut ?? false,
+      authError: auth.authError ?? null,
+      appPublicSettings: auth.appPublicSettings ?? null,
+    };
+  },
+  useKangurAuthActions: () => {
+    const auth = useKangurAuthMock();
+    return {
+      logout: auth.logout ?? vi.fn(),
+      navigateToLogin: auth.navigateToLogin ?? vi.fn(),
+      checkAppState: auth.checkAppState ?? vi.fn(),
+      selectLearner: auth.selectLearner ?? vi.fn(),
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+  useOptionalKangurRouting: useKangurRoutingMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: useKangurSubjectFocusMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady', () => ({
+  useKangurDeferredStandaloneHomeReady: useKangurDeferredStandaloneHomeReadyMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
@@ -142,7 +178,10 @@ describe('KangurGameRuntimeContext flow', () => {
 
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Game',
     });
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(true);
     useKangurSubjectFocusMock.mockReturnValue({
       setSubject: vi.fn(),
       subject: 'maths',

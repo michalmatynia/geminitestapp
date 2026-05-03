@@ -180,7 +180,7 @@ describe('local-kangur-platform learners shared API client integration', () => {
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      '/api/kangur/learners',
+      '/kangur-api/learners',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',
@@ -189,7 +189,7 @@ describe('local-kangur-platform learners shared API client integration', () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      '/api/kangur/learners/learner%20with%20space',
+      '/kangur-api/learners/learner%20with%20space',
       expect.objectContaining({
         method: 'PATCH',
         credentials: 'same-origin',
@@ -198,7 +198,7 @@ describe('local-kangur-platform learners shared API client integration', () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       3,
-      '/api/kangur/learners/learner-1',
+      '/kangur-api/learners/learner-1',
       expect.objectContaining({
         method: 'DELETE',
         credentials: 'same-origin',
@@ -240,7 +240,7 @@ describe('local-kangur-platform learners shared API client integration', () => {
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      '/api/kangur/learners/learner%201/sessions?limit=5&offset=1',
+      '/kangur-api/learners/learner%201/sessions?limit=5&offset=1',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',
@@ -248,7 +248,7 @@ describe('local-kangur-platform learners shared API client integration', () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      '/api/kangur/learners/learner%201/interactions?limit=5&offset=2',
+      '/kangur-api/learners/learner%201/interactions?limit=5&offset=2',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',

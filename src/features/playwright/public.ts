@@ -4,4 +4,5 @@ export * from './constants.public';
 export * from './engine.public';
 export * from './hooks.public';
 export * from './pages.public';
+export * from './scan-steps.public';
 export * from './utils.public';

@@ -33,93 +33,75 @@ type UseKangurMobileHomeDuelsInvitesOptions = {
   enabled?: boolean;
 };
 
+function resolveLearnerContext(session: ReturnType<typeof useKangurMobileAuth>['session']): { identity: string; activeId: string | null } {
+  const user = session.user;
+  if (!user) {
+    return { identity: 'guest', activeId: null };
+  }
+
+  const activeId = user.activeLearner?.id ?? user.id ?? null;
+  const identity = user.activeLearner?.id ?? user.email ?? user.id ?? 'guest';
+
+  return { identity, activeId };
+}
+
+function resolveResolvedPrivateEntries(
+    hasResolvedLive: boolean, 
+    privateEntries: KangurDuelLobbyEntry[], 
+    persisted: KangurDuelLobbyEntry[] | null
+): KangurDuelLobbyEntry[] {
+    return hasResolvedLive ? privateEntries : persisted ?? privateEntries;
+}
+
 export const useKangurMobileHomeDuelsInvites = ({
   enabled = true,
 }: UseKangurMobileHomeDuelsInvitesOptions = {}): UseKangurMobileHomeDuelsInvitesResult => {
   const { copy } = useKangurMobileI18n();
   const { apiBaseUrl, apiClient, storage } = useKangurMobileRuntime();
   const { isLoadingAuth, session } = useKangurMobileAuth();
-  const learnerIdentity =
-    session.user?.activeLearner?.id ??
-    session.user?.email ??
-    session.user?.id ??
-    'guest';
-  const activeLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
+  const { identity: learnerIdentity, activeId: activeLearnerId } = resolveLearnerContext(session);
+  
   const isAuthenticated = session.status === 'authenticated';
   const isRestoringAuth = isLoadingAuth && !isAuthenticated;
   const isQueryEnabled = enabled && isAuthenticated;
   const isDeferred = isAuthenticated && !isRestoringAuth && !isQueryEnabled;
-  const lobbyQueryKey = buildKangurMobileHomeDuelLobbyQueryKey(
-    apiBaseUrl,
-    learnerIdentity,
-    'private',
-  );
+
   const persistedPrivateEntries = useMemo(
-    () =>
-      isAuthenticated
-        ? resolvePersistedKangurMobileHomeDuelInvites({
-            learnerIdentity,
-            storage,
-          })
-        : null,
+    () => isAuthenticated ? resolvePersistedKangurMobileHomeDuelInvites({ learnerIdentity, storage }) : null,
     [isAuthenticated, learnerIdentity, storage],
   );
 
   const invitesQuery = useQuery({
     enabled: isQueryEnabled,
-    queryKey: lobbyQueryKey,
-    queryFn: async () =>
-      apiClient.listDuelLobby(
-        {
-          limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT,
-          visibility: 'private',
-        },
-        { cache: 'no-store' },
-      ),
+    queryKey: buildKangurMobileHomeDuelLobbyQueryKey(apiBaseUrl, learnerIdentity, 'private'),
+    queryFn: async () => apiClient.listDuelLobby({ limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT, visibility: 'private' }, { cache: 'no-store' }),
     refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
     staleTime: 10_000,
   });
 
   const privateEntries = useMemo(
-    () =>
-      (invitesQuery.data?.entries ?? [])
+    () => (invitesQuery.data?.entries ?? [])
         .filter((entry) => entry.visibility === 'private')
-        .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
+        .sort((l, r) => Date.parse(r.updatedAt) - Date.parse(l.updatedAt))
         .slice(0, MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT),
     [invitesQuery.data?.entries],
   );
-  const hasResolvedLivePrivateLobby =
-    isQueryEnabled &&
-    !invitesQuery.isLoading &&
-    !invitesQuery.error &&
-    invitesQuery.data !== undefined;
-  const resolvedPrivateEntries =
-    hasResolvedLivePrivateLobby ? privateEntries : persistedPrivateEntries ?? privateEntries;
+  
+  const hasResolvedLive = isQueryEnabled && !invitesQuery.isLoading && !invitesQuery.error && invitesQuery.data !== undefined;
+  const resolvedPrivateEntries = resolveResolvedPrivateEntries(hasResolvedLive, privateEntries, persistedPrivateEntries);
 
   useEffect(() => {
-    if (!hasResolvedLivePrivateLobby) {
-      return;
+    if (hasResolvedLive) {
+      persistKangurMobileHomeDuelInvites({ entries: privateEntries, learnerIdentity, storage });
     }
-
-    persistKangurMobileHomeDuelInvites({
-      entries: privateEntries,
-      learnerIdentity,
-      storage,
-    });
-  }, [hasResolvedLivePrivateLobby, learnerIdentity, privateEntries, storage]);
+  }, [hasResolvedLive, learnerIdentity, privateEntries, storage]);
 
   const invites = useMemo(
-    () =>
-      resolvedPrivateEntries
-        .filter((entry) => entry.host.learnerId !== activeLearnerId)
-        .slice(0, MOBILE_HOME_DUELS_INVITES_DISPLAY_LIMIT),
+    () => resolvedPrivateEntries.filter((e) => e.host.learnerId !== activeLearnerId).slice(0, MOBILE_HOME_DUELS_INVITES_DISPLAY_LIMIT),
     [activeLearnerId, resolvedPrivateEntries],
   );
   const outgoingChallenges = useMemo(
-    () =>
-      resolvedPrivateEntries
-        .filter((entry) => entry.host.learnerId === activeLearnerId)
-        .slice(0, MOBILE_HOME_DUELS_INVITES_DISPLAY_LIMIT),
+    () => resolvedPrivateEntries.filter((e) => e.host.learnerId === activeLearnerId).slice(0, MOBILE_HOME_DUELS_INVITES_DISPLAY_LIMIT),
     [activeLearnerId, resolvedPrivateEntries],
   );
 
@@ -127,16 +109,8 @@ export const useKangurMobileHomeDuelsInvites = ({
     error: resolveMobileDuelErrorMessage({
       error: invitesQuery.error,
       copy,
-      fallback: {
-        de: 'Die Duelleinladungen konnten nicht geladen werden.',
-        en: 'Could not load duel invites.',
-        pl: 'Nie udało się pobrać zaproszeń do pojedynków.',
-      },
-      unauthorized: {
-        de: 'Melde dich an, um private Duelleinladungen zu laden.',
-        en: 'Sign in to load private duel invites.',
-        pl: 'Zaloguj się, aby pobrać prywatne zaproszenia do pojedynków.',
-      },
+      fallback: { de: 'Die Duelleinladungen konnten nicht geladen werden.', en: 'Could not load duel invites.', pl: 'Nie udało się pobrać zaproszeń do pojedynków.' },
+      unauthorized: { de: 'Melde dich an, um private Duelleinladungen zu laden.', en: 'Sign in to load private duel invites.', pl: 'Zaloguj się, aby pobrać prywatne zaproszenia do pojedynków.' },
     }),
     invites,
     isDeferred,
@@ -144,12 +118,6 @@ export const useKangurMobileHomeDuelsInvites = ({
     isLoading: isRestoringAuth || (isQueryEnabled && invitesQuery.isLoading),
     outgoingChallenges,
     isRestoringAuth,
-    refresh: async () => {
-      if (!isQueryEnabled) {
-        return;
-      }
-
-      await invitesQuery.refetch();
-    },
+    refresh: async () => { if (isQueryEnabled) await invitesQuery.refetch(); },
   };
 };

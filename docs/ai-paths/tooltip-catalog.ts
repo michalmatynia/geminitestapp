@@ -1,18 +1,3 @@
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_01 } from './tooltip-catalog.chunk-01';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_02 } from './tooltip-catalog.chunk-02';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_03 } from './tooltip-catalog.chunk-03';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_04 } from './tooltip-catalog.chunk-04';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_05 } from './tooltip-catalog.chunk-05';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_06 } from './tooltip-catalog.chunk-06';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_07 } from './tooltip-catalog.chunk-07';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_08 } from './tooltip-catalog.chunk-08';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_09 } from './tooltip-catalog.chunk-09';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_10 } from './tooltip-catalog.chunk-10';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_11 } from './tooltip-catalog.chunk-11';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_12 } from './tooltip-catalog.chunk-12';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_13 } from './tooltip-catalog.chunk-13';
-import { AI_PATHS_TOOLTIP_CATALOG_CHUNK_14 } from './tooltip-catalog.chunk-14';
-
 export type AiPathsTooltipDocEntry = {
   id: string;
   title: string;
@@ -25,18 +10,9770 @@ export type AiPathsTooltipDocEntry = {
 };
 
 export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_01,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_02,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_03,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_04,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_05,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_06,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_07,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_08,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_09,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_10,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_11,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_12,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_13,
-  ...AI_PATHS_TOOLTIP_CATALOG_CHUNK_14,
+  {
+    "id": "canvas_clear_connector_data",
+    "title": "Clear Connector Data",
+    "summary": "Clears stored connector payload data shown in runtime inspection.",
+    "section": "Canvas Header",
+    "aliases": [
+      "clear connector data"
+    ],
+    "docPath": "/docs/ai-paths/node-validator-runtime-patterns.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "runtime",
+      "connector"
+    ],
+    "uiTargets": [
+      "canvas.header.clear-connector-data"
+    ]
+  },
+  {
+    "id": "canvas_clear_history",
+    "title": "Clear History",
+    "summary": "Resets node runtime history for the active path.",
+    "section": "Canvas Header",
+    "aliases": [
+      "clear history"
+    ],
+    "docPath": "/docs/ai-paths/node-validator-runtime-patterns.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "runtime",
+      "history"
+    ],
+    "uiTargets": [
+      "canvas.header.clear-history"
+    ]
+  },
+  {
+    "id": "canvas_enable_node_validation",
+    "title": "Enable Node Validation",
+    "summary": "Turns on preflight node validator checks for this path.",
+    "section": "Canvas Header",
+    "aliases": [
+      "enable validation",
+      "node validation"
+    ],
+    "docPath": "/docs/ai-paths/node-validator-central-patterns.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "validation"
+    ],
+    "uiTargets": [
+      "canvas.header.enable-node-validation"
+    ]
+  },
+  {
+    "id": "canvas_focus_mode_toggle",
+    "title": "Canvas Focus Mode Toggle",
+    "summary": "Shows canvas-only mode or restores side panels.",
+    "section": "Canvas Header",
+    "aliases": [
+      "show canvas only",
+      "show side panels",
+      "focus mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "canvas",
+      "layout"
+    ],
+    "uiTargets": [
+      "canvas.header.focus-mode-toggle"
+    ]
+  },
+  {
+    "id": "canvas_open_node_validator",
+    "title": "Open Node Validator",
+    "summary": "Opens AI-Paths Node Validator patterns and sequences.",
+    "section": "Canvas Header",
+    "aliases": [
+      "node validator"
+    ],
+    "docPath": "/docs/ai-paths/node-validator-central-patterns.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "validation",
+      "patterns"
+    ],
+    "uiTargets": [
+      "canvas.header.node-validator"
+    ]
+  },
+  {
+    "id": "canvas_path_name_field",
+    "title": "Path Name",
+    "summary": "Displays and edits the active path name.",
+    "section": "Canvas Header",
+    "aliases": [
+      "path name"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "path"
+    ],
+    "uiTargets": [
+      "canvas.header.path-name"
+    ]
+  },
+  {
+    "id": "canvas_path_selector",
+    "title": "Path Selector",
+    "summary": "Switches the currently active path on the canvas.",
+    "section": "Canvas Header",
+    "aliases": [
+      "path selector"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "path"
+    ],
+    "uiTargets": [
+      "canvas.header.path-selector"
+    ]
+  },
+  {
+    "id": "canvas_paths_settings",
+    "title": "Paths Settings",
+    "summary": "Opens path-level settings including validation and runtime controls.",
+    "section": "Canvas Header",
+    "aliases": [
+      "paths settings"
+    ],
+    "docPath": "/docs/ai-paths/node-validator-central-patterns.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "settings"
+    ],
+    "uiTargets": [
+      "canvas.header.paths-settings"
+    ]
+  },
+  {
+    "id": "canvas_save_path",
+    "title": "Save Path",
+    "summary": "Persists the active path graph and settings.",
+    "section": "Canvas Header",
+    "aliases": [
+      "save path"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "canvas",
+      "save"
+    ],
+    "uiTargets": [
+      "canvas.header.save-path"
+    ]
+  },
+  {
+    "id": "canvas_toggle_path_active",
+    "title": "Activate or Deactivate Path",
+    "summary": "Controls whether the path can execute runs.",
+    "section": "Canvas Header",
+    "aliases": [
+      "activate path",
+      "deactivate path"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "runtime"
+    ],
+    "uiTargets": [
+      "canvas.header.path-active"
+    ]
+  },
+  {
+    "id": "canvas_toggle_path_lock",
+    "title": "Lock or Unlock Path",
+    "summary": "Locks the path to prevent edits or unlocks it for changes.",
+    "section": "Canvas Header",
+    "aliases": [
+      "lock path",
+      "unlock path"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "path"
+    ],
+    "uiTargets": [
+      "canvas.header.path-lock"
+    ]
+  },
+  {
+    "id": "canvas_validate_nodes",
+    "title": "Validate Nodes",
+    "summary": "Runs node validation checks immediately and reports blocking findings.",
+    "section": "Canvas Header",
+    "aliases": [
+      "validate nodes"
+    ],
+    "docPath": "/docs/ai-paths/node-validator-central-patterns.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "validation"
+    ],
+    "uiTargets": [
+      "canvas.header.validate-nodes"
+    ]
+  },
+  {
+    "id": "docs_snippet_docs_description_snippet",
+    "title": "Docs Description Snippet",
+    "summary": "Snippet source for docs panel content. First line: ContextFilter.entityJson -> Parser.entityJson",
+    "section": "Docs Snippets",
+    "aliases": [
+      "DOCS_DESCRIPTION_SNIPPET",
+      "docs snippet",
+      "ContextFilter.entityJson -> Parser.entityJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": [
+      "ai-paths",
+      "docs",
+      "snippets",
+      "docs-snippet"
+    ],
+    "uiTargets": [
+      "docs.snippet.docs_description_snippet"
+    ]
+  },
+  {
+    "id": "docs_snippet_docs_jobs_snippet",
+    "title": "Docs Jobs Snippet",
+    "summary": "Snippet source for docs panel content. First line: # Inline (Model waits for result)",
+    "section": "Docs Snippets",
+    "aliases": [
+      "DOCS_JOBS_SNIPPET",
+      "docs snippet",
+      "# Inline (Model waits for result)"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": [
+      "ai-paths",
+      "docs",
+      "snippets",
+      "docs-snippet"
+    ],
+    "uiTargets": [
+      "docs.snippet.docs_jobs_snippet"
+    ]
+  },
+  {
+    "id": "docs_snippet_docs_overview_snippet",
+    "title": "Docs Overview Snippet",
+    "summary": "Snippet source for docs panel content. First line: AI Paths is a node-and-wire runtime that turns a graph into a reproducible workflow.",
+    "section": "Docs Snippets",
+    "aliases": [
+      "DOCS_OVERVIEW_SNIPPET",
+      "docs snippet",
+      "AI Paths is a node-and-wire runtime that turns a graph into a reproducible workflow."
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": [
+      "ai-paths",
+      "docs",
+      "snippets",
+      "docs-snippet"
+    ],
+    "uiTargets": [
+      "docs.snippet.docs_overview_snippet"
+    ]
+  },
+  {
+    "id": "docs_snippet_docs_wiring_snippet",
+    "title": "Docs Wiring Snippet",
+    "summary": "Snippet source for docs panel content. First line: Trigger.trigger -> Fetcher.trigger",
+    "section": "Docs Snippets",
+    "aliases": [
+      "DOCS_WIRING_SNIPPET",
+      "docs snippet",
+      "Trigger.trigger -> Fetcher.trigger"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": [
+      "ai-paths",
+      "docs",
+      "snippets",
+      "docs-snippet"
+    ],
+    "uiTargets": [
+      "docs.snippet.docs_wiring_snippet"
+    ]
+  },
+  {
+    "id": "docs_tooltips_toggle",
+    "title": "Docs Tooltips Toggle",
+    "summary": "Enables documentation-driven tooltips for AI-Paths controls in this route.",
+    "section": "Canvas Header",
+    "aliases": [
+      "docs tooltip",
+      "tooltips"
+    ],
+    "docPath": "/docs/ai-paths/tooltip-schema-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "tooltips"
+    ],
+    "uiTargets": [
+      "canvas.header.docs-tooltips-toggle"
+    ]
+  },
+  {
+    "id": "inspector_node_description",
+    "title": "Node Description",
+    "summary": "Editable description metadata for the selected node.",
+    "section": "Inspector",
+    "aliases": [
+      "node description"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "inspector"
+    ],
+    "uiTargets": [
+      "inspector.node-description"
+    ]
+  },
+  {
+    "id": "inspector_node_title",
+    "title": "Node Title",
+    "summary": "Editable display title of the selected node.",
+    "section": "Inspector",
+    "aliases": [
+      "node title"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "inspector"
+    ],
+    "uiTargets": [
+      "inspector.node-title"
+    ]
+  },
+  {
+    "id": "inspector_open_node_config",
+    "title": "Open Node Config",
+    "summary": "Opens the full node configuration modal for the selected node.",
+    "section": "Inspector",
+    "aliases": [
+      "open node config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "inspector",
+      "node-config"
+    ],
+    "uiTargets": [
+      "inspector.open-node-config"
+    ]
+  },
+  {
+    "id": "inspector_remove_node",
+    "title": "Remove Node",
+    "summary": "Deletes the selected node from the path.",
+    "section": "Inspector",
+    "aliases": [
+      "remove node"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "inspector"
+    ],
+    "uiTargets": [
+      "inspector.remove-node"
+    ]
+  },
+  {
+    "id": "node_config_agent",
+    "title": "Reasoning Agent (Configuration)",
+    "summary": "Configuration reference for Reasoning Agent.",
+    "section": "Node Config",
+    "aliases": [
+      "agent",
+      "Reasoning Agent",
+      "agent config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.agent"
+    ]
+  },
+  {
+    "id": "node_config_api_advanced",
+    "title": "API Operation (Advanced) (Configuration)",
+    "summary": "Configuration reference for API Operation (Advanced).",
+    "section": "Node Config",
+    "aliases": [
+      "api_advanced",
+      "API Operation (Advanced)",
+      "api_advanced config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced"
+    ]
+  },
+  {
+    "id": "node_config_audio_oscillator",
+    "title": "Audio Oscillator (Configuration)",
+    "summary": "Configuration reference for Audio Oscillator.",
+    "section": "Node Config",
+    "aliases": [
+      "audio_oscillator",
+      "Audio Oscillator",
+      "audio_oscillator config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.audio_oscillator"
+    ]
+  },
+  {
+    "id": "node_config_audio_speaker",
+    "title": "Audio Speaker (Mono) (Configuration)",
+    "summary": "Configuration reference for Audio Speaker (Mono).",
+    "section": "Node Config",
+    "aliases": [
+      "audio_speaker",
+      "Audio Speaker (Mono)",
+      "audio_speaker config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.audio_speaker"
+    ]
+  },
+  {
+    "id": "node_config_bundle",
+    "title": "Bundle (Configuration)",
+    "summary": "Configuration reference for Bundle.",
+    "section": "Node Config",
+    "aliases": [
+      "bundle",
+      "Bundle",
+      "bundle config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/bundle.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.bundle"
+    ]
+  },
+  {
+    "id": "node_config_close",
+    "title": "Close Node Config",
+    "summary": "Closes the node modal; if there are unsaved changes, a confirmation appears.",
+    "section": "Node Config Modal",
+    "aliases": [
+      "close node config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "node-config"
+    ],
+    "uiTargets": [
+      "node-config.close"
+    ]
+  },
+  {
+    "id": "node_config_compare",
+    "title": "Compare (Configuration)",
+    "summary": "Configuration reference for Compare.",
+    "section": "Node Config",
+    "aliases": [
+      "compare",
+      "Compare",
+      "compare config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.compare"
+    ]
+  },
+  {
+    "id": "node_config_constant",
+    "title": "Constant (Configuration)",
+    "summary": "Configuration reference for Constant.",
+    "section": "Node Config",
+    "aliases": [
+      "constant",
+      "Constant",
+      "constant config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/constant.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.constant"
+    ]
+  },
+  {
+    "id": "node_config_context",
+    "title": "Context Filter (Configuration)",
+    "summary": "Configuration reference for Context Filter.",
+    "section": "Node Config",
+    "aliases": [
+      "context",
+      "Context Filter",
+      "context config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.context"
+    ]
+  },
+  {
+    "id": "node_config_copy_id",
+    "title": "Copy Node ID",
+    "summary": "Copies the current node identifier to clipboard.",
+    "section": "Node Config Modal",
+    "aliases": [
+      "copy node id"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "node-config"
+    ],
+    "uiTargets": [
+      "node-config.copy-id"
+    ]
+  },
+  {
+    "id": "node_config_database",
+    "title": "Database Query (Configuration)",
+    "summary": "Configuration reference for Database Query.",
+    "section": "Node Config",
+    "aliases": [
+      "database",
+      "Database Query",
+      "database config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.database"
+    ]
+  },
+  {
+    "id": "node_config_db_schema",
+    "title": "Database Schema (Configuration)",
+    "summary": "Configuration reference for Database Schema.",
+    "section": "Node Config",
+    "aliases": [
+      "db_schema",
+      "Database Schema",
+      "db_schema config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.db_schema"
+    ]
+  },
+  {
+    "id": "node_config_delay",
+    "title": "Delay (Configuration)",
+    "summary": "Configuration reference for Delay.",
+    "section": "Node Config",
+    "aliases": [
+      "delay",
+      "Delay",
+      "delay config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/delay.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.delay"
+    ]
+  },
+  {
+    "id": "node_config_fetcher",
+    "title": "Fetcher: Trigger Context (Configuration)",
+    "summary": "Configuration reference for Fetcher: Trigger Context.",
+    "section": "Node Config",
+    "aliases": [
+      "fetcher",
+      "Fetcher: Trigger Context",
+      "fetcher config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.fetcher"
+    ]
+  },
+  {
+    "id": "node_config_field_agent_agent_personaid",
+    "title": "Reasoning Agent: agent.personaId",
+    "summary": "Persona to use from Agent Creator. Empty means runtime defaults.",
+    "section": "Node Config - Reasoning Agent",
+    "aliases": [
+      "agent",
+      "agent.personaId",
+      "agent.agent.personaId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.agent.agent.personaId"
+    ]
+  },
+  {
+    "id": "node_config_field_agent_agent_prompttemplate",
+    "title": "Reasoning Agent: agent.promptTemplate",
+    "summary": "Optional template to build the agent prompt from incoming ports.",
+    "section": "Node Config - Reasoning Agent",
+    "aliases": [
+      "agent",
+      "agent.promptTemplate",
+      "agent.agent.promptTemplate"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.agent.agent.promptTemplate"
+    ]
+  },
+  {
+    "id": "node_config_field_agent_agent_waitforresult",
+    "title": "Reasoning Agent: agent.waitForResult",
+    "summary": "When true, waits for completion and emits result. When false, emits jobId/status.",
+    "section": "Node Config - Reasoning Agent",
+    "aliases": [
+      "agent",
+      "agent.waitForResult",
+      "agent.agent.waitForResult"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.agent.agent.waitForResult"
+    ]
+  },
+  {
+    "id": "node_config_field_agent_runtime_cache_mode",
+    "title": "Reasoning Agent: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Reasoning Agent",
+    "aliases": [
+      "agent",
+      "runtime.cache.mode",
+      "agent.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.agent.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_agent_runtime_cache_scope",
+    "title": "Reasoning Agent: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Reasoning Agent",
+    "aliases": [
+      "agent",
+      "runtime.cache.scope",
+      "agent.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.agent.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_agent_runtime_waitforinputs",
+    "title": "Reasoning Agent: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Reasoning Agent",
+    "aliases": [
+      "agent",
+      "runtime.waitForInputs",
+      "agent.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.agent.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_authmode",
+    "title": "API Operation (Advanced): apiAdvanced.authMode",
+    "summary": "none/api_key/bearer/basic/oauth2_client_credentials/connection auth strategy.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.authMode",
+      "api_advanced.apiAdvanced.authMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.authMode"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_errorroutesjson",
+    "title": "API Operation (Advanced): apiAdvanced.errorRoutesJson",
+    "summary": "JSON array of explicit error route matchers and target output ports.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.errorRoutesJson",
+      "api_advanced.apiAdvanced.errorRoutesJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.errorRoutesJson"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_headersjson",
+    "title": "API Operation (Advanced): apiAdvanced.headersJson",
+    "summary": "JSON object for request headers.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.headersJson",
+      "api_advanced.apiAdvanced.headersJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.headersJson"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_method",
+    "title": "API Operation (Advanced): apiAdvanced.method",
+    "summary": "HTTP method including advanced methods (HEAD/OPTIONS).",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.method",
+      "api_advanced.apiAdvanced.method"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.method"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_outputmappingsjson",
+    "title": "API Operation (Advanced): apiAdvanced.outputMappingsJson",
+    "summary": "JSON object mapping output port -> JSON path in response envelope.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.outputMappingsJson",
+      "api_advanced.apiAdvanced.outputMappingsJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.outputMappingsJson"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_paginationmode",
+    "title": "API Operation (Advanced): apiAdvanced.paginationMode",
+    "summary": "none/page/cursor/link pagination strategy.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.paginationMode",
+      "api_advanced.apiAdvanced.paginationMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.paginationMode"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_pathparamsjson",
+    "title": "API Operation (Advanced): apiAdvanced.pathParamsJson",
+    "summary": "JSON object for explicit path parameter substitution before request execution.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.pathParamsJson",
+      "api_advanced.apiAdvanced.pathParamsJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.pathParamsJson"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_queryparamsjson",
+    "title": "API Operation (Advanced): apiAdvanced.queryParamsJson",
+    "summary": "JSON object for explicit query parameters. Values can include templates.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.queryParamsJson",
+      "api_advanced.apiAdvanced.queryParamsJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.queryParamsJson"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_responsemode",
+    "title": "API Operation (Advanced): apiAdvanced.responseMode",
+    "summary": "How to interpret response payload: json/text/status.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.responseMode",
+      "api_advanced.apiAdvanced.responseMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.responseMode"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_responsepath",
+    "title": "API Operation (Advanced): apiAdvanced.responsePath",
+    "summary": "Optional JSON path selection from parsed response payload.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.responsePath",
+      "api_advanced.apiAdvanced.responsePath"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.responsePath"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_retryattempts",
+    "title": "API Operation (Advanced): apiAdvanced.retryAttempts",
+    "summary": "Maximum attempts including first request.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.retryAttempts",
+      "api_advanced.apiAdvanced.retryAttempts"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.retryAttempts"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_retryenabled",
+    "title": "API Operation (Advanced): apiAdvanced.retryEnabled",
+    "summary": "Enable/disable retry behavior.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.retryEnabled",
+      "api_advanced.apiAdvanced.retryEnabled"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.retryEnabled"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_retryonstatusjson",
+    "title": "API Operation (Advanced): apiAdvanced.retryOnStatusJson",
+    "summary": "JSON array of status codes that should be retried when retries are enabled.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.retryOnStatusJson",
+      "api_advanced.apiAdvanced.retryOnStatusJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.retryOnStatusJson"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_apiadvanced_url",
+    "title": "API Operation (Advanced): apiAdvanced.url",
+    "summary": "Request URL template.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "apiAdvanced.url",
+      "api_advanced.apiAdvanced.url"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.apiAdvanced.url"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_runtime_cache_mode",
+    "title": "API Operation (Advanced): runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "runtime.cache.mode",
+      "api_advanced.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_runtime_cache_scope",
+    "title": "API Operation (Advanced): runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "runtime.cache.scope",
+      "api_advanced.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_api_advanced_runtime_waitforinputs",
+    "title": "API Operation (Advanced): runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - API Operation (Advanced)",
+    "aliases": [
+      "api_advanced",
+      "runtime.waitForInputs",
+      "api_advanced.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.api_advanced.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_oscillator_audiooscillator_durationms",
+    "title": "Audio Oscillator: audioOscillator.durationMs",
+    "summary": "Playback duration in milliseconds.",
+    "section": "Node Config - Audio Oscillator",
+    "aliases": [
+      "audio_oscillator",
+      "audioOscillator.durationMs",
+      "audio_oscillator.audioOscillator.durationMs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_oscillator.audioOscillator.durationMs"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_oscillator_audiooscillator_frequencyhz",
+    "title": "Audio Oscillator: audioOscillator.frequencyHz",
+    "summary": "Signal frequency in Hz.",
+    "section": "Node Config - Audio Oscillator",
+    "aliases": [
+      "audio_oscillator",
+      "audioOscillator.frequencyHz",
+      "audio_oscillator.audioOscillator.frequencyHz"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_oscillator.audioOscillator.frequencyHz"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_oscillator_audiooscillator_gain",
+    "title": "Audio Oscillator: audioOscillator.gain",
+    "summary": "Signal amplitude in 0..1 range.",
+    "section": "Node Config - Audio Oscillator",
+    "aliases": [
+      "audio_oscillator",
+      "audioOscillator.gain",
+      "audio_oscillator.audioOscillator.gain"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_oscillator.audioOscillator.gain"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_oscillator_audiooscillator_waveform",
+    "title": "Audio Oscillator: audioOscillator.waveform",
+    "summary": "Wave shape for generated signal: sine/square/triangle/sawtooth.",
+    "section": "Node Config - Audio Oscillator",
+    "aliases": [
+      "audio_oscillator",
+      "audioOscillator.waveform",
+      "audio_oscillator.audioOscillator.waveform"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_oscillator.audioOscillator.waveform"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_oscillator_runtime_cache_mode",
+    "title": "Audio Oscillator: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Audio Oscillator",
+    "aliases": [
+      "audio_oscillator",
+      "runtime.cache.mode",
+      "audio_oscillator.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_oscillator.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_oscillator_runtime_cache_scope",
+    "title": "Audio Oscillator: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Audio Oscillator",
+    "aliases": [
+      "audio_oscillator",
+      "runtime.cache.scope",
+      "audio_oscillator.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_oscillator.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_oscillator_runtime_waitforinputs",
+    "title": "Audio Oscillator: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Audio Oscillator",
+    "aliases": [
+      "audio_oscillator",
+      "runtime.waitForInputs",
+      "audio_oscillator.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_oscillator.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_speaker_audiospeaker_autoplay",
+    "title": "Audio Speaker (Mono): audioSpeaker.autoPlay",
+    "summary": "If true, plays incoming audio signal immediately.",
+    "section": "Node Config - Audio Speaker (Mono)",
+    "aliases": [
+      "audio_speaker",
+      "audioSpeaker.autoPlay",
+      "audio_speaker.audioSpeaker.autoPlay"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_speaker.audioSpeaker.autoPlay"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_speaker_audiospeaker_enabled",
+    "title": "Audio Speaker (Mono): audioSpeaker.enabled",
+    "summary": "If false, speaker stays muted and reports disabled status.",
+    "section": "Node Config - Audio Speaker (Mono)",
+    "aliases": [
+      "audio_speaker",
+      "audioSpeaker.enabled",
+      "audio_speaker.audioSpeaker.enabled"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_speaker.audioSpeaker.enabled"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_speaker_audiospeaker_gain",
+    "title": "Audio Speaker (Mono): audioSpeaker.gain",
+    "summary": "Speaker output gain multiplier in 0..1 range.",
+    "section": "Node Config - Audio Speaker (Mono)",
+    "aliases": [
+      "audio_speaker",
+      "audioSpeaker.gain",
+      "audio_speaker.audioSpeaker.gain"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_speaker.audioSpeaker.gain"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_speaker_audiospeaker_stopprevious",
+    "title": "Audio Speaker (Mono): audioSpeaker.stopPrevious",
+    "summary": "Stop existing tone before playing the next signal.",
+    "section": "Node Config - Audio Speaker (Mono)",
+    "aliases": [
+      "audio_speaker",
+      "audioSpeaker.stopPrevious",
+      "audio_speaker.audioSpeaker.stopPrevious"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_speaker.audioSpeaker.stopPrevious"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_speaker_runtime_cache_mode",
+    "title": "Audio Speaker (Mono): runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Audio Speaker (Mono)",
+    "aliases": [
+      "audio_speaker",
+      "runtime.cache.mode",
+      "audio_speaker.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_speaker.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_speaker_runtime_cache_scope",
+    "title": "Audio Speaker (Mono): runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Audio Speaker (Mono)",
+    "aliases": [
+      "audio_speaker",
+      "runtime.cache.scope",
+      "audio_speaker.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_speaker.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_audio_speaker_runtime_waitforinputs",
+    "title": "Audio Speaker (Mono): runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Audio Speaker (Mono)",
+    "aliases": [
+      "audio_speaker",
+      "runtime.waitForInputs",
+      "audio_speaker.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.audio_speaker.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_bundle_bundle_includeports",
+    "title": "Bundle: bundle.includePorts",
+    "summary": "Optional allowlist: only these input port names are included in the emitted bundle.",
+    "section": "Node Config - Bundle",
+    "aliases": [
+      "bundle",
+      "bundle.includePorts",
+      "bundle.bundle.includePorts"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/bundle.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.bundle.bundle.includePorts"
+    ]
+  },
+  {
+    "id": "node_config_field_bundle_runtime_cache_mode",
+    "title": "Bundle: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Bundle",
+    "aliases": [
+      "bundle",
+      "runtime.cache.mode",
+      "bundle.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/bundle.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.bundle.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_bundle_runtime_cache_scope",
+    "title": "Bundle: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Bundle",
+    "aliases": [
+      "bundle",
+      "runtime.cache.scope",
+      "bundle.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/bundle.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.bundle.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_bundle_runtime_waitforinputs",
+    "title": "Bundle: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Bundle",
+    "aliases": [
+      "bundle",
+      "runtime.waitForInputs",
+      "bundle.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/bundle.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.bundle.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_compare_compare_casesensitive",
+    "title": "Compare: compare.caseSensitive",
+    "summary": "When comparing strings, whether case matters.",
+    "section": "Node Config - Compare",
+    "aliases": [
+      "compare",
+      "compare.caseSensitive",
+      "compare.compare.caseSensitive"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.compare.compare.caseSensitive"
+    ]
+  },
+  {
+    "id": "node_config_field_compare_compare_compareto",
+    "title": "Compare: compare.compareTo",
+    "summary": "String to compare against (converted based on operator and input value).",
+    "section": "Node Config - Compare",
+    "aliases": [
+      "compare",
+      "compare.compareTo",
+      "compare.compare.compareTo"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.compare.compare.compareTo"
+    ]
+  },
+  {
+    "id": "node_config_field_compare_compare_message",
+    "title": "Compare: compare.message",
+    "summary": "Optional error message to emit when valid is false.",
+    "section": "Node Config - Compare",
+    "aliases": [
+      "compare",
+      "compare.message",
+      "compare.compare.message"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.compare.compare.message"
+    ]
+  },
+  {
+    "id": "node_config_field_compare_compare_operator",
+    "title": "Compare: compare.operator",
+    "summary": "Comparison operator (eq/neq/gt/gte/lt/lte/contains/startsWith/endsWith/isEmpty/notEmpty).",
+    "section": "Node Config - Compare",
+    "aliases": [
+      "compare",
+      "compare.operator",
+      "compare.compare.operator"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.compare.compare.operator"
+    ]
+  },
+  {
+    "id": "node_config_field_compare_runtime_cache_mode",
+    "title": "Compare: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Compare",
+    "aliases": [
+      "compare",
+      "runtime.cache.mode",
+      "compare.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.compare.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_compare_runtime_cache_scope",
+    "title": "Compare: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Compare",
+    "aliases": [
+      "compare",
+      "runtime.cache.scope",
+      "compare.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.compare.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_compare_runtime_waitforinputs",
+    "title": "Compare: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Compare",
+    "aliases": [
+      "compare",
+      "runtime.waitForInputs",
+      "compare.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.compare.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_constant_constant_value",
+    "title": "Constant: constant.value",
+    "summary": "The literal value to emit (for json, this should be JSON text).",
+    "section": "Node Config - Constant",
+    "aliases": [
+      "constant",
+      "constant.value",
+      "constant.constant.value"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/constant.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.constant.constant.value"
+    ]
+  },
+  {
+    "id": "node_config_field_constant_constant_valuetype",
+    "title": "Constant: constant.valueType",
+    "summary": "How to interpret the stored value: string/number/boolean/json.",
+    "section": "Node Config - Constant",
+    "aliases": [
+      "constant",
+      "constant.valueType",
+      "constant.constant.valueType"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/constant.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.constant.constant.valueType"
+    ]
+  },
+  {
+    "id": "node_config_field_constant_runtime_cache_mode",
+    "title": "Constant: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Constant",
+    "aliases": [
+      "constant",
+      "runtime.cache.mode",
+      "constant.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/constant.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.constant.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_constant_runtime_cache_scope",
+    "title": "Constant: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Constant",
+    "aliases": [
+      "constant",
+      "runtime.cache.scope",
+      "constant.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/constant.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.constant.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_constant_runtime_waitforinputs",
+    "title": "Constant: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Constant",
+    "aliases": [
+      "constant",
+      "runtime.waitForInputs",
+      "constant.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/constant.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.constant.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_context_context_entityid",
+    "title": "Context Filter: context.entityId",
+    "summary": "Entity ID to fetch when entityIdSource is manual (or as a fallback when missing).",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "context.entityId",
+      "context.context.entityId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.context.entityId"
+    ]
+  },
+  {
+    "id": "node_config_field_context_context_entityidsource",
+    "title": "Context Filter: context.entityIdSource",
+    "summary": "Where to read entityId from when loading context. simulation/manual/context.",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "context.entityIdSource",
+      "context.context.entityIdSource"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.context.entityIdSource"
+    ]
+  },
+  {
+    "id": "node_config_field_context_context_entitytype",
+    "title": "Context Filter: context.entityType",
+    "summary": "Forced entity type (auto/product/note/etc). If auto, it uses incoming trigger context.",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "context.entityType",
+      "context.context.entityType"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.context.entityType"
+    ]
+  },
+  {
+    "id": "node_config_field_context_context_excludepaths",
+    "title": "Context Filter: context.excludePaths",
+    "summary": "List of JSON paths to remove when scopeMode is exclude (example: ['internal.notes']).",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "context.excludePaths",
+      "context.context.excludePaths"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.context.excludePaths"
+    ]
+  },
+  {
+    "id": "node_config_field_context_context_includepaths",
+    "title": "Context Filter: context.includePaths",
+    "summary": "List of JSON paths to keep when scopeMode is include (example: ['title','images']).",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "context.includePaths",
+      "context.context.includePaths"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.context.includePaths"
+    ]
+  },
+  {
+    "id": "node_config_field_context_context_role",
+    "title": "Context Filter: context.role",
+    "summary": "Context role for downstream nodes (used as a hint for prompts and filtering).",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "context.role",
+      "context.context.role"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.context.role"
+    ]
+  },
+  {
+    "id": "node_config_field_context_context_scopemode",
+    "title": "Context Filter: context.scopeMode",
+    "summary": "How to scope the payload: full (no filter), include (only includePaths), exclude (drop excludePaths).",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "context.scopeMode",
+      "context.context.scopeMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.context.scopeMode"
+    ]
+  },
+  {
+    "id": "node_config_field_context_context_scopetarget",
+    "title": "Context Filter: context.scopeTarget",
+    "summary": "What is being scoped: entity (only entity object) or context (full context payload).",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "context.scopeTarget",
+      "context.context.scopeTarget"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.context.scopeTarget"
+    ]
+  },
+  {
+    "id": "node_config_field_context_runtime_cache_mode",
+    "title": "Context Filter: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "runtime.cache.mode",
+      "context.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_context_runtime_cache_scope",
+    "title": "Context Filter: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "runtime.cache.scope",
+      "context.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_context_runtime_waitforinputs",
+    "title": "Context Filter: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Context Filter",
+    "aliases": [
+      "context",
+      "runtime.waitForInputs",
+      "context.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.context.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_action",
+    "title": "Database Query: database.action",
+    "summary": "Provider action command (MongoDB action labels).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.action",
+      "database.database.action"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.action"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_actioncategory",
+    "title": "Database Query: database.actionCategory",
+    "summary": "Provider action category: create/read/update/delete/(aggregate for MongoDB).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.actionCategory",
+      "database.database.actionCategory"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.actionCategory"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_aiprompt",
+    "title": "Database Query: database.aiPrompt",
+    "summary": "Optional AI prompt template used by Database AI assistants.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.aiPrompt",
+      "database.database.aiPrompt"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.aiPrompt"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_distinctfield",
+    "title": "Database Query: database.distinctField",
+    "summary": "Field for distinct action.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.distinctField",
+      "database.database.distinctField"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.distinctField"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_dryrun",
+    "title": "Database Query: database.dryRun",
+    "summary": "When true, does not persist changes; returns computed payload only.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.dryRun",
+      "database.database.dryRun"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.dryRun"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_entitytype",
+    "title": "Database Query: database.entityType",
+    "summary": "Collection/entity type to operate on (product/note/custom).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.entityType",
+      "database.database.entityType"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.entityType"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_idfield",
+    "title": "Database Query: database.idField",
+    "summary": "Primary key field when using preset queries (example: _id or id).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.idField",
+      "database.database.idField"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.idField"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_mappings",
+    "title": "Database Query: database.mappings",
+    "summary": "Updater mappings for write operations: targetPath <- (sourcePort + optional sourcePath).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.mappings",
+      "database.database.mappings"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.mappings"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_mode",
+    "title": "Database Query: database.mode",
+    "summary": "Write mode: replace overwrites, append merges/extends (behavior depends on operation).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.mode",
+      "database.database.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_operation",
+    "title": "Database Query: database.operation",
+    "summary": "Operation category: query/update/insert/delete.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.operation",
+      "database.database.operation"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.operation"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_parameterinferenceguard_allowunknownparameterids",
+    "title": "Database Query: database.parameterInferenceGuard.allowUnknownParameterIds",
+    "summary": "When true, keeps inferred parameterIds missing from definitions.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.parameterInferenceGuard.allowUnknownParameterIds",
+      "database.database.parameterInferenceGuard.allowUnknownParameterIds"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.parameterInferenceGuard.allowUnknownParameterIds"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_parameterinferenceguard_definitionspath",
+    "title": "Database Query: database.parameterInferenceGuard.definitionsPath",
+    "summary": "Optional JSON path inside definitionsPort payload to locate definition rows.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.parameterInferenceGuard.definitionsPath",
+      "database.database.parameterInferenceGuard.definitionsPath"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.parameterInferenceGuard.definitionsPath"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_parameterinferenceguard_definitionsport",
+    "title": "Database Query: database.parameterInferenceGuard.definitionsPort",
+    "summary": "Input port carrying parameter definitions used for validation (default: result).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.parameterInferenceGuard.definitionsPort",
+      "database.database.parameterInferenceGuard.definitionsPort"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.parameterInferenceGuard.definitionsPort"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_parameterinferenceguard_enabled",
+    "title": "Database Query: database.parameterInferenceGuard.enabled",
+    "summary": "When enabled, validate/sanitize updated payload against parameter definitions.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.parameterInferenceGuard.enabled",
+      "database.database.parameterInferenceGuard.enabled"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.parameterInferenceGuard.enabled"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_parameterinferenceguard_enforceoptionlabels",
+    "title": "Database Query: database.parameterInferenceGuard.enforceOptionLabels",
+    "summary": "When true, radio/select/dropdown values must match optionLabels from definitions.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.parameterInferenceGuard.enforceOptionLabels",
+      "database.database.parameterInferenceGuard.enforceOptionLabels"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.parameterInferenceGuard.enforceOptionLabels"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_parameterinferenceguard_languagecode",
+    "title": "Database Query: database.parameterInferenceGuard.languageCode",
+    "summary": "Language code mirrored into valuesByLanguage for inferred parameter writes.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.parameterInferenceGuard.languageCode",
+      "database.database.parameterInferenceGuard.languageCode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.parameterInferenceGuard.languageCode"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_parameterinferenceguard_targetpath",
+    "title": "Database Query: database.parameterInferenceGuard.targetPath",
+    "summary": "Update field to sanitize (default: parameters).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.parameterInferenceGuard.targetPath",
+      "database.database.parameterInferenceGuard.targetPath"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.parameterInferenceGuard.targetPath"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query",
+    "title": "Database Query: database.query",
+    "summary": "Query definition (provider/collection/preset/queryTemplate/sort/projection/etc).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query",
+      "database.database.query"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_collection",
+    "title": "Database Query: database.query.collection",
+    "summary": "Collection to query (example: products).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.collection",
+      "database.database.query.collection"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.collection"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_field",
+    "title": "Database Query: database.query.field",
+    "summary": "Field used by preset queries (example: _id, productId).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.field",
+      "database.database.query.field"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.field"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_idtype",
+    "title": "Database Query: database.query.idType",
+    "summary": "How to treat IDs: string vs objectId.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.idType",
+      "database.database.query.idType"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.idType"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_limit",
+    "title": "Database Query: database.query.limit",
+    "summary": "Limit for multi-result queries.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.limit",
+      "database.database.query.limit"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.limit"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_mode",
+    "title": "Database Query: database.query.mode",
+    "summary": "preset uses a predefined query; custom uses queryTemplate.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.mode",
+      "database.database.query.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_preset",
+    "title": "Database Query: database.query.preset",
+    "summary": "Preset query shape (by_id/by_productId/by_entityId/by_field).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.preset",
+      "database.database.query.preset"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.preset"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_projection",
+    "title": "Database Query: database.query.projection",
+    "summary": "Projection JSON (string).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.projection",
+      "database.database.query.projection"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.projection"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_provider",
+    "title": "Database Query: database.query.provider",
+    "summary": "Database provider (mongodb; auto resolves to MongoDB).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.provider",
+      "database.database.query.provider"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.provider"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_querytemplate",
+    "title": "Database Query: database.query.queryTemplate",
+    "summary": "JSON query template (string) with {{placeholders}}.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.queryTemplate",
+      "database.database.query.queryTemplate"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.queryTemplate"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_single",
+    "title": "Database Query: database.query.single",
+    "summary": "If true, treat result as a single document.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.single",
+      "database.database.query.single"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.single"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_query_sort",
+    "title": "Database Query: database.query.sort",
+    "summary": "Sort JSON (string).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.query.sort",
+      "database.database.query.sort"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.query.sort"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_skipempty",
+    "title": "Database Query: database.skipEmpty",
+    "summary": "When true, empty strings/nulls are skipped when building updates.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.skipEmpty",
+      "database.database.skipEmpty"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.skipEmpty"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_trimstrings",
+    "title": "Database Query: database.trimStrings",
+    "summary": "When true, trim all string values before writing.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.trimStrings",
+      "database.database.trimStrings"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.trimStrings"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_updatestrategy",
+    "title": "Database Query: database.updateStrategy",
+    "summary": "When updating: one vs many (for multi-match updates).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.updateStrategy",
+      "database.database.updateStrategy"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.updateStrategy"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_updatetemplate",
+    "title": "Database Query: database.updateTemplate",
+    "summary": "Template JSON for updates (when using custom update templates).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.updateTemplate",
+      "database.database.updateTemplate"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.updateTemplate"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_usemongoactions",
+    "title": "Database Query: database.useMongoActions",
+    "summary": "When true, uses provider action mode (actionCategory/action) instead of simplified operation.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.useMongoActions",
+      "database.database.useMongoActions"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.useMongoActions"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_validationruleids",
+    "title": "Database Query: database.validationRuleIds",
+    "summary": "Optional list of validation rule IDs to apply before writing.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.validationRuleIds",
+      "database.database.validationRuleIds"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.validationRuleIds"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_writeoutcomepolicy_onzeroaffected",
+    "title": "Database Query: database.writeOutcomePolicy.onZeroAffected",
+    "summary": "Write outcome policy when execution affects 0 records: `fail` throws terminal node error, `warn` completes with warning metadata.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.writeOutcomePolicy.onZeroAffected",
+      "database.database.writeOutcomePolicy.onZeroAffected"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.writeOutcomePolicy.onZeroAffected"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_writesource",
+    "title": "Database Query: database.writeSource",
+    "summary": "Which incoming port to write from (example: result/bundle/context).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.writeSource",
+      "database.database.writeSource"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.writeSource"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_writesourcepath",
+    "title": "Database Query: database.writeSourcePath",
+    "summary": "Optional JSON path within writeSource to write (example: 'result.items[0]').",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.writeSourcePath",
+      "database.database.writeSourcePath"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.writeSourcePath"
+    ]
+  },
+  {
+    "id": "node_config_field_database_database_writetemplateguardrails",
+    "title": "Database Query: database.writeTemplateGuardrails",
+    "summary": "Runtime-enforced for writes: all query/update/insert template placeholders must resolve to connected, non-empty values (missing/empty blocks execution).",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "database.writeTemplateGuardrails",
+      "database.database.writeTemplateGuardrails"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.database.writeTemplateGuardrails"
+    ]
+  },
+  {
+    "id": "node_config_field_database_runtime_cache_mode",
+    "title": "Database Query: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "runtime.cache.mode",
+      "database.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_database_runtime_cache_scope",
+    "title": "Database Query: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "runtime.cache.scope",
+      "database.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_database_runtime_waitforinputs",
+    "title": "Database Query: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Database Query",
+    "aliases": [
+      "database",
+      "runtime.waitForInputs",
+      "database.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.database.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_collections",
+    "title": "Database Schema: db_schema.collections",
+    "summary": "Collection names to include when mode is selected.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.collections",
+      "db_schema.db_schema.collections"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.collections"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_contextcollections",
+    "title": "Database Schema: db_schema.contextCollections",
+    "summary": "Collections to fetch as live context during runtime. Falls back to selected schema collections when empty.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.contextCollections",
+      "db_schema.db_schema.contextCollections"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.contextCollections"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_contextlimit",
+    "title": "Database Schema: db_schema.contextLimit",
+    "summary": "Maximum documents fetched per live context collection during runtime.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.contextLimit",
+      "db_schema.db_schema.contextLimit"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.contextLimit"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_contextquery",
+    "title": "Database Schema: db_schema.contextQuery",
+    "summary": "Optional JSON filter or free-text search applied to each live context collection. Supports runtime templates such as `{{context.catalogId}}` or `{{bundle.categoryId}}`.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.contextQuery",
+      "db_schema.db_schema.contextQuery"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.contextQuery"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_formatas",
+    "title": "Database Schema: db_schema.formatAs",
+    "summary": "json emits structured schema/context payloads; text emits prompt-ready context text.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.formatAs",
+      "db_schema.db_schema.formatAs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.formatAs"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_includefields",
+    "title": "Database Schema: db_schema.includeFields",
+    "summary": "Include field lists for each collection.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.includeFields",
+      "db_schema.db_schema.includeFields"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.includeFields"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_includerelations",
+    "title": "Database Schema: db_schema.includeRelations",
+    "summary": "Include inferred relations/foreign key hints when available.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.includeRelations",
+      "db_schema.db_schema.includeRelations"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.includeRelations"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_mode",
+    "title": "Database Schema: db_schema.mode",
+    "summary": "all = include all collections; selected = include only `collections`.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.mode",
+      "db_schema.db_schema.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_provider",
+    "title": "Database Schema: db_schema.provider",
+    "summary": "Which provider to load: auto (primary) or mongodb.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.provider",
+      "db_schema.db_schema.provider"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.provider"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_db_schema_sourcemode",
+    "title": "Database Schema: db_schema.sourceMode",
+    "summary": "schema = emit structure only; live_context = emit latest collection rows; schema_and_live_context = emit both.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "db_schema.sourceMode",
+      "db_schema.db_schema.sourceMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.db_schema.sourceMode"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_runtime_cache_mode",
+    "title": "Database Schema: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "runtime.cache.mode",
+      "db_schema.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_runtime_cache_scope",
+    "title": "Database Schema: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "runtime.cache.scope",
+      "db_schema.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_db_schema_runtime_waitforinputs",
+    "title": "Database Schema: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Database Schema",
+    "aliases": [
+      "db_schema",
+      "runtime.waitForInputs",
+      "db_schema.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.db_schema.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_delay_delay_ms",
+    "title": "Delay: delay.ms",
+    "summary": "Delay duration in milliseconds.",
+    "section": "Node Config - Delay",
+    "aliases": [
+      "delay",
+      "delay.ms",
+      "delay.delay.ms"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/delay.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.delay.delay.ms"
+    ]
+  },
+  {
+    "id": "node_config_field_delay_runtime_cache_mode",
+    "title": "Delay: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Delay",
+    "aliases": [
+      "delay",
+      "runtime.cache.mode",
+      "delay.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/delay.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.delay.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_delay_runtime_cache_scope",
+    "title": "Delay: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Delay",
+    "aliases": [
+      "delay",
+      "runtime.cache.scope",
+      "delay.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/delay.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.delay.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_delay_runtime_waitforinputs",
+    "title": "Delay: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Delay",
+    "aliases": [
+      "delay",
+      "runtime.waitForInputs",
+      "delay.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/delay.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.delay.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_fetcher_fetcher_entityid",
+    "title": "Fetcher: Trigger Context: fetcher.entityId",
+    "summary": "Entity ID used by simulation fetch modes (preferred over productId alias).",
+    "section": "Node Config - Fetcher: Trigger Context",
+    "aliases": [
+      "fetcher",
+      "fetcher.entityId",
+      "fetcher.fetcher.entityId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.fetcher.fetcher.entityId"
+    ]
+  },
+  {
+    "id": "node_config_field_fetcher_fetcher_entitytype",
+    "title": "Fetcher: Trigger Context: fetcher.entityType",
+    "summary": "Entity type used by simulation fetch modes.",
+    "section": "Node Config - Fetcher: Trigger Context",
+    "aliases": [
+      "fetcher",
+      "fetcher.entityType",
+      "fetcher.fetcher.entityType"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.fetcher.fetcher.entityType"
+    ]
+  },
+  {
+    "id": "node_config_field_fetcher_fetcher_productid",
+    "title": "Fetcher: Trigger Context: fetcher.productId",
+    "summary": "Product ID alias for entityId.",
+    "section": "Node Config - Fetcher: Trigger Context",
+    "aliases": [
+      "fetcher",
+      "fetcher.productId",
+      "fetcher.fetcher.productId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.fetcher.fetcher.productId"
+    ]
+  },
+  {
+    "id": "node_config_field_fetcher_fetcher_sourcemode",
+    "title": "Fetcher: Trigger Context: fetcher.sourceMode",
+    "summary": "How to resolve context: live_context, simulation_id, or live_then_simulation.",
+    "section": "Node Config - Fetcher: Trigger Context",
+    "aliases": [
+      "fetcher",
+      "fetcher.sourceMode",
+      "fetcher.fetcher.sourceMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.fetcher.fetcher.sourceMode"
+    ]
+  },
+  {
+    "id": "node_config_field_fetcher_runtime_cache_mode",
+    "title": "Fetcher: Trigger Context: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Fetcher: Trigger Context",
+    "aliases": [
+      "fetcher",
+      "runtime.cache.mode",
+      "fetcher.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.fetcher.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_fetcher_runtime_cache_scope",
+    "title": "Fetcher: Trigger Context: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Fetcher: Trigger Context",
+    "aliases": [
+      "fetcher",
+      "runtime.cache.scope",
+      "fetcher.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.fetcher.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_fetcher_runtime_waitforinputs",
+    "title": "Fetcher: Trigger Context: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Fetcher: Trigger Context",
+    "aliases": [
+      "fetcher",
+      "runtime.waitForInputs",
+      "fetcher.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.fetcher.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_gate_gate_failmessage",
+    "title": "Gate: gate.failMessage",
+    "summary": "Optional message to display/log when blocking.",
+    "section": "Node Config - Gate",
+    "aliases": [
+      "gate",
+      "gate.failMessage",
+      "gate.gate.failMessage"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/gate.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.gate.gate.failMessage"
+    ]
+  },
+  {
+    "id": "node_config_field_gate_gate_mode",
+    "title": "Gate: gate.mode",
+    "summary": "block = stop downstream when valid is false; pass = always pass but preserve valid/errors.",
+    "section": "Node Config - Gate",
+    "aliases": [
+      "gate",
+      "gate.mode",
+      "gate.gate.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/gate.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.gate.gate.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_gate_runtime_cache_mode",
+    "title": "Gate: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Gate",
+    "aliases": [
+      "gate",
+      "runtime.cache.mode",
+      "gate.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/gate.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.gate.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_gate_runtime_cache_scope",
+    "title": "Gate: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Gate",
+    "aliases": [
+      "gate",
+      "runtime.cache.scope",
+      "gate.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/gate.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.gate.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_gate_runtime_waitforinputs",
+    "title": "Gate: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Gate",
+    "aliases": [
+      "gate",
+      "runtime.waitForInputs",
+      "gate.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/gate.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.gate.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_http_http_bodytemplate",
+    "title": "HTTP Fetch: http.bodyTemplate",
+    "summary": "Template for request body (JSON/text) using {{placeholders}} from incoming ports.",
+    "section": "Node Config - HTTP Fetch",
+    "aliases": [
+      "http",
+      "http.bodyTemplate",
+      "http.http.bodyTemplate"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.http.http.bodyTemplate"
+    ]
+  },
+  {
+    "id": "node_config_field_http_http_headers",
+    "title": "HTTP Fetch: http.headers",
+    "summary": "JSON string of request headers. Must be valid JSON.",
+    "section": "Node Config - HTTP Fetch",
+    "aliases": [
+      "http",
+      "http.headers",
+      "http.http.headers"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.http.http.headers"
+    ]
+  },
+  {
+    "id": "node_config_field_http_http_method",
+    "title": "HTTP Fetch: http.method",
+    "summary": "HTTP method.",
+    "section": "Node Config - HTTP Fetch",
+    "aliases": [
+      "http",
+      "http.method",
+      "http.http.method"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.http.http.method"
+    ]
+  },
+  {
+    "id": "node_config_field_http_http_responsemode",
+    "title": "HTTP Fetch: http.responseMode",
+    "summary": "How to interpret the response: json/text/status.",
+    "section": "Node Config - HTTP Fetch",
+    "aliases": [
+      "http",
+      "http.responseMode",
+      "http.http.responseMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.http.http.responseMode"
+    ]
+  },
+  {
+    "id": "node_config_field_http_http_responsepath",
+    "title": "HTTP Fetch: http.responsePath",
+    "summary": "Optional JSON path to extract from the response when responseMode is json.",
+    "section": "Node Config - HTTP Fetch",
+    "aliases": [
+      "http",
+      "http.responsePath",
+      "http.http.responsePath"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.http.http.responsePath"
+    ]
+  },
+  {
+    "id": "node_config_field_http_http_url",
+    "title": "HTTP Fetch: http.url",
+    "summary": "Request URL.",
+    "section": "Node Config - HTTP Fetch",
+    "aliases": [
+      "http",
+      "http.url",
+      "http.http.url"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.http.http.url"
+    ]
+  },
+  {
+    "id": "node_config_field_http_runtime_cache_mode",
+    "title": "HTTP Fetch: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - HTTP Fetch",
+    "aliases": [
+      "http",
+      "runtime.cache.mode",
+      "http.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.http.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_http_runtime_cache_scope",
+    "title": "HTTP Fetch: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - HTTP Fetch",
+    "aliases": [
+      "http",
+      "runtime.cache.scope",
+      "http.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.http.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_http_runtime_waitforinputs",
+    "title": "HTTP Fetch: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - HTTP Fetch",
+    "aliases": [
+      "http",
+      "runtime.waitForInputs",
+      "http.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.http.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_iterator_iterator_autocontinue",
+    "title": "Iterator: iterator.autoContinue",
+    "summary": "If true, the runtime will automatically attempt to advance to the next item after a callback is received.",
+    "section": "Node Config - Iterator",
+    "aliases": [
+      "iterator",
+      "iterator.autoContinue",
+      "iterator.iterator.autoContinue"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/iterator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.iterator.iterator.autoContinue"
+    ]
+  },
+  {
+    "id": "node_config_field_iterator_iterator_maxsteps",
+    "title": "Iterator: iterator.maxSteps",
+    "summary": "Safety cap for automatic continuation steps per run/tick (prevents infinite loops).",
+    "section": "Node Config - Iterator",
+    "aliases": [
+      "iterator",
+      "iterator.maxSteps",
+      "iterator.iterator.maxSteps"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/iterator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.iterator.iterator.maxSteps"
+    ]
+  },
+  {
+    "id": "node_config_field_iterator_runtime_cache_mode",
+    "title": "Iterator: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Iterator",
+    "aliases": [
+      "iterator",
+      "runtime.cache.mode",
+      "iterator.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/iterator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.iterator.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_iterator_runtime_cache_scope",
+    "title": "Iterator: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Iterator",
+    "aliases": [
+      "iterator",
+      "runtime.cache.scope",
+      "iterator.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/iterator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.iterator.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_iterator_runtime_waitforinputs",
+    "title": "Iterator: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Iterator",
+    "aliases": [
+      "iterator",
+      "runtime.waitForInputs",
+      "iterator.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/iterator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.iterator.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_learner_agent_learneragent_agentid",
+    "title": "Learner Agent: learnerAgent.agentId",
+    "summary": "Learner agent identifier used to resolve embeddings source and runtime execution behavior.",
+    "section": "Node Config - Learner Agent",
+    "aliases": [
+      "learner_agent",
+      "learnerAgent.agentId",
+      "learner_agent.learnerAgent.agentId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.learner_agent.learnerAgent.agentId"
+    ]
+  },
+  {
+    "id": "node_config_field_learner_agent_learneragent_includesources",
+    "title": "Learner Agent: learnerAgent.includeSources",
+    "summary": "When true, include matched source snippets in node outputs for downstream auditing.",
+    "section": "Node Config - Learner Agent",
+    "aliases": [
+      "learner_agent",
+      "learnerAgent.includeSources",
+      "learner_agent.learnerAgent.includeSources"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.learner_agent.learnerAgent.includeSources"
+    ]
+  },
+  {
+    "id": "node_config_field_learner_agent_learneragent_prompttemplate",
+    "title": "Learner Agent: learnerAgent.promptTemplate",
+    "summary": "Optional prompt template used to compose final query context before model execution.",
+    "section": "Node Config - Learner Agent",
+    "aliases": [
+      "learner_agent",
+      "learnerAgent.promptTemplate",
+      "learner_agent.learnerAgent.promptTemplate"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.learner_agent.learnerAgent.promptTemplate"
+    ]
+  },
+  {
+    "id": "node_config_field_learner_agent_runtime_cache_mode",
+    "title": "Learner Agent: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Learner Agent",
+    "aliases": [
+      "learner_agent",
+      "runtime.cache.mode",
+      "learner_agent.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.learner_agent.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_learner_agent_runtime_cache_scope",
+    "title": "Learner Agent: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Learner Agent",
+    "aliases": [
+      "learner_agent",
+      "runtime.cache.scope",
+      "learner_agent.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.learner_agent.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_learner_agent_runtime_waitforinputs",
+    "title": "Learner Agent: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Learner Agent",
+    "aliases": [
+      "learner_agent",
+      "runtime.waitForInputs",
+      "learner_agent.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.learner_agent.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_mapper_mapper_jsonintegritypolicy",
+    "title": "JSON Mapper: mapper.jsonIntegrityPolicy",
+    "summary": "How mapper normalizes JSON-like string inputs before resolving mapping paths. strict performs no repair. repair uses the shared staged JSON normalization pipeline before path resolution.",
+    "section": "Node Config - JSON Mapper",
+    "aliases": [
+      "mapper",
+      "mapper.jsonIntegrityPolicy",
+      "mapper.mapper.jsonIntegrityPolicy"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mapper.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mapper.mapper.jsonIntegrityPolicy"
+    ]
+  },
+  {
+    "id": "node_config_field_mapper_mapper_mappings",
+    "title": "JSON Mapper: mapper.mappings",
+    "summary": "Map output port name -> JSON path (relative to context).",
+    "section": "Node Config - JSON Mapper",
+    "aliases": [
+      "mapper",
+      "mapper.mappings",
+      "mapper.mapper.mappings"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mapper.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mapper.mapper.mappings"
+    ]
+  },
+  {
+    "id": "node_config_field_mapper_mapper_outputs",
+    "title": "JSON Mapper: mapper.outputs",
+    "summary": "Which output ports the mapper should expose (the ports must exist on the node).",
+    "section": "Node Config - JSON Mapper",
+    "aliases": [
+      "mapper",
+      "mapper.outputs",
+      "mapper.mapper.outputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mapper.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mapper.mapper.outputs"
+    ]
+  },
+  {
+    "id": "node_config_field_mapper_runtime_cache_mode",
+    "title": "JSON Mapper: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - JSON Mapper",
+    "aliases": [
+      "mapper",
+      "runtime.cache.mode",
+      "mapper.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mapper.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mapper.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_mapper_runtime_cache_scope",
+    "title": "JSON Mapper: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - JSON Mapper",
+    "aliases": [
+      "mapper",
+      "runtime.cache.scope",
+      "mapper.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mapper.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mapper.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_mapper_runtime_waitforinputs",
+    "title": "JSON Mapper: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - JSON Mapper",
+    "aliases": [
+      "mapper",
+      "runtime.waitForInputs",
+      "mapper.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mapper.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mapper.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_math_math_operand",
+    "title": "Math: math.operand",
+    "summary": "Number used by the operation (ignored for round/ceil/floor).",
+    "section": "Node Config - Math",
+    "aliases": [
+      "math",
+      "math.operand",
+      "math.math.operand"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/math.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.math.math.operand"
+    ]
+  },
+  {
+    "id": "node_config_field_math_math_operation",
+    "title": "Math: math.operation",
+    "summary": "Numeric operation to apply: add/subtract/multiply/divide/round/ceil/floor.",
+    "section": "Node Config - Math",
+    "aliases": [
+      "math",
+      "math.operation",
+      "math.math.operation"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/math.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.math.math.operation"
+    ]
+  },
+  {
+    "id": "node_config_field_math_runtime_cache_mode",
+    "title": "Math: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Math",
+    "aliases": [
+      "math",
+      "runtime.cache.mode",
+      "math.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/math.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.math.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_math_runtime_cache_scope",
+    "title": "Math: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Math",
+    "aliases": [
+      "math",
+      "runtime.cache.scope",
+      "math.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/math.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.math.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_math_runtime_waitforinputs",
+    "title": "Math: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Math",
+    "aliases": [
+      "math",
+      "runtime.waitForInputs",
+      "math.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/math.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.math.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_model_model_maxtokens",
+    "title": "Model: model.maxTokens",
+    "summary": "Node-level maximum output tokens. When set, it overrides the AI Brain default for this node.",
+    "section": "Node Config - Model",
+    "aliases": [
+      "model",
+      "model.maxTokens",
+      "model.model.maxTokens"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.model.model.maxTokens"
+    ]
+  },
+  {
+    "id": "node_config_field_model_model_modelid",
+    "title": "Model: model.modelId",
+    "summary": "Optional node-selected model ID. Empty means inherit the AI Brain default model for AI Paths. The picker uses the Brain model catalog.",
+    "section": "Node Config - Model",
+    "aliases": [
+      "model",
+      "model.modelId",
+      "model.model.modelId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.model.model.modelId"
+    ]
+  },
+  {
+    "id": "node_config_field_model_model_systemprompt",
+    "title": "Model: model.systemPrompt",
+    "summary": "Optional node-level system prompt. A non-empty value overrides the AI Brain default; empty inherits the AI Brain prompt.",
+    "section": "Node Config - Model",
+    "aliases": [
+      "model",
+      "model.systemPrompt",
+      "model.model.systemPrompt"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.model.model.systemPrompt"
+    ]
+  },
+  {
+    "id": "node_config_field_model_model_temperature",
+    "title": "Model: model.temperature",
+    "summary": "Node-level sampling temperature (0-2). When set, it overrides the AI Brain default for this node.",
+    "section": "Node Config - Model",
+    "aliases": [
+      "model",
+      "model.temperature",
+      "model.model.temperature"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.model.model.temperature"
+    ]
+  },
+  {
+    "id": "node_config_field_model_model_vision",
+    "title": "Model: model.vision",
+    "summary": "When true, image URLs are included as vision inputs if connected. Provider execution still routes through AI Brain.",
+    "section": "Node Config - Model",
+    "aliases": [
+      "model",
+      "model.vision",
+      "model.model.vision"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.model.model.vision"
+    ]
+  },
+  {
+    "id": "node_config_field_model_model_waitforresult",
+    "title": "Model: model.waitForResult",
+    "summary": "When true, node waits and emits result. When false, emits jobId/status immediately.",
+    "section": "Node Config - Model",
+    "aliases": [
+      "model",
+      "model.waitForResult",
+      "model.model.waitForResult"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.model.model.waitForResult"
+    ]
+  },
+  {
+    "id": "node_config_field_model_runtime_cache_mode",
+    "title": "Model: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Model",
+    "aliases": [
+      "model",
+      "runtime.cache.mode",
+      "model.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.model.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_model_runtime_cache_scope",
+    "title": "Model: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Model",
+    "aliases": [
+      "model",
+      "runtime.cache.scope",
+      "model.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.model.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_model_runtime_waitforinputs",
+    "title": "Model: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Model",
+    "aliases": [
+      "model",
+      "runtime.waitForInputs",
+      "model.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.model.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_mutator_mutator_path",
+    "title": "Mutator: mutator.path",
+    "summary": "JSON path to write to (example: 'meta.flags.needsReview').",
+    "section": "Node Config - Mutator",
+    "aliases": [
+      "mutator",
+      "mutator.path",
+      "mutator.mutator.path"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mutator.mutator.path"
+    ]
+  },
+  {
+    "id": "node_config_field_mutator_mutator_valuetemplate",
+    "title": "Mutator: mutator.valueTemplate",
+    "summary": "Template used to compute the value written at `path` (supports {{placeholders}}).",
+    "section": "Node Config - Mutator",
+    "aliases": [
+      "mutator",
+      "mutator.valueTemplate",
+      "mutator.mutator.valueTemplate"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mutator.mutator.valueTemplate"
+    ]
+  },
+  {
+    "id": "node_config_field_mutator_runtime_cache_mode",
+    "title": "Mutator: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Mutator",
+    "aliases": [
+      "mutator",
+      "runtime.cache.mode",
+      "mutator.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mutator.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_mutator_runtime_cache_scope",
+    "title": "Mutator: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Mutator",
+    "aliases": [
+      "mutator",
+      "runtime.cache.scope",
+      "mutator.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mutator.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_mutator_runtime_waitforinputs",
+    "title": "Mutator: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Mutator",
+    "aliases": [
+      "mutator",
+      "runtime.waitForInputs",
+      "mutator.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.mutator.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_notification_runtime_cache_mode",
+    "title": "Toast Notification: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Toast Notification",
+    "aliases": [
+      "notification",
+      "runtime.cache.mode",
+      "notification.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/notification.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.notification.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_notification_runtime_cache_scope",
+    "title": "Toast Notification: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Toast Notification",
+    "aliases": [
+      "notification",
+      "runtime.cache.scope",
+      "notification.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/notification.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.notification.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_notification_runtime_waitforinputs",
+    "title": "Toast Notification: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Toast Notification",
+    "aliases": [
+      "notification",
+      "runtime.waitForInputs",
+      "notification.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/notification.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.notification.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_parser_parser_mappings",
+    "title": "JSON Parser: parser.mappings",
+    "summary": "Map output port name -> JSON path (relative to entityJson/context).",
+    "section": "Node Config - JSON Parser",
+    "aliases": [
+      "parser",
+      "parser.mappings",
+      "parser.parser.mappings"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.parser.parser.mappings"
+    ]
+  },
+  {
+    "id": "node_config_field_parser_parser_outputmode",
+    "title": "JSON Parser: parser.outputMode",
+    "summary": "individual emits one port per mapping; bundle emits a single bundle output.",
+    "section": "Node Config - JSON Parser",
+    "aliases": [
+      "parser",
+      "parser.outputMode",
+      "parser.parser.outputMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.parser.parser.outputMode"
+    ]
+  },
+  {
+    "id": "node_config_field_parser_parser_presetid",
+    "title": "JSON Parser: parser.presetId",
+    "summary": "Optional preset that seeds mappings and output options (keeps your parser consistent).",
+    "section": "Node Config - JSON Parser",
+    "aliases": [
+      "parser",
+      "parser.presetId",
+      "parser.parser.presetId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.parser.parser.presetId"
+    ]
+  },
+  {
+    "id": "node_config_field_parser_runtime_cache_mode",
+    "title": "JSON Parser: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - JSON Parser",
+    "aliases": [
+      "parser",
+      "runtime.cache.mode",
+      "parser.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.parser.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_parser_runtime_cache_scope",
+    "title": "JSON Parser: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - JSON Parser",
+    "aliases": [
+      "parser",
+      "runtime.cache.scope",
+      "parser.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.parser.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_parser_runtime_waitforinputs",
+    "title": "JSON Parser: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - JSON Parser",
+    "aliases": [
+      "parser",
+      "runtime.waitForInputs",
+      "parser.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.parser.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_browserengine",
+    "title": "Playwright: Batch Capture: playwright.browserEngine",
+    "summary": "Browser engine to launch: chromium/firefox/webkit.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.browserEngine",
+      "playwright.playwright.browserEngine"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.browserEngine"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_capture_html",
+    "title": "Playwright: Batch Capture: playwright.capture.html",
+    "summary": "Capture final page HTML artifact on run completion.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.capture.html",
+      "playwright.playwright.capture.html"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.capture.html"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_capture_screenshot",
+    "title": "Playwright: Batch Capture: playwright.capture.screenshot",
+    "summary": "Capture final screenshot artifact on run completion.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.capture.screenshot",
+      "playwright.playwright.capture.screenshot"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.capture.screenshot"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_capture_trace",
+    "title": "Playwright: Batch Capture: playwright.capture.trace",
+    "summary": "Enable Playwright trace collection and save trace.zip artifact.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.capture.trace",
+      "playwright.playwright.capture.trace"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.capture.trace"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_capture_video",
+    "title": "Playwright: Batch Capture: playwright.capture.video",
+    "summary": "Enable Playwright video capture for the run context.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.capture.video",
+      "playwright.playwright.capture.video"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.capture.video"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_contextoptionsjson",
+    "title": "Playwright: Batch Capture: playwright.contextOptionsJson",
+    "summary": "Raw Playwright browser context options JSON applied when creating a context/page session.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.contextOptionsJson",
+      "playwright.playwright.contextOptionsJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.contextOptionsJson"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_launchoptionsjson",
+    "title": "Playwright: Batch Capture: playwright.launchOptionsJson",
+    "summary": "Raw Playwright launch options JSON merged with persona-driven settings before browser launch.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.launchOptionsJson",
+      "playwright.playwright.launchOptionsJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.launchOptionsJson"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_personaid",
+    "title": "Playwright: Batch Capture: playwright.personaId",
+    "summary": "Optional Playwright Persona ID. When set, node runtime inherits persona browser fidelity settings.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.personaId",
+      "playwright.playwright.personaId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.personaId"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_script",
+    "title": "Playwright: Batch Capture: playwright.script",
+    "summary": "User script that exports a default async function: `run({ browser, context, page, input, emit, artifacts, log, helpers })`.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.script",
+      "playwright.playwright.script"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.script"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_settingsoverrides",
+    "title": "Playwright: Batch Capture: playwright.settingsOverrides",
+    "summary": "Optional partial override object for Playwright persona fields (headless, slowMo, timeouts, proxy, device emulation).",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.settingsOverrides",
+      "playwright.playwright.settingsOverrides"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.settingsOverrides"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_starturltemplate",
+    "title": "Playwright: Batch Capture: playwright.startUrlTemplate",
+    "summary": "Optional URL template rendered from incoming ports before script execution (example: https://example.com/{{entityId}}).",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.startUrlTemplate",
+      "playwright.playwright.startUrlTemplate"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.startUrlTemplate"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_timeoutms",
+    "title": "Playwright: Batch Capture: playwright.timeoutMs",
+    "summary": "Per-run timeout budget in milliseconds.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.timeoutMs",
+      "playwright.playwright.timeoutMs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.timeoutMs"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_waitforresult",
+    "title": "Playwright: Batch Capture: playwright.waitForResult",
+    "summary": "When true, waits for Playwright completion and emits final outputs. When false, emits runId/job status immediately.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "playwright.waitForResult",
+      "playwright.playwright.waitForResult"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.waitForResult"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_runtime_cache_mode",
+    "title": "Playwright: Batch Capture: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "runtime.cache.mode",
+      "playwright.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_runtime_cache_scope",
+    "title": "Playwright: Batch Capture: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "runtime.cache.scope",
+      "playwright.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_runtime_waitforinputs",
+    "title": "Playwright: Batch Capture: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Playwright: Batch Capture",
+    "aliases": [
+      "playwright",
+      "runtime.waitForInputs",
+      "playwright.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_collection",
+    "title": "Poll Job: poll.dbQuery.collection",
+    "summary": "Collection to query (example: products).",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.collection",
+      "poll.poll.dbQuery.collection"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.collection"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_field",
+    "title": "Poll Job: poll.dbQuery.field",
+    "summary": "Field used by preset queries (example: _id, productId).",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.field",
+      "poll.poll.dbQuery.field"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.field"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_idtype",
+    "title": "Poll Job: poll.dbQuery.idType",
+    "summary": "How to treat IDs: string vs objectId.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.idType",
+      "poll.poll.dbQuery.idType"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.idType"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_limit",
+    "title": "Poll Job: poll.dbQuery.limit",
+    "summary": "Limit for multi-result queries.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.limit",
+      "poll.poll.dbQuery.limit"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.limit"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_mode",
+    "title": "Poll Job: poll.dbQuery.mode",
+    "summary": "preset uses a predefined query; custom uses queryTemplate.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.mode",
+      "poll.poll.dbQuery.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_preset",
+    "title": "Poll Job: poll.dbQuery.preset",
+    "summary": "Preset query shape (by_id/by_productId/by_entityId/by_field).",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.preset",
+      "poll.poll.dbQuery.preset"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.preset"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_projection",
+    "title": "Poll Job: poll.dbQuery.projection",
+    "summary": "Projection JSON (string).",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.projection",
+      "poll.poll.dbQuery.projection"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.projection"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_provider",
+    "title": "Poll Job: poll.dbQuery.provider",
+    "summary": "Database provider (mongodb; auto resolves to MongoDB).",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.provider",
+      "poll.poll.dbQuery.provider"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.provider"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_querytemplate",
+    "title": "Poll Job: poll.dbQuery.queryTemplate",
+    "summary": "JSON query template (string) with {{placeholders}}.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.queryTemplate",
+      "poll.poll.dbQuery.queryTemplate"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.queryTemplate"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_single",
+    "title": "Poll Job: poll.dbQuery.single",
+    "summary": "If true, treat result as a single document.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.single",
+      "poll.poll.dbQuery.single"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.single"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_dbquery_sort",
+    "title": "Poll Job: poll.dbQuery.sort",
+    "summary": "Sort JSON (string).",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.dbQuery.sort",
+      "poll.poll.dbQuery.sort"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.dbQuery.sort"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_intervalms",
+    "title": "Poll Job: poll.intervalMs",
+    "summary": "Poll frequency.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.intervalMs",
+      "poll.poll.intervalMs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.intervalMs"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_maxattempts",
+    "title": "Poll Job: poll.maxAttempts",
+    "summary": "Maximum retry limit before failing.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.maxAttempts",
+      "poll.poll.maxAttempts"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.maxAttempts"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_mode",
+    "title": "Poll Job: poll.mode",
+    "summary": "job = poll AI job status; database = poll database query.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.mode",
+      "poll.poll.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_resultpath",
+    "title": "Poll Job: poll.resultPath",
+    "summary": "JSON path to the actual data to emit on result port.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.resultPath",
+      "poll.poll.resultPath"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.resultPath"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_successoperator",
+    "title": "Poll Job: poll.successOperator",
+    "summary": "equals/not_equals/contains/in.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.successOperator",
+      "poll.poll.successOperator"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.successOperator"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_successpath",
+    "title": "Poll Job: poll.successPath",
+    "summary": "JSON path in result to check for completion.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.successPath",
+      "poll.poll.successPath"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.successPath"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_poll_successvalue",
+    "title": "Poll Job: poll.successValue",
+    "summary": "Value that indicates success (string/number).",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "poll.successValue",
+      "poll.poll.successValue"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.poll.successValue"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_runtime_cache_mode",
+    "title": "Poll Job: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "runtime.cache.mode",
+      "poll.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_runtime_cache_scope",
+    "title": "Poll Job: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "runtime.cache.scope",
+      "poll.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_poll_runtime_waitforinputs",
+    "title": "Poll Job: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Poll Job",
+    "aliases": [
+      "poll",
+      "runtime.waitForInputs",
+      "poll.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.poll.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_prompt_prompt_template",
+    "title": "Prompt: prompt.template",
+    "summary": "Template to produce final prompt text. Uses {{title}}, {{content_en}}, {{bundle}}, etc.",
+    "section": "Node Config - Prompt",
+    "aliases": [
+      "prompt",
+      "prompt.template",
+      "prompt.prompt.template"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/prompt.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.prompt.prompt.template"
+    ]
+  },
+  {
+    "id": "node_config_field_prompt_runtime_cache_mode",
+    "title": "Prompt: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Prompt",
+    "aliases": [
+      "prompt",
+      "runtime.cache.mode",
+      "prompt.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/prompt.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.prompt.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_prompt_runtime_cache_scope",
+    "title": "Prompt: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Prompt",
+    "aliases": [
+      "prompt",
+      "runtime.cache.scope",
+      "prompt.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/prompt.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.prompt.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_prompt_runtime_waitforinputs",
+    "title": "Prompt: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Prompt",
+    "aliases": [
+      "prompt",
+      "runtime.waitForInputs",
+      "prompt.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/prompt.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.prompt.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_aiprompt",
+    "title": "Regex Grouper: regex.aiPrompt",
+    "summary": "Optional AI prompt template used to propose a regex.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.aiPrompt",
+      "regex.regex.aiPrompt"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.aiPrompt"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_flags",
+    "title": "Regex Grouper: regex.flags",
+    "summary": "Regex flags string (example: g, i, m).",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.flags",
+      "regex.regex.flags"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.flags"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_groupby",
+    "title": "Regex Grouper: regex.groupBy",
+    "summary": "Selector used for grouping (group mode) or extraction (extract mode): match/0, capture index (1...), named group, groups, or captures.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.groupBy",
+      "regex.regex.groupBy"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.groupBy"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_includeunmatched",
+    "title": "Regex Grouper: regex.includeUnmatched",
+    "summary": "If true, inputs that do not match are emitted under unmatchedKey.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.includeUnmatched",
+      "regex.regex.includeUnmatched"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.includeUnmatched"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_jsonintegritypolicy",
+    "title": "Regex Grouper: regex.jsonIntegrityPolicy",
+    "summary": "How extract_json handles malformed JSON-like strings. strict performs no repair. repair applies staged normalization (code-fence stripping, malformed boundary repair, truncation closure, trailing-comma cleanup) before parsing.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.jsonIntegrityPolicy",
+      "regex.regex.jsonIntegrityPolicy"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.jsonIntegrityPolicy"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_matchmode",
+    "title": "Regex Grouper: regex.matchMode",
+    "summary": "first = one match per input string; first_overall = stop after the first match across all inputs; all = all matches per input string.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.matchMode",
+      "regex.regex.matchMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.matchMode"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_mode",
+    "title": "Regex Grouper: regex.mode",
+    "summary": "group = emit grouped matches; extract = emit selected capture on value output; extract_json = extract and parse JSON when possible.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.mode",
+      "regex.regex.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_outputmode",
+    "title": "Regex Grouper: regex.outputMode",
+    "summary": "Grouped output mode: object (Record) or array (list of groups).",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.outputMode",
+      "regex.regex.outputMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.outputMode"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_pattern",
+    "title": "Regex Grouper: regex.pattern",
+    "summary": "JavaScript/ECMAScript regex pattern (without / delimiters).",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.pattern",
+      "regex.regex.pattern"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.pattern"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_sampletext",
+    "title": "Regex Grouper: regex.sampleText",
+    "summary": "Optional sample text used for preview / AI prompt rendering.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.sampleText",
+      "regex.regex.sampleText"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.sampleText"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_splitlines",
+    "title": "Regex Grouper: regex.splitLines",
+    "summary": "If true, string inputs are split by newline into multiple items.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.splitLines",
+      "regex.regex.splitLines"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.splitLines"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_regex_unmatchedkey",
+    "title": "Regex Grouper: regex.unmatchedKey",
+    "summary": "Group key label for unmatched values.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "regex.unmatchedKey",
+      "regex.regex.unmatchedKey"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.regex.unmatchedKey"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_runtime_cache_mode",
+    "title": "Regex Grouper: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "runtime.cache.mode",
+      "regex.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_runtime_cache_scope",
+    "title": "Regex Grouper: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "runtime.cache.scope",
+      "regex.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_regex_runtime_waitforinputs",
+    "title": "Regex Grouper: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Regex Grouper",
+    "aliases": [
+      "regex",
+      "runtime.waitForInputs",
+      "regex.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.regex.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_router_router_compareto",
+    "title": "Router: router.compareTo",
+    "summary": "Used by equals/contains modes.",
+    "section": "Node Config - Router",
+    "aliases": [
+      "router",
+      "router.compareTo",
+      "router.router.compareTo"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/router.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.router.router.compareTo"
+    ]
+  },
+  {
+    "id": "node_config_field_router_router_matchmode",
+    "title": "Router: router.matchMode",
+    "summary": "truthy/falsy/equals/contains",
+    "section": "Node Config - Router",
+    "aliases": [
+      "router",
+      "router.matchMode",
+      "router.router.matchMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/router.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.router.router.matchMode"
+    ]
+  },
+  {
+    "id": "node_config_field_router_router_mode",
+    "title": "Router: router.mode",
+    "summary": "valid routes on valid/errors; value routes on a value input.",
+    "section": "Node Config - Router",
+    "aliases": [
+      "router",
+      "router.mode",
+      "router.router.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/router.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.router.router.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_router_runtime_cache_mode",
+    "title": "Router: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Router",
+    "aliases": [
+      "router",
+      "runtime.cache.mode",
+      "router.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/router.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.router.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_router_runtime_cache_scope",
+    "title": "Router: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Router",
+    "aliases": [
+      "router",
+      "runtime.cache.scope",
+      "router.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/router.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.router.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_router_runtime_waitforinputs",
+    "title": "Router: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Router",
+    "aliases": [
+      "router",
+      "runtime.waitForInputs",
+      "router.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/router.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.router.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_simulation_runtime_cache_mode",
+    "title": "Simulation: Entity Modal: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Simulation: Entity Modal",
+    "aliases": [
+      "simulation",
+      "runtime.cache.mode",
+      "simulation.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.simulation.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_simulation_runtime_cache_scope",
+    "title": "Simulation: Entity Modal: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Simulation: Entity Modal",
+    "aliases": [
+      "simulation",
+      "runtime.cache.scope",
+      "simulation.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.simulation.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_simulation_runtime_waitforinputs",
+    "title": "Simulation: Entity Modal: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Simulation: Entity Modal",
+    "aliases": [
+      "simulation",
+      "runtime.waitForInputs",
+      "simulation.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.simulation.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_simulation_simulation_entityid",
+    "title": "Simulation: Entity Modal: simulation.entityId",
+    "summary": "Entity ID to load (preferred).",
+    "section": "Node Config - Simulation: Entity Modal",
+    "aliases": [
+      "simulation",
+      "simulation.entityId",
+      "simulation.simulation.entityId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.simulation.simulation.entityId"
+    ]
+  },
+  {
+    "id": "node_config_field_simulation_simulation_entitytype",
+    "title": "Simulation: Entity Modal: simulation.entityType",
+    "summary": "Entity type to load (product, note, ...).",
+    "section": "Node Config - Simulation: Entity Modal",
+    "aliases": [
+      "simulation",
+      "simulation.entityType",
+      "simulation.simulation.entityType"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.simulation.simulation.entityType"
+    ]
+  },
+  {
+    "id": "node_config_field_simulation_simulation_productid",
+    "title": "Simulation: Entity Modal: simulation.productId",
+    "summary": "Product ID alias for entity identifier. Prefer entityId + entityType.",
+    "section": "Node Config - Simulation: Entity Modal",
+    "aliases": [
+      "simulation",
+      "simulation.productId",
+      "simulation.simulation.productId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.simulation.simulation.productId"
+    ]
+  },
+  {
+    "id": "node_config_field_simulation_simulation_runbehavior",
+    "title": "Simulation: Entity Modal: simulation.runBehavior",
+    "summary": "Execution policy for connected triggers: before_connected_trigger or manual_only.",
+    "section": "Node Config - Simulation: Entity Modal",
+    "aliases": [
+      "simulation",
+      "simulation.runBehavior",
+      "simulation.simulation.runBehavior"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.simulation.simulation.runBehavior"
+    ]
+  },
+  {
+    "id": "node_config_field_string_mutator_runtime_cache_mode",
+    "title": "String Mutator: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - String Mutator",
+    "aliases": [
+      "string_mutator",
+      "runtime.cache.mode",
+      "string_mutator.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_string_mutator_runtime_cache_scope",
+    "title": "String Mutator: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - String Mutator",
+    "aliases": [
+      "string_mutator",
+      "runtime.cache.scope",
+      "string_mutator.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_string_mutator_runtime_waitforinputs",
+    "title": "String Mutator: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - String Mutator",
+    "aliases": [
+      "string_mutator",
+      "runtime.waitForInputs",
+      "string_mutator.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_string_mutator_stringmutator_operations",
+    "title": "String Mutator: stringMutator.operations",
+    "summary": "Ordered list of string operations to apply to the incoming value.",
+    "section": "Node Config - String Mutator",
+    "aliases": [
+      "string_mutator",
+      "stringMutator.operations",
+      "string_mutator.stringMutator.operations"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator.stringMutator.operations"
+    ]
+  },
+  {
+    "id": "node_config_field_string_mutator_stringmutator_operations_flags",
+    "title": "String Mutator: stringMutator.operations[].flags",
+    "summary": "Regex flags when useRegex is enabled (e.g., gim).",
+    "section": "Node Config - String Mutator",
+    "aliases": [
+      "string_mutator",
+      "stringMutator.operations[].flags",
+      "string_mutator.stringMutator.operations[].flags"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator.stringMutator.operations[].flags"
+    ]
+  },
+  {
+    "id": "node_config_field_string_mutator_stringmutator_operations_matchmode",
+    "title": "String Mutator: stringMutator.operations[].matchMode",
+    "summary": "Match mode for replace/remove (first or all).",
+    "section": "Node Config - String Mutator",
+    "aliases": [
+      "string_mutator",
+      "stringMutator.operations[].matchMode",
+      "string_mutator.stringMutator.operations[].matchMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator.stringMutator.operations[].matchMode"
+    ]
+  },
+  {
+    "id": "node_config_field_string_mutator_stringmutator_operations_replace",
+    "title": "String Mutator: stringMutator.operations[].replace",
+    "summary": "Replacement text for replace operations.",
+    "section": "Node Config - String Mutator",
+    "aliases": [
+      "string_mutator",
+      "stringMutator.operations[].replace",
+      "string_mutator.stringMutator.operations[].replace"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator.stringMutator.operations[].replace"
+    ]
+  },
+  {
+    "id": "node_config_field_string_mutator_stringmutator_operations_search",
+    "title": "String Mutator: stringMutator.operations[].search",
+    "summary": "Text or regex pattern to replace/remove (replace/remove only).",
+    "section": "Node Config - String Mutator",
+    "aliases": [
+      "string_mutator",
+      "stringMutator.operations[].search",
+      "string_mutator.stringMutator.operations[].search"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator.stringMutator.operations[].search"
+    ]
+  },
+  {
+    "id": "node_config_field_string_mutator_stringmutator_operations_type",
+    "title": "String Mutator: stringMutator.operations[].type",
+    "summary": "Operation type: trim, replace, remove, case, append, slice.",
+    "section": "Node Config - String Mutator",
+    "aliases": [
+      "string_mutator",
+      "stringMutator.operations[].type",
+      "string_mutator.stringMutator.operations[].type"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator.stringMutator.operations[].type"
+    ]
+  },
+  {
+    "id": "node_config_field_string_mutator_stringmutator_operations_useregex",
+    "title": "String Mutator: stringMutator.operations[].useRegex",
+    "summary": "If true, treat search as a regex pattern.",
+    "section": "Node Config - String Mutator",
+    "aliases": [
+      "string_mutator",
+      "stringMutator.operations[].useRegex",
+      "string_mutator.stringMutator.operations[].useRegex"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator.stringMutator.operations[].useRegex"
+    ]
+  },
+  {
+    "id": "node_config_field_template_runtime_cache_mode",
+    "title": "Template: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Template",
+    "aliases": [
+      "template",
+      "runtime.cache.mode",
+      "template.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/template.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.template.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_template_runtime_cache_scope",
+    "title": "Template: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Template",
+    "aliases": [
+      "template",
+      "runtime.cache.scope",
+      "template.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/template.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.template.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_template_runtime_waitforinputs",
+    "title": "Template: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Template",
+    "aliases": [
+      "template",
+      "runtime.waitForInputs",
+      "template.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/template.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.template.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_template_template_template",
+    "title": "Template: template.template",
+    "summary": "Template used to generate a prompt string from incoming ports ({{bundle}}, {{context}}, etc).",
+    "section": "Node Config - Template",
+    "aliases": [
+      "template",
+      "template.template",
+      "template.template.template"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/template.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.template.template.template"
+    ]
+  },
+  {
+    "id": "node_config_field_trigger_runtime_cache_mode",
+    "title": "Trigger: Image Studio Analysis: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Trigger: Image Studio Analysis",
+    "aliases": [
+      "trigger",
+      "runtime.cache.mode",
+      "trigger.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/trigger.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.trigger.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_trigger_runtime_cache_scope",
+    "title": "Trigger: Image Studio Analysis: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Trigger: Image Studio Analysis",
+    "aliases": [
+      "trigger",
+      "runtime.cache.scope",
+      "trigger.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/trigger.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.trigger.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_trigger_runtime_waitforinputs",
+    "title": "Trigger: Image Studio Analysis: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Trigger: Image Studio Analysis",
+    "aliases": [
+      "trigger",
+      "runtime.waitForInputs",
+      "trigger.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/trigger.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.trigger.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_trigger_trigger_contextmode",
+    "title": "Trigger: Image Studio Analysis: trigger.contextMode",
+    "summary": "Trigger context policy. Canonical value is trigger_only; resolve entity context downstream with Fetcher or Simulation nodes.",
+    "section": "Node Config - Trigger: Image Studio Analysis",
+    "aliases": [
+      "trigger",
+      "trigger.contextMode",
+      "trigger.trigger.contextMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/trigger.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.trigger.trigger.contextMode"
+    ]
+  },
+  {
+    "id": "node_config_field_trigger_trigger_event",
+    "title": "Trigger: Image Studio Analysis: trigger.event",
+    "summary": "What event fires this Trigger node. Use manual for UI-driven runs; scheduled_run for server/cron runs.",
+    "section": "Node Config - Trigger: Image Studio Analysis",
+    "aliases": [
+      "trigger",
+      "trigger.event",
+      "trigger.trigger.event"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/trigger.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.trigger.trigger.event"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_runtime_cache_mode",
+    "title": "Validation Pattern: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "runtime.cache.mode",
+      "validation_pattern.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_runtime_cache_scope",
+    "title": "Validation Pattern: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "runtime.cache.scope",
+      "validation_pattern.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_runtime_waitforinputs",
+    "title": "Validation Pattern: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "runtime.waitForInputs",
+      "validation_pattern.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_failpolicy",
+    "title": "Validation Pattern: validationPattern.failPolicy",
+    "summary": "block_on_error sets valid=false when error issues exist; report_only always emits valid=true.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.failPolicy",
+      "validation_pattern.validationPattern.failPolicy"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.failPolicy"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_includeruleids",
+    "title": "Validation Pattern: validationPattern.includeRuleIds",
+    "summary": "Optional allowlist of rule IDs to execute.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.includeRuleIds",
+      "validation_pattern.validationPattern.includeRuleIds"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.includeRuleIds"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_inputport",
+    "title": "Validation Pattern: validationPattern.inputPort",
+    "summary": "Preferred input source (auto/value/prompt/result/context).",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.inputPort",
+      "validation_pattern.validationPattern.inputPort"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.inputPort"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_learnedrules",
+    "title": "Validation Pattern: validationPattern.learnedRules",
+    "summary": "Optional learned-rule list merged into runtime validation.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.learnedRules",
+      "validation_pattern.validationPattern.learnedRules"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.learnedRules"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_maxautofixpasses",
+    "title": "Validation Pattern: validationPattern.maxAutofixPasses",
+    "summary": "Maximum autofix refinement passes when runtimeMode is validate_and_autofix.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.maxAutofixPasses",
+      "validation_pattern.validationPattern.maxAutofixPasses"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.maxAutofixPasses"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_outputport",
+    "title": "Validation Pattern: validationPattern.outputPort",
+    "summary": "Primary output target for normalized text.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.outputPort",
+      "validation_pattern.validationPattern.outputPort"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.outputPort"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_rules",
+    "title": "Validation Pattern: validationPattern.rules",
+    "summary": "Active rule set used during runtime (global snapshot or path-local list).",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.rules",
+      "validation_pattern.validationPattern.rules"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.rules"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_runtimemode",
+    "title": "Validation Pattern: validationPattern.runtimeMode",
+    "summary": "validate_only runs checks; validate_and_autofix also applies rule autofix operations.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.runtimeMode",
+      "validation_pattern.validationPattern.runtimeMode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.runtimeMode"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_scope",
+    "title": "Validation Pattern: validationPattern.scope",
+    "summary": "Prompt validation scope used while evaluating rules (for scope-gated rules).",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.scope",
+      "validation_pattern.validationPattern.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_source",
+    "title": "Validation Pattern: validationPattern.source",
+    "summary": "Rule source: global_stack uses synced validator-stack rules, path_local uses node-local rules.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.source",
+      "validation_pattern.validationPattern.source"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.source"
+    ]
+  },
+  {
+    "id": "node_config_field_validation_pattern_validationpattern_stackid",
+    "title": "Validation Pattern: validationPattern.stackId",
+    "summary": "Selected global validation stack/list ID used when source=global_stack.",
+    "section": "Node Config - Validation Pattern",
+    "aliases": [
+      "validation_pattern",
+      "validationPattern.stackId",
+      "validation_pattern.validationPattern.stackId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern.validationPattern.stackId"
+    ]
+  },
+  {
+    "id": "node_config_field_validator_runtime_cache_mode",
+    "title": "Validator: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Validator",
+    "aliases": [
+      "validator",
+      "runtime.cache.mode",
+      "validator.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validator.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_validator_runtime_cache_scope",
+    "title": "Validator: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Validator",
+    "aliases": [
+      "validator",
+      "runtime.cache.scope",
+      "validator.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validator.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_validator_runtime_waitforinputs",
+    "title": "Validator: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Validator",
+    "aliases": [
+      "validator",
+      "runtime.waitForInputs",
+      "validator.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validator.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_validator_validator_mode",
+    "title": "Validator: validator.mode",
+    "summary": "all = require all requiredPaths; any = require at least one.",
+    "section": "Node Config - Validator",
+    "aliases": [
+      "validator",
+      "validator.mode",
+      "validator.validator.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validator.validator.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_validator_validator_requiredpaths",
+    "title": "Validator: validator.requiredPaths",
+    "summary": "List of JSON paths that must exist (and be non-empty) for valid=true.",
+    "section": "Node Config - Validator",
+    "aliases": [
+      "validator",
+      "validator.requiredPaths",
+      "validator.validator.requiredPaths"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.validator.validator.requiredPaths"
+    ]
+  },
+  {
+    "id": "node_config_field_viewer_runtime_cache_mode",
+    "title": "Result Viewer: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Result Viewer",
+    "aliases": [
+      "viewer",
+      "runtime.cache.mode",
+      "viewer.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/viewer.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.viewer.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_viewer_runtime_cache_scope",
+    "title": "Result Viewer: runtime.cache.scope",
+    "summary": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+    "section": "Node Config - Result Viewer",
+    "aliases": [
+      "viewer",
+      "runtime.cache.scope",
+      "viewer.runtime.cache.scope"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/viewer.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.viewer.runtime.cache.scope"
+    ]
+  },
+  {
+    "id": "node_config_field_viewer_runtime_waitforinputs",
+    "title": "Result Viewer: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Result Viewer",
+    "aliases": [
+      "viewer",
+      "runtime.waitForInputs",
+      "viewer.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/viewer.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.viewer.runtime.waitForInputs"
+    ]
+  },
+  {
+    "id": "node_config_field_viewer_viewer_outputs",
+    "title": "Result Viewer: viewer.outputs",
+    "summary": "Map of input port -> label/path. Used to display structured output inside the node config panel.",
+    "section": "Node Config - Result Viewer",
+    "aliases": [
+      "viewer",
+      "viewer.outputs",
+      "viewer.viewer.outputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/viewer.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.viewer.viewer.outputs"
+    ]
+  },
+  {
+    "id": "node_config_field_viewer_viewer_showimagesasjson",
+    "title": "Result Viewer: viewer.showImagesAsJson",
+    "summary": "When true, image lists render as JSON instead of thumbnails.",
+    "section": "Node Config - Result Viewer",
+    "aliases": [
+      "viewer",
+      "viewer.showImagesAsJson",
+      "viewer.viewer.showImagesAsJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/viewer.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.viewer.viewer.showImagesAsJson"
+    ]
+  },
+  {
+    "id": "node_config_gate",
+    "title": "Gate (Configuration)",
+    "summary": "Configuration reference for Gate.",
+    "section": "Node Config",
+    "aliases": [
+      "gate",
+      "Gate",
+      "gate config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/gate.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.gate"
+    ]
+  },
+  {
+    "id": "node_config_http",
+    "title": "HTTP Fetch (Configuration)",
+    "summary": "Configuration reference for HTTP Fetch.",
+    "section": "Node Config",
+    "aliases": [
+      "http",
+      "HTTP Fetch",
+      "http config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.http"
+    ]
+  },
+  {
+    "id": "node_config_iterator",
+    "title": "Iterator (Configuration)",
+    "summary": "Configuration reference for Iterator.",
+    "section": "Node Config",
+    "aliases": [
+      "iterator",
+      "Iterator",
+      "iterator config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/iterator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.iterator"
+    ]
+  },
+  {
+    "id": "node_config_learner_agent",
+    "title": "Learner Agent (Configuration)",
+    "summary": "Configuration reference for Learner Agent.",
+    "section": "Node Config",
+    "aliases": [
+      "learner_agent",
+      "Learner Agent",
+      "learner_agent config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.learner_agent"
+    ]
+  },
+  {
+    "id": "node_config_mapper",
+    "title": "JSON Mapper (Configuration)",
+    "summary": "Configuration reference for JSON Mapper.",
+    "section": "Node Config",
+    "aliases": [
+      "mapper",
+      "JSON Mapper",
+      "mapper config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mapper.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.mapper"
+    ]
+  },
+  {
+    "id": "node_config_math",
+    "title": "Math (Configuration)",
+    "summary": "Configuration reference for Math.",
+    "section": "Node Config",
+    "aliases": [
+      "math",
+      "Math",
+      "math config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/math.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.math"
+    ]
+  },
+  {
+    "id": "node_config_model",
+    "title": "Model (Configuration)",
+    "summary": "Configuration reference for Model.",
+    "section": "Node Config",
+    "aliases": [
+      "model",
+      "Model",
+      "model config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.model"
+    ]
+  },
+  {
+    "id": "node_config_mutator",
+    "title": "Mutator (Configuration)",
+    "summary": "Configuration reference for Mutator.",
+    "section": "Node Config",
+    "aliases": [
+      "mutator",
+      "Mutator",
+      "mutator config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.mutator"
+    ]
+  },
+  {
+    "id": "node_config_notification",
+    "title": "Toast Notification (Configuration)",
+    "summary": "Configuration reference for Toast Notification.",
+    "section": "Node Config",
+    "aliases": [
+      "notification",
+      "Toast Notification",
+      "notification config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/notification.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.notification"
+    ]
+  },
+  {
+    "id": "node_config_parser",
+    "title": "JSON Parser (Configuration)",
+    "summary": "Configuration reference for JSON Parser.",
+    "section": "Node Config",
+    "aliases": [
+      "parser",
+      "JSON Parser",
+      "parser config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.parser"
+    ]
+  },
+  {
+    "id": "node_config_playwright",
+    "title": "Playwright: Batch Capture (Configuration)",
+    "summary": "Configuration reference for Playwright: Batch Capture.",
+    "section": "Node Config",
+    "aliases": [
+      "playwright",
+      "Playwright: Batch Capture",
+      "playwright config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.playwright"
+    ]
+  },
+  {
+    "id": "node_config_poll",
+    "title": "Poll Job (Configuration)",
+    "summary": "Configuration reference for Poll Job.",
+    "section": "Node Config",
+    "aliases": [
+      "poll",
+      "Poll Job",
+      "poll config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.poll"
+    ]
+  },
+  {
+    "id": "node_config_prompt",
+    "title": "Prompt (Configuration)",
+    "summary": "Configuration reference for Prompt.",
+    "section": "Node Config",
+    "aliases": [
+      "prompt",
+      "Prompt",
+      "prompt config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/prompt.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.prompt"
+    ]
+  },
+  {
+    "id": "node_config_regex",
+    "title": "Regex Grouper (Configuration)",
+    "summary": "Configuration reference for Regex Grouper.",
+    "section": "Node Config",
+    "aliases": [
+      "regex",
+      "Regex Grouper",
+      "regex config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.regex"
+    ]
+  },
+  {
+    "id": "node_config_router",
+    "title": "Router (Configuration)",
+    "summary": "Configuration reference for Router.",
+    "section": "Node Config",
+    "aliases": [
+      "router",
+      "Router",
+      "router config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/router.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.router"
+    ]
+  },
+  {
+    "id": "node_config_simulation",
+    "title": "Simulation: Entity Modal (Configuration)",
+    "summary": "Configuration reference for Simulation: Entity Modal.",
+    "section": "Node Config",
+    "aliases": [
+      "simulation",
+      "Simulation: Entity Modal",
+      "simulation config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.simulation"
+    ]
+  },
+  {
+    "id": "node_config_string_mutator",
+    "title": "String Mutator (Configuration)",
+    "summary": "Configuration reference for String Mutator.",
+    "section": "Node Config",
+    "aliases": [
+      "string_mutator",
+      "String Mutator",
+      "string_mutator config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.string_mutator"
+    ]
+  },
+  {
+    "id": "node_config_template",
+    "title": "Template (Configuration)",
+    "summary": "Configuration reference for Template.",
+    "section": "Node Config",
+    "aliases": [
+      "template",
+      "Template",
+      "template config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/template.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.template"
+    ]
+  },
+  {
+    "id": "node_config_trigger",
+    "title": "Trigger: Image Studio Analysis (Configuration)",
+    "summary": "Configuration reference for Trigger: Image Studio Analysis.",
+    "section": "Node Config",
+    "aliases": [
+      "trigger",
+      "Trigger: Image Studio Analysis",
+      "trigger config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/trigger.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.trigger"
+    ]
+  },
+  {
+    "id": "node_config_update",
+    "title": "Update Node",
+    "summary": "Applies unsaved node modal edits into the canvas node state.",
+    "section": "Node Config Modal",
+    "aliases": [
+      "update node"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "node-config"
+    ],
+    "uiTargets": [
+      "node-config.update"
+    ]
+  },
+  {
+    "id": "node_config_validation_pattern",
+    "title": "Validation Pattern (Configuration)",
+    "summary": "Configuration reference for Validation Pattern.",
+    "section": "Node Config",
+    "aliases": [
+      "validation_pattern",
+      "Validation Pattern",
+      "validation_pattern config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.validation_pattern"
+    ]
+  },
+  {
+    "id": "node_config_validator",
+    "title": "Validator (Configuration)",
+    "summary": "Configuration reference for Validator.",
+    "section": "Node Config",
+    "aliases": [
+      "validator",
+      "Validator",
+      "validator config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.validator"
+    ]
+  },
+  {
+    "id": "node_config_viewer",
+    "title": "Result Viewer (Configuration)",
+    "summary": "Configuration reference for Result Viewer.",
+    "section": "Node Config",
+    "aliases": [
+      "viewer",
+      "Result Viewer",
+      "viewer config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/viewer.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.viewer"
+    ]
+  },
+  {
+    "id": "node_palette_agent",
+    "title": "Reasoning Agent (Palette)",
+    "summary": "Run a multi-step agent persona over the prompt.",
+    "section": "Node Palette",
+    "aliases": [
+      "agent",
+      "Reasoning Agent",
+      "palette agent"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.agent"
+    ]
+  },
+  {
+    "id": "node_palette_api_advanced",
+    "title": "API Operation (Advanced) (Palette)",
+    "summary": "Advanced API node with auth, retries, pagination, and error routing.",
+    "section": "Node Palette",
+    "aliases": [
+      "api_advanced",
+      "API Operation (Advanced)",
+      "palette api_advanced"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.api_advanced"
+    ]
+  },
+  {
+    "id": "node_palette_audio_oscillator",
+    "title": "Audio Oscillator (Palette)",
+    "summary": "Generate a waveform signal (sine/square/triangle/sawtooth).",
+    "section": "Node Palette",
+    "aliases": [
+      "audio_oscillator",
+      "Audio Oscillator",
+      "palette audio_oscillator"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.audio_oscillator"
+    ]
+  },
+  {
+    "id": "node_palette_audio_speaker",
+    "title": "Audio Speaker (Mono) (Palette)",
+    "summary": "Play incoming audio signals in local runtime.",
+    "section": "Node Palette",
+    "aliases": [
+      "audio_speaker",
+      "Audio Speaker (Mono)",
+      "palette audio_speaker"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.audio_speaker"
+    ]
+  },
+  {
+    "id": "node_palette_bundle",
+    "title": "Bundle (Palette)",
+    "summary": "Cluster inputs into a single bundle output.",
+    "section": "Node Palette",
+    "aliases": [
+      "bundle",
+      "Bundle",
+      "palette bundle"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/bundle.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.bundle"
+    ]
+  },
+  {
+    "id": "node_palette_compare",
+    "title": "Compare (Palette)",
+    "summary": "Compare a value and emit valid/errors.",
+    "section": "Node Palette",
+    "aliases": [
+      "compare",
+      "Compare",
+      "palette compare"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.compare"
+    ]
+  },
+  {
+    "id": "node_palette_constant",
+    "title": "Constant (Palette)",
+    "summary": "Emit a constant value as a signal.",
+    "section": "Node Palette",
+    "aliases": [
+      "constant",
+      "Constant",
+      "palette constant"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/constant.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.constant"
+    ]
+  },
+  {
+    "id": "node_palette_context",
+    "title": "Context Filter (Palette)",
+    "summary": "Filter incoming context payloads into scoped entity data.",
+    "section": "Node Palette",
+    "aliases": [
+      "context",
+      "Context Filter",
+      "palette context"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.context"
+    ]
+  },
+  {
+    "id": "node_palette_database",
+    "title": "Database Query (Palette)",
+    "summary": "Query, update, insert, or delete records.",
+    "section": "Node Palette",
+    "aliases": [
+      "database",
+      "Database Query",
+      "palette database"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.database"
+    ]
+  },
+  {
+    "id": "node_palette_db_schema",
+    "title": "Database Schema (Palette)",
+    "summary": "Provides live database structure and optional collection context for AI.",
+    "section": "Node Palette",
+    "aliases": [
+      "db_schema",
+      "Database Schema",
+      "palette db_schema"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.db_schema"
+    ]
+  },
+  {
+    "id": "node_palette_delay",
+    "title": "Delay (Palette)",
+    "summary": "Delay signals to sequence flows.",
+    "section": "Node Palette",
+    "aliases": [
+      "delay",
+      "Delay",
+      "palette delay"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/delay.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.delay"
+    ]
+  },
+  {
+    "id": "node_palette_fetcher",
+    "title": "Fetcher: Trigger Context (Palette)",
+    "summary": "Resolve live trigger context or fetch simulated entity by ID.",
+    "section": "Node Palette",
+    "aliases": [
+      "fetcher",
+      "Fetcher: Trigger Context",
+      "palette fetcher"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.fetcher"
+    ]
+  },
+  {
+    "id": "node_palette_gate",
+    "title": "Gate (Palette)",
+    "summary": "Allow context through when valid is true.",
+    "section": "Node Palette",
+    "aliases": [
+      "gate",
+      "Gate",
+      "palette gate"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/gate.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.gate"
+    ]
+  },
+  {
+    "id": "node_palette_http",
+    "title": "HTTP Fetch (Palette)",
+    "summary": "Call external APIs with templated inputs.",
+    "section": "Node Palette",
+    "aliases": [
+      "http",
+      "HTTP Fetch",
+      "palette http"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.http"
+    ]
+  },
+  {
+    "id": "node_palette_iterator",
+    "title": "Iterator (Palette)",
+    "summary": "Iterate over an array and emit one item at a time (advance on callback).",
+    "section": "Node Palette",
+    "aliases": [
+      "iterator",
+      "Iterator",
+      "palette iterator"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/iterator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.iterator"
+    ]
+  },
+  {
+    "id": "node_palette_learner_agent",
+    "title": "Learner Agent (Palette)",
+    "summary": "Answer using connected embedding collections (RAG).",
+    "section": "Node Palette",
+    "aliases": [
+      "learner_agent",
+      "Learner Agent",
+      "palette learner_agent"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.learner_agent"
+    ]
+  },
+  {
+    "id": "node_palette_mapper",
+    "title": "JSON Mapper (Palette)",
+    "summary": "Map context to custom outputs.",
+    "section": "Node Palette",
+    "aliases": [
+      "mapper",
+      "JSON Mapper",
+      "palette mapper"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mapper.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.mapper"
+    ]
+  },
+  {
+    "id": "node_palette_math",
+    "title": "Math (Palette)",
+    "summary": "Apply numeric transformation to a value.",
+    "section": "Node Palette",
+    "aliases": [
+      "math",
+      "Math",
+      "palette math"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/math.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.math"
+    ]
+  },
+  {
+    "id": "node_palette_model",
+    "title": "Model (Palette)",
+    "summary": "Runs a selected model.",
+    "section": "Node Palette",
+    "aliases": [
+      "model",
+      "Model",
+      "palette model"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.model"
+    ]
+  },
+  {
+    "id": "node_palette_mutator",
+    "title": "Mutator (Palette)",
+    "summary": "Mutate context values with templates.",
+    "section": "Node Palette",
+    "aliases": [
+      "mutator",
+      "Mutator",
+      "palette mutator"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.mutator"
+    ]
+  },
+  {
+    "id": "node_palette_notification",
+    "title": "Toast Notification (Palette)",
+    "summary": "Display an instant toast from incoming results.",
+    "section": "Node Palette",
+    "aliases": [
+      "notification",
+      "Toast Notification",
+      "palette notification"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/notification.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.notification"
+    ]
+  },
+  {
+    "id": "node_palette_parser",
+    "title": "JSON Parser (Palette)",
+    "summary": "Extract fields into outputs or a single bundle.",
+    "section": "Node Palette",
+    "aliases": [
+      "parser",
+      "JSON Parser",
+      "palette parser"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.parser"
+    ]
+  },
+  {
+    "id": "node_palette_playwright",
+    "title": "Playwright: Batch Capture (Palette)",
+    "summary": "Capture screenshots from multiple URLs using the engine capture script. Connect a captures array (id, title, url, selector) to the captures input port.",
+    "section": "Node Palette",
+    "aliases": [
+      "playwright",
+      "Playwright: Batch Capture",
+      "palette playwright"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.playwright"
+    ]
+  },
+  {
+    "id": "node_palette_poll",
+    "title": "Poll Job (Palette)",
+    "summary": "Poll an AI job or database query until it completes.",
+    "section": "Node Palette",
+    "aliases": [
+      "poll",
+      "Poll Job",
+      "palette poll"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.poll"
+    ]
+  },
+  {
+    "id": "node_palette_prompt",
+    "title": "Prompt (Palette)",
+    "summary": "Formats text with placeholders.",
+    "section": "Node Palette",
+    "aliases": [
+      "prompt",
+      "Prompt",
+      "palette prompt"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/prompt.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.prompt"
+    ]
+  },
+  {
+    "id": "node_palette_regex",
+    "title": "Regex Grouper (Palette)",
+    "summary": "Group strings with regex or extract matched fragments.",
+    "section": "Node Palette",
+    "aliases": [
+      "regex",
+      "Regex Grouper",
+      "palette regex"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.regex"
+    ]
+  },
+  {
+    "id": "node_palette_router",
+    "title": "Router (Palette)",
+    "summary": "Route payloads based on a condition.",
+    "section": "Node Palette",
+    "aliases": [
+      "router",
+      "Router",
+      "palette router"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/router.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.router"
+    ]
+  },
+  {
+    "id": "node_palette_simulation",
+    "title": "Simulation: Entity Modal (Palette)",
+    "summary": "Simulate a modal action by Entity ID.",
+    "section": "Node Palette",
+    "aliases": [
+      "simulation",
+      "Simulation: Entity Modal",
+      "palette simulation"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.simulation"
+    ]
+  },
+  {
+    "id": "node_palette_string_mutator",
+    "title": "String Mutator (Palette)",
+    "summary": "Transform text with chained string operations.",
+    "section": "Node Palette",
+    "aliases": [
+      "string_mutator",
+      "String Mutator",
+      "palette string_mutator"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.string_mutator"
+    ]
+  },
+  {
+    "id": "node_palette_template",
+    "title": "Template (Palette)",
+    "summary": "Create prompts from template strings.",
+    "section": "Node Palette",
+    "aliases": [
+      "template",
+      "Template",
+      "palette template"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/template.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.template"
+    ]
+  },
+  {
+    "id": "node_palette_trigger",
+    "title": "Trigger: Image Studio Analysis (Palette)",
+    "summary": "Entry point for Image Studio object analysis. Receives imageUrl, imageWidth, imageHeight, slotId, and projectId from the Image Studio analysis panel.",
+    "section": "Node Palette",
+    "aliases": [
+      "trigger",
+      "Trigger: Image Studio Analysis",
+      "palette trigger"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/trigger.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.trigger"
+    ]
+  },
+  {
+    "id": "node_palette_validation_pattern",
+    "title": "Validation Pattern (Palette)",
+    "summary": "Run ordered validation patterns from a stack or a path-local rule list.",
+    "section": "Node Palette",
+    "aliases": [
+      "validation_pattern",
+      "Validation Pattern",
+      "palette validation_pattern"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.validation_pattern"
+    ]
+  },
+  {
+    "id": "node_palette_validator",
+    "title": "Validator (Palette)",
+    "summary": "Validate required fields.",
+    "section": "Node Palette",
+    "aliases": [
+      "validator",
+      "Validator",
+      "palette validator"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validator.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.validator"
+    ]
+  },
+  {
+    "id": "node_palette_viewer",
+    "title": "Result Viewer (Palette)",
+    "summary": "Preview outputs connected from other nodes.",
+    "section": "Node Palette",
+    "aliases": [
+      "viewer",
+      "Result Viewer",
+      "palette viewer"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/viewer.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.viewer"
+    ]
+  },
+  {
+    "id": "palette_mode_data",
+    "title": "Data Signal Mode",
+    "summary": "Shows data-processing nodes in the palette.",
+    "section": "Node Palette",
+    "aliases": [
+      "data signal"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "palette"
+    ],
+    "uiTargets": [
+      "palette.mode.data"
+    ]
+  },
+  {
+    "id": "palette_mode_sound",
+    "title": "Sound Signal Mode",
+    "summary": "Shows audio-related nodes in the palette.",
+    "section": "Node Palette",
+    "aliases": [
+      "sound signal"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "palette"
+    ],
+    "uiTargets": [
+      "palette.mode.sound"
+    ]
+  },
+  {
+    "id": "palette_search",
+    "title": "Palette Search",
+    "summary": "Filters node palette items by node title, type, or description.",
+    "section": "Node Palette",
+    "aliases": [
+      "search node palette",
+      "search nodes"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "palette",
+      "search"
+    ],
+    "uiTargets": [
+      "palette.search"
+    ]
+  },
+  {
+    "id": "palette_toggle",
+    "title": "Palette Collapse Toggle",
+    "summary": "Expands or collapses the node palette.",
+    "section": "Node Palette",
+    "aliases": [
+      "node palette collapse",
+      "node palette expand"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "palette"
+    ],
+    "uiTargets": [
+      "palette.toggle"
+    ]
+  },
+  {
+    "id": "regex_placeholder_lines",
+    "title": "{{lines}} Placeholder",
+    "summary": "Resolved sample items array derived from line-split input.",
+    "section": "Regex AI Prompt",
+    "aliases": [
+      "{{lines}}"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "regex"
+    ],
+    "uiTargets": [
+      "regex.placeholder.lines"
+    ]
+  },
+  {
+    "id": "regex_placeholder_text",
+    "title": "{{text}} Placeholder",
+    "summary": "Resolved sample text from preview sample or runtime input.",
+    "section": "Regex AI Prompt",
+    "aliases": [
+      "{{text}}"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "regex"
+    ],
+    "uiTargets": [
+      "regex.placeholder.text"
+    ]
+  },
+  {
+    "id": "regex_placeholder_value",
+    "title": "{{value}} Placeholder",
+    "summary": "Alias of the current value, equivalent to sample text.",
+    "section": "Regex AI Prompt",
+    "aliases": [
+      "{{value}}"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "regex"
+    ],
+    "uiTargets": [
+      "regex.placeholder.value"
+    ]
+  },
+  {
+    "id": "semantic_node_agent",
+    "title": "Semantic Node JSON: Reasoning Agent",
+    "summary": "JSON semantic scaffold and contract for agent.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "agent",
+      "Reasoning Agent",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.agent"
+    ]
+  },
+  {
+    "id": "semantic_node_api_advanced",
+    "title": "Semantic Node JSON: API Operation (Advanced)",
+    "summary": "JSON semantic scaffold and contract for api_advanced.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "api_advanced",
+      "API Operation (Advanced)",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.api_advanced"
+    ]
+  },
+  {
+    "id": "semantic_node_audio_oscillator",
+    "title": "Semantic Node JSON: Audio Oscillator",
+    "summary": "JSON semantic scaffold and contract for audio_oscillator.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "audio_oscillator",
+      "Audio Oscillator",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.audio_oscillator"
+    ]
+  },
+  {
+    "id": "semantic_node_audio_speaker",
+    "title": "Semantic Node JSON: Audio Speaker (Mono)",
+    "summary": "JSON semantic scaffold and contract for audio_speaker.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "audio_speaker",
+      "Audio Speaker (Mono)",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.audio_speaker"
+    ]
+  },
+  {
+    "id": "semantic_node_bundle",
+    "title": "Semantic Node JSON: Bundle",
+    "summary": "JSON semantic scaffold and contract for bundle.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "bundle",
+      "Bundle",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/bundle.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.bundle"
+    ]
+  },
+  {
+    "id": "semantic_node_compare",
+    "title": "Semantic Node JSON: Compare",
+    "summary": "JSON semantic scaffold and contract for compare.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "compare",
+      "Compare",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.compare"
+    ]
+  },
+  {
+    "id": "semantic_node_constant",
+    "title": "Semantic Node JSON: Constant",
+    "summary": "JSON semantic scaffold and contract for constant.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "constant",
+      "Constant",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/constant.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.constant"
+    ]
+  },
+  {
+    "id": "semantic_node_context",
+    "title": "Semantic Node JSON: Context Filter",
+    "summary": "JSON semantic scaffold and contract for context.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "context",
+      "Context Filter",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/context.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.context"
+    ]
+  },
+  {
+    "id": "semantic_node_database",
+    "title": "Semantic Node JSON: Database Query",
+    "summary": "JSON semantic scaffold and contract for database.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "database",
+      "Database Query",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/database.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.database"
+    ]
+  },
+  {
+    "id": "semantic_node_db_schema",
+    "title": "Semantic Node JSON: Database Schema",
+    "summary": "JSON semantic scaffold and contract for db_schema.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "db_schema",
+      "Database Schema",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.db_schema"
+    ]
+  },
+  {
+    "id": "semantic_node_delay",
+    "title": "Semantic Node JSON: Delay",
+    "summary": "JSON semantic scaffold and contract for delay.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "delay",
+      "Delay",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/delay.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.delay"
+    ]
+  },
+  {
+    "id": "semantic_node_fetcher",
+    "title": "Semantic Node JSON: Fetcher: Trigger Context",
+    "summary": "JSON semantic scaffold and contract for fetcher.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "fetcher",
+      "Fetcher: Trigger Context",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.fetcher"
+    ]
+  },
+  {
+    "id": "semantic_node_gate",
+    "title": "Semantic Node JSON: Gate",
+    "summary": "JSON semantic scaffold and contract for gate.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "gate",
+      "Gate",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/gate.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.gate"
+    ]
+  },
+  {
+    "id": "semantic_node_http",
+    "title": "Semantic Node JSON: HTTP Fetch",
+    "summary": "JSON semantic scaffold and contract for http.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "http",
+      "HTTP Fetch",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/http.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.http"
+    ]
+  },
+  {
+    "id": "semantic_node_iterator",
+    "title": "Semantic Node JSON: Iterator",
+    "summary": "JSON semantic scaffold and contract for iterator.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "iterator",
+      "Iterator",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/iterator.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.iterator"
+    ]
+  },
+  {
+    "id": "semantic_node_learner_agent",
+    "title": "Semantic Node JSON: Learner Agent",
+    "summary": "JSON semantic scaffold and contract for learner_agent.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "learner_agent",
+      "Learner Agent",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.learner_agent"
+    ]
+  },
+  {
+    "id": "semantic_node_mapper",
+    "title": "Semantic Node JSON: JSON Mapper",
+    "summary": "JSON semantic scaffold and contract for mapper.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "mapper",
+      "JSON Mapper",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mapper.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.mapper"
+    ]
+  },
+  {
+    "id": "semantic_node_math",
+    "title": "Semantic Node JSON: Math",
+    "summary": "JSON semantic scaffold and contract for math.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "math",
+      "Math",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/math.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.math"
+    ]
+  },
+  {
+    "id": "semantic_node_model",
+    "title": "Semantic Node JSON: Model",
+    "summary": "JSON semantic scaffold and contract for model.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "model",
+      "Model",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/model.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.model"
+    ]
+  },
+  {
+    "id": "semantic_node_mutator",
+    "title": "Semantic Node JSON: Mutator",
+    "summary": "JSON semantic scaffold and contract for mutator.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "mutator",
+      "Mutator",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/mutator.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.mutator"
+    ]
+  },
+  {
+    "id": "semantic_node_notification",
+    "title": "Semantic Node JSON: Toast Notification",
+    "summary": "JSON semantic scaffold and contract for notification.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "notification",
+      "Toast Notification",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/notification.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.notification"
+    ]
+  },
+  {
+    "id": "semantic_node_parser",
+    "title": "Semantic Node JSON: JSON Parser",
+    "summary": "JSON semantic scaffold and contract for parser.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "parser",
+      "JSON Parser",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.parser"
+    ]
+  },
+  {
+    "id": "semantic_node_playwright",
+    "title": "Semantic Node JSON: Playwright: Batch Capture",
+    "summary": "JSON semantic scaffold and contract for playwright.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "playwright",
+      "Playwright: Batch Capture",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.playwright"
+    ]
+  },
+  {
+    "id": "semantic_node_poll",
+    "title": "Semantic Node JSON: Poll Job",
+    "summary": "JSON semantic scaffold and contract for poll.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "poll",
+      "Poll Job",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.poll"
+    ]
+  },
+  {
+    "id": "semantic_node_prompt",
+    "title": "Semantic Node JSON: Prompt",
+    "summary": "JSON semantic scaffold and contract for prompt.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "prompt",
+      "Prompt",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/prompt.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.prompt"
+    ]
+  },
+  {
+    "id": "semantic_node_regex",
+    "title": "Semantic Node JSON: Regex Grouper",
+    "summary": "JSON semantic scaffold and contract for regex.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "regex",
+      "Regex Grouper",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.regex"
+    ]
+  },
+  {
+    "id": "semantic_node_router",
+    "title": "Semantic Node JSON: Router",
+    "summary": "JSON semantic scaffold and contract for router.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "router",
+      "Router",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/router.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.router"
+    ]
+  },
+  {
+    "id": "semantic_node_simulation",
+    "title": "Semantic Node JSON: Simulation: Entity Modal",
+    "summary": "JSON semantic scaffold and contract for simulation.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "simulation",
+      "Simulation: Entity Modal",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.simulation"
+    ]
+  },
+  {
+    "id": "semantic_node_string_mutator",
+    "title": "Semantic Node JSON: String Mutator",
+    "summary": "JSON semantic scaffold and contract for string_mutator.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "string_mutator",
+      "String Mutator",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.string_mutator"
+    ]
+  },
+  {
+    "id": "semantic_node_template",
+    "title": "Semantic Node JSON: Template",
+    "summary": "JSON semantic scaffold and contract for template.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "template",
+      "Template",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/template.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.template"
+    ]
+  },
+  {
+    "id": "semantic_node_trigger",
+    "title": "Semantic Node JSON: Trigger: Image Studio Analysis",
+    "summary": "JSON semantic scaffold and contract for trigger.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "trigger",
+      "Trigger: Image Studio Analysis",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/trigger.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.trigger"
+    ]
+  },
+  {
+    "id": "semantic_node_validation_pattern",
+    "title": "Semantic Node JSON: Validation Pattern",
+    "summary": "JSON semantic scaffold and contract for validation_pattern.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "validation_pattern",
+      "Validation Pattern",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.validation_pattern"
+    ]
+  },
+  {
+    "id": "semantic_node_validator",
+    "title": "Semantic Node JSON: Validator",
+    "summary": "JSON semantic scaffold and contract for validator.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "validator",
+      "Validator",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/validator.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.validator"
+    ]
+  },
+  {
+    "id": "semantic_node_viewer",
+    "title": "Semantic Node JSON: Result Viewer",
+    "summary": "JSON semantic scaffold and contract for viewer.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "viewer",
+      "Result Viewer",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/viewer.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.viewer"
+    ]
+  },
+  {
+    "id": "workflow_overview",
+    "title": "AI-Paths Workflow",
+    "summary": "Build node workflows, validate them, and execute runs through canvas controls.",
+    "section": "Overview",
+    "aliases": [
+      "workflow",
+      "overview",
+      "ai paths"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": [
+      "ai-paths",
+      "manual",
+      "controls",
+      "overview"
+    ],
+    "uiTargets": [
+      "ai-paths-root"
+    ]
+  }
 ];

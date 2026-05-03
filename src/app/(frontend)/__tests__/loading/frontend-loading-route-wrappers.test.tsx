@@ -23,8 +23,7 @@ vi.mock('@/features/kangur/ui/FrontendRouteLoadingFallback', () => ({
   FrontendRouteLoadingFallback: frontendRouteLoadingFallbackMock,
 }));
 
-vi.mock('@/features/kangur/public', () => ({
-  FrontendRouteLoadingFallback: frontendRouteLoadingFallbackMock,
+vi.mock('@/features/kangur/ui/components/FrontendCmsRouteLoadingFallback', () => ({
   FrontendCmsRouteLoadingFallback: frontendCmsRouteLoadingFallbackMock,
 }));
 
@@ -34,22 +33,15 @@ describe('frontend loading route wrappers', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the shared loading fallback for the root frontend wrappers', async () => {
+  it('renders the shared loading fallback for the root frontend wrapper', async () => {
     const { default: FrontendLoading } = await import('@/app/(frontend)/loading');
-    const { default: KangurLoading } = await import('@/app/(frontend)/kangur/loading');
 
-    render(
-      <>
-        <FrontendLoading />
-        <KangurLoading />
-      </>
-    );
+    render(<FrontendLoading />);
 
-    expect(screen.getAllByTestId('frontend-route-loading-fallback-probe')).toHaveLength(2);
-    expect(frontendRouteLoadingFallbackMock).toHaveBeenCalledTimes(2);
+    expect(screen.getAllByTestId('frontend-route-loading-fallback-probe')).toHaveLength(1);
+    expect(frontendRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
     expect(frontendRouteLoadingFallbackMock.mock.calls.map(([props]) => props)).toEqual([
       { cmsVariant: 'home' },
-      {},
     ]);
   });
 
@@ -73,24 +65,15 @@ describe('frontend loading route wrappers', () => {
     ]);
   });
 
-  it('renders the shared loading fallback for the localized frontend wrappers', async () => {
+  it('renders the shared loading fallback for the localized frontend wrapper', async () => {
     const { default: LocalizedFrontendLoading } = await import('@/app/[locale]/(frontend)/loading');
-    const { default: LocalizedKangurLoading } = await import(
-      '@/app/[locale]/(frontend)/kangur/loading'
-    );
 
-    render(
-      <>
-        <LocalizedFrontendLoading />
-        <LocalizedKangurLoading />
-      </>
-    );
+    render(<LocalizedFrontendLoading />);
 
-    expect(screen.getAllByTestId('frontend-route-loading-fallback-probe')).toHaveLength(2);
-    expect(frontendRouteLoadingFallbackMock).toHaveBeenCalledTimes(2);
+    expect(screen.getAllByTestId('frontend-route-loading-fallback-probe')).toHaveLength(1);
+    expect(frontendRouteLoadingFallbackMock).toHaveBeenCalledTimes(1);
     expect(frontendRouteLoadingFallbackMock.mock.calls.map(([props]) => props)).toEqual([
       { cmsVariant: 'home' },
-      {},
     ]);
   });
 

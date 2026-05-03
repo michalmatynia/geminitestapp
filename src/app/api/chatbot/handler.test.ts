@@ -64,7 +64,7 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: vi.fn(),
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('chatbot handler', () => {
   beforeEach(() => {
@@ -117,9 +117,9 @@ describe('chatbot handler', () => {
       },
     });
 
-    const response = await GET_handler(
-      new Request('http://localhost/api/chatbot') as Parameters<typeof GET_handler>[0],
-      { requestId: 'req-1' } as Parameters<typeof GET_handler>[1]
+    const response = await getHandler(
+      new Request('http://localhost/api/chatbot') as Parameters<typeof getHandler>[0],
+      { requestId: 'req-1' } as Parameters<typeof getHandler>[1]
     );
     const payload = (await response.json()) as {
       models: string[];
@@ -152,7 +152,7 @@ describe('chatbot handler', () => {
       provider: 'ollama',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -165,8 +165,8 @@ describe('chatbot handler', () => {
             },
           ],
         }),
-      }) as Parameters<typeof POST_handler>[0],
-      { requestId: 'req-2' } as Parameters<typeof POST_handler>[1]
+      }) as Parameters<typeof postHandler>[0],
+      { requestId: 'req-2' } as Parameters<typeof postHandler>[1]
     );
 
     const payload = (await response.json()) as {
@@ -245,7 +245,7 @@ describe('chatbot handler', () => {
       provider: 'ollama',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new Request('http://localhost/api/chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -258,8 +258,8 @@ describe('chatbot handler', () => {
             },
           ],
         }),
-      }) as Parameters<typeof POST_handler>[0],
-      { requestId: 'req-4' } as Parameters<typeof POST_handler>[1]
+      }) as Parameters<typeof postHandler>[0],
+      { requestId: 'req-4' } as Parameters<typeof postHandler>[1]
     );
 
     const payload = (await response.json()) as {
@@ -308,7 +308,7 @@ describe('chatbot handler', () => {
 
   it('rejects legacy model override payloads', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         new Request('http://localhost/api/chatbot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -322,8 +322,8 @@ describe('chatbot handler', () => {
               },
             ],
           }),
-        }) as Parameters<typeof POST_handler>[0],
-        { requestId: 'req-3' } as Parameters<typeof POST_handler>[1]
+        }) as Parameters<typeof postHandler>[0],
+        { requestId: 'req-3' } as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow(/unsupported model override/i);
 

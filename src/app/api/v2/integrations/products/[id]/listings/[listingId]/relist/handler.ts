@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   isPlaywrightProgrammableSlug,
@@ -22,7 +22,30 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
-export async function POST_handler(
+const readString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+// Listing scripts time out at most 4 minutes (scripted Tradera). Allow 15 minutes before
+// treating a stuck in-flight relist record as stale so relist isn't blocked indefinitely.
+const IN_FLIGHT_RELIST_STALE_THRESHOLD_MS = 15 * 60 * 1000;
+
+const resolvePendingExecutionQueuedAt = (marketplaceData: unknown): string | null => {
+  const providerData = toRecord(toRecord(marketplaceData)['tradera']);
+  const pendingExecution = toRecord(providerData['pendingExecution']);
+  return readString(pendingExecution['queuedAt']);
+};
+
+const isQueuedStatusStale = (
+  updatedAt: string | Date | null | undefined,
+  queuedAt: string | null
+): boolean => {
+  const candidate = queuedAt ?? updatedAt ?? null;
+  if (!candidate) return true;
+  const ts = typeof candidate === 'string' ? new Date(candidate).getTime() : candidate.getTime();
+  return !Number.isFinite(ts) || Date.now() - ts > IN_FLIGHT_RELIST_STALE_THRESHOLD_MS;
+};
+
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; listingId: string }
@@ -61,12 +84,30 @@ export async function POST_handler(
       'Browser mode override is only supported for Playwright and Tradera browser relists'
     );
   }
+  if (
+    typeof payload.selectorProfile === 'string' &&
+    payload.selectorProfile.length > 0 &&
+    !isTraderaBrowserIntegrationSlug(integrationSlug)
+  ) {
+    throw badRequestError(
+      'Selector profile override is only supported for Tradera browser relists'
+    );
+  }
 
   const normalizedStatus = (resolved.listing.status ?? '').trim().toLowerCase();
-  if (
+  const isInFlightRelistStatus =
     normalizedStatus === 'running' ||
-    normalizedStatus === 'queued_relist' ||
-    normalizedStatus === 'queued'
+    normalizedStatus === 'queued' ||
+    normalizedStatus === 'queued_relist';
+  const isStaleInFlightRelist =
+    isInFlightRelistStatus &&
+    isQueuedStatusStale(
+      resolved.listing.updatedAt,
+      resolvePendingExecutionQueuedAt(resolved.listing.marketplaceData)
+    );
+  if (
+    !isStaleInFlightRelist &&
+    isInFlightRelistStatus
   ) {
     const response: ProductListingRelistResponse = {
       queued: true,
@@ -129,6 +170,7 @@ export async function POST_handler(
     action: 'relist',
     source: 'manual',
     ...(payload.browserMode ? { browserMode: payload.browserMode } : {}),
+    ...(payload.selectorProfile ? { selectorProfile: payload.selectorProfile } : {}),
   });
   const previousMarketplaceData = toRecord(resolved.listing.marketplaceData);
   const previousTraderaData = toRecord(previousMarketplaceData['tradera']);
@@ -139,7 +181,9 @@ export async function POST_handler(
       tradera: {
         ...previousTraderaData,
         pendingExecution: {
+          action: 'relist',
           requestedBrowserMode: payload.browserMode ?? 'connection_default',
+          ...(payload.selectorProfile ? { requestedSelectorProfile: payload.selectorProfile } : {}),
           requestId: jobId,
           queuedAt: enqueuedAt,
         },

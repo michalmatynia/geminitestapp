@@ -1,7 +1,8 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { useSearchParams } from 'next/navigation';
+import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, startTransition } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { MailPlus, RefreshCcw, FilterX, Search, Mail } from 'lucide-react';
 import type { PanelAction } from '@/shared/contracts/ui/panels';
@@ -16,11 +17,16 @@ import { formatFilemakerMailFolderLabel } from '../mail-master-tree';
 import {
   buildFilemakerMailSelectionHref as buildMailSelectionHref,
   fetchFilemakerMailJson as fetchJson,
+  resolveFilemakerMailSyncNotice,
+  type FilemakerMailSyncDispatchResponseLike,
 } from '../mail-ui-helpers';
 import { formatFilemakerMailboxAllowlist } from '../mail-utils';
 import {
   createDefaultFilemakerMailDraft as defaultDraft,
+  hasFilemakerMailAccountDraftErrors,
   toDraftFromFilemakerMailAccount as toDraftFromAccount,
+  validateFilemakerMailAccountDraft,
+  type FilemakerMailAccountDraftFieldErrors,
 } from './AdminFilemakerMailPage.helpers';
 import type {
   AccountsResponse,
@@ -36,11 +42,30 @@ import type {
   FilemakerMailThread,
 } from '../types';
 
+const RECENT_THREAD_PREVIEW_LIMIT = 5;
+
+const resolveStateAction = <State,>(
+  nextState: React.SetStateAction<State>,
+  previousState: State
+): State =>
+  typeof nextState === 'function'
+    ? (nextState as (currentState: State) => State)(previousState)
+    : nextState;
+
+const isSameMailPageSelection = (
+  left: MailPageSelection,
+  right: MailPageSelection
+): boolean =>
+  left.accountId === right.accountId &&
+  left.mailboxPath === right.mailboxPath &&
+  left.panel === right.panel;
+
 export interface MailPageState {
   accounts: FilemakerMailAccount[];
   setAccounts: React.Dispatch<React.SetStateAction<FilemakerMailAccount[]>>;
   folders: FilemakerMailFolderSummary[];
   threads: FilemakerMailThread[];
+  recentPreviewThreads: FilemakerMailThread[];
   selection: MailPageSelection;
   setSelection: React.Dispatch<React.SetStateAction<MailPageSelection>>;
   selectedAccountId: MailPageSelection['accountId'];
@@ -50,8 +75,10 @@ export interface MailPageState {
   isThreadsLoading: boolean;
   isSavingAccount: boolean;
   syncingAccountId: string | null;
+  setSyncingAccountId: React.Dispatch<React.SetStateAction<string | null>>;
   draft: FilemakerMailAccountDraft;
   setDraft: React.Dispatch<React.SetStateAction<FilemakerMailAccountDraft>>;
+  accountFormErrors: FilemakerMailAccountDraftFieldErrors;
   deepSearchQuery: string;
   setDeepSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   deepSearchResults: FilemakerMailSearchResponse | null;
@@ -65,6 +92,9 @@ export interface MailPageState {
   setRecentMailboxFilter: React.Dispatch<React.SetStateAction<string>>;
   recentUnreadOnly: boolean;
   setRecentUnreadOnly: React.Dispatch<React.SetStateAction<boolean>>;
+  recentCampaignId: string;
+  recentRunId: string;
+  recentDeliveryId: string;
   attentionAccounts: FilemakerMailAccount[];
   selectedAccount: FilemakerMailAccount | null;
   selectedFolder: FilemakerMailFolderSummary | null;
@@ -79,6 +109,8 @@ export interface MailPageState {
   tableActions: PanelAction[];
   handleSaveAccount: () => Promise<void>;
   handleSyncAccount: (accountId: string) => Promise<void>;
+  loadNavigation: () => Promise<void>;
+  onNewMailbox: () => void;
   router: ReturnType<typeof useRouter>;
 }
 
@@ -94,46 +126,276 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   const rawRequestedRecentMailboxFilter = searchParams.get('recentMailbox') ?? '';
   const rawRequestedRecentUnreadOnly = searchParams.get('recentUnread') === '1';
   const rawRequestedRecentQuery = searchParams.get('recentQuery') ?? '';
+  const rawRequestedRecentCampaignId = searchParams.get('campaignId') ?? '';
+  const rawRequestedRecentRunId = searchParams.get('runId') ?? '';
+  const rawRequestedRecentDeliveryId = searchParams.get('deliveryId') ?? '';
 
   const requestedPanel =
     rawRequestedPanel === 'attention'
       ? 'attention'
-      : rawRequestedPanel === 'settings'
+      : rawRequestedPanel === 'settings' || rawRequestedPanel === 'account'
       ? 'settings'
       : rawRequestedPanel === 'recent'
         ? 'recent'
         : rawRequestedPanel === 'search'
           ? 'search'
-          : null;
+          : rawRequestedAccountId && !rawRequestedMailboxPath
+            ? 'settings'
+            : null;
 
   const requestedAccountId = requestedPanel === 'attention' ? null : rawRequestedAccountId;
   const requestedMailboxPath = requestedPanel ? null : rawRequestedMailboxPath;
-  const requestedSearchQuery = requestedPanel === 'search' ? rawRequestedSearchQuery : '';
-  const requestedRecentMailboxFilter = requestedPanel === 'recent' ? rawRequestedRecentMailboxFilter : '';
-  const requestedRecentUnreadOnly = requestedPanel === 'recent' ? rawRequestedRecentUnreadOnly : false;
-  const requestedRecentQuery = requestedPanel === 'recent' ? rawRequestedRecentQuery : '';
 
-  const [query, setQuery] = useState('');
-  const deferredQuery = useDeferredValue(query.trim());
+  const [query, setQueryState] = useState('');
+  const nonRecentQueryScopeKeyRef = useRef<string | null>(null);
   const [accounts, setAccounts] = useState<FilemakerMailAccount[]>([]);
   const [folders, setFolders] = useState<FilemakerMailFolderSummary[]>([]);
   const [threads, setThreads] = useState<FilemakerMailThread[]>([]);
-  const [recentMailboxFilter, setRecentMailboxFilter] = useState('');
-  const [recentUnreadOnly, setRecentUnreadOnly] = useState(false);
-  const [selection, setSelection] = useState<MailPageSelection>({
+  const [recentPreviewThreads, setRecentPreviewThreads] = useState<FilemakerMailThread[]>([]);
+  const [recentMailboxFilter, setRecentMailboxFilterState] = useState('');
+  const [recentUnreadOnly, setRecentUnreadOnlyState] = useState(false);
+  const [recentCampaignId, setRecentCampaignIdState] = useState(
+    rawRequestedPanel === 'recent' ? rawRequestedRecentCampaignId : ''
+  );
+  const [recentRunId, setRecentRunIdState] = useState(
+    rawRequestedPanel === 'recent' ? rawRequestedRecentRunId : ''
+  );
+  const [recentDeliveryId, setRecentDeliveryIdState] = useState(
+    rawRequestedPanel === 'recent' ? rawRequestedRecentDeliveryId : ''
+  );
+  const [selection, setSelectionState] = useState<MailPageSelection>({
     accountId: requestedAccountId,
     mailboxPath: requestedMailboxPath,
     panel: requestedPanel,
   });
+  const shouldIgnoreActiveSearchState =
+    rawRequestedPanel === 'search' &&
+    selection.panel === 'search' &&
+    (rawRequestedAccountId ?? null) !== (selection.accountId ?? null);
+  const shouldIgnoreActiveRecentState =
+    rawRequestedPanel === 'recent' &&
+    selection.panel === 'recent' &&
+    rawRequestedAccountId !== selection.accountId;
+  const shouldIgnoreRequestedSearchState =
+    rawRequestedPanel === 'search' &&
+    (selection.panel !== 'search' ||
+      (rawRequestedAccountId ?? null) !== (selection.accountId ?? null));
+  const requestedSearchQuery =
+    requestedPanel === 'search' && !shouldIgnoreRequestedSearchState
+      ? rawRequestedSearchQuery
+      : '';
+  const shouldIgnoreRequestedRecentState =
+    rawRequestedPanel === 'recent' &&
+    (selection.panel !== 'recent' || rawRequestedAccountId !== selection.accountId);
+  const requestedRecentMailboxFilter =
+    requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
+      ? rawRequestedRecentMailboxFilter
+      : '';
+  const requestedRecentUnreadOnly =
+    requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
+      ? rawRequestedRecentUnreadOnly
+      : false;
+  const requestedRecentQuery =
+    requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
+      ? rawRequestedRecentQuery
+      : '';
+  const requestedRecentCampaignId =
+    requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
+      ? rawRequestedRecentCampaignId
+      : '';
+  const requestedRecentRunId =
+    requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
+      ? rawRequestedRecentRunId
+      : '';
+  const requestedRecentDeliveryId =
+    requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
+      ? rawRequestedRecentDeliveryId
+      : '';
+  const requestedSelection = useMemo(
+    () =>
+      ({
+        accountId: requestedAccountId,
+        mailboxPath: requestedMailboxPath,
+        panel: requestedPanel,
+      }) satisfies MailPageSelection,
+    [requestedAccountId, requestedMailboxPath, requestedPanel]
+  );
+  const requestedSelectionHref = buildMailSelectionHref({
+    accountId: requestedAccountId,
+    mailboxPath: requestedMailboxPath,
+    panel: requestedPanel,
+    recentMailboxFilter: requestedRecentMailboxFilter,
+    recentUnreadOnly: requestedRecentUnreadOnly,
+    recentQuery: requestedRecentQuery,
+    recentCampaignId: requestedRecentCampaignId,
+    recentRunId: requestedRecentRunId,
+    recentDeliveryId: requestedRecentDeliveryId,
+    searchQuery: requestedSearchQuery,
+  });
+  const effectiveQuery = shouldIgnoreActiveRecentState ? '' : query;
+  const effectiveRecentMailboxFilter = shouldIgnoreActiveRecentState ? '' : recentMailboxFilter;
+  const effectiveRecentUnreadOnly = shouldIgnoreActiveRecentState ? false : recentUnreadOnly;
+  const effectiveRecentCampaignId = shouldIgnoreActiveRecentState ? '' : recentCampaignId;
+  const effectiveRecentRunId = shouldIgnoreActiveRecentState ? '' : recentRunId;
+  const effectiveRecentDeliveryId = shouldIgnoreActiveRecentState ? '' : recentDeliveryId;
+  const deferredQuery = useDeferredValue(query.trim());
+  const currentNonRecentQueryScopeKey =
+    selection.panel === 'recent'
+      ? null
+      : [selection.panel ?? '', selection.accountId ?? '', selection.mailboxPath ?? ''].join('::');
+  const shouldIgnoreThreadQuery =
+    shouldIgnoreActiveRecentState ||
+    (rawRequestedPanel === 'recent' && selection.panel !== 'recent') ||
+    (currentNonRecentQueryScopeKey !== null &&
+      nonRecentQueryScopeKeyRef.current !== null &&
+      nonRecentQueryScopeKeyRef.current !== currentNonRecentQueryScopeKey);
+  const threadSourceQuery = shouldIgnoreThreadQuery ? '' : effectiveQuery.trim();
+  const activeThreadQuery = threadSourceQuery === '' ? '' : deferredQuery;
   const [isNavigationLoading, setIsNavigationLoading] = useState(true);
   const [isThreadsLoading, setIsThreadsLoading] = useState(false);
   const [isSavingAccount, setIsSavingAccount] = useState(false);
   const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
   const [draft, setDraft] = useState<FilemakerMailAccountDraft>(defaultDraft);
-  const [deepSearchQuery, setDeepSearchQuery] = useState(requestedSearchQuery);
+  const [accountFormErrors, setAccountFormErrors] =
+    useState<FilemakerMailAccountDraftFieldErrors>({});
+  const [deepSearchQuery, setDeepSearchQueryState] = useState(requestedSearchQuery);
+  const effectiveDeepSearchQuery = shouldIgnoreActiveSearchState ? '' : deepSearchQuery;
   const [deepSearchResults, setDeepSearchResults] = useState<FilemakerMailSearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [folderAllowlistValue, setFolderAllowlistValue] = useState('');
+  const navigationRequestIdRef = useRef(0);
+  const threadsRequestIdRef = useRef(0);
+  const threadsSourceKeyRef = useRef<string | null>(null);
+  const deepSearchRequestIdRef = useRef(0);
+  const deepSearchSourceKeyRef = useRef<string | null>(null);
+  const recentPreviewAccountIdRef = useRef<string | null>(null);
+  const routeSyncHrefRef = useRef<string | null>(null);
+  const routeSyncSourceKeyRef = useRef<string | null>(null);
+  const hasPendingRouteSync = routeSyncHrefRef.current !== null;
+  const isPendingRequestedRouteStale =
+    hasPendingRouteSync && routeSyncHrefRef.current !== requestedSelectionHref;
+  const shouldHoldLocalSelectionFromRoute =
+    isPendingRequestedRouteStale &&
+    !isSameMailPageSelection(selection, requestedSelection);
+  const shouldHoldLocalRecentStateFromRoute =
+    isPendingRequestedRouteStale &&
+    selection.panel === 'recent' &&
+    (recentMailboxFilter !== requestedRecentMailboxFilter ||
+      recentUnreadOnly !== requestedRecentUnreadOnly ||
+      query !== requestedRecentQuery ||
+      recentCampaignId !== requestedRecentCampaignId ||
+      recentRunId !== requestedRecentRunId ||
+      recentDeliveryId !== requestedRecentDeliveryId);
+  const shouldHoldLocalSearchStateFromRoute =
+    isPendingRequestedRouteStale &&
+    selection.panel === 'search' &&
+    deepSearchQuery !== requestedSearchQuery;
+
+  const setSelection = useCallback<React.Dispatch<React.SetStateAction<MailPageSelection>>>(
+    (nextSelection) => {
+      setSelectionState((previousSelection) => {
+        const resolvedSelection = resolveStateAction(nextSelection, previousSelection);
+        return isSameMailPageSelection(previousSelection, resolvedSelection)
+          ? previousSelection
+          : resolvedSelection;
+      });
+    },
+    []
+  );
+
+  const setQuery = useCallback<React.Dispatch<React.SetStateAction<string>>>((nextQuery) => {
+    setQueryState((previousQuery) => {
+      const resolvedQuery = resolveStateAction(nextQuery, previousQuery);
+      return previousQuery === resolvedQuery ? previousQuery : resolvedQuery;
+    });
+  }, []);
+
+  const setRecentMailboxFilter = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (nextMailboxFilter) => {
+      setRecentMailboxFilterState((previousMailboxFilter) => {
+        const resolvedMailboxFilter = resolveStateAction(
+          nextMailboxFilter,
+          previousMailboxFilter
+        );
+        return previousMailboxFilter === resolvedMailboxFilter
+          ? previousMailboxFilter
+          : resolvedMailboxFilter;
+      });
+    },
+    []
+  );
+
+  const setRecentUnreadOnly = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (nextRecentUnreadOnly) => {
+      setRecentUnreadOnlyState((previousRecentUnreadOnly) => {
+        const resolvedRecentUnreadOnly = resolveStateAction(
+          nextRecentUnreadOnly,
+          previousRecentUnreadOnly
+        );
+        return previousRecentUnreadOnly === resolvedRecentUnreadOnly
+          ? previousRecentUnreadOnly
+          : resolvedRecentUnreadOnly;
+      });
+    },
+    []
+  );
+
+  const setRecentCampaignId = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (nextRecentCampaignId) => {
+      setRecentCampaignIdState((previousRecentCampaignId) => {
+        const resolvedRecentCampaignId = resolveStateAction(
+          nextRecentCampaignId,
+          previousRecentCampaignId
+        );
+        return previousRecentCampaignId === resolvedRecentCampaignId
+          ? previousRecentCampaignId
+          : resolvedRecentCampaignId;
+      });
+    },
+    []
+  );
+
+  const setRecentRunId = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (nextRecentRunId) => {
+      setRecentRunIdState((previousRecentRunId) => {
+        const resolvedRecentRunId = resolveStateAction(nextRecentRunId, previousRecentRunId);
+        return previousRecentRunId === resolvedRecentRunId
+          ? previousRecentRunId
+          : resolvedRecentRunId;
+      });
+    },
+    []
+  );
+
+  const setRecentDeliveryId = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (nextRecentDeliveryId) => {
+      setRecentDeliveryIdState((previousRecentDeliveryId) => {
+        const resolvedRecentDeliveryId = resolveStateAction(
+          nextRecentDeliveryId,
+          previousRecentDeliveryId
+        );
+        return previousRecentDeliveryId === resolvedRecentDeliveryId
+          ? previousRecentDeliveryId
+          : resolvedRecentDeliveryId;
+      });
+    },
+    []
+  );
+
+  const setDeepSearchQuery = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (nextDeepSearchQuery) => {
+      setDeepSearchQueryState((previousDeepSearchQuery) => {
+        const resolvedDeepSearchQuery = resolveStateAction(
+          nextDeepSearchQuery,
+          previousDeepSearchQuery
+        );
+        return previousDeepSearchQuery === resolvedDeepSearchQuery
+          ? previousDeepSearchQuery
+          : resolvedDeepSearchQuery;
+      });
+    },
+    []
+  );
 
   const selectedAccountId = selection.accountId;
   const selectedMailboxPath = selection.mailboxPath;
@@ -163,20 +425,30 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   }, [folders, selectedAccountId, selectedMailboxPath]);
 
   const loadNavigation = useCallback(async (): Promise<void> => {
+    const requestId = navigationRequestIdRef.current + 1;
+    navigationRequestIdRef.current = requestId;
     setIsNavigationLoading(true);
     try {
       const [accountsResult, foldersResult] = await Promise.all([
         fetchJson<AccountsResponse>('/api/filemaker/mail/accounts'),
         fetchJson<FoldersResponse>('/api/filemaker/mail/folders'),
       ]);
+      if (requestId !== navigationRequestIdRef.current) {
+        return;
+      }
       setAccounts(accountsResult.accounts);
       setFolders(foldersResult.folders);
     } catch (error) {
+      if (requestId !== navigationRequestIdRef.current) {
+        return;
+      }
       toast(error instanceof Error ? error.message : 'Failed to load Filemaker mail.', {
         variant: 'error',
       });
     } finally {
-      setIsNavigationLoading(false);
+      if (requestId === navigationRequestIdRef.current) {
+        setIsNavigationLoading(false);
+      }
     }
   }, [toast]);
 
@@ -185,25 +457,93 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   }, [loadNavigation]);
 
   useEffect(() => {
-    setSelection({
-      accountId: requestedAccountId,
-      mailboxPath: requestedMailboxPath,
-      panel: requestedPanel,
-    });
-  }, [requestedAccountId, requestedMailboxPath, requestedPanel]);
+    if (shouldHoldLocalSelectionFromRoute) {
+      return;
+    }
+    setSelection(requestedSelection);
+  }, [
+    requestedSelection,
+    setSelection,
+    shouldHoldLocalSelectionFromRoute,
+  ]);
 
   useEffect(() => {
+    if (shouldHoldLocalRecentStateFromRoute) {
+      return;
+    }
     setRecentMailboxFilter(requestedRecentMailboxFilter);
     setRecentUnreadOnly(requestedRecentUnreadOnly);
-  }, [requestedRecentMailboxFilter, requestedRecentUnreadOnly]);
+    setRecentCampaignId(requestedRecentCampaignId);
+    setRecentRunId(requestedRecentRunId);
+    setRecentDeliveryId(requestedRecentDeliveryId);
+  }, [
+    requestedRecentCampaignId,
+    requestedRecentDeliveryId,
+    requestedRecentMailboxFilter,
+    requestedRecentRunId,
+    requestedRecentUnreadOnly,
+    setRecentCampaignId,
+    setRecentDeliveryId,
+    setRecentMailboxFilter,
+    setRecentRunId,
+    setRecentUnreadOnly,
+    shouldHoldLocalRecentStateFromRoute,
+  ]);
 
   useEffect(() => {
+    if (shouldHoldLocalSearchStateFromRoute) {
+      return;
+    }
     setDeepSearchQuery(requestedSearchQuery);
-  }, [requestedSearchQuery]);
+  }, [requestedSearchQuery, setDeepSearchQuery, shouldHoldLocalSearchStateFromRoute]);
 
   useEffect(() => {
+    if (shouldHoldLocalRecentStateFromRoute) {
+      return;
+    }
     setQuery(requestedPanel === 'recent' ? requestedRecentQuery : '');
-  }, [requestedPanel, requestedRecentQuery]);
+  }, [requestedPanel, requestedRecentQuery, setQuery, shouldHoldLocalRecentStateFromRoute]);
+
+  useLayoutEffect(() => {
+    if (selection.panel !== 'recent') {
+      setRecentMailboxFilter('');
+      setRecentUnreadOnly(false);
+      setRecentCampaignId('');
+      setRecentRunId('');
+      setRecentDeliveryId('');
+      setQuery('');
+    }
+    if (selection.panel !== 'search') {
+      setDeepSearchQuery('');
+    }
+  }, [
+    selection.panel,
+    setDeepSearchQuery,
+    setQuery,
+    setRecentCampaignId,
+    setRecentDeliveryId,
+    setRecentMailboxFilter,
+    setRecentRunId,
+    setRecentUnreadOnly,
+  ]);
+
+  useLayoutEffect(() => {
+    if (selection.panel === 'recent') {
+      nonRecentQueryScopeKeyRef.current = null;
+      return;
+    }
+
+    const nextNonRecentQueryScopeKey = [
+      selection.panel ?? '',
+      selectedAccountId ?? '',
+      selectedFolder?.mailboxPath ?? '',
+    ].join('::');
+
+    if (nonRecentQueryScopeKeyRef.current !== nextNonRecentQueryScopeKey) {
+      nonRecentQueryScopeKeyRef.current = nextNonRecentQueryScopeKey;
+      setQuery('');
+    }
+  }, [selectedAccountId, selectedFolder?.mailboxPath, selection.panel, setQuery]);
 
   useEffect(() => {
     if (!selectedAccount) {
@@ -216,68 +556,210 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   }, [selectedAccount]);
 
   useEffect(() => {
+    setAccountFormErrors({});
+  }, [draft, folderAllowlistValue]);
+
+  useEffect(() => {
     if (!selectedAccountId || (!selectedFolder && selection.panel !== 'recent')) {
+      threadsRequestIdRef.current += 1;
+      threadsSourceKeyRef.current = null;
+      setIsThreadsLoading(false);
       setThreads([]);
       return;
     }
 
+    const nextThreadsSourceKey = [
+      selectedAccountId,
+      selection.panel ?? '',
+      selectedFolder?.mailboxPath ?? '',
+      threadSourceQuery,
+      effectiveRecentCampaignId,
+      effectiveRecentRunId,
+      effectiveRecentDeliveryId,
+    ].join('::');
+    if (threadsSourceKeyRef.current !== nextThreadsSourceKey) {
+      threadsRequestIdRef.current += 1;
+      threadsSourceKeyRef.current = nextThreadsSourceKey;
+      setIsThreadsLoading(true);
+      setThreads([]);
+    }
+  }, [
+    effectiveRecentCampaignId,
+    effectiveRecentDeliveryId,
+    effectiveRecentRunId,
+    selectedAccountId,
+    selectedFolder,
+    selection.panel,
+    threadSourceQuery,
+  ]);
+
+  useEffect(() => {
+    if (!selectedAccountId || (!selectedFolder && selection.panel !== 'recent')) {
+      setIsThreadsLoading(false);
+      return;
+    }
+
+    const requestId = threadsRequestIdRef.current + 1;
+    threadsRequestIdRef.current = requestId;
+
     const loadThreads = async (): Promise<void> => {
       setIsThreadsLoading(true);
       try {
-        const baseQuery = `/api/filemaker/mail/threads?accountId=${encodeURIComponent(
-          selectedAccountId
-        )}`;
+        const params = new URLSearchParams({ accountId: selectedAccountId });
+        if (selection.panel === 'recent') {
+          if (activeThreadQuery !== '') params.set('query', activeThreadQuery);
+          if (effectiveRecentCampaignId !== '') params.set('campaignId', effectiveRecentCampaignId);
+          if (effectiveRecentRunId !== '') params.set('runId', effectiveRecentRunId);
+          if (effectiveRecentDeliveryId !== '') params.set('deliveryId', effectiveRecentDeliveryId);
+        } else {
+          params.set('mailboxPath', selectedFolder?.mailboxPath ?? '');
+          if (activeThreadQuery !== '') params.set('query', activeThreadQuery);
+        }
         const result = await fetchJson<ThreadsResponse>(
-          selection.panel === 'recent'
-            ? `${baseQuery}${deferredQuery ? `&query=${encodeURIComponent(deferredQuery)}` : ''}`
-            : `${baseQuery}&mailboxPath=${encodeURIComponent(selectedFolder?.mailboxPath ?? '')}${
-                deferredQuery ? `&query=${encodeURIComponent(deferredQuery)}` : ''
-              }`
+          `/api/filemaker/mail/threads?${params.toString()}`
         );
+        if (requestId !== threadsRequestIdRef.current) {
+          return;
+        }
         setThreads(result.threads);
       } catch (error) {
+        if (requestId !== threadsRequestIdRef.current) {
+          return;
+        }
         toast(error instanceof Error ? error.message : 'Failed to load mail threads.', {
           variant: 'error',
         });
       } finally {
-        setIsThreadsLoading(false);
+        if (requestId === threadsRequestIdRef.current) {
+          setIsThreadsLoading(false);
+        }
       }
     };
 
     void loadThreads();
-  }, [deferredQuery, selectedAccountId, selectedFolder, selection.panel, toast]);
+  }, [
+    activeThreadQuery,
+    effectiveRecentCampaignId,
+    effectiveRecentDeliveryId,
+    effectiveRecentRunId,
+    selectedAccountId,
+    selectedFolder,
+    selection.panel,
+    toast,
+  ]);
 
-  const deferredDeepSearch = useDeferredValue(deepSearchQuery.trim());
+  useEffect(() => {
+    if (isNavigationLoading) return;
+    if (!selectedAccountId) {
+      recentPreviewAccountIdRef.current = null;
+      setRecentPreviewThreads([]);
+      return;
+    }
+
+    if (recentPreviewAccountIdRef.current !== selectedAccountId) {
+      recentPreviewAccountIdRef.current = selectedAccountId;
+      setRecentPreviewThreads([]);
+    }
+
+    let isActive = true;
+
+    const loadRecentPreviewThreads = async (): Promise<void> => {
+      try {
+        const params = new URLSearchParams({
+          accountId: selectedAccountId,
+          limit: String(RECENT_THREAD_PREVIEW_LIMIT),
+        });
+        const result = await fetchJson<ThreadsResponse>(
+          `/api/filemaker/mail/threads?${params.toString()}`
+        );
+        if (!isActive) {
+          return;
+        }
+        setRecentPreviewThreads(result.threads);
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+        setRecentPreviewThreads([]);
+        toast(error instanceof Error ? error.message : 'Failed to load recent thread preview.', {
+          variant: 'error',
+        });
+      }
+    };
+
+    void loadRecentPreviewThreads();
+
+    return () => {
+      isActive = false;
+    };
+  }, [accounts, isNavigationLoading, selectedAccountId, toast]);
+
+  const deferredDeepSearch = useDeferredValue(effectiveDeepSearchQuery.trim());
+  const deepSearchSourceQuery = effectiveDeepSearchQuery.trim();
+  const activeDeepSearchQuery = deepSearchSourceQuery === '' ? '' : deferredDeepSearch;
 
   useEffect(() => {
     if (selection.panel !== 'search') {
+      deepSearchSourceKeyRef.current = null;
+      return;
+    }
+    if (deepSearchSourceQuery === '') {
+      deepSearchSourceKeyRef.current = null;
+      return;
+    }
+
+    const nextDeepSearchSourceKey = [selectedAccountId ?? 'all', deepSearchSourceQuery].join('::');
+    if (deepSearchSourceKeyRef.current !== nextDeepSearchSourceKey) {
+      deepSearchSourceKeyRef.current = nextDeepSearchSourceKey;
+      setDeepSearchResults(null);
+      setIsSearching(true);
+    }
+  }, [deepSearchSourceQuery, selectedAccountId, selection.panel]);
+
+  useEffect(() => {
+    if (selection.panel !== 'search') {
+      deepSearchRequestIdRef.current += 1;
+      setIsSearching(false);
       setDeepSearchResults(null);
       return;
     }
-    if (!deferredDeepSearch) {
+    if (activeDeepSearchQuery === '') {
+      deepSearchRequestIdRef.current += 1;
+      setIsSearching(false);
       setDeepSearchResults(null);
       return;
     }
+
+    const requestId = deepSearchRequestIdRef.current + 1;
+    deepSearchRequestIdRef.current = requestId;
 
     const runSearch = async (): Promise<void> => {
       setIsSearching(true);
       try {
-        const url = `/api/filemaker/mail/search?query=${encodeURIComponent(deferredDeepSearch)}${
+        const url = `/api/filemaker/mail/search?query=${encodeURIComponent(activeDeepSearchQuery)}${
           selectedAccountId ? `&accountId=${encodeURIComponent(selectedAccountId)}` : ''
         }`;
         const result = await fetchJson<FilemakerMailSearchResponse>(url);
+        if (requestId !== deepSearchRequestIdRef.current) {
+          return;
+        }
         setDeepSearchResults(result);
       } catch (error) {
+        if (requestId !== deepSearchRequestIdRef.current) {
+          return;
+        }
         toast(error instanceof Error ? error.message : 'Message search failed.', {
           variant: 'error',
         });
       } finally {
-        setIsSearching(false);
+        if (requestId === deepSearchRequestIdRef.current) {
+          setIsSearching(false);
+        }
       }
     };
 
     void runSearch();
-  }, [deferredDeepSearch, selectedAccountId, selection.panel, toast]);
+  }, [activeDeepSearchQuery, selectedAccountId, selection.panel, toast]);
 
   useEffect(() => {
     if (isNavigationLoading) return;
@@ -316,48 +798,86 @@ export function useAdminFilemakerMailPageState(): MailPageState {
 
   useEffect(() => {
     if (isNavigationLoading) return;
-    const nextPanel = selection.panel === 'account' ? null : selection.panel ?? null;
+    const nextPanel = selection.panel ?? null;
     const nextAccountId = nextPanel === 'attention' ? null : selection.accountId ?? null;
     const nextMailboxPath = nextPanel ? null : selection.mailboxPath ?? null;
-    const nextRecentMailboxFilter = nextPanel === 'recent' ? recentMailboxFilter : '';
-    const nextRecentUnreadOnly = nextPanel === 'recent' ? recentUnreadOnly : false;
-    const nextRecentQuery = nextPanel === 'recent' ? query : '';
-    const nextSearchQuery = nextPanel === 'search' ? deepSearchQuery : '';
+    const nextRecentMailboxFilter = nextPanel === 'recent' ? effectiveRecentMailboxFilter : '';
+    const nextRecentUnreadOnly = nextPanel === 'recent' ? effectiveRecentUnreadOnly : false;
+    const nextRecentQuery = nextPanel === 'recent' ? effectiveQuery : '';
+    const nextRecentCampaignId = nextPanel === 'recent' ? effectiveRecentCampaignId : '';
+    const nextRecentRunId = nextPanel === 'recent' ? effectiveRecentRunId : '';
+    const nextRecentDeliveryId = nextPanel === 'recent' ? effectiveRecentDeliveryId : '';
+    const nextSearchQuery = nextPanel === 'search' ? effectiveDeepSearchQuery : '';
+    const nextHref = buildMailSelectionHref({
+      accountId: nextAccountId,
+      mailboxPath: nextMailboxPath,
+      panel: nextPanel,
+      recentMailboxFilter: nextRecentMailboxFilter,
+      recentUnreadOnly: nextRecentUnreadOnly,
+      recentQuery: nextRecentQuery,
+      recentCampaignId: nextRecentCampaignId,
+      recentRunId: nextRecentRunId,
+      recentDeliveryId: nextRecentDeliveryId,
+      searchQuery: nextSearchQuery,
+    });
+    const currentRouteStateKey = [
+      rawRequestedAccountId ?? '',
+      rawRequestedMailboxPath ?? '',
+      rawRequestedPanel ?? '',
+      rawRequestedRecentMailboxFilter,
+      rawRequestedRecentUnreadOnly ? '1' : '0',
+      rawRequestedRecentQuery,
+      rawRequestedRecentCampaignId,
+      rawRequestedRecentRunId,
+      rawRequestedRecentDeliveryId,
+      rawRequestedSearchQuery,
+    ].join('::');
     if (
       (rawRequestedAccountId ?? null) === nextAccountId &&
       (rawRequestedMailboxPath ?? null) === nextMailboxPath &&
-      requestedPanel === nextPanel &&
+      (rawRequestedPanel ?? null) === nextPanel &&
       rawRequestedRecentMailboxFilter === nextRecentMailboxFilter &&
       rawRequestedRecentUnreadOnly === nextRecentUnreadOnly &&
       rawRequestedRecentQuery === nextRecentQuery &&
+      rawRequestedRecentCampaignId === nextRecentCampaignId &&
+      rawRequestedRecentRunId === nextRecentRunId &&
+      rawRequestedRecentDeliveryId === nextRecentDeliveryId &&
       rawRequestedSearchQuery === nextSearchQuery
+    ) {
+      routeSyncHrefRef.current = null;
+      routeSyncSourceKeyRef.current = null;
+      return;
+    }
+    if (
+      routeSyncHrefRef.current === nextHref &&
+      routeSyncSourceKeyRef.current === currentRouteStateKey
     ) {
       return;
     }
-    router.replace(
-      buildMailSelectionHref({
-        accountId: nextAccountId,
-        mailboxPath: nextMailboxPath,
-        panel: nextPanel,
-        recentMailboxFilter: nextRecentMailboxFilter,
-        recentUnreadOnly: nextRecentUnreadOnly,
-        recentQuery: nextRecentQuery,
-        searchQuery: nextSearchQuery,
-      })
-    );
+    routeSyncHrefRef.current = nextHref;
+    routeSyncSourceKeyRef.current = currentRouteStateKey;
+    startTransition(() => {
+      router.replace(nextHref);
+    });
   }, [
-    deepSearchQuery,
+    effectiveDeepSearchQuery,
+    effectiveRecentCampaignId,
+    effectiveRecentDeliveryId,
+    effectiveQuery,
+    effectiveRecentMailboxFilter,
+    effectiveRecentRunId,
+    effectiveRecentUnreadOnly,
     isNavigationLoading,
-    query,
-    requestedPanel,
     rawRequestedAccountId,
+    rawRequestedRecentCampaignId,
+    rawRequestedRecentDeliveryId,
     rawRequestedMailboxPath,
+    rawRequestedPanel,
     rawRequestedRecentMailboxFilter,
     rawRequestedRecentQuery,
+    rawRequestedRecentRunId,
     rawRequestedRecentUnreadOnly,
     rawRequestedSearchQuery,
-    recentMailboxFilter,
-    recentUnreadOnly,
     router,
     selection.accountId,
     selection.mailboxPath,
@@ -365,8 +885,19 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   ]);
 
   const handleSaveAccount = useCallback(async (): Promise<void> => {
+    const nextErrors = validateFilemakerMailAccountDraft(draft);
+    if (hasFilemakerMailAccountDraftErrors(nextErrors)) {
+      setAccountFormErrors(nextErrors);
+      toast('Fill the highlighted mailbox fields and try again.', {
+        variant: 'error',
+      });
+      return;
+    }
+
     setIsSavingAccount(true);
     try {
+      setAccountFormErrors({});
+      const isCreate = !draft.id;
       const payload = {
         ...draft,
         folderAllowlist: folderAllowlistValue
@@ -384,6 +915,27 @@ export function useAdminFilemakerMailPageState(): MailPageState {
       toast(draft.id ? 'Mailbox account updated.' : 'Mailbox account saved.', {
         variant: 'success',
       });
+
+      if (isCreate) {
+        try {
+          const syncResult = await fetchJson<FilemakerMailSyncDispatchResponseLike>(
+            `/api/filemaker/mail/accounts/${encodeURIComponent(result.account.id)}/sync`,
+            { method: 'POST' }
+          );
+          const notice = resolveFilemakerMailSyncNotice(syncResult);
+          toast(notice.message, { variant: notice.variant });
+        } catch (error) {
+          toast(
+            error instanceof Error
+              ? `Mailbox saved, but initial sync failed: ${error.message}`
+              : 'Mailbox saved, but initial sync failed.',
+            {
+              variant: 'error',
+            }
+          );
+        }
+      }
+
       await loadNavigation();
       setSelection({ accountId: result.account.id, mailboxPath: null, panel: 'settings' });
     } catch (error) {
@@ -395,17 +947,21 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     }
   }, [draft, folderAllowlistValue, loadNavigation, toast]);
 
+  const onNewMailbox = useCallback(() => {
+    setSelection({ accountId: null, mailboxPath: null, panel: 'settings' });
+  }, []);
+
   const handleSyncAccount = useCallback(
     async (accountId: string): Promise<void> => {
       setSyncingAccountId(accountId);
       try {
-        const result = await fetchJson<{ result: { fetchedMessageCount: number } }>(
+        const result = await fetchJson<FilemakerMailSyncDispatchResponseLike>(
           `/api/filemaker/mail/accounts/${encodeURIComponent(accountId)}/sync`,
           { method: 'POST' }
         );
-        toast(`Mailbox sync finished. Messages fetched: ${result.result.fetchedMessageCount}.`, {
-          variant: 'success',
-        });
+        const notice = resolveFilemakerMailSyncNotice(result);
+        toast(notice.message, { variant: notice.variant });
+
         await loadNavigation();
       } catch (error) {
         toast(error instanceof Error ? error.message : 'Mailbox sync failed.', {
@@ -474,17 +1030,20 @@ export function useAdminFilemakerMailPageState(): MailPageState {
               size='sm'
               variant='outline'
               onClick={(): void => {
-                router.push(
-                  buildThreadHref({
-                    threadId: row.original.id,
-                    accountId: row.original.accountId,
-                    mailboxPath: row.original.mailboxPath,
-                    originPanel: isRecentPanel ? 'recent' : null,
-                    recentMailboxFilter: isRecentPanel ? recentMailboxFilter : null,
-                    recentUnreadOnly: isRecentPanel ? recentUnreadOnly : false,
-                    recentQuery: isRecentPanel ? query : null,
-                  })
-                );
+                startTransition(() => { router.push(
+                                    buildThreadHref({
+                                      threadId: row.original.id,
+                                      accountId: row.original.accountId,
+                                      mailboxPath: row.original.mailboxPath,
+                                      originPanel: isRecentPanel ? 'recent' : null,
+                                      recentMailboxFilter: isRecentPanel ? effectiveRecentMailboxFilter : null,
+                                      recentUnreadOnly: isRecentPanel ? effectiveRecentUnreadOnly : false,
+                                      recentQuery: isRecentPanel ? effectiveQuery : null,
+                                      recentCampaignId: isRecentPanel ? effectiveRecentCampaignId : null,
+                                      recentRunId: isRecentPanel ? effectiveRecentRunId : null,
+                                      recentDeliveryId: isRecentPanel ? effectiveRecentDeliveryId : null,
+                                    })
+                                  ); });
               }}
             >
               Open Thread
@@ -493,7 +1052,16 @@ export function useAdminFilemakerMailPageState(): MailPageState {
         ),
       },
     ],
-    [isRecentPanel, query, recentMailboxFilter, recentUnreadOnly, router]
+    [
+      effectiveQuery,
+      effectiveRecentCampaignId,
+      effectiveRecentDeliveryId,
+      effectiveRecentMailboxFilter,
+      effectiveRecentRunId,
+      effectiveRecentUnreadOnly,
+      isRecentPanel,
+      router,
+    ]
   );
 
   const recentMailboxOptions = useMemo(
@@ -510,11 +1078,11 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   const visibleThreads = useMemo(() => {
     if (!isRecentPanel) return threads;
     return threads.filter((thread) => {
-      if (recentMailboxFilter && thread.mailboxPath !== recentMailboxFilter) return false;
-      if (recentUnreadOnly && thread.unreadCount < 1) return false;
+      if (effectiveRecentMailboxFilter && thread.mailboxPath !== effectiveRecentMailboxFilter) return false;
+      if (effectiveRecentUnreadOnly && thread.unreadCount < 1) return false;
       return true;
     });
-  }, [isRecentPanel, recentMailboxFilter, recentUnreadOnly, threads]);
+  }, [effectiveRecentMailboxFilter, effectiveRecentUnreadOnly, isRecentPanel, threads]);
 
   const tableActions = useMemo(
     () => [
@@ -523,16 +1091,19 @@ export function useAdminFilemakerMailPageState(): MailPageState {
         label: 'Compose',
         icon: <MailPlus className='size-4' />,
         onClick: () =>
-          router.push(
-            buildComposeHref({
-              accountId: selectedAccountId,
-              mailboxPath: selectedFolder?.mailboxPath ?? null,
-              originPanel: isRecentPanel ? 'recent' : null,
-              recentMailboxFilter: isRecentPanel ? recentMailboxFilter : null,
-              recentUnreadOnly: isRecentPanel ? recentUnreadOnly : false,
-              recentQuery: isRecentPanel ? query : null,
-            })
-          ),
+          startTransition(() => { router.push(
+                        buildComposeHref({
+                          accountId: selectedAccountId,
+                          mailboxPath: selectedFolder?.mailboxPath ?? null,
+                          originPanel: isRecentPanel ? 'recent' : null,
+                          recentMailboxFilter: isRecentPanel ? effectiveRecentMailboxFilter : null,
+                          recentUnreadOnly: isRecentPanel ? effectiveRecentUnreadOnly : false,
+                          recentQuery: isRecentPanel ? effectiveQuery : null,
+                          recentCampaignId: isRecentPanel ? effectiveRecentCampaignId : null,
+                          recentRunId: isRecentPanel ? effectiveRecentRunId : null,
+                          recentDeliveryId: isRecentPanel ? effectiveRecentDeliveryId : null,
+                        })
+                      ); }),
       },
       ...(selectedAccount
         ? [
@@ -548,7 +1119,14 @@ export function useAdminFilemakerMailPageState(): MailPageState {
             },
           ]
         : []),
-      ...(isRecentPanel && (recentMailboxFilter || recentUnreadOnly || query)
+      ...(isRecentPanel && (
+        effectiveRecentMailboxFilter ||
+        effectiveRecentUnreadOnly ||
+        effectiveQuery ||
+        effectiveRecentCampaignId ||
+        effectiveRecentRunId ||
+        effectiveRecentDeliveryId
+      )
         ? [
             {
               key: 'clear-recent-filters',
@@ -559,6 +1137,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
                 setQuery('');
                 setRecentMailboxFilter('');
                 setRecentUnreadOnly(false);
+                setRecentCampaignId('');
+                setRecentRunId('');
+                setRecentDeliveryId('');
               },
             },
           ]
@@ -590,16 +1171,22 @@ export function useAdminFilemakerMailPageState(): MailPageState {
       ...buildFilemakerNavActions(router, 'mail'),
     ],
     [
+      effectiveQuery,
+      effectiveRecentCampaignId,
+      effectiveRecentDeliveryId,
+      effectiveRecentMailboxFilter,
+      effectiveRecentRunId,
+      effectiveRecentUnreadOnly,
       handleSyncAccount,
       isRecentPanel,
-      recentMailboxFilter,
-      recentUnreadOnly,
-      query,
       router,
       selectedAccount,
       selectedAccountId,
       selectedFolder,
+      setRecentCampaignId,
+      setRecentDeliveryId,
       syncingAccountId,
+      setRecentRunId,
     ]
   );
 
@@ -608,27 +1195,33 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     setAccounts,
     folders,
     threads,
+    recentPreviewThreads,
     selection,
     setSelection,
     isNavigationLoading,
     isThreadsLoading,
     isSavingAccount,
     syncingAccountId,
+    setSyncingAccountId,
     draft,
     setDraft,
-    deepSearchQuery,
+    accountFormErrors,
+    deepSearchQuery: effectiveDeepSearchQuery,
     setDeepSearchQuery,
     deepSearchResults,
     setDeepSearchResults,
     isSearching,
     folderAllowlistValue,
     setFolderAllowlistValue,
-    query,
+    query: effectiveQuery,
     setQuery,
-    recentMailboxFilter,
+    recentMailboxFilter: effectiveRecentMailboxFilter,
     setRecentMailboxFilter,
-    recentUnreadOnly,
+    recentUnreadOnly: effectiveRecentUnreadOnly,
     setRecentUnreadOnly,
+    recentCampaignId: effectiveRecentCampaignId,
+    recentRunId: effectiveRecentRunId,
+    recentDeliveryId: effectiveRecentDeliveryId,
     attentionAccounts,
     selectedAccountId,
     selectedMailboxPath,
@@ -646,6 +1239,8 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     tableActions,
     handleSaveAccount,
     handleSyncAccount,
+    loadNavigation,
+    onNewMailbox,
     router,
   };
 }

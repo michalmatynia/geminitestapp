@@ -37,6 +37,9 @@ export const aiBrainFeatureSchema = z.enum([
   'agent_runtime',
   'agent_teaching',
   'prompt_engine',
+  'integrations',
+  'playwright',
+  'job_board',
 ]);
 export type AiBrainFeature = z.infer<typeof aiBrainFeatureSchema>;
 
@@ -51,6 +54,8 @@ export const aiBrainCapabilityKeySchema = z.enum([
   'prompt_engine.prompt_exploder',
   'product.description.vision',
   'product.description.generation',
+  'product.scan.amazon_candidate_match',
+  'product.scan.1688_supplier_match',
   'product.translation',
   'product.validation.runtime',
   'image_studio.general',
@@ -72,11 +77,18 @@ export const aiBrainCapabilityKeySchema = z.enum([
   'agent_runtime.selector_inference',
   'agent_runtime.output_normalization',
   'agent_teaching.chat',
+  'selector_registry.role_classification',
   'agent_teaching.embeddings',
   'insights.analytics',
   'insights.runtime_analytics',
   'insights.system_logs',
   'insights.error_logs',
+  'playwright.ai_evaluator_step',
+  'playwright.probe_suggestions',
+  'playwright.ai_code_injector',
+  'job_board.offer_extraction',
+  'job_board.vision_email_finder',
+  'job_board.vision_navigation',
 ]);
 export type AiBrainCapabilityKey = z.infer<typeof aiBrainCapabilityKeySchema>;
 
@@ -86,6 +98,7 @@ export const aiBrainAssignmentSchema = z
     provider: aiBrainProviderSchema.default('model'),
     modelId: z.string().trim().default(''),
     agentId: z.string().trim().default(''),
+    apiKey: z.string().trim().optional(),
     temperature: numberField(0, 2),
     maxTokens: numberField(1, 8192),
     systemPrompt: z.string().trim().optional(),

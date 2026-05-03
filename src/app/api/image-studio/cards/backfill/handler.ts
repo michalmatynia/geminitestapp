@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { runImageStudioCardLinkBackfill } from '@/features/ai/image-studio/server/card-link-backfill';
@@ -13,7 +13,7 @@ const payloadSchema = z.object({
   includeHeuristicGenerationLinks: z.boolean().optional(),
 });
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json().catch(() => ({}))) as unknown;
   const parsed = payloadSchema.safeParse(body);
   if (!parsed.success) {

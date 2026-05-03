@@ -1,5 +1,5 @@
 import { createValidationErrorResponse } from '@/shared/lib/api/handle-api-error';
-import { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';
+import { buildNormalizedProductValidationPayload } from '@/shared/lib/products/services/product-service-form-utils';
 import {
   validateProductCreate,
   validateProductUpdate,
@@ -12,17 +12,14 @@ export type ValidationMiddlewareOptions = {
 };
 
 const toValidationPayload = (formData: FormData): Record<string, unknown> => {
-  const payload = formDataToObject(formData);
-  // Files are handled in the service layer after validation.
-  delete payload['images'];
-  return payload;
+  return buildNormalizedProductValidationPayload(formData);
 };
 
 export async function validateProductCreateMiddleware(
   formData: FormData,
   options: ValidationMiddlewareOptions = {}
 ): Promise<{ success: true; data: unknown } | { success: false; response: Response }> {
-  if (options.skipValidation) {
+  if (options.skipValidation === true) {
     return { success: true, data: toValidationPayload(formData) };
   }
 
@@ -30,13 +27,14 @@ export async function validateProductCreateMiddleware(
   const result = await validateProductCreate(data);
 
   if (!result.success) {
-    if (options.customErrorHandler) {
+    if (typeof options.customErrorHandler === 'function') {
       return { success: false, response: options.customErrorHandler(result.errors) };
     }
     const fieldErrors: Record<string, string[]> = {};
     result.errors.forEach((err: ValidationError) => {
-      if (!fieldErrors[err.field]) fieldErrors[err.field] = [];
-      fieldErrors[err.field]!.push(err.message);
+      const messages = fieldErrors[err.field] ?? [];
+      messages.push(err.message);
+      fieldErrors[err.field] = messages;
     });
     const response = await createValidationErrorResponse(fieldErrors, {
       source: 'products.validation.create',
@@ -51,7 +49,7 @@ export async function validateProductUpdateMiddleware(
   formData: FormData,
   options: ValidationMiddlewareOptions = {}
 ): Promise<{ success: true; data: unknown } | { success: false; response: Response }> {
-  if (options.skipValidation) {
+  if (options.skipValidation === true) {
     return { success: true, data: toValidationPayload(formData) };
   }
 
@@ -59,13 +57,14 @@ export async function validateProductUpdateMiddleware(
   const result = await validateProductUpdate(data);
 
   if (!result.success) {
-    if (options.customErrorHandler) {
+    if (typeof options.customErrorHandler === 'function') {
       return { success: false, response: options.customErrorHandler(result.errors) };
     }
     const fieldErrors: Record<string, string[]> = {};
     result.errors.forEach((err: ValidationError) => {
-      if (!fieldErrors[err.field]) fieldErrors[err.field] = [];
-      fieldErrors[err.field]!.push(err.message);
+      const messages = fieldErrors[err.field] ?? [];
+      messages.push(err.message);
+      fieldErrors[err.field] = messages;
     });
     const response = await createValidationErrorResponse(fieldErrors, {
       source: 'products.validation.update',

@@ -8,7 +8,7 @@ type HydratedProductWithImages = ProductWithImages & {
 };
 
 export const markEditingProductHydrated = (product: ProductWithImages): ProductWithImages => {
-  const next = { ...product } as HydratedProductWithImages;
+  const next: HydratedProductWithImages = { ...product };
   Object.defineProperty(next, EDIT_PRODUCT_HYDRATED_FLAG, {
     value: true,
     enumerable: false,

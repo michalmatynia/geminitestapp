@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '@/dev/ai-paths-runtime-compatibility-normalization';
 
 import { EMPTY_RUNTIME_STATE, parseRuntimeState } from '../path-run-executor.runtime-state';
+
+const HISTORICAL_RUNTIME_STRATEGY_ALIAS = 'compatibility';
 
 describe('parseRuntimeState', () => {
   it('returns empty runtime state for empty input', () => {
@@ -110,40 +111,44 @@ describe('parseRuntimeState', () => {
     expect(parsed.currentRun?.status).toBe('running');
   });
 
-  it('rejects historical legacy runtime strategies inside runtime history', () => {
-    expect(() =>
-      parseRuntimeState(
-        JSON.stringify({
-          status: 'running',
-          nodeStatuses: {},
-          nodeOutputs: {},
-          variables: {},
-          events: [],
-          inputs: {},
-          outputs: {},
-          history: {
-            'node-1': [
-              {
-                timestamp: '2026-03-03T10:00:00.000Z',
-                pathId: 'path-1',
-                pathName: 'Path 1',
-                nodeId: 'node-1',
-                nodeType: 'template',
-                nodeTitle: 'Node 1',
-                status: 'completed',
-                iteration: 1,
-                inputs: {},
-                outputs: {},
-                inputHash: null,
-                runtimeStrategy: HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS,
-                runtimeResolutionSource: 'registry',
-                runtimeCodeObjectId: null,
-              },
-            ],
-          },
-        })
-      )
-    ).toThrowError(/Invalid AI Paths runtime state payload\./i);
+  it('prunes historical runtime strategies inside runtime history', () => {
+    const parsed = parseRuntimeState(
+      JSON.stringify({
+        status: 'running',
+        nodeStatuses: {},
+        nodeOutputs: {},
+        variables: {},
+        events: [],
+        inputs: {},
+        outputs: {},
+        history: {
+          'node-1': [
+            {
+              timestamp: '2026-03-03T10:00:00.000Z',
+              pathId: 'path-1',
+              pathName: 'Path 1',
+              nodeId: 'node-1',
+              nodeType: 'template',
+              nodeTitle: 'Node 1',
+              status: 'completed',
+              iteration: 1,
+              inputs: {},
+              outputs: {},
+              inputHash: null,
+              runtimeStrategy: HISTORICAL_RUNTIME_STRATEGY_ALIAS,
+              runtimeResolutionSource: 'registry',
+              runtimeCodeObjectId: null,
+            },
+          ],
+        },
+      })
+    );
+
+    expect(parsed.history?.['node-1']?.[0]).toMatchObject({
+      runtimeResolutionSource: 'registry',
+      runtimeCodeObjectId: null,
+    });
+    expect(parsed.history?.['node-1']?.[0]?.runtimeStrategy).toBeUndefined();
   });
 
   it('rejects legacy "cancelled" runtime event status spelling', () => {

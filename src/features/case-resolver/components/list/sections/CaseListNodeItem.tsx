@@ -29,9 +29,9 @@ export interface CaseListNodeItemProps {
   toggleExpand: () => void;
 }
 
-export const CaseListNodeItem = React.memo(function CaseListNodeItem(
+export const CaseListNodeItem = React.memo((
   props: CaseListNodeItemProps
-): React.JSX.Element {
+): React.JSX.Element => {
   const {
     node,
     depth,

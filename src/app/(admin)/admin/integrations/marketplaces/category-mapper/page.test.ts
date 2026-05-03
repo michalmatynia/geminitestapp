@@ -18,6 +18,6 @@ describe('unified category mapper route', () => {
   });
 
   it('imports from the integrations public barrel', () => {
-    expect(pageSource).toMatch(/@\/features\/integrations\/public/);
+    expect(pageSource).toMatch(/@\/features\/integrations\/(pages\.)?public/);
   });
 });

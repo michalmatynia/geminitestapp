@@ -26,6 +26,7 @@ export const buildProductSyncProfilePatch = (
   createId: () => string
 ): Partial<ProductSyncProfile> => ({
   ...(body.name !== undefined ? { name: body.name } : {}),
+  ...(body.isDefault !== undefined ? { isDefault: body.isDefault } : {}),
   ...(body.enabled !== undefined ? { enabled: body.enabled } : {}),
   ...(body.connectionId !== undefined ? { connectionId: body.connectionId } : {}),
   ...(body.inventoryId !== undefined ? { inventoryId: body.inventoryId } : {}),

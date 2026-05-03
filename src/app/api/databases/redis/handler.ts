@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { RedisOverview } from '@/shared/contracts/database';
@@ -29,7 +29,7 @@ const getNamespace = (key: string): string => {
   return key.slice(0, idx);
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const client = getRedisClient();

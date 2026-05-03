@@ -1,6 +1,4 @@
-'use client';
-
-import { useTranslations } from 'next-intl';
+import type { useTranslations } from 'next-intl';
 import type { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import type { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import type { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';

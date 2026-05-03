@@ -8,8 +8,16 @@ export const integrationConnectionBasicSchema = z.object({
   id: z.string(),
   name: z.string(),
   integrationId: z.string(),
+  hasPlaywrightStorageState: z.boolean().optional(),
   traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
   hasPlaywrightListingScript: z.boolean().optional(),
+  scanner1688StartUrl: z.string().nullable().optional(),
+  scanner1688LoginMode: z.enum(['session_required', 'manual_login']).nullable().optional(),
+  scanner1688DefaultSearchMode: z.enum(['local_image', 'image_url_fallback']).nullable().optional(),
+  scanner1688CandidateResultLimit: z.number().nullable().optional(),
+  scanner1688MinimumCandidateScore: z.number().nullable().optional(),
+  scanner1688MaxExtractedImages: z.number().nullable().optional(),
+  scanner1688AllowUrlImageSearchFallback: z.boolean().nullable().optional(),
   traderaDefaultTemplateId: z.string().nullable().optional(),
   traderaDefaultDurationHours: z.number().nullable().optional(),
   traderaAutoRelistEnabled: z.boolean().nullable().optional(),
@@ -18,6 +26,10 @@ export const integrationConnectionBasicSchema = z.object({
   traderaApiPublicKey: z.string().nullable().optional(),
   traderaApiUserId: z.number().nullable().optional(),
   traderaApiSandbox: z.boolean().nullable().optional(),
+  baseLastInventoryId: z.string().nullable().optional(),
+  jobApplicationPersonId: z.string().nullable().optional(),
+  jobApplicationPersonName: z.string().nullable().optional(),
+  playwrightStorageStateUpdatedAt: z.string().nullable().optional(),
 });
 
 export type IntegrationConnectionBasic = z.infer<typeof integrationConnectionBasicSchema>;
@@ -60,9 +72,12 @@ export type ExportJobDetail = z.infer<typeof exportJobDetailSchema>;
 
 export const integrationDefinitions = [
   { name: 'Tradera', slug: 'tradera' },
-  { name: 'Tradera API', slug: 'tradera-api' },
+  { name: 'Vinted.pl', slug: 'vinted' },
+  { name: '1688', slug: '1688' },
   { name: 'Allegro', slug: 'allegro' },
   { name: 'Baselinker', slug: 'baselinker' },
+  { name: 'Scraped Source', slug: 'scraped-source' },
   { name: 'LinkedIn', slug: 'linkedin' },
+  { name: 'Pracuj.pl', slug: 'pracuj-pl' },
   { name: 'Playwright (Programmable)', slug: 'playwright-programmable' },
 ] as const;

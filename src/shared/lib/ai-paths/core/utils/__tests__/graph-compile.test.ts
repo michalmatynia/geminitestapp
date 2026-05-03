@@ -180,6 +180,46 @@ describe('compileGraph', () => {
       fromPort: 'value',
       toPort: 'value',
     });
+
+    const report = compileGraph(nodes, edges);
+    expect(
+      report.findings.some(
+        (finding) => finding.code === 'duplicate_edge_dropped' && finding.edgeId === 'edge-b'
+      )
+    ).toBe(true);
+  });
+
+  it('surfaces dropped findings for edges that reference missing nodes', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'source',
+        type: 'mapper',
+        outputs: ['value'],
+      }),
+      buildNode({
+        id: 'target',
+        type: 'viewer',
+        inputs: ['value'],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-missing-source',
+        from: 'missing-source',
+        to: 'target',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'invalid_edge_missing_node' &&
+          finding.edgeId === 'edge-missing-source'
+      )
+    ).toBe(true);
   });
 
   it('blocks fan-in on single-cardinality ports', () => {

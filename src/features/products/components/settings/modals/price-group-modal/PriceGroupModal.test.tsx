@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { PriceGroup } from '@/shared/contracts/products/catalogs';
@@ -50,6 +50,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
 vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
   SettingsPanelBuilder: (props: {
     fields: SettingsPanelField<Record<string, unknown>>[];
+    onSave: () => Promise<void>;
   }) => {
     mocks.fields = props.fields;
     return (
@@ -67,6 +68,9 @@ vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
             ) : null}
           </div>
         ))}
+        <button type='button' onClick={() => void props.onSave()}>
+          Save
+        </button>
       </div>
     );
   },
@@ -156,12 +160,15 @@ describe('PriceGroupModal', () => {
     );
 
     expect(screen.getByText('Group type')).toBeInTheDocument();
-    expect(screen.getByText('Source price group')).toBeInTheDocument();
+    expect(screen.getByText('Source price')).toBeInTheDocument();
     expect(screen.getByText('Price multiplier')).toBeInTheDocument();
     expect(screen.getByText('Add to price')).toBeInTheDocument();
     expect(screen.getByTestId('field-sourceGroupId-disabled')).toHaveTextContent('enabled');
     expect(screen.getByTestId('field-priceMultiplier-disabled')).toHaveTextContent('enabled');
     expect(screen.getByTestId('field-addToPrice-disabled')).toHaveTextContent('enabled');
+    expect(screen.getByTestId('field-sourceGroupId-options')).toHaveTextContent(
+      'Scraped product sourcePrice'
+    );
     expect(screen.getByTestId('field-sourceGroupId-options')).toHaveTextContent('Standard PLN (PLN)');
     expect(screen.getByTestId('field-sourceGroupId-options')).not.toHaveTextContent(
       'Retail EUR (EUR)'
@@ -260,5 +267,31 @@ describe('PriceGroupModal', () => {
     expect(screen.getByTestId('field-sourceGroupId-options')).not.toHaveTextContent(
       'Retail EUR (EUR)'
     );
+  });
+
+  it('does not report success when validation blocks saving', async () => {
+    const onSuccess = vi.fn();
+
+    render(
+      <PriceGroupModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onSuccess={onSuccess}
+        item={{
+          ...dependentPriceGroup,
+          sourceGroupId: '',
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(mocks.toast).toHaveBeenCalledWith('Dependent price groups require a source price.', {
+        variant: 'error',
+      });
+    });
+    expect(mocks.mutateAsync).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Example Shop — Listing</title>
+  </head>
+  <body>
+    <main class="catalog">
+      <article class="product-card" data-testid="product-card">
+        <a class="product-link" href="/products/widget-alpha">
+          <h2 class="product-title">Widget Alpha</h2>
+        </a>
+        <p class="product-price">19,99 zł</p>
+        <p class="product-sku">SKU: SKU-A1</p>
+        <img class="product-image" src="/img/widget-alpha-1.jpg" alt="Alpha" />
+        <img class="product-image" src="/img/widget-alpha-2.jpg" alt="Alpha alt" />
+      </article>
+      <article class="product-card" data-testid="product-card">
+        <a class="product-link" href="/products/widget-beta">
+          <h2 class="product-title">Widget Beta</h2>
+        </a>
+        <p class="product-price">29,50 zł</p>
+        <p class="product-sku">SKU: SKU-B2</p>
+        <img class="product-image" src="/img/widget-beta-1.jpg" alt="Beta" />
+      </article>
+      <article class="product-card" data-testid="product-card">
+        <a class="product-link" href="/products/broken">
+          <h2 class="product-title"></h2>
+        </a>
+        <p class="product-price">—</p>
+        <p class="product-sku">SKU: </p>
+      </article>
+    </main>
+    <a class="pagination-next" href="/products?page=2">Next</a>
+  </body>
+</html>

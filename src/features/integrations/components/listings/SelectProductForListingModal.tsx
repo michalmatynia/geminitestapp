@@ -24,6 +24,7 @@ interface SelectProductForListingModalProps extends EntityModalProps<never> {
 function SelectProductForListingModalContent(): React.JSX.Element {
   const { onClose, onSuccess } = useSelectProductForListingModalView();
   const { modalTitle, saveText } = resolveSelectProductForListingModalCopy();
+  const selectedProductCategoryIdRef = React.useRef<string | null>(null);
 
   const {
     productSearch,
@@ -33,7 +34,7 @@ function SelectProductForListingModalContent(): React.JSX.Element {
     error,
     submitting,
     handleSubmit,
-  } = useProductSelectionForm();
+  } = useProductSelectionForm(() => selectedProductCategoryIdRef.current);
 
   const productsQuery = useIntegrationProductsWithCount({
     page: 1,
@@ -42,6 +43,8 @@ function SelectProductForListingModalContent(): React.JSX.Element {
     advancedFilter: undefined,
     baseExported: undefined,
   });
+  selectedProductCategoryIdRef.current =
+    productsQuery.products?.find((product) => product.id === selectedProductId)?.categoryId ?? null;
 
   return (
     <FormModal

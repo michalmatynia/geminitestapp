@@ -32,9 +32,10 @@ export function Ball({
   return (
     <div
       className={cn(
-        `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none transition`,
+        `${sizeClass} rounded-full flex items-center justify-center shadow-md select-none transition`,
         isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
       )}
+      style={{ backgroundColor: ball.color }}
     >
       <span className='text-white font-extrabold'>{ball.num}</span>
     </div>

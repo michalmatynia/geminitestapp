@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   enforceAiPathsActionRateLimit,
@@ -14,7 +14,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { productService } from '@/shared/lib/products/services/productService';
 import { aiPathEntityUpdateRequestSchema } from '@/shared/contracts/ai-paths';
-import { NoteUpdateInput } from '@/shared/contracts/notes';
+import { type NoteUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   badRequestError,
@@ -71,7 +71,7 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
     await enforceAiPathsActionRateLimit(access, 'entity-update');

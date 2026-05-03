@@ -5,29 +5,32 @@ export {
   useBaseInventories,
   useDefaultExportConnection,
   useDefaultTraderaConnection,
+  useDefaultVintedConnection,
+  useDefault1688Connection,
   useDefaultExportInventory,
 } from '@/shared/hooks/useIntegrationQueries';
-import { fetchSettingsCached } from '@/shared/api/settings-client';
 import { importExportTemplateSchema } from '@/shared/contracts/integrations/import-export';
 import { integrationSchema } from '@/shared/contracts/integrations/base';
-import { integrationConnectionSchema } from '@/shared/contracts/integrations/connections';
+import {
+  integrationConnectionSchema,
+  programmableIntegrationConnectionSchema,
+} from '@/shared/contracts/integrations/connections';
 import { sessionPayloadSchema } from '@/shared/contracts/integrations/session-testing';
 import { type BaseImportInventoriesPayload, type BaseImportInventoriesResponse, type BaseActiveTemplatePreferenceResponse, type BaseDefaultInventoryPreferenceResponse, type ImportExportTemplate, type SessionPayload } from '@/shared/contracts/integrations';
 import type { Integration } from '@/shared/contracts/integrations/base';
-import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type {
+  IntegrationConnection,
+  ProgrammableIntegrationConnection,
+} from '@/shared/contracts/integrations/connections';
 import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
-import type { PlaywrightPersona } from '@/shared/contracts/playwright';
-import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { normalizePlaywrightPersonas } from '@/shared/lib/playwright/personas';
 import {
   createListQueryV2,
   createSingleQueryV2,
   type QueryDescriptorV2,
 } from '@/shared/lib/query-factories-v2';
-import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { integrationKeys } from '@/shared/lib/query-key-exports';
 
 const INTEGRATIONS_QUERY_TIMEOUT_MS = 30_000;
 
@@ -61,7 +64,7 @@ export function useIntegrationConnections(
 ): ListQuery<IntegrationConnection> {
   const queryKey = integrationKeys.connections(integrationId);
   const queryFn = async (): Promise<IntegrationConnection[]> => {
-    if (!integrationId) return [];
+    if (typeof integrationId !== 'string' || integrationId.length === 0) return [];
     const data = await api.get<IntegrationConnection[]>(
       `/api/v2/integrations/${integrationId}/connections`,
       {
@@ -86,6 +89,38 @@ export function useIntegrationConnections(
   });
 }
 
+export function useProgrammableIntegrationConnections(
+  integrationId?: string,
+  options?: { enabled?: boolean }
+): ListQuery<ProgrammableIntegrationConnection> {
+  const queryKey = integrationKeys.connections(integrationId);
+  const queryFn = async (): Promise<ProgrammableIntegrationConnection[]> => {
+    if (typeof integrationId !== 'string' || integrationId.length === 0) return [];
+    const data = await api.get<ProgrammableIntegrationConnection[]>(
+      `/api/v2/integrations/${integrationId}/connections`,
+      {
+        timeout: INTEGRATIONS_QUERY_TIMEOUT_MS,
+      }
+    );
+    return z.array(programmableIntegrationConnectionSchema).parse(data);
+  };
+
+  return createListQueryV2({
+    queryKey,
+    queryFn,
+    enabled: Boolean(integrationId) && (options?.enabled ?? true),
+    meta: {
+      source: 'integrations.hooks.useProgrammableIntegrationConnections',
+      operation: 'list',
+      resource: 'integrations.connections.programmable',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'connections', 'playwright-programmable'],
+      description: 'Loads programmable integrations connections.',
+    },
+  });
+}
+
 export function useConnectionSession(
   connectionId?: string,
   options?: { enabled?: boolean }
@@ -100,7 +135,7 @@ export function useConnectionSession(
     id: connectionId,
     queryKey,
     queryFn,
-    enabled: (options?.enabled ?? true) && !!connectionId,
+    enabled: (options?.enabled ?? true) && Boolean(connectionId),
     staleTime: 0,
     meta: {
       source: 'integrations.hooks.useConnectionSession',
@@ -110,32 +145,6 @@ export function useConnectionSession(
       queryKey,
       tags: ['integrations', 'session'],
       description: 'Loads integrations connection session.'},
-  });
-}
-
-export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
-  const queryKey = playwrightKeys.personas();
-  const queryFn = async (): Promise<PlaywrightPersona[]> => {
-    const data = await fetchSettingsCached();
-    const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
-    const stored = parseJsonSetting<PlaywrightPersona[]>(
-      map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY),
-      []
-    );
-    return normalizePlaywrightPersonas(stored);
-  };
-
-  return createListQueryV2({
-    queryKey,
-    queryFn,
-    meta: {
-      source: 'integrations.hooks.usePlaywrightPersonas',
-      operation: 'list',
-      resource: 'playwright.personas',
-      domain: 'playwright',
-      queryKey,
-      tags: ['playwright', 'personas'],
-      description: 'Loads playwright personas.'},
   });
 }
 
@@ -262,7 +271,7 @@ export const getBaseInventoriesQueryOptions = (
       if (data.error) throw new ApiError(data.error, 400);
       return Array.isArray(data.inventories) ? data.inventories : [];
     },
-    enabled: enabled && !!connectionId,
+    enabled: enabled && Boolean(connectionId),
     meta: {
       source: 'integrations.queries.getBaseInventoriesOptions',
       operation: 'list' as const,

@@ -228,7 +228,62 @@ describe('resolveTraderaShippingGroupResolutionForProduct', () => {
       matchedCategoryRuleIds: ['category-jewellery'],
       matchingShippingGroupIds: ['group-7-eur'],
     });
-    expect(listShippingGroupsMock).toHaveBeenCalledWith({ catalogId: 'catalog-1' });
-    expect(listCategoriesMock).toHaveBeenCalledWith({ catalogId: 'catalog-1' });
+    expect(listShippingGroupsMock).toHaveBeenCalledWith({});
+    expect(listCategoriesMock).toHaveBeenCalledWith({});
+  });
+
+  it('auto-assigns shipping groups across product catalog boundaries', async () => {
+    listShippingGroupsMock.mockResolvedValue([
+      {
+        id: 'group-20-eur',
+        name: 'Gaming Figurines 20 EUR',
+        catalogId: 'catalog-main',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 20,
+        autoAssignCategoryIds: ['category-gaming'],
+      },
+    ]);
+    listCategoriesMock.mockResolvedValue([
+      {
+        id: 'category-gaming',
+        name: 'Gaming',
+        parentId: null,
+        catalogId: 'catalog-main',
+      },
+      {
+        id: 'category-gaming-figurine',
+        name: 'Gaming Figurine',
+        parentId: 'category-gaming',
+        catalogId: 'catalog-main',
+      },
+    ]);
+
+    await expect(
+      resolveTraderaShippingGroupResolutionForProduct({
+        product: {
+          shippingGroupId: null,
+          categoryId: 'category-gaming-figurine',
+          catalogId: 'catalog-battlestock',
+        } as never,
+      })
+    ).resolves.toEqual({
+      shippingGroup: {
+        id: 'group-20-eur',
+        name: 'Gaming Figurines 20 EUR',
+        catalogId: 'catalog-main',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 20,
+        autoAssignCategoryIds: ['category-gaming'],
+      },
+      shippingGroupId: 'group-20-eur',
+      shippingCondition: 'Buyer pays shipping',
+      shippingPriceEur: 20,
+      shippingGroupSource: 'category_rule',
+      reason: 'mapped',
+      matchedCategoryRuleIds: ['category-gaming'],
+      matchingShippingGroupIds: ['group-20-eur'],
+    });
+    expect(listShippingGroupsMock).toHaveBeenCalledWith({});
+    expect(listCategoriesMock).toHaveBeenCalledWith({});
   });
 });

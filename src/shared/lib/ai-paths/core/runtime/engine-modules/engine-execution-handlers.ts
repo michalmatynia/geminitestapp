@@ -1,8 +1,8 @@
-import { AiNode } from '@/shared/contracts/ai-paths';
-import { NodeHandler, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import { type AiNode } from '@/shared/contracts/ai-paths';
+import { type NodeHandler, type RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import { buildRuntimeTelemetryFields } from './engine-execution-telemetry';
-import { EngineStateManager } from './engine-state-manager';
+import { type EngineStateManager } from './engine-state-manager';
 import {
   type EvaluateGraphOptions,
   type RuntimeNodeResolutionTelemetry,

@@ -16,6 +16,7 @@ import {
 
 const {
   mockDbApiSchema,
+  mockDbApiBrowse,
   mockAiJobsEnqueue,
   mockAiJobsPoll,
   mockAgentEnqueue,
@@ -734,6 +735,200 @@ describe('client native code-object registry contract subset', () => {
         ] ?? ''
       )
     ).toContain('Collection: products');
+  });
+
+  it('feeds live db context into downstream prompt and model nodes', async () => {
+    mockDbApiBrowse.mockClear();
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+
+    mockDbApiBrowse.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        provider: 'mongodb',
+        collection: 'product_categories',
+        documents: [{ _id: 'cat-1', name_en: 'Lighting' }],
+        total: 1,
+        limit: 5,
+        skip: 0,
+      },
+    });
+
+    const dbSchemaNode: AiNode = {
+      ...builders.buildDbSchemaNode(),
+      config: {
+        db_schema: {
+          provider: 'auto',
+          mode: 'selected',
+          collections: ['product_categories'],
+          sourceMode: 'schema_and_live_context',
+          contextCollections: ['product_categories'],
+          contextQuery: '{"enabled":true}',
+          contextLimit: 5,
+          includeFields: true,
+          includeRelations: true,
+          formatAs: 'text',
+        },
+      },
+    };
+
+    const promptNode: AiNode = {
+      ...builders.buildPromptNode(),
+      inputs: ['context'],
+      config: {
+        prompt: {
+          template:
+            'Primary category: {{context.liveContext.collectionMap.product_categories.documents[0].name_en}}',
+        },
+      },
+    };
+
+    const result = await evaluateClientGraphForTest({
+      nodes: [dbSchemaNode, promptNode, builders.buildModelNode()],
+      edges: [
+        createValueEdge({
+          id: 'edge-db-schema-prompt-context',
+          from: 'node-db-schema',
+          to: 'node-prompt',
+          fromPort: 'context',
+          toPort: 'context',
+        }),
+        createValueEdge({
+          id: 'edge-prompt-model-live-context',
+          from: 'node-prompt',
+          to: 'node-model',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+        }),
+      ],
+      runtimeKernelNodeTypes: ['db_schema', 'prompt', 'model'],
+    });
+
+    expect(mockDbApiBrowse).toHaveBeenCalledTimes(1);
+    expect(mockDbApiBrowse).toHaveBeenCalledWith(
+      'product_categories',
+      expect.objectContaining({
+        provider: 'auto',
+        limit: 5,
+        query: '{"enabled":true}',
+      })
+    );
+    expect(result.outputs?.['node-prompt']?.['prompt']).toContain('Lighting');
+    expect(mockAiJobsEnqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'graph_model',
+        payload: expect.objectContaining({
+          prompt: expect.stringContaining('Lighting'),
+        }),
+      })
+    );
+    expect(result.outputs?.['node-model']?.['status']).toBe('queued');
+  });
+
+  it('renders templated db_schema live-context queries from connected client inputs', async () => {
+    mockDbApiBrowse.mockClear();
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+
+    mockDbApiBrowse.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        provider: 'mongodb',
+        collection: 'product_categories',
+        documents: [{ _id: 'cat-2', catalogId: 'catalog-1', name_en: 'Movie Keychain' }],
+        total: 1,
+        limit: 10,
+        skip: 0,
+      },
+    });
+
+    const dbSchemaNode: AiNode = {
+      ...builders.buildDbSchemaNode(),
+      config: {
+        db_schema: {
+          provider: 'auto',
+          mode: 'selected',
+          collections: ['product_categories'],
+          sourceMode: 'live_context',
+          contextCollections: ['product_categories'],
+          contextQuery: '{\n  "catalogId": "{{context.catalogId}}"\n}',
+          contextLimit: 10,
+          includeFields: true,
+          includeRelations: true,
+          formatAs: 'json',
+        },
+      },
+    };
+
+    const promptNode: AiNode = {
+      ...builders.buildPromptNode(),
+      inputs: ['context'],
+      config: {
+        prompt: {
+          template:
+            'Resolved category: {{context.liveContext.collectionMap.product_categories.documents[0].name_en}}',
+        },
+      },
+    };
+
+    const result = await evaluateClientGraphForTest({
+      nodes: [
+        builders.buildConstantNode({
+          id: 'node-live-context-input',
+          title: 'Live Context Input',
+          value: {
+            catalogId: 'catalog-1',
+            categoryId: 'cat-2',
+          },
+        }),
+        dbSchemaNode,
+        promptNode,
+        builders.buildModelNode(),
+      ],
+      edges: [
+        createValueEdge({
+          id: 'edge-live-context-input-db-schema',
+          from: 'node-live-context-input',
+          to: 'node-db-schema',
+          fromPort: 'value',
+          toPort: 'context',
+        }),
+        createValueEdge({
+          id: 'edge-db-schema-prompt-context-templated',
+          from: 'node-db-schema',
+          to: 'node-prompt',
+          fromPort: 'context',
+          toPort: 'context',
+        }),
+        createValueEdge({
+          id: 'edge-prompt-model-live-context-templated',
+          from: 'node-prompt',
+          to: 'node-model',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+        }),
+      ],
+      runtimeKernelNodeTypes: ['constant', 'db_schema', 'prompt', 'model'],
+    });
+
+    expect(mockDbApiBrowse).toHaveBeenCalledTimes(1);
+    expect(mockDbApiBrowse).toHaveBeenCalledWith(
+      'product_categories',
+      expect.objectContaining({
+        provider: 'auto',
+        limit: 10,
+        query: '{\n  "catalogId": "catalog-1"\n}',
+      })
+    );
+    expect(result.outputs?.['node-prompt']?.['prompt']).toContain('Movie Keychain');
+    expect(mockAiJobsEnqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'graph_model',
+        payload: expect.objectContaining({
+          prompt: expect.stringContaining('Movie Keychain'),
+        }),
+      })
+    );
   });
 
   it('executes playwright nodes through client native contract resolver mapping', async () => {

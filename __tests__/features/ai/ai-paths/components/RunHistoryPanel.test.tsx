@@ -273,37 +273,6 @@ describe('RunHistoryPanel Component', () => {
     expect(screen.getByText(/running/i)).toBeInTheDocument();
   });
 
-  it("should show 'Resume' button only for failed/paused runs", async () => {
-    const runs = [
-      { id: 'run-failed', status: 'failed', createdAt: new Date().toISOString() },
-      { id: 'run-running', status: 'running', createdAt: new Date().toISOString() },
-    ] as AiPathRunRecord[];
-    renderPanel({ runs });
-
-    expect(await screen.findByText('Resume')).toBeInTheDocument();
-    // Replay button is always shown for runs, but let's check count
-    const resumeButtons = screen.queryAllByText('Resume');
-    expect(resumeButtons.length).toBe(1);
-  });
-
-  it('should call onResumeRun when Resume is clicked', async () => {
-    const runs = [
-      { id: 'run-failed', status: 'failed', createdAt: new Date().toISOString() },
-    ] as AiPathRunRecord[];
-    const handleResumeRun = vi.fn().mockResolvedValue(undefined);
-    renderPanel({
-      runs,
-      operationHandlers: {
-        resumeRun: handleResumeRun,
-      },
-    });
-
-    fireEvent.click(await screen.findByText('Resume'));
-    await waitFor(() => {
-      expect(handleResumeRun).toHaveBeenCalledWith('run-failed', 'resume');
-    });
-  });
-
   it('should call onCancelRun when Cancel is clicked for active runs', async () => {
     const runs = [
       { id: 'run-active', status: 'running', createdAt: new Date().toISOString() },

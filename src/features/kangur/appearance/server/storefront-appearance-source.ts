@@ -57,7 +57,15 @@ const tryParseJson = (value: string): unknown => {
   }
 };
 
-const maybeUpgradeStoredThemeSetting = async (key: string, rawValue: string): Promise<string> => {
+const queueStorefrontAppearanceWrite = (key: string, value: string): void => {
+  if (!process.env['MONGODB_URI']) {
+    return;
+  }
+
+  void upsertKangurSettingValue(key, value).catch(() => undefined);
+};
+
+const maybeUpgradeStoredThemeSetting = (key: string, rawValue: string): string => {
   const baseline = KANGUR_STOREFRONT_THEME_BASELINES_BY_KEY[key];
   if (!baseline) {
     return rawValue;
@@ -75,8 +83,8 @@ const maybeUpgradeStoredThemeSetting = async (key: string, rawValue: string): Pr
   const normalized = normalizeKangurThemeSettings(parsed, baseline);
   const serialized = serializeSetting(normalized);
 
-  if (serialized !== rawValue && process.env['MONGODB_URI']) {
-    await upsertKangurSettingValue(key, serialized);
+  if (serialized !== rawValue) {
+    queueStorefrontAppearanceWrite(key, serialized);
   }
 
   return serialized;
@@ -127,22 +135,20 @@ export const ensureKangurStorefrontAppearanceSettingsSeeded = async (): Promise<
     ({ key }) => !hasStoredSettingValue(storedValues.get(key))
   );
 
-  if (missingSettings.length > 0 && process.env['MONGODB_URI']) {
-    await Promise.all(
-      missingSettings.map(({ key, value }) => upsertKangurSettingValue(key, value))
-    );
+  if (missingSettings.length > 0) {
+    missingSettings.forEach(({ key, value }) => {
+      queueStorefrontAppearanceWrite(key, value);
+    });
   }
 
-  return Promise.all(
-    KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS.map(async (key) => {
-      const rawValue = hasStoredSettingValue(storedValues.get(key))
-        ? (storedValues.get(key) ?? '')
-        : (KANGUR_STOREFRONT_APPEARANCE_SEED_MAP.get(key) ?? '');
+  return KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS.map((key) => {
+    const rawValue = hasStoredSettingValue(storedValues.get(key))
+      ? (storedValues.get(key) ?? '')
+      : (KANGUR_STOREFRONT_APPEARANCE_SEED_MAP.get(key) ?? '');
 
-      return {
-        key,
-        value: await maybeUpgradeStoredThemeSetting(key, rawValue),
-      };
-    })
-  );
+    return {
+      key,
+      value: maybeUpgradeStoredThemeSetting(key, rawValue),
+    };
+  });
 };

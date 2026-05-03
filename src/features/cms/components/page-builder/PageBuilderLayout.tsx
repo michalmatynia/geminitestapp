@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { PanelLeftClose, PanelRightClose } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
@@ -73,16 +74,8 @@ function PageBuilderContextRegistryShell(): React.JSX.Element {
 function PageBuilderInner(): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
   const { setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
-  const { activeDomainId, isLoading: domainSelectionLoading } = useCmsDomainSelection();
-  const pagesQuery = useCmsPages(activeDomainId);
-  const initialPageId = React.useMemo((): string => {
-    if (state.currentPage?.id) return state.currentPage.id;
-    return pagesQuery.data?.[0]?.id ?? '';
-  }, [pagesQuery.data, state.currentPage?.id]);
-  const pageQuery = useCmsPage(initialPageId || undefined);
   useBuilderKeyboardShortcuts();
 
-  const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
   const autoCollapsedRightRef = useRef(false);
   const wasNarrowRef = useRef<boolean | null>(null);
 
@@ -124,12 +117,50 @@ function PageBuilderInner(): React.JSX.Element {
     };
   }, [dispatch, state.rightPanelCollapsed]);
 
+  return <PageBuilderDomainBootstrap />;
+}
+
+function PageBuilderDomainBootstrap(): React.JSX.Element {
+  const { activeDomainId, isLoading: domainSelectionLoading } = useCmsDomainSelection();
+
+  return (
+    <PageBuilderPageBootstrap
+      activeDomainId={activeDomainId}
+      domainSelectionLoading={domainSelectionLoading}
+    />
+  );
+}
+
+function PageBuilderPageBootstrap({
+  activeDomainId,
+  domainSelectionLoading,
+}: {
+  activeDomainId: string | null;
+  domainSelectionLoading: boolean;
+}): React.JSX.Element {
+  const { state } = usePageBuilder();
+  const pagesQuery = useCmsPages(activeDomainId);
+  const initialPageId = React.useMemo((): string => {
+    if (typeof state.currentPage?.id === 'string' && state.currentPage.id.trim().length > 0) {
+      return state.currentPage.id;
+    }
+    return pagesQuery.data?.[0]?.id ?? '';
+  }, [pagesQuery.data, state.currentPage?.id]);
+  const pageQuery = useCmsPage(initialPageId.trim().length > 0 ? initialPageId : undefined);
+
   const isBuilderBootstrapping =
     !state.currentPage && (domainSelectionLoading || pagesQuery.isLoading || pageQuery.isLoading);
 
   if (isBuilderBootstrapping) {
     return <PageBuilderPageSkeleton />;
   }
+
+  return <PageBuilderShell />;
+}
+
+function PageBuilderShell(): React.JSX.Element {
+  const { state, dispatch } = usePageBuilder();
+  const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
 
   return (
     <div className='flex h-[calc(100vh-64px)] flex-col bg-background text-white'>

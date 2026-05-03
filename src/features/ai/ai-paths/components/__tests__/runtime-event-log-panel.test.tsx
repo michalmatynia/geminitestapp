@@ -24,6 +24,7 @@ function getRuntimeActionsMock() {
 
 vi.mock('../../context', () => ({
   useRuntimeState: getRuntimeStateMock,
+  useRuntimeDataState: getRuntimeStateMock,
   useRuntimeActions: getRuntimeActionsMock,
 }));
 
@@ -31,7 +32,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: (...args: unknown[]) => mockState.logClientError(...args),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     ...props
@@ -41,6 +42,23 @@ vi.mock('@/shared/ui', () => ({
   Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div className={className}>{children}</div>
   ),
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
+  StatusBadge: ({
+    status,
+    variant,
+    hideLabel,
+  }: {
+    status: React.ReactNode;
+    variant?: string;
+    hideLabel?: boolean;
+  }): React.JSX.Element => (
+    <span>{hideLabel ? `dot:${variant ?? 'none'}` : `${String(status)}:${variant ?? 'none'}`}</span>
+  ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     ariaLabel,
     options,
@@ -66,17 +84,6 @@ vi.mock('@/shared/ui', () => ({
         </option>
       ))}
     </select>
-  ),
-  StatusBadge: ({
-    status,
-    variant,
-    hideLabel,
-  }: {
-    status: React.ReactNode;
-    variant?: string;
-    hideLabel?: boolean;
-  }): React.JSX.Element => (
-    <span>{hideLabel ? `dot:${variant ?? 'none'}` : `${String(status)}:${variant ?? 'none'}`}</span>
   ),
 }));
 

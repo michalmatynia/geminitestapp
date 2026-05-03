@@ -7,7 +7,7 @@ import {
   AI_PATH_RUN_QUEUE_CHANNEL,
   parseAiPathRunEnqueuedEventPayload,
 } from '@/shared/contracts/ai-paths';
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import {
   getRecentAiPathRunEnqueue,
   rememberRecentAiPathRunEnqueue,
@@ -19,6 +19,7 @@ import {
 
 import {
   getLatestEventTimestamp,
+  isTerminalRunStatus,
   normalizeRunEvents,
   normalizeRunNodes,
   refreshRunDetailErrorSummary,
@@ -35,6 +36,7 @@ interface JobQueueRealtimeParams {
   queueStatus: QueueStatus | undefined;
   refetchQueueData: JobQueueRefetchData;
   rememberVisibleOptimisticRun: (run: AiPathRunRecord) => void;
+  runs: AiPathRunRecord[];
   runDetails: Record<string, RunDetail | null>;
   setRunDetails: Dispatch<SetStateAction<Record<string, RunDetail | null>>>;
 }
@@ -44,7 +46,7 @@ interface JobQueueRealtimeResult {
   pauseAllStreams: () => void;
   pausedStreams: Set<string>;
   queueHistory: QueueHistoryEntry[];
-  resumeAllStreams: () => void;
+  reconnectAllStreams: () => void;
   setQueueHistory: Dispatch<SetStateAction<QueueHistoryEntry[]>>;
   streamStatuses: Record<string, StreamConnectionStatus>;
 }
@@ -57,6 +59,7 @@ export function useJobQueueRealtime({
   queueStatus,
   refetchQueueData,
   rememberVisibleOptimisticRun,
+  runs,
   runDetails,
   setRunDetails,
 }: JobQueueRealtimeParams): JobQueueRealtimeResult {
@@ -100,7 +103,7 @@ export function useJobQueueRealtime({
     });
   }, [expandedRunIds]);
 
-  const resumeAllStreams = useCallback((): void => {
+  const reconnectAllStreams = useCallback((): void => {
     if (expandedRunIds.size === 0) return;
     setPausedStreams(new Set());
     setStreamStatuses((prev) => {
@@ -236,11 +239,24 @@ export function useJobQueueRealtime({
   ]);
 
   useEffect(() => {
+    const visibleRunsById = new Map(runs.map((run) => [run.id, run]));
+
     streamSourcesRef.current.forEach((source, runId) => {
       if (!expandedRunIds.has(runId)) {
         source.close();
         streamSourcesRef.current.delete(runId);
         setStreamStatuses((prev) => ({ ...prev, [runId]: 'stopped' }));
+        return;
+      }
+
+      const detailRun = runDetails[runId]?.run ?? visibleRunsById.get(runId) ?? null;
+      if (isTerminalRunStatus(detailRun?.status)) {
+        source.close();
+        streamSourcesRef.current.delete(runId);
+        setStreamStatuses((prev) => {
+          if (prev[runId] === 'stopped') return prev;
+          return { ...prev, [runId]: 'stopped' };
+        });
       }
     });
 
@@ -249,6 +265,14 @@ export function useJobQueueRealtime({
       if (pausedStreams.has(runId)) return;
 
       const existing = runDetails[runId];
+      const detailRun = existing?.run ?? visibleRunsById.get(runId) ?? null;
+      if (isTerminalRunStatus(detailRun?.status)) {
+        setStreamStatuses((prev) => {
+          if (prev[runId] === 'stopped') return prev;
+          return { ...prev, [runId]: 'stopped' };
+        });
+        return;
+      }
       const since = existing ? getLatestEventTimestamp(existing.events) : null;
       const params = new URLSearchParams();
       if (since) params.set('since', since);
@@ -283,7 +307,8 @@ export function useJobQueueRealtime({
             action: 'parseRunStreamPayload',
             runId,
           });
-        }      });
+        }
+      });
 
       source.addEventListener('nodes', (event: Event) => {
         try {
@@ -306,7 +331,8 @@ export function useJobQueueRealtime({
             action: 'parseNodesStreamPayload',
             runId,
           });
-        }      });
+        }
+      });
 
       source.addEventListener('events', (event: Event) => {
         try {
@@ -343,25 +369,41 @@ export function useJobQueueRealtime({
             action: 'parseEventsStreamPayload',
             runId,
           });
-        }      });
+        }
+      });
 
-      const cleanup = () => {
-        setStreamStatuses((prev) => ({ ...prev, [runId]: 'stopped' }));
+      const cleanup = (): void => {
+        setStreamStatuses((prev) => {
+          if (prev[runId] === 'stopped') return prev;
+          return { ...prev, [runId]: 'stopped' };
+        });
         source.close();
         streamSourcesRef.current.delete(runId);
       };
 
+      const handleStreamError = (event: Event): void => {
+        if (event instanceof MessageEvent) {
+          cleanup();
+          return;
+        }
+        if (streamSourcesRef.current.get(runId) !== source) return;
+        setStreamStatuses((prev) => {
+          if (prev[runId] === 'connecting') return prev;
+          return { ...prev, [runId]: 'connecting' };
+        });
+      };
+
       source.addEventListener('done', cleanup);
-      source.addEventListener('error', cleanup);
+      source.addEventListener('error', handleStreamError);
     });
-  }, [expandedRunIds, pausedStreams, runDetails, setRunDetails]);
+  }, [expandedRunIds, pausedStreams, runDetails, runs, setRunDetails]);
 
   return {
     handleToggleStream,
     pauseAllStreams,
     pausedStreams,
     queueHistory,
-    resumeAllStreams,
+    reconnectAllStreams,
     setQueueHistory,
     streamStatuses,
   };

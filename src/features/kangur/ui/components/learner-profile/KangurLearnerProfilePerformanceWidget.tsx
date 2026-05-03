@@ -52,13 +52,10 @@ function KangurLearnerProfileOperationStat({
   );
 }
 
-function KangurLearnerProfileWeeklySummaryChips({
-  snapshot,
-  translations,
-}: {
-  snapshot: KangurLearnerProfileRuntimeSnapshot;
-  translations: ReturnType<typeof useTranslations<'KangurLearnerProfileWidgets.performance'>>;
-}): React.JSX.Element {
+function KangurLearnerProfileWeeklySummaryChips(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.performance');
+  const { snapshot } = useKangurLearnerProfileRuntime();
+
   return (
     <div className={`mb-4 ${KANGUR_WRAP_ROW_CLASSNAME}`}>
       <KangurStatusChip accent='violet' data-testid='learner-profile-xp-summary-today'>
@@ -84,15 +81,10 @@ function KangurLearnerProfileWeeklySummaryChips({
   );
 }
 
-function KangurLearnerProfileWeeklyActivityChart({
-  maxWeeklyGames,
-  snapshot,
-  translations,
-}: {
-  maxWeeklyGames: number;
-  snapshot: KangurLearnerProfileRuntimeSnapshot;
-  translations: ReturnType<typeof useTranslations<'KangurLearnerProfileWidgets.performance'>>;
-}): React.JSX.Element {
+function KangurLearnerProfileWeeklyActivityChart(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.performance');
+  const { maxWeeklyGames, snapshot } = useKangurLearnerProfileRuntime();
+
   return (
     <div className='flex h-32 items-end gap-2'>
       {snapshot.weeklyActivity.map((point) => {
@@ -118,39 +110,30 @@ function KangurLearnerProfileWeeklyActivityChart({
   );
 }
 
-function KangurLearnerProfileActivityPanel({
-  maxWeeklyGames,
-  snapshot,
-  translations,
-}: {
-  maxWeeklyGames: number;
-  snapshot: KangurLearnerProfileRuntimeSnapshot;
-  translations: ReturnType<typeof useTranslations<'KangurLearnerProfileWidgets.performance'>>;
-}): React.JSX.Element {
+function KangurLearnerProfileActivityPanel(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.performance');
+
   return (
     <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
       <KangurPanelSectionHeading>{translations('activityHeading')}</KangurPanelSectionHeading>
-      <KangurLearnerProfileWeeklySummaryChips snapshot={snapshot} translations={translations} />
-      <KangurLearnerProfileWeeklyActivityChart
-        maxWeeklyGames={maxWeeklyGames}
-        snapshot={snapshot}
-        translations={translations}
-      />
+      <KangurLearnerProfileWeeklySummaryChips />
+      <KangurLearnerProfileWeeklyActivityChart />
     </KangurGlassPanel>
   );
 }
 
 function KangurLearnerProfileOperationCard({
-  basePath,
   item,
-  operationActionClassName,
-  translations,
 }: {
-  basePath: string;
   item: KangurLearnerProfileOperationPerformance;
-  operationActionClassName: string;
-  translations: ReturnType<typeof useTranslations<'KangurLearnerProfileWidgets.performance'>>;
 }): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.performance');
+  const { basePath } = useKangurLearnerProfileRuntime();
+  const isCoarsePointer = useKangurCoarsePointer();
+  const operationActionClassName = isCoarsePointer
+    ? 'min-h-11 w-full px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
+    : 'w-full sm:w-auto';
+
   return (
     <KangurInfoCard
       className='flex flex-col gap-3'
@@ -225,17 +208,10 @@ function KangurLearnerProfileOperationCard({
   );
 }
 
-function KangurLearnerProfileOperationsPanel({
-  basePath,
-  operationActionClassName,
-  snapshot,
-  translations,
-}: {
-  basePath: string;
-  operationActionClassName: string;
-  snapshot: KangurLearnerProfileRuntimeSnapshot;
-  translations: ReturnType<typeof useTranslations<'KangurLearnerProfileWidgets.performance'>>;
-}): React.JSX.Element {
+function KangurLearnerProfileOperationsPanel(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.performance');
+  const { snapshot } = useKangurLearnerProfileRuntime();
+
   return (
     <KangurGlassPanel padding='lg' surface='solid' variant='subtle'>
       <KangurPanelSectionHeading>{translations('operationsHeading')}</KangurPanelSectionHeading>
@@ -252,11 +228,8 @@ function KangurLearnerProfileOperationsPanel({
         ) : (
           snapshot.operationPerformance.map((item) => (
             <KangurLearnerProfileOperationCard
-              basePath={basePath}
               item={item}
               key={item.operation}
-              operationActionClassName={operationActionClassName}
-              translations={translations}
             />
           ))
         )}
@@ -267,16 +240,11 @@ function KangurLearnerProfileOperationsPanel({
 
 export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.performance');
-  const { basePath, maxWeeklyGames, snapshot } = useKangurLearnerProfileRuntime();
-  const isCoarsePointer = useKangurCoarsePointer();
   const { entry: performanceContent } = useKangurPageContentEntry('learner-profile-performance');
   const sectionTitle = performanceContent?.title ?? translations('title');
   const sectionSummary =
     performanceContent?.summary ??
     translations('summary');
-  const operationActionClassName = isCoarsePointer
-    ? 'min-h-11 w-full px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-    : 'w-full sm:w-auto';
 
   return (
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -286,17 +254,8 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
         eyebrow={sectionTitle}
       />
       <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-        <KangurLearnerProfileActivityPanel
-          maxWeeklyGames={maxWeeklyGames}
-          snapshot={snapshot}
-          translations={translations}
-        />
-        <KangurLearnerProfileOperationsPanel
-          basePath={basePath}
-          operationActionClassName={operationActionClassName}
-          snapshot={snapshot}
-          translations={translations}
-        />
+        <KangurLearnerProfileActivityPanel />
+        <KangurLearnerProfileOperationsPanel />
       </div>
     </section>
   );

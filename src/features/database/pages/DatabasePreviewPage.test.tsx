@@ -15,19 +15,8 @@ vi.mock('../hooks/useDatabasePreviewState', () => ({
   useDatabasePreviewState: () => useDatabasePreviewState(),
 }));
 
-vi.mock('@/shared/ui', () => ({
-  AdminDatabasePageLayout: ({
-    children,
-    title,
-  }: {
-    children?: React.ReactNode;
-    title?: string;
-  }) => (
-    <div>
-      <h1>{title}</h1>
-      {children}
-    </div>
-  ),
+vi.mock('@/shared/ui/primitives.public', () => ({
+  Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Badge: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
   Button: ({
     children,
@@ -39,7 +28,35 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  Pagination: () => <div data-testid='pagination' />,
+  Tabs: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  TabsContent: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  TabsList: ({
+    children,
+    ...props
+  }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => (
+    <div {...props}>{children}</div>
+  ),
+  TabsTrigger: ({ children }: { children?: React.ReactNode }) => <button type='button'>{children}</button>,
+  CollapsibleSection: ({
+    actions,
+    children,
+    title,
+  }: {
+    actions?: React.ReactNode;
+    children?: React.ReactNode;
+    title?: React.ReactNode;
+  }) => (
+    <section>
+      <div>
+        {title}
+        {actions}
+      </div>
+      {children}
+    </section>
+  ),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormSection: ({
     actions,
     children,
@@ -55,21 +72,24 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </section>
   ),
-  Tabs: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  TabsContent: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  TabsList: ({
-    children,
-    ...props
-  }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => (
-    <div {...props}>{children}</div>
-  ),
-  TabsTrigger: ({ children }: { children?: React.ReactNode }) => <button type='button'>{children}</button>,
-  StandardDataTablePanel: ({ data }: { data: unknown[] }) => (
-    <div data-testid='standard-data-table-panel' data-row-count={String(data.length)} />
-  ),
-  StatusBadge: ({ status }: { status: string }) => <span>{status}</span>,
-  Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   SearchInput: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  Hint: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  AdminDatabasePageLayout: ({
+    children,
+    title,
+  }: {
+    children?: React.ReactNode;
+    title?: string;
+  }) => (
+    <div>
+      <h1>{title}</h1>
+      {children}
+    </div>
+  ),
+  Pagination: () => <div data-testid='pagination' />,
   CollapsibleSection: ({
     actions,
     children,
@@ -105,10 +125,19 @@ vi.mock('@/shared/ui', () => ({
       <span>{description}</span>
     </div>
   ),
-  Hint: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
   UI_CENTER_ROW_RELAXED_CLASSNAME: 'row-relaxed',
   UI_CENTER_ROW_SPACED_CLASSNAME: 'row-spaced',
   UI_GRID_RELAXED_CLASSNAME: 'grid-relaxed',
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
+  StatusBadge: ({ status }: { status: string }) => <span>{status}</span>,
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
+  StandardDataTablePanel: ({ data }: { data: unknown[] }) => (
+    <div data-testid='standard-data-table-panel' data-row-count={String(data.length)} />
+  ),
 }));
 
 import { TableDetailCard } from './DatabasePreviewPage';

@@ -30,7 +30,7 @@ export function useQueryScheduler(): {
         queryKey: readonly unknown[];
         queryFn: () => Promise<unknown>;
         config: QuerySchedulerConfig;
-        timeout?: NodeJS.Timeout;
+        timeout?: ReturnType<typeof safeSetTimeout>;
           }
           >
           >(new Map());
@@ -52,7 +52,14 @@ export function useQueryScheduler(): {
         config.delay ||
         (config.priority === 'high' ? 0 : config.priority === 'medium' ? 1000 : 3000);
 
-      const timeout = setTimeout((): void => {
+import { useCallback, useEffect, useRef } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { useQueryClient } from '@tanstack/react-query';
+import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+
+// ... (existing code, update scheduleQuery/cancelScheduledQuery/clearAllScheduled to use safe functions)
+
+      const timeout = safeSetTimeout((): void => {
         if (!config.condition || config.condition()) {
           void prefetchQueryV2(queryClient, {
             queryKey,
@@ -83,14 +90,14 @@ export function useQueryScheduler(): {
   const cancelScheduledQuery = useCallback((id: string): void => {
     const query = scheduledQueries.current.get(id);
     if (query?.timeout) {
-      clearTimeout(query.timeout);
+      safeClearTimeout(query.timeout);
       scheduledQueries.current.delete(id);
     }
   }, []);
 
   const clearAllScheduled = useCallback((): void => {
     scheduledQueries.current.forEach((query) => {
-      if (query.timeout) clearTimeout(query.timeout);
+      if (query.timeout) safeClearTimeout(query.timeout);
     });
     scheduledQueries.current.clear();
   }, []);

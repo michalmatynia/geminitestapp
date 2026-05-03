@@ -1,6 +1,6 @@
 'use client';
 
-import { parsePathList } from '@/shared/lib/ai-paths';
+import { parsePathList } from '@/shared/lib/ai-paths/core/utils';
 import { Button, Textarea } from '@/shared/ui/primitives.public';
 import { FormField } from '@/shared/ui/forms-and-actions.public';
 

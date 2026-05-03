@@ -4,9 +4,10 @@ import { useCallback, useRef } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
-import type { PathConfig, PathDebugSnapshot, RuntimeState } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathDebugSnapshot } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 import { appendLocalRun } from '@/shared/lib/ai-paths/local-runs';
-import { PATH_DEBUG_PREFIX } from '@/shared/lib/ai-paths';
+import { PATH_DEBUG_PREFIX } from '@/shared/lib/ai-paths/core/constants';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -46,6 +47,29 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
     [setPathDebugSnapshots]
   );
 
+  const settleRuntimeCurrentRun = useCallback(
+    (status: 'completed' | 'failed' | 'canceled', finishedAt: string): void => {
+      const args = argsRef.current;
+      args.setRuntimeState((prev: RuntimeState): RuntimeState => {
+        const currentRun = prev.currentRun ?? null;
+        const runtimeStatus: RuntimeState['status'] = status === 'canceled' ? 'idle' : status;
+        return {
+          ...prev,
+          status: runtimeStatus,
+          currentRun: currentRun
+            ? {
+                ...currentRun,
+                status,
+                finishedAt,
+                ...(status === 'completed' ? { completedAt: finishedAt } : {}),
+              }
+            : currentRun,
+        };
+      });
+    },
+    []
+  );
+
   const finalizeLocalRunOutcome = useCallback(
     (
       outcome: {
@@ -63,6 +87,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
       const args = argsRef.current;
       const finishedAt = new Date().toISOString();
       if (outcome.status === 'completed') {
+        settleRuntimeCurrentRun('completed', finishedAt);
         args.settleTransientNodeStatuses('completed');
         args.appendRuntimeEvent({
           source: 'local',
@@ -130,6 +155,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
       }
 
       if (outcome.status === 'error') {
+        settleRuntimeCurrentRun('failed', finishedAt);
         args.settleTransientNodeStatuses('failed');
         args.appendRuntimeEvent({
           source: 'local',
@@ -190,6 +216,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
       }
 
       if (outcome.status === 'canceled') {
+        settleRuntimeCurrentRun('canceled', finishedAt);
         args.settleTransientNodeStatuses('canceled');
         args.appendRuntimeEvent({
           source: 'local',
@@ -246,7 +273,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
         });
       }
     },
-    [persistDebugSnapshot, setPathConfigs]
+    [persistDebugSnapshot, setPathConfigs, settleRuntimeCurrentRun]
   );
 
   return { finalizeLocalRunOutcome, persistDebugSnapshot };

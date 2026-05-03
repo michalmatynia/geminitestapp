@@ -23,8 +23,8 @@ vi.mock('@/features/products/server', () => ({
   getProductDataProvider: getProductDataProviderMock,
 }));
 
-import { GET_handler as getPublicCategoriesHandler } from './categories/handler';
-import { GET_handler as getPublicParametersHandler } from './parameters/handler';
+import { getHandler as getPublicCategoriesHandler } from './categories/handler';
+import { getHandler as getPublicParametersHandler } from './parameters/handler';
 
 const buildParameter = (overrides: Partial<ProductParameter> = {}): ProductParameter => ({
   id: 'param-1',

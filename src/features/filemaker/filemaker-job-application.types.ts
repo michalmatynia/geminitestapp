@@ -1,0 +1,246 @@
+export type FilemakerJobApplicationStatus =
+  | 'draft'
+  | 'ready'
+  | 'applied'
+  | 'rejected'
+  | 'archived';
+
+export type FilemakerJobApplicationLogMethod = 'manual' | 'apply_script';
+
+export type FilemakerJobApplicationLogEntry = {
+  id: string;
+  appliedAt: string;
+  method: FilemakerJobApplicationLogMethod;
+  personId: string | null;
+  personName: string | null;
+  toStatus?: FilemakerJobApplicationStatus | null;
+};
+
+export type FilemakerJobApplicationArtifactKind =
+  | 'application_email'
+  | 'cover_letter'
+  | 'tailored_cv';
+
+export type FilemakerJobApplicationExperienceHighlightPatch = {
+  experienceKey?: string | null;
+  experienceId: string | null;
+  experienceTitle: string | null;
+  company?: string | null;
+  role?: string | null;
+  highlights: string[];
+};
+
+export type FilemakerJobApplicationTailoringScope = {
+  allowedSections: string[];
+  canonicalPatchField?: string | null;
+  lockedFieldsPreserved: boolean | null;
+  renderedBodyMode?: string | null;
+};
+
+export type FilemakerJobApplicationTailoringPatch = {
+  professionalSummary: string | null;
+  coreStrengths: string[];
+  selectedTechnicalEnvironment: string[];
+  experienceHighlightPatches: FilemakerJobApplicationExperienceHighlightPatch[];
+};
+
+export type FilemakerJobApplicationTailoredCv = {
+  bodyMarkdown: string | null;
+  bodyText: string | null;
+  coreStrengths?: string[];
+  educationHighlights: string[];
+  experienceHighlightPatches?: FilemakerJobApplicationExperienceHighlightPatch[];
+  experienceHighlights: string[];
+  preferencesMatch: string[];
+  professionalSummary: string | null;
+  selectedTechnicalEnvironment?: string[];
+  skills: string[];
+  sourceCvRecordId?: string | null;
+  sourceCvTitle?: string | null;
+  tailoringPatch?: FilemakerJobApplicationTailoringPatch | null;
+  tailoringScope?: FilemakerJobApplicationTailoringScope | null;
+  title: string | null;
+};
+
+export type FilemakerJobApplicationCoverLetter = {
+  bodyMarkdown: string | null;
+  subject: string | null;
+};
+
+export type FilemakerJobApplicationEmail = {
+  bodyMarkdown: string | null;
+  bodyText: string | null;
+  subject: string | null;
+};
+
+export type FilemakerJobApplicationMatchAnalysisStatus =
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed';
+
+export type FilemakerJobApplicationMatchAnalysisDecision =
+  | 'Apply now'
+  | 'Prepare before applying'
+  | 'Deprioritise or rebuild evidence';
+
+export type FilemakerJobApplicationMatchAnalysisAttentionArea = {
+  area: string | null;
+  whyItMatters: string | null;
+  recommendedAction: string | null;
+  evidence: string | null;
+};
+
+export type FilemakerJobApplicationMatchAnalysis = {
+  score: number | null;
+  scoreLabel: string | null;
+  summary: string | null;
+  changeSincePrevious: string | null;
+  recommendedDecision: FilemakerJobApplicationMatchAnalysisDecision | null;
+  recommendedDecisionReason: string | null;
+  strongMatches: string[];
+  gaps: string[];
+  attentionAreas: FilemakerJobApplicationMatchAnalysisAttentionArea[];
+  cvEvidence: string[];
+  jobEvidence: string[];
+  riskFlags: string[];
+  interviewTalkingPoints: string[];
+  learningPlan: string[];
+};
+
+export type FilemakerJobApplicationArtifactVersion = {
+  id: string;
+  applicationNotes: string[];
+  confidence: number | null;
+  createdAt: string | null;
+  kind: FilemakerJobApplicationArtifactKind;
+  linkedRecordId: string | null;
+  missingInformation: string[];
+  payload: Record<string, unknown> | null;
+  sourceRunId: string | null;
+  version: number | null;
+};
+
+export type FilemakerJobApplicationArtifactVersionSet = {
+  applicationEmail: FilemakerJobApplicationArtifactVersion[];
+  coverLetter: FilemakerJobApplicationArtifactVersion[];
+  tailoredCv: FilemakerJobApplicationArtifactVersion[];
+};
+
+export type FilemakerJobApplicationActiveArtifacts = {
+  applicationEmailVersionId: string | null;
+  coverLetterVersionId: string | null;
+  tailoredCvVersionId: string | null;
+};
+
+export type FilemakerJobApplicationApplyRunStatus =
+  | 'queued'
+  | 'running'
+  | 'auth_required'
+  | 'awaiting_review'
+  | 'submitted'
+  | 'failed'
+  | 'canceled';
+
+export type FilemakerJobApplicationApplyRunMode = 'review' | 'submit';
+
+export type FilemakerJobApplicationApplyRunStepStatus = 'pending' | 'ok' | 'failed';
+
+export type FilemakerJobApplicationApplyRunStep = {
+  id: string;
+  label: string;
+  status: FilemakerJobApplicationApplyRunStepStatus;
+  detail: string;
+  createdAt: string;
+};
+
+export type FilemakerJobApplicationApplyRunArtifacts = {
+  applicationEmailVersionId: string | null;
+  coverLetterVersionId: string | null;
+  tailoredCvVersionId: string | null;
+};
+
+export type FilemakerJobApplicationApplyRun = {
+  id: string;
+  applicationId: string;
+  organizationId: string;
+  personId: string;
+  jobListingId: string;
+  integrationId: string | null;
+  integrationSlug: string | null;
+  connectionId: string | null;
+  sourceUrl: string | null;
+  mode: FilemakerJobApplicationApplyRunMode;
+  status: FilemakerJobApplicationApplyRunStatus;
+  artifactVersionIds: FilemakerJobApplicationApplyRunArtifacts;
+  confirmationUrl: string | null;
+  error: string | null;
+  steps: FilemakerJobApplicationApplyRunStep[];
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  updatedAt: string;
+};
+
+export type FilemakerJobApplication = {
+  id: string;
+  activeArtifacts?: FilemakerJobApplicationActiveArtifacts | null;
+  artifactKind?: FilemakerJobApplicationArtifactKind | null;
+  artifactVersionCreatedAt?: string | null;
+  artifactVersionId?: string | null;
+  artifactVersionNumber?: number | null;
+  artifactVersions?: FilemakerJobApplicationArtifactVersionSet | null;
+  persistedArtifactVersions?: FilemakerJobApplicationArtifactVersionSet | null;
+  canonicalApplicationKey?: string | null;
+  status: FilemakerJobApplicationStatus;
+  personId: string;
+  personName: string | null;
+  organizationId: string;
+  organizationName: string | null;
+  jobListingId: string;
+  jobTitle: string | null;
+  integrationId: string | null;
+  integrationSlug: string | null;
+  connectionId: string | null;
+  tailoredCvId: string | null;
+  tailoredCv: FilemakerJobApplicationTailoredCv | null;
+  coverLetter: FilemakerJobApplicationCoverLetter | null;
+  applicationEmail: FilemakerJobApplicationEmail | null;
+  matchAnalysis: FilemakerJobApplicationMatchAnalysis | null;
+  matchAnalysisHistory?: Array<{
+    id: string;
+    payload: FilemakerJobApplicationMatchAnalysis | null;
+    sourceRunId: string | null;
+    modelId?: string | null;
+    applicationId?: string | null;
+    canonicalApplicationKeySnapshot?: string | null;
+    applicationUpdatedAtSnapshot?: string | null;
+    createdAt: string | null;
+  }> | null;
+  matchAnalysisStatus?: FilemakerJobApplicationMatchAnalysisStatus | null;
+  matchAnalysisSourceEntityId?: string | null;
+  matchAnalysisModelId?: string | null;
+  matchAnalysisUpdatedAt?: string | null;
+  applicationNotes: string[];
+  missingInformation: string[];
+  confidence: number | null;
+  source: string | null;
+  sourceEntityId: string | null;
+  sourceApplicationContext: Record<string, unknown> | null;
+  storageApplicationId?: string | null;
+  applicationLog?: FilemakerJobApplicationLogEntry[] | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FilemakerJobApplicationListResponse = {
+  applications: FilemakerJobApplication[];
+};
+
+export type FilemakerJobApplicationResponse = {
+  application: FilemakerJobApplication;
+};
+
+export type FilemakerJobApplicationApplyRunResponse = {
+  run: FilemakerJobApplicationApplyRun | null;
+};

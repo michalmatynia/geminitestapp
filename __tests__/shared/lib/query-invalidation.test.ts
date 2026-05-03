@@ -27,7 +27,6 @@ describe('query-invalidation helpers', () => {
     retryCount: 0,
     maxAttempts: 3,
     nextRetryAt: null,
-    deadLetteredAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: null,
     startedAt: null,

@@ -17,7 +17,7 @@ export const toSeqGroupMasterNodeId = (groupId: string): string => `${SEQ_GROUP_
 export const fromSeqGroupMasterNodeId = (nodeId: string): string | null => {
   if (!nodeId.startsWith(SEQ_GROUP_PREFIX)) return null;
   const value = nodeId.slice(SEQ_GROUP_PREFIX.length).trim();
-  return value || null;
+  return value.length > 0 ? value : null;
 };
 
 export const toPatternMasterNodeId = (patternId: string): string => `${PATTERN_PREFIX}${patternId}`;
@@ -25,7 +25,7 @@ export const toPatternMasterNodeId = (patternId: string): string => `${PATTERN_P
 export const fromPatternMasterNodeId = (nodeId: string): string | null => {
   if (!nodeId.startsWith(PATTERN_PREFIX)) return null;
   const value = nodeId.slice(PATTERN_PREFIX.length).trim();
-  return value || null;
+  return value.length > 0 ? value : null;
 };
 
 // ─── Metadata types ──────────────────────────────────────────────────────────
@@ -40,6 +40,14 @@ type ValidatorPatternNodeMetadata = {
   patternId: string;
 };
 
+type ReorderUpdateInput = {
+  patternId: string;
+  sequence: number;
+  sequenceGroupId: string | null;
+  groupChanged: boolean;
+  groupMeta: ValidatorGroupNodeMetadata | undefined;
+};
+
 // ─── Slugify helper ───────────────────────────────────────────────────────────
 
 const slugifySegment = (value: string): string => {
@@ -49,7 +57,121 @@ const slugifySegment = (value: string): string => {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return normalized || 'item';
+  return normalized.length > 0 ? normalized : 'item';
+};
+
+const getPatternSequenceGroupId = (pattern: ProductValidationPattern): string | null => {
+  const groupId = pattern.sequenceGroupId?.trim();
+  return groupId !== undefined && groupId.length > 0 ? groupId : null;
+};
+
+const getGroupIdFromParent = (parentId: string | null): string | null =>
+  parentId !== null ? fromSeqGroupMasterNodeId(parentId) : null;
+
+const getValidatorGroupMetadata = (
+  node: MasterTreeNode | null | undefined
+): ValidatorGroupNodeMetadata | undefined =>
+  node?.metadata !== undefined
+    ? (node.metadata as { validatorGroup?: ValidatorGroupNodeMetadata }).validatorGroup
+    : undefined;
+
+const getSequenceForIndex = (index: number): number => (index + 1) * VALIDATOR_SORT_ORDER_GAP;
+
+const getPreviousSequence = (prevIndex: number | undefined): number | null =>
+  prevIndex !== undefined ? getSequenceForIndex(prevIndex) : null;
+
+const findNodeById = (nodes: MasterTreeNode[], nodeId: string | null): MasterTreeNode | null =>
+  nodeId !== null ? nodes.find((node) => node.id === nodeId) ?? null : null;
+
+const hasNoReorderChange = (
+  oldSequence: number | null,
+  newSequence: number,
+  oldGroupId: string | null,
+  newGroupId: string | null
+): boolean => oldSequence === newSequence && oldGroupId === newGroupId;
+
+const getPatternParentId = (
+  parentById: Map<string, string | null>,
+  patternId: string
+): string | null => parentById.get(patternId) ?? null;
+
+const buildReorderUpdate = ({
+  patternId,
+  sequence,
+  sequenceGroupId,
+  groupChanged,
+  groupMeta,
+}: ReorderUpdateInput): ReorderValidationPatternUpdatePayload => {
+  const update: ReorderValidationPatternUpdatePayload = { id: patternId, sequence, sequenceGroupId };
+  if (!groupChanged) return update;
+  return {
+    ...update,
+    sequenceGroupLabel: groupMeta?.label ?? null,
+    sequenceGroupDebounceMs: groupMeta?.debounceMs ?? 0,
+  };
+};
+
+const buildSequenceGroupNode = (
+  groupId: string,
+  position: number,
+  group: SequenceGroupView | undefined
+): MasterTreeNode => {
+  const label = group?.label ?? 'Sequence / Group';
+  return {
+    id: toSeqGroupMasterNodeId(groupId),
+    type: 'folder',
+    kind: 'sequence-group',
+    parentId: null,
+    name: label,
+    path: slugifySegment(label),
+    sortOrder: position * VALIDATOR_SORT_ORDER_GAP,
+    metadata: {
+      validatorGroup: {
+        groupId,
+        label,
+        debounceMs: group?.debounceMs ?? 0,
+      } satisfies ValidatorGroupNodeMetadata,
+    },
+  };
+};
+
+const getPatternSortOrder = (pattern: ProductValidationPattern, index: number): number =>
+  typeof pattern.sequence === 'number' && Number.isFinite(pattern.sequence)
+    ? pattern.sequence
+    : getSequenceForIndex(index);
+
+const getPatternPath = (
+  pattern: ProductValidationPattern,
+  groupId: string | null,
+  parentId: string | null
+): string => {
+  const label = pattern.label.trim().length > 0 ? pattern.label : pattern.id;
+  const pathSegment = slugifySegment(label);
+  return parentId !== null ? `${slugifySegment(groupId ?? 'group')}/${pathSegment}` : pathSegment;
+};
+
+const buildPatternNode = (
+  pattern: ProductValidationPattern,
+  index: number,
+  emittedGroupIds: Set<string>
+): MasterTreeNode => {
+  const groupId = getPatternSequenceGroupId(pattern);
+  const isGrouped = groupId !== null && emittedGroupIds.has(groupId);
+  const parentId = isGrouped ? toSeqGroupMasterNodeId(groupId) : null;
+  return {
+    id: toPatternMasterNodeId(pattern.id),
+    type: 'file',
+    kind: 'pattern',
+    parentId,
+    name: pattern.label,
+    path: getPatternPath(pattern, groupId, parentId),
+    sortOrder: getPatternSortOrder(pattern, index),
+    metadata: {
+      validatorPattern: {
+        patternId: pattern.id,
+      } satisfies ValidatorPatternNodeMetadata,
+    },
+  };
 };
 
 // ─── Build: domain → MasterTreeNode[] ────────────────────────────────────────
@@ -71,65 +193,21 @@ export function buildValidatorPatternMasterNodes(
   const emittedGroupIds = new Set<string>();
   const groupFirstPosition = new Map<string, number>();
 
-  // First pass: record which position each group first appears at
   orderedPatterns.forEach((pattern, index) => {
-    const groupId = pattern.sequenceGroupId?.trim() || null;
-    if (groupId && !groupFirstPosition.has(groupId) && sequenceGroups.has(groupId)) {
+    const groupId = getPatternSequenceGroupId(pattern);
+    if (groupId !== null && !groupFirstPosition.has(groupId) && sequenceGroups.has(groupId)) {
       groupFirstPosition.set(groupId, index);
     }
   });
 
-  // Emit group folder nodes (at root level)
   groupFirstPosition.forEach((position, groupId) => {
     if (emittedGroupIds.has(groupId)) return;
     emittedGroupIds.add(groupId);
-
-    const group = sequenceGroups.get(groupId);
-    const label = group?.label ?? 'Sequence / Group';
-    nodes.push({
-      id: toSeqGroupMasterNodeId(groupId),
-      type: 'folder',
-      kind: 'sequence-group',
-      parentId: null,
-      name: label,
-      path: slugifySegment(label),
-      sortOrder: position * VALIDATOR_SORT_ORDER_GAP,
-      metadata: {
-        validatorGroup: {
-          groupId,
-          label,
-          debounceMs: group?.debounceMs ?? 0,
-        } satisfies ValidatorGroupNodeMetadata,
-      },
-    });
+    nodes.push(buildSequenceGroupNode(groupId, position, sequenceGroups.get(groupId)));
   });
 
-  // Emit pattern file nodes
   orderedPatterns.forEach((pattern, index) => {
-    const groupId = pattern.sequenceGroupId?.trim() || null;
-    const isGrouped = groupId !== null && emittedGroupIds.has(groupId);
-    const parentId = isGrouped ? toSeqGroupMasterNodeId(groupId) : null;
-    const sortOrder =
-      typeof pattern.sequence === 'number' && Number.isFinite(pattern.sequence)
-        ? pattern.sequence
-        : (index + 1) * VALIDATOR_SORT_ORDER_GAP;
-    const pathSegment = slugifySegment(pattern.label || pattern.id);
-    const path = parentId ? `${slugifySegment(groupId ?? 'group')}/${pathSegment}` : pathSegment;
-
-    nodes.push({
-      id: toPatternMasterNodeId(pattern.id),
-      type: 'file',
-      kind: 'pattern',
-      parentId,
-      name: pattern.label,
-      path,
-      sortOrder,
-      metadata: {
-        validatorPattern: {
-          patternId: pattern.id,
-        } satisfies ValidatorPatternNodeMetadata,
-      },
-    });
+    nodes.push(buildPatternNode(pattern, index, emittedGroupIds));
   });
 
   return nodes;
@@ -162,7 +240,7 @@ function computeDfsPatternOrder(nodes: MasterTreeNode[]): string[] {
     siblings.forEach((node) => {
       if (node.type === 'file') {
         const patternId = fromPatternMasterNodeId(node.id);
-        if (patternId) result.push(patternId);
+        if (patternId !== null) result.push(patternId);
       } else {
         // folder: recurse into its children
         dfs(node.id);
@@ -179,7 +257,7 @@ function buildPatternParentMap(nodes: MasterTreeNode[]): Map<string, string | nu
   const map = new Map<string, string | null>();
   nodes.forEach((node) => {
     const patternId = fromPatternMasterNodeId(node.id);
-    if (patternId) {
+    if (patternId !== null) {
       map.set(patternId, node.parentId ?? null);
     }
   });
@@ -211,41 +289,29 @@ export function resolveValidatorPatternReorderUpdates(args: {
   const updates: ReorderValidationPatternUpdatePayload[] = [];
 
   nextOrder.forEach((patternId, nextIndex) => {
-    const newSequence = (nextIndex + 1) * VALIDATOR_SORT_ORDER_GAP;
+    const newSequence = getSequenceForIndex(nextIndex);
 
-    const newGroupFolderId = nextParentById.get(patternId) ?? null;
-    const newGroupId = newGroupFolderId ? fromSeqGroupMasterNodeId(newGroupFolderId) : null;
+    const newGroupFolderId = getPatternParentId(nextParentById, patternId);
+    const newGroupId = getGroupIdFromParent(newGroupFolderId);
 
     const prevIndex = prevIndexById.get(patternId);
-    const oldSequence = prevIndex !== undefined ? (prevIndex + 1) * VALIDATOR_SORT_ORDER_GAP : null;
+    const oldSequence = getPreviousSequence(prevIndex);
 
-    const oldGroupFolderId = prevParentById.get(patternId) ?? null;
-    const oldGroupId = oldGroupFolderId ? fromSeqGroupMasterNodeId(oldGroupFolderId) : null;
+    const oldGroupFolderId = getPatternParentId(prevParentById, patternId);
+    const oldGroupId = getGroupIdFromParent(oldGroupFolderId);
 
-    const sequenceChanged = oldSequence !== newSequence;
     const groupChanged = oldGroupId !== newGroupId;
+    if (hasNoReorderChange(oldSequence, newSequence, oldGroupId, newGroupId)) return;
 
-    if (!sequenceChanged && !groupChanged) return;
-
-    // Resolve group metadata from next nodes
-    const groupNode = newGroupFolderId
-      ? args.nextNodes.find((n) => n.id === newGroupFolderId)
-      : null;
-    const groupMeta =
-      groupNode?.metadata && typeof groupNode.metadata === 'object'
-        ? (groupNode.metadata as { validatorGroup?: ValidatorGroupNodeMetadata }).validatorGroup
-        : undefined;
-
-    const update: ReorderValidationPatternUpdatePayload = {
-      id: patternId,
+    const groupNode = findNodeById(args.nextNodes, newGroupFolderId);
+    const groupMeta = getValidatorGroupMetadata(groupNode);
+    const update = buildReorderUpdate({
+      patternId,
       sequence: newSequence,
-      sequenceGroupId: newGroupId ?? null,
-    };
-
-    if (groupChanged) {
-      update.sequenceGroupLabel = groupMeta?.label ?? null;
-      update.sequenceGroupDebounceMs = groupMeta?.debounceMs ?? 0;
-    }
+      sequenceGroupId: newGroupId,
+      groupChanged,
+      groupMeta,
+    });
 
     updates.push(update);
   });
@@ -269,16 +335,13 @@ export function rebuildValidatorPatternListFromMasterNodes(args: {
   return dfsOrder
     .map((patternId, index): ProductValidationPattern | null => {
       const pattern = args.patternById.get(patternId);
-      if (!pattern) return null;
+      if (pattern === undefined) return null;
 
       const groupFolderId = parentById.get(patternId) ?? null;
-      const groupId = groupFolderId ? fromSeqGroupMasterNodeId(groupFolderId) : null;
+      const groupId = getGroupIdFromParent(groupFolderId);
 
-      const groupNode = groupFolderId ? args.nodes.find((n) => n.id === groupFolderId) : null;
-      const groupMeta =
-        groupNode?.metadata && typeof groupNode.metadata === 'object'
-          ? (groupNode.metadata as { validatorGroup?: ValidatorGroupNodeMetadata }).validatorGroup
-          : undefined;
+      const groupNode = findNodeById(args.nodes, groupFolderId);
+      const groupMeta = getValidatorGroupMetadata(groupNode);
 
       return {
         ...pattern,

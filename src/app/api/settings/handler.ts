@@ -1,6 +1,6 @@
 import { primeFrontPageSettingRuntime } from '@/app/(frontend)/home/home-helpers';
-import { WithId } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { type WithId } from 'mongodb';
+import { type NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -55,6 +55,7 @@ import {
 } from '@/shared/lib/db/database-engine-constants';
 import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
@@ -66,6 +67,7 @@ import {
   getFrontPageRedirectPath,
   normalizeFrontPageApp,
 } from '@/shared/lib/front-page-app';
+import { parseAndValidatePlaywrightActionsSettingValue } from '@/shared/lib/browser-execution/playwright-actions-settings-validation';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { resetServerLoggingControlsCache } from '@/shared/lib/observability/logging-controls-server';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
@@ -84,7 +86,7 @@ import {
   withSettingsScopeTimeout,
 } from '@/shared/lib/settings/settings-logic';
 import {
-  SettingRecord,
+  type SettingRecord,
   getCachedSettings,
   setCachedSettings,
   clearSettingsCache,
@@ -99,6 +101,7 @@ import {
 import { isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
 import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { PLAYWRIGHT_ACTIONS_SETTINGS_KEY } from '@/shared/contracts/playwright-steps';
 
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
@@ -170,6 +173,7 @@ const revalidateFrontPageSelectionRoutes = async (): Promise<void> => {
 };
 
 const ensureSettingsIndexes = async (): Promise<void> => {
+  await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return;
   if (!settingsIndexesEnsured) {
     settingsIndexesEnsured = (async (): Promise<void> => {
@@ -220,6 +224,7 @@ const readCurrentSettingValue = async (
     return await readKangurSettingValue(key);
   }
   const readMongo = async (): Promise<string | null> => {
+    await applyActiveMongoSourceEnv();
     if (!process.env['MONGODB_URI']) return null;
     await ensureSettingsIndexes();
     const mongo = await getMongoDb();
@@ -325,6 +330,7 @@ export const querySchema = z.object({
 });
 
 const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]> => {
+  await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return [];
   await ensureSettingsIndexes();
   const mongo = await getMongoDb();
@@ -375,6 +381,7 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
 };
 
 const upsertMongoSetting = async (key: string, value: string): Promise<SettingRecord | null> => {
+  await applyActiveMongoSourceEnv();
   if (isKangurSettingKey(key)) {
     return await upsertKangurSettingValue(key, value);
   }
@@ -397,6 +404,15 @@ const normalizeIncomingSettingValue = (
   key: string,
   value: string
 ): { ok: true; value: string } | { ok: false; error: string } => {
+  if (key === PLAYWRIGHT_ACTIONS_SETTINGS_KEY) {
+    const result = parseAndValidatePlaywrightActionsSettingValue(value);
+    if (!result.ok) {
+      return result;
+    }
+
+    return { ok: true, value: result.value };
+  }
+
   if (key !== FRONT_PAGE_SETTING_KEY) {
     return { ok: true, value };
   }
@@ -513,7 +529,7 @@ const fetchAndCacheSettings = async (
   return settings;
 };
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   scopeOverride?: SettingsScope
@@ -640,8 +656,8 @@ export async function GET_handler(
         })()
         : null;
     const fallbackFromLight = scope === 'all' ? getLastKnownSettings('light') : null;
-    let fallbackData = stale ?? lastKnown ?? fallbackFromAll ?? fallbackFromLight ?? [];
-    let cacheStatus = stale
+    const fallbackData = stale ?? lastKnown ?? fallbackFromAll ?? fallbackFromLight ?? [];
+    const cacheStatus = stale
       ? 'timeout-stale'
       : lastKnown
         ? 'timeout-last-known'
@@ -701,7 +717,7 @@ export async function GET_handler(
       }
       void ErrorSystem.captureException(error, {
         service: 'api/settings',
-        action: 'GET_handler',
+        action: 'getHandler',
         scope,
         forceFresh: true,
       });
@@ -796,7 +812,7 @@ export async function GET_handler(
     }
     void ErrorSystem.captureException(error, {
       service: 'api/settings',
-      action: 'GET_handler',
+      action: 'getHandler',
       scope,
       status: 'miss',
     });
@@ -817,7 +833,7 @@ export async function GET_handler(
   return response;
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] POST /api/settings', { service: 'api/settings' });

@@ -56,9 +56,11 @@ describe('KangurLessonActivityInstanceRuntime', () => {
   it('renders a built-in calendar lesson activity instance with the section from its content set', () => {
     render(
       <KangurLessonActivityInstanceRuntime
-        gameId='calendar_interactive'
-        instanceId='calendar_interactive:instance:calendar-months'
-        onFinish={vi.fn()}
+        config={{
+          gameId: 'calendar_interactive',
+          instanceId: 'calendar_interactive:instance:calendar-months',
+          onFinish: vi.fn(),
+        }}
       />
     );
 
@@ -117,10 +119,12 @@ describe('KangurLessonActivityInstanceRuntime', () => {
 
     render(
       <KangurLessonActivityInstanceRuntime
-        engineOverrides={{ showClockTaskTitle: false }}
-        gameId='clock_training'
-        instanceId='clock_training:instance:clock-hours'
-        onFinish={vi.fn()}
+        config={{
+          engineOverrides: { showClockTaskTitle: false },
+          gameId: 'clock_training',
+          instanceId: 'clock_training:instance:clock-hours',
+          onFinish: vi.fn(),
+        }}
       />
     );
 
@@ -171,9 +175,11 @@ describe('KangurLessonActivityInstanceRuntime', () => {
 
     render(
       <KangurLessonActivityInstanceRuntime
-        gameId='calendar_interactive'
-        instanceId='calendar_interactive:instance:custom-dates'
-        onFinish={vi.fn()}
+        config={{
+          gameId: 'calendar_interactive',
+          instanceId: 'calendar_interactive:instance:custom-dates',
+          onFinish: vi.fn(),
+        }}
       />
     );
 

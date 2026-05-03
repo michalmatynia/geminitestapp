@@ -1,4 +1,4 @@
-import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { type normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import type { LearnerManagementCopy, ProfileModalTabId } from './KangurParentDashboardLearnerManagementWidget.types';
 
 export const SESSION_PAGE_LIMIT = 20;

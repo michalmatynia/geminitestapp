@@ -41,14 +41,18 @@ describe('playwright personas shared-lib', () => {
     expect(createPlaywrightPersonaId()).toBe('persona-uuid');
     expect(
       buildPlaywrightSettings({
+        identityProfile: 'marketplace',
         proxyEnabled: true,
         proxyServer: 'http://proxy.local',
+        locale: 'en-US',
         slowMo: 10,
       })
     ).toEqual({
       ...defaultPlaywrightSettings,
+      identityProfile: 'marketplace',
       proxyEnabled: true,
       proxyServer: 'http://proxy.local',
+      locale: 'en-US',
       slowMo: 10,
     });
   });
@@ -74,9 +78,13 @@ describe('playwright personas shared-lib', () => {
         description: 'Catalog crawler',
         name: '  Catalog  ',
         settings: {
+          identityProfile: 'search',
           proxyEnabled: true,
           proxyPassword: '',
           proxyServer: 'http://proxy.local',
+          proxySessionMode: 'rotate',
+          proxyProviderPreset: 'decodo',
+          timezoneId: 'Europe/Warsaw',
           slowMo: 125,
         },
       },
@@ -91,8 +99,12 @@ describe('playwright personas shared-lib', () => {
         updatedAt: '2026-03-24T10:00:00.000Z',
         settings: expect.objectContaining({
           slowMo: 125,
+          identityProfile: 'search',
           proxyEnabled: true,
           proxyServer: 'http://proxy.local',
+          proxySessionMode: 'rotate',
+          proxyProviderPreset: 'decodo',
+          timezoneId: 'Europe/Warsaw',
           timeout: defaultPlaywrightSettings.timeout,
         }),
       })
@@ -103,7 +115,11 @@ describe('playwright personas shared-lib', () => {
         proxyEnabled: true,
         proxyPassword: 'secret',
         proxyServer: 'http://proxy.local',
+        proxySessionMode: 'rotate',
+        proxyProviderPreset: 'decodo',
+        identityProfile: 'search',
         slowMo: 125,
+        timezoneId: 'Europe/Warsaw',
       }),
       personas
     );
@@ -113,6 +129,18 @@ describe('playwright personas shared-lib', () => {
       arePlaywrightSettingsEqual(
         buildPlaywrightSettings({ deviceName: 'Desktop Chrome' }),
         buildPlaywrightSettings({ deviceName: 'Pixel 7' })
+      )
+    ).toBe(false);
+    expect(
+      arePlaywrightSettingsEqual(
+        buildPlaywrightSettings({ locale: 'en-US' }),
+        buildPlaywrightSettings({ locale: 'de-DE' })
+      )
+    ).toBe(false);
+    expect(
+      arePlaywrightSettingsEqual(
+        buildPlaywrightSettings({ identityProfile: 'default' }),
+        buildPlaywrightSettings({ identityProfile: 'search' })
       )
     ).toBe(false);
     expect(
@@ -133,7 +161,9 @@ describe('playwright personas shared-lib', () => {
             id: 'persona-1',
             name: ' Runner ',
             settings: {
+              identityProfile: 'marketplace',
               headless: false,
+              locale: 'en-US',
               slowMo: 5,
             },
           },
@@ -150,6 +180,8 @@ describe('playwright personas shared-lib', () => {
         name: 'Runner',
         settings: expect.objectContaining({
           headless: false,
+          identityProfile: 'marketplace',
+          locale: 'en-US',
           slowMo: 5,
           timeout: defaultPlaywrightSettings.timeout,
         }),

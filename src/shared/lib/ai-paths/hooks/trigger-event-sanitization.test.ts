@@ -29,6 +29,26 @@ describe('shouldEmbedTriggerEntitySnapshot', () => {
     ).toBe(true);
   });
 
+  it('embeds entity snapshots for marketplace-copy row triggers even when entityId exists', () => {
+    expect(
+      shouldEmbedTriggerEntitySnapshot({
+        entityType: 'product',
+        entityId: 'product-1',
+        sourceLocation: 'product_marketplace_copy_row',
+      })
+    ).toBe(true);
+  });
+
+  it('embeds entity snapshots for parameter row triggers even when entityId exists', () => {
+    expect(
+      shouldEmbedTriggerEntitySnapshot({
+        entityType: 'product',
+        entityId: 'product-1',
+        sourceLocation: 'product_parameter_row',
+      })
+    ).toBe(true);
+  });
+
   it('embeds for note_modal source location', () => {
     expect(
       shouldEmbedTriggerEntitySnapshot({
@@ -137,5 +157,44 @@ describe('sanitizeTriggerEntitySnapshot', () => {
     };
     const result = sanitizeTriggerEntitySnapshot(snapshot);
     expect(result?.['meta']).toEqual({ tags: ['a', 'b'], count: 2 });
+  });
+
+  it('preserves Filemaker application technology terms used by job-application AI Paths', () => {
+    const snapshot = {
+      id: 'application-context-1',
+      applicationContext: {
+        jobContext: {
+          lexicon: {
+            technologyMentionHighlighting: {
+              terms: [
+                {
+                  lexiconTermId: 'term-react',
+                  label: 'React',
+                  normalizedLabel: 'react',
+                  iconUrl: '/icons/react.svg',
+                  aliases: ['React', 'React.js'],
+                },
+              ],
+            },
+          },
+        },
+      },
+    };
+
+    const result = sanitizeTriggerEntitySnapshot(snapshot);
+    const applicationContext = result?.['applicationContext'] as Record<string, unknown>;
+    const jobContext = applicationContext['jobContext'] as Record<string, unknown>;
+    const lexicon = jobContext['lexicon'] as Record<string, unknown>;
+    const highlighting = lexicon['technologyMentionHighlighting'] as Record<string, unknown>;
+
+    expect(highlighting['terms']).toEqual([
+      {
+        lexiconTermId: 'term-react',
+        label: 'React',
+        normalizedLabel: 'react',
+        iconUrl: '/icons/react.svg',
+        aliases: ['React', 'React.js'],
+      },
+    ]);
   });
 });

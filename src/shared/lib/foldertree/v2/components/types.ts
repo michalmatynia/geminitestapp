@@ -1,8 +1,8 @@
-import React from 'react';
+import type React from 'react';
 
-import { MasterTreeNodeStatus } from '@/shared/contracts/master-folder-tree';
-import { MasterTreeDropPosition } from '@/shared/utils/master-folder-tree-contract';
-import { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
+import { type MasterTreeNodeStatus } from '@/shared/contracts/master-folder-tree';
+import { type MasterTreeDropPosition } from '@/shared/utils/master-folder-tree-contract';
+import { type MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
 
 export type FolderTreeViewportRenderNodeInput = {
   node: MasterTreeViewNode;

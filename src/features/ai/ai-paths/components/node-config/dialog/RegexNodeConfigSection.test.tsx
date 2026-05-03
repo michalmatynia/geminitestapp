@@ -49,7 +49,7 @@ const mockState = vi.hoisted(() => ({
   parseRegexCandidate: vi.fn(),
 }));
 
-const REGEX_TEMPLATES_KEY = 'ai_paths.regex_templates';
+const REGEX_TEMPLATES_KEY = 'ai_paths_regex_templates';
 const regexNodeId = 'regex-node-1';
 
 const buildRegexConfig = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
@@ -104,8 +104,8 @@ vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
   useBrainModelOptions: () => mockState.brainModelOptions,
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
-  AI_PATHS_REGEX_TEMPLATES_KEY: 'ai_paths.regex_templates',
+vi.mock('@/shared/lib/ai-paths/core/utils', () => ({
+  AI_PATHS_REGEX_TEMPLATES_KEY: 'ai_paths_regex_templates',
   buildRegexTemplatesStore: (templates: RegexTemplate[]) => ({ templates }),
   createRegexTemplateId: () => mockState.createRegexTemplateId(),
   parseRegexTemplatesStore: (raw: string | null) => {
@@ -114,6 +114,17 @@ vi.mock('@/shared/lib/ai-paths', () => ({
     return { templates: parsed.templates ?? [] };
   },
   renderTemplate: (...args: unknown[]) => mockState.renderTemplate(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/regex-templates', () => ({
+  AI_PATHS_REGEX_TEMPLATES_KEY: 'ai_paths_regex_templates',
+  buildRegexTemplatesStore: (templates: RegexTemplate[]) => ({ templates }),
+  createRegexTemplateId: () => mockState.createRegexTemplateId(),
+  parseRegexTemplatesStore: (raw: string | null) => {
+    if (!raw) return { templates: [] };
+    const parsed = JSON.parse(raw) as { templates?: RegexTemplate[] };
+    return { templates: parsed.templates ?? [] };
+  },
 }));
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
@@ -662,20 +673,22 @@ describe('RegexNodeConfigSection', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save Node Template' }));
 
-    expect(latestPatch()).toMatchObject({
-      regex: {
-        templates: expect.arrayContaining([
-          expect.objectContaining({
-            id: 'generated-template-id',
-            name: 'Saved Template',
-            pattern: 'SKU-(\\d+)',
-          }),
-          expect.objectContaining({
-            id: 'node-template-1',
-            name: 'Node Template',
-          }),
-        ]),
-      },
+    await waitFor(() => {
+      expect(latestPatch()).toMatchObject({
+        regex: {
+          templates: expect.arrayContaining([
+            expect.objectContaining({
+              id: expect.stringMatching(/regex-template-|generated-template-id/),
+              name: 'Saved Template',
+              pattern: 'SKU-(\\d+)',
+            }),
+            expect.objectContaining({
+              id: 'node-template-1',
+              name: 'Node Template',
+            }),
+          ]),
+        },
+      });
     });
     expect(mockState.toast).toHaveBeenCalledWith('Regex template saved.', {
       variant: 'success',

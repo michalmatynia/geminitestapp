@@ -14,7 +14,7 @@ import {
   createKangurTestQuestion,
   deleteKangurTestQuestion,
   formDataToQuestion,
-  parseKangurTestQuestionStore,
+  type parseKangurTestQuestionStore,
   publishReadyQuestions,
   reorderQuestions,
   shouldDemotePublishedQuestionAfterEdit,

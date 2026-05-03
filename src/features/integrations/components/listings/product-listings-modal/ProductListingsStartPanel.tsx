@@ -30,6 +30,10 @@ export function ProductListingsStartPanel(): React.JSX.Element {
     isScopedMarketplaceFlow,
     statusTargetLabel,
   });
+  const shouldAutoSubmitRecoveryRestart =
+    Boolean(recoveryContext?.integrationId && recoveryContext?.connectionId) &&
+    recoveryContext?.integrationId === selectedIntegrationId &&
+    recoveryContext?.connectionId === selectedConnectionId;
   const selector = (
     <ConnectedIntegrationSelector
       integrations={integrations}
@@ -68,7 +72,9 @@ export function ProductListingsStartPanel(): React.JSX.Element {
           <Button
             onClick={(): void => {
               if (onStartListing && selectedIntegrationId && selectedConnectionId) {
-                onStartListing(selectedIntegrationId, selectedConnectionId);
+                onStartListing(selectedIntegrationId, selectedConnectionId, {
+                  autoSubmit: shouldAutoSubmitRecoveryRestart,
+                });
               }
             }}
             disabled={!selectedIntegrationId || !selectedConnectionId || !onStartListing}

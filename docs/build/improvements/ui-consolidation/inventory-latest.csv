@@ -1,0 +1,2 @@
+phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
+apply,ui-consolidation-apply,Apply UI consolidation changes through targeted feature migrations,manual,manual,true,,,2026-04-15T10:54:26.139Z,artifacts/improvements/apply-report.json

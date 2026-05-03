@@ -13,11 +13,11 @@
   },
   "scope": {
     "root": "src",
-    "prismaAllowedPatterns": [
+    "removedOrmAllowedPatterns": [
       "^src\\/app\\/api\\/",
       "^src\\/features\\/[^/]+\\/server\\/",
       "^src\\/shared\\/lib\\/db\\/",
-      "^prisma\\/",
+      "^removedOrm\\/",
       "^scripts\\/"
     ],
     "internalImportAllowlist": []

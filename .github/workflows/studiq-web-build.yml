@@ -1,0 +1,53 @@
+name: studiq-web build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/studiq-web/**'
+      - 'packages/kangur-core/**'
+      - 'packages/kangur-contracts/**'
+      - 'packages/kangur-api-client/**'
+      - 'packages/kangur-platform/**'
+      - 'src/i18n/**'
+      - 'package-lock.json'
+      - '.github/workflows/studiq-web-build.yml'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'apps/studiq-web/**'
+      - 'packages/kangur-core/**'
+      - 'packages/kangur-contracts/**'
+      - 'packages/kangur-api-client/**'
+      - 'packages/kangur-platform/**'
+      - 'src/i18n/**'
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck-and-build:
+    name: typecheck and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck studiq-web
+        run: npm run typecheck -w @app/studiq-web
+
+      - name: Build studiq-web
+        run: npm run build -w @app/studiq-web
+        env:
+          KANGUR_API_ORIGIN: https://app.studiq.com

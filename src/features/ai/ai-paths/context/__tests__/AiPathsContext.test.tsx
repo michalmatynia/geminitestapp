@@ -4,7 +4,12 @@ import React from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { AiPathsProvider, useAiPaths, useAiPathsActions, useAiPathsState } from '../AiPathsContext';
+import {
+  AiPathsWorkspaceProvider,
+  useAiPaths,
+  useAiPathsActions,
+  useAiPathsState,
+} from '../AiPathsContext';
 
 const mocks = vi.hoisted(() => ({
   setIsMenuHidden: vi.fn(),
@@ -23,19 +28,19 @@ describe('AiPathsContext', () => {
 
   it('throws when state hook is used outside the provider', () => {
     expect(() => renderHook(() => useAiPathsState())).toThrow(
-      'useAiPathsState must be used within an AiPathsProvider'
+      'useAiPathsState must be used within an AiPathsWorkspaceProvider'
     );
   });
 
   it('throws when actions hook is used outside the provider', () => {
     expect(() => renderHook(() => useAiPathsActions())).toThrow(
-      'useAiPathsActions must be used within an AiPathsProvider'
+      'useAiPathsActions must be used within an AiPathsWorkspaceProvider'
     );
   });
 
   it('updates focus mode state and admin menu visibility inside the provider', async () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AiPathsProvider>{children}</AiPathsProvider>
+      <AiPathsWorkspaceProvider>{children}</AiPathsWorkspaceProvider>
     );
 
     const { result, unmount } = renderHook(() => useAiPaths(), { wrapper });

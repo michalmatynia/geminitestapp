@@ -14,14 +14,20 @@ import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogT
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';
 
-import { type TriggerButtonLastRun, useTriggerButtons } from '../../hooks/useTriggerButtons';
+import {
+  type TriggerButtonLastRun,
+  type TriggerButtonRunSnapshotArgs,
+  useTriggerButtons,
+} from '../../hooks/useTriggerButtons';
 import { resolveTriggerButtonRunFeedbackPresentation } from '../../trigger-button-run-feedback';
 
 type TriggerButtonBarProps = {
   location: AiTriggerButtonLocation;
   entityType: 'product' | 'note' | 'custom';
   entityId?: string | null | undefined;
-  getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+  getEntityJson?: ((button?: AiTriggerButtonRecord) => Record<string, unknown> | null) | undefined;
+  getTriggerExtras?: ((button?: AiTriggerButtonRecord) => Record<string, unknown> | null) | undefined;
+  disabled?: boolean | undefined;
   showRunFeedback?: boolean | undefined;
   onRunQueued?:
     | ((args: {
@@ -31,6 +37,7 @@ type TriggerButtonBarProps = {
         entityType: 'product' | 'note' | 'custom';
       }) => void)
     | undefined;
+  onRunSnapshot?: ((args: TriggerButtonRunSnapshotArgs) => void) | undefined;
   className?: string;
 };
 
@@ -38,6 +45,7 @@ type TriggerButtonToggleRuntimeValue = {
   label: string;
   showLabel: boolean;
   isRunning: boolean;
+  disabled: boolean;
   progress: number;
   checked: boolean;
   iconNode: React.ReactNode;
@@ -54,10 +62,14 @@ const {
 });
 const PRODUCT_RUN_FEEDBACK_LOCATIONS = new Set<AiTriggerButtonLocation>([
   'product_row',
+  'product_marketplace_copy_row',
+  'product_parameter_row',
   'product_modal',
 ]);
 const COMPACT_TRIGGER_BUTTON_INLINE_LIMITS: Partial<Record<AiTriggerButtonLocation, number>> = {
   product_row: 1,
+  product_marketplace_copy_row: 1,
+  product_parameter_row: 1,
   product_list: 1,
   product_list_header: 1,
 };
@@ -158,10 +170,13 @@ function TriggerRunFeedback(props: {
   const presentation = resolveTriggerButtonRunFeedbackPresentation(run.status);
   const queueHref = `/admin/ai-paths/queue?tab=paths-all&query=${encodeURIComponent(run.runId)}&runId=${encodeURIComponent(run.runId)}&status=all`;
   const messageClassName =
-    run.status === 'failed' || run.status === 'dead_lettered'
+    run.status === 'failed'
       ? 'text-amber-200'
       : 'text-gray-400';
-  const summaryWidthClassName = location === 'product_row' ? 'max-w-[220px]' : 'max-w-[320px]';
+  const summaryWidthClassName =
+    location === 'product_row' || location === 'product_marketplace_copy_row'
+      ? 'max-w-[220px]'
+      : 'max-w-[320px]';
   const timestamp = resolveRunTimestamp(run);
   const timestampLabel = formatRunTimestampLabel(run);
   const showQueueLink = run.status !== 'waiting';
@@ -215,10 +230,16 @@ function TriggerRunFeedback(props: {
 }
 
 function TriggerButtonToggleControl(): React.JSX.Element {
-  const { label, showLabel, isRunning, progress, checked, iconNode, onCheckedChange } =
+  const { label, showLabel, isRunning, disabled, progress, checked, iconNode, onCheckedChange } =
     useTriggerButtonToggleRuntime();
   return (
-    <div className={cn('relative overflow-hidden rounded-lg', isRunning ? 'cursor-wait' : null)}>
+    <div
+      className={cn(
+        'relative overflow-hidden rounded-lg',
+        isRunning ? 'cursor-wait' : null,
+        disabled && !isRunning ? 'opacity-60' : null
+      )}
+    >
       {isRunning ? (
         <span
           aria-hidden
@@ -233,7 +254,7 @@ function TriggerButtonToggleControl(): React.JSX.Element {
         label={showLabel ? label : ''}
         icon={iconNode}
         checked={checked}
-        disabled={isRunning}
+        disabled={isRunning || disabled}
         onCheckedChange={onCheckedChange}
         className='relative z-10 border-border bg-card/40 px-2 py-1'
       />
@@ -246,8 +267,11 @@ export function TriggerButtonBar({
   entityType,
   entityId,
   getEntityJson,
+  getTriggerExtras,
+  disabled,
   showRunFeedback,
   onRunQueued,
+  onRunSnapshot,
   className,
 }: TriggerButtonBarProps): React.JSX.Element | null {
   const { buttons, toggleMap, successMap, runStates, lastRuns, handleTrigger } = useTriggerButtons({
@@ -255,7 +279,9 @@ export function TriggerButtonBar({
     entityType,
     entityId,
     getEntityJson,
+    getTriggerExtras,
     onRunQueued,
+    onRunSnapshot,
   });
   const feedbackLocation = location;
   const shouldShowRunFeedback =
@@ -333,10 +359,12 @@ export function TriggerButtonBar({
             label: button.name,
             showLabel,
             isRunning,
+            disabled: Boolean(disabled),
             progress,
             checked,
             iconNode,
             onCheckedChange: (nextChecked: boolean) => {
+              if (disabled) return;
               void handleTrigger(button, { mode: 'toggle', checked: nextChecked });
             },
           }}
@@ -366,13 +394,16 @@ export function TriggerButtonBar({
         aria-label={button.name}
         aria-busy={isRunning || undefined}
         loading={isRunning}
+        disabled={Boolean(disabled)}
         onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+          if (disabled) return;
           void handleTrigger(button, { mode: 'click', event });
         }}
         className={cn(
           'relative overflow-hidden text-gray-200',
           showLabel ? 'gap-2' : null,
           isRunning ? 'border-emerald-500/40 bg-emerald-500/10 disabled:opacity-100' : null,
+          disabled && !isRunning ? 'opacity-60' : null,
           isRunning ? 'cursor-wait' : null
         )}
       >
@@ -422,6 +453,7 @@ export function TriggerButtonBar({
         key={button.id}
         onSelect={(event: Event) => {
           event.preventDefault();
+          if (disabled) return;
           if (button.mode === 'toggle') {
             void handleTrigger(button, { mode: 'toggle', checked: !checked });
             return;

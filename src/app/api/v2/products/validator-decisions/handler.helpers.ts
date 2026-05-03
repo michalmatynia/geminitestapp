@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { validationError } from '@/shared/errors/app-error';
+import type * as ValidatorDecisionLogService from '@/shared/lib/products/services/validator-decision-log-service';
 
 export const createDecisionSchema = z.object({
   action: z.enum(['deny', 'replace', 'accept']).default('deny'),
@@ -15,6 +16,9 @@ export const createDecisionSchema = z.object({
 });
 
 export type CreateDecisionBody = z.infer<typeof createDecisionSchema>;
+type ProductValidationDecisionInput = Parameters<
+  typeof ValidatorDecisionLogService.appendProductValidationDecision
+>[0];
 
 export const parseCreateDecisionBody = (raw: unknown): CreateDecisionBody => {
   const parsed = createDecisionSchema.safeParse(raw);
@@ -30,7 +34,7 @@ export const parseCreateDecisionBody = (raw: unknown): CreateDecisionBody => {
 export const buildProductValidationDecisionInput = (
   body: CreateDecisionBody,
   userId: string | null | undefined
-) => ({
+): ProductValidationDecisionInput => ({
   action: body.action,
   productId: body.productId ?? null,
   draftId: body.draftId ?? null,

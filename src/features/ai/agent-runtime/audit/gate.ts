@@ -17,8 +17,8 @@ const parseJsonObject = (content: string): unknown => {
     try {
       const parsed: unknown = JSON.parse(content.slice(start, end + 1));
       return parsed;
-    } catch (error) {
-      logClientError(error);
+    } catch (innerError) {
+      logClientError(innerError);
       return null;
     }
   }
@@ -56,6 +56,45 @@ export function requiresHumanApproval(step: PlanStep, prompt: string): boolean {
   );
 }
 
+const APPROVAL_GATE_SYSTEM_PROMPT =
+  'You decide whether a planned web action requires human approval. Return only JSON with keys: requiresApproval (boolean), reason (string), riskLevel (low|medium|high), riskySignals (array). Flag any step that involves login, payments, deletions, account changes, admin actions, or irreversible changes.';
+
+const buildApprovalGateUserContent = (
+  prompt: string,
+  step: PlanStep,
+  browserContext?: { url: string; title: string | null } | null
+): string =>
+  JSON.stringify({
+    prompt,
+    step: {
+      title: step.title,
+      tool: step.tool ?? null,
+      expectedObservation: step.expectedObservation ?? null,
+      successCriteria: step.successCriteria ?? null,
+    },
+    browserContext: browserContext ? { url: browserContext.url, title: browserContext.title } : null,
+  });
+
+const parseApprovalGateResult = (
+  content: string
+): { requiresApproval: boolean; reason: string | null; riskLevel: string | null } => {
+  const parsed = parseJsonObject(content) as {
+    requiresApproval?: boolean;
+    reason?: string;
+    riskLevel?: string;
+  } | null;
+
+  if (parsed === null || typeof parsed.requiresApproval !== 'boolean') {
+    throw new Error('Approval gate model returned invalid JSON.');
+  }
+
+  return {
+    requiresApproval: parsed.requiresApproval,
+    reason: parsed.reason ?? null,
+    riskLevel: parsed.riskLevel ?? null,
+  };
+};
+
 export async function evaluateApprovalGateWithLLM({
   prompt,
   step,
@@ -79,44 +118,25 @@ export async function evaluateApprovalGateWithLLM({
   try {
     const content = await runApprovalGateTask({
       model,
-      systemPrompt:
-        'You decide whether a planned web action requires human approval. Return only JSON with keys: requiresApproval (boolean), reason (string), riskLevel (low|medium|high), riskySignals (array). Flag any step that involves login, payments, deletions, account changes, admin actions, or irreversible changes.',
-      userContent: JSON.stringify({
-        prompt,
-        step: {
-          title: step.title,
-          tool: step.tool ?? null,
-          expectedObservation: step.expectedObservation ?? null,
-          successCriteria: step.successCriteria ?? null,
-        },
-        browserContext: browserContext
-          ? { url: browserContext.url, title: browserContext.title }
-          : null,
-      }),
+      systemPrompt: APPROVAL_GATE_SYSTEM_PROMPT,
+      userContent: buildApprovalGateUserContent(prompt, step, browserContext),
     });
-    const parsed = parseJsonObject(content) as {
-      requiresApproval?: boolean;
-      reason?: string;
-      riskLevel?: string;
-    } | null;
-    if (!parsed || typeof parsed.requiresApproval !== 'boolean') {
-      throw new Error('Approval gate model returned invalid JSON.');
-    }
-    return {
-      requiresApproval: parsed.requiresApproval,
-      reason: parsed.reason ?? null,
-      riskLevel: parsed.riskLevel ?? null,
-    };
+
+    return parseApprovalGateResult(content);
   } catch (error) {
     logClientError(error);
-    if (runId && DEBUG_CHATBOT) {
-      void ErrorSystem.logWarning('Approval gate model failed', {
+
+    if (runId !== undefined && runId !== '' && DEBUG_CHATBOT === true) {
+      ErrorSystem.logWarning('Approval gate model failed', {
         service: 'agent-engine',
         action: 'approval-gate',
         runId,
         error: error instanceof Error ? error.message : String(error),
+      }).catch(() => {
+        // Ignore failure logging failure
       });
     }
+
     return null;
   }
 }

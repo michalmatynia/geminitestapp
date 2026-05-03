@@ -22,6 +22,7 @@ vi.mock('next/image', () => ({
 }));
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
+import { ProductImagePreviewProvider } from '@/features/products/context/ProductImagePreviewContext';
 
 describe('ProductImageCell', () => {
   beforeEach(() => {
@@ -30,7 +31,9 @@ describe('ProductImageCell', () => {
 
   it('keeps local product thumbnails and hover previews on the optimized image path', async () => {
     const { container } = render(
-      <ProductImageCell imageUrl='/uploads/products/example.png' productName='Test product' />
+      <ProductImagePreviewProvider>
+        <ProductImageCell imageUrl='/uploads/products/example.png' productName='Test product' />
+      </ProductImagePreviewProvider>
     );
 
     await waitFor(() => {

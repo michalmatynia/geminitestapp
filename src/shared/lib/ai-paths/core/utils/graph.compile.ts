@@ -1,7 +1,7 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { DependencyInspectorOptions as CompileGraphOptions } from '@/shared/contracts/ai-paths-core/engine';
 
-import { sanitizeEdges } from './graph.edges';
+import { sanitizeEdgesDetailed } from './graph.edges';
 import {
   getNodeInputPortCardinality,
   getNodeInputPortContract,
@@ -38,7 +38,11 @@ export const compileGraph = (
   options: CompileGraphOptions = {}
 ): GraphCompileReport => {
   const findings: GraphCompileFinding[] = [];
-  const normalizedEdges = sanitizeEdges(nodes, edges);
+  const { edges: normalizedEdges, dropped: droppedEdgeFindings } = sanitizeEdgesDetailed(
+    nodes,
+    edges
+  );
+  findings.push(...droppedEdgeFindings);
 
   const nodeMap = new Map(nodes.map((node: AiNode) => [node.id, node]));
   const adjacency = new Map<string, string[]>();

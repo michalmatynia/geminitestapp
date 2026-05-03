@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import type { KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor/onboarding-validation';
 import type { KangurAiTutorLocaleTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';

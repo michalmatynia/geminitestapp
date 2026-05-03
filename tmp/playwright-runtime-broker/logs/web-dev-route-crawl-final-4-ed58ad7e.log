@@ -168,7 +168,7 @@ Ready on http://localhost:54960 { port: 54960, host: '127.0.0.1' }
 [api/settings] [api/settings] [settings] cache fallback {
   service: 'api/settings',
   scope: 'heavy',
-  status: 'timeout-prisma-fallback',
+  status: 'timeout-removedOrm-fallback',
   reason: '[settings] cache miss fetch timed out after 3000ms',
   category: 'SYSTEM',
   otelTraceId: '5a4cf96cf6075ba31cf13761f644ea39',

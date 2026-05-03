@@ -1,8 +1,23 @@
-import type { BaseActiveTemplatePreferencePayload, BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferencePayload, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferencePayload, BaseDefaultInventoryPreferenceResponse, BaseSyncAllImagesResponse, TraderaDefaultConnectionPreferencePayload, TraderaDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type {
+  BaseActiveTemplatePreferencePayload,
+  BaseActiveTemplatePreferenceResponse,
+  BaseDefaultConnectionPreferencePayload,
+  BaseDefaultConnectionPreferenceResponse,
+  BaseDefaultInventoryPreferencePayload,
+  BaseDefaultInventoryPreferenceResponse,
+  BaseSyncAllImagesResponse,
+  TraderaDefaultConnectionPreferencePayload,
+  TraderaDefaultConnectionPreferenceResponse,
+  VintedDefaultConnectionPreferencePayload,
+  VintedDefaultConnectionPreferenceResponse,
+} from '@/shared/contracts/integrations/preferences';
 import type { IntegrationAllegroApiRequest, IntegrationAllegroApiResponse, IntegrationBaseApiRequest, IntegrationBaseApiResponse, IntegrationDisconnectResponse } from '@/shared/contracts/integrations/api';
 import type { IntegrationConnectionActionTarget, IntegrationConnectionTestVariables, TestConnectionResponse } from '@/shared/contracts/integrations/session-testing';
 import type { Integration } from '@/shared/contracts/integrations/base';
-import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type {
+  IntegrationConnection,
+  ProgrammableIntegrationConnection,
+} from '@/shared/contracts/integrations/connections';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -72,6 +87,39 @@ export function useUpsertConnection() {
   });
 }
 
+export function useUpsertProgrammableConnection() {
+  const mutationKey = QUERY_KEYS.integrations.connections();
+  return createMutationV2<
+    ProgrammableIntegrationConnection,
+    UpsertConnectionVariables & { id?: string }
+  >({
+    mutationFn: async (variables): Promise<ProgrammableIntegrationConnection> => {
+      const hasConnection = Boolean(variables.connectionId);
+      const url = hasConnection
+        ? `/api/v2/integrations/connections/${variables.connectionId}`
+        : `/api/v2/integrations/${variables.integrationId}/connections`;
+      const body = variables.payload;
+      if (hasConnection) {
+        return api.put<ProgrammableIntegrationConnection>(url, body);
+      }
+      return api.post<ProgrammableIntegrationConnection>(url, body);
+    },
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useUpsertProgrammableConnection',
+      operation: 'action',
+      resource: 'integrations.connections.programmable',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'connections', 'upsert', 'playwright-programmable'],
+      description: 'Runs programmable integrations connections.',
+    },
+    invalidate: (queryClient, _data, variables) => {
+      void invalidateIntegrationConnections(queryClient, variables.integrationId);
+    },
+  });
+}
+
 type DeleteConnectionVariables = {
   integrationId: string;
   connectionId: string;
@@ -118,11 +166,18 @@ export function useTestConnection() {
       integrationId,
       connectionId,
       type = 'test',
-      ...rest
+      body,
+      timeoutMs,
     }): Promise<TestConnectionResponse> =>
       api.post<TestConnectionResponse>(
         `/api/v2/integrations/${integrationId}/connections/${connectionId}/${type}`,
-        { integrationId, connectionId, type, ...rest }
+        {
+          integrationId,
+          connectionId,
+          type,
+          ...(body ?? {}),
+        },
+        ...(typeof timeoutMs === 'number' ? [{ timeout: timeoutMs }] : [])
       ),
     mutationKey,
     meta: {
@@ -338,5 +393,28 @@ export function useUpdateDefaultTraderaConnection() {
       description: 'Updates integrations exports Tradera default connection.',
     },
     invalidateKeys: [QUERY_KEYS.integrations.selection.traderaDefaultConnection()],
+  });
+}
+
+export function useUpdateDefaultVintedConnection() {
+  return createUpdateMutationV2<
+    VintedDefaultConnectionPreferenceResponse,
+    VintedDefaultConnectionPreferencePayload
+  >({
+    mutationFn: (variables) =>
+      api.post<VintedDefaultConnectionPreferenceResponse>(
+        '/api/v2/integrations/exports/vinted/default-connection',
+        variables
+      ),
+    mutationKey: QUERY_KEYS.integrations.selection.vintedDefaultConnection(),
+    meta: {
+      source: 'integrations.hooks.useUpdateDefaultVintedConnection',
+      operation: 'update',
+      resource: 'integrations.exports.vinted.default-connection',
+      domain: 'integrations',
+      tags: ['integrations', 'exports', 'vinted', 'default-connection'],
+      description: 'Updates integrations exports Vinted default connection.',
+    },
+    invalidateKeys: [QUERY_KEYS.integrations.selection.vintedDefaultConnection()],
   });
 }

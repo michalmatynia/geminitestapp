@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+import {
+  safeSetInterval,
+  safeClearInterval,
+  safeSetTimeout,
+  safeClearTimeout,
+} from '@/shared/lib/timers';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { CaseResolverRequestedCaseIssue, CaseResolverRequestedCaseStatus } from '@/shared/contracts/case-resolver/base';
 
@@ -524,7 +529,7 @@ export function useCaseResolverStateRequestedContext({
             requestKey,
             resolvedVia: 'snapshot_fetch',
           });
-          window.setTimeout((): void => {
+          safeSetTimeout((): void => {
             if (!isMountedRef.current) return;
             if (requestedCaseStatusRef.current !== 'loading') return;
             if (requestedContextAttemptKeyRef.current !== requestKey) return;
@@ -730,7 +735,7 @@ export function useCaseResolverStateRequestedContext({
 
   useEffect(() => {
     if (requestedCaseStatus !== 'loading') return;
-    const deadlockGuardTimer = window.setTimeout((): void => {
+    const deadlockGuardTimer = safeSetTimeout((): void => {
       if (requestedCaseStatusRef.current !== 'loading') return;
       const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
       if (!normalizedRequestedFileId) {
@@ -787,7 +792,7 @@ export function useCaseResolverStateRequestedContext({
     }, 1_500);
 
     return (): void => {
-      window.clearTimeout(deadlockGuardTimer);
+      safeClearTimeout(deadlockGuardTimer);
     };
   }, [
     applyRequestedContextEvent,

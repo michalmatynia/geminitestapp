@@ -12,6 +12,24 @@ describe('validator-regex-safety', () => {
     });
   });
 
+  it('accepts capture groups that are not themselves repeated', () => {
+    const result = validateRegexSafety('^(\\d+)-(\\w+)$', null);
+
+    expect(result).toEqual({
+      ok: true,
+      normalizedFlags: null,
+    });
+  });
+
+  it('accepts alternation groups that are not themselves repeated', () => {
+    const result = validateRegexSafety('^(foo|bar)$', null);
+
+    expect(result).toEqual({
+      ok: true,
+      normalizedFlags: null,
+    });
+  });
+
   it('rejects duplicate flags', () => {
     const result = validateRegexSafety('^.+$', 'ii');
 

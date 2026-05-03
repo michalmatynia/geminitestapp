@@ -1,5 +1,5 @@
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { QueryClient, type DehydratedState } from '@tanstack/react-query';
+import { type QueryClient, type DehydratedState } from '@tanstack/react-query';
 import { persistQueryClient, type PersistedClient } from '@tanstack/react-query-persist-client';
 
 import { QUERY_KEYS } from './query-keys';

@@ -60,6 +60,72 @@ const RESTORING_SESSION_LABEL = {
   pl: 'przywracanie logowania',
 } as const;
 
+function resolveStatusLabel(
+  isRestoring: boolean,
+  isLoading: boolean,
+  status: string,
+  locale: KangurMobileLocale,
+): string {
+  if (isRestoring) return getKangurMobileLocalizedValue(STATUS_LABELS.restoring, locale);
+  if (isLoading) return getKangurMobileLocalizedValue(STATUS_LABELS.loading, locale);
+  if (status === 'authenticated') return getKangurMobileLocalizedValue(STATUS_LABELS.authenticated, locale);
+  return getKangurMobileLocalizedValue(STATUS_LABELS.anonymous, locale);
+}
+
+function resolveActorTypeLabel(
+  actorType: string | undefined | null,
+  locale: KangurMobileLocale,
+): string | null {
+  if (actorType === 'learner') return ACTOR_TYPE_LABELS.learner[locale];
+  if (actorType === 'parent') return ACTOR_TYPE_LABELS.parent[locale];
+  if (actorType === 'admin') return ACTOR_TYPE_LABELS.admin[locale];
+  return actorType ?? null;
+}
+
+type DeveloperAutoSignInLabelProps = {
+  authError: string | null;
+  enabled: boolean;
+  hasAttempted: boolean;
+  isLoading: boolean;
+  status: string;
+};
+
+function resolveDeveloperAutoSignInLabel({
+  authError,
+  enabled,
+  hasAttempted,
+  isLoading,
+  status,
+}: DeveloperAutoSignInLabelProps): string | null {
+  if (!enabled) return null;
+  if (status === 'authenticated') return 'authenticated';
+  
+  if (!hasAttempted) {
+    return isLoading ? 'waiting' : 'ready';
+  }
+  
+  if (isLoading) {
+    return 'attempting';
+  }
+  
+  return authError !== null ? 'failed' : 'attempted';
+}
+
+function resolveUserLabel(
+  isRestoring: boolean,
+  session: KangurAuthSession,
+  actorTypeLabel: string | null,
+  locale: KangurMobileLocale,
+): string {
+  if (isRestoring) {
+    return getKangurMobileLocalizedValue(RESTORING_SESSION_LABEL, locale);
+  }
+  if (session.user) {
+    return `${session.user.full_name} (${actorTypeLabel ?? '?'})`;
+  }
+  return getKangurMobileLocalizedValue(STATUS_LABELS.anonymous, locale);
+}
+
 export const getKangurHomeAuthBoundaryViewModel = ({
   authError,
   developerAutoSignInEnabled,
@@ -77,51 +143,28 @@ export const getKangurHomeAuthBoundaryViewModel = ({
   session: KangurAuthSession;
   supportsLearnerCredentials: boolean;
 }): KangurHomeAuthBoundaryViewModel => {
-  const isRestoringLearnerSession =
-    isLoadingAuth && session.status !== 'authenticated';
-  const statusLabel = getKangurMobileLocalizedValue(
-    isRestoringLearnerSession
-      ? STATUS_LABELS.restoring
-      : isLoadingAuth
-        ? STATUS_LABELS.loading
-        : session.status === 'authenticated'
-          ? STATUS_LABELS.authenticated
-          : STATUS_LABELS.anonymous,
-    locale,
-  );
-  const actorTypeLabel =
-    session.user?.actorType === 'learner'
-      ? ACTOR_TYPE_LABELS['learner'][locale]
-      : session.user?.actorType === 'parent'
-        ? ACTOR_TYPE_LABELS['parent'][locale]
-      : session.user?.actorType === 'admin'
-          ? ACTOR_TYPE_LABELS['admin'][locale]
-          : session.user?.actorType ?? null;
+  const isRestoringLearnerSession = isLoadingAuth && session.status !== 'authenticated';
+  const statusLabel = resolveStatusLabel(isRestoringLearnerSession, isLoadingAuth, session.status, locale);
+  const actorTypeLabel = resolveActorTypeLabel(session.user?.actorType, locale);
+
+  const developerAutoSignInLabel = resolveDeveloperAutoSignInLabel({
+    authError,
+    enabled: developerAutoSignInEnabled,
+    hasAttempted: hasAttemptedDeveloperAutoSignIn,
+    isLoading: isLoadingAuth,
+    status: session.status,
+  });
+
+  const userLabel = resolveUserLabel(isRestoringLearnerSession, session, actorTypeLabel, locale);
 
   return {
-    developerAutoSignInLabel: !developerAutoSignInEnabled
-      ? null
-      : session.status === 'authenticated'
-        ? 'authenticated'
-        : hasAttemptedDeveloperAutoSignIn
-          ? isLoadingAuth
-            ? 'attempting'
-            : authError
-              ? 'failed'
-              : 'attempted'
-          : isLoadingAuth
-            ? 'waiting'
-            : 'ready',
+    developerAutoSignInLabel,
     isRestoringLearnerSession,
     showLearnerCredentialsForm:
       supportsLearnerCredentials &&
       !isRestoringLearnerSession &&
       session.status !== 'authenticated',
     statusLabel,
-    userLabel: isRestoringLearnerSession
-      ? getKangurMobileLocalizedValue(RESTORING_SESSION_LABEL, locale)
-      : session.user
-        ? `${session.user.full_name} (${actorTypeLabel})`
-        : getKangurMobileLocalizedValue(STATUS_LABELS.anonymous, locale),
+    userLabel,
   };
 };

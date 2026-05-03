@@ -4,34 +4,18 @@ import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { type PickActions, type OmitState } from '@/shared/lib/react/types';
 
 import {
   useAdminFilemakerOrganizationEditPageState,
   type AdminFilemakerOrganizationEditPageContextValue,
 } from '../hooks/useAdminFilemakerOrganizationEditPageState';
 
-type AdminFilemakerOrganizationEditPageFunctionKeys = {
-  [Key in keyof AdminFilemakerOrganizationEditPageContextValue]-?: AdminFilemakerOrganizationEditPageContextValue[Key] extends (
-    ...args: never[]
-  ) => unknown
-    ? Key
-    : never;
-}[keyof AdminFilemakerOrganizationEditPageContextValue];
+export type AdminFilemakerOrganizationEditPageStateContextValue =
+  OmitState<AdminFilemakerOrganizationEditPageContextValue>;
 
-type AdminFilemakerOrganizationEditPageDataKeys = Exclude<
-  keyof AdminFilemakerOrganizationEditPageContextValue,
-  AdminFilemakerOrganizationEditPageFunctionKeys
->;
-
-export type AdminFilemakerOrganizationEditPageStateContextValue = Pick<
-  AdminFilemakerOrganizationEditPageContextValue,
-  AdminFilemakerOrganizationEditPageDataKeys
->;
-
-export type AdminFilemakerOrganizationEditPageActionsContextValue = Pick<
-  AdminFilemakerOrganizationEditPageContextValue,
-  AdminFilemakerOrganizationEditPageFunctionKeys
->;
+export type AdminFilemakerOrganizationEditPageActionsContextValue =
+  PickActions<AdminFilemakerOrganizationEditPageContextValue>;
 
 const {
   Context: AdminFilemakerOrganizationEditPageStateContext,
@@ -56,26 +40,14 @@ export function AdminFilemakerOrganizationEditPageProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const value = useAdminFilemakerOrganizationEditPageState();
-  const {
-    setOrgDraft,
-    setEditableAddresses,
-    setEmailExtractionText,
-    setPhoneNumberExtractionText,
-    setLinkedEventIds,
-    handleSave,
-    handleExtractEmails,
-    ...stateValue
-  } = value;
-
-  const actionsValue: AdminFilemakerOrganizationEditPageActionsContextValue = {
-    setOrgDraft,
-    setEditableAddresses,
-    setEmailExtractionText,
-    setPhoneNumberExtractionText,
-    setLinkedEventIds,
-    handleSave,
-    handleExtractEmails,
-  };
+  const stateValue = React.useMemo(
+    () => value as AdminFilemakerOrganizationEditPageStateContextValue,
+    [value]
+  );
+  const actionsValue = React.useMemo(
+    () => value as AdminFilemakerOrganizationEditPageActionsContextValue,
+    [value]
+  );
 
   return (
     <AdminFilemakerOrganizationEditPageActionsContext.Provider value={actionsValue}>

@@ -5,10 +5,8 @@ import {
   aiPathsDbActionRequestSchema,
   aiPathsPlaywrightEnqueueRequestSchema,
   aiPathsPlaywrightRunRouteParamsSchema,
-  aiPathRunDeadLetterRequeueRequestSchema,
   aiPathEntityUpdateRequestSchema,
   aiPathRunEnqueueRequestSchema,
-  aiPathRunRetryNodeRequestSchema,
   aiPathsMaintenanceApplyRequestSchema,
   aiPathsSettingsBulkWriteRequestSchema,
   aiPathsSettingsDeleteRequestSchema,
@@ -37,28 +35,6 @@ describe('ai-paths write contract runtime', () => {
         refs: [{ id: 'ctx-1', kind: 'static_node' }],
         engineVersion: 'v1',
       },
-    });
-  });
-
-  it('parses retry and dead-letter requeue DTOs', () => {
-    expect(aiPathRunRetryNodeRequestSchema.parse({ nodeId: 'node-1' })).toEqual({
-      nodeId: 'node-1',
-    });
-
-    expect(
-      aiPathRunDeadLetterRequeueRequestSchema.parse({
-        runIds: ['run-1', 'run-2'],
-        pathId: 'path-1',
-        query: 'translation',
-        mode: 'replay',
-        limit: 25,
-      })
-    ).toEqual({
-      runIds: ['run-1', 'run-2'],
-      pathId: 'path-1',
-      query: 'translation',
-      mode: 'replay',
-      limit: 25,
     });
   });
 

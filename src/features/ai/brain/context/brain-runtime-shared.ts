@@ -31,6 +31,7 @@ export const ALL_BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
   'cms_builder',
   'image_studio',
   'products',
+  'integrations',
   'case_resolver',
   'agent_runtime',
   'agent_teaching',
@@ -39,10 +40,12 @@ export const ALL_BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
   'chatbot',
   'kangur_ai_tutor',
   'kangur_social',
+  'job_board',
   'analytics',
   'runtime_analytics',
   'system_logs',
   'error_logs',
+  'playwright',
 ];
 
 export const DEFAULT_BRAIN_OVERRIDES_ENABLED: Record<AiBrainFeature, boolean> = {
@@ -53,7 +56,9 @@ export const DEFAULT_BRAIN_OVERRIDES_ENABLED: Record<AiBrainFeature, boolean> = 
   chatbot: false,
   kangur_ai_tutor: false,
   kangur_social: false,
+  job_board: false,
   products: false,
+  integrations: false,
   case_resolver: false,
   agent_runtime: false,
   agent_teaching: false,
@@ -61,6 +66,7 @@ export const DEFAULT_BRAIN_OVERRIDES_ENABLED: Record<AiBrainFeature, boolean> = 
   runtime_analytics: true,
   system_logs: true,
   error_logs: true,
+  playwright: false,
 };
 
 export const getAllowedProvidersForFeature = (

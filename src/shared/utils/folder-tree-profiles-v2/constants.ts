@@ -1,14 +1,16 @@
+/* eslint-disable max-lines */
+
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import {
-  FolderTreePlaceholderPreset,
-  FolderTreePlaceholderStyle,
-  FolderTreePlaceholderEmphasis,
-  FolderTreeSelectionBehavior,
-  FolderTreeIconSlot,
-  FolderTreeInstance,
-  FolderTreeInstanceSettingsMeta,
-  FolderTreePersistFeedback,
+  type FolderTreePlaceholderPreset,
+  type FolderTreePlaceholderStyle,
+  type FolderTreePlaceholderEmphasis,
+  type FolderTreeSelectionBehavior,
+  type FolderTreeIconSlot,
+  type FolderTreeInstance,
+  type FolderTreeInstanceSettingsMeta,
+  type FolderTreePersistFeedback,
   folderTreeInstanceValues,
 } from './types';
 
@@ -60,6 +62,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     description: 'Controls the notes folder tree shown in the Notes workspace.',
     fileHint: 'Example: note',
     folderHint: 'Example: folder',
+  },
+  ai_paths: {
+    title: 'AI Paths',
+    description: 'Controls grouped path navigation and drag/drop behavior in AI Paths canvas.',
+    fileHint: 'Example: path',
+    folderHint: 'Example: path_group',
   },
   image_studio: {
     title: 'Image Studio',
@@ -147,6 +155,36 @@ export const folderTreeSettingsMetaByInstance: Record<
     folderHint:
       'Example: mail_attention, mail_new_account, mail_account, mail_account_compose, mail_account_sync, mail_account_status_toggle, mail_account_recent, mail_account_settings, mail_folder',
   },
+  filemaker_organizations: {
+    title: 'Filemaker Organizations',
+    description: 'Controls the organization master tree shown in Filemaker.',
+    fileHint: 'Example: filemaker_organization',
+    folderHint: 'Example: filemaker_organization_group',
+  },
+  filemaker_persons: {
+    title: 'Filemaker Persons',
+    description: 'Controls the person master tree shown in Filemaker.',
+    fileHint: 'Example: filemaker_person',
+    folderHint: 'Example: filemaker_person_group',
+  },
+  filemaker_events: {
+    title: 'Filemaker Events',
+    description: 'Controls the event master tree shown in Filemaker.',
+    fileHint: 'Example: filemaker_event',
+    folderHint: 'Not used (events render as flat entries).',
+  },
+  filemaker_invoices: {
+    title: 'Filemaker Invoices',
+    description: 'Controls the invoice master tree shown in Filemaker.',
+    fileHint: 'Example: filemaker_invoice',
+    folderHint: 'Not used (invoices render as flat entries).',
+  },
+  filemaker_values: {
+    title: 'Filemaker Values',
+    description: 'Controls the hierarchical value master tree shown in Filemaker.',
+    fileHint: 'Not used (values render as folder-type entries).',
+    folderHint: 'Example: filemaker_value',
+  },
   kangur_lessons_manager: {
     title: 'StudiQ Lessons Manager',
     description: 'Controls drag/drop ordering for StudiQ lessons in admin.',
@@ -189,6 +227,18 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: social-capture-slide',
     folderHint: 'Example: social-capture-section, social-capture-subsection',
   },
+  playwright_step_seq_constructor: {
+    title: 'Playwright Step Sequencer',
+    description: 'Controls action and step ordering in the Playwright Step Sequencer.',
+    fileHint: 'Example: playwright_action',
+    folderHint: 'Example: playwright_step',
+  },
+  playwright_step_seq_action_runs: {
+    title: 'Playwright Action Runs',
+    description: 'Controls the retained Step Sequencer action run history tree.',
+    fileHint: 'Example: playwright_action_run_step',
+    folderHint: 'Example: playwright_action_run',
+  },
 };
 
 export const folderTreePersistFeedbackByInstance: Record<
@@ -199,6 +249,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Folder tree updated.',
+  },
+  ai_paths: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'AI paths grouping updated.',
   },
   image_studio: {
     notifySuccess: false,
@@ -270,6 +325,31 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifyError: true,
     successMessage: 'Mail tree updated.',
   },
+  filemaker_organizations: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Organization tree updated.',
+  },
+  filemaker_persons: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Person tree updated.',
+  },
+  filemaker_events: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Event tree updated.',
+  },
+  filemaker_invoices: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Invoice tree updated.',
+  },
+  filemaker_values: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Values tree updated.',
+  },
   kangur_lessons_manager: {
     notifySuccess: false,
     notifyError: true,
@@ -304,6 +384,16 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: false,
     successMessage: 'Social capture browser updated.',
+  },
+  playwright_step_seq_constructor: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Step sequence updated.',
+  },
+  playwright_step_seq_action_runs: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Action run history tree updated.',
   },
 };
 

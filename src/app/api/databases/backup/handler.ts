@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
@@ -18,7 +18,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const backupTypeSchema = z.enum(['mongodb']);
 const isProductionRuntime = (): boolean => process.env['NODE_ENV'] === 'production';
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
 
   if (isProductionRuntime()) {

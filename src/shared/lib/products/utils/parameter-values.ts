@@ -51,12 +51,17 @@ export const mergeProductParameterValue = (
     parameterId: string;
     value: string;
     valuesByLanguage: Record<string, string>;
+    skipParameterInference?: boolean;
   }
 ): ResolvedProductParameterValue => {
+  const skipParameterInference =
+    existing?.skipParameterInference === true || incoming.skipParameterInference === true;
+
   if (Object.keys(incoming.valuesByLanguage).length === 0) {
     return {
       parameterId: incoming.parameterId,
       value: incoming.value,
+      ...(skipParameterInference ? { skipParameterInference: true } : {}),
     };
   }
 
@@ -71,5 +76,6 @@ export const mergeProductParameterValue = (
     parameterId: incoming.parameterId,
     value: resolveStoredParameterValue(mergedValuesByLanguage, scalarCandidate),
     valuesByLanguage: mergedValuesByLanguage,
+    ...(skipParameterInference ? { skipParameterInference: true } : {}),
   };
 };

@@ -2,11 +2,12 @@
 
 import React from 'react';
 
+import { isBrowserAutomationIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
   useIntegrationsData,
   useIntegrationsTesting,
 } from '@/features/integrations/context/IntegrationsContext';
-import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
+import { type TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SimpleSettingsList } from '@/shared/ui/templates.public';
@@ -18,14 +19,12 @@ export function ConnectionTestLog(): React.JSX.Element | null {
   if (!activeIntegration) return null;
 
   const integrationSlug = activeIntegration.slug;
-  const isTradera = integrationSlug === 'tradera';
-  const isTraderaApi = integrationSlug === 'tradera-api';
-  const showPlaywright = isTradera && !isTraderaApi;
+  const showPlaywright = isBrowserAutomationIntegrationSlug(integrationSlug);
 
   if (!showPlaywright) return null;
 
   return (
-    <FormSection title='Playwright live update' variant='subtle-compact' className='mt-4 p-3'>
+    <FormSection title='Browser live update' variant='subtle-compact' className='mt-4 p-3'>
       <div className='flex items-center justify-between'>
         <span className='text-xs text-gray-500'>{isTesting ? 'Running...' : 'Idle'}</span>
       </div>

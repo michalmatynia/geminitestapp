@@ -27,6 +27,18 @@ export const ensureMailIndexes = async (): Promise<void> => {
   await Promise.all([
     mongo.collection<FilemakerMailAccountDocument>(MAIL_ACCOUNTS_COLLECTION).createIndex({ emailAddress: 1 }),
     mongo.collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION).createIndex({ accountId: 1, lastMessageAt: -1 }),
+    mongo.collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION).createIndex(
+      { accountId: 1, normalizedSubject: 1, anchorAddress: 1 },
+      { sparse: true }
+    ),
+    mongo.collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION).createIndex(
+      { accountId: 1, providerThreadId: 1 },
+      { sparse: true }
+    ),
+    mongo.collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION).createIndex(
+      { 'campaignContext.campaignId': 1, 'campaignContext.runId': 1, 'campaignContext.deliveryId': 1 },
+      { sparse: true }
+    ),
     mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex({ threadId: 1, sentAt: 1, receivedAt: 1 }),
     mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex(
       { accountId: 1, providerMessageId: 1 },
@@ -34,6 +46,10 @@ export const ensureMailIndexes = async (): Promise<void> => {
     ),
     mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex(
       { accountId: 1, mailboxPath: 1, providerUid: 1 },
+      { sparse: true }
+    ),
+    mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex(
+      { 'campaignContext.campaignId': 1, 'campaignContext.runId': 1, 'campaignContext.deliveryId': 1 },
       { sparse: true }
     ),
     mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex(
@@ -83,7 +99,7 @@ export const getMailSyncState = async (accountId: string, mailboxPath: string): 
 export const upsertMailSyncState = async (state: FilemakerMailFolderSyncState): Promise<void> => {
   const mongo = await getMongoDb();
   await mongo.collection<FilemakerMailSyncStateDocument>(MAIL_SYNC_STATES_COLLECTION).updateOne(
-    { id: state.id },
+    { accountId: state.accountId, mailboxPath: state.mailboxPath },
     { $set: state },
     { upsert: true }
   );
@@ -113,6 +129,39 @@ export const findMailThreadBySubjectAndAnchor = async (accountId: string, normal
   return await mongo.collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION).findOne({ accountId, normalizedSubject, anchorAddress });
 };
 
+export const findMailThreadByReferences = async (
+  accountId: string,
+  references: string[]
+): Promise<FilemakerMailThread | null> => {
+  const trimmed = references
+    .map((entry: string): string => entry.trim())
+    .filter((entry: string): boolean => entry.length > 0);
+  if (trimmed.length === 0) return null;
+  const mongo = await getMongoDb();
+  const message = await mongo
+    .collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION)
+    .findOne({ accountId, providerMessageId: { $in: trimmed } });
+  if (!message) return null;
+  return await mongo
+    .collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION)
+    .findOne({ id: message.threadId });
+};
+
+export const findMailMessagesByProviderIds = async (
+  accountId: string,
+  providerMessageIds: string[]
+): Promise<FilemakerMailMessage[]> => {
+  const trimmed = providerMessageIds
+    .map((entry: string): string => entry.trim())
+    .filter((entry: string): boolean => entry.length > 0);
+  if (trimmed.length === 0) return [];
+  const mongo = await getMongoDb();
+  return await mongo
+    .collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION)
+    .find({ accountId, providerMessageId: { $in: trimmed } })
+    .toArray();
+};
+
 export const upsertMailMessage = async (message: FilemakerMailMessage): Promise<void> => {
   const mongo = await getMongoDb();
   await mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).updateOne(
@@ -130,6 +179,16 @@ export const getMailMessageByProviderId = async (accountId: string, providerMess
 export const getMailMessageByUid = async (accountId: string, mailboxPath: string, providerUid: number): Promise<FilemakerMailMessage | null> => {
   const mongo = await getMongoDb();
   return await mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).findOne({ accountId, mailboxPath, providerUid });
+};
+
+export const countMailMessagesForMailbox = async (
+  accountId: string,
+  mailboxPath: string
+): Promise<number> => {
+  const mongo = await getMongoDb();
+  return await mongo
+    .collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION)
+    .countDocuments({ accountId, mailboxPath });
 };
 
 export const listMailMessagesByThreadId = async (threadId: string): Promise<FilemakerMailMessage[]> => {
@@ -156,7 +215,9 @@ export const searchMailMessages = async (input: {
 }): Promise<FilemakerMailMessage[]> => {
   const mongo = await getMongoDb();
   const filter: Record<string, unknown> = {};
-  if (input.accountId) filter['accountId'] = input.accountId;
+  if (input.accountId !== undefined && input.accountId !== null && input.accountId.length > 0) {
+    filter['accountId'] = input.accountId;
+  }
 
   const escapedQuery = input.query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   filter['$or'] = [

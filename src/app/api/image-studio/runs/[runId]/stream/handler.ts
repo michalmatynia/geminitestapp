@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 
 import { getImageStudioRunById } from '@/features/ai/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -28,7 +28,7 @@ const createSubscriber = (): Redis | null => {
   });
 };
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }

@@ -14,6 +14,8 @@ import {
 import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
+import { safeSetTimeout } from '@/shared/lib/timers';
+
 import { createAgenticCodingMiniGameComponent } from './AgenticCodingMiniGames.factory';
 import type { SequenceGameConfig } from './AgenticCodingMiniGames.types';
 
@@ -38,7 +40,7 @@ function useAgenticSequenceGameModel(config: SequenceGameConfig) {
     }
     const id = `step-${index}`;
     setErrorId(id);
-    setTimeout(() => setErrorId((current) => (current === id ? null : current)), 600);
+    safeSetTimeout(() => setErrorId((current) => (current === id ? null : current)), 600);
   };
 
   return {

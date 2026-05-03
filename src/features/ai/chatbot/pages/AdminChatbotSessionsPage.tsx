@@ -57,7 +57,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               table.getIsAllPageRowsSelected() ||
               (table.getIsSomePageRowsSelected() && 'indeterminate')
             }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(Boolean(value))}
             aria-label='Select all'
           />
         ),
@@ -88,13 +88,15 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                   ref={(node) => {
                     node?.focus();
                   }}
-                 aria-label='Input field' title='Input field'/>
+                  aria-label='Session title'
+                  title='Session title'
+                />
               ) : (
                 <span className='font-medium text-white'>
                   {session.title || `Session ${session.id.slice(0, 6)}`}
                 </span>
               )}
-              <span className='text-[10px] text-gray-500'>
+              <span className='text-[10px] text-muted-foreground'>
                 Updated{' '}
                 {session.lastMessageAt ? new Date(session.lastMessageAt).toLocaleString() : 'Never'}
               </span>
@@ -106,7 +108,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         accessorKey: 'id',
         header: 'ID',
         cell: ({ row }: { row: { original: ChatbotSessionListItem } }) => (
-          <span className='font-mono text-[10px] text-gray-500'>{row.original.id}</span>
+          <span className='font-mono text-[10px] text-muted-foreground'>{row.original.id}</span>
         ),
       },
       {
@@ -251,7 +253,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       />
 
       <ConfirmModal
-        isOpen={!!sessionToDelete}
+        isOpen={Boolean(sessionToDelete)}
         onClose={() => setSessionToDelete(null)}
         onConfirm={() => {
           if (sessionToDelete) void deleteSession(sessionToDelete);

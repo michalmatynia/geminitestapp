@@ -7,6 +7,8 @@ describe('collection allowlist', () => {
     expect(isCollectionAllowed('Product')).toBe(false);
     expect(isCollectionAllowed('product')).toBe(false);
     expect(isCollectionAllowed('products')).toBe(true);
+    expect(isCollectionAllowed('filemaker_cvs')).toBe(true);
+    expect(isCollectionAllowed('filemaker_job_applications')).toBe(true);
     expect(isCollectionAllowed('noteFiles')).toBe(true);
   });
 });

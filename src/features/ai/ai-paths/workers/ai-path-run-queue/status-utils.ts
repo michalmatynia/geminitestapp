@@ -1,4 +1,4 @@
-import { getRuntimeAnalyticsSummary } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import { type getRuntimeAnalyticsSummary } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import type { AiPathRunVisibility } from '@/shared/contracts/ai-paths';
 import {
   type AiPathRunQueueBaseStatus,
@@ -6,8 +6,8 @@ import {
 } from '@/shared/contracts/ai-paths-runtime';
 
 import { computeAiPathRunQueueSlo } from '../ai-path-run-queue-slo';
-import { GetAiPathRunQueueStatusOptions } from './status';
-import { AiInsightsQueueStatus } from './types';
+import { type GetAiPathRunQueueStatusOptions } from './status';
+import { type AiInsightsQueueStatus } from './types';
 
 const EMPTY_AI_INSIGHTS_QUEUE_STATUS: AiInsightsQueueStatus = {
   running: false,
@@ -64,8 +64,7 @@ export const finalizeAiPathRunQueueStatus = (
   const terminalRuns24h = runtimeAnalyticsSummary
     ? runtimeAnalyticsSummary.runs.completed +
       runtimeAnalyticsSummary.runs.failed +
-      runtimeAnalyticsSummary.runs.canceled +
-      runtimeAnalyticsSummary.runs.deadLettered
+      runtimeAnalyticsSummary.runs.canceled
     : 0;
   const brainTotalReports24h = brainAnalytics24h.totalReports;
   const brainErrorRate24h =
@@ -78,7 +77,7 @@ export const finalizeAiPathRunQueueStatus = (
     queueLagMs: baseStatus.queueLagMs,
     successRate24h: runtimeAnalyticsSummary?.runs.successRate ?? 0,
     terminalRuns24h,
-    deadLetterRate24h: runtimeAnalyticsSummary?.runs.deadLetterRate ?? 0,
+    failureRate24h: runtimeAnalyticsSummary?.runs.failureRate ?? 0,
     brainErrorRate24h,
     brainTotalReports24h,
   });

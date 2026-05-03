@@ -3,8 +3,8 @@
 import { motion, type MotionStyle, type TargetAndTransition, type Transition } from 'framer-motion';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { type useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
+import { type useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 
 import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
 
@@ -79,14 +79,22 @@ type KangurAiTutorPanelFrameResolvedProps = {
   testId: string;
 };
 
+// toDataBoolean converts a boolean to a 'true'/'false' string for use as a
+// data attribute value (data-* attributes must be strings).
 const toDataBoolean = (value: boolean): 'true' | 'false' => (value ? 'true' : 'false');
 
+// resolvePanelFrameKey returns a stable React key for the panel frame.
+// The key changes between ask-modal and chat-panel modes so React remounts
+// the panel when the mode switches, resetting animation state.
 const resolvePanelFrameKey = (isAskModalMode: boolean): string =>
   isAskModalMode ? 'ask-modal' : 'chat-panel';
 
 const resolvePanelFrameTestId = (isAskModalMode: boolean): string =>
   isAskModalMode ? 'kangur-ai-tutor-ask-modal' : 'kangur-ai-tutor-panel';
 
+// resolvePanelFrameLayout maps the bubble mode and ask-modal flag to the
+// three layout variants: modal (ask-modal overlay), bubble (floating panel),
+// sheet (bottom-anchored panel).
 const resolvePanelFrameLayout = ({
   bubbleMode,
   isAskModalMode,
@@ -484,6 +492,14 @@ const renderAttachedAvatarNode = (props: {
     />
   ) : null;
 
+// KangurAiTutorRenderedPanel is the animated outer frame of the AI Tutor
+// panel. It owns:
+//  - Framer Motion animation (entry direction, open animation, reduced motion)
+//  - Panel layout variant (modal / bubble / sheet) and ARIA role
+//  - Backdrop overlay for modal mode
+//  - Attached avatar button (shown when the panel is anchored to a section)
+//  - Bubble pointer/tail rendered when the panel is in bubble mode
+//  - Drag state data attributes consumed by CSS and test selectors
 export function KangurAiTutorRenderedPanel(props: KangurAiTutorRenderedPanelProps): JSX.Element {
   const {
     attachedAvatarStyle,

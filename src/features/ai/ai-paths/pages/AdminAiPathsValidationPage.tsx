@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import { LoadingState, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';

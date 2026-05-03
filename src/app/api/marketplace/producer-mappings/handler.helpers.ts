@@ -1,16 +1,15 @@
-import { z } from 'zod';
-
 import type { ProducerMapping, ProducerMappingCreateInput } from '@/shared/contracts/integrations/producers';
 import { badRequestError } from '@/shared/errors/app-error';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
-const marketplaceProducerMappingsQuerySchema = z.object({
-  connectionId: optionalTrimmedQueryString(),
-});
-
-export type MarketplaceProducerMappingsListQuery = {
-  connectionId: string;
-};
+import {
+  connectionIdQuerySchema,
+  type ConnectionIdQuery,
+} from '@/shared/validations/product-metadata-api-schemas';
+import {
+  type MarketplaceMappingSaveResult,
+  type MarketplaceMappingSaveRepository,
+  saveMarketplaceMapping,
+} from '../marketplace-api.types';
 
 export type ProducerMappingCreateFields = {
   connectionId: string;
@@ -18,39 +17,35 @@ export type ProducerMappingCreateFields = {
   internalProducerId: string;
 };
 
-export type ProducerMappingSaveRepository = {
+export type ProducerMappingUpdateFields = {
+  externalProducerId: string;
+  isActive: true;
+};
+
+export type ProducerMappingSaveRepository = MarketplaceMappingSaveRepository<
+  ProducerMapping,
+  ProducerMappingCreateFields,
+  ProducerMappingUpdateFields
+> & {
   getByInternalProducer: (
     connectionId: string,
     internalProducerId: string
   ) => Promise<ProducerMapping | null>;
-  update: (
-    id: string,
-    input: { externalProducerId: string; isActive: true }
-  ) => Promise<ProducerMapping>;
-  create: (input: ProducerMappingCreateFields) => Promise<ProducerMapping>;
 };
 
-export type ProducerMappingSaveResult = {
-  body: ProducerMapping;
-  status: 200 | 201;
-};
+export type ProducerMappingSaveResult = MarketplaceMappingSaveResult<ProducerMapping>;
 
 export const parseMarketplaceProducerMappingsQuery = (
   rawQuery: unknown
-): MarketplaceProducerMappingsListQuery => {
-  const query = marketplaceProducerMappingsQuerySchema.safeParse(rawQuery);
+): ConnectionIdQuery => {
+  const query = connectionIdQuerySchema.safeParse(rawQuery);
   if (!query.success) {
     throw badRequestError('Invalid marketplace producer mappings query.', {
       errors: query.error.flatten(),
     });
   }
 
-  const { connectionId } = query.data;
-  if (!connectionId) {
-    throw badRequestError('connectionId is required');
-  }
-
-  return { connectionId };
+  return query.data;
 };
 
 export const requireProducerMappingCreateFields = (
@@ -72,16 +67,10 @@ export const requireProducerMappingCreateFields = (
 export const saveProducerMapping = async (
   repo: ProducerMappingSaveRepository,
   input: ProducerMappingCreateFields
-): Promise<ProducerMappingSaveResult> => {
-  const existing = await repo.getByInternalProducer(input.connectionId, input.internalProducerId);
-  if (existing) {
-    const updated = await repo.update(existing.id, {
-      externalProducerId: input.externalProducerId,
-      isActive: true,
-    });
-    return { body: updated, status: 200 };
-  }
-
-  const mapping = await repo.create(input);
-  return { body: mapping, status: 201 };
-};
+): Promise<ProducerMappingSaveResult> =>
+  saveMarketplaceMapping(
+    repo,
+    () => repo.getByInternalProducer(input.connectionId, input.internalProducerId),
+    input,
+    { externalProducerId: input.externalProducerId, isActive: true }
+  );

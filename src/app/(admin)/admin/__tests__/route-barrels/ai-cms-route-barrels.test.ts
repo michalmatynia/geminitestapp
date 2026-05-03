@@ -5,7 +5,6 @@ const adminAiRouteImports = [
   '@/app/(admin)/admin/ai-paths/queue/page',
   '@/app/(admin)/admin/ai-paths/trigger-buttons/page',
   '@/app/(admin)/admin/ai-paths/validation/page',
-  '@/app/(admin)/admin/ai-paths/dead-letter/page',
   '@/app/(admin)/admin/ai-insights/page',
   '@/app/(admin)/admin/agentcreator/runs/page',
   '@/app/(admin)/admin/agentcreator/personas/page',

@@ -210,6 +210,27 @@ const buildLiveCaptureProgressMessage = (params: {
   return `Playwright capture in progress: ${params.completedCount} captured, ${params.remainingCount} left of ${params.totalCount} ${totalLabel}.${failureMessage}`;
 };
 
+const processContextLoading = async (
+  normalizedDocReferences: string[],
+  publishProgress: (step: KangurSocialManualPipelineProgressStep, updates?: any) => Promise<void>
+) => {
+  await publishProgress('loading_context', {
+    message: 'Loading documentation context...',
+  });
+  const docs = resolveKangurDocReferences(normalizedDocReferences);
+  const context = docs.length > 0 ? await buildKangurDocContext(docs) : { summary: '', context: '' };
+  const contextSummary = context.summary.trim() || null;
+  await publishProgress('loading_context', {
+    message:
+      docs.length > 0
+        ? `Loaded ${docs.length} documentation reference${docs.length === 1 ? '' : 's'}.`
+        : 'No documentation references selected.',
+    contextDocCount: docs.length,
+    contextSummary,
+  });
+  return { docs, contextSummary };
+};
+
 export async function runKangurSocialPostPipeline(
   input: RunKangurSocialPostPipelineInput,
   options?: RunKangurSocialPostPipelineOptions
@@ -271,21 +292,7 @@ export async function runKangurSocialPostPipeline(
     });
   };
 
-  await publishProgress('loading_context', {
-    message: 'Loading documentation context...',
-  });
-  const docs = resolveKangurDocReferences(normalizedDocReferences);
-  const context =
-    docs.length > 0 ? await buildKangurDocContext(docs) : { summary: '', context: '' };
-  const contextSummary = context.summary.trim() || null;
-  await publishProgress('loading_context', {
-    message:
-      docs.length > 0
-        ? `Loaded ${docs.length} documentation reference${docs.length === 1 ? '' : 's'}.`
-        : 'No documentation references selected.',
-    contextDocCount: docs.length,
-    contextSummary,
-  });
+  const { docs, contextSummary } = await processContextLoading(normalizedDocReferences, publishProgress);
   const existingPost = await getKangurSocialPostById(postId);
 
   if (!existingPost) {
@@ -296,6 +303,8 @@ export async function runKangurSocialPostPipeline(
     : 'draft';
 
   try {
+    // ... rest of logic
+
     let batchCaptureResult: KangurSocialImageAddonsBatchResult | null = null;
     let mergedImageAddonIds = input.imageAddonIds.slice(0, MAX_IMAGE_ADDON_IDS);
     let mergedImageAssets = input.imageAssets.slice(0, MAX_IMAGE_ASSETS);

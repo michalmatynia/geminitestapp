@@ -2,18 +2,22 @@ import 'server-only';
 
 import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { renderCmsPage } from '@/app/(frontend)/cms/render';
 import {
   buildSlugMetadata,
+  loadPublishedSlugRenderDataCached,
   loadSlugRenderData,
+  resolvePublishedSlugToPageCached,
   resolveSlugToPage,
 } from '@/app/(frontend)/cms/slug-page-data';
 import { resolveFrontPageSelection } from '@/app/(frontend)/home/home-helpers';
-import { getKangurPublicLaunchHref } from '@/features/kangur/public';
+import { resolveCmsDomainFromHeaders } from '@/features/cms/server';
+import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
 import { getKangurConfiguredLaunchRoute, requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
 import type { Metadata } from 'next';
 
@@ -38,28 +42,35 @@ const resolveSlugLocale = (locale?: string | null): string | undefined =>
   typeof locale === 'string' ? normalizeSiteLocale(locale) : undefined;
 
 const localizeSlugPath = (pathname: string, locale?: string): string =>
-  locale ? buildLocalizedPathname(pathname, locale) : pathname;
+  (typeof locale === 'string' && locale !== '') ? buildLocalizedPathname(pathname, locale) : pathname;
 
 export const generateCmsSlugRouteMetadata = async ({
   locale,
   slug,
 }: CmsSlugMetadataOptions): Promise<Metadata> => {
   const resolvedLocale = resolveSlugLocale(locale);
-  const routeTranslations = resolvedLocale
+  const hasLocale = typeof resolvedLocale === 'string' && resolvedLocale !== '';
+  const routeTranslations = hasLocale
     ? await getTranslations({ locale: resolvedLocale, namespace: 'Routes' })
     : await getTranslations('Routes');
 
   if (await isKangurFrontPageSelected()) {
+    const isLogin = slug[0]?.trim().toLowerCase() === 'login';
     return {
-      title:
-        slug[0]?.trim().toLowerCase() === 'login'
-          ? routeTranslations('loginTitle')
-          : routeTranslations('siteTitle'),
+      title: isLogin ? routeTranslations('loginTitle') : routeTranslations('siteTitle'),
     };
   }
 
-  const page = await resolveSlugToPage(slug, resolvedLocale ? { locale: resolvedLocale } : undefined);
-  if (!page) {
+  const domain = await resolveCmsDomainFromHeaders(await readOptionalRequestHeaders());
+  const page =
+    (await resolvePublishedSlugToPageCached(domain.id, slug, {
+      locale: resolvedLocale,
+    })) ??
+    (await resolveSlugToPage(slug, {
+      locale: resolvedLocale,
+      domainId: domain.id,
+    }));
+  if (page === null) {
     return { title: routeTranslations('pageNotFoundTitle') };
   }
 
@@ -86,14 +97,28 @@ export const renderCmsSlugRoute = async ({
     );
   }
 
-  const page = await resolveSlugToPage(slug, resolvedLocale ? { locale: resolvedLocale } : undefined);
-  if (!page) {
+  const domain = await resolveCmsDomainFromHeaders(await readOptionalRequestHeaders());
+  const page =
+    (await resolvePublishedSlugToPageCached(domain.id, slug, {
+      locale: resolvedLocale,
+    })) ??
+    (await resolveSlugToPage(slug, {
+      locale: resolvedLocale,
+      domainId: domain.id,
+    }));
+  if (page === null) {
     notFound();
   }
 
-  const renderData = await loadSlugRenderData(
-    page,
-    resolvedLocale ? { locale: resolvedLocale } : undefined
-  );
+  const renderData =
+    (page.status === 'published'
+      ? await loadPublishedSlugRenderDataCached(page.id, domain.id, {
+          locale: resolvedLocale,
+        })
+      : null) ??
+    (await loadSlugRenderData(page, {
+      locale: resolvedLocale,
+      domainId: domain.id,
+    }));
   return renderCmsPage(renderData);
 };

@@ -32,9 +32,9 @@ const KangurMobileI18nContext = createContext<KangurMobileI18nContextValue>(
 export const normalizeKangurMobileLocale = (
   value: string | null | undefined,
 ): KangurMobileLocale => {
-  const normalized = value?.trim().toLowerCase();
+  const normalized = value?.trim().toLowerCase() ?? '';
 
-  if (!normalized) {
+  if (normalized === '') {
     return 'pl';
   }
 
@@ -76,9 +76,9 @@ export function KangurMobileI18nProvider({
   locale?: string | null;
 }>): React.JSX.Element {
   const [resolvedLocale] = useState<KangurMobileLocale>(() => {
-    const explicitLocale = locale?.trim();
+    const explicitLocale = locale?.trim() ?? '';
 
-    if (explicitLocale) {
+    if (explicitLocale !== '') {
       return normalizeKangurMobileLocale(explicitLocale);
     }
 
@@ -97,8 +97,10 @@ export function KangurMobileI18nProvider({
   );
 }
 
+export type KangurMobileCopy = <T>(value: KangurMobileLocalizedValue<T>) => T;
+
 export const useKangurMobileI18n = (): KangurMobileI18nContextValue & {
-  copy: <T>(value: KangurMobileLocalizedValue<T>) => T;
+  copy: KangurMobileCopy;
 } => {
   const context = useContext(KangurMobileI18nContext);
 

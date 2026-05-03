@@ -5,14 +5,16 @@ import {
   KangurPanelRow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurGameOperationRecommendationCardProps } from './KangurGameOperationSelectorWidget.types';
+import { useKangurGameOperationSelector } from './KangurGameOperationSelectorContext';
 
-export function KangurGameOperationRecommendationCard({
-  compactActionClassName,
-  onRecommendationSelect,
-  recommendation,
-  showMathSections,
-}: KangurGameOperationRecommendationCardProps): React.JSX.Element | null {
+export function KangurGameOperationRecommendationCard(): React.JSX.Element | null {
+  const {
+    compactActionClassName,
+    handleRecommendationSelect: onRecommendationSelect,
+    recommendation,
+    showMathSections,
+  } = useKangurGameOperationSelector();
+
   if (!showMathSections || !recommendation) {
     return null;
   }

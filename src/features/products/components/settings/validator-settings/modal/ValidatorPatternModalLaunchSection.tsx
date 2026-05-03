@@ -22,12 +22,177 @@ import {
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
 
-export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
-  const { formData, setFormData, sourceFieldOptions } = useValidatorSettingsContext();
+function LaunchScopeFields(): React.JSX.Element {
+  const { formData, setFormData } = useValidatorSettingsContext();
+
+  return (
+    <>
+      <FormField label='Launch In Forms' description='Context gate for this launch node (Draft/Create/Edit).'>
+        <ValidatorDocTooltip docId='validator.modal.launch.config'>
+          <MultiSelect
+            options={PATTERN_SCOPE_OPTIONS}
+            selected={normalizeProductValidationPatternLaunchScopes(
+              formData.launchAppliesToScopes
+            )}
+            onChange={(values: string[]): void =>
+              setFormData((prev: PatternFormData) => ({
+                ...prev,
+                launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(values),
+              }))
+            }
+            placeholder='Follow pattern scopes'
+            searchPlaceholder='Search launch scope...'
+            emptyMessage='No form scopes found.'
+          />
+        </ValidatorDocTooltip>
+      </FormField>
+      <FormField
+        label='Launch Scope Behavior'
+        description='`Gate` blocks pattern outside selected forms. `Condition Only` skips condition outside selected forms.'
+      >
+        <SelectSimple
+          size='sm'
+          value={formData.launchScopeBehavior}
+          onValueChange={(value: string): void =>
+            setFormData((prev: PatternFormData) => ({
+              ...prev,
+              launchScopeBehavior: value === 'condition_only' ? 'condition_only' : 'gate',
+            }))
+          }
+          options={LAUNCH_SCOPE_BEHAVIOR_OPTIONS}
+          ariaLabel='Launch Scope Behavior'
+          title='Launch Scope Behavior'
+        />
+      </FormField>
+    </>
+  );
+}
+
+function LaunchConditionGrid(): React.JSX.Element {
+  const { formData, setFormData } = useValidatorSettingsContext();
+
+  return (
+    <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+      <FormField label='Launch Source Mode'>
+        <SelectSimple
+          size='sm'
+          value={formData.launchSourceMode}
+          onValueChange={(value: string): void =>
+            setFormData((prev: PatternFormData) => ({
+              ...prev,
+              launchSourceMode: value as DynamicReplacementSourceMode,
+            }))
+          }
+          options={SOURCE_MODE_OPTIONS}
+          ariaLabel='Launch Source Mode'
+          title='Launch Source Mode'
+        />
+      </FormField>
+      <FormField label='Launch Operator'>
+        <SelectSimple
+          size='sm'
+          value={formData.launchOperator}
+          onValueChange={(value: string): void =>
+            setFormData((prev: PatternFormData) => ({
+              ...prev,
+              launchOperator: value as ProductValidationLaunchOperator,
+            }))
+          }
+          options={LAUNCH_OPERATOR_OPTIONS}
+          ariaLabel='Launch Operator'
+          title='Launch Operator'
+        />
+      </FormField>
+      <FormField label='Launch Value'>
+        <Input
+          className='h-9 font-mono'
+          value={formData.launchValue}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+            setFormData((prev: PatternFormData) => ({
+              ...prev,
+              launchValue: event.target.value,
+            }))
+          }
+          placeholder='KEYCHA000'
+          aria-label='KEYCHA000'
+          title='KEYCHA000'
+        />
+      </FormField>
+    </div>
+  );
+}
+
+function LaunchSourceField({
+  sourceFieldSelectOptions,
+}: {
+  sourceFieldSelectOptions: typeof SOURCE_FIELD_PLACEHOLDER_OPTION[];
+}): React.JSX.Element | null {
+  const { formData, setFormData } = useValidatorSettingsContext();
+  const canSelectSourceField =
+    formData.launchSourceMode === 'form_field' ||
+    formData.launchSourceMode === 'latest_product_field';
+  if (canSelectSourceField === false) return null;
+
+  return (
+    <FormField label='Launch Source Field'>
+      <SelectSimple
+        size='sm'
+        value={formData.launchSourceField !== '' ? formData.launchSourceField : '__none__'}
+        onValueChange={(value: string): void =>
+          setFormData((prev: PatternFormData) => ({
+            ...prev,
+            launchSourceField: value === '__none__' ? '' : value,
+          }))
+        }
+        options={sourceFieldSelectOptions}
+        ariaLabel='Launch Source Field'
+        title='Launch Source Field'
+      />
+    </FormField>
+  );
+}
+
+function LaunchFlagsField(): React.JSX.Element {
+  const { formData, setFormData } = useValidatorSettingsContext();
+
+  return (
+    <FormField label='Launch Flags (regex only)'>
+      <Input
+        className='h-9 font-mono'
+        value={formData.launchFlags}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+          setFormData((prev: PatternFormData) => ({
+            ...prev,
+            launchFlags: event.target.value,
+          }))
+        }
+        placeholder='i'
+        aria-label='i'
+        title='i'
+      />
+    </FormField>
+  );
+}
+
+function LaunchEnabledFields(): React.JSX.Element {
+  const { sourceFieldOptions } = useValidatorSettingsContext();
   const sourceFieldSelectOptions = React.useMemo(
     () => [SOURCE_FIELD_PLACEHOLDER_OPTION, ...sourceFieldOptions],
     [sourceFieldOptions]
   );
+
+  return (
+    <div className='mt-4 space-y-4'>
+      <LaunchScopeFields />
+      <LaunchConditionGrid />
+      <LaunchSourceField sourceFieldSelectOptions={sourceFieldSelectOptions} />
+      <LaunchFlagsField />
+    </div>
+  );
+}
+
+export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
+  const { formData, setFormData } = useValidatorSettingsContext();
 
   return (
     <FormSection
@@ -49,122 +214,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
         </ValidatorDocTooltip>
       }
     >
-      {formData.launchEnabled && (
-        <div className='mt-4 space-y-4'>
-          <FormField
-            label='Launch In Forms'
-            description='Context gate for this launch node (Draft/Create/Edit).'
-          >
-            <ValidatorDocTooltip docId='validator.modal.launch.config'>
-              <MultiSelect
-                options={PATTERN_SCOPE_OPTIONS}
-                selected={normalizeProductValidationPatternLaunchScopes(
-                  formData.launchAppliesToScopes
-                )}
-                onChange={(values: string[]) =>
-                  setFormData((prev: PatternFormData) => ({
-                    ...prev,
-                    launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(values),
-                  }))
-                }
-                placeholder='Follow pattern scopes'
-                searchPlaceholder='Search launch scope...'
-                emptyMessage='No form scopes found.'
-              />
-            </ValidatorDocTooltip>
-          </FormField>
-
-          <FormField
-            label='Launch Scope Behavior'
-            description='`Gate` blocks pattern outside selected forms. `Condition Only` skips condition outside selected forms.'
-          >
-            <SelectSimple
-              size='sm'
-              value={formData.launchScopeBehavior}
-              onValueChange={(value: string): void =>
-                setFormData((prev: PatternFormData) => ({
-                  ...prev,
-                  launchScopeBehavior: value === 'condition_only' ? 'condition_only' : 'gate',
-                }))
-              }
-              options={LAUNCH_SCOPE_BEHAVIOR_OPTIONS}
-             ariaLabel='Launch Scope Behavior' title='Launch Scope Behavior'/>
-          </FormField>
-
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-            <FormField label='Launch Source Mode'>
-              <SelectSimple
-                size='sm'
-                value={formData.launchSourceMode}
-                onValueChange={(value: string): void =>
-                  setFormData((prev: PatternFormData) => ({
-                    ...prev,
-                    launchSourceMode: value as DynamicReplacementSourceMode,
-                  }))
-                }
-                options={SOURCE_MODE_OPTIONS}
-               ariaLabel='Launch Source Mode' title='Launch Source Mode'/>
-            </FormField>
-            <FormField label='Launch Operator'>
-              <SelectSimple
-                size='sm'
-                value={formData.launchOperator}
-                onValueChange={(value: string): void =>
-                  setFormData((prev: PatternFormData) => ({
-                    ...prev,
-                    launchOperator: value as ProductValidationLaunchOperator,
-                  }))
-                }
-                options={LAUNCH_OPERATOR_OPTIONS}
-               ariaLabel='Launch Operator' title='Launch Operator'/>
-            </FormField>
-            <FormField label='Launch Value'>
-              <Input
-                className='h-9 font-mono'
-                value={formData.launchValue}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFormData((prev: PatternFormData) => ({
-                    ...prev,
-                    launchValue: event.target.value,
-                  }))
-                }
-                placeholder='KEYCHA000'
-               aria-label='KEYCHA000' title='KEYCHA000'/>
-            </FormField>
-          </div>
-
-          {(formData.launchSourceMode === 'form_field' ||
-            formData.launchSourceMode === 'latest_product_field') && (
-            <FormField label='Launch Source Field'>
-              <SelectSimple
-                size='sm'
-                value={formData.launchSourceField || '__none__'}
-                onValueChange={(value: string): void =>
-                  setFormData((prev: PatternFormData) => ({
-                    ...prev,
-                    launchSourceField: value === '__none__' ? '' : value,
-                  }))
-                }
-                options={sourceFieldSelectOptions}
-               ariaLabel='Launch Source Field' title='Launch Source Field'/>
-            </FormField>
-          )}
-
-          <FormField label='Launch Flags (regex only)'>
-            <Input
-              className='h-9 font-mono'
-              value={formData.launchFlags}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setFormData((prev: PatternFormData) => ({
-                  ...prev,
-                  launchFlags: event.target.value,
-                }))
-              }
-              placeholder='i'
-             aria-label='i' title='i'/>
-          </FormField>
-        </div>
-      )}
+      {formData.launchEnabled && <LaunchEnabledFields />}
     </FormSection>
   );
 }

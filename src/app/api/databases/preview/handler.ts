@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
@@ -73,7 +73,7 @@ export async function postDatabasesPreviewHandler(
       await mongoExecFileAsync(getMongoRestoreCommand(), [
         '--uri',
         mongoUri,
-        '--archive=' + backupPath,
+        `--archive=${  backupPath}`,
         '--gzip',
         '--nsFrom',
         `${sourceDbName}.*`,

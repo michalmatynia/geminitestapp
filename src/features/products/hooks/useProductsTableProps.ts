@@ -1,5 +1,8 @@
 'use client';
 
+// useProductsTableProps: adapter hook that exposes the product list context in a
+// shape consumable by the table component. Provides stable memoized props to
+// prevent unnecessary table re-renders when unrelated list state changes.
 import { useMemo } from 'react';
 
 import { useProductListTableContext } from '@/features/products/context/ProductListContext';

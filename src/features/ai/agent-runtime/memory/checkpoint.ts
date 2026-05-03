@@ -1,44 +1,25 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import type {
-  AgentCheckpoint,
-  AgentPlanPreferences,
-  AgentPlanSettings,
-  PlanStep,
-  PlannerMeta,
+import {
+  type AgentCheckpoint,
+  agentCheckpointSchema,
+  type AgentPlanPreferences,
+  type AgentPlanSettings,
+  type PlanStep,
+  type PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { InputJsonValue } from '@/shared/contracts/json';
 import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 
 export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
-  if (!payload || typeof payload !== 'object') return null;
-  const raw = payload as Partial<AgentCheckpoint>;
-  if (!Array.isArray(raw.steps)) return null;
-  return {
-    steps: raw.steps,
-    activeStepId: raw.activeStepId ?? null,
-    lastError: raw.lastError ?? null,
-    taskType: raw.taskType ?? null,
-    resumeRequestedAt: raw.resumeRequestedAt ?? null,
-    resumeProcessedAt: raw.resumeProcessedAt ?? null,
-    approvalRequestedStepId:
-      typeof raw.approvalRequestedStepId === 'string' ? raw.approvalRequestedStepId : null,
-    approvalGrantedStepId:
-      typeof raw.approvalGrantedStepId === 'string' ? raw.approvalGrantedStepId : null,
-    checkpointBrief: typeof raw.checkpointBrief === 'string' ? raw.checkpointBrief : null,
-    checkpointNextActions: Array.isArray(raw.checkpointNextActions)
-      ? raw.checkpointNextActions
-      : null,
-    checkpointRisks: Array.isArray(raw.checkpointRisks) ? raw.checkpointRisks : null,
-    checkpointStepId: typeof raw.checkpointStepId === 'string' ? raw.checkpointStepId : null,
-    checkpointCreatedAt:
-      typeof raw.checkpointCreatedAt === 'string' ? raw.checkpointCreatedAt : null,
-    summaryCheckpoint: typeof raw.summaryCheckpoint === 'number' ? raw.summaryCheckpoint : null,
-    settings: raw.settings ?? null,
-    preferences: raw.preferences ?? null,
-    contextRegistry: raw.contextRegistry ?? null,
-    updatedAt: raw.updatedAt ?? new Date().toISOString(),
-  };
+  if (payload === null || payload === undefined || typeof payload !== 'object') return null;
+
+  const result = agentCheckpointSchema.safeParse({
+    ...(payload as Record<string, unknown>),
+    updatedAt: (payload as Partial<AgentCheckpoint>).updatedAt ?? new Date().toISOString(),
+  });
+
+  return result.success ? result.data : null;
 }
 
 export function buildCheckpointState(payload: {
@@ -63,22 +44,40 @@ export function buildCheckpointState(payload: {
   return {
     steps: payload.steps,
     activeStepId: payload.activeStepId,
+    ...getWorkflowFields(payload),
+    ...getBriefFields(payload),
+    ...getConfigFields(payload),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function getWorkflowFields(payload: Partial<AgentCheckpoint>): Partial<AgentCheckpoint> {
+  return {
     lastError: payload.lastError ?? null,
     taskType: payload.taskType ?? null,
     resumeRequestedAt: payload.resumeRequestedAt ?? null,
     resumeProcessedAt: payload.resumeProcessedAt ?? null,
     approvalRequestedStepId: payload.approvalRequestedStepId ?? null,
     approvalGrantedStepId: payload.approvalGrantedStepId ?? null,
+  };
+}
+
+function getBriefFields(payload: Partial<AgentCheckpoint>): Partial<AgentCheckpoint> {
+  return {
     checkpointBrief: payload.checkpointBrief ?? null,
     checkpointNextActions: payload.checkpointNextActions ?? null,
     checkpointRisks: payload.checkpointRisks ?? null,
     checkpointStepId: payload.checkpointStepId ?? null,
     checkpointCreatedAt: payload.checkpointCreatedAt ?? null,
     summaryCheckpoint: payload.summaryCheckpoint ?? null,
+  };
+}
+
+function getConfigFields(payload: Partial<AgentCheckpoint>): Partial<AgentCheckpoint> {
+  return {
     settings: payload.settings ?? null,
     preferences: payload.preferences ?? null,
     contextRegistry: payload.contextRegistry ?? null,
-    updatedAt: new Date().toISOString(),
   };
 }
 

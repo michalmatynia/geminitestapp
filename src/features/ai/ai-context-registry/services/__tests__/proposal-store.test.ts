@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import { saveProposal, getProposal, updateProposal, __testOnly } from '../proposal-store';
+import { saveProposal, getProposal, updateProposal, testOnly } from '../proposal-store';
 
 const BASE_PROPOSAL = {
   workflow: 'data_analysis' as const,
@@ -16,7 +16,7 @@ const BASE_PROPOSAL = {
 
 describe('proposal-store', () => {
   beforeEach(() => {
-    __testOnly.clearProposals();
+    testOnly.clearProposals();
   });
 
   describe('saveProposal', () => {
@@ -95,10 +95,10 @@ describe('proposal-store', () => {
     });
   });
 
-  describe('__testOnly.clearProposals', () => {
+  describe('testOnly.clearProposals', () => {
     it('removes all stored proposals', () => {
       const saved = saveProposal(BASE_PROPOSAL);
-      __testOnly.clearProposals();
+      testOnly.clearProposals();
       expect(getProposal(saved.id)).toBeUndefined();
     });
   });

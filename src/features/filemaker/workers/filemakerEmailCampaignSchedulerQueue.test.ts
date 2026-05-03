@@ -60,6 +60,7 @@ describe('filemakerEmailCampaignSchedulerQueue', () => {
       evaluatedCampaignCount: 0,
       dueCampaignCount: 0,
       launchedRuns: [],
+      dueRetryRuns: [],
       skippedByReason: [],
       launchFailures: [],
     });
@@ -132,6 +133,14 @@ describe('filemakerEmailCampaignSchedulerQueue', () => {
           launchMode: 'recurring',
         },
       ],
+      dueRetryRuns: [
+        {
+          campaignId: 'campaign-retry',
+          runId: 'run-retry',
+          retryableDeliveryCount: 3,
+          nextRetryAt: '2026-04-03T09:10:00.000Z',
+        },
+      ],
       skippedByReason: [{ reason: 'scheduled-not-due', count: 1 }],
       launchFailures: [{ campaignId: 'campaign-3', message: 'launch failed' }],
     });
@@ -143,6 +152,11 @@ describe('filemakerEmailCampaignSchedulerQueue', () => {
       campaignId: 'campaign-1',
       runId: 'run-1',
       reason: 'launch',
+    });
+    expect(enqueueFilemakerEmailCampaignRunJobMock).toHaveBeenCalledWith({
+      campaignId: 'campaign-retry',
+      runId: 'run-retry',
+      reason: 'retry',
     });
     expect(upsertFilemakerCampaignSettingValueMock).toHaveBeenCalledTimes(1);
     expect(upsertFilemakerCampaignSettingValueMock).toHaveBeenCalledWith(
@@ -160,7 +174,7 @@ describe('filemakerEmailCampaignSchedulerQueue', () => {
         lastSuccessfulAt: '2026-04-03T09:15:00.000Z',
         evaluatedCampaignCount: 3,
         dueCampaignCount: 2,
-        queuedDispatchCount: 1,
+        queuedDispatchCount: 2,
         inlineDispatchCount: 0,
         launchFailures: [{ campaignId: 'campaign-3', message: 'launch failed' }],
       })
@@ -171,9 +185,11 @@ describe('filemakerEmailCampaignSchedulerQueue', () => {
       dueCampaignCount: 2,
       launchedRunCount: 2,
       launchedRunIds: ['run-1', 'run-2'],
+      dueRetryRunCount: 1,
+      dueRetryRunIds: ['run-retry'],
       launchFailures: [{ campaignId: 'campaign-3', message: 'launch failed' }],
       skippedByReason: [{ reason: 'scheduled-not-due', count: 1 }],
-      queuedDispatchCount: 1,
+      queuedDispatchCount: 2,
       inlineDispatchCount: 0,
     });
     expect(result).toEqual({
@@ -193,9 +209,17 @@ describe('filemakerEmailCampaignSchedulerQueue', () => {
           launchMode: 'recurring',
         },
       ],
+      dueRetryRuns: [
+        {
+          campaignId: 'campaign-retry',
+          runId: 'run-retry',
+          retryableDeliveryCount: 3,
+          nextRetryAt: '2026-04-03T09:10:00.000Z',
+        },
+      ],
       skippedByReason: [{ reason: 'scheduled-not-due', count: 1 }],
       launchFailures: [{ campaignId: 'campaign-3', message: 'launch failed' }],
-      queuedDispatchCount: 1,
+      queuedDispatchCount: 2,
       inlineDispatchCount: 0,
     });
   });

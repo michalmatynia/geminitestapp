@@ -131,8 +131,8 @@ export const getCompetitionChoiceDescription = (
   question: KangurExamQuestion,
   index: number,
 ): string => {
-  const describedChoice = question.choiceDescriptions?.[index]?.trim();
-  if (describedChoice) {
+  const describedChoice = question.choiceDescriptions?.[index]?.trim() ?? '';
+  if (describedChoice !== '') {
     return describedChoice;
   }
 

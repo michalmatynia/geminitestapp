@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { type ProductImageBase64Response } from '@/shared/contracts/products';
@@ -11,7 +11,7 @@ const paramsSchema = z.object({
   id: z.string().trim().min(1, 'Product id is required'),
 });
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }

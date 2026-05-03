@@ -1,7 +1,6 @@
-import { NextIntlClientProvider } from 'next-intl';
-
 import { AuthProvider } from '@/features/auth/public';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
+import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 
 export default function AuthPublicLayout({
   children,
@@ -9,8 +8,9 @@ export default function AuthPublicLayout({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <NextIntlClientProvider>
-      <AuthProvider mode='public'>
+    <AuthProvider mode='public'>
+      <>
+        <SkipToContentLink />
         <main
           id='kangur-main-content'
           tabIndex={-1}
@@ -18,7 +18,7 @@ export default function AuthPublicLayout({
         >
           <QueryErrorBoundary>{children}</QueryErrorBoundary>
         </main>
-      </AuthProvider>
-    </NextIntlClientProvider>
+      </>
+    </AuthProvider>
   );
 }

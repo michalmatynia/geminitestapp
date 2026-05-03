@@ -1,5 +1,5 @@
-import { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
-import { CaseResolverScanSlot } from '@/shared/contracts/case-resolver/ocr';
+import { type CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import { type CaseResolverScanSlot } from '@/shared/contracts/case-resolver/ocr';
 
 const IMAGE_FILE_EXTENSION_PATTERN = /\.(avif|bmp|gif|heic|heif|jpe?g|png|svg|tiff?|webp)$/i;
 const PDF_FILE_EXTENSION_PATTERN = /\.pdf$/i;

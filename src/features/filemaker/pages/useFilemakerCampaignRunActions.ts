@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useCallback, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
@@ -14,10 +14,41 @@ import type {
 } from '../types';
 import type { FilemakerCampaignRunActionId } from './AdminFilemakerCampaignEditPage.utils';
 
+type UseFilemakerCampaignRunActionsResult = {
+  handleRunAction: (runId: string, action: FilemakerCampaignRunActionId) => Promise<boolean>;
+  isRunActionPending: (runId: string, action?: FilemakerCampaignRunActionId) => boolean;
+  pendingActionKey: string | null;
+};
+
 const getPendingActionKey = (runId: string, action: FilemakerCampaignRunActionId): string =>
   `${runId}:${action}`;
 
-export const useFilemakerCampaignRunActions = () => {
+const getProcessRunReason = (action: FilemakerCampaignRunActionId): 'manual' | 'retry' =>
+  action === 'retry' ? 'retry' : 'manual';
+
+const getProcessRunQueuedMessage = (action: FilemakerCampaignRunActionId): string =>
+  action === 'retry' ? 'Retry processing queued.' : 'Run processing queued.';
+
+const getProcessRunInlineMessage = (action: FilemakerCampaignRunActionId): string =>
+  action === 'retry'
+    ? 'Retry processing started in inline mode.'
+    : 'Run processing started in inline mode.';
+
+const getProcessRunEmptyMessage = (action: FilemakerCampaignRunActionId): string =>
+  action === 'retry'
+    ? 'No retryable deliveries were queued.'
+    : 'No queued deliveries were available to process.';
+
+const getProcessRunToastMessage = (
+  action: FilemakerCampaignRunActionId,
+  response: FilemakerEmailCampaignProcessRunResponse
+): string => {
+  if (response.queuedDeliveryCount <= 0) return getProcessRunEmptyMessage(action);
+  if (response.dispatchMode === 'inline') return getProcessRunInlineMessage(action);
+  return getProcessRunQueuedMessage(action);
+};
+
+export const useFilemakerCampaignRunActions = (): UseFilemakerCampaignRunActionsResult => {
   const router = useRouter();
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
@@ -38,29 +69,11 @@ export const useFilemakerCampaignRunActions = () => {
           const response = await api.post<FilemakerEmailCampaignProcessRunResponse>(
             `/api/filemaker/campaigns/runs/${encodeURIComponent(runId)}/process`,
             {
-              reason: action === 'retry' ? 'retry' : 'manual',
+              reason: getProcessRunReason(action),
             }
           );
 
-          if (action === 'retry') {
-            toast(
-              response.queuedDeliveryCount > 0
-                ? response.dispatchMode === 'inline'
-                  ? 'Retry processing started in inline mode.'
-                  : 'Retry processing queued.'
-                : 'No retryable deliveries were queued.',
-              { variant: 'success' }
-            );
-          } else {
-            toast(
-              response.queuedDeliveryCount > 0
-                ? response.dispatchMode === 'inline'
-                  ? 'Run processing started in inline mode.'
-                  : 'Run processing queued.'
-                : 'No queued deliveries were available to process.',
-              { variant: 'success' }
-            );
-          }
+          toast(getProcessRunToastMessage(action, response), { variant: 'success' });
         }
 
         settingsStore.refetch();
@@ -81,8 +94,8 @@ export const useFilemakerCampaignRunActions = () => {
 
   const isRunActionPending = useCallback(
     (runId: string, action?: FilemakerCampaignRunActionId): boolean => {
-      if (!pendingActionKey) return false;
-      if (!action) return pendingActionKey.startsWith(`${runId}:`);
+      if (pendingActionKey === null) return false;
+      if (action === undefined) return pendingActionKey.startsWith(`${runId}:`);
       return pendingActionKey === getPendingActionKey(runId, action);
     },
     [pendingActionKey]

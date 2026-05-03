@@ -297,7 +297,7 @@ export function DocsTabPanel(): React.JSX.Element {
               (default) or per-activation for iterator/poll loops.
             </>,
             'Runtime outputs are stored per node. Viewer nodes can inspect live outputs when opened.',
-            'Path canvas state and palette group collapse state are persisted per-user in settings so you can resume where you left off.',
+            'Path canvas state and palette group collapse state are persisted per-user in settings so you can continue where you left off.',
           ]}
         />
       ) : null}

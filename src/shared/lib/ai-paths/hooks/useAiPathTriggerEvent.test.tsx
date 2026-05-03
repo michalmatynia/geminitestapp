@@ -16,15 +16,11 @@ vi.mock('@tanstack/react-query', async () => {
   };
 });
 
-vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
-  return {
-    ...actual,
-    useToast: () => ({
-      toast: toastMock,
-    }),
-  };
-});
+vi.mock('@/shared/ui/primitives.public', () => ({
+  useToast: () => ({
+    toast: toastMock,
+  }),
+}));
 
 import {
   resolveCurrentActivePathId,
@@ -65,15 +61,21 @@ describe('useAiPathTriggerEvent', () => {
     useQueryClientMock.mockReturnValue({
       getQueryData: vi.fn(),
     });
+    const onError = vi.fn();
+    const onFinished = vi.fn();
 
     const { result } = renderHook(() => useAiPathTriggerEvent());
 
     await act(async () => {
       await result.current.fireAiPathTriggerEvent({
         triggerEventId: '   ',
+        onError,
+        onFinished,
       } as never);
     });
 
     expect(toastMock).toHaveBeenCalledWith('Missing trigger id.', { variant: 'error' });
+    expect(onError).toHaveBeenCalledWith('Missing trigger id.');
+    expect(onFinished).toHaveBeenCalledTimes(1);
   });
 });

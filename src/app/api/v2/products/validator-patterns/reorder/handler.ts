@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
@@ -55,7 +55,7 @@ const assertReorderUpdatesAreFresh = (
       throw notFoundError('Validation pattern not found', { patternId: update.id });
     }
     const expectedUpdatedAt = normalizeNullableTrimmed(update.expectedUpdatedAt);
-    if (expectedUpdatedAt && current.updatedAt !== expectedUpdatedAt) {
+    if (expectedUpdatedAt !== null && expectedUpdatedAt !== undefined && current.updatedAt !== expectedUpdatedAt) {
       throw conflictError('Validation pattern was modified by another request.', {
         patternId: update.id,
         expectedUpdatedAt,
@@ -94,7 +94,7 @@ const applyReorderUpdates = async (
   return updatedPatterns;
 };
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as z.infer<typeof reorderPayloadSchema>;
   const updates = body.updates;
   assertUniqueReorderUpdateIds(updates);

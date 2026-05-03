@@ -136,6 +136,25 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   },
 }));
 
+vi.mock('@/features/kangur/ui/pages/GameDeferredAiTutorSessionSync', () => ({
+  default: (props: unknown) => {
+    tutorSessionSyncPropsMock(props);
+    return null;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/pages/GameDeferredDocsTooltipEnhancer', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/pages/GameDeferredLearnerActivityPing', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/pages/GameDeferredNavigationWidget', () => ({
+  default: () => <div data-testid='kangur-game-navigation-widget' />,
+}));
+
 vi.mock('@/features/kangur/ui/components/game-runtime/KangurGameNavigationWidget', () => ({
   KangurGameNavigationWidget: ({ visible = true }: { visible?: boolean }) =>
     visible ? <div data-testid='kangur-game-navigation-widget' /> : null,
@@ -360,15 +379,17 @@ describe('Game page - Launchables', () => {
         finishLabel: 'Wroc do Grajmy',
       })
     );
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        learnerId: 'learner-1',
-        sessionContext: expect.objectContaining({
-          surface: 'game',
-          contentId: 'game:english_adverbs_quiz',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          learnerId: 'learner-1',
+          sessionContext: expect.objectContaining({
+            surface: 'game',
+            contentId: 'game:english_adverbs_quiz',
+          }),
+        })
+      );
+    });
   });
 
   it('renders the addition launchable runtime on the dedicated game screen', async () => {
@@ -392,15 +413,17 @@ describe('Game page - Launchables', () => {
         finishLabelVariant: 'play',
       })
     );
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        learnerId: 'learner-1',
-        sessionContext: expect.objectContaining({
-          surface: 'game',
-          contentId: 'game:addition_quiz',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          learnerId: 'learner-1',
+          sessionContext: expect.objectContaining({
+            surface: 'game',
+            contentId: 'game:addition_quiz',
+          }),
+        })
+      );
+    });
   });
 
   it('renders the adding synthesis launchable runtime on the dedicated game screen', async () => {
@@ -424,15 +447,17 @@ describe('Game page - Launchables', () => {
         finishLabel: 'Wroc do Grajmy',
       })
     );
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        learnerId: 'learner-1',
-        sessionContext: expect.objectContaining({
-          surface: 'game',
-          contentId: 'game:adding_synthesis_quiz',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          learnerId: 'learner-1',
+          sessionContext: expect.objectContaining({
+            surface: 'game',
+            contentId: 'game:adding_synthesis_quiz',
+          }),
+        })
+      );
+    });
   });
 
   it('renders the multiplication array launchable runtime on the dedicated game screen', async () => {
@@ -456,15 +481,17 @@ describe('Game page - Launchables', () => {
         finishLabel: 'Wroc do Grajmy',
       })
     );
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        learnerId: 'learner-1',
-        sessionContext: expect.objectContaining({
-          surface: 'game',
-          contentId: 'game:multiplication_array_quiz',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          learnerId: 'learner-1',
+          sessionContext: expect.objectContaining({
+            surface: 'game',
+            contentId: 'game:multiplication_array_quiz',
+          }),
+        })
+      );
+    });
   });
 
   it('renders the division launchable runtime on the dedicated game screen', async () => {
@@ -488,15 +515,17 @@ describe('Game page - Launchables', () => {
         finishLabelVariant: 'play',
       })
     );
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        learnerId: 'learner-1',
-        sessionContext: expect.objectContaining({
-          surface: 'game',
-          contentId: 'game:division_quiz',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          learnerId: 'learner-1',
+          sessionContext: expect.objectContaining({
+            surface: 'game',
+            contentId: 'game:division_quiz',
+          }),
+        })
+      );
+    });
   });
 
   it('renders the subtraction launchable runtime on the dedicated game screen', async () => {
@@ -520,15 +549,17 @@ describe('Game page - Launchables', () => {
         finishLabelVariant: 'play',
       })
     );
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        learnerId: 'learner-1',
-        sessionContext: expect.objectContaining({
-          surface: 'game',
-          contentId: 'game:subtraction_quiz',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          learnerId: 'learner-1',
+          sessionContext: expect.objectContaining({
+            surface: 'game',
+            contentId: 'game:subtraction_quiz',
+          }),
+        })
+      );
+    });
   });
 
   it('renders the comparatives launchable runtime on the dedicated game screen', async () => {
@@ -552,15 +583,17 @@ describe('Game page - Launchables', () => {
         finishLabel: 'Wroc do Grajmy',
       })
     );
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        learnerId: 'learner-1',
-        sessionContext: expect.objectContaining({
-          surface: 'game',
-          contentId: 'game:english_compare_and_crown_quiz',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          learnerId: 'learner-1',
+          sessionContext: expect.objectContaining({
+            surface: 'game',
+            contentId: 'game:english_compare_and_crown_quiz',
+          }),
+        })
+      );
+    });
   });
 
   it('merges the selected content set with saved engine overrides for launchable game instances', async () => {

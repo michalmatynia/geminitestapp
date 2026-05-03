@@ -9,6 +9,7 @@ import { cn } from '@/shared/utils/ui-utils';
 export type CategoryMapperNameCellProps = {
   name: string;
   path?: string | null;
+  statusHint?: string | null;
   depth: number;
   canExpand: boolean;
   isExpanded: boolean;
@@ -20,6 +21,7 @@ export type CategoryMapperNameCellProps = {
 export function CategoryMapperNameCell({
   name,
   path = null,
+  statusHint = null,
   depth,
   canExpand,
   isExpanded,
@@ -28,6 +30,7 @@ export function CategoryMapperNameCell({
   hasPendingChange,
 }: CategoryMapperNameCellProps): React.JSX.Element {
   const normalizedPath = typeof path === 'string' ? path.trim() : '';
+  const normalizedStatusHint = typeof statusHint === 'string' ? statusHint.trim() : '';
   const shouldShowPath = normalizedPath.length > 0 && normalizedPath !== name.trim();
 
   return (
@@ -66,6 +69,11 @@ export function CategoryMapperNameCell({
           {shouldShowPath ? (
             <div className='text-[11px] text-gray-500 truncate' title={normalizedPath}>
               {normalizedPath}
+            </div>
+          ) : null}
+          {normalizedStatusHint ? (
+            <div className='text-[11px] text-amber-300 truncate' title={normalizedStatusHint}>
+              {normalizedStatusHint}
             </div>
           ) : null}
         </div>

@@ -16,6 +16,7 @@ import {
   type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { safeSetTimeout } from '@/shared/lib/timers';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { loosenMinInt } from '@/features/kangur/ui/services/drawing-leniency';
 import {
@@ -416,7 +417,7 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
     (wasCorrect: boolean): void => {
       const nextScore = wasCorrect ? score + 1 : score;
       const isLastRound = roundIndex + 1 >= totalRounds;
-      window.setTimeout((): void => {
+      safeSetTimeout((): void => {
         dispatch({ type: 'clear_feedback' });
         clearDrawing();
         if (isLastRound) {

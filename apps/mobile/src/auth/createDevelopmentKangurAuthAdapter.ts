@@ -84,16 +84,16 @@ export const createDevelopmentKangurAuthAdapter = (
   let currentSession = resolveStoredSession(storage);
 
   return {
-    getSession: async () => currentSession,
-    signIn: async () => {
+    getSession: () => Promise.resolve(currentSession),
+    signIn: () => {
       currentSession = createAuthenticatedDemoSession();
       persistSession(storage, currentSession);
-      return currentSession;
+      return Promise.resolve(currentSession);
     },
-    signOut: async () => {
+    signOut: () => {
       currentSession = createAnonymousKangurAuthSession('native-development');
       persistSession(storage, currentSession);
-      return currentSession;
+      return Promise.resolve(currentSession);
     },
   };
 };

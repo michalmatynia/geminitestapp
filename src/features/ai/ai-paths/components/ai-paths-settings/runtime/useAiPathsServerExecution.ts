@@ -5,8 +5,8 @@ import { useCallback, useRef } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import type { AiNode, AiPathRunRecord } from '@/shared/lib/ai-paths';
-import { mergeEnqueuedAiPathRunForCache } from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { mergeEnqueuedAiPathRunForCache } from '@/shared/lib/ai-paths/api';
 import {
   invalidateAiPathQueue,
   invalidateAiPathRuns,
@@ -189,8 +189,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           {
             ...enqueueInfo.payload,
             ...(contextRegistry ? { contextRegistry } : {}),
-          },
-          enqueueInfo.requestId
+          }
         );
         if ('error' in result && result.error === 'enqueue_failed') {
           const { metadata, result: enqueueResult } = result;
@@ -221,7 +220,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           return;
         }
 
-        const { runId, runRecord, enqueueRecovered } = result;
+        const { runId, runRecord } = result;
         if (!runId) {
           const message = 'Server run was enqueued without a run id.';
           args.appendRuntimeEvent({ source: 'server', kind: 'run_failed', level: 'error', message });
@@ -230,10 +229,6 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           args.toast(message, { variant: 'error' });
           stopServerRunStream();
           return;
-        }
-
-        if (enqueueRecovered) {
-          args.appendRuntimeEvent({ source: 'server', kind: 'run_warning', level: 'warn', message: 'Recovered queued server run after losing the enqueue response.' });
         }
 
         const queuedRunFallback: AiPathRunRecord = {

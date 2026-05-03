@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   mongoBackupsDir,
@@ -13,7 +13,7 @@ import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
 

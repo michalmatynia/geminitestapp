@@ -1,7 +1,7 @@
 'use client';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
+import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths/core/constants';
 import { Card, Input } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 

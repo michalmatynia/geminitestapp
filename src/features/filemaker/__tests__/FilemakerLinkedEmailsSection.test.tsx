@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { FilemakerLinkedEmailsSection } from '@/features/filemaker/components/shared/FilemakerLinkedEmailsSection';
+import {
+  FilemakerLinkedEmailsField,
+  formatLinkedEmailFieldValue,
+} from '@/features/filemaker/components/shared/FilemakerLinkedEmailsField';
 
 import type { FilemakerEmail } from '@/features/filemaker/types';
 
@@ -58,5 +62,21 @@ describe('FilemakerLinkedEmailsSection', () => {
 
     expect(screen.getByText('No emails linked yet.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Extract Emails' })).toBeDisabled();
+  });
+});
+
+describe('FilemakerLinkedEmailsField', () => {
+  it('renders linked emails as a read-only one-to-many relationship field', () => {
+    render(<FilemakerLinkedEmailsField emails={emails} />);
+
+    const field = screen.getByLabelText('Linked emails');
+    expect(field).toHaveValue('test@example.com');
+    expect(field).toHaveAttribute('readonly');
+  });
+
+  it('formats linked emails without duplicating repeated email records', () => {
+    expect(formatLinkedEmailFieldValue([...emails, { ...emails[0]!, id: 'email-2' }])).toBe(
+      'test@example.com'
+    );
   });
 });

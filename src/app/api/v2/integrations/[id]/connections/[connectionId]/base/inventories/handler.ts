@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { fetchBaseInventories } from '@/features/integrations/server';
@@ -10,7 +10,7 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
  * GET /api/v2/integrations/[id]/connections/[connectionId]/base/inventories
  * Fetches available inventories from Base.com/Baselinker API.
  */
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

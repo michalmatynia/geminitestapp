@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 
 import {
   useKangurManagedDrawingActions,
+  type UseKangurManagedDrawingActionsResult,
   type UseKangurManagedDrawingActionsOptions,
 } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedDrawingActions';
 
@@ -27,7 +28,7 @@ export const useKangurFeedbackManagedDrawingActions = <
   onAfterRedoExtra,
   onAfterUndoExtra,
   ...options
-}: UseKangurFeedbackManagedDrawingActionsOptions<TElement>) => {
+}: UseKangurFeedbackManagedDrawingActionsOptions<TElement>): UseKangurManagedDrawingActionsResult<TElement> => {
   const handleAfterClear = useCallback((): void => {
     clearFeedback?.();
     onAfterClearExtra?.();

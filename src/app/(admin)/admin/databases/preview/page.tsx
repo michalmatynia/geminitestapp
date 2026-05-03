@@ -1,5 +1,5 @@
 import { AdminRouteLoading } from '@/features/admin/public';
-import { JSX, Suspense } from 'react';
+import { type JSX, Suspense } from 'react';
 
 import { DatabasePreviewPage } from '@/features/database/public';
 

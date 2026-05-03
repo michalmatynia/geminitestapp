@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  querySchema,
   requireProductCategoryTreeCatalogId,
   shouldFetchFreshProductCategoryTree,
 } from './handler.helpers';
@@ -20,6 +21,7 @@ describe('product categories tree handler helpers', () => {
   });
 
   it('resolves the fresh flag with a safe default', () => {
+    expect(querySchema.parse({})).toEqual({ fresh: false });
     expect(shouldFetchFreshProductCategoryTree({ fresh: true })).toBe(true);
     expect(shouldFetchFreshProductCategoryTree({ fresh: false })).toBe(false);
     expect(shouldFetchFreshProductCategoryTree(undefined)).toBe(false);

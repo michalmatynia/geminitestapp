@@ -1,12 +1,1 @@
-export const KANGUR_LESSONS_SETTING_KEY = 'kangur_lessons_v1';
-export const KANGUR_LESSON_DOCUMENTS_SETTING_KEY = 'kangur_lesson_documents_v1';
-export const KANGUR_DAILY_THEME_SETTINGS_KEY = 'kangur_cms_theme_daily_v1';
-export const KANGUR_DAWN_THEME_SETTINGS_KEY = 'kangur_cms_theme_dawn_v1';
-export const KANGUR_SUNSET_THEME_SETTINGS_KEY = 'kangur_cms_theme_sunset_v1';
-export const KANGUR_NIGHTLY_THEME_SETTINGS_KEY = 'kangur_cms_theme_nightly_v1';
-export const KANGUR_THEME_CATALOG_KEY = 'kangur_cms_theme_catalog_v1';
-export const KANGUR_THEME_PRESET_MANIFEST_KEY = 'kangur_cms_theme_preset_manifest_v1';
-export const KANGUR_SLOT_ASSIGNMENTS_KEY = 'kangur_slot_assignments';
-export const KANGUR_LAUNCH_ROUTE_SETTINGS_KEY = 'kangur_launch_route_settings_v1';
-export const KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY =
-  'kangur_storefront_default_mode_v1';
+export * from '@kangur/contracts/kangur-settings-keys';

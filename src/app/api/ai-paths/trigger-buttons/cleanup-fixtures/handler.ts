@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { buildPlaywrightAiPathsFixtureCleanupPlan } from '@/features/ai/ai-paths/lib/playwright-fixture-cleanup';
 import {
@@ -13,7 +13,7 @@ import {
 } from '@/features/ai/ai-paths/server/settings-store.constants';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

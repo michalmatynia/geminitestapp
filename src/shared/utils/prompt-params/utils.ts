@@ -1,4 +1,4 @@
-import { ParamLeaf } from '@/shared/contracts/prompt-engine';
+import { type ParamLeaf } from '@/shared/contracts/prompt-engine';
 
 import { isObjectRecord } from '../object-utils';
 
@@ -8,7 +8,7 @@ export function flattenParams(params: Record<string, unknown>): ParamLeaf[] {
   const walk = (value: unknown, prefix: string): void => {
     if (isObjectRecord(value)) {
       Object.entries(value).forEach(([key, child]: [string, unknown]) => {
-        const nextPath = prefix ? `${prefix}.${key}` : key;
+        const nextPath = prefix.length > 0 ? `${prefix}.${key}` : key;
         walk(child, nextPath);
       });
       return;
@@ -32,14 +32,18 @@ export function setDeepValue(
   let cursor: Record<string, unknown> = root;
 
   for (let index = 0; index < parts.length - 1; index += 1) {
-    const key = parts[index]!;
+    const key = parts[index];
+    if (key === undefined) continue;
     const current = cursor[key];
     const nextNode: Record<string, unknown> = isObjectRecord(current) ? { ...current } : {};
     cursor[key] = nextNode;
     cursor = nextNode;
   }
 
-  cursor[parts[parts.length - 1]!] = nextValue;
+  const lastKey = parts[parts.length - 1];
+  if (lastKey !== undefined) {
+    cursor[lastKey] = nextValue;
+  }
   return root;
 }
 
@@ -47,8 +51,8 @@ export function getDeepValue(root: Record<string, unknown>, path: string): unkno
   const parts = path.split('.').filter(Boolean);
   let cursor: unknown = root;
   for (let index = 0; index < parts.length; index += 1) {
-    const key = parts[index]!;
-    if (!isObjectRecord(cursor)) return undefined;
+    const key = parts[index];
+    if (key === undefined || !isObjectRecord(cursor)) return undefined;
     cursor = cursor[key];
   }
   return cursor;
@@ -56,7 +60,7 @@ export function getDeepValue(root: Record<string, unknown>, path: string): unkno
 
 export function looksLikeConstraintHint(comment: string): boolean {
   const trimmed = comment.trim();
-  if (!trimmed) return false;
+  if (trimmed.length === 0) return false;
   if (trimmed.includes('===')) return false;
   if (trimmed.includes('|')) return true;
   if (/[0-9]/.test(trimmed) && (/[<>]=?/.test(trimmed) || /[–-]/.test(trimmed))) return true;
@@ -73,7 +77,7 @@ export function parseEnumOptionsFromHint(hint: string): string[] | null {
   const options = hint
     .split('|')
     .map((segment: string) => normalizeEnumToken(segment))
-    .filter((value: string | null): value is string => Boolean(value));
+    .filter((value: string | null): value is string => value !== null && value.length > 0);
   const unique = Array.from(new Set(options));
   return unique.length >= 2 ? unique : null;
 }
@@ -115,6 +119,14 @@ export function decimalsOf(value: number | undefined): number {
   return idx === -1 ? 0 : asString.length - idx - 1;
 }
 
+const inferSpanStep = (min: number, max: number): number => {
+  const span = Math.abs(max - min);
+  if (span <= 1) return 0.01;
+  if (span <= 10) return 0.1;
+  if (span <= 100) return 1;
+  return 0.5;
+};
+
 export function inferNumberStep(
   value: number,
   constraint: NumericConstraint,
@@ -129,10 +141,7 @@ export function inferNumberStep(
   if (decimals >= 2) return 0.01;
   if (decimals === 1) return 0.1;
   if (constraint.min !== undefined && constraint.max !== undefined) {
-    const span = Math.abs(constraint.max - constraint.min);
-    if (span <= 1) return 0.01;
-    if (span <= 10) return 0.1;
-    if (span <= 100) return 1;
+    return inferSpanStep(constraint.min, constraint.max);
   }
   return 0.5;
 }

@@ -1,20 +1,18 @@
-import { z } from 'zod';
-
 import { badRequestError } from '@/shared/errors/app-error';
-import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
-import { catalogIdQuerySchema } from '@/shared/validations/product-metadata-api-schemas';
+import {
+  optionalCatalogIdWithFreshQuerySchema,
+  type OptionalCatalogIdWithFreshQuery,
+} from '@/shared/validations/product-metadata-api-schemas';
 
-export const querySchema = catalogIdQuerySchema.extend({
-  fresh: optionalBooleanQuerySchema().default(false),
-});
+export const querySchema = optionalCatalogIdWithFreshQuerySchema;
 
-export type ProductCategoryTreeQuery = z.infer<typeof querySchema>;
+export type ProductCategoryTreeQuery = OptionalCatalogIdWithFreshQuery;
 
 export const requireProductCategoryTreeCatalogId = (
   query: ProductCategoryTreeQuery | undefined
 ): string => {
   const catalogId = query?.catalogId;
-  if (!catalogId) {
+  if (catalogId === undefined || catalogId.length === 0) {
     throw badRequestError('catalogId query parameter is required');
   }
   return catalogId;

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -13,7 +13,7 @@ const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).optional().default(20),
 });
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

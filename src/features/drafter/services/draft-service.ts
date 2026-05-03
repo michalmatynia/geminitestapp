@@ -17,7 +17,7 @@ export const listDrafts = async (): Promise<ProductDraft[]> => {
   try {
     return await repo.listDrafts();
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'draft-service',
       action: 'listDrafts',
@@ -30,7 +30,7 @@ export const getDraft = async (id: string): Promise<ProductDraft | null> => {
   try {
     return await repo.getDraft(id);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'draft-service',
       action: 'getDraft',
@@ -44,7 +44,7 @@ export const createDraft = async (input: CreateProductDraftInput): Promise<Produ
   try {
     return await repo.createDraft(input);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'draft-service',
       action: 'createDraft',
@@ -61,7 +61,7 @@ export const updateDraft = async (
   try {
     return await repo.updateDraft(id, input);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'draft-service',
       action: 'updateDraft',
@@ -75,7 +75,7 @@ export const deleteDraft = async (id: string): Promise<boolean> => {
   try {
     return await repo.deleteDraft(id);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'draft-service',
       action: 'deleteDraft',

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { clientErrorPayloadSchema, type ErrorContext } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -123,7 +123,7 @@ const hasMeaningfulClientPayload = (args: {
   return false;
 };
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<NextResponse> {

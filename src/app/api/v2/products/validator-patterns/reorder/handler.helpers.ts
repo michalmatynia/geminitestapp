@@ -47,7 +47,7 @@ export const assertFreshValidatorPatternReorderUpdates = (
     const expectedUpdatedAt = normalizeValidatorPatternReorderNullableTrimmed(
       update.expectedUpdatedAt
     );
-    if (expectedUpdatedAt && current.updatedAt !== expectedUpdatedAt) {
+    if (expectedUpdatedAt !== null && expectedUpdatedAt !== undefined && current.updatedAt !== expectedUpdatedAt) {
       throw conflictError('Validation pattern was modified by another request.', {
         patternId: update.id,
         expectedUpdatedAt,

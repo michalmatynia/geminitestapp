@@ -58,12 +58,20 @@ export class DitheringEffectImpl extends Effect {
     });
   }
 
+  private get intensityUniform(): Uniform {
+    const uniform = this.uniforms.get('intensity');
+    if (uniform === undefined) {
+      throw new Error('DitheringEffect intensity uniform is missing.');
+    }
+    return uniform;
+  }
+
   get intensity(): number {
-    return this.uniforms.get('intensity')!.value as number;
+    return this.intensityUniform.value as number;
   }
 
   set intensity(value: number) {
-    this.uniforms.get('intensity')!.value = value;
+    this.intensityUniform.value = value;
   }
 }
 
@@ -73,10 +81,10 @@ export interface DitheringPassProps {
 }
 
 export const DitheringPass = forwardRef<DitheringEffectImpl, DitheringPassProps>(
-  function DitheringPass(
+  (
     { intensity = 1.0, blendFunction = BlendFunction.NORMAL }: DitheringPassProps,
     ref: React.Ref<DitheringEffectImpl>
-  ) {
+  ) => {
     const effect = useMemo(
       () => new DitheringEffectImpl({ intensity, blendFunction }),
       [intensity, blendFunction]

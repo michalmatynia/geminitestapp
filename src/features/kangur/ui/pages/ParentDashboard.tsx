@@ -15,9 +15,12 @@ import {
 } from '@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardTabsWidget';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthSessionState,
+  useKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import {
   KangurParentDashboardRuntimeBoundary,
   type KangurParentDashboardTabId,
@@ -47,10 +50,16 @@ type ParentDashboardPanelRefs = {
   tabPanelsRef: React.RefObject<HTMLDivElement | null>;
 };
 
+// resolveParentDashboardActiveLearnerId extracts and trims the active learner
+// ID from the auth user object. Returns null when no learner is selected.
 const resolveParentDashboardActiveLearnerId = (
   activeLearner: { id?: string | null } | null | undefined
 ): string | null => activeLearner?.id?.trim() || null;
 
+// resolveParentDashboardSessionContentId builds the AI Tutor session content
+// ID for the parent dashboard. Encodes the active learner and tab so the
+// tutor maintains separate conversation histories per learner/tab combination.
+// Falls back to a guest content ID when the parent is not authenticated.
 const resolveParentDashboardSessionContentId = ({
   activeLearnerId,
   activeTab,
@@ -77,6 +86,9 @@ const resolveParentDashboardSessionTitle = ({
     ? translations('page.dashboardTitle', { tab: parentTabLabels[activeTab] })
     : translations('page.dashboardTitleRestricted');
 
+// resolveParentDashboardSessionSyncInput builds the full AI Tutor session
+// sync input for the parent dashboard. The tutor is only attached to a
+// learner when the AI Tutor tab is active and a learner is selected.
 const resolveParentDashboardSessionSyncInput = ({
   activeLearnerId,
   activeTab,
@@ -682,7 +694,7 @@ function ParentDashboardResolvedContent({
     isAuthenticated,
   } = useKangurParentDashboardRuntimeShellState();
   const { logout } = useKangurParentDashboardRuntimeShellActions();
-  const { openLoginModal } = useKangurLoginModal();
+  const { openLoginModal } = useKangurLoginModalActions();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const tabPanelsRef = useRef<HTMLDivElement | null>(null);
   const tabPanelsContentRef = useRef<HTMLDivElement | null>(null);
@@ -855,8 +867,12 @@ function ParentDashboardAuthLoadingState({
   );
 }
 
+// ParentDashboardContent gates rendering on auth resolution. Shows a loading
+// skeleton while auth is in flight to prevent a flash of the unauthenticated
+// state, then renders the full dashboard once auth has resolved.
 function ParentDashboardContent(): React.JSX.Element {
-  const { hasResolvedAuth = true, isLoadingAuth } = useKangurAuth();
+  const { hasResolvedAuth = true } = useKangurAuthSessionState();
+  const { isLoadingAuth } = useKangurAuthStatusState();
   const { canAccessDashboard, isAuthenticated } = useKangurParentDashboardRuntimeShellState();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('parentDashboard');
 
@@ -872,6 +888,9 @@ function ParentDashboardContent(): React.JSX.Element {
   return <ParentDashboardResolvedContent docsTooltipsEnabled={docsTooltipsEnabled} />;
 }
 
+// ParentDashboard is the page entry point. Wraps content in
+// KangurParentDashboardRuntimeBoundary so the dashboard runtime context is
+// always available, even when rendered outside the main app shell.
 export default function ParentDashboard(): React.JSX.Element {
   return (
     <KangurParentDashboardRuntimeBoundary enabled>

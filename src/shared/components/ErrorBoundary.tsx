@@ -1,6 +1,6 @@
 'use client';
 
-import { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 import { Button } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

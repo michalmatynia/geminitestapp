@@ -34,6 +34,19 @@ const setProgressScopeMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => authState.value,
+  useKangurAuthSessionState: () => ({
+    user: authState.value.user,
+    isAuthenticated: authState.value.isAuthenticated,
+    hasResolvedAuth: true,
+    canAccessParentAssignments: false,
+  }),
+  useKangurAuthStatusState: () => ({
+    isLoadingAuth: authState.value.isLoadingAuth,
+    isLoadingPublicSettings: false,
+    isLoggingOut: false,
+    authError: null,
+    appPublicSettings: null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/services/progress', () => ({

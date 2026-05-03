@@ -1,4 +1,4 @@
-import { Browser, BrowserContext } from 'playwright';
+import { type Browser, type BrowserContext } from 'playwright';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import {
@@ -6,7 +6,7 @@ import {
   isExtractionStep,
 } from '@/features/ai/agent-runtime/planning/utils';
 import { runAgentBrowserControl, runAgentTool } from '@/features/ai/agent-runtime/tools';
-import { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
+import { type PlanStep, type PlannerMeta } from '@/shared/contracts/agent-runtime';
 import unknownToErrorMessage from '@/shared/utils/error-formatting';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -29,25 +29,10 @@ export async function executeTool(args: {
   shouldRunExtraction: boolean;
   shouldInitializeBrowser: boolean;
 }> {
-  const {
-    step,
-    stepIndex,
-    hasBrowserContext,
-    runPrompt,
-    taskType,
-    runId,
-    agentBrowser,
-    runHeadless,
-    sharedBrowser,
-    sharedContext,
-  } = args;
+  const { step, stepIndex, runPrompt, taskType, runId } = args;
 
-  const shouldInitializeBrowser = !hasBrowserContext || stepIndex === 0;
+  const shouldInitializeBrowser = !args.hasBrowserContext || stepIndex === 0;
   const shouldRunExtraction = isExtractionStep(step, runPrompt, taskType);
-  const toolPrompt = appendTaskTypeToPrompt(
-    runPrompt,
-    shouldRunExtraction ? 'extract_info' : taskType
-  );
   const toolName = shouldInitializeBrowser || shouldRunExtraction ? 'playwright' : 'snapshot';
   const toolStart = Date.now();
 
@@ -73,50 +58,96 @@ export async function executeTool(args: {
   let toolError: unknown = null;
 
   try {
-    toolResult =
-      shouldInitializeBrowser || shouldRunExtraction
-        ? await runAgentTool(
-          {
-            name: 'playwright',
-            input: {
-              prompt: toolPrompt,
-              browser: agentBrowser || 'chromium',
-              runId,
-              ...(typeof runHeadless === 'boolean' && {
-                runHeadless: runHeadless,
-              }),
-              stepId: step.id,
-              stepLabel: step.title,
-            },
-          },
-          sharedBrowser ?? undefined,
-          sharedContext ?? undefined
-        )
-        : await runAgentBrowserControl({
-          runId,
-          action: 'snapshot',
-          stepId: step.id,
-          stepLabel: step.title,
-        });
+    toolResult = await runToolCore(args, { shouldInitializeBrowser, shouldRunExtraction });
   } catch (error) {
     logClientError(error);
     toolError = error;
   } finally {
     clearTimeout(toolTimeoutId);
-    const errorMessage = toolResult?.error ?? unknownToErrorMessage(toolError);
-    await logAgentAudit(runId, toolError ? 'error' : 'info', 'Tool execution finished.', {
-      ...toolContext,
-      ok: toolResult?.ok ?? false,
-      error: errorMessage,
-      durationMs: Date.now() - toolStart,
+    await logToolFinish({ runId, toolContext, toolResult, toolError, toolStart });
+  }
+
+  return { toolResult, toolError, toolName, shouldRunExtraction, shouldInitializeBrowser };
+}
+
+async function runToolCore(
+  args: {
+    step: PlanStep;
+    runPrompt: string;
+    taskType: PlannerMeta['taskType'] | null;
+    runId: string;
+    agentBrowser: string | undefined;
+    runHeadless: boolean | undefined;
+    sharedBrowser: Browser | null;
+    sharedContext: BrowserContext | null;
+  },
+  config: { shouldInitializeBrowser: boolean; shouldRunExtraction: boolean }
+): Promise<Awaited<ReturnType<typeof runAgentTool>>> {
+  if (!config.shouldInitializeBrowser && !config.shouldRunExtraction) {
+    return runAgentBrowserControl({
+      runId: args.runId,
+      action: 'snapshot',
+      stepId: args.step.id,
+      stepLabel: args.step.title,
     });
   }
 
-  return {
-    toolResult,
-    toolError,
-    toolName,
-    shouldRunExtraction,
-    shouldInitializeBrowser,
-  };
+  return runPlaywrightTool(args, config);
+}
+
+async function runPlaywrightTool(
+  args: {
+    step: PlanStep;
+    runPrompt: string;
+    taskType: PlannerMeta['taskType'] | null;
+    runId: string;
+    agentBrowser: string | undefined;
+    runHeadless: boolean | undefined;
+    sharedBrowser: Browser | null;
+    sharedContext: BrowserContext | null;
+  },
+  config: { shouldRunExtraction: boolean }
+): Promise<Awaited<ReturnType<typeof runAgentTool>>> {
+  const toolPrompt = appendTaskTypeToPrompt(
+    args.runPrompt,
+    config.shouldRunExtraction ? 'extract_info' : args.taskType
+  );
+
+  const browser =
+    args.agentBrowser !== undefined && args.agentBrowser !== '' ? args.agentBrowser : 'chromium';
+
+  return runAgentTool(
+    {
+      name: 'playwright',
+      input: {
+        prompt: toolPrompt,
+        browser,
+        runId: args.runId,
+        ...(typeof args.runHeadless === 'boolean' && {
+          runHeadless: args.runHeadless,
+        }),
+        stepId: args.step.id,
+        stepLabel: args.step.title,
+      },
+    },
+    args.sharedBrowser ?? undefined,
+    args.sharedContext ?? undefined
+  );
+}
+
+async function logToolFinish(options: {
+  runId: string;
+  toolContext: object;
+  toolResult: Awaited<ReturnType<typeof runAgentTool>> | null;
+  toolError: unknown;
+  toolStart: number;
+}): Promise<void> {
+  const { runId, toolContext, toolResult, toolError, toolStart } = options;
+  const errorMessage = toolResult?.error ?? unknownToErrorMessage(toolError);
+  await logAgentAudit(runId, toolError !== null ? 'error' : 'info', 'Tool execution finished.', {
+    ...toolContext,
+    ok: toolResult?.ok ?? false,
+    error: errorMessage,
+    durationMs: Date.now() - toolStart,
+  });
 }

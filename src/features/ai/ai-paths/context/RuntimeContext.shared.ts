@@ -9,28 +9,37 @@ import type {
   RuntimeNodeConfigHandlers,
 } from '@/shared/contracts/ai-paths';
 import { internalError } from '@/shared/errors/app-error';
-import type { AiNode, RuntimeState, RuntimePortValues, ParserSampleState, UpdaterSampleState, PathDebugSnapshot, RuntimeHistoryEntry, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
+import type { AiNode, PathDebugSnapshot, ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths';
+import type { RuntimeState, RuntimePortValues, RuntimeHistoryEntry, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/shared/contracts/ai-paths-runtime';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type { LastErrorInfo, RuntimeRunStatus, RuntimeControlHandlers, RuntimeNodeConfigHandlers };
 
-export interface RuntimeStateData {
-  runtimeState: RuntimeState;
+export interface RuntimeStatusState {
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
-  runtimeEvents: AiPathRuntimeEvent[];
-  parserSamples: Record<string, ParserSampleState>;
-  updaterSamples: Record<string, UpdaterSampleState>;
-  pathDebugSnapshots: Record<string, PathDebugSnapshot>;
   lastRunAt: string | null;
   lastError: LastErrorInfo | null;
   runtimeRunStatus: RuntimeRunStatus;
   currentRunId: string | null;
+}
+
+export interface RuntimeDataState {
+  runtimeState: RuntimeState;
+  runtimeEvents: AiPathRuntimeEvent[];
+  parserSamples: Record<string, ParserSampleState>;
+  updaterSamples: Record<string, UpdaterSampleState>;
+  pathDebugSnapshots: Record<string, PathDebugSnapshot>;
   nodeDurations: Record<string, number>;
+  eventsOverflowed: boolean;
+}
+
+export interface RuntimeUiState {
   parserSampleLoading: boolean;
   updaterSampleLoading: boolean;
   sendingToAi: boolean;
-  eventsOverflowed: boolean;
 }
+
+export type RuntimeStateData = RuntimeStatusState & RuntimeDataState & RuntimeUiState;
 
 export interface RuntimeActions {
   setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;
@@ -82,7 +91,7 @@ export interface RuntimeActions {
   fireTrigger: (node: AiNode, event?: MouseEvent<Element>) => Promise<void>;
   fireTriggerPersistent: (node: AiNode, event?: MouseEvent<Element>) => Promise<void>;
   pauseActiveRun: () => void;
-  resumeActiveRun: () => void;
+  continueActiveRun: () => void;
   stepActiveRun: (triggerNode?: AiNode) => void;
   cancelActiveRun: () => void;
   clearWires: () => void;
@@ -109,9 +118,36 @@ export interface RuntimeProviderProps {
 export const INITIAL_RUNTIME_STATE: RuntimeState = {
   inputs: {},
   outputs: {},
-} as RuntimeState;
+};
 
 export const MAX_RUNTIME_EVENTS = 300;
+
+const {
+  Context: RuntimeStatusStateContext,
+  useStrictContext: useRuntimeStatusState,
+} = createStrictContext<RuntimeStatusState>({
+  hookName: 'useRuntimeStatusState',
+  providerName: 'a RuntimeProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: RuntimeDataStateContext,
+  useStrictContext: useRuntimeDataState,
+} = createStrictContext<RuntimeDataState>({
+  hookName: 'useRuntimeDataState',
+  providerName: 'a RuntimeProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: RuntimeUiStateContext,
+  useStrictContext: useRuntimeUiState,
+} = createStrictContext<RuntimeUiState>({
+  hookName: 'useRuntimeUiState',
+  providerName: 'a RuntimeProvider',
+  errorFactory: internalError,
+});
 
 const {
   Context: RuntimeStateContext,
@@ -131,4 +167,15 @@ const {
   errorFactory: internalError,
 });
 
-export { RuntimeStateContext, RuntimeActionsContext, useRuntimeState, useRuntimeActions };
+export {
+  RuntimeStatusStateContext,
+  RuntimeDataStateContext,
+  RuntimeUiStateContext,
+  RuntimeStateContext,
+  RuntimeActionsContext,
+  useRuntimeStatusState,
+  useRuntimeDataState,
+  useRuntimeUiState,
+  useRuntimeState,
+  useRuntimeActions,
+};

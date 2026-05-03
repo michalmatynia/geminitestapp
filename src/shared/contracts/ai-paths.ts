@@ -38,6 +38,7 @@ import {
   aiPathRunEnqueueRequestSchema,
   aiPathRunEnqueueResponseSchema,
   aiPathRunRecordSchema,
+  aiPathRunResultResponseSchema,
   createAiPathRunSchema,
   extractAiPathRunIdFromEnqueueContractPayload,
   parseAiPathRunEnqueuedEventPayload,
@@ -45,6 +46,7 @@ import {
   type AiPathRunEnqueueRequest,
   type AiPathRunEnqueueResponse,
   type AiPathRunRecord,
+  type AiPathRunResultResponse,
   type AiPathRunUpdateInput,
 } from './ai-paths-run-contract';
 import { dtoBaseSchema, namedDtoSchema } from './base';
@@ -59,6 +61,7 @@ export {
   aiPathRunEnqueueRequestSchema,
   aiPathRunEnqueueResponseSchema,
   aiPathRunRecordSchema,
+  aiPathRunResultResponseSchema,
   aiPathRunSchema,
   aiPathRunStatusSchema,
   createAiPathRunSchema,
@@ -69,6 +72,7 @@ export {
   type AiPathRunEnqueueRequest,
   type AiPathRunEnqueueResponse,
   type AiPathRunRecord,
+  type AiPathRunResultResponse,
   type AiPathRun,
   type AiPathRunStatus,
   type AiPathRunUpdateInput,
@@ -189,6 +193,7 @@ export type AiPathRunEventCreateInput = z.infer<typeof aiPathRunEventCreateInput
 export const pathMetaSchema = z.object({
   id: z.string(),
   name: z.string(),
+  folderPath: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -263,6 +268,8 @@ export const pathConfigSchema = z.object({
   runMode: z.string().optional(),
   strictFlowMode: z.boolean().optional(),
   blockedRunPolicy: pathBlockedRunPolicySchema.optional(),
+  historyRetentionPasses: z.number().optional(),
+  historyRetentionOptionsMax: z.number().optional(),
   nodes: z.array(z.lazy(() => aiNodeSchema)),
   edges: z.array(z.lazy(() => edgeSchema)),
   updatedAt: z.string(),
@@ -370,7 +377,6 @@ export const AI_PATH_RUN_TERMINAL_STATUSES: readonly AiPathRunStatus[] = [
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ];
 
 export const aiPathRunRouteParamsSchema = z.object({
@@ -422,33 +428,6 @@ export const aiPathRunStreamQuerySchema = z.object({
   since: optionalTrimmedQueryString(),
 });
 export type AiPathRunStreamQuery = z.infer<typeof aiPathRunStreamQuerySchema>;
-
-export const aiPathRunResumeRequestSchema = z.object({
-  mode: z.enum(['resume', 'replay']).optional(),
-});
-export type AiPathRunResumeRequest = z.infer<typeof aiPathRunResumeRequestSchema>;
-
-export const aiPathRunRetryNodeRequestSchema = z.object({
-  nodeId: z.string().trim().min(1),
-});
-export type AiPathRunRetryNodeRequest = z.infer<typeof aiPathRunRetryNodeRequestSchema>;
-
-export const aiPathRunDeadLetterRequeueRequestSchema = z.object({
-  runIds: z.array(z.string().trim().min(1)).optional(),
-  pathId: z.string().trim().optional().nullable(),
-  query: z.string().trim().optional(),
-  mode: z.enum(['resume', 'replay']).optional(),
-  limit: z.number().int().min(1).max(1000).optional(),
-});
-export type AiPathRunDeadLetterRequeueRequest = z.infer<
-  typeof aiPathRunDeadLetterRequeueRequestSchema
->;
-
-export const aiPathRunHandoffRequestSchema = z.object({
-  reason: z.string().trim().min(1).max(500).optional(),
-  checkpointLineageId: z.string().trim().min(1).max(200).optional(),
-});
-export type AiPathRunHandoffRequest = z.infer<typeof aiPathRunHandoffRequestSchema>;
 
 export const aiPathsPlaywrightEnqueueRequestSchema = z.object({
   script: z.string().trim().min(1),
@@ -598,7 +577,7 @@ export type RuntimeProfileHighlight = {
   iteration?: number | undefined;
   durationMs?: number | undefined;
   hashMs?: number | undefined;
-  runtimeStrategy?: 'compatibility' | 'code_object_v3' | undefined;
+  runtimeStrategy?: 'code_object_v3' | undefined;
   runtimeResolutionSource?: 'override' | 'registry' | 'missing' | undefined;
   runtimeCodeObjectId?: string | null | undefined;
 };

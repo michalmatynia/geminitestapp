@@ -5,9 +5,11 @@
   "title": "Template",
   "purpose": "Create prompts from template strings.",
   "inputs": [
-    "bundle",
+    "template",
+    "context",
     "value",
-    "productId"
+    "result",
+    "bundle"
   ],
   "outputs": [
     "prompt"
@@ -45,9 +47,11 @@
       "y": 100
     },
     "inputs": [
-      "bundle",
+      "template",
+      "context",
       "value",
-      "productId"
+      "result",
+      "bundle"
     ],
     "outputs": [
       "prompt"
@@ -59,5 +63,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "349143bb99ff84ec6f3ceba1c8d8a24e48682e23c0679ef6bc8ff3048636640c"
+  "nodeHash": "a61e6756bfbc5e139976478c63fa5ab3cf1c07342f9f33c74f9388079d857c4d"
 }

@@ -2,8 +2,15 @@
 test-results/
 playwright-report/
 coverage/
+.eslintcache
+.next/
+.next-dev/
 
 # Bazel build artifacts
 bazel-*
 .cache/bazel-disk
 .cache/bazel-repo
+
+# Local databases and transient runtime data
+mongo/local-data/
+tmp/playwright-runs/

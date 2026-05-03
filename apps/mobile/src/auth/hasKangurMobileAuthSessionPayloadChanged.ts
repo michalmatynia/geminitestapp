@@ -1,5 +1,36 @@
 import type { KangurAuthSession } from '@kangur/platform';
 
+const areArraysEqual = (left: unknown[], right: unknown[]): boolean => {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((value, index) =>
+    areKangurMobileAuthValuesEqual(value, right[index]),
+  );
+};
+
+const areObjectsEqual = (
+  left: Record<string, unknown>,
+  right: Record<string, unknown>,
+): boolean => {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  return leftKeys.every(
+    (key) =>
+      Object.prototype.hasOwnProperty.call(right, key) &&
+      areKangurMobileAuthValuesEqual(left[key], right[key]),
+  );
+};
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 const areKangurMobileAuthValuesEqual = (
   left: unknown,
   right: unknown,
@@ -8,38 +39,15 @@ const areKangurMobileAuthValuesEqual = (
     return true;
   }
 
-  if (left === null || right === null) {
-    return left === right;
+  if (Array.isArray(left)) {
+    return Array.isArray(right) && areArraysEqual(left, right);
   }
 
-  if (Array.isArray(left) || Array.isArray(right)) {
-    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
-      return false;
-    }
-
-    return left.every((value, index) =>
-      areKangurMobileAuthValuesEqual(value, right[index]),
-    );
+  if (isPlainObject(left) && isPlainObject(right)) {
+    return areObjectsEqual(left, right);
   }
 
-  if (typeof left !== 'object' || typeof right !== 'object') {
-    return false;
-  }
-
-  const leftRecord = left as Record<string, unknown>;
-  const rightRecord = right as Record<string, unknown>;
-  const leftKeys = Object.keys(leftRecord);
-  const rightKeys = Object.keys(rightRecord);
-
-  if (leftKeys.length !== rightKeys.length) {
-    return false;
-  }
-
-  return leftKeys.every(
-    (key) =>
-      Object.prototype.hasOwnProperty.call(rightRecord, key) &&
-      areKangurMobileAuthValuesEqual(leftRecord[key], rightRecord[key]),
-  );
+  return false;
 };
 
 export const hasKangurMobileAuthSessionPayloadChanged = (

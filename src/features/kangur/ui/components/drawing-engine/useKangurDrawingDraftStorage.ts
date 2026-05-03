@@ -9,6 +9,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 const DRAWING_DRAFT_STORAGE_PREFIX = 'kangur-drawing-draft-v1:';
 export const KANGUR_DRAWING_DRAFT_PERSIST_DELAY_MS = 120;
@@ -89,10 +90,10 @@ export const useKangurDrawingDraftStorage = (
     }
 
     if (persistTimeoutRef.current !== null) {
-      window.clearTimeout(persistTimeoutRef.current);
+      safeClearTimeout(persistTimeoutRef.current);
     }
 
-    persistTimeoutRef.current = window.setTimeout(() => {
+    persistTimeoutRef.current = safeSetTimeout(() => {
       persistTimeoutRef.current = null;
       persistKangurDrawingDraftSnapshot(
         activeStorageKeyRef.current,

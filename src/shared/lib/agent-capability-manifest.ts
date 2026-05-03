@@ -97,7 +97,7 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       heartbeatMs: 30000,
       staleAfterMs: 300000,
       recovery:
-        'If a worker cannot claim execution ownership, transition the run to blocked_on_lease and hand off instead of racing the active owner.',
+        'If a worker cannot claim execution ownership, fail the run and require a fresh forward-only retry instead of racing the active owner.',
       entrypoints: [
         'src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts',
         'src/features/ai/ai-paths/services/path-run-management-service.ts',
@@ -206,7 +206,7 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       concurrencyNotes: [
         'Provide scopeId for partitioned resources such as broker leaseKey, base import runId, and AI Paths runId.',
         'Base import leases are mutated through the shared service; Playwright broker state is currently exposed through a broker-file adapter.',
-        'AI Paths queue workers claim ai-paths.run.execution before processing and expose lease contention through blocked_on_lease.',
+        'AI Paths queue workers claim ai-paths.run.execution before processing and fail fast on lease contention.',
       ],
     },
     {
@@ -254,7 +254,7 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       id: 'ai-paths-run-orchestration',
       name: 'AI Paths run orchestration',
       summary:
-        'AI Paths contracts now include lease-blocked and handoff-ready run states alongside existing queue, runtime, and checkpoint surfaces.',
+        'AI Paths exposes a forward-only run queue with canonical queued, running, completed, failed, and canceled lifecycle states.',
       surface: 'service',
       maturity: 'partial',
       effects: ['observe', 'propose', 'safe_write'],
@@ -265,18 +265,15 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
         'src/shared/contracts/ai-paths-runtime.ts',
         'src/shared/contracts/agent-runtime.ts',
         'src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts',
-        'src/app/api/ai-paths/runs/[runId]/handoff/handler.ts',
         'src/features/ai/ai-paths/components/run-history-panel.tsx',
-        'src/features/ai/ai-paths/components/run-detail-dialog.tsx',
         'src/features/ai/ai-paths/components/job-queue-run-card.tsx',
-        'src/features/ai/ai-paths/components/canvas-sidebar.tsx',
       ],
       resources: ['ai-paths.run.queue', 'ai-paths.run.execution'],
       concurrencyNotes: [
         'Prefer append-only run events and durable checkpoints to mutable singleton run state.',
-        'Use blocked_on_lease and handoff_ready to represent resource contention and agent handoff explicitly.',
+        'Treat AI Paths runs as forward-only: start fresh work instead of resuming prior execution state.',
         'Queue workers must claim ai-paths.run.execution with scopeId=runId before processing a run.',
-        'Operators can mark blocked runs handoff-ready from the run history list or run detail dialog, and other UI surfaces expose lease-blocked guidance.',
+        'If lease ownership cannot be claimed, fail the run and start a fresh run after ownership is available.',
       ],
     },
     {

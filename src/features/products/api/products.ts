@@ -1,10 +1,42 @@
+// Client product API helpers: wrapper around api client with sensible timeouts
+// and no-store caching to avoid stale client-side caches. Prefer
+// getProductsWithCount() for paged requests when possible.
 import { type ProductFilter } from '@/shared/contracts/products/filters';
-import { type ProductWithImages, type ProductsPagedResult } from '@/shared/contracts/products/product';
+import {
+  type ProductBatchEditRequest,
+  type ProductBatchEditResponse,
+  type ProductBulkArchiveResponse,
+  type ProductMarketplaceCopyDebrandBatchRequest,
+  type ProductMarketplaceCopyDebrandBatchResponse,
+  type ProductMarketplaceCopyDebrandRunRequest,
+  type ProductMarketplaceCopyDebrandRunResponse,
+  type ProductParseActionsMarkTraderaClosedRequest,
+  type ProductParseActionsMarkTraderaClosedResponse,
+  type ProductParseActionsMatchRequest,
+  type ProductParseActionsMatchResponse,
+  type ProductWithImages,
+  type ProductsPagedResult,
+} from '@/shared/contracts/products';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 const PRODUCT_READ_TIMEOUT_MS = 60_000;
 const PRODUCT_WRITE_TIMEOUT_MS = 60_000;
+
+function buildGetOptions(filters: ProductFilter, signal?: AbortSignal, fresh?: boolean): ApiClientOptions {
+  const { ids, ...restFilters } = filters;
+  const options: ApiClientOptions = {
+    params: {
+      ...(fresh === true ? { fresh: 1 } : {}),
+      ...restFilters,
+      ...(ids !== undefined && ids.length > 0 ? { ids: ids.join(',') } : {}),
+    },
+    cache: 'no-store',
+    timeout: PRODUCT_READ_TIMEOUT_MS,
+  };
+  if (signal !== undefined) options.signal = signal;
+  return options;
+}
 
 // This function fetches a list of products from the API.
 export async function getProducts(
@@ -12,32 +44,17 @@ export async function getProducts(
   signal?: AbortSignal,
   requestOptions?: { fresh?: boolean }
 ): Promise<ProductWithImages[]> {
-  const apiOptions: ApiClientOptions = {
-    params: {
-      ...(requestOptions?.fresh ? { fresh: 1 } : {}),
-      ...filters,
-    },
-    cache: 'no-store',
-  };
-  if (signal) apiOptions.signal = signal;
-  apiOptions.timeout = PRODUCT_READ_TIMEOUT_MS;
-  return api.get<ProductWithImages[]>('/api/v2/products', apiOptions);
+  const options = buildGetOptions(filters, signal, requestOptions?.fresh);
+  return api.get<ProductWithImages[]>('/api/v2/products', options);
 }
 
 export async function countProducts(filters: ProductFilter, signal?: AbortSignal): Promise<number> {
   try {
-    const options: ApiClientOptions = {
-      params: {
-        ...filters,
-      },
-      cache: 'no-store',
-    };
-    if (signal) options.signal = signal;
-    options.timeout = PRODUCT_READ_TIMEOUT_MS;
+    const options = buildGetOptions(filters, signal);
     const data = await api.get<{ count: number }>('/api/v2/products/count', options);
-    return data.count ?? 0;
-  } catch (_error) {
-    logClientCatch(_error, {
+    return data.count;
+  } catch (error: unknown) {
+    logClientCatch(error, {
       source: 'products.api',
       action: 'countProducts',
       filters,
@@ -51,14 +68,7 @@ export async function getProductIds(
   filters: ProductFilter,
   signal?: AbortSignal
 ): Promise<string[]> {
-  const options: ApiClientOptions = {
-    params: {
-      ...filters,
-    },
-    cache: 'no-store',
-  };
-  if (signal) options.signal = signal;
-  options.timeout = PRODUCT_READ_TIMEOUT_MS;
+  const options = buildGetOptions(filters, signal);
   const data = await api.get<{ ids?: string[] }>('/api/v2/products/ids', options);
   return Array.isArray(data.ids) ? data.ids : [];
 }
@@ -72,16 +82,8 @@ export async function getProductsWithCount(
   signal?: AbortSignal,
   requestOptions?: { fresh?: boolean }
 ): Promise<ProductsPagedResult> {
-  const apiOptions: ApiClientOptions = {
-    params: {
-      ...(requestOptions?.fresh ? { fresh: 1 } : {}),
-      ...filters,
-    },
-    cache: 'no-store',
-  };
-  if (signal) apiOptions.signal = signal;
-  apiOptions.timeout = PRODUCT_READ_TIMEOUT_MS;
-  return api.get<ProductsPagedResult>('/api/v2/products/paged', apiOptions);
+  const options = buildGetOptions(filters, signal, requestOptions?.fresh);
+  return api.get<ProductsPagedResult>('/api/v2/products/paged', options);
 }
 
 export async function createProduct(formData: FormData): Promise<ProductWithImages> {
@@ -104,8 +106,8 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
   try {
     await api.delete(`/api/v2/products/${id}`);
     return { success: true };
-  } catch (_error) {
-    logClientCatch(_error, {
+  } catch (error: unknown) {
+    logClientCatch(error, {
       source: 'products.api',
       action: 'deleteProduct',
       id,
@@ -113,6 +115,70 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
     });
     return { success: false };
   }
+}
+
+export async function bulkSetProductsArchivedState(
+  productIds: string[],
+  archived: boolean
+): Promise<ProductBulkArchiveResponse> {
+  return api.post<ProductBulkArchiveResponse>('/api/v2/products/archive/batch', {
+    productIds,
+    archived,
+  }, {
+    timeout: PRODUCT_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function batchEditProducts(
+  request: ProductBatchEditRequest
+): Promise<ProductBatchEditResponse> {
+  return api.post<ProductBatchEditResponse>('/api/v2/products/batch-edit', request, {
+    timeout: PRODUCT_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function queueMarketplaceCopyDebrandBatch(
+  request: ProductMarketplaceCopyDebrandBatchRequest
+): Promise<ProductMarketplaceCopyDebrandBatchResponse> {
+  return api.post<ProductMarketplaceCopyDebrandBatchResponse>(
+    '/api/v2/products/marketplace-copy-debrand/batch',
+    request,
+    {
+      timeout: PRODUCT_WRITE_TIMEOUT_MS,
+    }
+  );
+}
+
+export async function queueMarketplaceCopyDebrandRun(
+  request: ProductMarketplaceCopyDebrandRunRequest
+): Promise<ProductMarketplaceCopyDebrandRunResponse> {
+  return api.post<ProductMarketplaceCopyDebrandRunResponse>(
+    '/api/v2/products/marketplace-copy-debrand/run',
+    request,
+    {
+      timeout: PRODUCT_WRITE_TIMEOUT_MS,
+    }
+  );
+}
+
+export async function matchProductParseActions(
+  request: ProductParseActionsMatchRequest
+): Promise<ProductParseActionsMatchResponse> {
+  return api.post<ProductParseActionsMatchResponse>('/api/v2/products/parse-actions/match', request, {
+    timeout: PRODUCT_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function markParsedTraderaMatchesClosed(
+  request: ProductParseActionsMarkTraderaClosedRequest
+): Promise<ProductParseActionsMarkTraderaClosedResponse> {
+  return api.post<ProductParseActionsMarkTraderaClosedResponse>(
+    '/api/v2/products/parse-actions/tradera/mark-closed',
+    request,
+    {
+      timeout: PRODUCT_WRITE_TIMEOUT_MS,
+    }
+  );
 }
 
 export async function getProductById(id: string): Promise<ProductWithImages> {

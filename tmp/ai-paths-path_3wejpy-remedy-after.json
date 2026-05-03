@@ -2958,12 +2958,12 @@
             "id": "catalog_database_database_query_provider_allowed_values_in_1",
             "list": [
               "mongodb",
-              "prisma"
+              "removedOrm"
             ],
             "operator": "in"
           }
         ],
-        "description": "Database provider (mongodb|prisma). Allowed values inferred from docs: mongodb, prisma.",
+        "description": "Database provider (mongodb|removedOrm). Allowed values inferred from docs: mongodb, removedOrm.",
         "docsBindings": [
           "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
         ],
@@ -2986,7 +2986,7 @@
           ]
         },
         "module": "database",
-        "recommendation": "Set config.database.query.provider to one of: mongodb, prisma.",
+        "recommendation": "Set config.database.query.provider to one of: mongodb, removedOrm.",
         "sequence": 262,
         "severity": "error",
         "title": "Database Query: database.query.provider uses documented values"
@@ -3421,12 +3421,12 @@
             "list": [
               "all",
               "mongodb",
-              "prisma"
+              "removedOrm"
             ],
             "operator": "in"
           }
         ],
-        "description": "Which provider to load: auto (primary), mongodb, prisma, or all. Allowed values inferred from docs: all, mongodb, prisma.",
+        "description": "Which provider to load: auto (primary), mongodb, removedOrm, or all. Allowed values inferred from docs: all, mongodb, removedOrm.",
         "docsBindings": [
           "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
         ],
@@ -3449,7 +3449,7 @@
           ]
         },
         "module": "custom",
-        "recommendation": "Set config.db_schema.provider to one of: all, mongodb, prisma.",
+        "recommendation": "Set config.db_schema.provider to one of: all, mongodb, removedOrm.",
         "sequence": 262,
         "severity": "error",
         "title": "Database Schema: db_schema.provider uses documented values"
@@ -5444,12 +5444,12 @@
             "id": "catalog_poll_poll_dbquery_provider_allowed_values_in_1",
             "list": [
               "mongodb",
-              "prisma"
+              "removedOrm"
             ],
             "operator": "in"
           }
         ],
-        "description": "Database provider (mongodb|prisma). Allowed values inferred from docs: mongodb, prisma.",
+        "description": "Database provider (mongodb|removedOrm). Allowed values inferred from docs: mongodb, removedOrm.",
         "docsBindings": [
           "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
         ],
@@ -5472,7 +5472,7 @@
           ]
         },
         "module": "poll",
-        "recommendation": "Set config.poll.dbQuery.provider to one of: mongodb, prisma.",
+        "recommendation": "Set config.poll.dbQuery.provider to one of: mongodb, removedOrm.",
         "sequence": 262,
         "severity": "error",
         "title": "Poll Job: poll.dbQuery.provider uses documented values"
@@ -9338,7 +9338,7 @@
             "id": "coverage_database_database_query_provider_provider_values_in_1",
             "list": [
               "mongodb",
-              "prisma"
+              "removedOrm"
             ],
             "operator": "in"
           }
@@ -9372,7 +9372,7 @@
           ]
         },
         "module": "database",
-        "recommendation": "Set config.database.query.provider to one of: mongodb, prisma.",
+        "recommendation": "Set config.database.query.provider to one of: mongodb, removedOrm.",
         "sequence": 275,
         "severity": "info",
         "title": "Database Query: provider uses documented values"
@@ -9665,7 +9665,7 @@
             "list": [
               "all",
               "mongodb",
-              "prisma"
+              "removedOrm"
             ],
             "operator": "in"
           }
@@ -9699,7 +9699,7 @@
           ]
         },
         "module": "custom",
-        "recommendation": "Set config.db_schema.provider to one of: all, mongodb, prisma.",
+        "recommendation": "Set config.db_schema.provider to one of: all, mongodb, removedOrm.",
         "sequence": 275,
         "severity": "info",
         "title": "Database Schema: provider uses documented values"
@@ -13943,7 +13943,7 @@
           ]
         },
         "module": "database",
-        "recommendation": "Set query.provider to mongodb/prisma/auto as intended.",
+        "recommendation": "Set query.provider to mongodb/removedOrm/auto as intended.",
         "sequence": 92,
         "severity": "info",
         "title": "Database provider configured",

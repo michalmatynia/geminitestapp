@@ -81,6 +81,8 @@ export const buildCanvasPageContext = (
   pathName: 'Path Main',
   pathSwitchOptions: [{ label: 'Path Main', value: 'path-main' }],
   handleSwitchPath: vi.fn(),
+  isPathTreeVisible: true,
+  setIsPathTreeVisible: vi.fn(),
   isPathSwitching: false,
   lastError: null,
   persistLastError: vi.fn(async () => undefined),

@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getImageStudioSlotById, updateImageStudioSlot } from '@/features/ai/server';
@@ -41,7 +41,7 @@ function guessExtension(mime: string): string {
   return '.png';
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { slotId: string }

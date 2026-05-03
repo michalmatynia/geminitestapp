@@ -4,7 +4,7 @@ import { useQueryClient, type QueryClient, type Query } from '@tanstack/react-qu
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
-import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+import { safeClearInterval, safeClearTimeout, safeSetInterval, safeSetTimeout } from '@/shared/lib/timers';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -117,11 +117,11 @@ export function useQueryDiagnostics(options: UseQueryDiagnosticsOptions = {}): {
     if (!enabled) return () => {};
 
     const cache = queryClient.getQueryCache();
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;
     const update = (): void => {
       if (pendingUpdateRef.current) return;
       pendingUpdateRef.current = true;
-      timeoutId = setTimeout(() => {
+      timeoutId = safeSetTimeout(() => {
         pendingUpdateRef.current = false;
         const snapshot = buildSnapshot(queryClient);
         setQueries((prev: QueryDiagnosticsItem[]) =>
@@ -133,7 +133,7 @@ export function useQueryDiagnostics(options: UseQueryDiagnosticsOptions = {}): {
     const intervalId = safeSetInterval(update, 5000);
     update();
     return (): void => {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutId) safeClearTimeout(timeoutId);
       unsubscribe();
       safeClearInterval(intervalId);
     };

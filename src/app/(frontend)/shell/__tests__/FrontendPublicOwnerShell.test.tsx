@@ -28,6 +28,13 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: usePathnameMock,
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/ui/FrontendPublicOwnerKangurShell', () => ({
   FrontendPublicOwnerKangurShell: ({
     initialAppearance,
@@ -129,6 +136,21 @@ describe('FrontendPublicOwnerShell', () => {
         initialAppearance: undefined,
       });
     });
+  });
+
+  it('lets the root route keep its children when the server suppresses standalone shell rendering', () => {
+    render(
+      <FrontendPublicOwnerShell
+        publicOwner='kangur'
+        renderStandaloneKangurShell={false}
+      >
+        <div data-testid='frontend-children'>children</div>
+      </FrontendPublicOwnerShell>
+    );
+
+    expect(screen.getByTestId('frontend-children')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-feature-route-shell')).not.toBeInTheDocument();
+    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
   });
 
   it('lets the canonical public login route render its children when Kangur owns the root', () => {

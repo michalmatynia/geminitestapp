@@ -87,6 +87,31 @@ describe('cms-domain', () => {
     expect(getMongoDbMock).not.toHaveBeenCalled();
   });
 
+  it('returns a synthetic domain without writing when zoning is enabled and the host is unmapped', async () => {
+    vi.doMock('./cms-domain-settings', () => ({
+      getCmsDomainSettings: vi.fn().mockResolvedValue({ zoningEnabled: true }),
+    }));
+
+    const insertOne = vi.fn();
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue({
+        findOne: vi.fn().mockResolvedValue(null),
+        insertOne,
+      }),
+    });
+
+    const { resolveCmsDomainByHost } = await import('./cms-domain');
+
+    await expect(resolveCmsDomainByHost('Docs.Example.com')).resolves.toEqual(
+      expect.objectContaining({
+        id: 'unmapped-domain:docs.example.com',
+        name: 'docs.example.com',
+        domain: 'docs.example.com',
+      })
+    );
+    expect(insertOne).not.toHaveBeenCalled();
+  });
+
   it('falls back to repository slugs without opening mongo when zoning is disabled', async () => {
     vi.doMock('./cms-domain-settings', () => ({
       getCmsDomainSettings: vi.fn().mockResolvedValue({ zoningEnabled: false }),

@@ -17,15 +17,19 @@ type UseCreateFromDraftProps = {
   handleOpenCreateFromDraft: (draft: ProductDraft) => void;
 };
 
+type UseCreateFromDraftResult = {
+  handleCreateFromDraft: (draftId: string) => Promise<void>;
+};
+
 export function useCreateFromDraft({
   setCreateDraft,
   handleOpenCreateFromDraft,
-}: UseCreateFromDraftProps) {
+}: UseCreateFromDraftProps): UseCreateFromDraftResult {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const handleCreateFromDraft = useCallback(
-    async (draftId: string) => {
+    async (draftId: string): Promise<void> => {
       try {
         const draft = await fetchQueryV2<ProductDraft>(queryClient, {
           queryKey: normalizeQueryKey(draftKeys.detail(draftId)),

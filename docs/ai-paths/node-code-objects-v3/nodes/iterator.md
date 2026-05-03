@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-04-05'
+last_reviewed: '2026-04-12'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Iterator Migration Sheet (`iterator`)
 
-Generated at: 2026-04-05T14:57:58.017Z
+Generated at: 2026-04-12T04:59:57.716Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-04-05T14:57:58.017Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/iterator.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/iterator.scaffold.json`
 - v3 object id: `node_obj_iterator_portable_v3`
-- v3 object hash: `0afea5d6e82eb9fedbb94851d7ac2a33a6d8ab43210a9bb0ef004ef470ce00d5`
+- v3 object hash: `ec6c493b52fd6a50f3f9f1975aa60408e22cd715f9020ce10a6a32a9dd73ab00`
 
 ## Ports
 

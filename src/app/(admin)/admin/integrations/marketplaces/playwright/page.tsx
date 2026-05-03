@@ -1,7 +1,5 @@
-import { JSX } from 'react';
+import { redirect } from 'next/navigation';
 
-import { PlaywrightIntegrationPage } from '@/features/integrations/public';
-
-export default function Page(): JSX.Element {
-  return <PlaywrightIntegrationPage />;
+export default function AdminPlaywrightProgrammableCompatibilityPage(): never {
+  redirect('/admin/playwright/programmable');
 }

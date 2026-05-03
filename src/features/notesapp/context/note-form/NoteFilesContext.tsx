@@ -25,7 +25,7 @@ export interface NoteFilesData {
   handleFileDelete: (slotIndex: number) => Promise<void>;
   insertFileReference: (file: NoteFileRecord) => void;
   getNextAvailableSlot: () => number | null;
-  handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => Promise<void>;
+  handlePaste: (e: React.ClipboardEvent) => Promise<void>;
   formatFileSize: (bytes: number) => string;
   isImageFile: (mimetype: string) => boolean;
 }

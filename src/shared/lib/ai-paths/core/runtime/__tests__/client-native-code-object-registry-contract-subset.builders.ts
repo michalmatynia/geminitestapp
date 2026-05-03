@@ -26,6 +26,18 @@ const buildDbApiSchemaResponse = () => ({
   },
 });
 
+const buildDbApiBrowseResponse = () => ({
+  ok: true as const,
+  data: {
+    provider: 'mongodb' as const,
+    collection: 'products',
+    documents: [{ _id: 'prod-1', name_en: 'Desk Lamp' }],
+    total: 1,
+    limit: 20,
+    skip: 0,
+  },
+});
+
 const buildAiJobsEnqueueResponse = () => ({
   ok: true as const,
   data: { jobId: 'job-model-1' },
@@ -100,6 +112,7 @@ const buildPlaywrightPollResponse = () => ({
 
 const hoistedMocks = vi.hoisted(() => ({
   mockDbApiSchema: vi.fn(async () => buildDbApiSchemaResponse()),
+  mockDbApiBrowse: vi.fn(async () => buildDbApiBrowseResponse()),
   mockAiJobsEnqueue: vi.fn(async () => buildAiJobsEnqueueResponse()),
   mockAiJobsPoll: vi.fn(async () => buildAiJobsPollResponse()),
   mockAgentEnqueue: vi.fn(async () => buildAgentEnqueueResponse()),
@@ -111,6 +124,7 @@ const hoistedMocks = vi.hoisted(() => ({
 }));
 
 export const mockDbApiSchema = hoistedMocks.mockDbApiSchema;
+export const mockDbApiBrowse = hoistedMocks.mockDbApiBrowse;
 export const mockAiJobsEnqueue = hoistedMocks.mockAiJobsEnqueue;
 export const mockAiJobsPoll = hoistedMocks.mockAiJobsPoll;
 export const mockAgentEnqueue = hoistedMocks.mockAgentEnqueue;
@@ -129,6 +143,7 @@ vi.mock('@/shared/lib/ai-paths/api', async () => {
     dbApi: {
       ...actual.dbApi,
       schema: hoistedMocks.mockDbApiSchema,
+      browse: hoistedMocks.mockDbApiBrowse,
     },
     aiJobsApi: {
       ...actual.aiJobsApi,
@@ -396,12 +411,18 @@ export const buildDbSchemaNode = (): AiNode => ({
   type: 'db_schema',
   title: 'DB Schema',
   description: '',
-  inputs: [],
+  inputs: ['context', 'schema'],
   outputs: ['schema', 'context'],
   config: {
     db_schema: {
+      provider: 'auto',
       mode: 'selected',
       collections: ['products'],
+      sourceMode: 'schema_and_live_context',
+      contextCollections: ['products'],
+      contextQuery: '{"status":"active"}',
+      contextLimit: 20,
+      contextTransform: 'none',
       includeFields: true,
       includeRelations: true,
       formatAs: 'text',

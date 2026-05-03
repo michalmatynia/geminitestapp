@@ -1,6 +1,7 @@
 import type { RuntimeRunStatus } from '@/shared/contracts/ai-paths';
 import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
-import type { AiNode, Edge, PathFlowIntensity, RuntimeState, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent, RunPreflightBlockReason } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PathFlowIntensity, RunPreflightBlockReason } from '@/shared/contracts/ai-paths';
+import type { RuntimeState, AiPathRuntimeEvent, AiPathRuntimeNodeStatusMap } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   type CanvasRendererMode,

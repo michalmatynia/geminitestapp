@@ -1,6 +1,6 @@
 'use client';
 
-import { type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createContext,
   useCallback,
@@ -18,10 +18,6 @@ import {
   type ResizeStudioProjectCanvasResult,
   type UpdateStudioProjectPayload,
   type UpdateStudioProjectResult,
-  useCreateStudioProject,
-  useDeleteStudioProject,
-  useRenameStudioProject,
-  useResizeStudioProjectCanvas,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
@@ -36,7 +32,12 @@ import {
   useUserPreferences,
   useUpdateUserPreferences,
 } from '@/shared/hooks/useUserPreferences';
-import { ApiError } from '@/shared/lib/api-client';
+import { ApiError, api } from '@/shared/lib/api-client';
+import {
+  invalidateImageStudioProjects,
+  invalidateImageStudioSlots,
+} from '@/shared/lib/query-invalidation';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -86,10 +87,107 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
   const projectsQuery = useStudioProjects();
   const userPreferencesQuery = useUserPreferences();
   const updateUserPreferences = useUpdateUserPreferences();
-  const createProjectMutation = useCreateStudioProject();
-  const renameProjectMutation = useRenameStudioProject();
-  const deleteProjectMutation = useDeleteStudioProject();
-  const resizeProjectCanvasMutation = useResizeStudioProjectCanvas();
+  const queryClient = useQueryClient();
+  const createProjectMutation = useMutation<
+    CreateStudioProjectResult,
+    Error,
+    CreateStudioProjectPayload
+  >({
+    mutationKey: QUERY_KEYS.imageStudio.all,
+    mutationFn: (data: CreateStudioProjectPayload) =>
+      api.post<CreateStudioProjectResult>('/api/image-studio/projects', data),
+    onSuccess: async (): Promise<void> => {
+      await invalidateImageStudioProjects(queryClient);
+    },
+  });
+  const renameProjectMutation = useMutation<
+    UpdateStudioProjectResult,
+    Error,
+    UpdateStudioProjectPayload
+  >({
+    mutationKey: QUERY_KEYS.imageStudio.all,
+    mutationFn: ({ projectId, nextProjectId }: UpdateStudioProjectPayload) =>
+      api.patch<UpdateStudioProjectResult>(
+        `/api/image-studio/projects/${encodeURIComponent(projectId)}`,
+        { projectId: nextProjectId }
+      ),
+    onSuccess: async (): Promise<void> => {
+      await invalidateImageStudioProjects(queryClient);
+    },
+  });
+  const deleteProjectMutation = useMutation<string, Error, string>({
+    mutationKey: QUERY_KEYS.imageStudio.all,
+    mutationFn: async (id: string): Promise<string> => {
+      await api.delete(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
+        timeout: 120_000,
+      });
+      return id;
+    },
+    onSuccess: async (deletedProjectId: string): Promise<void> => {
+      await invalidateImageStudioProjects(queryClient);
+      await invalidateImageStudioSlots(queryClient, deletedProjectId);
+    },
+  });
+  const resizeProjectCanvasMutation = useMutation<
+    ResizeStudioProjectCanvasResult,
+    Error,
+    ResizeStudioProjectCanvasPayload
+  >({
+    mutationKey: QUERY_KEYS.imageStudio.all,
+    mutationFn: async (
+      payload: ResizeStudioProjectCanvasPayload
+    ): Promise<ResizeStudioProjectCanvasResult> => {
+      const normalizedProjectId = payload.projectId.trim();
+      if (!normalizedProjectId) {
+        throw new Error('Project id is required.');
+      }
+      if (
+        typeof payload.canvasWidthPx !== 'number' &&
+        typeof payload.canvasHeightPx !== 'number'
+      ) {
+        throw new Error('At least one canvas dimension is required.');
+      }
+
+      const response = await api.patch<UpdateStudioProjectResult>(
+        `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}`,
+        {
+          ...(typeof payload.canvasWidthPx === 'number'
+            ? { canvasWidthPx: payload.canvasWidthPx }
+            : {}),
+          ...(typeof payload.canvasHeightPx === 'number'
+            ? { canvasHeightPx: payload.canvasHeightPx }
+            : {}),
+        },
+        { timeout: 120_000 }
+      );
+
+      if (!response.projectId?.trim()) {
+        throw new Error('Failed to update project canvas size.');
+      }
+
+      const canvasWidthPx = response.project.canvasWidthPx ?? payload.canvasWidthPx ?? null;
+      const canvasHeightPx = response.project.canvasHeightPx ?? payload.canvasHeightPx ?? null;
+      if (canvasWidthPx === null || canvasHeightPx === null) {
+        throw new Error('Failed to resolve project canvas size.');
+      }
+
+      return {
+        projectId: response.projectId,
+        canvasWidthPx,
+        canvasHeightPx,
+      };
+    },
+    onSuccess: async (
+      result: ResizeStudioProjectCanvasResult,
+      variables: ResizeStudioProjectCanvasPayload
+    ): Promise<void> => {
+      const normalizedProjectId = result.projectId?.trim() || variables.projectId.trim();
+      await invalidateImageStudioProjects(queryClient);
+      if (normalizedProjectId) {
+        await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+      }
+    },
+  });
   const lastPersistedProjectRef = useRef<string | null>(null);
 
   const activeProjectIdFromPreferences = useMemo(() => {

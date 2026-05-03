@@ -12,13 +12,14 @@ import {
 
 import type {
   GamesLibraryGameModalProps,
+  GamesLibraryGameModalState,
 } from './GamesLibraryGameModal.types';
 
 export function useGamesLibraryGameModalState({
   open,
   onOpenChange,
   game,
-}: GamesLibraryGameModalProps) {
+}: GamesLibraryGameModalProps): GamesLibraryGameModalState {
   const locale = useLocale();
   const translations = useTranslations('KangurGamesLibraryPage');
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -43,11 +44,14 @@ export function useGamesLibraryGameModalState({
   }, [onOpenChange]);
 
   return {
+    open,
+    onOpenChange,
     translations,
     locale,
     settingsOpen,
     setSettingsOpen,
     handleCloseModal,
+    game,
     supportsPreviewSettings: game?.id === 'clock_training',
     lessonGameSectionsQuery,
     gameInstancesQuery,

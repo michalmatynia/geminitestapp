@@ -4,9 +4,11 @@ import { spawn } from 'node:child_process';
 
 import { parseCommonCheckArgs, writeSummaryJson } from '../lib/check-cli.mjs';
 import {
+  buildHighRiskCoverageMergeArgs,
   buildHighRiskCoverageVitestArgs,
   collectHighRiskCoverageTestFiles,
   highRiskCoverageDomains,
+  HIGH_RISK_COVERAGE_BLOB_REPORTS_DIRECTORY,
   HIGH_RISK_COVERAGE_SUMMARY_PATH,
   selectHighRiskCoverageDomains,
 } from './lib/high-risk-coverage-baseline.mjs';
@@ -16,17 +18,44 @@ const { strictMode, summaryJson } = parseCommonCheckArgs(args);
 const root = process.cwd();
 const MAX_OUTPUT_BYTES = 160_000;
 const DEFAULT_COVERAGE_CONCURRENCY = 2;
+const DEFAULT_DOMAIN_SHARD_CONCURRENCY = 2;
 
-const parseCoverageConcurrency = (value) => {
+const parsePositiveInteger = (value, fallback) => {
   const parsed = Number.parseInt(String(value ?? ''), 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_COVERAGE_CONCURRENCY;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
-const coverageConcurrency = parseCoverageConcurrency(process.env.HIGH_RISK_COVERAGE_CONCURRENCY);
+const coverageConcurrency = parsePositiveInteger(
+  process.env.HIGH_RISK_COVERAGE_CONCURRENCY,
+  DEFAULT_COVERAGE_CONCURRENCY
+);
+const domainShardConcurrency = parsePositiveInteger(
+  process.env.HIGH_RISK_COVERAGE_SHARD_CONCURRENCY,
+  DEFAULT_DOMAIN_SHARD_CONCURRENCY
+);
 const selectedTargetIds = String(process.env.HIGH_RISK_COVERAGE_TARGETS ?? '')
   .split(',')
   .map((value) => value.trim())
   .filter(Boolean);
+
+const resolveShardCount = (domain) =>
+  parsePositiveInteger(
+    process.env.HIGH_RISK_COVERAGE_SHARD_COUNT,
+    Number.isFinite(domain.defaultShardCount) ? domain.defaultShardCount : 1
+  );
+
+const resolveShardMaxWorkers = (shardConcurrency) => {
+  const explicit = String(process.env.HIGH_RISK_COVERAGE_SHARD_MAX_WORKERS ?? '').trim();
+  if (explicit.length > 0) {
+    return explicit;
+  }
+
+  if (shardConcurrency <= 1) {
+    return null;
+  }
+
+  return `${Math.max(1, Math.floor(100 / shardConcurrency))}%`;
+};
 
 const runCommand = ({ command, commandArgs, env }) =>
   new Promise((resolve) => {
@@ -76,6 +105,7 @@ const runCommand = ({ command, commandArgs, env }) =>
 const run = async () => {
   const coverageSummaryAbsolutePath = path.join(root, HIGH_RISK_COVERAGE_SUMMARY_PATH);
   const coverageReportsAbsolutePath = path.dirname(coverageSummaryAbsolutePath);
+  const coverageBlobReportsAbsolutePath = path.join(root, HIGH_RISK_COVERAGE_BLOB_REPORTS_DIRECTORY);
   const selectedDomains = selectHighRiskCoverageDomains({
     domains: highRiskCoverageDomains,
     ids: selectedTargetIds,
@@ -83,10 +113,19 @@ const run = async () => {
 
   if (selectedTargetIds.length === 0) {
     fs.rmSync(coverageReportsAbsolutePath, { force: true, recursive: true });
+    fs.rmSync(coverageBlobReportsAbsolutePath, { force: true, recursive: true });
   } else {
     fs.rmSync(coverageSummaryAbsolutePath, { force: true });
     for (const domain of selectedDomains) {
       fs.rmSync(path.join(root, domain.reportsDirectory), { force: true, recursive: true });
+      fs.rmSync(path.join(root, `${domain.reportsDirectory}-shards`), {
+        force: true,
+        recursive: true,
+      });
+      fs.rmSync(path.join(root, HIGH_RISK_COVERAGE_BLOB_REPORTS_DIRECTORY, domain.id), {
+        force: true,
+        recursive: true,
+      });
     }
   }
 
@@ -113,33 +152,149 @@ const run = async () => {
   }
 
   const runCoverageDomain = async (domain) => {
-    const coverageRun = await runCommand({
-      command: 'npx',
-      commandArgs: buildHighRiskCoverageVitestArgs({
-        root,
+    const coverageSummaryPath = `${domain.reportsDirectory}/coverage-summary.json`;
+    const shardCount = resolveShardCount(domain);
+
+    if (shardCount <= 1) {
+      const coverageRun = await runCommand({
+        command: 'npx',
+        commandArgs: buildHighRiskCoverageVitestArgs({
+          root,
+          reportsDirectory: domain.reportsDirectory,
+          coverageIncludeGlobs: domain.coverageIncludeGlobs,
+          testFiles: domain.testFiles,
+        }),
+      });
+
+      const result = {
+        ...coverageRun,
+        id: domain.id,
+        label: domain.label,
         reportsDirectory: domain.reportsDirectory,
         coverageIncludeGlobs: domain.coverageIncludeGlobs,
-        testFiles: domain.testFiles,
-      }),
-    });
+        discoveredTestFileCount: domain.testFiles.length,
+        coverageSummaryPath,
+        shardCount: 1,
+      };
 
-    const result = {
-      ...coverageRun,
+      if (!summaryJson) {
+        console.log(
+          `[high-risk-coverage-baseline] ${domain.id} ${coverageRun.status.toUpperCase()} ${coverageRun.durationMs}ms`
+        );
+      }
+
+      return result;
+    }
+
+    const blobDirectory = `${HIGH_RISK_COVERAGE_BLOB_REPORTS_DIRECTORY}/${domain.id}`;
+    const shardReportsRoot = `${domain.reportsDirectory}-shards`;
+    const shardRunConcurrency = Math.min(domainShardConcurrency, shardCount);
+    const shardMaxWorkers = resolveShardMaxWorkers(shardRunConcurrency);
+
+    fs.rmSync(path.join(root, blobDirectory), { force: true, recursive: true });
+    fs.rmSync(path.join(root, shardReportsRoot), { force: true, recursive: true });
+    fs.mkdirSync(path.join(root, blobDirectory), { recursive: true });
+
+    const shardRuns = new Array(shardCount);
+    let nextShardIndex = 1;
+    const runShardWorker = async () => {
+      while (true) {
+        const shardIndex = nextShardIndex;
+        nextShardIndex += 1;
+        if (shardIndex > shardCount) {
+          return;
+        }
+
+        const shardRun = await runCommand({
+          command: 'npx',
+          commandArgs: buildHighRiskCoverageVitestArgs({
+            root,
+            reportsDirectory: `${shardReportsRoot}/shard-${shardIndex}`,
+            coverageIncludeGlobs: domain.coverageIncludeGlobs,
+            coverageReporters: ['json-summary'],
+            testFiles: domain.testFiles,
+            reporter: 'blob',
+            outputFile: `${blobDirectory}/blob-${shardIndex}.json`,
+            shardIndex,
+            shardCount,
+            maxWorkers: shardMaxWorkers,
+          }),
+        });
+
+        shardRuns[shardIndex - 1] = {
+          ...shardRun,
+          shardIndex,
+          shardCount,
+        };
+
+        if (!summaryJson) {
+          console.log(
+            `[high-risk-coverage-baseline] ${domain.id} shard ${shardIndex}/${shardCount} ${shardRun.status.toUpperCase()} ${shardRun.durationMs}ms`
+          );
+        }
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: shardRunConcurrency }, () => runShardWorker())
+    );
+
+    const failedShardRun = shardRuns.find((shardRun) => shardRun?.status !== 'pass');
+    let mergeRun = null;
+    if (!failedShardRun) {
+      mergeRun = await runCommand({
+        command: 'npx',
+        commandArgs: buildHighRiskCoverageMergeArgs({
+          blobDirectory,
+          reportsDirectory: domain.reportsDirectory,
+          coverageIncludeGlobs: domain.coverageIncludeGlobs,
+        }),
+      });
+
+      if (!summaryJson) {
+        console.log(
+          `[high-risk-coverage-baseline] ${domain.id} merge ${mergeRun.status.toUpperCase()} ${mergeRun.durationMs}ms`
+        );
+      }
+
+      if (mergeRun.status === 'pass') {
+        fs.rmSync(path.join(root, shardReportsRoot), { force: true, recursive: true });
+        fs.rmSync(path.join(root, blobDirectory), { force: true, recursive: true });
+      }
+    }
+
+    const durationMs =
+      shardRuns.reduce((total, shardRun) => total + Number(shardRun?.durationMs ?? 0), 0) +
+      Number(mergeRun?.durationMs ?? 0);
+    const status =
+      failedShardRun || (mergeRun && mergeRun.status !== 'pass') ? 'fail' : 'pass';
+
+    return {
+      command:
+        mergeRun?.command ??
+        `sharded high-risk coverage (${domain.id}) ${shardCount} shard${shardCount === 1 ? '' : 's'}`,
+      status,
+      exitCode: failedShardRun?.exitCode ?? mergeRun?.exitCode ?? 0,
+      durationMs,
+      output:
+        failedShardRun?.output ??
+        mergeRun?.output ??
+        shardRuns
+          .map((shardRun) => shardRun?.output)
+          .filter(Boolean)
+          .join('\n'),
       id: domain.id,
       label: domain.label,
       reportsDirectory: domain.reportsDirectory,
       coverageIncludeGlobs: domain.coverageIncludeGlobs,
       discoveredTestFileCount: domain.testFiles.length,
-      coverageSummaryPath: `${domain.reportsDirectory}/coverage-summary.json`,
+      coverageSummaryPath,
+      shardCount,
+      shardRunConcurrency,
+      shardRuns,
+      mergeRun,
+      blobDirectory,
     };
-
-    if (!summaryJson) {
-      console.log(
-        `[high-risk-coverage-baseline] ${domain.id} ${coverageRun.status.toUpperCase()} ${coverageRun.durationMs}ms`
-      );
-    }
-
-    return result;
   };
 
   const coverageRuns = new Array(coverageDomains.length);

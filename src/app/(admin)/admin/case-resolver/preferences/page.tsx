@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { AdminCaseResolverPreferencesPage } from '@/features/case-resolver/public';
 

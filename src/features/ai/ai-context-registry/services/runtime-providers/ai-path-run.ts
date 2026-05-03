@@ -346,7 +346,6 @@ export const buildAiPathRunRuntimeDocument = async (
       createdAt: run.createdAt || '',
       startedAt: readTrimmedString(run.startedAt, 80),
       finishedAt: readTrimmedString(run.finishedAt, 80),
-      deadLetteredAt: readTrimmedString(run.deadLetteredAt, 80),
       updatedAt: readTrimmedString(run.updatedAt, 80),
     },
     facts,

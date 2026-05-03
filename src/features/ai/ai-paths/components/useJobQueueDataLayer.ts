@@ -5,8 +5,18 @@ import { useCallback, useMemo, useRef, useState, type Dispatch, type SetStateAct
 import type { Toast } from '@/shared/contracts/ui/base';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { internalError } from '@/shared/errors/app-error';
-import type { AiPathRunListResult, AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
-import { cancelAiPathRun, clearAiPathRuns, getAiPathQueueStatus, listAiPathRuns, removeAiPathRun } from '@/shared/lib/ai-paths';
+import type {
+  AiPathRunListResult,
+  AiPathRunRecord,
+  AiPathRunVisibility,
+} from '@/shared/contracts/ai-paths';
+import {
+  cancelAiPathRun,
+  clearAiPathRuns,
+  getAiPathQueueStatus,
+  listAiPathRuns,
+  removeAiPathRun,
+} from '@/shared/lib/ai-paths/api';
 import {
   mergeAiPathQueuePayloadWithOptimisticRuns,
   patchQueuedCountWithOptimisticRuns,

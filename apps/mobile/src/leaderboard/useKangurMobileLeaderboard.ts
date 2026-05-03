@@ -1,6 +1,6 @@
 import {
-  KANGUR_LEADERBOARD_OPERATION_OPTIONS,
-  KANGUR_LEADERBOARD_USER_OPTIONS,
+  type KANGUR_LEADERBOARD_OPERATION_OPTIONS,
+  type KANGUR_LEADERBOARD_USER_OPTIONS,
   buildKangurLeaderboardItems,
   filterKangurLeaderboardScores,
   getKangurLeaderboardOperationOptions,
@@ -8,12 +8,14 @@ import {
   type KangurLeaderboardItem,
   type KangurLeaderboardUserFilter,
 } from '@kangur/core';
-import { useQuery } from '@tanstack/react-query';
+import { type KangurScore } from '@kangur/contracts/kangur';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
-import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { type KangurAuthSession } from '@kangur/platform';
 
 type UseKangurMobileLeaderboardOptions = {
   enabled?: boolean;
@@ -38,60 +40,19 @@ type UseKangurMobileLeaderboardResult = {
 
 const LEADERBOARD_MEDALS = ['🥇', '🥈', '🥉'] as const;
 
-export const useKangurMobileLeaderboard = (
-  options: UseKangurMobileLeaderboardOptions = {},
-): UseKangurMobileLeaderboardResult => {
-  const { copy, locale } = useKangurMobileI18n();
-  const enabled = options.enabled ?? true;
-  const limit =
-    typeof options.limit === 'number' && options.limit > 0
-      ? Math.round(options.limit)
-      : 10;
+function useLeaderboardScoresQuery(enabled: boolean): UseQueryResult<KangurScore[], Error> {
   const { apiClient, apiBaseUrl } = useKangurMobileRuntime();
-  const { isLoadingAuth, session } = useKangurMobileAuth();
-  const [operationFilter, setOperationFilter] = useState('all');
-  const [userFilter, setUserFilter] =
-    useState<KangurLeaderboardUserFilter>('all');
-  const isRestoringAuth =
-    isLoadingAuth && session.status !== 'authenticated';
-
-  const scoresQuery = useQuery({
+  return useQuery({
     enabled,
     queryKey: ['kangur-mobile', 'leaderboard', apiBaseUrl],
     queryFn: async () =>
-      apiClient.listScores(
-        {
-          sort: '-score',
-          limit: 100,
-        },
-        {
-          cache: 'no-store',
-        },
-      ),
+      apiClient.listScores({ sort: '-score', limit: 100 }, { cache: 'no-store' }),
     staleTime: 30_000,
   });
+}
 
-  const visibleScores = useMemo(
-    () =>
-      filterKangurLeaderboardScores(scoresQuery.data ?? [], {
-        limit,
-        operationFilter,
-        userFilter,
-      }),
-    [limit, operationFilter, scoresQuery.data, userFilter],
-  );
-
-  const operationOptions = useMemo(
-    () => getKangurLeaderboardOperationOptions(locale),
-    [locale],
-  );
-
-  const userOptions = useMemo(
-    () => getKangurLeaderboardUserOptions(locale),
-    [locale],
-  );
-
-  const items = useMemo(
+function useLeaderboardItems(visibleScores: KangurScore[], session: KangurAuthSession, locale: KangurMobileLocale): KangurLeaderboardItem[] {
+  return useMemo(
     () =>
       buildKangurLeaderboardItems({
         currentLearnerId: session.user?.activeLearner?.id,
@@ -105,25 +66,42 @@ export const useKangurMobileLeaderboard = (
       })),
     [locale, session.user?.activeLearner?.id, session.user?.email, visibleScores],
   );
+}
+
+export const useKangurMobileLeaderboard = (
+  options: UseKangurMobileLeaderboardOptions = {},
+): UseKangurMobileLeaderboardResult => {
+  const { copy, locale } = useKangurMobileI18n();
+  const enabled = options.enabled ?? true;
+  const limit = typeof options.limit === 'number' && options.limit > 0 ? Math.round(options.limit) : 10;
+  const { isLoadingAuth, session } = useKangurMobileAuth();
+  const [operationFilter, setOperationFilter] = useState('all');
+  const [userFilter, setUserFilter] = useState<KangurLeaderboardUserFilter>('all');
+  const isRestoringAuth = isLoadingAuth && session.status !== 'authenticated';
+  const scoresQuery = useLeaderboardScoresQuery(enabled);
+
+  const visibleScores = useMemo(
+    () => filterKangurLeaderboardScores(scoresQuery.data ?? [], { limit, operationFilter, userFilter }),
+    [limit, operationFilter, scoresQuery.data, userFilter],
+  );
+
+  const items = useLeaderboardItems(visibleScores, session, locale);
+  const operationOptions = useMemo(() => getKangurLeaderboardOperationOptions(locale), [locale]);
+  const userOptions = useMemo(() => getKangurLeaderboardUserOptions(locale), [locale]);
 
   return {
-    error:
-      scoresQuery.error instanceof Error
-        ? copy({
-            de: 'Die Ergebnisse konnten nicht geladen werden.',
-            en: 'Could not load the results.',
-            pl: 'Nie udało się pobrać wyników.',
-          })
-        : null,
+    error: scoresQuery.error instanceof Error ? copy({
+      de: 'Die Ergebnisse konnten nicht geladen werden.',
+      en: 'Could not load the results.',
+      pl: 'Nie udało się pobrać wyników.',
+    }) : null,
     isLoadingAuth,
     isLoading: isRestoringAuth || scoresQuery.isLoading,
     isRestoringAuth,
     items,
     operationFilter,
     operationOptions,
-    refresh: async () => {
-      await scoresQuery.refetch();
-    },
+    refresh: async () => { await scoresQuery.refetch(); },
     setOperationFilter,
     setUserFilter,
     userFilter,

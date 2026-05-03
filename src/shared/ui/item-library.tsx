@@ -242,7 +242,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
       )}
 
       <ConfirmModal
-        isOpen={!!itemToDelete}
+        isOpen={Boolean(itemToDelete)}
         onClose={(): void => {
           setItemToDelete(null);
         }}

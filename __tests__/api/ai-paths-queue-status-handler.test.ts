@@ -20,7 +20,7 @@ vi.mock('@/features/ai/ai-paths/workers/ai-path-run-queue/status', () => ({
   getAiPathRunQueueStatus: getAiPathRunQueueStatusMock,
 }));
 
-import { GET_handler, __testOnly } from '@/app/api/ai-paths/runs/queue-status/handler';
+import { getHandler, __testOnly } from '@/app/api/ai-paths/runs/queue-status/handler';
 
 const mockContext: ApiHandlerContext = {
   requestId: 'test-req-id',
@@ -48,7 +48,7 @@ describe('AI Paths queue status handler', () => {
   });
 
   it('passes scoped visibility through with the current user id', async () => {
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/queue-status?visibility=scoped'),
       mockContext
     );
@@ -64,7 +64,7 @@ describe('AI Paths queue status handler', () => {
   it('allows explicit global visibility for users with global access', async () => {
     canAccessGlobalAiPathRunsMock.mockReturnValue(true);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/queue-status?visibility=global'),
       mockContext
     );
@@ -78,7 +78,7 @@ describe('AI Paths queue status handler', () => {
 
   it('rejects explicit global visibility without global access', async () => {
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/ai-paths/runs/queue-status?visibility=global'),
         mockContext
       )
@@ -88,11 +88,11 @@ describe('AI Paths queue status handler', () => {
   it('uses distinct cache entries for scoped and global visibility', async () => {
     canAccessGlobalAiPathRunsMock.mockReturnValue(true);
 
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/queue-status?visibility=scoped'),
       mockContext
     );
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/queue-status?visibility=global'),
       mockContext
     );
@@ -114,11 +114,11 @@ describe('AI Paths queue status handler', () => {
       .mockResolvedValueOnce({ queuedCount: 1 })
       .mockResolvedValueOnce({ queuedCount: 2 });
 
-    const first = await GET_handler(
+    const first = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/queue-status?fresh=1'),
       mockContext
     );
-    const second = await GET_handler(
+    const second = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs/queue-status?fresh=1'),
       mockContext
     );

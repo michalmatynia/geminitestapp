@@ -12,6 +12,8 @@ export const aiTriggerButtonLocationSchema = z.enum([
   'product_modal',
   'product_list',
   'product_row',
+  'product_marketplace_copy_row',
+  'product_parameter_row',
   'note_modal',
   'note_list',
   'product_list_header',
@@ -21,6 +23,9 @@ export const aiTriggerButtonLocationSchema = z.enum([
   'cms_page_header',
   'cms_block_header',
   'admin_dashboard',
+  'filemaker_organization_job_application',
+  'filemaker_prepared_application',
+  'filemaker_job_board_scraped_offer',
 ]);
 
 export type AiTriggerButtonLocation = z.infer<typeof aiTriggerButtonLocationSchema>;
@@ -108,6 +113,7 @@ export const aiTriggerButtonRecordValidatorSchema = z
     locations: z.array(aiTriggerButtonLocationSchema).min(1),
     mode: z.preprocess(normalizeModeForRead, aiTriggerButtonModeSchema),
     display: aiTriggerButtonDisplayModeSchema,
+    contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
     createdAt: z.string().trim().min(1),
     updatedAt: z.string().trim().min(1),
     sortIndex: z.number().int(),
@@ -123,6 +129,7 @@ export const aiTriggerButtonCreatePayloadSchema = z
     locations: z.array(aiTriggerButtonLocationSchema).min(1),
     mode: aiTriggerButtonModeSchema.optional().default('click'),
     display: aiTriggerButtonDisplayModeSchema.optional().default('icon_label'),
+    contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
   })
   .strict();
 
@@ -135,6 +142,7 @@ export const aiTriggerButtonUpdatePayloadSchema = z
     locations: z.array(aiTriggerButtonLocationSchema).min(1).optional(),
     mode: aiTriggerButtonModeSchema.optional(),
     display: aiTriggerButtonDisplayModeSchema.optional(),
+    contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, {

@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { internalError } from '@/shared/errors/app-error';
 
 const {
   chromiumLaunchMock,
   parsePersistedStorageStateMock,
   resolveConnectionPlaywrightSettingsMock,
+  encryptSecretMock,
   getProductByIdMock,
   resolveTraderaListingPriceForProductMock,
+  resolveTraderaCategoryMappingResolutionForProductMock,
   ensureLoggedInMock,
   readTraderaAuthStateMock,
   findVisibleLocatorMock,
@@ -17,8 +20,10 @@ const {
   chromiumLaunchMock: vi.fn(),
   parsePersistedStorageStateMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
+  encryptSecretMock: vi.fn(),
   getProductByIdMock: vi.fn(),
   resolveTraderaListingPriceForProductMock: vi.fn(),
+  resolveTraderaCategoryMappingResolutionForProductMock: vi.fn(),
   ensureLoggedInMock: vi.fn(),
   readTraderaAuthStateMock: vi.fn(),
   findVisibleLocatorMock: vi.fn(),
@@ -28,17 +33,29 @@ const {
   updateConnectionMock: vi.fn(),
 }));
 
-vi.mock('playwright', () => ({
-  chromium: {
-    launch: (...args: unknown[]) => chromiumLaunchMock(...args),
-  },
-  devices: {},
+vi.mock('@/shared/lib/playwright/runtime', () => ({
+  getPlaywrightRuntime: () => ({
+    chromium: {
+      launch: (...args: unknown[]) => chromiumLaunchMock(...args),
+    },
+  }),
+  getPlaywrightDevicesCatalog: () => ({}),
 }));
 
 vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
   parsePersistedStorageState: (...args: unknown[]) => parsePersistedStorageStateMock(...args),
   resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
     resolveConnectionPlaywrightSettingsMock(...args),
+}));
+
+vi.mock('@/shared/lib/security/encryption', () => ({
+  encryptSecret: (...args: unknown[]) => encryptSecretMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/integration-repository', () => ({
+  getIntegrationRepository: async () => ({
+    updateConnection: (...args: unknown[]) => updateConnectionMock(...args),
+  }),
 }));
 
 vi.mock('@/shared/lib/products/services/product-repository', () => ({
@@ -50,6 +67,11 @@ vi.mock('@/shared/lib/products/services/product-repository', () => ({
 vi.mock('./price', () => ({
   resolveTraderaListingPriceForProduct: (...args: unknown[]) =>
     resolveTraderaListingPriceForProductMock(...args),
+}));
+
+vi.mock('./category-mapping', () => ({
+  resolveTraderaCategoryMappingResolutionForProduct: (...args: unknown[]) =>
+    resolveTraderaCategoryMappingResolutionForProductMock(...args),
 }));
 
 vi.mock('./tradera-browser-auth', () => ({
@@ -66,12 +88,6 @@ vi.mock('./utils', () => ({
     captureTraderaListingDebugArtifactsMock(...args),
 }));
 
-vi.mock('../integration-repository', () => ({
-  getIntegrationRepository: async () => ({
-    updateConnection: (...args: unknown[]) => updateConnectionMock(...args),
-  }),
-}));
-
 import { runTraderaBrowserListingStandard } from './tradera-browser-standard';
 
 describe('runTraderaBrowserListingStandard', () => {
@@ -79,10 +95,19 @@ describe('runTraderaBrowserListingStandard', () => {
     vi.clearAllMocks();
     parsePersistedStorageStateMock.mockReturnValue(null);
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
+      browser: 'chromium',
       headless: true,
       slowMo: 0,
       timeout: 30_000,
       navigationTimeout: 30_000,
+      humanizeMouse: true,
+      mouseJitter: 4,
+      clickDelayMin: 7,
+      clickDelayMax: 7,
+      inputDelayMin: 12,
+      inputDelayMax: 12,
+      actionDelayMin: 0,
+      actionDelayMax: 0,
       emulateDevice: false,
       deviceName: null,
       proxyEnabled: false,
@@ -90,6 +115,7 @@ describe('runTraderaBrowserListingStandard', () => {
       proxyUsername: null,
       proxyPassword: null,
     });
+    encryptSecretMock.mockImplementation((value: string) => `encrypted:${value}`);
     getProductByIdMock.mockResolvedValue({
       id: 'product-1',
       sku: 'KEYCHA1266',
@@ -115,6 +141,23 @@ describe('runTraderaBrowserListingStandard', () => {
       catalogPriceGroupIds: ['price-group-pln', 'price-group-eur'],
       loadedPriceGroupIds: ['price-group-pln', 'price-group-eur'],
       matchedTargetPriceGroupIds: ['price-group-eur'],
+    });
+    resolveTraderaCategoryMappingResolutionForProductMock.mockResolvedValue({
+      mapping: {
+        externalCategoryId: '292904',
+        externalCategoryName: 'Other pins & needles',
+        externalCategoryPath: 'Collectibles > Pins & needles > Other pins & needles',
+        internalCategoryId: 'internal-category-1',
+        catalogId: 'catalog-1',
+        pathSegments: ['Collectibles', 'Pins & needles', 'Other pins & needles'],
+      },
+      reason: 'mapped',
+      matchScope: 'catalog_match',
+      internalCategoryId: 'internal-category-1',
+      productCatalogIds: ['catalog-1'],
+      matchingMappingCount: 1,
+      validMappingCount: 1,
+      catalogMatchedMappingCount: 1,
     });
     readTraderaAuthStateMock.mockResolvedValue({
       currentUrl: 'https://www.tradera.com/en/selling/new',
@@ -148,6 +191,7 @@ describe('runTraderaBrowserListingStandard', () => {
 
     chromiumLaunchMock.mockResolvedValue({
       newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
         setDefaultTimeout: vi.fn(),
         setDefaultNavigationTimeout: vi.fn(),
         newPage: vi.fn().mockResolvedValue({
@@ -179,6 +223,23 @@ describe('runTraderaBrowserListingStandard', () => {
     });
 
     expect(getProductByIdMock).toHaveBeenCalledWith('product-1');
+    expect(ensureLoggedInMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ id: 'connection-1' }),
+      'https://www.tradera.com/en/selling/new?categoryId=292904',
+      expect.objectContaining({
+        inputBehavior: expect.objectContaining({
+          humanizeMouse: true,
+          inputDelayMin: expect.any(Number),
+          inputDelayMax: expect.any(Number),
+        }),
+        onStatus: expect.any(Function),
+      })
+    );
+    expect(resolveTraderaCategoryMappingResolutionForProductMock).toHaveBeenCalledWith({
+      connectionId: 'connection-1',
+      product: expect.objectContaining({ id: 'product-1' }),
+    });
     expect(resolveTraderaListingPriceForProductMock).toHaveBeenCalledWith({
       product: expect.objectContaining({ id: 'product-1' }),
       targetCurrencyCode: 'EUR',
@@ -188,19 +249,32 @@ describe('runTraderaBrowserListingStandard', () => {
     );
     expect(priceFillMock).toHaveBeenCalledWith('55');
     expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
-      playwrightStorageState: JSON.stringify({ cookies: [], origins: [] }),
+      playwrightStorageState: 'encrypted:{"cookies":[],"origins":[]}',
       playwrightStorageStateUpdatedAt: expect.any(String),
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       externalListingId: '987654',
       listingUrl: 'https://www.tradera.com/item/987654',
       completedAt: expect.any(String),
-      metadata: {
+      metadata: expect.objectContaining({
         mode: 'standard',
         browserMode: 'headless',
         requestedBrowserMode: 'connection_default',
-        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new?categoryId=292904',
+        categoryId: '292904',
+        categoryPath: 'Collectibles > Pins & needles > Other pins & needles',
+        categorySource: 'categoryMapper',
+        categoryMappingReason: 'mapped',
+        categoryMatchScope: 'catalog_match',
+        categoryInternalCategoryId: 'internal-category-1',
         completedAt: expect.any(String),
+        playwright: expect.objectContaining({
+          instance: expect.objectContaining({
+            kind: 'tradera_standard_listing',
+            family: 'listing',
+            listingId: 'listing-1',
+          }),
+        }),
         listingPrice: 55,
         listingCurrencyCode: 'EUR',
         targetCurrencyCode: 'EUR',
@@ -215,8 +289,26 @@ describe('runTraderaBrowserListingStandard', () => {
         catalogPriceGroupIds: ['price-group-pln', 'price-group-eur'],
         loadedPriceGroupIds: ['price-group-pln', 'price-group-eur'],
         matchedTargetPriceGroupIds: ['price-group-eur'],
-      },
+      }),
     });
+    expect((result.metadata as { executionSteps?: Array<{ id: string; status: string }> }).executionSteps)
+      .toEqual([
+        expect.objectContaining({ id: 'browser_preparation', status: 'success' }),
+        expect.objectContaining({ id: 'browser_open', status: 'success' }),
+        expect.objectContaining({ id: 'cookie_accept', status: 'success' }),
+        expect.objectContaining({ id: 'auth_check', status: 'success' }),
+        expect.objectContaining({ id: 'auth_login', status: 'skipped' }),
+        expect.objectContaining({ id: 'auth_manual', status: 'skipped' }),
+        expect.objectContaining({ id: 'sell_page_open', status: 'success' }),
+        expect.objectContaining({ id: 'load_product', status: 'success' }),
+        expect.objectContaining({ id: 'resolve_price', status: 'success' }),
+        expect.objectContaining({ id: 'title_fill', status: 'success' }),
+        expect.objectContaining({ id: 'description_fill', status: 'success' }),
+        expect.objectContaining({ id: 'price_set', status: 'success' }),
+        expect.objectContaining({ id: 'publish', status: 'success' }),
+        expect.objectContaining({ id: 'publish_verify', status: 'success' }),
+        expect.objectContaining({ id: 'browser_close', status: 'success' }),
+      ]);
     expect(contextCloseMock).toHaveBeenCalled();
     expect(browserCloseMock).toHaveBeenCalled();
   });
@@ -241,6 +333,7 @@ describe('runTraderaBrowserListingStandard', () => {
 
     chromiumLaunchMock.mockResolvedValue({
       newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
         setDefaultTimeout: vi.fn(),
         setDefaultNavigationTimeout: vi.fn(),
         newPage: vi.fn().mockResolvedValue({
@@ -307,6 +400,7 @@ describe('runTraderaBrowserListingStandard', () => {
 
     chromiumLaunchMock.mockResolvedValue({
       newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
         setDefaultTimeout: vi.fn(),
         setDefaultNavigationTimeout: vi.fn(),
         newPage: vi.fn().mockResolvedValue({
@@ -355,13 +449,146 @@ describe('runTraderaBrowserListingStandard', () => {
         mode: 'standard',
         browserMode: 'headless',
         requestedBrowserMode: 'connection_default',
-        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new?categoryId=292904',
         listingCurrencyCode: 'PLN',
         targetCurrencyCode: 'EUR',
         priceResolutionReason: 'target_currency_unresolved',
       }),
     });
     expect(findVisibleLocatorMock).not.toHaveBeenCalled();
+    expect(contextCloseMock).toHaveBeenCalled();
+    expect(browserCloseMock).toHaveBeenCalled();
+  });
+
+  it('attaches auth diagnostics when Tradera session validation does not resolve', async () => {
+    const browserCloseMock = vi.fn().mockResolvedValue(undefined);
+    const contextCloseMock = vi.fn().mockResolvedValue(undefined);
+
+    chromiumLaunchMock.mockResolvedValue({
+      newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
+        setDefaultTimeout: vi.fn(),
+        setDefaultNavigationTimeout: vi.fn(),
+        newPage: vi.fn().mockResolvedValue({
+          url: () => 'https://www.tradera.com/en/my/',
+        }),
+        close: contextCloseMock,
+      }),
+      close: browserCloseMock,
+    });
+
+    ensureLoggedInMock.mockRejectedValue(
+      internalError('AUTH_STATE_TIMEOUT: Tradera session validation did not resolve.', {
+        phase: 'session_check',
+        hasStoredSession: true,
+        currentUrl: 'https://www.tradera.com/en/my/',
+        resolution: 'unknown',
+      })
+    );
+    readTraderaAuthStateMock.mockResolvedValue({
+      currentUrl: 'https://www.tradera.com/en/my/',
+      loggedIn: false,
+      successVisible: false,
+      loginFormVisible: false,
+      errorText: '',
+      captchaDetected: false,
+      manualVerificationDetected: false,
+      cookieConsentVisible: false,
+      knownAuthenticatedUrl: false,
+      resolution: 'unknown',
+      matchedSignals: [],
+    });
+
+    await expect(
+      runTraderaBrowserListingStandard({
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+        } as never,
+        connection: {
+          id: 'connection-1',
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'list',
+      })
+    ).rejects.toMatchObject({
+      message: 'AUTH_STATE_TIMEOUT: Tradera session validation did not resolve.',
+      meta: expect.objectContaining({
+        mode: 'standard',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new?categoryId=292904',
+        authState: expect.objectContaining({
+          currentUrl: 'https://www.tradera.com/en/my/',
+          resolution: 'unknown',
+        }),
+        authFailureMeta: expect.objectContaining({
+          phase: 'session_check',
+          hasStoredSession: true,
+        }),
+      }),
+    });
+
+    expect(contextCloseMock).toHaveBeenCalled();
+    expect(browserCloseMock).toHaveBeenCalled();
+  });
+
+  it('rejects mapper-mode standard listings when no active Tradera mapping exists', async () => {
+    const browserCloseMock = vi.fn().mockResolvedValue(undefined);
+    const contextCloseMock = vi.fn().mockResolvedValue(undefined);
+
+    chromiumLaunchMock.mockResolvedValue({
+      newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
+        setDefaultTimeout: vi.fn(),
+        setDefaultNavigationTimeout: vi.fn(),
+        newPage: vi.fn().mockResolvedValue({
+          url: () => 'https://www.tradera.com/en/selling/new',
+        }),
+        close: contextCloseMock,
+      }),
+      close: browserCloseMock,
+    });
+    resolveTraderaCategoryMappingResolutionForProductMock.mockResolvedValueOnce({
+      mapping: null,
+      reason: 'no_active_mapping',
+      matchScope: 'none',
+      internalCategoryId: 'internal-category-1',
+      productCatalogIds: ['catalog-1'],
+      matchingMappingCount: 0,
+      validMappingCount: 0,
+      catalogMatchedMappingCount: 0,
+    });
+
+    await expect(
+      runTraderaBrowserListingStandard({
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+        } as never,
+        connection: {
+          id: 'connection-1',
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'list',
+      })
+    ).rejects.toMatchObject({
+      message:
+        'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.',
+      meta: expect.objectContaining({
+        mode: 'standard',
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        categoryMappingReason: 'no_active_mapping',
+        categoryMatchScope: 'none',
+        categoryInternalCategoryId: 'internal-category-1',
+      }),
+    });
+
+    expect(ensureLoggedInMock).not.toHaveBeenCalled();
     expect(contextCloseMock).toHaveBeenCalled();
     expect(browserCloseMock).toHaveBeenCalled();
   });

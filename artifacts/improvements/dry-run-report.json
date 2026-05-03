@@ -1,137 +1,26 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-03-14T08:13:11.213Z",
+  "generatedAt": "2026-04-30T04:59:45.752Z",
   "phase": "dry-run",
   "executionMode": "executed",
   "allowWrite": false,
   "selectedTrackIds": [
-    "products-parameter-integrity",
-    "products-category-schema-normalization",
-    "repo-quality-baseline"
+    "image-studio-product-integration"
   ],
   "reportPath": "artifacts/improvements/dry-run-report.json",
   "steps": [
     {
-      "id": "products-parameter-recovery-classification",
-      "title": "Classify product parameter recovery state",
-      "trackId": "products-parameter-integrity",
-      "phase": "dry-run",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-recovery-classification-*.json",
-        "/tmp/product-parameter-recovery-classification-latest.json"
-      ],
-      "instructions": [],
-      "script": "products:classify:parameter-recovery",
-      "durationMs": 3244
-    },
-    {
-      "id": "products-parameter-source-report",
-      "title": "Refresh source-recovery report for unresolved products",
-      "trackId": "products-parameter-integrity",
-      "phase": "dry-run",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-source-recovery-*.json",
-        "/tmp/product-parameter-source-recovery-latest.json"
-      ],
-      "instructions": [],
-      "script": "products:report:parameter-source-recovery",
-      "durationMs": 6593
-    },
-    {
-      "id": "products-parameter-source-summary",
-      "title": "Summarize unresolved source-recovery products",
-      "trackId": "products-parameter-integrity",
-      "phase": "dry-run",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-source-recovery-summary-*.json",
-        "/tmp/product-parameter-source-recovery-summary-latest.json"
-      ],
-      "instructions": [],
-      "script": "products:summarize:parameter-source-recovery",
-      "durationMs": 263
-    },
-    {
-      "id": "products-category-schema-curate-family-mappings",
-      "title": "Fill final parameter ids in the latest family mapping packs",
-      "trackId": "products-category-schema-normalization",
-      "phase": "dry-run",
-      "mode": "manual",
-      "writes": false,
-      "status": "manual",
-      "outputs": [],
-      "instructions": [
-        "Review /tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md.",
-        "Fill suggestedFinalParameterId in each *-mapping-pack.json only when the final category/schema mapping is approved."
-      ]
-    },
-    {
-      "id": "products-category-schema-build-ready-curated-overrides",
-      "title": "Build ready curated override bundle from completed family mapping packs",
-      "trackId": "products-category-schema-normalization",
-      "phase": "dry-run",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-curated-build-latest.json",
-        "/tmp/product-parameter-curated-overrides-latest.json"
-      ],
-      "instructions": [],
-      "script": "products:build:ready-parameter-curated-overrides",
-      "durationMs": 256
-    },
-    {
-      "id": "products-category-schema-preview-ready-curated-overrides",
-      "title": "Preview the latest curated override bundle without applying writes",
-      "trackId": "products-category-schema-normalization",
-      "phase": "dry-run",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "/tmp/product-parameter-curated-apply-*.json"
-      ],
-      "instructions": [],
-      "script": "products:apply:parameter-curated-overrides",
-      "durationMs": 546
-    },
-    {
-      "id": "repo-quality-api-error-sources",
-      "title": "Check API error source coverage",
-      "trackId": "repo-quality-baseline",
-      "phase": "dry-run",
-      "mode": "automatic",
-      "writes": false,
-      "status": "passed",
-      "outputs": [
-        "docs/metrics/api-error-sources-latest.json",
-        "docs/metrics/api-error-sources-latest.md"
-      ],
-      "instructions": [],
-      "script": "check:api-error-sources",
-      "durationMs": 211
-    },
-    {
-      "id": "repo-quality-canonical-sitewide",
-      "title": "Check canonical sitewide coverage",
-      "trackId": "repo-quality-baseline",
+      "id": "image-studio-product-regression-tests",
+      "title": "Run Product modal and Image Studio integration regression tests",
+      "trackId": "image-studio-product-integration",
       "phase": "dry-run",
       "mode": "automatic",
       "writes": false,
       "status": "passed",
       "outputs": [],
       "instructions": [],
-      "script": "canonical:check:sitewide",
-      "durationMs": 1087
+      "script": "test:image-studio-product",
+      "durationMs": 13431
     }
   ]
 }

@@ -25,7 +25,6 @@ describe('starter workflow guardrails', () => {
   it('does not keep workflow-specific settings-store modules', () => {
     const serverDir = join(process.cwd(), 'src', 'features', 'ai', 'ai-paths', 'server');
     const allowed = new Set([
-      'settings-store-cache.ts',
       'settings-store.constants.ts',
       'settings-store.helpers.ts',
       'settings-store.parsing.ts',
@@ -81,11 +80,22 @@ describe('starter workflow guardrails', () => {
       join(
         workspaceRoot,
         'src',
-        'features',
-        'ai',
+        'shared',
+        'lib',
         'ai-paths',
-        'components',
-        'AiPathsSettingsUtils.ts'
+        'core',
+        'utils',
+        'path-config-sanitization.ts'
+      ),
+      join(
+        workspaceRoot,
+        'src',
+        'shared',
+        'lib',
+        'ai-paths',
+        'core',
+        'utils',
+        'runtime-state.ts'
       ),
     ];
 
@@ -110,5 +120,50 @@ describe('starter workflow guardrails', () => {
     ]);
 
     expect(report.actions.some((action) => deprecatedActionIds.has(action.id))).toBe(false);
+  });
+
+  it('keeps starter upgrade routing registry-driven instead of branching on starter keys', () => {
+    const workspaceRoot = process.cwd();
+    const upgradeSource = readFileSync(
+      join(
+        workspaceRoot,
+        'src',
+        'shared',
+        'lib',
+        'ai-paths',
+        'core',
+        'starter-workflows',
+        'segments',
+        'upgrade.ts'
+      ),
+        'utf8'
+    );
+    const templatesSource = readFileSync(
+      join(
+        workspaceRoot,
+        'src',
+        'shared',
+        'lib',
+        'ai-paths',
+        'core',
+        'starter-workflows',
+        'segments',
+        'templates.ts'
+      ),
+      'utf8'
+    );
+
+    [
+      "'parameter_inference'",
+      "'product_name_normalize'",
+      "'description_inference_lite'",
+      "'marketplace_copy_debrand'",
+      "'translation_en_pl'",
+    ].forEach((starterKeyLiteral) => {
+      expect(upgradeSource.includes(`starterLineage.starterKey === ${starterKeyLiteral}`)).toBe(false);
+    });
+
+    expect(upgradeSource.includes('legacy_alias')).toBe(false);
+    expect(templatesSource.includes('legacyRepairMatcher')).toBe(false);
   });
 });

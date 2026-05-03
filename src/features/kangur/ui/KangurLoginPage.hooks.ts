@@ -13,7 +13,6 @@ import {
 
 import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
 import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPublicOwnerContext';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
@@ -32,11 +31,13 @@ import {
 import { useTurnstile } from '@/features/kangur/ui/login-page/use-turnstile';
 import {
   parseJsonResponse,
+  resolveKangurClientEndpoint,
   resolveLoginKind,
   type KangurLoginInputErrorTarget,
   type KangurLoginSubmitStage,
   type VerificationCardState,
 } from './KangurLoginPage.utils';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 const resolveKangurLoginCurrentOrigin = (): string | null =>
   typeof window === 'undefined' ? null : window.location.origin;
@@ -153,7 +154,7 @@ const requestKangurParentVerificationResend = async ({
   callbackValue: string | undefined;
   email: string;
 }) =>
-  fetch('/api/kangur/auth/parent-account/resend', {
+  fetch(resolveKangurClientEndpoint('/api/kangur/auth/parent-account/resend'), {
     method: 'POST',
     credentials: 'same-origin',
     headers: {
@@ -236,7 +237,6 @@ export function useKangurLoginPageState() {
     defaultCallbackUrl,
     parentAuthMode,
   } = useKangurLoginPageProps();
-  useOptionalKangurAuth();
   const { isLoading, setIsLoading, successMessage, handleLoginSuccess } = useLoginLogic();
   const loginFormEntry = useKangurPageContentEntry('login-page-form');
   const identifierEntry = useKangurPageContentEntry('login-page-identifier-field');
@@ -383,7 +383,8 @@ export function useKangurLoginPageState() {
 
       const label = formatCooldownLabel(nextMs);
       setResendCooldownLabel(label);
-      resendTimerRef.current = setTimeout(() => {
+
+      resendTimerRef.current = safeSetTimeout(() => {
         setResendCooldownLabel(null);
         resendTimerRef.current = null;
       }, nextMs);
@@ -396,10 +397,10 @@ export function useKangurLoginPageState() {
       return;
     }
     if (focusTimerRef.current) {
-      clearTimeout(focusTimerRef.current);
+      safeClearTimeout(focusTimerRef.current);
       focusTimerRef.current = null;
     }
-    focusTimerRef.current = window.setTimeout(() => {
+    focusTimerRef.current = safeSetTimeout(() => {
       focusTimerRef.current = null;
       const field =
         target === 'password' ? passwordInputRef.current : identifierInputRef.current;

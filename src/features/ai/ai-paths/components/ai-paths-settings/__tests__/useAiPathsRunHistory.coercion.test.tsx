@@ -3,11 +3,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const listAiPathRunsMock = vi.hoisted(() => vi.fn());
+const listAiPathRunsMock = vi.hoisted(() => vi.fn().mockImplementation(async (args) => {
+  console.log('listAiPathRuns called with:', args);
+  return { ok: true, data: { runs: [] } };
+}));
 const getAiPathRunMock = vi.hoisted(() => vi.fn());
 const cancelAiPathRunMock = vi.hoisted(() => vi.fn());
-const resumeAiPathRunMock = vi.hoisted(() => vi.fn());
-const retryAiPathRunNodeMock = vi.hoisted(() => vi.fn());
 const eventSourceInstances = vi.hoisted((): MockEventSource[] => []);
 
 class MockEventSource {
@@ -50,18 +51,11 @@ class MockEventSource {
   }
 }
 
-vi.mock('@/shared/lib/ai-paths', async () => {
-  const actual =
-    await vi.importActual<typeof import('@/shared/lib/ai-paths')>('@/shared/lib/ai-paths');
-  return {
-    ...actual,
-    listAiPathRuns: listAiPathRunsMock,
-    getAiPathRun: getAiPathRunMock,
-    cancelAiPathRun: cancelAiPathRunMock,
-    resumeAiPathRun: resumeAiPathRunMock,
-    retryAiPathRunNode: retryAiPathRunNodeMock,
-  };
-});
+vi.mock('@/shared/lib/ai-paths/api', () => ({
+  listAiPathRuns: listAiPathRunsMock,
+  getAiPathRun: getAiPathRunMock,
+  cancelAiPathRun: cancelAiPathRunMock,
+}));
 
 import {
   RunHistoryProvider,
@@ -90,12 +84,14 @@ const createWrapper = (): React.ComponentType<{ children: React.ReactNode }> => 
   };
 };
 
-const useHarness = (): {
+const useHarness = (
+  activePathId: string | null
+): {
   state: ReturnType<typeof useRunHistoryState>;
   actions: ReturnType<typeof useRunHistoryActions>;
 } => {
   useAiPathsRunHistory({
-    activePathId: 'path-legacy',
+    activePathId,
     toast: toastMock,
   });
   return {
@@ -129,7 +125,7 @@ describe('useAiPathsRunHistory run coercion', () => {
       },
     });
 
-    const { result } = renderHook(() => useHarness(), {
+    const { result } = renderHook(() => useHarness('path-legacy'), {
       wrapper: createWrapper(),
     });
 
@@ -147,41 +143,6 @@ describe('useAiPathsRunHistory run coercion', () => {
     );
   });
 
-  it('registers node retry actions through the run history context', async () => {
-    listAiPathRunsMock.mockResolvedValue({
-      ok: true,
-      data: {
-        runs: [],
-        total: 0,
-      },
-    });
-    retryAiPathRunNodeMock.mockResolvedValue({
-      ok: true,
-      data: {
-        run: {
-          id: 'run-retry-1',
-          status: 'queued',
-          createdAt: '2026-03-07T11:00:00.000Z',
-        },
-      },
-    });
-
-    const { result } = renderHook(() => useHarness(), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(listAiPathRunsMock).toHaveBeenCalled();
-    });
-
-    await act(async () => {
-      await result.current.actions.retryRunNode('run-retry-1', 'node-failed');
-    });
-
-    expect(retryAiPathRunNodeMock).toHaveBeenCalledWith('run-retry-1', 'node-failed');
-    expect(toastMock).toHaveBeenCalledWith('Node retry queued.', { variant: 'success' });
-  });
-
   it('does not recreate the run detail stream when streamed events are merged', async () => {
     listAiPathRunsMock.mockResolvedValue({
       ok: true,
@@ -191,7 +152,7 @@ describe('useAiPathsRunHistory run coercion', () => {
       },
     });
 
-    const { result } = renderHook(() => useHarness(), {
+    const { result } = renderHook(() => useHarness('path-legacy'), {
       wrapper: createWrapper(),
     });
 
@@ -242,5 +203,80 @@ describe('useAiPathsRunHistory run coercion', () => {
 
     expect(eventSourceInstances).toHaveLength(1);
     expect(activeSource?.close).not.toHaveBeenCalled();
+  });
+
+  it('clears stale run detail and closes the previous stream when the active path changes', async () => {
+    listAiPathRunsMock.mockImplementation(async ({ pathId }: { pathId?: string }) => ({
+      ok: true,
+      data: {
+        runs:
+          pathId === 'path-next'
+            ? [
+              {
+                id: 'run-next-1',
+                pathId: 'path-next',
+                status: 'queued',
+                createdAt: '2026-03-11T09:05:00.000Z',
+              },
+            ]
+            : [
+              {
+                id: 'run-prev-1',
+                pathId: 'path-legacy',
+                status: 'running',
+                createdAt: '2026-03-11T09:00:00.000Z',
+                updatedAt: '2026-03-11T09:01:00.000Z',
+              },
+            ],
+        total: 1,
+      },
+    }));
+
+    const { result, rerender } = renderHook(
+      ({ activePathId }: { activePathId: string | null }) => useHarness(activePathId),
+      {
+        initialProps: { activePathId: 'path-legacy' },
+        wrapper: createWrapper(),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.state.runList[0]?.id).toBe('run-prev-1');
+    });
+
+    act(() => {
+      result.current.actions.setRunDetail({
+        run: {
+          id: 'run-prev-1',
+          status: 'running',
+          pathId: 'path-legacy',
+          createdAt: '2026-03-11T09:00:00.000Z',
+          updatedAt: '2026-03-11T09:01:00.000Z',
+        },
+        nodes: [],
+        events: [],
+        errorSummary: null,
+      });
+      result.current.actions.setRunDetailOpen(true);
+      result.current.actions.setRunHistoryNodeId('node-prev');
+    });
+
+    await waitFor(() => {
+      expect(eventSourceInstances).toHaveLength(1);
+    });
+
+    const previousSource = eventSourceInstances[0];
+
+    rerender({ activePathId: 'path-next' });
+
+    await waitFor(() => {
+      expect(result.current.state.runList[0]?.id).toBe('run-next-1');
+    });
+
+    expect(previousSource?.close).toHaveBeenCalledTimes(1);
+    expect(result.current.state.runDetail).toBeNull();
+    expect(result.current.state.runDetailOpen).toBe(false);
+    expect(result.current.state.runHistoryNodeId).toBeNull();
+    expect(result.current.state.runStreamStatus).toBe('stopped');
   });
 });

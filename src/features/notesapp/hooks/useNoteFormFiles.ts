@@ -133,7 +133,7 @@ export function useNoteFormFiles({
   );
 
   const handlePaste = useCallback(
-    async (event: React.ClipboardEvent<HTMLTextAreaElement>): Promise<void> => {
+    async (event: React.ClipboardEvent): Promise<void> => {
       const uploadPastedImage = async (file: File): Promise<void> => {
         if (!noteId) {
           toast('Please save the note first before pasting images');

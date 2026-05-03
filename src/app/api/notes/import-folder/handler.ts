@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -50,7 +50,7 @@ async function createFolderStructure(
   }
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, noteFolderImportRequestSchema, {
     logPrefix: 'notes.import-folder',
   });

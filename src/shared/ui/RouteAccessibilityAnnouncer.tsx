@@ -17,6 +17,7 @@ const getMainRegion = (): HTMLElement | null => {
   }
 
   const mainRegion =
+    document.getElementById('kangur-main-content') ??
     document.getElementById('app-content') ??
     document.querySelector<HTMLElement>('main, [role="main"]');
 
@@ -47,7 +48,7 @@ const getHeadingLabel = (): string => {
   }
 
   const heading = document.querySelector<HTMLElement>(
-    '#app-content h1, #app-content [role="heading"][aria-level="1"], #app-content h2, #app-content [role="heading"][aria-level="2"]'
+    '#kangur-main-content h1, #kangur-main-content [role="heading"][aria-level="1"], #kangur-main-content h2, #kangur-main-content [role="heading"][aria-level="2"], #app-content h1, #app-content [role="heading"][aria-level="1"], #app-content h2, #app-content [role="heading"][aria-level="2"]'
   );
 
   return trimText(heading?.textContent);

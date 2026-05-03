@@ -20,7 +20,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   upsertAiPathsSetting: upsertAiPathsSettingMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('ai-paths trigger-buttons cleanup-fixtures handler', () => {
   beforeEach(() => {
@@ -83,11 +83,11 @@ describe('ai-paths trigger-buttons cleanup-fixtures handler', () => {
       return null;
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons/cleanup-fixtures', {
         method: 'POST',
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -162,11 +162,11 @@ describe('ai-paths trigger-buttons cleanup-fixtures handler', () => {
       return null;
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons/cleanup-fixtures', {
         method: 'POST',
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     await expect(response.json()).resolves.toEqual({

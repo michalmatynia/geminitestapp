@@ -84,7 +84,7 @@ const createNestedCategoryProduct = (timestamp: string): ProductFixture => ({
   catalogId: '',
   category: {
     id: 'category-1',
-    catalogId: 'catalog-1',
+    catalogId: 'catalog-mentios',
     name: 'Keychains',
     name_en: 'Keychains',
     name_pl: 'Breloki',
@@ -165,6 +165,18 @@ const mockProductsAdminBootstrap = async (page: Page, timestamp: string) => {
           createdAt: timestamp,
           updatedAt: timestamp,
           isDefault: true,
+          languageIds: ['language-en'],
+          defaultLanguageId: 'language-en',
+          defaultPriceGroupId: 'price-group-1',
+          priceGroupIds: ['price-group-1'],
+        },
+        {
+          id: 'catalog-mentios',
+          name: 'Mentios',
+          description: null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          isDefault: false,
           languageIds: ['language-en'],
           defaultLanguageId: 'language-en',
           defaultPriceGroupId: 'price-group-1',
@@ -312,10 +324,10 @@ test.describe('Products list category labels', () => {
         contentType: 'application/json',
         headers: { 'Cache-Control': 'no-store' },
         body: JSON.stringify({
-          'catalog-1': [
+          'catalog-mentios': [
             {
               id: 'category-1',
-              catalogId: 'catalog-1',
+              catalogId: 'catalog-mentios',
               name_en: 'Keychains',
             },
           ],

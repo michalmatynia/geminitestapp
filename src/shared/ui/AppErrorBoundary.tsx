@@ -30,7 +30,10 @@ function AppErrorFallbackTryAgainButton(): React.JSX.Element {
   );
 }
 
-export function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+export function AppErrorFallback({
+  error,
+  resetErrorBoundary,
+}: FallbackProps): React.JSX.Element {
   const category = classifyError(error);
   const actions = getSuggestedActions(category, error);
   const errorMessage =
@@ -97,13 +100,13 @@ export function AppErrorBoundary({
   children,
   source = 'AppErrorBoundary',
   onReset,
-}: AppErrorBoundaryProps) {
+}: AppErrorBoundaryProps): React.JSX.Element {
   const resetProps = onReset
     ? {
-      onReset: (): void => {
-        onReset();
-      },
-    }
+        onReset: (): void => {
+          onReset();
+        },
+      }
     : {};
 
   return (

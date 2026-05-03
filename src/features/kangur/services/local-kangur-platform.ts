@@ -92,6 +92,9 @@ import {
 const progressResponseSchema = kangurProgressStateSchema;
 const learnerActivityStatusSchema = kangurLearnerActivityStatusSchema;
 
+// Dedicated API clients for progress and learner-activity endpoints.
+// Using separate client instances keeps their header factories and credential
+// settings isolated from other API calls.
 const kangurProgressApiClient = createKangurApiClient({
   fetchImpl: fetch,
   credentials: 'same-origin',
@@ -103,6 +106,9 @@ const kangurLearnerActivityApiClient = createKangurApiClient({
   getHeaders: () => createActorAwareHeaders(),
 });
 
+// Builds the progress endpoint URL, appending a subject query param when
+// provided. Falls back to a manually constructed URL if the path builder
+// throws (e.g. unexpected subject value).
 const buildProgressEndpoint = (subject?: KangurProgressRequestOptions['subject']): string => {
   return withKangurClientErrorSync(
     {
@@ -122,6 +128,10 @@ const buildProgressEndpoint = (subject?: KangurProgressRequestOptions['subject']
   );
 };
 
+// Fetches the learner's progress state from the API. Validates the response
+// against the Zod schema and rethrows on failure. Auth and recoverable fetch
+// errors are suppressed from error reporting but still rethrown so callers
+// can handle them (e.g. show a retry UI).
 const requestProgressFromApi = async (
   options?: KangurProgressRequestOptions
 ): Promise<KangurProgressState> => {
@@ -171,6 +181,9 @@ const requestProgressFromApi = async (
   );
 };
 
+// Persists a progress update to the API. Attaches optional CTA and source
+// headers so the server can attribute the update to the correct UI action
+// (e.g. lesson completion CTA).
 const updateProgressViaApi = async (
   input: KangurProgressState,
   context?: KangurProgressUpdateContext & KangurProgressRequestOptions
@@ -320,6 +333,19 @@ const updateLearnerActivityViaApi = async (
   );
 };
 
+// createLocalKangurPlatform builds the KangurPlatform implementation used by
+// the Next.js web shell. It wires together all API segments:
+//
+//  auth     – session resolution, login redirect, logout (clears all caches)
+//  learners – CRUD + learner selection for parent accounts
+//  score    – score persistence (authenticated or guest session)
+//  progress – read/write learner progress state
+//  assignments – CRUD for parent-delegated assignments
+//  duels    – full duel lifecycle (create, join, lobby, answer, leave, etc.)
+//  sessions / interactions / activity – learner session and activity tracking
+//
+// Each method is wrapped with withKangurClientError for structured error
+// reporting and fallback handling.
 export const createLocalKangurPlatform = (): KangurPlatform => {
   return {
     auth: {

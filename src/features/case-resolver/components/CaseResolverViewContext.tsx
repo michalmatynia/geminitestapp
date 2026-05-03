@@ -15,6 +15,10 @@ import type { CaseResolverFileEditDraft, CaseResolverFile } from '@/shared/contr
 import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import type {
+  OmitState,
+  PickActions,
+} from '@/shared/lib/react/types';
 
 import type { CaseResolverStateValue } from '../types';
 export type { EditorDetailsTab };
@@ -148,20 +152,8 @@ export type CaseResolverViewContextValue = {
   handleResetCaseContext: () => void;
 };
 
-type FunctionKey<T> = {
-  [K in keyof T]-?: T[K] extends (...args: infer _Args) => infer _Return ? K : never;
-}[keyof T];
-
-type CaseResolverViewActionKey = FunctionKey<CaseResolverViewContextValue>;
-
-export type CaseResolverViewActionsValue = Pick<
-  CaseResolverViewContextValue,
-  CaseResolverViewActionKey
->;
-export type CaseResolverViewStateValue = Omit<
-  CaseResolverViewContextValue,
-  CaseResolverViewActionKey
->;
+export type CaseResolverViewActionsValue = PickActions<CaseResolverViewContextValue>;
+export type CaseResolverViewStateValue = OmitState<CaseResolverViewContextValue>;
 
 const {
   Context: CaseResolverViewStateContext,

@@ -2,7 +2,6 @@ import 'server-only';
 
 import { type AiPathRunQueueStatus } from '@/shared/contracts/ai-paths-runtime';
 import { serviceUnavailableError } from '@/shared/errors/app-error';
-import type { RepeatableJobEntry } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
@@ -13,13 +12,16 @@ import {
 import {
   AI_PATH_RUN_QUEUE_NAME,
   LOG_SOURCE,
-  RECOVERY_REPEAT_MS,
   REQUIRE_DURABLE_QUEUE,
   QUEUE_HOT_WAITING_LIMIT,
   QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
 } from './ai-path-run-queue/config';
 import { queue, enqueuePathRunJob } from './ai-path-run-queue/queue';
-import { aiPathRunQueueState, localFallbackTimers } from './ai-path-run-queue/state';
+import {
+  aiPathRunQueueState,
+  localFallbackTimers,
+  setLocalFallbackTimer,
+} from './ai-path-run-queue/state';
 import {
   getAiPathRunQueueStatus,
   getAiPathRunQueueHotStatus,
@@ -36,7 +38,7 @@ export {
   enqueuePathRunJob,
 };
 
-export const __testOnly = {
+export const TEST_ONLY = {
   clearAiPathsEnabledCache: (): void => {
     resetAiPathsEnabledCache();
     clearAiPathRunQueueStatusCache();
@@ -58,42 +60,12 @@ type QueueJobLookupApi = {
   getJob: (jobId: string) => Promise<QueueJobRemovalApi | null>;
 };
 
-const hasRepeatableQueueApi = (
-  value: unknown
-): value is {
-  getRepeatableJobs: () => Promise<RepeatableJobEntry[]>;
-  removeRepeatableByKey: (key: string) => Promise<void>;
-} =>
-  typeof value === 'object' &&
-  value !== null &&
-  typeof (value as { getRepeatableJobs?: unknown }).getRepeatableJobs === 'function' &&
-  typeof (value as { removeRepeatableByKey?: unknown }).removeRepeatableByKey === 'function';
-
 const hasJobLookupQueueApi = (value: unknown): value is QueueJobLookupApi =>
   typeof value === 'object' &&
   value !== null &&
   typeof (value as { getJob?: unknown }).getJob === 'function';
 
-const removeRecoveryRepeatJobs = async (): Promise<void> => {
-  const queueApi = queue.getQueue();
-  if (!hasRepeatableQueueApi(queueApi)) return;
-  const repeatableJobs = await queueApi.getRepeatableJobs();
-  const targets = repeatableJobs.filter(
-    (job) =>
-      job.id === 'ai-path-run-recovery' ||
-      (job.name === AI_PATH_RUN_QUEUE_NAME && job.every === RECOVERY_REPEAT_MS)
-  );
-  await Promise.all(targets.map(async (job) => queueApi.removeRepeatableByKey(job.key)));
-};
-
 const stopAiPathRunQueueInternal = async (): Promise<void> => {
-  await removeRecoveryRepeatJobs().catch((error) => {
-    void ErrorSystem.captureException(error, {
-      service: LOG_SOURCE,
-      action: 'removeRecoverySchedule',
-    });
-  });
-  aiPathRunQueueState.recoveryScheduled = false;
   if (!aiPathRunQueueState.workerStarted) return;
   await queue.stopWorker();
   aiPathRunQueueState.workerStarted = false;
@@ -139,21 +111,6 @@ export const startAiPathRunQueue = (): void => {
         }
       })();
     }
-    if (aiPathRunQueueState.recoveryScheduled) return;
-
-    aiPathRunQueueState.recoveryScheduled = true;
-    await queue
-      .enqueue(
-        { runId: '__recovery__', type: 'recovery' },
-        { repeat: { every: RECOVERY_REPEAT_MS }, jobId: 'ai-path-run-recovery' }
-      )
-      .catch((error) => {
-        aiPathRunQueueState.recoveryScheduled = false;
-        void ErrorSystem.captureException(error, {
-          service: LOG_SOURCE,
-          action: 'registerRecoverySchedule',
-        });
-      });
   })().finally(() => {
     reconcileInFlight = null;
   });
@@ -214,7 +171,7 @@ export const assertAiPathRunQueueReadyForEnqueue = async (): Promise<AiPathRunQu
     );
   }
 
-  if (!aiPathRunQueueState.workerStarted || !aiPathRunQueueState.recoveryScheduled) {
+  if (!aiPathRunQueueState.workerStarted) {
     startAiPathRunQueue();
     await waitForQueueReconciliation();
   }
@@ -253,9 +210,6 @@ export const assertAiPathRunQueueReadyForEnqueue = async (): Promise<AiPathRunQu
 };
 
 export const scheduleLocalFallbackRun = (runId: string, delayMs: number): void => {
-  const existing = localFallbackTimers.get(runId);
-  if (existing) clearTimeout(existing);
-
   const timer = setTimeout(() => {
     void (async () => {
       localFallbackTimers.delete(runId);
@@ -279,7 +233,7 @@ export const scheduleLocalFallbackRun = (runId: string, delayMs: number): void =
     })();
   }, delayMs);
 
-  localFallbackTimers.set(runId, timer);
+  setLocalFallbackTimer(runId, timer);
 };
 
 export const cancelLocalFallbackRun = (runId: string): void => {

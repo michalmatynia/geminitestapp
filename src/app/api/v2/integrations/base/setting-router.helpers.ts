@@ -11,7 +11,13 @@ type RouteHandlers = {
   POST: ApiRouteHandler;
 };
 
-const buildSettingQuerySchema = <Field extends OptionalTrimmedQueryField>(fields: readonly Field[]) =>
+type SettingQuerySchema<Field extends OptionalTrimmedQueryField> = z.ZodObject<
+  Record<Field, ReturnType<typeof optionalTrimmedQueryString>>
+>;
+
+const buildSettingQuerySchema = <Field extends OptionalTrimmedQueryField>(
+  fields: readonly Field[]
+): SettingQuerySchema<Field> =>
   z.object(
     Object.fromEntries(fields.map((field) => [field, optionalTrimmedQueryString()])) as Record<
       Field,

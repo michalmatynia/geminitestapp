@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -14,7 +14,7 @@ import {
   startDatabaseBackupSchedulerQueue,
 } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 
-export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');

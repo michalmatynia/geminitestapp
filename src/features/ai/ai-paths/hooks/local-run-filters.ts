@@ -1,4 +1,4 @@
-import type { AiPathLocalRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathLocalRunRecord } from '@/shared/contracts/ai-paths';
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 
 const AI_PATHS_LOCAL_RUN_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);

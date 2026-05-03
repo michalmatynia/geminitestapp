@@ -6,7 +6,7 @@ import {
   getKangurLearnerActivityHandler,
   postKangurLearnerActivityHandler,
 } from '@/app/api/kangur/learner-activity/handler';
-import { GET_handler as getKangurLearnerActivityStreamHandler } from '@/app/api/kangur/learner-activity/stream/handler';
+import { getHandler as getKangurLearnerActivityStreamHandler } from '@/app/api/kangur/learner-activity/stream/handler';
 import {
   getKangurLearnersHandler,
   postKangurLearnersHandler,
@@ -24,7 +24,7 @@ import {
   postKangurScoresHandler,
   querySchema as scoresQuerySchema,
 } from '@/app/api/kangur/scores/handler';
-import { handleGetPost, methodNotAllowed, SimpleRouteHandler, ParamRouteHandler } from './routing.utils';
+import { handleGetPost, methodNotAllowed, type SimpleRouteHandler, type ParamRouteHandler } from './routing.utils';
 
 export const learnersGetHandler: SimpleRouteHandler = apiHandler(getKangurLearnersHandler, {
   source: 'kangur.learners.GET',

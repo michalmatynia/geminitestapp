@@ -19,7 +19,9 @@ import {
 import { KANGUR_WRAP_CENTER_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import {
+  GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
   GAME_HOME_ASSIGNMENT_SPOTLIGHT_INNER_SHELL_CLASSNAME,
   GAME_HOME_ASSIGNMENT_SPOTLIGHT_SHELL_CLASSNAME,
 } from '@/features/kangur/ui/pages/GameHome.constants';
@@ -100,31 +102,37 @@ function KangurAssignmentSpotlightCountdown({
 
 function KangurAssignmentSpotlightContent({
   assignment,
-  assignmentHref,
-  assignmentSubject,
-  assignmentSubjectAccent,
-  assignmentSubjectLabel,
-  countdownLabel,
-  isCoarsePointer,
-  locale,
-  runtimeTranslations,
-  setSubject,
-  subject,
-  transitionSourceId,
+  basePath,
+  now,
 }: {
   assignment: KangurAssignmentSpotlightAssignment;
-  assignmentHref: string;
-  assignmentSubject: KangurLessonSubject;
-  assignmentSubjectAccent: KangurAccent;
-  assignmentSubjectLabel: string;
-  countdownLabel: string | null;
-  isCoarsePointer: boolean;
-  locale: string;
-  runtimeTranslations: ReturnType<typeof useTranslations<'KangurAssignmentsRuntime'>>;
-  setSubject: ReturnType<typeof useKangurSubjectFocus>['setSubject'];
-  subject: ReturnType<typeof useKangurSubjectFocus>['subject'];
-  transitionSourceId: string;
+  basePath: string;
+  now: number;
 }): React.JSX.Element {
+  const locale = useLocale();
+  const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
+  const isCoarsePointer = useKangurCoarsePointer();
+  const { subject, setSubject } = useKangurSubjectFocus();
+
+  const assignmentSubject = resolveKangurAssignmentSubject(assignment);
+  const assignmentSubjectLabel = getLocalizedKangurSubjectLabel(assignmentSubject, locale);
+  const assignmentSubjectAccent = SUBJECT_ACCENTS[assignmentSubject];
+  const assignmentHref = buildKangurAssignmentHref(basePath, assignment);
+  const transitionSourceId = `assignment-spotlight:${assignment.id}`;
+  const countdownLabel = resolveKangurAssignmentCountdownLabel(
+    {
+      timeLimitMinutes: assignment.timeLimitMinutes,
+      timeLimitStartsAt: assignment.timeLimitStartsAt,
+      createdAt: assignment.createdAt,
+      status: assignment.progress.status,
+      now,
+    },
+    {
+      locale,
+      translate: runtimeTranslations,
+    }
+  );
+
   return (
     <KangurGlassPanel
       className={GAME_HOME_ASSIGNMENT_SPOTLIGHT_SHELL_CLASSNAME}
@@ -234,12 +242,12 @@ export function KangurAssignmentSpotlight({
   basePath,
   enabled = false,
 }: KangurAssignmentSpotlightProps): React.JSX.Element | null {
-  const locale = useLocale();
-  const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
-  const isCoarsePointer = useKangurCoarsePointer();
-  const { subject, setSubject } = useKangurSubjectFocus();
+  const isIdleReady = useKangurIdleReady({
+    minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+  });
+  const shouldLoadAssignmentSpotlight = enabled && isIdleReady;
   const { assignments, isLoading, error } = useKangurAssignments({
-    enabled,
+    enabled: shouldLoadAssignmentSpotlight,
     query: {
       includeArchived: false,
     },
@@ -264,7 +272,14 @@ export function KangurAssignmentSpotlight({
     setNow(Date.now());
   }, shouldTick ? 1000 : null);
 
-  if (!canRenderKangurAssignmentSpotlight({ assignment, enabled, error, isLoading })) {
+  if (
+    !canRenderKangurAssignmentSpotlight({
+      assignment,
+      enabled: shouldLoadAssignmentSpotlight,
+      error,
+      isLoading,
+    })
+  ) {
     return null;
   }
 
@@ -273,36 +288,11 @@ export function KangurAssignmentSpotlight({
     return null;
   }
 
-  const assignmentSubject = resolveKangurAssignmentSubject(visibleAssignment);
-  const assignmentSubjectLabel = getLocalizedKangurSubjectLabel(assignmentSubject, locale);
-  const assignmentSubjectAccent = SUBJECT_ACCENTS[assignmentSubject];
-  const assignmentHref = buildKangurAssignmentHref(basePath, visibleAssignment);
-  const transitionSourceId = `assignment-spotlight:${visibleAssignment.id}`;
-  const countdownLabel = resolveKangurAssignmentCountdownLabel({
-    timeLimitMinutes: visibleAssignment.timeLimitMinutes,
-    timeLimitStartsAt: visibleAssignment.timeLimitStartsAt,
-    createdAt: visibleAssignment.createdAt,
-    status: visibleAssignment.progress.status,
-    now,
-  }, {
-    locale,
-    translate: runtimeTranslations,
-  });
-
   return (
     <KangurAssignmentSpotlightContent
       assignment={visibleAssignment}
-      assignmentHref={assignmentHref}
-      assignmentSubject={assignmentSubject}
-      assignmentSubjectAccent={assignmentSubjectAccent}
-      assignmentSubjectLabel={assignmentSubjectLabel}
-      countdownLabel={countdownLabel}
-      isCoarsePointer={isCoarsePointer}
-      locale={locale}
-      runtimeTranslations={runtimeTranslations}
-      setSubject={setSubject}
-      subject={subject}
-      transitionSourceId={transitionSourceId}
+      basePath={basePath}
+      now={now}
     />
   );
 }

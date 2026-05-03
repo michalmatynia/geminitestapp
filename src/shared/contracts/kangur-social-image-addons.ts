@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { imageFileSelectionSchema } from './files';
 
 const trimmedString = z.string().trim();
-const optionalText = (max: number) => trimmedString.max(max).default('');
+const optionalText = (max: number): z.ZodDefault<typeof trimmedString> =>
+  trimmedString.max(max).default('');
 export const kangurSocialCaptureAppearanceModeSchema = z.enum([
   'default',
   'dawn',

@@ -101,7 +101,6 @@ describe('v2 products route migration', () => {
       'ai-paths/description-context/route-handler.ts',
       'categories/[id]/route-handler.ts',
       'categories/batch/route-handler.ts',
-      'categories/migrate/route-handler.ts',
       'categories/reorder/route-handler.ts',
       'categories/route-handler.ts',
       'categories/tree/route-handler.ts',

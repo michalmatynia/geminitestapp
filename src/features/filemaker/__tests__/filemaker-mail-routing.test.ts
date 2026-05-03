@@ -24,9 +24,12 @@ describe('filemaker mail routing helpers', () => {
         recentMailboxFilter: 'VIP',
         recentUnreadOnly: true,
         recentQuery: 'welcome',
+        recentCampaignId: 'campaign-1',
+        recentRunId: 'run-1',
+        recentDeliveryId: 'delivery-1',
       })
     ).toBe(
-      '/admin/filemaker/mail?accountId=account-1&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome'
+      '/admin/filemaker/mail?accountId=account-1&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome&campaignId=campaign-1&runId=run-1&deliveryId=delivery-1'
     );
   });
 
@@ -46,6 +49,19 @@ describe('filemaker mail routing helpers', () => {
         panel: 'settings',
       })
     ).toBe('/admin/filemaker/mail?accountId=account-1&panel=settings');
+
+    expect(
+      buildFilemakerMailSelectionHref({
+        accountId: 'account-1',
+        panel: 'account',
+      })
+    ).toBe('/admin/filemaker/mail?accountId=account-1&panel=settings');
+
+    expect(
+      buildFilemakerMailSelectionHref({
+        panel: 'settings',
+      })
+    ).toBe('/admin/filemaker/mail?panel=settings');
 
     expect(
       buildFilemakerMailSelectionHref({
@@ -88,9 +104,12 @@ describe('filemaker mail routing helpers', () => {
         recentMailboxFilter: 'VIP',
         recentUnreadOnly: true,
         recentQuery: 'welcome',
+        recentCampaignId: 'campaign-1',
+        recentRunId: 'run-1',
+        recentDeliveryId: 'delivery-1',
       })
     ).toBe(
-      '/admin/filemaker/mail/compose?accountId=account-1&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome'
+      '/admin/filemaker/mail/compose?accountId=account-1&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome&campaignId=campaign-1&runId=run-1&deliveryId=delivery-1'
     );
 
     expect(
@@ -102,9 +121,12 @@ describe('filemaker mail routing helpers', () => {
         recentMailboxFilter: 'VIP',
         recentUnreadOnly: true,
         recentQuery: 'welcome',
+        recentCampaignId: 'campaign-1',
+        recentRunId: 'run-1',
+        recentDeliveryId: 'delivery-1',
       })
     ).toBe(
-      '/admin/filemaker/mail/threads/thread-1?accountId=account-1&mailboxPath=VIP&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome'
+      '/admin/filemaker/mail/threads/thread-1?accountId=account-1&mailboxPath=VIP&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome&campaignId=campaign-1&runId=run-1&deliveryId=delivery-1'
     );
   });
 
@@ -132,6 +154,32 @@ describe('filemaker mail routing helpers', () => {
       })
     ).toBe(
       '/admin/filemaker/mail/threads/thread-1?accountId=account-1&mailboxPath=VIP&panel=search&searchQuery=invoice&searchAccountId=all'
+    );
+  });
+
+  it('keeps distinct focused search context on search-origin compose and thread routes', () => {
+    expect(
+      buildFilemakerMailComposeHref({
+        accountId: 'account-1',
+        originPanel: 'search',
+        searchContextAccountId: 'account-2',
+        searchQuery: 'invoice',
+      })
+    ).toBe(
+      '/admin/filemaker/mail/compose?accountId=account-1&panel=search&searchQuery=invoice&searchContextAccountId=account-2'
+    );
+
+    expect(
+      buildFilemakerMailThreadHref({
+        threadId: 'thread-1',
+        accountId: 'account-1',
+        mailboxPath: 'VIP',
+        originPanel: 'search',
+        searchContextAccountId: 'account-2',
+        searchQuery: 'invoice',
+      })
+    ).toBe(
+      '/admin/filemaker/mail/threads/thread-1?accountId=account-1&mailboxPath=VIP&panel=search&searchQuery=invoice&searchContextAccountId=account-2'
     );
   });
 });

@@ -18,6 +18,11 @@ interface ProductImageManagerProps {
   minimalSingleSlotAlign?: 'left' | 'center';
 }
 
+const resolveImageSlotKey = (
+  slot: ProductImageManagerController['imageSlots'][number],
+  index: number
+): string => slot?.slotId ?? `slot-${index}`;
+
 function ProductImageManagerGrid() {
   const { controller, minimalUi, minimalSingleSlotAlign } = useProductImageManagerUIState();
   const { imageSlots } = controller;
@@ -32,8 +37,8 @@ function ProductImageManagerGrid() {
     <div data-preserve-slot-selection='true'>
       <ProductImageManagerHeader />
       <div className={gridClass}>
-        {imageSlots.map((_: unknown, index: number) => (
-          <ProductImageSlot key={`slot-${index}`} index={index} />
+        {imageSlots.map((slot, index: number) => (
+          <ProductImageSlot key={resolveImageSlotKey(slot, index)} index={index} />
         ))}
       </div>
     </div>

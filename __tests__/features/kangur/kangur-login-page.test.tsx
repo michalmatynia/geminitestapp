@@ -54,6 +54,12 @@ vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: useRouterMock,
+  useSearchParams: useSearchParamsMock,
+  usePathname: usePathnameMock,
+}));
+
 vi.mock('next-auth/react', () => ({
   signOut: vi.fn(),
 }));
@@ -62,7 +68,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/services/kangur-active-learner', () => ({
   setStoredActiveLearnerId: vi.fn(),
@@ -71,6 +78,7 @@ const setStoredActiveLearnerIdMock = vi.mocked(setStoredActiveLearnerId);
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => null,
+  useOptionalKangurAuthActions: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -198,7 +206,7 @@ describe('KangurLoginPage', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        '/api/kangur/auth/learner-signin',
+        '/kangur-api/auth/learner-signin',
         expect.objectContaining({
           method: 'POST',
           credentials: 'same-origin',

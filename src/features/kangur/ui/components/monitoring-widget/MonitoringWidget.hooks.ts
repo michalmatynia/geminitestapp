@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 import type { KangurLearnerInteractionHistory } from '@kangur/platform';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
@@ -112,8 +113,8 @@ export function useMonitoringWidgetState() {
       setIsInteractionQueryReady(false);
       return;
     }
-    const timeoutId = setTimeout(() => setIsInteractionQueryReady(true), INTERACTIONS_LOAD_DEFER_MS);
-    return () => clearTimeout(timeoutId);
+    const timeoutId = safeSetTimeout(() => setIsInteractionQueryReady(true), INTERACTIONS_LOAD_DEFER_MS);
+    return () => safeClearTimeout(timeoutId);
   }, [activeLearnerId]);
 
   useEffect(() => {

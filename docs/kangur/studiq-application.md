@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'overview'
 scope: 'feature:kangur'
@@ -19,6 +19,7 @@ the public root route or be embedded inside CMS pages.
 ## Application topology
 
 - The repository root remains the canonical Next.js application. It owns the public web shell, CMS routing, `/admin/kangur`, and `/api/kangur/*`.
+- `apps/studiq-web` is a standalone Next.js workspace for the focused StudiQ and Kangur web shell. It reuses repo-root code and loads env from the monorepo root, but it does not replace the root app as the canonical owner of admin, CMS, or API surfaces.
 - `apps/mobile` is the Expo Router application for native Kangur learner flows.
 - `apps/mobile-web` is reserved for a future Expo or React Native Web target and is not part of the active production web topology.
 - Shared cross-platform logic is split across:
@@ -32,6 +33,7 @@ the public root route or be embedded inside CMS pages.
 | Surface | Canonical location | Responsibility |
 | --- | --- | --- |
 | Public web shell | repository root Next.js app | Owns the public StudiQ frontend, front-page ownership, CMS embedding, localized Kangur routes, and the canonical `/kangur/*` web routes. |
+| Standalone StudiQ web workspace | `apps/studiq-web` | Owns a focused Kangur-only Next.js shell for isolated web runtime work. It reuses repo-root features and shared code, but it does not take over root admin, CMS, or API ownership. |
 | Kangur admin | `src/app/(admin)/admin/kangur/*` | Owns authoring, content management, settings, observability, social publishing, and test or lesson management. |
 | Kangur backend | `src/app/api/kangur/*` | Owns learner auth, parent auth, progress, lessons, assignments, scores, duels, AI Tutor, and supporting operational endpoints. |
 | Native learner app | `apps/mobile` | Owns Expo routing, native bootstrapping, mobile auth flow, device storage, and mobile learner UI. |

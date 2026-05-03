@@ -8,6 +8,9 @@ const {
   findProviderForKeyMock,
   readFilemakerCampaignSettingValueMock,
   sendMailMock,
+  createImapClientMock,
+  listImapMailboxesMock,
+  parseMailSourceMock,
   clearSecretSettingCacheMock,
   clearSettingsCacheMock,
   clearLiteSettingsServerCacheMock,
@@ -17,6 +20,9 @@ const {
   findProviderForKeyMock: vi.fn(),
   readFilemakerCampaignSettingValueMock: vi.fn(),
   sendMailMock: vi.fn(),
+  createImapClientMock: vi.fn(),
+  listImapMailboxesMock: vi.fn(),
+  parseMailSourceMock: vi.fn(),
   clearSecretSettingCacheMock: vi.fn(),
   clearSettingsCacheMock: vi.fn(),
   clearLiteSettingsServerCacheMock: vi.fn(),
@@ -45,6 +51,15 @@ vi.mock('@/shared/lib/settings-lite-server-cache', () => ({
 
 vi.mock('./campaign-settings-store', () => ({
   readFilemakerCampaignSettingValue: readFilemakerCampaignSettingValueMock,
+}));
+
+vi.mock('./mail/mail-imap', () => ({
+  createImapClient: createImapClientMock,
+  listImapMailboxes: listImapMailboxesMock,
+}));
+
+vi.mock('./mail/mail-processor', () => ({
+  parseMailSource: parseMailSourceMock,
 }));
 
 vi.mock('nodemailer', () => ({
@@ -117,6 +132,9 @@ const createMockCollection = <T extends MockDocument>(seed: T[] = []) => {
     },
     find(filter: Record<string, unknown>) {
       return createMockCursor(docs.filter((entry) => matchesFilter(entry, filter)));
+    },
+    async countDocuments(filter: Record<string, unknown>): Promise<number> {
+      return docs.filter((entry) => matchesFilter(entry, filter)).length;
     },
     async insertOne(doc: T): Promise<{ insertedId: string }> {
       docs.push(clone(doc));
@@ -198,6 +216,110 @@ const createMongoHarness = () => {
   };
 };
 
+type MockImapMailboxState = {
+  uidValidity: bigint;
+  uidNext: number;
+};
+
+const createMockImapClient = (input: {
+  mailboxStates: Record<string, MockImapMailboxState>;
+  initialSearchUids?: number[] | false;
+  incrementalSearchUids?: number[] | false;
+  entries?: Array<{
+    uid: number;
+    flags?: Set<string>;
+    envelope?: {
+      subject?: string;
+      messageId?: string;
+      inReplyTo?: string;
+      from?: Array<{ name?: string; address?: string }>;
+      to?: Array<{ name?: string; address?: string }>;
+      cc?: Array<{ name?: string; address?: string }>;
+      replyTo?: Array<{ name?: string; address?: string }>;
+      date?: Date;
+    };
+    internalDate?: Date;
+    source?: Buffer;
+    threadId?: string;
+  }>;
+  connectError?: Error;
+}) => {
+  const mailboxRef: { current: MockImapMailboxState | false } = { current: false };
+  const client = {
+    connect: vi.fn(async () => {
+      if (input.connectError) throw input.connectError;
+    }),
+    logout: vi.fn(async () => true),
+    close: vi.fn(),
+    search: vi.fn(async (query: Record<string, unknown>) => {
+      if (typeof query['uid'] === 'string') {
+        return input.incrementalSearchUids ?? [];
+      }
+      return input.initialSearchUids ?? [];
+    }),
+    getMailboxLock: vi.fn(async (path: string) => {
+      const mailboxState = input.mailboxStates[path];
+      if (!mailboxState) {
+        throw new Error(`Mailbox ${path} not found`);
+      }
+      mailboxRef.current = mailboxState;
+      return {
+        path,
+        release: vi.fn(() => {
+          mailboxRef.current = false;
+        }),
+      };
+    }),
+    fetch: vi.fn(async function* (uids: number[]) {
+      for (const entry of input.entries ?? []) {
+        if (!uids.includes(entry.uid)) continue;
+        yield {
+          seq: entry.uid,
+          uid: entry.uid,
+          flags: entry.flags ?? new Set<string>(),
+          envelope: entry.envelope,
+          internalDate: entry.internalDate,
+          source: entry.source ?? Buffer.from(`message-${entry.uid}`),
+          threadId: entry.threadId,
+        };
+      }
+    }),
+    get mailbox() {
+      return mailboxRef.current;
+    },
+  };
+
+  return client;
+};
+
+const createMailAccountDoc = () => ({
+  _id: 'account-1',
+  id: 'account-1',
+  createdAt: '2026-03-28T09:00:00.000Z',
+  updatedAt: '2026-03-28T09:00:00.000Z',
+  name: 'Support Inbox',
+  emailAddress: 'support@example.com',
+  provider: 'imap_smtp',
+  status: 'active',
+  imapHost: 'imap.example.com',
+  imapPort: 993,
+  imapSecure: true,
+  imapUser: 'support@example.com',
+  imapPasswordSettingKey: 'filemaker_mail_account_account-1_imap_password',
+  smtpHost: 'smtp.example.com',
+  smtpPort: 465,
+  smtpSecure: true,
+  smtpUser: 'support@example.com',
+  smtpPasswordSettingKey: 'filemaker_mail_account_account-1_smtp_password',
+  fromName: 'Support Team',
+  replyToEmail: 'replies@example.com',
+  folderAllowlist: ['INBOX'],
+  initialSyncLookbackDays: 30,
+  maxMessagesPerSync: 100,
+  lastSyncedAt: null,
+  lastSyncError: null,
+});
+
 const createDatabaseJson = (): string =>
   JSON.stringify({
     version: 2,
@@ -246,6 +368,7 @@ const createDatabaseJson = (): string =>
       },
     ],
     eventOrganizationLinks: [],
+    values: [],
   });
 
 describe('filemaker mail service - accounts and sending', () => {
@@ -406,6 +529,867 @@ describe('filemaker mail service - accounts and sending', () => {
     });
 
     expect(secretProvider.upsertValue).toHaveBeenCalledTimes(2);
+  });
+
+  it('preserves existing secret setting keys when updating an account with blank passwords', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_accounts', [
+      {
+        ...createMailAccountDoc(),
+        imapPasswordSettingKey: 'imap-custom-key',
+        smtpPasswordSettingKey: 'smtp-custom-key',
+      },
+    ]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const { getFilemakerMailAccount, upsertFilemakerMailAccount } = await import(
+      './filemaker-mail-service'
+    );
+
+    const updated = await upsertFilemakerMailAccount({
+      id: 'account-1',
+      name: 'Support Inbox Updated',
+      emailAddress: 'support@example.com',
+      status: 'active',
+      imapHost: 'imap.example.com',
+      imapPort: 993,
+      imapSecure: true,
+      imapUser: 'support@example.com',
+      imapPassword: '',
+      smtpHost: 'smtp.example.com',
+      smtpPort: 465,
+      smtpSecure: true,
+      smtpUser: 'support@example.com',
+      smtpPassword: '',
+      fromName: 'Support',
+      replyToEmail: null,
+      folderAllowlist: ['INBOX'],
+      initialSyncLookbackDays: 30,
+      maxMessagesPerSync: 100,
+    });
+    const stored = await getFilemakerMailAccount('account-1');
+
+    expect(updated.imapPasswordSettingKey).toBe('imap-custom-key');
+    expect(updated.smtpPasswordSettingKey).toBe('smtp-custom-key');
+    expect(stored.imapPasswordSettingKey).toBe('imap-custom-key');
+    expect(stored.smtpPasswordSettingKey).toBe('smtp-custom-key');
+    expect(findProviderForKeyMock).not.toHaveBeenCalled();
+  });
+
+  it('updates mailbox status without rewriting stored secrets', async () => {
+    const secretProvider = {
+      upsertValue: vi.fn(async () => true),
+    };
+    findProviderForKeyMock.mockResolvedValue(secretProvider);
+
+    const mongoHarness = createMongoHarness();
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const { getFilemakerMailAccount, updateFilemakerMailAccountStatus, upsertFilemakerMailAccount } =
+      await import('./filemaker-mail-service');
+
+    await upsertFilemakerMailAccount({
+      id: 'account-1',
+      name: 'Support Inbox',
+      emailAddress: 'support@example.com',
+      status: 'active',
+      imapHost: 'imap.example.com',
+      imapPort: 993,
+      imapSecure: true,
+      imapUser: 'support@example.com',
+      imapPassword: 'imap-secret',
+      smtpHost: 'smtp.example.com',
+      smtpPort: 465,
+      smtpSecure: true,
+      smtpUser: 'support@example.com',
+      smtpPassword: 'smtp-secret',
+      fromName: 'Support',
+      replyToEmail: null,
+      folderAllowlist: ['INBOX'],
+      initialSyncLookbackDays: 30,
+      maxMessagesPerSync: 100,
+    });
+
+    vi.setSystemTime(new Date('2026-03-30T10:00:00.000Z'));
+
+    const updated = await updateFilemakerMailAccountStatus('account-1', 'paused');
+    const stored = await getFilemakerMailAccount('account-1');
+
+    expect(updated.status).toBe('paused');
+    expect(stored.status).toBe('paused');
+    expect(stored.updatedAt).toBe('2026-03-30T10:00:00.000Z');
+    expect(secretProvider.upsertValue).toHaveBeenCalledTimes(2);
+  });
+
+  it('limits thread listings by recent activity when a limit is requested', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_threads', [
+      {
+        _id: 'thread-older',
+        id: 'thread-older',
+        accountId: 'account-1',
+        mailboxPath: 'INBOX',
+        mailboxRole: 'inbox',
+        providerThreadId: null,
+        subject: 'Older thread',
+        normalizedSubject: 'older thread',
+        snippet: 'Older preview',
+        participantSummary: [{ address: 'older@example.com', name: 'Older' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 0,
+        messageCount: 1,
+        lastMessageAt: '2026-03-27T10:00:00.000Z',
+      },
+      {
+        _id: 'thread-newest',
+        id: 'thread-newest',
+        accountId: 'account-1',
+        mailboxPath: 'INBOX',
+        mailboxRole: 'inbox',
+        providerThreadId: null,
+        subject: 'Newest thread',
+        normalizedSubject: 'newest thread',
+        snippet: 'Newest preview',
+        participantSummary: [{ address: 'newest@example.com', name: 'Newest' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 2,
+        messageCount: 3,
+        lastMessageAt: '2026-03-28T11:00:00.000Z',
+      },
+      {
+        _id: 'thread-middle',
+        id: 'thread-middle',
+        accountId: 'account-1',
+        mailboxPath: 'VIP',
+        mailboxRole: 'custom',
+        providerThreadId: null,
+        subject: 'Middle thread',
+        normalizedSubject: 'middle thread',
+        snippet: 'Middle preview',
+        participantSummary: [{ address: 'middle@example.com', name: 'Middle' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 1,
+        messageCount: 2,
+        lastMessageAt: '2026-03-28T10:00:00.000Z',
+      },
+      {
+        _id: 'thread-other-account',
+        id: 'thread-other-account',
+        accountId: 'account-2',
+        mailboxPath: 'INBOX',
+        mailboxRole: 'inbox',
+        providerThreadId: null,
+        subject: 'Other account thread',
+        normalizedSubject: 'other account thread',
+        snippet: 'Other preview',
+        participantSummary: [{ address: 'other@example.com', name: 'Other' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 0,
+        messageCount: 1,
+        lastMessageAt: '2026-03-29T09:00:00.000Z',
+      },
+    ]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const { listFilemakerMailThreads } = await import('./filemaker-mail-service');
+
+    const threads = await listFilemakerMailThreads({
+      accountId: 'account-1',
+      limit: 2,
+    });
+
+    expect(threads.map((thread) => thread.id)).toEqual(['thread-newest', 'thread-middle']);
+  });
+
+  it('lists campaign-linked threads by campaign, run, and delivery context', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_threads', [
+      {
+        _id: 'thread-campaign-delivery-1',
+        id: 'thread-campaign-delivery-1',
+        accountId: 'account-1',
+        mailboxPath: 'Sent',
+        mailboxRole: 'sent',
+        providerThreadId: null,
+        subject: 'Campaign delivery 1',
+        normalizedSubject: 'campaign delivery 1',
+        snippet: 'Preview 1',
+        participantSummary: [{ address: 'one@example.com', name: 'One' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 0,
+        messageCount: 1,
+        lastMessageAt: '2026-03-29T10:00:00.000Z',
+        campaignContext: {
+          campaignId: 'campaign-spring',
+          runId: 'run-1',
+          deliveryId: 'delivery-1',
+        },
+      },
+      {
+        _id: 'thread-campaign-delivery-2',
+        id: 'thread-campaign-delivery-2',
+        accountId: 'account-1',
+        mailboxPath: 'Sent',
+        mailboxRole: 'sent',
+        providerThreadId: null,
+        subject: 'Campaign delivery 2',
+        normalizedSubject: 'campaign delivery 2',
+        snippet: 'Preview 2',
+        participantSummary: [{ address: 'two@example.com', name: 'Two' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 0,
+        messageCount: 1,
+        lastMessageAt: '2026-03-29T11:00:00.000Z',
+        campaignContext: {
+          campaignId: 'campaign-spring',
+          runId: 'run-1',
+          deliveryId: 'delivery-2',
+        },
+      },
+      {
+        _id: 'thread-other-campaign',
+        id: 'thread-other-campaign',
+        accountId: 'account-1',
+        mailboxPath: 'Sent',
+        mailboxRole: 'sent',
+        providerThreadId: null,
+        subject: 'Other campaign',
+        normalizedSubject: 'other campaign',
+        snippet: 'Other preview',
+        participantSummary: [{ address: 'other@example.com', name: 'Other' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 0,
+        messageCount: 1,
+        lastMessageAt: '2026-03-29T12:00:00.000Z',
+        campaignContext: {
+          campaignId: 'campaign-other',
+          runId: 'run-2',
+          deliveryId: 'delivery-3',
+        },
+      },
+    ]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const {
+      getFilemakerMailThreadForCampaignDelivery,
+      listFilemakerMailThreads,
+      listFilemakerMailThreadsForCampaign,
+    } = await import('./filemaker-mail-service');
+
+    const runThreads = await listFilemakerMailThreadsForCampaign({
+      campaignId: 'campaign-spring',
+      runId: 'run-1',
+    });
+    const deliveryThread = await getFilemakerMailThreadForCampaignDelivery({
+      campaignId: 'campaign-spring',
+      runId: 'run-1',
+      deliveryId: 'delivery-1',
+    });
+    const queriedThreads = await listFilemakerMailThreads({
+      query: 'run-1',
+    });
+
+    expect(runThreads.map((thread) => thread.id)).toEqual([
+      'thread-campaign-delivery-2',
+      'thread-campaign-delivery-1',
+    ]);
+    expect(deliveryThread?.id).toBe('thread-campaign-delivery-1');
+    expect(queriedThreads.map((thread) => thread.id)).toEqual([
+      'thread-campaign-delivery-2',
+      'thread-campaign-delivery-1',
+    ]);
+  });
+
+  it('downloads IMAP messages, stores them, and updates sync state', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const client = createMockImapClient({
+      mailboxStates: {
+        INBOX: {
+          uidValidity: 123n,
+          uidNext: 43,
+        },
+      },
+      initialSearchUids: [41, 42],
+      entries: [
+        {
+          uid: 41,
+          flags: new Set(),
+          envelope: {
+            subject: 'Welcome',
+            messageId: '<message-41@example.com>',
+            from: [{ name: 'Jane Recipient', address: 'jane@example.com' }],
+            to: [{ address: 'support@example.com' }],
+            date: new Date('2026-03-27T10:00:00.000Z'),
+          },
+          internalDate: new Date('2026-03-27T10:01:00.000Z'),
+        },
+        {
+          uid: 42,
+          flags: new Set(['\\Seen']),
+          envelope: {
+            subject: 'Welcome',
+            messageId: '<message-42@example.com>',
+            from: [{ name: 'Jane Recipient', address: 'jane@example.com' }],
+            to: [{ address: 'support@example.com' }],
+            date: new Date('2026-03-27T10:05:00.000Z'),
+          },
+          internalDate: new Date('2026-03-27T10:06:00.000Z'),
+        },
+      ],
+    });
+    createImapClientMock.mockReturnValue(client);
+    listImapMailboxesMock.mockResolvedValue([
+      {
+        path: 'INBOX',
+        flags: new Set<string>(),
+        specialUse: '\\Inbox',
+      },
+    ]);
+    parseMailSourceMock
+      .mockResolvedValueOnce({
+        subject: 'Welcome',
+        messageId: '<message-41@example.com>',
+        from: { value: [{ name: 'Jane Recipient', address: 'jane@example.com' }] },
+        to: { value: [{ address: 'support@example.com' }] },
+        text: 'Hello from Jane',
+        html: '<p>Hello from <strong>Jane</strong></p>',
+        date: new Date('2026-03-27T10:00:00.000Z'),
+        references: [],
+        attachments: [],
+      })
+      .mockResolvedValueOnce({
+        subject: 'Welcome',
+        messageId: '<message-42@example.com>',
+        from: { value: [{ name: 'Jane Recipient', address: 'jane@example.com' }] },
+        to: { value: [{ address: 'support@example.com' }] },
+        text: 'Second note',
+        html: '<p>Second note</p>',
+        date: new Date('2026-03-27T10:05:00.000Z'),
+        references: '<message-41@example.com> <legacy-message@example.com>',
+        attachments: [],
+      });
+
+    const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
+
+    const result = await syncFilemakerMailAccount('account-1');
+
+    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_accounts');
+    const threadDocs = mongoHarness.docs<MockDocument>('filemaker_mail_threads');
+    const messageDocs = mongoHarness.docs<MockDocument>('filemaker_mail_messages');
+    const syncStateDocs = mongoHarness.docs<MockDocument>('filemaker_mail_sync_states');
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        accountId: 'account-1',
+        foldersScanned: ['INBOX'],
+        fetchedMessageCount: 2,
+        insertedMessageCount: 2,
+        updatedMessageCount: 0,
+        touchedThreadCount: 1,
+        lastSyncError: null,
+      })
+    );
+    expect(createImapClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'account-1' }),
+      'imap-secret'
+    );
+    expect(listImapMailboxesMock).toHaveBeenCalledWith(client);
+    expect(messageDocs).toHaveLength(2);
+    expect(messageDocs[0]?.providerUid).toBe(41);
+    expect(threadDocs).toHaveLength(1);
+    expect(threadDocs[0]).toEqual(
+      expect.objectContaining({
+        mailboxPath: 'INBOX',
+        messageCount: 2,
+        unreadCount: 1,
+        relatedPersonIds: ['person-1'],
+      })
+    );
+    expect(syncStateDocs).toHaveLength(1);
+    expect(syncStateDocs[0]).toEqual(
+      expect.objectContaining({
+        accountId: 'account-1',
+        mailboxPath: 'INBOX',
+        uidValidity: '123',
+        lastUid: 42,
+      })
+    );
+    expect(accountDocs[0]).toEqual(
+      expect.objectContaining({
+        id: 'account-1',
+        lastSyncError: null,
+        lastSyncedAt: expect.any(String),
+      })
+    );
+  });
+
+  it('syncs with the IMAP password key stored on the account', async () => {
+    readSecretSettingValuesMock.mockResolvedValue({
+      'imap-custom-key': 'custom-imap-secret',
+    });
+
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_accounts', [
+      {
+        ...createMailAccountDoc(),
+        imapPasswordSettingKey: 'imap-custom-key',
+      },
+    ]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const client = createMockImapClient({
+      mailboxStates: {
+        INBOX: {
+          uidValidity: 123n,
+          uidNext: 1,
+        },
+      },
+      initialSearchUids: [],
+    });
+    createImapClientMock.mockReturnValue(client);
+    listImapMailboxesMock.mockResolvedValue([
+      {
+        path: 'INBOX',
+        flags: new Set<string>(),
+        specialUse: '\\Inbox',
+      },
+    ]);
+
+    const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
+
+    const result = await syncFilemakerMailAccount('account-1');
+
+    expect(readSecretSettingValuesMock).toHaveBeenCalledWith(['imap-custom-key']);
+    expect(createImapClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({ imapPasswordSettingKey: 'imap-custom-key' }),
+      'custom-imap-secret'
+    );
+    expect(result.lastSyncError).toBeNull();
+  });
+
+  it('replays the initial mailbox sync when sync state exists but no messages were stored', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    mongoHarness.seed('filemaker_mail_sync_states', [
+      {
+        _id: 'sync-state-1',
+        id: 'sync-state-1',
+        createdAt: '2026-03-27T10:00:00.000Z',
+        updatedAt: '2026-03-27T10:00:00.000Z',
+        accountId: 'account-1',
+        mailboxPath: 'INBOX',
+        role: 'inbox',
+        uidValidity: '123',
+        lastUid: 99,
+        lastSyncedAt: '2026-03-27T10:00:00.000Z',
+      },
+    ]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const client = createMockImapClient({
+      mailboxStates: {
+        INBOX: {
+          uidValidity: 123n,
+          uidNext: 42,
+        },
+      },
+      initialSearchUids: [41],
+      incrementalSearchUids: [100],
+      entries: [
+        {
+          uid: 41,
+          flags: new Set(),
+          envelope: {
+            subject: 'Recovered message',
+            messageId: '<message-41@example.com>',
+            from: [{ name: 'Jane Recipient', address: 'jane@example.com' }],
+            to: [{ address: 'support@example.com' }],
+            date: new Date('2026-03-27T10:00:00.000Z'),
+          },
+          internalDate: new Date('2026-03-27T10:01:00.000Z'),
+        },
+      ],
+    });
+    createImapClientMock.mockReturnValue(client);
+    listImapMailboxesMock.mockResolvedValue([
+      {
+        path: 'INBOX',
+        flags: new Set<string>(),
+        specialUse: '\\Inbox',
+      },
+    ]);
+    parseMailSourceMock.mockResolvedValueOnce({
+      subject: 'Recovered message',
+      messageId: '<message-41@example.com>',
+      from: { value: [{ name: 'Jane Recipient', address: 'jane@example.com' }] },
+      to: { value: [{ address: 'support@example.com' }] },
+      text: 'Recovered body',
+      html: '<p>Recovered body</p>',
+      date: new Date('2026-03-27T10:00:00.000Z'),
+      references: [],
+      attachments: [],
+    });
+
+    const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
+
+    const result = await syncFilemakerMailAccount('account-1');
+    const messageDocs = mongoHarness.docs<MockDocument>('filemaker_mail_messages');
+    const syncStateDocs = mongoHarness.docs<MockDocument>('filemaker_mail_sync_states');
+
+    expect(client.search).toHaveBeenCalledWith({ since: expect.any(Date) }, { uid: true });
+    expect(result).toEqual(
+      expect.objectContaining({
+        accountId: 'account-1',
+        fetchedMessageCount: 1,
+        insertedMessageCount: 1,
+        updatedMessageCount: 0,
+        lastSyncError: null,
+      })
+    );
+    expect(messageDocs).toHaveLength(1);
+    expect(messageDocs[0]).toEqual(
+      expect.objectContaining({
+        providerUid: 41,
+        subject: 'Recovered message',
+      })
+    );
+    expect(syncStateDocs[0]).toEqual(
+      expect.objectContaining({
+        accountId: 'account-1',
+        mailboxPath: 'INBOX',
+        lastUid: 41,
+      })
+    );
+  });
+
+  it('keeps syncing available folders when another configured folder fails', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_accounts', [
+      {
+        ...createMailAccountDoc(),
+        folderAllowlist: ['INBOX', 'Broken'],
+      },
+    ]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const client = createMockImapClient({
+      mailboxStates: {
+        INBOX: {
+          uidValidity: 123n,
+          uidNext: 42,
+        },
+      },
+      initialSearchUids: [41],
+      entries: [
+        {
+          uid: 41,
+          flags: new Set(),
+          envelope: {
+            subject: 'Available folder message',
+            messageId: '<message-41@example.com>',
+            from: [{ name: 'Jane Recipient', address: 'jane@example.com' }],
+            to: [{ address: 'support@example.com' }],
+            date: new Date('2026-03-27T10:00:00.000Z'),
+          },
+          internalDate: new Date('2026-03-27T10:01:00.000Z'),
+        },
+      ],
+    });
+    createImapClientMock.mockReturnValue(client);
+    listImapMailboxesMock.mockResolvedValue([
+      {
+        path: 'INBOX',
+        flags: new Set<string>(),
+        specialUse: '\\Inbox',
+      },
+      {
+        path: 'Broken',
+        flags: new Set<string>(),
+      },
+    ]);
+    parseMailSourceMock.mockResolvedValueOnce({
+      subject: 'Available folder message',
+      messageId: '<message-41@example.com>',
+      from: { value: [{ name: 'Jane Recipient', address: 'jane@example.com' }] },
+      to: { value: [{ address: 'support@example.com' }] },
+      text: 'Available body',
+      html: '<p>Available body</p>',
+      date: new Date('2026-03-27T10:00:00.000Z'),
+      references: [],
+      attachments: [],
+    });
+
+    const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
+
+    const result = await syncFilemakerMailAccount('account-1');
+    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_accounts');
+    const messageDocs = mongoHarness.docs<MockDocument>('filemaker_mail_messages');
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        accountId: 'account-1',
+        fetchedMessageCount: 1,
+        insertedMessageCount: 1,
+        updatedMessageCount: 0,
+        lastSyncError:
+          'Mailbox sync finished with 1 failed folder: Broken: Mailbox Broken not found',
+      })
+    );
+    expect(messageDocs).toHaveLength(1);
+    expect(messageDocs[0]).toEqual(
+      expect.objectContaining({
+        providerUid: 41,
+        subject: 'Available folder message',
+      })
+    );
+    expect(accountDocs[0]).toEqual(
+      expect.objectContaining({
+        id: 'account-1',
+        lastSyncError:
+          'Mailbox sync finished with 1 failed folder: Broken: Mailbox Broken not found',
+        lastSyncedAt: expect.any(String),
+      })
+    );
+  });
+
+  it('inherits campaign context for inbound replies matched to an existing campaign thread', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    mongoHarness.seed('filemaker_mail_threads', [
+      {
+        _id: 'campaign-thread-1',
+        id: 'campaign-thread-1',
+        createdAt: '2026-03-27T10:00:00.000Z',
+        updatedAt: '2026-03-27T10:00:00.000Z',
+        accountId: 'account-1',
+        mailboxPath: 'INBOX',
+        mailboxRole: 'inbox',
+        providerThreadId: null,
+        subject: 'Spring Offer',
+        normalizedSubject: 'Spring Offer',
+        anchorAddress: 'jane@example.com',
+        snippet: 'Campaign sent',
+        participantSummary: [{ address: 'jane@example.com', name: 'Jane Recipient' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 0,
+        messageCount: 1,
+        lastMessageAt: '2026-03-27T10:00:00.000Z',
+        campaignContext: {
+          campaignId: 'campaign-spring',
+          runId: 'run-1',
+          deliveryId: 'delivery-1',
+        },
+      },
+    ]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const client = createMockImapClient({
+      mailboxStates: {
+        INBOX: {
+          uidValidity: 123n,
+          uidNext: 44,
+        },
+      },
+      initialSearchUids: [43],
+      entries: [
+        {
+          uid: 43,
+          flags: new Set(),
+          envelope: {
+            subject: 'Re: Spring Offer',
+            messageId: '<reply-43@example.com>',
+            from: [{ name: 'Jane Recipient', address: 'jane@example.com' }],
+            to: [{ address: 'support@example.com' }],
+            date: new Date('2026-03-27T10:30:00.000Z'),
+          },
+          internalDate: new Date('2026-03-27T10:31:00.000Z'),
+        },
+      ],
+    });
+    createImapClientMock.mockReturnValue(client);
+    listImapMailboxesMock.mockResolvedValue([
+      {
+        path: 'INBOX',
+        flags: new Set<string>(),
+        specialUse: '\\Inbox',
+      },
+    ]);
+    parseMailSourceMock.mockResolvedValueOnce({
+      subject: 'Re: Spring Offer',
+      messageId: '<reply-43@example.com>',
+      from: { value: [{ name: 'Jane Recipient', address: 'jane@example.com' }] },
+      to: { value: [{ address: 'support@example.com' }] },
+      text: 'Sounds good',
+      html: '<p>Sounds good</p>',
+      date: new Date('2026-03-27T10:30:00.000Z'),
+      references: [],
+      attachments: [],
+    });
+
+    const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
+
+    await syncFilemakerMailAccount('account-1');
+
+    const messageDocs = mongoHarness.docs<MockDocument>('filemaker_mail_messages');
+    expect(messageDocs[0]).toEqual(
+      expect.objectContaining({
+        threadId: 'campaign-thread-1',
+        campaignContext: {
+          campaignId: 'campaign-spring',
+          runId: 'run-1',
+          deliveryId: 'delivery-1',
+        },
+      })
+    );
+  });
+
+  it('records IMAP sync errors on the account and returns the failure message', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const client = createMockImapClient({
+      mailboxStates: {
+        INBOX: {
+          uidValidity: 123n,
+          uidNext: 1,
+        },
+      },
+      connectError: new Error('Authentication failed'),
+    });
+    createImapClientMock.mockReturnValue(client);
+
+    const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
+
+    const result = await syncFilemakerMailAccount('account-1');
+    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_accounts');
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        accountId: 'account-1',
+        fetchedMessageCount: 0,
+        insertedMessageCount: 0,
+        updatedMessageCount: 0,
+        touchedThreadCount: 0,
+        lastSyncError: 'Authentication failed',
+      })
+    );
+    expect(accountDocs[0]).toEqual(
+      expect.objectContaining({
+        id: 'account-1',
+        lastSyncError: 'Authentication failed',
+        lastSyncedAt: null,
+      })
+    );
+  });
+
+  it('records IMAP command response details when the provider rejects sync', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const connectError = Object.assign(new Error('Command failed'), {
+      responseStatus: 'NO',
+      responseText: 'sync is not available for this account',
+      serverResponseCode: 'ALERT',
+    });
+    const client = createMockImapClient({
+      mailboxStates: {
+        INBOX: {
+          uidValidity: 123n,
+          uidNext: 1,
+        },
+      },
+      connectError,
+    });
+    createImapClientMock.mockReturnValue(client);
+
+    const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
+
+    const result = await syncFilemakerMailAccount('account-1');
+    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_accounts');
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        accountId: 'account-1',
+        fetchedMessageCount: 0,
+        insertedMessageCount: 0,
+        updatedMessageCount: 0,
+        touchedThreadCount: 0,
+        lastSyncError:
+          'IMAP command failed (NO ALERT): sync is not available for this account',
+      })
+    );
+    expect(accountDocs[0]).toEqual(
+      expect.objectContaining({
+        id: 'account-1',
+        lastSyncError:
+          'IMAP command failed (NO ALERT): sync is not available for this account',
+        lastSyncedAt: null,
+      })
+    );
+  });
+
+  it('records IMAP search failures without advancing the mailbox sync state', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const client = createMockImapClient({
+      mailboxStates: {
+        INBOX: {
+          uidValidity: 123n,
+          uidNext: 43,
+        },
+      },
+      initialSearchUids: false,
+    });
+    createImapClientMock.mockReturnValue(client);
+    listImapMailboxesMock.mockResolvedValue([
+      {
+        path: 'INBOX',
+        flags: new Set<string>(),
+        specialUse: '\\Inbox',
+      },
+    ]);
+
+    const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
+
+    const result = await syncFilemakerMailAccount('account-1');
+    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_accounts');
+    const syncStateDocs = mongoHarness.docs<MockDocument>('filemaker_mail_sync_states');
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        accountId: 'account-1',
+        fetchedMessageCount: 0,
+        insertedMessageCount: 0,
+        updatedMessageCount: 0,
+        touchedThreadCount: 0,
+        lastSyncError:
+          'Mailbox sync finished with 1 failed folder: INBOX: IMAP search failed for mailbox INBOX. The server rejected the search command.',
+      })
+    );
+    expect(syncStateDocs).toHaveLength(0);
+    expect(accountDocs[0]).toEqual(
+      expect.objectContaining({
+        id: 'account-1',
+        lastSyncError:
+          'Mailbox sync finished with 1 failed folder: INBOX: IMAP search failed for mailbox INBOX. The server rejected the search command.',
+        lastSyncedAt: null,
+      })
+    );
   });
 
   it('sends a composed message, stores outbox state, and links related parties', async () => {

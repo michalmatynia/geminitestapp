@@ -79,7 +79,7 @@ export const buildPromptDiffLines = (
 
 export function toSlotName(filename: string, index: number): string {
   const clean = filename.trim();
-  if (!clean) return `Card ${index + 1}`;
+  if (clean === '') return `Card ${index + 1}`;
   const dotIndex = clean.lastIndexOf('.');
   if (dotIndex <= 0) return clean;
   return clean.slice(0, dotIndex);

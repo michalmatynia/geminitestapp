@@ -2,7 +2,7 @@
 
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
@@ -60,6 +60,31 @@ type SubtractingChoicePresentation = {
   emphasis: 'neutral' | 'accent';
   state: 'default' | 'muted';
 };
+
+type SubtractingGameContextValue = {
+  confirmed: boolean;
+  finishLabel: string;
+  isCoarsePointer: boolean;
+  onConfirm: () => void;
+  onFinish: () => void;
+  onRestart: () => void;
+  onSelect: (choice: number) => void;
+  question: SubtractingQuestion;
+  roundIndex: number;
+  selected: number | null;
+  translations: ReturnType<typeof useTranslations>;
+};
+
+const SubtractingGameContext = React.createContext<SubtractingGameContextValue | null>(null);
+
+function useSubtractingGame(): SubtractingGameContextValue {
+  const context = React.useContext(SubtractingGameContext);
+  if (!context) {
+    throw new Error('useSubtractingGame must be used within a SubtractingGameContext.Provider');
+  }
+  return context;
+}
+
 
 type SubtractingDifficulty = 'easy' | 'medium' | 'hard';
 
@@ -381,24 +406,18 @@ const confirmSubtractingSelection = ({
 };
 
 function SubtractingGameSummaryView({
-  finishLabel,
-  onFinish,
-  onRestart,
-  percent,
-  score,
-  translations,
-  xpBreakdown,
-  xpEarned,
+  results,
 }: {
-  finishLabel: string;
-  onFinish: () => void;
-  onRestart: () => void;
-  percent: number;
-  score: number;
-  translations: ReturnType<typeof useTranslations>;
-  xpBreakdown: KangurRewardBreakdownEntry[];
-  xpEarned: number;
+  results: {
+    percent: number;
+    score: number;
+    xpBreakdown: KangurRewardBreakdownEntry[];
+    xpEarned: number;
+  };
 }): React.JSX.Element {
+  const { finishLabel, onFinish, onRestart, translations } = useSubtractingGame();
+  const { percent, score, xpBreakdown, xpEarned } = results;
+
   return (
     <KangurPracticeGameSummary
       dataTestId='subtracting-game-summary-shell'
@@ -436,15 +455,9 @@ function SubtractingGameSummaryView({
   );
 }
 
-function SubtractingGameQuestionPanel({
-  isCoarsePointer,
-  question,
-  translations,
-}: {
-  isCoarsePointer: boolean;
-  question: SubtractingQuestion;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function SubtractingGameQuestionPanel(): React.JSX.Element {
+  const { isCoarsePointer, question, translations } = useSubtractingGame();
+
   return (
     <>
       <KangurEquationDisplay accent='rose' data-testid='subtracting-game-equation'>
@@ -468,19 +481,9 @@ function SubtractingGameQuestionPanel({
   );
 }
 
-function SubtractingGameChoicesGrid({
-  confirmed,
-  isCoarsePointer,
-  onSelect,
-  question,
-  selected,
-}: {
-  confirmed: boolean;
-  isCoarsePointer: boolean;
-  onSelect: (choice: number) => void;
-  question: SubtractingQuestion;
-  selected: number | null;
-}): React.JSX.Element {
+function SubtractingGameChoicesGrid(): React.JSX.Element {
+  const { confirmed, isCoarsePointer, onSelect, question, selected } = useSubtractingGame();
+
   return (
     <div className='grid w-full grid-cols-1 gap-2 sm:grid-cols-2'>
       {question.choices.map((choice, index) => {
@@ -518,25 +521,15 @@ function SubtractingGameChoicesGrid({
   );
 }
 
-function SubtractingGameRoundView({
-  confirmed,
-  isCoarsePointer,
-  onConfirm,
-  onSelect,
-  question,
-  roundIndex,
-  selected,
-  translations,
-}: {
-  confirmed: boolean;
-  isCoarsePointer: boolean;
-  onConfirm: () => void;
-  onSelect: (choice: number) => void;
-  question: SubtractingQuestion;
-  roundIndex: number;
-  selected: number | null;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function SubtractingGameRoundView(): React.JSX.Element {
+  const {
+    confirmed,
+    onConfirm,
+    question,
+    roundIndex,
+    selected,
+  } = useSubtractingGame();
+
   return (
     <KangurPracticeGameShell
       className='w-full max-w-4xl'
@@ -558,21 +551,11 @@ function SubtractingGameRoundView({
         >
           <div className='grid w-full gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.95fr)] lg:items-start'>
             <div className='flex min-w-0 flex-col items-center gap-4 text-center lg:items-start lg:text-left'>
-              <SubtractingGameQuestionPanel
-                isCoarsePointer={isCoarsePointer}
-                question={question}
-                translations={translations}
-              />
+              <SubtractingGameQuestionPanel />
             </div>
 
             <div className='flex min-w-0 flex-col gap-4'>
-              <SubtractingGameChoicesGrid
-                confirmed={confirmed}
-                isCoarsePointer={isCoarsePointer}
-                onSelect={onSelect}
-                question={question}
-                selected={selected}
-              />
+              <SubtractingGameChoicesGrid />
 
               <KangurButton
                 className={resolveSubtractingCheckButtonClassName({
@@ -649,44 +632,53 @@ export default function SubtractingGame({
     });
   };
 
+  const handleRestart = (): void => {
+    resetSubtractingGameSession({
+      sessionStartedAtRef,
+      setConfirmed,
+      setDone,
+      setQuestion,
+      setRoundIndex,
+      setScore,
+      setSelected,
+      setXpBreakdown,
+      setXpEarned,
+    });
+  };
+
+  const contextValue = {
+    confirmed,
+    finishLabel,
+    isCoarsePointer,
+    onConfirm: handleConfirm,
+    onFinish: handleFinishGame,
+    onRestart: handleRestart,
+    onSelect: handleSelect,
+    question,
+    roundIndex,
+    selected,
+    translations,
+  };
+
   if (done) {
     const percent = Math.round((score / TOTAL) * 100);
     return (
-      <SubtractingGameSummaryView
-        finishLabel={finishLabel}
-        onFinish={handleFinishGame}
-        onRestart={() =>
-          resetSubtractingGameSession({
-            sessionStartedAtRef,
-            setConfirmed,
-            setDone,
-            setQuestion,
-            setRoundIndex,
-            setScore,
-            setSelected,
-            setXpBreakdown,
-            setXpEarned,
-          })
-        }
-        percent={percent}
-        score={score}
-        translations={translations}
-        xpBreakdown={xpBreakdown}
-        xpEarned={xpEarned}
-      />
+      <SubtractingGameContext.Provider value={contextValue}>
+        <SubtractingGameSummaryView
+          results={{
+            percent,
+            score,
+            xpBreakdown,
+            xpEarned,
+          }}
+        />
+      </SubtractingGameContext.Provider>
     );
   }
 
   return (
-    <SubtractingGameRoundView
-      confirmed={confirmed}
-      isCoarsePointer={isCoarsePointer}
-      onConfirm={handleConfirm}
-      onSelect={handleSelect}
-      question={question}
-      roundIndex={roundIndex}
-      selected={selected}
-      translations={translations}
-    />
+    <SubtractingGameContext.Provider value={contextValue}>
+      <SubtractingGameRoundView />
+    </SubtractingGameContext.Provider>
   );
 }

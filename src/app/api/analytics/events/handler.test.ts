@@ -30,8 +30,8 @@ vi.mock('@/shared/lib/analytics/server', () => ({
 }));
 
 import {
-  GET_handler,
-  POST_handler,
+  getHandler,
+  postHandler,
   resetAnalyticsEventsIngestionGuardState,
 } from './handler';
 
@@ -108,7 +108,7 @@ describe('analytics events handler', () => {
       total: 41,
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/analytics/events'),
       createRequestContext({
         page: 2,
@@ -165,7 +165,7 @@ describe('analytics events handler', () => {
       total: 0,
     });
 
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/analytics/events'),
       createRequestContext({
         page: 1,
@@ -204,7 +204,7 @@ describe('analytics events handler', () => {
       total: 0,
     });
 
-    await GET_handler(
+    await getHandler(
       new NextRequest('http://localhost/api/analytics/events'),
       createRequestContext({
         page: 1,
@@ -231,7 +231,7 @@ describe('analytics events handler', () => {
 
   it('enriches created events with parsed connection context before inserting', async () => {
     const requestPayload = buildAnalyticsEventRequestPayload({});
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/analytics/events', {
         method: 'POST',
         headers: {
@@ -306,7 +306,7 @@ describe('analytics events handler', () => {
   it('deduplicates identical analytics event payloads from retry loops', async () => {
     const requestPayload = buildAnalyticsEventRequestPayload({});
 
-    const firstResponse = await POST_handler(
+    const firstResponse = await postHandler(
       new NextRequest('http://localhost/api/analytics/events', {
         method: 'POST',
         headers: {
@@ -319,7 +319,7 @@ describe('analytics events handler', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    const secondResponse = await POST_handler(
+    const secondResponse = await postHandler(
       new NextRequest('http://localhost/api/analytics/events', {
         method: 'POST',
         headers: {
@@ -346,7 +346,7 @@ describe('analytics events handler', () => {
     vi.useFakeTimers();
     const requestPayload = buildAnalyticsEventRequestPayload({});
 
-    const firstRequest = POST_handler(
+    const firstRequest = postHandler(
       new NextRequest('http://localhost/api/analytics/events', {
         method: 'POST',
         headers: {
@@ -362,7 +362,7 @@ describe('analytics events handler', () => {
 
     await vi.advanceTimersByTimeAsync(30_001);
 
-    const secondRequest = POST_handler(
+    const secondRequest = postHandler(
       new NextRequest('http://localhost/api/analytics/events', {
         method: 'POST',
         headers: {

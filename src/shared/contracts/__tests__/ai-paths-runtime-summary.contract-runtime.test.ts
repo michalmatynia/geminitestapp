@@ -25,10 +25,8 @@ describe('ai paths runtime analytics summary contract runtime', () => {
           completed: 10,
           failed: 1,
           canceled: 0,
-          deadLettered: 0,
           successRate: 90.9,
           failureRate: 9.1,
-          deadLetterRate: 0,
           avgDurationMs: 420,
           p95DurationMs: 980,
         },
@@ -89,9 +87,9 @@ describe('ai paths runtime analytics summary contract runtime', () => {
             runsWithKernelParity: 10,
             sampledHistoryEntries: 20,
             strategyCounts: {
-              compatibility: 4,
               code_object_v3: 6,
-              unknown: 0,
+              compatibility: 0,
+              unknown: 4,
             },
             resolutionSourceCounts: {
               override: 1,

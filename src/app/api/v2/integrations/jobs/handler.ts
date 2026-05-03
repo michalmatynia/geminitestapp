@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { ObjectId, type Document, type Filter } from 'mongodb';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type ObjectId, type Document, type Filter } from 'mongodb';
 
 import { getProductListingRepository } from '@/features/integrations/server';
 import type { ListingJob, ProductJob } from '@/shared/contracts/integrations/domain';
@@ -143,7 +143,7 @@ const buildProductLookupMap = async (productIds: string[]): Promise<Map<string, 
  * GET /api/v2/integrations/jobs
  * Fetches all product listing jobs with product details
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const listingRepo = await getProductListingRepository();
 
   const allListings = await listingRepo.listAllListings();

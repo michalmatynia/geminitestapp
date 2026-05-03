@@ -1,5 +1,5 @@
 import { type RuntimeHistoryEntry } from '@/shared/contracts/ai-paths';
-import { AI_PATHS_HISTORY_RETENTION_DEFAULT, AI_PATHS_HISTORY_RETENTION_MAX, AI_PATHS_HISTORY_RETENTION_MIN } from '@/shared/lib/ai-paths';
+import { AI_PATHS_HISTORY_RETENTION_DEFAULT, AI_PATHS_HISTORY_RETENTION_MAX, AI_PATHS_HISTORY_RETENTION_MIN } from '@/shared/lib/ai-paths/core/constants';
 
 export const resolveHistoryRetention = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {

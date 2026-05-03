@@ -4,7 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+import { safeClearInterval, safeClearTimeout, safeSetInterval, safeSetTimeout } from '@/shared/lib/timers';
+import { logClientEvent } from '@/shared/utils/observability/client-error-logger';
 
 import { useOfflineSync } from '../offline/useOfflineMutation';
 
@@ -26,6 +27,11 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
   const [lastSync, setLastSync] = useState<Date | null>(null);
 
   const performSync = useCallback(async (): Promise<void> => {
+    logClientEvent({
+      level: 'info',
+      message: 'Starting system-wide sync (performSync)',
+      context: { source: 'useSystemSync', action: 'sync-start', isOnline },
+    });
     await queryClient.refetchQueries({
       predicate: (query: {
         queryKey: unknown;
@@ -39,13 +45,33 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
     if (isOnline) {
       await processQueue();
     }
-    setLastSync(new Date());
+    const now = new Date();
+    setLastSync(now);
+    logClientEvent({
+      level: 'info',
+      message: 'Successfully completed system-wide sync',
+      context: { source: 'useSystemSync', action: 'sync-complete', lastSync: now.toISOString() },
+    });
   }, [isOnline, queryClient, processQueue]);
 
   // Monitor online/offline status
   useEffect((): (() => void) => {
-    const handleOnline = (): void => setIsOnline(true);
-    const handleOffline = (): void => setIsOnline(false);
+    const handleOnline = (): void => {
+      setIsOnline(true);
+      logClientEvent({
+        level: 'info',
+        message: 'Browser reported online',
+        context: { source: 'useSystemSync', action: 'network-status', online: true },
+      });
+    };
+    const handleOffline = (): void => {
+      setIsOnline(false);
+      logClientEvent({
+        level: 'warn',
+        message: 'Browser reported offline',
+        context: { source: 'useSystemSync', action: 'network-status', online: false },
+      });
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -58,6 +84,7 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
 
   // Sync when coming back online (skip initial mount — only on false→true transition)
   const wasOfflineRef = useRef(false);
+
   useEffect(() => {
     if (!isOnline) {
       wasOfflineRef.current = true;
@@ -65,10 +92,10 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
     }
     if (wasOfflineRef.current && enabled) {
       wasOfflineRef.current = false;
-      const timer = setTimeout(() => {
+      const timer = safeSetTimeout(() => {
         void performSync();
       }, 0);
-      return (): void => clearTimeout(timer);
+      return (): void => safeClearTimeout(timer);
     }
     return undefined;
   }, [isOnline, enabled, performSync]);
@@ -78,6 +105,11 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
     if (!enabled || !isOnline) return (): void => {};
 
     const syncCriticalData = (): void => {
+      logClientEvent({
+        level: 'info',
+        message: 'Syncing critical system data',
+        context: { source: 'useSystemSync', action: 'periodic-sync', intervalMs: interval },
+      });
       const canRefetch = (query: {
         queryKey: unknown;
         options?: { queryFn?: unknown };

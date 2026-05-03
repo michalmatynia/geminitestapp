@@ -1,8 +1,13 @@
 import bcrypt from 'bcryptjs';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { auth, findAuthUserById } from '@/features/auth/server';
+import { auth, findAuthUserById, type AuthUserRecord } from '@/features/auth/server';
+import {
+  isPlaywrightProgrammableSlug,
+  isPracujPlIntegrationSlug,
+  isScrapedSourceIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
 import {
@@ -11,36 +16,57 @@ import {
 import {
   normalizePersistedTraderaPlaywrightListingScript,
 } from '@/features/integrations/services/tradera-listing/managed-script';
+import {
+  type PlaywrightProgrammableConnectionMutationInput,
+  updatePlaywrightProgrammableConnection,
+} from '@/features/playwright/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { resolveJobApplicationPersonFields } from '../../_shared/job-application-person-fields';
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),
   username: z.string().trim().optional(),
   password: z.string().trim().optional(),
-  playwrightHeadless: z.boolean().optional(),
-  playwrightSlowMo: z.number().int().min(0).optional(),
-  playwrightTimeout: z.number().int().min(1000).optional(),
-  playwrightNavigationTimeout: z.number().int().min(1000).optional(),
-  playwrightHumanizeMouse: z.boolean().optional(),
-  playwrightMouseJitter: z.number().int().min(0).optional(),
-  playwrightClickDelayMin: z.number().int().min(0).optional(),
-  playwrightClickDelayMax: z.number().int().min(0).optional(),
-  playwrightInputDelayMin: z.number().int().min(0).optional(),
-  playwrightInputDelayMax: z.number().int().min(0).optional(),
-  playwrightActionDelayMin: z.number().int().min(0).optional(),
-  playwrightActionDelayMax: z.number().int().min(0).optional(),
-  playwrightProxyEnabled: z.boolean().optional(),
-  playwrightProxyServer: z.string().optional(),
-  playwrightProxyUsername: z.string().optional(),
-  playwrightProxyPassword: z.string().optional(),
-  playwrightEmulateDevice: z.boolean().optional(),
-  playwrightDeviceName: z.string().optional(),
-  playwrightPersonaId: z.string().trim().nullable().optional(),
+  jobApplicationPersonId: z.string().trim().nullable().optional(),
+  jobApplicationPersonName: z.string().trim().nullable().optional(),
+  playwrightIdentityProfile: z.never().optional(),
+  playwrightHeadless: z.never().optional(),
+  playwrightSlowMo: z.never().optional(),
+  playwrightTimeout: z.never().optional(),
+  playwrightNavigationTimeout: z.never().optional(),
+  playwrightLocale: z.never().optional(),
+  playwrightTimezoneId: z.never().optional(),
+  playwrightHumanizeMouse: z.never().optional(),
+  playwrightMouseJitter: z.never().optional(),
+  playwrightClickDelayMin: z.never().optional(),
+  playwrightClickDelayMax: z.never().optional(),
+  playwrightInputDelayMin: z.never().optional(),
+  playwrightInputDelayMax: z.never().optional(),
+  playwrightActionDelayMin: z.never().optional(),
+  playwrightActionDelayMax: z.never().optional(),
+  playwrightProxyEnabled: z.never().optional(),
+  playwrightProxyServer: z.never().optional(),
+  playwrightProxyUsername: z.never().optional(),
+  playwrightProxyPassword: z.never().optional(),
+  playwrightBrowser: z.never().optional(),
+  playwrightEmulateDevice: z.never().optional(),
+  playwrightDeviceName: z.never().optional(),
+  playwrightPersonaId: z.never().optional(),
   traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
+  traderaCategoryStrategy: z.enum(['mapper', 'top_suggested']).nullable().optional(),
   playwrightListingScript: z.string().nullable().optional(),
+  playwrightImportScript: z.string().nullable().optional(),
+  playwrightImportBaseUrl: z.string().nullable().optional(),
+  playwrightListingActionId: z.string().trim().nullable().optional(),
+  playwrightImportActionId: z.string().trim().nullable().optional(),
+  playwrightImportCaptureRoutesJson: z.string().nullable().optional(),
+  playwrightFieldMapperJson: z.string().nullable().optional(),
+  playwrightDraftMapperJson: z.string().nullable().optional(),
+  playwrightImportAutomationFlowJson: z.string().nullable().optional(),
+  resetPlaywrightOverrides: z.boolean().optional(),
   allegroUseSandbox: z.boolean().optional(),
   traderaDefaultTemplateId: z.string().trim().nullable().optional(),
   traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
@@ -52,9 +78,48 @@ const connectionSchema = z.object({
   traderaApiUserId: z.number().int().positive().optional(),
   traderaApiToken: z.string().trim().optional(),
   traderaApiSandbox: z.boolean().optional(),
+  traderaParameterMapperRulesJson: z.string().trim().nullable().optional(),
+  traderaParameterMapperCatalogJson: z.string().trim().nullable().optional(),
+  pracujLoginMode: z.enum(['password', 'google', 'one_time_code']).nullable().optional(),
+  pracujAuthMode: z.enum(['auto', 'manual']).nullable().optional(),
+  pracujSalaryExpectation: z.number().int().positive().nullable().optional(),
+  pracujCooperationForm: z.enum(['uop', 'b2b']).nullable().optional(),
+  scanner1688StartUrl: z.string().trim().max(4_000).nullable().optional(),
+  scanner1688LoginMode: z.enum(['session_required', 'manual_login']).nullable().optional(),
+  scanner1688DefaultSearchMode: z.enum(['local_image', 'image_url_fallback']).nullable().optional(),
+  scanner1688CandidateResultLimit: z.number().int().positive().nullable().optional(),
+  scanner1688MinimumCandidateScore: z.number().int().positive().nullable().optional(),
+  scanner1688MaxExtractedImages: z.number().int().positive().nullable().optional(),
+  scanner1688AllowUrlImageSearchFallback: z.boolean().nullable().optional(),
 });
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
+const PLAYWRIGHT_OVERRIDE_RESET_VALUES = {
+  playwrightPersonaId: null,
+  playwrightIdentityProfile: null,
+  playwrightSlowMo: null,
+  playwrightTimeout: null,
+  playwrightNavigationTimeout: null,
+  playwrightLocale: null,
+  playwrightTimezoneId: null,
+  playwrightHumanizeMouse: null,
+  playwrightMouseJitter: null,
+  playwrightClickDelayMin: null,
+  playwrightClickDelayMax: null,
+  playwrightInputDelayMin: null,
+  playwrightInputDelayMax: null,
+  playwrightActionDelayMin: null,
+  playwrightActionDelayMax: null,
+  playwrightProxyEnabled: null,
+  playwrightProxyServer: null,
+  playwrightProxyUsername: null,
+  playwrightProxyPassword: null,
+  playwrightProxySessionAffinity: null,
+  playwrightProxySessionMode: null,
+  playwrightProxyProviderPreset: null,
+  playwrightEmulateDevice: null,
+  playwrightDeviceName: null,
+} as const;
 
 const deleteConnectionSchema = z.object({
   userPassword: z.string().trim().min(1),
@@ -68,7 +133,7 @@ export const deleteQuerySchema = z.object({
  * PUT /api/v2/integrations/connections/[id]
  * Updates an integration connection.
  */
-export async function PUT_handler(
+export async function putHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -106,10 +171,34 @@ export async function PUT_handler(
   const isBaseIntegration = Boolean(
     integration && BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
   );
+  const isVintedIntegration = Boolean(
+    integration && (integration.slug ?? '').trim().toLowerCase() === 'vinted'
+  );
+  const isPracujIntegration = Boolean(
+    integration && isPracujPlIntegrationSlug(integration.slug)
+  );
+  const isScrapedSourceIntegration = Boolean(
+    integration && isScrapedSourceIntegrationSlug(integration.slug)
+  );
+  const isPlaywrightProgrammableIntegration = Boolean(
+    integration && isPlaywrightProgrammableSlug(integration.slug)
+  );
+  if (isPlaywrightProgrammableIntegration) {
+    return NextResponse.json(
+      await updatePlaywrightProgrammableConnection({
+        connectionId: id,
+        data: data as PlaywrightProgrammableConnectionMutationInput,
+      })
+    );
+  }
 
   if (
     integration &&
     integration.slug !== 'baselinker' &&
+    !isVintedIntegration &&
+    !isPracujIntegration &&
+    !isScrapedSourceIntegration &&
+    !isPlaywrightProgrammableIntegration &&
     typeof normalizedUsername === 'string' &&
     !normalizedUsername
   ) {
@@ -125,6 +214,10 @@ export async function PUT_handler(
     traderaBrowserMode: resolvedTraderaBrowserMode,
     playwrightListingScript: normalizedPlaywrightListingScript,
   });
+
+  const jobApplicationPersonFields = await resolveJobApplicationPersonFields(
+    data.jobApplicationPersonId
+  );
 
   const connection = await repo.updateConnection(id, {
     name: data.name,
@@ -143,72 +236,49 @@ export async function PUT_handler(
         };
       })()
       : {}),
-
-    ...(typeof data.playwrightHeadless === 'boolean'
-      ? { playwrightHeadless: data.playwrightHeadless }
-      : {}),
-    ...(typeof data.playwrightSlowMo === 'number'
-      ? { playwrightSlowMo: data.playwrightSlowMo }
-      : {}),
-    ...(typeof data.playwrightTimeout === 'number'
-      ? { playwrightTimeout: data.playwrightTimeout }
-      : {}),
-    ...(typeof data.playwrightNavigationTimeout === 'number'
-      ? { playwrightNavigationTimeout: data.playwrightNavigationTimeout }
-      : {}),
-    ...(typeof data.playwrightHumanizeMouse === 'boolean'
-      ? { playwrightHumanizeMouse: data.playwrightHumanizeMouse }
-      : {}),
-    ...(typeof data.playwrightMouseJitter === 'number'
-      ? { playwrightMouseJitter: data.playwrightMouseJitter }
-      : {}),
-    ...(typeof data.playwrightClickDelayMin === 'number'
-      ? { playwrightClickDelayMin: data.playwrightClickDelayMin }
-      : {}),
-    ...(typeof data.playwrightClickDelayMax === 'number'
-      ? { playwrightClickDelayMax: data.playwrightClickDelayMax }
-      : {}),
-    ...(typeof data.playwrightInputDelayMin === 'number'
-      ? { playwrightInputDelayMin: data.playwrightInputDelayMin }
-      : {}),
-    ...(typeof data.playwrightInputDelayMax === 'number'
-      ? { playwrightInputDelayMax: data.playwrightInputDelayMax }
-      : {}),
-    ...(typeof data.playwrightActionDelayMin === 'number'
-      ? { playwrightActionDelayMin: data.playwrightActionDelayMin }
-      : {}),
-    ...(typeof data.playwrightActionDelayMax === 'number'
-      ? { playwrightActionDelayMax: data.playwrightActionDelayMax }
-      : {}),
-    ...(typeof data.playwrightProxyEnabled === 'boolean'
-      ? { playwrightProxyEnabled: data.playwrightProxyEnabled }
-      : {}),
-    ...(typeof data.playwrightProxyServer === 'string'
-      ? { playwrightProxyServer: data.playwrightProxyServer }
-      : {}),
-    ...(typeof data.playwrightProxyUsername === 'string'
-      ? { playwrightProxyUsername: data.playwrightProxyUsername }
-      : {}),
-    ...(typeof data.playwrightProxyPassword === 'string' && data.playwrightProxyPassword.trim()
-      ? {
-        playwrightProxyPassword: encryptSecret(data.playwrightProxyPassword.trim()),
-      }
-      : {}),
-    ...(typeof data.playwrightEmulateDevice === 'boolean'
-      ? { playwrightEmulateDevice: data.playwrightEmulateDevice }
-      : {}),
-    ...(typeof data.playwrightDeviceName === 'string'
-      ? { playwrightDeviceName: data.playwrightDeviceName }
-      : {}),
-    ...(typeof data.playwrightPersonaId === 'string' || data.playwrightPersonaId === null
-      ? { playwrightPersonaId: data.playwrightPersonaId ?? null }
-      : {}),
+    ...jobApplicationPersonFields,
+    ...(data.resetPlaywrightOverrides ? PLAYWRIGHT_OVERRIDE_RESET_VALUES : {}),
     ...(typeof data.traderaBrowserMode === 'string' || data.traderaBrowserMode === null
       ? { traderaBrowserMode: data.traderaBrowserMode ?? 'builtin' }
+      : {}),
+    ...(typeof data.traderaCategoryStrategy === 'string' || data.traderaCategoryStrategy === null
+      ? { traderaCategoryStrategy: data.traderaCategoryStrategy ?? 'mapper' }
       : {}),
     ...(typeof normalizedPlaywrightListingScript === 'string' ||
     normalizedPlaywrightListingScript === null
       ? { playwrightListingScript: normalizedPlaywrightListingScript ?? null }
+      : {}),
+    ...(typeof data.playwrightImportScript === 'string' || data.playwrightImportScript === null
+      ? { playwrightImportScript: data.playwrightImportScript ?? null }
+      : {}),
+    ...(typeof data.playwrightImportBaseUrl === 'string' || data.playwrightImportBaseUrl === null
+      ? { playwrightImportBaseUrl: data.playwrightImportBaseUrl ?? null }
+      : {}),
+    ...(typeof data.playwrightListingActionId === 'string' ||
+    data.playwrightListingActionId === null
+      ? { playwrightListingActionId: data.playwrightListingActionId ?? null }
+      : {}),
+    ...(typeof data.playwrightImportActionId === 'string' ||
+    data.playwrightImportActionId === null
+      ? { playwrightImportActionId: data.playwrightImportActionId ?? null }
+      : {}),
+    ...(typeof data.playwrightImportCaptureRoutesJson === 'string' ||
+    data.playwrightImportCaptureRoutesJson === null
+      ? {
+          playwrightImportCaptureRoutesJson: data.playwrightImportCaptureRoutesJson ?? null,
+        }
+      : {}),
+    ...(typeof data.playwrightFieldMapperJson === 'string' || data.playwrightFieldMapperJson === null
+      ? { playwrightFieldMapperJson: data.playwrightFieldMapperJson ?? null }
+      : {}),
+    ...(typeof data.playwrightDraftMapperJson === 'string' || data.playwrightDraftMapperJson === null
+      ? { playwrightDraftMapperJson: data.playwrightDraftMapperJson ?? null }
+      : {}),
+    ...(typeof data.playwrightImportAutomationFlowJson === 'string' ||
+    data.playwrightImportAutomationFlowJson === null
+      ? {
+          playwrightImportAutomationFlowJson: data.playwrightImportAutomationFlowJson ?? null,
+        }
       : {}),
     ...(typeof data.allegroUseSandbox === 'boolean'
       ? { allegroUseSandbox: data.allegroUseSandbox }
@@ -246,8 +316,52 @@ export async function PUT_handler(
     ...(typeof data.traderaApiSandbox === 'boolean'
       ? { traderaApiSandbox: data.traderaApiSandbox }
       : {}),
+    ...(typeof data.traderaParameterMapperRulesJson === 'string' ||
+    data.traderaParameterMapperRulesJson === null
+      ? {
+          traderaParameterMapperRulesJson: data.traderaParameterMapperRulesJson ?? null,
+        }
+      : {}),
+    ...(typeof data.traderaParameterMapperCatalogJson === 'string' ||
+    data.traderaParameterMapperCatalogJson === null
+      ? {
+          traderaParameterMapperCatalogJson: data.traderaParameterMapperCatalogJson ?? null,
+        }
+      : {}),
+    ...(typeof data.pracujLoginMode === 'string' || data.pracujLoginMode === null
+      ? { pracujLoginMode: data.pracujLoginMode ?? null }
+      : {}),
+    ...(typeof data.pracujAuthMode === 'string' || data.pracujAuthMode === null
+      ? { pracujAuthMode: data.pracujAuthMode ?? null }
+      : {}),
+    ...(typeof data.pracujSalaryExpectation === 'number' || data.pracujSalaryExpectation === null
+      ? { pracujSalaryExpectation: data.pracujSalaryExpectation ?? null }
+      : {}),
+    ...(typeof data.pracujCooperationForm === 'string' || data.pracujCooperationForm === null
+      ? { pracujCooperationForm: data.pracujCooperationForm ?? null }
+      : {}),
+    ...(typeof data.scanner1688StartUrl === 'string' || data.scanner1688StartUrl === null
+      ? { scanner1688StartUrl: data.scanner1688StartUrl ?? null }
+      : {}),
+    ...(typeof data.scanner1688LoginMode === 'string' || data.scanner1688LoginMode === null
+      ? { scanner1688LoginMode: data.scanner1688LoginMode ?? null }
+      : {}),
+    ...(typeof data.scanner1688DefaultSearchMode === 'string' || data.scanner1688DefaultSearchMode === null
+      ? { scanner1688DefaultSearchMode: data.scanner1688DefaultSearchMode ?? null }
+      : {}),
+    ...(typeof data.scanner1688CandidateResultLimit === 'number' || data.scanner1688CandidateResultLimit === null
+      ? { scanner1688CandidateResultLimit: data.scanner1688CandidateResultLimit ?? null }
+      : {}),
+    ...(typeof data.scanner1688MinimumCandidateScore === 'number' || data.scanner1688MinimumCandidateScore === null
+      ? { scanner1688MinimumCandidateScore: data.scanner1688MinimumCandidateScore ?? null }
+      : {}),
+    ...(typeof data.scanner1688MaxExtractedImages === 'number' || data.scanner1688MaxExtractedImages === null
+      ? { scanner1688MaxExtractedImages: data.scanner1688MaxExtractedImages ?? null }
+      : {}),
+    ...(typeof data.scanner1688AllowUrlImageSearchFallback === 'boolean' || data.scanner1688AllowUrlImageSearchFallback === null
+      ? { scanner1688AllowUrlImageSearchFallback: data.scanner1688AllowUrlImageSearchFallback ?? null }
+      : {}),
   });
-
   return NextResponse.json({
     id: connection.id,
     integrationId: connection.integrationId,
@@ -266,27 +380,19 @@ export async function PUT_handler(
     linkedinScope: connection.linkedinScope ?? null,
     linkedinPersonUrn: connection.linkedinPersonUrn ?? null,
     linkedinProfileUrl: connection.linkedinProfileUrl ?? null,
-    playwrightHeadless: connection.playwrightHeadless,
-    playwrightSlowMo: connection.playwrightSlowMo,
-    playwrightTimeout: connection.playwrightTimeout,
-    playwrightNavigationTimeout: connection.playwrightNavigationTimeout,
-    playwrightHumanizeMouse: connection.playwrightHumanizeMouse,
-    playwrightMouseJitter: connection.playwrightMouseJitter,
-    playwrightClickDelayMin: connection.playwrightClickDelayMin,
-    playwrightClickDelayMax: connection.playwrightClickDelayMax,
-    playwrightInputDelayMin: connection.playwrightInputDelayMin,
-    playwrightInputDelayMax: connection.playwrightInputDelayMax,
-    playwrightActionDelayMin: connection.playwrightActionDelayMin,
-    playwrightActionDelayMax: connection.playwrightActionDelayMax,
-    playwrightProxyEnabled: connection.playwrightProxyEnabled,
-    playwrightProxyServer: connection.playwrightProxyServer,
-    playwrightProxyUsername: connection.playwrightProxyUsername,
-    playwrightProxyHasPassword: Boolean(connection.playwrightProxyPassword),
-    playwrightEmulateDevice: connection.playwrightEmulateDevice,
-    playwrightDeviceName: connection.playwrightDeviceName,
-    playwrightPersonaId: connection.playwrightPersonaId ?? null,
+    jobApplicationPersonId: connection.jobApplicationPersonId ?? null,
+    jobApplicationPersonName: connection.jobApplicationPersonName ?? null,
     traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
+    traderaCategoryStrategy: connection.traderaCategoryStrategy ?? 'mapper',
     playwrightListingScript: connection.playwrightListingScript ?? null,
+    playwrightImportScript: connection.playwrightImportScript ?? null,
+    playwrightImportBaseUrl: connection.playwrightImportBaseUrl ?? null,
+    playwrightListingActionId: connection.playwrightListingActionId ?? null,
+    playwrightImportActionId: connection.playwrightImportActionId ?? null,
+    playwrightImportCaptureRoutesJson: connection.playwrightImportCaptureRoutesJson ?? null,
+    playwrightFieldMapperJson: connection.playwrightFieldMapperJson ?? null,
+    playwrightDraftMapperJson: connection.playwrightDraftMapperJson ?? null,
+    playwrightImportAutomationFlowJson: connection.playwrightImportAutomationFlowJson ?? null,
     hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
     traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
@@ -296,9 +402,22 @@ export async function PUT_handler(
     traderaApiPublicKey: connection.traderaApiPublicKey ?? null,
     traderaApiUserId: connection.traderaApiUserId ?? null,
     traderaApiSandbox: connection.traderaApiSandbox ?? false,
+    traderaParameterMapperRulesJson: connection.traderaParameterMapperRulesJson ?? null,
+    traderaParameterMapperCatalogJson: connection.traderaParameterMapperCatalogJson ?? null,
     hasTraderaApiAppKey: Boolean(connection.traderaApiAppKey),
     hasTraderaApiToken: Boolean(connection.traderaApiToken),
     traderaApiTokenUpdatedAt: connection.traderaApiTokenUpdatedAt ?? null,
+    pracujLoginMode: connection.pracujLoginMode ?? null,
+    pracujAuthMode: connection.pracujAuthMode ?? null,
+    pracujSalaryExpectation: connection.pracujSalaryExpectation ?? null,
+    pracujCooperationForm: connection.pracujCooperationForm ?? null,
+    scanner1688StartUrl: connection.scanner1688StartUrl ?? null,
+    scanner1688LoginMode: connection.scanner1688LoginMode ?? null,
+    scanner1688DefaultSearchMode: connection.scanner1688DefaultSearchMode ?? null,
+    scanner1688CandidateResultLimit: connection.scanner1688CandidateResultLimit ?? null,
+    scanner1688MinimumCandidateScore: connection.scanner1688MinimumCandidateScore ?? null,
+    scanner1688MaxExtractedImages: connection.scanner1688MaxExtractedImages ?? null,
+    scanner1688AllowUrlImageSearchFallback: connection.scanner1688AllowUrlImageSearchFallback ?? null,
   });
 }
 
@@ -306,7 +425,7 @@ export async function PUT_handler(
  * DELETE /api/v2/integrations/connections/[id]
  * Deletes an integration connection.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
@@ -329,7 +448,7 @@ export async function DELETE_handler(
     return parsed.response;
   }
 
-  const user = await findAuthUserById(userId);
+  const user = (await findAuthUserById(userId)) as AuthUserRecord | null;
   if (!user?.passwordHash) {
     throw authError('Unable to verify password for this account.');
   }

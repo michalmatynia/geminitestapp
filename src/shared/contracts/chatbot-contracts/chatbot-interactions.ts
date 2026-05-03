@@ -156,12 +156,14 @@ export const chatbotJobsClearResponseSchema = z.object({
 export type ChatbotJobsClearResponseDto = z.infer<typeof chatbotJobsClearResponseSchema>;
 export type ChatbotJobsClearResponse = ChatbotJobsClearResponseDto;
 
+import { type SimpleDeleteResponse } from '../base';
+
 export const chatbotJobDeleteResponseSchema = z.object({
-  deleted: z.literal(true),
+  success: z.boolean(),
+  deleted: z.literal(true).optional(), // Legacy
 });
 
-export type ChatbotJobDeleteResponseDto = z.infer<typeof chatbotJobDeleteResponseSchema>;
-export type ChatbotJobDeleteResponse = ChatbotJobDeleteResponseDto;
+export type ChatbotJobDeleteResponse = SimpleDeleteResponse & { deleted?: true };
 
 /**
  * Chatbot Memory Contract

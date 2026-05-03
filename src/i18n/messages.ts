@@ -2,7 +2,8 @@ import 'server-only';
 
 import { cache } from 'react';
 
-import enMessages from './messages/en.json';
+import type enMessages from './messages/en.json';
+import plMessages from './messages/pl.json';
 
 import {
   getDefaultSiteLocaleCode,
@@ -54,20 +55,29 @@ const mergeSiteMessageDictionaries = (
   return next;
 };
 
-const defaultMessageLoader = () =>
-  import('./messages/pl.json').then((module) =>
-    repairBundledPolishMessages(module.default as SiteMessageDictionary)
-  );
+const repairedBundledPolishMessages = repairBundledPolishMessages(
+  plMessages as SiteMessageDictionary
+);
+
+const KANGUR_MESSAGE_ROOT_ALLOWLIST = new Set<string>(['Common']);
+
+const defaultMessageLoader = async () => repairedBundledPolishMessages;
 
 const messageLoaders: Partial<Record<string, () => Promise<SiteMessageDictionary>>> = {
-  pl: () =>
-    import('./messages/pl.json').then((module) =>
-      repairBundledPolishMessages(module.default as SiteMessageDictionary)
-    ),
+  pl: async () => repairedBundledPolishMessages,
   en: () => import('./messages/en.json').then((module) => module.default as SiteMessageDictionary),
   de: () => import('./messages/de.json').then((module) => module.default as SiteMessageDictionary),
   uk: () => import('./messages/uk.json').then((module) => module.default as SiteMessageDictionary),
 };
+
+const isKangurMessageRoot = (key: string): boolean =>
+  key.startsWith('Kangur') || KANGUR_MESSAGE_ROOT_ALLOWLIST.has(key);
+
+const filterScopedSiteMessages = (
+  messages: SiteMessageDictionary,
+  predicate: (key: string) => boolean
+): SiteMessageDictionary =>
+  Object.fromEntries(Object.entries(messages).filter(([key]) => predicate(key)));
 
 export const loadSiteMessages = cache(
   async (locale: string | null | undefined): Promise<SiteMessages> => {
@@ -97,4 +107,9 @@ export const loadSiteMessages = cache(
 
     return mergedMessages as SiteMessages;
   }
+);
+
+export const loadKangurSiteMessages = cache(
+  async (locale: string | null | undefined): Promise<SiteMessages> =>
+    filterScopedSiteMessages(await loadSiteMessages(locale), isKangurMessageRoot) as SiteMessages
 );

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/performance';
@@ -8,28 +8,16 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { productService } from '@/shared/lib/products/services/productService';
 import { productFilterSchema, type ProductFiltersParsed } from '@/shared/lib/products/validations';
 
-const shouldLogTiming = () => env.DEBUG_API_TIMING;
+import { freshQuerySchema } from '../fresh-query-schema';
 
-const freshQuerySchema = z.preprocess(
-  (value: unknown) => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value !== 'string') return undefined;
-    const normalized = value.trim().toLowerCase();
-    if (!normalized) return undefined;
-    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
-      return true;
-    }
-    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
-      return false;
-    }
-    return value;
-  },
-  z.boolean().optional()
+const shouldLogTiming = (): boolean => env.DEBUG_API_TIMING;
+
+export const querySchema = z.intersection(
+  productFilterSchema,
+  z.object({
+    fresh: freshQuerySchema,
+  })
 );
-
-export const querySchema = productFilterSchema.extend({
-  fresh: freshQuerySchema,
-});
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
   const parts = Object.entries(entries)
@@ -43,7 +31,7 @@ const attachTimingHeaders = (
   entries: Record<string, number | null | undefined>
 ): void => {
   const value = buildServerTiming(entries);
-  if (value) {
+  if (value.length > 0) {
     response.headers.set('Server-Timing', value);
   }
 };
@@ -63,7 +51,7 @@ const resolvePagedProductsQueryInput = (
  * MongoDB uses a single $facet aggregation for filtered queries and keeps the
  * unfiltered path on the indexed list query + estimatedDocumentCount fast path.
  */
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const query = querySchema.parse(resolvePagedProductsQueryInput(req, ctx)) as ProductFiltersParsed &
     { fresh?: boolean };

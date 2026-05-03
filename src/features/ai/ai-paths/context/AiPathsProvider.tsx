@@ -1,7 +1,9 @@
-import type { AiNode, Edge, PathMeta, PathConfig, ClusterPreset, DbQueryPreset, DbNodePreset, RuntimeState } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PathMeta, PathConfig, ClusterPreset, DbQueryPreset, DbNodePreset } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import { CanvasProvider, type ViewState } from './CanvasContext';
 import { GraphProvider } from './GraphContext';
+import { PathConfigProvider } from './PathConfigContext';
 import { PersistenceProvider } from './PersistenceContext';
 import { PresetsProvider } from './PresetsContext';
 import { RunHistoryProvider } from './RunHistoryContext';
@@ -96,11 +98,13 @@ export function AiPathsProvider(props: AiPathsProviderProps): React.ReactNode {
               initialPathConfigs={initialPathConfigs}
               initialActivePathId={initialActivePathId}
             >
-              <RuntimeProvider initialRuntimeState={initialRuntimeState}>
-                <PersistenceProvider initialLoading={initialLoading}>
-                  {children}
-                </PersistenceProvider>
-              </RuntimeProvider>
+              <PathConfigProvider>
+                <RuntimeProvider initialRuntimeState={initialRuntimeState}>
+                  <PersistenceProvider initialLoading={initialLoading}>
+                    {children}
+                  </PersistenceProvider>
+                </RuntimeProvider>
+              </PathConfigProvider>
             </GraphProvider>
           </RunHistoryProvider>
         </PresetsProvider>

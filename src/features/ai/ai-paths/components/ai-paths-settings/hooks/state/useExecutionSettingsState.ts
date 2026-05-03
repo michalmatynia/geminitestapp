@@ -2,9 +2,12 @@
 
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
 
-import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
-import type { AiPathsValidationConfig, PathBlockedRunPolicy, PathExecutionMode, PathFlowIntensity, PathRunMode } from '@/shared/lib/ai-paths';
-import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths';
+import {
+  useGraphActions,
+  usePathMetadataState,
+} from '@/features/ai/ai-paths/context/GraphContext';
+import type { AiPathsValidationConfig, PathBlockedRunPolicy, PathExecutionMode, PathFlowIntensity, PathRunMode } from '@/shared/contracts/ai-paths';
+import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 
 const resolveStateAction = <T,>(next: SetStateAction<T>, currentValue: T): T =>
   typeof next === 'function' ? (next as (previous: T) => T)(currentValue) : next;
@@ -25,8 +28,27 @@ const useResolvedGraphSettingSetter = <T,>(
     [commit, currentValue, normalize]
   );
 
-export function useExecutionSettingsState() {
-  const graphState = useGraphState();
+type ExecutionSettingsState = {
+  executionMode: PathExecutionMode;
+  setExecutionMode: Dispatch<SetStateAction<PathExecutionMode>>;
+  flowIntensity: PathFlowIntensity;
+  setFlowIntensity: Dispatch<SetStateAction<PathFlowIntensity>>;
+  runMode: PathRunMode;
+  setRunMode: Dispatch<SetStateAction<PathRunMode>>;
+  strictFlowMode: boolean;
+  setStrictFlowMode: Dispatch<SetStateAction<boolean>>;
+  blockedRunPolicy: PathBlockedRunPolicy;
+  setBlockedRunPolicy: Dispatch<SetStateAction<PathBlockedRunPolicy>>;
+  aiPathsValidationState: AiPathsValidationConfig;
+  setAiPathsValidationState: Dispatch<SetStateAction<AiPathsValidationConfig>>;
+  historyRetentionPasses: number;
+  setHistoryRetentionPasses: Dispatch<SetStateAction<number>>;
+  historyRetentionOptionsMax: number;
+  setHistoryRetentionOptionsMax: Dispatch<SetStateAction<number>>;
+};
+
+export function useExecutionSettingsState(): ExecutionSettingsState {
+  const graphState = usePathMetadataState();
   const graphActions = useGraphActions();
 
   const setExecutionMode = useResolvedGraphSettingSetter<PathExecutionMode>(

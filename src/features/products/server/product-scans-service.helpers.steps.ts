@@ -1,0 +1,288 @@
+import 'server-only';
+
+import {
+  productScanStepSchema,
+  productScanAmazonDetailsSchema,
+  productScanAmazonProbeSchema,
+  productScanSupplierDetailsSchema,
+  productScanSupplierProbeSchema,
+  productScanSupplierEvaluationSchema,
+  type ProductScanAmazonDetails,
+  type ProductScanAmazonProbe,
+  type ProductScanRecord,
+  type ProductScanStep,
+  type ProductScanSupplierDetails,
+  type ProductScanSupplierProbe,
+  type ProductScanSupplierEvaluation,
+} from '@/shared/contracts/product-scans';
+import {
+  resolveProductScanStepGroup as resolveSharedProductScanStepGroup,
+} from '@/features/playwright/scan-steps';
+import {
+  toRecord,
+  readOptionalString,
+  readOptionalPositiveInt,
+} from './product-scans-service.helpers.base';
+import {
+  PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH,
+  PRODUCT_SCAN_URL_MAX_LENGTH,
+} from './product-scans-service.constants';
+import {
+  hasSameProductScanStepPersistenceIdentity,
+  normalizePersistedProductScanStepDetails,
+} from './product-scans-service.helpers.step-upsert';
+import type {
+  AmazonScanCandidatePreview,
+  AmazonScanCandidateResult,
+} from './product-scans-service.types';
+
+export { upsertPersistedProductScanStep } from './product-scans-service.helpers.step-upsert';
+
+export const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item: unknown) => {
+      const record = toRecord(item);
+      const sanitizedItem =
+        record === null
+          ? item
+          : {
+              ...record,
+              details: Array.isArray(record['details'])
+                ? record['details'].slice(0, 20)
+                : record['details'],
+            };
+      const parsed = productScanStepSchema.safeParse(sanitizedItem);
+      return parsed.success ? parsed.data : null;
+    })
+    .filter((step): step is ProductScanStep => step !== null);
+};
+
+export const normalizeParsedAmazonDetails = (value: unknown): ProductScanAmazonDetails => {
+  const parsed = productScanAmazonDetailsSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
+export const normalizeParsedAmazonProbe = (value: unknown): ProductScanAmazonProbe => {
+  const parsed = productScanAmazonProbeSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
+export const normalizeParsedSupplierDetails = (value: unknown): ProductScanSupplierDetails => {
+  const parsed = productScanSupplierDetailsSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
+export const normalizeParsedSupplierProbe = (value: unknown): ProductScanSupplierProbe => {
+  const parsed = productScanSupplierProbeSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
+export const normalizeParsedSupplierEvaluation = (
+  value: unknown
+): ProductScanSupplierEvaluation => {
+  const parsed = productScanSupplierEvaluationSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
+export const normalizeParsedCandidateUrls = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item: unknown) => readOptionalString(item))
+    .filter((item): item is string => item !== null);
+};
+
+export const normalizeParsedAmazonCandidateResults = (
+  value: unknown
+): AmazonScanCandidateResult[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item: unknown): AmazonScanCandidateResult | null => {
+      const record = toRecord(item);
+      if (record === null) return null;
+      const url = readOptionalString(record['url']);
+      if (url === null) return null;
+      return {
+        url,
+        score: typeof record['score'] === 'number' ? record['score'] : null,
+        asin: readOptionalString(record['asin']),
+        marketplaceDomain: readOptionalString(record['marketplaceDomain']),
+        title: readOptionalString(record['title']),
+        snippet: readOptionalString(record['snippet']),
+        rank: typeof record['rank'] === 'number' ? record['rank'] : null,
+      };
+    })
+    .filter((item): item is AmazonScanCandidateResult => item !== null);
+};
+
+export const normalizeParsedAmazonCandidatePreviews = (
+  value: unknown
+): AmazonScanCandidatePreview[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item: unknown): AmazonScanCandidatePreview | null => {
+      const record = toRecord(item);
+      if (record === null) return null;
+      const url = readOptionalString(record['url']);
+      if (url === null) return null;
+      return {
+        id: readOptionalString(record['id']),
+        matchedImageId: readOptionalString(record['matchedImageId']),
+        url,
+        asin: readOptionalString(record['asin']),
+        marketplaceDomain: readOptionalString(record['marketplaceDomain']),
+        title: readOptionalString(record['title']),
+        snippet: readOptionalString(record['snippet']),
+        heroImageUrl: readOptionalString(record['heroImageUrl']),
+        heroImageAlt: readOptionalString(record['heroImageAlt']),
+        heroImageArtifactName: readOptionalString(record['heroImageArtifactName']),
+        artifactKey: readOptionalString(record['artifactKey']),
+        rank: typeof record['rank'] === 'number' ? record['rank'] : null,
+      };
+    })
+    .filter((item): item is AmazonScanCandidatePreview => item !== null);
+};
+
+export const resolveProductScanStepGroup = (
+  key: string | null | undefined
+): ProductScanStep['group'] => resolveSharedProductScanStepGroup(key);
+
+const PRODUCT_SCAN_STEP_EQUALITY_FIELDS = [
+  'key',
+  'status',
+  'resultCode',
+  'message',
+  'url',
+  'candidateId',
+  'candidateRank',
+  'attempt',
+] as const satisfies ReadonlyArray<keyof ProductScanStep>;
+
+const haveSameProductScanStepFields = (
+  stepA: ProductScanStep,
+  stepB: ProductScanStep
+): boolean =>
+  PRODUCT_SCAN_STEP_EQUALITY_FIELDS.every((field) => stepA[field] === stepB[field]);
+
+const haveSameProductScanStepDetails = (
+  stepA: ProductScanStep,
+  stepB: ProductScanStep
+): boolean => JSON.stringify(stepA.details) === JSON.stringify(stepB.details);
+
+export const areProductScanStepsEqual = (
+  a: ProductScanStep[],
+  b: ProductScanStep[]
+): boolean => {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  for (let i = 0; i < a.length; i++) {
+    const stepA = a[i];
+    const stepB = b[i];
+    if (stepA === undefined || stepB === undefined) {
+      return false;
+    }
+    if (!haveSameProductScanStepFields(stepA, stepB)) {
+      return false;
+    }
+    if (!haveSameProductScanStepDetails(stepA, stepB)) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+export const resolvePersistedProductScanSteps = (
+  scan: ProductScanRecord,
+  nextSteps?: ProductScanStep[] | null
+): ProductScanStep[] => {
+  const existingSteps = Array.isArray(scan.steps) ? scan.steps : [];
+  if (!nextSteps || nextSteps.length === 0) {
+    return existingSteps;
+  }
+
+  const results = [...existingSteps];
+  for (const nextStep of nextSteps) {
+    const existingIndex = results.findIndex((step) =>
+      hasSameProductScanStepPersistenceIdentity(step, nextStep)
+    );
+    if (existingIndex >= 0) {
+      const existing = results[existingIndex];
+      if (existing === undefined) {
+        results.push(nextStep);
+        continue;
+      }
+      results[existingIndex] = {
+        ...existing,
+        ...nextStep,
+        details: normalizePersistedProductScanStepDetails(nextStep.details),
+      };
+    } else {
+      results.push(nextStep);
+    }
+  }
+
+  return results;
+};
+
+export const createPersistedProductScanStep = (input: {
+  key: string;
+  label: string;
+  status?: ProductScanStep['status'];
+  resultCode?: string | null;
+  message?: string | null;
+  details?: ProductScanStep['details'] | null;
+  url?: string | null;
+  candidateId?: string | null;
+  candidateRank?: number | null;
+  attempt?: number | null;
+  retryOf?: string | null;
+  inputSource?: ProductScanStep['inputSource'];
+}): ProductScanStep => ({
+  key: input.key,
+  label: input.label,
+  group: resolveProductScanStepGroup(input.key),
+  status: input.status ?? 'pending',
+  resultCode: input.resultCode ?? null,
+  message: readOptionalString(input.message),
+  details: normalizePersistedProductScanStepDetails(input.details),
+  url: readOptionalString(input.url, PRODUCT_SCAN_URL_MAX_LENGTH),
+  candidateId: readOptionalString(input.candidateId, PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH),
+  candidateRank: readOptionalPositiveInt(input.candidateRank),
+  attempt: readOptionalPositiveInt(input.attempt),
+  retryOf: readOptionalString(input.retryOf),
+  inputSource: input.inputSource ?? 'url',
+  warning: null,
+  startedAt: new Date().toISOString(),
+  completedAt: input.status === 'completed' || input.status === 'failed' ? new Date().toISOString() : null,
+  durationMs: null,
+});
+
+export const buildPreparedProductScanSteps = (input: {
+  stepKeys?: string[];
+  prepareLabel?: string;
+  summaryLabel?: string;
+  imageCandidateCount?: number;
+  status?: ProductScanRecord['status'];
+  error?: string | null;
+}): ProductScanStep[] => {
+  const stepKeys = input.stepKeys ?? ['validate', 'prepare_scan', 'queue_scan'];
+  return stepKeys.map((key) =>
+    createPersistedProductScanStep({
+      key,
+      label: key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+      status: 'pending',
+    })
+  );
+};

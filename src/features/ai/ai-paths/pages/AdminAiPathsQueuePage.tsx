@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
+import { BaseImportRunsQueuePanel } from '@/shared/lib/jobs/components/BaseImportRunsQueuePanel';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
 import { AdminAiPathsBreadcrumbs } from '@/shared/ui/admin.public';
 import { Badge, Button } from '@/shared/ui/primitives.public';
@@ -16,7 +17,14 @@ import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
 
-type QueueTab = 'paths-all' | 'paths' | 'paths-external' | 'file-uploads' | 'image-studio' | 'kangur-social';
+type QueueTab =
+  | 'paths-all'
+  | 'paths'
+  | 'paths-external'
+  | 'product-imports'
+  | 'file-uploads'
+  | 'image-studio'
+  | 'kangur-social';
 
 const QUEUE_TABS: Array<
   IdLabelOptionDto<QueueTab> & { icon: React.ComponentType<{ className?: string }> }
@@ -24,6 +32,7 @@ const QUEUE_TABS: Array<
   { id: 'paths-all', label: 'All Runs', icon: ActivityIcon },
   { id: 'paths', label: 'Node Runs', icon: ActivityIcon },
   { id: 'paths-external', label: 'External Runs', icon: ExternalLinkIcon },
+  { id: 'product-imports', label: 'Product Imports', icon: ActivityIcon },
   { id: 'file-uploads', label: 'File Uploads', icon: UploadCloudIcon },
   { id: 'image-studio', label: 'Image Studio', icon: ImageIcon },
   { id: 'kangur-social', label: 'StudiQ Social', icon: NewspaperIcon },
@@ -32,6 +41,7 @@ const QUEUE_TABS: Array<
 const toQueueTab = (value: string): QueueTab => {
   if (value === 'paths-all' || value === 'all') return 'paths-all';
   if (value === 'paths-external') return 'paths-external';
+  if (value === 'product-imports') return 'product-imports';
   if (value === 'file-uploads') return 'file-uploads';
   if (value === 'image-studio') return 'image-studio';
   if (value === 'kangur-social') return 'kangur-social';
@@ -106,7 +116,7 @@ export function AdminAiPathsQueuePage({
           <div
             role='tablist'
             aria-label='Queue views'
-            className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2 lg:grid-cols-6'
+            className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2 lg:grid-cols-7'
           >
             {QUEUE_TABS.map((tab) => {
               const Icon = tab.icon;
@@ -205,6 +215,17 @@ export function AdminAiPathsQueuePage({
             <div id='image-studio-jobs'>
               <ImageStudioRunsQueuePanel />
             </div>
+          </section>
+        ) : null}
+
+        {activeTab === 'product-imports' ? (
+          <section
+            role='tabpanel'
+            id={getContentId('product-imports')}
+            aria-labelledby={getTriggerId('product-imports')}
+            className='space-y-4'
+          >
+            <BaseImportRunsQueuePanel initialSearchQuery={requestedQuery} />
           </section>
         ) : null}
 

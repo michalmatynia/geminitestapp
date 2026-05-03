@@ -63,7 +63,7 @@ export const getRedisConnection = (): Redis | null => {
 };
 
 export const isRedisAvailable = (): boolean => {
-  return !!process.env['REDIS_URL'];
+  return Boolean(process.env['REDIS_URL']);
 };
 
 export const isRedisReachable = async (): Promise<boolean> => {

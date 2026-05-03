@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createEmptyConnectionForm } from '@/features/integrations/context/integrations-context-types';
 
@@ -32,13 +32,16 @@ vi.mock('@/shared/ui/primitives.public', () => ({
 vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     label,
+    description,
     children,
   }: {
     label: string;
+    description?: string;
     children: React.ReactNode;
   }) => (
     <div>
       <div>{label}</div>
+      {description ? <div>{description}</div> : null}
       {children}
     </div>
   ),
@@ -73,6 +76,8 @@ vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
 
 import { ConnectionFormFields } from './ConnectionFormFields';
 
+const fetchMock = vi.fn();
+
 function renderFields(integrationSlug: string): void {
   function Wrapper(): React.JSX.Element {
     const [form, setForm] = React.useState(createEmptyConnectionForm());
@@ -91,6 +96,27 @@ function renderFields(integrationSlug: string): void {
 }
 
 describe('ConnectionFormFields', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        persons: [
+          {
+            id: 'person-1',
+            fullName: 'Ada Lovelace',
+            cvProfessionalSummary: 'Analytical engineer',
+          },
+        ],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('shows scripted Tradera browser controls without persisting a managed script body by default', () => {
     renderFields('tradera');
 
@@ -106,10 +132,130 @@ describe('ConnectionFormFields', () => {
     expect((textarea as HTMLTextAreaElement).value).toBe('');
   });
 
-  it('does not show scripted browser controls for Tradera API connections', () => {
-    renderFields('tradera-api');
+  it('explains strict mapped categories versus Tradera automatic category selection', () => {
+    renderFields('tradera');
 
+    const strategySelect = screen.getByLabelText('Category selection strategy');
+
+    expect(screen.getByText('Category mapper (strict mapped category)')).toBeInTheDocument();
+    expect(screen.getByText('Top suggested by Tradera (automatic)')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Uses the synced Category Mapper match and stops the listing if that Tradera category cannot be selected.'
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.change(strategySelect, {
+      target: { value: 'top_suggested' },
+    });
+
+    expect(
+      screen.getByText('Lets Tradera choose the category automatically during listing.')
+    ).toBeInTheDocument();
+  });
+
+  it('shows optional Vinted credential fields for reusable browser sessions', () => {
+    renderFields('vinted');
+
+    expect(screen.getByLabelText('Integration name (e.g. Vinted Browser)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Vinted email (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Vinted password (optional)')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
+      )
+    ).toHaveLength(2);
     expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
-    expect(screen.queryByLabelText('Playwright listing script')).toBeNull();
+  });
+
+  it('shows optional Pracuj.pl credential fields for reusable job-application sessions', async () => {
+    renderFields('pracuj-pl');
+
+    expect(screen.getByLabelText('Integration name (e.g. Pracuj.pl Profile)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pracuj.pl email (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pracuj.pl password (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Search Persons')).toBeInTheDocument();
+    expect(screen.getByLabelText('Person profile for job applications')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
+      )
+    ).toHaveLength(2);
+    expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
+    expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
+
+    const loginMethodSelect = screen.getByLabelText('Pracuj.pl login method') as HTMLSelectElement;
+    expect(loginMethodSelect.value).toBe('password');
+
+    const authModeSelect = screen.getByLabelText('Pracuj.pl auth mode for apply runs') as HTMLSelectElement;
+    expect(authModeSelect.value).toBe('auto');
+    expect(screen.getByText('Automatic (use stored session or credentials)')).toBeInTheDocument();
+
+    fireEvent.change(authModeSelect, { target: { value: 'manual' } });
+    expect(authModeSelect.value).toBe('manual');
+    expect(
+      screen.getByText(
+        'Opens a visible browser window for you to log in manually before each apply run. Use this when automatic login is unavailable.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('shows scraped source credentials for scraped-item purchase runs', () => {
+    renderFields('scraped-source');
+
+    expect(screen.getByLabelText('Integration name (e.g. BattleStock)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Source account email (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Source account password (optional)')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Optional. Used by scraped-item purchase runs to sign in before cart and checkout review.'
+      )
+    ).toHaveLength(2);
+    expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
+  });
+
+  it('selects a Persons profile for Pracuj.pl job applications', async () => {
+    renderFields('pracuj-pl');
+
+    expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
+
+    const personSelect = screen.getByLabelText(
+      'Person profile for job applications'
+    ) as HTMLSelectElement;
+    fireEvent.change(personSelect, {
+      target: { value: 'person-1' },
+    });
+
+    expect(personSelect.value).toBe('person-1');
+  });
+
+  it('shows 1688 profile fields and keeps search mode in sync with URL fallback', () => {
+    renderFields('1688');
+
+    expect(screen.getByLabelText('1688 start URL')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 login mode')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 search mode')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 candidate cap override')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 minimum score override')).toBeInTheDocument();
+    expect(screen.getByLabelText('1688 max extracted images override')).toBeInTheDocument();
+
+    const searchMode = screen.getByLabelText('1688 search mode') as HTMLSelectElement;
+    const urlFallback = screen.getByLabelText(
+      'Allow image URL fallback for 1688 search'
+    ) as HTMLInputElement;
+
+    expect(searchMode.value).toBe('local_image');
+    expect(urlFallback.checked).toBe(false);
+
+    fireEvent.change(searchMode, {
+      target: { value: 'image_url_fallback' },
+    });
+
+    expect(urlFallback.checked).toBe(true);
+
+    fireEvent.click(urlFallback);
+
+    expect(searchMode.value).toBe('local_image');
+    expect(urlFallback.checked).toBe(false);
   });
 });

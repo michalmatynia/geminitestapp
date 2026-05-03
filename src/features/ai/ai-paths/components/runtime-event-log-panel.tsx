@@ -3,12 +3,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { AiPathRuntimeEvent, AiPathRunEventLevel } from '@/shared/lib/ai-paths';
+import type { AiPathRunEventLevel } from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeEvent } from '@/shared/contracts/ai-paths-runtime';
 import { Button, Card } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
-import { useRuntimeState, useRuntimeActions } from '../context';
+import { useRuntimeActions, useRuntimeDataState } from '../context';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { renderRuntimeEventEntry } from './runtime-event-entry';
 
@@ -62,7 +63,7 @@ const renderRuntimeEventLogCountBadge = ({
 // ---------------------------------------------------------------------------
 
 export function RuntimeEventLogPanel(): React.JSX.Element {
-  const { runtimeEvents } = useRuntimeState();
+  const { runtimeEvents } = useRuntimeDataState();
   const { clearRuntimeEvents } = useRuntimeActions();
 
   const [collapsed, setCollapsed] = useState(true);

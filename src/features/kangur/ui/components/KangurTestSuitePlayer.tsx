@@ -11,7 +11,7 @@ import {
   useKangurAiTutorSessionSync,
   useOptionalKangurAiTutor,
 } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useOptionalKangurAuthSessionState } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurTestSuiteRuntimeProvider } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import {
@@ -52,13 +52,13 @@ export function KangurTestSuitePlayer({
 }: Props): React.JSX.Element {
   const suiteId = suite.id;
   const suiteTitle = suite.title;
-  const auth = useOptionalKangurAuth();
+  const authSessionState = useOptionalKangurAuthSessionState();
   useKangurLearnerActivityPing({
     activity: {
       kind: 'test',
       title: `Test: ${suiteTitle}`,
     },
-    enabled: auth?.user?.actorType === 'learner',
+    enabled: authSessionState?.user?.actorType === 'learner',
   });
   const prefersReducedMotion = useReducedMotion();
   const questionMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);

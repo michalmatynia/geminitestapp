@@ -1,4 +1,4 @@
-'use client';
+import { type useTranslations } from 'next-intl';
 
 import type {
   KangurDifficulty,
@@ -85,7 +85,8 @@ export type KangurMiniGameBinaryFeedbackState =
   | 'success'
   | 'error'
   | null;
-export type KangurIntlTranslate = ReturnType<(typeof import('next-intl'))['useTranslations']>;
+export type KangurIntlTranslate = ReturnType<typeof useTranslations>;
+
 
 export type KangurMiniGameInformationalFeedbackDto = KangurMiniGameFeedbackBaseDto<
   'success' | 'error' | 'info'

@@ -1,4 +1,4 @@
-import { contextRegistryEngine } from '@/features/ai/server';
+import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import {
   buildContextRegistryConsumerEnvelope,

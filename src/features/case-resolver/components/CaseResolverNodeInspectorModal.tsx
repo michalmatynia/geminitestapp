@@ -222,7 +222,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                 <div className='flex items-center justify-between rounded border border-border/60 bg-card/30 px-3 py-2'>
                   <div className='text-xs text-gray-300'>Include node in compiled output</div>
                   <Checkbox
-                    checked={!!selectedPromptMeta.includeInOutput}
+                    checked={Boolean(selectedPromptMeta.includeInOutput)}
                     onCheckedChange={(checked: boolean): void => {
                       onUpdateSelectedNodeMeta?.({ includeInOutput: checked });
                     }}

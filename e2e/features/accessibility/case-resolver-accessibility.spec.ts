@@ -26,17 +26,16 @@ test('case resolver exposes tree controls accessibly and passes the accessibilit
   await expect(page.getByRole('heading', { name: 'Case Resolver' })).toBeVisible({
     timeout: caseResolverUiTimeoutMs,
   });
-  await expect(page.getByText('Case 1').first()).toBeVisible({ timeout: caseResolverUiTimeoutMs });
   await expect(page.getByRole('button', { name: 'ALL CASES' })).toBeVisible();
   await expect(page.getByRole('switch', { name: 'Show nested folders and files' })).toBeVisible();
   await expect(page.getByRole('searchbox', { name: 'Search files & folders…' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add folder' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add case file' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Create new image file' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Create new image asset' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Add node file' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Scan' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Image' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Node' })).toBeVisible();
 
-  const skipLink = page.getByRole('link', { name: 'Skip to content' });
+  const skipLink = page.getByRole('link', { name: /Skip to (main )?content/i });
   await skipLink.focus();
   await expect(skipLink).toBeFocused();
 

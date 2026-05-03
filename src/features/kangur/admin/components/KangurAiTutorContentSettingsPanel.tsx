@@ -18,7 +18,7 @@ import {
 } from './KangurAdminCard';
 import {
   AI_TUTOR_CONTENT_TRANSLATION_LOCALES,
-  SectionTranslationFilterStatus,
+  type SectionTranslationFilterStatus,
   useKangurAiTutorContentSettingsState,
 } from './KangurAiTutorContentSettingsPanel.hooks';
 

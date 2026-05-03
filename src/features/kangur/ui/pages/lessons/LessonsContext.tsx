@@ -19,7 +19,7 @@ const { Context: LessonsContext, useStrictContext: useLessons } =
 
 export { useLessons };
 
-export function LessonsProvider({ children }: { children: ReactNode }) {
+export function LessonsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const value = useLessonsLogic();
   return (
     <LessonsContext.Provider value={value}>

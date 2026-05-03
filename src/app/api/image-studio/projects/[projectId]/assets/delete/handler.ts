@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { deleteImageStudioVariant } from '@/features/ai/image-studio/server/variant-delete';
@@ -210,7 +210,7 @@ async function deleteGenerationSlotsLinkedToAsset(params: {
   }
 }
 
-export async function POST_handler(
+export async function postHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }

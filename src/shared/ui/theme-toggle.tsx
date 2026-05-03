@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from './dropdown-menu';
 
-export function ThemeToggle() {
+export function ThemeToggle(): React.JSX.Element {
   const { setTheme } = useTheme();
 
   return (

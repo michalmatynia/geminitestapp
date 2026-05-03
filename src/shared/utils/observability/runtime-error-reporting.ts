@@ -1,4 +1,4 @@
-import { type ClientErrorContext, logClientCatch } from './client-error-logger';
+import { logClientCatchIfBrowser, type ClientErrorContext } from './client-error-dispatch';
 import { reportObservabilityInternalError } from './internal-observability-fallback';
 
 export type RuntimeErrorReportingContext = ClientErrorContext & {
@@ -11,8 +11,7 @@ export const reportRuntimeCatch = async (
   error: unknown,
   context: RuntimeErrorReportingContext
 ): Promise<void> => {
-  if (typeof window !== 'undefined') {
-    logClientCatch(error, context);
+  if (await logClientCatchIfBrowser(error, context)) {
     return;
   }
 

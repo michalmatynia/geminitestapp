@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-04-17'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -16,6 +16,13 @@ already underway. It is the operational companion to
 Treat the contents here as dated execution records unless a file explicitly says it
 is the active tracker for an in-flight wave.
 
+## Open This Hub When
+
+- a migration is already approved and you need execution or stabilization tracking
+- you need the latest wave status, script-lifecycle register, or migration closeout
+- you need to know whether a dated migration file is still current or only historical
+- you need to verify whether there is machine-readable evidence under `reports/`
+
 ## What Lives Here
 
 - migration wave status updates
@@ -26,20 +33,29 @@ is the active tracker for an in-flight wave.
 
 ## Key Entry Points
 
-- Active closeout and tracking:
-  - [`wave-execution-status-2026-04-17.md`](./wave-execution-status-2026-04-17.md)
-  - [`stabilization-window-2026-04-17.md`](./stabilization-window-2026-04-17.md)
-  - [`script-lifecycle-register-2026-04-17.md`](./script-lifecycle-register-2026-04-17.md)
-- Historical wave records:
+Current execution trackers:
+
+- [`wave-execution-status-2026-04-17.md`](./wave-execution-status-2026-04-17.md)
+- [`stabilization-window-2026-04-17.md`](./stabilization-window-2026-04-17.md)
+- [`script-lifecycle-register-2026-04-17.md`](./script-lifecycle-register-2026-04-17.md)
+
+Historical migration records:
+
 - [`decision-filemaker-normalizer-compat-options-2026-03-05.md`](./decision-filemaker-normalizer-compat-options-2026-03-05.md)
 - [`decision-products-ai-worker-model-fallback-2026-03-05.md`](./decision-products-ai-worker-model-fallback-2026-03-05.md)
 - [`decision-products-migrate-runtime-endpoint-2026-03-05.md`](./decision-products-migrate-runtime-endpoint-2026-03-05.md)
 - [`script-lifecycle-register-2026-03-05.md`](./script-lifecycle-register-2026-03-05.md)
 - [`wave-execution-status-2026-03-05.md`](./wave-execution-status-2026-03-05.md)
 
-Current supporting plan:
+Supporting cross-feature plan:
 
 - [`docs/plans/canonical-closeout-2026-04-17.md`](../plans/canonical-closeout-2026-04-17.md)
+
+Machine-readable evidence:
+
+- `docs/migrations/reports/` is intentionally empty except for `.gitkeep` right now.
+  Add retained report artifacts there only when a migration task explicitly
+  produces them.
 
 ## Placement Rule
 

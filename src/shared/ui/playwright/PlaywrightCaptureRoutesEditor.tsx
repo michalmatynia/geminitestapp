@@ -1,10 +1,14 @@
 'use client';
 
+import React, { createContext, useContext, useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
 
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes';
 import { buildCaptureRouteUrl } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
+import {
+  formatSelectorRegistryRoleLabel,
+  getCaptureCompatibleSelectorRoles,
+} from '@/shared/lib/browser-execution/selector-registry-roles';
 import { Button, Input } from '@/shared/ui/primitives.public';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { cn } from '@/shared/utils/ui-utils';
@@ -22,6 +26,7 @@ const createEmptyRoute = (): PlaywrightConfigCaptureRoute => ({
   path: '/',
   description: '',
   selector: null,
+  selectorRole: null,
   waitForMs: null,
   waitForSelectorMs: 15_000,
 });
@@ -32,21 +37,61 @@ const APPEARANCE_MODE_OPTIONS = [
   { value: 'light', label: 'Light' },
 ];
 
+const CAPTURE_SELECTOR_ROLE_OPTIONS = [
+  { value: '', label: 'Auto / untyped' },
+  ...getCaptureCompatibleSelectorRoles().map((role) => ({
+    value: role,
+    label: formatSelectorRegistryRoleLabel(role) ?? role,
+  })),
+];
+
 type RoutePatch = Partial<PlaywrightConfigCaptureRoute>;
+type CaptureSelectorRole = Exclude<PlaywrightConfigCaptureRoute['selectorRole'], null | undefined>;
+
+const normalizeRouteText = (value: string | undefined, fallback = ''): string => value ?? fallback;
+
+const parseCaptureSelectorRole = (value: string): CaptureSelectorRole | null =>
+  getCaptureCompatibleSelectorRoles().includes(value as CaptureSelectorRole)
+    ? (value as CaptureSelectorRole)
+    : null;
+
+type PlaywrightCaptureRoutesEditorContextValue = {
+  baseUrl: string;
+  onUpdateRoute: (index: number, patch: RoutePatch) => void;
+  onDeleteRoute: (index: number) => void;
+  onChange: (patch: {
+    routes?: PlaywrightConfigCaptureRoute[];
+    baseUrl?: string;
+    appearanceMode?: string;
+  }) => void;
+};
+
+const PlaywrightCaptureRoutesEditorContext = createContext<PlaywrightCaptureRoutesEditorContextValue | null>(null);
+
+function usePlaywrightCaptureRoutesEditor() {
+  const context = useContext(PlaywrightCaptureRoutesEditorContext);
+  if (!context) {
+    throw new Error('PlaywrightCaptureRoutesEditor sub-components must be used within its Provider');
+  }
+  return context;
+}
 
 type RouteRowProps = {
   route: PlaywrightConfigCaptureRoute;
-  baseUrl: string;
-  onUpdate: (patch: RoutePatch) => void;
-  onDelete: () => void;
+  index: number;
 };
 
-function RouteRow({ route, baseUrl, onUpdate, onDelete }: RouteRowProps): React.JSX.Element {
+function RouteRow({ route, index }: RouteRowProps): React.JSX.Element {
+  const { baseUrl, onUpdateRoute, onDeleteRoute } = usePlaywrightCaptureRoutesEditor();
   const [expanded, setExpanded] = useState(false);
+  const routeTitle = normalizeRouteText(route.title);
+  const routePath = normalizeRouteText(route.path, '/');
 
-  const resolvedUrl = buildCaptureRouteUrl(baseUrl, route.path);
+  const resolvedUrl = buildCaptureRouteUrl(baseUrl, routePath);
   const hasIssue = !resolvedUrl;
 
+  const onUpdate = (patch: RoutePatch) => onUpdateRoute(index, patch);
+  const onDelete = () => onDeleteRoute(index);
   return (
     <div className='rounded-lg border border-border/50 bg-background/40'>
       {/* Header row */}
@@ -67,15 +112,15 @@ function RouteRow({ route, baseUrl, onUpdate, onDelete }: RouteRowProps): React.
         <div className='flex-1 min-w-0'>
           <div className='flex items-center gap-1.5'>
             <span className='text-[11px] font-medium text-foreground truncate'>
-              {route.title.trim() || <span className='text-muted-foreground italic'>Untitled</span>}
+              {routeTitle.trim() || <span className='text-muted-foreground italic'>Untitled</span>}
             </span>
-            <span className='text-muted-foreground/60 text-[10px] truncate'>{route.path}</span>
+            <span className='text-muted-foreground/60 text-[10px] truncate'>{routePath}</span>
           </div>
           {resolvedUrl ? (
             <div className='text-[9px] text-muted-foreground/70 truncate font-mono'>{resolvedUrl}</div>
           ) : hasIssue ? (
             <div className='text-[9px] text-amber-400/80'>
-              {!route.path.trim() ? 'Add a path.' : 'Add a base URL to resolve this route.'}
+              {!routePath.trim() ? 'Add a path.' : 'Add a base URL to resolve this route.'}
             </div>
           ) : null}
         </div>
@@ -98,7 +143,7 @@ function RouteRow({ route, baseUrl, onUpdate, onDelete }: RouteRowProps): React.
               <Input
                 variant='subtle'
                 size='sm'
-                value={route.title}
+                value={routeTitle}
                 onChange={(e) => onUpdate({ title: e.target.value })}
                 placeholder='e.g. Homepage'
                 aria-label='Route title'
@@ -108,7 +153,7 @@ function RouteRow({ route, baseUrl, onUpdate, onDelete }: RouteRowProps): React.
               <Input
                 variant='subtle'
                 size='sm'
-                value={route.path}
+                value={routePath}
                 onChange={(e) => onUpdate({ path: e.target.value })}
                 placeholder='/about or https://…'
                 aria-label='Route path'
@@ -125,9 +170,28 @@ function RouteRow({ route, baseUrl, onUpdate, onDelete }: RouteRowProps): React.
               variant='subtle'
               size='sm'
               value={route.selector ?? ''}
-              onChange={(e) => onUpdate({ selector: e.target.value.trim() || null })}
+              onChange={(e) =>
+                onUpdate({
+                  selector: e.target.value.trim() || null,
+                  ...(e.target.value.trim() ? {} : { selectorRole: null }),
+                })
+              }
               placeholder='#main-content'
               aria-label='CSS selector'
+            />
+          </FormField>
+
+          <FormField
+            label='Selector Role'
+            description='Optional semantic classification for element-targeted captures.'
+          >
+            <SelectSimple
+              size='sm'
+              variant='subtle'
+              value={route.selectorRole ?? ''}
+              onValueChange={(value) => onUpdate({ selectorRole: parseCaptureSelectorRole(value) })}
+              options={CAPTURE_SELECTOR_ROLE_OPTIONS}
+              disabled={!route.selector}
             />
           </FormField>
 
@@ -204,7 +268,15 @@ export function PlaywrightCaptureRoutesEditor({
   };
 
   return (
-    <div className='space-y-3'>
+    <PlaywrightCaptureRoutesEditorContext.Provider
+      value={{
+        baseUrl,
+        onUpdateRoute: updateRoute,
+        onDeleteRoute: deleteRoute,
+        onChange,
+      }}
+    >
+      <div className='space-y-3'>
       <FormField
         label='Base URL'
         description='Relative paths are resolved against this URL.'
@@ -263,14 +335,13 @@ export function PlaywrightCaptureRoutesEditor({
               <RouteRow
                 key={route.id}
                 route={route}
-                baseUrl={baseUrl}
-                onUpdate={(patch) => updateRoute(index, patch)}
-                onDelete={() => deleteRoute(index)}
+                index={index}
               />
             ))}
           </div>
         )}
       </div>
     </div>
-  );
+  </PlaywrightCaptureRoutesEditorContext.Provider>
+);
 }

@@ -1,10 +1,24 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type MutableRefObject } from 'react';
 import { stopActiveNode } from '../useKangurMusicSynth.utils';
 import type { ActiveNode } from '../useKangurMusicSynth.types';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
-export function useKangurMusicSynthPlayback() {
+type KangurMusicSynthPlayback = {
+  activeNodesRef: MutableRefObject<ActiveNode[]>;
+  isPlayingSequenceRef: MutableRefObject<boolean>;
+  playbackTokenRef: MutableRefObject<number>;
+  timeoutIdsRef: MutableRefObject<number[]>;
+  isPlayingSequence: boolean;
+  setIsPlayingSequence: (value: boolean) => void;
+  clearScheduledTimeouts: () => void;
+  clearActivePlayback: () => void;
+  schedulePlaybackTimeout: (callback: () => void, ms: number) => number;
+  waitForPlaybackWindow: (token: number, ms: number) => Promise<boolean>;
+};
+
+export function useKangurMusicSynthPlayback(): KangurMusicSynthPlayback {
   const activeNodesRef = useRef<ActiveNode[]>([]);
   const isPlayingSequenceRef = useRef(false);
   const playbackTokenRef = useRef(0);
@@ -18,7 +32,7 @@ export function useKangurMusicSynthPlayback() {
 
   const clearScheduledTimeouts = useCallback((): void => {
     timeoutIdsRef.current.forEach((timeoutId) => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     });
     timeoutIdsRef.current = [];
   }, []);
@@ -31,7 +45,7 @@ export function useKangurMusicSynthPlayback() {
 
   const schedulePlaybackTimeout = useCallback(
     (callback: () => void, ms: number): number => {
-      const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
         timeoutIdsRef.current = timeoutIdsRef.current.filter((candidate) => candidate !== timeoutId);
         callback();
       }, Math.max(0, ms));

@@ -1,0 +1,2 @@
+phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
+apply,application-performance-apply,Apply performance fixes through targeted implementation work,manual,manual,true,,,2026-04-15T10:54:26.139Z,artifacts/improvements/apply-report.json

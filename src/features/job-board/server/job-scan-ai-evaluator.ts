@@ -1,0 +1,179 @@
+import 'server-only';
+
+import { z } from 'zod';
+
+import {
+  jobContractTypeSchema,
+  jobExperienceLevelSchema,
+  jobWorkModeSchema,
+  type JobScanEvaluation,
+} from '@/shared/contracts/job-board';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+const aiCompanyPartialSchema = z.object({
+  name: z.string().nullable().optional(),
+  nip: z.string().nullable().optional(),
+  domain: z.string().nullable().optional(),
+  website: z.string().nullable().optional(),
+  profileUrl: z.string().nullable().optional(),
+  industry: z.string().nullable().optional(),
+  size: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  addressLine: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  postalCode: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+});
+
+const aiSalarySchema = z
+  .object({
+    min: z.number().nullable().optional(),
+    max: z.number().nullable().optional(),
+    currency: z.string().nullable().optional(),
+    period: z.string().nullable().optional(),
+    raw: z.string().nullable().optional(),
+  })
+  .nullable()
+  .optional();
+
+const aiListingPartialSchema = z.object({
+  title: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  contractType: jobContractTypeSchema.nullable().optional(),
+  workMode: jobWorkModeSchema.nullable().optional(),
+  experienceLevel: jobExperienceLevelSchema.nullable().optional(),
+  city: z.string().nullable().optional(),
+  region: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+  salary: aiSalarySchema,
+  requirements: z.array(z.string()).max(50).optional(),
+  responsibilities: z.array(z.string()).max(50).optional(),
+  benefits: z.array(z.string()).max(50).optional(),
+  technologies: z.array(z.string()).max(50).optional(),
+  applyUrl: z.string().nullable().optional(),
+  postedAt: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
+});
+
+export const jobScanAiResponseSchema = z.object({
+  company: aiCompanyPartialSchema.nullable(),
+  listing: aiListingPartialSchema.nullable(),
+  confidence: z.number().min(0).max(1).nullable(),
+});
+export type JobScanAiResponse = z.infer<typeof jobScanAiResponseSchema>;
+type JobScanAiListingResponse = z.infer<typeof aiListingPartialSchema>;
+
+const SYSTEM_PROMPT = `You extract structured company and job-listing data from a job-board page (e.g. pracuj.pl).
+Return ONLY a JSON object that matches this shape (use null for unknown fields, never invent values):
+{
+  "company": { "name": string|null, "nip": string|null, "domain": string|null, "website": string|null, "profileUrl": string|null,
+               "industry": string|null, "size": string|null, "description": string|null,
+               "addressLine": string|null, "city": string|null, "postalCode": string|null, "country": string|null },
+  "listing": { "title": string|null, "description": string|null,
+               "contractType": "employment"|"b2b"|"mandate"|"contract_of_specific_task"|"internship"|"unknown"|null,
+               "workMode": "onsite"|"remote"|"hybrid"|"unknown"|null,
+               "experienceLevel": "intern"|"junior"|"mid"|"senior"|"expert"|"manager"|"unknown"|null,
+               "city": string|null, "region": string|null, "country": string|null,
+               "salary": { "min": number|null, "max": number|null, "currency": string|null,
+                           "period": "monthly"|"hourly"|"yearly"|null, "raw": string|null } | null,
+               "requirements": string[], "responsibilities": string[], "benefits": string[],
+               "technologies": string[], "applyUrl": string|null,
+               "postedAt": ISO-8601-string|null, "expiresAt": ISO-8601-string|null },
+  "confidence": number between 0 and 1
+}
+Rules:
+- The page content may contain scraper-produced sections like [pracuj_snapshot] and [page_text]. Prefer explicit values from [pracuj_snapshot] over repeated boilerplate in raw page text.
+- Use company-focused sections (for example "O firmie", "company_profile", employer/about-company content, fact tables, JSON-LD, canonical/company links) for company fields, and job-offer sections (requirements, responsibilities, benefits, technologies, salary, work mode, apply URLs) for listing fields.
+- If a [job_board_snapshot] contains company_profile text from Pracuj.pl, summarize that content into company.description and use its URL/website links for company.website/domain when explicit.
+- Salary numbers must be plain numbers in the listed currency (no formatting).
+- Polish NIP is exactly 10 digits — extract only if you can see one.
+- contractType "employment" = "umowa o pracę", "b2b" = "kontrakt B2B", "mandate" = "umowa zlecenie".
+- Output JSON only, no markdown, no comments.`;
+
+const MAX_INPUT_CHARS = 80_000;
+
+const normalizeAiListing = (listing: JobScanAiListingResponse | null): Record<string, unknown> | null =>
+  listing
+    ? {
+        ...listing,
+        requirements: listing.requirements ?? [],
+        responsibilities: listing.responsibilities ?? [],
+        benefits: listing.benefits ?? [],
+        technologies: listing.technologies ?? [],
+      }
+    : null;
+
+export const evaluateJobPageWithAi = async (input: {
+  sourceUrl: string;
+  pageContent: string;
+  modelId?: string;
+}): Promise<JobScanEvaluation> => {
+  let modelId = input.modelId?.trim() ?? '';
+  const truncated = input.pageContent.slice(0, MAX_INPUT_CHARS);
+  const evaluatedAt = new Date().toISOString();
+
+  try {
+    const brainConfig = await resolveBrainExecutionConfigForCapability(
+      'job_board.offer_extraction',
+      {
+        defaultTemperature: 0,
+        defaultMaxTokens: 4096,
+        defaultSystemPrompt: SYSTEM_PROMPT,
+        ...(modelId.length > 0 ? { defaultModelId: modelId } : {}),
+      }
+    );
+    modelId = brainConfig.modelId;
+    const completion = await runBrainChatCompletion({
+      modelId,
+      messages: [
+        { role: 'system', content: brainConfig.systemPrompt },
+        {
+          role: 'user',
+          content: `Source URL: ${input.sourceUrl}\n\nPage content (HTML or structured text):\n\n${truncated}`,
+        },
+      ],
+      temperature: brainConfig.temperature,
+      maxTokens: brainConfig.maxTokens,
+      jsonMode: true,
+    });
+
+    const jsonText = extractJsonObject(completion.text);
+    const parsed = jobScanAiResponseSchema.parse(JSON.parse(jsonText));
+
+    return {
+      company: parsed.company ?? null,
+      listing: normalizeAiListing(parsed.listing),
+      confidence: parsed.confidence,
+      modelId: completion.modelId,
+      error: null,
+      evaluatedAt,
+    };
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'job-scans.ai-evaluator',
+      action: 'evaluateJobPageWithAi',
+      sourceUrl: input.sourceUrl,
+    });
+    return {
+      company: null,
+      listing: null,
+      confidence: null,
+      modelId,
+      error: error instanceof Error ? error.message : String(error),
+      evaluatedAt,
+    };
+  }
+};
+
+const extractJsonObject = (text: string): string => {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const fencedJson = fenced?.[1];
+  if (fencedJson !== undefined) return fencedJson.trim();
+  const start = trimmed.indexOf('{');
+  const end = trimmed.lastIndexOf('}');
+  if (start >= 0 && end > start) return trimmed.slice(start, end + 1);
+  return trimmed;
+};

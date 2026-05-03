@@ -1,8 +1,8 @@
 import 'server-only';
 
 import {
-  AiPathRuntimeAnalyticsRange,
-  AiPathRuntimeAnalyticsSummary,
+  type AiPathRuntimeAnalyticsRange,
+  type AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
 
 import { SUMMARY_CACHE_TTL_MS, SUMMARY_RANGE_BUCKET_MS } from './config';

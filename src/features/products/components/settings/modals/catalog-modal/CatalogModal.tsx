@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { useInternationalizationData } from '@/features/internationalization/public';
+import type { Language } from '@/shared/contracts/internationalization';
 import type { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';
 import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import { Alert } from '@/shared/ui/alert';
@@ -20,151 +21,136 @@ interface CatalogModalProps extends EntityModalProps<Catalog, PriceGroup> {
   defaultId?: string;
 }
 
-export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
-  const {
-    isOpen,
-    onClose,
-    onSuccess,
-    item: catalog,
-    items: priceGroups = [],
-    loading: loadingGroups = false,
-    defaultId: defaultGroupId = '',
-  } = props;
+type CatalogFormController = ReturnType<typeof useCatalogForm>;
+type CatalogModalProviderValue = Parameters<typeof CatalogModalProvider>[0]['value'];
 
-  const { languages, languagesLoading, languagesError } = useInternationalizationData();
+type CatalogLanguageHandlers = {
+  handleMoveLanguage: (id: string, direction: 'up' | 'down') => void;
+  handleToggleLanguage: (id: string) => void;
+};
 
-  const {
-    form,
-    setForm,
-    selectedLanguageIds,
-    setSelectedLanguageIds,
-    defaultLanguageId,
-    setDefaultLanguageId,
-    catalogPriceGroupIds,
-    setCatalogPriceGroupIds,
-    catalogDefaultPriceGroupId,
-    setCatalogDefaultPriceGroupId,
-    languageQuery,
-    setLanguageQuery,
-    error,
-    canonicalizeLanguageId,
-    getLanguage,
-    saveMutation,
-    handleSubmit: handleFormSubmit,
-  } = useCatalogForm({
-    catalog,
-    languages,
-    priceGroups,
-    defaultGroupId,
-  });
+type CatalogModalController = {
+  catalog?: Catalog | null | undefined;
+  error: string | null;
+  fields: Array<SettingsPanelField<CatalogFormController['form']>>;
+  form: CatalogFormController['form'];
+  handleChange: (vals: Partial<CatalogFormController['form']>) => void;
+  handleSubmit: () => Promise<void>;
+  isOpen: boolean;
+  isSaving: boolean;
+  onClose: () => void;
+};
 
-  const availableLanguages = React.useMemo(() => {
-    const query = languageQuery.trim().toLowerCase();
+function useAvailableCatalogLanguages(
+  catalogForm: CatalogFormController,
+  languages: Language[]
+): Language[] {
+  return React.useMemo(() => {
+    const query = catalogForm.languageQuery.trim().toLowerCase();
     const selectedSet = new Set(
-      selectedLanguageIds
-        .map((id: string) => canonicalizeLanguageId(id))
-        .filter((id: string) => Boolean(id))
+      catalogForm.selectedLanguageIds
+        .map((id: string) => catalogForm.canonicalizeLanguageId(id))
+        .filter((id: string) => id !== '')
     );
     return languages.filter(
-      (l) =>
-        !selectedSet.has(l.id) &&
-        (!query || l.name.toLowerCase().includes(query) || l.code.toLowerCase().includes(query))
+      (language) =>
+        !selectedSet.has(language.id) &&
+        (query === '' || language.name.toLowerCase().includes(query) || language.code.toLowerCase().includes(query))
     );
-  }, [languages, selectedLanguageIds, languageQuery, canonicalizeLanguageId]);
+  }, [catalogForm, languages]);
+}
 
+function useCatalogLanguageHandlers(catalogForm: CatalogFormController): CatalogLanguageHandlers {
   const handleToggleLanguage = React.useCallback(
     (id: string): void => {
-      setSelectedLanguageIds(
-        toggleLanguage(selectedLanguageIds, id, defaultLanguageId, setDefaultLanguageId)
+      catalogForm.setSelectedLanguageIds(
+        toggleLanguage(
+          catalogForm.selectedLanguageIds,
+          id,
+          catalogForm.defaultLanguageId,
+          catalogForm.setDefaultLanguageId
+        )
       );
     },
-    [defaultLanguageId, selectedLanguageIds, setDefaultLanguageId, setSelectedLanguageIds]
+    [catalogForm]
   );
 
   const handleMoveLanguage = React.useCallback(
     (id: string, direction: 'up' | 'down'): void => {
-      setSelectedLanguageIds(moveLanguage(selectedLanguageIds, id, direction));
+      catalogForm.setSelectedLanguageIds(
+        moveLanguage(catalogForm.selectedLanguageIds, id, direction)
+      );
     },
-    [selectedLanguageIds, setSelectedLanguageIds]
+    [catalogForm]
   );
 
-  const handleTogglePriceGroup = React.useCallback(
+  return { handleMoveLanguage, handleToggleLanguage };
+}
+
+function useCatalogPriceGroupHandler(catalogForm: CatalogFormController): (id: string) => void {
+  return React.useCallback(
     (id: string): void => {
-      setCatalogPriceGroupIds(
+      catalogForm.setCatalogPriceGroupIds(
         togglePriceGroup(
-          catalogPriceGroupIds,
+          catalogForm.catalogPriceGroupIds,
           id,
-          catalogDefaultPriceGroupId,
-          setCatalogDefaultPriceGroupId
+          catalogForm.catalogDefaultPriceGroupId,
+          catalogForm.setCatalogDefaultPriceGroupId
         )
       );
     },
-    [
-      catalogDefaultPriceGroupId,
-      catalogPriceGroupIds,
-      setCatalogDefaultPriceGroupId,
-      setCatalogPriceGroupIds,
-    ]
+    [catalogForm]
   );
+}
 
-  const contextValue = React.useMemo(
-    () => ({
-      form,
-      setForm,
-      selectedLanguageIds,
-      toggleLanguage: handleToggleLanguage,
-      moveLanguage: handleMoveLanguage,
-      defaultLanguageId,
-      setDefaultLanguageId,
-      languageQuery,
-      setLanguageQuery,
-      availableLanguages,
-      getLanguage,
-      languagesLoading,
-      languagesError,
-      error,
-      catalogPriceGroupIds,
-      togglePriceGroup: handleTogglePriceGroup,
-      catalogDefaultPriceGroupId,
-      setCatalogDefaultPriceGroupId,
-      priceGroups,
-      loadingGroups,
-    }),
-    [
-      availableLanguages,
-      catalogDefaultPriceGroupId,
-      catalogPriceGroupIds,
-      defaultLanguageId,
-      form,
-      getLanguage,
-      handleMoveLanguage,
-      handleToggleLanguage,
-      handleTogglePriceGroup,
-      languageQuery,
-      languagesError,
-      languagesLoading,
-      loadingGroups,
-      priceGroups,
-      selectedLanguageIds,
-      setCatalogDefaultPriceGroupId,
-      setDefaultLanguageId,
-      setForm,
-      setLanguageQuery,
-    ]
-  );
-
-  const handleSubmit = async (): Promise<void> => {
-    await handleFormSubmit();
-    if (!error) {
-      onSuccess?.();
-    }
+function buildCatalogModalContextValue({
+  availableLanguages,
+  catalogForm,
+  handleMoveLanguage,
+  handleToggleLanguage,
+  handleTogglePriceGroup,
+  intl,
+  loadingGroups,
+  priceGroups,
+}: {
+  availableLanguages: Language[];
+  catalogForm: CatalogFormController;
+  handleMoveLanguage: CatalogLanguageHandlers['handleMoveLanguage'];
+  handleToggleLanguage: CatalogLanguageHandlers['handleToggleLanguage'];
+  handleTogglePriceGroup: (id: string) => void;
+  intl: ReturnType<typeof useInternationalizationData>;
+  loadingGroups: boolean;
+  priceGroups: PriceGroup[];
+}): CatalogModalProviderValue {
+  return {
+    form: catalogForm.form,
+    setForm: catalogForm.setForm,
+    selectedLanguageIds: catalogForm.selectedLanguageIds,
+    toggleLanguage: handleToggleLanguage,
+    moveLanguage: handleMoveLanguage,
+    defaultLanguageId: catalogForm.defaultLanguageId,
+    setDefaultLanguageId: catalogForm.setDefaultLanguageId,
+    languageQuery: catalogForm.languageQuery,
+    setLanguageQuery: catalogForm.setLanguageQuery,
+    availableLanguages,
+    getLanguage: catalogForm.getLanguage,
+    languagesLoading: intl.languagesLoading,
+    languagesError: intl.languagesError,
+    error: catalogForm.error,
+    catalogPriceGroupIds: catalogForm.catalogPriceGroupIds,
+    togglePriceGroup: handleTogglePriceGroup,
+    catalogDefaultPriceGroupId: catalogForm.catalogDefaultPriceGroupId,
+    setCatalogDefaultPriceGroupId: catalogForm.setCatalogDefaultPriceGroupId,
+    priceGroups,
+    loadingGroups,
   };
+}
 
-  const handleChange = (vals: Partial<typeof form>) => {
-    setForm((prev) => ({ ...prev, ...vals }));
-  };
-
-  const fields: SettingsPanelField<typeof form>[] = [
+function useCatalogFields(
+  contextValue: CatalogModalProviderValue
+): Array<SettingsPanelField<CatalogFormController['form']>> {
+  return React.useMemo(
+    () => [
     {
       key: 'name',
       label: 'Catalog Name',
@@ -178,7 +164,7 @@ export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
       type: 'checkbox',
     },
     {
-      key: 'name', // Using key for custom section
+      key: 'name',
       label: 'Languages & Pricing',
       type: 'custom',
       render: () => (
@@ -190,25 +176,103 @@ export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
         </CatalogModalProvider>
       ),
     },
-  ];
+    ],
+    [contextValue]
+  );
+}
+
+function useCatalogSubmitHandler({
+  error,
+  handleFormSubmit,
+  onSuccess,
+}: {
+  error: string | null;
+  handleFormSubmit: () => Promise<void>;
+  onSuccess?: (() => void) | undefined;
+}): () => Promise<void> {
+  return React.useCallback(async (): Promise<void> => {
+    await handleFormSubmit();
+    if (error === null) {
+      onSuccess?.();
+    }
+  }, [error, handleFormSubmit, onSuccess]);
+}
+
+function useCatalogChangeHandler(
+  setForm: CatalogFormController['setForm']
+): (vals: Partial<CatalogFormController['form']>) => void {
+  return React.useCallback(
+    (vals: Partial<CatalogFormController['form']>): void => {
+      setForm((prev) => ({ ...prev, ...vals }));
+    },
+    [setForm]
+  );
+}
+
+function useCatalogModalController(props: CatalogModalProps): CatalogModalController {
+  const priceGroups = props.items ?? [];
+  const loadingGroups = props.loading ?? false;
+  const intl = useInternationalizationData();
+  const catalogForm = useCatalogForm({
+    catalog: props.item,
+    languages: intl.languages,
+    priceGroups,
+    defaultGroupId: props.defaultId ?? '',
+  });
+  const availableLanguages = useAvailableCatalogLanguages(catalogForm, intl.languages);
+  const { handleMoveLanguage, handleToggleLanguage } = useCatalogLanguageHandlers(catalogForm);
+  const handleTogglePriceGroup = useCatalogPriceGroupHandler(catalogForm);
+  const contextValue = buildCatalogModalContextValue({
+    availableLanguages,
+    catalogForm,
+    handleMoveLanguage,
+    handleToggleLanguage,
+    handleTogglePriceGroup,
+    intl,
+    loadingGroups,
+    priceGroups,
+  });
+  const fields = useCatalogFields(contextValue);
+  const handleChange = useCatalogChangeHandler(catalogForm.setForm);
+  const handleSubmit = useCatalogSubmitHandler({
+    error: catalogForm.error,
+    handleFormSubmit: catalogForm.handleSubmit,
+    onSuccess: props.onSuccess,
+  });
+
+  return {
+    catalog: props.item,
+    error: catalogForm.error,
+    fields,
+    form: catalogForm.form,
+    handleChange,
+    handleSubmit,
+    isOpen: props.isOpen,
+    isSaving: catalogForm.saveMutation.isPending,
+    onClose: props.onClose,
+  };
+}
+
+export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
+  const controller = useCatalogModalController(props);
 
   return (
     <>
       <SettingsPanelBuilder
-        open={isOpen}
-        onClose={onClose}
-        title={catalog ? 'Edit Catalog' : 'Create Catalog'}
-        onSave={handleSubmit}
-        isSaving={saveMutation.isPending}
-        fields={fields}
-        values={form}
-        onChange={handleChange}
+        open={controller.isOpen}
+        onClose={controller.onClose}
+        title={controller.catalog ? 'Edit Catalog' : 'Create Catalog'}
+        onSave={controller.handleSubmit}
+        isSaving={controller.isSaving}
+        fields={controller.fields}
+        values={controller.form}
+        onChange={controller.handleChange}
         size='lg'
       />
-      {error && (
+      {controller.error !== null && (
         <div className='fixed bottom-20 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-4'>
           <Alert variant='error' className='shadow-2xl'>
-            {error}
+            {controller.error}
           </Alert>
         </div>
       )}

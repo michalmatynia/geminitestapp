@@ -25,6 +25,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 
 import {
   useDefaultTraderaConnection,
+  useDefaultVintedConnection,
   useIntegrationConnections,
   useIntegrations,
 } from './useIntegrationQueries';
@@ -97,6 +98,21 @@ describe('useIntegrationQueries', () => {
     await expect(config.queryFn()).resolves.toEqual({ connectionId: 'conn-tradera-1' });
     expect(apiGetMock).toHaveBeenCalledWith(
       '/api/v2/integrations/exports/tradera/default-connection'
+    );
+  });
+
+  it('loads the default Vinted connection from the dedicated preference endpoint', async () => {
+    apiGetMock.mockResolvedValue({ connectionId: 'conn-vinted-1' });
+
+    const { result } = renderHook(() => useDefaultVintedConnection());
+    const config = createSingleQueryV2Mock.mock.calls[0]?.[0];
+
+    expect(result.current).toEqual({ kind: 'single-query' });
+    expect(config.queryKey).toEqual(integrationKeys.selection.vintedDefaultConnection());
+
+    await expect(config.queryFn()).resolves.toEqual({ connectionId: 'conn-vinted-1' });
+    expect(apiGetMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/exports/vinted/default-connection'
     );
   });
 });

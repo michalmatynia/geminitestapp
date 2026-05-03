@@ -5,6 +5,7 @@ import type { ProductStudioAuditEntry, ProductStudioRunStatus, ProductStudioVari
 export type ProductImageSlotPreview = {
   index: number;
   label: string;
+  sourceType: 'file' | 'link' | 'base64';
   src: string;
 };
 
@@ -19,6 +20,7 @@ export interface ProductStudioStateContextValue {
   variantsLoading: boolean;
   selectedVariantSlotId: string | null;
   selectedVariant: ImageStudioSlotRecord | null;
+  pendingExpectedOutputs: number;
   pendingVariantPlaceholderCount: number;
   sourceImageSrc: string | null;
   variantImageSrc: string | null;
@@ -35,6 +37,7 @@ export interface ProductStudioStateContextValue {
   accepting: boolean;
   openingInImageStudio: boolean;
   rotatingDirection: 'left' | 'right' | null;
+  convertingLinkImageIndex: number | null;
   deletingVariantId: string | null;
   studioActionError: string | null;
 }
@@ -49,8 +52,60 @@ export interface ProductStudioActionsContextValue {
   handleAcceptVariant: () => Promise<void>;
   handleDeleteVariant: (slot: ImageStudioSlotRecord) => Promise<void>;
   handleRotateImageSlot: (direction: 'left' | 'right') => Promise<void>;
+  handleConvertLinkImageToFile: (index: number) => Promise<void>;
   refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
 }
+
+export type ProductStudioRunState = {
+  activeRunBaselineVariantIds: string[];
+  activeRunId: string | null;
+  pendingExpectedOutputs: number;
+  runStatus: ProductStudioRunStatus | null;
+  setActiveRunBaselineVariantIds: (ids: string[] | ((prev: string[]) => string[])) => void;
+  setActiveRunId: (id: string | null | ((prev: string | null) => string | null)) => void;
+  setPendingExpectedOutputs: (count: number | ((prev: number) => number)) => void;
+  setRunStatus: (status: ProductStudioRunStatus | null | ((prev: ProductStudioRunStatus | null) => ProductStudioRunStatus | null)) => void;
+};
+
+export type ProductStudioBaseState = {
+  imageLinks: string[];
+  imageSlotPreviews: ProductImageSlotPreview[];
+  product: any; // Using any to avoid circularity if needed, but ideally typed
+  productId: string | null;
+  productImagesExternalBaseUrl: string;
+  refreshImagesFromProduct: () => Promise<void>;
+  selectedImageIndex: number | null;
+  setSelectedImageIndex: (index: number | null | ((prev: number | null) => number | null)) => void;
+  setStudioProjectId: (id: string | null) => void;
+  studioConfigLoading: boolean;
+  studioProjectId: string | null;
+  studioProjectOptions: Array<LabeledOptionDto<string>>;
+  studioProjectsLoading: boolean;
+};
+
+export type ProductStudioLoadedState = {
+  auditState: {
+    auditEntries: ProductStudioAuditEntry[];
+    auditError: string | null;
+    auditLoading: boolean;
+    refreshAudit: () => Promise<void>;
+  };
+  derivedState: {
+    registrySource: any;
+    pendingVariantPlaceholderCount: number;
+    // ... rest of derived state used in controller
+    [key: string]: any;
+  };
+  variantsState: {
+    variantsData: ProductStudioVariantsResponse | null;
+    variantsLoading: boolean;
+    selectedVariantSlotId: string | null;
+    studioActionError: string | null;
+    refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
+    setSelectedVariantSlotId: (id: string | null) => void;
+    setStudioActionError: (error: string | null) => void;
+  };
+};
 
 export type ProductStudioContextValue = ProductStudioStateContextValue &
   ProductStudioActionsContextValue;

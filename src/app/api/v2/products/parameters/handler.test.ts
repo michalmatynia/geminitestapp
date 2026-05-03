@@ -27,7 +27,7 @@ vi.mock('@/features/products/server', () => ({
   },
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 describe('products/parameters handler', () => {
   beforeEach(() => {
@@ -48,7 +48,7 @@ describe('products/parameters handler', () => {
   it('uses cached parameter service by default', async () => {
     listParametersCachedMock.mockResolvedValue([{ id: 'param-1', catalogId: 'catalog-1' }]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/parameters?catalogId=catalog-1'),
       {
         query: { catalogId: 'catalog-1' },
@@ -63,7 +63,7 @@ describe('products/parameters handler', () => {
   it('bypasses cached parameter service when fresh=1 is provided', async () => {
     listParametersMock.mockResolvedValue([{ id: 'param-1', catalogId: 'catalog-1' }]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/v2/products/parameters?catalogId=catalog-1&fresh=1'),
       {
         query: { catalogId: 'catalog-1' },
@@ -76,6 +76,20 @@ describe('products/parameters handler', () => {
     expect(listParametersCachedMock).not.toHaveBeenCalled();
   });
 
+  it('lists all parameters directly when catalogId is omitted', async () => {
+    listParametersMock.mockResolvedValue([{ id: 'param-1', catalogId: 'catalog-1' }]);
+
+    const response = await getHandler(
+      new NextRequest('http://localhost/api/v2/products/parameters'),
+      {} as ApiHandlerContext
+    );
+
+    expect(response.status).toBe(200);
+    expect(getParameterRepositoryMock).toHaveBeenCalledTimes(1);
+    expect(listParametersMock).toHaveBeenCalledWith({});
+    expect(listParametersCachedMock).not.toHaveBeenCalled();
+  });
+
   it('invalidates server-side products cache after parameter creation', async () => {
     findByNameMock.mockResolvedValue(null);
     createParameterMock.mockResolvedValue({
@@ -84,9 +98,10 @@ describe('products/parameters handler', () => {
       name_en: 'Material',
       selectorType: 'text',
       optionLabels: [],
+      linkedTitleTermType: 'material',
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/v2/products/parameters'),
       {
         body: {
@@ -94,12 +109,17 @@ describe('products/parameters handler', () => {
           catalogId: 'catalog-1',
           selectorType: 'text',
           optionLabels: [],
+          linkedTitleTermType: 'material',
         },
       } as ApiHandlerContext
     );
 
     expect(response.status).toBe(201);
-    expect(createParameterMock).toHaveBeenCalled();
+    expect(createParameterMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        linkedTitleTermType: 'material',
+      })
+    );
     expect(invalidateAllMock).toHaveBeenCalledTimes(1);
   });
 });

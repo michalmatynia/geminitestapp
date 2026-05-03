@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import {
   generateCmsSlugRouteMetadata,
@@ -6,8 +6,6 @@ import {
 } from '@/app/(frontend)/route-helpers/slug-route-helpers';
 
 import type { Metadata } from 'next';
-
-export const revalidate = 3600;
 
 type LocalizedSlugPageProps = {
   params: Promise<{ locale: string; slug: string[] }>;

@@ -17,6 +17,7 @@ export const setMasterTreeDragNodeData = (
 
   try {
     dataTransfer.setData(MASTER_TREE_DRAG_NODE_ID, normalizedNodeId);
+    dataTransfer.effectAllowed = 'move';
     if (textValue.length > 0) {
       dataTransfer.setData(DRAG_KEYS.TEXT, textValue);
     }

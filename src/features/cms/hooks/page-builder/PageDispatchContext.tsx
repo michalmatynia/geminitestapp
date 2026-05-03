@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, Dispatch } from 'react';
+import { createContext, useContext, type Dispatch } from 'react';
 
 import type { PageBuilderAction } from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';

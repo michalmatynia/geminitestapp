@@ -178,10 +178,13 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
 import { BaselinkerSettings } from './BaselinkerSettings';
 
 const defaultPlaywrightSettings: PlaywrightSettings = {
+  identityProfile: 'default',
   headless: true,
   slowMo: 0,
   timeout: 30_000,
   navigationTimeout: 30_000,
+  locale: '',
+  timezoneId: '',
   humanizeMouse: false,
   mouseJitter: 0,
   clickDelayMin: 0,
@@ -194,6 +197,9 @@ const defaultPlaywrightSettings: PlaywrightSettings = {
   proxyServer: '',
   proxyUsername: '',
   proxyPassword: '',
+  proxySessionAffinity: false,
+  proxySessionMode: 'sticky',
+  proxyProviderPreset: 'custom',
   emulateDevice: false,
   deviceName: '',
 };
@@ -245,7 +251,6 @@ const baseConnection = (overrides: Partial<IntegrationConnection>): IntegrationC
   hasBaseApiToken: false,
   hasPlaywrightStorageState: false,
   playwrightStorageStateUpdatedAt: null,
-  playwrightHeadless: null,
   playwrightSlowMo: null,
   playwrightTimeout: null,
   playwrightNavigationTimeout: null,
@@ -306,8 +311,9 @@ const renderWithProviders = ({
     handleAllegroTest: noopAsync,
     handleTestConnection: noopAsync,
     handleTraderaManualLogin: noopAsync,
+    handleVintedManualLogin: noopAsync,
     handleSelectPlaywrightPersona: noopAsync,
-    handleSavePlaywrightSettings: noopAsync,
+    handleSavePlaywrightFallbackSettings: noopAsync,
     handleAllegroAuthorize: vi.fn(),
     handleAllegroDisconnect: noopAsync,
     handleAllegroSandboxToggle: noopAsync,
@@ -318,6 +324,7 @@ const renderWithProviders = ({
     handleAllegroApiRequest: noopAsync,
     onCloseModal: vi.fn(),
     onOpenSessionModal: vi.fn(),
+    handleResetListingScript: noopAsync,
   };
 
   const testingValue = {

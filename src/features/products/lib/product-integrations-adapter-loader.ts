@@ -1,18 +1,17 @@
 import type { ComponentProps } from 'react';
+import type * as ProductIntegrationsAdapter from '@/features/integrations/product-integrations-adapter';
+import type * as TriggerButtonBarModule from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 
 export type ProductTriggerButtonBarProps = ComponentProps<
-  typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
+  typeof TriggerButtonBarModule.TriggerButtonBar
 >;
 
-export type ProductIntegrationsAdapterModule =
-  typeof import('@/features/integrations/product-integrations-adapter');
+export type ProductIntegrationsAdapterModule = typeof ProductIntegrationsAdapter;
 
 let productIntegrationsAdapterPromise: Promise<ProductIntegrationsAdapterModule> | null = null;
 
 export const loadProductIntegrationsAdapter =
   (): Promise<ProductIntegrationsAdapterModule> => {
-    if (!productIntegrationsAdapterPromise) {
-      productIntegrationsAdapterPromise = import('@/features/integrations/product-integrations-adapter');
-    }
+    productIntegrationsAdapterPromise ??= import('@/features/integrations/product-integrations-adapter');
     return productIntegrationsAdapterPromise;
   };

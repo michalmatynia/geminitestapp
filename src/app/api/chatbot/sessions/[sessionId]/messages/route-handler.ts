@@ -3,14 +3,14 @@ export const dynamic = 'force-dynamic';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, POST_handler } from './handler';
+import { getHandler, postHandler } from './handler';
 
-export const GET = apiHandlerWithParams<{ sessionId: string }>(GET_handler, {
+export const GET = apiHandlerWithParams<{ sessionId: string }>(getHandler, {
   source: 'chatbot.sessions.[sessionId].messages.GET',
   requireAuth: true,
 });
 
-export const POST = apiHandlerWithParams<{ sessionId: string }>(POST_handler, {
+export const POST = apiHandlerWithParams<{ sessionId: string }>(postHandler, {
   source: 'chatbot.sessions.[sessionId].messages.POST',
   requireAuth: true,
 });

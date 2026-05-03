@@ -5,7 +5,7 @@ const { registerProviderMock, registerSettingsProviderMock } = vi.hoisted(() => 
   registerSettingsProviderMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/server', () => ({
+vi.mock('@/features/ai/ai-context-registry/server', () => ({
   contextRegistryEngine: {
     registerProvider: registerProviderMock,
   },

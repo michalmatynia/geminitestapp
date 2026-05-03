@@ -5,7 +5,7 @@ import type { Queue } from 'bullmq';
 import { getKangurSocialPipelineQueue } from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
-export async function POST_handler(
+export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {

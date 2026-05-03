@@ -464,7 +464,7 @@
         "lines": 1529
       },
       {
-        "path": "src/features/products/services/product-repository/prisma-product-repository.ts",
+        "path": "src/features/products/services/product-repository/removedOrm-product-repository.ts",
         "lines": 1517
       },
       {

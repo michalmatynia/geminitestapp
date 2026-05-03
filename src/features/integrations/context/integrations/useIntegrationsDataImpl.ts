@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react';
 import {
   useIntegrations,
   useIntegrationConnections,
-  usePlaywrightPersonas,
 } from '@/features/integrations/hooks/useIntegrationQueries';
+import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywrightPersonas';
 import type { Integration } from '@/shared/contracts/integrations/base';
 import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';

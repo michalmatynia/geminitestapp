@@ -1,0 +1,2 @@
+phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
+apply,repo-quality-baseline-apply,Apply repo-wide quality fixes manually,manual,manual,true,,,2026-04-15T10:54:26.139Z,artifacts/improvements/apply-report.json

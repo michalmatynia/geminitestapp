@@ -22,20 +22,27 @@ import {
   buildFilemakerMailSnippet,
   dedupeFilemakerMailParticipants,
   ensureFilemakerForwardSubject,
+  ensureFilemakerMailPlainTextAlternative,
   ensureFilemakerReplySubject,
+  evaluateFilemakerMailAccountDmarcAlignment,
   normalizeFilemakerMailSubject,
   parseFilemakerMailboxAllowlistInput,
   resolveFilemakerReplyRecipients,
 } from '../mail-utils';
 import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
 import { normalizeString, toIdToken } from '../filemaker-settings.helpers';
-import { getFilemakerPartiesForEmail } from '../settings/database-getters';
+import {
+  getFilemakerEmailsForParty,
+  getFilemakerPartiesForEmail,
+} from '../settings/database-getters';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
 
 import type {
   FilemakerMailAccount,
   FilemakerMailAccountDraft,
+  FilemakerMailAccountStatus,
   FilemakerMailComposeInput,
+  FilemakerMailFlagPatch,
   FilemakerMailFolderRole,
   FilemakerMailFolderSummary,
   FilemakerMailMessage,
@@ -49,17 +56,40 @@ import type {
   FilemakerMailThreadDetail,
 } from '../types';
 
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+
 import { readFilemakerCampaignSettingValue } from './campaign-settings-store';
+import {
+  detectFilemakerCampaignReplyContext,
+  recordFilemakerCampaignReply,
+} from './campaign-reply-detector';
+import {
+  filterFilemakerMailSuppressionEntries,
+  recordFilemakerMailBounceSuppressions,
+  recordFilemakerMailComplaintSuppressions,
+} from './campaign-suppression';
+import { createImapClient, listImapMailboxes } from './mail/mail-imap';
+import {
+  isLikelyFilemakerMailBounceMessage,
+  isLikelyFilemakerMailComplaintMessage,
+  parseFilemakerMailComplaintReport,
+  parseFilemakerMailDsnReport,
+} from './mail/mail-dsn';
+import { parseMailSource } from './mail/mail-processor';
 import * as storage from './mail/mail-storage';
 import * as smtp from './mail/mail-smtp';
 import * as mailServerUtils from './mail/mail-utils';
 
 import type {
+  MailparserAttachment,
+  MailparserParsedMail,
+  FilemakerMailMessageDocument,
   FilemakerMailThreadDocument,
 } from './mail/mail-types';
 
 const SETTINGS_COLLECTION = 'settings';
 const MAIL_THREADS_COLLECTION = 'filemaker_mail_threads';
+const MAIL_MESSAGES_COLLECTION = 'filemaker_mail_messages';
 
 const invalidateSettingsCaches = (): void => {
   clearSettingsCache();
@@ -96,6 +126,15 @@ const roleSortOrder: Record<FilemakerMailFolderRole, number> = {
   spam: 4,
   trash: 5,
   custom: 6,
+};
+
+type ImapCommandError = Error & {
+  code?: unknown;
+  mailboxMissing?: unknown;
+  response?: unknown;
+  responseStatus?: unknown;
+  responseText?: unknown;
+  serverResponseCode?: unknown;
 };
 
 const upsertSecretSettingValue = async (key: string, value: string): Promise<void> => {
@@ -170,16 +209,37 @@ const listThreadDocuments = async (
   input: {
     accountId?: string | null;
     mailboxPath?: string | null;
+    campaignId?: string | null;
+    runId?: string | null;
+    deliveryId?: string | null;
+    limit?: number | null;
   } = {}
 ): Promise<FilemakerMailThread[]> => {
   const mongo = await getMongoDb();
   const filter: Record<string, unknown> = {};
-  if (input.accountId) filter['accountId'] = input.accountId;
-  if (input.mailboxPath) filter['mailboxPath'] = input.mailboxPath;
-  return await mongo
+  if (typeof input.accountId === 'string' && input.accountId.length > 0) {
+    filter['accountId'] = input.accountId;
+  }
+  if (typeof input.mailboxPath === 'string' && input.mailboxPath.length > 0) {
+    filter['mailboxPath'] = input.mailboxPath;
+  }
+  if (typeof input.campaignId === 'string' && input.campaignId.length > 0) {
+    filter['campaignContext.campaignId'] = input.campaignId;
+  }
+  if (typeof input.runId === 'string' && input.runId.length > 0) {
+    filter['campaignContext.runId'] = input.runId;
+  }
+  if (typeof input.deliveryId === 'string' && input.deliveryId.length > 0) {
+    filter['campaignContext.deliveryId'] = input.deliveryId;
+  }
+  const cursor = mongo
     .collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION)
     .find(filter)
-    .toArray();
+    .sort({ lastMessageAt: -1, subject: 1 });
+  if (typeof input.limit === 'number' && input.limit > 0) {
+    cursor.limit(input.limit);
+  }
+  return await cursor.toArray();
 };
 
 const sortThreadsByActivity = (threads: FilemakerMailThread[]): FilemakerMailThread[] =>
@@ -189,6 +249,18 @@ const sortThreadsByActivity = (threads: FilemakerMailThread[]): FilemakerMailThr
     if (timeDelta !== 0) return timeDelta;
     return left.subject.localeCompare(right.subject);
   });
+
+const getThreadCampaignContextSearchTokens = (
+  thread: FilemakerMailThread
+): string[] => {
+  const context = thread.campaignContext;
+  if (context === null || context === undefined) return [];
+  return [
+    context.campaignId,
+    context.runId ?? '',
+    context.deliveryId ?? '',
+  ];
+};
 
 const matchesThreadQuery = (thread: FilemakerMailThread, query: string): boolean => {
   const normalizedQuery = normalizeString(query).toLowerCase();
@@ -202,10 +274,554 @@ const matchesThreadQuery = (thread: FilemakerMailThread, query: string): boolean
       participant.name ?? '',
       participant.address,
     ]),
+    ...getThreadCampaignContextSearchTokens(thread),
   ]
     .join('\n')
     .toLowerCase()
     .includes(normalizedQuery);
+};
+
+const toIsoTimestamp = (
+  value: Date | string | null | undefined,
+  fallback: string
+): string => {
+  if (!value) return fallback;
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) return fallback;
+  return parsed.toISOString();
+};
+
+const normalizeMailHtml = (
+  value: MailparserParsedMail['html']
+): string | null => {
+  if (!value) return null;
+  const html = typeof value === 'string' ? value : value.toString();
+  const normalized = normalizeString(html);
+  return normalized || null;
+};
+
+const mergeUniqueStrings = (
+  ...groups: ReadonlyArray<ReadonlyArray<string | null | undefined>>
+): string[] =>
+  Array.from(
+    new Set(
+      groups
+        .flat()
+        .map((entry) => normalizeString(entry))
+        .filter(Boolean)
+    )
+  );
+
+const mergeParticipants = (
+  ...groups: ReadonlyArray<ReadonlyArray<FilemakerMailParticipant>>
+): FilemakerMailParticipant[] => dedupeFilemakerMailParticipants(groups.flat());
+
+const buildThreadParticipantSummary = (
+  account: Pick<FilemakerMailAccount, 'emailAddress'>,
+  participants: FilemakerMailParticipant[]
+): FilemakerMailParticipant[] => {
+  const allParticipants = dedupeFilemakerMailParticipants(participants);
+  const externalParticipants = allParticipants.filter(
+    (participant) =>
+      normalizeString(participant.address).toLowerCase() !==
+      normalizeString(account.emailAddress).toLowerCase()
+  );
+  return externalParticipants.length > 0 ? externalParticipants : allParticipants;
+};
+
+const buildAttachmentIdBase = (value: string | null | undefined): string =>
+  toIdToken(normalizeString(value)) || randomUUID();
+
+const toMessageAttachments = (
+  attachments: MailparserAttachment[] | null | undefined,
+  idBase: string
+): FilemakerMailMessage['attachments'] =>
+  (attachments ?? []).map((attachment, index) => ({
+    id: `filemaker-mail-attachment-${idBase}-${index + 1}`,
+    fileName: normalizeString(attachment.filename) || null,
+    contentType: normalizeString(attachment.contentType) || null,
+    sizeBytes:
+      typeof attachment.size === 'number' && Number.isFinite(attachment.size)
+        ? attachment.size
+        : null,
+    contentId: normalizeString(attachment.cid) || null,
+    disposition: normalizeString(attachment.contentDisposition) || null,
+    isInline: normalizeString(attachment.contentDisposition).toLowerCase() === 'inline',
+  }));
+
+const resolveMailboxPath = (
+  availablePaths: Map<string, string>,
+  path: string
+): string => availablePaths.get(normalizeString(path).toLowerCase()) ?? path;
+
+const resolveMailboxPathsToSync = (
+  account: FilemakerMailAccount,
+  mailboxes: Array<{
+    path: string;
+    flags: Set<string>;
+  }>
+): string[] => {
+  const selectableMailboxes = mailboxes.filter((mailbox) => !mailbox.flags.has('\\Noselect'));
+  const availablePaths = new Map(
+    selectableMailboxes.map((mailbox) => [mailbox.path.toLowerCase(), mailbox.path])
+  );
+
+  if (account.folderAllowlist.length > 0) {
+    return Array.from(
+      new Set(
+        account.folderAllowlist
+          .map((path) => resolveMailboxPath(availablePaths, path))
+          .map((path) => normalizeString(path))
+          .filter(Boolean)
+      )
+    );
+  }
+
+  const autoPaths = selectableMailboxes.map((mailbox) => mailbox.path);
+  return autoPaths.length > 0 ? autoPaths : ['INBOX'];
+};
+
+const normalizeErrorTextPart = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = normalizeString(value);
+  return normalized.length > 0 ? normalized : null;
+};
+
+const formatImapSyncError = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return 'Mailbox sync failed.';
+  }
+
+  const imapError = error as ImapCommandError;
+  const responseText = normalizeErrorTextPart(imapError.responseText);
+  const response = normalizeErrorTextPart(imapError.response);
+  const responseStatus = normalizeErrorTextPart(imapError.responseStatus);
+  const responseCode =
+    normalizeErrorTextPart(imapError.serverResponseCode) ??
+    normalizeErrorTextPart(imapError.code);
+  const detail = responseText ?? response;
+  const statusParts: string[] = [];
+  if (responseStatus !== null) statusParts.push(responseStatus);
+  if (responseCode !== null) statusParts.push(responseCode);
+  const statusLabel = statusParts.join(' ');
+
+  if (error.message === 'Command failed') {
+    if (detail !== null) {
+      return statusLabel.length > 0
+        ? `IMAP command failed (${statusLabel}): ${detail}`
+        : `IMAP command failed: ${detail}`;
+    }
+    if (imapError.mailboxMissing === true) {
+      return 'IMAP command failed: mailbox not found.';
+    }
+    return 'IMAP command failed.';
+  }
+
+  if (detail !== null && detail !== error.message) {
+    return `${error.message}: ${detail}`;
+  }
+
+  return error.message || 'Mailbox sync failed.';
+};
+
+const formatFolderSyncErrors = (errors: string[]): string => {
+  const suffix = errors.length === 1 ? 'folder' : 'folders';
+  return `Mailbox sync finished with ${errors.length} failed ${suffix}: ${errors.join('; ')}`;
+};
+
+const resolveImapSearchResults = (
+  searchResults: number[] | false,
+  mailboxPath: string
+): number[] => {
+  if (searchResults === false) {
+    throw new Error(
+      `IMAP search failed for mailbox ${mailboxPath}. The server rejected the search command.`
+    );
+  }
+  return searchResults.slice().sort((left, right) => left - right);
+};
+
+const buildInitialMailboxUids = async (
+  client: ReturnType<typeof createImapClient>,
+  account: FilemakerMailAccount,
+  mailboxPath: string
+): Promise<number[]> => {
+  const lookbackStart = new Date();
+  lookbackStart.setDate(lookbackStart.getDate() - account.initialSyncLookbackDays);
+  const searchResults = await client.search({ since: lookbackStart }, { uid: true });
+  const uids = resolveImapSearchResults(searchResults, mailboxPath);
+  return uids.slice(-account.maxMessagesPerSync);
+};
+
+const buildIncrementalMailboxUids = async (
+  client: ReturnType<typeof createImapClient>,
+  lastUid: number,
+  mailboxPath: string
+): Promise<number[]> => {
+  const searchResults = await client.search({ uid: `${lastUid + 1}:*` }, { uid: true });
+  return resolveImapSearchResults(searchResults, mailboxPath);
+};
+
+const syncMailboxMessages = async (input: {
+  account: FilemakerMailAccount;
+  mailboxPath: string;
+  mailboxRole: FilemakerMailFolderRole;
+  client: ReturnType<typeof createImapClient>;
+  touchedThreadIds: Set<string>;
+}): Promise<{
+  fetchedMessageCount: number;
+  insertedMessageCount: number;
+  updatedMessageCount: number;
+  lastUid: number;
+}> => {
+  const lock = await input.client.getMailboxLock(input.mailboxPath, { readOnly: true });
+
+  try {
+    const mailbox = input.client.mailbox;
+    if (!mailbox) {
+      return {
+        fetchedMessageCount: 0,
+        insertedMessageCount: 0,
+        updatedMessageCount: 0,
+        lastUid: 0,
+      };
+    }
+
+    const now = new Date().toISOString();
+    const uidValidity = mailbox.uidValidity?.toString() ?? null;
+    const existingSyncState = await storage.getMailSyncState(
+      input.account.id,
+      input.mailboxPath
+    );
+    const existingMessageCount = existingSyncState
+      ? await storage.countMailMessagesForMailbox(input.account.id, input.mailboxPath)
+      : 0;
+    const uidValidityChanged =
+      Boolean(existingSyncState?.uidValidity) &&
+      existingSyncState?.uidValidity !== uidValidity;
+    const isIncremental =
+      Boolean(existingSyncState) &&
+      existingMessageCount > 0 &&
+      !uidValidityChanged &&
+      existingSyncState?.uidValidity === uidValidity &&
+      (existingSyncState?.lastUid ?? 0) > 0;
+    const shouldResetSyncCursor = Boolean(existingSyncState) && existingMessageCount === 0;
+
+    const messageUids = isIncremental
+      ? await buildIncrementalMailboxUids(
+          input.client,
+          existingSyncState?.lastUid ?? 0,
+          input.mailboxPath
+        )
+      : await buildInitialMailboxUids(input.client, input.account, input.mailboxPath);
+
+    let fetchedMessageCount = 0;
+    let insertedMessageCount = 0;
+    let updatedMessageCount = 0;
+    let highestSeenUid =
+      uidValidityChanged || shouldResetSyncCursor ? 0 : existingSyncState?.lastUid ?? 0;
+
+    if (messageUids.length > 0) {
+      const limitedUids = messageUids.slice(-input.account.maxMessagesPerSync);
+      highestSeenUid = Math.max(highestSeenUid, limitedUids[limitedUids.length - 1] ?? 0);
+
+      for await (const entry of input.client.fetch(
+        limitedUids,
+        {
+          uid: true,
+          flags: true,
+          envelope: true,
+          internalDate: true,
+          source: true,
+          threadId: true,
+        },
+        { uid: true }
+      )) {
+        if (!entry.source) continue;
+
+        fetchedMessageCount += 1;
+
+        const parsed = await parseMailSource(entry.source);
+        const providerMessageId =
+          normalizeString(parsed.messageId ?? entry.envelope?.messageId ?? null) || null;
+        const existingMessage =
+          (providerMessageId
+            ? await storage.getMailMessageByProviderId(input.account.id, providerMessageId)
+            : null) ??
+          (await storage.getMailMessageByUid(
+            input.account.id,
+            input.mailboxPath,
+            entry.uid
+          ));
+
+        const from =
+          mailServerUtils.parseMailParserAddressList(parsed.from)[0] ??
+          mailServerUtils.toParticipantList(entry.envelope?.from ?? [])[0] ??
+          null;
+        const to = mailServerUtils.pickParticipantList(
+          mailServerUtils.parseMailParserAddressList(parsed.to),
+          mailServerUtils.toParticipantList(entry.envelope?.to ?? [])
+        );
+        const cc = mailServerUtils.pickParticipantList(
+          mailServerUtils.parseMailParserAddressList(parsed.cc),
+          mailServerUtils.toParticipantList(entry.envelope?.cc ?? [])
+        );
+        const bcc = mailServerUtils.pickParticipantList(
+          mailServerUtils.parseMailParserAddressList(parsed.bcc),
+          mailServerUtils.toParticipantList(entry.envelope?.bcc ?? [])
+        );
+        const replyTo = mailServerUtils.pickParticipantList(
+          mailServerUtils.parseMailParserAddressList(parsed.replyTo),
+          mailServerUtils.toParticipantList(entry.envelope?.replyTo ?? [])
+        );
+        const allParticipants = mergeParticipants(
+          from ? [from] : [],
+          to,
+          cc,
+          bcc,
+          replyTo
+        );
+        const participantSummary = buildThreadParticipantSummary(input.account, allParticipants);
+        const relatedLinks = await resolveRelatedPartiesForParticipants(allParticipants);
+        const subject = normalizeString(parsed.subject ?? entry.envelope?.subject) || '(no subject)';
+        const normalizedSubject = normalizeFilemakerMailSubject(subject);
+        const htmlBody = normalizeMailHtml(parsed.html);
+        const textBody = normalizeString(parsed.text) || null;
+        const snippet = buildFilemakerMailSnippet(textBody, htmlBody);
+        const sentAt = toIsoTimestamp(
+          parsed.date ?? entry.envelope?.date ?? entry.internalDate ?? null,
+          now
+        );
+        const receivedAt = toIsoTimestamp(
+          entry.internalDate ?? parsed.date ?? entry.envelope?.date ?? null,
+          sentAt
+        );
+        const messageTimestamp =
+          Date.parse(receivedAt) >= Date.parse(sentAt) ? receivedAt : sentAt;
+        const flags = mailServerUtils.deriveFlags(entry.flags);
+        const direction = mailServerUtils.resolveDirection(input.account, from);
+        const providerThreadId = normalizeString(entry.threadId) || null;
+        const anchorParticipants =
+          participantSummary.length > 0 ? participantSummary : allParticipants;
+        const anchorAddress = mailServerUtils.pickAnchorAddress(anchorParticipants);
+        const inReplyToHeader = normalizeString(parsed.inReplyTo ?? entry.envelope?.inReplyTo) || null;
+        const referenceIds = Array.from(
+          new Set(
+            [
+              ...mailServerUtils.normalizeReferenceIds(parsed.references),
+              ...mailServerUtils.parseReferencesHeader(entry.envelope),
+              ...(inReplyToHeader ? [inReplyToHeader] : []),
+            ].filter((referenceId) => referenceId.trim().length > 0)
+          )
+        );
+
+        let resolvedThread: FilemakerMailThread | null = null;
+        if (!existingMessage) {
+          if (providerThreadId) {
+            resolvedThread = await storage.findMailThreadByProviderId(input.account.id, providerThreadId);
+          }
+          if (!resolvedThread && referenceIds.length > 0) {
+            resolvedThread = await storage.findMailThreadByReferences(input.account.id, referenceIds);
+          }
+          if (!resolvedThread) {
+            resolvedThread = await storage.findMailThreadBySubjectAndAnchor(
+              input.account.id,
+              normalizedSubject,
+              anchorAddress
+            );
+          }
+        }
+
+        const threadId =
+          existingMessage?.threadId ??
+          resolvedThread?.id ??
+          mailServerUtils.buildThreadId({
+            accountId: input.account.id,
+            providerThreadId,
+            normalizedSubject,
+            anchorAddress,
+          });
+        const currentThread = resolvedThread ?? (await storage.getMailThreadById(threadId));
+        const attachmentIdBase = buildAttachmentIdBase(
+          providerMessageId ?? `${input.mailboxPath}-${entry.uid}`
+        );
+
+        let campaignReplyContext = existingMessage?.campaignContext ?? null;
+        if (!campaignReplyContext && direction === 'inbound' && referenceIds.length > 0) {
+          campaignReplyContext = await detectFilemakerCampaignReplyContext({
+            accountId: input.account.id,
+            references: referenceIds,
+          });
+        }
+        if (!campaignReplyContext && direction === 'inbound') {
+          campaignReplyContext = currentThread?.campaignContext ?? null;
+        }
+
+        const nextMessage: FilemakerMailMessage = {
+          id: existingMessage?.id ?? `filemaker-mail-message-${randomUUID()}`,
+          createdAt: existingMessage?.createdAt ?? now,
+          updatedAt: now,
+          accountId: input.account.id,
+          threadId,
+          mailboxPath: input.mailboxPath,
+          mailboxRole: input.mailboxRole,
+          providerMessageId,
+          providerThreadId,
+          providerUid: entry.uid,
+          direction,
+          subject,
+          snippet,
+          from,
+          to,
+          cc,
+          bcc,
+          replyTo,
+          sentAt,
+          receivedAt,
+          flags,
+          textBody,
+          htmlBody,
+          inReplyTo: inReplyToHeader,
+          references: referenceIds,
+          attachments: toMessageAttachments(parsed.attachments, attachmentIdBase),
+          relatedPersonIds: relatedLinks.personIds,
+          relatedOrganizationIds: relatedLinks.organizationIds,
+          campaignContext: campaignReplyContext,
+        };
+        await storage.upsertMailMessage(nextMessage);
+
+        if (!existingMessage && campaignReplyContext && direction === 'inbound') {
+          void recordFilemakerCampaignReply({
+            campaignContext: campaignReplyContext,
+            replyMessage: nextMessage,
+          }).catch(() => {});
+        }
+
+        if (
+          !existingMessage &&
+          direction === 'inbound' &&
+          isLikelyFilemakerMailBounceMessage(parsed)
+        ) {
+          const report = parseFilemakerMailDsnReport(parsed);
+          if (report.isPermanent && report.bouncedAddresses.length > 0) {
+            void recordFilemakerMailBounceSuppressions({
+              addresses: report.bouncedAddresses,
+              notes: `Auto-suppressed after inbound DSN${
+                report.status ? ` (status ${report.status})` : ''
+              }${report.diagnosticCode ? `: ${report.diagnosticCode}` : '.'}`,
+              campaignId: campaignReplyContext?.campaignId ?? null,
+              runId: campaignReplyContext?.runId ?? null,
+              deliveryId: campaignReplyContext?.deliveryId ?? null,
+            }).catch(() => {});
+          }
+        }
+
+        if (
+          !existingMessage &&
+          direction === 'inbound' &&
+          isLikelyFilemakerMailComplaintMessage(parsed)
+        ) {
+          const complaint = parseFilemakerMailComplaintReport(parsed);
+          if (complaint.complainedAddresses.length > 0) {
+            void recordFilemakerMailComplaintSuppressions({
+              addresses: complaint.complainedAddresses,
+              notes: `Auto-suppressed after ARF complaint${
+                complaint.feedbackType ? ` (${complaint.feedbackType})` : ''
+              }${complaint.userAgent ? ` via ${complaint.userAgent}` : '.'}`,
+              campaignId: campaignReplyContext?.campaignId ?? null,
+              runId: campaignReplyContext?.runId ?? null,
+              deliveryId: campaignReplyContext?.deliveryId ?? null,
+            }).catch(() => {});
+          }
+        }
+
+        const wasUnread =
+          existingMessage?.direction === 'inbound' && !existingMessage.flags.seen ? 1 : 0;
+        const isUnread = nextMessage.direction === 'inbound' && !nextMessage.flags.seen ? 1 : 0;
+        const lastKnownThreadAt = currentThread?.lastMessageAt ?? '';
+        const shouldRefreshThreadHeadline =
+          !currentThread || Date.parse(messageTimestamp) >= Date.parse(lastKnownThreadAt || '');
+
+        const nextThread: FilemakerMailThread = {
+          id: threadId,
+          createdAt: currentThread?.createdAt ?? now,
+          updatedAt: now,
+          accountId: input.account.id,
+          mailboxPath: shouldRefreshThreadHeadline
+            ? input.mailboxPath
+            : (currentThread?.mailboxPath ?? input.mailboxPath),
+          mailboxRole: shouldRefreshThreadHeadline
+            ? input.mailboxRole
+            : (currentThread?.mailboxRole ?? input.mailboxRole),
+          providerThreadId: providerThreadId ?? currentThread?.providerThreadId ?? null,
+          subject: shouldRefreshThreadHeadline
+            ? subject
+            : (currentThread?.subject ?? subject),
+          normalizedSubject,
+          anchorAddress: currentThread?.anchorAddress || anchorAddress,
+          snippet: shouldRefreshThreadHeadline
+            ? snippet
+            : (currentThread?.snippet ?? snippet),
+          participantSummary: mergeParticipants(
+            participantSummary,
+            currentThread?.participantSummary ?? []
+          ),
+          relatedPersonIds: mergeUniqueStrings(
+            relatedLinks.personIds,
+            currentThread?.relatedPersonIds ?? []
+          ),
+          relatedOrganizationIds: mergeUniqueStrings(
+            relatedLinks.organizationIds,
+            currentThread?.relatedOrganizationIds ?? []
+          ),
+          unreadCount: Math.max(
+            0,
+            (currentThread?.unreadCount ?? 0) + isUnread - wasUnread
+          ),
+          messageCount:
+            (currentThread?.messageCount ?? 0) + (existingMessage ? 0 : 1),
+          lastMessageAt: shouldRefreshThreadHeadline
+            ? messageTimestamp
+            : (currentThread?.lastMessageAt ?? messageTimestamp),
+          campaignContext:
+            campaignReplyContext ?? currentThread?.campaignContext ?? null,
+        };
+        await storage.upsertMailThread(nextThread);
+        input.touchedThreadIds.add(threadId);
+
+        if (existingMessage) {
+          updatedMessageCount += 1;
+        } else {
+          insertedMessageCount += 1;
+        }
+      }
+    } else if (!isIncremental) {
+      highestSeenUid = Math.max(highestSeenUid, Math.max(0, mailbox.uidNext - 1));
+    }
+
+    await storage.upsertMailSyncState({
+      id:
+        existingSyncState?.id ??
+        mailServerUtils.buildSyncStateId(input.account.id, input.mailboxPath),
+      createdAt: existingSyncState?.createdAt ?? now,
+      updatedAt: now,
+      accountId: input.account.id,
+      mailboxPath: input.mailboxPath,
+      role: input.mailboxRole,
+      uidValidity,
+      lastUid: highestSeenUid,
+      lastSyncedAt: now,
+    });
+
+    return {
+      fetchedMessageCount,
+      insertedMessageCount,
+      updatedMessageCount,
+      lastUid: highestSeenUid,
+    };
+  } finally {
+    lock.release();
+  }
 };
 
 export const listFilemakerMailAccounts = async (): Promise<FilemakerMailAccount[]> => {
@@ -229,6 +845,25 @@ export const upsertFilemakerMailAccount = async (
   const id = existing?.id ?? draft.id ?? `mail-account-${toIdToken(draft.emailAddress) || randomUUID()}`;
   const now = new Date().toISOString();
   const isCreate = !existing;
+  const existingImapPasswordSettingKey = normalizeString(existing?.imapPasswordSettingKey);
+  const existingSmtpPasswordSettingKey = normalizeString(existing?.smtpPasswordSettingKey);
+  const imapPasswordSettingKey =
+    existingImapPasswordSettingKey.length > 0
+      ? existingImapPasswordSettingKey
+      : mailServerUtils.buildAccountSecretSettingKey(id, 'imap_password');
+  const smtpPasswordSettingKey =
+    existingSmtpPasswordSettingKey.length > 0
+      ? existingSmtpPasswordSettingKey
+      : mailServerUtils.buildAccountSecretSettingKey(id, 'smtp_password');
+  const dkimDomain = normalizeNullableString(draft.dkimDomain);
+  const dkimKeySelector = normalizeNullableString(draft.dkimKeySelector);
+  const hasIncomingDkimPrivateKey = normalizeString(draft.dkimPrivateKey).length > 0;
+  const existingDkimPrivateKeySettingKey = normalizeString(existing?.dkimPrivateKeySettingKey);
+  const shouldPersistDkimKey = Boolean(dkimDomain && dkimKeySelector && hasIncomingDkimPrivateKey);
+  const dkimPrivateKeySettingKey =
+    shouldPersistDkimKey && existingDkimPrivateKeySettingKey.length === 0
+      ? mailServerUtils.buildAccountSecretSettingKey(id, 'dkim_private_key')
+      : existingDkimPrivateKeySettingKey || null;
 
   const nextAccount: FilemakerMailAccount = {
     id,
@@ -242,19 +877,23 @@ export const upsertFilemakerMailAccount = async (
     imapPort: draft.imapPort,
     imapSecure: draft.imapSecure,
     imapUser: normalizeString(draft.imapUser),
-    imapPasswordSettingKey: mailServerUtils.buildAccountSecretSettingKey(id, 'imap_password'),
+    imapPasswordSettingKey,
     smtpHost: normalizeString(draft.smtpHost),
     smtpPort: draft.smtpPort,
     smtpSecure: draft.smtpSecure,
     smtpUser: normalizeString(draft.smtpUser),
-    smtpPasswordSettingKey: mailServerUtils.buildAccountSecretSettingKey(id, 'smtp_password'),
+    smtpPasswordSettingKey,
     fromName: normalizeNullableString(draft.fromName),
     replyToEmail: normalizeNullableEmail(draft.replyToEmail),
     folderAllowlist: parseFilemakerMailboxAllowlistInput(draft.folderAllowlist.join(',')),
     initialSyncLookbackDays: draft.initialSyncLookbackDays,
     maxMessagesPerSync: draft.maxMessagesPerSync,
+    pushEnabled: draft.pushEnabled ?? existing?.pushEnabled ?? true,
     lastSyncedAt: existing?.lastSyncedAt ?? null,
     lastSyncError: existing?.lastSyncError ?? null,
+    dkimDomain: dkimDomain ?? existing?.dkimDomain ?? null,
+    dkimKeySelector: dkimKeySelector ?? existing?.dkimKeySelector ?? null,
+    dkimPrivateKeySettingKey: dkimPrivateKeySettingKey ?? null,
   };
 
   if (isCreate && !normalizeString(draft.imapPassword)) {
@@ -272,8 +911,34 @@ export const upsertFilemakerMailAccount = async (
   if (normalizeString(draft.smtpPassword)) {
     await upsertSecretSettingValue(nextAccount.smtpPasswordSettingKey, draft.smtpPassword);
   }
+  if (shouldPersistDkimKey && nextAccount.dkimPrivateKeySettingKey) {
+    await upsertSecretSettingValue(nextAccount.dkimPrivateKeySettingKey, draft.dkimPrivateKey);
+  }
 
   await storage.ensureMailIndexes();
+
+  const dmarcAlignment = evaluateFilemakerMailAccountDmarcAlignment({
+    emailAddress: nextAccount.emailAddress,
+    replyToEmail: nextAccount.replyToEmail,
+    dkimDomain: nextAccount.dkimDomain,
+    dkimKeySelector: nextAccount.dkimKeySelector,
+    hasDkimPrivateKey: Boolean(nextAccount.dkimPrivateKeySettingKey),
+  });
+  if (!dmarcAlignment.isAligned) {
+    await logSystemEvent({
+      level: 'warn',
+      source: 'filemaker-mail-account',
+      message: `Mail account ${nextAccount.emailAddress} saved with DMARC alignment warnings: ${dmarcAlignment.warnings.join(', ')}.`,
+      context: {
+        accountId: nextAccount.id,
+        warnings: dmarcAlignment.warnings,
+        fromDomain: dmarcAlignment.fromDomain,
+        replyToDomain: dmarcAlignment.replyToDomain,
+        dkimDomain: dmarcAlignment.dkimDomain,
+      },
+    }).catch(() => {});
+  }
+
   return nextAccount;
 };
 
@@ -281,6 +946,21 @@ export const saveFilemakerMailAccount = upsertFilemakerMailAccount;
 
 export const deleteFilemakerMailAccount = async (id: string): Promise<void> => {
   await storage.deleteMailAccount(id);
+};
+
+export const updateFilemakerMailAccountStatus = async (
+  id: string,
+  status: FilemakerMailAccountStatus
+): Promise<FilemakerMailAccount> => {
+  const account = await getFilemakerMailAccount(id);
+  const nextAccount: FilemakerMailAccount = {
+    ...account,
+    status,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await storage.upsertMailAccount(nextAccount);
+  return nextAccount;
 };
 
 export const listFilemakerMailFolderSummaries = async (input?: {
@@ -348,14 +1028,54 @@ export const listFilemakerMailThreads = async (input?: {
   query?: string | null;
   accountId?: string | null;
   mailboxPath?: string | null;
+  campaignId?: string | null;
+  runId?: string | null;
+  deliveryId?: string | null;
+  limit?: number | null;
 }): Promise<FilemakerMailThread[]> => {
   const threads = await listThreadDocuments({
     accountId: input?.accountId ?? null,
     mailboxPath: input?.mailboxPath ?? null,
+    campaignId: input?.campaignId ?? null,
+    runId: input?.runId ?? null,
+    deliveryId: input?.deliveryId ?? null,
+    limit: input?.query ? null : input?.limit ?? null,
   });
-  return sortThreadsByActivity(
+  const matchingThreads = sortThreadsByActivity(
     threads.filter((thread) => matchesThreadQuery(thread, input?.query ?? ''))
   );
+  return typeof input?.limit === 'number' ? matchingThreads.slice(0, input.limit) : matchingThreads;
+};
+
+export const listFilemakerMailThreadsForCampaign = async (input: {
+  campaignId: string;
+  runId?: string | null;
+  deliveryId?: string | null;
+  limit?: number | null;
+}): Promise<FilemakerMailThread[]> => {
+  const campaignId = normalizeString(input.campaignId);
+  if (campaignId.length === 0) return [];
+
+  return listFilemakerMailThreads({
+    campaignId,
+    runId: normalizeNullableString(input.runId),
+    deliveryId: normalizeNullableString(input.deliveryId),
+    limit: input.limit ?? null,
+  });
+};
+
+export const getFilemakerMailThreadForCampaignDelivery = async (input: {
+  campaignId: string;
+  runId?: string | null;
+  deliveryId: string;
+}): Promise<FilemakerMailThread | null> => {
+  const threads = await listFilemakerMailThreadsForCampaign({
+    campaignId: input.campaignId,
+    runId: input.runId ?? null,
+    deliveryId: input.deliveryId,
+    limit: 1,
+  });
+  return threads[0] ?? null;
 };
 
 export const syncFilemakerMailAccount = async (
@@ -363,25 +1083,115 @@ export const syncFilemakerMailAccount = async (
 ): Promise<FilemakerMailSyncResult & { lastSyncError: string | null }> => {
   const account = await getFilemakerMailAccount(id);
   const completedAt = new Date().toISOString();
-  const nextAccount: FilemakerMailAccount = {
-    ...account,
-    updatedAt: completedAt,
-    lastSyncedAt: completedAt,
-    lastSyncError: null,
-  };
-  await storage.upsertMailAccount(nextAccount);
+  const imapPasswordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
+  const defaultFolders =
+    account.folderAllowlist.length > 0 ? account.folderAllowlist : ['INBOX'];
 
-  return {
-    accountId: id,
-    foldersScanned:
-      nextAccount.folderAllowlist.length > 0 ? nextAccount.folderAllowlist : ['INBOX'],
-    fetchedMessageCount: 0,
-    insertedMessageCount: 0,
-    updatedMessageCount: 0,
-    touchedThreadCount: 0,
-    completedAt,
-    lastSyncError: null,
-  };
+  try {
+    const secrets = await readSecretSettingValues([imapPasswordKey]);
+    const imapPassword = secrets[imapPasswordKey];
+    if (!imapPassword) {
+      throw configurationError(
+        `IMAP password not configured for ${account.emailAddress}. Set it on the mail account before syncing.`
+      );
+    }
+    const client = createImapClient(account, imapPassword);
+    const touchedThreadIds = new Set<string>();
+    let foldersScanned = defaultFolders;
+    let fetchedMessageCount = 0;
+    let insertedMessageCount = 0;
+    let updatedMessageCount = 0;
+    let successfulFolderCount = 0;
+    const folderSyncErrors: string[] = [];
+
+    try {
+      await client.connect();
+      const mailboxes = await listImapMailboxes(client);
+      const mailboxRoleByPath = new Map(
+        mailboxes.map((mailbox) => [mailbox.path, mailServerUtils.normalizeMailboxRole(mailbox)])
+      );
+      foldersScanned = resolveMailboxPathsToSync(account, mailboxes);
+
+      for (const mailboxPath of foldersScanned) {
+        try {
+          const mailboxResult = await syncMailboxMessages({
+            account,
+            mailboxPath,
+            mailboxRole:
+              mailboxRoleByPath.get(mailboxPath) ?? inferMailboxRoleFromPath(mailboxPath),
+            client,
+            touchedThreadIds,
+          });
+          fetchedMessageCount += mailboxResult.fetchedMessageCount;
+          insertedMessageCount += mailboxResult.insertedMessageCount;
+          updatedMessageCount += mailboxResult.updatedMessageCount;
+          successfulFolderCount += 1;
+        } catch (error) {
+          const folderError = `${mailboxPath}: ${formatImapSyncError(error)}`;
+          folderSyncErrors.push(folderError);
+          await logSystemEvent({
+            level: 'warn',
+            source: 'filemaker-mail-sync',
+            message: `Failed to sync Filemaker mailbox ${mailboxPath} for ${account.emailAddress}`,
+            error,
+            context: {
+              accountId: account.id,
+              mailboxPath,
+            },
+          }).catch(() => {});
+        }
+      }
+    } finally {
+      try {
+        await client.logout();
+      } catch {
+        client.close();
+      }
+    }
+
+    if (successfulFolderCount === 0 && folderSyncErrors.length > 0) {
+      throw new Error(formatFolderSyncErrors(folderSyncErrors));
+    }
+
+    const lastSyncError =
+      folderSyncErrors.length > 0 ? formatFolderSyncErrors(folderSyncErrors) : null;
+    const nextAccount: FilemakerMailAccount = {
+      ...account,
+      updatedAt: completedAt,
+      lastSyncedAt: completedAt,
+      lastSyncError,
+    };
+    await storage.upsertMailAccount(nextAccount);
+
+    return {
+      accountId: id,
+      foldersScanned,
+      fetchedMessageCount,
+      insertedMessageCount,
+      updatedMessageCount,
+      touchedThreadCount: touchedThreadIds.size,
+      completedAt,
+      lastSyncError,
+    };
+  } catch (error) {
+    const lastSyncError = formatImapSyncError(error);
+    await storage.upsertMailAccount({
+      ...account,
+      updatedAt: completedAt,
+      lastSyncError,
+    });
+
+    return {
+      accountId: id,
+      foldersScanned: defaultFolders,
+      fetchedMessageCount: 0,
+      insertedMessageCount: 0,
+      updatedMessageCount: 0,
+      touchedThreadCount: 0,
+      completedAt,
+      lastSyncError,
+    };
+  }
 };
 
 export const getFilemakerMailThreadDetail = async (
@@ -474,14 +1284,30 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
   outboxEntry: FilemakerMailOutboxEntry;
 }> => {
   const account = await getFilemakerMailAccount(input.accountId);
-  const smtpPasswordKey = mailServerUtils.buildAccountSecretSettingKey(account.id, 'smtp_password');
-  const secrets = await readSecretSettingValues([smtpPasswordKey]);
+  const smtpPasswordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'smtp_password');
+  const dkimPrivateKeySettingKey = account.dkimPrivateKeySettingKey?.trim() || null;
+  const secretKeys = [smtpPasswordKey, ...(dkimPrivateKeySettingKey ? [dkimPrivateKeySettingKey] : [])];
+  const secrets = await readSecretSettingValues(secretKeys);
   const password = secrets[smtpPasswordKey];
+  const dkimPrivateKey = dkimPrivateKeySettingKey ? secrets[dkimPrivateKeySettingKey] ?? null : null;
 
   const to = dedupeFilemakerMailParticipants(input.to);
   const cc = dedupeFilemakerMailParticipants(input.cc ?? []);
   const bcc = dedupeFilemakerMailParticipants(input.bcc ?? []);
   const recipientSummary = dedupeFilemakerMailParticipants([...to, ...cc, ...bcc]);
+
+  if (!input.overrideSuppression) {
+    const suppressed = await filterFilemakerMailSuppressionEntries(
+      recipientSummary.map((participant) => participant.address)
+    );
+    if (suppressed.length > 0) {
+      throw validationError(
+        `Recipient(s) are on the suppression list: ${suppressed
+          .map((entry) => `${entry.emailAddress} (${entry.reason})`)
+          .join(', ')}. Pass overrideSuppression=true to force-send.`
+      );
+    }
+  }
   const normalizedSubject = normalizeFilemakerMailSubject(input.subject);
   const bodyText = buildFilemakerMailPlainText(input.bodyHtml);
   const snippet = buildFilemakerMailSnippet(bodyText, input.bodyHtml);
@@ -519,7 +1345,12 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
   };
   await storage.upsertOutboxEntry(queuedOutbox);
 
-  const transport = smtp.createSmtpTransport(account, password ?? undefined);
+  const transport = smtp.createSmtpTransport(account, password ?? undefined, dkimPrivateKey);
+  const attachments = (input.attachments ?? []).map((attachment) => ({
+    filename: attachment.fileName,
+    contentType: attachment.contentType,
+    content: Buffer.from(attachment.dataBase64, 'base64'),
+  }));
   const sendResult = await transport.sendMail({
     from: account.fromName
       ? `"${account.fromName}" <${account.emailAddress}>`
@@ -530,9 +1361,17 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
     replyTo: account.replyToEmail ?? undefined,
     inReplyTo: input.inReplyTo ?? undefined,
     subject: normalizeString(input.subject),
-    text: bodyText || undefined,
+    text: ensureFilemakerMailPlainTextAlternative(bodyText, input.bodyHtml),
     html: input.bodyHtml,
+    attachments: attachments.length > 0 ? attachments : undefined,
   });
+  const rawMessage = (sendResult as unknown as { message?: Buffer | string }).message;
+  if (rawMessage) {
+    void appendFilemakerMailToSentFolder({
+      account,
+      rawMessage,
+    }).catch(() => {});
+  }
 
   const message: FilemakerMailMessage = {
     id: `filemaker-mail-message-${randomUUID()}`,
@@ -574,6 +1413,7 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
     attachments: [],
     relatedPersonIds: personIds,
     relatedOrganizationIds: organizationIds,
+    campaignContext: input.campaignContext ?? null,
   };
   await storage.upsertMailMessage(message);
 
@@ -587,6 +1427,9 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
     providerThreadId: existingThread?.providerThreadId ?? null,
     subject: normalizeString(input.subject) || normalizedSubject,
     normalizedSubject,
+    anchorAddress:
+      existingThread?.anchorAddress ||
+      mailServerUtils.pickAnchorAddress(recipientSummary),
     snippet,
     participantSummary: recipientSummary,
     relatedPersonIds: personIds,
@@ -594,6 +1437,7 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
     unreadCount: existingThread?.unreadCount ?? 0,
     messageCount: (existingThread?.messageCount ?? 0) + 1,
     lastMessageAt: now,
+    campaignContext: input.campaignContext ?? existingThread?.campaignContext ?? null,
   };
   await storage.upsertMailThread(thread);
 
@@ -635,6 +1479,204 @@ export const markFilemakerMailThreadRead = async (
   };
   await storage.upsertMailThread(updatedThread);
   return updatedThread;
+};
+
+const flagKeyToImapName = (key: keyof FilemakerMailFlagPatch): string => {
+  switch (key) {
+    case 'seen':
+      return '\\Seen';
+    case 'flagged':
+      return '\\Flagged';
+    case 'answered':
+      return '\\Answered';
+    case 'deleted':
+      return '\\Deleted';
+  }
+};
+
+export const updateFilemakerMailMessageFlags = async (
+  messageId: string,
+  patch: FilemakerMailFlagPatch
+): Promise<FilemakerMailMessage> => {
+  const mongo = await getMongoDb();
+  const message = await mongo
+    .collection<FilemakerMailMessage & { _id: string }>('filemaker_mail_messages')
+    .findOne({ id: messageId });
+  if (!message) throw validationError('Message not found.');
+  const account = await getFilemakerMailAccount(message.accountId);
+  const adds: string[] = [];
+  const removes: string[] = [];
+  const nextFlags = { ...message.flags };
+  (Object.keys(patch) as Array<keyof FilemakerMailFlagPatch>).forEach((key) => {
+    const next = patch[key];
+    if (typeof next !== 'boolean') return;
+    const current = message.flags[key] ?? false;
+    if (next === current) return;
+    nextFlags[key] = next;
+    const flagName = flagKeyToImapName(key);
+    if (next) adds.push(flagName);
+    else removes.push(flagName);
+  });
+
+  if (typeof message.providerUid === 'number' && (adds.length > 0 || removes.length > 0)) {
+    const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
+    const secrets = await readSecretSettingValues([passwordKey]);
+    const password = secrets[passwordKey];
+    if (password) {
+      const client = createImapClient(account, password);
+      try {
+        await client.connect();
+        const lock = await client.getMailboxLock(message.mailboxPath);
+        try {
+          if (adds.length > 0) {
+            await client.messageFlagsAdd({ uid: message.providerUid }, adds, { uid: true });
+          }
+          if (removes.length > 0) {
+            await client.messageFlagsRemove({ uid: message.providerUid }, removes, { uid: true });
+          }
+        } finally {
+          lock.release();
+        }
+      } finally {
+        try {
+          await client.logout();
+        } catch {
+          client.close();
+        }
+      }
+    }
+  }
+
+  const updatedMessage: FilemakerMailMessage = {
+    ...message,
+    flags: nextFlags,
+    updatedAt: new Date().toISOString(),
+  };
+  await storage.upsertMailMessage(updatedMessage);
+
+  const thread = await storage.getMailThreadById(message.threadId);
+  if (thread) {
+    const messages = await storage.listMailMessagesByThreadId(message.threadId);
+    const unreadCount = messages.filter(
+      (candidate) => candidate.direction === 'inbound' && !candidate.flags.seen
+    ).length;
+    await storage.upsertMailThread({
+      ...thread,
+      unreadCount,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  return updatedMessage;
+};
+
+const resolveMailboxPathByRole = async (
+  client: ReturnType<typeof createImapClient>,
+  role: FilemakerMailFolderRole
+): Promise<string | null> => {
+  const mailboxes = await listImapMailboxes(client);
+  const match = mailboxes.find(
+    (mailbox) => mailServerUtils.normalizeMailboxRole(mailbox) === role
+  );
+  return match?.path ?? null;
+};
+
+export const moveFilemakerMailMessage = async (input: {
+  messageId: string;
+  targetMailboxPath?: string | null;
+  targetRole?: FilemakerMailFolderRole | null;
+}): Promise<FilemakerMailMessage> => {
+  const mongo = await getMongoDb();
+  const message = await mongo
+    .collection<FilemakerMailMessage & { _id: string }>('filemaker_mail_messages')
+    .findOne({ id: input.messageId });
+  if (!message) throw validationError('Message not found.');
+  if (typeof message.providerUid !== 'number') {
+    throw validationError('Message has no provider UID and cannot be moved.');
+  }
+  const account = await getFilemakerMailAccount(message.accountId);
+  const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
+  const secrets = await readSecretSettingValues([passwordKey]);
+  const password = secrets[passwordKey];
+  if (!password) {
+    throw configurationError(`IMAP password not configured for ${account.emailAddress}.`);
+  }
+
+  const client = createImapClient(account, password);
+  let resolvedPath = input.targetMailboxPath ?? null;
+  try {
+    await client.connect();
+    if (!resolvedPath && input.targetRole) {
+      resolvedPath = await resolveMailboxPathByRole(client, input.targetRole);
+    }
+    if (!resolvedPath) {
+      throw validationError('Target mailbox not found.');
+    }
+    const lock = await client.getMailboxLock(message.mailboxPath);
+    try {
+      await client.messageMove({ uid: message.providerUid }, resolvedPath, { uid: true });
+    } finally {
+      lock.release();
+    }
+  } finally {
+    try {
+      await client.logout();
+    } catch {
+      client.close();
+    }
+  }
+
+  const updatedMessage: FilemakerMailMessage = {
+    ...message,
+    mailboxPath: resolvedPath,
+    mailboxRole: input.targetRole ?? inferMailboxRoleFromPath(resolvedPath),
+    updatedAt: new Date().toISOString(),
+  };
+  await storage.upsertMailMessage(updatedMessage);
+
+  const threadMessages = await storage.listMailMessagesByThreadId(message.threadId);
+  const representative = threadMessages[threadMessages.length - 1] ?? updatedMessage;
+  const thread = await storage.getMailThreadById(message.threadId);
+  if (thread) {
+    await storage.upsertMailThread({
+      ...thread,
+      mailboxPath: representative.mailboxPath,
+      mailboxRole: representative.mailboxRole,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  return updatedMessage;
+};
+
+export const appendFilemakerMailToSentFolder = async (input: {
+  account: FilemakerMailAccount;
+  rawMessage: string | Buffer;
+}): Promise<void> => {
+  const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(input.account, 'imap_password');
+  const secrets = await readSecretSettingValues([passwordKey]);
+  const password = secrets[passwordKey];
+  if (!password) return;
+  const client = createImapClient(input.account, password);
+  try {
+    await client.connect();
+    const sentPath = await resolveMailboxPathByRole(client, 'sent');
+    if (!sentPath) return;
+    await client.append(sentPath, input.rawMessage, ['\\Seen']);
+  } catch (error) {
+    await logSystemEvent({
+      level: 'warn',
+      source: 'filemaker-mail-sent-append',
+      message: `Failed to append sent message for ${input.account.emailAddress}`,
+      error,
+    }).catch(() => {});
+  } finally {
+    try {
+      await client.logout();
+    } catch {
+      client.close();
+    }
+  }
 };
 
 export const deleteFilemakerMailThread = async (threadId: string): Promise<void> => {
@@ -766,5 +1808,88 @@ export const searchFilemakerMailMessages = async (input: {
     query,
     totalHits: messages.length,
     groups,
+  };
+};
+
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export const listFilemakerOrganizationEmailLog = async (input: {
+  organizationId: string;
+  limit?: number;
+}): Promise<FilemakerMailSearchResponse> => {
+  const organizationId = normalizeString(input.organizationId);
+  if (organizationId.length === 0) {
+    return { query: '', totalHits: 0, groups: [] };
+  }
+
+  const database = await loadFilemakerDatabase();
+  const linkedEmailAddresses = Array.from(
+    new Set(
+      getFilemakerEmailsForParty(database, 'organization', organizationId)
+        .map((email) => normalizeString(email.email).toLowerCase())
+        .filter((emailAddress) => emailAddress.length > 0)
+    )
+  );
+  if (linkedEmailAddresses.length === 0) {
+    return { query: organizationId, totalHits: 0, groups: [] };
+  }
+
+  const fromAddressFilters = linkedEmailAddresses.map((emailAddress) => ({
+    'from.address': { $regex: `^${escapeRegex(emailAddress)}$`, $options: 'i' },
+  }));
+  const mongo = await getMongoDb();
+  const messages = await mongo
+    .collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION)
+    .find({
+      direction: 'inbound',
+      $or: fromAddressFilters,
+    })
+    .sort({ receivedAt: -1, sentAt: -1 })
+    .limit(input.limit ?? 500)
+    .toArray();
+  const threadIds = [...new Set(messages.map((message) => message.threadId))];
+  const threadDocs = await Promise.all(threadIds.map((id) => storage.getMailThreadById(id)));
+  const threadMap = new Map(threadDocs.filter(Boolean).map((thread) => [thread!.id, thread!]));
+  const groupMap = new Map<string, FilemakerMailSearchResultGroup>();
+
+  messages.forEach((message: FilemakerMailMessage): void => {
+    const thread = threadMap.get(message.threadId);
+    const hit: FilemakerMailSearchHit = {
+      messageId: message.id,
+      threadId: message.threadId,
+      accountId: message.accountId,
+      mailboxPath: message.mailboxPath,
+      subject: message.subject,
+      from: message.from ?? null,
+      to: message.to,
+      direction: message.direction,
+      sentAt: message.sentAt ?? null,
+      receivedAt: message.receivedAt ?? null,
+      matchSnippet:
+        message.snippet ?? buildSearchMatchSnippet(buildSearchableText(message), organizationId),
+      matchField: 'from',
+    };
+    const existing = groupMap.get(message.threadId);
+    if (existing !== undefined) {
+      existing.hits.push(hit);
+      return;
+    }
+    groupMap.set(message.threadId, {
+      threadId: message.threadId,
+      threadSubject: thread?.subject ?? message.subject,
+      accountId: message.accountId,
+      mailboxPath: thread?.mailboxPath ?? message.mailboxPath,
+      lastMessageAt:
+        thread?.lastMessageAt ?? message.receivedAt ?? message.sentAt ?? message.createdAt ?? '',
+      hits: [hit],
+    });
+  });
+
+  return {
+    query: organizationId,
+    totalHits: messages.length,
+    groups: Array.from(groupMap.values()).sort(
+      (left, right) => Date.parse(right.lastMessageAt || '') - Date.parse(left.lastMessageAt || '')
+    ),
   };
 };

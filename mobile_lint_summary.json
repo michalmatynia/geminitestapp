@@ -1,0 +1,1962 @@
+[
+  {
+    "filePath": "apps/mobile/src/home/HomeLoadingShell.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 73,
+        "message": "Function 'HomeLoadingShell' has too many lines (109). Maximum allowed is 60."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/KangurMobileHomeProgressSnapshotContext.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "complexity",
+        "line": 42,
+        "message": "Arrow function has a complexity of 9. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 56,
+        "message": "Do not nest ternary expressions."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/AssignmentCard.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/explicit-function-return-type",
+        "line": 7,
+        "message": "Missing return type on function."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 26,
+        "message": "Unexpected value in conditional. A boolean expression is required."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/FocusCard.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 8,
+        "message": "Function 'FocusCard' has too many lines (86). Maximum allowed is 60."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeAccountSection.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 30,
+        "message": "Function 'HomeAccountSection' has too many lines (119). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 30,
+        "message": "Function 'HomeAccountSection' has a complexity of 9. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeDuelLeaderboardSection.tsx",
+    "errorCount": 6,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 13,
+        "message": "Function 'HomeDuelLeaderboardSection' has too many lines (72). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "line": 14,
+        "message": "'activeDuelLearnerId' is defined but never used. Allowed unused args must match /^_/u."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "line": 15,
+        "message": "'isAuthenticated' is defined but never used. Allowed unused args must match /^_/u."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 30,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 38,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 38,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeDuelSectionsGroup.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 26,
+        "message": "Function 'HomeDuelSectionsGroup' has too many lines (68). Maximum allowed is 60."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeHeroSection.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 27,
+        "message": "Function 'HomeHeroSection' has too many lines (171). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 27,
+        "message": "Function 'HomeHeroSection' has a complexity of 13. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeLearnerCredentialsSignInSection.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 12,
+        "message": "Function 'HomeLearnerCredentialsSignInSection' has too many lines (80). Maximum allowed is 60."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeNavigationSection.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 32,
+        "message": "Function 'HomeNavigationSection' has too many lines (163). Maximum allowed is 60."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeResultsHubSection.tsx",
+    "errorCount": 8,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 36,
+        "message": "Function 'HomeResultsHubSection' has too many lines (193). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 36,
+        "message": "Function 'HomeResultsHubSection' has a complexity of 15. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 68,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 76,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 84,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 84,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 88,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 96,
+        "message": "Do not nest ternary expressions."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeSecondaryInsightsBadgesAndPlanSectionGroup.tsx",
+    "errorCount": 5,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "line": 2,
+        "message": "'DeferredHomeInsightsBadgesAndPlanCard' is defined but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "line": 8,
+        "message": "'DeferredHomeInsightsResultsHubCard' is defined but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 33,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 40,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 42,
+        "message": "Do not nest ternary expressions."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeSecondaryInsightsBadgesSectionGroup.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 13,
+        "message": "Function 'HomeSecondaryInsightsBadgesSectionGroup' has too many lines (76). Maximum allowed is 60."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeSecondaryLessonPlanSection.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "line": 1,
+        "message": "'View' is defined but never used. Allowed unused vars must match /^_/u."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeSecondaryRecentLessonsSection.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 16,
+        "message": "Function 'HomeSecondaryRecentLessonsSection' has too many lines (62). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 43,
+        "message": "Do not nest ternary expressions."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/HomeTrainingFocusSection.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 22,
+        "message": "Function 'HomeTrainingFocusSection' has too many lines (118). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 22,
+        "message": "Function 'HomeTrainingFocusSection' has a complexity of 14. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/LessonCheckpointCard.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 7,
+        "message": "Function 'LessonCheckpointCard' has too many lines (75). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "line": 14,
+        "message": "Unnecessary conditional, the types have no overlap."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/LessonMasteryCard.tsx",
+    "errorCount": 3,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 7,
+        "message": "Function 'LessonMasteryCard' has too many lines (78). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 15,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "line": 23,
+        "message": "Unnecessary conditional, the types have no overlap."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/LiveHomeSecondaryLessonPlanSection.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 10,
+        "message": "Function 'LiveHomeSecondaryLessonPlanSection' has too many lines (74). Maximum allowed is 60."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/duels/AnonymousHomePrivateDuelSectionGroup.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 15,
+        "message": "Function 'AnonymousHomePrivateDuelSectionGroup' has too many lines (131). Maximum allowed is 60."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/duels/AuthenticatedHomeActiveRivalsContent.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 21,
+        "message": "Function 'AuthenticatedHomeActiveRivalsContent' has too many lines (131). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 21,
+        "message": "Function 'AuthenticatedHomeActiveRivalsContent' has a complexity of 15. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/duels/AuthenticatedHomeInvitesContent.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 20,
+        "message": "Function 'AuthenticatedHomeInvitesContent' has too many lines (96). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 20,
+        "message": "Function 'AuthenticatedHomeInvitesContent' has a complexity of 10. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/duels/AuthenticatedHomeOutgoingChallengesContent.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 22,
+        "message": "Function 'AuthenticatedHomeOutgoingChallengesContent' has too many lines (108). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 22,
+        "message": "Function 'AuthenticatedHomeOutgoingChallengesContent' has a complexity of 12. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/duels/AuthenticatedHomeRematchesSection.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 25,
+        "message": "Function 'AuthenticatedHomeRematchesSection' has too many lines (138). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 25,
+        "message": "Function 'AuthenticatedHomeRematchesSection' has a complexity of 10. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/duels/HomeDuelLeaderboardSection.tsx",
+    "errorCount": 3,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 15,
+        "message": "Function 'HomeDuelLeaderboardSection' has too many lines (132). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 15,
+        "message": "Function 'HomeDuelLeaderboardSection' has a complexity of 11. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 95,
+        "message": "Do not nest ternary expressions."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/components/duels/HomeLiveDuelsSection.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 14,
+        "message": "Function 'HomeLiveDuelsSection' has too many lines (91). Maximum allowed is 60."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/home-duel-section-cards.tsx",
+    "errorCount": 9,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 20,
+        "message": "Function 'DuelInviteCard' has too many lines (76). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 97,
+        "message": "Function 'OutgoingChallengeCard' has too many lines (93). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 191,
+        "message": "Function 'ActiveRivalCard' has too many lines (72). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 264,
+        "message": "Function 'RecentOpponentCard' has too many lines (74). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "max-lines",
+        "line": 308,
+        "message": "File has too many lines (545). Maximum allowed is 300."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 339,
+        "message": "Function 'LiveDuelCard' has too many lines (115). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 351,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 361,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 378,
+        "message": "Do not nest ternary expressions."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/home-screen-content.tsx",
+    "errorCount": 10,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "line": 3,
+        "message": "'Href' is defined but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 49,
+        "message": "Function 'HomeScreenContent' has too many lines (292). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 49,
+        "message": "Function 'HomeScreenContent' has a complexity of 27. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "line": 119,
+        "message": "Unnecessary optional chain on a non-nullish value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "line": 120,
+        "message": "Unnecessary optional chain on a non-nullish value."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 121,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "line": 128,
+        "message": "'authBoundaryView' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 157,
+        "message": "Arrow function has too many lines (148). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 208,
+        "message": "Arrow function has too many lines (96). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "max-lines",
+        "line": 322,
+        "message": "File has too many lines (337). Maximum allowed is 300."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/home-screen-deferred.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines",
+        "line": 336,
+        "message": "File has too many lines (365). Maximum allowed is 300."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/home-screen-insights.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "line": 1,
+        "message": "'View' is defined but never used. Allowed unused vars must match /^_/u."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/home-screen-score-state.tsx",
+    "errorCount": 6,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/explicit-function-return-type",
+        "line": 153,
+        "message": "Missing return type on function."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 154,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 212,
+        "message": "Function 'LiveAuthenticatedHomeScoreState' has too many lines (73). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 212,
+        "message": "Function 'LiveAuthenticatedHomeScoreState' has a complexity of 16. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 232,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "max-lines",
+        "line": 324,
+        "message": "File has too many lines (321). Maximum allowed is 300."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/homeAuthBoundary.ts",
+    "errorCount": 14,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 63,
+        "message": "Arrow function has too many lines (64). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 79,
+        "message": "Arrow function has a complexity of 24. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 83,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 85,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 93,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 95,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "line": 97,
+        "message": "Unnecessary conditional, comparison is always false, since `undefined === \"admin\"` is false."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "line": 99,
+        "message": "Unnecessary conditional, left-hand side of `??` operator is always `null` or `undefined`."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 102,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 104,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 106,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 107,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 109,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 121,
+        "message": "Do not nest ternary expressions."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/homeDebugProof.ts",
+    "errorCount": 5,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 34,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 37,
+        "message": "Arrow function has too many lines (177). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 45,
+        "message": "Arrow function has a complexity of 10. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 46,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 155,
+        "message": "Do not nest ternary expressions."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/persistedKangurMobileHomeDuelInvites.ts",
+    "errorCount": 3,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 13,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 20,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "no-param-reassign",
+        "line": 34,
+        "message": "Assignment to property of function parameter 'snapshot'."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/persistedKangurMobileHomeLessonCheckpoints.ts",
+    "errorCount": 8,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 40,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 99,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 106,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 115,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "no-param-reassign",
+        "line": 124,
+        "message": "Assignment to property of function parameter 'masterySnapshot'."
+      },
+      {
+        "ruleId": "no-param-reassign",
+        "line": 129,
+        "message": "Assignment to property of function parameter 'snapshot'."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 164,
+        "message": "Unexpected value in conditional. A boolean expression is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 178,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/useHomeScreenDeferredPanels.ts",
+    "errorCount": 5,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/explicit-function-return-type",
+        "line": 11,
+        "message": "Missing return type on function."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "line": 44,
+        "message": "Unnecessary optional chain on a non-nullish value."
+      },
+      {
+        "ruleId": "consistent-return",
+        "line": 146,
+        "message": "Arrow function expected no return value."
+      },
+      {
+        "ruleId": "consistent-return",
+        "line": 182,
+        "message": "Arrow function expected no return value."
+      },
+      {
+        "ruleId": "consistent-return",
+        "line": 221,
+        "message": "Arrow function expected no return value."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/useKangurMobileHomeBadges.ts",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/explicit-function-return-type",
+        "line": 27,
+        "message": "Missing return type on function."
+      },
+      {
+        "ruleId": "@typescript-eslint/prefer-nullish-coalescing",
+        "line": 28,
+        "message": "Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/useKangurMobileHomeDuelsInvites.ts",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 36,
+        "message": "Arrow function has too many lines (113). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 38,
+        "message": "Arrow function has a complexity of 27. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/useKangurMobileHomeDuelsLeaderboard.ts",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 26,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 39,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/useKangurMobileHomeDuelsPresence.ts",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 37,
+        "message": "Arrow function has too many lines (129). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 39,
+        "message": "Arrow function has a complexity of 15. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/useKangurMobileHomeDuelsRematches.ts",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 34,
+        "message": "Arrow function has too many lines (114). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 36,
+        "message": "Arrow function has a complexity of 15. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/useKangurMobileHomeDuelsSpotlight.ts",
+    "errorCount": 3,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 40,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 53,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 81,
+        "message": "Arrow function has a complexity of 12. Maximum allowed is 8."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/useKangurMobileHomeLessonMastery.ts",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 39,
+        "message": "Unexpected value in conditional. A boolean expression is required."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/useKangurMobileRecentResults.ts",
+    "errorCount": 4,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-return",
+        "line": 62,
+        "message": "Unsafe return of a value of type error."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 62,
+        "message": "Unsafe call of a type that could not be resolved."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 66,
+        "message": "Arrow function has a complexity of 11. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-non-null-assertion",
+        "line": 98,
+        "message": "Forbidden non-null assertion."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/home/useKangurMobileTrainingFocus.ts",
+    "errorCount": 5,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 38,
+        "message": "Arrow function has too many lines (83). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 40,
+        "message": "Arrow function has a complexity of 13. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 55,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 75,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 81,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/KangurLessonsScreen.tsx",
+    "errorCount": 8,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 118,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 128,
+        "message": "Function 'KangurLessonsScreen' has too many lines (243). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 179,
+        "message": "Arrow function has too many lines (182). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-redundant-type-constituents",
+        "line": 179,
+        "message": "'Element' is an 'error' type that acts as 'any' and overrides all other types in this union type."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 179,
+        "message": "Arrow function has a complexity of 20. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 240,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "max-lines",
+        "line": 321,
+        "message": "File has too many lines (361). Maximum allowed is 300."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 335,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/LessonsCatalogPanel.tsx",
+    "errorCount": 3,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "line": 10,
+        "message": "'renderLessonPracticeLink' is defined but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 14,
+        "message": "Function 'LessonsCatalogPanel' has too many lines (71). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 76,
+        "message": "Unsafe call of a type that could not be resolved."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/components/LessonsAssignmentsSection.tsx",
+    "errorCount": 13,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "line": 9,
+        "message": "Unexpected any. Specify a different type."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 10,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 15,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 18,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 21,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 24,
+        "message": "Unsafe member access .assignmentItems on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 26,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 30,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 30,
+        "message": "Unsafe member access .assignmentItems on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "line": 30,
+        "message": "Unexpected any. Specify a different type."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 31,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 31,
+        "message": "Unsafe member access .assignment on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 31,
+        "message": "Unsafe assignment of an `any` value."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/components/LessonsBadgesSection.tsx",
+    "errorCount": 30,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "line": 10,
+        "message": "Unexpected any. Specify a different type."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 11,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 16,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 19,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 22,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 27,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 27,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 28,
+        "message": "Unsafe member access .unlockedBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 28,
+        "message": "Unsafe member access .totalBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 29,
+        "message": "Unsafe member access .unlockedBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 29,
+        "message": "Unsafe member access .totalBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 30,
+        "message": "Unsafe member access .unlockedBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 30,
+        "message": "Unsafe member access .totalBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 35,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 35,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 36,
+        "message": "Unsafe member access .remainingBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 37,
+        "message": "Unsafe member access .remainingBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 38,
+        "message": "Unsafe member access .remainingBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 44,
+        "message": "Unsafe member access .recentBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 46,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 51,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 54,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 54,
+        "message": "Unsafe member access .recentBadges on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "line": 54,
+        "message": "Unexpected any. Specify a different type."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 55,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 55,
+        "message": "Unsafe member access .id on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 55,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 62,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 63,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 63,
+        "message": "Unsafe call of an `any` typed value."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/components/LessonsCatalogSection.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 57,
+        "message": "Unsafe call of a type that could not be resolved."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/components/LessonsCheckpointsSection.tsx",
+    "errorCount": 15,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "line": 9,
+        "message": "Unexpected any. Specify a different type."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 10,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 15,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 18,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 21,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 24,
+        "message": "Unsafe member access .recentCheckpoints on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 26,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 30,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 30,
+        "message": "Unsafe member access .recentCheckpoints on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "line": 30,
+        "message": "Unexpected any. Specify a different type."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 31,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 31,
+        "message": "Unsafe member access .componentId on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 31,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 35,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 35,
+        "message": "Unsafe call of an `any` typed value."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/components/LessonsDuelsSection.tsx",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 219,
+        "message": "Unsafe assignment of an error typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 219,
+        "message": "Unsafe call of a type that could not be resolved."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/components/LessonsMasterySection.tsx",
+    "errorCount": 57,
+    "errors": [
+      {
+        "ruleId": "max-lines-per-function",
+        "line": 5,
+        "message": "Function 'LessonsMasterySection' has too many lines (78). Maximum allowed is 60."
+      },
+      {
+        "ruleId": "complexity",
+        "line": 5,
+        "message": "Function 'LessonsMasterySection' has a complexity of 10. Maximum allowed is 8."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "line": 10,
+        "message": "Unexpected any. Specify a different type."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 11,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 12,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 12,
+        "message": "Unsafe member access .weakest on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 13,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 13,
+        "message": "Unsafe member access .strongest on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 18,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 21,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 24,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 29,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 29,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 29,
+        "message": "Unsafe member access .trackedLessons on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 29,
+        "message": "Unsafe member access .trackedLessons on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 29,
+        "message": "Unsafe member access .trackedLessons on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 33,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 33,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 33,
+        "message": "Unsafe member access .masteredLessons on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 33,
+        "message": "Unsafe member access .masteredLessons on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 33,
+        "message": "Unsafe member access .masteredLessons on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 37,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 37,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 37,
+        "message": "Unsafe member access .lessonsNeedingPractice on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 37,
+        "message": "Unsafe member access .lessonsNeedingPractice on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 37,
+        "message": "Unsafe member access .lessonsNeedingPractice on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 42,
+        "message": "Unsafe member access .trackedLessons on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 44,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 48,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 53,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 55,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 55,
+        "message": "Unsafe member access .lessonHref on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 56,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 56,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 56,
+        "message": "Unsafe member access .title on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 56,
+        "message": "Unsafe member access .title on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 56,
+        "message": "Unsafe member access .title on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 61,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 63,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 63,
+        "message": "Unsafe member access .lessonHref on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 64,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 64,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 64,
+        "message": "Unsafe member access .title on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 64,
+        "message": "Unsafe member access .title on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 64,
+        "message": "Unsafe member access .title on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 71,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 71,
+        "message": "Unsafe member access .weakest on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 73,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 73,
+        "message": "Unsafe member access .weakest on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 74,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 74,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 77,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 77,
+        "message": "Unsafe member access .strongest on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 79,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 79,
+        "message": "Unsafe member access .strongest on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 80,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 80,
+        "message": "Unsafe call of an `any` typed value."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/components/LessonsRecentResultsSection.tsx",
+    "errorCount": 30,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "line": 11,
+        "message": "Unexpected any. Specify a different type."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 12,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 17,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 20,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 23,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 27,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 28,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 28,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 32,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 32,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 32,
+        "message": "Unsafe member access .isLoading on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 32,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 32,
+        "message": "Unsafe member access .isRestoringAuth on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 34,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 36,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 36,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 36,
+        "message": "Unsafe member access .isEnabled on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 38,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "line": 40,
+        "message": "Do not nest ternary expressions."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 40,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 40,
+        "message": "Unsafe member access .error on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 42,
+        "message": "Unsafe member access .error on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 44,
+        "message": "Unsafe member access .recentResultItems on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 46,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "line": 50,
+        "message": "Unsafe call of an `any` typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 50,
+        "message": "Unsafe member access .recentResultItems on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "line": 50,
+        "message": "Unexpected any. Specify a different type."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 51,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 51,
+        "message": "Unsafe member access .result on an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 51,
+        "message": "Unsafe assignment of an `any` value."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/lesson-checkpoint-service.ts",
+    "errorCount": 10,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "line": 19,
+        "message": "Unexpected any. Specify a different type."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 24,
+        "message": "Unsafe assignment of an `any` value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-argument",
+        "line": 27,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }`."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 31,
+        "message": "Unsafe assignment of an error typed value."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 32,
+        "message": "Unsafe member access .lessonsCompleted on a type that cannot be resolved."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 33,
+        "message": "Unsafe member access .lessonsCompleted on a type that cannot be resolved."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-argument",
+        "line": 36,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }`."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 37,
+        "message": "Unsafe member access .badges on a type that cannot be resolved."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "line": 37,
+        "message": "Unsafe spread of an error typed value in an array."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 37,
+        "message": "Unsafe member access .badges on a type that cannot be resolved."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/lesson-row-primitives.tsx",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "max-lines",
+        "line": 326,
+        "message": "File has too many lines (394). Maximum allowed is 300."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/lessonHref.ts",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 11,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 27,
+        "message": "Unexpected value in conditional. A boolean expression is required."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/useKangurMobileLessonCheckpoints.ts",
+    "errorCount": 2,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 45,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 129,
+        "message": "Unexpected value in conditional. A boolean expression is required."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/useKangurMobileLessons.ts",
+    "errorCount": 3,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "line": 52,
+        "message": "Unsafe member access .lessonMastery on a type that cannot be resolved."
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-argument",
+        "line": 70,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `Pick<{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }, \"lessonMastery\">`."
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "line": 71,
+        "message": "Unexpected value in conditional. A boolean expression is required."
+      }
+    ]
+  },
+  {
+    "filePath": "apps/mobile/src/lessons/useKangurMobileLessonsDuels.ts",
+    "errorCount": 1,
+    "errors": [
+      {
+        "ruleId": "@typescript-eslint/explicit-function-return-type",
+        "line": 7,
+        "message": "Missing return type on function."
+      }
+    ]
+  }
+]

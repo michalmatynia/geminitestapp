@@ -2,7 +2,6 @@ import type { ManagedQueueStatus } from '@/shared/lib/queue/scheduler-queue-type
 
 export type AiPathRunJobData = {
   runId: string;
-  type?: 'run' | 'recovery';
 };
 
 export type AiInsightsQueueStatus = ManagedQueueStatus;
@@ -21,5 +20,4 @@ export type AiPathRunQueueHotStatus = {
 
 export type AiPathRunQueueState = {
   workerStarted: boolean;
-  recoveryScheduled: boolean;
 };

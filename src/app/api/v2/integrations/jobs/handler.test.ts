@@ -16,7 +16,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('v2 integrations jobs handler', () => {
   beforeEach(() => {
@@ -134,7 +134,7 @@ describe('v2 integrations jobs handler', () => {
       },
     });
 
-    const response = await GET_handler({} as never, {} as never);
+    const response = await getHandler({} as never, {} as never);
     const body = await response.json();
 
     expect(listAllListingsMock).toHaveBeenCalledTimes(1);

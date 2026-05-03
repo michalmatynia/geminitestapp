@@ -1,8 +1,8 @@
 'use client';
 
 import { Folder, FolderOpen, PlusIcon } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 
 import { createCaseResolverCasesMasterTreeAdapter } from '@/features/case-resolver/adapter';
 import {
@@ -58,7 +58,7 @@ import { CaseListSorting } from './list/sections/CaseListSorting';
 
 const CASE_LIST_LOADING_SKELETON_ROWS = 8;
 
-const CaseListLoadingSkeleton = memo(function CaseListLoadingSkeleton(): React.JSX.Element {
+const CaseListLoadingSkeleton = memo((): React.JSX.Element => {
   return (
     <div className='space-y-2 py-2'>
       {Array.from({ length: CASE_LIST_LOADING_SKELETON_ROWS }).map(
@@ -77,7 +77,7 @@ const CaseListLoadingSkeleton = memo(function CaseListLoadingSkeleton(): React.J
   );
 });
 
-export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
+export const CaseListPanel = memo((): React.JSX.Element => {
   const router = useRouter();
   const settingsStore = useSettingsStore();
   const {
@@ -400,7 +400,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const handleOpenCase = useCallback(
     (caseId: string): void => {
       primeCaseResolverNavigationWorkspace(workspace);
-      router.push(buildCaseResolverCaseHref(caseId));
+      startTransition(() => { router.push(buildCaseResolverCaseHref(caseId)); });
     },
     [router, workspace]
   );
@@ -448,7 +448,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const handleOpenFile = useCallback(
     (fileId: string): void => {
       primeCaseResolverNavigationWorkspace(workspace);
-      router.push(buildCaseResolverCaseHref(fileId));
+      startTransition(() => { router.push(buildCaseResolverCaseHref(fileId)); });
     },
     [router, workspace]
   );

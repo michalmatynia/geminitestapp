@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import {
   appendKangurUrlParams,
@@ -51,10 +51,9 @@ type KangurGameHomeQuestStatusLabels = {
 type KangurGameHomeQuestLeadingTrack =
   | ReturnType<typeof getProgressBadgeTrackSummaries>[number]
   | null;
-type KangurGameHomeQuestPanelProps = {
-  actionHref: string;
+
+type KangurGameHomeQuestContextValue = {
   averageXpPerSession: number;
-  basePath: string;
   currentWinStreak: number;
   fallbackCopy: KangurHomeQuestFallbackCopy;
   guidedMomentum: ReturnType<typeof getRecommendedSessionMomentum>;
@@ -64,6 +63,16 @@ type KangurGameHomeQuestPanelProps = {
   translateWithFallback: KangurGameHomeQuestTranslateWithFallback;
   visibleLeadingTrack: KangurGameHomeQuestLeadingTrack;
 };
+
+const KangurGameHomeQuestContext = React.createContext<KangurGameHomeQuestContextValue | null>(null);
+
+function useKangurGameHomeQuest(): KangurGameHomeQuestContextValue {
+  const context = React.useContext(KangurGameHomeQuestContext);
+  if (!context) {
+    throw new Error('useKangurGameHomeQuest must be used within KangurGameHomeQuestProvider');
+  }
+  return context;
+}
 
 const buildAssignmentHref = (
   basePath: string,
@@ -345,15 +354,17 @@ const renderKangurGameHomeQuestGuidedChip = ({
     </KangurStatusChip>
   ) : null;
 
-const KangurGameHomeQuestMomentumSection = ({
-  averageXpPerSession,
-  currentWinStreak,
-  fallbackCopy,
-  guidedMomentum,
-  runtimeTranslations,
-  translateWithFallback,
-  visibleLeadingTrack,
-}: Omit<KangurGameHomeQuestPanelProps, 'actionHref' | 'basePath' | 'quest' | 'questStatusLabels'>): React.JSX.Element | null => {
+const KangurGameHomeQuestMomentumSection = (): React.JSX.Element | null => {
+  const {
+    averageXpPerSession,
+    currentWinStreak,
+    fallbackCopy,
+    guidedMomentum,
+    runtimeTranslations,
+    translateWithFallback,
+    visibleLeadingTrack,
+  } = useKangurGameHomeQuest();
+
   if (
     !hasKangurGameHomeQuestMomentum({
       averageXpPerSession,
@@ -394,16 +405,11 @@ const KangurGameHomeQuestMomentumSection = ({
 
 const KangurGameHomeQuestPanel = ({
   actionHref,
-  averageXpPerSession,
-  currentWinStreak,
-  fallbackCopy,
-  guidedMomentum,
-  quest,
-  questStatusLabels,
-  runtimeTranslations,
-  translateWithFallback,
-  visibleLeadingTrack,
-}: KangurGameHomeQuestPanelProps): React.JSX.Element => {
+}: {
+  actionHref: string;
+}): React.JSX.Element => {
+  const { quest, questStatusLabels, translateWithFallback, fallbackCopy } =
+    useKangurGameHomeQuest();
   const assignment = quest.assignment;
 
   return (
@@ -481,15 +487,7 @@ const KangurGameHomeQuestPanel = ({
             </KangurStatusChip>
           </div>
 
-          <KangurGameHomeQuestMomentumSection
-            averageXpPerSession={averageXpPerSession}
-            currentWinStreak={currentWinStreak}
-            fallbackCopy={fallbackCopy}
-            guidedMomentum={guidedMomentum}
-            runtimeTranslations={runtimeTranslations}
-            translateWithFallback={translateWithFallback}
-            visibleLeadingTrack={visibleLeadingTrack}
-          />
+          <KangurGameHomeQuestMomentumSection />
 
           <KangurProgressBar
             accent={resolveKangurGameHomeQuestProgressAccent(quest.progress.status)}
@@ -578,22 +576,26 @@ export function KangurGameHomeQuestWidget({
   }
 
   return (
-    <KangurGameHomeQuestPanel
-      actionHref={buildAssignmentHref(basePath, visibleQuest.assignment.action)}
-      averageXpPerSession={averageXpPerSession}
-      basePath={basePath}
-      currentWinStreak={currentWinStreak}
-      fallbackCopy={fallbackCopy}
-      guidedMomentum={guidedMomentum}
-      quest={visibleQuest}
-      questStatusLabels={resolveKangurGameHomeQuestStatusLabels({
+    <KangurGameHomeQuestContext.Provider
+      value={{
+        averageXpPerSession,
+        currentWinStreak,
         fallbackCopy,
+        guidedMomentum,
+        quest: visibleQuest,
+        questStatusLabels: resolveKangurGameHomeQuestStatusLabels({
+          fallbackCopy,
+          translateWithFallback,
+        }),
+        runtimeTranslations,
         translateWithFallback,
-      })}
-      runtimeTranslations={runtimeTranslations}
-      translateWithFallback={translateWithFallback}
-      visibleLeadingTrack={visibleLeadingTrack}
-    />
+        visibleLeadingTrack,
+      }}
+    >
+      <KangurGameHomeQuestPanel
+        actionHref={buildAssignmentHref(basePath, visibleQuest.assignment.action)}
+      />
+    </KangurGameHomeQuestContext.Provider>
   );
 }
 

@@ -6,9 +6,12 @@ import { DuelsLobbyPanel } from './duels/DuelsLobbyPanel';
 import { useDuelsLobby } from './duels/useDuelsLobby';
 import { useDuelState } from './duels/useDuelState';
 import type { KangurDuelMode } from '@/features/kangur/shared/contracts/kangur-duels';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurRouteActivity } from '@/features/kangur/ui/hooks/useKangurRouteActivity';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
@@ -29,10 +32,10 @@ const DUELS_MAIN_ID = 'kangur-duels-main';
 function DuelsContent(): React.JSX.Element {
   const lobbyTranslations = useTranslations('KangurDuels.lobby');
   const { basePath } = useKangurRouting();
-  const auth = useKangurAuth();
-  const { user, isAuthenticated, logout } = auth;
+  const { user, isAuthenticated } = useKangurAuthSessionState();
+  const { logout } = useKangurAuthActions();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const { openLoginModal } = useKangurLoginModal();
+  const { openLoginModal } = useKangurLoginModalActions();
   const isGuest = !isAuthenticated;
   const isDuelsRouteActive = useKangurRouteActivity('Duels');
   const [lobbyModeFilter, setLobbyModeFilter] = useState<'all' | KangurDuelMode>('all');
@@ -73,7 +76,7 @@ function DuelsContent(): React.JSX.Element {
     [basePath, guestPlayerName, logout, openLoginModal, setGuestPlayerName, user]
   );
 
-  const publicLobbyEntries = lobby.lobbyEntries ?? [];
+  const publicLobbyEntries = lobby.lobbyEntries;
   const filteredPublicLobbyEntries = useMemo(() => {
     const filtered =
       lobbyModeFilter === 'all'
@@ -107,7 +110,7 @@ function DuelsContent(): React.JSX.Element {
   const visibleLobbyCount = filteredPublicLobbyEntries.length;
   const lobbyCountLabel = lobbyTranslations('countLabel', { count: publicLobbyCount });
   const lobbyRefreshSeconds = Math.round(LOBBY_POLL_INTERVAL_MS / 1000);
-  const lobbyFresh = lobby.lobbyFresh ?? new Map();
+  const lobbyFresh = lobby.lobbyFresh;
 
   return (
     <KangurStandardPageLayout
@@ -141,11 +144,11 @@ function DuelsContent(): React.JSX.Element {
           lobbyError={lobby.lobbyError}
           isLobbyLoading={lobby.isLobbyLoading}
           isBusy={lobby.isLobbyLoading}
-          relativeNow={lobby.relativeNow ?? Date.now()}
+          relativeNow={lobby.relativeNow}
           lobbyFresh={lobbyFresh}
           freshWindowMs={LOBBY_FRESH_WINDOW_MS}
           onRefresh={() => {
-            void lobby.loadLobby({ showLoading: true });
+            lobby.loadLobby({ showLoading: true }).catch(() => undefined);
           }}
           onModeFilterChange={setLobbyModeFilter}
           onSortChange={setLobbySort}

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,

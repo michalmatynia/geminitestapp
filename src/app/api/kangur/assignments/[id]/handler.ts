@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
@@ -39,7 +39,7 @@ export async function patchKangurAssignmentHandler(
     await readKangurJsonBody(req, 'assignment update', ctx.body)
   );
   const repository = await getKangurAssignmentRepository();
-  let updatedAssignment = await repository
+  const updatedAssignment = await repository
     .updateAssignment(actor.learnerKey, id, payload)
     .catch(async (error) => {
       void ErrorSystem.captureException(error);

@@ -1,8 +1,6 @@
-import { JSX } from 'react';
+import { type JSX } from 'react';
 
 import { renderProductPublicRoute } from '@/app/(frontend)/products/product-route-helpers';
-
-export const revalidate = 3600;
 
 type LocalizedProductPageProps = {
   params: Promise<{ locale: string; id: string }>;

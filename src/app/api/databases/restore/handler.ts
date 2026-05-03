@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
@@ -98,7 +98,7 @@ export async function postDatabasesRestoreHandler(
     mongoUri,
     '--db',
     databaseName,
-    '--archive=' + backupPath,
+    `--archive=${  backupPath}`,
     '--gzip',
     '--drop',
   ];

@@ -172,10 +172,10 @@ export function useNotesAppEntityHandlers({
           [
             ...(selectedNote.relationsFrom ?? [])
               .map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
-              .filter((rid: string | undefined): rid is string => !!rid),
+              .filter((rid: string | undefined): rid is string => Boolean(rid)),
             ...(selectedNote.relationsTo ?? [])
               .map((rel: NoteRelationWithSource) => rel.sourceNote?.id)
-              .filter((rid: string | undefined): rid is string => !!rid),
+              .filter((rid: string | undefined): rid is string => Boolean(rid)),
           ].filter(
             (id: string, index: number, array: string[]): boolean => array.indexOf(id) === index
           );

@@ -51,10 +51,9 @@ export class ApiErrorBuilder {
   }
 
   build(): ApiError {
-    return {
-      error: this.error,
-      ...(this.meta && { meta: this.meta }),
-    };
+    const result: ApiError = { error: this.error };
+    if (this.meta !== undefined) result.meta = this.meta;
+    return result;
   }
 
   toResponse(status: number = 400): Response {
@@ -62,18 +61,10 @@ export class ApiErrorBuilder {
       'Content-Type': 'application/json',
     };
 
-    // Add specific headers based on error type
-    switch (this.error.code) {
-      case 'RATE_LIMITED':
-        headers['Retry-After'] = '60';
-        break;
-      case 'UNSUPPORTED_VERSION':
-        headers['API-Supported-Versions'] = 'v2';
-        break;
-      case 'SERVICE_UNAVAILABLE':
-        headers['Retry-After'] = '300';
-        break;
-    }
+    const code = this.error.code;
+    if (code === 'RATE_LIMITED') headers['Retry-After'] = '60';
+    else if (code === 'UNSUPPORTED_VERSION') headers['API-Supported-Versions'] = 'v2';
+    else if (code === 'SERVICE_UNAVAILABLE') headers['Retry-After'] = '300';
 
     return new Response(JSON.stringify(this.build()), {
       status,
@@ -103,7 +94,7 @@ export class StandardErrors {
   }
 
   static forbidden(action?: string): ApiErrorBuilder {
-    const message = action ? `Insufficient permissions for ${action}` : 'Access forbidden';
+    const message = (typeof action === 'string' && action !== '') ? `Insufficient permissions for ${action}` : 'Access forbidden';
     return new ApiErrorBuilder('FORBIDDEN', message).withDocumentation('/docs/permissions');
   }
 
@@ -190,40 +181,41 @@ export class StandardErrors {
 }
 
 // Error response helpers
+const attachRequestId = (builder: ApiErrorBuilder, requestId?: string): ApiErrorBuilder => {
+  if (typeof requestId === 'string' && requestId !== '') {
+    builder.withRequestId(requestId);
+  }
+  return builder;
+};
+
+const resolveErrorMessage = (error: Error): string =>
+  typeof error.message === 'string' && error.message !== ''
+    ? error.message
+    : 'An unexpected error occurred';
+
+const buildGenericErrorBuilder = (error: Error): ApiErrorBuilder => {
+  const category = classifyError(error);
+  const builder = new ApiErrorBuilder('SERVER_ERROR', resolveErrorMessage(error)).withCategory(
+    category
+  );
+
+  if (process.env['NODE_ENV'] === 'development') {
+    builder.withDetails([{ message: error.message, code: 'INTERNAL_ERROR' }]);
+  }
+
+  return builder;
+};
+
 export function createVersionedErrorResponse(
   error: Error | ApiErrorBuilder,
   status: number = 500,
   requestId?: string
 ): Response {
   if (error instanceof ApiErrorBuilder) {
-    if (requestId) {
-      error.withRequestId(requestId);
-    }
-    return error.toResponse(status);
+    return attachRequestId(error, requestId).toResponse(status);
   }
 
-  // Handle generic errors
-  const category = classifyError(error);
-  const builder = new ApiErrorBuilder(
-    'SERVER_ERROR',
-    error.message || 'An unexpected error occurred'
-  ).withCategory(category);
-
-  if (requestId) {
-    builder.withRequestId(requestId);
-  }
-
-  // In development, include error details
-  if (process.env['NODE_ENV'] === 'development') {
-    builder.withDetails([
-      {
-        message: error.message,
-        code: 'INTERNAL_ERROR',
-      },
-    ]);
-  }
-
-  return builder.toResponse(status);
+  return attachRequestId(buildGenericErrorBuilder(error), requestId).toResponse(status);
 }
 
 // HTTP status code mapping

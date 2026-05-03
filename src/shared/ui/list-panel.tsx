@@ -1,5 +1,6 @@
 import { Loader2 } from 'lucide-react';
 
+import type { DataAttributes } from '@/shared/contracts/ui/base';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { SectionHeader } from './section-header';
@@ -8,7 +9,7 @@ import type { ReactNode } from 'react';
 
 type ListPanelVariant = 'default' | 'flat';
 
-type ListPanelProps = {
+type ListPanelProps = DataAttributes & {
   title?: string;
   description?: string;
   eyebrow?: ReactNode;
@@ -73,12 +74,14 @@ export function ListPanel(props: ListPanelProps) {
     isLoading = false,
     loadingMessage = 'Loading...',
     emptyState,
+    ...rest
   } = props;
 
   return (
     <section
       className={cn(variantStyles[variant], className)}
       {...(isLoading ? { 'aria-busy': true } : {})}
+      {...rest}
     >
       {header || title ? (
         <div className={cn('mb-6', headerClassName)}>

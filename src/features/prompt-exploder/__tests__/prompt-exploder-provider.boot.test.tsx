@@ -30,14 +30,19 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mocks.routerPush,
-  }),
   useSearchParams: () => new URLSearchParams(mocks.searchParams),
 }));
 
-vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: mocks.routerPush,
+  }),
+}));
+
+vi.mock('@/shared/ui/primitives.public', async () => {
+  const actual = await vi.importActual<typeof import('@/shared/ui/primitives.public')>(
+    '@/shared/ui/primitives.public'
+  );
   return {
     ...actual,
     useToast: () => ({

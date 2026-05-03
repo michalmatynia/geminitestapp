@@ -35,16 +35,25 @@ type KangurSocialPostsPageOptions = {
 
 let indexesEnsured: Promise<void> | null = null;
 
+/**
+ * Name of the local JSON file used for social post persistence when MongoDB is unavailable.
+ */
 const LOCAL_STORE_FILENAME = 'kangur_social_posts.json';
 
+/**
+ * Resolves the absolute path to the local social posts store file.
+ * Defaults to the system temp directory if no environment override is provided.
+ * 
+ * @returns Path to the local JSON store
+ */
 const resolveLocalStorePath = (): string => {
   const customPath = process.env['KANGUR_SOCIAL_POSTS_STORE_PATH']?.trim();
-  const baseDir = customPath
-    ? path.extname(customPath)
-      ? path.dirname(customPath)
-      : customPath
-    : os.tmpdir();
 
+  if (customPath == null || customPath.length === 0) {
+    return path.join(os.tmpdir(), LOCAL_STORE_FILENAME);
+  }
+
+  const baseDir = path.extname(customPath) ? path.dirname(customPath) : customPath;
   return path.join(baseDir, LOCAL_STORE_FILENAME);
 };
 
@@ -57,7 +66,7 @@ const readLocalStore = async (): Promise<KangurSocialPostStore> => {
     return parseKangurSocialPostStore(parsed);
   } catch (error) {
     if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') {
-      void ErrorSystem.captureException(error, {
+      ErrorSystem.captureException(error, {
         service: 'kangur.social-posts.repository',
         action: 'readLocalStore',
       });
@@ -72,7 +81,7 @@ const writeLocalStore = async (store: KangurSocialPostStore): Promise<void> => {
 };
 
 const ensureIndexes = async (): Promise<void> => {
-  if (!process.env['MONGODB_URI']) {
+  if (process.env['MONGODB_URI'] == null || process.env['MONGODB_URI'].length === 0) {
     return;
   }
 
@@ -90,7 +99,7 @@ const ensureIndexes = async (): Promise<void> => {
       collection.createIndex({ updatedAt: -1 }),
     ]);
   })().catch((error) => {
-    void ErrorSystem.captureException(error, {
+    ErrorSystem.captureException(error, {
       service: 'kangur.social-posts.repository',
       action: 'ensureIndexes',
     });
@@ -101,7 +110,7 @@ const ensureIndexes = async (): Promise<void> => {
   return indexesEnsured;
 };
 
-const readCollection = async () => {
+const readCollection = async (): Promise<import('mongodb').Collection<KangurSocialPostDoc>> => {
   const db = await getMongoDb();
   return db.collection<KangurSocialPostDoc>(KANGUR_SOCIAL_POSTS_COLLECTION);
 };
@@ -114,7 +123,7 @@ const toSocialPost = (doc: KangurSocialPostDoc): KangurSocialPost =>
   });
 
 const toDocUpdate = (post: KangurSocialPost): Omit<KangurSocialPostDoc, 'createdAt' | 'updatedAt'> => {
-  const { createdAt: _createdAt, updatedAt: _updatedAt, ...rest } = post;
+  const { createdAt: createdAtIgnored, updatedAt: updatedAtIgnored, ...rest } = post;
   return rest;
 };
 
@@ -216,7 +225,7 @@ const filterPostsForAdminList = (
 
 const buildMongoSearchMatch = (search: string | null | undefined): Filter<KangurSocialPostDoc> => {
   const normalizedSearch = search?.trim();
-  if (!normalizedSearch) {
+  if (normalizedSearch == null || normalizedSearch.length === 0) {
     return {};
   }
 
@@ -272,11 +281,11 @@ const findPostDocById = async (
 };
 
 export async function listKangurSocialPosts(): Promise<KangurSocialPost[]> {
-  if (!process.env['MONGODB_URI']) {
+  if (process.env['MONGODB_URI'] == null || process.env['MONGODB_URI'].length === 0) {
     const store = await readLocalStore();
     return [...store.posts].sort((left, right) => {
-      const leftTs = left.updatedAt ? Date.parse(left.updatedAt) : 0;
-      const rightTs = right.updatedAt ? Date.parse(right.updatedAt) : 0;
+      const leftTs = left.updatedAt != null ? Date.parse(left.updatedAt) : 0;
+      const rightTs = right.updatedAt != null ? Date.parse(right.updatedAt) : 0;
       return rightTs - leftTs;
     });
   }
@@ -294,11 +303,11 @@ export async function listKangurSocialPostsPage(
   const pageSize = normalizePageNumber(options?.pageSize, 8);
   const normalizedStatus = normalizeSocialStatus(options?.status);
 
-  if (!process.env['MONGODB_URI']) {
+  if (process.env['MONGODB_URI'] == null || process.env['MONGODB_URI'].length === 0) {
     const store = await readLocalStore();
     const posts = [...store.posts].sort((left, right) => {
-      const leftTs = left.updatedAt ? Date.parse(left.updatedAt) : 0;
-      const rightTs = right.updatedAt ? Date.parse(right.updatedAt) : 0;
+      const leftTs = left.updatedAt != null ? Date.parse(left.updatedAt) : 0;
+      const rightTs = right.updatedAt != null ? Date.parse(right.updatedAt) : 0;
       return rightTs - leftTs;
     });
     return filterPostsForAdminList(posts, {
@@ -393,13 +402,13 @@ export async function listKangurSocialPostsPage(
 }
 
 export async function listPublishedKangurSocialPosts(limit = 8): Promise<KangurSocialPost[]> {
-  if (!process.env['MONGODB_URI']) {
+  if (process.env['MONGODB_URI'] == null || process.env['MONGODB_URI'].length === 0) {
     const store = await readLocalStore();
     return [...store.posts]
       .filter((post) => hasKangurSocialLinkedInPublication(post))
       .sort((left, right) => {
-        const leftTs = left.publishedAt ? Date.parse(left.publishedAt) : 0;
-        const rightTs = right.publishedAt ? Date.parse(right.publishedAt) : 0;
+        const leftTs = left.publishedAt != null ? Date.parse(left.publishedAt) : 0;
+        const rightTs = right.publishedAt != null ? Date.parse(right.publishedAt) : 0;
         return rightTs - leftTs;
       })
       .slice(0, limit);
@@ -418,7 +427,7 @@ export async function listPublishedKangurSocialPosts(limit = 8): Promise<KangurS
 export async function listDueScheduledKangurSocialPosts(
   now: Date = new Date()
 ): Promise<KangurSocialPost[]> {
-  if (!process.env['MONGODB_URI']) {
+  if (process.env['MONGODB_URI'] == null || process.env['MONGODB_URI'].length === 0) {
     const nowIso = now.toISOString();
     const store = await readLocalStore();
     return [...store.posts].filter(
@@ -445,7 +454,7 @@ export async function getKangurSocialPostById(id: string): Promise<KangurSocialP
   const normalizedId = id.trim();
   if (!normalizedId) return null;
 
-  if (!process.env['MONGODB_URI']) {
+  if (process.env['MONGODB_URI'] == null || process.env['MONGODB_URI'].length === 0) {
     const store = await readLocalStore();
     return store.posts.find((post) => post.id === normalizedId) ?? null;
   }
@@ -460,7 +469,7 @@ export async function upsertKangurSocialPost(post: KangurSocialPost): Promise<Ka
   const normalized = normalizeKangurSocialPost(post);
   const now = new Date();
 
-  if (!process.env['MONGODB_URI']) {
+  if (process.env['MONGODB_URI'] == null || process.env['MONGODB_URI'].length === 0) {
     const next = {
       ...normalized,
       createdAt: normalized.createdAt ?? now.toISOString(),
@@ -523,7 +532,7 @@ export async function deleteKangurSocialPost(id: string): Promise<KangurSocialPo
   const normalizedId = id.trim();
   if (!normalizedId) return null;
 
-  if (!process.env['MONGODB_URI']) {
+  if (process.env['MONGODB_URI'] == null || process.env['MONGODB_URI'].length === 0) {
     const store = await readLocalStore();
     const matchesId = (value: string): boolean => value.trim() === normalizedId;
     const existing = store.posts.find((entry) => matchesId(entry.id)) ?? null;

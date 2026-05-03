@@ -2,6 +2,14 @@
 
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
 
+type AutoExpandResult = {
+  autoExpand: (...nodeIds: (string | string[] | null | undefined)[]) => void;
+  toggleExpand: (nodeId: string) => void;
+  collapse: (...nodeIds: (string | string[] | null | undefined)[]) => void;
+  setExpanded: (nodeIds: string[]) => void;
+  collapseAll: () => void;
+};
+
 /**
  * A hook that provides utility functions for managing the expanded state
  * of tree nodes. Consolidates the repeated auto-expand patterns used
@@ -21,7 +29,9 @@ import { useCallback, type Dispatch, type SetStateAction } from 'react';
  * }
  * ```
  */
-export function useAutoExpand(setExpandedIds: Dispatch<SetStateAction<Set<string>>>) {
+export function useAutoExpand(
+  setExpandedIds: Dispatch<SetStateAction<Set<string>>>
+): AutoExpandResult {
   /**
    * Adds one or more node IDs to the expanded set.
    * Accepts a single ID, an array of IDs, or multiple IDs as rest parameters.
@@ -83,28 +93,13 @@ export function useAutoExpand(setExpandedIds: Dispatch<SetStateAction<Set<string
     [setExpandedIds]
   );
 
-  /**
-   * Expands all provided node IDs and collapses all others.
-   */
-  const setExpanded = useCallback(
-    (nodeIds: string[]) => {
-      setExpandedIds(new Set(nodeIds));
-    },
-    [setExpandedIds]
-  );
+  const setExpanded = useCallback((nodeIds: string[]) => {
+    setExpandedIds(new Set(nodeIds));
+  }, [setExpandedIds]);
 
-  /**
-   * Clears all expanded nodes.
-   */
   const collapseAll = useCallback(() => {
     setExpandedIds(new Set());
   }, [setExpandedIds]);
 
-  return {
-    autoExpand,
-    toggleExpand,
-    collapse,
-    setExpanded,
-    collapseAll,
-  };
+  return { autoExpand, toggleExpand, collapse, setExpanded, collapseAll };
 }

@@ -1,4 +1,4 @@
-import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
+import { type resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
 import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
 

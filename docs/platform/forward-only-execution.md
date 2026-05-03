@@ -48,7 +48,7 @@ When an agent cannot safely continue:
 - release or retain the lease according to the resource contract
 - hand off the run if another agent or operator should continue
 
-For AI Paths specifically, lease contention should surface as explicit runtime states such as `blocked_on_lease` and `handoff_ready` rather than hidden retries or silent ownership races.
+For AI Paths specifically, lease contention should fail the active attempt and require a fresh run rather than hidden retries or resumable blocked states.
 
 Do not silently overwrite shared state to make the conflict disappear.
 

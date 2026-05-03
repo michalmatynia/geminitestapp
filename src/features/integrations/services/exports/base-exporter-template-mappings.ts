@@ -5,10 +5,10 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 
 import {
-  ProducerNameLookup,
-  ProducerExternalIdLookup,
-  TagNameLookup,
-  TagExternalIdLookup,
+  type ProducerNameLookup,
+  type ProducerExternalIdLookup,
+  type TagNameLookup,
+  type TagExternalIdLookup,
 } from './base-exporter/lookup-resolvers';
 import {
   toStringValue,
@@ -25,7 +25,7 @@ import {
   toTagNameValueList,
   toTagIdValueList,
 } from './base-exporter/value-resolvers';
-import { ImageExportLogger } from './base-exporter-images';
+import { type ImageExportLogger } from './base-exporter-images';
 
 export { toStringValue, toNumberValue };
 
@@ -129,16 +129,7 @@ export const resolveBaseExporterTemplateMappings = (
     if (!targetField) continue;
     const parameterSource = parseParameterSourceKey(mapping.sourceKey);
 
-    const sourceValue = getProductValue(
-      product,
-      mapping.sourceKey,
-      options?.imageBaseUrl,
-      options?.diagnostics,
-      options?.producerNameById,
-      options?.producerExternalIdByInternalId,
-      options?.tagNameById,
-      options?.tagExternalIdByInternalId
-    );
+    const sourceValue = getProductValue(product, mapping.sourceKey, options);
 
     const producerTargetValue = resolveProducerTargetValue(targetField, sourceValue, options);
     if (producerTargetValue !== undefined) {

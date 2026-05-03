@@ -8,19 +8,21 @@ import type {
 } from '../../types';
 
 export const createImapClient = (account: FilemakerMailAccount, password?: string): ImapFlow => {
-  const host = account.imapHost;
+  const host = account.imapHost.trim();
   const port = account.imapPort;
-  if (!host || !port) {
+  if (host.length === 0 || !Number.isFinite(port) || port <= 0) {
     throw configurationError(`IMAP configuration missing for account ${account.id}`);
   }
+  const user = account.imapUser.trim().length > 0 ? account.imapUser : account.emailAddress;
+  const pass = typeof password === 'string' && password.length > 0 ? password : '';
 
   return new ImapFlow({
     host,
     port,
     secure: account.imapSecure,
     auth: {
-      user: account.imapUser || account.emailAddress,
-      pass: password || '',
+      user,
+      pass,
     },
     logger: false,
   });

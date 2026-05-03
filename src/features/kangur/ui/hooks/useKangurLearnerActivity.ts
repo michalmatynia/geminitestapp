@@ -17,6 +17,7 @@ import {
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+import { resolveKangurClientEndpoint } from '@/features/kangur/services/resolve-kangur-client-endpoint';
 import type {
   KangurLearnerActivityStatus,
   KangurLearnerActivityUpdateInput,
@@ -299,7 +300,7 @@ const applyRefreshedKangurLearnerActivityStatus = ({
 };
 
 const resolveKangurLearnerActivityStreamUrl = (learnerId: string): string =>
-  `/api/kangur/learner-activity/stream?learnerId=${encodeURIComponent(learnerId)}`;
+  `${resolveKangurClientEndpoint('/api/kangur/learner-activity/stream')}?learnerId=${encodeURIComponent(learnerId)}`;
 
 const openKangurLearnerActivityStream = (streamUrl: string): EventSource | null =>
   withKangurClientErrorSync(
@@ -348,11 +349,11 @@ const useKangurLearnerActivityDeferredReady = ({
     }
 
     setIsDeferredReady(false);
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       setIsDeferredReady(true);
     }, deferInitialRefreshMs);
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [deferInitialRefreshMs, enabled, learnerId]);
 

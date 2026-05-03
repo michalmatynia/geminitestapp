@@ -54,7 +54,24 @@ vi.mock('../../context', () => ({
     activePathId: 'path_72l57d',
     isPathLocked: false,
   }),
+  useGraphDataState: () => ({
+    nodes: [] as AiNode[],
+    edges: [],
+  }),
+  usePathMetadataState: () => ({
+    activePathId: 'path_72l57d',
+    isPathLocked: false,
+  }),
   useRuntimeState: () => runtimeStateValue,
+  useRuntimeDataState: () => ({
+    runtimeState: runtimeStateValue.runtimeState,
+    parserSamples: runtimeStateValue.parserSamples,
+    updaterSamples: runtimeStateValue.updaterSamples,
+    pathDebugSnapshots: runtimeStateValue.pathDebugSnapshots,
+  }),
+  useRuntimeUiState: () => ({
+    sendingToAi: runtimeStateValue.sendingToAi,
+  }),
   useRuntimeActions: () => runtimeActionsMock,
   usePresetsState: () => ({
     dbQueryPresets: [],
@@ -84,7 +101,7 @@ vi.mock(
   })
 );
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
 

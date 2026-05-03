@@ -1,6 +1,8 @@
+/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/explicit-function-return-type, @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion */
 import { describe, expect, it } from 'vitest';
 
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import { LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION } from '@/shared/contracts/products/validation';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import {
@@ -303,6 +305,33 @@ describe('buildFieldIssues', () => {
     expect(issues['name_en']).toHaveLength(1);
   });
 
+  it('does not emit field issues for parser-only validation patterns', () => {
+    const pattern = makePattern({
+      regex: '.+',
+      target: 'description',
+      message: 'Parse Actions: Tradera repeated title line.',
+      semanticState: {
+        version: LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION,
+        presetId: 'products.parse-actions.tradera.v1',
+        operation: 'parse_marketplace_listing_text',
+        sourceField: 'marketplaceText',
+        targetField: 'parsedRows',
+        tags: ['parse_actions', 'tradera', 'repeatedTitle'],
+        metadata: {
+          marketplace: 'tradera',
+          parserPatternRole: 'repeatedTitle',
+        },
+      },
+    });
+    const issues = buildFieldIssues({
+      values: { description_en: 'Correct product description.' },
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: 'product_edit',
+    });
+    expect(issues).toEqual({});
+  });
+
   it('handles SKU field', () => {
     const pattern = makePattern({ regex: '^\\s', target: 'sku' });
     const issues = buildFieldIssues({
@@ -384,6 +413,36 @@ describe('buildFieldIssues', () => {
         validationScope: 'product_create',
       })
     ).toBe(false);
+  });
+
+  it('evaluates empty producer fields so static formatter patterns can auto-fill defaults', () => {
+    const pattern = makePattern({
+      regex: '^$',
+      target: 'producer',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementFields: ['producerIds'],
+      replacementValue: 'StarGater.net',
+      message: 'Assign the default producer',
+    });
+
+    const issues = buildFieldIssues({
+      values: {
+        producerIds: '',
+      },
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: SCOPE,
+    });
+
+    expect(issues['producerIds']).toHaveLength(1);
+    expect(issues['producerIds']?.[0]).toMatchObject({
+      patternId: pattern.id,
+      replacementValue: 'StarGater.net',
+      replacementApplyMode: 'replace_matched_segment',
+      replacementScope: 'field',
+      replacementActive: true,
+    });
   });
 
   it('supports category inference driven by Name EN segment #4', () => {

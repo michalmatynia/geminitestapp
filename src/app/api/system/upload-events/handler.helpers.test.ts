@@ -33,7 +33,7 @@ describe('system/upload-events handler helpers', () => {
     expect(parseUploadEventDateParam('not-a-date')).toBeNull();
   });
 
-  it('builds upload-event list input with nullable filters', () => {
+  it('builds upload-event list input with optional filters', () => {
     const input = buildFileUploadEventsListInput({
       page: 2,
       pageSize: 25,
@@ -48,10 +48,10 @@ describe('system/upload-events handler helpers', () => {
     expect(input).toEqual({
       page: 2,
       pageSize: 25,
-      status: null,
-      category: null,
+      status: undefined,
+      category: undefined,
       projectId: 'project-1',
-      query: null,
+      query: undefined,
       from: new Date('2026-01-01T00:00:00.000'),
       to: new Date('2026-01-31T23:59:59.999'),
     });

@@ -1,0 +1,101 @@
+async run(): Promise<void> {
+async scan(): Promise<void> {
+protected abstract executeStep(stepId: StepId): Promise<void>;
+protected abstract resolveImageCandidateFilepath(
+protected applyResultPayloadAugmenters(
+protected async acceptCookies(selectors: readonly string[]): Promise<void> {
+protected async applyNaturalBrowserSetup(): Promise<void> {
+protected async attachImageToGoogleLensInput(
+protected async attempt1688PostCaptchaRecovery(
+protected async captureArtifacts(key: string): Promise<void> {
+protected async checkElementExists(selector: string, timeout = 2000): Promise<boolean> {
+protected async clickFirstVisible(selectors: readonly string[]): Promise<boolean> {
+protected async clickGoogleConsentIfPresent(): Promise<{ resolved: boolean }> {
+protected async clickGoogleLensSearchSubmitIfPresent(): Promise<boolean> {
+protected async clickIfVisible(selector: string, timeout = 2000): Promise<boolean> {
+protected async clickLocator(
+protected async collect1688Candidates(
+protected async collect1688CandidateUrls(): Promise<string[]> {
+protected async collectAmazonCandidates(
+protected async collectAmazonProbeData(
+protected async continueGoogleLensUploadAfterCaptcha(
+protected async detect1688AccessBarrier(stage: ScanStage): Promise<BarrierState> {
+protected async detect1688ReadyState(stage: ScanStage): Promise<ReadyState> {
+protected async detectAmazonOverlayState(): Promise<AmazonOverlayState> {
+protected async detectGoogleLensCaptcha(): Promise<CaptchaState> {
+protected async dismissAmazonOverlays(): Promise<{ cleared: boolean; message: string | null }> {
+protected async dismissGoogleRedirectInterstitialIfPresent(): Promise<boolean> {
+protected async emitResult(payload: Record<string, unknown>): Promise<void> {
+protected async executeStep(stepId: StepId): Promise<void> {
+protected async extractAmazonAsin(): Promise<string | null> {
+protected async extractAmazonProductData(asin: string | null): Promise<AmazonProductData> {
+protected async extractSupplierData(originalUrl: string): Promise<SupplierProductData> {
+protected async findFirstAccessibleFileInput(): Promise<Locator | null> {
+protected async findFirstVisibleFileInput(): Promise<Locator | null> {
+protected async findFirstVisibleSelector(
+protected async handle1688Captcha(
+protected async handleGoogleCaptcha(
+protected async hasGoogleLensResultHints(): Promise<boolean> {
+protected async hasVisibleSelector(selectors: readonly string[]): Promise<boolean> {
+protected async humanWait(minMs: number, maxMs: number): Promise<void> {
+protected async interact(selector: string, action: 'click' | 'fill', value?: string): Promise<void> {
+protected async open1688ImageSearch(
+protected async openGoogleLens(
+protected async probeSupplierCandidate(
+protected async processAmazonCandidate(params: ProductScanCandidateAttemptMeta & {
+protected async processSupplierCandidateUrls(
+protected async readFirstText(selectors: readonly string[]): Promise<string | null> {
+protected async resolveGoogleLensFileInput(): Promise<FileInputState> {
+protected async runManualVerificationFlow<
+protected async safeFill(selector: string, value: string, timeout = 2000): Promise<void> {
+protected async selectOptionByText(selector: string, text: string): Promise<void> {
+protected async submit1688UploadedImageSearch(): Promise<boolean> {
+protected async upload1688Image(
+protected async uploadToGoogleLens(
+protected async wait(ms: number): Promise<void> {
+protected async waitForAmazonProductContent(): Promise<boolean> {
+protected async waitForGoogleLensFileInput(): Promise<FileInputState> {
+protected async waitForGoogleLensResultState(
+protected async waitForNavigation(urlPart: string, timeout = 10000): Promise<void> {
+protected async waitForSupplierContent(_url: string): Promise<boolean> {
+protected async withRetry<T>(
+protected bindCandidatePageSession<
+protected context: PlaywrightSequencerContext;
+protected createPageSession<TSession>(
+protected createPayloadAugmentedPageSession<
+protected createPayloadAugmentedRuntimePageSession<
+protected getStepConfig(stepId: StepId): PlaywrightActionBlockConfig {
+protected isGoogleCaptchaUrl(url: string | null): boolean {
+protected isGoogleImagesUploadEntryUrl(url: string): boolean {
+protected isPageClosed(): boolean {
+protected normalize1688OfferUrl(value: string | null | undefined): string | null {
+protected normalizeStepGroup(value: unknown): ProductScanStepGroup | null {
+protected normalizeText(value: unknown): string | null {
+protected override async openGoogleLensAttemptUrl(url: string): Promise<{ resolved: boolean }> {
+protected override async readGoogleLensOpenReadinessState(
+protected override resolveGoogleLensOpenAttemptUrls(): string[] {
+protected override resolveGoogleLensOpenUrl(): string {
+protected override resolveImageCandidateFilepath(
+protected override resolveImageSearchProvider(): AmazonImageSearchProvider {
+protected readonly artifacts: ProductScanArtifacts;
+protected readonly CAPTCHA_REQUIRED_MESSAGE = 'Google Lens requested captcha verification.';
+protected readonly CAPTCHA_STABLE_CLEAR_WINDOW_MS = 10_000;
+protected readonly CAPTCHA_WAIT_MESSAGE =
+protected readonly DEFAULT_MANUAL_VERIFICATION_TIMEOUT_MS = 240_000;
+protected readonly emit: (type: string, payload: unknown) => void;
+protected readonly helpers: ProductScanHelpers;
+protected readonly input: TInput;
+protected readonly log: (message: string, context?: unknown) => void;
+protected readonly page: Page;
+protected registerResultPayloadAugmenter(
+protected resolveConfiguredImageSearchPageUrl(): string | null {
+protected resolveImageSearchProvider(): GoogleLensSearchProvider {
+protected resolveManualVerificationPolicy(
+protected resolveManualVerificationTimeoutMs(
+protected resultPayloadAugmenters: Array<
+protected safePageUrl(): string | null {
+protected scanSteps: ProductScanStep[] = [];
+protected seedStepSequence(input?: {
+protected toAbsoluteUrl(value: unknown, baseUrl?: string | null): string | null {
+protected upsertScanStep(input: ScanStepUpsertInput): ProductScanStep {
+public result: TraderaCategorySequencerResult | null = null;

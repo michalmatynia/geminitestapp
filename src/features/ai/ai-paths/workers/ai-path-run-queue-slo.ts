@@ -14,7 +14,7 @@ export type ComputeQueueSloInput = {
   queueLagMs: number | null;
   successRate24h: number;
   terminalRuns24h: number;
-  deadLetterRate24h: number;
+  failureRate24h: number;
   brainErrorRate24h: number;
   brainTotalReports24h: number;
 };
@@ -26,7 +26,7 @@ const parseEnvFloat = (
   max: number = 100
 ): number => {
   const raw = process.env[name];
-  if (!raw) return fallback;
+  if (raw === undefined) return fallback;
   const parsed = Number.parseFloat(raw);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.min(max, Math.max(min, parsed));
@@ -37,8 +37,8 @@ export const resolveQueueSloThresholds = (): QueueSloThresholds => ({
   queueLagCriticalMs: parseEnvNumber('AI_PATHS_SLO_QUEUE_LAG_CRITICAL_MS', 180_000, 1_000),
   successRateWarningPct: parseEnvFloat('AI_PATHS_SLO_SUCCESS_RATE_WARNING_PCT', 95, 0, 100),
   successRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_SUCCESS_RATE_CRITICAL_PCT', 90, 0, 100),
-  deadLetterRateWarningPct: parseEnvFloat('AI_PATHS_SLO_DEAD_LETTER_RATE_WARNING_PCT', 1, 0, 100),
-  deadLetterRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_DEAD_LETTER_RATE_CRITICAL_PCT', 3, 0, 100),
+  failureRateWarningPct: parseEnvFloat('AI_PATHS_SLO_FAILURE_RATE_WARNING_PCT', 5, 0, 100),
+  failureRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_FAILURE_RATE_CRITICAL_PCT', 10, 0, 100),
   brainErrorRateWarningPct: parseEnvFloat('AI_PATHS_SLO_BRAIN_ERROR_RATE_WARNING_PCT', 5, 0, 100),
   brainErrorRateCriticalPct: parseEnvFloat(
     'AI_PATHS_SLO_BRAIN_ERROR_RATE_CRITICAL_PCT',
@@ -57,22 +57,53 @@ const severityRank: Record<SloLevel, number> = {
 };
 
 export const maxSloLevel = (levels: SloLevel[]): SloLevel => {
-  return levels.reduce((max, current) => {
-    if (severityRank[current] > severityRank[max]) return current;
-    return max;
-  }, 'ok' as SloLevel);
+  let maxLevel: SloLevel = 'ok';
+  for (const level of levels) {
+    if (severityRank[level] > severityRank[maxLevel]) {
+      maxLevel = level;
+    }
+  }
+  return maxLevel;
 };
 
-const classifyGreaterIsWorse = (value: number, warning: number, critical: number): SloLevel => {
-  if (value >= Math.max(warning, critical)) return 'critical';
-  if (value >= Math.min(warning, critical)) return 'warning';
+const checkThreshold = (
+  value: number,
+  warning: number,
+  critical: number,
+  greaterIsWorse = true
+): SloLevel => {
+  const isCritical = greaterIsWorse ? value >= critical : value <= critical;
+  if (isCritical) return 'critical';
+  const isWarning = greaterIsWorse ? value >= warning : value <= warning;
+  if (isWarning) return 'warning';
   return 'ok';
 };
 
-const classifyLowerIsWorse = (value: number, warning: number, critical: number): SloLevel => {
-  if (value <= Math.min(warning, critical)) return 'critical';
-  if (value <= Math.max(warning, critical)) return 'warning';
-  return 'ok';
+const getWorkerHealth = (running: boolean, healthy: boolean): { level: SloLevel, message: string } => {
+  if (!running) return { level: 'critical', message: 'Worker is stopped.' };
+  if (healthy) return { level: 'ok', message: 'Worker is healthy.' };
+  return { level: 'warning', message: 'Worker is running but not healthy.' };
+};
+
+const getLagIndicator = (lag: number | null, warn: number, crit: number): { level: SloLevel, message: string } => {
+  if (lag === null) return { level: 'ok', message: 'No queued runs.' };
+  const level = checkThreshold(lag, warn, crit);
+  const message = `Lag ${lag}ms (warn ${warn}ms / critical ${crit}ms).`;
+  return { level, message };
+};
+
+type RateIndicator = { level: SloLevel, message: string, rate: number, runs: number };
+const getRateIndicator = (
+  rate: number,
+  options: { warn: number, crit: number, label: string, runs: number, min: number, greaterIsWorse?: boolean }
+): RateIndicator => {
+  const { warn, crit, label, runs, min, greaterIsWorse = true } = options;
+  if (runs < min) {
+    return { level: 'ok', message: `Insufficient sample (${runs}/${min}) for ${label} SLO.`, rate, runs };
+  }
+  const level = checkThreshold(rate, warn, crit, greaterIsWorse);
+  const message = `${label} ${rate.toFixed(2)}% over ${runs} terminal runs.`;
+  return { level, message, rate, runs };
 };
 
 export const computeAiPathRunQueueSlo = (
@@ -80,137 +111,58 @@ export const computeAiPathRunQueueSlo = (
   thresholds: QueueSloThresholds = resolveQueueSloThresholds()
 ): AiPathRunQueueSloStatus => {
   const breaches: AiPathRunQueueSloStatus['breaches'] = [];
+  const add = (indicator: keyof AiPathRunQueueSloStatus['indicators'], level: SloLevel, message: string): void => {
+    if (level !== 'ok') breaches.push({ indicator, level, message });
+  };
 
-  const workerHealthLevel: SloLevel = !input.queueRunning
-    ? 'critical'
-    : input.queueHealthy
-      ? 'ok'
-      : 'warning';
-  const workerHealthMessage = !input.queueRunning
-    ? 'Worker is stopped.'
-    : input.queueHealthy
-      ? 'Worker is healthy.'
-      : 'Worker is running but not healthy.';
-  if (workerHealthLevel !== 'ok') {
-    breaches.push({
-      indicator: 'workerHealth',
-      level: workerHealthLevel,
-      message: workerHealthMessage,
-    });
-  }
+  const health = getWorkerHealth(input.queueRunning, input.queueHealthy);
+  add('workerHealth', health.level, health.message);
 
-  const lagValue = input.queueLagMs ?? 0;
-  const queueLagLevel =
-    input.queueLagMs === null
-      ? 'ok'
-      : classifyGreaterIsWorse(
-        lagValue,
-        thresholds.queueLagWarningMs,
-        thresholds.queueLagCriticalMs
-      );
-  const queueLagMessage =
-    input.queueLagMs === null
-      ? 'No queued runs.'
-      : `Lag ${lagValue}ms (warn ${thresholds.queueLagWarningMs}ms / critical ${thresholds.queueLagCriticalMs}ms).`;
-  if (queueLagLevel !== 'ok') {
-    breaches.push({
-      indicator: 'queueLag',
-      level: queueLagLevel,
-      message: queueLagMessage,
-    });
-  }
+  const lag = getLagIndicator(input.queueLagMs, thresholds.queueLagWarningMs, thresholds.queueLagCriticalMs);
+  add('queueLag', lag.level, lag.message);
 
-  const hasTerminalSample = input.terminalRuns24h >= thresholds.minTerminalSamples;
-  const successRateLevel = hasTerminalSample
-    ? classifyLowerIsWorse(
-      input.successRate24h,
-      thresholds.successRateWarningPct,
-      thresholds.successRateCriticalPct
-    )
-    : 'ok';
-  const successRateMessage = hasTerminalSample
-    ? `Success ${input.successRate24h.toFixed(2)}% over ${input.terminalRuns24h} terminal runs.`
-    : `Insufficient sample (${input.terminalRuns24h}/${thresholds.minTerminalSamples}) for success-rate SLO.`;
-  if (successRateLevel !== 'ok') {
-    breaches.push({
-      indicator: 'successRate24h',
-      level: successRateLevel,
-      message: successRateMessage,
-    });
-  }
+  const success = getRateIndicator(input.successRate24h, { 
+    warn: thresholds.successRateWarningPct, 
+    crit: thresholds.successRateCriticalPct, 
+    label: 'Success', 
+    runs: input.terminalRuns24h, 
+    min: thresholds.minTerminalSamples, 
+    greaterIsWorse: false 
+  });
+  add('successRate24h', success.level, success.message);
 
-  const deadLetterLevel = hasTerminalSample
-    ? classifyGreaterIsWorse(
-      input.deadLetterRate24h,
-      thresholds.deadLetterRateWarningPct,
-      thresholds.deadLetterRateCriticalPct
-    )
-    : 'ok';
-  const deadLetterMessage = hasTerminalSample
-    ? `Dead-letter rate ${input.deadLetterRate24h.toFixed(2)}% over ${input.terminalRuns24h} terminal runs.`
-    : `Insufficient sample (${input.terminalRuns24h}/${thresholds.minTerminalSamples}) for dead-letter SLO.`;
-  if (deadLetterLevel !== 'ok') {
-    breaches.push({
-      indicator: 'deadLetterRate24h',
-      level: deadLetterLevel,
-      message: deadLetterMessage,
-    });
-  }
+  const failure = getRateIndicator(input.failureRate24h, {
+    warn: thresholds.failureRateWarningPct,
+    crit: thresholds.failureRateCriticalPct,
+    label: 'Failure rate',
+    runs: input.terminalRuns24h, 
+    min: thresholds.minTerminalSamples, 
+    greaterIsWorse: true 
+  });
+  add('failureRate24h', failure.level, failure.message);
 
-  const hasBrainSample = input.brainTotalReports24h >= thresholds.minBrainSamples;
-  const brainErrorLevel = hasBrainSample
-    ? classifyGreaterIsWorse(
-      input.brainErrorRate24h,
-      thresholds.brainErrorRateWarningPct,
-      thresholds.brainErrorRateCriticalPct
-    )
-    : 'ok';
-  const brainErrorMessage = hasBrainSample
-    ? `Brain error ${input.brainErrorRate24h.toFixed(2)}% over ${input.brainTotalReports24h} total reports.`
-    : `Insufficient sample (${input.brainTotalReports24h}/${thresholds.minBrainSamples}) for brain-health SLO.`;
-  if (brainErrorLevel !== 'ok') {
-    breaches.push({
-      indicator: 'brainErrorRate24h',
-      level: brainErrorLevel,
-      message: brainErrorMessage,
-    });
-  }
-
-  const overall = maxSloLevel(breaches.map((b) => b.level));
+  const brain = getRateIndicator(input.brainErrorRate24h, { warn: thresholds.brainErrorRateWarningPct, crit: thresholds.brainErrorRateCriticalPct, label: 'Brain error', runs: input.brainTotalReports24h, min: thresholds.minBrainSamples, greaterIsWorse: true });
+  add('brainErrorRate24h', brain.level, brain.message);
 
   return {
-    overall,
+    overall: maxSloLevel(breaches.map((b) => b.level)),
     evaluatedAt: new Date().toISOString(),
     thresholds,
     indicators: {
-      workerHealth: {
-        level: workerHealthLevel,
-        running: input.queueRunning,
-        healthy: input.queueHealthy,
-        message: workerHealthMessage,
+      workerHealth: { level: health.level, running: input.queueRunning, healthy: input.queueHealthy, message: health.message },
+      queueLag: { level: lag.level, valueMs: input.queueLagMs, message: lag.message },
+      successRate24h: { level: success.level, valuePct: success.rate, sampleSize: success.runs, message: success.message },
+      failureRate24h: {
+        level: failure.level,
+        valuePct: failure.rate,
+        sampleSize: failure.runs,
+        message: failure.message,
       },
-      queueLag: {
-        level: queueLagLevel,
-        valueMs: input.queueLagMs,
-        message: queueLagMessage,
-      },
-      successRate24h: {
-        level: successRateLevel,
-        valuePct: input.successRate24h,
-        sampleSize: input.terminalRuns24h,
-        message: successRateMessage,
-      },
-      deadLetterRate24h: {
-        level: deadLetterLevel,
-        valuePct: input.deadLetterRate24h,
-        sampleSize: input.terminalRuns24h,
-        message: deadLetterMessage,
-      },
-      brainErrorRate24h: {
-        level: brainErrorLevel,
-        valuePct: input.brainErrorRate24h,
-        sampleSize: input.brainTotalReports24h,
-        message: brainErrorMessage,
+      brainErrorRate24h: { 
+        level: brain.level, 
+        valuePct: brain.rate, 
+        sampleSize: brain.runs, 
+        message: brain.message 
       },
     },
     breachCount: breaches.length,

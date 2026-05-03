@@ -2,9 +2,9 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
-import { ImageFileSelection } from '@/shared/contracts/files';
-import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
-import { DebugInfo } from '@/shared/contracts/products/drafts';
+import { type ImageFileSelection } from '@/shared/contracts/files';
+import { type ProductImageManagerController } from '@/shared/contracts/product-image-manager';
+import { type DebugInfo } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
@@ -313,10 +313,9 @@ export function ProductImageManagerUIProvider({
       }
       if (imageSlots[index]) {
         await handleSlotDisconnectImage(index);
-      } else {
-        if (imageBase64s[index]) setImageBase64At(index, '');
-        if (imageLinks[index]) setImageLinkAt(index, '');
       }
+      if (imageBase64s[index]) setImageBase64At(index, '');
+      if (imageLinks[index]) setImageLinkAt(index, '');
       setSlotViewMode(index, 'upload');
     },
     [

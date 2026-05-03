@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 import { parseKangurPageContentStore } from '@/shared/contracts/kangur-page-content';
 
 const { getMongoDbMock } = vi.hoisted(() => ({
@@ -132,5 +133,70 @@ describe('page-content repository cache', () => {
 
     expect(collection.find).not.toHaveBeenCalled();
     expect(reread).toEqual(updatedStore);
+  });
+
+  it('returns defaults immediately even when index creation and first-write persistence are still pending', async () => {
+    const neverSettles = new Promise<never>(() => {});
+    collection.createIndex.mockReturnValue(neverSettles);
+    collection.bulkWrite.mockReturnValue(neverSettles);
+    collection.deleteMany.mockReturnValue(neverSettles);
+
+    const resolved = await Promise.race([
+      getKangurPageContentStore('uk').then((store) => ({
+        status: 'resolved' as const,
+        store,
+      })),
+      new Promise<{ status: 'timeout' }>((resolve) => {
+        setTimeout(() => resolve({ status: 'timeout' }), 25);
+      }),
+    ]);
+
+    expect(resolved.status).toBe('resolved');
+    if (resolved.status === 'resolved') {
+      expect(resolved.store.locale).toBe('uk');
+      expect(resolved.store.entries.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('returns the merged store immediately even when syncing updated defaults is still pending', async () => {
+    const defaults = buildDefaultKangurPageContentStore('de');
+    const [firstEntry, ...restEntries] = defaults.entries;
+    const staleStore = parseKangurPageContentStore({
+      locale: 'de',
+      version: defaults.version,
+      entries:
+        firstEntry !== undefined
+          ? [{ ...firstEntry, summary: 'Stale Mongo summary.' }, ...restEntries.slice(0, 1)]
+          : [],
+    });
+    const neverSettles = new Promise<never>(() => {});
+    collection.createIndex.mockReturnValue(neverSettles);
+    collection.bulkWrite.mockReturnValue(neverSettles);
+    collection.deleteMany.mockReturnValue(neverSettles);
+    docsByLocale.set(
+      'de',
+      staleStore.entries.map((entry) => ({
+        ...entry,
+        locale: 'de',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      }))
+    );
+
+    const resolved = await Promise.race([
+      getKangurPageContentStore('de').then((store) => ({
+        status: 'resolved' as const,
+        store,
+      })),
+      new Promise<{ status: 'timeout' }>((resolve) => {
+        setTimeout(() => resolve({ status: 'timeout' }), 25);
+      }),
+    ]);
+
+    expect(resolved.status).toBe('resolved');
+    if (resolved.status === 'resolved') {
+      expect(resolved.store.locale).toBe('de');
+      expect(resolved.store.entries.length).toBeGreaterThan(staleStore.entries.length);
+    }
   });
 });

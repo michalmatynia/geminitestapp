@@ -9,7 +9,6 @@ export {
   KANGUR_PAGE_TO_SLUG,
   KangurActiveLessonPanelWidget,
   KangurAssignmentSpotlight,
-  KangurFeaturePage,
   KangurGameCalendarTrainingWidget,
   KangurGameGeometryTrainingWidget,
   KangurGameHomeActionsWidget,
@@ -53,4 +52,4 @@ export {
   LearnerProfile,
   Lessons,
   ParentDashboard,
-} from '@/features/kangur/public';
+} from '@/features/kangur/cms/public';

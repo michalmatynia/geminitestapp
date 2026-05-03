@@ -148,8 +148,8 @@ export async function handleDatabaseMongoReadAction({
     return { result: null, bundle: { error: 'Read failed' }, aiPrompt };
   }
   const data: DbActionResult = readResult.data;
-  let result: unknown = data['item'] ?? data['items'] ?? data['values'] ?? data['count'] ?? [];
-  let count: number =
+  const result: unknown = data['item'] ?? data['items'] ?? data['values'] ?? data['count'] ?? [];
+  const count: number =
     (data['count'] as number) ??
     (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
   toast(`Database query succeeded for ${collection} (${count} result${count === 1 ? '' : 's'}).`, {

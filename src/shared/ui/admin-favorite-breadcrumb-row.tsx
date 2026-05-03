@@ -9,11 +9,12 @@ import { api } from '@/shared/lib/api-client';
 import { useAdminFavorites } from '@/shared/providers/AdminFavoritesProvider';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { cn } from '@/shared/utils/ui-utils';
+import type { DataAttributes } from '@/shared/contracts/ui/base';
 
 import { Button } from './button';
 import { useOptionalToast } from './toast';
 
-export type AdminFavoriteBreadcrumbRowProps = {
+export type AdminFavoriteBreadcrumbRowProps = DataAttributes & {
   itemId?: string;
   itemLabel?: string;
   children: React.ReactNode;
@@ -34,17 +35,20 @@ const normalizeFavoriteIds = (value: string | undefined): string[] => {
   }
 };
 
-export function AdminFavoriteBreadcrumbRow({
-  itemId,
-  itemLabel,
-  children,
-  className,
-}: AdminFavoriteBreadcrumbRowProps): React.JSX.Element {
+export function AdminFavoriteBreadcrumbRow(
+  props: AdminFavoriteBreadcrumbRowProps
+): React.JSX.Element {
+  const { itemId, itemLabel, children, className, ...rest } = props;
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const settingsStore = useSettingsStore();
   const { toast } = useOptionalToast();
   const { favoritesKey, resolveCandidate } = useAdminFavorites();
+  const [hasMounted, setHasMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const resolvedCandidate = React.useMemo(
     () =>
@@ -58,8 +62,9 @@ export function AdminFavoriteBreadcrumbRow({
   );
 
   const storedFavoriteIds = React.useMemo(
-    () => (favoritesKey ? normalizeFavoriteIds(settingsStore.get(favoritesKey)) : []),
-    [settingsStore.map, favoritesKey]
+    () =>
+      hasMounted && favoritesKey ? normalizeFavoriteIds(settingsStore.get(favoritesKey)) : [],
+    [hasMounted, settingsStore.map, favoritesKey]
   );
 
   const [optimisticFavoriteIds, setOptimisticFavoriteIds] = React.useState<string[] | null>(null);
@@ -108,7 +113,7 @@ export function AdminFavoriteBreadcrumbRow({
   }, [favoriteIds, isFavorite, resolvedItemId, settingsStore, targetLabel, toast, favoritesKey]);
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn('flex items-center gap-2', className)} {...rest}>
       {resolvedItemId && favoritesKey ? (
         <Button
           type='button'

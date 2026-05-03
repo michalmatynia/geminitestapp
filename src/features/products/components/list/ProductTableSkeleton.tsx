@@ -1,3 +1,6 @@
+// ProductTableSkeleton: presentational skeleton rows shown while the
+// products list is loading. This component is purely visual to keep
+// SSR/hydration stable and avoid data-fetching responsibilities.
 import { Skeleton } from '@/shared/ui/skeleton';
 import { TableRow, TableCell } from '@/shared/ui/table';
 

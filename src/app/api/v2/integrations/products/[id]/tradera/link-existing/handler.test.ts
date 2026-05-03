@@ -36,7 +36,7 @@ vi.mock('@/features/products/server', () => ({
   getProductRepository: (...args: unknown[]) => mocks.getProductRepositoryMock(...args),
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const createRequest = (): Request =>
   new Request('http://localhost/api/v2/integrations/products/product-1/tradera/link-existing', {
@@ -123,7 +123,7 @@ describe('integration product Tradera link-existing handler', () => {
   });
 
   it('creates a linked Tradera listing by inferring the connection from the seller alias', async () => {
-    const response = await POST_handler(createRequest() as never, {} as never, {
+    const response = await postHandler(createRequest() as never, {} as never, {
       id: 'product-1',
     });
     const payload = await response.json();
@@ -187,7 +187,7 @@ describe('integration product Tradera link-existing handler', () => {
       },
     });
 
-    const response = await POST_handler(createRequest() as never, {} as never, {
+    const response = await postHandler(createRequest() as never, {} as never, {
       id: 'product-1',
     });
     const payload = await response.json();
@@ -229,7 +229,7 @@ describe('integration product Tradera link-existing handler', () => {
     });
 
     await expect(
-      POST_handler(createRequest() as never, {} as never, { id: 'product-1' })
+      postHandler(createRequest() as never, {} as never, { id: 'product-1' })
     ).rejects.toMatchObject({
       httpStatus: 400,
       meta: expect.objectContaining({
@@ -248,7 +248,7 @@ describe('integration product Tradera link-existing handler', () => {
     });
 
     await expect(
-      POST_handler(createRequest() as never, {} as never, { id: 'product-1' })
+      postHandler(createRequest() as never, {} as never, { id: 'product-1' })
     ).rejects.toMatchObject({
       httpStatus: 409,
       meta: expect.objectContaining({
@@ -286,7 +286,7 @@ describe('integration product Tradera link-existing handler', () => {
     ]);
 
     await expect(
-      POST_handler(createRequest() as never, {} as never, { id: 'product-1' })
+      postHandler(createRequest() as never, {} as never, { id: 'product-1' })
     ).rejects.toMatchObject({
       httpStatus: 409,
       meta: expect.objectContaining({

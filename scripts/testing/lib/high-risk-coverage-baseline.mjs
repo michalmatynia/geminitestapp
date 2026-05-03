@@ -3,7 +3,9 @@ import path from 'node:path';
 
 export const HIGH_RISK_COVERAGE_REPORTS_DIRECTORY = 'coverage/high-risk';
 export const HIGH_RISK_COVERAGE_SUMMARY_PATH = `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/coverage-summary.json`;
+export const HIGH_RISK_COVERAGE_BLOB_REPORTS_DIRECTORY = 'coverage/high-risk-blobs';
 const highRiskCoverageExcludeGlobs = ['**/*.md', '**/*.markdown'];
+const buildCodeCoverageIncludeGlob = (directory) => `${directory}/**/*.{ts,tsx}`;
 
 const METRIC_KEYS = ['lines', 'statements', 'functions', 'branches'];
 
@@ -12,35 +14,37 @@ export const highRiskCoverageDomains = [
     id: 'api-routes',
     label: 'API',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/api`,
-    coverageIncludeGlobs: ['src/app/api/**'],
+    coverageIncludeGlobs: [buildCodeCoverageIncludeGlob('src/app/api')],
     testRoots: ['__tests__/api', '__tests__/app/api', 'src/app/api'],
+    defaultShardCount: 4,
   },
   {
     id: 'shared-contracts',
     label: 'Shared contracts',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/shared-contracts`,
-    coverageIncludeGlobs: ['src/shared/contracts/**'],
+    coverageIncludeGlobs: [buildCodeCoverageIncludeGlob('src/shared/contracts')],
     testRoots: ['__tests__/shared/contracts', 'src/shared/contracts'],
   },
   {
     id: 'shared-lib',
     label: 'Shared lib',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/shared-lib`,
-    coverageIncludeGlobs: ['src/shared/lib/**'],
+    coverageIncludeGlobs: [buildCodeCoverageIncludeGlob('src/shared/lib')],
     testRoots: ['__tests__/shared', 'src/shared/lib'],
   },
   {
     id: 'kangur',
     label: 'Kangur',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/kangur`,
-    coverageIncludeGlobs: ['src/features/kangur/**'],
+    coverageIncludeGlobs: [buildCodeCoverageIncludeGlob('src/features/kangur')],
     testRoots: ['__tests__/features/kangur', 'src/features/kangur'],
+    defaultShardCount: 4,
   },
   {
     id: 'ai-paths',
     label: 'AI Paths',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/ai-paths`,
-    coverageIncludeGlobs: ['src/features/ai/ai-paths/**'],
+    coverageIncludeGlobs: [buildCodeCoverageIncludeGlob('src/features/ai/ai-paths')],
     testRoots: ['__tests__/api/ai-paths', '__tests__/features/ai/ai-paths', 'src/features/ai/ai-paths'],
   },
 ];
@@ -182,14 +186,51 @@ export const mergeHighRiskCoverageSummaries = ({
   };
 };
 
+const buildCoverageReporterArgs = (coverageReporters = ['json-summary', 'text-summary']) =>
+  coverageReporters.flatMap((reporter) => ['--coverage.reporter', reporter]);
+
 export const buildHighRiskCoverageVitestArgs = ({
   reportsDirectory = HIGH_RISK_COVERAGE_REPORTS_DIRECTORY,
   root = process.cwd(),
   testFiles = collectHighRiskCoverageTestFiles({ root }),
   coverageIncludeGlobs = highRiskCoverageIncludeGlobs,
+  coverageReporters = ['json-summary', 'text-summary'],
+  shardIndex,
+  shardCount,
+  reporter,
+  outputFile,
+  maxWorkers,
 } = {}) => [
   'vitest',
   'run',
+  '--project',
+  'unit',
+  ...(reporter ? ['--reporter', reporter] : []),
+  ...(outputFile ? ['--outputFile', outputFile] : []),
+  ...(maxWorkers ? ['--maxWorkers', String(maxWorkers)] : []),
+  ...(shardIndex && shardCount ? ['--shard', `${shardIndex}/${shardCount}`] : []),
+  '--coverage.enabled',
+  '--coverage.provider',
+  'v8',
+  '--coverage.clean',
+  '--coverage.reportOnFailure',
+  '--coverage.reportsDirectory',
+  reportsDirectory,
+  ...buildCoverageReporterArgs(coverageReporters),
+  ...coverageIncludeGlobs.flatMap((pattern) => ['--coverage.include', pattern]),
+  ...highRiskCoverageExcludeGlobs.flatMap((pattern) => ['--coverage.exclude', pattern]),
+  ...testFiles,
+];
+
+export const buildHighRiskCoverageMergeArgs = ({
+  blobDirectory = HIGH_RISK_COVERAGE_BLOB_REPORTS_DIRECTORY,
+  reportsDirectory = HIGH_RISK_COVERAGE_REPORTS_DIRECTORY,
+  coverageIncludeGlobs = highRiskCoverageIncludeGlobs,
+  coverageReporters = ['json-summary', 'text-summary'],
+} = {}) => [
+  'vitest',
+  '--mergeReports',
+  blobDirectory,
   '--project',
   'unit',
   '--coverage.enabled',
@@ -199,11 +240,7 @@ export const buildHighRiskCoverageVitestArgs = ({
   '--coverage.reportOnFailure',
   '--coverage.reportsDirectory',
   reportsDirectory,
-  '--coverage.reporter',
-  'json-summary',
-  '--coverage.reporter',
-  'text-summary',
+  ...buildCoverageReporterArgs(coverageReporters),
   ...coverageIncludeGlobs.flatMap((pattern) => ['--coverage.include', pattern]),
   ...highRiskCoverageExcludeGlobs.flatMap((pattern) => ['--coverage.exclude', pattern]),
-  ...testFiles,
 ];

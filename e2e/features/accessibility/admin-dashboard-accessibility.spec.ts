@@ -19,7 +19,7 @@ test('admin dashboard exposes shell landmarks and passes the accessibility smoke
   await expect(page.getByRole('complementary', { name: 'Admin sidebar' })).toBeVisible();
   await expect(page.locator('header[aria-label="Admin toolbar"]')).toBeVisible();
 
-  const skipLink = page.getByRole('link', { name: 'Skip to content' });
+  const skipLink = page.getByRole('link', { name: /Skip to (main )?content/i });
   await skipLink.focus();
   await expect(skipLink).toBeFocused();
 

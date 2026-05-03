@@ -30,6 +30,7 @@ export const productCategoryWithChildrenSchema: z.ZodType<ProductCategoryWithChi
 
 export const createProductCategorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
+  name_pl: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   parentId: z.string().nullable().optional(),
@@ -41,6 +42,7 @@ export type ProductCategoryCreateInput = z.infer<typeof createProductCategorySch
 
 export const updateProductCategorySchema = z.object({
   name: z.string().min(1).optional(),
+  name_pl: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   parentId: z.string().nullable().optional(),

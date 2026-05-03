@@ -145,7 +145,7 @@ function CampaignDetailsHarness(): React.JSX.Element {
   const mailAccountOptions = [
     {
       value: '__shared__',
-      label: 'Shared Filemaker campaign delivery provider',
+      label: 'Select an email account (required)',
     },
     {
       value: 'mail-account-sales',
@@ -191,7 +191,7 @@ describe('CampaignDetailsSection', () => {
     );
   });
 
-  it('lets admins switch back to the shared campaign delivery provider', () => {
+  it('shows the required sender warning when the campaign has no email account', () => {
     render(<CampaignDetailsHarness />);
 
     fireEvent.change(screen.getByLabelText('Campaign mail account'), {
@@ -202,5 +202,8 @@ describe('CampaignDetailsSection', () => {
     });
 
     expect(screen.getByTestId('campaign-mail-account-id')).toHaveTextContent('');
+    expect(
+      screen.getByText(/Assign an email account before sending tests or launching this campaign/)
+    ).toBeInTheDocument();
   });
 });

@@ -31,7 +31,7 @@ vi.mock('@/features/ai/insights/workers/aiInsightsQueue', () => ({
 
 import { authError } from '@/shared/errors/app-error';
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('ai-paths runtime analytics summary handler', () => {
   const from = new Date('2026-03-01T00:00:00.000Z');
@@ -48,9 +48,9 @@ describe('ai-paths runtime analytics summary handler', () => {
   it('returns disabled fallback summary for unauthorized access and includes portable engine block', async () => {
     requireAiPathsAccessMock.mockRejectedValue(authError('Unauthorized'));
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/summary?range=24h'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -85,10 +85,8 @@ describe('ai-paths runtime analytics summary handler', () => {
         completed: 4,
         failed: 1,
         canceled: 0,
-        deadLettered: 0,
         successRate: 80,
         failureRate: 20,
-        deadLetterRate: 0,
         avgDurationMs: 120,
         p95DurationMs: 220,
       },
@@ -174,9 +172,9 @@ describe('ai-paths runtime analytics summary handler', () => {
       generatedAt: '2026-03-05T00:00:00.000Z',
     });
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/summary?range=7d'),
-      {} as Parameters<typeof GET_handler>[1]
+      {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
@@ -194,9 +192,9 @@ describe('ai-paths runtime analytics summary handler', () => {
 
   it('rejects invalid ranges', async () => {
     await expect(
-      GET_handler(
+      getHandler(
         new NextRequest('http://localhost/api/ai-paths/runtime-analytics/summary?range=2h'),
-        {} as Parameters<typeof GET_handler>[1]
+        {} as Parameters<typeof getHandler>[1]
       )
     ).rejects.toThrow('Invalid range.');
   });

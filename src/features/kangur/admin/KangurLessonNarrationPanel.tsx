@@ -34,8 +34,7 @@ import {
 
 import { validateKangurLessonPageDraft } from './content-creator-insights';
 import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
-
-type RequestStatus = 'idle' | 'loading' | 'ready' | 'error';
+import { type RequestStatus } from '@/shared/contracts/ui/base';
 
 const KANGUR_LESSON_NARRATION_PANEL_CONTEXT_ROOT_IDS = [
   'component:kangur-lesson-narration-panel',

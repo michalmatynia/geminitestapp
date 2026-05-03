@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 
 vi.mock('@/shared/lib/ai-brain/server-model-catalog', () => ({
   listBrainModels: vi.fn(),
 }));
 
-describe('case-resolver/ocr/models GET_handler', () => {
+describe('case-resolver/ocr/models getHandler', () => {
   const mockContext = { source: 'test' } as any;
 
   beforeEach(() => {
@@ -25,7 +25,7 @@ describe('case-resolver/ocr/models GET_handler', () => {
     vi.mocked(listBrainModels).mockResolvedValue(mockPayload as any);
 
     const req = new NextRequest('http://localhost/api/case-resolver/ocr/models');
-    const response = await GET_handler(req, mockContext);
+    const response = await getHandler(req, mockContext);
     const data = await response.json();
 
     expect(data.models).toEqual(['gpt-4o', 'llama3']);
@@ -42,7 +42,7 @@ describe('case-resolver/ocr/models GET_handler', () => {
     vi.mocked(listBrainModels).mockResolvedValue(mockPayload as any);
 
     const req = new NextRequest('http://localhost/api/case-resolver/ocr/models');
-    const response = await GET_handler(req, mockContext);
+    const response = await getHandler(req, mockContext);
     const data = await response.json();
 
     expect(data.warning).toEqual({ code: 'EMPTY', message: 'No models' });

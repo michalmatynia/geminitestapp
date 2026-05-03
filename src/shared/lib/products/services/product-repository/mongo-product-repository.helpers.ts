@@ -4,6 +4,7 @@ import { productAdvancedFilterGroupSchema } from '@/shared/contracts/products/fi
 import { type ProductAdvancedFilterGroup, type ProductParameterValue } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
+import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 import {
   mergeProductParameterValue,
   normalizeParameterValuesByLanguage,
@@ -31,6 +32,9 @@ export type ProductListingFilterDocument = {
   productId: string | ObjectId;
   integrationId: string | ObjectId;
   externalListingId?: string | null;
+  status?: string | null;
+  marketplaceData?: Record<string, unknown> | null;
+  updatedAt?: Date | string | null;
 };
 
 export type BaseExportLookupContext = {
@@ -104,6 +108,7 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
     const valuesByLanguage = normalizeParameterValuesByLanguage(record['valuesByLanguage']);
     const hasLocalizedValues = Object.keys(valuesByLanguage).length > 0;
     const existingEntry = byParameterId.get(parameterId);
+    const skipParameterInference = record['skipParameterInference'] === true;
     byParameterId.set(
       parameterId,
       hasLocalizedValues
@@ -111,16 +116,20 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
           parameterId,
           value,
           valuesByLanguage,
+          skipParameterInference,
         })
         : {
           parameterId,
           value: resolveStoredParameterValue({}, value),
+          ...(skipParameterInference ? { skipParameterInference: true } : {}),
         }
     );
   });
 
   return Array.from(byParameterId.values());
 };
+
+export { normalizeProductCustomFieldValues };
 
 export const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
   const unique = new Set<string>();

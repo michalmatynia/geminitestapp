@@ -19,6 +19,9 @@ import {
 // Re-exported types (moved here so storage + Runtime.shared.ts can import)
 // ---------------------------------------------------------------------------
 
+// KangurAiTutorSessionRegistration identifies the page/context the AI Tutor
+// is currently attached to. The token symbol is unique per registration so
+// stale registrations can be detected even when other fields are identical.
 export type KangurAiTutorSessionRegistration = {
   token: symbol;
   learnerId: string | null;
@@ -37,6 +40,9 @@ export type KangurAiTutorSessionRegistrationSetter =
 // Internal type
 // ---------------------------------------------------------------------------
 
+// KangurAiTutorHintRecoveryCandidate captures the context at the moment a
+// hint was shown so the tutor can detect whether the learner recovered
+// (answered correctly after seeing the hint) in a follow-up interaction.
 export type KangurAiTutorHintRecoveryCandidate = {
   surface: KangurAiTutorConversationContext['surface'];
   contentId: string | null;
@@ -55,6 +61,9 @@ export type KangurAiTutorHintRecoveryCandidate = {
 export const normalizeTutorMessageForComparison = (value: string): string =>
   value.trim().toLocaleLowerCase().replace(/\s+/g, ' ');
 
+// normalizeTutorScopePart converts a raw string into a URL-safe, lowercase,
+// hyphen-delimited scope segment. Used when building session and memory keys
+// so keys are stable across minor formatting differences in content IDs.
 export const normalizeTutorScopePart = (
   value: string | null | undefined,
   maxLength: number
@@ -116,6 +125,9 @@ export const normalizeTutorMemoryText = (
 // Session / memory key builders
 // ---------------------------------------------------------------------------
 
+// buildTutorSessionScope derives a stable string scope from a conversation
+// context. The scope encodes the surface + content/assignment/focus/title
+// hierarchy so each unique page context gets its own session bucket.
 export const buildTutorSessionScope = (
   sessionContext: KangurAiTutorConversationContext | null | undefined
 ): string | null => {
@@ -145,6 +157,9 @@ export const buildTutorSessionScope = (
 
 const KANGUR_AI_TUTOR_MEMORY_SCOPE_SEPARATOR = '::';
 
+// buildLearnerMemoryKey builds the storage key for a learner's memory within
+// a specific session scope. Returns null when learnerId is absent (guest) or
+// when no scope can be derived from the context.
 export const buildLearnerMemoryKey = (
   learnerId: string | null | undefined,
   sessionContext: KangurAiTutorConversationContext | null | undefined
@@ -157,9 +172,15 @@ export const buildLearnerMemoryKey = (
   return scope ? `${learnerId}${KANGUR_AI_TUTOR_MEMORY_SCOPE_SEPARATOR}${scope}` : null;
 };
 
+// isLearnerMemoryKeyForLearner checks whether a memory key belongs to a
+// given learner (either an exact match or a scoped key prefixed with the
+// learner ID + separator).
 export const isLearnerMemoryKeyForLearner = (key: string, learnerId: string): boolean =>
   key === learnerId || key.startsWith(`${learnerId}${KANGUR_AI_TUTOR_MEMORY_SCOPE_SEPARATOR}`);
 
+// buildSessionKey builds the per-session state storage key. Guest sessions
+// use 'guest' as the learner prefix so their history is isolated from any
+// authenticated learner that signs in later.
 export const buildSessionKey = (
   learnerId: string | null,
   sessionContext: KangurAiTutorConversationContext | null | undefined
@@ -176,6 +197,9 @@ export const buildSessionKey = (
 // Message helpers
 // ---------------------------------------------------------------------------
 
+// countRepeatedUserMessages counts how many times the learner has already
+// sent the same message text in the current session. Used to detect
+// repetitive questions and adjust the tutor's coaching response.
 export const countRepeatedUserMessages = (
   messages: ChatMessage[],
   nextText: string
@@ -196,6 +220,9 @@ export const countRepeatedUserMessages = (
   }, 0);
 };
 
+// getLastAssistantCoachingMode scans the message history in reverse to find
+// the most recent coaching mode used by the assistant. Used to maintain
+// coaching continuity across follow-up messages.
 export const getLastAssistantCoachingMode = (
   messages: ChatMessage[],
   fallback: KangurAiTutorLearnerMemory | null

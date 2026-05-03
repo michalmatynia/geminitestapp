@@ -2,12 +2,14 @@
  * @vitest-environment jsdom
  */
 
-import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 
-import { GAME_HOME_LEADERBOARD_SHELL_CLASSNAME } from '@/features/kangur/ui/pages/GameHome.constants';
+import {
+  GAME_HOME_LEADERBOARD_SHELL_CLASSNAME,
+  GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+} from '@/features/kangur/ui/pages/GameHome.constants';
 
 const { logKangurClientErrorMock: _logKangurClientErrorMock, withKangurClientError: _withKangurClientError, withKangurClientErrorSync: _withKangurClientErrorSync } =
   globalThis.__kangurClientErrorMocks();
@@ -15,6 +17,9 @@ const authMeMock = vi.fn<() => Promise<KangurUser>>();
 const scoreFilterMock = vi.fn<() => Promise<KangurScoreRecord[]>>();
 const useKangurPageContentEntryMock = vi.fn();
 const useKangurSubjectFocusMock = vi.fn();
+let intersectionObserverCallback:
+  | ((entries: Array<{ isIntersecting: boolean }>) => void)
+  | null = null;
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({
@@ -37,7 +42,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
       withKangurClientErrorSync,
     };
   })(),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: (...args: Parameters<typeof useKangurPageContentEntryMock>) =>
@@ -59,6 +65,16 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
       role: 'student',
       display_name: 'Ada',
     },
+  }),
+  useOptionalKangurAuthSessionState: () => ({
+    user: {
+      email: 'ada@example.com',
+      role: 'student',
+      display_name: 'Ada',
+    },
+    isAuthenticated: true,
+    hasResolvedAuth: true,
+    canAccessParentAssignments: false,
   }),
 }));
 
@@ -82,6 +98,21 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
 describe('Leaderboard', () => {
   beforeEach(async () => {
     vi.resetModules();
+    intersectionObserverCallback = null;
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(callback: (entries: Array<{ isIntersecting: boolean }>) => void) {
+          intersectionObserverCallback = callback;
+        }
+
+        disconnect(): void {}
+
+        observe(): void {}
+
+        unobserve(): void {}
+      }
+    );
     Leaderboard = (await import('@/features/kangur/ui/components/Leaderboard')).default;
     vi.clearAllMocks();
     useKangurPageContentEntryMock.mockImplementation(() => ({
@@ -129,14 +160,20 @@ describe('Leaderboard', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('uses shared segmented styling for filters and still narrows leaderboard results', async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers();
 
     render(<Leaderboard />);
 
-    const allOperationFilter = await screen.findByTestId('leaderboard-operation-filter-all');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS);
+      await Promise.resolve();
+    });
+
+    const allOperationFilter = screen.getByTestId('leaderboard-operation-filter-all');
     const divisionOperationFilter = screen.getByTestId('leaderboard-operation-filter-division');
     const allUserFilter = screen.getByTestId('leaderboard-user-filter-all');
     const anonymousUserFilter = screen.getByTestId('leaderboard-user-filter-anonymous');
@@ -188,7 +225,7 @@ describe('Leaderboard', () => {
       'touch-manipulation'
     );
     expect(anonymousUserFilter).not.toHaveClass('kangur-segmented-control-item-active');
-    expect(await screen.findByTestId('leaderboard-row-score-1')).toHaveClass(
+    expect(screen.getByTestId('leaderboard-row-score-1')).toHaveClass(
       'soft-card'
     );
     expect(screen.getByTestId('leaderboard-current-user-badge-score-1')).toHaveClass(
@@ -205,7 +242,7 @@ describe('Leaderboard', () => {
     expect(screen.getByText('Bartek')).toBeInTheDocument();
     expect(screen.getByText('Olek')).toBeInTheDocument();
 
-    await user.click(divisionOperationFilter);
+    fireEvent.click(divisionOperationFilter);
 
     expect(divisionOperationFilter).toHaveClass('kangur-segmented-control-item-active');
     expect(divisionOperationFilter).toHaveAttribute('aria-pressed', 'true');
@@ -214,7 +251,7 @@ describe('Leaderboard', () => {
     expect(screen.getByText('Bartek')).toBeInTheDocument();
     expect(screen.getByText('Olek')).toBeInTheDocument();
 
-    await user.click(anonymousUserFilter);
+    fireEvent.click(anonymousUserFilter);
 
     expect(anonymousUserFilter).toHaveClass('kangur-segmented-control-item-active');
     expect(anonymousUserFilter).toHaveAttribute('aria-pressed', 'true');
@@ -224,11 +261,17 @@ describe('Leaderboard', () => {
   });
 
   it('uses the shared empty-state surface when no scores match filters', async () => {
+    vi.useFakeTimers();
     scoreFilterMock.mockResolvedValue([]);
 
     render(<Leaderboard />);
 
-    expect(await screen.findByTestId('leaderboard-empty')).toHaveClass(
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId('leaderboard-empty')).toHaveClass(
       'soft-card',
       'border-dashed',
       'border'
@@ -266,7 +309,32 @@ describe('Leaderboard', () => {
     expect(screen.getByTestId('leaderboard-loading')).toBeInTheDocument();
 
     await act(async () => {
-      vi.runOnlyPendingTimers();
+      await vi.advanceTimersByTimeAsync(GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS - 1);
+    });
+
+    expect(scoreFilterMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+
+    expect(scoreFilterMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the leaderboard score fetch blocked until the shell becomes visible on home', async () => {
+    vi.useFakeTimers();
+
+    render(<Leaderboard deferUntilVisible />);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS);
+    });
+
+    expect(scoreFilterMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      intersectionObserverCallback?.([{ isIntersecting: true }]);
+      await Promise.resolve();
     });
 
     expect(scoreFilterMock).toHaveBeenCalledTimes(1);

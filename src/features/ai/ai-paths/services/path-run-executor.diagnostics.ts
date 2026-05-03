@@ -17,6 +17,14 @@ export type FailedNodeDiagnostic = {
   message: string | null;
 };
 
+export type WaitingNodeDiagnostic = {
+  nodeId: string;
+  nodeType: string;
+  nodeTitle: string | null;
+  message: string | null;
+  waitingOnPorts: string[];
+};
+
 export const normalizePortList = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
   return value
@@ -75,6 +83,51 @@ export const buildBlockedRunFailureMessage = (blockedNodes: BlockedNodeDiagnosti
       ? ` (+${blockedNodes.length - 1} more blocked node${blockedNodes.length === 2 ? '' : 's'})`
       : '';
   return `Run blocked by ${title}${waiting}${suffix}.`;
+};
+
+export const collectWaitingNodeDiagnostics = (
+  nodes: AiNode[],
+  outputs: Record<string, RuntimePortValues> | undefined
+): WaitingNodeDiagnostic[] => {
+  if (!outputs) return [];
+  const nodeById = new Map<string, AiNode>(nodes.map((node: AiNode) => [node.id, node]));
+  return Object.entries(outputs)
+    .map(([nodeId, value]): WaitingNodeDiagnostic | null => {
+      const status =
+        typeof value?.['status'] === 'string' ? value['status'].trim().toLowerCase() : '';
+      if (status !== 'waiting_callback' && status !== 'advance_pending') return null;
+      const node = nodeById.get(nodeId);
+      const message =
+        typeof value['message'] === 'string' && value['message'].trim().length > 0
+          ? value['message'].trim()
+          : null;
+      return {
+        nodeId,
+        nodeType: node?.type ?? 'unknown',
+        nodeTitle: node?.title ?? null,
+        message,
+        waitingOnPorts: normalizePortList(value['waitingOnPorts']),
+      };
+    })
+    .filter((entry: WaitingNodeDiagnostic | null): entry is WaitingNodeDiagnostic =>
+      Boolean(entry)
+    );
+};
+
+export const buildWaitingNodeFailureMessage = (waitingNodes: WaitingNodeDiagnostic[]): string => {
+  const [first] = waitingNodes;
+  if (!first) {
+    return 'Run failed while waiting for asynchronous node completion.';
+  }
+  const title = first.nodeTitle ?? first.nodeId;
+  const waiting =
+    first.waitingOnPorts.length > 0 ? ` (waiting on: ${first.waitingOnPorts.join(', ')})` : '';
+  const detail = first.message ? ` ${first.message}` : '';
+  const suffix =
+    waitingNodes.length > 1
+      ? ` (+${waitingNodes.length - 1} more waiting node${waitingNodes.length === 2 ? '' : 's'})`
+      : '';
+  return `Run failed while waiting at ${title}${waiting}.${detail}${suffix}`.trim();
 };
 
 export const collectFailedNodeDiagnostics = (

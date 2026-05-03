@@ -1,11 +1,16 @@
 'use client';
 
-import React, { ChangeEvent, ReactElement, useMemo } from 'react';
+import React, { type ChangeEvent, type ReactElement, useMemo } from 'react';
 
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { PlaywrightSettingsContextType, PlaywrightSettingsFormProps, PlaywrightSettingsProviderProps } from '@/shared/contracts/ui/playwright';
 import { internalError } from '@/shared/errors/app-error';
-import { playwrightDeviceOptions } from '@/shared/lib/playwright/settings';
+import {
+  playwrightDeviceOptions,
+  playwrightIdentityProfileOptions,
+  playwrightProxyProviderPresetOptions,
+  playwrightProxySessionModeOptions,
+} from '@/shared/lib/playwright/settings';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { CollapsibleSection, Input } from '@/shared/ui/primitives.public';
 import { FormActions, FormField, FormSection, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
@@ -189,6 +194,78 @@ function TimeoutsSection(): ReactElement {
   );
 }
 
+function IdentitySection(): ReactElement {
+  const { settings, setSettings } = usePlaywrightSettings();
+  return (
+    <div className='space-y-4'>
+      <FormSection variant='subtle-compact' className='p-3'>
+        <FormField label='Identity profile'>
+          <SelectSimple
+            size='sm'
+            value={settings.identityProfile}
+            onValueChange={(value: string): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                identityProfile: value as PlaywrightSettings['identityProfile'],
+              }))
+            }
+            options={playwrightIdentityProfileOptions}
+            ariaLabel='Identity profile'
+            title='Identity profile'
+          />
+          <Hint variant='subtle'>
+            Applies engine-owned fallback fingerprints for hostile targets before custom overrides.
+          </Hint>
+        </FormField>
+      </FormSection>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+      <FormSection variant='subtle-compact' className='p-3'>
+        <FormField label='Locale'>
+          <Input
+            type='text'
+            className='h-9'
+            placeholder='en-US'
+            value={settings.locale ?? ''}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+              const value = event.target.value;
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                locale: value,
+              }));
+            }}
+            aria-label='Locale'
+            title='Locale'
+          />
+          <Hint variant='subtle'>
+            Sets navigator language and the default Accept-Language header.
+          </Hint>
+        </FormField>
+      </FormSection>
+      <FormSection variant='subtle-compact' className='p-3'>
+        <FormField label='Timezone'>
+          <Input
+            type='text'
+            className='h-9'
+            placeholder='Europe/Warsaw'
+            value={settings.timezoneId ?? ''}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+              const value = event.target.value;
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                timezoneId: value,
+              }));
+            }}
+            aria-label='Timezone'
+            title='Timezone'
+          />
+          <Hint variant='subtle'>Uses an IANA timezone ID for browser context time APIs.</Hint>
+        </FormField>
+      </FormSection>
+      </div>
+    </div>
+  );
+}
+
 function HumanizeSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
@@ -221,6 +298,100 @@ function HumanizeSection(): ReactElement {
            aria-label='Mouse Jitter (pixels)' title='Mouse Jitter (pixels)'/>
         </FormField>
       )}
+    </FormSection>
+  );
+}
+
+function StartupCadenceSection(): ReactElement {
+  const { settings, setSettings } = usePlaywrightSettings();
+  return (
+    <FormSection variant='subtle-compact' className='p-3 space-y-3'>
+      <FormField label='Startup cadence (ms)'>
+        <Hint variant='subtle'>
+          Pre-launch and post-navigation pauses. Leave at <code>0</code> to use the identity profile
+          default.
+        </Hint>
+      </FormField>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-3`}>
+        <FormField label='Launch cooldown'>
+          <Input
+            type='number'
+            className='h-9'
+            value={settings.launchCooldownMs ?? 0}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                launchCooldownMs: toNumber(event.target.value, prev.launchCooldownMs ?? 0),
+              }))
+            }
+            aria-label='Launch cooldown (ms)'
+            title='Launch cooldown (ms)'
+          />
+        </FormField>
+        <FormField label='Prewarm wait'>
+          <Input
+            type='number'
+            className='h-9'
+            value={settings.prewarmWaitMs ?? 0}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                prewarmWaitMs: toNumber(event.target.value, prev.prewarmWaitMs ?? 0),
+              }))
+            }
+            aria-label='Prewarm wait (ms)'
+            title='Prewarm wait (ms)'
+          />
+        </FormField>
+        <FormField label='Post start-URL wait'>
+          <Input
+            type='number'
+            className='h-9'
+            value={settings.postStartUrlWaitMs ?? 0}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                postStartUrlWaitMs: toNumber(event.target.value, prev.postStartUrlWaitMs ?? 0),
+              }))
+            }
+            aria-label='Post start-URL wait (ms)'
+            title='Post start-URL wait (ms)'
+          />
+        </FormField>
+      </div>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+        <FormField label='Viewport jitter (px)'>
+          <Input
+            type='number'
+            className='h-9'
+            value={settings.viewportJitterPx ?? 0}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                viewportJitterPx: toNumber(event.target.value, prev.viewportJitterPx ?? 0),
+              }))
+            }
+            aria-label='Viewport jitter (px)'
+            title='Viewport jitter (px)'
+          />
+          <Hint variant='subtle'>
+            Randomly shifts context viewport by ±N px per launch to vary fingerprint.
+          </Hint>
+        </FormField>
+        <ToggleRow
+          label='Post-load cursor nudge'
+          description='Drift the cursor to a natural resting position after navigation.'
+          checked={settings.postLoadNudgeEnabled !== false}
+          onCheckedChange={(checked: boolean): void =>
+            setSettings((prev: PlaywrightSettings) => ({
+              ...prev,
+              postLoadNudgeEnabled: checked,
+            }))
+          }
+          variant='switch'
+          className='border-none bg-transparent p-0 hover:bg-transparent'
+        />
+      </div>
     </FormSection>
   );
 }
@@ -330,6 +501,66 @@ function ProxySection(): ReactElement {
                aria-label='Proxy password' title='Proxy password'/>
             </FormField>
           </div>
+          <ToggleRow
+            label='Proxy session tokens'
+            description='Inject engine-managed session tokens into proxy values that contain a session placeholder.'
+            checked={settings.proxySessionAffinity}
+            onCheckedChange={(checked: boolean): void =>
+              setSettings((prev: PlaywrightSettings) => ({
+                ...prev,
+                proxySessionAffinity: checked,
+              }))
+            }
+            variant='switch'
+            className='border-none bg-transparent p-0 hover:bg-transparent'
+          />
+          {settings.proxySessionAffinity ? (
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+              <FormSection variant='subtle-compact' className='p-3'>
+                <FormField label='Proxy session mode'>
+                  <SelectSimple
+                    size='sm'
+                    value={settings.proxySessionMode}
+                    onValueChange={(value: string): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        proxySessionMode: value as PlaywrightSettings['proxySessionMode'],
+                      }))
+                    }
+                    options={playwrightProxySessionModeOptions}
+                    ariaLabel='Proxy session mode'
+                    title='Proxy session mode'
+                  />
+                  <Hint variant='subtle'>
+                    Sticky keeps one session token per scope. Rotate issues a fresh token for each run.
+                  </Hint>
+                </FormField>
+              </FormSection>
+              <FormSection variant='subtle-compact' className='p-3'>
+                <FormField label='Proxy provider preset'>
+                  <SelectSimple
+                    size='sm'
+                    value={settings.proxyProviderPreset}
+                    onValueChange={(value: string): void =>
+                      setSettings((prev: PlaywrightSettings) => ({
+                        ...prev,
+                        proxyProviderPreset: value as PlaywrightSettings['proxyProviderPreset'],
+                      }))
+                    }
+                    options={playwrightProxyProviderPresetOptions}
+                    ariaLabel='Proxy provider preset'
+                    title='Proxy provider preset'
+                  />
+                  <Hint variant='subtle'>
+                    `Custom` uses only explicit placeholders. Provider presets can inject session tokens into usernames when no placeholder is present.
+                  </Hint>
+                </FormField>
+              </FormSection>
+            </div>
+          ) : null}
+          <Hint variant='subtle'>
+            Use <code>{'{session}'}</code>, <code>{'{{session}}'}</code>, or <code>__SESSION__</code> in the proxy server, username, or password to opt into engine-managed affinity.
+          </Hint>
         </div>
       )}
     </FormSection>
@@ -352,6 +583,8 @@ function AdvancedSettingsSection(): ReactElement {
         <DelayInputs label='Input delay' minKey='inputDelayMin' maxKey='inputDelayMax' />
         <DelayInputs label='Action delay' minKey='actionDelayMin' maxKey='actionDelayMax' />
 
+        <StartupCadenceSection />
+
         <ProxySection />
       </div>
     </CollapsibleSection>
@@ -372,6 +605,7 @@ export function PlaywrightSettingsFormContent(): ReactElement {
         <HeadlessModeSection />
         <EmulationSection />
         <TimeoutsSection />
+        <IdentitySection />
         <HumanizeSection />
         <AdvancedSettingsSection />
 

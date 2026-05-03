@@ -9,21 +9,33 @@ const {
   updateConnectionMock,
   decryptSecretMock,
   encryptSecretMock,
-  resolveConnectionPlaywrightSettingsMock,
+  resolvePlaywrightConnectionRuntimeMock,
+  createTraderaBrowserTestUtilsMock,
+  resolveTraderaEmailVerificationCodeMock,
+  humanizedClickMock,
+  humanizedFillMock,
   validateTraderaQuickListProductConfigMock,
+  handlePracujBrowserTestMock,
   chromiumLaunchMock,
   browserNewContextMock,
   contextSetDefaultTimeoutMock,
   contextSetDefaultNavigationTimeoutMock,
   contextNewPageMock,
+  contextAddInitScriptMock,
+  contextRouteMock,
   contextCloseMock,
   browserCloseMock,
   safeGotoMock,
   safeWaitForLoadStateMock,
   safeIsVisibleMock,
   pageLocatorMock,
+  pageGotoMock,
   pageContextStorageStateMock,
+  pageState,
+  pageWaitForTimeoutMock,
+  pageWaitForNavigationMock,
   pageWaitForURLMock,
+  pageKeyboardPressMock,
   pageCloseMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
@@ -33,29 +45,43 @@ const {
   updateConnectionMock: vi.fn(),
   decryptSecretMock: vi.fn(),
   encryptSecretMock: vi.fn(),
-  resolveConnectionPlaywrightSettingsMock: vi.fn(),
+  resolvePlaywrightConnectionRuntimeMock: vi.fn(),
+  createTraderaBrowserTestUtilsMock: vi.fn(),
+  resolveTraderaEmailVerificationCodeMock: vi.fn(),
+  humanizedClickMock: vi.fn(),
+  humanizedFillMock: vi.fn(),
   validateTraderaQuickListProductConfigMock: vi.fn(),
+  handlePracujBrowserTestMock: vi.fn(),
   chromiumLaunchMock: vi.fn(),
   browserNewContextMock: vi.fn(),
   contextSetDefaultTimeoutMock: vi.fn(),
   contextSetDefaultNavigationTimeoutMock: vi.fn(),
   contextNewPageMock: vi.fn(),
+  contextAddInitScriptMock: vi.fn(),
+  contextRouteMock: vi.fn(),
   contextCloseMock: vi.fn(),
   browserCloseMock: vi.fn(),
   safeGotoMock: vi.fn(),
   safeWaitForLoadStateMock: vi.fn(),
   safeIsVisibleMock: vi.fn(),
   pageLocatorMock: vi.fn(),
+  pageGotoMock: vi.fn(),
   pageContextStorageStateMock: vi.fn(),
+  pageState: { currentUrl: 'about:blank' as string },
+  pageWaitForTimeoutMock: vi.fn(),
+  pageWaitForNavigationMock: vi.fn(),
   pageWaitForURLMock: vi.fn(),
+  pageKeyboardPressMock: vi.fn(),
   pageCloseMock: vi.fn(),
 }));
 
-vi.mock('playwright', () => ({
-  chromium: {
-    launch: (...args: unknown[]) => chromiumLaunchMock(...args),
-  },
-  devices: {
+vi.mock('@/shared/lib/playwright/runtime', () => ({
+  getPlaywrightRuntime: () => ({
+    chromium: {
+      launch: (...args: unknown[]) => chromiumLaunchMock(...args),
+    },
+  }),
+  getPlaywrightDevicesCatalog: () => ({
     'Desktop Chrome': {
       defaultBrowserType: 'chromium',
       viewport: { width: 1280, height: 720 },
@@ -64,7 +90,7 @@ vi.mock('playwright', () => ({
       hasTouch: false,
       isMobile: false,
     },
-  },
+  }),
 }));
 
 vi.mock('@/shared/lib/api/parse-json', () => ({
@@ -88,39 +114,37 @@ vi.mock('@/shared/lib/products/services/product-repository', () => ({
   }),
 }));
 
-vi.mock('@/features/integrations/services/tradera-api-client', () => ({
-  getTraderaUserInfo: vi.fn(),
-}));
-
 vi.mock('@/features/integrations/services/tradera-listing/preflight', () => ({
   validateTraderaQuickListProductConfig: (...args: unknown[]) =>
     validateTraderaQuickListProductConfigMock(...args),
 }));
 
-vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
-  resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
-    resolveConnectionPlaywrightSettingsMock(...args),
-}));
+vi.mock('@/features/playwright/server', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/features/playwright/server')>(
+      '@/features/playwright/server'
+    );
+  return {
+    ...actual,
+    resolvePlaywrightConnectionRuntime: (...args: unknown[]) =>
+      resolvePlaywrightConnectionRuntimeMock(...args) as Promise<unknown>,
+    resolvePlaywrightConnectionTestRuntime: async (
+      input: { connection: unknown }
+    ) => resolvePlaywrightConnectionRuntimeMock(input.connection),
+  };
+});
 
 vi.mock('@/features/integrations/services/tradera-browser-test-utils', () => ({
-  createTraderaBrowserTestUtils: () => ({
-    safeWaitForSelector: vi.fn(),
-    safeWaitFor: vi.fn(),
-    safeCount: vi.fn().mockResolvedValue(0),
-    safeIsVisible: (...args: unknown[]) => safeIsVisibleMock(...args),
-    safeInnerText: vi.fn().mockResolvedValue(''),
-    safeGoto: (...args: unknown[]) => safeGotoMock(...args),
-    safeWaitForLoadState: (...args: unknown[]) => safeWaitForLoadStateMock(...args),
-    failWithDebug: async (_step: string, detail: string) => {
-      throw new Error(detail);
-    },
-    humanizedPause: vi.fn(),
-    humanizedClick: vi.fn(),
-    humanizedFill: vi.fn(),
-    acceptCookieConsent: vi.fn().mockResolvedValue(false),
-    successSelector: '[data-tradera-success]',
-    errorSelector: '[data-tradera-error]',
-  }),
+  createTraderaBrowserTestUtils: (...args: unknown[]) => createTraderaBrowserTestUtilsMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/tradera-listing/tradera-auth-email-code', () => ({
+  resolveTraderaEmailVerificationCode: (...args: unknown[]) =>
+    resolveTraderaEmailVerificationCodeMock(...args),
+}));
+
+vi.mock('./handler.pracuj-browser', () => ({
+  handlePracujBrowserTest: (...args: unknown[]) => handlePracujBrowserTestMock(...args),
 }));
 
 import { postTestConnectionHandler } from './handler';
@@ -168,6 +192,9 @@ describe('integration connection test handler', () => {
       categoryMapping: { reason: 'mapped', mapping: {} },
       shippingGroupResolution: { reason: 'mapped', shippingPriceEur: 5 },
     });
+    handlePracujBrowserTestMock.mockResolvedValue(
+      Response.json({ ok: true, steps: [], sessionReady: true })
+    );
 
     decryptSecretMock.mockImplementation((value: string) => {
       if (value === 'state-secret') {
@@ -180,42 +207,92 @@ describe('integration connection test handler', () => {
     });
 
     encryptSecretMock.mockImplementation((value: string) => `encrypted:${value}`);
-
-    resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
-      headless: true,
-      slowMo: 77,
-      timeout: 11_111,
-      navigationTimeout: 22_222,
-      proxyEnabled: true,
-      proxyServer: 'http://persona-proxy.example:8080',
-      proxyUsername: 'persona-user',
-      proxyPassword: 'persona-pass',
-      emulateDevice: true,
-      deviceName: 'Desktop Chrome',
+    resolvePlaywrightConnectionRuntimeMock.mockResolvedValue({
+      settings: {
+        browser: 'chromium',
+        headless: true,
+        slowMo: 77,
+        timeout: 11_111,
+        navigationTimeout: 22_222,
+        humanizeMouse: true,
+        mouseJitter: 11,
+        clickDelayMin: 40,
+        clickDelayMax: 160,
+        inputDelayMin: 35,
+        inputDelayMax: 140,
+        actionDelayMin: 300,
+        actionDelayMax: 1_100,
+        proxyEnabled: true,
+        proxyServer: 'http://persona-proxy.example:8080',
+        proxyUsername: 'persona-user',
+        proxyPassword: 'persona-pass',
+        emulateDevice: true,
+        deviceName: 'Desktop Chrome',
+      },
+      storageState: { cookies: [], origins: [] },
+      personaId: 'persona-1',
+      browserPreference: 'chromium',
+      deviceProfileName: 'Desktop Chrome',
+      deviceContextOptions: {
+        viewport: { width: 1280, height: 720 },
+        userAgent: 'persona-user-agent',
+      },
+    });
+    createTraderaBrowserTestUtilsMock.mockReturnValue({
+      safeWaitForSelector: vi.fn(),
+      safeWaitFor: vi.fn(),
+      safeCount: vi.fn().mockResolvedValue(0),
+      safeIsVisible: (...args: unknown[]) => safeIsVisibleMock(...args),
+      safeInnerText: vi.fn().mockResolvedValue(''),
+      safeGoto: (...args: unknown[]) => safeGotoMock(...args),
+      safeWaitForLoadState: (...args: unknown[]) => safeWaitForLoadStateMock(...args),
+      failWithDebug: async (_step: string, detail: string) => {
+        throw new Error(detail);
+      },
+      humanizedPause: vi.fn(),
+      humanizedClick: (...args: unknown[]) => humanizedClickMock(...args),
+      humanizedFill: (...args: unknown[]) => humanizedFillMock(...args),
+      acceptCookieConsent: vi.fn().mockResolvedValue(false),
+      successSelector: '[data-tradera-success]',
+      errorSelector: '[data-tradera-error]',
     });
 
-    let currentUrl = 'https://www.tradera.com/en/my/listings?tab=active';
+    pageState.currentUrl = 'https://www.tradera.com/en/my/listings?tab=active';
     safeGotoMock.mockImplementation(async (url: string) => {
-      currentUrl = url.includes('/selling')
+      pageState.currentUrl = url.includes('/selling')
         ? 'https://www.tradera.com/en/selling/new'
         : url;
     });
     pageWaitForURLMock.mockImplementation(async () => {
-      currentUrl = 'https://www.tradera.com/en/selling/new';
+      pageState.currentUrl = 'https://www.tradera.com/en/selling/new';
     });
+    pageGotoMock.mockImplementation(async (url: string) => {
+      pageState.currentUrl = url;
+    });
+    pageWaitForTimeoutMock.mockResolvedValue(undefined);
+    pageWaitForNavigationMock.mockResolvedValue(undefined);
+    resolveTraderaEmailVerificationCodeMock.mockResolvedValue(null);
 
     const page = {
       locator: (...args: unknown[]) => pageLocatorMock(...args),
-      url: () => currentUrl,
+      goto: (...args: unknown[]) => pageGotoMock(...args),
+      url: () => pageState.currentUrl,
       context: () => ({
         storageState: (...args: unknown[]) => pageContextStorageStateMock(...args),
       }),
+      waitForTimeout: (...args: unknown[]) => pageWaitForTimeoutMock(...args),
+      waitForNavigation: (...args: unknown[]) => pageWaitForNavigationMock(...args),
       waitForURL: (...args: unknown[]) => pageWaitForURLMock(...args),
+      keyboard: {
+        press: (...args: unknown[]) => pageKeyboardPressMock(...args),
+      },
       close: (...args: unknown[]) => pageCloseMock(...args),
     };
 
     const context = {
       newPage: (...args: unknown[]) => contextNewPageMock(...args),
+      addInitScript: (...args: unknown[]) => contextAddInitScriptMock(...args),
+      route: (...args: unknown[]) => contextRouteMock(...args),
       setDefaultTimeout: (...args: unknown[]) => contextSetDefaultTimeoutMock(...args),
       setDefaultNavigationTimeout: (...args: unknown[]) =>
         contextSetDefaultNavigationTimeoutMock(...args),
@@ -255,21 +332,18 @@ describe('integration connection test handler', () => {
     const payload = (await response.json()) as { ok: boolean };
 
     expect(payload.ok).toBe(true);
-    expect(resolveConnectionPlaywrightSettingsMock).toHaveBeenCalledWith(
+    expect(resolvePlaywrightConnectionRuntimeMock).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'connection-1',
         playwrightPersonaId: 'persona-1',
       })
     );
-    expect(chromiumLaunchMock).toHaveBeenCalledWith({
-      headless: false,
-      slowMo: 77,
-      proxy: {
-        server: 'http://persona-proxy.example:8080',
-        username: 'persona-user',
-        password: 'persona-pass',
-      },
-    });
+    expect(chromiumLaunchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headless: false,
+        slowMo: 77,
+      })
+    );
     expect(browserNewContextMock).toHaveBeenCalledWith(
       expect.objectContaining({
         storageState: { cookies: [], origins: [] },
@@ -279,6 +353,19 @@ describe('integration connection test handler', () => {
     );
     expect(contextSetDefaultTimeoutMock).toHaveBeenCalledWith(11_111);
     expect(contextSetDefaultNavigationTimeoutMock).toHaveBeenCalledWith(22_222);
+    expect(createTraderaBrowserTestUtilsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionId: 'connection-1',
+        humanizeMouse: true,
+        mouseJitter: 11,
+        clickDelayMin: 40,
+        clickDelayMax: 160,
+        inputDelayMin: 35,
+        inputDelayMax: 140,
+        actionDelayMin: 300,
+        actionDelayMax: 1_100,
+      })
+    );
     expect(safeGotoMock).toHaveBeenCalledWith(
       'https://www.tradera.com/en/my/listings?tab=active',
       expect.objectContaining({
@@ -298,6 +385,177 @@ describe('integration connection test handler', () => {
     expect(browserNewContextMock).toHaveBeenCalled();
     expect(pageWaitForURLMock).not.toHaveBeenCalled();
     expect(decryptSecretMock).not.toHaveBeenCalledWith('raw-proxy-secret');
+  });
+
+  it('forces manual_session_refresh through the Tradera login page and ignores unauthenticated /my redirects until account markers appear', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        mode: 'manual_session_refresh',
+      },
+    });
+
+    let currentPhase: 'login' | 'email-code' | 'authenticated' = 'login';
+    pageGotoMock.mockImplementation(async (url: string) => {
+      pageState.currentUrl = url;
+      currentPhase = 'login';
+    });
+    pageWaitForTimeoutMock.mockImplementation(async (timeoutMs?: number) => {
+      if (timeoutMs !== 1000) {
+        return;
+      }
+      if (currentPhase === 'authenticated') return;
+    });
+    resolveTraderaEmailVerificationCodeMock.mockResolvedValue({
+      code: '343079',
+      accountId: 'mail-account-1',
+      messageId: 'message-1',
+      receivedAt: '2026-04-24T19:00:00.000Z',
+    });
+    const usernameInput = {
+      count: async () => 1,
+      isVisible: async () => currentPhase === 'login',
+    };
+    const passwordInput = {
+      count: async () => 1,
+      isVisible: async () => currentPhase === 'login',
+    };
+    const loginSubmitButton = {
+      count: async () => 1,
+      isVisible: async () => currentPhase === 'login',
+    };
+    const codeInput = {
+      count: async () => 1,
+      isVisible: async () => currentPhase === 'email-code',
+      waitFor: async () => undefined,
+    };
+    const codeSubmitButton = {
+      count: async () => 1,
+      isVisible: async () => false,
+    };
+    pageKeyboardPressMock.mockImplementation(async (key: string) => {
+      if (key === 'Enter') {
+        currentPhase = 'authenticated';
+        pageState.currentUrl = 'https://www.tradera.com/en/my/';
+      }
+    });
+    humanizedClickMock.mockImplementation(async (locator: unknown) => {
+      if (locator === loginSubmitButton) {
+        currentPhase = 'email-code';
+        pageState.currentUrl = 'https://www.tradera.com/en/login/verify';
+        return;
+      }
+      if (locator === codeSubmitButton) {
+        currentPhase = 'authenticated';
+        pageState.currentUrl = 'https://www.tradera.com/en/my/';
+      }
+    });
+    pageLocatorMock.mockImplementation((selector: string) => ({
+      first: () => {
+        if (
+          selector === '#email' ||
+          selector === 'input[name="email"]' ||
+          selector === 'input[type="email"]'
+        ) {
+          return usernameInput;
+        }
+        if (
+          selector === '#password' ||
+          selector === 'input[name="password"]' ||
+          selector === 'input[type="password"]'
+        ) {
+          return passwordInput;
+        }
+        if (
+          selector === 'button[data-login-submit="true"]' ||
+          selector === '#sign-in-form button[type="submit"]' ||
+          selector === 'button:has-text("Sign in")' ||
+          selector === 'button:has-text("Logga in")'
+        ) {
+          return loginSubmitButton;
+        }
+        if (
+          selector.includes('input[autocomplete="one-time-code"]') ||
+          selector === 'input[autocomplete="one-time-code"]' ||
+          selector === 'input[name*="verification" i]' ||
+          selector === 'input[id*="verification" i]' ||
+          selector === 'input[name*="code" i]' ||
+          selector === 'input[id*="code" i]' ||
+          selector === 'input[inputmode="numeric"]' ||
+          selector === 'input[type="tel"]' ||
+          selector === 'input[type="text"][maxlength="6"]'
+        ) {
+          return codeInput;
+        }
+        if (
+          selector === 'button[type="submit"]' ||
+          selector === 'button:has-text("Verify")' ||
+          selector === 'button:has-text("Continue")' ||
+          selector === 'button:has-text("Confirm")' ||
+          selector === 'button:has-text("Submit")' ||
+          selector === 'button:has-text("Verifiera")' ||
+          selector === 'button:has-text("Fortsätt")' ||
+          selector === 'button:has-text("Bekräfta")' ||
+          selector === 'button:has-text("Skicka")'
+        ) {
+          return codeSubmitButton;
+        }
+        return {
+          count: async () => 1,
+          isVisible: async () => {
+            if (selector.includes('a[href*="logout"]')) {
+              return currentPhase === 'authenticated';
+            }
+            if (selector.includes('#sign-in-form') || selector.includes('form[action*="login"]')) {
+              return currentPhase === 'login';
+            }
+            return false;
+          },
+        };
+      },
+    }));
+
+    const response = await postTestConnectionHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/integration-1/connections/connection-1/test',
+        { method: 'POST' }
+      ),
+      {} as never,
+      { id: 'integration-1', connectionId: 'connection-1' }
+    );
+
+    const payload = (await response.json()) as { ok: boolean; message: string };
+
+    expect(payload.ok).toBe(true);
+    expect(payload.message).toBe('Tradera session refreshed successfully.');
+    expect(pageGotoMock).toHaveBeenCalledWith('https://www.tradera.com/login', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60_000,
+    });
+    expect(decryptSecretMock).toHaveBeenCalledWith('password-secret');
+    expect(humanizedFillMock).toHaveBeenNthCalledWith(1, usernameInput, 'user@example.com');
+    expect(humanizedFillMock).toHaveBeenNthCalledWith(2, passwordInput, 'decrypted-password');
+    expect(humanizedClickMock).toHaveBeenNthCalledWith(1, loginSubmitButton);
+    expect(resolveTraderaEmailVerificationCodeMock).toHaveBeenCalledWith({
+      emailAddress: 'user@example.com',
+      requestedAfter: expect.any(String),
+      timeoutMs: 120_000,
+    });
+    expect(humanizedFillMock).toHaveBeenNthCalledWith(3, codeInput, '343079');
+    expect(humanizedClickMock).toHaveBeenCalledTimes(1);
+    expect(pageKeyboardPressMock).toHaveBeenCalledWith('Enter');
+    expect(safeGotoMock).not.toHaveBeenCalledWith(
+      'https://www.tradera.com/en/my/listings?tab=active',
+      expect.anything(),
+      expect.anything()
+    );
+    expect(updateConnectionMock).toHaveBeenCalledWith(
+      'connection-1',
+      expect.objectContaining({
+        playwrightStorageState: expect.any(String),
+        playwrightStorageStateUpdatedAt: expect.any(String),
+      })
+    );
   });
 
   it('supports fast quicklist preflight without opening the sell page or saving session again', async () => {
@@ -321,15 +579,12 @@ describe('integration connection test handler', () => {
 
     expect(payload.ok).toBe(true);
     expect(payload.sessionReady).toBe(true);
-    expect(chromiumLaunchMock).toHaveBeenCalledWith({
-      headless: true,
-      slowMo: 0,
-      proxy: {
-        server: 'http://persona-proxy.example:8080',
-        username: 'persona-user',
-        password: 'persona-pass',
-      },
-    });
+    expect(chromiumLaunchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headless: true,
+        slowMo: 0,
+      })
+    );
     expect(safeGotoMock).toHaveBeenCalledTimes(1);
     expect(safeGotoMock).toHaveBeenCalledWith(
       'https://www.tradera.com/en/my/listings?tab=active',
@@ -346,6 +601,58 @@ describe('integration connection test handler', () => {
     );
     expect(updateConnectionMock).not.toHaveBeenCalled();
     expect(pageWaitForURLMock).not.toHaveBeenCalled();
+  });
+
+  it('forces quicklist preflight to stay headless even when the connection default is headed', async () => {
+    resolvePlaywrightConnectionRuntimeMock.mockResolvedValue({
+      settings: {
+        browser: 'chromium',
+        headless: false,
+        slowMo: 77,
+        timeout: 11_111,
+        navigationTimeout: 22_222,
+        proxyEnabled: true,
+        proxyServer: 'http://persona-proxy.example:8080',
+        proxyUsername: 'persona-user',
+        proxyPassword: 'persona-pass',
+        emulateDevice: true,
+        deviceName: 'Desktop Chrome',
+      },
+      storageState: { cookies: [], origins: [] },
+      personaId: 'persona-1',
+      browserPreference: 'chromium',
+      deviceProfileName: 'Desktop Chrome',
+      deviceContextOptions: {
+        viewport: { width: 1280, height: 720 },
+        userAgent: 'persona-user-agent',
+      },
+    });
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        mode: 'quicklist_preflight',
+      },
+    });
+
+    const response = await postTestConnectionHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/integration-1/connections/connection-1/test',
+        { method: 'POST' }
+      ),
+      {} as never,
+      { id: 'integration-1', connectionId: 'connection-1' }
+    );
+
+    const payload = (await response.json()) as { ok: boolean; sessionReady?: boolean };
+
+    expect(payload.ok).toBe(true);
+    expect(payload.sessionReady).toBe(true);
+    expect(chromiumLaunchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headless: true,
+        slowMo: 0,
+      })
+    );
   });
 
   it('validates product configuration during quicklist preflight when a product id is supplied', async () => {
@@ -402,6 +709,34 @@ describe('integration connection test handler', () => {
       )
     ).rejects.toThrow(
       'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+    );
+    expect(chromiumLaunchMock).not.toHaveBeenCalled();
+  });
+
+  it('routes Pracuj.pl connections to the job-search browser handler', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-1',
+      slug: 'pracuj-pl',
+      name: 'Pracuj.pl',
+    });
+
+    const response = await postTestConnectionHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/integration-1/connections/connection-1/test',
+        { method: 'POST' }
+      ),
+      {} as never,
+      { id: 'integration-1', connectionId: 'connection-1' }
+    );
+
+    const payload = (await response.json()) as { ok: boolean; sessionReady?: boolean };
+
+    expect(payload).toMatchObject({ ok: true, sessionReady: true });
+    expect(handlePracujBrowserTestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connection: expect.objectContaining({ id: 'connection-1' }),
+        manualMode: true,
+      })
     );
     expect(chromiumLaunchMock).not.toHaveBeenCalled();
   });

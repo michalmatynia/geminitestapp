@@ -31,8 +31,8 @@ const buildStatus = (
     queueLagCriticalMs: 180000,
     successRateWarningPct: 95,
     successRateCriticalPct: 90,
-    deadLetterRateWarningPct: 1,
-    deadLetterRateCriticalPct: 3,
+    failureRateWarningPct: 5,
+    failureRateCriticalPct: 10,
     brainErrorRateWarningPct: 5,
     brainErrorRateCriticalPct: 15,
     minTerminalSamples: 10,
@@ -59,14 +59,14 @@ const buildStatus = (
           ? breach.message
           : 'Success 100% over 100 terminal runs.',
     },
-    deadLetterRate24h: {
-      level: breach.indicator === 'deadLetterRate24h' ? breach.level : 'ok',
+    failureRate24h: {
+      level: breach.indicator === 'failureRate24h' ? breach.level : 'ok',
       valuePct: 0,
       sampleSize: 100,
       message:
-        breach.indicator === 'deadLetterRate24h'
+        breach.indicator === 'failureRate24h'
           ? breach.message
-          : 'Dead-letter rate 0% over 100 terminal runs.',
+          : 'Failure rate 0% over 100 terminal runs.',
     },
     brainErrorRate24h: {
       level: breach.indicator === 'brainErrorRate24h' ? breach.level : 'ok',

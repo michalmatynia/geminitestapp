@@ -8,8 +8,9 @@ type ListProductModalFormContextValue = {
   submitting: boolean;
   onRetryImageExport: (preset: ImageRetryPreset) => void;
   authRequired: boolean;
+  authRequiredMarketplace: 'tradera' | 'vinted' | null;
   loggingIn: boolean;
-  onTraderaLogin: () => void;
+  onMarketplaceLogin: () => void;
   onRetrySubmit: () => void;
 };
 

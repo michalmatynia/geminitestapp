@@ -2,8 +2,16 @@
 
 import React, { useMemo, type ReactNode } from 'react';
 
-import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
-import { useDefaultTraderaConnection } from '@/features/integrations/hooks/useIntegrationQueries';
+import {
+  isTraderaBrowserIntegrationSlug,
+  isVintedIntegrationSlug,
+  is1688IntegrationSlug,
+} from '@/features/integrations/constants/slugs';
+import {
+  useDefault1688Connection,
+  useDefaultTraderaConnection,
+  useDefaultVintedConnection,
+} from '@/features/integrations/hooks/useIntegrationQueries';
 import type { IntegrationsData } from '@/shared/contracts/integrations/context';
 
 import {
@@ -54,11 +62,20 @@ export {
 export function IntegrationsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const data = useIntegrationsDataImpl();
   const defaultTraderaConnectionQuery = useDefaultTraderaConnection();
+  const defaultVintedConnectionQuery = useDefaultVintedConnection();
+  const default1688ConnectionQuery = useDefault1688Connection();
   const preferredConnectionId =
     isTraderaBrowserIntegrationSlug(data.activeIntegration?.slug)
       ? defaultTraderaConnectionQuery.data?.connectionId ?? null
-      : null;
-  const form = useIntegrationsFormImpl(data.connections, preferredConnectionId);
+      : isVintedIntegrationSlug(data.activeIntegration?.slug)
+        ? defaultVintedConnectionQuery.data?.connectionId ?? null
+        : is1688IntegrationSlug(data.activeIntegration?.slug)
+          ? default1688ConnectionQuery.data?.connectionId ?? null
+        : null;
+  const form = useIntegrationsFormImpl(
+    data.connections,
+    preferredConnectionId
+  );
   const testing = useIntegrationsTestingImpl();
   const session = useIntegrationsSessionImpl(
     data.connections.find((c) => c.id === form.editingConnectionId) ?? data.connections[0] ?? null
@@ -83,11 +100,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     setTestErrorMeta: testing.setTestErrorMeta,
     setShowTestSuccessModal: testing.setShowTestSuccessModal,
     setTestSuccessMessage: testing.setTestSuccessMessage,
-    playwrightPersonas: data.playwrightPersonas,
-    setPlaywrightPersonaId: form.setPlaywrightPersonaId,
-    setPlaywrightSettings: form.setPlaywrightSettings,
-    playwrightPersonaId: form.playwrightPersonaId,
-    playwrightSettings: form.playwrightSettings,
     setShowSessionModal: session.setShowSessionModal,
     baseApiMethod: apiConsole.baseApiMethod,
     baseApiParams: apiConsole.baseApiParams,
@@ -125,9 +137,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       setEditingConnectionId: form.setEditingConnectionId,
       connectionToDelete: form.connectionToDelete,
       setConnectionToDelete: form.setConnectionToDelete,
-      playwrightSettings: form.playwrightSettings,
-      setPlaywrightSettings: form.setPlaywrightSettings,
-      playwrightPersonaId: form.playwrightPersonaId,
       savingAllegroSandbox: actions.savingAllegroSandbox,
     }),
     [form, actions.savingAllegroSandbox]
@@ -197,8 +206,9 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       handleAllegroTest: actions.handleAllegroTest,
       handleTestConnection: actions.handleTestConnection,
       handleTraderaManualLogin: actions.handleTraderaManualLogin,
-      handleSelectPlaywrightPersona: actions.handleSelectPlaywrightPersona,
-      handleSavePlaywrightSettings: actions.handleSavePlaywrightSettings,
+      handleVintedManualLogin: actions.handleVintedManualLogin,
+      handle1688ManualLogin: actions.handle1688ManualLogin,
+      handlePracujManualLogin: actions.handlePracujManualLogin,
       handleAllegroAuthorize: actions.handleAllegroAuthorize,
       handleAllegroDisconnect: actions.handleAllegroDisconnect,
       handleAllegroSandboxToggle: actions.handleAllegroSandboxToggle,

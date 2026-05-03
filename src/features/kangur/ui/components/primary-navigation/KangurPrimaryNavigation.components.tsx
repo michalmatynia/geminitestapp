@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { LogIn } from 'lucide-react';
-import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import {
-  ICON_CLASSNAME,
-  renderNavAction,
-} from './KangurPrimaryNavigation.utils';
 
+/**
+ * Renders the StuqiQ Beta badge as an SVG element.
+ * 
+ * @param props - Component properties
+ * @param props.testId - Test identifier for the badge
+ */
 export function KangurHomeBetaBadge({
   testId = 'kangur-home-beta-badge',
 }: {
@@ -47,38 +47,4 @@ export function KangurHomeBetaBadge({
       </text>
     </svg>
   );
-}
-
-export function KangurPrimaryNavigationLoginAction({
-  className,
-  fallbackLabel,
-  loginActionRef,
-  onActionClick,
-  onLogin,
-}: {
-  className?: string;
-  fallbackLabel: string;
-  loginActionRef?: React.Ref<HTMLButtonElement>;
-  onActionClick?: () => void;
-  onLogin: () => void;
-}): React.JSX.Element {
-  const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
-
-  return renderNavAction({
-    className,
-    content: (
-      <>
-        <LogIn aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>{loginActionContent?.title ?? fallbackLabel}</span>
-      </>
-    ),
-    docId: 'profile_login',
-    elementRef: loginActionRef,
-    onClick: () => {
-      onLogin();
-      onActionClick?.();
-    },
-    testId: 'kangur-primary-nav-login',
-    title: loginActionContent?.summary ?? undefined,
-  });
 }

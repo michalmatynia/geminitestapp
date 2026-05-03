@@ -51,7 +51,7 @@ const MODEL_FAMILY_MATCHERS: ReadonlyArray<{
   },
   {
     family: 'vision_extract',
-    matches: ['vision', '-vl', 'llava', 'gemma3', 'multimodal'],
+    matches: ['vision', '-vl', 'llava', 'gemma3', 'gemma-3', 'gemma4', 'gemma-4', 'multimodal'],
   },
   {
     family: 'validation',

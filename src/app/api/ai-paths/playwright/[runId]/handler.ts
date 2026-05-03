@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   enforceAiPathsActionRateLimit,
@@ -6,22 +6,23 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { aiPathsPlaywrightRunRouteParamsSchema } from '@/shared/contracts/ai-paths';
 import {
-  readPlaywrightNodeRun,
-  type PlaywrightNodeRunRecord,
-} from '@/features/ai/ai-paths/services/playwright-node-runner';
+  readPlaywrightEngineRun,
+  type PlaywrightEngineRunRecord,
+} from '@/features/playwright/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 
 import { assertPlaywrightRunAccess } from '../access';
 
 const toPublicRun = (
-  run: PlaywrightNodeRunRecord
-): Omit<PlaywrightNodeRunRecord, 'ownerUserId'> => {
-  const { ownerUserId: _ownerUserId, ...rest } = run;
+  run: PlaywrightEngineRunRecord
+): Omit<PlaywrightEngineRunRecord, 'ownerUserId'> => {
+   
+  const { ownerUserId: _unused, ...rest } = run;
   return rest;
 };
 
-export async function GET_handler(
+export async function getPlaywrightRunHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
@@ -39,7 +40,7 @@ export async function GET_handler(
   }
   const { runId } = parsedParams.data;
 
-  const run = await readPlaywrightNodeRun(runId);
+  const run = await readPlaywrightEngineRun(runId);
   if (!run) {
     throw notFoundError('Playwright run not found.', { runId });
   }

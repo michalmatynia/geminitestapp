@@ -6,23 +6,12 @@ import {
 } from './run-history-entry-actions';
 
 describe('run-history-entry-actions', () => {
-  it('returns retry action for retry mode and failed statuses', () => {
-    expect(resolveRunHistoryAction({ resumeMode: 'retry' }).kind).toBe('retry_node');
-    expect(resolveRunHistoryAction({ status: ' failed ' }).kind).toBe('retry_node');
-  });
-
-  it('returns resume action for resumable decisions and statuses', () => {
-    expect(resolveRunHistoryAction({ resumeDecision: 'reused' }).kind).toBe('resume_run');
-    expect(resolveRunHistoryAction({ resumeDecision: 'reexecuted' }).kind).toBe('resume_run');
-    expect(resolveRunHistoryAction({ status: 'waiting_callback' }).kind).toBe('resume_run');
-    expect(resolveRunHistoryAction({ status: 'blocked' }).resumeMode).toBe('resume');
-  });
-
-  it('falls back to replay action when no resume metadata is present', () => {
+  it('always exposes rerun-from-inputs as the only forward-only history action', () => {
     expect(resolveRunHistoryAction({ status: 'completed' })).toEqual(
       expect.objectContaining({
-        kind: 'replay_run',
-        resumeMode: 'replay',
+        kind: 'rerun_from_inputs',
+        label: 'Run again',
+        description: 'Forward-only mode starts a fresh run from recorded inputs.',
       })
     );
   });
@@ -32,8 +21,6 @@ describe('run-history-entry-actions', () => {
       runHistoryEntryActionTitle(
         {
           status: 'completed',
-          resumeMode: null,
-          resumeDecision: null,
         } as never,
         false
       )

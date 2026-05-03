@@ -47,7 +47,7 @@ export function VariantPanelProvider({
 }: {
   children: React.ReactNode;
   value: VariantPanelContextValue;
-}) {
+}): React.JSX.Element {
   return <VariantPanelContext.Provider value={value}>{children}</VariantPanelContext.Provider>;
 }
 export { useVariantPanelContext };

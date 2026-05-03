@@ -2,23 +2,25 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  getListingsByProductIdsMock,
   listAllListingsMock,
+  listProductListingsByProductIdsMock,
   listIntegrationsMock,
 } = vi.hoisted(() => ({
-  getListingsByProductIdsMock: vi.fn(),
   listAllListingsMock: vi.fn(),
+  listProductListingsByProductIdsMock: vi.fn(),
   listIntegrationsMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
-  getProductListingRepository: async () => ({
-    getListingsByProductIds: (...args: unknown[]) => getListingsByProductIdsMock(...args),
-    listAllListings: (...args: unknown[]) => listAllListingsMock(...args),
-  }),
   getIntegrationRepository: async () => ({
     listIntegrations: (...args: unknown[]) => listIntegrationsMock(...args),
   }),
+}));
+
+vi.mock('@/features/integrations/services/product-listing-repository', () => ({
+  listAllProductListingsAcrossProviders: (...args: unknown[]) => listAllListingsMock(...args),
+  listProductListingsByProductIdsAcrossProviders: (...args: unknown[]) =>
+    listProductListingsByProductIdsMock(...args),
 }));
 
 vi.mock('@/features/integrations/services/base-listing-canonicalization', () => ({
@@ -31,7 +33,7 @@ vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: vi.fn(),
 }));
 
-import { GET_handler } from './handler';
+import { getHandler } from './handler';
 
 describe('integration product listings handler', () => {
   beforeEach(() => {
@@ -46,7 +48,7 @@ describe('integration product listings handler', () => {
   });
 
   it('prefers the newer auth_required Tradera status over an older queued listing', async () => {
-    getListingsByProductIdsMock.mockResolvedValue([
+    listProductListingsByProductIdsMock.mockResolvedValue([
       {
         id: 'listing-queued',
         productId: 'product-1',
@@ -63,7 +65,7 @@ describe('integration product listings handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
       ),
@@ -82,7 +84,7 @@ describe('integration product listings handler', () => {
   });
 
   it('keeps an active Tradera badge when an older live listing still exists', async () => {
-    getListingsByProductIdsMock.mockResolvedValue([
+    listProductListingsByProductIdsMock.mockResolvedValue([
       {
         id: 'listing-active',
         productId: 'product-1',
@@ -99,7 +101,7 @@ describe('integration product listings handler', () => {
       },
     ]);
 
-    const response = await GET_handler(
+    const response = await getHandler(
       new NextRequest(
         'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
       ),
@@ -113,6 +115,116 @@ describe('integration product listings handler', () => {
     expect(payload).toEqual({
       'product-1': {
         tradera: 'active',
+      },
+    });
+  });
+
+  it('surfaces a newer closed Tradera listing over an older active listing', async () => {
+    listProductListingsByProductIdsMock.mockResolvedValue([
+      {
+        id: 'listing-active',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'active',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+      },
+      {
+        id: 'listing-closed',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'closed',
+        updatedAt: '2026-04-02T18:10:00.000Z',
+      },
+    ]);
+
+    const response = await getHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
+      ),
+      {
+        query: { productIds: ['product-1'] },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      'product-1': {
+        tradera: 'closed',
+      },
+    });
+  });
+
+  it('keeps a closed Tradera badge over newer ended listings for the same product', async () => {
+    listProductListingsByProductIdsMock.mockResolvedValue([
+      {
+        id: 'listing-closed',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'closed',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+      },
+      {
+        id: 'listing-ended',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'ended',
+        updatedAt: '2026-04-02T18:10:00.000Z',
+      },
+    ]);
+
+    const response = await getHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
+      ),
+      {
+        query: { productIds: ['product-1'] },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      'product-1': {
+        tradera: 'closed',
+      },
+    });
+  });
+
+  it('surfaces processing while a Tradera live status check is pending', async () => {
+    listProductListingsByProductIdsMock.mockResolvedValue([
+      {
+        id: 'listing-active',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'active',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+        marketplaceData: {
+          tradera: {
+            pendingExecution: {
+              action: 'check_status',
+              requestId: 'job-check-1',
+              queuedAt: '2026-04-02T18:00:00.000Z',
+            },
+          },
+        },
+      },
+    ]);
+
+    const response = await getHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
+      ),
+      {
+        query: { productIds: ['product-1'] },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      'product-1': {
+        tradera: 'processing',
       },
     });
   });

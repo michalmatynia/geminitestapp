@@ -30,7 +30,7 @@ vi.mock('@/features/jobs/server', () => ({
   enqueueFilemakerEmailCampaignRunJob: enqueueFilemakerEmailCampaignRunJobMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 describe('filemaker campaign run process handler', () => {
   beforeEach(() => {
@@ -85,13 +85,13 @@ describe('filemaker campaign run process handler', () => {
   });
 
   it('reads the run, counts queued deliveries, and enqueues processing', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/runs/run-1/process', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ reason: 'manual' }),
       }),
-      {} as Parameters<typeof POST_handler>[1],
+      {} as Parameters<typeof postHandler>[1],
       {
         runId: 'run-1',
       }
@@ -187,13 +187,13 @@ describe('filemaker campaign run process handler', () => {
       return null;
     });
 
-    const response = await POST_handler(
+    const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/campaigns/runs/run-1/process', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ reason: 'retry' }),
       }),
-      {} as Parameters<typeof POST_handler>[1],
+      {} as Parameters<typeof postHandler>[1],
       {
         runId: 'run-1',
       }

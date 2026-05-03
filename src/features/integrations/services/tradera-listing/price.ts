@@ -189,6 +189,7 @@ export const resolveTraderaListingPriceForProduct = async ({
             groupId: 1,
             currencyId: 1,
             type: 1,
+            basePriceField: 1,
             isDefault: 1,
             sourceGroupId: 1,
             priceMultiplier: 1,
@@ -248,6 +249,7 @@ export const resolveTraderaListingPriceForProduct = async ({
           ...(groupId ? { groupId } : {}),
           currencyId,
           type: toTrimmedString(priceGroupDoc.type) || 'standard',
+          basePriceField: toTrimmedString(priceGroupDoc.basePriceField) || 'price',
           isDefault:
             Boolean(priceGroupDoc.isDefault) ||
             matchesPriceGroupIdentifier({ id, groupId }, defaultPriceGroupId),
@@ -265,7 +267,8 @@ export const resolveTraderaListingPriceForProduct = async ({
     basePrice,
     defaultPriceGroupId,
     normalizedTargetCurrencyCode,
-    priceGroups
+    priceGroups,
+    { sourcePrice: toFiniteNumber(product.sourcePrice) }
   );
   const listingPrice = toFiniteNumber(calculation.price);
   const listingCurrencyCode =

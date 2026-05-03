@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
@@ -7,7 +7,7 @@ import type {
   JobQueueContextValue,
   JobQueueStateValue,
 } from '@/features/ai/ai-paths/components/JobQueueContext';
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 const { useJobQueueStateMock, useJobQueueActionsMock } = vi.hoisted(() => ({
   useJobQueueStateMock: vi.fn(),
@@ -58,7 +58,7 @@ const buildContextValue = (): JobQueueContextValue =>
     pausedStreams: new Set<string>(),
     toggleStream: vi.fn(),
     pauseAllStreams: vi.fn(),
-    resumeAllStreams: vi.fn(),
+    reconnectAllStreams: vi.fn(),
     autoRefreshEnabled: false,
     setAutoRefreshEnabled: vi.fn(),
     autoRefreshInterval: 1000,
@@ -86,9 +86,6 @@ const buildContextValue = (): JobQueueContextValue =>
     isDeletingRun: () => false,
     refetchQueueData: vi.fn(),
     handleClearRuns: async () => {},
-    handleResumeRun: async () => {},
-    handleHandoffRun: async () => false,
-    handleRetryRunNode: async () => {},
     handleCancelRun: async () => {},
     handleDeleteRun: async () => {},
     loadRunDetail: async () => {},
@@ -104,7 +101,7 @@ const toActionsValue = (value: JobQueueContextValue): JobQueueActionsValue => ({
   setHistorySelection: value.setHistorySelection,
   toggleStream: value.toggleStream,
   pauseAllStreams: value.pauseAllStreams,
-  resumeAllStreams: value.resumeAllStreams,
+  reconnectAllStreams: value.reconnectAllStreams,
   setAutoRefreshEnabled: value.setAutoRefreshEnabled,
   setAutoRefreshInterval: value.setAutoRefreshInterval,
   setShowMetricsPanel: value.setShowMetricsPanel,
@@ -113,9 +110,6 @@ const toActionsValue = (value: JobQueueContextValue): JobQueueActionsValue => ({
   setRunToDelete: value.setRunToDelete,
   refetchQueueData: value.refetchQueueData,
   handleClearRuns: value.handleClearRuns,
-  handleResumeRun: value.handleResumeRun,
-  handleHandoffRun: value.handleHandoffRun,
-  handleRetryRunNode: value.handleRetryRunNode,
   handleCancelRun: value.handleCancelRun,
   handleDeleteRun: value.handleDeleteRun,
   loadRunDetail: value.loadRunDetail,
@@ -132,7 +126,7 @@ const toStateValue = (value: JobQueueContextValue): JobQueueStateValue => {
     setHistorySelection: _setHistorySelection,
     toggleStream: _toggleStream,
     pauseAllStreams: _pauseAllStreams,
-    resumeAllStreams: _resumeAllStreams,
+    reconnectAllStreams: _reconnectAllStreams,
     setAutoRefreshEnabled: _setAutoRefreshEnabled,
     setAutoRefreshInterval: _setAutoRefreshInterval,
     setShowMetricsPanel: _setShowMetricsPanel,
@@ -141,9 +135,6 @@ const toStateValue = (value: JobQueueContextValue): JobQueueStateValue => {
     setRunToDelete: _setRunToDelete,
     refetchQueueData: _refetchQueueData,
     handleClearRuns: _handleClearRuns,
-    handleResumeRun: _handleResumeRun,
-    handleHandoffRun: _handleHandoffRun,
-    handleRetryRunNode: _handleRetryRunNode,
     handleCancelRun: _handleCancelRun,
     handleDeleteRun: _handleDeleteRun,
     loadRunDetail: _loadRunDetail,
@@ -181,136 +172,85 @@ describe('JobQueueRunCard status pills', () => {
     expect(screen.getByText('Created 2026-03-05 00:00:00 UTC')).toBeTruthy();
   });
 
-  it('renders a lease-blocked operator notice when execution ownership is unavailable', () => {
-    render(
-      <JobQueueRunCard
-        runId='run-1'
-        run={createRun('blocked_on_lease', {
-          meta: {
-            executionLease: {
-              ownerAgentId: 'agent-other',
-              ownerRunId: 'run-1',
-            },
-          },
-        })}
-      />
-    );
-
-    expect(screen.getByText('Execution lease blocked')).toBeTruthy();
-    expect(
-      screen.getByText(
-        'This run cannot continue until its execution lease is released or another operator takes over.'
-      )
-    ).toBeTruthy();
-    expect(screen.getByText('Current owner: agent-other (run-1).')).toBeTruthy();
-  });
-
-  it('renders a handoff-ready operator notice with checkpoint lineage context', () => {
-    render(
-      <JobQueueRunCard
-        runId='run-1'
-        run={createRun('handoff_ready', {
-          meta: {
-            handoff: {
-              reason: 'Execution lease is still owned by another worker.',
-              checkpointLineageId: 'run-1:checkpoint',
-            },
-          },
-        })}
-      />
-    );
-
-    expect(screen.getByText('Ready for delegated continuation')).toBeTruthy();
-    expect(screen.getByText('Execution lease is still owned by another worker.')).toBeTruthy();
-    expect(screen.getByText('Checkpoint lineage: run-1:checkpoint')).toBeTruthy();
-  });
-
-  it('marks blocked runs handoff-ready from the queue card', async () => {
+  it('renders Playwright runtime posture details for expanded Playwright nodes', () => {
     const contextValue = buildContextValue();
-    const handleHandoffRun = vi.fn().mockResolvedValue(true);
-    contextValue.handleHandoffRun = handleHandoffRun;
-    useJobQueueStateMock.mockReturnValue(toStateValue(contextValue));
-    useJobQueueActionsMock.mockReturnValue(toActionsValue(contextValue));
-
-    render(
-      <JobQueueRunCard
-        runId='run-1'
-        run={createRun('blocked_on_lease', {
-          meta: {
-            executionLease: {
-              ownerAgentId: 'agent-other',
-              ownerRunId: 'run-1',
-            },
-          },
-        })}
-      />
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: 'Mark handoff-ready' }));
-
-    expect(handleHandoffRun).toHaveBeenCalledWith('run-1');
-    await waitFor(() => {
-      expect(screen.getByText('Handoff requested. Refreshing status...')).toBeTruthy();
-    });
-  });
-
-  it('retries failed history entries from the run card history panel', () => {
-    const contextValue = buildContextValue();
-    const handleRetryRunNode = vi.fn().mockResolvedValue(undefined);
-    contextValue.handleRetryRunNode = handleRetryRunNode;
     contextValue.expandedRunIds = new Set(['run-1']);
     contextValue.runDetails = {
       'run-1': {
-        run: {
-          ...createRun('failed'),
-          runtimeState: {
-            history: {
-              'node-failed': [
-                {
-                  timestamp: '2026-03-07T11:00:00.000Z',
-                  pathId: 'path-1',
-                  pathName: 'Test Path',
-                  traceId: 'run-1',
-                  spanId: 'node-failed:1:1',
-                  nodeId: 'node-failed',
-                  nodeType: 'template',
-                  nodeTitle: 'Recover',
-                  status: 'failed',
-                  iteration: 1,
-                  attempt: 1,
-                  inputs: { value: 'seeded' },
-                  outputs: { status: 'failed', error: 'boom' },
-                  inputHash: 'hash-failed',
-                  error: 'boom',
+        run: createRun('completed'),
+        nodes: [
+          {
+            id: 'node-runtime-1',
+            runId: 'run-1',
+            nodeId: 'node-playwright',
+            nodeType: 'playwright',
+            nodeTitle: 'Playwright node',
+            status: 'completed',
+            attempt: 1,
+            inputs: {},
+            outputs: {
+              bundle: {
+                result: {
+                  runtimePosture: {
+                    browser: {
+                      engine: 'chromium',
+                      label: 'Chrome',
+                      headless: false,
+                    },
+                    antiDetection: {
+                      identityProfile: 'search',
+                      locale: 'en-US',
+                      timezoneId: 'America/New_York',
+                      stickyStorageState: {
+                        enabled: true,
+                        loaded: true,
+                      },
+                      proxy: {
+                        enabled: true,
+                        providerPreset: 'brightdata',
+                        sessionMode: 'sticky',
+                        reason: 'applied',
+                        serverHost: 'proxy.local:8080',
+                      },
+                    },
+                  },
                 },
-              ],
-            },
-          },
-          graph: {
-            nodes: [
-              {
-                id: 'node-failed',
-                type: 'template',
-                title: 'Recover',
-                position: { x: 0, y: 0 },
-                data: {},
+                artifacts: [
+                  {
+                    name: 'runtime-posture',
+                    path: 'run-1/runtime-posture.json',
+                    url: '/api/ai-paths/playwright/run-1/artifacts/runtime-posture.json',
+                    mimeType: 'application/json',
+                    kind: 'json',
+                  },
+                ],
               },
-            ],
-            edges: [],
+            },
+            createdAt: '2026-03-05T00:00:00.000Z',
+            updatedAt: '2026-03-05T00:00:01.000Z',
+            startedAt: '2026-03-05T00:00:00.000Z',
+            finishedAt: '2026-03-05T00:00:01.000Z',
           },
-        },
-        nodes: [],
+        ],
         events: [],
       },
     };
     useJobQueueStateMock.mockReturnValue(toStateValue(contextValue));
     useJobQueueActionsMock.mockReturnValue(toActionsValue(contextValue));
 
-    render(<JobQueueRunCard runId='run-1' run={createRun('failed')} />);
+    render(<JobQueueRunCard runId='run-1' run={createRun('completed')} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Run history' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Retry node' }));
+    fireEvent.click(screen.getByRole('button', { name: /Nodes \(1\)/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Playwright node \(playwright\)\s*completed/i }));
 
-    expect(handleRetryRunNode).toHaveBeenCalledWith('run-1', 'node-failed');
+    expect(screen.getByText('Runtime posture')).toBeTruthy();
+    expect(screen.getByText('Chrome · Headed')).toBeTruthy();
+    expect(screen.getByText('Search profile · en-US · America/New_York')).toBeTruthy();
+    expect(screen.getByText('Brightdata · Sticky · Applied · proxy.local:8080')).toBeTruthy();
+    expect(screen.getByText('Loaded sticky state')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Runtime posture (json)' })).toHaveAttribute(
+      'href',
+      '/api/ai-paths/playwright/run-1/artifacts/runtime-posture.json'
+    );
   });
 });

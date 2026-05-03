@@ -1,7 +1,7 @@
 import { gunzipSync, gzipSync } from 'zlib';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import { dispatchClientCatch } from '@/shared/utils/observability/client-error-dispatch';
 
 export const COMPRESSED_SETTING_PREFIX = '__gz_b64__:';
 
@@ -32,7 +32,7 @@ export const decodeSettingValue = (key: string, value: string): string => {
   try {
     return decodeCompressedSettingPayload(value) ?? value;
   } catch (error) {
-    logClientCatch(error, {
+    dispatchClientCatch(error, {
       source: 'settings-compression',
       action: 'decodeSettingValue',
       key,
@@ -57,7 +57,7 @@ export const encodeSettingValue = (key: string, value: string): string => {
     const encoded = `${COMPRESSED_SETTING_PREFIX}${compressedUnknown.toString('base64')}`;
     return encoded.length < value.length ? encoded : value;
   } catch (error) {
-    logClientCatch(error, {
+    dispatchClientCatch(error, {
       source: 'settings-compression',
       action: 'encodeSettingValue',
       key,

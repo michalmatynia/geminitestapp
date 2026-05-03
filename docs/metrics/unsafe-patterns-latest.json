@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-03T08:51:14.364Z",
-  "status": "passed",
+  "generatedAt": "2026-04-15T09:38:11.897Z",
+  "status": "failed",
   "summary": {
-    "total": 2,
-    "errorCount": 0,
+    "total": 13,
+    "errorCount": 6,
     "warningCount": 0,
-    "infoCount": 2,
-    "status": "passed",
-    "fileCount": 6675
+    "infoCount": 7,
+    "status": "failed",
+    "fileCount": 7350
   },
   "scope": {
     "root": "src",
@@ -15,23 +15,114 @@
     "doubleAssertionAllowlist": []
   },
   "trendCounters": {
-    "doubleAssertionCount": 0,
-    "anyCount": 0,
-    "eslintDisableCount": 1,
-    "nonNullAssertionCount": 1,
+    "doubleAssertionCount": 6,
+    "anyCount": 1,
+    "eslintDisableCount": 2,
+    "nonNullAssertionCount": 4,
     "tsIgnoreCount": 0,
     "tsExpectErrorCount": 0
   },
   "eslintDisabledRules": {
-    "@typescript-eslint/no-unsafe-return": 1
+    "@typescript-eslint/no-unsafe-return": 1,
+    "@typescript-eslint/no-explicit-any": 1
   },
   "issues": [
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/context/ProductImagePreviewContext.tsx",
+      "line": 31,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/context/ProductImagePreviewContext.tsx",
+      "line": 31,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/context/ProductListContext.tsx",
+      "line": 61,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/features/products/context/ProductListContext.tsx",
+      "line": 61,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts",
+      "line": 1242,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "double-assertion",
+      "message": "Unsafe double type assertion (as unknown as). Use a type guard or proper narrowing instead.",
+      "file": "src/shared/ui/templates/pickers/GenericPickerDropdown.tsx",
+      "line": 119,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/admin/components/menu/NavTree.tsx",
+      "line": 337,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
     {
       "severity": "info",
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
       "file": "src/features/filemaker/server/filemaker-mail-service.ts",
       "line": 712,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/integrations/utils/tradera-browser-session.ts",
+      "line": 56,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/integrations/utils/tradera-browser-session.ts",
+      "line": 69,
       "column": null,
       "snippet": null,
       "context": null
@@ -45,11 +136,43 @@
       "column": null,
       "snippet": null,
       "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/react/types.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/react/types.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
     }
   ],
   "rules": [
     {
+      "ruleId": "double-assertion",
+      "errorCount": 6,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
       "ruleId": "eslint-disable",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 2
+    },
+    {
+      "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
       "infoCount": 1
@@ -58,8 +181,8 @@
       "ruleId": "non-null-assertion",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 1
+      "infoCount": 4
     }
   ],
-  "durationMs": 2264
+  "durationMs": 2289
 }

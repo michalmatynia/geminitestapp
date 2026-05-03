@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
 import { buildImageStudioWorkspaceSystemPrompt } from '@/features/ai/image-studio/context-registry/workspace-prompt';
@@ -33,7 +33,7 @@ const ruleSignature = (rule: PromptValidationRule): string => {
   return `params:${rule.id}`;
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated || session?.user?.permissions?.includes('ai_paths.manage');

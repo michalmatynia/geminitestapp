@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -40,7 +40,7 @@ const databaseCrudRequestSchema = z.union([
   }),
 ]);
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   if (process.env['NODE_ENV'] === 'production') {
     throw forbiddenError('Database operations are disabled in production.');

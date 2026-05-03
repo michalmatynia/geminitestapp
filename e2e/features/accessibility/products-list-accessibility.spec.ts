@@ -30,7 +30,7 @@ test('products list exposes search and actions accessibly and passes the accessi
     timeout: productsUiTimeoutMs,
   });
 
-  const skipLink = page.getByRole('link', { name: 'Skip to content' });
+  const skipLink = page.getByRole('link', { name: /Skip to (main )?content/i });
   await skipLink.focus();
   await expect(skipLink).toBeFocused();
 

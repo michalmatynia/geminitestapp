@@ -5,7 +5,7 @@ import React from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';
 
-import { Button, buttonVariants } from './button';
+import { Button, type buttonVariants } from './button';
 
 interface FormActionsProps {
   onCancel?: (() => void) | undefined;

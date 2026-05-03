@@ -19,6 +19,7 @@ import {
   locationAssignSpy,
   openLanguageMenu,
   optionalAuthMock,
+  optionalRoutingMock,
   optionalTutorMock,
   pathnameMock,
   persistTutorVisibilityHidden,
@@ -37,12 +38,35 @@ import {
   translationMessages,
   updateSettingMutateAsyncMock,
   useKangurCoarsePointerMock,
+  useKangurIdleReadyMock,
   useKangurPageContentEntryMock,
   useKangurSubjectFocusMock,
 } from '../KangurPrimaryNavigation.test-support';
 
 describe('KangurPrimaryNavigation', () => {
   setupKangurPrimaryNavigationTest();
+
+it('does not mount the language switcher during the standalone home utility delay', () => {
+  optionalRoutingMock.mockReturnValue({
+    basePath: '/kangur',
+    embedded: false,
+    pageKey: 'Game',
+    requestedHref: '/kangur',
+    requestedPath: '/kangur',
+  });
+  useKangurIdleReadyMock.mockReturnValue(false);
+
+  render(
+    <KangurPrimaryNavigation
+      basePath='/kangur'
+      currentPage='Game'
+      isAuthenticated
+      onLogout={vi.fn()}
+    />
+  );
+
+  expect(screen.queryByTestId('kangur-language-switcher-trigger')).toBeNull();
+});
 
 it('renders the language switcher inside the utility actions and marks the current locale', async () => {
   localeMock.mockReturnValue('de');
@@ -505,7 +529,7 @@ it('translates the mobile section labels for German locale', async () => {
 
   fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
 
-  expect(screen.getByRole('link', { name: 'Startseite' })).toBeInTheDocument();
+  expect(await screen.findByRole('link', { name: 'Startseite' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Lektionen' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Duelle' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Eltern' })).toBeInTheDocument();
@@ -674,14 +698,14 @@ it('places the language selector left of the appearance toggle in the mobile men
 
     fireEvent.click(screen.getByTestId('kangur-primary-nav-mobile-toggle'));
 
-    const header = screen.getByTestId('kangur-primary-nav-mobile-header');
+    const header = await screen.findByTestId('kangur-primary-nav-mobile-header');
     const headerActions = screen.getByTestId('kangur-primary-nav-mobile-header-actions');
     const utilityActions = screen.getByTestId('kangur-primary-nav-mobile-utility-actions');
     const mobileMenuDialog = screen.getByRole('dialog');
     const headerScope = within(header);
     const mobileToggle = screen.getByTestId('kangur-primary-nav-mobile-toggle');
     const trigger = within(headerActions).getByTestId('kangur-language-switcher-trigger');
-    const themeToggle = headerScope.getByRole('button', { name: 'Switch to Dawn theme' });
+    const themeToggle = await headerScope.findByRole('button', { name: 'Switch to Dawn theme' });
     const lessonsAction = within(mobileMenuDialog).getByTestId('kangur-primary-nav-lessons');
 
     expect(trigger).toBeInTheDocument();

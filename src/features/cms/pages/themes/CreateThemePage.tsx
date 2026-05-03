@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { useState, startTransition } from 'react';
 
 import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/ThemeForm';
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
@@ -26,7 +26,7 @@ export default function CreateThemePage(): React.JSX.Element {
     setError(null);
     try {
       await createTheme.mutateAsync(validation.data);
-      router.push('/admin/cms/themes');
+      startTransition(() => { router.push('/admin/cms/themes'); });
     } catch (submitError: unknown) {
       logClientCatch(submitError, {
         source: 'CreateThemePage',
@@ -52,7 +52,7 @@ export default function CreateThemePage(): React.JSX.Element {
       <ThemeForm
         onSubmit={handleSubmit}
         isSaving={createTheme.isPending}
-        onCancel={() => router.push('/admin/cms/themes')}
+        onCancel={() => startTransition(() => { router.push('/admin/cms/themes'); })}
         submitText='Create Theme'
       />
     </AdminCmsPageLayout>

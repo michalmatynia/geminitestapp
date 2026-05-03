@@ -1,6 +1,6 @@
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-export const toDataUrl = (buffer: Buffer): string =>
-  `data:image/png;base64,${buffer.toString('base64')}`;
+
+export const toDataUrl = (buffer: Buffer): string => `data:image/png;base64,${buffer.toString('base64')}`;
 
 export const safeText = (value: string | null | undefined): string => value ?? '';
 
@@ -181,8 +181,14 @@ export const parseCredentials = (
 
 export const parseExtractionRequest = (
   prompt?: string
-): { type: 'product_names' | 'emails'; count: number | null } | null => {
+): { type: 'product_names' | 'emails' | 'batch_image'; count: number | null } | null => {
   if (!prompt) return null;
+
+  if (/generate\s+images/i.test(prompt)) {
+    const countMatch = prompt.match(/(\d+)\s*images/i);
+    return { type: 'batch_image', count: countMatch ? Number(countMatch[1]) : 1 };
+  }
+
   const taskTypeHint = /task type:\s*extract_info/i.test(prompt);
   const wantsExtraction = taskTypeHint || /(extract|collect|find|list|get)\b/i.test(prompt);
   if (/task type:\s*web_task/i.test(prompt) && !wantsExtraction) return null;

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import {
   imageStudioCenterLayoutConfigSchema,
   imageStudioCenterObjectBoundsSchema,
-  imageStudioCenterDetectionModeSchema,
+  type imageStudioCenterDetectionModeSchema,
 } from '../image-studio-transform-contracts';
 import {
   imageStudioDetectionCandidateSummarySchema,

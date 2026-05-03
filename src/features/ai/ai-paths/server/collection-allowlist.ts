@@ -13,6 +13,8 @@ const DEFAULT_COLLECTION_ALLOWLIST = [
   'product_listings',
   'product_ai_jobs',
   'product_producer_assignments',
+  'filemaker_cvs',
+  'filemaker_job_applications',
   'integrations',
   'integration_connections',
   'settings',
@@ -47,7 +49,7 @@ type AllowlistConfig = {
 
 const buildAllowlist = (): AllowlistConfig => {
   const raw = process.env['AI_PATHS_DB_COLLECTION_ALLOWLIST'];
-  if (!raw?.trim()) {
+  if (raw === undefined || raw.trim().length === 0) {
     return {
       allowAll: false,
       allowed: new Set(
@@ -88,7 +90,7 @@ const buildAllowlist = (): AllowlistConfig => {
 const allowlistConfig = buildAllowlist();
 
 export const isCollectionAllowed = (collection: string): boolean => {
-  if (!collection) return false;
+  if (collection.trim().length === 0) return false;
   if (allowlistConfig.allowAll) return true;
   return allowlistConfig.allowed.has(normalizeCollectionName(collection));
 };

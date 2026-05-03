@@ -139,7 +139,7 @@ describe('local-kangur-platform scores shared API client integration', () => {
     ).resolves.toEqual([REMOTE_SCORE]);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/scores?sort=-score&limit=5&player_name=Ada&subject=maths&learner_id=learner-1',
+      '/kangur-api/scores?sort=-score&limit=5&player_name=Ada&subject=maths&learner_id=learner-1',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',
@@ -188,11 +188,11 @@ describe('local-kangur-platform scores shared API client integration', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const cacheModule = await import('@/features/kangur/services/local-kangur-platform-score-cache');
-    cacheModule.scoreQueryCache.set('/api/kangur/scores?sort=-score', {
+    cacheModule.scoreQueryCache.set('/kangur-api/scores?sort=-score', {
       rows: [REMOTE_SCORE],
       expiresAt: Date.now() + 10_000,
     });
-    cacheModule.scoreQueryInFlight.set('/api/kangur/scores?sort=-score', Promise.resolve([REMOTE_SCORE]));
+    cacheModule.scoreQueryInFlight.set('/kangur-api/scores?sort=-score', Promise.resolve([REMOTE_SCORE]));
 
     const { createScoreViaApi } = await import(
       '@/features/kangur/services/local-kangur-platform-scores'
@@ -212,7 +212,7 @@ describe('local-kangur-platform scores shared API client integration', () => {
     ).resolves.toEqual(REMOTE_SCORE);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/scores',
+      '/kangur-api/scores',
       expect.objectContaining({
         method: 'POST',
         credentials: 'same-origin',
@@ -232,7 +232,7 @@ describe('local-kangur-platform scores shared API client integration', () => {
     );
   });
 
-  it('does not report recoverable fetch misses while listing scores', async () => {
+  it('falls back to an empty list for recoverable fetch misses while listing scores', async () => {
     const fetchError = new TypeError('Failed to fetch');
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(fetchError));
 
@@ -240,7 +240,51 @@ describe('local-kangur-platform scores shared API client integration', () => {
       '@/features/kangur/services/local-kangur-platform-scores'
     );
 
-    await expect(requestMergedScores({ sort: '-created_date', limit: 10 })).rejects.toBe(fetchError);
+    await expect(requestMergedScores({ sort: '-created_date', limit: 10 })).resolves.toEqual([]);
+    expect(trackReadFailureMock).not.toHaveBeenCalled();
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(reportKangurClientErrorMock).not.toHaveBeenCalled();
+  });
+
+  it('does not report HTML fallback responses as score list exceptions', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => {
+          throw new SyntaxError(`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`);
+        },
+      }),
+    );
+
+    const { requestMergedScores } = await import(
+      '@/features/kangur/services/local-kangur-platform-scores'
+    );
+
+    await expect(requestMergedScores({ sort: '-created_date', limit: 10 })).resolves.toEqual([]);
+    expect(trackReadFailureMock).not.toHaveBeenCalled();
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(reportKangurClientErrorMock).not.toHaveBeenCalled();
+  });
+
+  it('does not report temporary API proxy failures while listing scores', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        statusText: 'Bad Gateway',
+        text: async () => JSON.stringify({ error: 'Kangur API proxy request failed.' }),
+      }),
+    );
+
+    const { requestMergedScores } = await import(
+      '@/features/kangur/services/local-kangur-platform-scores'
+    );
+
+    await expect(requestMergedScores({ sort: '-created_date', limit: 10 })).resolves.toEqual([]);
     expect(trackReadFailureMock).not.toHaveBeenCalled();
     expect(captureExceptionMock).not.toHaveBeenCalled();
     expect(reportKangurClientErrorMock).not.toHaveBeenCalled();

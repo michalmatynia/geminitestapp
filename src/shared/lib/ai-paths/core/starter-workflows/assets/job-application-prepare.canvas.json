@@ -1,0 +1,578 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "path_job_application_prepare_v1",
+    "version": 1,
+    "name": "Prepare Job Application",
+    "description": "Create a tailored CV and cover letter from a Persons profile, job listing, and organisation profile.",
+    "trigger": "Organisation Job Row - Create Application",
+    "updatedAt": "2026-04-29T00:00:00.000Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": true,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-trigger-job-application-prepare",
+      "type": "trigger",
+      "title": "Trigger: Create Application",
+      "description": "Fire job application preparation from the Organisation job row modal.",
+      "position": {
+        "x": 24,
+        "y": 240
+      },
+      "inputs": [],
+      "outputs": [
+        "trigger",
+        "triggerName"
+      ],
+      "config": {
+        "trigger": {
+          "event": "cb9f76f4-50d5-4d23-8f89-f11d4f7f81dd",
+          "contextMode": "trigger_only"
+        }
+      }
+    },
+    {
+      "id": "node-fetcher-job-application-prepare",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve the job application context embedded by the modal.",
+      "position": {
+        "x": 240,
+        "y": 240
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "custom",
+          "entityId": ""
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-parser-job-application-prepare",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract person, CV, job, organisation, and platform contexts.",
+      "position": {
+        "x": 500,
+        "y": 240
+      },
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
+      "outputs": [
+        "bundle",
+        "personContext",
+        "jobContext",
+        "organizationContext",
+        "platformContext",
+        "generationRequest",
+        "outputContract"
+      ],
+      "config": {
+        "parser": {
+          "mappings": {
+            "personContext": "$.applicationContext.personContext",
+            "jobContext": "$.applicationContext.jobContext",
+            "organizationContext": "$.applicationContext.organizationContext",
+            "platformContext": "$.applicationContext.platformContext",
+            "generationRequest": "$.applicationContext.generationRequest",
+            "outputContract": "$.applicationContext.outputContract"
+          },
+          "outputMode": "bundle",
+          "presetId": "custom"
+        }
+      }
+    },
+    {
+      "id": "node-prompt-job-application-prepare",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Build a grounded application-writing prompt.",
+      "position": {
+        "x": 880,
+        "y": 240
+      },
+      "inputs": [
+        "bundle",
+        "context"
+      ],
+      "outputs": [
+        "prompt",
+        "images"
+      ],
+      "config": {
+        "prompt": {
+          "template": "Create a LIMITED tailored job application package from the provided database context.\n\nPerson context JSON: {{bundle.personContext}}\nJob listing context JSON: {{bundle.jobContext}}\nOrganisation context JSON: {{bundle.organizationContext}}\nPlatform context JSON: {{bundle.platformContext}}\nGeneration request JSON: {{bundle.generationRequest}}\n\nReturn ONLY valid JSON with this exact schema:\n{\"tailoredCv\":{\"title\":\"\",\"professionalSummary\":\"\",\"coreStrengths\":[\"\"],\"selectedTechnicalEnvironment\":[\"\"],\"experienceHighlightPatches\":[{\"experienceId\":\"\",\"experienceTitle\":\"\",\"highlights\":[\"\"]}],\"tailoringScope\":{\"lockedFieldsPreserved\":true,\"allowedSections\":[\"Professional Summary\",\"Core Strengths\",\"Selected Technical Environment\",\"Experience Highlights\"]},\"tailoringPatch\":{\"professionalSummary\":\"\",\"coreStrengths\":[\"\"],\"selectedTechnicalEnvironment\":[\"\"],\"experienceHighlightPatches\":[{\"experienceId\":\"\",\"experienceTitle\":\"\",\"highlights\":[\"\"]}]},\"bodyText\":\"\",\"bodyMarkdown\":\"\",\"bodyBlocks\":[{\"id\":\"ai-profile\",\"kind\":\"profileHeader\",\"name\":\"\",\"headline\":\"\",\"email\":\"\",\"phone\":\"\",\"location\":\"\",\"website\":\"\",\"linkedinUrl\":\"\",\"githubUrl\":\"\"},{\"id\":\"ai-summary\",\"kind\":\"summary\",\"text\":\"\"},{\"id\":\"ai-tech\",\"kind\":\"techStack\",\"label\":\"Selected Technical Environment\",\"items\":[{\"label\":\"\",\"iconUrl\":\"\",\"lexiconTermId\":\"\"}]},{\"id\":\"ai-skills\",\"kind\":\"skills\",\"label\":\"Core Strengths\",\"items\":[\"\"]}],\"experienceHighlights\":[\"\"],\"educationHighlights\":[\"\"],\"skills\":[\"\"],\"preferencesMatch\":[\"\"]},\"coverLetter\":{\"subject\":\"\",\"bodyMarkdown\":\"\"},\"applicationNotes\":[\"\"],\"missingInformation\":[\"\"],\"confidence\":0}\n\nRules:\n1. CV tailoring is limited. Only change Professional Summary, Core Strengths, Selected Technical Environment, and highlight bullets inside existing job experience sections. Use personContext.cvsSummary.preferredSourceCvRecordId and personContext.cvsSummary.preferredSourceCvTitle as the source CV reference. Copy those exact values into tailoredCv.sourceCvRecordId and tailoredCv.sourceCvTitle.\n2. Do not change candidate identity, contact details, links, education, languages, employers, job titles, dates, locations, certifications, section order, or the existence of experience entries.\n3. tailoredCv.tailoringPatch is the canonical limited patch object. It must contain only the allowed changes and must mirror professionalSummary, coreStrengths, selectedTechnicalEnvironment, and experienceHighlightPatches. Set tailoringScope.canonicalPatchField to \"tailoringPatch\" and tailoringScope.renderedBodyMode to \"ai_rendered_full_cv\".\n4. tailoredCv.bodyText, bodyMarkdown, and bodyBlocks must be the base CV with only the allowed sections patched. Preserve locked fields exactly where source context provides them.\n5. Selected Technical Environment should be lightly tailored. Prefer overlap between candidate context and jobContext.lexicon.selectedTechnologyTerms. Keep important recent stack items; do not overfit or add ungrounded technologies.\n6. Experience highlight patches must reframe existing responsibilities/accomplishments only. Never invent new achievements, metrics, employers, roles, or dates.\n7. If jobContext.lexicon.selectedTechnologyTerms are relevant, include grounded terms in tailoredCv.bodyBlocks techStack with label, iconUrl, and lexiconTermId.\n8. Keep the cover letter professional, direct, and specific to the company and role.\n9. Use only facts present in person profile, linked records, and existing CV records.\n10. If the job or organisation context is thin, explain missing data in missingInformation instead of inventing it.\n11. Return JSON only. No markdown outside bodyMarkdown fields, no code fences, no commentary."
+        }
+      }
+    },
+    {
+      "id": "node-model-job-application-prepare",
+      "type": "model",
+      "title": "CV & Cover Letter Model",
+      "description": "Model node for generating the tailored CV and cover letter.",
+      "position": {
+        "x": 1280,
+        "y": 240
+      },
+      "inputs": [
+        "prompt",
+        "images",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "config": {
+        "model": {
+          "temperature": 0.2,
+          "maxTokens": 2200,
+          "vision": false,
+          "waitForResult": true
+        }
+      }
+    },
+    {
+      "id": "node-regex-job-application-prepare",
+      "type": "regex",
+      "title": "Regex JSON Extract",
+      "description": "Parse the application package JSON response.",
+      "position": {
+        "x": 1660,
+        "y": 240
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "config": {
+        "regex": {
+          "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      }
+    },
+    {
+      "id": "node-db-insert-cv-job-application-prepare",
+      "type": "database",
+      "title": "Persist Tailored CV",
+      "description": "Save the generated tailored CV against the selected Person record.",
+      "position": {
+        "x": 2040,
+        "y": 88
+      },
+      "inputs": [
+        "value",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "bundle"
+      ],
+      "config": {
+        "database": {
+          "operation": "insert",
+          "entityType": "filemaker_cv",
+          "mode": "replace",
+          "useMongoActions": true,
+          "actionCategory": "create",
+          "action": "insertOne",
+          "query": {
+            "provider": "mongodb",
+            "collection": "filemaker_cvs",
+            "mode": "custom",
+            "preset": "by_id",
+            "field": "id",
+            "idType": "string",
+            "queryTemplate": "{\"_id\":\"ai-filemaker-cv-{{context.entityId}}-{{context.timestamp}}\",\"id\":\"ai-filemaker-cv-{{context.entityId}}-{{context.timestamp}}\",\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"personName\":\"{{context.entityJson.applicationContext.personContext.person.fullName}}\",\"title\":\"{{value.tailoredCv.title}}\",\"sourceCvRecordId\":\"{{context.entityJson.applicationContext.personContext.cvsSummary.preferredSourceCvRecordId}}\",\"sourceCvTitle\":\"{{context.entityJson.applicationContext.personContext.cvsSummary.preferredSourceCvTitle}}\",\"status\":\"draft\",\"template\":\"classic\",\"bodyBlocks\":{{value.tailoredCv.bodyBlocks}},\"bodyHtml\":null,\"bodyText\":null,\"bodyMarkdown\":null,\"professionalSummary\":\"{{value.tailoredCv.professionalSummary}}\",\"coreStrengths\":[],\"selectedTechnicalEnvironment\":[],\"experienceHighlightPatches\":[],\"tailoringScope\":{\"lockedFieldsPreserved\":true,\"allowedSections\":[\"Professional Summary\",\"Core Strengths\",\"Selected Technical Environment\",\"Experience Highlights\"],\"canonicalPatchField\":\"tailoringPatch\",\"renderedBodyMode\":\"ai_rendered_full_cv\"},\"tailoringPatch\":{\"professionalSummary\":\"{{value.tailoredCv.professionalSummary}}\",\"coreStrengths\":[],\"selectedTechnicalEnvironment\":[],\"experienceHighlightPatches\":[]},\"experienceHighlights\":[],\"educationHighlights\":[],\"skills\":[],\"preferencesMatch\":[],\"highlightTechnologyTerms\":{{context.entityJson.applicationContext.jobContext.lexicon.technologyMentionHighlighting.terms}},\"source\":\"ai-path-job-application-prepare\",\"sourceEntityId\":\"{{context.entityId}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"createdAt\":\"{{context.timestamp}}\",\"updatedAt\":\"{{context.timestamp}}\"}",
+            "limit": 1,
+            "sort": "",
+            "projection": "",
+            "single": true
+          },
+          "writeOutcomePolicy": {
+            "onZeroAffected": "fail"
+          }
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "value": {
+              "required": true
+            },
+            "context": {
+              "required": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-db-insert-application-job-application-prepare",
+      "type": "database",
+      "title": "Persist Application Package",
+      "description": "Save the full generated job application package, including cover letter and context metadata.",
+      "position": {
+        "x": 2040,
+        "y": 392
+      },
+      "inputs": [
+        "value",
+        "context",
+        "entityId"
+      ],
+      "outputs": [
+        "result",
+        "bundle"
+      ],
+      "config": {
+        "database": {
+          "operation": "update",
+          "entityType": "filemaker_job_application",
+          "mode": "replace",
+          "useMongoActions": true,
+          "actionCategory": "update",
+          "action": "updateOne",
+          "query": {
+            "provider": "mongodb",
+            "collection": "filemaker_job_applications",
+            "mode": "custom",
+            "preset": "by_id",
+            "field": "id",
+            "idType": "string",
+            "queryTemplate": "{\"$or\":[{\"canonicalApplicationKey\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}::{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}::{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}::{{context.entityJson.applicationContext.platformContext.integrationSlug}}\"},{\"id\":\"ai-job-application-{{context.entityJson.applicationContext.personContext.selectedPersonId}}-{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}-{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}-{{context.entityJson.applicationContext.platformContext.integrationSlug}}\"},{\"_id\":\"ai-job-application-{{context.entityJson.applicationContext.personContext.selectedPersonId}}-{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}-{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}-{{context.entityJson.applicationContext.platformContext.integrationSlug}}\"}]}",
+            "limit": 1,
+            "sort": "",
+            "projection": "",
+            "single": true
+          },
+          "writeOutcomePolicy": {
+            "onZeroAffected": "fail"
+          },
+          "upsert": true,
+          "updatePayloadMode": "custom",
+          "updateTemplate": "{\"$setOnInsert\":{\"_id\":\"ai-job-application-{{context.entityJson.applicationContext.personContext.selectedPersonId}}-{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}-{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}-{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"id\":\"ai-job-application-{{context.entityJson.applicationContext.personContext.selectedPersonId}}-{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}-{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}-{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"status\":\"draft\",\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"createdAt\":\"{{context.timestamp}}\"},\"$set\":{\"personName\":\"{{context.entityJson.applicationContext.personContext.person.fullName}}\",\"organizationName\":\"{{context.entityJson.applicationContext.organizationContext.organization.name}}\",\"jobTitle\":\"{{context.entityJson.applicationContext.jobContext.listing.title}}\",\"integrationId\":\"{{context.entityJson.applicationContext.platformContext.integrationId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"connectionId\":\"{{context.entityJson.applicationContext.platformContext.connectionId}}\",\"canonicalApplicationKey\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}::{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}::{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}::{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"source\":\"ai-path-job-application-prepare\",\"sourceEntityId\":\"{{context.entityId}}\",\"sourceApplicationContext\":{\"version\":{{context.entityJson.applicationContext.version}},\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"sourceEntityId\":\"{{context.entityId}}\"},\"activeArtifacts.tailoredCvVersionId\":\"ai-job-application-cv-{{context.entityId}}-{{context.timestamp}}\",\"activeArtifacts.coverLetterVersionId\":\"ai-job-application-cover-letter-{{context.entityId}}-{{context.timestamp}}\",\"tailoredCvId\":\"ai-filemaker-cv-{{context.entityId}}-{{context.timestamp}}\",\"tailoredCv\":{{value.tailoredCv}},\"coverLetter\":{{value.coverLetter}},\"applicationNotes\":{{value.applicationNotes}},\"missingInformation\":{{value.missingInformation}},\"confidence\":{{value.confidence}},\"updatedAt\":\"{{context.timestamp}}\"},\"$inc\":{\"artifactVersionCounters.tailoredCv\":1,\"artifactVersionCounters.coverLetter\":1},\"$push\":{\"artifactVersions.tailoredCv\":{\"id\":\"ai-job-application-cv-{{context.entityId}}-{{context.timestamp}}\",\"kind\":\"tailored_cv\",\"linkedRecordId\":\"ai-filemaker-cv-{{context.entityId}}-{{context.timestamp}}\",\"payload\":{{value.tailoredCv}},\"applicationNotes\":{{value.applicationNotes}},\"missingInformation\":{{value.missingInformation}},\"confidence\":{{value.confidence}},\"sourceRunId\":\"{{context.runId}}\",\"createdAt\":\"{{context.timestamp}}\"},\"artifactVersions.coverLetter\":{\"id\":\"ai-job-application-cover-letter-{{context.entityId}}-{{context.timestamp}}\",\"kind\":\"cover_letter\",\"linkedRecordId\":null,\"payload\":{{value.coverLetter}},\"applicationNotes\":{{value.applicationNotes}},\"missingInformation\":{{value.missingInformation}},\"confidence\":{{value.confidence}},\"sourceRunId\":\"{{context.runId}}\",\"createdAt\":\"{{context.timestamp}}\"}}}"
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "value": {
+              "required": true
+            },
+            "context": {
+              "required": true
+            },
+            "entityId": {
+              "required": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-view-job-application-prepare",
+      "type": "viewer",
+      "title": "Application Package",
+      "description": "Inspect the generated tailored CV and cover letter.",
+      "position": {
+        "x": 2440,
+        "y": 240
+      },
+      "inputs": [
+        "bundle",
+        "cvPersistence",
+        "applicationPersistence",
+        "context",
+        "prompt",
+        "entityId",
+        "entityType",
+        "meta"
+      ],
+      "outputs": [],
+      "config": {
+        "viewer": {
+          "outputs": {
+            "bundle": "",
+            "cvPersistence": "",
+            "applicationPersistence": "",
+            "context": "",
+            "prompt": "",
+            "entityId": "",
+            "entityType": "",
+            "meta": ""
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-trigger-fetcher-job-application-prepare",
+      "fromNodeId": "node-trigger-job-application-prepare",
+      "toNodeId": "node-fetcher-job-application-prepare",
+      "fromPort": "trigger",
+      "toPort": "trigger",
+      "from": "node-trigger-job-application-prepare",
+      "to": "node-fetcher-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-parser-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-parser-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-parser-job-application-prepare"
+    },
+    {
+      "id": "edge-parser-prompt-job-application-prepare",
+      "fromNodeId": "node-parser-job-application-prepare",
+      "toNodeId": "node-prompt-job-application-prepare",
+      "fromPort": "bundle",
+      "toPort": "bundle",
+      "from": "node-parser-job-application-prepare",
+      "to": "node-prompt-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-prompt-context-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-prompt-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-prompt-job-application-prepare"
+    },
+    {
+      "id": "edge-prompt-model-job-application-prepare",
+      "fromNodeId": "node-prompt-job-application-prepare",
+      "toNodeId": "node-model-job-application-prepare",
+      "fromPort": "prompt",
+      "toPort": "prompt",
+      "from": "node-prompt-job-application-prepare",
+      "to": "node-model-job-application-prepare"
+    },
+    {
+      "id": "edge-prompt-images-model-job-application-prepare",
+      "fromNodeId": "node-prompt-job-application-prepare",
+      "toNodeId": "node-model-job-application-prepare",
+      "fromPort": "images",
+      "toPort": "images",
+      "from": "node-prompt-job-application-prepare",
+      "to": "node-model-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-model-context-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-model-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-model-job-application-prepare"
+    },
+    {
+      "id": "edge-model-regex-job-application-prepare",
+      "fromNodeId": "node-model-job-application-prepare",
+      "toNodeId": "node-regex-job-application-prepare",
+      "fromPort": "result",
+      "toPort": "value",
+      "from": "node-model-job-application-prepare",
+      "to": "node-regex-job-application-prepare"
+    },
+    {
+      "id": "edge-regex-cv-db-job-application-prepare",
+      "fromNodeId": "node-regex-job-application-prepare",
+      "toNodeId": "node-db-insert-cv-job-application-prepare",
+      "fromPort": "value",
+      "toPort": "value",
+      "from": "node-regex-job-application-prepare",
+      "to": "node-db-insert-cv-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-cv-db-context-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-db-insert-cv-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-db-insert-cv-job-application-prepare"
+    },
+    {
+      "id": "edge-regex-application-db-job-application-prepare",
+      "fromNodeId": "node-regex-job-application-prepare",
+      "toNodeId": "node-db-insert-application-job-application-prepare",
+      "fromPort": "value",
+      "toPort": "value",
+      "from": "node-regex-job-application-prepare",
+      "to": "node-db-insert-application-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-application-db-context-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-db-insert-application-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-db-insert-application-job-application-prepare"
+    },
+    {
+      "id": "edge-regex-viewer-job-application-prepare",
+      "fromNodeId": "node-regex-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "value",
+      "toPort": "bundle",
+      "from": "node-regex-job-application-prepare",
+      "to": "node-view-job-application-prepare"
+    },
+    {
+      "id": "edge-cv-db-viewer-job-application-prepare",
+      "fromNodeId": "node-db-insert-cv-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "bundle",
+      "toPort": "cvPersistence",
+      "from": "node-db-insert-cv-job-application-prepare",
+      "to": "node-view-job-application-prepare"
+    },
+    {
+      "id": "edge-application-db-viewer-job-application-prepare",
+      "fromNodeId": "node-db-insert-application-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "bundle",
+      "toPort": "applicationPersistence",
+      "from": "node-db-insert-application-job-application-prepare",
+      "to": "node-view-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-viewer-context-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-view-job-application-prepare"
+    },
+    {
+      "id": "edge-prompt-viewer-job-application-prepare",
+      "fromNodeId": "node-prompt-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "prompt",
+      "toPort": "prompt",
+      "from": "node-prompt-job-application-prepare",
+      "to": "node-view-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-entity-id-viewer-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "entityId",
+      "toPort": "entityId",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-view-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-entity-type-viewer-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "entityType",
+      "toPort": "entityType",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-view-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-meta-viewer-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "meta",
+      "toPort": "meta",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-view-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-insert-application-job-application-prepare-entity-id",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-db-insert-application-job-application-prepare",
+      "fromPort": "entityId",
+      "toPort": "entityId",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-db-insert-application-job-application-prepare"
+    }
+  ],
+  "execution": {
+    "parserSamples": {},
+    "updaterSamples": {},
+    "runtimeState": {
+      "inputs": {},
+      "outputs": {}
+    },
+    "lastRunAt": null,
+    "runCount": 0
+  },
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-04-29T00:00:00.000Z",
+    "pathId": "path_job_application_prepare_v1"
+  }
+}

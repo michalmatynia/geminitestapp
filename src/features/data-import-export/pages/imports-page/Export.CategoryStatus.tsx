@@ -23,7 +23,7 @@ export function ExportCategoryStatusSection(): React.JSX.Element {
   );
 
   const categoryMappingsQuery = useCategoryMappingsByConnection(selectedBaseConnectionId, {
-    enabled: usesCategoryMapper && !!selectedBaseConnectionId,
+    enabled: usesCategoryMapper && Boolean(selectedBaseConnectionId),
   });
 
   const activeCategoryMappings = React.useMemo(

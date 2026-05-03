@@ -104,6 +104,31 @@ describe('kangur client observability', () => {
     expect(logClientErrorMock).not.toHaveBeenCalled();
   });
 
+  it('skips system capture and client reporting for Kangur API proxy misses', async () => {
+    const proxyError = Object.assign(new Error('Kangur API proxy request failed.'), {
+      status: 502,
+    });
+
+    await expect(
+      withKangurClientError(
+        {
+          source: 'kangur.lesson-sections',
+          action: 'fetch-sections',
+          description: 'Loads Kangur lesson sections from the API.',
+        },
+        async () => {
+          throw proxyError;
+        },
+        {
+          fallback: [],
+        }
+      )
+    ).resolves.toEqual([]);
+
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logClientErrorMock).not.toHaveBeenCalled();
+  });
+
   it('skips sync system capture and client reporting when shouldReport returns false', () => {
     const authError = Object.assign(new Error('Authentication required'), { status: 401 });
     const onErrorMock = vi.fn();
@@ -209,6 +234,11 @@ describe('kangur client observability', () => {
       isRecoverableKangurClientFetchError({ message: 'Request timeout after 30000ms' })
     ).toBe(true);
     expect(isRecoverableKangurClientFetchError('Request timeout after 30000ms')).toBe(true);
+    expect(
+      isRecoverableKangurClientFetchError(
+        Object.assign(new Error('Kangur API proxy request failed.'), { status: 502 })
+      )
+    ).toBe(true);
     expect(isRecoverableKangurClientFetchError(new Error('Unexpected failure'))).toBe(false);
   });
 

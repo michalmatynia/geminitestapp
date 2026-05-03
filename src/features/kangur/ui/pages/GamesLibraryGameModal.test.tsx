@@ -69,10 +69,13 @@ const modalState = vi.hoisted(() => ({
         } as Record<string, string>
       )[key] ?? key),
     locale: 'en',
+    open: true,
+    onOpenChange: vi.fn(),
     settingsOpen: true,
     setSettingsOpen: vi.fn(),
     handleCloseModal: vi.fn(),
     supportsPreviewSettings: true,
+    game: null as any,
     lessonGameSectionsQuery: {
       data: [
         {
@@ -145,14 +148,19 @@ const TEST_GAME =
   createDefaultKangurGames().find((game) => game.id === 'clock_training') ??
   createDefaultKangurGames()[0];
 
+console.log('TEST_GAME:', TEST_GAME?.id);
+
 const resetModalState = (): void => {
   modalState.value = {
     ...modalState.value,
     locale: 'en',
+    open: true,
+    onOpenChange: vi.fn(),
     settingsOpen: true,
     setSettingsOpen: vi.fn(),
     handleCloseModal: vi.fn(),
     supportsPreviewSettings: true,
+    game: TEST_GAME,
     lessonGameSectionsQuery: {
       data: [
         {
@@ -213,6 +221,8 @@ describe('GamesLibraryGameModal', () => {
       />
     );
 
+    screen.debug();
+
     expect(screen.getByTestId('games-library-modal-variants')).toBeInTheDocument();
     expect(screen.getByTestId('games-library-modal-instances')).toBeInTheDocument();
     expect(screen.getByTestId('games-library-modal-lessons')).toBeInTheDocument();
@@ -230,12 +240,15 @@ describe('GamesLibraryGameModal', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows modal empty states when there is no persisted data', () => {
+  it('shows modal empty states when there is no persisted data', async () => {
     resetModalState();
+    const gameWithNoLessons = {
+      ...TEST_GAME,
+      lessonComponentIds: [],
+    };
     modalState.value = {
       ...modalState.value,
-      settingsOpen: true,
-      supportsPreviewSettings: true,
+      game: gameWithNoLessons,
       lessonGameSectionsQuery: {
         data: [],
         isPending: false,
@@ -249,20 +262,21 @@ describe('GamesLibraryGameModal', () => {
     render(
       <GamesLibraryGameModal
         basePath='/kangur'
-        game={{
-          ...TEST_GAME,
-          lessonComponentIds: [],
-        }}
+        game={gameWithNoLessons}
         onOpenChange={() => undefined}
         open
       />
     );
 
-    expect(screen.getByText('No saved launchable instances yet.')).toBeInTheDocument();
-    expect(screen.getByText('This game is not linked to lesson components yet.')).toBeInTheDocument();
-    expect(screen.getByText('No hub sections yet.')).toBeInTheDocument();
+    expect(await screen.findByText('No saved launchable instances yet.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('This game is not linked to lesson components yet.')
+    ).toBeInTheDocument();
+    expect(await screen.findByText('No hub sections yet.')).toBeInTheDocument();
     expect(screen.getByTestId('games-library-modal-settings')).toBeInTheDocument();
-    expect(screen.getByText('No preview settings were saved for this game yet.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('No preview settings were saved for this game yet.')
+    ).toBeInTheDocument();
   });
 
   it('exposes settings toggle semantics for the expandable settings section', () => {

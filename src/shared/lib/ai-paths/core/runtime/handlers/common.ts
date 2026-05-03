@@ -431,9 +431,7 @@ export const handleDelay: NodeHandler = async ({
 };
 
 export const handleViewer: NodeHandler = ({
-  node,
-  prevOutputs,
+  nodeInputs,
 }: NodeHandlerContext): RuntimePortValues => {
-  if (node.outputs.length === 0) return prevOutputs;
-  return prevOutputs;
+  return { ...nodeInputs };
 };

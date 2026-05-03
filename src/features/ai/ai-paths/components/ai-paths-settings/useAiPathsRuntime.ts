@@ -1,12 +1,25 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
-import { useRuntimeActions, useRuntimeState } from '@/features/ai/ai-paths/context/RuntimeContext';
+import {
+  useRuntimeActions,
+  useRuntimeDataState,
+  useRuntimeUiState,
+} from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
-import { normalizeNodes, sanitizeEdges, stableStringify, aiJobsApi } from '@/shared/lib/ai-paths';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { sanitizeEdges, stableStringify } from '@/shared/lib/ai-paths/core/utils';
+import { aiJobsApi } from '@/shared/lib/ai-paths/api';
+import {
+  buildVisionModelCapabilityErrorMessage,
+  collectVisionModelCapabilityIssues,
+} from '@/shared/lib/ai-paths/core/utils/model-capability-preflight';
 import {
   buildGraphModelJobPayload,
   buildQueuedGraphModelJobEnqueueRequest,
@@ -24,22 +37,25 @@ import { createRunId } from './runtime/utils';
 import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from './runtime/types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
-  const runtimeContextState = useRuntimeState();
+  const runtimeDataState = useRuntimeDataState();
+  const runtimeUiState = useRuntimeUiState();
   const runtimeContextActions = useRuntimeActions();
   const setRuntimeState = runtimeContextActions.setRuntimeState;
   const setLastRunAt = runtimeContextActions.setLastRunAt;
-  const parserSamples = runtimeContextState.parserSamples;
-  const updaterSamples = runtimeContextState.updaterSamples;
-  const sendingToAi = runtimeContextState.sendingToAi;
+  const parserSamples = runtimeDataState.parserSamples;
+  const updaterSamples = runtimeDataState.updaterSamples;
+  const sendingToAi = runtimeUiState.sendingToAi;
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const brainAssignment = useBrainAssignment({
     capability: 'ai_paths.model',
   });
+  const brainModelOptions = useBrainModelOptions({
+    capability: 'ai_paths.model',
+  });
 
   // Shared refs
-  const runtimeStateRef = useRef<RuntimeState>(runtimeContextState.runtimeState);
+  const runtimeStateRef = useRef<RuntimeState>(runtimeDataState.runtimeState);
   const runInFlightRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const pauseRequestedRef = useRef(false);
@@ -60,7 +76,21 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const state = useAiPathsRuntimeState();
 
   // Memos
-  const normalizedNodes = useMemo((): AiNode[] => normalizeNodes(args.nodes), [args.nodes]);
+  const runtimeNodes = useMemo((): AiNode[] => {
+    if (!args.nodeConfigDirty || !args.nodeConfigDraft) {
+      return args.nodes;
+    }
+    let appliedDraft = false;
+    const nextNodes = args.nodes.map((node: AiNode): AiNode => {
+      if (node.id !== args.nodeConfigDraft?.id) {
+        return node;
+      }
+      appliedDraft = true;
+      return args.nodeConfigDraft;
+    });
+    return appliedDraft ? nextNodes : args.nodes;
+  }, [args.nodeConfigDirty, args.nodeConfigDraft, args.nodes]);
+  const normalizedNodes = useMemo((): AiNode[] => normalizeNodes(runtimeNodes), [runtimeNodes]);
   const sanitizedEdges = useMemo(
     (): Edge[] => sanitizeEdges(normalizedNodes, args.edges),
     [args.edges, normalizedNodes]
@@ -154,8 +184,8 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
 
   // Effect to sync refs
   useEffect(() => {
-    runtimeStateRef.current = runtimeContextState.runtimeState;
-  }, [runtimeContextState.runtimeState]);
+    runtimeStateRef.current = runtimeDataState.runtimeState;
+  }, [runtimeDataState.runtimeState]);
 
   useEffect(() => {
     runtimeContextActions.setRuntimeRunStatus(state.runStatus);
@@ -275,12 +305,23 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       args.toast('Configure AI Paths in AI Brain first.', { variant: 'error' });
       return;
     }
+    const modelCapabilityIssues = collectVisionModelCapabilityIssues({
+      nodes: [aiNode],
+      defaultModelId: aiModelId,
+      descriptors: brainModelOptions.descriptors,
+    });
+    if (modelCapabilityIssues.length > 0) {
+      args.toast(buildVisionModelCapabilityErrorMessage(modelCapabilityIssues[0]!), {
+        variant: 'error',
+      });
+      return;
+    }
 
     runtimeContextActions.setSendingToAi(true);
     let directJobId: string | null = null;
 
     try {
-      const sourceOutputs = runtimeContextState.runtimeState.outputs?.[sourceNodeId] ?? {};
+      const sourceOutputs = runtimeStateRef.current.outputs?.[sourceNodeId] ?? {};
       const payload = buildGraphModelJobPayload({
         prompt,
         modelId: selectedModelId,
@@ -348,10 +389,10 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   }, [
     args,
     brainAssignment,
+    brainModelOptions.descriptors,
     contextRegistry,
     resolvePreviewModelNode,
     runtimeContextActions,
-    runtimeContextState,
     setRuntimeState,
   ]);
 
@@ -428,7 +469,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     handlePauseRun: () => {
       pauseRequestedRef.current = true;
     },
-    handleResumeRun: () => {
+    handleContinueRun: () => {
       void local.runLocalLoop('run');
     },
     handleStepRun: (triggerNode?: AiNode) => {

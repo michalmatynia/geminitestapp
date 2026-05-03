@@ -1,12 +1,15 @@
-'use client';
-
 import {
   BASE_INTEGRATION_SLUGS,
   PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
   TRADERA_INTEGRATION_SLUGS,
-  isTraderaBrowserIntegrationSlug,
+  isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import type { ProductListingWithDetails, ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import {
+  isVintedGoogleSignInBlockedMessage,
+  resolveVintedGoogleSignInBlockedRecoveryDescription,
+} from './vinted-browser-messages';
+import { resolveDuplicateLinkedFromListing } from './tradera-listing-client-utils';
 
 export type TraderaRecoveryContext = Extract<
   ProductListingsRecoveryContext,
@@ -18,6 +21,11 @@ export type BaseRecoveryContext = Extract<
   ProductListingsRecoveryContext,
   { integrationSlug: 'baselinker' }
 >;
+export type VintedRecoveryContext = Extract<
+  ProductListingsRecoveryContext,
+  { integrationSlug: 'vinted' }
+>;
+export type VintedRecoverySource = VintedRecoveryContext['source'];
 
 export const normalizeProductListingsIntegrationScope = (
   value: string | null | undefined
@@ -31,6 +39,16 @@ export const readProductListingsRecoveryString = (value: unknown): string | null
 
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
+const isTraderaRecoveryIntegrationSlug = (
+  value: string | null | undefined
+): boolean => {
+  const normalized = normalizeProductListingsIntegrationScope(value)?.toLowerCase();
+  return (
+    TRADERA_INTEGRATION_SLUGS.has(normalized ?? '') ||
+    normalized === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG
+  );
+};
 
 const readOptionalDate = (value: unknown): number | null => {
   const normalized = readProductListingsRecoveryString(value);
@@ -47,12 +65,14 @@ export const isBaseQuickExportRecoveryContext = (
 export const createBaseRecoveryContext = ({
   status,
   runId,
+  failureReason,
   requestId,
   integrationId,
   connectionId,
 }: {
   status: string;
   runId: string | null;
+  failureReason?: string | null | undefined;
   requestId?: string | null | undefined;
   integrationId?: string | null | undefined;
   connectionId?: string | null | undefined;
@@ -61,6 +81,7 @@ export const createBaseRecoveryContext = ({
   integrationSlug: 'baselinker',
   status,
   runId,
+  failureReason: failureReason ?? null,
   ...(requestId != null ? { requestId } : {}),
   ...(integrationId != null ? { integrationId } : {}),
   ...(connectionId != null ? { connectionId } : {}),
@@ -72,10 +93,24 @@ export const isTraderaQuickExportRecoveryContext = (
   recoveryContext?.source === 'tradera_quick_export_auth_required' ||
   recoveryContext?.source === 'tradera_quick_export_failed';
 
+export const isVintedQuickExportRecoveryContext = (
+  recoveryContext?: ProductListingsRecoveryContext | null | undefined
+): recoveryContext is VintedRecoveryContext =>
+  recoveryContext?.source === 'vinted_quick_export_auth_required' ||
+  recoveryContext?.source === 'vinted_quick_export_failed';
+
 export const resolveProductListingsEmptyDescription = (
   recoveryContext?: ProductListingsRecoveryContext | null | undefined
 ): string => {
   if (isBaseQuickExportRecoveryContext(recoveryContext)) {
+    const failureReason =
+      typeof recoveryContext.failureReason === 'string' &&
+      recoveryContext.failureReason.trim().length > 0
+        ? recoveryContext.failureReason.trim()
+        : null;
+    if (failureReason) {
+      return failureReason;
+    }
     return 'The last Base.com one-click export failed before a listing record was created. Use the options above to retry or choose a different connection.';
   }
 
@@ -95,6 +130,27 @@ export const resolveProductListingsEmptyDescription = (
       return failureReason;
     }
     return 'The last Tradera quick export stopped before a stable listing record was available. Open the Tradera login window if needed, then continue the Tradera listing flow from this modal.';
+  }
+
+  if (isVintedQuickExportRecoveryContext(recoveryContext)) {
+    const normalizedStatus = (recoveryContext.status ?? '').trim().toLowerCase();
+    const failureReason =
+      'failureReason' in recoveryContext &&
+      typeof recoveryContext.failureReason === 'string' &&
+      recoveryContext.failureReason.trim().length > 0
+        ? recoveryContext.failureReason.trim()
+        : null;
+    if (isVintedGoogleSignInBlockedMessage(failureReason)) {
+      return resolveVintedGoogleSignInBlockedRecoveryDescription(true);
+    }
+    if (
+      failureReason &&
+      normalizedStatus !== 'auth_required' &&
+      normalizedStatus !== 'needs_login'
+    ) {
+      return failureReason;
+    }
+    return 'The last Vinted.pl quick export stopped before a stable listing record was available. Refresh the Vinted browser session if needed, then retry the Vinted listing flow from this modal.';
   }
 
   return 'This product is not listed on any marketplace yet. Use the + button in the header to list products on a marketplace.';
@@ -130,6 +186,44 @@ export const createTraderaRecoveryContext = ({
 }): TraderaRecoveryContext => ({
   source: resolveTraderaRecoverySource(source ?? status),
   integrationSlug: 'tradera',
+  status,
+  runId,
+  failureReason: failureReason ?? null,
+  requestId: requestId ?? null,
+  integrationId: integrationId ?? null,
+  connectionId: connectionId ?? null,
+});
+
+export const resolveVintedRecoverySource = (
+  statusOrSource: string | null | undefined
+): VintedRecoverySource => {
+  const normalized = statusOrSource?.trim().toLowerCase();
+  return normalized === 'vinted_quick_export_auth_required' ||
+    normalized === 'auth_required' ||
+    normalized === 'needs_login'
+    ? 'vinted_quick_export_auth_required'
+    : 'vinted_quick_export_failed';
+};
+
+export const createVintedRecoveryContext = ({
+  status,
+  runId,
+  failureReason,
+  requestId,
+  integrationId,
+  connectionId,
+  source,
+}: {
+  status: string;
+  runId: string | null;
+  failureReason?: string | null | undefined;
+  requestId?: string | null | undefined;
+  integrationId?: string | null | undefined;
+  connectionId?: string | null | undefined;
+  source?: string | null | undefined;
+}): VintedRecoveryContext => ({
+  source: resolveVintedRecoverySource(source ?? status),
+  integrationSlug: 'vinted',
   status,
   runId,
   failureReason: failureReason ?? null,
@@ -277,20 +371,27 @@ const compareTraderaRecoveryListings = (
   return rightTimestamp - leftTimestamp;
 };
 
+const isTraderaDuplicateLinkedListing = (
+  listing: ProductListingWithDetails
+): boolean => resolveDuplicateLinkedFromListing(listing);
+
 export const findTraderaRecoveryListing = (
   listings: ProductListingWithDetails[],
   recoveryRequestId: string | null,
   recoveryRunId: string | null
 ): ProductListingWithDetails | null => {
   const traderaListings = listings.filter((listing) =>
-    isTraderaBrowserIntegrationSlug(listing.integration?.slug)
+    isTraderaRecoveryIntegrationSlug(listing.integration?.slug)
   );
   if (traderaListings.length === 0) return null;
 
   if (recoveryRequestId) {
     const requestMatch = traderaListings.find((listing) => {
       const metadata = resolveTraderaRecoveryMetadata(listing);
-      return metadata.requestId === recoveryRequestId;
+      return (
+        metadata.requestId === recoveryRequestId &&
+        !isTraderaDuplicateLinkedListing(listing)
+      );
     });
     if (requestMatch) return requestMatch;
   }
@@ -298,17 +399,22 @@ export const findTraderaRecoveryListing = (
   if (recoveryRunId) {
     const runMatch = traderaListings.find((listing) => {
       const metadata = resolveTraderaRecoveryMetadata(listing);
-      return metadata.runId === recoveryRunId;
+      return metadata.runId === recoveryRunId && !isTraderaDuplicateLinkedListing(listing);
     });
     if (runMatch) return runMatch;
   }
 
   const recoveryCandidates = traderaListings
-    .filter((listing) => isTraderaRecoveryStatus(listing.status))
+    .filter(
+      (listing) =>
+        isTraderaRecoveryStatus(listing.status) && !isTraderaDuplicateLinkedListing(listing)
+    )
     .sort(compareTraderaRecoveryListings);
   if (recoveryCandidates.length > 0) return recoveryCandidates[0] ?? null;
 
-  return [...traderaListings].sort(compareTraderaRecoveryListings)[0] ?? null;
+  return [...traderaListings]
+    .filter((listing) => !isTraderaDuplicateLinkedListing(listing))
+    .sort(compareTraderaRecoveryListings)[0] ?? null;
 };
 
 export const resolveTraderaRecoveryTarget = ({
@@ -360,6 +466,7 @@ export const resolveProductListingsIntegrationScopeLabel = (
   if (!filter) return null;
   if (BASE_INTEGRATION_SLUGS.has(filter)) return 'Base.com';
   if (TRADERA_INTEGRATION_SLUGS.has(filter)) return 'Tradera';
+  if (isVintedIntegrationSlug(filter)) return 'Vinted.pl';
   if (filter === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'Playwright';
   return filterIntegrationSlug?.trim() || null;
 };
@@ -375,7 +482,7 @@ export const matchesProductListingsIntegrationScope = (
     return BASE_INTEGRATION_SLUGS.has(listing);
   }
   if (TRADERA_INTEGRATION_SLUGS.has(filter)) {
-    return TRADERA_INTEGRATION_SLUGS.has(listing);
+    return isTraderaRecoveryIntegrationSlug(listing);
   }
   return listing === filter;
 };

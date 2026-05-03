@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
 import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver/relations';
 import type {
   FilemakerAddressDto as FilemakerAddress,

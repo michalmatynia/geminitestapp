@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -71,7 +71,10 @@ describe('AdminFilemakerMail pages recent flows', () => {
           ],
         });
       }
-      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1' ||
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5'
+      ) {
         return jsonResponse({
           threads: [
             {
@@ -277,14 +280,14 @@ describe('AdminFilemakerMail pages recent flows', () => {
     render(<AdminFilemakerMailPage />);
 
     expect(await screen.findByText('Support inbox / Recent')).toBeInTheDocument();
-    expect(screen.getByText('VIP • Recent branch preview')).toBeInTheDocument();
+    expect(await screen.findByText('VIP • Recent branch preview')).toBeInTheDocument();
     expect(screen.getByText('Account Recent')).toBeInTheDocument();
     expect(screen.getByText('Threads: 2')).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     expect(screen.getAllByRole('option', { name: 'VIP' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('option', { name: 'INBOX' }).length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByLabelText('Sidebar recent unread only'));
+    fireEvent.click(screen.getByLabelText('Unread only'));
     await waitFor(() => {
       expect(screen.getByText('Threads: 1')).toBeInTheDocument();
       expect(screen.getAllByRole('listitem')).toHaveLength(1);
@@ -295,7 +298,7 @@ describe('AdminFilemakerMail pages recent flows', () => {
       );
     });
 
-    fireEvent.change(screen.getByLabelText('Sidebar recent mailbox filter'), {
+    fireEvent.change(screen.getByLabelText('Recent mailbox filter'), {
       target: { value: 'VIP' },
     });
     expect(within(screen.getByRole('list')).getByText('Recent welcome')).toBeInTheDocument();
@@ -319,11 +322,13 @@ describe('AdminFilemakerMail pages recent flows', () => {
     });
     expect(screen.queryByText('Mailbox: VIP')).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Sidebar recent search'), {
+    fireEvent.change(screen.getByLabelText('Search subject, snippet, or participant...'), {
       target: { value: 'welcome' },
     });
     await waitFor(() => {
-      expect(screen.getByLabelText('Sidebar recent search')).toHaveValue('welcome');
+      expect(screen.getByLabelText('Search subject, snippet, or participant...')).toHaveValue(
+        'welcome'
+      );
       expect(screen.getByText('Threads: 1')).toBeInTheDocument();
       expect(screen.getAllByRole('listitem')).toHaveLength(1);
       expect(routerReplaceMock).toHaveBeenCalledWith(
@@ -331,24 +336,435 @@ describe('AdminFilemakerMail pages recent flows', () => {
       );
     });
     expect(screen.getByText('Search: welcome')).toBeInTheDocument();
-    expect(screen.getByText('Recent: 1')).toBeInTheDocument();
+    expect(screen.getByText('Recent: 2')).toBeInTheDocument();
     expect(screen.getByText('Recent Search: welcome')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Inbox digest/ })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('list')).queryByText('Inbox digest')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Clear Filters' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Clear Recent' })).toBeInTheDocument();
 
+    routerPushMock.mockClear();
+    routerReplaceMock.mockClear();
     fireEvent.click(screen.getByRole('button', { name: 'Clear Recent' }));
-    expect(routerPushMock).toHaveBeenCalledWith(
-      '/admin/filemaker/mail?accountId=account-1&panel=recent'
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: 'Clear Filters' }));
+    await waitFor(() => {
+      expect(routerPushMock).not.toHaveBeenCalled();
+      expect(routerReplaceMock).not.toHaveBeenCalled();
+      expect(screen.queryByText('Recent Search: welcome')).not.toBeInTheDocument();
+    });
     await waitFor(() => {
       expect(screen.getByText('Threads: 2')).toBeInTheDocument();
       expect(screen.getAllByRole('listitem')).toHaveLength(2);
       expect(screen.queryByText('Search: welcome')).not.toBeInTheDocument();
-      expect(screen.getByLabelText('Sidebar recent search')).toHaveValue('');
+      expect(screen.getByLabelText('Search subject, snippet, or participant...')).toHaveValue('');
     });
+    expect(screen.queryByRole('button', { name: 'Clear Filters' })).not.toBeInTheDocument();
+  });
+
+  it('loads account recent threads from campaign route filters', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'panel') return 'recent';
+      if (key === 'campaignId') return 'campaign-1';
+      if (key === 'runId') return 'run-1';
+      if (key === 'deliveryId') return 'delivery-1';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'support@example.com',
+              imapPasswordSettingKey: 'imap-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'support@example.com',
+              smtpPasswordSettingKey: 'smtp-key',
+              fromName: 'Support',
+              replyToEmail: null,
+              folderAllowlist: ['Sent'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError: null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:00:00.000Z',
+              provider: 'imap_smtp',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({ folders: [] });
+      }
+      if (
+        url ===
+        '/api/filemaker/mail/threads?accountId=account-1&campaignId=campaign-1&runId=run-1&deliveryId=delivery-1'
+      ) {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread-campaign-1',
+              accountId: 'account-1',
+              subject: 'Campaign reply',
+              participantSummary: [{ address: 'jane@example.com', name: 'Jane' }],
+              snippet: 'Campaign branch preview',
+              mailboxPath: 'Sent',
+              mailboxRole: 'sent',
+              normalizedSubject: 'Campaign reply',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 2,
+              unreadCount: 0,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+              campaignContext: {
+                campaignId: 'campaign-1',
+                runId: 'run-1',
+                deliveryId: 'delivery-1',
+              },
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads?accountId=account-1&limit=5') {
+        return jsonResponse({ threads: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailPage />);
+
+    expect(await screen.findByText('Campaign reply')).toBeInTheDocument();
+    expect(screen.getByText('Campaign: campaign-1')).toBeInTheDocument();
+    expect(screen.getByText('Run: run-1')).toBeInTheDocument();
+    expect(screen.getByText('Delivery: delivery-1')).toBeInTheDocument();
+  });
+
+  it('keeps the latest local recent filters when an older recent route lands', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+    let currentSearchParams = new URLSearchParams(
+      'accountId=account-1&panel=recent&recentMailbox=INBOX&recentUnread=1&recentQuery=welcome'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => currentSearchParams.get(key));
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'support@example.com',
+              imapPasswordSettingKey: 'imap-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'support@example.com',
+              smtpPasswordSettingKey: 'smtp-key',
+              fromName: 'Support',
+              replyToEmail: null,
+              folderAllowlist: ['INBOX', 'VIP'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError: null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:00:00.000Z',
+              provider: 'imap_smtp',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::INBOX',
+              accountId: 'account-1',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 0,
+              lastMessageAt: '2026-03-28T10:05:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?accountId=account-1')) {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread-1',
+              accountId: 'account-1',
+              subject: 'Welcome',
+              participantSummary: [{ address: 'jane@example.com', name: 'Jane' }],
+              snippet: 'Welcome message',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              normalizedSubject: 'Welcome',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+            {
+              id: 'thread-2',
+              accountId: 'account-1',
+              subject: 'Urgent follow-up',
+              participantSummary: [{ address: 'vip@example.com', name: 'VIP' }],
+              snippet: 'Urgent thread',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Urgent follow-up',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 0,
+              lastMessageAt: '2026-03-28T10:05:00.000Z',
+            },
+          ],
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    const { rerender } = render(<AdminFilemakerMailPage />);
+
+    await screen.findByText('Support inbox / Recent');
+
+    fireEvent.change(screen.getByLabelText('Recent mailbox filter'), {
+      target: { value: 'VIP' },
+    });
+    fireEvent.click(screen.getByLabelText('Unread only'));
+    fireEvent.change(screen.getByLabelText('Search subject, snippet, or participant...'), {
+      target: { value: 'urgent' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Recent mailbox filter')).toHaveValue('VIP');
+      expect(screen.getByLabelText('Unread only')).not.toBeChecked();
+      expect(screen.getByLabelText('Search subject, snippet, or participant...')).toHaveValue(
+        'urgent'
+      );
+      expect(routerReplaceMock).toHaveBeenCalledWith(
+        '/admin/filemaker/mail?accountId=account-1&panel=recent&recentMailbox=VIP&recentQuery=urgent'
+      );
+    });
+
+    routerReplaceMock.mockClear();
+    currentSearchParams = new URLSearchParams(
+      'accountId=account-1&panel=recent&recentMailbox=INBOX&recentUnread=1&recentQuery=followup'
+    );
+    rerender(<AdminFilemakerMailPage />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Recent mailbox filter')).toHaveValue('VIP');
+      expect(screen.getByLabelText('Unread only')).not.toBeChecked();
+      expect(screen.getByLabelText('Search subject, snippet, or participant...')).toHaveValue(
+        'urgent'
+      );
+      expect(routerReplaceMock).toHaveBeenCalledWith(
+        '/admin/filemaker/mail?accountId=account-1&panel=recent&recentMailbox=VIP&recentQuery=urgent'
+      );
+    });
+  });
+
+  it('clears stale recent rows before a delayed recent query response resolves', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'panel') return 'recent';
+      return null;
+    });
+
+    let resolveUrgentThreads:
+      | ((value: Response | PromiseLike<Response>) => void)
+      | undefined;
+
+    fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return Promise.resolve(
+          jsonResponse({
+            accounts: [
+              {
+                id: 'account-1',
+                name: 'Support inbox',
+                emailAddress: 'support@example.com',
+                status: 'active',
+                imapHost: 'imap.example.com',
+                imapPort: 993,
+                imapSecure: true,
+                imapUser: 'support@example.com',
+                imapPasswordSettingKey: 'imap-key',
+                smtpHost: 'smtp.example.com',
+                smtpPort: 465,
+                smtpSecure: true,
+                smtpUser: 'support@example.com',
+                smtpPasswordSettingKey: 'smtp-key',
+                fromName: 'Support',
+                replyToEmail: null,
+                folderAllowlist: ['INBOX', 'VIP'],
+                initialSyncLookbackDays: 30,
+                maxMessagesPerSync: 100,
+                lastSyncedAt: null,
+                lastSyncError: null,
+                createdAt: '2026-03-28T10:00:00.000Z',
+                updatedAt: '2026-03-28T10:00:00.000Z',
+                provider: 'imap_smtp',
+              },
+            ],
+          })
+        );
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return Promise.resolve(
+          jsonResponse({
+            folders: [
+              {
+                id: 'account-1::INBOX',
+                accountId: 'account-1',
+                mailboxPath: 'INBOX',
+                mailboxRole: 'inbox',
+                threadCount: 2,
+                unreadCount: 1,
+                lastMessageAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          })
+        );
+      }
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1' ||
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5'
+      ) {
+        return Promise.resolve(
+          jsonResponse({
+            threads: [
+              {
+                id: 'thread-1',
+                accountId: 'account-1',
+                subject: 'Recent welcome',
+                participantSummary: [{ address: 'jane@example.com', name: 'Jane' }],
+                snippet: 'Recent branch preview',
+                mailboxPath: 'VIP',
+                mailboxRole: 'custom',
+                normalizedSubject: 'Recent welcome',
+                relatedPersonIds: [],
+                relatedOrganizationIds: [],
+                messageCount: 3,
+                unreadCount: 1,
+                lastMessageAt: '2026-03-28T10:00:00.000Z',
+              },
+              {
+                id: 'thread-2',
+                accountId: 'account-1',
+                subject: 'Inbox digest',
+                participantSummary: [{ address: 'team@example.com', name: 'Team' }],
+                snippet: 'Inbox branch preview',
+                mailboxPath: 'INBOX',
+                mailboxRole: 'inbox',
+                normalizedSubject: 'Inbox digest',
+                relatedPersonIds: [],
+                relatedOrganizationIds: [],
+                messageCount: 1,
+                unreadCount: 0,
+                lastMessageAt: '2026-03-28T09:00:00.000Z',
+              },
+            ],
+          })
+        );
+      }
+      if (url === '/api/filemaker/mail/threads?accountId=account-1&query=urgent') {
+        return new Promise<Response>((resolve) => {
+          resolveUrgentThreads = resolve;
+        });
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`));
+    });
+
+    render(<AdminFilemakerMailPage />);
+
+    expect(await screen.findByText('Support inbox / Recent')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Threads: 2')).toBeInTheDocument();
+      expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    });
+
+    fireEvent.change(screen.getByLabelText('Search subject, snippet, or participant...'), {
+      target: { value: 'urgent' },
+    });
+
+    const threadsList = screen.getByRole('list');
+    await waitFor(() => {
+      expect(within(threadsList).queryByText('Recent welcome')).not.toBeInTheDocument();
+      expect(within(threadsList).queryByText('Inbox digest')).not.toBeInTheDocument();
+      expect(within(threadsList).queryAllByRole('listitem')).toHaveLength(0);
+    });
+    await waitFor(() => {
+      expect(resolveUrgentThreads).toBeDefined();
+    });
+
+    await act(async () => {
+      resolveUrgentThreads?.(
+        jsonResponse({
+          threads: [
+            {
+              id: 'thread-3',
+              accountId: 'account-1',
+              subject: 'Urgent invoice',
+              participantSummary: [{ address: 'vip@example.com', name: 'VIP' }],
+              snippet: 'Need approval today',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Urgent invoice',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T11:00:00.000Z',
+            },
+          ],
+        })
+      );
+    });
+
+    expect(await screen.findByText('Urgent invoice')).toBeInTheDocument();
+    expect(within(threadsList).queryByText('Recent welcome')).not.toBeInTheDocument();
+    expect(within(threadsList).queryByText('Inbox digest')).not.toBeInTheDocument();
+    expect(within(threadsList).getAllByRole('listitem')).toHaveLength(1);
   });
 
   it('returns to the filtered recent panel from a recent-origin thread route', async () => {
@@ -365,6 +781,9 @@ describe('AdminFilemakerMail pages recent flows', () => {
       if (key === 'recentMailbox') return 'VIP';
       if (key === 'recentUnread') return '1';
       if (key === 'recentQuery') return 'welcome';
+      if (key === 'campaignId') return 'campaign-1';
+      if (key === 'runId') return 'run-1';
+      if (key === 'deliveryId') return 'delivery-1';
       return null;
     });
 
@@ -458,7 +877,7 @@ describe('AdminFilemakerMail pages recent flows', () => {
     await screen.findByText('Alice');
     fireEvent.click(screen.getByRole('button', { name: 'Back to Recent' }));
     expect(routerPushMock).toHaveBeenCalledWith(
-      '/admin/filemaker/mail?accountId=account-1&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome'
+      '/admin/filemaker/mail?accountId=account-1&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome&campaignId=campaign-1&runId=run-1&deliveryId=delivery-1'
     );
   });
 
@@ -504,7 +923,10 @@ describe('AdminFilemakerMail pages recent flows', () => {
           ],
         });
       }
-      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1' ||
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5'
+      ) {
         return jsonResponse({
           threads: [
             {
@@ -637,7 +1059,10 @@ describe('AdminFilemakerMail pages recent flows', () => {
           ],
         });
       }
-      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1' ||
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5'
+      ) {
         return jsonResponse({
           threads: [
             {

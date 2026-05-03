@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import { categoryMappingUpdateInputSchema } from '@/shared/contracts/integrations/listings';
@@ -7,11 +7,13 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
+import { assertCategoryMappingsCanBeSaved } from '../validation';
+
 /**
  * GET /api/marketplace/mappings/[id]
  * Gets a specific category mapping by ID.
  */
-export async function GET_handler(
+export async function getHandler(
   _request: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params
@@ -32,7 +34,7 @@ export async function GET_handler(
  * PUT /api/marketplace/mappings/[id]
  * Updates a category mapping.
  */
-export async function PUT_handler(
+export async function putHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params
@@ -55,6 +57,22 @@ export async function PUT_handler(
     throw notFoundError('Mapping not found');
   }
 
+  const nextInternalCategoryId =
+    body.internalCategoryId !== undefined ? body.internalCategoryId : existing.internalCategoryId;
+  const nextIsActive = body.isActive !== undefined ? body.isActive : existing.isActive;
+
+  if (nextIsActive && nextInternalCategoryId) {
+    await assertCategoryMappingsCanBeSaved({
+      connectionId: existing.connectionId,
+      mappings: [
+        {
+          externalCategoryId: existing.externalCategoryId,
+          internalCategoryId: nextInternalCategoryId,
+        },
+      ],
+    });
+  }
+
   const updated = await repo.update(id, {
     ...(body.internalCategoryId !== undefined && {
       internalCategoryId: body.internalCategoryId,
@@ -69,7 +87,7 @@ export async function PUT_handler(
  * DELETE /api/marketplace/mappings/[id]
  * Deletes a category mapping.
  */
-export async function DELETE_handler(
+export async function deleteHandler(
   _request: NextRequest,
   _ctx: ApiHandlerContext,
   params: Params

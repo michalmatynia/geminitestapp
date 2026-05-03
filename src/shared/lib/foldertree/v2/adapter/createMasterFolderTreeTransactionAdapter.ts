@@ -13,12 +13,13 @@ export type CreateMasterFolderTreeTransactionAdapterOptions = {
     | undefined;
 };
 
-const toPreparedTransaction = async (
+const toPreparedTransaction = (
   tx: FolderTreeTransaction
-): Promise<FolderTreePreparedTransaction> => ({
-  tx,
-  preparedAt: Date.now(),
-});
+): Promise<FolderTreePreparedTransaction> =>
+  Promise.resolve({
+    tx,
+    preparedAt: Date.now(),
+  });
 
 const toAppliedTransaction = (
   tx: FolderTreeTransaction,

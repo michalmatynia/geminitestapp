@@ -10,7 +10,7 @@ type AdminFilemakerCampaignPreferencesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export async function generateMetadata(): Promise<Metadata> {
+export function generateMetadata(): Metadata {
   return generateFilemakerPreferencesMetadata();
 }
 

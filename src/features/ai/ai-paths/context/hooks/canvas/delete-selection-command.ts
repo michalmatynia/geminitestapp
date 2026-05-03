@@ -1,4 +1,4 @@
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 export type NodeSelectionDeleteResult = {
   nodeIds: string[];

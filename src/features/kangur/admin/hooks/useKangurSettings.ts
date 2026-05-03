@@ -233,7 +233,7 @@ export function useKangurSettings() {
   useEffect(
     () => () => {
       if (copyTimeoutRef.current) {
-        window.clearTimeout(copyTimeoutRef.current);
+        safeClearTimeout(copyTimeoutRef.current);
       }
     },
     []
@@ -266,9 +266,9 @@ export function useKangurSettings() {
     if (didCopy) {
       setCopyStatus('Copied!');
       if (copyTimeoutRef.current) {
-        window.clearTimeout(copyTimeoutRef.current);
+        safeClearTimeout(copyTimeoutRef.current);
       }
-      copyTimeoutRef.current = window.setTimeout(() => setCopyStatus('Copy text'), 1800);
+      copyTimeoutRef.current = safeSetTimeout(() => setCopyStatus('Copy text'), 1800);
     }
   };
 

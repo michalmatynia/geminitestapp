@@ -2,12 +2,12 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-28T14:11:53.253Z",
+  "generatedAt": "2026-04-11T13:54:15.455Z",
   "id": "node_obj_playwright_portable_v2",
   "nodeType": "playwright",
   "nodeDocVersion": "2026-02-20.v1",
-  "title": "Playwright",
-  "purpose": "Run programmable browser automation with persona-driven fidelity.",
+  "title": "Playwright: Batch Capture",
+  "purpose": "Capture screenshots from multiple URLs using the engine capture script. Connect a captures array (id, title, url, selector) to the captures input port.",
   "nodeFamily": "integration",
   "portability": {
     "copyPasteReady": true,
@@ -18,15 +18,15 @@
   },
   "ports": {
     "inputs": [
-      "url",
+      "captures",
+      "appearanceMode",
       "bundle",
       "context"
     ],
     "outputs": [
       "result",
       "jobId",
-      "screenshot",
-      "html"
+      "bundle"
     ]
   },
   "statusModel": {
@@ -171,22 +171,22 @@
     "minimalNode": {
       "id": "node_playwright_example",
       "type": "playwright",
-      "title": "Playwright",
-      "description": "Run programmable browser automation with persona-driven fidelity.",
+      "title": "Playwright: Batch Capture",
+      "description": "Capture screenshots from multiple URLs using the engine capture script. Connect a captures array (id, title, url, selector) to the captures input port.",
       "position": {
         "x": 100,
         "y": 100
       },
       "inputs": [
-        "url",
+        "captures",
+        "appearanceMode",
         "bundle",
         "context"
       ],
       "outputs": [
         "result",
         "jobId",
-        "screenshot",
-        "html"
+        "bundle"
       ],
       "data": {},
       "connections": {
@@ -197,22 +197,22 @@
     "fullNode": {
       "id": "node_playwright_example",
       "type": "playwright",
-      "title": "Playwright",
-      "description": "Run programmable browser automation with persona-driven fidelity.",
+      "title": "Playwright: Batch Capture",
+      "description": "Capture screenshots from multiple URLs using the engine capture script. Connect a captures array (id, title, url, selector) to the captures input port.",
       "position": {
         "x": 100,
         "y": 100
       },
       "inputs": [
-        "url",
+        "captures",
+        "appearanceMode",
         "bundle",
         "context"
       ],
       "outputs": [
         "result",
         "jobId",
-        "screenshot",
-        "html"
+        "bundle"
       ],
       "data": {},
       "connections": {
@@ -251,22 +251,22 @@
         {
           "id": "node_playwright_example",
           "type": "playwright",
-          "title": "Playwright",
-          "description": "Run programmable browser automation with persona-driven fidelity.",
+          "title": "Playwright: Batch Capture",
+          "description": "Capture screenshots from multiple URLs using the engine capture script. Connect a captures array (id, title, url, selector) to the captures input port.",
           "position": {
             "x": 100,
             "y": 100
           },
           "inputs": [
-            "url",
+            "captures",
+            "appearanceMode",
             "bundle",
             "context"
           ],
           "outputs": [
             "result",
             "jobId",
-            "screenshot",
-            "html"
+            "bundle"
           ],
           "data": {},
           "connections": {
@@ -310,8 +310,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/playwright.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "7fe5f58cbada808ffbcf5fdcafb8ad435b9278f38320239f6b66897e3d2d0056"
+    "semanticNodeHash": "33b228c66c0793a7aa00140ca99d1b066eb21107810427c330001f69e25a70c0"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "81fb0a69fde9df0fafb5210019ffdb20038f9a7b924a2c227a9c34100cb09ab9"
+  "objectHash": "220a81b00937dbce4c2c661a8cb404015390daeeb32420d9590bd9f6b9156b39"
 }

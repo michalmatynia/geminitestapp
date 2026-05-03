@@ -16,86 +16,86 @@ const APP_BOOT_FAIL_OPEN_TIMEOUT_MS = 1_800;
 const APP_BOOT_MIN_VISIBLE_TIMEOUT_MS = 140;
 const APP_BOOT_INTERACTION_FALLBACK_TIMEOUT_MS = 220;
 
+const useMetMinimumVisibleTime = (): boolean => {
+  const [hasMet, setHasMet] = useState(false);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setHasMet(true);
+    }, APP_BOOT_MIN_VISIBLE_TIMEOUT_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  return hasMet;
+};
+
+const useClearedInitialInteractions = (): boolean => {
+  const [hasCleared, setHasCleared] = useState(false);
+
+  useEffect(() => {
+    let fallbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const markReady = (): void => {
+      if (fallbackTimeoutId !== null) {
+        clearTimeout(fallbackTimeoutId);
+        fallbackTimeoutId = null;
+      }
+      setHasCleared(true);
+    };
+
+    const task = InteractionManager.runAfterInteractions(markReady);
+    fallbackTimeoutId = setTimeout(markReady, APP_BOOT_INTERACTION_FALLBACK_TIMEOUT_MS);
+
+    return () => {
+      if (fallbackTimeoutId !== null) {
+        clearTimeout(fallbackTimeoutId);
+      }
+      task.cancel();
+    };
+  }, []);
+
+  return hasCleared;
+};
+
+const useForcedDismiss = (): boolean => {
+  const [hasForced, setHasForced] = useState(false);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setHasForced(true);
+    }, APP_BOOT_FAIL_OPEN_TIMEOUT_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  return hasForced;
+};
+
 export function KangurAppBootstrapGate({
   children,
 }: PropsWithChildren): React.JSX.Element {
   const { isBootLoading } = useKangurAppStartup();
   const [isBootstrapping, setIsBootstrapping] = useState(true);
-  const [hasMetMinimumVisibleTime, setHasMetMinimumVisibleTime] = useState(false);
-  const [hasClearedInitialInteractions, setHasClearedInitialInteractions] =
-    useState(false);
-  const [hasForcedDismiss, setHasForcedDismiss] = useState(false);
+  const hasMetMinimumVisibleTime = useMetMinimumVisibleTime();
+  const hasClearedInitialInteractions = useClearedInitialInteractions();
+  const hasForcedDismiss = useForcedDismiss();
   const hasDismissedRef = useRef(false);
   const hasConsumedInitialRouteBootstrapBypassRef = useRef(false);
   const hasExpiredInitialRouteBootstrapBypassRef = useRef(false);
+
   const bootstrapContextValue = useMemo(
     () => ({
       consumeInitialRouteBootstrapBypass: () => {
-        if (
-          hasConsumedInitialRouteBootstrapBypassRef.current ||
-          hasExpiredInitialRouteBootstrapBypassRef.current
-        ) {
+        if (hasConsumedInitialRouteBootstrapBypassRef.current || hasExpiredInitialRouteBootstrapBypassRef.current) {
           return false;
         }
-
         hasConsumedInitialRouteBootstrapBypassRef.current = true;
         return true;
       },
     }),
     [],
   );
-
-  useEffect(() => {
-    const minimumVisibleTimeoutId = setTimeout(() => {
-      setHasMetMinimumVisibleTime(true);
-    }, APP_BOOT_MIN_VISIBLE_TIMEOUT_MS);
-
-    return () => {
-      clearTimeout(minimumVisibleTimeoutId);
-    };
-  }, []);
-
-  useEffect(() => {
-    let interactionFallbackTimeoutId: ReturnType<typeof setTimeout> | null =
-      null;
-
-    const clearInteractionFallbackTimeout = (): void => {
-      if (interactionFallbackTimeoutId === null) {
-        return;
-      }
-
-      clearTimeout(interactionFallbackTimeoutId);
-      interactionFallbackTimeoutId = null;
-    };
-
-    const markInteractionsReady = (): void => {
-      clearInteractionFallbackTimeout();
-      setHasClearedInitialInteractions(true);
-    };
-
-    const interactionTask = InteractionManager.runAfterInteractions(
-      markInteractionsReady,
-    );
-    interactionFallbackTimeoutId = setTimeout(
-      markInteractionsReady,
-      APP_BOOT_INTERACTION_FALLBACK_TIMEOUT_MS,
-    );
-
-    return () => {
-      clearInteractionFallbackTimeout();
-      interactionTask.cancel?.();
-    };
-  }, []);
-
-  useEffect(() => {
-    const failOpenTimeoutId = setTimeout(() => {
-      setHasForcedDismiss(true);
-    }, APP_BOOT_FAIL_OPEN_TIMEOUT_MS);
-
-    return () => {
-      clearTimeout(failOpenTimeoutId);
-    };
-  }, []);
 
   useEffect(() => {
     if (
@@ -111,32 +111,18 @@ export function KangurAppBootstrapGate({
     startTransition(() => {
       setIsBootstrapping(false);
     });
-  }, [
-    hasClearedInitialInteractions,
-    hasForcedDismiss,
-    hasMetMinimumVisibleTime,
-    isBootLoading,
-  ]);
+  }, [hasClearedInitialInteractions, hasForcedDismiss, hasMetMinimumVisibleTime, isBootLoading]);
 
   useEffect(() => {
     if (isBootstrapping) {
       return;
     }
-
     hasExpiredInitialRouteBootstrapBypassRef.current = true;
   }, [isBootstrapping]);
 
-  if (isBootstrapping) {
-    return (
-      <KangurAppBootstrapProvider value={bootstrapContextValue}>
-        <KangurAppBootScreen />
-      </KangurAppBootstrapProvider>
-    );
-  }
-
   return (
     <KangurAppBootstrapProvider value={bootstrapContextValue}>
-      {children}
+      {isBootstrapping ? <KangurAppBootScreen /> : children}
     </KangurAppBootstrapProvider>
   );
 }

@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   useValidatorSettingsContextMock: vi.fn(),
   toastMock: vi.fn(),
   openCreateMock: vi.fn(),
+  createStarGaterProducerPatternMock: vi.fn(),
   clipboardWriteTextMock: vi.fn(),
 }));
 
@@ -107,6 +108,7 @@ describe('ValidatorPatternTablePanel', () => {
   beforeEach(() => {
     mocks.toastMock.mockReset();
     mocks.openCreateMock.mockReset();
+    mocks.createStarGaterProducerPatternMock.mockReset();
     mocks.clipboardWriteTextMock.mockReset();
 
     Object.defineProperty(globalThis.navigator, 'clipboard', {
@@ -121,6 +123,7 @@ describe('ValidatorPatternTablePanel', () => {
       loading: false,
       patterns: [{ id: 'pattern-1' }],
       openCreate: mocks.openCreateMock,
+      handleCreateStarGaterProducerPattern: mocks.createStarGaterProducerPatternMock,
     });
   });
 
@@ -147,6 +150,7 @@ describe('ValidatorPatternTablePanel', () => {
     expect(screen.queryByRole('button', { name: '+ Name EN to PL' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Import JSON' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy Full Validation Docs' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Producer: StarGater.net' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add Pattern/ })).toBeInTheDocument();
   });
 
@@ -156,10 +160,12 @@ describe('ValidatorPatternTablePanel', () => {
     render(<ValidatorPatternTablePanel />);
 
     fireEvent.click(screen.getByRole('button', { name: /Add Pattern/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Producer: StarGater.net' }));
     fireEvent.click(screen.getByRole('button', { name: 'Import JSON' }));
     fireEvent.click(screen.getByRole('button', { name: 'Copy Full Validation Docs' }));
 
     expect(mocks.openCreateMock).toHaveBeenCalledTimes(1);
+    expect(mocks.createStarGaterProducerPatternMock).toHaveBeenCalledTimes(1);
     expect(screen.getByText('validator-pattern-import-modal')).toBeInTheDocument();
     expect(mocks.clipboardWriteTextMock).toHaveBeenCalledWith('validator docs');
   });

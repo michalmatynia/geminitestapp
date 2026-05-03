@@ -1,4 +1,5 @@
-import type { AiNode, RuntimePortValues } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import type {
   FetcherSourceMode,
   SimulationRunBehavior,

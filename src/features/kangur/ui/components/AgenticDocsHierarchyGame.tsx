@@ -7,6 +7,7 @@ import {
   type DraggableProvidedDraggableProps,
   type DropResult,
 } from '@hello-pangea/dnd';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import {
@@ -43,6 +44,29 @@ type AgenticDocsHierarchyGameProps = {
   helperText?: string;
   touchSelectedTemplate?: string;
 };
+
+type AgenticDocsHierarchyGameContextValue = {
+  accent: KangurAccent;
+  isCoarsePointer: boolean;
+  checked: boolean;
+  resolvedOrder: readonly string[];
+  isComplete: boolean;
+  selectedItemId: string | null;
+  showTouchHint: boolean;
+  touchHint: string;
+  onItemClick: (itemId: string, targetIndex: number) => void;
+  onDragEnd: (result: DropResult) => void;
+};
+
+const AgenticDocsHierarchyGameContext = React.createContext<AgenticDocsHierarchyGameContextValue | null>(null);
+
+function useAgenticDocsHierarchyGame(): AgenticDocsHierarchyGameContextValue {
+  const context = React.useContext(AgenticDocsHierarchyGameContext);
+  if (!context) {
+    throw new Error('useAgenticDocsHierarchyGame must be used within AgenticDocsHierarchyGame.');
+  }
+  return context;
+}
 
 const dragPortal = typeof document === 'undefined' ? null : document.body;
 
@@ -120,36 +144,27 @@ const resolveItemSurfaceClassName = ({
 type HierarchyItemButtonProps = {
   item: HierarchyItem;
   index: number;
-  accent: KangurAccent;
-  isCoarsePointer: boolean;
   isCorrect: boolean;
   isIncorrect: boolean;
-  checked: boolean;
   isDragging: boolean;
   isSelected: boolean;
-  isComplete: boolean;
   dragHandleProps: DraggableProvidedDragHandleProps | null | undefined;
   draggableProps: DraggableProvidedDraggableProps;
   innerRef: (element: HTMLElement | null) => void;
-  onItemClick: (itemId: string, targetIndex: number) => void;
 };
 
 function HierarchyItemButton({
   item,
   index,
-  accent,
-  isCoarsePointer,
   isCorrect,
   isIncorrect,
-  checked,
   isDragging,
   isSelected,
-  isComplete,
   dragHandleProps,
   draggableProps,
   innerRef,
-  onItemClick,
 }: HierarchyItemButtonProps): React.JSX.Element {
+  const { accent, isCoarsePointer, checked, isComplete, onItemClick } = useAgenticDocsHierarchyGame();
   return (
     <button
       ref={innerRef}
@@ -192,29 +207,18 @@ function HierarchyItemButton({
   );
 }
 
-type HierarchyDraggableItemProps = {
+type HierarchyDraggableItemConfig = {
   item: HierarchyItem;
   index: number;
-  accent: KangurAccent;
-  checked: boolean;
-  resolvedOrder: readonly string[];
-  isCoarsePointer: boolean;
-  isComplete: boolean;
-  selectedItemId: string | null;
-  onItemClick: (itemId: string, targetIndex: number) => void;
 };
 
 function HierarchyDraggableItem({
-  item,
-  index,
-  accent,
-  checked,
-  resolvedOrder,
-  isCoarsePointer,
-  isComplete,
-  selectedItemId,
-  onItemClick,
-}: HierarchyDraggableItemProps): React.JSX.Element {
+  config,
+}: {
+  config: HierarchyDraggableItemConfig;
+}): React.JSX.Element {
+  const { item, index } = config;
+  const { checked, resolvedOrder, selectedItemId, isComplete } = useAgenticDocsHierarchyGame();
   const isCorrect = checked && item.id === resolvedOrder[index];
   const isIncorrect = checked && !isCorrect;
 
@@ -230,18 +234,13 @@ function HierarchyDraggableItem({
           <HierarchyItemButton
             item={item}
             index={index}
-            accent={accent}
-            isCoarsePointer={isCoarsePointer}
             isCorrect={isCorrect}
             isIncorrect={isIncorrect}
-            checked={checked}
             isDragging={snapshot.isDragging}
             isSelected={selectedItemId === item.id}
-            isComplete={isComplete}
             dragHandleProps={provided.dragHandleProps}
             draggableProps={provided.draggableProps}
             innerRef={provided.innerRef}
-            onItemClick={onItemClick}
           />
         );
 
@@ -254,33 +253,18 @@ function HierarchyDraggableItem({
   );
 }
 
-type HierarchyListProps = {
-  droppableId: string;
-  order: HierarchyItem[];
-  accent: KangurAccent;
-  checked: boolean;
-  resolvedOrder: readonly string[];
-  isCoarsePointer: boolean;
-  isComplete: boolean;
-  selectedItemId: string | null;
-  isTouchMoveTargetActive: boolean;
-  onDragEnd: (result: DropResult) => void;
-  onItemClick: (itemId: string, targetIndex: number) => void;
-};
-
 function HierarchyList({
   droppableId,
-  order,
-  accent,
-  checked,
-  resolvedOrder,
-  isCoarsePointer,
-  isComplete,
-  selectedItemId,
-  isTouchMoveTargetActive,
-  onDragEnd,
-  onItemClick,
-}: HierarchyListProps): React.JSX.Element {
+  state,
+}: {
+  droppableId: string;
+  state: {
+    order: HierarchyItem[];
+    isTouchMoveTargetActive: boolean;
+  };
+}): React.JSX.Element {
+  const { order, isTouchMoveTargetActive } = state;
+  const { onDragEnd } = useAgenticDocsHierarchyGame();
   return (
     <KangurDragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId={`docs-hierarchy-${droppableId}`}>
@@ -301,15 +285,7 @@ function HierarchyList({
             {order.map((item, index) => (
               <HierarchyDraggableItem
                 key={item.id}
-                item={item}
-                index={index}
-                accent={accent}
-                checked={checked}
-                resolvedOrder={resolvedOrder}
-                isCoarsePointer={isCoarsePointer}
-                isComplete={isComplete}
-                selectedItemId={selectedItemId}
-                onItemClick={onItemClick}
+                config={{ item, index }}
               />
             ))}
             {droppableProvided.placeholder}
@@ -328,11 +304,9 @@ const resolveCheckButtonTone = (
   return isComplete ? 'success' : 'error';
 };
 
-function HierarchyTouchHint(props: {
-  show: boolean;
-  text: string;
-}): React.JSX.Element | null {
-  if (!props.show) return null;
+function HierarchyTouchHint(): React.JSX.Element | null {
+  const { showTouchHint: show, touchHint: text } = useAgenticDocsHierarchyGame();
+  if (!show) return null;
 
   return (
     <KangurLessonCaption
@@ -342,7 +316,7 @@ function HierarchyTouchHint(props: {
       aria-live='polite'
       aria-atomic='true'
     >
-      {props.text}
+      {text}
     </KangurLessonCaption>
   );
 }
@@ -524,42 +498,51 @@ export default function AgenticDocsHierarchyGame({
   });
 
   return (
-    <KangurLessonCallout accent={accent} padding='sm' className='text-left'>
-      <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'justify-between gap-3')}>
-        <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>{prompt}</div>
-      </div>
-      <KangurLessonCaption className='mt-2 text-left'>{helperText}</KangurLessonCaption>
-      <HierarchyTouchHint show={runtime.showTouchHint} text={runtime.touchHint} />
-      <HierarchyList
-        droppableId={runtime.droppableId}
-        order={runtime.order}
-        accent={accent}
-        checked={runtime.checked}
-        resolvedOrder={runtime.resolvedOrder}
-        isCoarsePointer={runtime.isCoarsePointer}
-        isComplete={runtime.isComplete}
-        selectedItemId={runtime.selectedItemId}
-        isTouchMoveTargetActive={runtime.isTouchMoveTargetActive}
-        onDragEnd={runtime.handleDragEnd}
-        onItemClick={runtime.handleItemClick}
-      />
-      <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'mt-3 flex-wrap justify-start gap-2')}>
-        <KangurButton
-          size='sm'
-          variant='primary'
-          onClick={runtime.handleCheck}
-          disabled={runtime.isComplete}
-          className={getKangurCheckButtonClassName(
-            undefined,
-            resolveCheckButtonTone(runtime.checked, runtime.isComplete)
-          )}
-        >
-          Sprawdź
-        </KangurButton>
-        <KangurButton size='sm' variant='ghost' onClick={runtime.handleReset}>
-          Reset
-        </KangurButton>
-      </div>
-    </KangurLessonCallout>
+    <AgenticDocsHierarchyGameContext.Provider
+      value={{
+        accent,
+        isCoarsePointer: runtime.isCoarsePointer,
+        checked: runtime.checked,
+        resolvedOrder: runtime.resolvedOrder,
+        isComplete: runtime.isComplete,
+        selectedItemId: runtime.selectedItemId,
+        showTouchHint: runtime.showTouchHint,
+        touchHint: runtime.touchHint,
+        onItemClick: runtime.handleItemClick,
+        onDragEnd: runtime.handleDragEnd,
+      }}
+    >
+      <KangurLessonCallout accent={accent} padding='sm' className='text-left'>
+        <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'justify-between gap-3')}>
+          <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>{prompt}</div>
+        </div>
+        <KangurLessonCaption className='mt-2 text-left'>{helperText}</KangurLessonCaption>
+        <HierarchyTouchHint />
+        <HierarchyList
+          droppableId={runtime.droppableId}
+          state={{
+            order: runtime.order,
+            isTouchMoveTargetActive: runtime.isTouchMoveTargetActive,
+          }}
+        />
+        <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'mt-3 flex-wrap justify-start gap-2')}>
+          <KangurButton
+            size='sm'
+            variant='primary'
+            onClick={runtime.handleCheck}
+            disabled={runtime.isComplete}
+            className={getKangurCheckButtonClassName(
+              undefined,
+              resolveCheckButtonTone(runtime.checked, runtime.isComplete)
+            )}
+          >
+            Sprawdź
+          </KangurButton>
+          <KangurButton size='sm' variant='ghost' onClick={runtime.handleReset}>
+            Reset
+          </KangurButton>
+        </div>
+      </KangurLessonCallout>
+    </AgenticDocsHierarchyGameContext.Provider>
   );
 }

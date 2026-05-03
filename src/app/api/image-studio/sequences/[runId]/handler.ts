@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getImageStudioSequenceRunById } from '@/features/ai/image-studio/server/sequence-run-repository';
@@ -14,7 +14,7 @@ const paramsSchema = z.object({
   runId: z.string().trim().min(1, 'Run id is required'),
 });
 
-export async function GET_handler(
+export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }

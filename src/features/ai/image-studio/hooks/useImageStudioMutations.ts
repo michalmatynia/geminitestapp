@@ -10,9 +10,9 @@ import { type ImageStudioProjectRecord, type ImageStudioSlotRecord, type StudioS
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateImageStudioProjects,
@@ -105,7 +105,7 @@ export function useCreateStudioProject(): CreateMutation<
   CreateStudioProjectResult,
   CreateStudioProjectPayload
   > {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: (data: CreateStudioProjectPayload) =>
       api.post<CreateStudioProjectResult>('/api/image-studio/projects', data),
     mutationKey: QUERY_KEYS.imageStudio.all,
@@ -126,7 +126,7 @@ export function useRenameStudioProject(): UpdateMutation<
   UpdateStudioProjectResult,
   UpdateStudioProjectPayload
   > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: ({ projectId, nextProjectId }: UpdateStudioProjectPayload) =>
       api.patch<UpdateStudioProjectResult>(
         `/api/image-studio/projects/${encodeURIComponent(projectId)}`,
@@ -150,7 +150,7 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<
   ResizeStudioProjectCanvasResult,
   ResizeStudioProjectCanvasPayload
   > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (
       payload: ResizeStudioProjectCanvasPayload
     ): Promise<ResizeStudioProjectCanvasResult> => {
@@ -210,7 +210,7 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<
 }
 
 export function useDeleteStudioProject(): DeleteMutation<string, string> {
-  return createDeleteMutationV2<string, string>({
+  return useDeleteMutationV2<string, string>({
     mutationFn: async (id: string): Promise<string> => {
       await api.delete(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
         // Recursive folder deletion can take longer for large projects.
@@ -238,7 +238,7 @@ export function useDeleteStudioProject(): DeleteMutation<string, string> {
 export function useCreateStudioSlots(
   projectId: string
 ): CreateMutation<StudioSlotsResponse, Array<Partial<ImageStudioSlotRecord>>> {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: async (slots: Array<Partial<ImageStudioSlotRecord>>) =>
       studioSlotsResponseSchema.parse(
         await api.post<unknown>(
@@ -265,7 +265,7 @@ export function useUpdateStudioSlot(
 ): UpdateMutation<ImageStudioSlotRecord, IdDataDto<Partial<ImageStudioSlotRecord>>> {
   const queryClient = useQueryClient();
 
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     ImageStudioSlotRecord,
     IdDataDto<Partial<ImageStudioSlotRecord>>,
     { previous?: StudioSlotsResponse | undefined }
@@ -475,7 +475,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
     }
   };
 
-  return createDeleteMutationV2<void, string>({
+  return useDeleteMutationV2<void, string>({
     mutationFn: async (id: string) => {
       const slotId = normalizeStudioSlotId(id);
       if (
@@ -614,7 +614,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
 export function useUploadStudioAssets(
   projectId: string
 ): CreateMutation<StudioAssetImportResult, { files: File[]; folder: string }> {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({ files, folder }: { files: File[]; folder: string }) => {
       const formData = new FormData();
       files.forEach((file: File) => formData.append('files', file));
@@ -643,7 +643,7 @@ export function useUploadStudioAssets(
 export function useImportStudioAssetsFromDrive(
   projectId: string
 ): CreateMutation<StudioAssetImportResult, { files: ImageFileSelection[]; folder: string }> {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({ files, folder }: { files: ImageFileSelection[]; folder: string }) =>
       api.post<StudioAssetImportResult>(
         `/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`,
@@ -664,7 +664,7 @@ export function useImportStudioAssetsFromDrive(
 }
 
 export function useRunStudio(): CreateMutation<RunStudioEnqueueResult, RunStudioPayload> {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: async (payload: RunStudioPayload): Promise<RunStudioEnqueueResult> => {
       return api.post<RunStudioEnqueueResult>('/api/image-studio/run', payload, {
         timeout: 60_000,

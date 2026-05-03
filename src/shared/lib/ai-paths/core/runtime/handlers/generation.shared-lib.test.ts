@@ -104,7 +104,7 @@ describe('Generation Handlers', () => {
           id: 'n1',
           type: 'model',
           inputs: ['prompt', 'images'],
-          config: { model: { modelId: 'gpt-4o', waitForResult: false } },
+          config: { model: { modelId: 'gpt-4o', waitForResult: false, vision: true } },
         } as any,
         nodeInputs: {
           prompt: 'Do something',
@@ -138,6 +138,37 @@ describe('Generation Handlers', () => {
       expect(toast).toHaveBeenCalledWith(
         expect.stringContaining('Blocked 1 image URL'),
         expect.objectContaining({ variant: 'warning' })
+      );
+    });
+
+    it('omits image payloads when the model node disables image input', async () => {
+      vi.mocked(api.aiJobsApi.enqueue).mockResolvedValue({
+        ok: true,
+        data: { jobId: 'job-123' },
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'model',
+          inputs: ['prompt', 'images'],
+          config: { model: { modelId: 'gpt-4o', waitForResult: false, vision: false } },
+        } as any,
+        nodeInputs: {
+          prompt: 'Do something',
+          images: ['https://cdn.example.com/image-1.jpg'],
+        },
+      });
+
+      const result = await handleModel(ctx);
+      expect(result['jobId']).toBe('job-123');
+      expect(api.aiJobsApi.enqueue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'graph_model',
+          payload: expect.not.objectContaining({
+            imageUrls: expect.anything(),
+          }),
+        })
       );
     });
 

@@ -1,9 +1,9 @@
-import { Document, Collection, Filter, WithId } from 'mongodb';
+import { type Document, type Collection, type Filter, type WithId } from 'mongodb';
 
-import { ProductFilters } from '@/shared/contracts/products/drafts';
-import { ProductWithImages } from '@/shared/contracts/products/product';
+import { type ProductFilters } from '@/shared/contracts/products/drafts';
+import { type ProductWithImages } from '@/shared/contracts/products/product';
 
-import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
+import { type ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import { buildMongoWhere } from '../mongo-product-repository.filters';
 import { buildProductIdFilter, isEmptyFilter } from '../mongo-product-repository.helpers';
 
@@ -12,22 +12,172 @@ type ProductsWithCountAggregateResult = {
   meta?: Array<{ total?: number }>;
 };
 
+type DuplicateSkuAggregateResult = {
+  _id: string;
+  count: number;
+};
+
+const PRODUCT_ID_ORDER_FIELD = '__productIdOrder';
+
+const normalizeRequestedProductIds = (ids: string[] | undefined): string[] =>
+  Array.from(
+    new Set(
+      (ids ?? [])
+        .map((id: string): string => id.trim())
+        .filter((id: string): boolean => id.length > 0)
+    )
+  );
+
+const buildProductSortStages = (filters: ProductFilters): Document[] => {
+  const orderedIds = normalizeRequestedProductIds(filters.ids);
+  if (orderedIds.length === 0) {
+    return [{ $sort: { createdAt: -1 } }];
+  }
+
+  return [
+    {
+      $addFields: {
+        [PRODUCT_ID_ORDER_FIELD]: {
+          $let: {
+            vars: {
+              productIdIndex: { $indexOfArray: [orderedIds, '$id'] },
+              objectIdIndex: { $indexOfArray: [orderedIds, { $toString: '$_id' }] },
+            },
+            in: {
+              $cond: [
+                { $gte: ['$$productIdIndex', 0] },
+                '$$productIdIndex',
+                {
+                  $cond: [
+                    { $gte: ['$$objectIdIndex', 0] },
+                    '$$objectIdIndex',
+                    orderedIds.length,
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+    { $sort: { [PRODUCT_ID_ORDER_FIELD]: 1, createdAt: -1 } },
+  ];
+};
+
+const hasExplicitProductIdOrder = (filters: ProductFilters): boolean =>
+  normalizeRequestedProductIds(filters.ids).length > 0;
+
+const normalizeSkuForDuplicateDetection = (sku: unknown): string | null => {
+  if (typeof sku !== 'string') return null;
+  const trimmed = sku.trim();
+  return trimmed.length > 0 ? trimmed.toUpperCase() : null;
+};
+
+const attachDuplicateSkuCounts = async (
+  docs: WithId<ProductDocument>[],
+  collection: Collection<ProductDocument>
+): Promise<WithId<ProductDocument>[]> => {
+  const normalizedSkuByProductId = new Map<string, string>();
+
+  docs.forEach((doc) => {
+    const normalizedSku = normalizeSkuForDuplicateDetection(doc.sku);
+    if (!normalizedSku) return;
+    normalizedSkuByProductId.set(doc.id ?? doc._id, normalizedSku);
+  });
+
+  if (normalizedSkuByProductId.size === 0) {
+    return docs;
+  }
+
+  const duplicateCounts = await collection
+    .aggregate<DuplicateSkuAggregateResult>([
+      {
+        $match: {
+          sku: { $type: 'string' },
+        },
+      },
+      {
+        $project: {
+          normalizedSku: {
+            $toUpper: {
+              $trim: {
+                input: '$sku',
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: {
+          normalizedSku: {
+            $in: Array.from(new Set(normalizedSkuByProductId.values())),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: '$normalizedSku',
+          count: { $sum: 1 },
+        },
+      },
+    ])
+    .toArray();
+
+  const duplicateCountBySku = new Map<string, number>(
+    duplicateCounts
+      .filter(
+        (entry): entry is DuplicateSkuAggregateResult =>
+          typeof entry?._id === 'string' &&
+          typeof entry.count === 'number' &&
+          Number.isFinite(entry.count) &&
+          entry.count > 1
+      )
+      .map((entry) => [entry._id, Math.trunc(entry.count)])
+  );
+
+  return docs.map((doc) => {
+    const normalizedSku = normalizedSkuByProductId.get(doc.id ?? doc._id);
+    const duplicateSkuCount = normalizedSku ? duplicateCountBySku.get(normalizedSku) : undefined;
+    return duplicateSkuCount ? { ...doc, duplicateSkuCount } : doc;
+  });
+};
+
+const LIST_PROJECT_FIELD_SELECTION: Document = {
+  _id: 1,
+  id: 1,
+  sku: 1,
+  baseProductId: 1,
+  importSource: 1,
+  supplierName: 1,
+  supplierLink: 1,
+  defaultPriceGroupId: 1,
+  categoryId: 1,
+  catalogId: 1,
+  catalogs: 1,
+  name_en: 1,
+  name_pl: 1,
+  name_de: 1,
+  description_en: 1,
+  description_pl: 1,
+  marketplaceContentOverrides: 1,
+  parameters: 1,
+  customFields: 1,
+  notes: 1,
+  sourcePrice: 1,
+  sourcePriceCurrencyCode: 1,
+  price: 1,
+  stock: 1,
+  archived: 1,
+  createdAt: 1,
+  updatedAt: 1,
+};
+
 export const buildListProjectStage = (filters: ProductFilters): Document | null => {
   if (typeof filters.sku === 'string' && filters.sku.trim().length > 0) {
     return null;
   }
   return {
-    _id: 1,
-    id: 1,
-    sku: 1,
-    baseProductId: 1,
-    importSource: 1,
-    defaultPriceGroupId: 1,
-    categoryId: 1,
-    catalogId: 1,
-    name_en: 1,
-    name_pl: 1,
-    name_de: 1,
+    ...LIST_PROJECT_FIELD_SELECTION,
     category: {
       id: '$category.id',
       name: '$category.name',
@@ -42,11 +192,6 @@ export const buildListProjectStage = (filters: ProductFilters): Document | null 
       parentId: '$category.parentId',
       sortIndex: '$category.sortIndex',
     },
-    parameters: 1,
-    price: 1,
-    stock: 1,
-    createdAt: 1,
-    updatedAt: 1,
     imageLinks: { $slice: ['$imageLinks', 1] },
     imageBase64s: { $literal: [] },
     images: {
@@ -79,11 +224,12 @@ export const mongoProductReadImpl = {
     const limit = pageSize;
     const searchFilter = await buildMongoWhere(filters);
     const projectStage = buildListProjectStage(filters);
+    const sortStages = buildProductSortStages(filters);
 
     if (projectStage) {
       const pipeline: Document[] = [
         { $match: searchFilter },
-        { $sort: { createdAt: -1 } },
+        ...sortStages,
         { $skip: skip },
         { $limit: limit },
         { $project: projectStage },
@@ -92,9 +238,26 @@ export const mongoProductReadImpl = {
         ? { hint: { createdAt: -1 } }
         : undefined;
       const docs = await collection.aggregate(pipeline, aggregateOptions).toArray();
-      const projectedDocs = docs as WithId<ProductDocument>[];
+      const projectedDocs = await attachDuplicateSkuCounts(
+        docs as WithId<ProductDocument>[],
+        collection
+      );
 
       return projectedDocs.map((doc) => toProductResponse(doc));
+    }
+
+    if (hasExplicitProductIdOrder(filters)) {
+      const docs = await collection
+        .aggregate<WithId<ProductDocument>>([
+          { $match: searchFilter },
+          ...sortStages,
+          { $skip: skip },
+          { $limit: limit },
+        ])
+        .toArray();
+      const docsWithDuplicateSkuCounts = await attachDuplicateSkuCounts(docs, collection);
+
+      return docsWithDuplicateSkuCounts.map((doc) => toProductResponse(doc));
     }
 
     let cursor = collection.find(searchFilter).sort({ createdAt: -1 });
@@ -103,8 +266,9 @@ export const mongoProductReadImpl = {
     }
     cursor = cursor.skip(skip).limit(limit);
     const docs = await cursor.toArray();
+    const docsWithDuplicateSkuCounts = await attachDuplicateSkuCounts(docs, collection);
 
-    return docs.map((doc) => toProductResponse(doc));
+    return docsWithDuplicateSkuCounts.map((doc) => toProductResponse(doc));
   },
 
   async getProductIds(
@@ -113,6 +277,23 @@ export const mongoProductReadImpl = {
   ): Promise<string[]> {
     const collection = await getCollection();
     const searchFilter = await buildMongoWhere(filters);
+    const sortStages = buildProductSortStages(filters);
+
+    if (hasExplicitProductIdOrder(filters)) {
+      const docs = await collection
+        .aggregate<{ id?: string }>([
+          { $match: searchFilter },
+          ...sortStages,
+          { $project: { _id: 0, id: 1 } },
+        ])
+        .toArray();
+      return docs
+        .map((doc) =>
+          typeof doc.id === 'string' && doc.id.trim().length > 0 ? doc.id.trim() : null
+        )
+        .filter((id): id is string => id !== null);
+    }
+
     let cursor = collection
       .find(searchFilter, { projection: { _id: 0, id: 1 } })
       .sort({ createdAt: -1 });
@@ -149,6 +330,7 @@ export const mongoProductReadImpl = {
     const skip = (page - 1) * pageSize;
     const searchFilter = await buildMongoWhere(filters);
     const projectStage = buildListProjectStage(filters);
+    const sortStages = buildProductSortStages(filters);
 
     if (isEmptyFilter(searchFilter)) {
       const [docs, total] = await Promise.all([
@@ -156,7 +338,7 @@ export const mongoProductReadImpl = {
           if (projectStage) {
             const pipeline: Document[] = [
               { $match: searchFilter },
-              { $sort: { createdAt: -1 } },
+              ...sortStages,
               { $skip: skip },
               { $limit: pageSize },
               { $project: projectStage },
@@ -174,7 +356,10 @@ export const mongoProductReadImpl = {
         })(),
         collection.estimatedDocumentCount(),
       ]);
-      const projectedDocs = docs as WithId<ProductDocument>[];
+      const projectedDocs = await attachDuplicateSkuCounts(
+        docs as WithId<ProductDocument>[],
+        collection
+      );
 
       return {
         products: projectedDocs.map((doc) => toProductResponse(doc)),
@@ -183,7 +368,7 @@ export const mongoProductReadImpl = {
     }
 
     const productsPipeline: Document[] = [
-      { $sort: { createdAt: -1 } },
+      ...sortStages,
       { $skip: skip },
       { $limit: pageSize },
     ];
@@ -208,7 +393,10 @@ export const mongoProductReadImpl = {
       result?.meta && Array.isArray(result.meta) && typeof result.meta[0]?.total === 'number'
         ? result.meta[0].total
         : 0;
-    const projectedDocs = docs as WithId<ProductDocument>[];
+    const projectedDocs = await attachDuplicateSkuCounts(
+      docs as WithId<ProductDocument>[],
+      collection
+    );
 
     return {
       products: projectedDocs.map((doc) => toProductResponse(doc)),
@@ -261,5 +449,16 @@ export const mongoProductReadImpl = {
       .find({ baseProductId: { $in: baseIds } } as Filter<ProductDocument>)
       .toArray();
     return docs.map((doc) => toProductResponse(doc));
+  },
+
+  async findProductBySupplierLink(
+    supplierLink: string,
+    getCollection: () => Promise<Collection<ProductDocument>>
+  ) {
+    const collection = await getCollection();
+    const filter: Filter<ProductDocument> = { supplierLink };
+    const doc = await collection.findOne(filter);
+    if (!doc) return null;
+    return toProductResponse(doc);
   },
 };

@@ -528,6 +528,18 @@ export async function createKangurDuelSession(
 
   const collection = await getDuelCollection();
   await collection.insertOne(session);
+
+  void ErrorSystem.logInfo(`Created Kangur duel session: ${sessionId}`, {
+    service: 'kangur.duels.server-db',
+    action: 'create',
+    sessionId,
+    mode: session.mode,
+    visibility: session.visibility,
+    operation: session.operation,
+    difficulty: session.difficulty,
+    hostLearnerId: learner.id,
+  });
+
   publishKangurDuelLobbyUpdate({
     reason: 'created',
     sessionId: session._id,
@@ -568,6 +580,16 @@ export async function joinKangurDuelSession(
   );
 
   const updated = await ensureSession(sessionId);
+
+  void ErrorSystem.logInfo(`Learner joined Kangur duel session: ${sessionId}`, {
+    service: 'kangur.duels.server-db',
+    action: 'join',
+    sessionId,
+    learnerId: learner.id,
+    playerCount: updated.playerCount,
+    status: updated.status,
+  });
+
   publishKangurDuelLobbyUpdate({
     reason: 'joined',
     sessionId: updated._id,

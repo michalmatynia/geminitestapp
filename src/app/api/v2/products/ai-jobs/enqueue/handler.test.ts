@@ -26,7 +26,7 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: logSystemEventMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const makeRequest = (body: Record<string, unknown>): NextRequest =>
   new NextRequest('http://localhost/api/v2/products/ai-jobs/enqueue', {
@@ -48,7 +48,7 @@ describe('products ai jobs enqueue graph_model payload validation', () => {
   });
 
   it('preserves graph.requestedModelId for graph_model payloads', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         productId: 'product-1',
         type: 'graph_model',
@@ -78,7 +78,7 @@ describe('products ai jobs enqueue graph_model payload validation', () => {
   });
 
   it('rejects invalid graph_model graph payload shapes', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         productId: 'product-1',
         type: 'graph_model',
@@ -97,7 +97,7 @@ describe('products ai jobs enqueue graph_model payload validation', () => {
   });
 
   it('rejects graph_model requests without source', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         productId: 'product-1',
         type: 'graph_model',
@@ -117,7 +117,7 @@ describe('products ai jobs enqueue graph_model payload validation', () => {
   });
 
   it('rejects graph_model requests without payload', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         productId: 'product-1',
         type: 'graph_model',
@@ -130,7 +130,7 @@ describe('products ai jobs enqueue graph_model payload validation', () => {
   });
 
   it('rejects graph_model requests with a blank prompt', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         productId: 'product-1',
         type: 'graph_model',
@@ -151,7 +151,7 @@ describe('products ai jobs enqueue graph_model payload validation', () => {
   });
 
   it('rejects ai_paths graph_model requests without graph node context', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         productId: 'product-1',
         type: 'graph_model',
@@ -168,7 +168,7 @@ describe('products ai jobs enqueue graph_model payload validation', () => {
   });
 
   it('rejects ai_paths graph_model requests without graph.runId even when source is explicit', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       makeRequest({
         productId: 'product-1',
         type: 'graph_model',

@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { startTransition, useCallback, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import { safeSetTimeout } from '@/shared/lib/timers';
 import { useTranslations } from 'next-intl';
 import {
   withKangurClientErrorSync,
@@ -11,7 +12,7 @@ import {
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
 import {
-  useOptionalKangurAuth,
+  useOptionalKangurAuthActions,
 } from '@/features/kangur/ui/context/KangurAuthContext';
 import { clearSessionUserCache } from '@/features/kangur/services/local-kangur-platform-auth';
 import {
@@ -101,8 +102,8 @@ const syncKangurLoginSuccessLearnerState = ({
 };
 
 const waitForKangurLoginSuccessNotice = async (): Promise<void> => {
-  await new Promise((resolve) => {
-    setTimeout(resolve, LOGIN_SUCCESS_NOTICE_DELAY_MS);
+  await new Promise<void>((resolve) => {
+    safeSetTimeout(resolve, LOGIN_SUCCESS_NOTICE_DELAY_MS);
   });
 };
 
@@ -117,23 +118,25 @@ const resolveKangurLoginSuccessTarget = ({
 }): string | null => callbackOverride ?? callbackUrl ?? defaultCallbackUrl ?? null;
 
 const resolveKangurLoginSuccessNavigationState = ({
-  auth,
+  checkAppState,
   currentPath,
   navigation,
   refreshedUser,
 }: {
-  auth: ReturnType<typeof useOptionalKangurAuth>;
+  checkAppState: ReturnType<typeof useOptionalKangurAuthActions>['checkAppState'];
   currentPath: string | null;
   navigation: ReturnType<typeof resolveKangurLoginCallbackNavigation>;
   refreshedUser: Awaited<
-    ReturnType<NonNullable<NonNullable<ReturnType<typeof useOptionalKangurAuth>>['checkAppState']>>
+    ReturnType<
+      NonNullable<NonNullable<ReturnType<typeof useOptionalKangurAuthActions>>['checkAppState']>
+    >
   > | undefined;
 }) => ({
   isSameRoute:
     Boolean(currentPath) &&
     navigation?.kind === 'router' &&
     navigation.href === currentPath,
-  shouldForceFullReload: Boolean(auth?.checkAppState) && refreshedUser === null,
+  shouldForceFullReload: Boolean(checkAppState) && refreshedUser === null,
 });
 
 const performKangurLoginFallbackNavigation = ({
@@ -170,11 +173,15 @@ const performKangurLoginRouterNavigation = ({
   }
 
   if (currentPath && href === currentPath) {
-    router.refresh();
+    startTransition(() => {
+      router.refresh();
+    });
     return;
   }
 
-  router.push(href, { scroll: false });
+  startTransition(() => {
+    router.push(href, { scroll: false });
+  });
 };
 
 const performKangurLoginSuccessNavigation = ({
@@ -220,7 +227,7 @@ export function useLoginLogic() {
   const translations = useTranslations('KangurLogin');
   const router = useRouter();
   const { defaultCallbackUrl, callbackUrl, onClose } = useKangurLoginPageProps();
-  const auth = useOptionalKangurAuth();
+  const authActions = useOptionalKangurAuthActions();
 
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -238,7 +245,7 @@ export function useLoginLogic() {
       syncKangurLoginSuccessLearnerState({ kind, learnerId });
 
       onStageChange?.('refreshing-session');
-      const refreshedUser = await auth?.checkAppState?.({
+      const refreshedUser = await authActions?.checkAppState?.({
         timeoutMs: LOGIN_AUTH_REFRESH_TIMEOUT_MS,
       });
 
@@ -252,7 +259,7 @@ export function useLoginLogic() {
         : null;
       const currentPath = resolveCurrentPath();
       const { shouldForceFullReload } = resolveKangurLoginSuccessNavigationState({
-        auth,
+        checkAppState: authActions?.checkAppState,
         currentPath,
         navigation,
         refreshedUser,
@@ -268,7 +275,7 @@ export function useLoginLogic() {
         shouldForceFullReload,
       });
     },
-    [auth, callbackUrl, defaultCallbackUrl, onClose, router, translations]
+    [authActions, callbackUrl, defaultCallbackUrl, onClose, router, translations]
   );
 
   return {

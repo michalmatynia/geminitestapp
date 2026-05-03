@@ -272,6 +272,48 @@ describe('validator pattern simulator', () => {
     });
   });
 
+  it('simulates a producer replacement when producers metadata is available', () => {
+    const result = buildAndSimulateValidatorPatternPreview({
+      formData: {
+        ...EMPTY_FORM,
+        label: 'Default producer',
+        target: 'producer',
+        regex: '^$',
+        message: 'Assign producer',
+        replacementEnabled: true,
+        replacementMode: 'static',
+        replacementValue: 'StarGater.net',
+      },
+      sequenceGroups: new Map(),
+      orderedPatterns: [],
+      editingPattern: null,
+      modalSemanticState: null,
+      simulatorValues: {
+        'current_field:producerIds': '',
+      },
+      categoryFixturesText: '',
+      producers: [
+        {
+          id: 'producer-1',
+          name: 'StarGater.net',
+          website: 'https://stargater.net',
+          createdAt: '',
+          updatedAt: '',
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      status: 'ready',
+      launchMatched: true,
+      regexMatched: true,
+      replacementValue: 'StarGater.net',
+      applied: true,
+      outputValue: 'StarGater.net',
+      outputDisplayValue: 'StarGater.net',
+    });
+  });
+
   it('builds a per-step sequence trace for grouped patterns', () => {
     const existingPattern = buildPattern({
       id: 'pattern-1',

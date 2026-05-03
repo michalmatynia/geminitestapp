@@ -13,7 +13,9 @@ import type {
   ListSystemLogsResultDto as ListSystemLogsResult,
 } from '@/shared/contracts/observability';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
+import { getObservabilityIndexManifestEntries } from '@/shared/lib/observability/observability-index-manifest';
 import type { MongoSystemLogDoc } from '@/shared/lib/observability/system-log-types';
 
 type CreateSystemLogInput = Omit<CreateSystemLogInputDto, 'createdAt'> & {
@@ -213,19 +215,8 @@ const ensureSystemLogIndexes = async (): Promise<void> => {
     indexesPromise = (async (): Promise<void> => {
       const db = await getMongoDb();
       const col = db.collection(SYSTEM_LOGS_COLLECTION);
-      await Promise.all([
-        col.createIndex({ createdAt: -1 }),
-        col.createIndex({ level: 1, createdAt: -1 }),
-        col.createIndex({ source: 1, createdAt: -1 }),
-        col.createIndex({ service: 1, createdAt: -1 }),
-        col.createIndex({ path: 1, createdAt: -1 }),
-        col.createIndex({ requestId: 1 }),
-        col.createIndex({ traceId: 1 }),
-        col.createIndex({ traceId: 1, createdAt: -1 }),
-        col.createIndex({ correlationId: 1 }),
-        col.createIndex({ 'context.fingerprint': 1 }),
-        col.createIndex({ userId: 1 }),
-      ]);
+      const indexes = getObservabilityIndexManifestEntries(SYSTEM_LOGS_COLLECTION);
+      await Promise.all(indexes.map((index) => col.createIndex(index.key, index.options)));
       indexesReady = true;
     })().catch((error: unknown) => {
       indexesPromise = null;
@@ -376,6 +367,11 @@ export async function createSystemLog(input: CreateSystemLogInput): Promise<Syst
     createdAt: (input.createdAt ?? new Date()).toISOString(),
     updatedAt: null,
   };
+
+  const syncLock = await readMongoSyncLock({ pruneStale: true });
+  if (syncLock) {
+    return normalizeLogRecord(payload);
+  }
 
   await insertMongoSystemLog(payload);
   return normalizeLogRecord(payload);

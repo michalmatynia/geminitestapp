@@ -29,8 +29,8 @@ vi.mock('@/features/products/server', () => ({
 }));
 
 import {
-  GET_handler,
-  POST_handler,
+  getHandler,
+  postHandler,
   productShippingGroupCreateSchema,
   querySchema,
 } from './handler';
@@ -51,8 +51,8 @@ describe('product shipping groups handler module', () => {
   });
 
   it('exports the supported handlers and schemas', () => {
-    expect(typeof GET_handler).toBe('function');
-    expect(typeof POST_handler).toBe('function');
+    expect(typeof getHandler).toBe('function');
+    expect(typeof postHandler).toBe('function');
     expect(typeof querySchema.safeParse).toBe('function');
     expect(typeof productShippingGroupCreateSchema.safeParse).toBe('function');
   });
@@ -71,7 +71,7 @@ describe('product shipping groups handler module', () => {
     ]);
 
     await expect(
-      POST_handler(
+      postHandler(
         {} as never,
         {
           body: {
@@ -93,7 +93,7 @@ describe('product shipping groups handler module', () => {
   });
 
   it('normalizes redundant descendant category rules on create', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       {} as never,
       {
         body: {
@@ -120,7 +120,7 @@ describe('product shipping groups handler module', () => {
   });
 
   it('drops missing category rules on create', async () => {
-    const response = await POST_handler(
+    const response = await postHandler(
       {} as never,
       {
         body: {

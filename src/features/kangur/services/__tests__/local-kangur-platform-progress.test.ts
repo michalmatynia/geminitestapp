@@ -114,7 +114,7 @@ describe('local-kangur-platform progress shared API client integration', () => {
 
     await expect(platform.progress.get({ subject: 'maths' })).resolves.toEqual(PROGRESS_STATE);
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/progress?subject=maths',
+      '/kangur-api/progress?subject=maths',
       expect.objectContaining({
         method: 'GET',
         credentials: 'same-origin',
@@ -145,7 +145,7 @@ describe('local-kangur-platform progress shared API client integration', () => {
     ).resolves.toEqual(PROGRESS_STATE);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/kangur/progress?subject=maths',
+      '/kangur-api/progress?subject=maths',
       expect.objectContaining({
         method: 'PATCH',
         credentials: 'same-origin',

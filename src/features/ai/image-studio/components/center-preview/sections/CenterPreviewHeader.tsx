@@ -25,7 +25,7 @@ export function CenterPreviewHeader(): React.JSX.Element {
   return (
     <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2'>
       <div className='flex items-center gap-2'>
-        {workingSlot?.asset3dId ? (
+        {workingSlot?.asset3dId !== undefined && workingSlot?.asset3dId !== '' ? (
           <ToggleButtonGroup
             value={previewMode}
             onChange={setPreviewMode}

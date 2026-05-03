@@ -96,6 +96,58 @@ describe('compileGraph edge sanitization and deadlock heuristics', () => {
 
     const sanitized = sanitizeEdges(nodes, edges);
     expect(sanitized).toEqual([]);
+
+    const report = compileGraph(nodes, edges);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'invalid_edge_incompatible_connection' &&
+          finding.edgeId === 'edge-bundle-cross'
+      )
+    ).toBe(true);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'invalid_edge_incompatible_connection' &&
+          finding.edgeId === 'edge-images-cross'
+      )
+    ).toBe(true);
+  });
+
+  it('surfaces dropped findings when an edge omits required ports', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'source-1',
+        type: 'parser',
+        title: 'Parser',
+        inputs: ['entityJson'],
+        outputs: ['bundle'],
+      }),
+      buildNode({
+        id: 'target-1',
+        type: 'prompt',
+        title: 'Prompt',
+        inputs: ['bundle'],
+        outputs: ['prompt'],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-missing-port',
+        from: 'source-1',
+        to: 'target-1',
+        toPort: 'bundle',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'invalid_edge_missing_port' &&
+          finding.edgeId === 'edge-missing-port'
+      )
+    ).toBe(true);
   });
 
   it('rejects legacy object-map edge payloads', () => {

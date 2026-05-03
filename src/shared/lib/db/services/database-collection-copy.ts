@@ -9,6 +9,6 @@ export function getSupportedCollections(): string[] {
   return [];
 }
 
-export async function copyCollection(): Promise<never> {
-  throw operationFailedError(DATABASE_COLLECTION_COPY_REMOVED_MESSAGE);
+export function copyCollection(): Promise<never> {
+  return Promise.reject(operationFailedError(DATABASE_COLLECTION_COPY_REMOVED_MESSAGE));
 }

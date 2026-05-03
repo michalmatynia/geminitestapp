@@ -192,5 +192,6 @@ describe('useUserPreferences page size normalization', () => {
     expect(window.localStorage.getItem('productListAdvancedFilterPresets')).toBe(
       JSON.stringify([advancedFilterPreset])
     );
+    expect(result.current.preferences.advancedFilterPresets).toEqual([advancedFilterPreset]);
   });
 });

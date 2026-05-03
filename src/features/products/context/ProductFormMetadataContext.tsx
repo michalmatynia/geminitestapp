@@ -1,5 +1,9 @@
 'use client';
 
+// ProductFormMetadataContext: supplies catalog/category/tag metadata and
+// selection helpers to the product form. Separates metadata fetching from
+// form state to keep the form core focused on values and validation.
+
 import { createContext, useContext, useMemo } from 'react';
 
 import type { Language } from '@/shared/contracts/internationalization';
@@ -33,6 +37,7 @@ export interface ProductFormMetadataContextType {
   producers: Producer[];
   producersLoading: boolean;
   selectedProducerIds: string[];
+  setProducerIds: (producerIds: string[]) => void;
   toggleProducer: (producerId: string) => void;
   filteredLanguages: Language[];
   filteredPriceGroups: PriceGroupWithDetails[];
@@ -61,12 +66,29 @@ export type ProductFormMetadataStateContextType = Pick<
 
 export type ProductFormMetadataActionsContextType = Pick<
   ProductFormMetadataContextType,
-  'toggleCatalog' | 'setCategoryId' | 'toggleTag' | 'toggleProducer'
+  'toggleCatalog' | 'setCategoryId' | 'toggleTag' | 'setProducerIds' | 'toggleProducer'
 >;
 
 export const ProductFormMetadataContext = createContext<ProductFormMetadataContextType | null>(
   null
 );
+
+type ProductFormMetadataProviderProps = {
+  children: React.ReactNode;
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  initialCatalogId?: string;
+  onInteraction?: () => void;
+};
+
+const resolveInitialCatalogIds = (
+  draft: ProductDraft | null | undefined,
+  initialCatalogId: string | undefined
+): string[] | undefined => {
+  if (draft?.catalogIds !== undefined && draft.catalogIds.length > 0) return draft.catalogIds;
+  if (initialCatalogId !== undefined && initialCatalogId !== '') return [initialCatalogId];
+  return undefined;
+};
 
 export function ProductFormMetadataProvider({
   children,
@@ -74,28 +96,17 @@ export function ProductFormMetadataProvider({
   draft,
   initialCatalogId,
   onInteraction,
-}: {
-  children: React.ReactNode;
-  product?: ProductWithImages;
-  draft?: ProductDraft | null;
-  initialCatalogId?: string;
-  onInteraction?: () => void;
-}) {
+}: ProductFormMetadataProviderProps): React.JSX.Element {
   const metadata = useProductMetadata({
     product,
     initialCatalogId,
-    initialCatalogIds:
-      draft?.catalogIds && draft.catalogIds.length > 0
-        ? draft.catalogIds
-        : initialCatalogId
-          ? [initialCatalogId]
-          : undefined,
+    initialCatalogIds: resolveInitialCatalogIds(draft, initialCatalogId),
     initialCategoryId: draft?.categoryId ?? null,
     initialTagIds: draft?.tagIds,
     initialProducerIds: draft?.producerIds,
   });
 
-  const value = useMemo(
+  const contextValue = useMemo(
     () => ({
       ...metadata,
       toggleCatalog: (id: string) => {
@@ -114,12 +125,16 @@ export function ProductFormMetadataProvider({
         onInteraction?.();
         metadata.toggleProducer(id);
       },
+      setProducerIds: (producerIds: string[]) => {
+        onInteraction?.();
+        metadata.setProducerIds(producerIds);
+      },
     }),
     [metadata, onInteraction]
   );
 
   return (
-    <ProductFormMetadataContext.Provider value={value}>
+    <ProductFormMetadataContext.Provider value={contextValue}>
       {children}
     </ProductFormMetadataContext.Provider>
   );
@@ -175,12 +190,13 @@ export const useProductFormMetadataState = (): ProductFormMetadataStateContextTy
 };
 
 export const useProductFormMetadataActions = (): ProductFormMetadataActionsContextType => {
-  const { toggleCatalog, setCategoryId, toggleTag, toggleProducer } =
+  const { toggleCatalog, setCategoryId, toggleTag, setProducerIds, toggleProducer } =
     useRequiredProductFormMetadataContext();
   return {
     toggleCatalog,
     setCategoryId,
     toggleTag,
+    setProducerIds,
     toggleProducer,
   };
 };

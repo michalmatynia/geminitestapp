@@ -1,3 +1,4 @@
+import { countryCodeOptions } from '@/shared/constants/countries';
 import {
   countryCodes,
   currencyCodes,
@@ -10,12 +11,8 @@ import {
 export { countryCodes, currencyCodes, languageCodes };
 export type { CountryCode, CurrencyCode, LanguageCode };
 
-export const defaultCountries: Array<{ code: CountryCode; name: string }> = [
-  { code: 'PL', name: 'Poland' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'SE', name: 'Sweden' },
-];
+export const defaultCountries: Array<{ code: CountryCode; name: string }> =
+  countryCodeOptions.map(({ code, name }) => ({ code, name }));
 
 export const defaultLanguages: Array<{
   code: LanguageCode;

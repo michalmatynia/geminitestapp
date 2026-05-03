@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -21,7 +21,7 @@ export const batchDecisionSchema = z.object({
   decisions: z.array(decisionItemSchema).min(1).max(50),
 });
 
-export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const parsed = batchDecisionSchema.safeParse(ctx.body);
   if (!parsed.success) {
     throw validationError('Validation failed', {

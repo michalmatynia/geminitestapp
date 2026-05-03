@@ -58,6 +58,7 @@ describe('product categories by-id handler helpers', () => {
       buildCategoryUpdatePayload(
         {
           color: '#fff',
+          name_pl: ' Priorytet ',
           catalogId: 'catalog-2',
         },
         'Priority',
@@ -70,6 +71,7 @@ describe('product categories by-id handler helpers', () => {
       )
     ).toEqual({
       name: 'Priority',
+      name_pl: ' Priorytet ',
       color: '#fff',
       parentId: null,
       catalogId: 'catalog-2',

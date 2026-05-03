@@ -30,7 +30,9 @@ type UseKangurManagedFreeformCanvasDrawingOptions = {
 export const useKangurManagedFreeformCanvasDrawing = ({
   actions,
   drawing: drawingOptions,
-}: UseKangurManagedFreeformCanvasDrawingOptions) => {
+}: UseKangurManagedFreeformCanvasDrawingOptions): ReturnType<
+  typeof useKangurManagedStoredFreeformCanvasDrawing
+> => {
   const {
     resolveCanExport = (current) => current.hasDrawableContent,
     resolveCanRedo = (current) => current.canRedo,

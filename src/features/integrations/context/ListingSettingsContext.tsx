@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
@@ -59,6 +59,8 @@ export interface ListingTraderaSettings {
   setSelectedTraderaAutoRelistLeadMinutes: (value: number) => void;
   selectedTraderaTemplateId: string;
   setSelectedTraderaTemplateId: (value: string) => void;
+  selectedConcurrencyMode: 'sequential' | 'concurrent' | null;
+  setSelectedConcurrencyMode: (value: 'sequential' | 'concurrent' | null) => void;
 }
 export const { Context: TraderaSettingsContext, useValue: useListingTraderaSettings } =
   createStrictContext<ListingTraderaSettings>({
@@ -91,6 +93,7 @@ export function ListingSettingsProvider({
   const [selectedTraderaAutoRelistLeadMinutes, setSelectedTraderaAutoRelistLeadMinutes] =
     useState<number>(DEFAULT_TRADERA_SYSTEM_SETTINGS.autoRelistLeadMinutes);
   const [selectedTraderaTemplateId, setSelectedTraderaTemplateId] = useState<string>('none');
+  const [selectedConcurrencyMode, setSelectedConcurrencyMode] = useState<'sequential' | 'concurrent' | null>(null);
 
   const selectedTraderaConnection = useMemo(() => {
     if (!selection.isTraderaIntegration || !selection.selectedIntegration) {
@@ -143,12 +146,15 @@ export function ListingSettingsProvider({
       setSelectedTraderaAutoRelistLeadMinutes,
       selectedTraderaTemplateId,
       setSelectedTraderaTemplateId,
+      selectedConcurrencyMode,
+      setSelectedConcurrencyMode,
     }),
     [
       selectedTraderaDurationHours,
       selectedTraderaAutoRelistEnabled,
       selectedTraderaAutoRelistLeadMinutes,
       selectedTraderaTemplateId,
+      selectedConcurrencyMode,
     ]
   );
 

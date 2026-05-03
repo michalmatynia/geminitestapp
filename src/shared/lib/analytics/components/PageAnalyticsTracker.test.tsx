@@ -16,6 +16,11 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => useSearchParamsMock(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: () => usePathnameMock(),
+  useSearchParams: () => useSearchParamsMock(),
+}));
+
 vi.mock('@/shared/lib/analytics/hooks/useAnalyticsQueries', () => ({
   useTrackEventMutation: () => ({
     mutate: mutateMock,

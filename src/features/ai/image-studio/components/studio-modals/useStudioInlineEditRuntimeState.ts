@@ -10,7 +10,7 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/shared/lib/products/constants';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { flattenParams } from '@/shared/utils/prompt-params';
 
 import { buildPromptDiffLines } from './prompt-extract-utils';
@@ -108,7 +108,7 @@ export function useStudioInlineEditRuntimeState({
     [settingsStore]
   );
 
-  const linkedRunsQuery = createListQueryV2<
+  const linkedRunsQuery = useListQueryV2<
     LinkedGeneratedRunsResponse,
     LinkedGeneratedRunsResponse
   >({

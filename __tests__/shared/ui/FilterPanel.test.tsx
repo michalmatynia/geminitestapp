@@ -42,7 +42,7 @@ describe('FilterPanel', () => {
     const onApplyPreset = vi.fn();
     const presets = [{ label: 'Active', values: { status: 'active' } }];
     render(<FilterPanel {...defaultProps} presets={presets} onApplyPreset={onApplyPreset} />);
-    fireEvent.click(screen.getByText('Active'));
+    fireEvent.click(screen.getByRole('button', { name: 'Active' }));
     expect(onApplyPreset).toHaveBeenCalledWith({ status: 'active' });
   });
 

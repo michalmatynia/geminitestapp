@@ -1,12 +1,12 @@
 'use client';
 
 import React, { memo, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, type UseFormRegister } from 'react-hook-form';
 
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
 import type { FieldValidatorIssue } from '@/features/products/validation-engine/core';
-import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { type ProductFormData } from '@/shared/contracts/products/drafts';
 import { FormField } from '@/shared/ui/form-section';
 import { Hint } from '@/shared/ui/Hint';
 import { Input } from '@/shared/ui/input';
@@ -27,9 +27,123 @@ interface ValidatedFieldProps {
   unit?: string;
 }
 
-export const ValidatedField = memo(function ValidatedField(
+type ValidatedFieldControlProps = {
+  name: keyof ProductFormData;
+  fieldNameKey: string;
+  inputClassName: string;
+  register: UseFormRegister<ProductFormData>;
+  type: 'input' | 'textarea' | 'number';
+  step?: string;
+  placeholder?: string;
+  rows?: number;
+};
+
+const resolveFieldValue = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return '';
+};
+
+const resolveIssueBorderClassName = (
+  validatorEnabled: boolean,
+  firstIssue: FieldValidatorIssue | undefined
+): string | undefined => {
+  if (validatorEnabled === false || firstIssue === undefined) return undefined;
+  return firstIssue.severity === 'warning' ? 'border-amber-500/60' : 'border-red-500/60';
+};
+
+const resolveInputClassName = ({
+  unit,
+  validatorEnabled,
+  firstIssue,
+}: {
+  unit?: string;
+  validatorEnabled: boolean;
+  firstIssue: FieldValidatorIssue | undefined;
+}): string =>
+  cn(
+    unit !== undefined && unit !== '' ? 'pr-8' : undefined,
+    resolveIssueBorderClassName(validatorEnabled, firstIssue)
+  );
+
+function ValidatedFieldControl({
+  name,
+  fieldNameKey,
+  inputClassName,
+  register,
+  type,
+  step,
+  placeholder,
+  rows,
+}: ValidatedFieldControlProps): React.JSX.Element {
+  if (type === 'textarea') {
+    return (
+      <Textarea
+        id={fieldNameKey}
+        className={inputClassName}
+        {...register(name)}
+        placeholder={placeholder}
+        rows={rows ?? 4}
+      />
+    );
+  }
+
+  return (
+    <Input
+      id={fieldNameKey}
+      type={type === 'number' ? 'number' : 'text'}
+      step={step}
+      className={inputClassName}
+      {...register(name, type === 'number' ? { valueAsNumber: true } : {})}
+      placeholder={placeholder}
+    />
+  );
+}
+
+function ValidatedFieldUnitHint({ unit }: { unit?: string }): React.JSX.Element | null {
+  if (unit === undefined || unit === '') return null;
+
+  return (
+    <Hint
+      uppercase
+      size='xxs'
+      className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-bold'
+    >
+      {unit}
+    </Hint>
+  );
+}
+
+function ValidatedFieldIssueRows({
+  validatorEnabled,
+  issues,
+  fieldNameKey,
+  fieldValue,
+}: {
+  validatorEnabled: boolean;
+  issues: FieldValidatorIssue[];
+  fieldNameKey: string;
+  fieldValue: string;
+}): React.JSX.Element | null {
+  if (validatorEnabled === false) return null;
+
+  return (
+    <>
+      {issues.map((issue: FieldValidatorIssue) => (
+        <IssueHintRow
+          key={issue.patternId}
+          fieldName={fieldNameKey}
+          issue={issue}
+          fieldValue={fieldValue}
+        />
+      ))}
+    </>
+  );
+}
+
+export const ValidatedField = memo((
   props: ValidatedFieldProps
-): React.JSX.Element {
+): React.JSX.Element => {
   const {
     name,
     label,
@@ -52,60 +166,31 @@ export const ValidatedField = memo(function ValidatedField(
 
   const value = watch(name);
 
-  const fieldValue = useMemo(() => {
-    if (typeof value === 'string') return value;
-    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-    return '';
-  }, [value]);
-
-  const inputClassName = cn(
-    unit && 'pr-8',
-    validatorEnabled &&
-      firstIssue &&
-      (firstIssue.severity === 'warning' ? 'border-amber-500/60' : 'border-red-500/60')
-  );
-  const resolvedLabel = isRequired ? `${label} *` : label;
+  const fieldValue = useMemo(() => resolveFieldValue(value), [value]);
+  const inputClassName = resolveInputClassName({ unit, validatorEnabled, firstIssue });
+  const resolvedLabel = isRequired === true ? `${label} *` : label;
 
   return (
     <FormField label={resolvedLabel} error={error} id={fieldNameKey}>
       <div className='relative'>
-        {type === 'textarea' ? (
-          <Textarea
-            id={fieldNameKey}
-            className={inputClassName}
-            {...register(name)}
-            placeholder={placeholder}
-            rows={rows ?? 4}
-          />
-        ) : (
-          <Input
-            id={fieldNameKey}
-            type={type === 'number' ? 'number' : 'text'}
-            step={step}
-            className={inputClassName}
-            {...register(name, type === 'number' ? { valueAsNumber: true } : {})}
-            placeholder={placeholder}
-          />
-        )}
-        {unit && (
-          <Hint
-            uppercase
-            size='xxs'
-            className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-bold'
-          >
-            {unit}
-          </Hint>
-        )}
+        <ValidatedFieldControl
+          name={name}
+          fieldNameKey={fieldNameKey}
+          inputClassName={inputClassName}
+          register={register}
+          type={type}
+          step={step}
+          placeholder={placeholder}
+          rows={rows}
+        />
+        <ValidatedFieldUnitHint unit={unit} />
       </div>
-      {validatorEnabled &&
-        issues.map((issue: FieldValidatorIssue) => (
-          <IssueHintRow
-            key={issue.patternId}
-            fieldName={fieldNameKey}
-            issue={issue}
-            fieldValue={fieldValue}
-          />
-        ))}
+      <ValidatedFieldIssueRows
+        validatorEnabled={validatorEnabled}
+        issues={issues}
+        fieldNameKey={fieldNameKey}
+        fieldValue={fieldValue}
+      />
     </FormField>
   );
 });

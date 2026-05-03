@@ -9,26 +9,31 @@ function extractExports(filePath: string): string[] {
   const exportTypeRegex = /export\s+(?:type\s+)?\{\s*([^}]+)\s*\}/g;
   let match;
   while ((match = exportTypeRegex.exec(content)) !== null) {
-    const symbols = match[1].split(',').map(s => s.trim()).filter(Boolean);
+    const capture = match[1];
+    if (!capture) continue;
+    const symbols = capture.split(',').map((s) => s.trim()).filter(Boolean);
     for (const sym of symbols) {
       if (sym.includes('from')) continue; 
-      const name = sym.split(/\s+as\s+/)[0].trim();
+      const name = sym.split(/\s+as\s+/)[0]?.trim();
       if (name) exports.push(name);
     }
   }
 
   const exportFromRegex = /export\s+(?:type\s+)?\{\s*([^}]+)\s*\}\s*from\s+['"]([^'"]+)['"]/g;
   while ((match = exportFromRegex.exec(content)) !== null) {
-      const symbols = match[1].split(',').map(s => s.trim()).filter(Boolean);
+      const capture = match[1];
+      if (!capture) continue;
+      const symbols = capture.split(',').map((s) => s.trim()).filter(Boolean);
       for (const sym of symbols) {
-        const name = sym.split(/\s+as\s+/)[0].trim();
+        const name = sym.split(/\s+as\s+/)[0]?.trim();
         if (name && name !== 'default') exports.push(name);
       }
   }
 
   const declRegex = /export\s+(?:interface|type|class|const|function|enum)\s+([A-Za-z0-9_]+)/g;
   while ((match = declRegex.exec(content)) !== null) {
-    exports.push(match[1]);
+    const name = match[1];
+    if (name) exports.push(name);
   }
 
   return exports;
@@ -44,8 +49,8 @@ function processBarrel(barrelPath: string, barrelName: string, map: Map<string, 
   let match;
 
   while ((match = regex.exec(content)) !== null) {
-    let subPath = match[1];
-    if (!subPath.startsWith('.')) continue;
+    const subPath = match[1];
+    if (!subPath || !subPath.startsWith('.')) continue;
 
     const fullFilePath = path.join(barrelDir, subPath + (subPath.endsWith('.ts') ? '' : '.ts'));
     let actualFilePath = fullFilePath;
@@ -65,13 +70,15 @@ function processBarrel(barrelPath: string, barrelName: string, map: Map<string, 
   const exportFromRegex = /export\s+(?:type\s+)?\{\s*([^}]+)\s*\}\s*from\s+['"]([^'"]+)['"]/g;
   exportFromRegex.lastIndex = 0;
   while ((match = exportFromRegex.exec(content)) !== null) {
-    const symbolsRaw = match[1].split(',').map(s => s.trim()).filter(Boolean);
+    const symbolsCapture = match[1];
     const targetPath = match[2];
-    if (targetPath.startsWith('.')) {
-      let importPath = `${barrelName}/${targetPath.replace(/^\.\//, '').replace(/\.ts$/, '')}`;
+    if (!symbolsCapture) continue;
+    const symbolsRaw = symbolsCapture.split(',').map((s) => s.trim()).filter(Boolean);
+    if (targetPath && targetPath.startsWith('.')) {
+      const importPath = `${barrelName}/${targetPath.replace(/^\.\//, '').replace(/\.ts$/, '')}`;
       for (const raw of symbolsRaw) {
-        const name = raw.split(/\s+as\s+/)[0].trim();
-        if (!map.has(name)) map.set(name, importPath);
+        const name = raw.split(/\s+as\s+/)[0]?.trim();
+        if (name && !map.has(name)) map.set(name, importPath);
       }
     }
   }
@@ -97,17 +104,20 @@ function processFile(filePath: string) {
     while ((match = regex.exec(content)) !== null) {
       const isType = match[1] ? 'type ' : '';
       const symbolsStr = match[2];
+      if (!symbolsStr) continue;
+      
       const symbols = symbolsStr.split(',').map(s => s.trim()).filter(Boolean);
       
       const newImports = new Map<string, string[]>(); 
       let unmapped: string[] = [];
 
       for (const symRaw of symbols) {
-        const symLabel = symRaw.split(/\s+as\s+/)[0].trim();
+        const symLabel = symRaw.split(/\s+as\s+/)[0]?.trim();
+        if (!symLabel) continue;
         const mappedPath = symbolsMap.get(symLabel);
         if (mappedPath) {
           if (!newImports.has(mappedPath)) newImports.set(mappedPath, []);
-          newImports.get(mappedPath)!.push(symRaw);
+          newImports.get(mappedPath)?.push(symRaw);
         } else {
           unmapped.push(symRaw);
         }
@@ -133,6 +143,7 @@ function processFile(filePath: string) {
 
     for (let i = replacements.length - 1; i >= 0; i--) {
       const repl = replacements[i];
+      if (!repl) continue;
       content = content.slice(0, repl.start) + repl.newCode + content.slice(repl.end);
       modified = true;
     }

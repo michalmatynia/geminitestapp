@@ -11,7 +11,7 @@ vi.mock('@/features/ai/ai-context-registry/server', () => ({
   updateProposal: updateProposalMock,
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const PENDING_PROPOSAL = {
   id: '22222222-2222-4222-8222-222222222222',
@@ -49,12 +49,12 @@ describe('POST /api/ai/actions/execute handler', () => {
     getProposalMock.mockReturnValue(PENDING_PROPOSAL);
     updateProposalMock.mockReturnValue({ ...PENDING_PROPOSAL, status: 'executed' });
 
-    const res = await POST_handler(
+    const res = await postHandler(
       makeRequest({
         proposalId: PENDING_PROPOSAL.id,
         approval: VALID_APPROVAL,
       }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(res.status).toBe(200);
@@ -74,9 +74,9 @@ describe('POST /api/ai/actions/execute handler', () => {
     getProposalMock.mockReturnValue(PENDING_PROPOSAL);
     updateProposalMock.mockReturnValue({ ...PENDING_PROPOSAL, status: 'executed' });
 
-    await POST_handler(
+    await postHandler(
       makeRequest({ proposalId: PENDING_PROPOSAL.id, approval: VALID_APPROVAL }),
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof postHandler>[1]
     );
 
     expect(updateProposalMock).toHaveBeenCalledWith(
@@ -92,12 +92,12 @@ describe('POST /api/ai/actions/execute handler', () => {
     getProposalMock.mockReturnValue(undefined);
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({
           proposalId: '00000000-0000-0000-0000-000000000000',
           approval: VALID_APPROVAL,
         }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Proposal not found.');
   });
@@ -106,16 +106,16 @@ describe('POST /api/ai/actions/execute handler', () => {
     getProposalMock.mockReturnValue({ ...PENDING_PROPOSAL, status: 'executed' });
 
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({ proposalId: PENDING_PROPOSAL.id, approval: VALID_APPROVAL }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Proposal is not pending');
   });
 
   it('throws for missing required fields in request body', async () => {
     await expect(
-      POST_handler(makeRequest({}), {} as Parameters<typeof POST_handler>[1])
+      postHandler(makeRequest({}), {} as Parameters<typeof postHandler>[1])
     ).rejects.toThrow('Invalid execute request payload.');
   });
 
@@ -125,16 +125,16 @@ describe('POST /api/ai/actions/execute handler', () => {
       headers: { 'content-type': 'application/json' },
       body: '{bad-json',
     });
-    await expect(POST_handler(req, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+    await expect(postHandler(req, {} as Parameters<typeof postHandler>[1])).rejects.toThrow(
       'Invalid JSON body.'
     );
   });
 
   it('throws for invalid proposalId (not UUID)', async () => {
     await expect(
-      POST_handler(
+      postHandler(
         makeRequest({ proposalId: 'not-a-uuid', approval: VALID_APPROVAL }),
-        {} as Parameters<typeof POST_handler>[1]
+        {} as Parameters<typeof postHandler>[1]
       )
     ).rejects.toThrow('Invalid execute request payload.');
   });

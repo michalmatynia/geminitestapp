@@ -15,6 +15,7 @@ import {
   ProductListProvider,
   type ProductListContextType,
 } from '@/features/products/context/ProductListContext';
+import { ProductImagePreviewProvider } from '@/features/products/context/ProductImagePreviewContext';
 import { server } from '@/mocks/server';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { DataTable } from '@/shared/ui/data-display.public';
@@ -47,6 +48,13 @@ vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  useRouter: () => ({
+    push: pushMock,
+    refresh: vi.fn(),
+  }),
+}));
+
 vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
   TriggerButtonBar: () => null,
 }));
@@ -64,7 +72,7 @@ const mockProducts: ProductWithImages[] = [
     images: [],
     name: { en: 'Product Alpha' },
     description: { en: '' },
-    categoryId: '',
+    categoryId: 'category-1',
     baseProductId: null,
     defaultPriceGroupId: null,
     ean: null,
@@ -91,7 +99,7 @@ const mockProducts: ProductWithImages[] = [
     images: [],
     name: { en: 'Product Beta' },
     description: { en: '' },
-    categoryId: '',
+    categoryId: 'category-1',
     baseProductId: null,
     defaultPriceGroupId: null,
     ean: null,
@@ -241,19 +249,21 @@ const renderProductTable = (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <ProductListProvider value={contextValue}>
-          <DataTable
-            columns={contextValue.tableColumns}
-            data={contextValue.data}
-            getRowId={contextValue.getRowId}
-            rowSelection={contextValue.rowSelection}
-            onRowSelectionChange={contextValue.setRowSelection}
-            isLoading={contextValue.isLoading}
-            skeletonRows={contextValue.skeletonRows}
-            getRowClassName={contextValue.getRowClassName}
-            maxHeight={contextValue.maxHeight}
-            stickyHeader={contextValue.stickyHeader}
-            meta={{ currencyCode: contextValue.currencyCode }}
-          />
+          <ProductImagePreviewProvider>
+            <DataTable
+              columns={contextValue.tableColumns}
+              data={contextValue.data}
+              getRowId={contextValue.getRowId}
+              rowSelection={contextValue.rowSelection}
+              onRowSelectionChange={contextValue.setRowSelection}
+              isLoading={contextValue.isLoading}
+              skeletonRows={contextValue.skeletonRows}
+              getRowClassName={contextValue.getRowClassName}
+              maxHeight={contextValue.maxHeight}
+              stickyHeader={contextValue.stickyHeader}
+              meta={{ currencyCode: contextValue.currencyCode }}
+            />
+          </ProductImagePreviewProvider>
         </ProductListProvider>
       </ToastProvider>
     </QueryClientProvider>
@@ -528,15 +538,60 @@ describe('Admin Products List UI', () => {
 
     expect(onIntegrationsClick).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'product-1' }),
-      {
+      expect.objectContaining({
         source: 'base_quick_export_failed',
         integrationSlug: 'baselinker',
         status: 'failed',
         runId: 'run-failed-recovery',
-      },
+      }),
       'baselinker'
     );
     expect(exportCalls).toBe(0);
+  });
+
+  it('still exports when a product only has a Base product id but no listing badge', async () => {
+    let exportCalls = 0;
+
+    server.use(
+      http.get('/api/v2/integrations/exports/base/default-connection', () =>
+        HttpResponse.json({ connectionId: 'base-conn-1' })
+      ),
+      http.get('/api/v2/integrations/exports/base/default-inventory', () =>
+        HttpResponse.json({ inventoryId: 'inv-1' })
+      ),
+      http.post('/api/v2/integrations/imports/base', async () =>
+        HttpResponse.json({
+          inventories: [{ id: 'inv-1', name: 'Inventory 1', is_default: true }],
+        })
+      ),
+      http.get('/api/v2/integrations/exports/base/active-template', () =>
+        HttpResponse.json({ templateId: null })
+      ),
+      http.post('/api/v2/integrations/products/:id/base/sku-check', () =>
+        HttpResponse.json({ exists: false })
+      ),
+      http.post('/api/v2/integrations/products/:id/export-to-base', () => {
+        exportCalls += 1;
+        return HttpResponse.json({ success: true });
+      }),
+      http.post('/api/v2/integrations/product-listings', () => HttpResponse.json({}))
+    );
+
+    renderProductTable({
+      data: [
+        {
+          ...mockProducts[0],
+          baseProductId: 'base-123',
+        } as ProductWithImages,
+        mockProducts[1]!,
+      ],
+    });
+
+    await clickFirstOneClickExport();
+
+    await waitFor(() => {
+      expect(exportCalls).toBe(1);
+    });
   });
 
   it('opens the Base listings modal instead of re-exporting when the Base badge is green', async () => {
@@ -544,6 +599,9 @@ describe('Admin Products List UI', () => {
     const onIntegrationsClick = vi.fn();
 
     server.use(
+      http.post('/api/v2/integrations/product-listings', () =>
+        HttpResponse.json({ 'product-1': { base: 'active' } })
+      ),
       http.post('/api/v2/integrations/products/:id/export-to-base', () => {
         exportCalls += 1;
         return HttpResponse.json({ success: true });
@@ -552,13 +610,6 @@ describe('Admin Products List UI', () => {
 
     renderProductTable({
       onIntegrationsClick,
-      data: [
-        {
-          ...mockProducts[0],
-          baseProductId: 'base-123',
-        } as ProductWithImages,
-        mockProducts[1]!,
-      ],
     });
 
     const user = userEvent.setup();

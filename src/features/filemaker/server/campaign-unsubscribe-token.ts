@@ -19,12 +19,18 @@ const normalizeOptionalSecret = (value: string | undefined): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const normalizeOptionalInputString = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 const resolveSigningKey = (): string => {
   const configured =
     normalizeOptionalSecret(process.env['FILEMAKER_CAMPAIGN_UNSUBSCRIBE_SECRET']) ??
     normalizeOptionalSecret(process.env['AUTH_SECRET']) ??
     normalizeOptionalSecret(process.env['NEXTAUTH_SECRET']);
-  if (configured) {
+  if (configured !== null) {
     return configured;
   }
   if (process.env['NODE_ENV'] === 'development' || process.env['NODE_ENV'] === 'test') {
@@ -42,6 +48,9 @@ const resolvePublicAppUrl = (): string =>
     'http://localhost:3000'
   ).replace(/\/+$/g, '');
 
+const resolveInputBaseUrl = (appUrl: string | null | undefined): string =>
+  (normalizeOptionalInputString(appUrl) ?? resolvePublicAppUrl()).replace(/\/+$/g, '');
+
 const base64UrlEncode = (value: string): string => Buffer.from(value).toString('base64url');
 
 const base64UrlDecode = (value: string): string => Buffer.from(value, 'base64url').toString('utf8');
@@ -58,6 +67,42 @@ const safeEqual = (left: string, right: string): boolean => {
   return timingSafeEqual(leftBuffer, rightBuffer);
 };
 
+const normalizeParsedPayloadString = (value: unknown): string | null =>
+  typeof value === 'string' ? normalizeOptionalInputString(value) : null;
+
+const parseTokenPayloadBody = (
+  body: string,
+  now: number
+): FilemakerCampaignUnsubscribeTokenPayload | null => {
+  try {
+    const parsed = JSON.parse(base64UrlDecode(body)) as Partial<
+      FilemakerCampaignUnsubscribeTokenPayload
+    >;
+    const emailAddress = normalizeParsedPayloadString(parsed.emailAddress);
+    if (emailAddress === null || typeof parsed.exp !== 'number' || parsed.exp <= now) {
+      return null;
+    }
+    return {
+      emailAddress: emailAddress.toLowerCase(),
+      campaignId: normalizeParsedPayloadString(parsed.campaignId),
+      runId: normalizeParsedPayloadString(parsed.runId),
+      deliveryId: normalizeParsedPayloadString(parsed.deliveryId),
+      redirectTo: normalizeParsedPayloadString(parsed.redirectTo),
+      scope: parsed.scope === 'all_campaigns' ? 'all_campaigns' : 'campaign',
+      exp: parsed.exp,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const hasValidTokenSignature = (body: string | undefined, signature: string | undefined): boolean =>
+  body !== undefined &&
+  body.length > 0 &&
+  signature !== undefined &&
+  signature.length > 0 &&
+  safeEqual(signValue(body), signature);
+
 export const createFilemakerCampaignUnsubscribeToken = (input: {
   emailAddress: string;
   campaignId?: string | null;
@@ -71,10 +116,10 @@ export const createFilemakerCampaignUnsubscribeToken = (input: {
   const now = input.now ?? Date.now();
   const payload: FilemakerCampaignUnsubscribeTokenPayload = {
     emailAddress: input.emailAddress.trim().toLowerCase(),
-    campaignId: input.campaignId?.trim() || null,
-    runId: input.runId?.trim() || null,
-    deliveryId: input.deliveryId?.trim() || null,
-    redirectTo: input.redirectTo?.trim() || null,
+    campaignId: normalizeOptionalInputString(input.campaignId),
+    runId: normalizeOptionalInputString(input.runId),
+    deliveryId: normalizeOptionalInputString(input.deliveryId),
+    redirectTo: normalizeOptionalInputString(input.redirectTo),
     scope: input.scope === 'all_campaigns' ? 'all_campaigns' : 'campaign',
     exp: now + (input.ttlMs ?? FILEMAKER_CAMPAIGN_UNSUBSCRIBE_TOKEN_TTL_MS),
   };
@@ -88,36 +133,14 @@ export const parseFilemakerCampaignUnsubscribeToken = (
   now: number = Date.now()
 ): FilemakerCampaignUnsubscribeTokenPayload | null => {
   const normalized = token?.trim();
-  if (!normalized) {
+  if (normalized === undefined || normalized.length === 0) {
     return null;
   }
   const [body, signature] = normalized.split('.');
-  if (!body || !signature || !safeEqual(signValue(body), signature)) {
+  if (!hasValidTokenSignature(body, signature)) {
     return null;
   }
-  try {
-    const parsed = JSON.parse(base64UrlDecode(body)) as Partial<FilemakerCampaignUnsubscribeTokenPayload>;
-    if (
-      typeof parsed.emailAddress !== 'string' ||
-      typeof parsed.exp !== 'number' ||
-      parsed.exp <= now
-    ) {
-      return null;
-    }
-    return {
-      emailAddress: parsed.emailAddress.trim().toLowerCase(),
-      campaignId: typeof parsed.campaignId === 'string' ? parsed.campaignId.trim() || null : null,
-      runId: typeof parsed.runId === 'string' ? parsed.runId.trim() || null : null,
-      deliveryId:
-        typeof parsed.deliveryId === 'string' ? parsed.deliveryId.trim() || null : null,
-      redirectTo:
-        typeof parsed.redirectTo === 'string' ? parsed.redirectTo.trim() || null : null,
-      scope: parsed.scope === 'all_campaigns' ? 'all_campaigns' : 'campaign',
-      exp: parsed.exp,
-    };
-  } catch {
-    return null;
-  }
+  return parseTokenPayloadBody(body ?? '', now);
 };
 
 export const buildFilemakerCampaignUnsubscribeUrl = (input: {
@@ -130,8 +153,22 @@ export const buildFilemakerCampaignUnsubscribeUrl = (input: {
   appUrl?: string | null;
 }): string => {
   const token = createFilemakerCampaignUnsubscribeToken(input);
-  const baseUrl = (input.appUrl?.trim() || resolvePublicAppUrl()).replace(/\/+$/g, '');
+  const baseUrl = resolveInputBaseUrl(input.appUrl);
   return `${baseUrl}/admin/filemaker/campaigns/unsubscribe?token=${encodeURIComponent(token)}`;
+};
+
+export const buildFilemakerCampaignOneClickUnsubscribeUrl = (input: {
+  emailAddress: string;
+  campaignId?: string | null;
+  runId?: string | null;
+  deliveryId?: string | null;
+  now?: number;
+  ttlMs?: number;
+  appUrl?: string | null;
+}): string => {
+  const token = createFilemakerCampaignUnsubscribeToken(input);
+  const baseUrl = resolveInputBaseUrl(input.appUrl);
+  return `${baseUrl}/api/filemaker/campaigns/unsubscribe?token=${encodeURIComponent(token)}`;
 };
 
 export const buildFilemakerCampaignPreferencesUrl = (input: {
@@ -144,7 +181,7 @@ export const buildFilemakerCampaignPreferencesUrl = (input: {
   appUrl?: string | null;
 }): string => {
   const token = createFilemakerCampaignUnsubscribeToken(input);
-  const baseUrl = (input.appUrl?.trim() || resolvePublicAppUrl()).replace(/\/+$/g, '');
+  const baseUrl = resolveInputBaseUrl(input.appUrl);
   return `${baseUrl}/admin/filemaker/campaigns/preferences?token=${encodeURIComponent(token)}`;
 };
 
@@ -161,7 +198,7 @@ export const buildFilemakerCampaignManageAllPreferencesUrl = (input: {
     ...input,
     scope: 'all_campaigns',
   });
-  const baseUrl = (input.appUrl?.trim() || resolvePublicAppUrl()).replace(/\/+$/g, '');
+  const baseUrl = resolveInputBaseUrl(input.appUrl);
   return `${baseUrl}/admin/filemaker/campaigns/preferences?token=${encodeURIComponent(token)}`;
 };
 
@@ -175,7 +212,7 @@ export const buildFilemakerCampaignOpenTrackingUrl = (input: {
   appUrl?: string | null;
 }): string => {
   const token = createFilemakerCampaignUnsubscribeToken(input);
-  const baseUrl = (input.appUrl?.trim() || resolvePublicAppUrl()).replace(/\/+$/g, '');
+  const baseUrl = resolveInputBaseUrl(input.appUrl);
   return `${baseUrl}/api/filemaker/campaigns/open?token=${encodeURIComponent(token)}`;
 };
 
@@ -190,10 +227,11 @@ export const buildFilemakerCampaignClickTrackingUrl = (input: {
   appUrl?: string | null;
 }): string => {
   const token = createFilemakerCampaignUnsubscribeToken(input);
-  const baseUrl = (input.appUrl?.trim() || resolvePublicAppUrl()).replace(/\/+$/g, '');
+  const baseUrl = resolveInputBaseUrl(input.appUrl);
   return `${baseUrl}/api/filemaker/campaigns/click?token=${encodeURIComponent(token)}`;
 };
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const __testOnly = {
   resolvePublicAppUrl,
 };

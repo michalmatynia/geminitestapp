@@ -26,7 +26,8 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientError: withKangurClientErrorMock,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { useDuelLeaderboard } from '@/features/kangur/ui/pages/duels/useDuelLeaderboard';
 

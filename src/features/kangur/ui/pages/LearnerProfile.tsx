@@ -19,8 +19,11 @@ import { KangurLearnerProfileSessionsWidget } from '@/features/kangur/ui/compone
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import {
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurLoginModalActions } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import {
   KangurLearnerProfileRuntimeBoundary,
   useKangurLearnerProfileRuntime,
@@ -37,6 +40,7 @@ import { KangurStandardPageLayout } from '@/features/kangur/ui/components/Kangur
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import type { KangurUser } from '@kangur/platform';
 
 type LearnerProfileTabId = 'overview' | 'ai-mood';
 
@@ -302,9 +306,13 @@ function LearnerProfileStatsSection(props: {
   );
 }
 
-const resolveLearnerProfileIsAuthenticated = (
-  auth: ReturnType<typeof useKangurAuth>
-): boolean => auth.isAuthenticated ?? Boolean(auth.user);
+const resolveLearnerProfileIsAuthenticated = ({
+  isAuthenticated,
+  user,
+}: {
+  isAuthenticated: boolean;
+  user: KangurUser | null;
+}): boolean => isAuthenticated || Boolean(user);
 
 const resolveLearnerProfileTutorSessionSyncInput = ({
   activeTab,
@@ -325,8 +333,11 @@ const resolveLearnerProfileTutorSessionSyncInput = ({
 
 function LearnerProfileContent(): React.JSX.Element {
   const { user } = useKangurLearnerProfileRuntime();
-  const auth = useKangurAuth();
-  const isAuthenticated = resolveLearnerProfileIsAuthenticated(auth);
+  const { isAuthenticated } = useKangurAuthSessionState();
+  const resolvedIsAuthenticated = resolveLearnerProfileIsAuthenticated({
+    isAuthenticated,
+    user,
+  });
   const { push: navigateTo } = useKangurRouteNavigator();
   const { basePath } = useKangurRouting();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('profile');
@@ -355,7 +366,7 @@ function LearnerProfileContent(): React.JSX.Element {
     ready: true,
   });
 
-  if (isAuthenticated && !user) {
+  if (resolvedIsAuthenticated && !user) {
     return (
       <LearnerProfileLoadErrorState
         basePath={basePath}
@@ -391,9 +402,10 @@ function LearnerProfileContent(): React.JSX.Element {
 
 export default function LearnerProfilePage(): React.JSX.Element {
   const { basePath } = useKangurRouting();
-  const { user, isAuthenticated, logout } = useKangurAuth();
-  const { openLoginModal } = useKangurLoginModal();
-  const resolvedIsAuthenticated = isAuthenticated ?? Boolean(user);
+  const { user, isAuthenticated } = useKangurAuthSessionState();
+  const { logout } = useKangurAuthActions();
+  const { openLoginModal } = useKangurLoginModalActions();
+  const resolvedIsAuthenticated = isAuthenticated || Boolean(user);
 
   const navigation = useMemo<KangurPrimaryNavigationProps>(
     () => ({

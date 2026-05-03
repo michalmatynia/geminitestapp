@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { DELETE_handler, PATCH_handler } from './handler';
+import { deleteHandler, patchHandler } from './handler';
 
 describe('integration listing-by-id handler module', () => {
   it('exports the supported handlers', () => {
-    expect(typeof DELETE_handler).toBe('function');
-    expect(typeof PATCH_handler).toBe('function');
+    expect(typeof deleteHandler).toBe('function');
+    expect(typeof patchHandler).toBe('function');
   });
 });

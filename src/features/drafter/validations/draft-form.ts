@@ -1,20 +1,39 @@
 import { z } from 'zod';
 
-import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
+import {
+  PRODUCT_DRAFT_KIND_OPTIONS,
+  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
+} from '@/shared/contracts/products/drafts';
 
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const STOCK_PATTERN = /^\d+$/;
+
+const stockFromFormSchema = z.preprocess(
+  (value) => value ?? '',
+  z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === '' || STOCK_PATTERN.test(value),
+      'Stock must be a non-negative whole number.'
+    )
+    .transform((value) => (value === '' ? null : Number(value)))
+);
 
 export const draftSubmitSchema = z
   .object({
     name: z.string().trim().min(1, 'Draft name is required'),
+    draftKind: z.enum(PRODUCT_DRAFT_KIND_OPTIONS).optional(),
+    scrapeProfileId: z.string().trim().nullable().optional(),
     iconColorMode: z.enum(['theme', 'custom']),
     iconColor: z.string().trim().optional().nullable(),
     openProductFormTab: z.enum(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS),
+    stock: stockFromFormSchema,
   })
   .superRefine((data, ctx) => {
     if (data.iconColorMode !== 'custom') return;
 
-    const normalized = data.iconColor?.trim() || '';
+    const normalized = (data.iconColor?.trim()) ?? '';
     if (!HEX_COLOR_PATTERN.test(normalized)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

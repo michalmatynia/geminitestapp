@@ -4,11 +4,7 @@ import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
-import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
-import {
-  findDueTraderaRelistListingIds,
-  shouldRunTraderaRelistScheduler,
-} from '@/features/integrations/services/tradera-listing-service';
+import { findProductListingByIdAcrossProviders } from '@/features/integrations/services/product-listing-repository';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { createManagedQueue } from '@/shared/lib/queue';
 import type { ScheduledTickJobData } from '@/shared/lib/queue/scheduler-queue-types';
@@ -21,10 +17,35 @@ import type { Queue, RepeatableJob } from 'bullmq';
 const SCHEDULER_QUEUE_NAME = 'tradera-relist-scheduler';
 const SCHEDULER_REPEAT_JOB_ID = 'tradera-relist-scheduler-tick';
 
+type TraderaRelistSchedulerServiceModule = {
+  findDueTraderaRelistListingIds: (limit: number) => Promise<string[]>;
+  shouldRunTraderaRelistScheduler: () => Promise<boolean>;
+};
+
+const loadTraderaRelistSchedulerService =
+  async (): Promise<TraderaRelistSchedulerServiceModule> =>
+    import('../services/' + 'tradera-listing-service') as Promise<TraderaRelistSchedulerServiceModule>;
+
 const parseMs = (value: string | null, fallback: number): number => {
   const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return fallback;
+  if (Number.isFinite(parsed) === false) return fallback;
   return Math.max(30_000, Math.floor(parsed));
+};
+
+const processRelistItem = async (listingId: string): Promise<void> => {
+  const resolved = await findProductListingByIdAcrossProviders(listingId);
+  if (resolved !== null) {
+    await resolved.repository.updateListingStatus(listingId, 'queued_relist');
+    await resolved.repository.updateListing(listingId, {
+      nextRelistAt: null,
+      lastStatusCheckAt: new Date(),
+    });
+  }
+  await enqueueTraderaListingJob({
+    listingId,
+    action: 'relist',
+    source: 'scheduler',
+  });
 };
 
 const queue = createManagedQueue<ScheduledTickJobData>({
@@ -36,25 +57,18 @@ const queue = createManagedQueue<ScheduledTickJobData>({
     removeOnFail: false,
   },
   processor: async () => {
+    const {
+      shouldRunTraderaRelistScheduler,
+      findDueTraderaRelistListingIds,
+    } = await loadTraderaRelistSchedulerService();
     const enabled = await shouldRunTraderaRelistScheduler();
-    if (!enabled) return { scheduled: false, count: 0 };
+    if (enabled === false) return { scheduled: false, count: 0 };
 
     const dueListingIds = await findDueTraderaRelistListingIds(20);
-    for (const listingId of dueListingIds) {
-      const resolved = await findProductListingByIdAcrossProviders(listingId);
-      if (resolved) {
-        await resolved.repository.updateListingStatus(listingId, 'queued_relist');
-        await resolved.repository.updateListing(listingId, {
-          nextRelistAt: null,
-          lastStatusCheckAt: new Date(),
-        });
-      }
-      await enqueueTraderaListingJob({
-        listingId,
-        action: 'relist',
-        source: 'scheduler',
-      });
-    }
+    
+    // Use Promise.all to avoid await in loop
+    await Promise.all(dueListingIds.map(processRelistItem));
+    
     return { scheduled: true, count: dueListingIds.length };
   },
   onFailed: async (_jobId, error) => {
@@ -84,7 +98,7 @@ const queueState =
 
 const ensureBullQueue = async (): Promise<Queue | null> => {
   const current = (queue.getQueue() ?? null) as Queue | null;
-  if (current) return current;
+  if (current !== null) return current;
 
   await queue.getHealthStatus().catch(() => null);
   return (queue.getQueue() ?? null) as Queue | null;
@@ -98,7 +112,7 @@ const listSchedulerRepeatJobs = async (bullQueue: Queue): Promise<RepeatableJob[
 const unregisterRepeatScheduler = async (): Promise<void> => {
   try {
     const bullQueue = await ensureBullQueue();
-    if (!bullQueue) {
+    if (bullQueue === null) {
       queueState.repeatRegistered = false;
       return;
     }
@@ -108,7 +122,7 @@ const unregisterRepeatScheduler = async (): Promise<void> => {
       schedulerRepeatJobs.map((repeatJob) => bullQueue.removeRepeatableByKey(repeatJob.key))
     );
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'tradera-relist-scheduler-queue',
       action: 'unregisterRepeat',
@@ -119,11 +133,11 @@ const unregisterRepeatScheduler = async (): Promise<void> => {
 };
 
 const stopWorkerIfRunning = async (): Promise<void> => {
-  if (!queueState.workerStarted && !queue.getQueue()) return;
+  if (queueState.workerStarted === false && queue.getQueue() === null) return;
   try {
     await queue.stopWorker();
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'tradera-relist-scheduler-queue',
       action: 'stopWorker',
@@ -134,20 +148,23 @@ const stopWorkerIfRunning = async (): Promise<void> => {
 };
 
 export const startTraderaRelistSchedulerQueue = (): void => {
-  if (queueState.startupInFlight) return;
-  queueState.startupInFlight = true;
+  const state = queueState;
+  if (state.startupInFlight === true) return;
+  state.startupInFlight = true;
 
-  void (async (): Promise<void> => {
+  const runStartup = async (): Promise<void> => {
     try {
+      const { shouldRunTraderaRelistScheduler } =
+        await loadTraderaRelistSchedulerService();
       const enabled = await shouldRunTraderaRelistScheduler();
-      if (!enabled) {
+      if (enabled === false) {
         await unregisterRepeatScheduler();
         await stopWorkerIfRunning();
         return;
       }
 
-      if (!queueState.workerStarted) {
-        queueState.workerStarted = true;
+      if (state.workerStarted === false) {
+        state.workerStarted = true;
         queue.startWorker();
       }
 
@@ -155,7 +172,7 @@ export const startTraderaRelistSchedulerQueue = (): void => {
       const intervalMs = parseMs(rawInterval, DEFAULT_TRADERA_SYSTEM_SETTINGS.schedulerIntervalMs);
 
       const bullQueue = await ensureBullQueue();
-      if (bullQueue) {
+      if (bullQueue !== null) {
         const schedulerRepeatJobs = await listSchedulerRepeatJobs(bullQueue);
         const expectedJobExists = schedulerRepeatJobs.some(
           (repeatJob) =>
@@ -164,16 +181,16 @@ export const startTraderaRelistSchedulerQueue = (): void => {
               repeatJob.key.includes(SCHEDULER_REPEAT_JOB_ID))
         );
         if (expectedJobExists) {
-          queueState.repeatRegistered = true;
+          state.repeatRegistered = true;
           return;
         }
         if (schedulerRepeatJobs.length > 0) {
           await Promise.all(
             schedulerRepeatJobs.map((repeatJob) => bullQueue.removeRepeatableByKey(repeatJob.key))
           );
-          queueState.repeatRegistered = false;
+          state.repeatRegistered = false;
         }
-      } else if (queueState.repeatRegistered) {
+      } else if (state.repeatRegistered === true) {
         return;
       }
 
@@ -184,16 +201,24 @@ export const startTraderaRelistSchedulerQueue = (): void => {
           jobId: SCHEDULER_REPEAT_JOB_ID,
         }
       );
-      queueState.repeatRegistered = true;
+      state.repeatRegistered = true;
     } catch (error) {
-      void ErrorSystem.captureException(error);
-      queueState.repeatRegistered = false;
+      ErrorSystem.captureException(error).catch(() => {});
+      state.repeatRegistered = false;
       await ErrorSystem.captureException(error, {
         service: 'tradera-relist-scheduler-queue',
         action: 'registerRepeat',
       });
     } finally {
-      queueState.startupInFlight = false;
+      state.startupInFlight = false;
     }
-  })();
+  };
+
+  runStartup().catch((error) => {
+    state.startupInFlight = false;
+    ErrorSystem.captureException(error, {
+      service: 'tradera-relist-scheduler-queue',
+      action: 'runStartup-failed',
+    }).catch(() => {});
+  });
 };

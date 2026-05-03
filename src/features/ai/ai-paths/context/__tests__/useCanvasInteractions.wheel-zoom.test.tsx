@@ -2,7 +2,7 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 import { useCanvasInteractionsNavigation } from '../hooks/useCanvasInteractions.navigation';
 
@@ -58,7 +58,12 @@ const runWheelZoomScenario = (options?: {
   );
 
   act(() => {
-    result.current.applyWheelZoom(deltaY, 120, 90, 0, ctrlKey, metaKey, deltaX);
+    result.current.applyWheelZoom(deltaY, 120, 90, {
+      deltaMode: 0,
+      ctrlKey,
+      metaKey,
+      deltaX,
+    });
   });
 
   act(() => {
@@ -129,13 +134,146 @@ describe('useCanvasInteractionsNavigation wheel zoom', () => {
     );
 
     act(() => {
-      result.current.applyWheelZoom(0.4, 300, 220, 0, false, false, 0, { immediate: true });
+      result.current.applyWheelZoom(0.4, 300, 220, {
+        deltaMode: 0,
+        ctrlKey: false,
+        metaKey: false,
+        deltaX: 0,
+        immediate: true,
+      });
     });
 
     expect(latestViewRef.current.scale).not.toBe(1);
     expect(rafQueue.length).toBe(0);
 
     unmount();
+  });
+
+  it('bounds animated wheel zoom frames when view feedback progresses slowly', () => {
+    const viewportElement = document.createElement('div');
+    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
+      value: (): DOMRect => buildViewportRect(),
+    });
+
+    const latestViewRef = { current: { x: 0, y: 0, scale: 1 } };
+    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement | null>;
+    const rafQueue: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+      (callback: FrameRequestCallback): number => {
+        rafQueue.push(callback);
+        return rafQueue.length;
+      }
+    );
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((): void => undefined);
+
+    let reportedScale = 1;
+    const updateView = vi.fn((next: { x: number; y: number; scale: number }): void => {
+      const direction = next.scale < reportedScale ? -1 : 1;
+      reportedScale = Math.max(0.1, Math.min(1.6, reportedScale + direction * 0.001));
+      latestViewRef.current = { ...next, scale: reportedScale };
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useCanvasInteractionsNavigation({
+        view: latestViewRef.current,
+        latestViewRef,
+        updateView,
+        viewportRef,
+        nodes: [],
+        resolveActiveNodeSelectionIds: (): string[] => [],
+        updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null => null,
+      })
+    );
+
+    act(() => {
+      result.current.applyWheelZoom(500, 300, 220, { deltaMode: 0 });
+    });
+
+    act(() => {
+      for (let step = 0; step < 240 && rafQueue.length > 0; step += 1) {
+        const callback = rafQueue.shift();
+        if (!callback) break;
+        callback(performance.now() + (step + 1) * 16);
+      }
+    });
+
+    expect(updateView).toHaveBeenCalledTimes(24);
+    expect(rafQueue).toHaveLength(0);
+    expect(result.current.wheelZoomRafRef.current).toBeNull();
+
+    unmount();
+  });
+
+  it('does not dispatch a view update when clamped view is unchanged', () => {
+    const viewportElement = document.createElement('div');
+    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
+      value: (): DOMRect => buildViewportRect(),
+    });
+
+    const latestViewRef = { current: { x: 0, y: 0, scale: 1 } };
+    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement | null>;
+    const updateView = vi.fn((next: { x: number; y: number; scale: number }): void => {
+      latestViewRef.current = next;
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useCanvasInteractionsNavigation({
+        view: latestViewRef.current,
+        latestViewRef,
+        updateView,
+        viewportRef,
+        nodes: [],
+        resolveActiveNodeSelectionIds: (): string[] => [],
+        updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null => null,
+      })
+    );
+
+    act(() => {
+      expect(result.current.setViewClamped({ x: 0, y: 0, scale: 1 })).toBe(false);
+    });
+
+    expect(updateView).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('cancels an active wheel zoom frame on unmount', () => {
+    const viewportElement = document.createElement('div');
+    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
+      value: (): DOMRect => buildViewportRect(),
+    });
+
+    const latestViewRef = { current: { x: 0, y: 0, scale: 1 } };
+    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement | null>;
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((): number => 42);
+    const cancelAnimationFrameSpy = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation((): void => undefined);
+
+    const { result, unmount } = renderHook(() =>
+      useCanvasInteractionsNavigation({
+        view: latestViewRef.current,
+        latestViewRef,
+        updateView: (next): void => {
+          latestViewRef.current = next;
+        },
+        viewportRef,
+        nodes: [],
+        resolveActiveNodeSelectionIds: (): string[] => [],
+        updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null => null,
+      })
+    );
+
+    act(() => {
+      result.current.applyWheelZoom(0.4, 300, 220, { deltaMode: 0 });
+    });
+
+    expect(requestAnimationFrameSpy).toHaveBeenCalled();
+
+    unmount();
+
+    expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(42);
   });
 
   it('allows higher upward pan when nodes exist above canvas origin', () => {

@@ -8,23 +8,14 @@ import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 describe('AI-Paths API Client Utilities', () => {
   describe('extractAiPathRunIdFromEnqueueResponseData', () => {
-    it('extracts ID from a direct string', () => {
-      expect(extractAiPathRunIdFromEnqueueResponseData('run-123')).toBe('run-123');
-    });
-
-    it('extracts ID from an object with id field', () => {
-      expect(extractAiPathRunIdFromEnqueueResponseData({ id: 'run-123' })).toBe('run-123');
-    });
-
-    it('extracts ID from an object with runId field', () => {
-      expect(extractAiPathRunIdFromEnqueueResponseData({ runId: 'run-123' })).toBe('run-123');
-    });
-
     it('extracts ID from a nested run object', () => {
-      expect(extractAiPathRunIdFromEnqueueResponseData({ run: { id: 'run-123' } })).toBe('run-123');
+      expect(extractAiPathRunIdFromEnqueueResponseData({ run: { id: 'run-123', status: 'queued' } })).toBe('run-123');
     });
 
     it('returns null for invalid data', () => {
+      expect(extractAiPathRunIdFromEnqueueResponseData('run-123')).toBeNull();
+      expect(extractAiPathRunIdFromEnqueueResponseData({ id: 'run-123' })).toBeNull();
+      expect(extractAiPathRunIdFromEnqueueResponseData({ runId: 'run-123' })).toBeNull();
       expect(extractAiPathRunIdFromEnqueueResponseData(null)).toBeNull();
       expect(extractAiPathRunIdFromEnqueueResponseData({})).toBeNull();
       expect(extractAiPathRunIdFromEnqueueResponseData(123)).toBeNull();
@@ -48,7 +39,7 @@ describe('AI-Paths API Client Utilities', () => {
       });
     });
 
-    it('handles legacy envelope with ID on wrapper', () => {
+    it('rejects legacy envelope ids on the wrapper', () => {
       const data = {
         runId: 'run-123',
         run: {
@@ -56,14 +47,10 @@ describe('AI-Paths API Client Utilities', () => {
         },
       };
       const result = extractAiPathRunRecordFromEnqueueResponseData(data);
-      expect(result).toMatchObject({
-        id: 'run-123',
-        status: 'pending',
-      });
+      expect(result).toBeNull();
     });
 
     it('returns null for ID-only string response', () => {
-      // Logic returns null for strings to preserve legacy behavior (caller uses extractId)
       expect(extractAiPathRunRecordFromEnqueueResponseData('run-123')).toBeNull();
     });
   });

@@ -29,6 +29,35 @@ export interface ValidatorListTreeProps {
   isPending: boolean;
 }
 
+function useSyncedRef<T>(value: T): React.MutableRefObject<T> {
+  const ref = useRef(value);
+
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+
+  return ref;
+}
+
+function useValidatorListTreeAdapter(
+  listById: Map<string, ValidatorPatternList>,
+  onReorder: (reorderedLists: ValidatorPatternList[]) => void
+): ReturnType<typeof createMasterFolderTreeTransactionAdapter> {
+  const listByIdRef = useSyncedRef(listById);
+  const onReorderRef = useSyncedRef(onReorder);
+
+  return useMemo(
+    () =>
+      createMasterFolderTreeTransactionAdapter({
+        onApply: (tx) => {
+          const reordered = resolveValidatorListOrderFromNodes(tx.nextNodes, listByIdRef.current);
+          onReorderRef.current(reordered);
+        },
+      }),
+    [listByIdRef, onReorderRef]
+  );
+}
+
 function ValidatorListTreeViewport(): React.JSX.Element {
   const {
     controller: treeController,
@@ -60,27 +89,7 @@ export function ValidatorListTree({
 }: ValidatorListTreeProps): React.JSX.Element {
   const masterNodes = useMemo(() => buildValidatorListMasterNodes(lists), [lists]);
   const listById = useMemo(() => new Map(lists.map((l) => [l.id, l])), [lists]);
-
-  const listByIdRef = useRef(listById);
-  useEffect(() => {
-    listByIdRef.current = listById;
-  }, [listById]);
-
-  const onReorderRef = useRef(onReorder);
-  useEffect(() => {
-    onReorderRef.current = onReorder;
-  }, [onReorder]);
-
-  const adapter = useMemo(
-    () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: async (tx) => {
-          const reordered = resolveValidatorListOrderFromNodes(tx.nextNodes, listByIdRef.current);
-          onReorderRef.current(reordered);
-        },
-      }),
-    []
-  );
+  const adapter = useValidatorListTreeAdapter(listById, onReorder);
 
   const {
     appearance: { rootDropUi },

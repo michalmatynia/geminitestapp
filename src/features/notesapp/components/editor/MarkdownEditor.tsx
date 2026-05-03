@@ -44,7 +44,7 @@ export function MarkdownEditor(): React.JSX.Element {
       sanitizePreviewHtml: sanitizeHtml,
       isCodeMode,
       isPasting,
-      onPaste: (event: React.ClipboardEvent<HTMLTextAreaElement>): void => {
+      onPaste: (event: React.ClipboardEvent): void => {
         void handlePaste(event);
       },
       textareaRef: contentRef,

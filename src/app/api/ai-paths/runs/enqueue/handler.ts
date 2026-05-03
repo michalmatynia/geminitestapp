@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   buildContextRegistryConsumerEnvelope,
@@ -11,26 +11,33 @@ import {
   getAiPathsSetting,
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
+import { ensureCanonicalStarterWorkflowSettingsForPathIds } from '@/features/ai/ai-paths/server/settings-store';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
-import { upsertAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   aiPathRunEnqueueRequestSchema,
-  aiPathRunEnqueueResponseSchema,
+  aiPathRunRecordSchema,
   type AiNode,
   type Edge,
   type PathConfig,
 } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
-import { compileGraph, evaluateAiPathsValidationPreflight, normalizeNodes, normalizeAiPathsValidationConfig, PATH_CONFIG_PREFIX, palette, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths';
-import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
+import { sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils';
+import { evaluateAiPathsValidationPreflight, normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths/core/constants';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import {
-  remediateRemovedLegacyTriggerContextModes,
+  findRemovedLegacyTriggerContextModes,
+  formatRemovedLegacyTriggerContextModesMessage,
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+import { buildPathRunPayload, logEnqueueTiming, resolveMetaRecord, runCompileGraphSync, type ContextBundle } from './handler.helpers';
 
 const QUEUE_PREFLIGHT_TIMEOUT_MS = Number.parseInt(
   process.env['AI_PATHS_ENQUEUE_QUEUE_PREFLIGHT_TIMEOUT_MS'] ?? '10000',
@@ -43,299 +50,165 @@ const withTimeout = async <T>(
   timeoutMessage: string
 ): Promise<T> => {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let tId: ReturnType<typeof safeSetTimeout> | null = null;
   try {
     return await Promise.race<T>([
       promise,
       new Promise<T>((_resolve, reject) => {
-        timeoutId = setTimeout(() => {
+        tId = safeSetTimeout(() => {
           reject(new Error(timeoutMessage));
         }, timeoutMs);
       }),
     ]);
   } finally {
-    if (timeoutId) clearTimeout(timeoutId);
+    if (tId) {
+      safeClearTimeout(tId);
+    }
   }
 };
-
-const resolveEnqueueRunId = (run: unknown): string | null => {
-  if (typeof run === 'string') {
-    const normalized = run.trim();
-    return normalized.length > 0 ? normalized : null;
-  }
-  if (!run || typeof run !== 'object' || Array.isArray(run)) return null;
-  const record = run as Record<string, unknown>;
-  const candidates = [record['id'], record['runId'], record['_id']];
-  for (const candidate of candidates) {
-    if (typeof candidate !== 'string') continue;
-    const normalized = candidate.trim();
-    if (normalized.length > 0) return normalized;
-  }
-  return null;
-};
-
-const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
-  Object.prototype.hasOwnProperty.call(record, key);
 
 const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
-  const configKey = `${PATH_CONFIG_PREFIX}${pathId}`;
-  const raw = await getAiPathsSetting(configKey);
-  if (!raw) {
-    throw badRequestError(`Stored AI Path config not found for "${pathId}".`);
-  }
-
-  const resolved = materializeStoredTriggerPathConfig({
-    pathId,
-    rawConfig: raw,
-    fallbackName: pathId,
-  });
-  if (resolved.changed) {
-    try {
-      await upsertAiPathsSettings([{ key: configKey, value: JSON.stringify(resolved.config) }]);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-    
-      // Best-effort persistence only. The repaired config is still safe to execute for this request.
-    }
-  }
-  return resolved.config;
-};
-
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const timings: Record<string, number> = {};
-  const withTiming = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
-    const startedAt = performance.now();
-    const result = await fn();
-    timings[label] = performance.now() - startedAt;
-    return result;
-  };
-
-  const access = await withTiming('accessMs', async () => await requireAiPathsRunAccess());
-  ctx.userId = access.userId;
-  await withTiming('rateLimitMs', async () => await enforceAiPathsRunRateLimit(access));
-  const parsed = await withTiming('parseBodyMs', async () => {
-    return await parseJsonBody(req, aiPathRunEnqueueRequestSchema, {
-      logPrefix: 'ai-paths.runs.enqueue',
-    });
-  });
-  if (!parsed.ok) return parsed.response;
-
-  const data = parsed.data;
-  const { nodes, edges, ...rest } = data;
-  const triggerContextRecord =
-    rest.triggerContext &&
-    typeof rest.triggerContext === 'object' &&
-    !Array.isArray(rest.triggerContext)
-      ? rest.triggerContext
-      : null;
-  const requestContentLength = Number.parseInt(req.headers.get('content-length') ?? '', 10);
-  const resolvedContextRegistryBundle = data.contextRegistry?.refs.length
-    ? await withTiming('contextRegistryMs', async () => {
-      return await contextRegistryEngine.resolveRefs({
-        refs: data.contextRegistry?.refs ?? [],
-        maxNodes: 24,
-        depth: 1,
-      });
-    })
-    : null;
-  const contextRegistry = buildContextRegistryConsumerEnvelope({
-    refs: data.contextRegistry?.refs,
-    resolved: mergeContextRegistryResolutionBundles(
-      resolvedContextRegistryBundle,
-      data.contextRegistry?.resolved ?? null
-    ),
-  });
-  let resolvedPathName = rest.pathName?.trim() || rest.pathId;
-  let resolvedNodesInput: AiNode[] | undefined = nodes;
-  let resolvedEdgesInput: Edge[] | undefined = edges;
-  let graphSource: 'payload' | 'settings' = 'payload';
-  if (!Array.isArray(nodes) || !Array.isArray(edges)) {
-    const storedConfig = await withTiming('loadStoredPathMs', async () => {
-      return await loadStoredPathConfig(rest.pathId);
-    });
-    resolvedPathName = storedConfig.name?.trim() || resolvedPathName;
-    resolvedNodesInput = storedConfig.nodes;
-    resolvedEdgesInput = storedConfig.edges;
-    graphSource = 'settings';
-  }
-  let normalizedMeta = rest.meta ?? null;
-  if (normalizedMeta && typeof normalizedMeta === 'object') {
-    const sourceValue = normalizedMeta['source'];
-    if (sourceValue && typeof sourceValue === 'object' && !Array.isArray(sourceValue)) {
-      throw badRequestError('Invalid enqueue metadata: meta.source must be a string.');
-    }
-  }
-  if (!Array.isArray(resolvedNodesInput) || !Array.isArray(resolvedEdgesInput)) {
-    throw badRequestError('Nodes and edges are required to enqueue a run.');
-  }
-
-  const normalizedNodes = normalizeNodes(
-    remediateRemovedLegacyTriggerContextModes(resolvedNodesInput).value as AiNode[]
-  );
-  const validationConfig: PathConfig = {
-    id: rest.pathId,
-    version: 1,
-    name: resolvedPathName,
-    description: '',
-    trigger: rest.triggerEvent?.trim() || 'manual',
-    nodes: normalizedNodes,
-    edges: resolvedEdgesInput,
-    updatedAt: new Date().toISOString(),
-  };
-  const identityIssues = validateCanonicalPathNodeIdentities(validationConfig, {
-    palette,
-  });
-  if (identityIssues.length > 0) {
-    throw badRequestError('AI Paths run graph contains unsupported node identities.');
-  }
-  const normalizedEdges = sanitizeEdges(normalizedNodes, resolvedEdgesInput);
-  if (stableStringify(normalizedEdges) !== stableStringify(resolvedEdgesInput)) {
-    throw badRequestError('AI Paths run graph contains invalid or non-canonical edges.');
-  }
-  const metaRecord = normalizedMeta && typeof normalizedMeta === 'object' ? normalizedMeta : {};
-  const validationState = normalizeAiPathsValidationConfig(
-    (metaRecord['aiPathsValidation'] as Record<string, unknown> | undefined) ?? undefined
-  );
-  const nodeValidationEnabled = validationState.enabled !== false;
-  const validationReport = evaluateAiPathsValidationPreflight({
-    nodes: normalizedNodes,
-    edges: normalizedEdges,
-    config: validationState,
-  });
-  if (nodeValidationEnabled && validationReport.blocked) {
-    const finding = validationReport.findings[0];
-    throw badRequestError(
-      finding
-        ? `Validation blocked run: ${finding.ruleTitle}.`
-        : `Validation blocked run: score ${validationReport.score} below threshold ${validationReport.blockThreshold}.`
-    );
-  }
-  normalizedMeta = {
-    ...metaRecord,
-    ...(contextRegistry ? { contextRegistry } : {}),
-    aiPathsValidation: validationState,
-    validationPreflight: validationReport,
-  };
-
-  const compileReport = await withTiming('compileMs', async () => {
-    return nodeValidationEnabled
-      ? compileGraph(normalizedNodes, normalizedEdges)
-      : compileGraph(normalizedNodes, normalizedEdges, {
-        scopeMode: 'reachable_from_roots',
-        ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
-      });
-  });
-  if (nodeValidationEnabled && !compileReport.ok) {
-    const primaryError = compileReport.findings.find((finding) => finding.severity === 'error');
-    throw badRequestError(
-      (primaryError ? `Graph compile failed: ${primaryError.message}` : null) ??
-        `Graph compile failed with ${compileReport.errors} blocking issue(s).`
-    );
-  }
-  normalizedMeta = {
-    ...(normalizedMeta ?? {}),
-    graphCompile: {
-      errors: compileReport.errors,
-      warnings: compileReport.warnings,
-      findings: compileReport.findings,
-      compiledAt: new Date().toISOString(),
-    },
-  };
+  await ensureCanonicalStarterWorkflowSettingsForPathIds([pathId]);
+  const raw = await getAiPathsSetting(`${PATH_CONFIG_PREFIX}${pathId}`);
+  if (typeof raw !== 'string' || raw === '') throw badRequestError(`Stored AI Path config not found for "${pathId}".`);
 
   try {
-    await withTiming('queueReadyMs', async () => {
-      await withTimeout(
-        assertAiPathRunQueueReadyForEnqueue(),
-        QUEUE_PREFLIGHT_TIMEOUT_MS,
-        `queue_preflight_timeout after ${QUEUE_PREFLIGHT_TIMEOUT_MS}ms`
-      );
-    });
+    return loadCanonicalStoredPathConfig({ pathId, rawConfig: raw });
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    const message = error instanceof Error ? error.message : String(error);
-    if (message.includes('queue_preflight_timeout')) {
-      throw serviceUnavailableError(
-        'AI Paths queue readiness check timed out (queue_preflight_timeout). Please retry.',
-        3_000,
-        { code: 'queue_preflight_timeout' }
-      );
+    if (error instanceof Error && /non-canonical persisted values/i.test(error.message)) {
+      throw badRequestError(`Stored AI Path "${pathId}" contains non-canonical persisted values. Repair or restore it explicitly before running it.`);
     }
     throw error;
   }
+};
 
-  const run = await withTiming('enqueueServiceMs', async () => {
-    return await enqueuePathRun({
-      userId: access.userId,
-      pathId: rest.pathId,
-      pathName: resolvedPathName,
-      nodes: normalizedNodes,
-      edges: normalizedEdges,
-      ...(rest.triggerEvent ? { triggerEvent: rest.triggerEvent } : {}),
-      ...(rest.triggerNodeId ? { triggerNodeId: rest.triggerNodeId } : {}),
-      triggerContext: rest.triggerContext ?? null,
-      entityId: rest.entityId ?? null,
-      entityType: rest.entityType ?? null,
-      ...(rest.maxAttempts !== undefined ? { maxAttempts: rest.maxAttempts } : {}),
-      ...(rest.backoffMs !== undefined ? { backoffMs: rest.backoffMs } : {}),
-      ...(rest.backoffMaxMs !== undefined ? { backoffMaxMs: rest.backoffMaxMs } : {}),
-      ...(rest.requestId ? { requestId: rest.requestId } : {}),
-      meta: normalizedMeta,
-    });
-  });
-  const runId = resolveEnqueueRunId(run);
-  if (!runId) {
-    throw internalError('AI Paths enqueue response missing run identifier.', {
-      source: 'ai-paths.runs.enqueue',
-      pathId: rest.pathId,
-    });
-  }
-  void logSystemEvent({
-    level: 'info',
-    source: 'ai-paths.runs.enqueue',
-    message: '[ai-paths.runs.enqueue] timing',
-    context: {
-      pathId: rest.pathId,
-      nodeCount: normalizedNodes.length,
-      edgeCount: normalizedEdges.length,
-      accessMs: Math.round(timings['accessMs'] ?? 0),
-      rateLimitMs: Math.round(timings['rateLimitMs'] ?? 0),
-      parseBodyMs: Math.round(timings['parseBodyMs'] ?? 0),
-      loadStoredPathMs: Math.round(timings['loadStoredPathMs'] ?? 0),
-      compileMs: Math.round(timings['compileMs'] ?? 0),
-      contextRegistryMs: Math.round(timings['contextRegistryMs'] ?? 0),
-      queueReadyMs: Math.round(timings['queueReadyMs'] ?? 0),
-      enqueueServiceMs: Math.round(timings['enqueueServiceMs'] ?? 0),
-      graphSource,
-      contextRegistryRefCount: contextRegistry?.refs.length ?? 0,
-      contextRegistryDocumentCount: contextRegistry?.resolved?.documents.length ?? 0,
-      ...(Number.isFinite(requestContentLength) ? { requestContentLength } : {}),
-      triggerContextHasEntityJson:
-        triggerContextRecord !== null && hasOwn(triggerContextRecord, 'entityJson'),
-      triggerContextHasEntity:
-        triggerContextRecord !== null && hasOwn(triggerContextRecord, 'entity'),
-      triggerContextHasProduct:
-        triggerContextRecord !== null && hasOwn(triggerContextRecord, 'product'),
-    },
-  });
+type EnqueueContext = {
+  timings: Record<string, number>;
+  withTiming: <T>(label: string, fn: () => Promise<T>) => Promise<T>;
+};
 
-  const responsePayload = { run, runId };
-  const responseContract = aiPathRunEnqueueResponseSchema.safeParse(responsePayload);
-  if (!responseContract.success) {
-    throw internalError('AI Paths enqueue response contract violation.', {
-      source: 'ai-paths.runs.enqueue',
-      pathId: rest.pathId,
-      issues: responseContract.error.issues,
-    });
+async function resolveGraphInput(
+  options: { pathId: string; pathName?: string; nodes?: AiNode[]; edges?: Edge[] },
+  ctx: EnqueueContext
+): Promise<{ resolvedPathName: string; resolvedNodes: AiNode[]; resolvedEdges: Edge[]; graphSource: 'payload' | 'settings' }> {
+  const { pathId, pathName, nodes, edges } = options;
+  if (Array.isArray(nodes) && Array.isArray(edges)) {
+    return {
+      resolvedPathName: (typeof pathName === 'string' && pathName !== '') ? pathName : pathId,
+      resolvedNodes: nodes,
+      resolvedEdges: edges,
+      graphSource: 'payload',
+    };
   }
 
-  const repoSelection = await withTiming('resolveRunRepoMs', async () => {
-    return await resolvePathRunRepository();
-  });
+  const cfg = await ctx.withTiming('loadStoredPathMs', () => loadStoredPathConfig(pathId));
+  return {
+    resolvedPathName: (typeof cfg.name === 'string' && cfg.name !== '') ? cfg.name : pathId,
+    resolvedNodes: cfg.nodes,
+    resolvedEdges: cfg.edges,
+    graphSource: 'settings',
+  };
+}
 
-  return NextResponse.json(responseContract.data, {
-    headers: {
-      'X-Ai-Paths-Run-Provider': repoSelection.provider,
-      'X-Ai-Paths-Run-Route-Mode': repoSelection.routeMode,
-    },
+async function checkQueueReadiness(ctx: EnqueueContext): Promise<void> {
+  try {
+    await ctx.withTiming('queueReadyMs', async () => {
+      await withTimeout(assertAiPathRunQueueReadyForEnqueue(), QUEUE_PREFLIGHT_TIMEOUT_MS, `queue_preflight_timeout after ${QUEUE_PREFLIGHT_TIMEOUT_MS}ms`);
+    });
+  } catch (error) {
+    await ErrorSystem.captureException(error);
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes('queue_preflight_timeout')) {
+      throw serviceUnavailableError('AI Paths queue readiness check timed out (queue_preflight_timeout). Please retry.', 3_000, { code: 'queue_preflight_timeout' });
+    }
+    throw error;
+  }
+}
+
+async function resolveContextRegistry(data: any, ctx: EnqueueContext): Promise<ContextBundle> {
+  const refs = data.contextRegistry?.refs;
+  const hasRefs = Array.isArray(refs) && refs.length > 0;
+  const bundle = hasRefs
+    ? await ctx.withTiming('contextRegistryMs', () => contextRegistryEngine.resolveRefs({ refs, maxNodes: 24, depth: 1 }))
+    : null;
+
+  return buildContextRegistryConsumerEnvelope({
+    refs,
+    resolved: mergeContextRegistryResolutionBundles(bundle, data.contextRegistry?.resolved ?? null),
+  }) as ContextBundle;
+}
+
+function validateGraph(options: { pathId: string; pathName: string; nodes: AiNode[]; edges: Edge[]; triggerEvent?: string }): { normalizedNodes: AiNode[]; normalizedEdges: Edge[] } {
+  const { pathId, pathName, nodes, edges, triggerEvent } = options;
+  const removedModes = findRemovedLegacyTriggerContextModes(nodes);
+  if (removedModes.length > 0) throw badRequestError(formatRemovedLegacyTriggerContextModesMessage(removedModes, { surface: 'run graph' }));
+
+  const normalizedNodes = normalizeNodes(nodes);
+  const trigger = (typeof triggerEvent === 'string' && triggerEvent !== '') ? triggerEvent : 'manual';
+  const identityIssues = validateCanonicalPathNodeIdentities({ id: pathId, version: 1, name: pathName, description: '', trigger, nodes: normalizedNodes, edges, updatedAt: new Date().toISOString() }, { palette });
+  if (identityIssues.length > 0) throw badRequestError('AI Paths run graph contains unsupported node identities.');
+
+  const normalizedEdges = sanitizeEdges(normalizedNodes, edges);
+  if (stableStringify(normalizedEdges) !== stableStringify(edges)) throw badRequestError('AI Paths run graph contains invalid or non-canonical edges.');
+
+  return { normalizedNodes, normalizedEdges };
+}
+
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const timings: Record<string, number> = {};
+  const withTiming = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
+    const start = performance.now();
+    const res = await fn();
+    timings[label] = performance.now() - start;
+    return res;
+  };
+
+  const access = await withTiming('accessMs', requireAiPathsRunAccess);
+  await withTiming('rateLimitMs', () => enforceAiPathsRunRateLimit(access));
+  const parsed = await withTiming('parseBodyMs', () => parseJsonBody(req, aiPathRunEnqueueRequestSchema, { logPrefix: 'ai-paths.runs.enqueue' }));
+  if (!parsed.ok) return parsed.response;
+
+  const { nodes, edges, ...rest } = parsed.data;
+  const metaRecord = resolveMetaRecord(rest.meta);
+  if (Object.prototype.hasOwnProperty.call(metaRecord, 'source') && typeof metaRecord['source'] !== 'string') {
+    throw badRequestError('meta.source must be a string');
+  }
+
+  const contextRegistry = await resolveContextRegistry(parsed.data, { timings, withTiming });
+  const { resolvedPathName, resolvedNodes, resolvedEdges, graphSource } = await resolveGraphInput({ pathId: rest.pathId, pathName: rest.pathName, nodes, edges }, { timings, withTiming });
+  const { normalizedNodes, normalizedEdges } = validateGraph({ pathId: rest.pathId, pathName: resolvedPathName, nodes: resolvedNodes, edges: resolvedEdges, triggerEvent: rest.triggerEvent });
+
+  const validationState = normalizeAiPathsValidationConfig(metaRecord['aiPathsValidation'] as Record<string, unknown> | undefined);
+  const report = evaluateAiPathsValidationPreflight({ nodes: normalizedNodes, edges: normalizedEdges, config: validationState });
+
+  if (validationState.enabled !== false && report.blocked) {
+    const finding = report.findings[0];
+    const detail = (typeof finding?.message === 'string' && finding.message.trim() !== '')
+      ? finding.message.trim()
+      : (typeof finding?.ruleTitle === 'string' && finding.ruleTitle.trim() !== '')
+        ? finding.ruleTitle.trim()
+        : null;
+    throw badRequestError(detail !== null ? `Validation blocked run: ${detail}` : `Validation blocked run: score ${report.score} below threshold ${report.blockThreshold}.`);
+  }
+
+  const compileReport = runCompileGraphSync({ nodes: normalizedNodes, edges: normalizedEdges, triggerNodeId: rest.triggerNodeId, isNodeValidationEnabled: validationState.enabled !== false });
+  if (validationState.enabled !== false && !compileReport.ok) {
+    const err = compileReport.findings.find((f) => f.severity === 'error')?.message;
+    throw badRequestError(typeof err === 'string' && err !== '' ? `Graph compile failed: ${err}` : `Graph compile failed with ${compileReport.errors} blocking issue(s).`);
+  }
+
+  await checkQueueReadiness({ timings, withTiming });
+
+  const normalizedMeta = { ...metaRecord, contextRegistry, aiPathsValidation: validationState, validationPreflight: report, graphCompile: { errors: compileReport.errors, warnings: compileReport.warnings, findings: compileReport.findings, compiledAt: new Date().toISOString() } };
+  const run = await withTiming('enqueueServiceMs', () => enqueuePathRun(buildPathRunPayload({ access, data: parsed.data, nodes: normalizedNodes, edges: normalizedEdges, meta: normalizedMeta, pathName: resolvedPathName })));
+
+  const parsedRun = aiPathRunRecordSchema.strict().safeParse(run);
+  if (!parsedRun.success) throw internalError('AI Paths enqueue service returned a non-canonical run payload.', { source: 'ai-paths.runs.enqueue', pathId: rest.pathId, issues: parsedRun.error.issues });
+
+  await logEnqueueTiming({ timings, pathId: rest.pathId, nodeCount: normalizedNodes.length, edgeCount: normalizedEdges.length, graphSource, contextRegistry, req, triggerContext: rest.triggerContext });
+  const repoSelection = await withTiming('resolveRunRepoMs', resolvePathRunRepository);
+
+  return NextResponse.json({ run: parsedRun.data }, {
+    headers: { 'X-Ai-Paths-Run-Provider': repoSelection.provider, 'X-Ai-Paths-Run-Route-Mode': repoSelection.routeMode },
   });
 }

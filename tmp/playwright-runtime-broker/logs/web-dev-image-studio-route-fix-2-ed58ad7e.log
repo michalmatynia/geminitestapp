@@ -166,7 +166,7 @@ Ready on http://localhost:59147 { port: 59147, host: '127.0.0.1' }
 [api/settings] [api/settings] [settings] cache fallback {
   service: 'api/settings',
   scope: 'heavy',
-  status: 'timeout-prisma-fallback',
+  status: 'timeout-removedOrm-fallback',
   reason: '[settings] cache miss fetch timed out after 3000ms',
   category: 'SYSTEM',
   otelTraceId: '11703c79af4b6b7f1622dd5098ba2643',
@@ -227,7 +227,7 @@ Caused by:
 [api/settings] [api/settings] [settings] cache fallback {
   service: 'api/settings',
   scope: 'heavy',
-  status: 'timeout-prisma-fallback',
+  status: 'timeout-removedOrm-fallback',
   reason: '[settings] cache miss fetch timed out after 3000ms',
   category: 'SYSTEM',
   otelTraceId: '99f998684dd7bec1169c818519de5485',
@@ -263,7 +263,7 @@ Caused by:
 [api/settings] [api/settings] [settings] cache fallback {
   service: 'api/settings',
   scope: 'heavy',
-  status: 'timeout-prisma-fallback',
+  status: 'timeout-removedOrm-fallback',
   reason: '[settings] cache miss fetch timed out after 3000ms',
   category: 'SYSTEM',
   otelTraceId: 'bc9cb4c6ff6a8c1efe26697be6bb85cf',

@@ -1,12 +1,23 @@
 'use client';
 
-import { JSX, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { type JSX, useState } from 'react';
 
 import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
 import { useSystemActivity } from '@/shared/hooks/useSystemActivity';
 import { PageLayout } from '@/shared/ui/navigation-and-layout.public';
 
-import { QuickAccessPanel, RecentActivityPanel, SystemHealthPanel } from './dashboard-panels';
+import { QuickAccessPanel } from './dashboard-panels';
+
+const SystemHealthPanel = dynamic(
+  () => import('./dashboard-panels').then((mod) => mod.SystemHealthPanel),
+  { ssr: false }
+);
+
+const RecentActivityPanel = dynamic(
+  () => import('./dashboard-panels').then((mod) => mod.RecentActivityPanel),
+  { ssr: false }
+);
 
 export default function AdminDashboardPage(): JSX.Element {
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);

@@ -1,3 +1,4 @@
+ 
 export function Q2Illustration() {
   const sums = [
     { expr: '202 + 4', result: 206 },

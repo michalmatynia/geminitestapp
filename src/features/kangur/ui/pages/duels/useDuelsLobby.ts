@@ -18,6 +18,7 @@ import {
   LOBBY_POLL_INTERVAL_MS,
   LOBBY_PRESENCE_POLL_INTERVAL_MS,
 } from './constants';
+import { beginAbortableLobbyLoad, finishAbortableLobbyLoad } from './useDuelsLobbyActions';
 
 const kangurPlatform = getKangurPlatform();
 
@@ -29,45 +30,6 @@ export type DuelsLobbyOptions = {
   isPageActive: boolean;
 };
 
-const beginAbortableLobbyLoad = (input: {
-  errorReset: () => void;
-  loadingRef: React.MutableRefObject<AbortController | null>;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  pollingRef: React.MutableRefObject<boolean>;
-  showLoading: boolean;
-}): AbortController => {
-  if (input.loadingRef.current && input.showLoading) {
-    input.loadingRef.current.abort();
-  }
-
-  const controller = new AbortController();
-  input.loadingRef.current = controller;
-  input.pollingRef.current = true;
-  if (input.showLoading) {
-    input.setIsLoading(true);
-  }
-  input.errorReset();
-  return controller;
-};
-
-const finishAbortableLobbyLoad = (input: {
-  controller: AbortController;
-  loadingRef: React.MutableRefObject<AbortController | null>;
-  pollingRef: React.MutableRefObject<boolean>;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  showLoading: boolean;
-}): void => {
-  if (input.loadingRef.current !== input.controller) {
-    return;
-  }
-
-  input.loadingRef.current = null;
-  input.pollingRef.current = false;
-  if (input.showLoading) {
-    input.setIsLoading(false);
-  }
-};
-
 export function useDuelsLobby(options: DuelsLobbyOptions) {
   const {
     canBrowseLobby,
@@ -76,7 +38,6 @@ export function useDuelsLobby(options: DuelsLobbyOptions) {
     isOnline,
     isPageActive,
   } = options;
-
   const [lobbyEntries, setLobbyEntries] = useState<KangurDuelLobbyEntry[]>([]);
   const [lobbyError, setLobbyError] = useState<string | null>(null);
   const [isLobbyLoading, setIsLobbyLoading] = useState(false);
@@ -327,7 +288,7 @@ export function useDuelsLobby(options: DuelsLobbyOptions) {
         setIsLoading: setIsLobbyLoading,
         showLoading,
       });
-      if (lobbyRefreshQueuedRef.current) {
+      if (lobbyRefreshQueuedRef.current === true) {
         lobbyRefreshQueuedRef.current = false;
         void loadLobby();
       }

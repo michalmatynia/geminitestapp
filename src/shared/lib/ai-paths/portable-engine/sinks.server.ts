@@ -4,7 +4,6 @@ export * from './sinks-constants.server';
 export * from './sinks-contracts.server';
 export * from './sinks-creators.server';
 export * from './sinks-trends.server';
-export * from './sinks-auto-remediation.server';
 export * from './sinks-bootstrap.server';
 export {
   resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment,

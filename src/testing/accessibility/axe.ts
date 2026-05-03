@@ -27,7 +27,7 @@ type AxeApi = {
 };
 
 const isAxeApi = (value: unknown): value is AxeApi => {
-  if (!value || typeof value !== 'object') {
+  if (value === null || value === undefined || typeof value !== 'object') {
     return false;
   }
 

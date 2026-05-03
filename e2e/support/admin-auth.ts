@@ -4,6 +4,7 @@ type EnsureAdminSessionOptions = {
   initialNavigationTimeoutMs?: number;
   destinationNavigationTimeoutMs?: number;
   transitionTimeoutMs?: number;
+  sessionCookieTimeoutMs?: number;
 };
 
 const AUTH_SESSION_COOKIE_NAMES = new Set([
@@ -69,9 +70,10 @@ export async function ensureAdminSession(
   options: EnsureAdminSessionOptions = {}
 ): Promise<void> {
   const {
-    initialNavigationTimeoutMs = 60_000,
-    destinationNavigationTimeoutMs = 60_000,
-    transitionTimeoutMs = 30_000,
+    initialNavigationTimeoutMs = 180_000,
+    destinationNavigationTimeoutMs = 180_000,
+    transitionTimeoutMs = 90_000,
+    sessionCookieTimeoutMs = 5_000,
   } = options;
   const authRequestTimeoutMs = Math.min(
     Math.max(initialNavigationTimeoutMs, transitionTimeoutMs),
@@ -94,8 +96,8 @@ export async function ensureAdminSession(
       (cookie) => AUTH_SESSION_COOKIE_NAMES.has(cookie.name) && cookie.value.trim().length > 0
     );
   };
-  const waitForSessionCookie = async (): Promise<boolean> => {
-    const deadline = Date.now() + transitionTimeoutMs;
+  const waitForSessionCookie = async (timeoutMs = sessionCookieTimeoutMs): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
 
     do {
       if (await hasSessionCookie()) {

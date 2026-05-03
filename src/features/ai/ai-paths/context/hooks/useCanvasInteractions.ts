@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import type { Edge, RuntimeState } from '@/shared/lib/ai-paths';
+import type { Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import {
@@ -36,8 +38,6 @@ import {
 } from './useCanvasInteractions.connections';
 import { useEdgePaths, type EdgePath, type EdgeRoutingMode } from './useEdgePaths';
 import { useSelectionState, useSelectionActions } from './useSelection';
-import { useGraphState, useGraphActions } from '../GraphContext';
-import { useRuntimeActions } from '../RuntimeContext';
 import {
   type MarqueeSelectionState,
   type TouchLongPressIndicatorState,
@@ -56,8 +56,12 @@ import {
   useCanvasInteractionsTouch,
   type UseCanvasInteractionsTouchValue,
 } from './useCanvasInteractions.touch';
-
-
+import {
+  useGraphActions,
+  useGraphDataState,
+  usePathMetadataState,
+} from '../GraphContext';
+import { useRuntimeActions } from '../RuntimeContext';
 
 /**
  * Hook that manages all canvas-related interactions (pan, drag, connect, drop)
@@ -87,7 +91,8 @@ export function useCanvasInteractions(args?: {
   const { viewportRef } = useCanvasRefs();
 
   // Context: Graph
-  const { nodes, edges, activePathId, isPathLocked } = useGraphState();
+  const { nodes, edges } = useGraphDataState();
+  const { activePathId, isPathLocked } = usePathMetadataState();
   const { setNodes, setEdges } = useGraphActions();
 
   // Context: Runtime
@@ -151,33 +156,41 @@ export function useCanvasInteractions(args?: {
   });
 
   const nodeActions: UseCanvasInteractionsNodesValue = useCanvasInteractionsNodes({
-    nodes,
-    edges,
-    isPathLocked,
-    notifyLocked: stateHandlers.notifyLocked,
-    confirmNodeSwitch,
-    selectedNodeIdSet: new Set(selectedNodeIds),
-    selectedNodeIds,
-    setNodes,
-    setNodeSelection,
-    toggleNodeSelection,
-    selectNode,
-    selectEdge,
-    startDrag,
-    endDrag,
-    dragState,
-    updateLastPointerCanvasPosFromClient,
-    stopViewAnimation: nav.stopViewAnimation,
-    resolveActiveNodeSelectionIds,
-    confirm,
-    setEdges,
-    setRuntimeState,
-    pruneRuntimeInputsInternal: stateHandlers.pruneRuntimeInputsInternal,
-    viewportRef,
-    view,
-    setLastDrop: (pos: { x: number; y: number }) => setLastDrop(pos),
-    ensureNodeVisible: nav.ensureNodeVisible,
-    toast: toast,
+    graphOps: {
+      nodes,
+      edges,
+      setNodes,
+      setEdges,
+      setRuntimeState,
+      pruneRuntimeInputsInternal: stateHandlers.pruneRuntimeInputsInternal,
+    },
+    selectionOps: {
+      selectedNodeIdSet: new Set(selectedNodeIds),
+      selectedNodeIds,
+      setNodeSelection,
+      toggleNodeSelection,
+      selectNode,
+      selectEdge,
+      resolveActiveNodeSelectionIds,
+    },
+    canvasOps: {
+      startDrag,
+      endDrag,
+      dragState,
+      updateLastPointerCanvasPosFromClient,
+      stopViewAnimation: nav.stopViewAnimation,
+      viewportRef,
+      view,
+      setLastDrop: (pos: { x: number; y: number }) => setLastDrop(pos),
+      ensureNodeVisible: nav.ensureNodeVisible,
+    },
+    interactionOps: {
+      isPathLocked,
+      notifyLocked: stateHandlers.notifyLocked,
+      confirmNodeSwitch,
+      confirm,
+      toast,
+    },
   });
 
   const connectionActions: UseCanvasInteractionsConnectionsValue = useCanvasInteractionsConnections(
@@ -198,7 +211,7 @@ export function useCanvasInteractions(args?: {
       setConnectingPos,
       view,
       viewportRef,
-      toast: toast,
+      toast,
     }
   );
 
@@ -218,7 +231,7 @@ export function useCanvasInteractions(args?: {
     viewportRef,
     lastPointerCanvasPosRef: stateHandlers.lastPointerCanvasPosRef,
     view,
-    toast: toast,
+    toast,
   });
 
   const edgePaths = useEdgePaths(edgeRoutingMode as EdgeRoutingMode);
@@ -242,7 +255,7 @@ export function useCanvasInteractions(args?: {
     touchLongPressSelectionRef: touch.touchLongPressSelectionRef,
     touchLongPressIndicatorRafRef: touch.touchLongPressIndicatorRafRef,
     touchLongPressIndicatorHideTimerRef: touch.touchLongPressIndicatorHideTimerRef,
-    viewportRef: viewportRef,
+    viewportRef,
     latestViewRef,
     setTouchLongPressIndicator,
     setNodeSelection,

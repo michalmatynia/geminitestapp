@@ -27,12 +27,17 @@ vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
 }));
 
+vi.mock('nextjs-toploader/app', () => ({
+  usePathname: usePathnameMock,
+}));
+
 vi.mock('next-auth/react', () => ({
   useSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: useOptionalKangurAuthMock,
+  useOptionalKangurAuthSessionState: useOptionalKangurAuthMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({

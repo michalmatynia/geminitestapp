@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
@@ -29,7 +29,7 @@ export const querySchema = z.object({
   state: optionalTrimmedQueryString(),
 });
 
-export async function GET_handler(
+export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }

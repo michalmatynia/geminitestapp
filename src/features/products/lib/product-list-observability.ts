@@ -1,5 +1,9 @@
 'use client';
 
+// product-list observability: centralized helpers for logging UI debug events
+// related to product list queries. The helpers are gateable via URL query
+// (`?productListDebug=1`) and ship throttled system logs to /api/system/logs.
+// Useful for diagnosing flaky queries and user-reported issues in production.
 import type { SystemLogsCreateRequest } from '@/shared/contracts/observability';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logger } from '@/shared/utils/logger';
@@ -31,7 +35,8 @@ const isEnabledDebugValue = (value: string): boolean =>
 
 const stableSerialize = (value: unknown): string => {
   try {
-    return JSON.stringify(value) ?? 'null';
+    if (value === undefined) return 'undefined';
+    return JSON.stringify(value);
   } catch {
     return String(value);
   }
@@ -131,7 +136,7 @@ const shipProductListDebugLog = (event: string, context?: Record<string, unknown
 
       throw new Error(
         `System log request failed with status ${response.status}${
-          details ? `: ${details.slice(0, 200)}` : ''
+          details !== '' ? `: ${details.slice(0, 200)}` : ''
         }`
       );
     })
@@ -143,23 +148,50 @@ const shipProductListDebugLog = (event: string, context?: Record<string, unknown
     });
 };
 
+const shouldSkipProductListDebugLog = ({
+  dedupeKey,
+  signature,
+  now,
+  throttleMs,
+}: {
+  dedupeKey: string;
+  signature: string;
+  now: number;
+  throttleMs: number;
+}): boolean => {
+  const previous = recentProductListDebugLogs.get(dedupeKey);
+  if (previous === undefined) return false;
+  return previous.signature === signature && now - previous.at < throttleMs;
+};
+
+type ProductListDebugLogOptions = {
+  dedupeKey?: string;
+  throttleMs?: number;
+};
+
+const resolveProductListDebugLogOptions = (
+  event: string,
+  options?: ProductListDebugLogOptions
+): {
+  dedupeKey: string;
+  throttleMs: number;
+} => ({
+  throttleMs: Math.max(0, options?.throttleMs ?? DEFAULT_THROTTLE_MS),
+  dedupeKey: options?.dedupeKey ?? event,
+});
+
 export const logProductListDebug = (
   event: string,
   context?: Record<string, unknown>,
-  options?: {
-    dedupeKey?: string;
-    throttleMs?: number;
-  }
+  options?: ProductListDebugLogOptions
 ): void => {
-  if (!isProductListDebugEnabled()) return;
+  if (isProductListDebugEnabled() === false) return;
 
-  const throttleMs = Math.max(0, options?.throttleMs ?? DEFAULT_THROTTLE_MS);
-  const dedupeKey = options?.dedupeKey ?? event;
+  const { dedupeKey, throttleMs } = resolveProductListDebugLogOptions(event, options);
   const signature = stableSerialize(context ?? null);
   const now = Date.now();
-  const previous = recentProductListDebugLogs.get(dedupeKey);
 
-  if (previous?.signature === signature && now - previous.at < throttleMs) {
+  if (shouldSkipProductListDebugLog({ dedupeKey, signature, now, throttleMs })) {
     return;
   }
 

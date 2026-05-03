@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { findAuthUserById } from '@/features/auth/server';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';

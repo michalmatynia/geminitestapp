@@ -35,13 +35,15 @@ export function CaseResolverWorkspaceDebugPanel({
     setEvents(readCaseResolverWorkspaceDebugEvents());
   }, []);
 
+
   React.useEffect(() => {
     if (!enabled || typeof window === 'undefined') return;
     const eventName = getCaseResolverWorkspaceDebugEventName();
     sync();
     window.addEventListener(eventName, sync);
-    return (): void => {
+    return () => {
       window.removeEventListener(eventName, sync);
+      return undefined;
     };
   }, [enabled, sync]);
 

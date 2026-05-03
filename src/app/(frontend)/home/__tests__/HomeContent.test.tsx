@@ -54,7 +54,7 @@ vi.mock('@/app/(frontend)/home/home-helpers', async () => {
   };
 });
 
-vi.mock('@/features/cms/public', () => ({
+vi.mock('@/features/cms/components/frontend/home/HomeContentClient', () => ({
   HomeContentClient: homeContentClientMock,
 }));
 

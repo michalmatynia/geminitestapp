@@ -5,7 +5,8 @@ type MaybeImages = {
   catalogs?: (ProductWithImages['catalogs'][number] | null)[] | null;
 };
 
-const notNull = <T>(value: T | null | undefined): value is T => value != null;
+const notNull = <T>(value: T | null | undefined): value is T =>
+  value !== null && value !== undefined;
 
 export const normalizeHomeProducts = (
   productsRaw: (ProductWithImages | (ProductWithImages & MaybeImages))[]

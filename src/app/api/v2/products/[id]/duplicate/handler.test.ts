@@ -25,7 +25,7 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
   },
 }));
 
-import { POST_handler } from './handler';
+import { postHandler } from './handler';
 
 const buildContext = (userId: string | null = null): ApiHandlerContext =>
   ({
@@ -45,7 +45,7 @@ describe('products/[id]/duplicate handler cache invalidation', () => {
   it('invalidates all product caches after successful duplicate', async () => {
     const request = {} as NextRequest;
 
-    const response = await POST_handler(request, buildContext(), { id: 'product-1' });
+    const response = await postHandler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(200);
     expect(duplicateProductMock).toHaveBeenCalledWith('product-1', 'DUP-SKU', undefined);
@@ -56,7 +56,7 @@ describe('products/[id]/duplicate handler cache invalidation', () => {
     const request = {} as NextRequest;
     duplicateProductMock.mockResolvedValueOnce(null);
 
-    await expect(POST_handler(request, buildContext(), { id: 'missing-product' })).rejects.toThrow(
+    await expect(postHandler(request, buildContext(), { id: 'missing-product' })).rejects.toThrow(
       'Product not found'
     );
 

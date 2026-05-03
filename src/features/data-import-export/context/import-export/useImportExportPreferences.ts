@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type MutableRefObject } from 'react';
 
 import { normalizeImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
 import type { BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse, BaseImageRetryPresetsResponse, BaseSampleProductResponse, BaseStockFallbackPreferenceResponse } from '@/shared/contracts/integrations/preferences';
@@ -15,6 +15,9 @@ export function useImportExportPreferences({
   imageRetryPresetsPref,
   sampleProductPref,
   baseConnections,
+  importTemplateIdRef,
+  inventoryIdRef,
+  selectedBaseConnectionIdRef,
   setImportTemplateId,
   setExportInventoryId,
   setSelectedBaseConnectionId,
@@ -29,6 +32,9 @@ export function useImportExportPreferences({
   imageRetryPresetsPref: BaseImageRetryPresetsResponse | undefined | null;
   sampleProductPref: BaseSampleProductResponse | undefined | null;
   baseConnections: IntegrationConnectionBasic[];
+  importTemplateIdRef: MutableRefObject<string>;
+  inventoryIdRef: MutableRefObject<string>;
+  selectedBaseConnectionIdRef: MutableRefObject<string>;
   setImportTemplateId: (id: string) => void;
   setExportInventoryId: (id: string) => void;
   setSelectedBaseConnectionId: (id: string) => void;
@@ -41,13 +47,18 @@ export function useImportExportPreferences({
   useEffect(() => {
     if (!hasInitializedPrefs.current) {
       const timer = setTimeout(() => {
-        if (lastImportTemplatePref?.templateId) {
+        const liveImportTemplateId = importTemplateIdRef.current.trim();
+        const liveSelectedBaseConnectionId = selectedBaseConnectionIdRef.current.trim();
+        const liveInventoryId = inventoryIdRef.current.trim();
+
+        if (!liveImportTemplateId && lastImportTemplatePref?.templateId) {
           setImportTemplateId(lastImportTemplatePref.templateId);
         }
         if (defaultExportInventoryPref?.inventoryId) {
           setExportInventoryId(defaultExportInventoryPref.inventoryId);
         }
         if (
+          !liveSelectedBaseConnectionId &&
           defaultConnectionPref?.connectionId &&
           baseConnections.some(
             (c: IntegrationConnectionBasic) => c.id === defaultConnectionPref.connectionId
@@ -61,7 +72,7 @@ export function useImportExportPreferences({
         if (imageRetryPresetsPref?.presets) {
           setImageRetryPresets(normalizeImageRetryPresets(imageRetryPresetsPref.presets));
         }
-        if (sampleProductPref?.inventoryId) {
+        if (!liveInventoryId && sampleProductPref?.inventoryId) {
           setInventoryId(sampleProductPref.inventoryId);
         }
         hasInitializedPrefs.current = true;
@@ -77,6 +88,9 @@ export function useImportExportPreferences({
     imageRetryPresetsPref,
     sampleProductPref,
     baseConnections,
+    importTemplateIdRef,
+    inventoryIdRef,
+    selectedBaseConnectionIdRef,
     setImportTemplateId,
     setExportInventoryId,
     setSelectedBaseConnectionId,

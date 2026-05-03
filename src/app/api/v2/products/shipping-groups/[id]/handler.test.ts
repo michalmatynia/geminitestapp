@@ -30,7 +30,7 @@ vi.mock('@/features/products/server', () => ({
   getCategoryRepository: getCategoryRepositoryMock,
 }));
 
-import { DELETE_handler, PUT_handler, productShippingGroupUpdateSchema } from './handler';
+import { deleteHandler, putHandler, productShippingGroupUpdateSchema } from './handler';
 
 describe('product shipping groups by-id handler module', () => {
   beforeEach(() => {
@@ -73,14 +73,14 @@ describe('product shipping groups by-id handler module', () => {
   });
 
   it('exports the supported handlers and schema', () => {
-    expect(typeof PUT_handler).toBe('function');
-    expect(typeof DELETE_handler).toBe('function');
+    expect(typeof putHandler).toBe('function');
+    expect(typeof deleteHandler).toBe('function');
     expect(typeof productShippingGroupUpdateSchema.safeParse).toBe('function');
   });
 
   it('rejects overlapping category auto-assign rules on update when rule scope changes', async () => {
     await expect(
-      PUT_handler(
+      putHandler(
         {} as never,
         {
           body: {
@@ -108,7 +108,7 @@ describe('product shipping groups by-id handler module', () => {
       autoAssignCategoryIds: ['category-rings'],
     });
 
-    const response = await PUT_handler(
+    const response = await putHandler(
       {} as never,
       {
         body: {
@@ -129,7 +129,7 @@ describe('product shipping groups by-id handler module', () => {
   it('normalizes redundant descendant category rules on update', async () => {
     shippingGroupRepositoryMock.listShippingGroups.mockResolvedValue([]);
 
-    const response = await PUT_handler(
+    const response = await putHandler(
       {} as never,
       {
         body: {
@@ -151,7 +151,7 @@ describe('product shipping groups by-id handler module', () => {
   it('drops missing category rules on update', async () => {
     shippingGroupRepositoryMock.listShippingGroups.mockResolvedValue([]);
 
-    const response = await PUT_handler(
+    const response = await putHandler(
       {} as never,
       {
         body: {
@@ -167,6 +167,17 @@ describe('product shipping groups by-id handler module', () => {
       {
         autoAssignCategoryIds: ['category-jewellery'],
       }
+    );
+  });
+
+  it('deletes a shipping group by id', async () => {
+    const response = await deleteHandler({} as never, {} as never, {
+      id: 'shipping-group-2',
+    });
+
+    expect(response).toBeInstanceOf(Response);
+    expect(shippingGroupRepositoryMock.deleteShippingGroup).toHaveBeenCalledWith(
+      'shipping-group-2'
     );
   });
 });

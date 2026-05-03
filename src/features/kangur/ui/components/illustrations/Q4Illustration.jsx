@@ -20,8 +20,8 @@ export function Q4Illustration() {
             c < posterStartCol + posterCols &&
             r >= posterStartRow &&
             r < posterStartRow + posterRows;
-          let fill = isGray ? '#9ca3af' : 'white';
-          let opacity = inPoster ? 0.25 : 1;
+          const fill = isGray ? '#9ca3af' : 'white';
+          const opacity = inPoster ? 0.25 : 1;
           return (
             <rect
               key={`${r}-${c}`}

@@ -100,4 +100,39 @@ describe('useCatalogSync', () => {
     );
     expect(logClientErrorMock).not.toHaveBeenCalled();
   });
+
+  it('falls back to empty arrays when cached query payloads are malformed', async () => {
+    apiGetMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/products/entities/catalogs') {
+        return Promise.resolve({ items: [] });
+      }
+      if (url === '/api/v2/products/metadata/price-groups') {
+        return Promise.resolve({ items: [] });
+      }
+      return Promise.reject(new Error(`Unexpected URL ${url}`));
+    });
+
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useCatalogSync('all'), { wrapper });
+
+    await waitFor(() => {
+      expect(apiGetMock).toHaveBeenCalledTimes(2);
+    });
+
+    await waitFor(() => {
+      expect(result.current.catalogs).toEqual([]);
+    });
+
+    expect(result.current.currencyOptions).toEqual([]);
+    expect(result.current.currencyCode).toBe('');
+    expect(result.current.languageOptions).toEqual([
+      { value: 'name_en', label: 'English' },
+      { value: 'name_pl', label: 'Polish' },
+      { value: 'name_de', label: 'German' },
+    ]);
+  });
 });

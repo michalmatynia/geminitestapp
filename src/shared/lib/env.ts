@@ -30,8 +30,13 @@ const envSchema = z.object({
   // Core
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   MONGODB_URI: z.string().url().optional(),
+  MONGODB_LOCAL_URI: z.string().url().optional(),
+  MONGODB_CLOUD_URI: z.string().url().optional(),
   REDIS_URL: z.string().url().optional(),
   MONGODB_DB: z.string().default('app'),
+  MONGODB_LOCAL_DB: z.string().default('app'),
+  MONGODB_CLOUD_DB: z.string().default('app'),
+  MONGODB_ACTIVE_SOURCE_DEFAULT: z.enum(['local', 'cloud']).optional(),
   APP_DB_PROVIDER: z.enum(['mongodb']).optional(),
 
   // Auth
@@ -125,7 +130,42 @@ export const env = getEnv();
  * Validates that at least one primary database is configured.
  */
 export function validateDatabaseConfig() {
-  if (!env.MONGODB_URI) {
-    throw new Error('MONGODB_URI must be configured.');
+  const hasLegacyMongoConfig = Boolean(env.MONGODB_URI);
+  const hasSplitMongoConfig = Boolean(env.MONGODB_LOCAL_URI || env.MONGODB_CLOUD_URI);
+
+  if (!hasLegacyMongoConfig && !hasSplitMongoConfig) {
+    throw new Error(
+      'MongoDB must be configured. Set MONGODB_URI or one of MONGODB_LOCAL_URI / MONGODB_CLOUD_URI.'
+    );
+  }
+
+  if (hasLegacyMongoConfig && hasSplitMongoConfig) {
+    throw new Error(
+      'Do not mix legacy MONGODB_URI with split MongoDB source envs. Use either MONGODB_URI alone or MONGODB_LOCAL_URI / MONGODB_CLOUD_URI with MONGODB_ACTIVE_SOURCE_DEFAULT.'
+    );
+  }
+
+  if (env.MONGODB_ACTIVE_SOURCE_DEFAULT && !hasSplitMongoConfig) {
+    throw new Error(
+      'MONGODB_ACTIVE_SOURCE_DEFAULT requires split MongoDB source envs. Configure MONGODB_LOCAL_URI / MONGODB_CLOUD_URI instead of relying on legacy MONGODB_URI.'
+    );
+  }
+
+  if (env.MONGODB_LOCAL_URI && env.MONGODB_CLOUD_URI && !env.MONGODB_ACTIVE_SOURCE_DEFAULT) {
+    throw new Error(
+      'Split MongoDB configuration requires MONGODB_ACTIVE_SOURCE_DEFAULT to be set to "local" or "cloud".'
+    );
+  }
+
+  if (env.MONGODB_ACTIVE_SOURCE_DEFAULT === 'local' && !env.MONGODB_LOCAL_URI) {
+    throw new Error(
+      'MONGODB_ACTIVE_SOURCE_DEFAULT=local requires MONGODB_LOCAL_URI to be configured.'
+    );
+  }
+
+  if (env.MONGODB_ACTIVE_SOURCE_DEFAULT === 'cloud' && !env.MONGODB_CLOUD_URI) {
+    throw new Error(
+      'MONGODB_ACTIVE_SOURCE_DEFAULT=cloud requires MONGODB_CLOUD_URI to be configured.'
+    );
   }
 }

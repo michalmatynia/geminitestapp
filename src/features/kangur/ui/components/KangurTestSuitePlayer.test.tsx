@@ -33,6 +33,7 @@ vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorRuntimeScope: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useKangurAiTutorSessionSync: useKangurAiTutorSessionSyncMock,
   useOptionalKangurAiTutor: useOptionalKangurAiTutorMock,
   useKangurAiTutorDeferredActivationBridge: vi.fn(),

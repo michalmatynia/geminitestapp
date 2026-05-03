@@ -8,6 +8,7 @@ import {
   getDefaultSiteLocaleCode,
   getPathLocale,
   resolvePreferredSiteLocale,
+  stripSiteLocalePrefix,
 } from '@/shared/lib/i18n/site-locale';
 import { applyEdgeTrafficGuard } from '@/shared/lib/security/edge-traffic-guard';
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
@@ -20,9 +21,9 @@ const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
   ['/admin/ai-paths/jobs', '/admin/ai-paths/queue'],
   ['/admin/databases', '/admin/databases/engine'],
   ['/admin/databases/backups', '/admin/databases/engine?view=backups'],
-  ['/admin/databases/control', '/admin/databases/engine'],
+  ['/admin/databases/crud', '/admin/databases/engine?view=crud'],
   ['/admin/databases/operations', '/admin/databases/engine?view=operations'],
-  ['/admin/databases/settings', '/admin/databases/engine'],
+  ['/admin/databases/redis', '/admin/databases/engine?view=redis'],
   ['/admin/image-studio/settings', '/admin/image-studio?tab=settings'],
   ['/admin/image-studio/validation-patterns', '/admin/image-studio?tab=validation'],
   ['/admin/integrations/aggregators', '/admin/integrations/aggregators/base-com'],
@@ -35,8 +36,6 @@ const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
     '/admin/integrations/marketplaces/category-mapper',
     '/admin/integrations/aggregators/base-com/category-mapping',
   ],
-  ['/admin/products/builder', '/admin/products/settings'],
-  ['/admin/products/constructor', '/admin/products/settings'],
   ['/admin/products/jobs', '/admin/ai-paths/queue?tab=paths-external'],
   ['/admin/prompt-engine', '/admin/prompt-engine/validation'],
   ['/admin/settings/ai', '/admin/brain?tab=routing'],
@@ -60,10 +59,20 @@ type NextRequestHandler = NonNullable<typeof handler>;
 type HandlerContext = Parameters<NextRequestHandler>[1];
 type AuthenticatedProxyRequest = NextRequest & { auth?: Session | null };
 
+const STUDIQ_WEB_ORIGIN = process.env['STUDIQ_WEB_ORIGIN'] || '';
+
+const isKangurPageRequest = (pathname: string): boolean => {
+  const stripped = stripSiteLocalePrefix(pathname);
+  return stripped === '/kangur' || stripped.startsWith('/kangur/');
+};
+
 const isApiRequest = (pathname: string): boolean => pathname === '/api' || pathname.startsWith('/api/');
 
 const isAdminRequest = (pathname: string): boolean =>
   pathname === '/admin' || pathname.startsWith('/admin/');
+
+const isPlaywrightFixturePath = (pathname: string): boolean =>
+  pathname === '/__playwright' || pathname.startsWith('/__playwright/');
 
 const isSafePageMethod = (request: NextRequest): boolean =>
   request.method === 'GET' || request.method === 'HEAD';
@@ -71,6 +80,8 @@ const isSafePageMethod = (request: NextRequest): boolean =>
 const isDefaultLocaleBypassPath = (pathname: string): boolean => {
   return (
     pathname === '/' ||
+    pathname === '/auth' ||
+    pathname.startsWith('/auth/') ||
     pathname === '/login' ||
     pathname === '/kangur' ||
     pathname.startsWith('/kangur/') ||
@@ -135,6 +146,13 @@ const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null 
 
   const pathname = request.nextUrl.pathname;
   const pathLocale = getPathLocale(pathname);
+  const strippedPathname = stripSiteLocalePrefix(pathname);
+  if (isPlaywrightFixturePath(strippedPathname)) {
+    return pathLocale
+      ? syncExplicitLocaleCookie(request, baseProxy(request), pathLocale)
+      : baseProxy(request);
+  }
+
   const defaultLocale = getDefaultSiteLocaleCode();
 
   if (pathLocale && pathLocale !== defaultLocale) {
@@ -173,8 +191,14 @@ const buildAdminRequestHeaders = (request: AuthenticatedProxyRequest): Headers |
 const handler =
   typeof auth === 'function'
     ? auth(
-      (request: AuthenticatedProxyRequest): Response =>
-        resolveAdminRedirectResponse(request) ?? baseProxy(request, buildAdminRequestHeaders(request) ?? undefined)
+      (request: AuthenticatedProxyRequest): Response => {
+        const fastRedirect = resolveAdminRedirectResponse(request);
+        if (fastRedirect) {
+          return fastRedirect;
+        }
+
+        return baseProxy(request, buildAdminRequestHeaders(request) ?? undefined);
+      }
     )
     : null;
 
@@ -194,12 +218,18 @@ export function proxy(
     return baseProxy(request);
   }
 
+  if (STUDIQ_WEB_ORIGIN && isKangurPageRequest(pathname)) {
+    const target = new URL(pathname, STUDIQ_WEB_ORIGIN);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target.toString(), 307);
+  }
+
   if (!isAdminRequest(pathname)) {
     return resolvePublicLocaleResponse(request) ?? baseProxy(request);
   }
 
   if (!handler || typeof handler !== 'function') {
-    return baseProxy(request);
+    return resolveAdminRedirectResponse(request) ?? baseProxy(request);
   }
   const result = handler(request, resolvedContext);
   if (result instanceof Promise) {

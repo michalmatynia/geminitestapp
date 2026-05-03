@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildFilemakerPartyOptions,
+  createDefaultFilemakerDatabase,
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
   getFilemakerAddressById,
@@ -151,6 +152,7 @@ describe('filemaker settings', () => {
       emails: [],
       emailLinks: [],
       eventOrganizationLinks: [],
+      values: [],
     });
 
     const database = parseFilemakerDatabase(raw);
@@ -218,6 +220,7 @@ describe('filemaker settings', () => {
         emails: [],
         emailLinks: [],
         eventOrganizationLinks: [],
+        values: [],
       })
     );
 
@@ -233,6 +236,109 @@ describe('filemaker settings', () => {
     expect(persisted.events[0]?.postalCode).toBe('');
     expect(persisted.addresses[0]?.city).toBe('Warsaw');
     expect(persisted.phoneNumbers[0]?.phoneNumber).toBe('+48123456789');
+  });
+
+  it('normalizes organization job listings and campaign targeting state', () => {
+    const database = parseFilemakerDatabase(
+      JSON.stringify({
+        version: 2,
+        persons: [],
+        organizations: [createOrganizationRecord({ id: 'o-1', name: 'Hiring Org' })],
+        events: [],
+        addresses: [],
+        addressLinks: [],
+        phoneNumbers: [],
+        phoneNumberLinks: [],
+        emails: [],
+        emailLinks: [],
+        eventOrganizationLinks: [],
+        values: [],
+        jobListings: [
+          {
+            id: 'job-1',
+            organizationId: 'o-1',
+            title: ' Senior Developer ',
+            description: 'Build FileMaker integrations.',
+            location: 'Remote',
+            salaryMin: '12000',
+            salaryMax: 18000,
+            salaryCurrency: 'pln',
+            salaryPeriod: 'monthly',
+            status: 'open',
+            targetedCampaignIds: ['campaign-1', '', 'campaign-1'],
+          },
+          {
+            id: 'job-empty',
+            organizationId: 'o-1',
+            title: '',
+            description: 'Ignored because it has no title.',
+          },
+          {
+            id: 'job-mongo-org',
+            organizationId: 'mongo-organization-1',
+            title: 'Mongo-backed organization listing',
+            description: 'Stored locally by organization id.',
+            status: 'paused',
+          },
+        ],
+      })
+    );
+
+    expect(database.jobListings).toHaveLength(2);
+    expect(database.jobListings[0]).toMatchObject({
+      id: 'job-1',
+      organizationId: 'o-1',
+      title: 'Senior Developer',
+      salaryMin: 12000,
+      salaryMax: 18000,
+      salaryCurrency: 'PLN',
+      salaryPeriod: 'monthly',
+      status: 'open',
+      targetedCampaignIds: ['campaign-1'],
+    });
+    expect(database.jobListings[1]).toMatchObject({
+      id: 'job-mongo-org',
+      organizationId: 'mongo-organization-1',
+      status: 'paused',
+    });
+  });
+
+  it('normalizes reusable lexicon type records with defaults', () => {
+    const defaultDatabase = createDefaultFilemakerDatabase();
+    expect(defaultDatabase.lexiconTypes.map((type) => type.key)).toEqual(
+      expect.arrayContaining(['technology', 'requirement', 'benefit', 'responsibility'])
+    );
+
+    const database = parseFilemakerDatabase(
+      JSON.stringify({
+        version: 2,
+        lexiconTypes: [
+          {
+            key: 'technology',
+            label: 'Tech stack',
+            description: 'Offer technologies and tooling',
+            sortOrder: 5,
+            system: true,
+          },
+        ],
+      })
+    );
+
+    const typeKeys = database.lexiconTypes.map((type) => type.key);
+    expect(new Set(typeKeys).size).toBe(typeKeys.length);
+    expect(typeKeys).toEqual(expect.arrayContaining(['technology', 'requirement', 'benefit']));
+    expect(database.lexiconTypes.find((type) => type.key === 'technology')).toMatchObject({
+      id: 'filemaker-lexicon-type-technology',
+      key: 'technology',
+      label: 'Tech stack',
+      description: 'Offer technologies and tooling',
+      sortOrder: 5,
+    });
+    expect(database.lexiconTypes.find((type) => type.key === 'requirement')).toMatchObject({
+      key: 'requirement',
+      label: 'Requirement',
+    });
+    expect(toPersistedFilemakerDatabase(database).lexiconTypes).toEqual(database.lexiconTypes);
   });
 
   it('normalizes address links and enforces one default per owner', () => {
@@ -347,6 +453,7 @@ describe('filemaker settings', () => {
         emails: [],
         emailLinks: [],
         eventOrganizationLinks: [],
+      values: [],
       })
     );
 
@@ -372,6 +479,7 @@ describe('filemaker settings', () => {
         emails: [],
         emailLinks: [],
         eventOrganizationLinks: [],
+      values: [],
       })
     );
 
@@ -453,6 +561,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker payload includes unsupported fullAddress fields\./);
@@ -477,6 +586,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
@@ -506,6 +616,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
@@ -548,6 +659,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
@@ -578,6 +690,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker person payload includes unsupported inline phoneNumbers field\./);
@@ -604,6 +717,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker person payload includes unsupported inline phoneNumbers field\./);
@@ -628,6 +742,7 @@ describe('filemaker settings', () => {
           emails: [{ id: 'e-1', email: 'jane@example.com', status: 'active' }],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker person payload includes unsupported inline email fields\./);
@@ -652,6 +767,7 @@ describe('filemaker settings', () => {
           emails: [{ id: 'e-1', email: 'org@example.com', status: 'active' }],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker organization payload includes unsupported inline email fields\./);
@@ -672,6 +788,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Invalid Filemaker phoneNumbers entry payload/);
@@ -696,6 +813,7 @@ describe('filemaker settings', () => {
           emails: [{ id: 'e-1', email: 'jane@example.com', status: 'active' }],
           emailLinks: [{ id: 'el-1', emailId: 'e-1', partyKind: 'person', partyId: 'p-1' }],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker person payload includes unsupported inline email fields\./);
@@ -720,6 +838,7 @@ describe('filemaker settings', () => {
           emails: [{ id: 'e-1', email: 'org@example.com', status: 'active' }],
           emailLinks: [{ id: 'el-1', emailId: 'e-1', partyKind: 'organization', partyId: 'o-1' }],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker organization payload includes unsupported inline email fields\./);
@@ -746,6 +865,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(
@@ -768,6 +888,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Invalid Filemaker phoneNumbers payload/);

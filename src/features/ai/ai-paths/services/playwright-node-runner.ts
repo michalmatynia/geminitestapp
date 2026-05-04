@@ -1,8 +1,28 @@
+/**
+ * Playwright Node Runner Service
+ * 
+ * Server-side browser automation runner for AI path execution.
+ * Provides:
+ * - Playwright browser instance management
+ * - Secure server-only browser operations
+ * - Context isolation and cleanup
+ * - Browser type abstraction (Chromium, Firefox, WebKit)
+ * - Automated script execution environment
+ */
+
 import 'server-only';
 
 import { createHash, randomUUID } from 'crypto';
 import path from 'path';
-
+import type * as Playwright from 'playwright';
+import type {
+  Browser,
+  BrowserContext,
+  BrowserContextOptions,
+  BrowserType,
+  LaunchOptions,
+  Page,
+} from 'playwright';
 import {
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
   playwrightSettingsSchema,
@@ -51,14 +71,6 @@ import type {
 } from './playwright-node-runner.types';
 import { isPlaywrightNodeRuntimeRunRequest } from './playwright-node-runner.types';
 
-import type {
-  Browser,
-  BrowserContext,
-  BrowserContextOptions,
-  BrowserType,
-  LaunchOptions,
-  Page,
-} from 'playwright';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   RUN_ROOT_DIR,
@@ -182,7 +194,7 @@ const withTimeout = async <T>(
       }),
     ]);
     } finally {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+     
     if (timeoutRef !== null) clearTimeout(timeoutRef);
     }
     };
@@ -706,7 +718,7 @@ const resolvePersonaSettings = async (
 };
 
 const getBrowserType = (
-  playwright: typeof import('playwright'),
+  playwright: typeof Playwright,
   engine: 'chromium' | 'firefox' | 'webkit'
 ): BrowserType =>
   engine === 'firefox'
@@ -748,7 +760,7 @@ const buildLaunchOptions = (
 };
 
 const buildBaseContextOptions = (
-  playwright: typeof import('playwright'),
+  playwright: typeof Playwright,
   settings: PlaywrightSettings
 ): BrowserContextOptions => {
   const devicePreset =
@@ -803,7 +815,7 @@ const resolveViewportWithJitter = (
 };
 
 const buildContextOptions = (
-  playwright: typeof import('playwright'),
+  playwright: typeof Playwright,
   settings: PlaywrightSettings,
   runArtifactsDir: string,
   contextOverrides: BrowserContextOptions,

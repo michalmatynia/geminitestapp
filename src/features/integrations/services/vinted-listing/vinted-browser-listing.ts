@@ -1,3 +1,15 @@
+/**
+ * Vinted Browser Listing Automation
+ * 
+ * Automated browser-based listing management for Vinted marketplace.
+ * Provides:
+ * - Form automation for listing creation and updates
+ * - Image upload and category selection
+ * - Price and description management
+ * - Selector-based UI interaction
+ * - Marketplace-specific workflow automation
+ */
+
 import {
   VINTED_LISTING_FORM_URL,
   VINTED_BASE_ORIGIN,

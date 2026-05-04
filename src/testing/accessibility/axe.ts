@@ -54,9 +54,10 @@ const formatAxeViolations = (violations: AxeViolation[]): string =>
     .map((violation: AxeViolation) => {
       const nodes = violation.nodes
         .map((node: AxeNode) => {
-          const target = node.target.join(' > ') || '(unknown target)';
+          const target = node.target.join(' > ');
+          const targetDisplay = target.length > 0 ? target : '(unknown target)';
           const summary = node.failureSummary ?? 'No failure summary provided.';
-          return `- ${target}\n${summary}`;
+          return `- ${targetDisplay}\n${summary}`;
         })
         .join('\n');
 

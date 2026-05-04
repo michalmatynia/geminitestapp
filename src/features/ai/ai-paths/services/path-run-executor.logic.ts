@@ -1,7 +1,6 @@
 import type {
   AiPathNodeStatus,
   AiNode,
-  AiPathRunRecord,
   Edge,
   RuntimePortValues,
   RuntimeState,

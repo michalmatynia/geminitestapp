@@ -3,6 +3,7 @@ import type {
   FilemakerJobApplicationLogEntry,
   FilemakerJobApplicationLogMethod,
 } from '../filemaker-job-application.types';
+import { normalizeId as normalizeMongoId } from '@/shared/lib/db/services/sync-utils';
 import { buildFilemakerJobApplicationCanonicalKey } from './filemaker-job-application-canonical-key';
 import type { FilemakerJobApplicationMongoDocument } from './filemaker-job-application-repository.types';
 import {
@@ -62,9 +63,7 @@ const normalizeApplicationLog = (value: unknown): FilemakerJobApplicationLogEntr
 };
 
 export const normalizeId = (document: FilemakerJobApplicationMongoDocument): string => {
-  const id = normalizeString(document.id);
-  if (id !== null) return id;
-  return document._id;
+  return normalizeMongoId(document);
 };
 
 const buildFallbackCanonicalKey = (input: {

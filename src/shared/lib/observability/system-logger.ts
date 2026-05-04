@@ -1,3 +1,18 @@
+/**
+ * System Logger
+ * 
+ * Centralized logging system for application-wide observability.
+ * Provides structured logging with:
+ * - Automatic data redaction for sensitive information
+ * - OpenTelemetry integration for distributed tracing
+ * - Configurable log levels and filtering
+ * - Context enrichment and metadata attachment
+ * - Central log forwarding and aggregation
+ * 
+ * This logger ensures consistent log formatting, security compliance,
+ * and integration with monitoring and alerting systems.
+ */
+
 import type {
   SystemLogLevelDto as SystemLogLevel,
   SystemLogRecordDto as SystemLogRecord,
@@ -19,10 +34,10 @@ import {
 import { getActiveOtelContextAttributes } from './otel-context';
 import { emitOtelLogRecord } from './otel-log-bridge';
 
-
-const MAX_CONTEXT_SIZE = 12000;
-const MAX_VALUE_LENGTH = 4000;
-const MAX_STACK_LENGTH = 20000;
+// Configuration constants for log data limits
+const MAX_CONTEXT_SIZE = 12000; // Maximum size for context data
+const MAX_VALUE_LENGTH = 4000; // Maximum length for individual values
+const MAX_STACK_LENGTH = 20000; // Maximum length for stack traces
 const MAX_CAUSE_DEPTH = 5;
 
 const parseEnvBoolean = (value: string | undefined): boolean | null => {

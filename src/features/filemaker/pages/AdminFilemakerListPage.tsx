@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
-
 import { Edit2, LayoutList, Users, Building2, CalendarDays, Database, Globe, Mail } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import React, { useDeferredValue, useMemo, useState, startTransition } from 'react';
@@ -22,6 +20,8 @@ import { includeQuery } from './filemaker-page-utils';
 import type { FilemakerEvent, FilemakerOrganization, FilemakerPerson } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
 
+/* eslint-disable max-lines */
+
 type EntityTabConfig<TData> = {
   key: 'persons' | 'organizations' | 'events';
   columns: ColumnDef<TData>[];
@@ -32,6 +32,7 @@ type EntityTabConfig<TData> = {
   badges: React.ReactNode;
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function AdminFilemakerListPage(): React.JSX.Element {
   const router = useRouter();
   const settingsStore = useSettingsStore();
@@ -138,7 +139,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
           const person = row.original;
           return (
             <div className='space-y-0.5 text-[11px] text-gray-500'>
-              <div>NIP: {person.nip || 'n/a'}</div>
+              <div>NIP: {person.nip !== '' ? person.nip : 'n/a'}</div>
               <div>
                 Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
               </div>
@@ -345,8 +346,8 @@ export function AdminFilemakerListPage(): React.JSX.Element {
           columns: personColumns,
           data: persons,
           searchPlaceholder: 'Search name, address, NIP, REGON, phone...',
-          emptyTitle: query ? 'No persons found' : 'No persons yet',
-          emptyDescription: query
+          emptyTitle: query.length > 0 ? 'No persons found' : 'No persons yet',
+          emptyDescription: query.length > 0
             ? 'Try adjusting your search terms.'
             : 'Add your first person to the database.',
           badges: (
@@ -375,8 +376,8 @@ export function AdminFilemakerListPage(): React.JSX.Element {
           columns: orgColumns,
           data: organizations,
           searchPlaceholder: 'Search name, address, NIP, REGON, phone...',
-          emptyTitle: query ? 'No organizations found' : 'No organizations yet',
-          emptyDescription: query
+          emptyTitle: query.length > 0 ? 'No organizations found' : 'No organizations yet',
+          emptyDescription: query.length > 0
             ? 'Try adjusting your search terms.'
             : 'Add your first organization to the database.',
           badges: (
@@ -405,8 +406,8 @@ export function AdminFilemakerListPage(): React.JSX.Element {
           columns: eventColumns,
           data: events,
           searchPlaceholder: 'Search event name and address...',
-          emptyTitle: query ? 'No events found' : 'No events yet',
-          emptyDescription: query
+          emptyTitle: query.length > 0 ? 'No events found' : 'No events yet',
+          emptyDescription: query.length > 0
             ? 'Try adjusting your search terms.'
             : 'Add your first event to the database.',
           badges: (

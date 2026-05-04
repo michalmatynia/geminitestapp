@@ -1,3 +1,14 @@
+/**
+ * Mock Service Worker - Server Setup
+ * 
+ * Configures MSW for Node.js server environments.
+ * Used for:
+ * - API mocking in server-side tests (Vitest, Jest)
+ * - Integration testing without external API dependencies
+ * - Consistent mock responses in CI/CD pipelines
+ * - Testing error scenarios and edge cases
+ */
+
 import { setupServer } from 'msw/node';
 
 import { handlers } from './handlers';

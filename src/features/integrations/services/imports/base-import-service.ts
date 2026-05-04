@@ -1,3 +1,15 @@
+/**
+ * Base Import Service
+ * 
+ * Foundation service for data import operations across integrations.
+ * Provides:
+ * - Template-based import processing
+ * - Error handling and retry logic
+ * - Status tracking and progress monitoring
+ * - Item-level import coordination
+ * - Server-side import orchestration
+ */
+
 import 'server-only';
 
 import { getImportTemplate } from '@/features/integrations/services/import-template-repository';

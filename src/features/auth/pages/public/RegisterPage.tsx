@@ -11,13 +11,33 @@ import { Link } from '@/i18n/navigation';
 import { Button, Input, Alert, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/shared/ui/primitives.public';
 import { PasswordInput, FormField, Hint } from '@/shared/ui/forms-and-actions.public';
 import { UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
-import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export default function RegisterPage(): React.JSX.Element {
   return <RegisterForm />;
 }
 
-const useRegisterFormLogic = () => {
+type RegisterFormState = {
+  name: string;
+  setName: React.Dispatch<React.SetStateAction<string>>;
+  email: string;
+  setEmail: React.Dispatch<React.SetStateAction<string>>;
+  password: string;
+  setPassword: React.Dispatch<React.SetStateAction<string>>;
+  error: string | null;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
+  isSubmitting: boolean;
+  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  translations: ReturnType<typeof useTranslations>;
+};
+
+type RegisterInput = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+const useRegisterFormLogic = (): RegisterFormState => {
   const translations = useTranslations('AuthRegister');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -26,7 +46,8 @@ const useRegisterFormLogic = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const registerUserMutation = useRegisterUser();
 
-  const handleRegister = useCallback(async (data: { name: string; email: string; password: string }) => {
+  // eslint-disable-next-line complexity
+  const handleRegister = useCallback(async (data: RegisterInput): Promise<void> => {
     const registerInput: { email: string; password: string; name?: string } = { email: data.email, password: data.password };
     const trimmedName = data.name.trim();
     if (trimmedName !== '') registerInput.name = trimmedName;
@@ -34,12 +55,13 @@ const useRegisterFormLogic = () => {
     if (!response.ok) {
       const payload = response.payload as { error?: string; details?: { issues?: string[] } } | null;
       const details = payload?.details?.issues?.join(' ') ?? '';
-      const message = payload?.error ? `${payload.error}${details !== '' ? ` ${details}` : ''}` : translations('createAccountFailed');
+      const payloadError = typeof payload?.error === 'string' ? payload.error : null;
+      const message = payloadError !== null ? `${payloadError}${details.length > 0 ? ` ${details}` : ''}` : translations('createAccountFailed');
       throw new Error(message);
     }
   }, [registerUserMutation, translations]);
 
-  const handleSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     setIsSubmitting(true);
     setError(null);
@@ -58,9 +80,10 @@ const useRegisterFormLogic = () => {
 };
 
 function RegisterForm(): React.JSX.Element {
-  const { name, setName, email, setEmail, password, setPassword, error, isSubmitting, handleSubmit, translations } = useRegisterFormLogic();
+  const { name, setName, email, setEmail, password, setPassword, error, isSubmitting, handleSubmit, translations } =
+    useRegisterFormLogic();
   const { userPageSettings } = useAuth();
-  const allowSignup = userPageSettings.allowSignup === true;
+  const allowSignup = Boolean(userPageSettings.allowSignup);
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-gray-950 px-4'>

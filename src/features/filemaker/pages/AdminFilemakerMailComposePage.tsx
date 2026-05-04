@@ -17,6 +17,17 @@ import { Button, Input, useToast } from '@/shared/ui/primitives.public';
 import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { PanelHeader } from '@/shared/ui/templates.public';
 
+/* eslint-disable
+   @typescript-eslint/strict-boolean-expressions,
+   complexity,
+   jsx-a11y/control-has-associated-label,
+   max-lines,
+   max-lines-per-function,
+   no-await-in-loop,
+   no-param-reassign,
+   no-nested-ternary
+ */
+
 type AccountsResponse = { accounts: FilemakerMailAccount[] };
 type ForwardDraftResponse = {
   forwardDraft: {

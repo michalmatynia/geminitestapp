@@ -1,3 +1,15 @@
+/**
+ * Kangur API Lesson Sections Route
+ * 
+ * API route for Kangur lesson sections management.
+ * Provides:
+ * - GET endpoint for retrieving lesson sections
+ * - POST endpoint for creating/updating sections
+ * - Query schema validation
+ * - CSRF-exempt public API access
+ * - Success logging configuration
+ */
+
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import {
   getKangurLessonSectionsHandler,

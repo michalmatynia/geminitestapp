@@ -1,5 +1,13 @@
 /**
  * Centralized Query Keys Factory for TanStack Query
+ * 
+ * Provides a hierarchical, type-safe system for managing query cache keys.
+ * Benefits:
+ * - Consistent key structure across all features
+ * - Type-safe key generation with TypeScript
+ * - Efficient cache invalidation patterns
+ * - Prevents key collisions and naming conflicts
+ * - Supports complex filtering and nested relationships
  *
  * Pattern Guidelines:
  * - all: ['feature'] as const (base key for invalidating EVERYTHING in a feature)
@@ -7,21 +15,25 @@
  * - list: (filters: unknown) => [...lists(), { filters }] as const (specific list)
  * - details: () => [...all, 'detail'] as const (base for all single items)
  * - detail: (id: string) => [...details(), id] as const (specific single item)
+ * 
+ * This factory ensures consistent cache management and enables
+ * precise invalidation strategies for optimal performance.
  */
 
 export const QUERY_KEYS = {
+  // Product-related queries with hierarchical structure
   products: {
-    all: ['products'] as const,
-    lists: () => [...QUERY_KEYS.products.all, 'list'] as const,
-    list: (filters: unknown) => [...QUERY_KEYS.products.lists(), { filters }] as const,
-    counts: () => [...QUERY_KEYS.products.all, 'count'] as const,
-    count: (filters: unknown) => [...QUERY_KEYS.products.counts(), { filters }] as const,
-    details: () => [...QUERY_KEYS.products.all, 'detail'] as const,
-    detail: (id: string) => [...QUERY_KEYS.products.details(), id] as const,
-    detailEdit: (id: string) => [...QUERY_KEYS.products.detail(id), 'edit'] as const,
-    baseSyncPreview: (id: string) => [...QUERY_KEYS.products.detail(id), 'base-sync-preview'] as const,
-    scans: (productId: string) => [...QUERY_KEYS.products.detail(productId), 'scans'] as const,
-    scansLatestAll: () => [...QUERY_KEYS.products.all, 'scans-latest'] as const,
+    all: ['products'] as const, // Base key for all product queries
+    lists: () => [...QUERY_KEYS.products.all, 'list'] as const, // All product lists
+    list: (filters: unknown) => [...QUERY_KEYS.products.lists(), { filters }] as const, // Filtered lists
+    counts: () => [...QUERY_KEYS.products.all, 'count'] as const, // Count queries
+    count: (filters: unknown) => [...QUERY_KEYS.products.counts(), { filters }] as const, // Filtered counts
+    details: () => [...QUERY_KEYS.products.all, 'detail'] as const, // All detail queries
+    detail: (id: string) => [...QUERY_KEYS.products.details(), id] as const, // Single product
+    detailEdit: (id: string) => [...QUERY_KEYS.products.detail(id), 'edit'] as const, // Edit mode data
+    baseSyncPreview: (id: string) => [...QUERY_KEYS.products.detail(id), 'base-sync-preview'] as const, // Sync preview
+    scans: (productId: string) => [...QUERY_KEYS.products.detail(productId), 'scans'] as const, // Product scans
+    scansLatestAll: () => [...QUERY_KEYS.products.all, 'scans-latest'] as const, // Latest scans overview
     scansLatest: (productIds: string[]) =>
       [
         ...QUERY_KEYS.products.scansLatestAll(),

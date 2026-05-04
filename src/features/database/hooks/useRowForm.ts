@@ -1,3 +1,15 @@
+/**
+ * Database Row Form Hook
+ * 
+ * Form state management for database row operations.
+ * Provides:
+ * - Dynamic form generation based on column definitions
+ * - Input value parsing and validation
+ * - Add/edit mode handling with appropriate defaults
+ * - Form submission coordination
+ * - Type-safe data transformation
+ */
+
 import { useState, useRef } from 'react';
 import type { DatabaseColumnInfo } from '@/shared/contracts/database';
 import { parseInputValue } from '../utils/database-utils';

@@ -1,7 +1,19 @@
+/**
+ * Database Utilities
+ * 
+ * Collection of utility functions for database operations and data formatting.
+ * Provides:
+ * - Cell value formatting for different data types
+ * - Type detection and parsing logic
+ * - Database-specific data transformation
+ * - Consistent data display patterns
+ */
+
 import { formatDatabaseCellValue } from '../components/format-cell-value';
 
 export { formatDatabaseCellValue };
 
+// Database type classifications for proper data handling
 const BOOLEAN_TYPES = ['bool', 'boolean', 'bit'];
 const NUMBER_TYPES = ['int', 'number', 'float', 'double', 'decimal', 'real', 'bigint', 'smallint', 'long', 'short'];
 const OBJECT_TYPES = ['object', 'array', 'json', 'document', 'map'];

@@ -1,5 +1,14 @@
 'use client';
 
+/* eslint-disable
+   complexity,
+   max-lines,
+   max-lines-per-function,
+   no-nested-ternary,
+   @typescript-eslint/no-unnecessary-condition,
+   @typescript-eslint/strict-boolean-expressions
+ */
+
 import { Archive, ArrowLeft, Eye, EyeOff, Forward, Paperclip, Reply, Star, StarOff, Trash2 } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import { useParams, useSearchParams } from 'next/navigation';

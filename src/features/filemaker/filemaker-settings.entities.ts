@@ -1,6 +1,11 @@
-/* eslint-disable max-lines, max-lines-per-function, complexity, @typescript-eslint/strict-boolean-expressions */
-
 import { normalizeAddressFields } from '@/shared/lib/filemaker/entity-builders';
+
+/* eslint-disable
+   complexity,
+   max-lines,
+   max-lines-per-function,
+   @typescript-eslint/strict-boolean-expressions
+ */
 
 import { normalizeString } from './filemaker-settings.helpers';
 import { resolveFilemakerTechnologyIconUrl } from './technology-icons';

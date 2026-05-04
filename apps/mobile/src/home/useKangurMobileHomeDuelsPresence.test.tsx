@@ -14,12 +14,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   createDuelMock,
-  listDuelLobbyPresenceMock,
+  pingDuelLobbyPresenceMock,
   useKangurMobileAuthMock,
   useKangurMobileRuntimeMock,
 } = vi.hoisted(() => ({
   createDuelMock: vi.fn(),
-  listDuelLobbyPresenceMock: vi.fn(),
+  pingDuelLobbyPresenceMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
   useKangurMobileRuntimeMock: vi.fn(),
 }));
@@ -90,7 +90,7 @@ describe('useKangurMobileHomeDuelsPresence', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    listDuelLobbyPresenceMock.mockResolvedValue({
+    pingDuelLobbyPresenceMock.mockResolvedValue({
       entries: [
         {
           displayName: 'Leo Mentor',
@@ -137,7 +137,7 @@ describe('useKangurMobileHomeDuelsPresence', () => {
       apiBaseUrl: 'http://localhost:3000',
       apiClient: {
         createDuel: createDuelMock,
-        listDuelLobbyPresence: listDuelLobbyPresenceMock,
+        pingDuelLobbyPresence: pingDuelLobbyPresenceMock,
       },
     });
 
@@ -161,7 +161,7 @@ describe('useKangurMobileHomeDuelsPresence', () => {
       expect(result.current.entries).toHaveLength(2);
     });
 
-    expect(listDuelLobbyPresenceMock).toHaveBeenCalledWith(
+    expect(pingDuelLobbyPresenceMock).toHaveBeenCalledWith(
       { limit: 6 },
       { cache: 'no-store' },
     );
@@ -211,7 +211,7 @@ describe('useKangurMobileHomeDuelsPresence', () => {
 
     expect(result.current.isRestoringAuth).toBe(true);
     expect(result.current.entries).toEqual([]);
-    expect(listDuelLobbyPresenceMock).not.toHaveBeenCalled();
+    expect(pingDuelLobbyPresenceMock).not.toHaveBeenCalled();
   });
 
   it('does not load lobby presence until deferred home duel panels are enabled', () => {
@@ -226,6 +226,6 @@ describe('useKangurMobileHomeDuelsPresence', () => {
     expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.entries).toEqual([]);
-    expect(listDuelLobbyPresenceMock).not.toHaveBeenCalled();
+    expect(pingDuelLobbyPresenceMock).not.toHaveBeenCalled();
   });
 });

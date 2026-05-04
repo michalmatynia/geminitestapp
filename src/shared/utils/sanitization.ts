@@ -1,11 +1,33 @@
+/**
+ * HTML Sanitization Utilities
+ * 
+ * Security-focused HTML sanitization to prevent XSS attacks.
+ * Provides:
+ * - Script tag removal and dangerous element filtering
+ * - DOM-based sanitization with fallback patterns
+ * - Client-side and server-side compatible sanitization
+ * - Error handling and observability integration
+ */
+
 import { dispatchClientCatch } from '@/shared/utils/observability/client-error-dispatch';
 
+// Regex pattern to remove script tags as fallback sanitization
 const HTML_SCRIPT_FALLBACK_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script>/gi;
+
+// Set of dangerous HTML tag names that should be filtered
 const DANGEROUS_HTML_TAG_NAMES = new Set(['SCRIPT', 'OBJECT', 'EMBED', 'IFRAME']);
 
+/**
+ * Fallback HTML sanitization using regex pattern matching.
+ * Removes script tags but may not catch all XSS vectors.
+ */
 const sanitizeHtmlFallback = (html: string): string =>
   html.replace(HTML_SCRIPT_FALLBACK_PATTERN, '');
 
+/**
+ * Checks if DOM-based HTML sanitization is available.
+ * Returns false in server-side environments or when DOM APIs are unavailable.
+ */
 const canUseDomHtmlSanitizer = (): boolean =>
   !(
     typeof window === 'undefined' ||

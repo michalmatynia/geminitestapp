@@ -1,3 +1,15 @@
+/**
+ * Settings Lite API Handler
+ * 
+ * Lightweight API handler for settings retrieval and management.
+ * Provides:
+ * - GET endpoint for lite settings access
+ * - Kangur storefront appearance settings
+ * - Theme preset manifest seeding
+ * - Kangur-specific setting key validation
+ * - Optimized settings payload delivery
+ */
+
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 

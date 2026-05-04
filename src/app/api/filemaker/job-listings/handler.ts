@@ -22,6 +22,13 @@ export type EnrichedJobListing = FilemakerJobListing & {
   applicationLog: FilemakerJobApplicationLogEntry[];
 };
 
+const hasApplicableManualLog = (application: FilemakerJobApplication): boolean =>
+  (application.applicationLog ?? []).some(
+    (entry: FilemakerJobApplicationLogEntry): boolean =>
+      entry.method === 'manual' &&
+      (entry.toStatus === undefined || entry.toStatus === null || entry.toStatus === 'applied')
+  );
+
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
 
@@ -51,20 +58,28 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   const orgIds = listings.map((l) => l.organizationId);
   const orgNames = await getMongoFilemakerOrganizationNamesByIds(orgIds);
 
-  let appliedListingIds = new Set<string>();
-  const appliedLogsByListingId = new Map<string, FilemakerJobApplicationLogEntry[]>();
-  const applicationIdByListingId = new Map<string, string>();
+  const appliedListingIds = new Set<string>();
+  const appliedApplicationByListingId = new Map<
+    string,
+    { applicationId: string; applicationLog: FilemakerJobApplicationLogEntry[]; hasManualLog: boolean }
+  >();
   if (personId.length > 0) {
     const applications = await listMongoFilemakerJobApplications({ personId, limit: 5000 });
     applications
       .filter((app: FilemakerJobApplication): boolean => app.status === 'applied')
       .forEach((app: FilemakerJobApplication): void => {
         appliedListingIds.add(app.jobListingId);
-        if ((app.applicationLog?.length ?? 0) > 0) {
-          appliedLogsByListingId.set(app.jobListingId, app.applicationLog ?? []);
-        }
-        if (!applicationIdByListingId.has(app.jobListingId)) {
-          applicationIdByListingId.set(app.jobListingId, app.id);
+        const currentValue = appliedApplicationByListingId.get(app.jobListingId);
+        const hasManualLog = hasApplicableManualLog(app);
+        if (
+          currentValue === undefined ||
+          (!currentValue.hasManualLog && hasManualLog)
+        ) {
+          appliedApplicationByListingId.set(app.jobListingId, {
+            applicationId: app.id,
+            applicationLog: app.applicationLog ?? [],
+            hasManualLog,
+          });
         }
       });
   }
@@ -73,8 +88,10 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
     ...listing,
     organizationName: orgNames.get(listing.organizationId) ?? null,
     isApplied: appliedListingIds.has(listing.id),
-    applicationId: applicationIdByListingId.get(listing.id) ?? null,
-    applicationLog: appliedLogsByListingId.get(listing.id) ?? [],
+    applicationId:
+      appliedApplicationByListingId.get(listing.id)?.applicationId ?? null,
+    applicationLog:
+      appliedApplicationByListingId.get(listing.id)?.applicationLog ?? [],
   }));
 
   return Response.json({ listings: enriched, total: enriched.length });

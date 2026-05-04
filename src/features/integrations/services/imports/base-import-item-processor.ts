@@ -1,3 +1,15 @@
+/**
+ * Base Import Item Processor
+ * 
+ * Individual item processing engine for data import operations.
+ * Provides:
+ * - Product record mapping and transformation
+ * - Custom field diagnostics and validation
+ * - Parameter import application
+ * - Cache invalidation and event emission
+ * - Cross-provider product listing resolution
+ */
+
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import {
   collectCustomFieldImportDiagnostics,

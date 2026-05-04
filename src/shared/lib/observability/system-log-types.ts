@@ -1,3 +1,15 @@
+/**
+ * System Log Types
+ * 
+ * Type definitions for system log documents and structures.
+ * Provides:
+ * - MongoDB system log document types
+ * - Log level type definitions
+ * - Log category and source types
+ * - Service identification types
+ * - Database document structure types
+ */
+
 import type { ObjectId } from 'mongodb';
 
 export type MongoSystemLogDoc = {

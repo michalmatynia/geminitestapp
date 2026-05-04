@@ -1,3 +1,15 @@
+/**
+ * UI Panels Contracts
+ * 
+ * Type definitions for UI panel components and filtering.
+ * Provides:
+ * - Filter field interface definitions
+ * - Panel configuration types
+ * - Label-value option integration
+ * - Field type definitions (text, search, select)
+ * - Panel component contracts
+ */
+
 import type { ReactNode } from 'react';
 import type { LabelValueOptionDto } from './base';
 

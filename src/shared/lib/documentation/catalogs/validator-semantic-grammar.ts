@@ -1,3 +1,15 @@
+/**
+ * Validator Semantic Grammar Catalog
+ * 
+ * Semantic grammar definitions for validator import system.
+ * Provides:
+ * - Validator import manifest
+ * - Semantic grammar schema definitions
+ * - Import options configuration
+ * - Type definitions for imports
+ * - Grammar validation rules
+ */
+
 import validatorImportManifest from '@docs/validator/semantic-grammar/manifest.json';
 import validatorImportOptions from '@docs/validator/semantic-grammar/options/validator-import-options.v1.json';
 import validatorImportSchema from '@docs/validator/semantic-grammar/schema/validator-import.v1.json';

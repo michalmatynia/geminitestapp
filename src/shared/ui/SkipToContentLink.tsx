@@ -1,14 +1,26 @@
 'use client';
 
+/**
+ * Skip to Content Link
+ * 
+ * Accessibility component providing keyboard navigation shortcuts.
+ * Features:
+ * - Hidden by default, visible on keyboard focus
+ * - Allows screen reader users to bypass navigation
+ * - WCAG 2.1 compliance for keyboard accessibility
+ * - Customizable target and styling
+ * - Automatic focus management
+ */
+
 import * as React from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';
 import { getTextContent } from '@/shared/utils/a11y';
 
 export interface SkipToContentLinkProps {
-  targetId?: string;
-  className?: string;
-  children?: React.ReactNode;
+  targetId?: string; // ID of the main content element to focus
+  className?: string; // Additional CSS classes
+  children?: React.ReactNode; // Link text content
 }
 
 export function SkipToContentLink({

@@ -1,3 +1,15 @@
+/**
+ * Category Mapper Context Helpers
+ * 
+ * Helper functions for category mapping context operations.
+ * Provides:
+ * - Category mapping with details handling
+ * - External category integration
+ * - Marketplace fetch response processing
+ * - Tradera category browser mode support
+ * - API error handling for category operations
+ */
+
 import type {
   CategoryMappingWithDetails,
   ExternalCategory,

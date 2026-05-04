@@ -1,3 +1,15 @@
+/**
+ * Log Triage Presets
+ * 
+ * Predefined filter presets for log triage and analysis.
+ * Provides:
+ * - Log filter preset definitions
+ * - Time-based filter resolution
+ * - System log filter form values
+ * - Preset configuration management
+ * - Quick filter application
+ */
+
 import type {
   SystemLogFilterFormValues,
   LogTriagePreset as LogTriagePresetBase,

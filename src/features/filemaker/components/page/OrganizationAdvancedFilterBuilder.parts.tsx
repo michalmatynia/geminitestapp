@@ -1,5 +1,6 @@
 'use client';
-/* eslint-disable complexity, max-lines, max-lines-per-function, no-nested-ternary */
+
+/* eslint-disable max-lines */
 
 import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from 'lucide-react';
 import { memo, useMemo } from 'react';
@@ -87,6 +88,32 @@ const FIELD_OPTIONS: SelectSimpleOption[] = ORGANIZATION_ADVANCED_FILTER_FIELD_C
   })
 );
 
+const resolveValueForCondition = (condition: OrganizationAdvancedFilterCondition): string => {
+  if (useMultiValueInputTypeCondition(condition)) {
+    return serializeOrganizationMultiValue(
+      Array.isArray(condition.value) ? condition.value : undefined
+    );
+  }
+  if (condition.value === undefined || condition.value === null) {
+    return '';
+  }
+  return String(condition.value);
+};
+
+const resolveBooleanConditionValue = (value: unknown): string | undefined => {
+  if (value === true) {
+    return 'true';
+  }
+  if (value === false) {
+    return 'false';
+  }
+  return undefined;
+};
+
+const useMultiValueInputTypeCondition = (condition: OrganizationAdvancedFilterCondition): boolean =>
+  isOrganizationAdvancedMultiValueOperator(condition.operator);
+
+/* eslint-disable complexity, max-lines-per-function */
 const OrganizationAdvancedConditionEditor = memo((props: {
   canMoveDown: boolean;
   canMoveUp: boolean;
@@ -124,13 +151,9 @@ const OrganizationAdvancedConditionEditor = memo((props: {
     [fieldConfig.operators]
   );
   const inputType = getOrganizationAdvancedInputType(condition.field);
-  const useMultiValueInput = isOrganizationAdvancedMultiValueOperator(condition.operator);
+  const useMultiValueInput = useMultiValueInputTypeCondition(condition);
   const dataListId = `organization-advanced-filter-value-options-${condition.id}`;
-  const value = useMultiValueInput
-    ? serializeOrganizationMultiValue(Array.isArray(condition.value) ? condition.value : undefined)
-    : condition.value === undefined || condition.value === null
-      ? ''
-      : String(condition.value);
+  const value = resolveValueForCondition(condition);
   const valueTo =
     condition.valueTo === undefined || condition.valueTo === null ? '' : String(condition.valueTo);
   const validationMessage = useMemo(
@@ -209,13 +232,7 @@ const OrganizationAdvancedConditionEditor = memo((props: {
             {fieldConfig.kind === 'boolean' && !useMultiValueInput ? (
               <SelectSimple
                 size='sm'
-                value={
-                  condition.value === true
-                    ? 'true'
-                    : condition.value === false
-                      ? 'false'
-                      : undefined
-                }
+                  value={resolveBooleanConditionValue(condition.value)}
                 onValueChange={handleBooleanValueChange}
                 options={ORGANIZATION_ADVANCED_BOOLEAN_OPTIONS}
                 placeholder='Select value'
@@ -345,8 +362,11 @@ const OrganizationAdvancedConditionEditor = memo((props: {
   );
 });
 
+/* eslint-enable max-lines-per-function */
+
 OrganizationAdvancedConditionEditor.displayName = 'OrganizationAdvancedConditionEditor';
 
+/* eslint-disable max-lines-per-function */
 export const OrganizationAdvancedFilterGroupEditor = memo(
   function OrganizationAdvancedFilterGroupEditor(props: {
     canMoveDown?: boolean;
@@ -539,3 +559,4 @@ export const OrganizationAdvancedFilterGroupEditor = memo(
     );
   }
 );
+/* eslint-enable complexity, max-lines-per-function */

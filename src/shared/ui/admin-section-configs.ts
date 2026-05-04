@@ -1,3 +1,15 @@
+/**
+ * Admin Section Configuration
+ * 
+ * Navigation and breadcrumb configuration for admin interface sections.
+ * Provides:
+ * - Admin section breadcrumb definitions
+ * - Navigation hierarchy for admin features
+ * - Consistent labeling and routing patterns
+ * - Agent creator and teaching section configs
+ * - Centralized admin navigation structure
+ */
+
 import type { AdminBreadcrumbNode } from '@/shared/contracts/ui/base';
 
 export const ADMIN_AGENT_CREATOR_SECTION: AdminBreadcrumbNode = {

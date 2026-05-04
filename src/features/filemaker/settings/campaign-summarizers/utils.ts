@@ -1,3 +1,15 @@
+/**
+ * Campaign Summarizers Utilities
+ * 
+ * Shared utility functions for campaign summarization.
+ * Provides:
+ * - String normalization helpers
+ * - Delivery and event type utilities
+ * - Health level calculations
+ * - Activity type classification
+ * - Common summarization helpers
+ */
+
 import { normalizeString } from '../../filemaker-settings.helpers';
 import type {
   FilemakerEmailCampaignDelivery,

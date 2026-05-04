@@ -1,3 +1,15 @@
+/**
+ * Database Cache Utilities
+ * 
+ * In-memory caching utilities for database operations.
+ * Provides:
+ * - TTL-based cache value storage
+ * - Cache options configuration
+ * - Timestamp-based expiration
+ * - Runtime error reporting integration
+ * - Source tracking for cache entries
+ */
+
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
 export type DatabaseCacheValue<T> = {

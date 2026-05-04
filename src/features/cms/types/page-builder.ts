@@ -1,3 +1,15 @@
+/**
+ * Page Builder Type Definitions
+ * 
+ * Core type definitions for the CMS page builder system.
+ * Provides:
+ * - Block and section type definitions
+ * - Page builder state and action types
+ * - Inspector settings interfaces
+ * - Page zone configuration types
+ * - Snapshot and history management types
+ */
+
 import type {
   BlockDefinition,
   BlockInstance,

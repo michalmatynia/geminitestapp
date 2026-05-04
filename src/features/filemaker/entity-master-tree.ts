@@ -1,6 +1,9 @@
-/* eslint-disable complexity, max-lines */
-
 import { formatFilemakerAddress } from './settings';
+
+/* eslint-disable
+   complexity,
+   max-lines
+ */
 
 import type { MongoFilemakerInvoice } from './pages/AdminFilemakerInvoicesPage.types';
 import type {

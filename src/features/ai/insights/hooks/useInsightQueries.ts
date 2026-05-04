@@ -1,3 +1,15 @@
+/**
+ * AI Insights Query Hooks
+ * 
+ * React Query hooks for AI insights data management.
+ * Provides:
+ * - Insight list queries with pagination
+ * - Insight creation mutations
+ * - Context registry integration
+ * - Type-safe query and mutation operations
+ * - API client integration for insights
+ */
+
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import type {
   AiInsightRecord,

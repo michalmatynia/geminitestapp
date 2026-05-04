@@ -1,3 +1,15 @@
+/**
+ * Campaign Analytics Summarizer
+ * 
+ * Comprehensive analytics aggregation for email campaigns.
+ * Provides:
+ * - Campaign performance analytics
+ * - Delivery registry analysis
+ * - Event tracking and aggregation
+ * - Run metrics compilation
+ * - Suppression registry integration
+ */
+
 import type {
   FilemakerDatabase,
   FilemakerEmailCampaign,

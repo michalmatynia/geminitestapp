@@ -1,3 +1,15 @@
+/**
+ * MongoDB Utilities
+ * 
+ * Server-side utilities for MongoDB operations and management.
+ * Provides:
+ * - Backup directory management
+ * - Child process execution for MongoDB tools
+ * - File system operations for backups
+ * - Configuration validation
+ * - Error handling for MongoDB operations
+ */
+
 import 'server-only';
 
 import { execFile } from 'child_process';

@@ -1,3 +1,15 @@
+/**
+ * Integrations Context Types
+ * 
+ * Type definitions for integrations context system.
+ * Provides:
+ * - Integration definition types
+ * - Session cookie and testing types
+ * - Connection form state types
+ * - Integration and connection interfaces
+ * - Playwright persona and settings types
+ */
+
 import { type integrationDefinitions } from '@/shared/contracts/integrations/domain';
 import { type SessionCookie, type TestLogEntry, type SessionPayload } from '@/shared/contracts/integrations/session-testing';
 import { type ConnectionFormState, type StepWithResult, type SaveConnectionOptions } from '@/shared/contracts/integrations/connections';

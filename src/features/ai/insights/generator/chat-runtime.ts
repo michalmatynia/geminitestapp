@@ -1,3 +1,15 @@
+/**
+ * AI Insights Chat Runtime
+ * 
+ * Chat model runtime integration for AI insights generation.
+ * Provides:
+ * - Brain chat completion integration
+ * - Message role transformation
+ * - Chat model invocation
+ * - Response handling and parsing
+ * - Runtime message coordination
+ */
+
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   runBrainChatCompletion,

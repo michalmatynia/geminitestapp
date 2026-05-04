@@ -1,5 +1,21 @@
 'use client';
 
+/**
+ * CRUD Panel State Management Hook
+ * 
+ * Manages the complete state for database CRUD operations interface.
+ * Provides functionality for:
+ * - Table selection and navigation
+ * - Pagination and data loading
+ * - Modal state management (add/edit/delete)
+ * - SQL query execution and result handling
+ * - Real-time data synchronization
+ * 
+ * This hook centralizes all database interaction logic for the
+ * admin database management interface, ensuring consistent
+ * state management across CRUD operations.
+ */
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
@@ -10,19 +26,20 @@ import { executeSqlQuery } from '../api';
 import { useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
 import { useCrudMutations, type UseCrudMutationsReturn } from './crud/useCrudMutations';
 
+// Result structure for paginated table data
 type CrudRowsResult = {
   rows: Record<string, unknown>[];
   totalRows: number;
 };
 
 export interface UseCrudPanelStateReturn extends UseCrudMutationsReturn {
-  selectedTable: string;
+  selectedTable: string; // Currently selected database table
   setSelectedTable: (table: string) => void;
-  page: number;
+  page: number; // Current pagination page
   setPage: (page: number) => void;
-  pageSize: number;
+  pageSize: number; // Number of rows per page
   setPageSize: (size: number) => void;
-  showAddModal: boolean;
+  showAddModal: boolean; // Add new record modal visibility
   setShowAddModal: (show: boolean) => void;
   editingRow: Record<string, unknown> | null;
   setEditingRow: (row: Record<string, unknown> | null) => void;

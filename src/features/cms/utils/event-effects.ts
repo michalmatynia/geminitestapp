@@ -1,3 +1,15 @@
+/**
+ * CMS Event Effects Utilities
+ * 
+ * Event handling and visual effects for CMS blocks.
+ * Provides:
+ * - Click action configuration and handling
+ * - Hover effect management
+ * - Scroll behavior customization
+ * - Event effects configuration
+ * - Interactive block behavior coordination
+ */
+
 import type {
   CmsClickAction,
   CmsClickTarget,

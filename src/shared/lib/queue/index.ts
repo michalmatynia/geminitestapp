@@ -1,3 +1,18 @@
+/**
+ * Queue Management System
+ * 
+ * Centralized job queue infrastructure built on Redis and Bull.
+ * Provides:
+ * - Managed queue creation with standardized configuration
+ * - Redis connection pooling and health monitoring
+ * - Queue registry for centralized management
+ * - Worker lifecycle management (start/stop all queues)
+ * - Health checks and monitoring capabilities
+ * 
+ * This system enables reliable background job processing
+ * with proper resource management and observability.
+ */
+
 export {
   getRedisConnection,
   isRedisAvailable,

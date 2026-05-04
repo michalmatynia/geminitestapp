@@ -1,3 +1,27 @@
+/**
+ * TanStack Query Client Configuration
+ * 
+ * Centralized configuration for React Query client with enhanced error handling.
+ * Features:
+ * - Global error classification and handling
+ * - Telemetry integration for query performance monitoring
+ * - Automatic retry logic with exponential backoff
+ * - Cache management and invalidation strategies
+ * - Observability integration for debugging and monitoring
+ */
+
+/**
+ * TanStack Query Client Configuration
+ * 
+ * Centralized configuration for React Query client with enhanced error handling.
+ * Features:
+ * - Global error classification and handling
+ * - Telemetry integration for query performance monitoring
+ * - Automatic retry logic with exponential backoff
+ * - Cache management and invalidation strategies
+ * - Observability integration for debugging and monitoring
+ */
+
 import { MutationCache, QueryCache, QueryClient, type QueryKey } from '@tanstack/react-query';
 
 import { classifyError } from '@/shared/errors/error-classifier';

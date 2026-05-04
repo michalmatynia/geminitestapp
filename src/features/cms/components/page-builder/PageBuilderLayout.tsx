@@ -1,6 +1,23 @@
 'use client';
 'use no memo';
 
+/**
+ * Page Builder Layout Component
+ * 
+ * Main layout container for the CMS page builder interface.
+ * Orchestrates the multi-panel layout including:
+ * - Left panel: Block library and page structure
+ * - Center panel: Live page preview with editing capabilities
+ * - Right panel: Settings and properties for selected elements
+ * 
+ * Provides context providers for:
+ * - Page builder state management
+ * - Drag and drop operations
+ * - Theme settings
+ * - Keyboard shortcuts
+ * - AI context registry integration
+ */
+
 import { PanelLeftClose, PanelRightClose } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 

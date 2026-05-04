@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable complexity, max-lines-per-function */
-
 import { Building2, CalendarDays, ExternalLink, UserRound } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'nextjs-toploader/app';
@@ -58,6 +56,7 @@ const formatOwnerName = (link: MongoFilemakerWebsiteLink): string => {
   return name.length > 0 ? name : link.partyId;
 };
 
+// eslint-disable-next-line complexity, max-lines-per-function
 export function AdminFilemakerWebsiteEditPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();

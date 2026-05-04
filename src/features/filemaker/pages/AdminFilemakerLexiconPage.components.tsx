@@ -1,5 +1,4 @@
 import type { ColumnDef } from '@tanstack/react-table';
-/* eslint-disable max-lines, max-lines-per-function */
 import { BookOpen, Pencil, Trash2 } from 'lucide-react';
 import type React from 'react';
 
@@ -30,6 +29,8 @@ import {
 } from './AdminFilemakerLexiconPage.type-metadata';
 import { FilemakerLexiconTypesModal } from './AdminFilemakerLexiconTypesModal';
 import { resolveFilemakerTechnologyIconUrl } from '../technology-icons';
+
+/* eslint-disable max-lines */
 
 type FilemakerLexiconTypeEditorViewState = {
   changeDraft: (
@@ -70,6 +71,7 @@ type FilemakerLexiconPageViewProps = {
   };
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function FilemakerLexiconPageView(
   props: FilemakerLexiconPageViewProps
 ): React.JSX.Element {
@@ -166,6 +168,7 @@ const VALIDATION_PATTERN_SOURCE_SCOPE_OPTIONS = [
   { label: 'Unclassified', value: 'unclassified' },
 ] as const;
 
+// eslint-disable-next-line max-lines-per-function
 function FilemakerLexiconValidationPatternsModal(props: {
   drafts: FilemakerLexiconValidationPattern[];
   editCategoryOptions: FilemakerLexiconTypeOption[];
@@ -194,7 +197,9 @@ function FilemakerLexiconValidationPatternsModal(props: {
       }
     >
       <div className='space-y-3'>
-        {props.drafts.map((pattern) => (
+        {props.drafts.map(
+        // eslint-disable-next-line max-lines-per-function
+          (pattern) => (
           <div
             key={pattern.id}
             className='rounded-lg border border-border/60 bg-muted/10 p-3'
@@ -396,6 +401,7 @@ const resolveLexiconEditorIconPreviewMessage = (
     ? 'Technology icon preview. Leave URL empty to use the generated default.'
     : 'Icon preview.';
 
+// eslint-disable-next-line max-lines-per-function
 export function FilemakerLexiconEditorModal(
   props: FilemakerLexiconEditorModalProps
 ): React.JSX.Element {

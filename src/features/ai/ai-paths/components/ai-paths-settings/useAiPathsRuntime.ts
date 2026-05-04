@@ -1,3 +1,15 @@
+/**
+ * AI Paths Runtime Hook
+ * 
+ * Runtime execution management for AI automation paths.
+ * Provides:
+ * - Runtime state monitoring and control
+ * - Context registry integration for page environments
+ * - Execution lifecycle management
+ * - Real-time runtime data synchronization
+ * - UI state coordination for runtime operations
+ */
+
 'use client';
 
 import type React from 'react';

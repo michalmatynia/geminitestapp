@@ -1,3 +1,15 @@
+/**
+ * Settings Database Sync Handler
+ * 
+ * API handler for synchronizing settings with database.
+ * Provides:
+ * - POST endpoint for database sync operations
+ * - Authentication and authorization checks
+ * - Elevated user and permission validation
+ * - Settings management access control
+ * - Secure database synchronization
+ */
+
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';

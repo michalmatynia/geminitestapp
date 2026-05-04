@@ -1,3 +1,15 @@
+/**
+ * Settings Compression Utilities
+ * 
+ * Compression and decompression utilities for large settings storage.
+ * Provides:
+ * - Gzip compression for settings data
+ * - Base64 encoding for storage compatibility
+ * - Automatic compression detection and handling
+ * - Error tracking and recovery
+ * - Workspace-specific compression keys
+ */
+
 import { gunzipSync, gzipSync } from 'zlib';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

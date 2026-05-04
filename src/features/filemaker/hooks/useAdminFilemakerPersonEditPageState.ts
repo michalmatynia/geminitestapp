@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable max-lines, max-lines-per-function, complexity */
-
 import { useRouter } from 'nextjs-toploader/app';
 import { useParams } from 'next/navigation';
 import type React from 'react';
@@ -12,6 +10,8 @@ import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
+
+/* eslint-disable max-lines */
 
 import {
   createClientFilemakerId,
@@ -112,6 +112,7 @@ const applyPersonAddresses = (
   addresses: PreparedPersonAddress[]
 ): FilemakerDatabase => {
   const addressById = new Map(database.addresses.map((address) => [address.id, address]));
+  // eslint-disable-next-line complexity
   addresses.forEach((address: PreparedPersonAddress): void => {
     const existing = addressById.get(address.addressId);
     addressById.set(
@@ -206,6 +207,7 @@ export type AdminFilemakerPersonEditPageContextValue = {
   router: AppRouterInstance;
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEditPageContextValue {
   const params = useParams();
   const router = useRouter();
@@ -278,6 +280,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         if (!response.ok) throw new Error(`Failed to load person (${response.status}).`);
         return (await response.json()) as MongoFilemakerPersonResponse;
       })
+      // eslint-disable-next-line complexity
       .then((response: MongoFilemakerPersonResponse): void => {
         setMongoPerson(response.person);
         setMongoLinkedAnyParams(response.linkedAnyParams ?? []);
@@ -311,6 +314,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     };
   }, [isCreateMode, personId]);
 
+  // eslint-disable-next-line max-lines-per-function
   useEffect(() => {
     if (isCreateMode) {
       setPersonDraft({
@@ -327,7 +331,9 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       setPersonDraft(person);
 
       const addressLinks = getFilemakerAddressLinksForOwner(database, 'person', person.id);
-      const settingsAddresses = addressLinks.map((link) => {
+      const settingsAddresses = addressLinks.map(
+        // eslint-disable-next-line complexity
+        (link) => {
         const addr = getFilemakerAddressById(database, link.addressId);
         return {
           addressId: link.addressId,
@@ -413,6 +419,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     [updateSetting, toast]
   );
 
+  // eslint-disable-next-line complexity,max-lines-per-function
   const handleSave = useCallback(async (): Promise<void> => {
     const nextFirstName = personDraft.firstName?.trim() ?? '';
     const nextLastName = personDraft.lastName?.trim() ?? '';
@@ -577,7 +584,9 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     }
     nextDatabase = {
       ...nextDatabase,
-      persons: nextDatabase.persons.map((p) => {
+      persons: nextDatabase.persons.map(
+        // eslint-disable-next-line complexity
+        (p) => {
         if (p.id !== person.id) return p;
         const basePerson = {
           ...p,
@@ -631,12 +640,12 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              parserRules: rules,
-              text: emailExtractionText,
-            }),
-          }
-        );
+          body: JSON.stringify({
+            parserRules: rules,
+            text: emailExtractionText,
+          }),
+        }
+      );
         if (!response.ok) throw new Error(`Failed to extract emails (${response.status}).`);
         const payload = (await response.json()) as {
           createdEmailCount: number;

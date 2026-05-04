@@ -1,3 +1,15 @@
+/**
+ * Edge Traffic Guard
+ * 
+ * Edge-based traffic protection and rate limiting.
+ * Provides:
+ * - Request rate limiting at edge
+ * - Suspicious traffic detection
+ * - Time-window-based blocking
+ * - Configurable thresholds
+ * - Page request tracking
+ */
+
 import { NextResponse, type NextRequest } from 'next/server';
 
 type EdgeTrafficGuardOptions = {

@@ -1,3 +1,15 @@
+/**
+ * API Error Handler
+ * 
+ * Centralized error handling for API routes.
+ * Provides:
+ * - Error response formatting
+ * - Service source resolution
+ * - Error tracking and reporting
+ * - UUID generation for error tracking
+ * - Server-only error processing
+ */
+
 import 'server-only';
 
 import { randomUUID } from 'crypto';

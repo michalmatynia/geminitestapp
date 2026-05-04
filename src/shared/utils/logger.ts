@@ -1,11 +1,23 @@
+/**
+ * Application Logger
+ * 
+ * Centralized logging utility with observability integration.
+ * Features:
+ * - Consistent logging interface across client and server
+ * - OpenTelemetry context integration for distributed tracing
+ * - Configurable log handlers for different environments
+ * - Error reporting and observability fallbacks
+ * - Structured logging with metadata support
+ */
+
 import { getActiveOtelContextAttributes } from '@/shared/lib/observability/otel-context';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
-
 /**
  * Simple logger utility to provide a consistent interface for logging.
  * This can be expanded to log to external services or files if needed.
+ * Integrates with observability systems for comprehensive monitoring.
  */
 
 type LogLevel = 'info' | 'warn' | 'error' | 'log';

@@ -1,3 +1,5 @@
+// Root layout component for the Next.js application
+// Handles global providers, metadata, and accessibility setup
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
@@ -16,6 +18,7 @@ import type { Metadata, Viewport } from 'next';
 import './fonts.css';
 import './globals.css';
 
+// Generate metadata for SEO and social sharing
 export async function generateMetadata(): Promise<Metadata> {
   const locale = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
   const routeTranslations = await getTranslations({ locale, namespace: 'Routes' });

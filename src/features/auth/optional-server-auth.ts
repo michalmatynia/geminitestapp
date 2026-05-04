@@ -1,3 +1,14 @@
+/**
+ * Optional Server Authentication
+ * 
+ * Fault-tolerant server-side authentication utilities.
+ * Provides:
+ * - Optional authentication that gracefully handles failures
+ * - Error tolerance for missing request scope
+ * - Fallback mechanisms for authentication errors
+ * - Server-side session management with error recovery
+ */
+
 import { isMissingRequestScopeError } from '@/shared/lib/auth/request-scope-error';
 import { auth } from './auth';
 

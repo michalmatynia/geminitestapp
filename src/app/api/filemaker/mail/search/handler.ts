@@ -19,7 +19,7 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   );
   const result = await searchFilemakerMailMessages({
     query,
-    ...(accountId ? { accountId } : {}),
+    ...(accountId === undefined ? {} : { accountId }),
   });
   return Response.json(result);
 }

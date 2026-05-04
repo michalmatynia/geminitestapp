@@ -6,12 +6,40 @@ import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 
 import { OrganizationJobListingsSection } from '../components/page/OrganizationJobListingsSection';
-import { OrganizationLegacyDemandSection } from '../components/page/OrganizationLegacyDemandSection';
 import {
   AdminFilemakerOrganizationEditPageProvider,
   useAdminFilemakerOrganizationEditPageStateContext,
 } from '../context/AdminFilemakerOrganizationEditPageContext';
 
+type OrganizationBreadcrumbContext = {
+  label: string;
+  nameForTitle: string | null;
+  organizationId: string;
+  organizationHref: string;
+};
+
+const resolveOrganizationBreadcrumbContext = (
+  organizationName: string | null | undefined,
+  organizationId: string
+): OrganizationBreadcrumbContext => {
+  if (organizationId.length > 0) {
+    return {
+      label: organizationName ?? 'Organization',
+      nameForTitle: organizationName,
+      organizationId,
+      organizationHref: `/admin/filemaker/organizations/${encodeURIComponent(organizationId)}`,
+    };
+  }
+
+  return {
+    label: 'Organization',
+    nameForTitle: null,
+    organizationId,
+    organizationHref: '/admin/filemaker/organizations',
+  };
+};
+
+// eslint-disable-next-line complexity
 function AdminFilemakerOrganizationJobListingsPageInner(): React.JSX.Element {
   const { isLoading, organization, router } =
     useAdminFilemakerOrganizationEditPageStateContext();
@@ -24,22 +52,31 @@ function AdminFilemakerOrganizationJobListingsPageInner(): React.JSX.Element {
   const isPageLoading = !hasMounted || isLoading;
   const organizationName = organization?.name ?? null;
   const organizationId = organization?.id ?? '';
+  const { label: parentLabel, nameForTitle, organizationHref } = resolveOrganizationBreadcrumbContext(
+    organizationName,
+    organizationId
+  );
+  const pageTitle = isPageLoading ? 'Loading...' : (nameForTitle ?? 'Job Listings');
+
+  const handleBackToOrganization = React.useCallback((): void => {
+    startTransition(() => {
+      router.push(organizationHref);
+    });
+  }, [organizationHref, router]);
 
   return (
     <div className='w-full max-w-none space-y-3 pb-4 pt-0'>
       <AdminTitleBreadcrumbHeader
         title={
           <h1 className='text-3xl font-bold tracking-tight text-white'>
-            {isPageLoading ? 'Loading...' : (organizationName ?? 'Job Listings')}
+            {pageTitle}
           </h1>
         }
         breadcrumb={
           <AdminFilemakerBreadcrumbs
             parent={{
-              label: organizationName ?? 'Organization',
-              href: organizationId.length > 0
-                ? `/admin/filemaker/organizations/${encodeURIComponent(organizationId)}`
-                : '/admin/filemaker/organizations',
+              label: parentLabel,
+              href: organizationHref,
             }}
             current='Job Listings'
           />
@@ -48,15 +85,7 @@ function AdminFilemakerOrganizationJobListingsPageInner(): React.JSX.Element {
           <button
             type='button'
             className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 px-3 text-xs text-gray-300 hover:bg-white/5'
-            onClick={(): void => {
-              startTransition(() => {
-                router.push(
-                  organizationId.length > 0
-                    ? `/admin/filemaker/organizations/${encodeURIComponent(organizationId)}`
-                    : '/admin/filemaker/organizations'
-                );
-              });
-            }}
+            onClick={handleBackToOrganization}
           >
             Back to organization
           </button>
@@ -66,7 +95,6 @@ function AdminFilemakerOrganizationJobListingsPageInner(): React.JSX.Element {
       />
       {!isPageLoading ? (
         <>
-          <OrganizationLegacyDemandSection />
           <OrganizationJobListingsSection />
         </>
       ) : null}

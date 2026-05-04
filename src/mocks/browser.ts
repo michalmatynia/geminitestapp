@@ -1,3 +1,14 @@
+/**
+ * Mock Service Worker - Browser Setup
+ * 
+ * Configures MSW (Mock Service Worker) for browser environments.
+ * Used for:
+ * - API mocking during development and testing
+ * - Intercepting HTTP requests without server setup
+ * - Consistent mock responses across different environments
+ * - Testing API integration without backend dependencies
+ */
+
 import { setupWorker } from 'msw/browser';
 
 import { handlers } from './handlers';

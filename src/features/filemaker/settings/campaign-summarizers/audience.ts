@@ -1,3 +1,15 @@
+/**
+ * Campaign Audience Summarizer
+ * 
+ * Audience analysis and summarization for email campaigns.
+ * Provides:
+ * - Audience rule evaluation
+ * - Email link resolution
+ * - Suppression registry filtering
+ * - Audience size calculation
+ * - Targeting criteria analysis
+ */
+
 import {
   getFilemakerEmailById,
 } from '../database-getters';

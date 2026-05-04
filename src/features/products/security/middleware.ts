@@ -1,3 +1,18 @@
+/**
+ * Product Security Middleware
+ * 
+ * Comprehensive security layer for product-related operations.
+ * Provides protection through:
+ * - Rate limiting to prevent abuse and DoS attacks
+ * - Input sanitization and validation for XSS prevention
+ * - Secure file upload handling with type validation
+ * - Configurable security policies per endpoint
+ * - Automatic threat detection and logging
+ * 
+ * This middleware ensures all product operations meet
+ * security standards while maintaining performance.
+ */
+
 import { NextRequest, type NextResponse } from 'next/server';
 
 import { AppError } from '@/shared/errors/app-error';
@@ -12,14 +27,16 @@ import {
 import { withRateLimit, rateLimiters } from './rate-limiting';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+// Configuration options for security middleware
 type SecurityConfig = {
-  enableRateLimit?: boolean | undefined;
-  enableInputSanitization?: boolean | undefined;
-  enableFileUploadSecurity?: boolean | undefined;
-  rateLimiter?: 'api' | 'productCreate' | 'imageUpload' | 'search' | 'auth' | undefined;
-  customSanitizationRules?: Record<string, SanitizationOptions> | undefined;
+  enableRateLimit?: boolean | undefined; // Enable request rate limiting
+  enableInputSanitization?: boolean | undefined; // Enable input cleaning
+  enableFileUploadSecurity?: boolean | undefined; // Enable file validation
+  rateLimiter?: 'api' | 'productCreate' | 'imageUpload' | 'search' | 'auth' | undefined; // Rate limit type
+  customSanitizationRules?: Record<string, SanitizationOptions> | undefined; // Custom sanitization rules
 };
 
+// Sanitized file with validated name
 interface SanitizedFile {
   file: File;
   sanitizedName: string;

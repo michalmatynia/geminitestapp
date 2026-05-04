@@ -1,3 +1,15 @@
+/**
+ * Database Queries Hook
+ * 
+ * React Query hooks for database management operations.
+ * Provides:
+ * - Database backup and restore queries
+ * - Sync status and operation monitoring
+ * - Engine state and configuration queries
+ * - Job status and progress tracking
+ * - Type-safe query interfaces with automatic caching
+ */
+
 import { type QueryClient } from '@tanstack/react-query';
 
 import type {

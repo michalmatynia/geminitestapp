@@ -1,3 +1,15 @@
+/**
+ * Query Schema Utilities
+ * 
+ * Query parameter parsing and validation utilities.
+ * Provides:
+ * - Boolean query parameter normalization
+ * - Optional query string handling
+ * - Zod schema integration for queries
+ * - Type-safe query parameter parsing
+ * - Common query value sets (true/false)
+ */
+
 import { z } from 'zod';
 
 const TRUE_QUERY_VALUES = new Set(['1', 'true', 'yes', 'on']);

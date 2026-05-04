@@ -20,7 +20,7 @@ export const pruneSingleCardinalityIncomingEdges = (
   edges.forEach((edge: Edge): void => {
     const targetNodeId = typeof edge.to === 'string' ? edge.to.trim() : '';
     const targetPort = typeof edge.toPort === 'string' ? edge.toPort.trim() : '';
-    if (!targetNodeId || !targetPort) {
+    if (targetNodeId.length === 0 || targetPort.length === 0) {
       nextEdges.push(edge);
       return;
     }

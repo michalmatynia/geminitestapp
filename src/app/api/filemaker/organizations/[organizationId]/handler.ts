@@ -85,12 +85,26 @@ const resolveOrganizationId = (ctx: ApiHandlerContext): string => {
   return decodeURIComponent(raw);
 };
 
-export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  await requireFilemakerMailAdminSession();
-  const organization = await getMongoFilemakerOrganizationById(resolveOrganizationId(ctx));
-  if (!organization) {
-    throw notFoundError('Filemaker organization was not found.');
-  }
+// eslint-disable-next-line max-lines-per-function
+const loadLinkedOrganizationData = async (
+  organization: Parameters<typeof listMongoFilemakerDemandsForOrganization>[0]
+): Promise<{
+  harvestProfiles: Awaited<ReturnType<typeof listMongoFilemakerHarvestProfilesForOrganization>>;
+  importedDemands: Awaited<ReturnType<typeof listMongoFilemakerDemandsForOrganization>>;
+  importedProfiles: Awaited<ReturnType<typeof listMongoFilemakerProfilesForOrganization>>;
+  linkedJobListings: Awaited<ReturnType<typeof listSettingsFilemakerJobListingsForOrganizationIds>>;
+  linkedAnyParams: Awaited<ReturnType<typeof listMongoFilemakerAnyParamsForOrganization>>;
+  linkedAnyTexts: Awaited<ReturnType<typeof listMongoFilemakerAnyTextsForOrganization>>;
+  linkedAddresses: Awaited<ReturnType<typeof listMongoFilemakerAddressesForOrganization>>;
+  linkedBankAccounts: Awaited<ReturnType<typeof listMongoFilemakerBankAccountsForOrganization>>;
+  linkedDocuments: Awaited<ReturnType<typeof listMongoFilemakerDocumentsForOrganization>>;
+  linkedEmails: Awaited<ReturnType<typeof listMongoFilemakerEmailsForOrganization>>;
+  linkedEvents: Awaited<ReturnType<typeof listMongoFilemakerEventsForOrganization>>;
+  linkedPersons: Awaited<ReturnType<typeof listMongoFilemakerPersonsForOrganization>>;
+  linkedWebsites: Awaited<ReturnType<typeof listMongoFilemakerWebsitesForOrganization>>;
+  relationshipSummary: Awaited<ReturnType<typeof getMongoFilemakerPartySnapshot>>;
+  valueCatalog: Awaited<ReturnType<typeof listMongoFilemakerValueCatalog>>;
+}> => {
   const [
     harvestProfiles,
     importedDemands,
@@ -131,7 +145,8 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
     }),
     listMongoFilemakerValueCatalog(),
   ]);
-  return Response.json({
+
+  return {
     harvestProfiles,
     importedDemands,
     importedProfiles,
@@ -145,9 +160,22 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
     linkedJobListings,
     linkedPersons,
     linkedWebsites,
-    organization,
     relationshipSummary,
     valueCatalog,
+  };
+};
+
+export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  await requireFilemakerMailAdminSession();
+  const organization = await getMongoFilemakerOrganizationById(resolveOrganizationId(ctx));
+  if (!organization) {
+    throw notFoundError('Filemaker organization was not found.');
+  }
+  const linkedData = await loadLinkedOrganizationData(organization);
+
+  return Response.json({
+    ...linkedData,
+    organization,
   });
 }
 

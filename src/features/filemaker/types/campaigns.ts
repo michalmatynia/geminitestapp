@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import type {
   FilemakerEmail,
   FilemakerPartyKind,
@@ -12,6 +11,8 @@ import type {
   FilemakerEmailCampaignDeliveryAttemptStatus,
   FilemakerEmailCampaignSuppressionReason,
 } from '../types';
+
+/* eslint-disable max-lines */
 
 export type FilemakerEmailCampaignAudienceRecipient = {
   emailId: string;

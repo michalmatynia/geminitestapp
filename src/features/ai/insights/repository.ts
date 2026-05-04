@@ -1,3 +1,15 @@
+/**
+ * AI Insights Repository
+ * 
+ * Server-side data repository for AI-generated insights.
+ * Provides:
+ * - Insight record storage and retrieval
+ * - Notification management for insights
+ * - Type-specific insight queries
+ * - MongoDB integration for persistence
+ * - Secure server-only data access
+ */
+
 import 'server-only';
 
 import { randomUUID } from 'crypto';

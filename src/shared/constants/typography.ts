@@ -1,21 +1,34 @@
+/**
+ * Typography Configuration
+ * 
+ * Centralized font management system for the application.
+ * Provides:
+ * - Predefined font combinations for consistent branding
+ * - User-selectable font sets with heading/body pairings
+ * - System font fallbacks for performance
+ * - Typography settings persistence
+ */
+
 export const APP_FONT_SET_SETTING_KEY = 'app_font_set.v1';
 
+// Available font set identifiers
 export type AppFontSetId =
-  | 'system'
-  | 'dm-sans'
-  | 'manrope'
-  | 'outfit'
-  | 'plus-jakarta'
-  | 'space-grotesk'
-  | 'sora'
-  | 'bebas-dm';
+  | 'system' // System default fonts
+  | 'dm-sans' // DM Sans family
+  | 'manrope' // Manrope family
+  | 'outfit' // Outfit family
+  | 'plus-jakarta' // Plus Jakarta Sans family
+  | 'space-grotesk' // Space Grotesk family
+  | 'sora' // Sora family
+  | 'bebas-dm'; // Bebas Neue + DM Sans combination
 
+// Font set configuration with heading and body font pairings
 export type AppFontSet = {
   id: AppFontSetId;
-  name: string;
-  description: string;
-  heading: string;
-  body: string;
+  name: string; // Display name for UI
+  description: string; // Description for font selection
+  heading: string; // CSS font-family for headings
+  body: string; // CSS font-family for body text
 };
 
 export const APP_FONT_SETS: readonly AppFontSet[] = [

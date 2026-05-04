@@ -1,11 +1,24 @@
 import 'server-only';
 
+/**
+ * Secret Settings Management
+ * 
+ * Secure handling of sensitive configuration values.
+ * Provides:
+ * - Encrypted storage and retrieval of secrets
+ * - Time-based caching with automatic expiration
+ * - Database-backed secret persistence
+ * - Provider-based secret resolution
+ * - Error handling and observability integration
+ */
+
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 
 import { findProviderForKey } from '@/shared/lib/db/settings-registry';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+// Cache secrets for 60 seconds to reduce database load
 const SECRET_CACHE_TTL_MS = 60_000;
 const secretCache = new Map<string, { value: string | null; fetchedAt: number }>();
 

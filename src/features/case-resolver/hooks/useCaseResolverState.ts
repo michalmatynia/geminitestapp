@@ -1,3 +1,15 @@
+/**
+ * Case Resolver State Management Hook
+ * 
+ * Comprehensive state management for case resolution workflows.
+ * Provides:
+ * - URL parameter synchronization for case state
+ * - Capture settings management and persistence
+ * - Real-time state updates and validation
+ * - Integration with case resolver capture system
+ * - Client-side state coordination
+ */
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';

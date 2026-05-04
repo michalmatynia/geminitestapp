@@ -1,3 +1,15 @@
+/**
+ * Backup Schedule Time Utilities
+ * 
+ * Time formatting and parsing utilities for backup schedules.
+ * Provides:
+ * - UTC time validation
+ * - Hour:minute formatting with padding
+ * - Time string parsing
+ * - Schedule time normalization
+ * - Backup timing utilities
+ */
+
 import { isValidDatabaseEngineBackupTimeUtc } from '@/shared/lib/db/database-engine-backup-schedule';
 
 const pad2 = (value: number): string => value.toString().padStart(2, '0');

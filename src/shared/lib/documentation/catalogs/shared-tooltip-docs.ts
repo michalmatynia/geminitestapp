@@ -1,3 +1,15 @@
+/**
+ * Shared Tooltip Documentation Catalog
+ * 
+ * Shared tooltip documentation entries across features.
+ * Provides:
+ * - Cross-feature tooltip documentation
+ * - Vector drawing tool documentation
+ * - Module ID integration
+ * - Reusable tooltip entries
+ * - Centralized tooltip registry
+ */
+
 import {
   DOCUMENTATION_MODULE_IDS,
   type DocumentationEntry,

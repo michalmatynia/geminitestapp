@@ -1,3 +1,15 @@
+/**
+ * Next.js Configuration
+ * 
+ * Comprehensive build and runtime configuration for the application.
+ * Handles:
+ * - Internationalization setup with next-intl
+ * - React Native Web integration for cross-platform components
+ * - Build optimization for different deployment targets
+ * - Development vs production environment differences
+ * - Vercel-specific optimizations and standalone builds
+ */
+
 import { copyFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,11 +22,13 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const isDev = process.env.NODE_ENV !== 'production';
+
 // VERCEL=1 is set automatically by Vercel on all build/deploy containers.
 // output:'standalone' is only needed for Docker/self-hosted deploys; enabling
 // it on Vercel adds unnecessary filesystem work (tracing + copying node_modules)
 // that contributes to the 45-minute build timeout.
 const isVercel = Boolean(process.env.VERCEL);
+
 // Turbopack builds do not emit output file tracing manifests yet, so standalone
 // output will fail to copy traced files. Use webpack builds when standalone
 // artifacts are required (see npm run build:webpack).

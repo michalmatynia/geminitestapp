@@ -1,3 +1,15 @@
+/**
+ * Outbound URL Policy
+ * 
+ * Security policy enforcement for outbound URL requests.
+ * Provides:
+ * - Host-based URL filtering
+ * - Suffix matching for domain rules
+ * - Allow/deny decision making
+ * - Policy violation reporting
+ * - Configurable outbound request rules
+ */
+
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 type OutboundHostRule = {
   raw: string;

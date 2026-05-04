@@ -1,3 +1,15 @@
+/**
+ * Database Engine Operation Controls
+ * 
+ * Configuration management for database engine operations.
+ * Provides:
+ * - Operation control settings parsing
+ * - Default control values
+ * - JSON configuration validation
+ * - Runtime error reporting integration
+ * - Operation control normalization
+ */
+
 import {
   DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
   type DatabaseEngineOperationControls,

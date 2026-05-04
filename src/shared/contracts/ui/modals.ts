@@ -1,3 +1,15 @@
+/**
+ * UI Modals Contracts
+ * 
+ * Type definitions for modal dialog components.
+ * Provides:
+ * - Entity modal props interface
+ * - Modal state management types
+ * - Generic item and list handling
+ * - Loading and error state types
+ * - Default ID configuration
+ */
+
 import type { ReactNode } from 'react';
 import type { ModalStateProps } from './base';
 

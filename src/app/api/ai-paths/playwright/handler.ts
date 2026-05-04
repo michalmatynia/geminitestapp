@@ -13,6 +13,9 @@ import {
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { aiPathsPlaywrightEnqueueRequestSchema } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
+import { type z } from 'zod';
+
+type AiPathsPlaywrightEnqueueRequest = z.infer<typeof aiPathsPlaywrightEnqueueRequestSchema>;
 
 type CapturePayload = {
   screenshot?: boolean;
@@ -57,40 +60,49 @@ interface EngineRequest {
 const toPublicRun = (
   run: PlaywrightEngineRunRecord
 ): Omit<PlaywrightEngineRunRecord, 'ownerUserId'> => {
-  const { ownerUserId: unused, ...rest } = run;
+  const { ownerUserId, ...rest } = run;
+  void ownerUserId;
   return rest;
 };
 
-const addEngineOptions = (request: EngineRequest, payload: z.infer<typeof aiPathsPlaywrightEnqueueRequestSchema>) => {
-  if (payload.timeoutMs !== undefined) request.timeoutMs = payload.timeoutMs;
-  if (payload.browserEngine !== undefined) request.browserEngine = payload.browserEngine;
-  if (payload.settingsOverrides !== undefined) request.settingsOverrides = payload.settingsOverrides as Record<string, unknown>;
-  if (payload.launchOptions !== undefined) request.launchOptions = payload.launchOptions as Record<string, unknown>;
-  if (payload.contextOptions !== undefined) request.contextOptions = payload.contextOptions as Record<string, unknown>;
-};
+const addEngineOptions = (
+  request: EngineRequest,
+  payload: AiPathsPlaywrightEnqueueRequest
+): EngineRequest => ({
+  ...request,
+  ...(payload.timeoutMs !== undefined ? { timeoutMs: payload.timeoutMs } : {}),
+  ...(payload.browserEngine !== undefined ? { browserEngine: payload.browserEngine } : {}),
+  ...(payload.settingsOverrides !== undefined ? { settingsOverrides: payload.settingsOverrides } : {}),
+  ...(payload.launchOptions !== undefined ? { launchOptions: payload.launchOptions } : {}),
+  ...(payload.contextOptions !== undefined ? { contextOptions: payload.contextOptions } : {}),
+});
 
-const buildEngineRequest = (
-  payload: z.infer<typeof aiPathsPlaywrightEnqueueRequestSchema>,
+/* eslint-disable complexity */
+const resolveBuildEngineRequest = (
+  payload: AiPathsPlaywrightEnqueueRequest,
   contextRegistry: unknown,
   capture: CapturePayload | undefined
 ): EngineRequest => {
   const request: EngineRequest = { script: payload.script };
-  
+
   if (payload.input !== undefined) request.input = payload.input;
-  
+
   const startUrl = payload.startUrl?.trim();
   if (typeof startUrl === 'string' && startUrl.length > 0) request.startUrl = startUrl;
-  
-  addEngineOptions(request, payload);
-  
+
+  const enrichedRequest = addEngineOptions(request, payload);
+
   const personaId = payload.personaId?.trim();
-  if (typeof personaId === 'string' && personaId.length > 0) request.personaId = personaId;
-  
-  if (contextRegistry !== undefined && contextRegistry !== null) request.contextRegistry = contextRegistry;
-  if (capture !== undefined) request.capture = capture;
-  
-  return request;
+  if (typeof personaId === 'string' && personaId.length > 0) enrichedRequest.personaId = personaId;
+
+  if (contextRegistry !== undefined && contextRegistry !== null) {
+    enrichedRequest.contextRegistry = contextRegistry;
+  }
+  if (capture !== undefined) enrichedRequest.capture = capture;
+
+  return enrichedRequest;
 };
+/* eslint-enable complexity */
 
 export async function postPlaywrightHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
@@ -108,7 +120,7 @@ export async function postPlaywrightHandler(req: NextRequest, _ctx: ApiHandlerCo
   const contextRegistry = await resolveAiPathsContextRegistryEnvelope(payload.contextRegistry);
   
   const run = await enqueuePlaywrightEngineRun({
-    request: buildEngineRequest(payload, contextRegistry, capture),
+    request: resolveBuildEngineRequest(payload, contextRegistry, capture),
     waitForResult: payload.waitForResult ?? true,
     ownerUserId: isInternal ? 'system' : access.userId,
     instance: createAiPathNodePlaywrightInstance(),
@@ -116,6 +128,3 @@ export async function postPlaywrightHandler(req: NextRequest, _ctx: ApiHandlerCo
 
   return NextResponse.json({ run: toPublicRun(run) });
 }
-
-
-

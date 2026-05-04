@@ -1,3 +1,15 @@
+/**
+ * FileMaker Values Import Audit
+ * 
+ * Audit field resolution for FileMaker values import process.
+ * Provides:
+ * - Audit field resolution from parsed values
+ * - Field preference and fallback logic
+ * - Legacy value transformation
+ * - Import data validation
+ * - Audit trail management
+ */
+
 import type { ParsedLegacyValue } from './filemaker-values-import.parser';
 import type { FilemakerValue } from './types';
 

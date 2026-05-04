@@ -1,3 +1,15 @@
+/**
+ * Trusted Self-Origin Utilities
+ * 
+ * Utilities for validating trusted self-origin requests.
+ * Provides:
+ * - Loopback hostname detection
+ * - Hostname normalization
+ * - IPv4 and IPv6 loopback validation
+ * - Localhost variant checking
+ * - Self-origin security validation
+ */
+
 const LOOPBACK_HOSTNAMES = new Set(['localhost', 'localhost.localdomain', '127.0.0.1', '::1']);
 
 const normalizeHostname = (hostname: string): string =>

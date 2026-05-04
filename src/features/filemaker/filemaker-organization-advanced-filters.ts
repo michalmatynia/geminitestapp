@@ -1,5 +1,10 @@
-/* eslint-disable complexity, max-lines, max-lines-per-function */
 import { z } from 'zod';
+
+/* eslint-disable
+   complexity,
+   max-lines,
+   max-lines-per-function
+ */
 
 export const organizationAdvancedFilterFieldSchema = z.enum([
   'id',

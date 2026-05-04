@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable complexity, max-lines, max-lines-per-function */
+/* eslint-disable max-lines */
 
 import { Download, ExternalLink, Eye, FileText, Loader2, Plus } from 'lucide-react';
 import React, { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
@@ -34,6 +34,7 @@ type CvCreatePayload = {
   title: string;
 };
 
+/* eslint-disable complexity */
 const readDownloadFilename = (response: Response, fallback: string): string => {
   const contentDisposition = response.headers.get('Content-Disposition') ?? '';
   const quoted = /filename="([^"]+)"/i.exec(contentDisposition);
@@ -42,6 +43,7 @@ const readDownloadFilename = (response: Response, fallback: string): string => {
   const unquotedFilename = unquoted?.[1]?.trim() ?? '';
   return unquotedFilename.length > 0 ? unquotedFilename : fallback;
 };
+/* eslint-enable complexity */
 
 const downloadBlob = (blob: Blob, filename: string): void => {
   const url = URL.createObjectURL(blob);
@@ -74,6 +76,7 @@ const formatCvSourceSuffix = (cv: FilemakerCv): string => {
   return '';
 };
 
+/* eslint-disable complexity, max-lines-per-function */
 export function PersonCvsSection(): React.JSX.Element {
   const {
     editableAddresses,
@@ -174,7 +177,6 @@ export function PersonCvsSection(): React.JSX.Element {
         personDraft.cvSelectedTechnicalEnvironment ?? person.cvSelectedTechnicalEnvironment ?? [],
     };
   }, [person, personDraft]);
-
   const buildCvCreatePayloadFromProfile = useCallback((): CvCreatePayload => {
     if (person === null) throw new Error('Person is not loaded.');
     const seedPerson = buildCvSeedPerson();
@@ -530,3 +532,4 @@ export function PersonCvsSection(): React.JSX.Element {
     </FormSection>
   );
 }
+/* eslint-enable complexity, max-lines-per-function */

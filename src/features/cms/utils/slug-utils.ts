@@ -1,3 +1,15 @@
+/**
+ * Slug Utilities
+ * 
+ * URL slug validation and normalization for CMS pages.
+ * Provides:
+ * - Slug entry validation and type checking
+ * - Normalized slug link structures
+ * - Error handling for invalid slugs
+ * - Page slug link payload processing
+ * - Type-safe slug operations
+ */
+
 import { validationError } from '@/shared/errors/app-error';
 
 export type NormalizedPageSlugLink = { id: string; slug: string };

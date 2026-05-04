@@ -1,3 +1,15 @@
+/**
+ * UI Menus Contracts
+ * 
+ * Type definitions for menu and context menu components.
+ * Provides:
+ * - Tree context menu item definitions
+ * - Menu item configuration types
+ * - Event handler types for menus
+ * - Data attributes integration
+ * - Menu tone and icon support
+ */
+
 import type { ReactNode, MouseEvent, KeyboardEvent, HTMLAttributes, ButtonHTMLAttributes } from 'react';
 import type { DataAttributes } from './base';
 

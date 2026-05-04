@@ -1,3 +1,15 @@
+/**
+ * Campaign Scheduler Status
+ * 
+ * Status management for email campaign scheduler.
+ * Provides:
+ * - Scheduler launch failure tracking
+ * - Skip reason management
+ * - Campaign status versioning
+ * - Error logging integration
+ * - Scheduler state coordination
+ */
+
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   type FilemakerEmailCampaignSchedulerLaunchFailure,

@@ -3,7 +3,7 @@ import { KangurMobileInsetPanel as InsetPanel, KangurMobileLinkButton as LinkBut
 import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 import { formatKangurMobileScoreOperation, getKangurMobileScoreAccuracyPercent } from '../../scores/mobileScoreSummary';
 import { formatProfileDateTime, formatProfileDuration, getSessionAccentTone, getSessionScoreTone } from '../profile-primitives';
-import type { KangurMobileProfileRecentResultItem } from './useKangurMobileProfileRecentResults';
+import type { KangurMobileProfileRecentResultItem } from '../useKangurMobileProfileRecentResults';
 
 export function SessionRow({ item }: { item: KangurMobileProfileRecentResultItem }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
@@ -32,7 +32,7 @@ export function SessionRow({ item }: { item: KangurMobileProfileRecentResultItem
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton href={item.practiceHref} label={copy({ de: 'Erneut trainieren', en: 'Train again', pl: 'Trenuj ponownie' })} tone='primary' />
-        {item.lessonHref && <LinkButton href={item.lessonHref} label={copy({ de: 'Lektion öffnen', en: 'Open lesson', pl: 'Otwórz lekcję' })} />}
+        {Boolean(item.lessonHref) && <LinkButton href={item.lessonHref} label={copy({ de: 'Lektion öffnen', en: 'Open lesson', pl: 'Otwórz lekcję' })} />}
         <LinkButton href={item.historyHref} label={copy({ de: 'Modusverlauf', en: 'Mode history', pl: 'Historia trybu' })} />
       </View>
     </InsetPanel>

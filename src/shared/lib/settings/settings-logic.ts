@@ -1,3 +1,15 @@
+/**
+ * Settings Logic
+ * 
+ * Core business logic for settings management and optimization.
+ * Provides:
+ * - Heavy settings detection and filtering
+ * - Settings scope management
+ * - Performance optimization for large settings
+ * - Key-based settings categorization
+ * - Client-side error logging integration
+ */
+
 import type { SettingsScope, SettingRecord } from '@/shared/lib/settings-cache';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

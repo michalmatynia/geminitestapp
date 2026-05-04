@@ -27,7 +27,7 @@ const MenuLink = ({ item, isActive, color, style, content }: { item: MenuItemSet
   return <LocaleLink href={item.url || '/'} className={className} style={itemStyle} aria-current={isActive ? 'page' : undefined} aria-label={item.label}>{content}</LocaleLink>;
 };
 
-export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMenuProps): React.JSX.Element | null {
+export function CmsMenu({ menu, colorSchemes: _colorSchemes, animationsEnabled: _animationsEnabled = true }: CmsMenuProps): React.JSX.Element | null {
   const app = useOptionalCmsStorefrontAppearance(); const path = usePathname(); const trans = useTranslations('CmsMenu');
   const [hydrated, setHydrated] = useState(false); const [collapsed, setCollapsed] = useState(menu.collapsible ? menu.collapsedByDefault : false);
   const isSide = menu.menuPlacement === 'left' || menu.menuPlacement === 'right';

@@ -1,3 +1,15 @@
+/**
+ * FileMaker Document Types
+ * 
+ * Type definitions for FileMaker document management.
+ * Provides:
+ * - Document owner kind types (event, organization, person)
+ * - Document structure interface
+ * - Document metadata fields
+ * - Type and code classification
+ * - Timestamp and comment tracking
+ */
+
 export type FilemakerDocumentOwnerKind = 'event' | 'organization' | 'person';
 
 export type FilemakerDocument = {

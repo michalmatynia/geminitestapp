@@ -1,3 +1,15 @@
+/**
+ * Custom CSS Utilities
+ * 
+ * CSS scoping and transformation utilities for CMS blocks.
+ * Provides:
+ * - CSS selector generation for nodes
+ * - Scoped CSS building with parent/children tokens
+ * - Token replacement for hierarchical styling
+ * - Safe CSS string processing
+ * - Node-specific style isolation
+ */
+
 const PARENT_TOKEN = /\bparent\b/g;
 const CHILDREN_TOKEN = /\bchildren\b/g;
 

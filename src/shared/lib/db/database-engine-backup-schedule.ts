@@ -1,3 +1,15 @@
+/**
+ * Database Engine Backup Schedule
+ * 
+ * Backup scheduling configuration and management.
+ * Provides:
+ * - Backup schedule parsing and validation
+ * - Cadence configuration (daily, weekly, etc.)
+ * - Target schedule management
+ * - Backup status tracking
+ * - Default schedule settings
+ */
+
 import {
   DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
   type DatabaseEngineBackupCadence,

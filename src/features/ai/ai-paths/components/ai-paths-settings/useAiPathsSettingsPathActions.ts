@@ -1,3 +1,15 @@
+/**
+ * AI Paths Settings Path Actions Hook
+ * 
+ * Action orchestration for AI automation path management.
+ * Provides:
+ * - Graph manipulation actions for path editing
+ * - Persistence layer actions for saving changes
+ * - Runtime control actions for execution management
+ * - Selection state actions for UI interaction
+ * - Path run clearing and cleanup operations
+ */
+
 'use client';
 
 import React, { useCallback } from 'react';

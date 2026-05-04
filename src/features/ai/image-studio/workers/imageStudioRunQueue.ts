@@ -1,5 +1,21 @@
 import 'server-only';
 
+/**
+ * Image Studio Run Queue Worker
+ * 
+ * Background job processor for AI image generation workflows.
+ * Handles:
+ * - Queued image generation requests
+ * - Batch processing and resource management
+ * - Cost estimation and billing integration
+ * - Slot-based execution tracking
+ * - Error handling and retry logic
+ * 
+ * This worker processes image generation jobs asynchronously,
+ * managing AI model interactions, file storage, and execution
+ * metadata while ensuring efficient resource utilization.
+ */
+
 import {
   getImageStudioRunById,
   updateImageStudioRun,

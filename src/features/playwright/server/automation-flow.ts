@@ -1,5 +1,21 @@
 import 'server-only';
 
+/**
+ * Playwright Automation Flow Engine
+ * 
+ * Orchestrates complex web automation workflows for data extraction and import.
+ * Handles:
+ * - Multi-step automation sequences with conditional logic
+ * - Data mapping and transformation from scraped content
+ * - Product creation and draft management
+ * - Error handling and recovery strategies
+ * - Integration with external systems and databases
+ * 
+ * This engine powers automated data collection workflows,
+ * enabling sophisticated web scraping and import operations
+ * with robust error handling and data validation.
+ */
+
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integration-storage';
 import type {
   PlaywrightAutomationBlock,

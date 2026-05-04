@@ -1,3 +1,15 @@
+/**
+ * AI Insights Processor Worker
+ * 
+ * Background worker for processing AI insights generation tasks.
+ * Provides:
+ * - Analytics insight generation
+ * - Logs insight generation
+ * - Runtime analytics insight generation
+ * - Schedule settings management
+ * - Metadata tracking for insights
+ */
+
 import 'server-only';
 
 import {

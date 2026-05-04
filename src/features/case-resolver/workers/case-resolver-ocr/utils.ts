@@ -1,6 +1,5 @@
 import {
   safeSetTimeout,
-  safeClearInterval,
   safeClearTimeout,
 } from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

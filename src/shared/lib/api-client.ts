@@ -1,3 +1,19 @@
+/**
+ * API Client
+ * 
+ * Centralized HTTP client for all API communications.
+ * Provides:
+ * - Automatic error handling and classification
+ * - CSRF protection and security headers
+ * - Request/response logging and tracing
+ * - Timeout management and retry logic
+ * - Type-safe error responses with structured metadata
+ * 
+ * This client ensures consistent API interaction patterns,
+ * security compliance, and comprehensive error reporting
+ * across all application features.
+ */
+
 import type { ErrorCategory, SuggestedAction } from '@/shared/contracts/observability';
 import { resolveKangurClientEndpoint } from '@/features/kangur/services/resolve-kangur-client-endpoint';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
@@ -8,21 +24,25 @@ import { getTraceId } from '@/shared/utils/observability/trace';
 export type ApiClientOptions = {
   [K in keyof RequestInit]?: RequestInit[K] | undefined;
 } & {
-  params?: Record<string, string | number | boolean | undefined> | undefined;
-  logError?: boolean | undefined;
-  timeout?: number | undefined;
+  params?: Record<string, string | number | boolean | undefined> | undefined; // URL query parameters
+  logError?: boolean | undefined; // Whether to log errors automatically
+  timeout?: number | undefined; // Request timeout in milliseconds
 };
 
+/**
+ * Enhanced Error class for API responses with structured metadata.
+ * Provides detailed error information for better debugging and user experience.
+ */
 export class ApiError extends Error {
-  status: number;
-  errorId?: string | undefined;
-  category?: ErrorCategory | string | undefined;
-  suggestedActions?: SuggestedAction[] | undefined;
-  retryAfterMs?: number | undefined;
-  payload?: unknown | undefined;
-  __logged?: boolean;
-  endpoint?: string;
-  method?: string;
+  status: number; // HTTP status code
+  errorId?: string | undefined; // Unique error identifier
+  category?: ErrorCategory | string | undefined; // Error classification
+  suggestedActions?: SuggestedAction[] | undefined; // Recommended user actions
+  retryAfterMs?: number | undefined; // Retry delay for rate limiting
+  payload?: unknown | undefined; // Additional error data
+  __logged?: boolean; // Internal flag to prevent duplicate logging
+  endpoint?: string; // API endpoint that failed
+  method?: string; // HTTP method used
 
   constructor(
     message: string,

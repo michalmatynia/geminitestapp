@@ -1,6 +1,10 @@
-/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
-
 import type { FilemakerAnyText } from './filemaker-anytext.types';
+/* eslint-disable
+   complexity,
+   max-lines,
+   max-lines-per-function,
+   @typescript-eslint/strict-boolean-expressions
+ */
 import type { FilemakerContract } from './filemaker-contract.types';
 import type { FilemakerDocument } from './filemaker-document.types';
 import type {

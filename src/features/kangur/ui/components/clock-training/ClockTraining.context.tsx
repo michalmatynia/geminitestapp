@@ -1,5 +1,22 @@
 'use client';
 
+/* eslint-disable max-lines */
+
+/**
+ * Clock Training Context Provider
+ * 
+ * Manages the state and logic for Kangur's clock reading training game.
+ * Provides comprehensive functionality for:
+ * - Task generation and progression through difficulty levels
+ * - Timer management for challenge modes
+ * - Score tracking and XP rewards
+ * - Feedback generation for correct/incorrect answers
+ * - Progress persistence and session management
+ * 
+ * This context powers the interactive clock training experience,
+ * handling both practice and challenge modes with adaptive difficulty.
+ */
+
 import React, { createContext, useContext, useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
@@ -36,6 +53,7 @@ import type {
 } from '../clock-training/types';
 import { translateClockTrainingWithFallback } from './clock-training-i18n';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 export type ClockTrainingContextValue = {
   props: ClockTrainingProps;
@@ -87,7 +105,11 @@ const resolveClockTrainingTaskSet = ({
     ? createClockTaskSet(section)
     : resolveClockPracticeTaskSet(section, practiceTasks);
 
-export function ClockTrainingProvider({ children, ...props }: ClockTrainingProps & { children: React.ReactNode }) {
+/* eslint-disable-next-line max-lines-per-function */
+export function ClockTrainingProvider({
+  children,
+  ...props
+}: ClockTrainingProps & { children: React.ReactNode }): JSX.Element {
   const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
@@ -179,7 +201,7 @@ export function ClockTrainingProvider({ children, ...props }: ClockTrainingProps
       });
 
       setXpEarned(reward.xp);
-      setXpBreakdown(reward.breakdown ?? []);
+      setXpBreakdown(reward.breakdown);
       setDone(true);
       if (gameMode === 'challenge') {
         const medal = resolveClockChallengeMedal(finalScore, tasks.length);
@@ -199,6 +221,7 @@ export function ClockTrainingProvider({ children, ...props }: ClockTrainingProps
     [gameMode, props.onChallengeSuccess, props.onPracticeCompleted, ownerKey, section, tasks.length]
   );
 
+  /* eslint-disable complexity, max-lines-per-function */
   const resolveAttempt = useCallback(
     ({
       correct,
@@ -279,14 +302,22 @@ export function ClockTrainingProvider({ children, ...props }: ClockTrainingProps
       }
 
       const isLastTask = current + 1 >= nextTaskCount;
-      const nextStep = isLastTask 
-        ? (gameMode === 'challenge' || !props.onPracticeCompleted ? 'summary' : 'next-stage')
-        : 'next-task';
-        
+      const isSummaryStep =
+        gameMode === 'challenge' || !props.onPracticeCompleted;
+      let nextStep: 'next-stage' | 'next-task' | 'summary' = 'next-task';
+      if (isLastTask) {
+        nextStep = isSummaryStep ? 'summary' : 'next-stage';
+      }
+
       setSubmitNextStep(nextStep);
 
-      const delayMs = correct ? 1200 : gameMode === 'challenge' ? 1400 : 2100;
-      
+      let delayMs = 2100;
+      if (correct) {
+        delayMs = 1200;
+      } else if (gameMode === 'challenge') {
+        delayMs = 1400;
+      }
+
       advanceTimeoutRef.current = safeSetTimeout(() => {
         if (isLastTask) {
           if (gameMode === 'challenge') {
@@ -321,6 +352,7 @@ export function ClockTrainingProvider({ children, ...props }: ClockTrainingProps
       section,
     ]
   );
+  /* eslint-enable complexity, max-lines-per-function */
 
   const handleSubmit = useCallback((hours: number, minutes: number): void => {
     if (!task) return;
@@ -334,9 +366,11 @@ export function ClockTrainingProvider({ children, ...props }: ClockTrainingProps
   }, [resolveAttempt, task]);
 
   useEffect(() => {
+    let timerId = 0;
     if (gameMode !== 'challenge' || done || feedback || !task) {
-      return;
+      return () => undefined;
     }
+
     if (challengeTimeLeft <= 0) {
       resolveAttempt({
         correct: false,
@@ -347,10 +381,10 @@ export function ClockTrainingProvider({ children, ...props }: ClockTrainingProps
           ...buildClockTimeoutFeedback(section, task, translations),
         },
       });
-      return;
+      return () => undefined;
     }
 
-    const timerId = safeSetTimeout(() => {
+    timerId = safeSetTimeout(() => {
       setChallengeTimeLeft((value) => Math.max(0, value - 1));
     }, 1000);
 

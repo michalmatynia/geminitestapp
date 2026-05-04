@@ -1,5 +1,6 @@
-/* eslint-disable max-lines */
 import Papa from 'papaparse';
+
+/* eslint-disable max-lines */
 
 import { normalizeString } from './filemaker-settings.helpers';
 import { parseLegacyOrganiserTimestamp } from './filemaker-organisers-import.parser';

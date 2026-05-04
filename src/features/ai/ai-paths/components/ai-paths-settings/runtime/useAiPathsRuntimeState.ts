@@ -1,5 +1,18 @@
 'use client';
 
+/**
+ * AI Paths Runtime State Management Hook
+ * 
+ * Manages the execution state of AI path workflows including:
+ * - Node status tracking (running, completed, failed, etc.)
+ * - Runtime event streaming and processing
+ * - Execution duration calculations
+ * - Status normalization and display logic
+ * 
+ * This hook is central to the AI paths execution UI, providing real-time
+ * updates on workflow progress and node-level execution details.
+ */
+
 import { useCallback, useRef, useState } from 'react';
 
 import {
@@ -17,6 +30,7 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { resolveRuntimeNodeDisplayStatus } from './utils';
 
+// Node statuses that indicate completion and should track execution duration
 const DURATION_TERMINAL_NODE_STATUSES: ReadonlySet<AiPathRuntimeNodeStatus> = new Set([
   'completed',
   'cached',

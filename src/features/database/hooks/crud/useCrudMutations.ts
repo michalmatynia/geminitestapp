@@ -1,3 +1,15 @@
+/**
+ * CRUD Mutations Hook
+ * 
+ * Database CRUD operation mutation management.
+ * Provides:
+ * - Create, read, update, delete operation handling
+ * - Mutation error state management
+ * - Success message coordination
+ * - Client-side error logging integration
+ * - Type-safe mutation result handling
+ */
+
 import { useCallback, useState } from 'react';
 import type { CrudResult, CrudRequest } from '@/shared/contracts/database';
 import type { MutationResult } from '@/shared/contracts/ui/queries';

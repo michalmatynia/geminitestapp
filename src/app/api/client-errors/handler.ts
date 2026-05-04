@@ -1,3 +1,15 @@
+/**
+ * Client Errors API Handler
+ * 
+ * API handler for receiving and processing client-side errors.
+ * Provides:
+ * - Client error payload validation
+ * - Error context processing
+ * - Sensitive data redaction
+ * - String truncation for large payloads
+ * - Server-side error logging integration
+ */
+
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { clientErrorPayloadSchema, type ErrorContext } from '@/shared/contracts/observability';

@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable complexity, max-lines, max-lines-per-function */
-
 import { Download, ExternalLink, Eye, RotateCcw, Save, Trash2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'nextjs-toploader/app';
@@ -32,6 +30,12 @@ import type {
   FilemakerCvTailoringPatch,
 } from '../filemaker-cv.types';
 import { decodeRouteParam, formatTimestamp } from './filemaker-page-utils';
+
+/* eslint-disable
+   complexity,
+   max-lines,
+   max-lines-per-function
+ */
 
 type CvDetailState = {
   cv: FilemakerCv | null;

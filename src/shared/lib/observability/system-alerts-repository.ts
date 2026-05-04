@@ -1,3 +1,15 @@
+/**
+ * System Alerts Repository
+ * 
+ * Server-side repository for system alert management.
+ * Provides:
+ * - Alert storage and retrieval
+ * - Alert schema validation with Zod
+ * - MongoDB-based alert persistence
+ * - Error tracking integration
+ * - Server-only alert operations
+ */
+
 import 'server-only';
 
 import { z } from 'zod';

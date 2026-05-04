@@ -1,3 +1,15 @@
+/**
+ * System Log Repository
+ * 
+ * Server-side repository for system log storage and retrieval.
+ * Provides:
+ * - System log record persistence
+ * - MongoDB-based log storage
+ * - Log level filtering
+ * - Log metrics aggregation
+ * - Query and retrieval operations
+ */
+
 'use server';
 
 import { randomUUID } from 'crypto';

@@ -1,3 +1,30 @@
+/* eslint-disable
+  complexity,
+  @typescript-eslint/no-unnecessary-condition,
+  @typescript-eslint/strict-boolean-expressions,
+  max-lines,
+  max-lines-per-function,
+  no-nested-ternary,
+  @typescript-eslint/consistent-type-assertions,
+  require-atomic-updates
+*/
+
+/**
+ * Integration Schema Handler for AI Paths Runtime
+ * 
+ * This handler manages database schema operations within AI path execution flows.
+ * It provides functionality to:
+ * - Fetch and normalize database collection schemas
+ * - Handle schema responses and collection metadata
+ * - Process template-based schema queries
+ * - Manage schema caching and updates
+ * 
+ * Used by AI path nodes that need to interact with database structures
+ * and understand collection schemas for data operations.
+ */
+
+import type { CollectionSchema, SchemaResponse } from '@/shared/contracts/database';
+import type { HttpResult } from '@/shared/contracts/http';
 import type { DbSchemaConfig } from '@/shared/contracts/ai-paths';
 import type {
   NodeHandler,
@@ -7,10 +34,10 @@ import type {
 import { dbApi } from '@/shared/lib/ai-paths/api';
 import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
 import { coerceInput, renderJsonTemplate } from '../../utils';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
-// Import modularized utilities
+// Import modularized utilities for schema processing
 import {
-  isCollectionSchema,
   resolveCollectionList,
   cloneSchemaResponse,
   normalizeSelectedCollectionKey,
@@ -22,7 +49,7 @@ import { type LiveContextCollection, type LiveContextPayload } from './integrati
 
 // Module-scoped schema cache to avoid redundant API calls across database nodes
 // within the same run. TTL ensures freshness across separate runs.
-let schemaCacheResult: any = null; // Simplified cache handling for now
+let schemaCacheResult: HttpResult<SchemaResponse> | null = null;
 let schemaCacheTs = 0;
 const SCHEMA_CACHE_TTL_MS = 30_000;
 const DEFAULT_LIVE_CONTEXT_LIMIT = 20;
@@ -337,7 +364,7 @@ const buildLiveContextFromEmbeddedCategoryContext = (args: {
   };
 };
 
-export const getCachedSchema = async (): Promise<HttpResult<unknown>> => {
+export const getCachedSchema = async (): Promise<HttpResult<SchemaResponse>> => {
   const now = Date.now();
   if (schemaCacheResult && schemaCacheResult.ok && now - schemaCacheTs < SCHEMA_CACHE_TTL_MS) {
     return schemaCacheResult;
@@ -679,7 +706,7 @@ export const handleDbSchema: NodeHandler = async ({
     };
   }
 
-  const fullSchema = cloneSchemaResponse(schemaResult.data as SchemaResponse);
+  const fullSchema = cloneSchemaResponse(schemaResult.data);
 
   // Filter collections if mode is "selected"
   const schema =

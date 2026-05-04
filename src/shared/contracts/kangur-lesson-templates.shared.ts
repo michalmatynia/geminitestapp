@@ -1,3 +1,15 @@
+/**
+ * Kangur Lesson Templates Shared Contracts
+ * 
+ * Shared type definitions for Kangur lesson template system.
+ * Provides:
+ * - Lesson template catalog definitions
+ * - Slide content schema validation
+ * - Template structure contracts
+ * - Content length constraints
+ * - Cross-platform lesson type definitions
+ */
+
 import { z } from 'zod';
 
 // ---------------------------------------------------------------------------

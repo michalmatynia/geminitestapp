@@ -1,3 +1,15 @@
+/**
+ * Campaign Audience Conditions
+ * 
+ * Condition evaluation engine for campaign audience targeting.
+ * Provides:
+ * - Audience condition evaluation
+ * - Condition group logic (AND/OR)
+ * - Field-based filtering
+ * - Operator-based comparisons
+ * - Email, organization, and person targeting
+ */
+
 import {
   type FilemakerAudienceCondition,
   type FilemakerAudienceConditionGroup,

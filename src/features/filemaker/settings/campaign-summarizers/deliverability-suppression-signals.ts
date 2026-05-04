@@ -1,3 +1,15 @@
+/**
+ * Campaign Deliverability Suppression Signals
+ * 
+ * Analysis and summarization of email suppression signals.
+ * Provides:
+ * - Suppression reason tracking (complaint, bounced, etc.)
+ * - Suppression registry analysis
+ * - Percentage calculations for suppression rates
+ * - Deliverability signal aggregation
+ * - Campaign health metrics
+ */
+
 import type {
   FilemakerEmailCampaignSuppressionReason,
   FilemakerEmailCampaignSuppressionRegistry,

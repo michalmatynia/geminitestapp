@@ -45,7 +45,7 @@ const resolveEdgeMeta = (
 ): CaseResolverEdgeMeta => edgeMeta[edgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
 
 // Helper: Node text processing logic
-const getNodeContent = (node: AiNode, output: 'plainText' | 'plaintextContent' | 'wysiwygText'): string => {
+const _getNodeContent = (node: AiNode, output: 'plainText' | 'plaintextContent' | 'wysiwygText'): string => {
   if (output === 'plainText' || output === 'plaintextContent') return resolveNodeText(node);
   return resolveNodeWysiwygText(node);
 };

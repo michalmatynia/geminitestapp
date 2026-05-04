@@ -1,5 +1,17 @@
 import 'server-only';
 
+/**
+ * Filemaker Values Repository
+ * 
+ * Database repository for managing Filemaker value entities and parameters.
+ * Handles:
+ * - CRUD operations for value records
+ * - Parameter and link management
+ * - Value categorization and organization
+ * - Query optimization and indexing
+ * - Data validation and integrity checks
+ */
+
 import type { Collection, Document } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

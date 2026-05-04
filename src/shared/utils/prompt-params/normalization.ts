@@ -11,7 +11,7 @@ export function normalizeParamsObject(rawObjectText: string): string {
       const inner = segment.text.slice(1, -1);
       // Best-effort safety: only convert simple single-quoted strings.
       if (
-        !inner ||
+        inner.length === 0 ||
         inner.includes('\n') ||
         inner.includes('\r') ||
         inner.includes('\\') ||

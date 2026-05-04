@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable max-lines-per-function */
-
 import { ExternalLink, Globe } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import React, {
@@ -143,6 +141,7 @@ function useMongoFilemakerWebsites(input: {
   return state;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function AdminFilemakerWebsitesPage(): React.JSX.Element {
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -157,6 +156,7 @@ export function AdminFilemakerWebsitesPage(): React.JSX.Element {
   const state = useMongoFilemakerWebsites(listInput);
 
   const columns = useMemo<ColumnDef<MongoFilemakerWebsiteSummary>[]>(
+    // eslint-disable-next-line max-lines-per-function
     () => [
       {
         id: 'website',

@@ -1,3 +1,15 @@
+/**
+ * AI Paths Settings State Management
+ * 
+ * Complex state management for AI automation path configuration.
+ * Provides:
+ * - Graph-based path configuration state
+ * - Persistence layer integration for settings
+ * - Runtime data synchronization
+ * - Real-time updates and validation
+ * - Client-side state coordination without memoization
+ */
+
 'use client';
 'use no memo';
 

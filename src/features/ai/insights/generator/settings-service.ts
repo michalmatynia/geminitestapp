@@ -1,3 +1,15 @@
+/**
+ * AI Insights Settings Service
+ * 
+ * Settings retrieval service for AI insights configuration.
+ * Provides:
+ * - MongoDB settings integration
+ * - Setting value retrieval by key
+ * - Error logging for settings access
+ * - Null-safe settings handling
+ * - Database connection management
+ */
+
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

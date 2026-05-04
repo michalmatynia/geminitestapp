@@ -1,5 +1,18 @@
 'use client';
 
+/**
+ * Admin Layout Provider
+ * 
+ * Manages the global layout state for admin interfaces including:
+ * - Sidebar visibility and collapse state
+ * - Panel management (left/right panels)
+ * - Navigation state persistence
+ * - Responsive layout behavior
+ * 
+ * Uses split context pattern for performance optimization,
+ * separating state and actions to prevent unnecessary re-renders.
+ */
+
 import { useMemo, useState, type ReactNode } from 'react';
 
 import type { AdminLayoutActions, AdminLayoutState } from '@/shared/contracts/admin';
@@ -7,6 +20,7 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type { AdminLayoutActions, AdminLayoutState };
 
+// State context for layout data (sidebar state, panel visibility, etc.)
 const {
   Context: StateContext,
   useStrictContext: useAdminLayoutState,
@@ -16,6 +30,7 @@ const {
   displayName: 'AdminLayoutStateContext',
 });
 
+// Actions context for layout manipulation functions
 const {
   Context: ActionsContext,
   useStrictContext: useAdminLayoutActions,

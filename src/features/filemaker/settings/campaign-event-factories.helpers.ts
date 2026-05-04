@@ -1,3 +1,15 @@
+/**
+ * Campaign Event Factories Helpers
+ * 
+ * Factory functions for creating campaign event records.
+ * Provides:
+ * - Campaign event creation and normalization
+ * - Event type validation
+ * - Event registry management
+ * - Run and delivery status tracking
+ * - ID token generation
+ */
+
 import { normalizeString, toIdToken } from '../filemaker-settings.helpers';
 import {
   isFilemakerEmailCampaignEventType,

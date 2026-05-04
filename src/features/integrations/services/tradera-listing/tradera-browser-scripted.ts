@@ -1,3 +1,15 @@
+/**
+ * Tradera Browser Scripted Automation
+ * 
+ * Advanced browser automation for Tradera marketplace operations.
+ * Provides:
+ * - Scripted listing creation and management
+ * - Custom Playwright instance configuration
+ * - Automated form filling and submission
+ * - Status monitoring and error handling
+ * - Integration with Tradera marketplace API
+ */
+
 import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
   normalizeTraderaListingFormUrl,

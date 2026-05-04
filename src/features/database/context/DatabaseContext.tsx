@@ -1,5 +1,17 @@
 'use client';
 
+/**
+ * Database Context Provider
+ * 
+ * Manages global database interface state and configuration.
+ * Provides:
+ * - Database connection and type management
+ * - Preview mode and UI configuration
+ * - Data pagination and filtering state
+ * - Shared database operations context
+ * - Type-safe database interaction patterns
+ */
+
 import React, { useState, useMemo } from 'react';
 import type {
   DatabaseType,

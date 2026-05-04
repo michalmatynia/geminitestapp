@@ -2,13 +2,14 @@ import 'server-only';
 
 import os from 'os';
 import path from 'path';
+import type * as Playwright from 'playwright';
 
 import { getPlaywrightRuntime } from '@/shared/lib/playwright/runtime';
 
 export const RUN_ROOT_DIR = path.join(os.tmpdir(), 'ai-paths-playwright-runs');
 export const RUN_TTL_MS = 24 * 60 * 60 * 1000;
 
-export const getPlaywright = (): typeof import('playwright') => getPlaywrightRuntime();
+export const getPlaywright = (): typeof Playwright => getPlaywrightRuntime();
 
 export type PlaywrightHelperTarget = {
   scrollIntoViewIfNeeded?: (() => Promise<unknown> | unknown) | undefined;

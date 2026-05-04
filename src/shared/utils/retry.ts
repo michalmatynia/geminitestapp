@@ -1,3 +1,15 @@
+/**
+ * Retry Utilities
+ * 
+ * Robust retry mechanisms for handling transient failures.
+ * Features:
+ * - Exponential backoff with jitter to prevent thundering herd
+ * - Configurable retry policies and error classification
+ * - Comprehensive logging and observability integration
+ * - Support for both synchronous and asynchronous operations
+ * - Circuit breaker patterns for external service calls
+ */
+
 import {
   isRetryableError,
   getRetryDelay,

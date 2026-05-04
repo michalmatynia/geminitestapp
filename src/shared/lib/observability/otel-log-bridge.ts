@@ -1,3 +1,15 @@
+/**
+ * OpenTelemetry Log Bridge
+ * 
+ * Bridge between system logs and OpenTelemetry logging.
+ * Provides:
+ * - System log to OTel severity mapping
+ * - Log redaction for sensitive data
+ * - String truncation for large logs
+ * - OTel API integration
+ * - Structured log emission
+ */
+
 import { SeverityNumber, logs } from '@opentelemetry/api-logs';
 
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';

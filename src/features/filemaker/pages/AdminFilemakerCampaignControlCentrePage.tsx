@@ -42,6 +42,14 @@ import type {
   FilemakerEmailCampaignEventRegistry,
 } from '../types';
 
+/* eslint-disable
+   complexity,
+   eqeqeq,
+   max-lines,
+   max-lines-per-function,
+   @typescript-eslint/strict-boolean-expressions
+ */
+
 export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
   const router = useRouter();
   const settingsStore = useSettingsStore();

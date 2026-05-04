@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable max-lines */
+
 import {
   useCallback,
   type Dispatch,
@@ -21,6 +23,7 @@ import {
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { getMotionSafeScrollBehavior } from '@/features/kangur/shared/utils';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import {
   getPageRect,
@@ -45,6 +48,25 @@ type SectionAnchor = KangurTutorAnchorRegistration & {
   surface: TutorSurface;
 };
 
+type UseKangurAiTutorGuidedFlowReturn = {
+  focusSectionRect: (
+    sectionRect: DOMRect | null | undefined,
+    options?: {
+      forceScroll?: boolean;
+      spotlight?: boolean;
+    }
+  ) => void;
+  focusSelectionPageRect: (
+    selectionPageRect: DOMRect | null | undefined,
+    options?: {
+      forceScroll?: boolean;
+      spotlight?: boolean;
+    }
+  ) => void;
+  startGuidedSectionExplanation: (anchor: SectionAnchor) => void;
+  startGuidedSelectionExplanation: (selectionText: string) => void;
+};
+
 const buildSectionExplainPrompt = (
   tutorContent: KangurAiTutorContent,
   anchor: SectionAnchor
@@ -59,7 +81,7 @@ const buildSectionExplainPrompt = (
   >;
   const prompt = promptCatalog[anchor.kind] ?? tutorContent.sectionExplainPrompts.default;
 
-  if (label && prompt.labeledPrompt) {
+  if (label !== null && label.length > 0 && prompt.labeledPrompt !== undefined) {
     return formatKangurAiTutorTemplate(prompt.labeledPrompt, { label });
   }
 
@@ -67,6 +89,7 @@ const buildSectionExplainPrompt = (
 };
 
 
+/* eslint-disable-next-line max-lines-per-function */
 export function useKangurAiTutorGuidedFlow(input: {
   activeSelectionPageRect: DOMRect | null;
   activateSelectionGlow: () => boolean;
@@ -112,7 +135,7 @@ export function useKangurAiTutorGuidedFlow(input: {
   telemetryContext: KangurAiTutorTelemetryContextDto;
   tutorContent: KangurAiTutorContent;
   viewportHeight: number;
-}) {
+}): UseKangurAiTutorGuidedFlowReturn {
   const {
     activeSelectionPageRect,
     activateSelectionGlow,
@@ -165,7 +188,7 @@ export function useKangurAiTutorGuidedFlow(input: {
     (selectionText: string) => {
       if (
         selectionKnowledgeReference?.sourceCollection !== 'kangur_page_content' ||
-        !selectionKnowledgeEntry
+        selectionKnowledgeEntry === null
       ) {
         return selectionKnowledgeReference;
       }
@@ -221,13 +244,14 @@ export function useKangurAiTutorGuidedFlow(input: {
         });
       }
 
-      if (options?.spotlight) {
+      if (options?.spotlight === true) {
         setSelectionContextSpotlightTick((current) => current + 1);
       }
     },
     [setSelectionContextSpotlightTick, viewportHeight]
   );
 
+  /* eslint-disable complexity */
   const focusSectionRect = useCallback(
     (
       sectionRect: DOMRect | null | undefined,
@@ -261,14 +285,16 @@ export function useKangurAiTutorGuidedFlow(input: {
         });
       }
 
-      if (options?.spotlight) {
+      if (options?.spotlight === true) {
         setViewportTick((current) => current + 1);
       }
     },
     [setViewportTick, viewportHeight]
   );
+  /* eslint-enable complexity */
 
   const startGuidedSectionExplanation = useCallback(
+    // eslint-disable-next-line complexity, max-lines-per-function
     (anchor: SectionAnchor): void => {
       if (selectionExplainTimeoutRef.current !== null) {
         window.clearTimeout(selectionExplainTimeoutRef.current);
@@ -396,6 +422,7 @@ export function useKangurAiTutorGuidedFlow(input: {
   );
 
   const startGuidedSelectionExplanation = useCallback(
+    // eslint-disable-next-line complexity, max-lines-per-function
     (selectionText: string): void => {
       if (selectionExplainTimeoutRef.current !== null) {
         safeClearTimeout(selectionExplainTimeoutRef.current);
@@ -505,3 +532,5 @@ export function useKangurAiTutorGuidedFlow(input: {
     startGuidedSelectionExplanation,
   };
 }
+
+/* eslint-enable max-lines */

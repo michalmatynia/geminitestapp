@@ -1,3 +1,15 @@
+/**
+ * Source Service Utilities
+ * 
+ * Service identification and resolution from source strings.
+ * Provides:
+ * - Source string parsing and normalization
+ * - HTTP method segment detection
+ * - Service name extraction
+ * - Segment filtering and cleanup
+ * - Source-to-service mapping
+ */
+
 const HTTP_METHOD_SEGMENTS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']);
 
 const normalizeSourceSegments = (source: string | undefined): string[] =>

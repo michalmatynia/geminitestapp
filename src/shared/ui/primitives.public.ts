@@ -1,3 +1,19 @@
+/**
+ * UI Primitives - Public API
+ * 
+ * Centralized export of all UI primitive components for public consumption.
+ * Provides:
+ * - Consistent component API across the application
+ * - Type-safe component props and variants
+ * - Reusable design system components
+ * - Accessibility-compliant implementations
+ * - Standardized styling and behavior patterns
+ * 
+ * This module serves as the single source of truth for UI components,
+ * ensuring consistency and maintainability across all features.
+ */
+
+// Dialog and Modal Components
 export {
   AlertDialog,
   AlertDialogPortal,
@@ -11,11 +27,17 @@ export {
   AlertDialogAction,
   AlertDialogCancel,
 } from './alert-dialog';
+
+// Notification and Feedback Components
 export { Alert } from './alert';
 export type { AlertVariant } from './alert';
+
+// User Interface Elements
 export { Avatar, AvatarImage, AvatarFallback } from './avatar';
 export { Button, buttonVariants } from './button';
 export type { ButtonProps } from './button';
+
+// Layout and Container Components
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './card';
 export type { CardProps } from './card';
 export { ClientOnly } from './client-only';

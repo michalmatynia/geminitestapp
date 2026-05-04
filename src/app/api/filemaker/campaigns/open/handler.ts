@@ -27,6 +27,10 @@ const TRANSPARENT_GIF = Buffer.from(
 const querySchema = z.object({
   token: optionalTrimmedQueryString(),
 });
+
+const isPresentString = (value: string | null | undefined): value is string =>
+  typeof value === 'string' && value.length > 0;
+
 const buildTransparentPixelResponse = (): Response =>
   /* safe */ new Response(TRANSPARENT_GIF, {
     status: 200,
@@ -41,7 +45,7 @@ const buildTransparentPixelResponse = (): Response =>
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { token } = querySchema.parse(Object.fromEntries(req.nextUrl.searchParams.entries()));
   const tokenPayload = parseFilemakerCampaignUnsubscribeToken(token ?? null);
-  if (!tokenPayload?.campaignId) {
+  if (!isPresentString(tokenPayload?.campaignId)) {
     return buildTransparentPixelResponse();
   }
 
@@ -59,16 +63,15 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
     }
 
     const alreadyTracked = eventRegistry.events.some((event) => {
-      if (event.type !== 'opened' || event.campaignId !== campaign.id) {
-        return false;
-      }
-      if (tokenPayload.deliveryId) {
-        return event.deliveryId === tokenPayload.deliveryId;
-      }
-      if (tokenPayload.runId) {
-        return event.runId === tokenPayload.runId;
-      }
-      return false;
+      const hasDeliveryMatch =
+        tokenPayload.deliveryId === null || event.deliveryId === tokenPayload.deliveryId;
+      const hasRunMatch = tokenPayload.runId === null || event.runId === tokenPayload.runId;
+      return (
+        event.type === 'opened' &&
+        event.campaignId === campaign.id &&
+        hasDeliveryMatch &&
+        hasRunMatch
+      );
     });
 
     if (!alreadyTracked) {

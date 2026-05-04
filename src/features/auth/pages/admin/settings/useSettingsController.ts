@@ -1,16 +1,42 @@
-import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { disableMfa, setupMfa, verifyMfa } from '@/features/auth/api/mfa';
 import { useAuthUserSecurity } from '@/features/auth/hooks/useAuthQueries';
 import { AUTH_SETTINGS_KEYS, type AuthRole } from '@/features/auth/utils/auth-management';
 import { type AuthSecurityPolicy } from '@/features/auth/utils/auth-security';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { disableMfa, setupMfa, verifyMfa } from '@/features/auth/api/mfa';
-import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
+import type { MfaDisableResponse, MfaSetupResponse, MfaVerifyResponse } from '@/shared/contracts/auth';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 
-export function useSettingsController() {
+type SettingsMutations = {
+  mfaSetupMutation: MutationResult<{ ok: boolean; payload: MfaSetupResponse }, void>;
+  mfaVerifyMutation: MutationResult<{ ok: boolean; payload: MfaVerifyResponse }, string>;
+  mfaDisableMutation: MutationResult<
+    { ok: boolean; payload: MfaDisableResponse },
+    string | { token?: string; recoveryCode?: string }
+  >;
+};
+
+type SettingsControllerReturn = {
+  roles: AuthRole[];
+  defaultRole: string;
+  setDefaultRole: Dispatch<SetStateAction<string>>;
+  setDefaultDirty: Dispatch<SetStateAction<boolean>>;
+  defaultDirty: boolean;
+  saveDefaultRole: () => Promise<void>;
+  securityPolicy: AuthSecurityPolicy;
+  setSecurityPolicy: Dispatch<SetStateAction<AuthSecurityPolicy>>;
+  setSecurityDirty: Dispatch<SetStateAction<boolean>>;
+  securityDirty: boolean;
+  saveSecurityPolicy: () => Promise<void>;
+  userSecurityQuery: ReturnType<typeof useAuthUserSecurity>;
+  isSaving: boolean;
+} & SettingsMutations;
+
+export function useSettingsController(): SettingsControllerReturn {
   const { toast } = useToast();
   const { session, roles: contextRoles, defaultRole: contextDefaultRole, securityPolicy: contextSecurityPolicy, updateSetting, refetchSettings } = useAuth();
   
@@ -31,7 +57,7 @@ export function useSettingsController() {
     setSecurityPolicy(contextSecurityPolicy);
   }, [contextRoles, contextDefaultRole, contextSecurityPolicy]);
 
-  const saveDefaultRole = async () => {
+  const saveDefaultRole = async (): Promise<void> => {
     try {
       await updateSetting.mutateAsync({ key: AUTH_SETTINGS_KEYS.defaultRole, value: defaultRole });
       setDefaultDirty(false);
@@ -43,7 +69,7 @@ export function useSettingsController() {
     }
   };
 
-  const saveSecurityPolicy = async () => {
+  const saveSecurityPolicy = async (): Promise<void> => {
     try {
       await updateSetting.mutateAsync({ key: AUTH_SETTINGS_KEYS.securityPolicy, value: JSON.stringify(securityPolicy) });
       setSecurityDirty(false);

@@ -1,3 +1,15 @@
+/**
+ * Documentation Tooltip Settings
+ * 
+ * Client-side settings management for documentation tooltips.
+ * Provides:
+ * - Tooltip visibility preference persistence
+ * - LocalStorage-based settings storage
+ * - Default value fallback handling
+ * - Client-side error logging
+ * - SSR-safe settings access
+ */
+
 'use client';
 
 import React from 'react';

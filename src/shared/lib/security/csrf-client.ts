@@ -1,13 +1,36 @@
+/**
+ * CSRF Protection Client
+ * 
+ * Client-side Cross-Site Request Forgery (CSRF) protection utilities.
+ * Provides:
+ * - Automatic CSRF token generation and management
+ * - Secure token storage in HTTP-only cookies
+ * - Request header injection for API calls
+ * - Method-based protection (POST, PUT, DELETE, etc.)
+ * - Fallback token generation for older browsers
+ * 
+ * This module ensures all state-changing requests include
+ * valid CSRF tokens to prevent unauthorized actions.
+ */
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+
+// CSRF configuration constants
 export const CSRF_COOKIE_NAME = 'csrf-token';
 export const CSRF_HEADER_NAME = 'x-csrf-token';
-export const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+export const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']); // Methods that don't require CSRF protection
 
+/**
+ * Generates a cryptographically secure CSRF token.
+ * Uses modern Web Crypto API with fallbacks for compatibility.
+ */
 const generateClientCsrfToken = (): string => {
   if (typeof window !== 'undefined' && window.crypto) {
+    // Modern browsers: use crypto.randomUUID()
     if ('randomUUID' in window.crypto) {
       return window.crypto.randomUUID().replace(/-/g, '');
     }
+    // Fallback: use crypto.getRandomValues()
     if ('getRandomValues' in window.crypto) {
       const bytes = new Uint8Array(32);
       (window.crypto as Window['crypto']).getRandomValues(bytes);
@@ -19,9 +42,13 @@ const generateClientCsrfToken = (): string => {
       return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
     }
   }
+  // Legacy fallback for older browsers
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 };
 
+/**
+ * Ensures a CSRF token exists in cookies, creating one if needed.
+ */
 const ensureClientCsrfCookie = (): string | null => {
   if (typeof document === 'undefined') return null;
   const token = generateClientCsrfToken();

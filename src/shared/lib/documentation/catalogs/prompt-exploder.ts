@@ -1,3 +1,15 @@
+/**
+ * Prompt Exploder Documentation Catalog
+ * 
+ * Documentation catalog for prompt exploder feature.
+ * Provides:
+ * - Prompt exploder tooltip documentation
+ * - Documentation module ID integration
+ * - Tooltip catalog entries
+ * - Documentation entry type definitions
+ * - Feature-specific documentation registry
+ */
+
 import {
   DOCUMENTATION_MODULE_IDS,
   type DocumentationEntry,

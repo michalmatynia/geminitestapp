@@ -1,22 +1,22 @@
-# geminitestapp
+# Kangur Platform - Comprehensive Educational & Business Application
 
-This repository contains a large Next.js platform application, the Kangur
-learner product, an Expo-based native mobile app, and shared cross-platform
-packages for contracts, domain logic, transport, and platform ports.
+This repository contains a large-scale Next.js platform application featuring the Kangur educational product, an Expo-based native mobile app, and shared cross-platform packages for contracts, domain logic, transport, and platform integrations.
 
-## Main surfaces
+## Architecture Overview
 
-- Root app: Next.js App Router web, admin, and API surface at the repository
-  root.
-- Kangur web: learner-facing StudiQ and Kangur experience inside the root app.
-- Standalone StudiQ web workspace: focused Next.js workspace in
-  `apps/studiq-web` for an isolated Kangur/StudiQ web shell.
-- Kangur mobile: Expo Router app in `apps/mobile`.
-- Shared Kangur packages:
-  - `packages/kangur-contracts`
-  - `packages/kangur-core`
-  - `packages/kangur-api-client`
-  - `packages/kangur-platform`
+The platform is built as a monorepo supporting multiple deployment targets and user experiences, from educational content delivery to business process automation.
+
+## Main Application Surfaces
+
+- **Root App**: Next.js App Router web application with admin interface and comprehensive API surface at the repository root
+- **Kangur Web**: Learner-facing StudiQ and Kangur educational experience integrated within the root app
+- **Standalone StudiQ Web**: Focused Next.js workspace in `apps/studiq-web` providing an isolated Kangur/StudiQ web shell
+- **Kangur Mobile**: Cross-platform Expo Router app in `apps/mobile` for iOS and Android
+- **Shared Kangur Packages**: Reusable cross-platform modules
+  - `packages/kangur-contracts` - Type definitions and API contracts
+  - `packages/kangur-core` - Core business logic and utilities  
+  - `packages/kangur-api-client` - API client libraries
+  - `packages/kangur-platform` - Platform-specific integrations
 
 ## Workspaces
 

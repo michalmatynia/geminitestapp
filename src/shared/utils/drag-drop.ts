@@ -1,18 +1,30 @@
+/**
+ * Drag and Drop Utilities
+ * 
+ * Standardized drag and drop data transfer keys and utilities.
+ * Provides:
+ * - Consistent data transfer key definitions
+ * - Type-safe drag data handling
+ * - Cross-component drag and drop support
+ * - Structured data transfer for complex objects
+ */
+
+// Standardized keys for drag and drop data transfer
 export const DRAG_KEYS = {
-  TEXT: 'text/plain',
-  NOTE_ID: 'noteId',
-  FOLDER_ID: 'folderId',
-  CATEGORY_ID: 'categoryId',
-  ADMIN_MENU_PATH: 'application/x-admin-menu-path',
-  AI_NODE: 'application/x-ai-node',
-  ASSET_ID: 'assetId',
-  FOLDER_PATH: 'folderPath',
-  BLOCK_ID: 'blockId',
-  BLOCK_TYPE: 'blockType',
-  SECTION_ID: 'sectionId',
-  SECTION_TYPE: 'sectionType',
-  SECTION_ZONE: 'sectionZone',
-  SECTION_INDEX: 'sectionIndex',
+  TEXT: 'text/plain', // Standard text content
+  NOTE_ID: 'noteId', // Note identifier for note management
+  FOLDER_ID: 'folderId', // Folder identifier for file organization
+  CATEGORY_ID: 'categoryId', // Category identifier for content classification
+  ADMIN_MENU_PATH: 'application/x-admin-menu-path', // Admin navigation paths
+  AI_NODE: 'application/x-ai-node', // AI workflow node data
+  ASSET_ID: 'assetId', // Asset identifier for media management
+  FOLDER_PATH: 'folderPath', // Full folder path for navigation
+  BLOCK_ID: 'blockId', // Page builder block identifier
+  BLOCK_TYPE: 'blockType', // Page builder block type
+  SECTION_ID: 'sectionId', // Page section identifier
+  SECTION_TYPE: 'sectionType', // Page section type
+  SECTION_ZONE: 'sectionZone', // Page section zone placement
+  SECTION_INDEX: 'sectionIndex', // Page section ordering index
   FROM_SECTION_ID: 'fromSectionId',
   FROM_COLUMN_ID: 'fromColumnId',
   FROM_PARENT_BLOCK_ID: 'fromParentBlockId',

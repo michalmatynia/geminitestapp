@@ -1,3 +1,15 @@
+/**
+ * Kangur Design Tokens
+ * 
+ * Design system tokens and theme utilities for Kangur UI.
+ * Provides:
+ * - Page tone definitions and styling
+ * - Accent color management
+ * - Theme-aware class name utilities
+ * - Viewport height calculations
+ * - Premium background styling
+ */
+
 import { cn } from '@/features/kangur/shared/utils';
 import type { KangurAccent } from '@/shared/contracts/kangur-theme';
 

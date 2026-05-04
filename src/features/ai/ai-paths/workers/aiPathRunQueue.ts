@@ -10,7 +10,6 @@ import {
   clearAiPathsEnabledCache as resetAiPathsEnabledCache,
 } from './ai-path-run-queue/brain-gate';
 import {
-  AI_PATH_RUN_QUEUE_NAME,
   LOG_SOURCE,
   REQUIRE_DURABLE_QUEUE,
   QUEUE_HOT_WAITING_LIMIT,
@@ -67,8 +66,11 @@ const hasJobLookupQueueApi = (value: unknown): value is QueueJobLookupApi =>
 
 const stopAiPathRunQueueInternal = async (): Promise<void> => {
   if (!aiPathRunQueueState.workerStarted) return;
+  const currentState = aiPathRunQueueState.workerStarted;
   await queue.stopWorker();
-  aiPathRunQueueState.workerStarted = false;
+  if (currentState) {
+    aiPathRunQueueState.workerStarted = false;
+  }
 };
 
 export const startAiPathRunQueue = (): void => {
@@ -97,8 +99,11 @@ export const startAiPathRunQueue = (): void => {
     }
 
     if (!aiPathRunQueueState.workerStarted) {
+      const wasStarted = aiPathRunQueueState.workerStarted;
       queue.startWorker();
-      aiPathRunQueueState.workerStarted = true;
+      if (!wasStarted) {
+        aiPathRunQueueState.workerStarted = true;
+      }
 
       void (async (): Promise<void> => {
         try {

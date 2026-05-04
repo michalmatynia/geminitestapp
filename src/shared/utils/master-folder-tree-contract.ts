@@ -1,3 +1,15 @@
+/**
+ * Master Folder Tree Contract
+ * 
+ * Type definitions and contracts for hierarchical folder tree structures.
+ * Provides:
+ * - Node type definitions (folder, file)
+ * - Target type and drop position types
+ * - Tree node structure interfaces
+ * - Tree ID type definitions
+ * - Drag-and-drop operation types
+ */
+
 import type {
   MasterTreeNodeTypeDto,
   MasterTreeTargetTypeDto,

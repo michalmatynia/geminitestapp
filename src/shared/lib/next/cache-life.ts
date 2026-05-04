@@ -1,11 +1,22 @@
+/**
+ * Next.js Cache Life Configuration
+ * 
+ * Wrapper for Next.js cache lifecycle management.
+ * Provides:
+ * - Configurable cache duration profiles
+ * - Stale-while-revalidate patterns
+ * - Cache expiration and revalidation strategies
+ * - Type-safe cache configuration
+ */
+
 import { cacheLife } from 'next/cache';
 
 type CacheLifeProfile =
   | string
   | {
-      stale?: number;
-      revalidate?: number;
-      expire?: number;
+      stale?: number; // Duration content is served stale
+      revalidate?: number; // Revalidation interval
+      expire?: number; // Hard expiration time
     };
 
 export const applyCacheLife = (profile: CacheLifeProfile): void => {

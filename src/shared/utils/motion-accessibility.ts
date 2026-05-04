@@ -1,3 +1,15 @@
+/**
+ * Motion Accessibility Utilities
+ * 
+ * Utilities for respecting user motion preferences.
+ * Provides:
+ * - Reduced motion detection via media queries
+ * - WCAG compliance for motion preferences
+ * - SSR-safe motion preference checking
+ * - Animation control based on user settings
+ * - Accessibility-first animation handling
+ */
+
 'use client';
 
 const REDUCED_MOTION_MEDIA_QUERY = '(prefers-reduced-motion: reduce)';

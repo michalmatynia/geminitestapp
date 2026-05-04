@@ -1,12 +1,8 @@
 'use client';
 
-import { Suspense } from 'react';
-import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
 import { PreviewToolbar } from './preview-panel/PreviewToolbar';
-import { ViewportController } from './preview-panel/ViewportController';
 import { PreviewCanvas } from './preview-panel/PreviewCanvas';
 import { usePreviewPanelController } from './preview-panel/usePreviewPanelController';
-import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 export function PagePreviewPanel(): React.ReactNode {
   const ctrl = usePreviewPanelController();

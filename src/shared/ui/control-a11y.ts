@@ -1,3 +1,15 @@
+/**
+ * Control Accessibility Utilities
+ * 
+ * Accessibility label resolution and validation for UI controls.
+ * Provides:
+ * - Accessible label resolution with fallback strategies
+ * - Missing label detection and warnings
+ * - ARIA attribute coordination
+ * - Component accessibility compliance checking
+ * - WCAG-compliant labeling patterns
+ */
+
 import { resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 
 type ControlAccessibleLabelInput = {

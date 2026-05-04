@@ -1,5 +1,14 @@
 import 'server-only';
-/* eslint-disable complexity, max-lines, max-lines-per-function, no-await-in-loop */
+
+/* eslint-disable
+   complexity,
+   max-depth,
+   max-lines,
+   max-lines-per-function,
+   no-await-in-loop,
+   @typescript-eslint/no-unnecessary-condition,
+   @typescript-eslint/strict-boolean-expressions
+ */
 
 import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';

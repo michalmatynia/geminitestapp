@@ -1,3 +1,15 @@
+/**
+ * Legacy SQL Client
+ * 
+ * Stub implementation for removed legacy SQL database client.
+ * Provides:
+ * - Error throwing for removed SQL client access
+ * - Test environment compatibility stubs
+ * - Migration guidance to MongoDB-only architecture
+ * - Proxy-based access prevention
+ * - Graceful degradation for tests
+ */
+
 const removedLegacyDatabaseHandler: ProxyHandler<Record<string, never>> = {
   get(_target, prop): unknown {
     if (

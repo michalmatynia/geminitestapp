@@ -1,3 +1,15 @@
+/**
+ * Upload with Progress Utilities
+ * 
+ * File upload utilities with progress tracking and CSRF protection.
+ * Provides:
+ * - XMLHttpRequest-based upload with progress events
+ * - CSRF token integration for secure uploads
+ * - Same-origin validation
+ * - Upload progress callbacks
+ * - Error handling and logging
+ */
+
 import {
   CSRF_HEADER_NAME,
   CSRF_SAFE_METHODS,

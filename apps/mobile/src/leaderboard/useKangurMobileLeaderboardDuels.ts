@@ -1,5 +1,6 @@
-import type { KangurDuelLeaderboardEntry, KangurDuelOpponentEntry } from '@kangur/contracts/kangur-duels';
-import { useQueryClient } from '@tanstack/react-query';
+import type { KangurDuelLeaderboardEntry } from '@kangur/contracts/kangur-duels';
+import { type KangurAuthSession } from '@kangur/platform';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useMemo, useState, useCallback } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
@@ -34,12 +35,13 @@ function useLeaderboardDuelsActionErrorMessage(copy: ReturnType<typeof useKangur
         return copy({ de: 'Melde dich an.', en: 'Sign in.', pl: 'Zaloguj się.' });
       }
     }
+    
     if (!(error instanceof Error)) return copy({ de: 'Fehler.', en: 'Error.', pl: 'Błąd.' });
+    
     const message = error.message.trim();
-    if (message === '' || message.toLowerCase().includes('failed to fetch')) {
-       return copy({ de: 'Fehler.', en: 'Error.', pl: 'Błąd.' });
-    }
-    return message;
+    const isNetworkError = message === '' || message.toLowerCase().includes('failed to fetch');
+    
+    return isNetworkError ? copy({ de: 'Fehler.', en: 'Error.', pl: 'Błąd.' }) : message;
   }, [copy]);
 }
 
@@ -57,15 +59,20 @@ type ChallengeActionState = {
   challengeLearner: (opponentLearnerId: string) => Promise<string | null>;
 };
 
-function performDuelChallenge(apiClient: any, queryClient: any, opponentLearnerId: string, apiBaseUrl: string) {
-  return apiClient.createDuel({
+async function performDuelChallenge(
+  apiClient: ReturnType<typeof useKangurMobileRuntime>['apiClient'],
+  queryClient: QueryClient,
+  opponentLearnerId: string,
+  apiBaseUrl: string
+): Promise<string> {
+  const response = await apiClient.createDuel({
     difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY, mode: 'challenge', operation: MOBILE_DUEL_DEFAULT_OPERATION,
     opponentLearnerId, questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT, timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
     visibility: 'private',
-  }, { cache: 'no-store' }).then(async (response: any) => {
-    await queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'home', 'duels-leaderboard', apiBaseUrl] });
-    return response.session.id;
-  });
+  }, { cache: 'no-store' });
+  
+  await queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'home', 'duels-leaderboard', apiBaseUrl] });
+  return response.session.id;
 }
 
 function useLeaderboardChallengeAction(toErrorMessage: (error: unknown) => string): ChallengeActionState {
@@ -93,12 +100,16 @@ function useLeaderboardChallengeAction(toErrorMessage: (error: unknown) => strin
   return { actionError, isActionPending, pendingOpponentLearnerId, challengeLearner };
 }
 
-export const useKangurMobileLearnerDuelsSummary =
+function resolveActiveLearnerId(session: KangurAuthSession): string | null {
+  return session.user?.activeLearner?.id ?? session.user?.id ?? null;
+}
+
+export const useKangurMobileLeaderboardDuels =
   (): UseKangurMobileLeaderboardDuelsResult => {
     const { copy } = useKangurMobileI18n();
     const duelLeaderboard = useKangurMobileHomeDuelsLeaderboard();
     const { session } = useKangurMobileAuth();
-    const activeLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
+    const activeLearnerId = resolveActiveLearnerId(session);
     const isAuthenticated = session.status === 'authenticated';
     const toErrorMessage = useLeaderboardDuelsActionErrorMessage(copy);
 
@@ -114,3 +125,5 @@ export const useKangurMobileLearnerDuelsSummary =
       refresh: duelLeaderboard.refresh,
     };
   };
+
+export const useKangurMobileLearnerDuelsSummary = useKangurMobileLeaderboardDuels;

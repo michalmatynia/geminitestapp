@@ -1,3 +1,15 @@
+/**
+ * Rate Limiting
+ * 
+ * Redis-based rate limiting for API endpoints.
+ * Provides:
+ * - Request rate limiting per client
+ * - Redis-backed rate limit storage
+ * - Configurable time windows
+ * - Rate limit error responses
+ * - Server-only rate limit enforcement
+ */
+
 import 'server-only';
 
 import { rateLimitedError } from '@/shared/errors/app-error';

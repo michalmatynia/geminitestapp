@@ -1,3 +1,15 @@
+/**
+ * CMS Text Extractor
+ * 
+ * Text content extraction utilities for CMS pages and blocks.
+ * Provides:
+ * - Block-type-specific text extraction
+ * - Settings key mapping for text content
+ * - Recursive block traversal
+ * - Human-readable text aggregation
+ * - Page content indexing support
+ */
+
 import type { BlockInstance, Page, PageComponentInput } from '@/shared/contracts/cms';
 
 /**

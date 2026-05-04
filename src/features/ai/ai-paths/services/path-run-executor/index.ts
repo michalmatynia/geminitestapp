@@ -1,3 +1,15 @@
+/**
+ * AI Path Run Executor
+ * 
+ * Core execution engine for AI automation path workflows.
+ * Provides:
+ * - Path execution orchestration and coordination
+ * - Real-time run updates and streaming
+ * - Runtime analytics and performance tracking
+ * - Fingerprinting for execution identification
+ * - Server-side execution environment management
+ */
+
 import 'server-only';
 
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';

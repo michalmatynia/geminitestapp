@@ -1,3 +1,15 @@
+/**
+ * Neo4j Configuration
+ * 
+ * Server-side configuration management for Neo4j database connections.
+ * Provides:
+ * - Environment variable parsing and validation
+ * - Connection string configuration
+ * - Boolean flag parsing with fallbacks
+ * - Configuration error handling
+ * - Secure server-only configuration access
+ */
+
 import 'server-only';
 
 import { configurationError } from '@/shared/errors/app-error';

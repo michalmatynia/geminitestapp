@@ -1,3 +1,15 @@
+/**
+ * JSON Parsing Utilities
+ * 
+ * Safe JSON parsing utilities for API request bodies.
+ * Provides:
+ * - JSON body parsing with validation
+ * - Zod schema integration
+ * - Error response creation
+ * - Type-safe parsing results
+ * - Bad request and validation error handling
+ */
+
 import { z } from 'zod';
 
 import type { JsonParseResult, ParseJsonOptions } from '@/shared/contracts/ui/api';

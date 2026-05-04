@@ -1,3 +1,15 @@
+/**
+ * Kangur API Lessons Catalog Route
+ * 
+ * API route for Kangur lessons catalog retrieval.
+ * Provides:
+ * - GET endpoint for lessons catalog
+ * - Query schema validation
+ * - CSRF-exempt public API access
+ * - No session user resolution required
+ * - Success logging configuration
+ */
+
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import {
   getKangurLessonsCatalogHandler,

@@ -31,7 +31,7 @@ function reducer(state: PathConfigState, action: Action): PathConfigState {
         if (value === undefined) continue;
         if (next[key] !== value) {
           changed = true;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           (next as any)[key] = value;
         }
       }

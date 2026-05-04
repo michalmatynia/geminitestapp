@@ -1,3 +1,15 @@
+/**
+ * Transient Recovery Utilities
+ * 
+ * Retry and recovery mechanisms for transient failures.
+ * Provides:
+ * - Exponential backoff retry logic
+ * - Configurable retry attempts and delays
+ * - Jitter support for distributed systems
+ * - Transient error detection
+ * - Recovery settings management
+ */
+
 // Local implementations to avoid importing from features layer
 
 import type { TransientRecoverySettings } from '@/shared/contracts/observability';

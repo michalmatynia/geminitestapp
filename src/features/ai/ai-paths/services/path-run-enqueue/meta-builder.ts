@@ -1,5 +1,5 @@
 import { type EnqueueRunInput } from './types';
-import { type AiNode, type PathRunRepositorySelection } from '@/shared/contracts/ai-paths';
+import { type PathRunRepositorySelection } from '@/shared/contracts/ai-paths';
 import { withRuntimeFingerprintMeta } from '@/features/ai/ai-paths/services/runtime-fingerprint';
 
 const compactPersistedRunMeta = (

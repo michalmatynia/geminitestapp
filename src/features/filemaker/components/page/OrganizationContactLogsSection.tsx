@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 'use client';
 
 import {
@@ -153,6 +152,7 @@ function ContactLogContent(props: {
   );
 }
 
+/* eslint-disable max-lines-per-function */
 export function OrganizationContactLogsSection(): React.JSX.Element | null {
   const { organization, relationshipSummary } =
     useAdminFilemakerOrganizationEditPageStateContext();
@@ -265,3 +265,5 @@ export function OrganizationContactLogsSection(): React.JSX.Element | null {
     </FormSection>
   );
 }
+
+/* eslint-enable max-lines-per-function */

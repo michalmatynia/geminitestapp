@@ -1,3 +1,15 @@
+/**
+ * Encryption Utilities
+ * 
+ * Server-side encryption and decryption utilities.
+ * Provides:
+ * - AES-256-GCM encryption
+ * - Secure key management from environment
+ * - Initialization vector generation
+ * - Authentication tag validation
+ * - Server-only cryptographic operations
+ */
+
 import 'server-only';
 
 import crypto from 'crypto';

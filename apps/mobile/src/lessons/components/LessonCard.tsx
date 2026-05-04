@@ -7,9 +7,9 @@ import {
   KangurMobileLinkButton as LinkButton,
   KangurMobilePill as Pill,
 } from '../../shared/KangurMobileUi';
-import { type LessonBody } from './lessons-types';
+import { type useRouter } from 'expo-router';
+import { type LessonBody } from '../lessons-types';
 import { LessonBodyView } from './LessonBodyView';
-import { type Href } from 'expo-router';
 
 interface SavedCheckpoint {
   countsAsLessonCompletion: boolean;
@@ -50,7 +50,7 @@ interface LessonCardProps {
   setSavedCheckpoint: (checkpoint: SavedCheckpoint | null) => void;
   setDismissedFocusToken: (token: string | null) => void;
   setActiveSectionIdx: (idx: number) => void;
-  router: any;
+  router: ReturnType<typeof useRouter>;
 }
 
 export function LessonCard(props: LessonCardProps): React.JSX.Element | null {
@@ -82,7 +82,7 @@ function LessonShortcutHelp({ copy, focusToken, setDismissedFocusToken, router }
         <ActionButton
           label={copy({ de: 'Zurück zur Liste', en: 'Back to list', pl: 'Wróć do listy' })}
           onPress={() => {
-            if (focusToken) setDismissedFocusToken(focusToken);
+            if (focusToken !== null) setDismissedFocusToken(focusToken);
             router.replace('/lessons');
           }}
           stretch
@@ -97,16 +97,35 @@ interface LessonDetailsCardProps extends LessonCardProps {
   selectedLesson: SelectedLesson;
 }
 
-function LessonStats({ checkpointSummary, copy }: { checkpointSummary: CheckpointSummary | undefined; copy: LessonCardProps['copy'] }) {
+function LessonStats({ checkpointSummary, copy }: { checkpointSummary: CheckpointSummary | undefined; copy: LessonCardProps['copy'] }): React.JSX.Element {
+  const { attempts = 0, bestScorePercent = 0, lastScorePercent = 0, lastCompletedAt } = checkpointSummary ?? {};
+
   return (
     <View style={{ gap: 8 }}>
-      <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Versuche', en: 'Attempts', pl: 'Próby' })} {checkpointSummary?.attempts ?? 0}</Text>
-      <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Bestes Ergebnis', en: 'Best score', pl: 'Najlepszy wynik' })} {checkpointSummary?.bestScorePercent ?? 0}%</Text>
-      <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Letztes Ergebnis', en: 'Last score', pl: 'Ostatni wynik' })} {checkpointSummary?.lastScorePercent ?? 0}%</Text>
-      {checkpointSummary?.lastCompletedAt && (
-        <Text style={{ color: '#64748b', fontSize: 12 }}>{copy({ de: 'Letzte Speicherung', en: 'Last saved', pl: 'Ostatni zapis' })}: {new Date(checkpointSummary.lastCompletedAt).toLocaleDateString()}</Text>
+      <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Versuche', en: 'Attempts', pl: 'Próby' })} {attempts}</Text>
+      <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Bestes Ergebnis', en: 'Best score', pl: 'Najlepszy wynik' })} {bestScorePercent}%</Text>
+      <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Letztes Ergebnis', en: 'Last score', pl: 'Ostatni wynik' })} {lastScorePercent}%</Text>
+      {Boolean(lastCompletedAt) && (
+        <Text style={{ color: '#64748b', fontSize: 12 }}>{copy({ de: 'Letzte Speicherung', en: 'Last saved', pl: 'Ostatni zapis' })}: {new Date(lastCompletedAt ?? '').toLocaleDateString()}</Text>
       )}
     </View>
+  );
+}
+
+function SavedCheckpointBanner({ savedCheckpoint, copy }: { savedCheckpoint: SavedCheckpoint; copy: LessonCardProps['copy'] }): React.JSX.Element {
+  return (
+    <InsetPanel gap={8} style={{ backgroundColor: '#f0fdfa', borderColor: '#ccfbf1' }}>
+      <Text style={{ color: '#0f766e', fontSize: 14, lineHeight: 20 }}>
+        {savedCheckpoint.countsAsLessonCompletion
+          ? copy({ de: `Lektion mit ${savedCheckpoint.scorePercent}% abgeschlossen!`, en: `Lesson completed with ${savedCheckpoint.scorePercent}%!`, pl: `Lekcja ukończona z wynikiem ${savedCheckpoint.scorePercent}%!` })
+          : copy({ de: `Checkpoint mit ${savedCheckpoint.scorePercent}% gespeichert.`, en: `Checkpoint saved with ${savedCheckpoint.scorePercent}%!`, pl: `Checkpoint lekcji zapisano lokalnie z wynikiem ${savedCheckpoint.scorePercent}%.` })}
+      </Text>
+      {Boolean(savedCheckpoint.newBadges.length > 0) && (
+        <Text style={{ color: '#0d9488', fontSize: 13, fontWeight: '700' }}>
+          {copy({ de: 'Neue Abzeichen', en: 'New badges', pl: 'Nowa odznaka' })}: {savedCheckpoint.newBadges.join(', ')}
+        </Text>
+      )}
+    </InsetPanel>
   );
 }
 
@@ -120,7 +139,7 @@ function LessonProgress({
   effectiveFocusToken: string | null;
   lessonBody: LessonBody;
   copy: LessonCardProps['copy'];
-}) {
+}): React.JSX.Element {
   return (
     <InsetPanel gap={8} style={{ backgroundColor: '#f0f9ff', borderColor: '#bae6fd' }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
@@ -134,27 +153,49 @@ function LessonProgress({
   );
 }
 
+function LessonBriefView({
+  copy,
+  selectedLesson,
+  saveLessonCheckpoint,
+  setSavedCheckpoint,
+}: {
+  copy: LessonCardProps['copy'];
+  selectedLesson: SelectedLesson;
+  saveLessonCheckpoint: LessonCardProps['saveLessonCheckpoint'];
+  setSavedCheckpoint: LessonCardProps['setSavedCheckpoint'];
+}): React.JSX.Element {
+  return (
+    <View style={{ gap: 12 }}>
+      <InsetPanel gap={10}>
+        <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{copy({ de: 'Lektionsbrief', en: 'Lesson brief', pl: 'Skrót lekcji' })}</Text>
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{copy({ de: 'Diese Lektion ist hier vorerst als Kurzbrief verfügbar.', en: 'This lesson is currently available here as a brief summary.', pl: 'Ta lekcja jest tu na razie dostępna jako krótki skrót.' })}</Text>
+      </InsetPanel>
+      <LessonStats checkpointSummary={selectedLesson.checkpointSummary} copy={copy} />
+      <ActionButton
+        label={copy({ de: 'Zapisz checkpoint', en: 'Save checkpoint', pl: 'Zapisz checkpoint' })}
+        onPress={() => {
+          const res = saveLessonCheckpoint({
+            countsAsLessonCompletion: false,
+            lessonComponentId: selectedLesson.lesson.componentId,
+            scorePercent: 50,
+          });
+          setSavedCheckpoint(res);
+        }}
+        stretch
+        tone='primary'
+      />
+    </View>
+  );
+}
+
 function LessonDetailsCard(props: LessonDetailsCardProps): React.JSX.Element {
   const { copy, selectedLesson, actionError, savedCheckpoint, selectedLessonBody, activeSectionIdx, effectiveFocusToken, saveLessonCheckpoint, setSavedCheckpoint, setActiveSectionIdx, setDismissedFocusToken, router, focusToken } = props;
   
   return (
     <Card>
       <Text style={{ color: '#0f172a', fontSize: 24, fontWeight: '800' }}>{selectedLesson.lesson.emoji} {selectedLesson.lesson.title}</Text>
-      {actionError && <Text style={{ color: '#b91c1c', fontSize: 14 }}>{actionError}</Text>}
-      {savedCheckpoint && (
-        <InsetPanel gap={8} style={{ backgroundColor: '#f0fdfa', borderColor: '#ccfbf1' }}>
-          <Text style={{ color: '#0f766e', fontSize: 14, lineHeight: 20 }}>
-            {savedCheckpoint.countsAsLessonCompletion
-              ? copy({ de: `Lektion mit ${savedCheckpoint.scorePercent}% abgeschlossen!`, en: `Lesson completed with ${savedCheckpoint.scorePercent}%!`, pl: `Lekcja ukończona z wynikiem ${savedCheckpoint.scorePercent}%!` })
-              : copy({ de: `Checkpoint mit ${savedCheckpoint.scorePercent}% gespeichert.`, en: `Checkpoint saved with ${savedCheckpoint.scorePercent}%!`, pl: `Checkpoint lekcji zapisano lokalnie z wynikiem ${savedCheckpoint.scorePercent}%.` })}
-          </Text>
-          {savedCheckpoint.newBadges.length > 0 && (
-            <Text style={{ color: '#0d9488', fontSize: 13, fontWeight: '700' }}>
-              {copy({ de: 'Neue Abzeichen', en: 'New badges', pl: 'Nowa odznaka' })}: {savedCheckpoint.newBadges.join(', ')}
-            </Text>
-          )}
-        </InsetPanel>
-      )}
+      {Boolean(actionError) && <Text style={{ color: '#b91c1c', fontSize: 14 }}>{actionError}</Text>}
+      {savedCheckpoint !== null && <SavedCheckpointBanner savedCheckpoint={savedCheckpoint} copy={copy} />}
 
       {selectedLessonBody !== null ? (
         <View style={{ gap: 16 }}>
@@ -179,26 +220,12 @@ function LessonDetailsCard(props: LessonDetailsCardProps): React.JSX.Element {
           <LessonProgress activeSectionIdx={activeSectionIdx} effectiveFocusToken={effectiveFocusToken} lessonBody={selectedLessonBody} copy={copy} />
         </View>
       ) : (
-        <View style={{ gap: 12 }}>
-          <InsetPanel gap={10}>
-            <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{copy({ de: 'Lektionsbrief', en: 'Lesson brief', pl: 'Skrót lekcji' })}</Text>
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{copy({ de: 'Diese Lektion ist hier vorerst als Kurzbrief verfügbar.', en: 'This lesson is currently available here as a brief summary.', pl: 'Ta lekcja jest tu na razie dostępna jako krótki skrót.' })}</Text>
-          </InsetPanel>
-          <LessonStats checkpointSummary={selectedLesson.checkpointSummary} copy={copy} />
-          <ActionButton
-            label={copy({ de: 'Zapisz checkpoint', en: 'Save checkpoint', pl: 'Zapisz checkpoint' })}
-            onPress={() => {
-              const res = saveLessonCheckpoint({
-                countsAsLessonCompletion: false,
-                lessonComponentId: selectedLesson.lesson.componentId,
-                scorePercent: 50,
-              });
-              setSavedCheckpoint(res);
-            }}
-            stretch
-            tone='primary'
-          />
-        </View>
+        <LessonBriefView
+          copy={copy}
+          selectedLesson={selectedLesson}
+          saveLessonCheckpoint={saveLessonCheckpoint}
+          setSavedCheckpoint={setSavedCheckpoint}
+        />
       )}
       <ActionButton
         label={copy({ de: 'Zurück zur Liste', en: 'Back to list', pl: 'Wróć do listy' })}

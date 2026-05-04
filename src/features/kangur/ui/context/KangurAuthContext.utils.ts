@@ -1,3 +1,15 @@
+/**
+ * Kangur Auth Context Utilities
+ * 
+ * Utility functions for Kangur authentication context management.
+ * Provides:
+ * - User authentication status validation
+ * - Bootstrap cache priming and reading
+ * - Error message resolution
+ * - Session loading and management
+ * - Shell session client integration
+ */
+
 import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import {

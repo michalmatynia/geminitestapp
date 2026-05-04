@@ -398,10 +398,12 @@ const getManualAppliedLogRemovalTarget = (
           return entryPersonId.length === 0 || entryPersonId === normalizedPersonId;
         }
       );
-      return manualLogEntries.map((logEntry: FilemakerJobApplicationLogEntry) => ({
-        applicationId: application.id,
-        logEntry,
-      }));
+      return manualLogEntries
+        .map((logEntry: FilemakerJobApplicationLogEntry) => ({
+          applicationId: application.id,
+          logEntry,
+        }))
+        .filter((target): boolean => target.logEntry.id.trim().length > 0);
     }
   );
   if (targets.length === 0) return null;

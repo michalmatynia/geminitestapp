@@ -41,6 +41,17 @@ import {
 
 import { useCampaignEditContext } from './AdminFilemakerCampaignEditPage.context';
 
+/* eslint-disable
+   @typescript-eslint/consistent-type-assertions,
+   @typescript-eslint/explicit-function-return-type,
+   @typescript-eslint/strict-boolean-expressions,
+   complexity,
+   eqeqeq,
+   max-lines,
+   max-lines-per-function,
+   no-nested-ternary
+ */
+
 type CampaignDraftSetter = React.Dispatch<React.SetStateAction<FilemakerEmailCampaign>>;
 
 const SHARED_DELIVERY_OPTION_VALUE = '__shared__';

@@ -1,4 +1,5 @@
 {
+  "_comment": "Main package.json for the Kangur platform monorepo. Manages workspaces for web app, mobile app, and shared packages. Includes scripts for development, testing, building, and deployment across multiple platforms and environments.",
   "name": "libapp2",
   "version": "0.1.0",
   "private": true,
@@ -9,6 +10,7 @@
     "packages/*"
   ],
   "scripts": {
+    "_dev_comment": "Development scripts with memory optimization and platform-specific targets",
     "preinstall": "node scripts/runtime/check-install-package-manager.cjs",
     "predev": "node scripts/runtime/check-node-version.cjs",
     "dev": "node --max-old-space-size=8192 server.cjs",

@@ -1,3 +1,15 @@
+/**
+ * OpenTelemetry Context Utilities
+ * 
+ * Utilities for OpenTelemetry context and trace management.
+ * Provides:
+ * - Trace ID extraction
+ * - Span ID extraction
+ * - Trace flags management
+ * - Context attribute resolution
+ * - Internal error reporting integration
+ */
+
 import { context, trace } from '@opentelemetry/api';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 

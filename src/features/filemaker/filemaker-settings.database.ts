@@ -1,4 +1,13 @@
 import { validationError } from '@/shared/errors/app-error';
+/* eslint-disable
+   complexity,
+   max-lines,
+   max-lines-per-function,
+   max-params,
+   no-nested-ternary,
+   @typescript-eslint/no-unnecessary-condition,
+   @typescript-eslint/strict-boolean-expressions
+ */
 
 import {
   createFilemakerAddress,

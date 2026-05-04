@@ -1,4 +1,4 @@
-import { type Redis, type ChainableCommander } from 'ioredis';
+import { type ChainableCommander } from 'ioredis';
 import { getRedisConnection } from '@/shared/lib/db/redis-client';
 import { toTimestampMs, pruneBefore, keyBrain, buildEventMember, keyTotals, randomUUID, ErrorSystem } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { normalizeBrainInsightStatus } from '../service-helpers';

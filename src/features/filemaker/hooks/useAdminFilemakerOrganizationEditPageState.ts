@@ -1,4 +1,3 @@
-/* eslint-disable complexity, max-lines, max-lines-per-function */
 'use client';
 
 import { useRouter } from 'nextjs-toploader/app';
@@ -11,6 +10,8 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
+
+/* eslint-disable max-lines */
 
 import { createClientFilemakerId, decodeRouteParam } from '../pages/filemaker-page-utils';
 import {
@@ -156,6 +157,7 @@ const applyOrganizationAddresses = (
   addresses: PreparedOrganizationAddress[]
 ): FilemakerDatabase => {
   const addressById = new Map(database.addresses.map((address) => [address.id, address]));
+  // eslint-disable-next-line complexity
   addresses.forEach((address: PreparedOrganizationAddress): void => {
     const existing = addressById.get(address.addressId);
     addressById.set(
@@ -383,6 +385,7 @@ const parseMongoFilemakerOrganizationResponse = async (
   return (await response.json()) as MongoFilemakerOrganizationResponse;
 };
 
+/* eslint-disable complexity */
 const toLoadedMongoOrganizationState = (
   response: MongoFilemakerOrganizationResponse
 ): MongoFilemakerOrganizationState => ({
@@ -405,6 +408,7 @@ const toLoadedMongoOrganizationState = (
   relationshipSummary: response.relationshipSummary ?? null,
   valueCatalog: response.valueCatalog?.values ?? [],
 });
+/* eslint-enable complexity */
 
 export type AdminFilemakerOrganizationEditPageContextValue = {
   isCreateMode: boolean;
@@ -529,6 +533,7 @@ const resolveOrganizationEmails = (input: {
   return getFilemakerEmailsForParty(input.database, 'organization', input.organization.id);
 };
 
+// eslint-disable-next-line complexity, max-lines-per-function
 export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrganizationEditPageContextValue {
   const params = useParams();
   const router = useRouter();
@@ -623,6 +628,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const [legacyDemandRows, setLegacyDemandRows] = useState<FilemakerOrganizationLegacyDemand[]>([]);
   const [jobListings, setJobListings] = useState<FilemakerJobListing[]>([]);
 
+  // eslint-disable-next-line max-lines-per-function
   useEffect(() => {
     if (isCreateMode) {
       setOrgDraft({
@@ -645,7 +651,9 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
         'organization',
         organization.id
       );
-      const settingsAddresses = addressLinks.map((link) => {
+      const settingsAddresses = addressLinks.map(
+        // eslint-disable-next-line complexity
+        (link) => {
         const addr = getFilemakerAddressById(database, link.addressId);
         return {
           addressId: link.addressId,
@@ -671,7 +679,8 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
           legacyCountryUuid: addr?.legacyCountryUuid,
           legacyUuid: addr?.legacyUuid,
         };
-      });
+      }
+      );
       if (settingsAddresses.length > 0 || organizationSource !== 'mongo') {
         setEditableAddresses(settingsAddresses);
       } else {
@@ -790,6 +799,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     [updateSetting, toast]
   );
 
+  // eslint-disable-next-line complexity, max-lines-per-function
   const handleSave = useCallback(async (): Promise<void> => {
     const nextName = orgDraft.name?.trim() ?? '';
     if (nextName.length === 0) {
@@ -974,22 +984,24 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     nextDatabase = applyOrganizationAddresses(nextDatabase, organization.id, normalizedAddresses);
     nextDatabase = {
       ...nextDatabase,
-      organizations: nextDatabase.organizations.map((o) =>
-        o.id === organization.id
-          ? {
-              ...o,
-              ...orgDraft,
-              addressId: defaultAddress?.addressId ?? '',
-              street: defaultAddress?.street ?? '',
-              streetNumber: defaultAddress?.streetNumber ?? '',
-              city: defaultAddress?.city ?? '',
-              postalCode: defaultAddress?.postalCode ?? '',
-              country: defaultAddress?.country ?? '',
-              countryId: defaultAddress?.countryId ?? '',
-              updatedAt: new Date().toISOString(),
-            }
-          : o
-      ),
+      organizations: nextDatabase.organizations.map(
+        // eslint-disable-next-line complexity
+        (o) =>
+          o.id === organization.id
+            ? {
+                ...o,
+                ...orgDraft,
+                addressId: defaultAddress?.addressId ?? '',
+                street: defaultAddress?.street ?? '',
+                streetNumber: defaultAddress?.streetNumber ?? '',
+                city: defaultAddress?.city ?? '',
+                postalCode: defaultAddress?.postalCode ?? '',
+                country: defaultAddress?.country ?? '',
+                countryId: defaultAddress?.countryId ?? '',
+                updatedAt: new Date().toISOString(),
+              }
+            : o
+      )
     };
     nextDatabase = applyOrganizationLegacyDemands(
       nextDatabase,

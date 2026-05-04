@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable max-lines-per-function */
-
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -99,6 +97,7 @@ function InvoicePdfPreview(props: {
   );
 }
 
+/* eslint-disable-next-line max-lines-per-function */
 function InvoicePdfLexiconEditor(props: {
   settings: FilemakerInvoicePdfSettings;
   setSettings: React.Dispatch<React.SetStateAction<FilemakerInvoicePdfSettings>>;
@@ -166,6 +165,7 @@ function InvoicePdfLexiconEditor(props: {
   );
 }
 
+/* eslint-disable-next-line max-lines-per-function */
 export function AdminFilemakerInvoicePdfSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();

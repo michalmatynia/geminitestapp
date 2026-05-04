@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 import { KangurMobileInsetPanel as InsetPanel, KangurMobileLinkButton as LinkButton, KangurMobilePill as Pill } from '../../shared/KangurMobileUi';
 import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 import { formatProfileDateTime, getMasteryTone } from '../profile-primitives';
-import type { KangurMobileLessonCheckpointItem } from '../lessons/useKangurMobileLessonCheckpoints';
+import type { KangurMobileLessonCheckpointItem } from '../../lessons/useKangurMobileLessonCheckpoints';
 
 export function LessonCheckpointRow({ item }: { item: KangurMobileLessonCheckpointItem }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
@@ -26,7 +26,7 @@ export function LessonCheckpointRow({ item }: { item: KangurMobileLessonCheckpoi
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton href={item.lessonHref} label={`${copy({ de: 'Zur Lektion zurück', en: 'Return to lesson', pl: 'Wróć do lekcji' })}: ${item.title}`} tone='brand' />
-        {item.practiceHref && <LinkButton href={item.practiceHref} label={`${copy({ de: 'Danach trainieren', en: 'Practice after', pl: 'Potem trenuj' })}: ${item.title}`} />}
+        {Boolean(item.practiceHref) && <LinkButton href={item.practiceHref} label={`${copy({ de: 'Danach trainieren', en: 'Practice after', pl: 'Potem trenuj' })}: ${item.title}`} />}
       </View>
     </InsetPanel>
   );

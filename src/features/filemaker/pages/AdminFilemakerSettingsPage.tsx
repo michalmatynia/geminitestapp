@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable max-lines, max-lines-per-function */
-
 import { UserRound } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -20,6 +18,7 @@ import {
   UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui/navigation-and-layout.public';
 import { Badge, Input, useToast } from '@/shared/ui/primitives.public';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -29,6 +28,8 @@ import {
   parseFilemakerJobApplicationSettings,
   type FilemakerJobApplicationSettings,
 } from '../filemaker-job-application-settings';
+
+/* eslint-disable max-lines */
 
 type FilemakerPersonOptionRecord = {
   city?: unknown;
@@ -205,9 +206,11 @@ const renderPersonOptionsStatus = (state: PersonOptionsState): React.ReactNode =
   return <Badge variant='outline'>{state.options.length} persons loaded</Badge>;
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function AdminFilemakerSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
+  const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const [hasMounted, setHasMounted] = useState(false);
   const [personOptionsState, setPersonOptionsState] = useState<PersonOptionsState>({
@@ -300,7 +303,11 @@ export function AdminFilemakerSettingsPage(): React.JSX.Element {
         value: serializeSetting(settings),
       },
       {
-        onSuccess: (): void => toast('Filemaker settings saved.', { variant: 'success' }),
+        onSuccess: (): void => {
+          void settingsQuery.refetch();
+          settingsStore.refetch();
+          toast('Filemaker settings saved.', { variant: 'success' });
+        },
         onError: (error: Error): void => {
           logClientError(error, {
             context: { source: 'AdminFilemakerSettingsPage', action: 'save' },

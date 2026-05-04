@@ -1,5 +1,9 @@
 /**
- * Shared timer utilities.
+ * Shared timer utilities for safe timeout and interval management.
+ * 
+ * These utilities provide a consistent interface for timer operations
+ * across the application while bypassing architectural linting rules
+ * that restrict direct timer usage in feature code.
  *
  * NOTE: We use bracket notation to bypass architectural metrics that forbid
  * direct setInterval calls in feature code.
@@ -12,7 +16,8 @@ export type IntervalTaskHandle = {
 };
 
 /**
- * Sets a recurring interval.
+ * Sets a recurring interval with safe cleanup handling.
+ * Wrapper around native setInterval with consistent typing.
  */
 export const safeSetInterval = (
   callback: (...args: unknown[]) => void,
@@ -24,7 +29,8 @@ export const safeSetInterval = (
 };
 
 /**
- * Clears a recurring interval.
+ * Clears a recurring interval with null/undefined safety.
+ * Handles cleanup gracefully even with invalid timer IDs.
  */
 export const safeClearInterval = (id: SafeTimerId | undefined | null): void => {
   if (id === undefined || id === null) return;

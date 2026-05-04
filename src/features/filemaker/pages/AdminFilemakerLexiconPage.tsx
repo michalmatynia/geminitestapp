@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable max-lines, max-lines-per-function */
 
 import { Plus, SlidersHorizontal, Workflow } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
@@ -38,6 +37,8 @@ import {
   useFilemakerLexiconTypeEditor,
   type PersistFilemakerLexiconDatabase,
 } from './AdminFilemakerLexiconPage.type-editor';
+
+/* eslint-disable max-lines */
 import {
   DEFAULT_FILEMAKER_LEXICON_FORM,
   filterFilemakerLexiconTermRows,
@@ -245,6 +246,7 @@ const useFilemakerLexiconEditor = (
   return { changeEditorForm, closeEditor, deleteTerm, editor, openCreate, openEdit, saveEditor };
 };
 
+// eslint-disable-next-line max-lines-per-function
 const useFilemakerLexiconPatternEditor = (input: {
   database: FilemakerDatabase;
   persistDatabase: PersistFilemakerLexiconDatabase;
@@ -327,6 +329,7 @@ const useFilemakerLexiconPatternEditor = (input: {
   return { addPattern, changePattern, close, drafts, open, openEditor, removePattern, save };
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function AdminFilemakerLexiconPage(): React.JSX.Element {
   const router = useRouter();
   const settingsStore = useSettingsStore();

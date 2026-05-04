@@ -1,5 +1,10 @@
-/* eslint-disable complexity, max-lines, max-lines-per-function */
 import { spawn } from 'node:child_process';
+
+/* eslint-disable
+   complexity,
+   max-lines,
+   max-lines-per-function
+ */
 
 import Papa from 'papaparse';
 import { SaxesParser, type SaxesTag } from 'saxes';

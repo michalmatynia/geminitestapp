@@ -1,3 +1,15 @@
+/**
+ * Turnstile CAPTCHA Hook
+ * 
+ * Client-side integration for Cloudflare Turnstile CAPTCHA.
+ * Provides:
+ * - Dynamic Turnstile script loading
+ * - CAPTCHA widget lifecycle management
+ * - Token generation and validation
+ * - Error tracking and recovery
+ * - Site key configuration management
+ */
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';

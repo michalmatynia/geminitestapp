@@ -1,9 +1,23 @@
+/**
+ * Node.js Instrumentation
+ * 
+ * Sets up Node.js runtime instrumentation and error handling.
+ * Provides:
+ * - Global error handlers for unhandled exceptions and rejections
+ * - Process signal handling for graceful shutdown
+ * - OpenTelemetry integration for distributed tracing
+ * - Performance monitoring and resource tracking
+ * - Environment-specific instrumentation configuration
+ */
+
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 type InstrumentationGlobal = typeof globalThis & {
   __nodeInstrumentationRegistered?: boolean;
   __cmsProcessHandlersRegistered?: boolean;
 };
 
+// Error codes that can be safely ignored (network-related transient errors)
 const IGNORABLE_PROCESS_ERROR_CODES = new Set(['ECONNRESET', 'ECONNABORTED', 'EPIPE']);
 
 const parseEnvBoolean = (value: string | undefined): boolean | null => {

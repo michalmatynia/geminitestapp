@@ -1,26 +1,37 @@
 import { useState } from 'react';
-import { Button, Input, Alert } from '@/shared/ui/primitives.public';
+import { Button, Input } from '@/shared/ui/primitives.public';
 import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
-import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
+import type {
+  MfaDisableResponse,
+  MfaSetupResponse,
+  MfaVerifyResponse,
+} from '@/shared/contracts/auth';
+
+type MfaSetupMutation = MutationResult<{ ok: boolean; payload: MfaSetupResponse }, void>;
+type MfaVerifyMutation = MutationResult<{ ok: boolean; payload: MfaVerifyResponse }, string>;
+type MfaDisableMutation = MutationResult<
+  { ok: boolean; payload: MfaDisableResponse },
+  string | { token?: string; recoveryCode?: string }
+>;
 
 export function MfaSettings({
   enabled,
   onSetup,
-  onVerify,
+  onVerify: _onVerify,
   onDisable,
   mfaSetupMutation,
-  mfaVerifyMutation,
+  mfaVerifyMutation: _mfaVerifyMutation,
   mfaDisableMutation,
 }: {
   enabled: boolean;
   onSetup: () => void;
   onVerify: (token: string) => void;
   onDisable: (code: string) => void;
-  mfaSetupMutation: any;
-  mfaVerifyMutation: any;
-  mfaDisableMutation: any;
-}) {
-  const [token, setToken] = useState('');
+  mfaSetupMutation: MfaSetupMutation;
+  mfaVerifyMutation: MfaVerifyMutation;
+  mfaDisableMutation: MfaDisableMutation;
+}): React.JSX.Element {
   const [disableCode, setDisableCode] = useState('');
 
   return (

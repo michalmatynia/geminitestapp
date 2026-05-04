@@ -1,22 +1,36 @@
+/**
+ * Tailwind CSS Configuration
+ * 
+ * Comprehensive styling configuration for the application.
+ * Features:
+ * - Dark mode support with class-based toggling
+ * - Custom design system with consistent spacing and colors
+ * - Responsive breakpoints and container settings
+ * - Animation utilities and transitions
+ * - Component-specific styling patterns
+ */
+
 import type { Config } from 'tailwindcss';
 import tailwindcssAnimate from 'tailwindcss-animate';
 
 const config = {
-  darkMode: 'class',
+  darkMode: 'class', // Enable class-based dark mode switching
   content: [
+    // Scan these paths for Tailwind classes
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
+    // Exclude test files to improve build performance
     '!./**/__tests__/**',
     '!./**/*.test.{ts,tsx}',
     '!./**/*.spec.{ts,tsx}',
   ],
-  prefix: '',
+  prefix: '', // No prefix for Tailwind classes
   theme: {
     container: {
-      center: true,
-      padding: '2rem',
+      center: true, // Center containers by default
+      padding: '2rem', // Default container padding
       screens: {
         '2xl': '1400px',
       },

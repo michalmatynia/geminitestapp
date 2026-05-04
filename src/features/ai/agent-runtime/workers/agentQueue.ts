@@ -1,5 +1,20 @@
 import 'server-only';
 
+/**
+ * AI Agent Runtime Queue
+ * 
+ * Background job queue for processing AI agent execution workflows.
+ * Manages:
+ * - Sequential agent run processing with concurrency control
+ * - Automatic recovery of stuck or failed runs
+ * - Brain assignment and resource allocation
+ * - Error handling and retry logic
+ * - Queue monitoring and health checks
+ * 
+ * This queue ensures reliable execution of AI agent workflows
+ * while managing system resources and handling failures gracefully.
+ */
+
 import {
   processAgentRun,
   processNextQueuedAgentRun,
@@ -10,17 +25,19 @@ import { createManagedQueue } from '@/shared/lib/queue';
 import type { RepeatableJobEntry } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+// Job data structure for agent processing
 type AgentJobData = {
-  runId: string;
-  type?: 'run' | 'recovery';
+  runId: string; // Unique identifier for the agent run
+  type?: 'run' | 'recovery'; // Job type for different processing modes
 };
 
+// Create managed queue with single concurrency to prevent resource conflicts
 const queue = createManagedQueue<AgentJobData>({
   name: 'agent',
-  concurrency: 1,
+  concurrency: 1, // Process one agent at a time to manage resources
   defaultJobOptions: {
-    attempts: 1,
-    removeOnComplete: true,
+    attempts: 1, // Single attempt per job (recovery handled separately)
+    removeOnComplete: true, // Clean up completed jobs
   },
   processor: async (data) => {
     if (data.type === 'recovery' || data.runId === '__recovery__') {

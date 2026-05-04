@@ -1,3 +1,15 @@
+/**
+ * Settings JSON Utilities
+ * 
+ * JSON parsing and serialization utilities for settings storage.
+ * Provides:
+ * - Safe JSON parsing with fallbacks
+ * - Error logging for parse failures
+ * - Type-safe settings deserialization
+ * - Null/undefined handling
+ * - Settings value validation
+ */
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const parseJsonSetting = <T>(value: string | null | undefined, fallback: T): T => {

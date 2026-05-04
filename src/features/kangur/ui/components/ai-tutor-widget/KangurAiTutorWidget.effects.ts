@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable max-lines */
+
 import { useEffect, useLayoutEffect, type MutableRefObject, type RefObject } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
@@ -8,6 +10,7 @@ import type {
   KangurAiTutorTelemetryContextDto,
   KangurAiTutorUsageSummary,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import { extractNarrationTextFromElement } from '../kangur-narrator-utils';
 import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers';
@@ -17,6 +20,7 @@ import type { TutorProactiveNudge } from '../KangurAiTutorPanelBody.context';
 import type { PendingSelectionResponse, SectionExplainContext } from './KangurAiTutorWidget.types';
 import type { KangurAiTutorRuntimeMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
+/* eslint-disable-next-line max-lines-per-function */
 export function useKangurAiTutorGuidanceCompletionEffects(input: {
   activeSelectedText: string | null;
   contextualTutorMode: string | null;
@@ -70,6 +74,7 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     telemetryContext,
   } = input;
 
+  // eslint-disable-next-line complexity
   useEffect(() => {
     const selectionThreadMessages =
       selectionConversationStartIndex !== null
@@ -155,17 +160,19 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
   ]);
 
   useEffect(() => {
-    if (!selectionResponseComplete) {
+    const clearSelectionResponseCompleteTimeout = (): void => {
       if (selectionResponseCompleteTimeoutRef.current !== null) {
         window.clearTimeout(selectionResponseCompleteTimeoutRef.current);
         selectionResponseCompleteTimeoutRef.current = null;
       }
-      return;
+    };
+
+    if (!selectionResponseComplete) {
+      clearSelectionResponseCompleteTimeout();
+      return clearSelectionResponseCompleteTimeout;
     }
 
-    if (selectionResponseCompleteTimeoutRef.current !== null) {
-      window.clearTimeout(selectionResponseCompleteTimeoutRef.current);
-    }
+    clearSelectionResponseCompleteTimeout();
 
     selectionResponseCompleteTimeoutRef.current = window.setTimeout(() => {
       selectionResponseCompleteTimeoutRef.current = null;
@@ -173,25 +180,24 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     }, 4200);
 
     return () => {
-      if (selectionResponseCompleteTimeoutRef.current !== null) {
-        window.clearTimeout(selectionResponseCompleteTimeoutRef.current);
-        selectionResponseCompleteTimeoutRef.current = null;
-      }
+      clearSelectionResponseCompleteTimeout();
     };
   }, [selectionResponseComplete, selectionResponseCompleteTimeoutRef, setSelectionResponseComplete]);
 
   useEffect(() => {
-    if (!sectionResponseComplete) {
+    const clearSectionResponseCompleteTimeout = (): void => {
       if (sectionResponseCompleteTimeoutRef.current !== null) {
         window.clearTimeout(sectionResponseCompleteTimeoutRef.current);
         sectionResponseCompleteTimeoutRef.current = null;
       }
-      return;
+    };
+
+    if (!sectionResponseComplete) {
+      clearSectionResponseCompleteTimeout();
+      return clearSectionResponseCompleteTimeout;
     }
 
-    if (sectionResponseCompleteTimeoutRef.current !== null) {
-      window.clearTimeout(sectionResponseCompleteTimeoutRef.current);
-    }
+    clearSectionResponseCompleteTimeout();
 
     sectionResponseCompleteTimeoutRef.current = window.setTimeout(() => {
       sectionResponseCompleteTimeoutRef.current = null;
@@ -199,15 +205,12 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
     }, 4200);
 
     return () => {
-      if (sectionResponseCompleteTimeoutRef.current !== null) {
-        window.clearTimeout(sectionResponseCompleteTimeoutRef.current);
-        sectionResponseCompleteTimeoutRef.current = null;
-      }
+      clearSectionResponseCompleteTimeout();
     };
   }, [sectionResponseComplete, sectionResponseCompleteTimeoutRef, setSectionResponseComplete]);
 
   useEffect(() => {
-    if (activeSelectedText) {
+    if (activeSelectedText !== null && activeSelectedText.length > 0) {
       return;
     }
 
@@ -219,7 +222,7 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
   }, [activeSelectedText, selectionResponseCompleteTimeoutRef, setSelectionResponseComplete]);
 
   useEffect(() => {
-    if (highlightedSection) {
+    if (highlightedSection !== null) {
       return;
     }
 
@@ -237,6 +240,7 @@ export function useKangurAiTutorGuidanceCompletionEffects(input: {
   ]);
 }
 
+/* eslint-disable-next-line max-lines-per-function */
 export function useKangurAiTutorFocusTelemetryEffect(input: {
   activeFocus: ActiveTutorFocus;
   activeSelectedText: string | null;
@@ -264,19 +268,28 @@ export function useKangurAiTutorFocusTelemetryEffect(input: {
     setPanelMotionState,
   } = input;
 
+  // eslint-disable-next-line complexity
   useEffect(() => {
-    if (!isOpen || !focusTelemetryKey || !activeFocus.kind) {
-      lastTrackedFocusKeyRef.current = null;
-      setPanelMotionState('settled');
+    const clearMotionTimeout = (): void => {
       if (motionTimeoutRef.current !== null) {
         window.clearTimeout(motionTimeoutRef.current);
         motionTimeoutRef.current = null;
       }
-      return;
+    };
+
+    if (
+      !isOpen ||
+      focusTelemetryKey === null ||
+      activeFocus.kind === null
+    ) {
+      lastTrackedFocusKeyRef.current = null;
+      setPanelMotionState('settled');
+      clearMotionTimeout();
+      return clearMotionTimeout;
     }
 
     if (lastTrackedFocusKeyRef.current === focusTelemetryKey) {
-      return;
+      return clearMotionTimeout;
     }
 
     lastTrackedFocusKeyRef.current = focusTelemetryKey;
@@ -291,9 +304,7 @@ export function useKangurAiTutorFocusTelemetryEffect(input: {
       hasSelectedText: Boolean(activeSelectedText),
     });
 
-    if (motionTimeoutRef.current !== null) {
-      window.clearTimeout(motionTimeoutRef.current);
-    }
+    clearMotionTimeout();
     motionTimeoutRef.current = window.setTimeout(() => {
       setPanelMotionState('settled');
       trackKangurClientEvent('kangur_ai_tutor_motion_completed', {
@@ -309,10 +320,7 @@ export function useKangurAiTutorFocusTelemetryEffect(input: {
     }, prefersReducedMotion ? 0 : motionProfile.motionCompletedDelayMs);
 
     return () => {
-      if (motionTimeoutRef.current !== null) {
-        window.clearTimeout(motionTimeoutRef.current);
-        motionTimeoutRef.current = null;
-      }
+      clearMotionTimeout();
     };
   }, [
     activeFocus.id,
@@ -332,6 +340,7 @@ export function useKangurAiTutorFocusTelemetryEffect(input: {
   ]);
 }
 
+/* eslint-disable-next-line max-lines-per-function */
 export function useKangurAiTutorSupplementalTelemetryEffects(input: {
   activeSelectedText: string | null;
   bridgeQuickActionId: string | null;
@@ -362,7 +371,10 @@ export function useKangurAiTutorSupplementalTelemetryEffects(input: {
   } = input;
 
   useLayoutEffect(() => {
-    if (!proactiveNudgeTelemetryKey || !visibleProactiveNudge) {
+    if (
+      proactiveNudgeTelemetryKey === null ||
+      visibleProactiveNudge === null
+    ) {
       lastTrackedProactiveNudgeKeyRef.current = proactiveNudgeTelemetryKey;
       return;
     }
@@ -397,7 +409,11 @@ export function useKangurAiTutorSupplementalTelemetryEffects(input: {
   ]);
 
   useEffect(() => {
-    if (!quotaExhaustedTelemetryKey || !usageSummary) {
+    if (
+      quotaExhaustedTelemetryKey === null ||
+      usageSummary === null ||
+      usageSummary === undefined
+    ) {
       lastTrackedQuotaKeyRef.current = quotaExhaustedTelemetryKey;
       return;
     }
@@ -422,6 +438,7 @@ export function useKangurAiTutorSupplementalTelemetryEffects(input: {
   ]);
 }
 
+/* eslint-disable-next-line max-lines-per-function */
 export function useKangurAiTutorNarrationObserverEffect(input: {
   observationKey: string;
   setTutorNarrationObservedText: (value: string) => void;
@@ -440,31 +457,33 @@ export function useKangurAiTutorNarrationObserverEffect(input: {
   } = input;
 
   useLayoutEffect(() => {
+    let timeoutId: number | null = null;
+
+    const clearNarrationTimeout = (): void => {
+      if (timeoutId !== null) {
+        safeClearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+
     if (!shouldEnableTutorNarration) {
       setTutorNarrationObservedText('');
-      return;
+      return clearNarrationTimeout;
     }
 
     const rootRef =
-      preferGuestIntroRoot && guestIntroNarrationRootRef
+      preferGuestIntroRoot === true && guestIntroNarrationRootRef !== undefined
         ? guestIntroNarrationRootRef
         : tutorNarrationRootRef;
     const root = rootRef.current;
-    if (!root) {
+    if (root === null) {
       setTutorNarrationObservedText('');
-      return;
+      return clearNarrationTimeout;
     }
 
-    let timeoutId: number | null = null;
     const updateText = (): void => {
       setTutorNarrationObservedText(extractNarrationTextFromElement(root));
     };
-
-    updateText();
-
-    if (typeof MutationObserver === 'undefined') {
-      return;
-    }
 
     const observer = new MutationObserver(() => {
       if (timeoutId !== null) {
@@ -472,6 +491,12 @@ export function useKangurAiTutorNarrationObserverEffect(input: {
       }
       timeoutId = safeSetTimeout(updateText, 120);
     });
+
+    updateText();
+
+    if (typeof MutationObserver === 'undefined') {
+      return clearNarrationTimeout;
+    }
 
     observer.observe(root, {
       childList: true,
@@ -481,9 +506,7 @@ export function useKangurAiTutorNarrationObserverEffect(input: {
 
     return () => {
       observer.disconnect();
-      if (timeoutId !== null) {
-        safeClearTimeout(timeoutId);
-      }
+      clearNarrationTimeout();
     };
   }, [
     observationKey,

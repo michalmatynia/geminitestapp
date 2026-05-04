@@ -1,3 +1,15 @@
+/**
+ * Admin Case Resolver Page State Hook
+ * 
+ * Administrative interface state management for case resolution workflows.
+ * Provides:
+ * - Router integration with loading states
+ * - URL parameter synchronization for admin views
+ * - FileMaker party integration and labeling
+ * - Case resolver node metadata management
+ * - Path validation and folder hierarchy handling
+ */
+
 'use client';
 
 import { useRouter } from 'nextjs-toploader/app';

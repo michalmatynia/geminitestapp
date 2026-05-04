@@ -17,6 +17,40 @@ import {
   resolvePathRunRepository,
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 
+type RunRepositorySelection = Awaited<ReturnType<typeof resolvePathRunRepository>>;
+
+const parseRunRepositoryGraphCompile = (
+  runMeta: Record<string, unknown> | null
+): Record<string, unknown> | null => {
+  const graphCompile = runMeta?.['graphCompile'];
+  return graphCompile !== null && typeof graphCompile === 'object'
+    ? (graphCompile as Record<string, unknown>)
+    : null;
+};
+
+const buildRunRepositoryHeaders = (
+  repoSelection: RunRepositorySelection,
+  readProvider: RunRepositorySelection['provider'],
+  writerSelection: ReturnType<typeof readPersistedRunRepositorySelection>
+): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'X-Ai-Paths-Run-Provider': repoSelection.provider,
+    'X-Ai-Paths-Run-Route-Mode': repoSelection.routeMode,
+    'X-Ai-Paths-Run-Read-Provider': readProvider,
+    'X-Ai-Paths-Run-Read-Mode': 'selected',
+  };
+  if (writerSelection !== null) {
+    const { provider, routeMode } = writerSelection;
+    if (provider !== null) {
+      headers['X-Ai-Paths-Run-Writer-Provider'] = provider;
+    }
+    if (routeMode !== null) {
+      headers['X-Ai-Paths-Run-Writer-Route-Mode'] = routeMode;
+    }
+  }
+  return headers;
+};
+
 const parseRunId = (params: { runId: string }): string => {
   const parsed = aiPathRunRouteParamsSchema.safeParse(params);
   if (!parsed.success) {
@@ -36,39 +70,21 @@ export async function getHandler(
   const runId = parseRunId(params);
   const repoSelection = await resolvePathRunRepository();
   const repo = repoSelection.repo;
-  const readProvider = repoSelection.provider;
-  const readMode = 'selected' as const;
   const run = await repo.findRunById(runId);
   if (run === null) {
     throw notFoundError('Run not found', { runId });
   }
   assertAiPathRunAccess(access, run);
-  const readRepo = repo;
-  const nodes = await readRepo.listRunNodes(runId);
-  const events = await readRepo.listRunEvents(runId);
+  const [nodes, events] = await Promise.all([repo.listRunNodes(runId), repo.listRunEvents(runId)]);
   const runMeta = run.meta && typeof run.meta === 'object' ? run.meta : null;
-  const compile =
-    runMeta?.['graphCompile'] && typeof runMeta['graphCompile'] === 'object'
-      ? (runMeta['graphCompile'] as Record<string, unknown>)
-      : null;
+  const compile = parseRunRepositoryGraphCompile(runMeta);
   const errorSummary = buildAiPathRunErrorSummary({ run, nodes, events });
   const writerSelection = readPersistedRunRepositorySelection(run.meta);
   const repositoryMismatch = hasRunRepositorySelectionMismatch(writerSelection, repoSelection);
 
-  const headers = new Headers({
-    'X-Ai-Paths-Run-Provider': repoSelection.provider,
-    'X-Ai-Paths-Run-Route-Mode': repoSelection.routeMode,
-    'X-Ai-Paths-Run-Read-Provider': readProvider,
-    'X-Ai-Paths-Run-Read-Mode': readMode,
-  });
-  if (writerSelection?.provider) {
-    headers.set('X-Ai-Paths-Run-Writer-Provider', writerSelection.provider);
-  }
-  if (writerSelection?.routeMode) {
-    headers.set('X-Ai-Paths-Run-Writer-Route-Mode', writerSelection.routeMode);
-  }
+  const headers = buildRunRepositoryHeaders(repoSelection, repoSelection.provider, writerSelection);
   if (repositoryMismatch) {
-    headers.set('X-Ai-Paths-Run-Provider-Mismatch', '1');
+    headers['X-Ai-Paths-Run-Provider-Mismatch'] = '1';
   }
 
   return NextResponse.json(
@@ -83,15 +99,15 @@ export async function getHandler(
           collection: repoSelection.collection,
           selectedProvider: repoSelection.provider,
           selectedRouteMode: repoSelection.routeMode,
-          readProvider,
-          readMode,
+          readProvider: repoSelection.provider,
+          readMode: 'selected',
         },
         writer: writerSelection,
         mismatch: repositoryMismatch,
       },
     },
     {
-      headers: Object.fromEntries(headers.entries()),
+      headers,
     }
   );
 }

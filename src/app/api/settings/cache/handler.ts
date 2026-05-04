@@ -1,3 +1,15 @@
+/**
+ * Settings Cache API Handler
+ * 
+ * API handler for settings cache management and debugging.
+ * Provides:
+ * - GET endpoint for cache statistics
+ * - Settings management access control
+ * - Cache debug mode validation
+ * - Cache stats retrieval
+ * - Development and debugging support
+ */
+
 import { type NextRequest, NextResponse } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';

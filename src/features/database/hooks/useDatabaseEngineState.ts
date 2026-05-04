@@ -1,3 +1,15 @@
+/**
+ * Database Engine State Hook
+ * 
+ * Comprehensive state management for database engine operations.
+ * Provides:
+ * - Router integration with loading states
+ * - URL parameter synchronization for engine settings
+ * - Engine status monitoring and job tracking
+ * - Backup scheduler status management
+ * - Real-time state updates with transition handling
+ */
+
 'use client';
 
 import { useRouter } from 'nextjs-toploader/app';

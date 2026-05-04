@@ -1,8 +1,21 @@
+/**
+ * Vitest Configuration
+ * 
+ * Test runner configuration for unit and integration tests.
+ * Features:
+ * - React component testing with @vitejs/plugin-react
+ * - Path aliases matching the main application
+ * - Separate test projects for different test types
+ * - MongoDB integration test isolation
+ * - Bazel workspace exclusions for performance
+ */
+
 import { defineConfig, configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { mongoIntegrationTestFiles } from './scripts/testing/lib/vitest-integration-projects.mjs';
 
+// Exclude Bazel-generated directories from test scanning
 const bazelWorkspaceMirrorExcludes = [
   'bazel-geminitestapp/**',
   'bazel-bin/**',
@@ -12,8 +25,9 @@ const bazelWorkspaceMirrorExcludes = [
 ];
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react()], // Enable React component testing
   resolve: {
+    // Path aliases matching the main application for consistent imports
     alias: {
       '@/__tests__': path.resolve(__dirname, './__tests__'),
       '@': path.resolve(__dirname, './src'),

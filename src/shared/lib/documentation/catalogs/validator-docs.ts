@@ -1,3 +1,15 @@
+/**
+ * Validator Documentation Catalog
+ * 
+ * Centralized documentation catalog for validator functions and UI.
+ * Provides:
+ * - Validator function documentation entries
+ * - Validator UI documentation entries
+ * - Documentation ID sets for lookup
+ * - Consolidated validator docs exports
+ * - Documentation registry management
+ */
+
 import { VALIDATOR_FUNCTION_DOCS } from './validator-docs/validator-docs.functions';
 import { VALIDATOR_UI_DOCS } from './validator-docs/validator-docs.ui';
 

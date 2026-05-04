@@ -37,7 +37,6 @@ const JOB_STATUSES: ProductAiJobStatus[] = [
   'canceled',
 ];
 const DEFAULT_HEALTH_CRITICAL_GRACE_MS = 15 * 60 * 1000;
-let criticalSloSinceMs: number | null = null;
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number.parseInt(value ?? '', 10);
@@ -127,7 +126,20 @@ async function getAiPathsHealth(): Promise<{ provider: string; routeMode: string
   }
 }
 
-async function getAiJobsHealth(): Promise<{ provider: string; total: number | null; byStatus: Record<ProductAiJobStatus, number>; latest: { id: string; status: ProductAiJobStatus; createdAt: string | null; productId: string | null; type: string | null } | null; error?: string }> {
+/* eslint-disable-next-line complexity */
+async function getAiJobsHealth(): Promise<{
+  provider: string;
+  total: number | null;
+  byStatus: Record<ProductAiJobStatus, number>;
+  latest: {
+    id: string;
+    status: ProductAiJobStatus;
+    createdAt: string | null;
+    productId: string | null;
+    type: string | null;
+  } | null;
+  error?: string;
+}> {
   try {
     await getProductAiJobRepository();
     const provider = getProductAiJobProvider() ?? 'unknown';
@@ -199,7 +211,11 @@ async function getRuntimeHealth(): Promise<{ summary: RuntimeSummary | null; err
 
 let globalCriticalSloSinceMs: number | null = null;
 
-export async function getHealthHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+// eslint-disable-next-line complexity
+export async function getHealthHandler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
   await requireAiPathsAccess();
   startAiPathRunQueue();
   startAiInsightsQueue();
@@ -212,10 +228,10 @@ export async function getHealthHandler(_req: NextRequest, _ctx: ApiHandlerContex
     getRuntimeHealth(),
   ]);
 
-  if (aiPaths.error) errors['aiPaths'] = aiPaths.error;
-  if (aiJobs.error) errors['aiJobs'] = aiJobs.error;
-  if (queueResult.error) errors['queue'] = queueResult.error;
-  if (runtimeResult.error) errors['runtime24h'] = runtimeResult.error;
+  if (aiPaths.error !== undefined) errors['aiPaths'] = aiPaths.error;
+  if (aiJobs.error !== undefined) errors['aiJobs'] = aiJobs.error;
+  if (queueResult.error !== undefined) errors['queue'] = queueResult.error;
+  if (runtimeResult.error !== undefined) errors['runtime24h'] = runtimeResult.error;
 
   const queue = queueResult.status;
   let sloNotification = null;
@@ -262,6 +278,5 @@ export async function getHealthHandler(_req: NextRequest, _ctx: ApiHandlerContex
     { status }
   );
 }
-
 
 

@@ -1,3 +1,15 @@
+/**
+ * Kangur Social Generated Draft Utilities
+ * 
+ * Utilities for managing AI-generated social media post drafts.
+ * Provides:
+ * - Draft field normalization and validation
+ * - Bilingual content handling (Polish/English)
+ * - Text processing and cleanup
+ * - Draft comparison and change detection
+ * - Social post content management
+ */
+
 import type { KangurSocialGeneratedDraft, KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 
 const DRAFT_KEYS = ['titlePl', 'titleEn', 'bodyPl', 'bodyEn'] as const;

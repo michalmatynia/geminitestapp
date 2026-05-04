@@ -1,5 +1,3 @@
-import { Button } from '@/shared/ui/primitives.public';
-
 export function ButtonBlock({ settings }: { settings: Record<string, unknown> }) {
   const label = (settings['buttonLabel'] as string) || 'Button';
   const style = (settings['buttonStyle'] as string) || 'solid';

@@ -1,4 +1,4 @@
-/* eslint-disable max-lines, max-lines-per-function, complexity, max-depth, no-param-reassign, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
+ 
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';

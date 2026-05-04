@@ -1,3 +1,15 @@
+/**
+ * Collection Provider Map
+ * 
+ * MongoDB collection routing and provider management.
+ * Provides:
+ * - Collection-to-provider mapping
+ * - Database engine provider resolution
+ * - Active MongoDB source environment application
+ * - Server-only collection routing
+ * - Provider configuration management
+ */
+
 import 'server-only';
 
 import { internalError } from '@/shared/errors/app-error';

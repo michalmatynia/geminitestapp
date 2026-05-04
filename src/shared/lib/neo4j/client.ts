@@ -1,5 +1,17 @@
 import 'server-only';
 
+/**
+ * Neo4j Database Client
+ * 
+ * Server-side Neo4j graph database client for complex relationship queries.
+ * Provides:
+ * - Cypher query execution with connection pooling
+ * - Transaction management and error handling
+ * - Performance monitoring and timeout management
+ * - Secure connection handling with authentication
+ * - Integration with observability and error reporting systems
+ */
+
 import { externalServiceError, timeoutError } from '@/shared/errors/app-error';
 
 import { getNeo4jConfig } from './config';

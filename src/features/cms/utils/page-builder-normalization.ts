@@ -1,3 +1,15 @@
+/**
+ * Page Builder Normalization Utilities
+ * 
+ * Data normalization and validation for page builder structures.
+ * Provides:
+ * - Page zone validation and normalization
+ * - Valid zone set management
+ * - Type-safe zone conversion
+ * - Default fallback handling
+ * - Input sanitization for page zones
+ */
+
 import type { PageZone } from '@/shared/contracts/cms';
 
 const VALID_PAGE_ZONES = new Set<PageZone>(['header', 'template', 'footer']);

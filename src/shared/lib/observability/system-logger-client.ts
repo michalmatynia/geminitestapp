@@ -1,3 +1,15 @@
+/**
+ * System Logger Client
+ * 
+ * Client-side system logging utilities.
+ * Provides:
+ * - Client-side log level management
+ * - Logging control integration
+ * - Log level filtering
+ * - Error logging coordination
+ * - Client-side observability logging
+ */
+
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
 import {
   getObservabilityLoggingControlTypeForSystemLogLevel,

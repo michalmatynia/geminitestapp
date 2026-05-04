@@ -15,6 +15,8 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   await requireFilemakerMailAdminSession();
   const { accountId } = querySchema.parse(Object.fromEntries(req.nextUrl.searchParams.entries()));
   return Response.json({
-    folders: await listFilemakerMailFolderSummaries(accountId ? { accountId } : undefined),
+    folders: await listFilemakerMailFolderSummaries(
+      accountId === undefined ? undefined : { accountId }
+    ),
   });
 }

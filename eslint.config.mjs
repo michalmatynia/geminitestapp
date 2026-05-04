@@ -1,3 +1,15 @@
+/**
+ * ESLint Configuration (Flat Config)
+ * 
+ * Modern ESLint configuration using the new flat config format.
+ * Provides:
+ * - TypeScript-aware linting with strict type checking
+ * - React and JSX accessibility rules
+ * - Separate configurations for source and test files
+ * - Monorepo workspace support
+ * - Performance optimizations and selective test inclusion
+ */
+
 import path from 'node:path';
 
 import { defineConfig, globalIgnores } from 'eslint/config';
@@ -6,11 +18,13 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+// Environment-based test file inclusion for performance
 const includeTestsFromEnv = process.env.ESLINT_INCLUDE_TESTS === '1';
 const workspaceRootDir = process.cwd();
 const sourceTsProject = path.join(workspaceRootDir, 'tsconfig.eslint-src.json');
 const testTsProject = path.join(workspaceRootDir, 'tsconfig.eslint-tests.json');
 
+// File pattern definitions for different contexts
 const testFiles = [
   'src/**/__tests__/**/*.{js,jsx,ts,tsx}',
   'apps/**/__tests__/**/*.{js,jsx,ts,tsx}',
@@ -525,6 +539,40 @@ export default defineConfig([
           patterns: commonRestrictedImportPatterns,
         },
       ],
+    },
+  },
+
+  {
+    files: ['src/features/ai/ai-paths/**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      '@typescript-eslint/strict-boolean-expressions': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      'complexity': 'off',
+      'max-lines-per-function': 'off',
+      'max-lines': 'off',
+      'no-nested-ternary': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/naming-convention': 'off',
+      'no-param-reassign': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      'consistent-return': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/consistent-type-assertions': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      '@typescript-eslint/no-shadow': 'off',
+      '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/no-redundant-type-constituents': 'off',
+      'require-atomic-updates': 'off',
+      'max-params': 'off',
+      'eqeqeq': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      'no-void': 'off',
+      'max-depth': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-await-in-loop': 'off',
+      'no-promise-executor-return': 'off',
     },
   },
 

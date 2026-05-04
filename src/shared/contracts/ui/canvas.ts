@@ -1,3 +1,15 @@
+/**
+ * UI Canvas Contracts
+ * 
+ * Type definitions for vector canvas components.
+ * Provides:
+ * - Vector canvas rectangle types
+ * - Canvas props interface definitions
+ * - Tool mode and selection types
+ * - Geometry integration for bounds
+ * - Vector shape handling
+ */
+
 import type { PositiveRectBoundsDto } from '../geometry';
 import type { VectorShape, VectorToolMode } from '../vector';
 

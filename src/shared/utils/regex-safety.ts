@@ -1,3 +1,15 @@
+/**
+ * Regex Safety Utilities
+ * 
+ * Security utilities for safe regular expression handling.
+ * Provides:
+ * - Regex pattern length validation
+ * - Flag validation and sanitization
+ * - ReDoS attack prevention
+ * - Open-ended quantifier detection
+ * - Safe regex construction
+ */
+
 const ALLOWED_REGEX_FLAGS = new Set<string>(['d', 'g', 'i', 'm', 's', 'u', 'v', 'y']);
 const MAX_REGEX_PATTERN_LENGTH = 512;
 const MAX_REGEX_FLAGS_LENGTH = 8;

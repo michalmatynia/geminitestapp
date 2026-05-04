@@ -1,5 +1,20 @@
 'use client';
 
+/**
+ * Query Factories V2
+ * 
+ * Enhanced query factory utilities built on TanStack Query.
+ * Provides standardized patterns for:
+ * - Data fetching with consistent error handling
+ * - Mutation operations with optimistic updates
+ * - Infinite queries for paginated data
+ * - Suspense-enabled queries for better UX
+ * - Telemetry and performance monitoring
+ * 
+ * These factories abstract common query patterns and provide
+ * type-safe interfaces for API interactions across the app.
+ */
+
 import {
   useInfiniteQuery,
   useMutation,

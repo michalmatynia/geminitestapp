@@ -1,5 +1,6 @@
 'use client';
-/* eslint-disable max-lines, max-lines-per-function, complexity */
+
+/* eslint-disable max-lines */
 
 import {
   BriefcaseBusiness,
@@ -188,6 +189,7 @@ function FilemakerOrganizationGroupNode(props: OrganizationGroupNodeProps): Reac
   );
 }
 
+/* eslint-disable-next-line max-lines-per-function */
 function FilemakerOrganizationLeafDetails(props: {
   jobListings: readonly FilemakerJobListing[];
   organization: FilemakerOrganization;
@@ -306,6 +308,25 @@ function OrganizationRelationCountColumn(props: {
   widthClassName: string;
 }): React.JSX.Element {
   const { count, href, label, widthClassName } = props;
+  const labelBadge = href === undefined ? (
+    <Badge variant='outline' className='h-5 max-w-full truncate text-[10px]'>
+      {label} {count}
+    </Badge>
+  ) : (
+    <Link
+      href={href}
+      onClick={(event: React.MouseEvent<HTMLAnchorElement>): void => {
+        event.stopPropagation();
+      }}
+    >
+      <Badge
+        variant='outline'
+        className='h-5 max-w-full truncate text-[10px] hover:border-sky-400 hover:text-sky-300'
+      >
+        {label} {count}
+      </Badge>
+    </Link>
+  );
 
   return (
     <div
@@ -315,26 +336,12 @@ function OrganizationRelationCountColumn(props: {
       )}
       aria-label={`${label}: ${count}`}
     >
-      {count > 0 ? (
-        href !== undefined ? (
-          <Link
-            href={href}
-            onClick={(event: React.MouseEvent<HTMLAnchorElement>): void => { event.stopPropagation(); }}
-          >
-            <Badge variant='outline' className='h-5 max-w-full truncate text-[10px] hover:border-sky-400 hover:text-sky-300'>
-              {label} {count}
-            </Badge>
-          </Link>
-        ) : (
-          <Badge variant='outline' className='h-5 max-w-full truncate text-[10px]'>
-            {label} {count}
-          </Badge>
-        )
-      ) : null}
+      {count > 0 ? labelBadge : null}
     </div>
   );
 }
 
+/* eslint-disable-next-line max-lines-per-function */
 function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.JSX.Element {
   const {
     depth,
@@ -622,6 +629,7 @@ function FilemakerOrganizationJobListingLinkNode(
   );
 }
 
+/* eslint-disable-next-line complexity,max-lines-per-function */
 export function FilemakerOrganizationMasterTreeNode(
   props: FilemakerOrganizationTreeNodeProps
 ): React.JSX.Element {

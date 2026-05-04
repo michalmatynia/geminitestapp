@@ -1,3 +1,15 @@
+/**
+ * Vector Canvas Geometry Utilities
+ * 
+ * Mathematical utilities for vector-based canvas operations.
+ * Provides:
+ * - Canvas coordinate system transformations
+ * - View scaling and transformation management
+ * - Geometric calculations for vector shapes
+ * - Canvas viewport and viewbox handling
+ * - Sensitivity and scaling constants
+ */
+
 import type { VectorCanvasRect, VectorViewTransform } from '@/shared/contracts/ui/canvas';
 import { type VectorPoint, type VectorShape } from '@/shared/contracts/vector';
 

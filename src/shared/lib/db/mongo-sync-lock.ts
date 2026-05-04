@@ -1,3 +1,15 @@
+/**
+ * MongoDB Sync Lock Manager
+ * 
+ * File-based locking mechanism for MongoDB synchronization operations.
+ * Provides:
+ * - Sync operation locking and coordination
+ * - Direction-based sync tracking (import/export)
+ * - In-progress sync state management
+ * - File system-based lock persistence
+ * - Server-only sync coordination
+ */
+
 import 'server-only';
 
 import { promises as fs } from 'fs';

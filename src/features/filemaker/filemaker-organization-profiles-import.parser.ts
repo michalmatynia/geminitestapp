@@ -1,3 +1,15 @@
+/**
+ * FileMaker Organization Profiles Import Parser
+ * 
+ * CSV parsing and data transformation for organization profiles import.
+ * Provides:
+ * - CSV file parsing with delimiter detection
+ * - Organization profile data normalization
+ * - Legacy timestamp parsing
+ * - UUID normalization
+ * - Header scanning and validation
+ */
+
 import Papa from 'papaparse';
 
 import { normalizeString } from './filemaker-settings.helpers';

@@ -25,145 +25,253 @@ import { filemakerEmailCampaignUnsubscribeRequestSchema } from '@/shared/contrac
 import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
-const buildUnsubscribeNotes = (source: string | null | undefined): string =>
-  source?.trim()
-    ? `Self-service unsubscribe request. Source: ${source.trim()}`
-    : 'Self-service unsubscribe request.';
+type CampaignRegistry = ReturnType<typeof parseFilemakerEmailCampaignRegistry>;
+type Campaign = CampaignRegistry['campaigns'][number];
+type CampaignEventRegistry = ReturnType<typeof parseFilemakerEmailCampaignEventRegistry>;
 
-const isOneClickFormBody = (contentType: string | null, bodyText: string): boolean => {
-  if (!contentType) return false;
-  if (!/application\/x-www-form-urlencoded/i.test(contentType)) return false;
+const buildUnsubscribeNotes = (source: string | null | undefined): string => {
+  const normalizedSource = typeof source === 'string' ? source.trim() : '';
+  if (normalizedSource.length === 0) {
+    return 'Self-service unsubscribe request.';
+  }
+  return `Self-service unsubscribe request. Source: ${normalizedSource}`;
+};
+
+const isNonEmptyString = (value: string | null | undefined): value is string =>
+  typeof value === 'string' && value.length > 0;
+
+const isOneClickFormBody = (contentType: string, bodyText: string): boolean => {
+  if (!/application\/x-www-form-urlencoded/i.test(contentType)) {
+    return false;
+  }
   const params = new URLSearchParams(bodyText);
   return params.get('List-Unsubscribe') === 'One-Click';
 };
 
-export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const queryToken = req.nextUrl.searchParams.get('token');
-  const contentType = req.headers.get('content-type');
+const normalizeTokenValue = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
 
-  let parsedRequest: FilemakerEmailCampaignUnsubscribeRequest;
-  if (queryToken && contentType && /application\/x-www-form-urlencoded/i.test(contentType)) {
-    const bodyText = await req.text();
-    if (!isOneClickFormBody(contentType, bodyText)) {
-      throw badRequestError('Expected List-Unsubscribe=One-Click form body.');
+const resolveCampaign = (
+  campaignRegistry: CampaignRegistry,
+  campaignId: string | null
+): Campaign | null => {
+  if (campaignId === null) {
+    return null;
+  }
+  for (const entry of campaignRegistry.campaigns) {
+    if (entry.id === campaignId) {
+      return entry;
     }
-    parsedRequest = {
+  }
+  return null;
+};
+
+type ParsedUnsubscribeRequestResult =
+  | { ok: true; data: FilemakerEmailCampaignUnsubscribeRequest }
+  | { ok: false; response: Response };
+
+const parseUnsubscribeRequest = async (
+  req: NextRequest,
+  queryToken: string | null,
+  contentType: string | null
+): Promise<ParsedUnsubscribeRequestResult> => {
+  const hasQueryToken = isNonEmptyString(queryToken);
+  const hasFormContentType = isNonEmptyString(contentType) && /application\/x-www-form-urlencoded/i.test(contentType);
+  const isFormSubmit = hasQueryToken && hasFormContentType;
+  if (!isFormSubmit) {
+    const result: JsonParseResult<FilemakerEmailCampaignUnsubscribeRequest> =
+      await parseJsonBody(req, filemakerEmailCampaignUnsubscribeRequestSchema, {
+        logPrefix: 'filemaker.campaigns.unsubscribe.POST',
+      });
+    if (!result.ok) {
+      return { ok: false, response: result.response };
+    }
+    const hasBodyToken = isNonEmptyString(result.data.token);
+    return {
+      ok: true,
+      data: hasQueryToken && !hasBodyToken ? { ...result.data, token: queryToken } : result.data,
+    };
+  }
+
+  const bodyText = await req.text();
+  if (!isOneClickFormBody(contentType, bodyText)) {
+    throw badRequestError('Expected List-Unsubscribe=One-Click form body.');
+  }
+  return {
+    ok: true,
+    data: {
       token: queryToken,
       source: 'list-unsubscribe-one-click',
-    };
-  } else {
-    const result: JsonParseResult<FilemakerEmailCampaignUnsubscribeRequest> = await parseJsonBody(
-      req,
-      filemakerEmailCampaignUnsubscribeRequestSchema,
-      { logPrefix: 'filemaker.campaigns.unsubscribe.POST' }
-    );
-    if (!result.ok) {
-      return result.response;
-    }
-    parsedRequest = queryToken && !result.data.token
-      ? { ...result.data, token: queryToken }
-      : result.data;
+    },
+  };
+};
+
+const persistUnsubscribeChanges = async (writes: Array<Promise<boolean>>): Promise<void> => {
+  const persisted = await Promise.all(writes);
+  if (persisted.some((entry) => !entry)) {
+    throw new Error('Failed to persist the Filemaker unsubscribe request.');
   }
+};
 
-  const result = { data: parsedRequest };
+type UnsubscribeRegistryData = {
+  campaignRegistry: CampaignRegistry;
+  suppressionRegistry: ReturnType<typeof parseFilemakerEmailCampaignSuppressionRegistry>;
+  eventRegistry: CampaignEventRegistry;
+};
 
-  const tokenPayload = result.data.token
-    ? parseFilemakerCampaignUnsubscribeToken(result.data.token)
-    : null;
-  if (result.data.token && !tokenPayload) {
-    throw badRequestError('Invalid or expired unsubscribe token.');
-  }
-
-  const normalizedEmailAddress = (
-    tokenPayload?.emailAddress ??
-    result.data.emailAddress?.trim().toLowerCase() ??
-    ''
-  ).trim();
-  const normalizedCampaignId =
-    tokenPayload?.campaignId ?? result.data.campaignId?.trim() ?? null;
+const loadUnsubscribeRegistries = async (): Promise<UnsubscribeRegistryData> => {
   const [campaignsRaw, suppressionsRaw, eventsRaw] = await Promise.all([
     readFilemakerCampaignSettingValue(FILEMAKER_EMAIL_CAMPAIGNS_KEY),
     readFilemakerCampaignSettingValue(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY),
     readFilemakerCampaignSettingValue(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY),
   ]);
+  return {
+    campaignRegistry: parseFilemakerEmailCampaignRegistry(campaignsRaw),
+    suppressionRegistry: parseFilemakerEmailCampaignSuppressionRegistry(suppressionsRaw),
+    eventRegistry: parseFilemakerEmailCampaignEventRegistry(eventsRaw),
+  };
+};
 
-  const campaignRegistry = parseFilemakerEmailCampaignRegistry(campaignsRaw);
-  const suppressionRegistry = parseFilemakerEmailCampaignSuppressionRegistry(suppressionsRaw);
-  const eventRegistry = parseFilemakerEmailCampaignEventRegistry(eventsRaw);
-  const existingEntry = getFilemakerEmailCampaignSuppressionByAddress(
-    suppressionRegistry,
-    normalizedEmailAddress
-  );
-  const alreadySuppressed = Boolean(existingEntry);
-  const normalizedRunId = tokenPayload?.runId ?? existingEntry?.runId ?? null;
-  const normalizedDeliveryId = tokenPayload?.deliveryId ?? existingEntry?.deliveryId ?? null;
-
+/* eslint-disable complexity */
+/* eslint-disable max-lines-per-function */
+const buildUnsubscribeWrites = (input: {
+  suppressionRegistry: ReturnType<typeof parseFilemakerEmailCampaignSuppressionRegistry>;
+  eventRegistry: CampaignEventRegistry;
+  campaign: Campaign | null;
+  existingEntry: ReturnType<typeof getFilemakerEmailCampaignSuppressionByAddress>;
+  emailAddress: string;
+  campaignId: string | null;
+  normalizedRunId: string | null;
+  normalizedDeliveryId: string | null;
+  notes: string;
+}): {
+  writes: Array<Promise<boolean>>;
+  campaignId: string | null;
+} => {
+  const resolvedRunId = input.normalizedRunId ?? input.existingEntry?.runId ?? null;
+  const resolvedDeliveryId = input.normalizedDeliveryId ?? input.existingEntry?.deliveryId ?? null;
   const nextSuppressionRegistry = upsertFilemakerEmailCampaignSuppressionEntry({
-    registry: suppressionRegistry,
+    registry: input.suppressionRegistry,
     entry: createFilemakerEmailCampaignSuppressionEntry({
-      id: existingEntry?.id,
-      createdAt: existingEntry?.createdAt,
+      id: input.existingEntry?.id,
+      createdAt: input.existingEntry?.createdAt,
       updatedAt: new Date().toISOString(),
-      emailAddress: normalizedEmailAddress,
+      emailAddress: input.emailAddress,
       reason: 'unsubscribed',
       actor: 'recipient',
-      campaignId: normalizedCampaignId ?? existingEntry?.campaignId ?? null,
-      runId: normalizedRunId,
-      deliveryId: normalizedDeliveryId,
-      notes: buildUnsubscribeNotes(
-        tokenPayload ? result.data.source ?? 'signed-unsubscribe-token' : result.data.source
-      ),
+      campaignId: input.campaignId,
+      runId: resolvedRunId,
+      deliveryId: resolvedDeliveryId,
+      notes: input.notes,
     }),
   });
-
-  const campaign = normalizedCampaignId
-    ? campaignRegistry.campaigns.find((entry) => entry.id === normalizedCampaignId) ?? null
-    : null;
-  const nextEventRegistry = campaign
-    ? normalizeFilemakerEmailCampaignEventRegistry({
-        version: eventRegistry.version,
-        events: eventRegistry.events.concat(
-          createFilemakerEmailCampaignEvent({
-            campaignId: campaign.id,
-            runId: normalizedRunId,
-            deliveryId: normalizedDeliveryId,
-            type: 'unsubscribed',
-            actor: 'recipient',
-            message: `${normalizedEmailAddress} unsubscribed via the public unsubscribe form.`,
-          })
-        ),
-      })
-    : eventRegistry;
 
   const writes: Array<Promise<boolean>> = [
     upsertFilemakerCampaignSettingValue(
       FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
-      JSON.stringify(
-        toPersistedFilemakerEmailCampaignSuppressionRegistry(nextSuppressionRegistry)
-      )
+      JSON.stringify(toPersistedFilemakerEmailCampaignSuppressionRegistry(nextSuppressionRegistry))
     ),
   ];
-
-  if (campaign) {
-    writes.push(
-      upsertFilemakerCampaignSettingValue(
-        FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
-        JSON.stringify(toPersistedFilemakerEmailCampaignEventRegistry(nextEventRegistry))
-      )
-    );
+  if (input.campaign === null) {
+    return { writes, campaignId: input.campaignId };
   }
 
-  const persisted = await Promise.all(writes);
-  if (persisted.some((entry) => !entry)) {
-    throw new Error('Failed to persist the Filemaker unsubscribe request.');
+  const nextEventRegistry = normalizeFilemakerEmailCampaignEventRegistry({
+    version: input.eventRegistry.version,
+    events: input.eventRegistry.events.concat(
+      createFilemakerEmailCampaignEvent({
+        campaignId: input.campaign.id,
+        runId: resolvedRunId,
+        deliveryId: resolvedDeliveryId,
+        type: 'unsubscribed',
+        actor: 'recipient',
+        message: `${input.emailAddress} unsubscribed via the public unsubscribe form.`,
+      })
+    ),
+  });
+
+  writes.push(
+    upsertFilemakerCampaignSettingValue(
+      FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
+      JSON.stringify(toPersistedFilemakerEmailCampaignEventRegistry(nextEventRegistry))
+    )
+  );
+  return { writes, campaignId: input.campaignId };
+};
+/* eslint-enable complexity,max-lines-per-function */
+
+const buildUnsubscribeResponse = (
+  input: {
+    emailAddress: string;
+    campaign: Campaign | null;
+    campaignId: string | null;
+    alreadySuppressed: boolean;
+  }
+): FilemakerEmailCampaignUnsubscribeResponse => ({
+  ok: true,
+  emailAddress: input.emailAddress,
+  campaignId: input.campaign?.id ?? input.campaignId,
+  alreadySuppressed: input.alreadySuppressed,
+  reason: 'unsubscribed',
+});
+
+// eslint-disable-next-line complexity
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const queryToken = req.nextUrl.searchParams.get('token');
+  const contentType = req.headers.get('content-type');
+  const parsedRequestResult = await parseUnsubscribeRequest(req, queryToken, contentType);
+  if (!parsedRequestResult.ok) {
+    return parsedRequestResult.response;
   }
 
-  const response: FilemakerEmailCampaignUnsubscribeResponse = {
-    ok: true,
+  const parsedRequest = parsedRequestResult.data;
+  const hasToken = isNonEmptyString(parsedRequest.token);
+  const tokenPayload = hasToken ? parseFilemakerCampaignUnsubscribeToken(parsedRequest.token) : null;
+  if (hasToken && tokenPayload === null) {
+    throw badRequestError('Invalid or expired unsubscribe token.');
+  }
+
+  const normalizedEmailAddress = (tokenPayload?.emailAddress ?? parsedRequest.emailAddress ?? '')
+    .trim()
+    .toLowerCase();
+  const normalizedCampaignId = normalizeTokenValue(tokenPayload?.campaignId) ?? normalizeTokenValue(parsedRequest.campaignId);
+  const normalizedRunId = tokenPayload?.runId ?? null;
+  const normalizedDeliveryId = tokenPayload?.deliveryId ?? null;
+
+  const { campaignRegistry, suppressionRegistry, eventRegistry } = await loadUnsubscribeRegistries();
+  const campaign = resolveCampaign(campaignRegistry, normalizedCampaignId);
+  const existingEntry = getFilemakerEmailCampaignSuppressionByAddress(
+    suppressionRegistry,
+    normalizedEmailAddress
+  );
+  const alreadySuppressed = existingEntry !== null;
+
+  const { writes, campaignId } = buildUnsubscribeWrites({
+    suppressionRegistry,
+    eventRegistry,
+    campaign,
+    existingEntry,
     emailAddress: normalizedEmailAddress,
-    campaignId: campaign?.id ?? normalizedCampaignId,
-    alreadySuppressed,
-    reason: 'unsubscribed',
-  };
-  return NextResponse.json(response);
+    campaignId: normalizedCampaignId ?? existingEntry?.campaignId ?? null,
+    normalizedRunId,
+    normalizedDeliveryId,
+    notes: buildUnsubscribeNotes(
+      hasToken ? parsedRequest.source ?? 'signed-unsubscribe-token' : parsedRequest.source
+    ),
+  });
+  await persistUnsubscribeChanges(writes);
+
+  return NextResponse.json(
+    buildUnsubscribeResponse({
+      emailAddress: normalizedEmailAddress,
+      campaign,
+      campaignId,
+      alreadySuppressed,
+    })
+  );
 }

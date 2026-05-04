@@ -12,21 +12,21 @@ export const normalizeTreePath = (value: string): string =>
 
 export const getTreePathLeaf = (value: string): string => {
   const normalized = normalizeTreePath(value);
-  if (!normalized) return '';
+  if (normalized.length === 0) return '';
   return normalized.split('/').pop() ?? '';
 };
 
 export const isTreePathWithin = (value: string, parentPath: string): boolean => {
   const normalizedValue = normalizeTreePath(value);
   const normalizedParent = normalizeTreePath(parentPath);
-  if (!normalizedParent) return false;
+  if (normalizedParent.length === 0) return false;
   return normalizedValue === normalizedParent || normalizedValue.startsWith(`${normalizedParent}/`);
 };
 
 export const canMoveTreePath = (sourcePath: string, targetPath: string): boolean => {
   const source = normalizeTreePath(sourcePath);
   const target = normalizeTreePath(targetPath);
-  if (!source) return false;
+  if (source.length === 0) return false;
   if (source === target) return false;
   if (target.startsWith(`${source}/`)) return false;
   return true;
@@ -36,7 +36,7 @@ export const rebaseTreePath = (value: string, sourcePath: string, targetPath: st
   const source = normalizeTreePath(sourcePath);
   const target = normalizeTreePath(targetPath);
   const normalizedValue = normalizeTreePath(value);
-  if (!source || !normalizedValue) return normalizedValue;
+  if (source.length === 0 || normalizedValue.length === 0) return normalizedValue;
   if (normalizedValue === source) return target;
   if (normalizedValue.startsWith(`${source}/`)) {
     const suffix = normalizedValue.slice(source.length);

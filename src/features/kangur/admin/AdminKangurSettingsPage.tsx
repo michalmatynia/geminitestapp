@@ -1,8 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
-import Link from 'next/link';
-import { Button, Alert } from '@/features/kangur/shared/ui';
+import { Button } from '@/features/kangur/shared/ui';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { useKangurSettingsController } from './settings/useKangurSettingsController';
 import { StorefrontThemePanel } from './settings/StorefrontThemePanel';
@@ -19,14 +17,14 @@ const KANGUR_LAUNCH_ROUTE_OPTIONS = [
   { value: 'dedicated_app', label: 'Dedicated app', description: 'Offers a native Kangur app handoff.' },
 ];
 
-export default function AdminKangurSettingsPage() {
+export default function AdminKangurSettingsPage(): React.JSX.Element {
   const ctrl = useKangurSettingsController();
 
   return (
     <KangurAdminContentShell
       title='Kangur Settings'
       headerActions={
-        <Button onClick={ctrl.handleSave} disabled={!ctrl.isDirty || ctrl.isSaving}>
+        <Button onClick={() => { void ctrl.handleSave(); }} disabled={!ctrl.isDirty || ctrl.isSaving}>
           {ctrl.isSaving ? 'Saving...' : 'Save Settings'}
         </Button>
       }

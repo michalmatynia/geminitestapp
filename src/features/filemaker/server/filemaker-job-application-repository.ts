@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import type { Filter } from 'mongodb';
 
 import { notFoundError } from '@/shared/errors/app-error';
+import { toObjectIdMaybe } from '@/shared/lib/db/services/sync-utils';
 
 import type {
   FilemakerJobApplicationActiveArtifacts,
@@ -56,9 +57,7 @@ const findApplicationDocumentById = async (
   applicationId: string
 ): Promise<FilemakerJobApplicationMongoDocument | null> => {
   const collection = await getFilemakerJobApplicationsCollection();
-  return collection.findOne({
-    $or: [{ _id: applicationId }, { id: applicationId }],
-  });
+  return collection.findOne(resolveApplicationIdFilter(applicationId));
 };
 
 export const getMongoFilemakerJobApplicationById = async (
@@ -261,10 +260,25 @@ export const deleteMongoFilemakerJobApplication = async (
   applicationId: string
 ): Promise<void> => {
   const collection = await getFilemakerJobApplicationsCollection();
-  const result = await collection.deleteOne({
-    $or: [{ _id: applicationId }, { id: applicationId }],
-  });
+  const result = await collection.deleteOne(resolveApplicationIdFilter(applicationId));
   if (result.deletedCount === 0) {
     throw notFoundError('Filemaker job application was not found.');
   }
+};
+
+const resolveApplicationIdFilter = (
+  applicationId: string
+): Filter<FilemakerJobApplicationMongoDocument> => {
+  const objectId = toObjectIdMaybe(applicationId);
+  const candidates = [{ _id: applicationId }, { id: applicationId }] as Filter<
+    FilemakerJobApplicationMongoDocument
+  >[];
+
+  if (objectId === null || (typeof objectId === 'string' && objectId === applicationId)) {
+    return { $or: candidates };
+  }
+
+  return {
+    $or: [{ _id: objectId }, ...candidates],
+  };
 };

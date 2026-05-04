@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable complexity, max-lines-per-function */
-
 import { Settings } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import React, {
@@ -73,6 +71,7 @@ const buildInvoiceListParams = (input: {
   return params;
 };
 
+/* eslint-disable-next-line complexity */
 const readDownloadFilename = (response: Response, fallback: string): string => {
   const contentDisposition = response.headers.get('Content-Disposition') ?? '';
   const quoted = /filename="([^"]+)"/i.exec(contentDisposition);
@@ -176,6 +175,7 @@ function useInvoiceRenderNode(
   );
 }
 
+/* eslint-disable-next-line max-lines-per-function */
 export function useAdminFilemakerInvoicesListState(): InvoiceListState {
   const router = useRouter();
   const { toast } = useToast();

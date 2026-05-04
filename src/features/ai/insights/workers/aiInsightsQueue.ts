@@ -1,3 +1,15 @@
+/**
+ * AI Insights Queue
+ * 
+ * Queue management for scheduled AI insights generation.
+ * Provides:
+ * - Managed queue creation and coordination
+ * - Repeatable job scheduling
+ * - Schedule settings integration
+ * - Brain capability assignment
+ * - Tick-based processing coordination
+ */
+
 import 'server-only';
 
 import { getScheduleSettings } from '@/features/ai/insights/server';

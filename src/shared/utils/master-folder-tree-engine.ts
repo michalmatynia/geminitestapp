@@ -1,6 +1,15 @@
- 
- 
- 
+/**
+ * Master Folder Tree Engine
+ * 
+ * Core engine for hierarchical folder tree operations and validation.
+ * Provides:
+ * - Tree building and validation
+ * - Cycle detection and prevention
+ * - Drop operation validation
+ * - Tree structure integrity checks
+ * - Node relationship management
+ */
+
 import type {
   MasterTreeViewNodeDto,
   MasterTreeValidationIssueCodeDto,

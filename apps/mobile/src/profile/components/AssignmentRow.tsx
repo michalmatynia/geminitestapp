@@ -11,7 +11,7 @@ export function AssignmentRow({ assignment, href }: { assignment: KangurAssignme
   const priorityTone = getPriorityTone(assignment.priority);
   const actionLabel = translateKangurMobileActionLabel(assignment.action.label, locale);
   
-  const assignmentAction = href ? (
+  const assignmentAction = href !== null ? (
     <LinkButton href={href} label={actionLabel} tone='brand' />
   ) : (
     <MutedActionChip label={`${actionLabel} · ${copy({ de: 'bald', en: 'soon', pl: 'wkrotce' })}`} />

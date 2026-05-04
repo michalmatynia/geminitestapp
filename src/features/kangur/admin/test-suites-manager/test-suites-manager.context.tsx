@@ -27,7 +27,7 @@ const readPersistedTreeMode = (): TreeMode => {
   );
 };
 
-type TestSuitesManagerContextValue = {
+export type TestSuitesManagerContextValue = {
   showModal: boolean;
   setShowModal: (show: boolean) => void;
   showGroupModal: boolean;

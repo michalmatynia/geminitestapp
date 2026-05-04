@@ -1,3 +1,15 @@
+/**
+ * Campaign Audience Evaluation Helpers
+ * 
+ * Helper functions for evaluating campaign audience rules.
+ * Provides:
+ * - Audience rule evaluation logic
+ * - Suppression registry checking
+ * - Email link validation
+ * - Organization and person filtering
+ * - Campaign targeting logic
+ */
+
 import {
   type FilemakerDatabase,
   type FilemakerEmail,

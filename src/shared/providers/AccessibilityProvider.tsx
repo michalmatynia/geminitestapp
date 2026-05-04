@@ -1,8 +1,26 @@
 'use client';
 
+/**
+ * Accessibility Provider
+ * 
+ * Enhances application accessibility through automated focus management.
+ * Provides:
+ * - Automatic focus restoration after route changes
+ * - Skip-to-content functionality for keyboard navigation
+ * - Focus trap management for modals and overlays
+ * - Screen reader announcements for dynamic content
+ * - WCAG 2.1 compliance helpers
+ * 
+ * This provider ensures the application is accessible to users
+ * with disabilities and meets modern accessibility standards.
+ */
+
 import { useEffect } from 'react';
 
+// Attribute to mark elements that should be ignored during scroll focus
 const SCROLL_FOCUS_IGNORE_ATTRIBUTE = 'data-scroll-focus-ignore';
+
+// CSS selector for all focusable elements
 const FOCUSABLE_SELECTOR = [
   'a[href]',
   'area[href]',
@@ -16,6 +34,10 @@ const FOCUSABLE_SELECTOR = [
   '[contenteditable]',
 ].join(',');
 
+/**
+ * Determines if an element can receive keyboard focus.
+ * Checks both native focusability and explicit tabindex values.
+ */
 function isFocusable(el: Element): boolean {
   if (!(el instanceof HTMLElement)) return false;
   const tab = el.getAttribute('tabindex');

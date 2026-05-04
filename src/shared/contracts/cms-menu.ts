@@ -1,3 +1,15 @@
+/**
+ * CMS Menu Contracts
+ * 
+ * Type definitions and schemas for CMS menu system.
+ * Provides:
+ * - Menu item schema definitions
+ * - Animation preset integration
+ * - Menu structure validation
+ * - Hierarchical menu types
+ * - Menu configuration contracts
+ */
+
 import { z } from 'zod';
 
 import { animationPresetSchema } from './gsap';

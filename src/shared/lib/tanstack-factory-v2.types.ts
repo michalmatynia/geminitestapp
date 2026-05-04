@@ -1,3 +1,15 @@
+/**
+ * TanStack Query Factory Types (V2)
+ * 
+ * Type definitions for standardized TanStack Query factory patterns.
+ * Provides:
+ * - Request operation type definitions (list, detail, infinite, polling, create)
+ * - Query key type safety and structure
+ * - Error category integration for observability
+ * - Factory pattern type constraints
+ * - Standardized query configuration types
+ */
+
 import type { ErrorCategory } from '@/shared/contracts/observability';
 
 import type { QueryKey } from '@tanstack/react-query';

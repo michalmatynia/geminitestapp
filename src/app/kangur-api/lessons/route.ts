@@ -1,3 +1,15 @@
+/**
+ * Kangur API Lessons Route
+ * 
+ * API route for Kangur lessons management.
+ * Provides:
+ * - GET endpoint for retrieving lessons
+ * - POST endpoint for creating/updating lessons
+ * - Body and query schema validation
+ * - CSRF-exempt public API access
+ * - Success logging configuration
+ */
+
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import {
   bodySchema,

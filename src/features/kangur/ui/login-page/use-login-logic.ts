@@ -1,3 +1,15 @@
+/**
+ * Kangur Login Logic Hook
+ * 
+ * Client-side authentication logic for Kangur login flow.
+ * Provides:
+ * - Login form state management
+ * - Router integration with loading states
+ * - Safe timeout handling for async operations
+ * - Internationalization support
+ * - Error tracking and synchronization
+ */
+
 'use client';
 
 import { startTransition, useCallback, useState } from 'react';

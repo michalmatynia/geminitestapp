@@ -1,5 +1,20 @@
+/**
+ * Accessibility Utilities
+ * 
+ * Helper functions for improving application accessibility.
+ * Provides:
+ * - Text content extraction from React nodes
+ * - Accessible label resolution with fallbacks
+ * - ARIA attribute management
+ * - Screen reader optimization utilities
+ */
+
 import * as React from 'react';
 
+/**
+ * Recursively extracts text content from React nodes.
+ * Handles strings, numbers, arrays, and React elements.
+ */
 export const getTextContent = (node: React.ReactNode): string => {
   if (node === null || node === undefined || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
@@ -10,6 +25,10 @@ export const getTextContent = (node: React.ReactNode): string => {
   return '';
 };
 
+/**
+ * Resolves accessible labels with intelligent fallback logic.
+ * Prioritizes explicit ARIA labels, then title attributes, then fallbacks.
+ */
 const resolveFallbackAccessibleLabel = ({
   ariaLabel,
   title,

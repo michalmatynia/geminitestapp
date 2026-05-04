@@ -1,3 +1,15 @@
+/**
+ * Campaign Runs Summarizer
+ * 
+ * Summarization and metrics calculation for campaign runs.
+ * Provides:
+ * - Campaign run metrics aggregation
+ * - Delivery status tracking
+ * - Run status management
+ * - Campaign run creation utilities
+ * - Performance metrics calculation
+ */
+
 import type {
   FilemakerEmailCampaignDelivery,
   FilemakerEmailCampaignRun,

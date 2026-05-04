@@ -1,3 +1,19 @@
+/**
+ * Application Error System
+ * 
+ * Centralized error handling and classification system.
+ * Provides:
+ * - Standardized error codes and messages
+ * - Type-safe error creation and handling
+ * - HTTP status code mapping
+ * - Structured error context and metadata
+ * - Consistent error responses across API endpoints
+ * 
+ * This system ensures uniform error handling throughout
+ * the application, making debugging and error tracking
+ * more reliable and user-friendly.
+ */
+
 import type {
   AppErrorCode as ContractAppErrorCode,
   AppErrorOptions as ContractAppErrorOptions,
@@ -9,25 +25,26 @@ type AppErrorOptions = ContractAppErrorOptions;
 
 export type { AppErrorCode, AppErrorOptions };
 
+// Standardized error codes with semantic meaning
 export const AppErrorCodes = {
-  // Client Errors
-  badRequest: 'BAD_REQUEST',
-  validation: 'VALIDATION_ERROR',
-  unauthorized: 'UNAUTHORIZED',
-  forbidden: 'FORBIDDEN',
-  notFound: 'NOT_FOUND',
-  conflict: 'CONFLICT',
-  rateLimited: 'RATE_LIMITED',
-  payloadTooLarge: 'PAYLOAD_TOO_LARGE',
-  unprocessableEntity: 'UNPROCESSABLE_ENTITY',
-  methodNotAllowed: 'METHOD_NOT_ALLOWED',
-  resourceLocked: 'RESOURCE_LOCKED',
-  quotaExceeded: 'QUOTA_EXCEEDED',
+  // Client Errors (4xx) - Issues with the request
+  badRequest: 'BAD_REQUEST', // Malformed or invalid request
+  validation: 'VALIDATION_ERROR', // Input validation failures
+  unauthorized: 'UNAUTHORIZED', // Authentication required
+  forbidden: 'FORBIDDEN', // Insufficient permissions
+  notFound: 'NOT_FOUND', // Resource doesn't exist
+  conflict: 'CONFLICT', // Resource state conflict
+  rateLimited: 'RATE_LIMITED', // Too many requests
+  payloadTooLarge: 'PAYLOAD_TOO_LARGE', // Request body too large
+  unprocessableEntity: 'UNPROCESSABLE_ENTITY', // Semantic errors
+  methodNotAllowed: 'METHOD_NOT_ALLOWED', // HTTP method not supported
+  resourceLocked: 'RESOURCE_LOCKED', // Resource temporarily locked
+  quotaExceeded: 'QUOTA_EXCEEDED', // Usage limits exceeded
 
-  // Server Errors
-  internal: 'INTERNAL_SERVER_ERROR',
-  externalService: 'EXTERNAL_SERVICE_ERROR',
-  serviceUnavailable: 'SERVICE_UNAVAILABLE',
+  // Server Errors (5xx) - Internal system issues
+  internal: 'INTERNAL_SERVER_ERROR', // Unexpected server error
+  externalService: 'EXTERNAL_SERVICE_ERROR', // Third-party service failure
+  serviceUnavailable: 'SERVICE_UNAVAILABLE', // Temporary service outage
   timeout: 'TIMEOUT',
   databaseError: 'DATABASE_ERROR',
   configurationError: 'CONFIGURATION_ERROR',

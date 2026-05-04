@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable max-lines, max-lines-per-function, max-params */
 
 import { useRouter } from 'nextjs-toploader/app';
 import React, {
@@ -53,6 +52,8 @@ import {
   type OrganizationSelectionState,
   type OrganizationSortOption,
 } from '../pages/AdminFilemakerOrganizationsPage.types';
+
+/* eslint-disable max-lines */
 
 const ADDRESS_FILTERS = new Set(['with_address', 'without_address']);
 const BANK_FILTERS = new Set(['with_bank', 'without_bank']);
@@ -193,6 +194,7 @@ type BatchDeleteOrganizationsResponse = {
   missingOrganizationIds?: string[];
 };
 
+// eslint-disable-next-line max-lines-per-function
 function useMongoFilemakerOrganizations(input: {
   filters: OrganizationFilters;
   page: number;
@@ -345,22 +347,41 @@ function useOrganizationActions(router: ReturnType<typeof useRouter>): {
   return { actions, openEvent, openJobListing, openOrganization };
 }
 
+// eslint-disable-next-line max-lines-per-function
 function useOrganizationRenderNode(
-  eventsById: ReadonlyMap<string, FilemakerEvent>,
-  jobListingsById: ReadonlyMap<string, FilemakerJobListing>,
-  jobListingsByOrganizationId: ReadonlyMap<string, readonly FilemakerJobListing[]>,
-  organizations: FilemakerOrganization[],
-  organizationEmailScrapeState: Record<string, boolean>,
-  organizationWebsiteSocialScrapeState: Record<string, boolean>,
-  organizationSelection: OrganizationSelectionState,
-  onLaunchOrganizationEmailScrape: (organizationId: string) => void,
-  onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void,
-  onDeleteOrganization: (organization: FilemakerOrganization) => void,
-  onOpenEvent: (eventId: string) => void,
-  onOpenJobListing: (organizationId: string, jobListingId: string) => void,
-  onOpenOrganization: (organizationId: string) => void,
-  onToggleOrganizationSelection: (organizationId: string, checked: boolean) => void
-): (input: FolderTreeViewportRenderNodeInput) => React.ReactNode {
+  input: {
+    eventsById: ReadonlyMap<string, FilemakerEvent>;
+    jobListingsById: ReadonlyMap<string, FilemakerJobListing>;
+    jobListingsByOrganizationId: ReadonlyMap<string, readonly FilemakerJobListing[]>;
+    organizations: FilemakerOrganization[];
+    organizationEmailScrapeState: Record<string, boolean>;
+    organizationWebsiteSocialScrapeState: Record<string, boolean>;
+    organizationSelection: OrganizationSelectionState;
+    onLaunchOrganizationEmailScrape: (organizationId: string) => void;
+    onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void;
+    onDeleteOrganization: (organization: FilemakerOrganization) => void;
+    onOpenEvent: (eventId: string) => void;
+    onOpenJobListing: (organizationId: string, jobListingId: string) => void;
+    onOpenOrganization: (organizationId: string) => void;
+    onToggleOrganizationSelection: (organizationId: string, checked: boolean) => void;
+  }
+): (renderInput: FolderTreeViewportRenderNodeInput) => React.ReactNode {
+  const {
+    eventsById,
+    jobListingsById,
+    jobListingsByOrganizationId,
+    organizations,
+    organizationEmailScrapeState,
+    organizationWebsiteSocialScrapeState,
+    organizationSelection,
+    onLaunchOrganizationEmailScrape,
+    onLaunchOrganizationWebsiteSocialScrape,
+    onDeleteOrganization,
+    onOpenEvent,
+    onOpenJobListing,
+    onOpenOrganization,
+    onToggleOrganizationSelection,
+  } = input;
   const organizationById = useMemo(
     () =>
       new Map<string, FilemakerOrganization>(
@@ -369,9 +390,9 @@ function useOrganizationRenderNode(
     [organizations]
   );
   return useCallback(
-    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
+    (renderInput: FolderTreeViewportRenderNodeInput): React.ReactNode => (
       <FilemakerOrganizationMasterTreeNode
-        {...input}
+        {...renderInput}
         eventsById={eventsById}
         jobListingsById={jobListingsById}
         jobListingsByOrganizationId={jobListingsByOrganizationId}
@@ -483,6 +504,7 @@ const buildOrganizationRelationMaps = (
   };
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function useAdminFilemakerOrganizationsListState(): OrganizationListState {
   const router = useRouter();
   const settingsStore = useSettingsStore();
@@ -768,22 +790,22 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       },
     });
   }, [confirm, organizationSelection, removeMongoOrganizations, settingsStore, toast]);
-  const renderNode = useOrganizationRenderNode(
-    organizationRelations.eventsById,
-    organizationRelations.jobListingsById,
-    organizationRelations.jobListingsByOrganizationId,
+  const renderNode = useOrganizationRenderNode({
+    eventsById: organizationRelations.eventsById,
+    jobListingsById: organizationRelations.jobListingsById,
+    jobListingsByOrganizationId: organizationRelations.jobListingsByOrganizationId,
     organizations,
     organizationEmailScrapeState,
     organizationWebsiteSocialScrapeState,
     organizationSelection,
-    launchOrganizationEmailScrape,
-    launchOrganizationWebsiteSocialScrape,
-    deleteOrganization,
-    openEvent,
-    openJobListing,
-    openOrganization,
-    toggleOrganizationSelection
-  );
+    onLaunchOrganizationEmailScrape: launchOrganizationEmailScrape,
+    onLaunchOrganizationWebsiteSocialScrape: launchOrganizationWebsiteSocialScrape,
+    onDeleteOrganization: deleteOrganization,
+    onOpenEvent: openEvent,
+    onOpenJobListing: openJobListing,
+    onOpenOrganization: openOrganization,
+    onToggleOrganizationSelection: toggleOrganizationSelection,
+  });
   const selectedOrganizationCount = selectedOrganizationIdsFromState(organizationSelection).length;
   const handleJobBoardScrapeCompleted = useCallback((): void => {
     settingsStore.refetch();

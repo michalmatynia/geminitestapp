@@ -5,6 +5,7 @@ import {
   type AiPathRunRecord,
   type AiPathRunRepository,
 } from '@/shared/contracts/ai-paths';
+import type { AiPathsValidationConfig } from '@/shared/contracts/ai-paths-core/nodes-primitives';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/segments/api';
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
@@ -31,7 +32,7 @@ export async function runExecutorPreflight(input: {
   runStartedAt: string;
   traceId: string;
 }): Promise<{
-  validationConfig: import('@/shared/contracts/ai-paths-core/nodes-primitives').AiPathsValidationConfig;
+  validationConfig: AiPathsValidationConfig;
   strictFlowMode: boolean;
   nodeValidationEnabled: boolean;
   blockedRunPolicy: 'fail_run' | 'complete_with_warning';

@@ -1,4 +1,3 @@
-import { type Collection } from 'mongodb';
 import { runMongoAction as runFind } from './find';
 import { runMongoAction as runFindOne } from './findOne';
 import { runMongoAction as runCountDocuments } from './countDocuments';

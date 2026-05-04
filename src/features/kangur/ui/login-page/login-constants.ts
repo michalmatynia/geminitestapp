@@ -1,3 +1,15 @@
+/**
+ * Kangur Login Constants
+ * 
+ * Configuration constants for Kangur authentication flows.
+ * Provides:
+ * - Password validation rules and patterns
+ * - Timing constants for UI transitions
+ * - Success message definitions
+ * - Route acknowledgment delays
+ * - Account creation flow timing
+ */
+
 import {
   KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
   KANGUR_LEARNER_PASSWORD_PATTERN,

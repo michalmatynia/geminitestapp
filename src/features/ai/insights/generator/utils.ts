@@ -1,3 +1,15 @@
+/**
+ * AI Insights Generator Utilities
+ * 
+ * Utility functions for AI insights generation and data processing.
+ * Provides:
+ * - Analytics event sanitization
+ * - Record type validation and conversion
+ * - Event data normalization
+ * - Safe data transformation
+ * - Input validation for insights
+ */
+
 import type { AnalyticsEvent, AnalyticsSummary } from '@/shared/contracts/analytics';
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {

@@ -1,3 +1,15 @@
+/**
+ * Locale Layout
+ * 
+ * Internationalization layout wrapper for locale-specific routes.
+ * Handles:
+ * - Locale validation and normalization
+ * - Message loading for the current locale
+ * - Internationalization provider setup
+ * - Locale-specific metadata and configuration
+ * - Fallback handling for unsupported locales
+ */
+
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 

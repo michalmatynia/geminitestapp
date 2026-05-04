@@ -1,3 +1,15 @@
+/**
+ * Catch-All Router
+ * 
+ * Dynamic routing handler for catch-all API routes.
+ * Provides:
+ * - HTTP method routing (GET, POST, PUT, PATCH, DELETE)
+ * - Path parameter extraction
+ * - Method not allowed handling
+ * - Not found error responses
+ * - Type-safe route handler definitions
+ */
+
 import { type NextRequest } from 'next/server';
 
 import type { StringRecord } from '@/shared/contracts/base';

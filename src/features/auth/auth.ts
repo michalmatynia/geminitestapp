@@ -1,3 +1,15 @@
+/**
+ * NextAuth Configuration
+ * 
+ * Core authentication system configuration and setup.
+ * Provides:
+ * - Multi-provider authentication (Google, Facebook, Credentials)
+ * - MongoDB adapter integration for session persistence
+ * - User access control and authorization
+ * - Secure password hashing with bcrypt
+ * - Server-side authentication management
+ */
+
 import 'server-only';
 
 import { MongoDBAdapter } from '@auth/mongodb-adapter';

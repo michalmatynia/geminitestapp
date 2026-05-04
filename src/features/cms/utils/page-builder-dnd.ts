@@ -1,3 +1,15 @@
+/**
+ * Page Builder Drag and Drop Utilities
+ * 
+ * Drag-and-drop operation utilities for page builder interface.
+ * Provides:
+ * - Drag state management and parsing
+ * - Block drag data handling
+ * - Page zone drag operations
+ * - Drag index calculation and validation
+ * - Drop target resolution
+ */
+
 import type { PageZone } from '@/shared/contracts/cms';
 import {
   DRAG_KEYS,

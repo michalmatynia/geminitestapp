@@ -1,3 +1,15 @@
+/**
+ * CMS Theme Contract
+ * 
+ * Type definitions and schemas for CMS theme system.
+ * Provides:
+ * - Theme color schema definitions
+ * - Named DTO integration
+ * - Color palette validation
+ * - Theme configuration contracts
+ * - Design system color management
+ */
+
 import { z } from 'zod';
 
 import { namedDtoSchema } from './base';

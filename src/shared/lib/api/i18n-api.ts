@@ -1,3 +1,15 @@
+/**
+ * Internationalization API Client
+ * 
+ * API client functions for internationalization operations.
+ * Provides:
+ * - Country option management
+ * - Currency option management
+ * - Language preference handling
+ * - Save operations for i18n settings
+ * - Type-safe i18n API calls
+ */
+
 import type {
   CountryOption,
   CurrencyOption,

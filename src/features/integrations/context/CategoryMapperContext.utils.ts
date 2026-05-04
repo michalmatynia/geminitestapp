@@ -1,3 +1,15 @@
+/**
+ * Category Mapper Context Utilities
+ * 
+ * Utility functions for category mapping operations.
+ * Provides:
+ * - Parent external ID normalization
+ * - External category handling
+ * - Internal category option mapping
+ * - Product category integration
+ * - Category hierarchy management
+ */
+
 import type { ExternalCategory } from '@/shared/contracts/integrations/listings';
 import type { InternalCategoryOption } from '@/shared/contracts/integrations/context';
 import type { ProductCategory } from '@/shared/contracts/products/categories';

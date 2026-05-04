@@ -1,5 +1,19 @@
 'use client';
 
+/**
+ * Authentication Context Provider
+ * 
+ * Centralized authentication state management for the application.
+ * Provides:
+ * - User session state from NextAuth
+ * - Role-based permissions and access control
+ * - Security policy enforcement
+ * - User settings and preferences
+ * 
+ * This context is used throughout the app to check user permissions,
+ * render conditional UI based on roles, and manage authentication state.
+ */
+
 import { useSession } from 'next-auth/react';
 import React, { createContext, useContext, useMemo } from 'react';
 
@@ -14,15 +28,15 @@ import type { AuthSecurityPolicy } from '@/features/auth/utils/auth-security';
 import type { AuthUserPageSettings } from '@/features/auth/utils/auth-user-pages';
 
 interface AuthContextValue {
-  session: Session | null;
-  status: 'loading' | 'authenticated' | 'unauthenticated';
-  permissions: string[];
-  isElevated: boolean;
-  canReadUsers: boolean;
-  canManageSecurity: boolean;
-  roles: AuthRole[];
-  permissionsLibrary: AuthPermission[];
-  userRoles: AuthUserRoleMap;
+  session: Session | null; // NextAuth session object
+  status: 'loading' | 'authenticated' | 'unauthenticated'; // Authentication status
+  permissions: string[]; // Array of permission strings for current user
+  isElevated: boolean; // Whether user has elevated admin privileges
+  canReadUsers: boolean; // Permission to view user management
+  canManageSecurity: boolean; // Permission to manage security settings
+  roles: AuthRole[]; // Available roles in the system
+  permissionsLibrary: AuthPermission[]; // All available permissions
+  userRoles: AuthUserRoleMap; // Mapping of users to their roles
   defaultRole: string;
   securityPolicy: AuthSecurityPolicy;
   userPageSettings: AuthUserPageSettings;

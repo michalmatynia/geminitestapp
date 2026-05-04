@@ -1,7 +1,7 @@
 import React from 'react';
 import { usePreviewEditorActions, usePreviewEditorState } from '../preview/context/PreviewEditorContext';
 import { PreviewNodeSelectionButton } from '../preview/PreviewNodeSelectionButton';
-import { BlockContextProvider, useBlockContext } from '../preview/context/BlockContext';
+import { useBlockContext } from '../preview/context/BlockContext';
 import { InspectorHover } from '../preview/InspectorOverlay';
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';
@@ -16,7 +16,6 @@ export function PreviewBlockOrchestrator({ block, children }: { block: BlockInst
   const { sectionId, columnId, parentBlockId } = useBlockContext();
 
   const isSelected = selectedNodeId === block.id;
-  const isHovered = isInspecting && hoveredNodeId === block.id;
   const animConfig = block.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined;
   const cssAnimConfig = block.settings['cssAnimation'] as CssAnimationConfig | undefined;
 

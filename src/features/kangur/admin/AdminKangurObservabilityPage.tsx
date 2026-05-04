@@ -3,11 +3,8 @@
 import { GaugeIcon } from 'lucide-react';
 import Link from 'next/link';
 import { createContext, useContext } from 'react';
-import { AdminKangurContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
-import { KangurDocsTooltipEnhancer } from '@/features/kangur/docs/tooltips';
+import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { Alert, Button, LoadingState, SegmentedControl, CompactEmptyState } from '@/features/kangur/shared/ui';
-import { Breadcrumbs } from '@/features/kangur/shared/ui';
-import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 import type {
   KangurObservabilityRange,
   KangurObservabilitySummary,
@@ -40,14 +37,22 @@ export const buildSystemLogsHref = (input: {
   to: Date | string;
 }): string => {
   const params = new URLSearchParams();
-  if (input.query) params.set('query', input.query);
-  if (input.source) params.set('source', input.source);
-  if (input.level) params.set('level', input.level);
+
+  (['query', 'source', 'level'] as const).forEach((key) => {
+    const value = input[key];
+    if (typeof value === 'string' && value.length > 0) {
+      params.set(key, value);
+    }
+  });
+
   if (typeof input.minDurationMs === 'number' && Number.isFinite(input.minDurationMs)) {
     params.set('minDurationMs', String(Math.max(0, Math.round(input.minDurationMs))));
   }
-  params.set('from', input.from instanceof Date ? input.from.toISOString() : input.from);
-  params.set('to', input.to instanceof Date ? input.to.toISOString() : input.to);
+
+  const format = (d: Date | string): string => (d instanceof Date ? d.toISOString() : d);
+  params.set('from', format(input.from));
+  params.set('to', format(input.to));
+
   return `/admin/system/logs?${params.toString()}`;
 };
 
@@ -59,7 +64,6 @@ const RANGE_OPTIONS = [
 
 export function AdminKangurObservabilityPage(): React.JSX.Element {
   const ctrl = useObservabilityController();
-  const breadcrumbs = [{ label: 'Admin', href: '/admin' }, { label: 'Kangur', href: '/admin/kangur' }, { label: 'Observability' }];
 
   return (
     <KangurAdminContentShell
@@ -82,13 +86,17 @@ export function AdminKangurObservabilityPage(): React.JSX.Element {
       <div className='space-y-8'>
         {ctrl.summaryQuery.error ? <Alert variant='error'>{ctrl.summaryQuery.error.message}</Alert> : null}
 
-        {ctrl.summaryQuery.isLoading ? (
-          <LoadingState message='Loading observability...' className='min-h-[320px]' />
-        ) : !ctrl.summaryQuery.data ? (
-          <CompactEmptyState title='No summary' description='No data available.' />
-        ) : (
-          <SummarySection range={ctrl.range} summary={ctrl.summaryQuery.data} />
-        )}
+        {(() => {
+          if (ctrl.summaryQuery.isLoading) {
+            return <LoadingState message='Loading observability...' className='min-h-[320px]' />;
+          }
+
+          if (ctrl.summaryQuery.data === undefined) {
+            return <CompactEmptyState title='No summary' description='No data available.' />;
+          }
+
+          return <SummarySection range={ctrl.range} summary={ctrl.summaryQuery.data} />;
+        })()}
       </div>
     </KangurAdminContentShell>
   );

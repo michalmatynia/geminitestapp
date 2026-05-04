@@ -1,3 +1,15 @@
+/**
+ * AI Insights Session Runtime
+ * 
+ * Session management and runtime coordination for AI insights generation.
+ * Provides:
+ * - Chatbot session integration for insights
+ * - Message mapping and transformation
+ * - Chat model invocation coordination
+ * - Session state management
+ * - Prompt message handling
+ */
+
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
 import type { ChatMessageDto } from '@/shared/contracts/chatbot';
 import { callInsightChatModel } from './chat-runtime';

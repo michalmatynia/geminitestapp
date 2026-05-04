@@ -1,3 +1,19 @@
+/**
+ * Settings Management Hooks
+ * 
+ * Provides React hooks for managing application settings.
+ * Features:
+ * - Cached settings retrieval with automatic invalidation
+ * - Optimistic updates with rollback on failure
+ * - Scoped settings (user, system, lite) with proper isolation
+ * - Type-safe setting access and mutation
+ * - Error handling and retry logic
+ * 
+ * These hooks abstract the complexity of settings management,
+ * providing a simple interface for reading and updating
+ * configuration values throughout the application.
+ */
+
 import {
   fetchSettingsCached,
   fetchLiteSettingsCached,
@@ -18,9 +34,11 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 
 export type { SystemSetting };
 
+// Transform settings array into a Map for efficient key-based access
 const selectSettingsMap = (data: SystemSetting[]): Map<string, string> =>
   new Map(data.map((item) => [item.key, item.value]));
 
+// Fetch settings with graceful fallback handling
 const fetchSettingsWithFallback = async (
   scope: SettingsScope,
   source: string

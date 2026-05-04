@@ -1,3 +1,15 @@
+/**
+ * AI Brain Catalog Entries
+ * 
+ * Catalog pool definitions and entry management for AI Brain.
+ * Provides:
+ * - Catalog pool type definitions
+ * - Model preset pools
+ * - Paid and Ollama model pools
+ * - Agent and persona pools
+ * - Deep thinking agent pools
+ */
+
 import type { AiBrainCatalogEntry, AiBrainCatalogPool } from '@/shared/contracts/ai-brain';
 
 export const BRAIN_CATALOG_POOL_VALUES: readonly AiBrainCatalogPool[] = [

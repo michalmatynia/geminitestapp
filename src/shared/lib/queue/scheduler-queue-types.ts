@@ -1,3 +1,15 @@
+/**
+ * Scheduler Queue Types
+ * 
+ * Type definitions for scheduler queue operations.
+ * Provides:
+ * - Typed scheduler job data structures
+ * - Scheduled tick job definitions
+ * - Queue state management types
+ * - Worker and scheduler status tracking
+ * - Type-safe queue operations
+ */
+
 export type TypedSchedulerTickJobData<TType extends string> = {
   type: TType;
 };

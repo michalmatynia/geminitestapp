@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 import { KangurMobileCard as Card, KangurMobileLinkButton as LinkButton } from '../../shared/KangurMobileUi';
 import { LessonCheckpointRow, LESSONS_ROUTE } from '../daily-plan-primitives';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
-import { type UseKangurMobileLessonCheckpointsResult, type KangurMobileLessonCheckpointItem } from '../useKangurMobileLessonCheckpoints';
+import { type UseKangurMobileLessonCheckpointsResult } from '../../lessons/useKangurMobileLessonCheckpoints';
 
 interface DailyPlanCheckpointsSectionProps {
     copy: KangurMobileCopy;

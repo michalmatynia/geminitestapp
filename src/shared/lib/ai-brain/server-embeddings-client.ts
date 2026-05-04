@@ -1,3 +1,15 @@
+/**
+ * AI Brain Server Embeddings Client
+ * 
+ * Server-side embeddings generation client for AI models.
+ * Provides:
+ * - Text embedding generation
+ * - Multi-vendor embedding support (OpenAI, Ollama)
+ * - Model ID normalization
+ * - Provider credential resolution
+ * - Server-only embedding operations
+ */
+
 import 'server-only';
 
 import OpenAI from 'openai';

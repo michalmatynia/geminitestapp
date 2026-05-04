@@ -1,3 +1,15 @@
+/**
+ * AI Brain Provider Metadata
+ * 
+ * Metadata and configuration for AI provider integrations.
+ * Provides:
+ * - Provider credential vendor types
+ * - Settings key mappings
+ * - Settings path definitions
+ * - Provider labels and identifiers
+ * - Multi-provider configuration
+ */
+
 export type BrainProviderCredentialVendor = 'openai' | 'anthropic' | 'gemini';
 
 export const BRAIN_PROVIDER_SETTING_KEYS = {

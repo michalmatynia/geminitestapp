@@ -1,3 +1,15 @@
+/**
+ * AI Brain Settings
+ * 
+ * Configuration and settings management for AI Brain system.
+ * Provides:
+ * - Brain catalog and pool management
+ * - Provider configuration
+ * - Feature and capability assignments
+ * - Model family definitions
+ * - Centralized Brain settings
+ */
+
 import {
   type AiBrainCatalogEntry,
   type AiBrainCatalogPool,

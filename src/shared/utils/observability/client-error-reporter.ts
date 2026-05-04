@@ -1,3 +1,15 @@
+/**
+ * Client Error Reporter
+ * 
+ * Client-side error reporting and information extraction.
+ * Provides:
+ * - Error information extraction
+ * - Abort-like error filtering
+ * - Context string validation
+ * - Client error logging integration
+ * - Error metadata processing
+ */
+
 import type { ErrorContext } from '@/shared/contracts/observability';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';

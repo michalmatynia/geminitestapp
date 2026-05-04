@@ -20,7 +20,7 @@ function FocusCardMetrics({
   accentColor: string;
   operation: { averageAccuracyPercent: number; sessions: number };
   copy: ReturnType<typeof useKangurMobileI18n>['copy'];
-}) {
+}): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       <Pill
@@ -61,7 +61,7 @@ function FocusCardActions({
   historyHref: Href;
   lessonHref: Href | null;
   practiceHref: Href;
-}) {
+}): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       <LinkButton

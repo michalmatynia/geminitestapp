@@ -1,3 +1,15 @@
+/**
+ * Error Resolution
+ * 
+ * Server-side error resolution and enrichment.
+ * Provides:
+ * - Error to ResolvedError transformation
+ * - Error ID generation
+ * - Error category classification
+ * - Zod validation error handling
+ * - Server-only error processing
+ */
+
 import 'server-only';
 
 import { randomUUID } from 'crypto';

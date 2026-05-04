@@ -3,12 +3,18 @@ import { KangurMobileCard as Card, KangurMobileLinkButton as LinkButton, KangurM
 import { DailyPlanBadgeChip, PROFILE_ROUTE } from '../daily-plan-primitives';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
 
+interface BadgeItem {
+  id: string;
+  title: string;
+  emoji: string;
+}
+
 interface DailyPlanBadgesSectionProps {
     copy: KangurMobileCopy;
     unlockedBadges: number;
     totalBadges: number;
     remainingBadges: number;
-    recentBadges: any[];
+    recentBadges: BadgeItem[];
 }
 
 export function DailyPlanBadgesSection({

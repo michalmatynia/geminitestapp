@@ -1,3 +1,15 @@
+/**
+ * UI Playwright Contracts
+ * 
+ * Type definitions for Playwright UI components and context.
+ * Provides:
+ * - Playwright settings context types
+ * - Settings provider props
+ * - State management types
+ * - Playwright configuration UI
+ * - Browser automation settings
+ */
+
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import type { PlaywrightSettings } from '../playwright';
 

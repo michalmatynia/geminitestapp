@@ -1,3 +1,15 @@
+/**
+ * Product Scanner Settings Normalization Evaluators
+ * 
+ * Normalization and evaluation logic for product scanner settings.
+ * Provides:
+ * - 1688 candidate evaluator normalization
+ * - Amazon candidate evaluator normalization
+ * - Language detection mode handling
+ * - Similarity mode configuration
+ * - Content language validation
+ */
+
 import type {
   ProductScanner1688CandidateEvaluator,
   ProductScannerAmazonCandidateEvaluator,

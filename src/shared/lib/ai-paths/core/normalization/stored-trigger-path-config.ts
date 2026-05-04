@@ -1,3 +1,15 @@
+/**
+ * Stored Trigger Path Configuration
+ * 
+ * Configuration management for stored trigger-based AI paths.
+ * Provides:
+ * - Stored path configuration loading
+ * - Trigger path normalization
+ * - Starter workflow upgrades
+ * - Portable path input resolution
+ * - Configuration sanitization
+ */
+
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
 import { upgradeStarterWorkflowPathConfig } from '@/shared/lib/ai-paths/core/starter-workflows';

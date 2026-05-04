@@ -13,7 +13,7 @@ import {
   type KangurDuelOpponentEntry,
   type KangurDuelLeaderboardEntry,
 } from '@kangur/contracts/kangur-duels';
-import { type UseKangurMobileLearnerDuelsSummaryResult } from '../../duels/useKangurMobileLearnerDuelsSummary';
+import { type UseKangurMobileLearnerDuelsSummaryResult } from '../../duels/duels-summary-types';
 
 export interface DailyPlanDuelsSectionProps {
   copy: KangurMobileCopy;
@@ -50,7 +50,7 @@ function OpponentItem({
         label={copy({ de: 'Schneller Rückkampf', en: 'Quick rematch', pl: 'Szybki rewanż' })}
         onPress={async () => {
           const sessionId = await duelPlan.createRematch(opponent.learnerId);
-          if (sessionId) openDuelSession(sessionId);
+          if (sessionId !== null) openDuelSession(sessionId);
         }}
         pending={duelPlan.pendingOpponentLearnerId === opponent.learnerId}
         pendingLabel={copy({ de: 'Rückkampf wird gesendet...', en: 'Sending rematch...', pl: 'Wysyłanie rewanżu...' })}
@@ -87,6 +87,60 @@ function CurrentEntryPanel({
   );
 }
 
+function DuelStatusPills({
+  copy,
+  opponentsCount,
+  currentRank,
+}: {
+  copy: KangurMobileCopy;
+  opponentsCount: number;
+  currentRank: number | null;
+}): React.JSX.Element {
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <Pill label={copy({ de: `Rivalen ${opponentsCount}`, en: `Rivals ${opponentsCount}`, pl: `Rywale ${opponentsCount}` })} tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }} />
+      <Pill label={(currentRank !== null && currentRank !== 0) ? copy({ de: `Deine Position #${currentRank}`, en: `Your rank #${currentRank}`, pl: `Twoja pozycja #${currentRank}` }) : copy({ de: 'Wartet auf Sichtbarkeit', en: 'Waiting for visibility', pl: 'Czeka na widoczność' })} tone={{ backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', textColor: '#047857' }} />
+    </View>
+  );
+}
+
+function DuelRivalsList({
+  copy,
+  opponents,
+  locale,
+  duelPlan,
+  openDuelSession,
+}: {
+  copy: KangurMobileCopy;
+  opponents: KangurDuelOpponentEntry[];
+  locale: KangurMobileLocale;
+  duelPlan: UseKangurMobileLearnerDuelsSummaryResult;
+  openDuelSession: (sessionId: string) => void;
+}): React.JSX.Element {
+  if (opponents.length === 0) {
+    return (
+      <Text style={{ color: '#475569', lineHeight: 22 }}>
+        {copy({ de: 'Keine Rivalen.', en: 'No rivals.', pl: 'Brak rywali.' })}
+      </Text>
+    );
+  }
+
+  return (
+    <>
+      {opponents.map((opponent) => (
+        <OpponentItem 
+          key={opponent.learnerId} 
+          opponent={opponent} 
+          copy={copy} 
+          locale={locale} 
+          duelPlan={duelPlan} 
+          openDuelSession={openDuelSession} 
+        />
+      ))}
+    </>
+  );
+}
+
 export function DailyPlanDuelsSection({
   copy,
   locale,
@@ -115,7 +169,7 @@ export function DailyPlanDuelsSection({
     );
   }
 
-  if (error) {
+  if (error !== null) {
     return (
       <Card>
         <View style={{ gap: 10 }}>
@@ -132,14 +186,17 @@ export function DailyPlanDuelsSection({
         <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{copy({ de: 'Duelle für heute', en: 'Duels for today', pl: 'Pojedynki na dziś' })}</Text>
         <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>{copy({ de: 'Schneller Rückweg zu Rivalen', en: 'Quick return to rivals', pl: 'Szybki powrót do rywali' })}</Text>
       </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Pill label={copy({ de: `Rivalen ${opponents.length}`, en: `Rivals ${opponents.length}`, pl: `Rywale ${opponents.length}` })} tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }} />
-        <Pill label={(currentRank !== null && currentRank !== 0) ? copy({ de: `Deine Position #${currentRank}`, en: `Your rank #${currentRank}`, pl: `Twoja pozycja #${currentRank}` }) : copy({ de: 'Wartet auf Sichtbarkeit', en: 'Waiting for visibility', pl: 'Czeka na widoczność' })} tone={{ backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', textColor: '#047857' }} />
-      </View>
+      <DuelStatusPills copy={copy} currentRank={currentRank} opponentsCount={opponents.length} />
       <View style={{ gap: 12 }}>
         {currentEntry !== null ? <CurrentEntryPanel copy={copy} rank={currentRank} entry={currentEntry} /> : <Text style={{ color: '#475569', lineHeight: 22 }}>{copy({ de: 'Dein Konto ist nicht sichtbar.', en: 'Your account is not visible.', pl: 'Twoje konto jest niewidoczne.' })}</Text>}
-        {actionError && <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{actionError}</Text>}
-        {opponents.length === 0 ? <Text style={{ color: '#475569', lineHeight: 22 }}>{copy({ de: 'Keine Rivalen.', en: 'No rivals.', pl: 'Brak rywali.' })}</Text> : opponents.map((opponent) => <OpponentItem key={opponent.learnerId} opponent={opponent} copy={copy} locale={locale as KangurMobileLocale} duelPlan={duelPlan} openDuelSession={openDuelSession} />)}
+        {Boolean(actionError) && <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{actionError}</Text>}
+        <DuelRivalsList 
+          copy={copy} 
+          opponents={opponents} 
+          locale={locale as KangurMobileLocale} 
+          duelPlan={duelPlan} 
+          openDuelSession={openDuelSession} 
+        />
         <LinkButton href={DUELS_ROUTE} label={copy({ de: 'Duelle öffnen', en: 'Open duels', pl: 'Otwórz pojedynki' })} stretch />
       </View>
     </Card>

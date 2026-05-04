@@ -1,3 +1,15 @@
+/**
+ * Integration Slugs
+ * 
+ * Centralized integration identifier slugs and validation.
+ * Provides:
+ * - Integration slug constants (baselinker, tradera, linkedin, etc.)
+ * - Slug validation sets
+ * - Integration type identification
+ * - Cross-feature slug consistency
+ * - Integration routing identifiers
+ */
+
 const BASE_INTEGRATION_SLUG_VALUES = ['baselinker', 'base', 'base-com'] as const;
 const TRADERA_INTEGRATION_SLUG_VALUES = ['tradera'] as const;
 

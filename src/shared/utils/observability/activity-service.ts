@@ -1,3 +1,15 @@
+/**
+ * Activity Service
+ * 
+ * Server-side activity logging and management service.
+ * Provides:
+ * - Activity log creation and storage
+ * - Activity filtering and retrieval
+ * - Server-side logging controls
+ * - System event integration
+ * - Activity repository coordination
+ */
+
 import 'server-only';
 
 import { randomUUID } from 'crypto';

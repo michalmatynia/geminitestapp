@@ -1,3 +1,15 @@
+/**
+ * User Action Tracker
+ * 
+ * User interaction tracking and analytics.
+ * Provides:
+ * - User action event tracking
+ * - Click and interaction coordinates
+ * - Text content capture
+ * - Timestamp recording
+ * - Client-side action analytics
+ */
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 type UserAction = {
   type: string;

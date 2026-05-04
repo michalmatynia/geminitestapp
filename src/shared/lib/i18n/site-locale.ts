@@ -1,3 +1,15 @@
+/**
+ * Site Locale Utilities
+ * 
+ * Locale management and URL handling for internationalization.
+ * Provides:
+ * - Locale list generation from config
+ * - URL segment normalization
+ * - Localized text handling
+ * - Default locale configuration
+ * - Locale-aware routing utilities
+ */
+
 import {
   DEFAULT_SITE_I18N_CONFIG,
   type LocalizedText,

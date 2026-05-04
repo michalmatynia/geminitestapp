@@ -1,3 +1,15 @@
+/**
+ * Redis Connection Manager
+ * 
+ * Redis connection management for queue operations.
+ * Provides:
+ * - Singleton Redis connection
+ * - Connection health monitoring
+ * - Transient error handling
+ * - Ping timeout configuration
+ * - Server-only Redis operations
+ */
+
 import 'server-only';
 
 import { Redis } from 'ioredis';

@@ -1,3 +1,15 @@
+/**
+ * AI Brain Provider Credentials
+ * 
+ * Server-side credential management for AI providers.
+ * Provides:
+ * - Provider credential retrieval
+ * - Vendor-specific credential handling
+ * - Configuration validation
+ * - Secure credential storage access
+ * - Server-only credential operations
+ */
+
 import 'server-only';
 
 import { configurationError } from '@/shared/errors/app-error';

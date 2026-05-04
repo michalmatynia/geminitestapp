@@ -1,3 +1,15 @@
+/**
+ * Kangur Polish Diacritics
+ * 
+ * Polish language diacritic correction utilities for Kangur.
+ * Provides:
+ * - Exact phrase replacements for common errors
+ * - Polish character normalization
+ * - Diacritic restoration
+ * - Language-specific text corrections
+ * - Polish language quality improvements
+ */
+
 const exactPhraseReplacements = [
   ['Cześć {displayName},', 'Cześć {displayName},'],
   ['Czesc,', 'Cześć,'],

@@ -1,3 +1,15 @@
+/**
+ * AI Brain Server Runtime Client
+ * 
+ * Server-side AI model runtime client for chat completions.
+ * Provides:
+ * - OpenAI-compatible chat completion interface
+ * - Multi-vendor model support
+ * - Model ID normalization
+ * - Vendor inference and routing
+ * - Server-only AI operations
+ */
+
 import 'server-only';
 
 import OpenAI from 'openai';

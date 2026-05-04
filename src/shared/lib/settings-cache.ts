@@ -1,3 +1,15 @@
+/**
+ * Settings Cache
+ * 
+ * LRU-based caching system for application settings.
+ * Provides:
+ * - In-memory settings caching with TTL
+ * - Stale-while-revalidate pattern
+ * - Settings scope management
+ * - Cache statistics and debugging
+ * - Server-only settings cache
+ */
+
 import 'server-only';
 
 import { LRUCache } from 'lru-cache';

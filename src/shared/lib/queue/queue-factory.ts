@@ -1,3 +1,15 @@
+/**
+ * Queue Factory
+ * 
+ * Factory for creating and managing BullMQ queues.
+ * Provides:
+ * - Queue creation with Redis connection
+ * - Worker management and lifecycle
+ * - Queue health monitoring
+ * - Queue registry integration
+ * - Server-only queue operations
+ */
+
 import 'server-only';
 
 import { Queue, Worker } from 'bullmq';

@@ -1,3 +1,15 @@
+/**
+ * Validator Category Labels
+ * 
+ * Text normalization utilities for product category validation.
+ * Provides:
+ * - Category label text normalization
+ * - Loose text comparison utilities
+ * - Unicode normalization (NFKD)
+ * - Case-insensitive text processing
+ * - Category matching logic
+ */
+
 const normalizeComparableText = (value: unknown): string => {
   if (typeof value !== 'string') return '';
   return value.trim().toLowerCase();

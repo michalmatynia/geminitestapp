@@ -1,3 +1,15 @@
+/**
+ * AI Paths Portable Engine Contracts
+ * 
+ * Type definitions for portable AI path engine operations.
+ * Provides:
+ * - Portable path JSON schema types
+ * - Query schema validation
+ * - Kind-based path filtering
+ * - Zod schema integration
+ * - Portable engine configuration
+ */
+
 import { z } from 'zod';
 
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';

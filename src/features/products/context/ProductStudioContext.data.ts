@@ -1,3 +1,15 @@
+/**
+ * Product Studio Context Data
+ * 
+ * Data fetching and management for product studio.
+ * Provides:
+ * - Studio audit data retrieval
+ * - Studio variants data retrieval
+ * - API client integration
+ * - Response schema validation
+ * - Client-side error logging
+ */
+
 'use client';
 
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';

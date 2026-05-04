@@ -1,3 +1,15 @@
+/**
+ * Server Translator
+ * 
+ * Server-side translation utilities using use-intl.
+ * Provides:
+ * - Server-side message translation
+ * - Locale-aware translation
+ * - Message loading and caching
+ * - Preferred locale resolution
+ * - Type-safe translation values
+ */
+
 import 'server-only';
 
 import { createTranslator } from 'use-intl/core';

@@ -1,3 +1,15 @@
+/**
+ * Client Error Dispatch
+ * 
+ * Client-side error dispatching and browser detection.
+ * Provides:
+ * - Browser runtime detection
+ * - Conditional client error logging
+ * - Error context forwarding
+ * - Client-side error coordination
+ * - Browser-specific error handling
+ */
+
 import type { ClientErrorContext } from './client-error-logger';
 
 export type { ClientErrorContext };

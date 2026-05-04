@@ -1,3 +1,15 @@
+/**
+ * Validator Semantic State
+ * 
+ * Product validation semantic state management.
+ * Provides:
+ * - Semantic validation state tracking
+ * - Audit record management
+ * - Validation pattern inference
+ * - Operation and preset migration
+ * - Semantic validation coordination
+ */
+
 import type { ProductValidationPattern, ProductValidationSemanticAuditRecord, ProductValidationSemanticAuditSource, ProductValidationSemanticAuditTrigger, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
 import { LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION, productValidationSemanticAuditRecordSchema } from '@/shared/contracts/products/validation';
 import {

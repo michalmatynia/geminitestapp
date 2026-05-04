@@ -5,7 +5,7 @@ import {
   KangurMobileFilterChip as FilterChip,
   KangurMobileInsetPanel as InsetPanel,
 } from '../../shared/KangurMobileUi';
-import { type LessonBody, type LessonSection } from './lessons-types';
+import { type LessonBody, type LessonSection } from '../lessons-types';
 
 interface SectionNavigationProps {
   copy: (dict: { de: string; en: string; pl: string }) => string;
@@ -14,7 +14,7 @@ interface SectionNavigationProps {
   setActiveSectionIndex: (index: number) => void;
 }
 
-function SectionNavigation({ copy, activeSectionIndex, totalSections, setActiveSectionIndex }: SectionNavigationProps) {
+function SectionNavigation({ copy, activeSectionIndex, totalSections, setActiveSectionIndex }: SectionNavigationProps): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'row', gap: 10 }}>
       <ActionButton
@@ -43,7 +43,7 @@ function SectionList({
   sections: LessonSection[];
   activeSectionIndex: number;
   setActiveSectionIndex: (index: number) => void;
-}) {
+}): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'column', gap: 8 }}>
       {sections.map((s, idx) => (
@@ -90,7 +90,7 @@ export function LessonBodyView({
           <SectionNavigation copy={copy} activeSectionIndex={activeSectionIndex} totalSections={totalSections} setActiveSectionIndex={setActiveSectionIndex} />
         </InsetPanel>
       )}
-      {lessonBody.practiceNote && (
+      {Boolean(lessonBody.practiceNote) && (
         <Text style={{ color: '#475569', fontSize: 13, fontStyle: 'italic', lineHeight: 18 }}>
           {lessonBody.practiceNote}
         </Text>

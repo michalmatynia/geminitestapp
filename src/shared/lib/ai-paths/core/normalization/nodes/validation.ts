@@ -1,3 +1,15 @@
+/**
+ * AI Paths Validation Node Normalization
+ * 
+ * Normalization utilities for validation pattern nodes.
+ * Provides:
+ * - Validation pattern node configuration
+ * - Input/output port normalization
+ * - Unique port enforcement
+ * - Validation node standardization
+ * - Pattern-based validation setup
+ */
+
 import { type AiNode } from '@/shared/contracts/ai-paths';
 
 import { VALIDATION_PATTERN_INPUT_PORTS, VALIDATION_PATTERN_OUTPUT_PORTS } from '../../constants';

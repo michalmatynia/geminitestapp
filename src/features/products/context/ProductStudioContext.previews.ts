@@ -1,3 +1,15 @@
+/**
+ * Product Studio Context Previews
+ * 
+ * Preview management for product studio image slots.
+ * Provides:
+ * - Image slot preview generation
+ * - Preview source type handling
+ * - Image URL resolution
+ * - Client-side preview state management
+ * - Preview synchronization with image slots
+ */
+
 'use client';
 
 import { useEffect, useMemo, type Dispatch, type SetStateAction } from 'react';

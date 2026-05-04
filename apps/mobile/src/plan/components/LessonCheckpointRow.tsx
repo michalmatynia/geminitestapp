@@ -12,7 +12,9 @@ import {
   KangurMobilePill as Pill,
 } from '../../shared/KangurMobileUi';
 
-function CheckpointHeader({ item }: { item: KangurMobileLessonCheckpointItem }) {
+import { type KangurMobileLocale } from '../../i18n/kangurMobileI18n';
+
+function CheckpointHeader({ item }: { item: KangurMobileLessonCheckpointItem }): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
       <View style={{ flex: 1, gap: 4 }}>
@@ -23,7 +25,7 @@ function CheckpointHeader({ item }: { item: KangurMobileLessonCheckpointItem }) 
   );
 }
 
-function CheckpointMetadata({ item, copy, locale }: { item: KangurMobileLessonCheckpointItem; copy: ReturnType<typeof useKangurMobileI18n>['copy']; locale: string }) {
+function CheckpointMetadata({ item, copy, locale }: { item: KangurMobileLessonCheckpointItem; copy: ReturnType<typeof useKangurMobileI18n>['copy']; locale: KangurMobileLocale }): React.JSX.Element {
   return (
     <>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -35,9 +37,9 @@ function CheckpointMetadata({ item, copy, locale }: { item: KangurMobileLessonCh
       </Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {copy({
-          de: `Zuletzt gespeichert ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale as KangurMobileLocale)}`,
-          en: `Last saved ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale as KangurMobileLocale)}`,
-          pl: `Ostatni zapis ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale as KangurMobileLocale)}`,
+          de: `Zuletzt gespeichert ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
+          en: `Last saved ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
+          pl: `Ostatni zapis ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
         })}
       </Text>
     </>

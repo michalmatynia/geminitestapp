@@ -1,3 +1,15 @@
+/**
+ * Logging Controls
+ * 
+ * Configuration and management for observability logging controls.
+ * Provides:
+ * - Logging control type definitions (info, activity, error)
+ * - System log level mapping
+ * - Logging control keys management
+ * - Control type resolution
+ * - Centralized logging configuration
+ */
+
 import type {
   ObservabilityLoggingControls,
   SystemLogLevelDto as SystemLogLevel,

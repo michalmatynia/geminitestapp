@@ -1,3 +1,15 @@
+/**
+ * Product Studio Context Actions
+ * 
+ * Action handlers for product studio operations.
+ * Provides:
+ * - Studio operation actions (run, cancel, etc.)
+ * - Image studio slot management
+ * - Context registry integration
+ * - Router integration with loading states
+ * - Client-side action coordination without memoization
+ */
+
 'use client';
 
 'use no memo';

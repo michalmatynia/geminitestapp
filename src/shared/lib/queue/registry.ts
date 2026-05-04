@@ -1,3 +1,15 @@
+/**
+ * Queue Registry
+ * 
+ * Central registry for managing active queues.
+ * Provides:
+ * - Queue registration and lookup
+ * - Queue health status aggregation
+ * - Registry-wide queue management
+ * - System event logging
+ * - Server-only queue registry
+ */
+
 import 'server-only';
 
 import type { ManagedQueue, QueueHealthStatus } from '@/shared/contracts/jobs';

@@ -1,3 +1,15 @@
+/**
+ * Error Mapper
+ * 
+ * Error transformation and mapping utilities.
+ * Provides:
+ * - External error to AppError mapping
+ * - Error code normalization
+ * - HTTP status code mapping
+ * - Error type detection and conversion
+ * - Standardized error transformation
+ */
+
 import {
   type AppError,
   AppErrorCodes,

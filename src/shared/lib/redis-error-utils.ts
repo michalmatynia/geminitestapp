@@ -1,3 +1,15 @@
+/**
+ * Redis Error Utilities
+ * 
+ * Utilities for classifying and handling Redis errors.
+ * Provides:
+ * - Transient error detection
+ * - Error code classification
+ * - Error message pattern matching
+ * - Connection error identification
+ * - Retry-eligible error determination
+ */
+
 const TRANSIENT_REDIS_ERROR_CODES = new Set(['EPIPE', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT']);
 const TRANSIENT_REDIS_MESSAGE_PATTERNS = [
   'write epipe',

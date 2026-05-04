@@ -1,3 +1,15 @@
+/**
+ * Optional NextAuth Session Hook
+ * 
+ * Optional session hook that gracefully handles missing SessionProvider.
+ * Provides:
+ * - Optional session context access
+ * - Fallback session values
+ * - Graceful degradation without provider
+ * - Client-side session management
+ * - NextAuth React integration
+ */
+
 'use client';
 
 import * as React from 'react';

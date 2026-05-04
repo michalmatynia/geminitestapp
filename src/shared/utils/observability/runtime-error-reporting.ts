@@ -1,3 +1,15 @@
+/**
+ * Runtime Error Reporting
+ * 
+ * Runtime error reporting and dispatch utilities.
+ * Provides:
+ * - Runtime error context management
+ * - Client-side error dispatch
+ * - Internal observability fallback
+ * - Error reporting coordination
+ * - Service and action tracking
+ */
+
 import { logClientCatchIfBrowser, type ClientErrorContext } from './client-error-dispatch';
 import { reportObservabilityInternalError } from './internal-observability-fallback';
 

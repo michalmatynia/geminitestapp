@@ -20,7 +20,7 @@ export function DailyPlanResultsSection({
     scoreError,
     recentResultItems,
 }: DailyPlanResultsSectionProps): React.JSX.Element {
-    const renderContent = () => {
+    const renderContent = (): React.JSX.Element => {
         if (isLoading) {
             return (
                 <Text style={{ color: '#475569' }}>

@@ -1,3 +1,15 @@
+/**
+ * Auth Constants
+ * 
+ * Authentication system configuration constants.
+ * Provides:
+ * - Auth settings key definitions
+ * - Role and permission keys
+ * - User page access keys
+ * - Security policy keys
+ * - Database provider configuration
+ */
+
 export const AUTH_SETTINGS_KEYS = {
   roles: 'auth_roles',
   permissions: 'auth_permissions',

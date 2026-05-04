@@ -1,3 +1,15 @@
+/**
+ * Auth Provider Service
+ * 
+ * Authentication database provider management.
+ * Provides:
+ * - Auth database provider resolution
+ * - Database engine policy integration
+ * - Primary provider configuration checking
+ * - Service provider coordination
+ * - Server-only provider management
+ */
+
 import 'server-only';
 
 import type { AppProviderValue as AuthDbProvider } from '@/shared/contracts/system';

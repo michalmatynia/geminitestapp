@@ -1,3 +1,27 @@
+/**
+ * AI Paths Context Node Normalization
+ * 
+ * Normalization utilities for context nodes in AI paths.
+ * Provides:
+ * - Context node configuration normalization
+ * - Role-based context management
+ * - Input/output port standardization
+ * - Context data flow setup
+ * - AI conversation context handling
+ */
+
+/**
+ * AI Paths Context Node Normalization
+ * 
+ * Normalization utilities for context nodes in AI paths.
+ * Provides:
+ * - Context node configuration normalization
+ * - Role-based context management
+ * - Input/output port standardization
+ * - Context data flow setup
+ * - AI conversation context handling
+ */
+
 import { type AiNode } from '@/shared/contracts/ai-paths';
 
 import { CONTEXT_INPUT_PORTS, CONTEXT_OUTPUT_PORTS, DEFAULT_CONTEXT_ROLE } from '../../constants';

@@ -1,5 +1,15 @@
 import { type KangurAiTutorConversationContext } from '../../../../src/shared/contracts/kangur-ai-tutor';
 import { type KangurMobileLocale, type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { type KangurMobileLessonItem } from './useKangurMobileLessons';
+
+export type LessonItem = KangurMobileLessonItem;
+
+export interface LessonsCatalogPanelProps {
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  lessons: LessonItem[];
+  locale: KangurMobileLocale;
+  onOpenCatalogLesson?: () => void;
+}
 
 export interface LessonMastery {
   trackedLessons: number;

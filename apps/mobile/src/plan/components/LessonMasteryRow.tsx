@@ -35,7 +35,9 @@ const getLessonMasteryTone = (masteryPercent: number): Tone => {
   };
 };
 
-function MasteryHeader({ insight, title, copy }: { insight: KangurMobileDailyPlanLessonMasteryItem; title: string; copy: ReturnType<typeof useKangurMobileI18n>['copy'] }) {
+import { type KangurMobileLocale } from '../../i18n/kangurMobileI18n';
+
+function MasteryHeader({ insight, title, copy }: { insight: KangurMobileDailyPlanLessonMasteryItem; title: string; copy: ReturnType<typeof useKangurMobileI18n>['copy'] }): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
       <View style={{ flex: 1, gap: 4 }}>
@@ -54,7 +56,7 @@ function MasteryHeader({ insight, title, copy }: { insight: KangurMobileDailyPla
   );
 }
 
-function MasteryMetadata({ insight, copy, locale }: { insight: KangurMobileDailyPlanLessonMasteryItem; copy: ReturnType<typeof useKangurMobileI18n>['copy']; locale: KangurMobileLocale }) {
+function MasteryMetadata({ insight, copy, locale }: { insight: KangurMobileDailyPlanLessonMasteryItem; copy: ReturnType<typeof useKangurMobileI18n>['copy']; locale: KangurMobileLocale }): React.JSX.Element {
   const lastAttemptLabel = insight.lastCompletedAt !== null ? formatKangurMobileScoreDateTime(insight.lastCompletedAt, locale) : copy({ de: 'kein Datum', en: 'no date', pl: 'brak daty' });
   return (
     <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
@@ -78,7 +80,7 @@ export function LessonMasteryRow({
   return (
     <InsetPanel gap={10}>
       <MasteryHeader insight={insight} title={title} copy={copy} />
-      <MasteryMetadata insight={insight} copy={copy} locale={locale as KangurMobileLocale} />
+      <MasteryMetadata insight={insight} copy={copy} locale={locale} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton href={insight.lessonHref} label={copy({ de: 'Lektion öffnen', en: 'Open lesson', pl: 'Otwórz lekcję' })} tone='primary' />
         {insight.practiceHref !== null && (

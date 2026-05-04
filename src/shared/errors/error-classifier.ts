@@ -1,3 +1,15 @@
+/**
+ * Error Classifier
+ * 
+ * Error classification and categorization utilities.
+ * Provides:
+ * - Error category determination
+ * - Suggested action resolution
+ * - API error classification
+ * - Zod validation error detection
+ * - Error type identification
+ */
+
 import { z } from 'zod';
 
 import {

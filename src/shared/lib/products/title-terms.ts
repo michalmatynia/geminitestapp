@@ -1,3 +1,15 @@
+/**
+ * Product Title Terms
+ * 
+ * Product title structure and term management utilities.
+ * Provides:
+ * - Structured product name definitions
+ * - Title term type handling
+ * - Product category integration
+ * - Title separator constants
+ * - Product naming conventions
+ */
+
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type {
   ProductTitleTerm,

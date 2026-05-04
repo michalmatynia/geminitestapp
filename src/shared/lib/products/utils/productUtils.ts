@@ -1,3 +1,15 @@
+/**
+ * Product Utilities
+ * 
+ * General utilities for product operations and management.
+ * Provides:
+ * - Mock product creation for testing
+ * - Product validation integration
+ * - Product repository coordination
+ * - Multi-language product support
+ * - Product data validation
+ */
+
 import type { ProductRecord } from '@/shared/contracts/products/product';
 import { validationError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';

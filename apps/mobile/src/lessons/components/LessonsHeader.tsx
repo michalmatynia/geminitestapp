@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { KangurMobileCard as Card, KangurMobilePill as Pill, KangurMobileLinkButton as LinkButton } from '../shared/KangurMobileUi';
-import { type LessonMastery } from './lessons-types';
+import { KangurMobileCard as Card, KangurMobilePill as Pill, KangurMobileLinkButton as LinkButton } from '../../shared/KangurMobileUi';
+import { type LessonMastery } from '../lessons-types';
 
 type LessonsHeaderProps = {
   copy: (dict: { de: string; en: string; pl: string }) => string;

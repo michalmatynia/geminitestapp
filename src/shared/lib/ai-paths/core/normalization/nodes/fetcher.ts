@@ -1,3 +1,15 @@
+/**
+ * AI Paths Fetcher Node Normalization
+ * 
+ * Normalization utilities for fetcher and simulation nodes.
+ * Provides:
+ * - Fetcher node configuration normalization
+ * - Simulation node setup
+ * - Input/output port standardization
+ * - Data fetching node preparation
+ * - External data integration nodes
+ */
+
 import type {
   AiNode,
   FetcherConfig,

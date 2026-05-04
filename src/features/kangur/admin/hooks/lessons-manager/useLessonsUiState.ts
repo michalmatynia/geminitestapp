@@ -4,6 +4,8 @@ import type { LessonFormData, LessonTreeMode, KangurLessonAuthoringFilter } from
 import { createDefaultKangurLessonDocument } from '@/features/kangur/lesson-documents';
 import { createInitialLessonFormData, readPersistedTreeMode } from '../../utils';
 
+export type UseLessonsUiStateReturn = ReturnType<typeof useLessonsUiState>;
+
 export function useLessonsUiState() {
   const [showModal, setShowModal] = useState(false);
   const [showContentModal, setShowContentModal] = useState(false);

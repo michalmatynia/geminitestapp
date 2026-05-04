@@ -1,4 +1,16 @@
 
+/**
+ * Log Parsing Utilities
+ * 
+ * Utilities for parsing and formatting log-related data.
+ * Provides:
+ * - Date parameter formatting with timezone handling
+ * - Status code input parsing
+ * - End-of-day date calculations
+ * - ISO string conversion
+ * - Input validation and normalization
+ */
+
 export const formatDateParam = (value: string, endOfDay: boolean = false): string | null => {
   if (!value) return null;
   const suffix = endOfDay ? 'T23:59:59.999' : 'T00:00:00.000';

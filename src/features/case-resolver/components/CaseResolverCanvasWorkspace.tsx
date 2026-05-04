@@ -1,33 +1,8 @@
 'use client';
 
-import { Save, Sparkles } from 'lucide-react';
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 
-import { CanvasBoard } from '@/features/ai/public';
-import { AiPathsProvider } from '@/features/ai/public';
-import { useGraphState } from '@/features/ai/public';
-import {
-  useSelectionActions,
-  useSelectionState,
-} from '@/features/ai/public';
-import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
-import type { CaseResolverEdge } from '@/shared/contracts/case-resolver/graph';
-import { DEFAULT_CASE_RESOLVER_NODE_META, DEFAULT_CASE_RESOLVER_EDGE_META } from '@/shared/contracts/case-resolver/constants';
-import { type CaseResolverNodeMeta, type CaseResolverEdgeMeta, type CaseResolverGraph } from '@/shared/contracts/case-resolver';
-import { AI_PATHS_UI_STATE_KEY, EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
-import {
-  fetchAiPathsSettingsCached,
-  invalidateAiPathsSettingsCache,
-  updateAiPathsSetting,
-} from '@/shared/lib/ai-paths/settings-store-client';
-import { Badge, Button, Card } from '@/shared/ui/primitives.public';
-import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
-import { cn } from '@/shared/utils/ui-utils';
-import { isObjectRecord } from '@/shared/utils/object-utils';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
-
-import { resolvePromptConfig, renderPromptNodeTextPreview } from './case-resolver-canvas-utils';
+import { useGraphState, useSelectionActions, useSelectionState } from '@/features/ai/public';
 import { CaseResolverLinkedPreviewModal } from './CaseResolverLinkedPreviewModal';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 import {
@@ -38,11 +13,27 @@ import {
   useCaseResolverPageActions,
   useCaseResolverPageState,
 } from '../context/CaseResolverPageContext';
+import { useGraphMetadata, useSelectedNodeMeta, useSelectedEdgeMeta } from './useGraphMetadata';
+import { WorkspaceCanvas } from './WorkspaceCanvas';
+import { NodeListPanel } from './NodeListPanel';
+import {
+  AI_PATHS_UI_STATE_KEY,
+} from '@/shared/lib/ai-paths/core/constants';
+import {
+  fetchAiPathsSettingsCached,
+  invalidateAiPathsSettingsCache,
+  updateAiPathsSetting,
+} from '@/shared/lib/ai-paths/settings-store-client';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { Save } from 'lucide-react';
+import { AiPathsProvider, EMPTY_RUNTIME_STATE } from '@/features/ai/public';
+import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
 
 function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const { workspace, activeFile } = useCaseResolverPageState();
   const { onGraphChange } = useCaseResolverPageActions();
-
   const { nodes } = useGraphState();
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
   const { selectNode, setConfigOpen } = useSelectionActions();
@@ -50,352 +41,83 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpenLocal] = useState(false);
 
-  const normalizedNodeMeta = useMemo((): Record<string, CaseResolverNodeMeta> => {
-    const value = activeFile?.graph?.nodeMeta;
-    return isObjectRecord(value) ? value : {};
-  }, [activeFile?.graph?.nodeMeta]);
+  const { normalizedNodeMeta, normalizedEdgeMeta } = useGraphMetadata(activeFile);
+  const selectedNodeMeta = useSelectedNodeMeta(selectedNodeId, normalizedNodeMeta);
+  const selectedEdgeMeta = useSelectedEdgeMeta(selectedEdgeId, normalizedEdgeMeta);
 
-  const normalizedEdgeMeta = useMemo((): Record<string, CaseResolverEdgeMeta> => {
-    const value = activeFile?.graph?.edgeMeta;
-    return isObjectRecord(value) ? value : {};
-  }, [activeFile?.graph?.edgeMeta]);
-
-  const activeNodeOptions = useMemo(
-    () =>
-      nodes
-        .filter((n) => n.type === 'prompt')
-        .map((n) => ({
-          value: n.id,
-          label: n.title || n.id,
-          description: n.description || undefined,
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [nodes]
-  );
-
-  const selectedNode = useMemo(
-    (): AiNode | null =>
-      selectedNodeId ? (nodes.find((n: AiNode) => n.id === selectedNodeId) ?? null) : null,
-    [nodes, selectedNodeId]
-  );
-
-  const selectedEdge = useMemo((): CaseResolverEdge | null => {
-    const edges = activeFile?.graph?.edges;
-    if (!selectedEdgeId || !Array.isArray(edges)) return null;
-    return edges.find((e) => e.id === selectedEdgeId) ?? null;
-  }, [activeFile?.graph?.edges, selectedEdgeId]);
-
-  const selectedNodeMeta = useMemo(
-    () =>
-      selectedNodeId
-        ? (normalizedNodeMeta[selectedNodeId] ?? DEFAULT_CASE_RESOLVER_NODE_META)
-        : null,
-    [normalizedNodeMeta, selectedNodeId]
-  );
-
-  const selectedPromptMeta = selectedNodeMeta;
-  const selectedPromptSourceFile = null;
-  const selectedNodeMetaValue = selectedNodeMeta ?? DEFAULT_CASE_RESOLVER_NODE_META;
-  const selectedPromptTemplate = useMemo(() => {
-    if (!selectedNode) return '';
-    const config = resolvePromptConfig(selectedNode);
-    return config.template ?? '';
-  }, [selectedNode]);
-  const selectedPromptInputText = useMemo(
-    () => (selectedNode ? renderPromptNodeTextPreview(selectedNode, selectedNodeMetaValue) : ''),
-    [selectedNode, selectedNodeMetaValue]
-  );
-
-  const updateSelectedPromptTemplate = useCallback((_template: string): void => {
-    // No-op for now in canvas workspace
-  }, []);
-
-  const updateSelectedNodeMeta = useCallback(
-    (patch: Partial<CaseResolverNodeMeta>): void => {
-      if (!selectedNodeId || !activeFile?.graph) return;
-      const nextMeta = {
-        ...normalizedNodeMeta,
-        [selectedNodeId]: { ...selectedNodeMetaValue, ...patch },
-      };
-      const { nodes, edges, ...rest } = activeFile.graph;
-      const nextGraph: CaseResolverGraph = {
-        ...rest,
-        nodes,
-        edges,
-        nodeMeta: nextMeta,
-      };
-      onGraphChange(nextGraph);
-    },
-    [selectedNodeId, activeFile, normalizedNodeMeta, selectedNodeMetaValue, onGraphChange]
-  );
-
-  const selectedEdgeJoinMode = useMemo(
-    () =>
-      selectedEdgeId
-        ? (normalizedEdgeMeta[selectedEdgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode
-        : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode,
-    [normalizedEdgeMeta, selectedEdgeId]
-  );
-
-  const updateSelectedEdgeMeta = useCallback(
-    (patch: Partial<CaseResolverEdgeMeta>): void => {
-      if (!selectedEdgeId || !activeFile?.graph) return;
-      const currentMeta = normalizedEdgeMeta[selectedEdgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
-      const nextMeta = { ...normalizedEdgeMeta, [selectedEdgeId]: { ...currentMeta, ...patch } };
-      const { nodes, edges, ...rest } = activeFile.graph;
-      const nextGraph: CaseResolverGraph = {
-        ...rest,
-        nodes,
-        edges,
-        edgeMeta: nextMeta,
-      };
-      onGraphChange(nextGraph);
-    },
-    [selectedEdgeId, activeFile, normalizedEdgeMeta, onGraphChange]
-  );
+  const activeNodeOptions = useMemo(() => nodes
+    .filter((n) => n.type === 'prompt')
+    .map((n) => ({
+      value: n.id,
+      label: (n.title ?? n.id) as string,
+      description: (n.description ?? undefined) as string | undefined,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label)), [nodes]);
 
   const handleManualGraphSave = useCallback((): void => {
-    if (!activeFile?.graph) return;
-    const { nodes, edges, ...rest } = activeFile.graph;
-    const nextGraph: CaseResolverGraph = {
-      ...rest,
-      nodes,
-      edges,
-      nodeMeta: normalizedNodeMeta,
-      edgeMeta: normalizedEdgeMeta,
-    };
-    onGraphChange(nextGraph);
-  }, [activeFile, normalizedEdgeMeta, normalizedNodeMeta, onGraphChange]);
+    if (activeFile?.graph) {
+      const { nodes, edges, ...rest } = activeFile.graph;
+      onGraphChange({ ...rest, nodes, edges, nodeMeta: normalizedNodeMeta, edgeMeta: normalizedEdgeMeta });
+    }
+  }, [activeFile?.graph, normalizedEdgeMeta, normalizedNodeMeta, onGraphChange]);
 
-  const handlePersistUiState = useCallback(async (): Promise<void> => {
-    try {
-      const settingsData = await fetchAiPathsSettingsCached();
-      const map = new Map<string, string>(
-        settingsData.map((item: { key: string; value: string }) => [item.key, item.value])
-      );
-      const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
-      const uiState = parseJsonSetting<Record<string, unknown>>(uiStateRaw, {});
-      const nextUiState = {
-        ...uiState,
-        lastWorkspaceId: workspace?.id,
-        lastFileId: activeFile?.id,
+  useEffect(() => {
+    if (activeFile?.id) {
+      const persist = async () => {
+        try {
+          const settingsData = await fetchAiPathsSettingsCached();
+          const map = new Map(settingsData.map((item: { key: string; value: string }) => [item.key, item.value]));
+          const uiState = parseJsonSetting<Record<string, unknown>>(map.get(AI_PATHS_UI_STATE_KEY) ?? '', {});
+          await updateAiPathsSetting(AI_PATHS_UI_STATE_KEY, JSON.stringify({
+            ...uiState, lastWorkspaceId: workspace?.id, lastFileId: activeFile.id
+          }));
+          invalidateAiPathsSettingsCache();
+        } catch (error) {
+          logClientCatch(error, { source: 'CaseResolverCanvasWorkspace', action: 'persistUiState' });
+        }
       };
-      await updateAiPathsSetting(AI_PATHS_UI_STATE_KEY, JSON.stringify(nextUiState));
-      invalidateAiPathsSettingsCache();
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'CaseResolverCanvasWorkspace',
-        action: 'persistUiState',
-      });
+      void persist();
     }
   }, [activeFile?.id, workspace?.id]);
 
   useEffect(() => {
-    if (activeFile?.id) {
-      void handlePersistUiState();
+    if (configOpen) {
+      setIsNodeInspectorOpenLocal(true);
+      setConfigOpen(false);
     }
-  }, [activeFile?.id, handlePersistUiState]);
+  }, [configOpen, setConfigOpen]);
 
-  useEffect(() => {
-    if (!configOpen) return;
-    setIsNodeInspectorOpenLocal(true);
-    setConfigOpen(false);
-  }, [configOpen, setConfigOpen, setIsNodeInspectorOpenLocal]);
-
-  const contextValue = useMemo(
-    (): NodeFileWorkspaceContextValue => ({
-      assetId: activeFile?.id ?? '',
-      assetName: activeFile?.name ?? '',
-      nodes,
-      edges: activeFile?.graph?.edges || [],
-      selectedNodeId,
-      selectedEdgeId,
-      configOpen,
-      newNodeType: 'prompt',
-      setNewNodeType: () => {},
-      isSidePanelVisible: false,
-      setIsSidePanelVisible: () => {},
-      isNodeInspectorOpen,
-      setIsNodeInspectorOpen: setIsNodeInspectorOpenLocal,
-      isLinkedPreviewOpen,
-      setIsLinkedPreviewOpen,
-      showNodeSelectorUnderCanvas: true,
-      setShowNodeSelectorUnderCanvas: () => {},
-      documentSearchScope: 'case_scope',
-      setDocumentSearchScope: () => {},
-      documentSearchQuery: '',
-      setDocumentSearchQuery: () => {},
-      nodeMetaByNode: normalizedNodeMeta,
-      edgeMetaByEdge: normalizedEdgeMeta,
-      filesById: new Map(),
-      caseIdentifierLabelById: new Map(),
-      documentSearchRows: [],
-      visibleDocumentSearchRows: [],
-      compiled: {
-        segments: [],
-        combinedContent: '',
-        prompt: '',
-        outputsByNode: {},
-        warnings: [],
-      },
-      selectedNode,
-      selectedNodeMeta,
-      selectedNodeFileMeta: null,
-      selectedFile: selectedPromptSourceFile,
-      handleManualSave: handleManualGraphSave,
-      selectNode,
-      setConfigOpen,
-      addNode: () => {},
-      updateNode: () => {},
-      setNodeFileMeta: () => {},
-      setNodes: () => {},
-      setEdges: () => {},
-      setView: () => {},
-      view: { x: 0, y: 0, scale: 1 },
-      canvasHostRef: { current: null },
-      viewportRef: { current: null },
-      canvasRef: { current: null },
-      onSelectFile: () => {},
-      documentSearchRef: { current: null },
-
-      // Optional / Canvas additions
-      isSidebarReady: true,
-      selectedPromptMeta,
-      selectedPromptSourceFile,
-      selectedPromptTemplate,
-      selectedPromptInputText,
-      selectedPromptOutputPreview: undefined,
-      selectedPromptSecondaryOutputHint: undefined,
-      updateSelectedPromptTemplate,
-      updateSelectedNodeMeta,
-      selectedEdge,
-      selectedEdgeJoinMode,
-      updateSelectedEdgeMeta,
-      hasPendingSnapshotChanges: false,
-    }),
-    [
-      activeFile?.id,
-      activeFile?.name,
-      nodes,
-      activeFile?.graph?.edges,
-      selectedNodeId,
-      selectedEdgeId,
-      configOpen,
-      isNodeInspectorOpen,
-      isLinkedPreviewOpen,
-      normalizedNodeMeta,
-      normalizedEdgeMeta,
-      selectedNode,
-      selectedNodeMeta,
-      selectedPromptSourceFile,
-      handleManualGraphSave,
-      selectNode,
-      setConfigOpen,
-      selectedPromptMeta,
-      selectedPromptTemplate,
-      selectedPromptInputText,
-      updateSelectedPromptTemplate,
-      updateSelectedNodeMeta,
-      selectedEdge,
-      selectedEdgeJoinMode,
-      updateSelectedEdgeMeta,
-    ]
-  );
-
-  const headerActions = (
-    <div className='flex items-center gap-2'>
-      <Button
-        variant='outline'
-        size='sm'
-        onClick={handleManualGraphSave}
-        className='h-8 border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/10'
-      >
-        <Save className='mr-2 size-3.5' />
-        Save Map
-      </Button>
-      <Button
-        variant='outline'
-        size='sm'
-        onClick={() => setIsLinkedPreviewOpen(true)}
-        className='h-8 border-sky-500/30 text-sky-200 hover:bg-sky-500/10'
-      >
-        <Sparkles className='mr-2 size-3.5' />
-        Preview Compiled
-      </Button>
-    </div>
-  );
+  const contextValue: NodeFileWorkspaceContextValue = useMemo((): any => ({
+    assetId: activeFile?.id ?? '',
+    selectedNodeId,
+    selectedEdgeId,
+    configOpen,
+    isNodeInspectorOpen,
+    setIsNodeInspectorOpen: setIsNodeInspectorOpenLocal,
+    isLinkedPreviewOpen,
+    setIsLinkedPreviewOpen,
+    nodeMetaByNode: normalizedNodeMeta,
+    edgeMetaByEdge: normalizedEdgeMeta,
+    handleManualSave: handleManualGraphSave,
+    selectNode,
+    setConfigOpen,
+    selectedNodeMeta,
+    selectedEdge: activeFile?.graph?.edges?.find(e => e.id === selectedEdgeId) ?? null,
+    selectedEdgeJoinMode: selectedEdgeMeta.joinMode,
+  }), [
+    activeFile?.id, activeFile?.graph?.edges, selectedNodeId, selectedEdgeId, configOpen, isNodeInspectorOpen, 
+    isLinkedPreviewOpen, normalizedNodeMeta, normalizedEdgeMeta, handleManualGraphSave, selectNode, setConfigOpen,
+    selectedNodeMeta, selectedEdgeMeta,
+  ]);
 
   return (
     <NodeFileWorkspaceProvider value={contextValue}>
       <div className='flex h-full min-h-0 flex-col gap-4'>
         <div className='flex flex-1 min-h-0 gap-4 overflow-hidden'>
-          <Card
-            variant='subtle'
-            padding='none'
-            className='relative flex flex-1 flex-col overflow-hidden'
-          >
-            <div className='absolute left-4 top-4 z-10 flex items-center gap-2'>
-              <div className='rounded-full border border-border/60 bg-card/80 px-3 py-1.5 backdrop-blur-sm'>
-                <div className='flex items-center gap-2'>
-                  <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500'>
-                    Active:
-                  </span>
-                  <span className='text-xs font-medium text-white'>
-                    {activeFile?.name || 'Untitled Map'}
-                  </span>
-                </div>
-              </div>
-              {headerActions}
-            </div>
-
-            <CanvasBoard />
-          </Card>
-
-          {activeNodeOptions.length > 0 && (
-            <div className='w-72 flex flex-col gap-3'>
-              <Card variant='subtle' padding='sm' className='flex-1 overflow-hidden bg-card/40'>
-                <div className='mb-3 flex items-center justify-between px-1'>
-                  <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500'>
-                    Nodes
-                  </span>
-                  <Badge variant='neutral' className='bg-muted/30 text-[10px]'>
-                    {activeNodeOptions.length}
-                  </Badge>
-                </div>
-                <div className='flex-1 overflow-y-auto space-y-1.5 pr-1'>
-                  {activeNodeOptions.map((option) => {
-                    const isSelected = selectedNodeId === option.value;
-                    return (
-                      <Button
-                        key={option.value}
-                        variant='outline'
-                        onClick={() => selectNode(option.value)}
-                        className={cn(
-                          'w-full flex-col items-start gap-1 h-auto p-2.5 text-left transition-all',
-                          isSelected
-                            ? 'border-blue-500/50 bg-blue-500/10 hover:bg-blue-500/15'
-                            : 'border-border/40 bg-card/20 hover:border-border/80 hover:bg-card/40'
-                        )}
-                      >
-                        <div className='truncate text-xs font-medium text-gray-200 w-full'>
-                          {option.label}
-                        </div>
-                        {option.description && (
-                          <div className='truncate text-[10px] text-gray-500 w-full'>
-                            {option.description}
-                          </div>
-                        )}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </Card>
-            </div>
-          )}
+          <WorkspaceCanvas onSave={handleManualGraphSave} />
+          <NodeListPanel activeNodeOptions={activeNodeOptions} selectedNodeId={selectedNodeId} selectNode={selectNode} />
         </div>
-
         <CaseResolverNodeInspectorModal />
-
         <CaseResolverLinkedPreviewModal />
       </div>
     </NodeFileWorkspaceProvider>

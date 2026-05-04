@@ -1,3 +1,15 @@
+/**
+ * Abort-Like Error Detection
+ * 
+ * Utilities for detecting abort and cancellation errors.
+ * Provides:
+ * - Abort error name detection
+ * - Abort message pattern matching
+ * - Cancellation error identification
+ * - Request abortion detection
+ * - Error filtering for expected aborts
+ */
+
 const ABORT_ERROR_NAMES = new Set(['AbortError', 'CanceledError', 'CancelError']);
 
 const hasAbortLikeMessage = (value: string): boolean => {

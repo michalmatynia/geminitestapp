@@ -1,3 +1,15 @@
+/**
+ * Redis Client
+ * 
+ * Redis client management and connection utilities.
+ * Provides:
+ * - Redis connection management
+ * - Transient error handling
+ * - Error tracking and reporting
+ * - Connection health monitoring
+ * - Server-only Redis operations
+ */
+
 import 'server-only';
 
 import { Redis } from 'ioredis';

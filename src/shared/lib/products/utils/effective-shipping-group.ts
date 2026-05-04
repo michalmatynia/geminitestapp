@@ -1,3 +1,15 @@
+/**
+ * Effective Shipping Group Utilities
+ * 
+ * Utilities for resolving effective shipping groups for products.
+ * Provides:
+ * - Shipping group resolution logic
+ * - Category-based shipping group inheritance
+ * - Product catalog reference handling
+ * - Shipping group hierarchy management
+ * - Effective shipping group calculation
+ */
+
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 

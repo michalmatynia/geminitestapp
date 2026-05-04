@@ -1,3 +1,15 @@
+/**
+ * Elevated Session User Utilities
+ * 
+ * Utilities for managing elevated user sessions and permissions.
+ * Provides:
+ * - Elevated role detection (admin, super_admin, superuser)
+ * - Session user elevation status
+ * - Role normalization
+ * - Permission level checking
+ * - Elevated access validation
+ */
+
 import type { Session } from 'next-auth';
 
 const ELEVATED_SESSION_ROLES = new Set(['admin', 'super_admin', 'superuser']);

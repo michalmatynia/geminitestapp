@@ -1,3 +1,15 @@
+/**
+ * UI Settings Contracts
+ * 
+ * Type definitions for settings form components.
+ * Provides:
+ * - Field type definitions (text, email, password, etc.)
+ * - Settings form configuration
+ * - Labeled option integration
+ * - Form field specifications
+ * - Settings UI component types
+ */
+
 import type { ReactNode } from 'react';
 import type { LabeledOptionDto } from './base';
 

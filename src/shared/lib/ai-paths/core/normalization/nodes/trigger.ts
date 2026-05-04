@@ -1,3 +1,15 @@
+/**
+ * AI Paths Trigger Node Normalization
+ * 
+ * Normalization utilities for trigger nodes in AI paths.
+ * Provides:
+ * - Trigger node configuration normalization
+ * - Standard input/output port assignment
+ * - Trigger event handling
+ * - Node standardization for triggers
+ * - Path execution initiation setup
+ */
+
 import { type AiNode } from '@/shared/contracts/ai-paths';
 
 import { TRIGGER_EVENTS, TRIGGER_INPUT_PORTS, TRIGGER_OUTPUT_PORTS } from '../../constants';

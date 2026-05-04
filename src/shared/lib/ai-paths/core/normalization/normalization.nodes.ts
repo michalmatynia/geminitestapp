@@ -1,3 +1,15 @@
+/**
+ * AI Paths Node Normalization
+ * 
+ * Node normalization and configuration for AI automation paths.
+ * Provides:
+ * - Node configuration normalization
+ * - Default value application
+ * - Port contract backfilling
+ * - Node type-specific processing
+ * - Path node standardization
+ */
+
 import type { AiNode, NodeConfig, NodeType } from '@/shared/contracts/ai-paths';
 
 import {

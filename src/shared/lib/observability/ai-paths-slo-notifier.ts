@@ -1,3 +1,15 @@
+/**
+ * AI Paths SLO Notifier
+ * 
+ * Service Level Objective monitoring and notification for AI paths.
+ * Provides:
+ * - SLO status tracking for AI path runs
+ * - Queue performance monitoring
+ * - Notification triggering for SLO violations
+ * - Redis-based status storage
+ * - Server-only SLO management
+ */
+
 import 'server-only';
 
 import { createHash } from 'crypto';

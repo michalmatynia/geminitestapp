@@ -1,3 +1,15 @@
+/**
+ * Error Reporting
+ * 
+ * Server-side error reporting and resolution.
+ * Provides:
+ * - Error resolution and enrichment
+ * - Error message resolution
+ * - User-facing error messages
+ * - System log integration
+ * - Server-only error processing
+ */
+
 import 'server-only';
 
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';

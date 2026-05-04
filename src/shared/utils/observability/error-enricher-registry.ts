@@ -1,3 +1,15 @@
+/**
+ * Error Enricher Registry
+ * 
+ * Registry for error enrichment functions.
+ * Provides:
+ * - Error enricher registration
+ * - Context-based error enhancement
+ * - Pluggable error processing
+ * - Error enrichment coordination
+ * - Extensible error handling
+ */
+
 import { logger } from '@/shared/utils/logger';
 
 export type ErrorEnricher = (

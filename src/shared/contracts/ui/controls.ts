@@ -1,3 +1,15 @@
+/**
+ * UI Controls Contracts
+ * 
+ * Type definitions for UI control components.
+ * Provides:
+ * - Segmented control option types
+ * - Labeled option with disabled/group support
+ * - Icon component integration
+ * - Accessibility label support
+ * - Control component interfaces
+ */
+
 import type { ReactNode, ComponentType } from 'react';
 import type { LabeledOptionWithDisabledDto, LabeledOptionWithGroupDto } from './base';
 

@@ -1,3 +1,15 @@
+/**
+ * Auth Secret Settings
+ * 
+ * Secret settings management for authentication providers.
+ * Provides:
+ * - OAuth provider credentials (Google, Facebook)
+ * - Email webhook configuration
+ * - Secret settings key definitions
+ * - Secure credential retrieval
+ * - Server-only secret access
+ */
+
 import 'server-only';
 
 import { readSecretSettingValues } from '@/shared/lib/settings/secret-settings';

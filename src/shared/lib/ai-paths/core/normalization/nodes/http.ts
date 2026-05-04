@@ -1,3 +1,15 @@
+/**
+ * AI Paths HTTP Node Normalization
+ * 
+ * Normalization utilities for HTTP request nodes in AI paths.
+ * Provides:
+ * - HTTP node configuration normalization
+ * - API request port standardization
+ * - Input/output port management
+ * - HTTP request node setup
+ * - External API integration preparation
+ */
+
 import { type AiNode } from '@/shared/contracts/ai-paths';
 
 import { API_ADVANCED_INPUT_PORTS, HTTP_INPUT_PORTS } from '../../constants';

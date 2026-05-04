@@ -1,3 +1,15 @@
+/**
+ * UI Image Manager Contracts
+ * 
+ * Type definitions for image manager UI components.
+ * Provides:
+ * - Slot view mode definitions (upload, link, base64)
+ * - Product image manager context types
+ * - Loading state management
+ * - Drag event handling
+ * - Image manager controller integration
+ */
+
 import type { DragEvent } from 'react';
 import type { DebugInfo } from '../products';
 import type { ProductImageManagerController } from '../product-image-manager';

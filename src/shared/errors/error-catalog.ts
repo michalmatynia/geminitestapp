@@ -1,3 +1,15 @@
+/**
+ * Error Catalog
+ * 
+ * Centralized catalog of application error definitions.
+ * Provides:
+ * - Error code to message mapping
+ * - User-facing error messages
+ * - Operator-facing error messages
+ * - Error catalog entry definitions
+ * - Standardized error documentation
+ */
+
 import type { ResolvedError } from '@/shared/contracts/base';
 
 import { AppErrorCodes, type AppErrorCode } from '@/shared/errors/app-error';

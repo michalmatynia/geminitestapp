@@ -1,3 +1,15 @@
+/**
+ * Internal Observability Fallback
+ * 
+ * Fallback error reporting for internal observability failures.
+ * Provides:
+ * - Internal error context management
+ * - Fallback payload serialization
+ * - Client error dispatch integration
+ * - Observability system error handling
+ * - Error reporting resilience
+ */
+
 import { dispatchClientCatch, type ClientErrorContext } from './client-error-dispatch';
 
 export type InternalObservabilityErrorContext = ClientErrorContext & {

@@ -1,3 +1,15 @@
+/**
+ * Product Parameter Values Utilities
+ * 
+ * Utilities for managing product parameter values.
+ * Provides:
+ * - Parameter value normalization by language
+ * - String trimming and validation
+ * - Resolved parameter value handling
+ * - Multi-language parameter support
+ * - Parameter value transformation
+ */
+
 import type { ProductParameterValue, ResolvedProductParameterValue } from '@/shared/contracts/products/product';
 
 const normalizeTrimmedString = (value: unknown): string => {

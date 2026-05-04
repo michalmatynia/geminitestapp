@@ -1,3 +1,15 @@
+/**
+ * Admin Layout Session Utilities
+ * 
+ * Session management utilities for admin layout.
+ * Provides:
+ * - Admin layout session header handling
+ * - Session user normalization
+ * - String value validation
+ * - Session data extraction
+ * - Admin-specific session utilities
+ */
+
 import type { Session } from 'next-auth';
 
 export const ADMIN_LAYOUT_SESSION_HEADER = 'x-admin-layout-session';

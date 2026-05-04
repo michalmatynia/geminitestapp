@@ -1,3 +1,15 @@
+/**
+ * Parameter Partition Utilities
+ * 
+ * Utilities for partitioning and organizing product parameters.
+ * Provides:
+ * - Simple parameter identification
+ * - Parameter value partitioning
+ * - Language-based parameter normalization
+ * - Parameter value resolution
+ * - Parameter organization logic
+ */
+
 import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products/base';
 import type { ProductParameterValue } from '@/shared/contracts/products/product';
 import type { ProductSimpleParameterValue } from '@/shared/contracts/products/parameters';

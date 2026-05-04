@@ -1,3 +1,15 @@
+/**
+ * Marketplace Content Overrides
+ * 
+ * Utilities for managing marketplace-specific content overrides.
+ * Provides:
+ * - Content override normalization
+ * - Locale-specific content handling
+ * - Marketplace content customization
+ * - Product content adaptation
+ * - Multi-language override support
+ */
+
 import type {
   ProductMarketplaceContentOverride,
   ProductRecord,

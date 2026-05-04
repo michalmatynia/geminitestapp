@@ -1,3 +1,15 @@
+/**
+ * Redaction Policy
+ * 
+ * Data redaction policies for sensitive information protection.
+ * Provides:
+ * - Sensitive key pattern detection
+ * - Redaction value constants
+ * - Password and token redaction
+ * - Cookie and authorization redaction
+ * - Security-focused data protection
+ */
+
 export const REDACTED_VALUE = '[REDACTED]';
 
 const SENSITIVE_KEY_PATTERNS: RegExp[] = [

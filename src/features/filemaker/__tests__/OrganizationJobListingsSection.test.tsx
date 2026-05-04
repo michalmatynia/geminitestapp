@@ -508,32 +508,44 @@ describe('OrganizationJobListingsSection', () => {
           }
           return createJsonResponse({ run: null });
         }
-        if (href.includes('/api/filemaker/job-applications/application-1')) {
+        const applicationResourceMatch = href.match(/\/api\/filemaker\/job-applications\/([^/?#]+)/);
+        if (applicationResourceMatch !== null) {
+          const applicationId = applicationResourceMatch[1] as string;
           if (method === 'PATCH') {
             const body =
               typeof init?.body === 'string'
-                ? (JSON.parse(init.body) as { status?: string })
+                ? (JSON.parse(init.body) as { status?: string; removeLogEntryId?: string })
                 : { status: undefined };
             const updatedApplications = jobApplicationsPayload.applications.map(
               (application: unknown): unknown => {
                 const record = application as FilemakerJobApplication;
-                return record.id === 'application-1'
-                  ? {
-                      ...record,
-                      status: body.status ?? record.status,
-                      updatedAt: '2026-04-29T11:00:00.000Z',
-                    }
-                  : application;
+                if (record.id !== applicationId) return application;
+                const nextApplicationLog =
+                  typeof body.removeLogEntryId === 'string'
+                    ? (record.applicationLog ?? []).filter(
+                        (entry: { id: string }): boolean => entry.id !== body.removeLogEntryId
+                      )
+                    : record.applicationLog;
+                return {
+                  ...record,
+                  applicationLog: nextApplicationLog,
+                  status: body.status ?? record.status,
+                  updatedAt: '2026-04-29T11:00:00.000Z',
+                };
               }
             );
             jobApplicationsPayload = { applications: updatedApplications };
-            return createJsonResponse({ application: updatedApplications[0] });
+            const responseApplication = (updatedApplications.find(
+              (application: unknown): boolean =>
+                (application as FilemakerJobApplication).id === applicationId
+            ) as FilemakerJobApplication | undefined) ?? (updatedApplications[0] as FilemakerJobApplication);
+            return createJsonResponse({ application: responseApplication });
           }
           if (method === 'DELETE') {
             jobApplicationsPayload = {
               applications: jobApplicationsPayload.applications.filter(
                 (application: unknown): boolean =>
-                  (application as FilemakerJobApplication).id !== 'application-1'
+                  (application as FilemakerJobApplication).id !== applicationId
               ),
             };
             return new Response(null, { status: 204 });
@@ -979,6 +991,674 @@ describe('OrganizationJobListingsSection', () => {
       organizationId: 'org-1',
       personId: 'person-2',
       status: 'applied',
+    });
+  });
+
+  it('unmarks a manually applied job listing by removing the manual log entry', async () => {
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      if (key === FILEMAKER_JOB_APPLICATION_SETTINGS_KEY) {
+        return JSON.stringify({
+          defaultPersonId: 'person-2',
+          defaultPersonName: 'Grace Hopper',
+        });
+      }
+      return undefined;
+    });
+    jobApplicationsPayload = {
+      applications: [
+        {
+          id: 'application-1',
+          status: 'applied',
+          personId: 'person-2',
+          personName: 'Grace Hopper',
+          activeArtifacts: {
+            applicationEmailVersionId: null,
+            coverLetterVersionId: null,
+            tailoredCvVersionId: null,
+          },
+          artifactVersions: {
+            applicationEmail: [],
+            coverLetter: [],
+            tailoredCv: [],
+          },
+          applicationEmail: null,
+          coverLetter: null,
+          tailoredCv: null,
+          applicationLog: [
+            {
+              id: 'manual-log-entry-1',
+              method: 'manual',
+              appliedAt: '2026-04-29T10:00:00.000Z',
+              personId: 'person-2',
+              personName: 'Grace Hopper',
+              toStatus: 'applied',
+            },
+          ],
+          canonicalApplicationKey: 'person-2::org-1::job-1::default',
+          jobListingId: 'job-1',
+          jobTitle: 'FileMaker Consultant',
+          organizationId: 'org-1',
+          organizationName: 'Acme Hiring',
+          integrationId: null,
+          integrationSlug: null,
+          connectionId: null,
+          tailoredCvId: null,
+          missingInformation: [],
+          applicationNotes: ['Marked applied manually.'],
+          confidence: null,
+          source: 'filemaker-manual-applied',
+          sourceEntityId: 'org-1:job-1:person-2:manual_applied',
+          sourceApplicationContext: {
+            jobContext: {
+              listing: {
+                sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+              },
+            },
+          },
+          createdAt: '2026-04-29T10:00:00.000Z',
+          updatedAt: '2026-04-29T11:00:00.000Z',
+          matchAnalysis: null,
+          matchAnalysisHistory: null,
+        } as FilemakerJobApplication,
+      ],
+    };
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+          }),
+        ]}
+      />
+    );
+
+    const markAppliedButton = screen.getByRole('button', {
+      name: /Mark applied manually for FileMaker Consultant/i,
+    });
+    await waitFor(() => {
+      expect(markAppliedButton).not.toBeDisabled();
+      expect(markAppliedButton).toHaveTextContent('Applied');
+    });
+
+    fireEvent.click(markAppliedButton);
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/filemaker/job-applications/application-1',
+        expect.objectContaining({
+          method: 'PATCH',
+        })
+      );
+    });
+
+    const fetchCalls = (
+      fetch as unknown as {
+        mock: { calls: Array<[string | URL | Request, RequestInit | undefined]> };
+      }
+    ).mock.calls;
+    const patchCall = fetchCalls.find(
+      ([url, init]) =>
+        String(url) === '/api/filemaker/job-applications/application-1' &&
+        init?.method === 'PATCH'
+    );
+    expect(JSON.parse(String(patchCall?.[1]?.body))).toMatchObject({
+      removeLogEntryId: 'manual-log-entry-1',
+      status: 'draft',
+    });
+
+    expect(await screen.findByRole('button', { name: /Mark applied manually for FileMaker Consultant/i }))
+      .toHaveTextContent('Mark applied');
+
+    expect(jobApplicationsPayload.applications[0]).toMatchObject({
+      status: 'draft',
+      applicationLog: [],
+    });
+  });
+
+  it('unmarks an applied job listing when manual log has missing person id', async () => {
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      if (key === FILEMAKER_JOB_APPLICATION_SETTINGS_KEY) {
+        return JSON.stringify({
+          defaultPersonId: 'person-2',
+          defaultPersonName: 'Grace Hopper',
+        });
+      }
+      return undefined;
+    });
+    jobApplicationsPayload = {
+      applications: [
+        {
+          id: 'application-1',
+          status: 'applied',
+          personId: 'person-2',
+          personName: 'Grace Hopper',
+          activeArtifacts: {
+            applicationEmailVersionId: null,
+            coverLetterVersionId: null,
+            tailoredCvVersionId: null,
+          },
+          artifactVersions: {
+            applicationEmail: [],
+            coverLetter: [],
+            tailoredCv: [],
+          },
+          applicationEmail: null,
+          coverLetter: null,
+          tailoredCv: null,
+          applicationLog: [
+            {
+              id: 'manual-log-entry-1',
+              method: 'manual',
+              appliedAt: '2026-04-29T10:00:00.000Z',
+              personId: null,
+              personName: 'Grace Hopper',
+              toStatus: 'applied',
+            },
+          ],
+          canonicalApplicationKey: 'person-2::org-1::job-1::default',
+          jobListingId: 'job-1',
+          jobTitle: 'FileMaker Consultant',
+          organizationId: 'org-1',
+          organizationName: 'Acme Hiring',
+          integrationId: null,
+          integrationSlug: null,
+          connectionId: null,
+          tailoredCvId: null,
+          missingInformation: [],
+          applicationNotes: ['Marked applied manually.'],
+          confidence: null,
+          source: 'filemaker-manual-applied',
+          sourceEntityId: 'org-1:job-1:person-2:manual_applied',
+          sourceApplicationContext: {
+            jobContext: {
+              listing: {
+                sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+              },
+            },
+          },
+          createdAt: '2026-04-29T10:00:00.000Z',
+          updatedAt: '2026-04-29T11:00:00.000Z',
+          matchAnalysis: null,
+          matchAnalysisHistory: null,
+        } as FilemakerJobApplication,
+      ],
+    };
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+          }),
+        ]}
+      />
+    );
+
+    const markAppliedButton = screen.getByRole('button', {
+      name: /Mark applied manually for FileMaker Consultant/i,
+    });
+    await waitFor(() => {
+      expect(markAppliedButton).not.toBeDisabled();
+      expect(markAppliedButton).toHaveTextContent('Applied');
+    });
+
+    fireEvent.click(markAppliedButton);
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/filemaker/job-applications/application-1',
+        expect.objectContaining({
+          method: 'PATCH',
+        })
+      );
+    });
+
+    const fetchCalls = (
+      fetch as unknown as {
+        mock: { calls: Array<[string | URL | Request, RequestInit | undefined]> };
+      }
+    ).mock.calls;
+    const patchCall = fetchCalls.find(
+      ([url, init]) =>
+        String(url) === '/api/filemaker/job-applications/application-1' &&
+        init?.method === 'PATCH'
+    );
+    expect(JSON.parse(String(patchCall?.[1]?.body))).toMatchObject({
+      removeLogEntryId: 'manual-log-entry-1',
+      status: 'draft',
+    });
+
+    expect(
+      await screen.findByRole('button', { name: /Mark applied manually for FileMaker Consultant/i })
+    ).toHaveTextContent('Mark applied');
+
+    expect(jobApplicationsPayload.applications[0]).toMatchObject({
+      status: 'draft',
+      applicationLog: [],
+    });
+  });
+
+  it('unmarks an applied job listing when manual log has nullable toStatus and whitespace person ids', async () => {
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      if (key === FILEMAKER_JOB_APPLICATION_SETTINGS_KEY) {
+        return JSON.stringify({
+          defaultPersonId: 'person-2',
+          defaultPersonName: 'Grace Hopper',
+        });
+      }
+      return undefined;
+    });
+    jobApplicationsPayload = {
+      applications: [
+        {
+          id: 'application-1',
+          status: 'applied',
+          personId: '  person-2  ',
+          personName: 'Grace Hopper',
+          activeArtifacts: {
+            applicationEmailVersionId: null,
+            coverLetterVersionId: null,
+            tailoredCvVersionId: null,
+          },
+          artifactVersions: {
+            applicationEmail: [],
+            coverLetter: [],
+            tailoredCv: [],
+          },
+          applicationEmail: null,
+          coverLetter: null,
+          tailoredCv: null,
+          applicationLog: [
+            {
+              id: 'manual-log-entry-1',
+              method: 'manual',
+              appliedAt: '2026-04-29T10:00:00.000Z',
+              personId: 'person-2',
+              personName: 'Grace Hopper',
+              toStatus: null,
+            },
+          ],
+          canonicalApplicationKey: 'person-2::org-1::job-1::default',
+          jobListingId: 'job-1',
+          jobTitle: 'FileMaker Consultant',
+          organizationId: 'org-1',
+          organizationName: 'Acme Hiring',
+          integrationId: null,
+          integrationSlug: null,
+          connectionId: null,
+          tailoredCvId: null,
+          missingInformation: [],
+          applicationNotes: ['Marked applied manually.'],
+          confidence: null,
+          source: 'filemaker-manual-applied',
+          sourceEntityId: 'org-1:job-1:person-2:manual_applied',
+          sourceApplicationContext: {
+            jobContext: {
+              listing: {
+                sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+              },
+            },
+          },
+          createdAt: '2026-04-29T10:00:00.000Z',
+          updatedAt: '2026-04-29T11:00:00.000Z',
+          matchAnalysis: null,
+          matchAnalysisHistory: null,
+        } as FilemakerJobApplication,
+      ],
+    };
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+          }),
+        ]}
+      />
+    );
+
+    const markAppliedButton = screen.getByRole('button', {
+      name: /Mark applied manually for FileMaker Consultant/i,
+    });
+    await waitFor(() => {
+      expect(markAppliedButton).not.toBeDisabled();
+      expect(markAppliedButton).toHaveTextContent('Applied');
+    });
+
+    fireEvent.click(markAppliedButton);
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/filemaker/job-applications/application-1',
+        expect.objectContaining({
+          method: 'PATCH',
+        })
+      );
+    });
+
+    const fetchCalls = (
+      fetch as unknown as {
+        mock: { calls: Array<[string | URL | Request, RequestInit | undefined]> };
+      }
+    ).mock.calls;
+    const patchCall = fetchCalls.find(
+      ([url, init]) =>
+        String(url) === '/api/filemaker/job-applications/application-1' &&
+        init?.method === 'PATCH'
+    );
+    expect(JSON.parse(String(patchCall?.[1]?.body))).toMatchObject({
+      removeLogEntryId: 'manual-log-entry-1',
+      status: 'draft',
+    });
+  });
+
+  it('unmarks an applied job listing by removing a manual log from a non-base application', async () => {
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      if (key === FILEMAKER_JOB_APPLICATION_SETTINGS_KEY) {
+        return JSON.stringify({
+          defaultPersonId: 'person-2',
+          defaultPersonName: 'Grace Hopper',
+        });
+      }
+      return undefined;
+    });
+    jobApplicationsPayload = {
+      applications: [
+        {
+          id: 'base-application-1',
+          status: 'draft',
+          personId: 'person-2',
+          personName: 'Grace Hopper',
+          activeArtifacts: {
+            applicationEmailVersionId: null,
+            coverLetterVersionId: null,
+            tailoredCvVersionId: null,
+          },
+          artifactVersions: {
+            applicationEmail: [],
+            coverLetter: [],
+            tailoredCv: [],
+          },
+          applicationEmail: null,
+          coverLetter: null,
+          tailoredCv: null,
+          applicationLog: [],
+          canonicalApplicationKey: 'person-2::org-1::job-1::default',
+          jobListingId: 'job-1',
+          jobTitle: 'FileMaker Consultant',
+          organizationId: 'org-1',
+          organizationName: 'Acme Hiring',
+          integrationId: null,
+          integrationSlug: null,
+          connectionId: null,
+          tailoredCvId: null,
+          missingInformation: [],
+          applicationNotes: ['Prepared application row.'],
+          confidence: null,
+          source: 'ai-path-job-application-prepare',
+          sourceEntityId: 'org-1:job-1:person-2:legacy',
+          sourceApplicationContext: {
+            jobContext: {
+              listing: {
+                sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+              },
+            },
+          },
+          createdAt: '2026-04-29T09:00:00.000Z',
+          updatedAt: '2026-04-29T09:30:00.000Z',
+          matchAnalysis: null,
+          matchAnalysisHistory: null,
+        } as FilemakerJobApplication,
+        {
+          id: 'manual-application-1',
+          status: 'applied',
+          personId: 'person-2',
+          personName: 'Grace Hopper',
+          activeArtifacts: {
+            applicationEmailVersionId: null,
+            coverLetterVersionId: null,
+            tailoredCvVersionId: null,
+          },
+          artifactVersions: null,
+          applicationEmail: null,
+          coverLetter: null,
+          tailoredCv: null,
+          applicationLog: [
+            {
+              id: 'manual-log-entry-1',
+              method: 'manual',
+              appliedAt: '2026-04-29T10:00:00.000Z',
+              personId: 'person-2',
+              personName: 'Grace Hopper',
+              toStatus: 'applied',
+            },
+          ],
+          canonicalApplicationKey: 'person-2::org-1::job-1::default',
+          jobListingId: 'job-1',
+          jobTitle: 'FileMaker Consultant',
+          organizationId: 'org-1',
+          organizationName: 'Acme Hiring',
+          integrationId: null,
+          integrationSlug: null,
+          connectionId: null,
+          tailoredCvId: null,
+          missingInformation: [],
+          applicationNotes: ['Marked applied manually.'],
+          confidence: null,
+          source: 'filemaker-manual-applied',
+          sourceEntityId: 'org-1:job-1:person-2:manual_applied',
+          sourceApplicationContext: {
+            jobContext: {
+              listing: {
+                sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+              },
+            },
+          },
+          createdAt: '2026-04-29T10:00:00.000Z',
+          updatedAt: '2026-04-29T10:45:00.000Z',
+          matchAnalysis: null,
+          matchAnalysisHistory: null,
+        } as FilemakerJobApplication,
+      ],
+    };
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+          }),
+        ]}
+      />
+    );
+
+    const markAppliedButton = screen.getByRole('button', {
+      name: /Mark applied manually for FileMaker Consultant/i,
+    });
+    await waitFor(() => {
+      expect(markAppliedButton).not.toBeDisabled();
+      expect(markAppliedButton).toHaveTextContent('Applied');
+    });
+
+    fireEvent.click(markAppliedButton);
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/filemaker/job-applications/manual-application-1',
+        expect.objectContaining({
+          method: 'PATCH',
+        })
+      );
+    });
+
+    const fetchCalls = (
+      fetch as unknown as {
+        mock: { calls: Array<[string | URL | Request, RequestInit | undefined]> };
+      }
+    ).mock.calls;
+    const patchCall = fetchCalls.find(
+      ([url, init]) =>
+        String(url) === '/api/filemaker/job-applications/manual-application-1' &&
+        init?.method === 'PATCH'
+    );
+    expect(JSON.parse(String(patchCall?.[1]?.body))).toMatchObject({
+      removeLogEntryId: 'manual-log-entry-1',
+      status: 'draft',
+    });
+
+    expect(
+      await screen.findByRole('button', { name: /Mark applied manually for FileMaker Consultant/i })
+    ).toHaveTextContent('Mark applied');
+
+    const manualApplication = jobApplicationsPayload.applications.find(
+      (application: FilemakerJobApplication): boolean => application.id === 'manual-application-1'
+    );
+    expect(manualApplication).toMatchObject({
+      status: 'draft',
+      applicationLog: [],
+    });
+  });
+
+  it('unmarks an applied job listing by setting status to draft when no manual log is present', async () => {
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      if (key === FILEMAKER_JOB_APPLICATION_SETTINGS_KEY) {
+        return JSON.stringify({
+          defaultPersonId: 'person-2',
+          defaultPersonName: 'Grace Hopper',
+        });
+      }
+      return undefined;
+    });
+    jobApplicationsPayload = {
+      applications: [
+        {
+          id: 'application-1',
+          status: 'applied',
+          personId: 'person-2',
+          personName: 'Grace Hopper',
+          activeArtifacts: {
+            applicationEmailVersionId: null,
+            coverLetterVersionId: null,
+            tailoredCvVersionId: null,
+          },
+          artifactVersions: {
+            applicationEmail: [],
+            coverLetter: [],
+            tailoredCv: [],
+          },
+          applicationEmail: null,
+          coverLetter: null,
+          tailoredCv: null,
+          applicationLog: [],
+          canonicalApplicationKey: 'person-2::org-1::job-1::default',
+          jobListingId: 'job-1',
+          jobTitle: 'FileMaker Consultant',
+          organizationId: 'org-1',
+          organizationName: 'Acme Hiring',
+          integrationId: null,
+          integrationSlug: null,
+          connectionId: null,
+          tailoredCvId: null,
+          missingInformation: [],
+          applicationNotes: ['Marked applied manually.'],
+          confidence: null,
+          source: 'filemaker-manual-applied',
+          sourceEntityId: 'org-1:job-1:person-2:manual_applied',
+          sourceApplicationContext: {
+            jobContext: {
+              listing: {
+                sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+              },
+            },
+          },
+          createdAt: '2026-04-29T10:00:00.000Z',
+          updatedAt: '2026-04-29T11:00:00.000Z',
+          matchAnalysis: null,
+          matchAnalysisHistory: null,
+        } as FilemakerJobApplication,
+      ],
+    };
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+          }),
+        ]}
+      />
+    );
+
+    const markAppliedButton = screen.getByRole('button', {
+      name: /Mark applied manually for FileMaker Consultant/i,
+    });
+    await waitFor(() => {
+      expect(markAppliedButton).not.toBeDisabled();
+      expect(markAppliedButton).toHaveTextContent('Applied');
+    });
+
+    fireEvent.click(markAppliedButton);
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/filemaker/job-applications/application-1',
+        expect.objectContaining({
+          method: 'PATCH',
+        })
+      );
+    });
+
+    const fetchCalls = (
+      fetch as unknown as {
+        mock: { calls: Array<[string | URL | Request, RequestInit | undefined]> };
+      }
+    ).mock.calls;
+    const patchCall = fetchCalls.find(
+      ([url, init]) =>
+        String(url) === '/api/filemaker/job-applications/application-1' &&
+        init?.method === 'PATCH'
+    );
+    expect(JSON.parse(String(patchCall?.[1]?.body))).toEqual({
+      status: 'draft',
+    });
+
+    expect(
+      await screen.findByRole('button', { name: /Mark applied manually for FileMaker Consultant/i })
+    ).toHaveTextContent('Mark applied');
+
+    expect(jobApplicationsPayload.applications[0]).toMatchObject({
+      status: 'draft',
     });
   });
 

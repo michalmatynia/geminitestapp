@@ -81,11 +81,9 @@ import type {
   FilemakerCv,
   FilemakerEmailCampaign,
   FilemakerJobApplication,
-  FilemakerJobApplicationActiveArtifacts,
   FilemakerJobApplicationApplyRun,
   FilemakerJobApplicationApplyRunResponse,
   FilemakerJobApplicationApplyRunStep,
-  FilemakerJobApplicationArtifactVersion,
   FilemakerJobApplicationLogEntry,
   FilemakerJobApplicationStatus,
   FilemakerJobListing,
@@ -93,6 +91,10 @@ import type {
   FilemakerJobListingStatus,
   FilemakerLexiconTerm,
 } from '../../types';
+import type {
+  FilemakerJobApplicationActiveArtifacts,
+  FilemakerJobApplicationArtifactVersion,
+} from '../../filemaker-job-application.types';
 
 const JOB_STATUS_OPTIONS: Array<{ value: FilemakerJobListingStatus; label: string }> = [
   { value: 'draft', label: 'Draft' },
@@ -280,6 +282,11 @@ type ManualAppliedJobApplicationResponse = {
   application?: FilemakerJobApplication;
 };
 
+type ManualAppliedLogRemovalTarget = {
+  applicationId: string;
+  logEntryId?: string;
+};
+
 type PreparedApplicationArtifactVersions = {
   applicationEmail: FilemakerJobApplication[];
   coverLetter: FilemakerJobApplication[];
@@ -348,6 +355,105 @@ const compareApplicationsByFreshness = (
   right: FilemakerJobApplication
 ): number => toApplicationTimestamp(right) - toApplicationTimestamp(left);
 
+const groupApplicationsByJobListingId = (
+  applications: FilemakerJobApplication[]
+): Map<string, FilemakerJobApplication[]> => {
+  const groups = new Map<string, FilemakerJobApplication[]>();
+  applications.forEach((application: FilemakerJobApplication): void => {
+    const jobListingId = application.jobListingId.trim();
+    if (jobListingId.length === 0) return;
+    const group = groups.get(jobListingId) ?? [];
+    group.push(application);
+    groups.set(jobListingId, group);
+  });
+  return groups;
+};
+
+const toApplicationLogTimestamp = (entry: FilemakerJobApplicationLogEntry): number => {
+  const value = Date.parse(entry.appliedAt);
+  return Number.isFinite(value) ? value : 0;
+};
+
+const getManualAppliedLogRemovalTarget = (
+  applications: FilemakerJobApplication[],
+  personId: string
+): ManualAppliedLogRemovalTarget | null => {
+  const normalizedPersonId = personId.trim();
+  if (normalizedPersonId.length === 0) return null;
+
+  const targets = applications.flatMap(
+    (
+      application: FilemakerJobApplication
+    ): Array<{ applicationId: string; logEntry: FilemakerJobApplicationLogEntry }> => {
+      if (application.personId.trim() !== normalizedPersonId) return [];
+      const manualLogEntries = (application.applicationLog ?? []).filter(
+        (entry: FilemakerJobApplicationLogEntry): boolean => {
+          if (entry.method !== 'manual') return false;
+          if (
+            entry.toStatus !== undefined &&
+            entry.toStatus !== null &&
+            entry.toStatus !== 'applied'
+          ) return false;
+          const entryPersonId = (entry.personId ?? '').trim();
+          return entryPersonId.length === 0 || entryPersonId === normalizedPersonId;
+        }
+      );
+      return manualLogEntries.map((logEntry: FilemakerJobApplicationLogEntry) => ({
+        applicationId: application.id,
+        logEntry,
+      }));
+    }
+  );
+  if (targets.length === 0) return null;
+
+  const sortedTargets = targets.slice().sort(
+    (
+      left: { applicationId: string; logEntry: FilemakerJobApplicationLogEntry },
+      right: { applicationId: string; logEntry: FilemakerJobApplicationLogEntry }
+    ): number => toApplicationLogTimestamp(right.logEntry) - toApplicationLogTimestamp(left.logEntry)
+  );
+  const latestTarget = sortedTargets[0];
+  return latestTarget === undefined
+    ? null
+    : { applicationId: latestTarget.applicationId, logEntryId: latestTarget.logEntry.id };
+};
+
+const getManualAppliedStatusOnlyTarget = (
+  applications: FilemakerJobApplication[],
+  personId: string
+): ManualAppliedLogRemovalTarget | null => {
+  const normalizedPersonId = personId.trim();
+  if (normalizedPersonId.length === 0) return null;
+
+  const applicableApplications = applications
+    .filter(
+      (application: FilemakerJobApplication): boolean =>
+        application.personId.trim() === normalizedPersonId && application.status === 'applied'
+    )
+    .map((application: FilemakerJobApplication): ManualAppliedLogRemovalTarget => ({
+      applicationId: application.id,
+    }))
+    .sort(
+      (
+        left: ManualAppliedLogRemovalTarget,
+        right: ManualAppliedLogRemovalTarget
+      ): number => {
+        const leftApplication = applications.find(
+          (application: FilemakerJobApplication): boolean => application.id === left.applicationId
+        );
+        const rightApplication = applications.find(
+          (application: FilemakerJobApplication): boolean => application.id === right.applicationId
+        );
+        if (leftApplication === undefined && rightApplication === undefined) return 0;
+        if (leftApplication === undefined) return 1;
+        if (rightApplication === undefined) return -1;
+        return toApplicationTimestamp(rightApplication) - toApplicationTimestamp(leftApplication);
+      }
+    );
+
+  return applicableApplications[0] ?? null;
+};
+
 const hasTailoredCvArtifact = (application: FilemakerJobApplication): boolean =>
   (application.tailoredCvId?.trim().length ?? 0) > 0 || application.tailoredCv !== null;
 
@@ -372,6 +478,11 @@ const hasApplicationEmailVersionArtifact = (application: FilemakerJobApplication
 
 const normalizePayloadString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const normalizeTrimmedString = (value: string | null | undefined): string | null => {
+  const normalized = value?.trim() ?? '';
+  return normalized.length > 0 ? normalized : null;
+};
 
 const normalizePayloadStringArray = (value: unknown): string[] =>
   Array.isArray(value)
@@ -545,6 +656,8 @@ const createArtifactApplicationFromPersistedVersion = (
   application: FilemakerJobApplication,
   version: FilemakerJobApplicationArtifactVersion
 ): FilemakerJobApplication => {
+  const normalizedCreatedAt = version.createdAt ?? application.createdAt;
+  const storageApplicationId = application.storageApplicationId ?? application.id;
   const baseVersionFields: FilemakerJobApplication = {
     ...application,
     id: version.id,
@@ -556,12 +669,12 @@ const createArtifactApplicationFromPersistedVersion = (
     artifactVersionNumber: version.version,
     confidence: version.confidence,
     coverLetter: null,
-    createdAt: version.createdAt ?? application.createdAt,
+    createdAt: normalizedCreatedAt,
     missingInformation: version.missingInformation,
-    storageApplicationId: application.storageApplicationId ?? application.id,
+    storageApplicationId,
     tailoredCv: null,
     tailoredCvId: null,
-    updatedAt: version.createdAt ?? application.updatedAt,
+    updatedAt: normalizedCreatedAt,
   };
   if (version.kind === 'tailored_cv') {
     return {
@@ -628,6 +741,9 @@ const mergeUniqueStringArrays = (...arrays: string[][]): string[] => {
   return Array.from(values);
 };
 
+const isNonEmptyString = (value: string | null | undefined): value is string =>
+  value !== null && value !== undefined && value.trim().length > 0;
+
 const buildPreparedApplicationKey = (application: FilemakerJobApplication): string => {
   const canonicalApplicationKey = application.canonicalApplicationKey?.trim() ?? '';
   if (canonicalApplicationKey.length > 0) return canonicalApplicationKey;
@@ -637,11 +753,10 @@ const buildPreparedApplicationKey = (application: FilemakerJobApplication): stri
   if (personId.length === 0 || organizationId.length === 0 || jobListingId.length === 0) {
     return `legacy:${application.id}`;
   }
-  const integrationKey =
-    application.integrationSlug?.trim() ||
-    application.integrationId?.trim() ||
-    application.connectionId?.trim() ||
-    'default';
+  const integrationSlug = normalizeTrimmedString(application.integrationSlug);
+  const integrationId = normalizeTrimmedString(application.integrationId);
+  const connectionId = normalizeTrimmedString(application.connectionId);
+  const integrationKey = integrationSlug ?? integrationId ?? connectionId ?? 'default';
   return [personId, organizationId, jobListingId, integrationKey].join('::');
 };
 
@@ -688,7 +803,7 @@ const createPreparedJobApplication = (
   const storageApplicationIds = Array.from(
     new Set(
       sortedApplications.map((application: FilemakerJobApplication): string =>
-        application.storageApplicationId?.trim() || application.id
+        normalizeTrimmedString(application.storageApplicationId) ?? application.id
       )
     )
   );
@@ -1071,17 +1186,27 @@ function JobApplicationRunStatusBadges({
       {sortedEntries.map((entry: JobApplicationRunEntry) => {
         const label = resolveJobApplicationArtifactLabel(entry);
         const status = JOB_APPLICATION_RUN_STATUS_LABELS[entry.status];
-        const title = [label, status, entry.runId ? `Run ${entry.runId}` : null, entry.error]
+        const runId = entry.runId?.trim() ?? '';
+        const runStatusBadgeVariant: Record<
+          JobApplicationRunEntry['status'],
+          'success' | 'error' | 'outline' | 'pending' | 'processing'
+        > = {
+          completed: 'success',
+          error: 'error',
+          running: 'processing',
+          completed_with_errors: 'error',
+          queued: 'outline',
+          failed: 'error',
+          canceled: 'outline',
+          pending: 'pending',
+          auth_required: 'outline',
+          awaiting_review: 'outline',
+          submitted: 'success',
+        };
+        const title = [label, status, runId.length > 0 ? `Run ${runId}` : null, entry.error]
           .filter((value: string | null): value is string => value !== null && value.length > 0)
           .join(' · ');
-        const variant =
-          entry.status === 'completed'
-            ? 'success'
-            : entry.status === 'error'
-              ? 'error'
-              : entry.status === 'running'
-                ? 'processing'
-                : 'pending';
+        const variant = runStatusBadgeVariant[entry.status];
         return (
           <Badge key={entry.id} variant={variant} title={title}>
             {label} {status}
@@ -1147,24 +1272,23 @@ function JobApplicationsInline({
           const hasMatchAnalysis = application.matchAnalysis !== null;
           const matchAnalysisStatus = application.matchAnalysisStatus ?? null;
           const latestMatchScore = application.matchAnalysis?.score ?? null;
-          const previousMatchScore =
-            (application.matchAnalysisHistory?.length ?? 0) > 1
-              ? application.matchAnalysisHistory?.[
-                  (application.matchAnalysisHistory?.length ?? 0) - 2
-                ]?.payload?.score ?? null
-              : null;
+  const previousMatchScore =
+    (application.matchAnalysisHistory?.length ?? 0) > 1
+      ? application.matchAnalysisHistory?.[application.matchAnalysisHistory.length - 2]?.payload?.score ?? null
+      : null;
           const matchScoreDelta =
             latestMatchScore !== null && previousMatchScore !== null
               ? latestMatchScore - previousMatchScore
               : null;
           const matchDecision = application.matchAnalysis?.recommendedDecision ?? null;
           const matchDecisionReason = application.matchAnalysis?.recommendedDecisionReason ?? null;
-          const matchDecisionTitle =
-            matchDecisionReason !== null
-              ? `AI recommendation: ${matchDecisionReason}`
-              : matchDecision !== null
-                ? 'AI recommendation'
-                : undefined;
+          const matchDecisionTitle = (() => {
+            if (matchDecisionReason !== null && matchDecisionReason.trim().length > 0) {
+              return `AI recommendation: ${matchDecisionReason}`;
+            }
+            if (matchDecision !== null) return 'AI recommendation';
+            return undefined;
+          })();
           const matchAnalysisUpdatedAtMs = Date.parse(application.matchAnalysisUpdatedAt ?? '');
           const applicationUpdatedAtMs = Date.parse(application.updatedAt);
           const latestHistoryApplicationSnapshotMs = Date.parse(
@@ -1186,9 +1310,9 @@ function JobApplicationsInline({
             >
               <div className='flex flex-wrap items-center justify-between gap-2'>
                 <div className='min-w-0'>
-                  <div className='truncate text-sm font-medium text-gray-100'>
-                    {formatApplicationTitle(application)}
-                  </div>
+                    <div className='truncate text-sm font-medium text-gray-100'>
+                      {formatApplicationTitle(application)}
+                    </div>
                   <div className='text-[11px] text-gray-500'>
                     {formatApplicationPerson(application)} · {formatTimestamp(application.createdAt)}
                   </div>
@@ -1282,17 +1406,20 @@ function JobApplicationsInline({
                 <div className='mt-1.5 space-y-0.5'>
                   {(application.applicationLog as FilemakerJobApplicationLogEntry[]).map(
                     (entry: FilemakerJobApplicationLogEntry, i: number) => (
-                      <div key={entry.id ?? i} className='flex items-center gap-1.5 text-[11px] text-gray-500'>
+                      <div
+                        key={entry.id.length > 0 ? entry.id : String(i)}
+                        className='flex items-center gap-1.5 text-[11px] text-gray-500'
+                      >
                         <span className='font-medium text-emerald-400'>
                           {entry.method === 'manual' ? 'Manual' : 'Apply script'}
                         </span>
                         {' · '}
                         {formatTimestamp(entry.appliedAt)}
-                        {entry.personName !== null
-                          ? ` · ${entry.personName}`
-                          : entry.personId !== null
-                            ? ` · ${entry.personId}`
-                            : ''}
+                        {(() => {
+                          if (isNonEmptyString(entry.personName)) return ` · ${entry.personName}`;
+                          if (isNonEmptyString(entry.personId)) return ` · ${entry.personId}`;
+                          return '';
+                        })()}
                         <button
                           type='button'
                           className='ml-1 text-gray-700 hover:text-red-400'
@@ -1672,8 +1799,12 @@ function ApplicationPackageModal({
     );
 
   useEffect(() => {
-    const personId = application?.personId?.trim() ?? '';
-    if (application === null || personId.length === 0) {
+    if (application === null) {
+      setMatchAnalysisContext(createEmptyApplicationMatchAnalysisContextState());
+      return undefined;
+    }
+    const personId = application.personId.trim();
+    if (personId.length === 0) {
       setMatchAnalysisContext(createEmptyApplicationMatchAnalysisContextState());
       return undefined;
     }
@@ -1864,8 +1995,10 @@ function ApplicationPackageModal({
           visibleApplication.personId
         )}/cvs/${encodeURIComponent(tailoredCvSourceId)}`
       : null;
-  const hasApplicationEmail =
-    visibleApplication !== null && hasApplicationEmailArtifact(visibleApplication);
+  const visibleApplicationForEmail =
+    visibleApplication !== null && hasApplicationEmailArtifact(visibleApplication)
+      ? visibleApplication
+      : null;
   const canExportPdf =
     visibleApplication?.tailoredCvId !== null &&
     visibleApplication?.tailoredCvId !== undefined &&
@@ -1883,6 +2016,8 @@ function ApplicationPackageModal({
   const latestMatchAnalysisApplicationSnapshotMs = Date.parse(
     matchAnalysisHistory[matchAnalysisHistory.length - 1]?.applicationUpdatedAtSnapshot ?? ''
   );
+  const visibleApplicationMatchAnalysisUpdatedAt = visibleApplication?.matchAnalysisUpdatedAt ?? null;
+  const visibleApplicationMatchAnalysisSourceEntityId = visibleApplication?.matchAnalysisSourceEntityId ?? null;
   const matchAnalysisFreshnessBaselineMs = Number.isFinite(latestMatchAnalysisApplicationSnapshotMs)
     ? latestMatchAnalysisApplicationSnapshotMs
     : matchAnalysisUpdatedAtMs;
@@ -1906,50 +2041,42 @@ function ApplicationPackageModal({
     matchAnalysisContext.isLoading === false &&
     matchAnalysisContext.error === null;
   const matchAnalysisCvCount = matchAnalysisContext.cvs.length;
-  const matchAnalysisContextStatus = matchAnalysisContext.isLoading
-    ? 'Loading CV context'
-    : matchAnalysisContext.error !== null
-      ? 'Context unavailable'
-      : `${matchAnalysisCvCount} CV record${matchAnalysisCvCount === 1 ? '' : 's'} loaded`;
-  const matchAnalysisDisabledReason =
-    visibleApplication === null
-      ? 'Open a prepared application before running match analysis.'
-      : jobListing === null
-        ? 'Job listing context is missing.'
-        : matchAnalysisContext.isLoading
-          ? 'Selected person profile and CV records are still loading.'
-          : matchAnalysisContext.error;
+  const matchAnalysisContextStatus = (() => {
+    if (matchAnalysisContext.isLoading) return 'Loading CV context';
+    if (matchAnalysisContext.error !== null) return 'Context unavailable';
+    const suffix = matchAnalysisCvCount === 1 ? '' : 's';
+    return `${matchAnalysisCvCount} CV record${suffix} loaded`;
+  })();
+  const matchAnalysisDisabledReason = (() => {
+    if (visibleApplication === null) return 'Open a prepared application before running match analysis.';
+    if (jobListing === null) return 'Job listing context is missing.';
+    if (matchAnalysisContext.isLoading) return 'Selected person profile and CV records are still loading.';
+    return matchAnalysisContext.error;
+  })();
   const matchAnalysisScore = matchAnalysis?.score ?? null;
-  const matchAnalysisReadinessLabel =
-    matchAnalysisScore === null
-      ? 'Not analyzed'
-      : matchAnalysisScore >= 90
-        ? 'Excellent fit'
-        : matchAnalysisScore >= 75
-          ? 'Strong fit'
-          : matchAnalysisScore >= 60
-            ? 'Workable fit'
-            : matchAnalysisScore >= 40
-              ? 'Partial fit'
-              : 'Weak fit';
-  const matchAnalysisReadinessHint =
-    matchAnalysisScore === null
-      ? 'Run analysis to estimate application readiness.'
-      : matchAnalysisScore >= 75
-        ? 'This application looks worth prioritising. Focus on sharpening evidence and interview talking points.'
-        : matchAnalysisScore >= 60
-          ? 'This application may be viable, but the gaps should be addressed before applying.'
-          : 'This application needs focused preparation or a stronger evidence story before applying.';
-  const matchAnalysisReadinessClassName =
-    matchAnalysisScore === null
-      ? 'border-border/50 bg-background/35 text-gray-300'
-      : matchAnalysisScore >= 75
-        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100'
-        : matchAnalysisScore >= 60
-          ? 'border-blue-500/30 bg-blue-500/10 text-blue-100'
-          : matchAnalysisScore >= 40
-            ? 'border-amber-500/30 bg-amber-500/10 text-amber-100'
-            : 'border-red-500/30 bg-red-500/10 text-red-100';
+  const matchAnalysisReadinessLabel = (() => {
+    if (matchAnalysisScore === null) return 'Not analyzed';
+    if (matchAnalysisScore >= 90) return 'Excellent fit';
+    if (matchAnalysisScore >= 75) return 'Strong fit';
+    if (matchAnalysisScore >= 60) return 'Workable fit';
+    if (matchAnalysisScore >= 40) return 'Partial fit';
+    return 'Weak fit';
+  })();
+  const matchAnalysisReadinessHint = (() => {
+    if (matchAnalysisScore === null) return 'Run analysis to estimate application readiness.';
+    if (matchAnalysisScore >= 75)
+      return 'This application looks worth prioritising. Focus on sharpening evidence and interview talking points.';
+    if (matchAnalysisScore >= 60)
+      return 'This application may be viable, but the gaps should be addressed before applying.';
+    return 'This application needs focused preparation or a stronger evidence story before applying.';
+  })();
+  const matchAnalysisReadinessClassName = (() => {
+    if (matchAnalysisScore === null) return 'border-border/50 bg-background/35 text-gray-300';
+    if (matchAnalysisScore >= 75) return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100';
+    if (matchAnalysisScore >= 60) return 'border-blue-500/30 bg-blue-500/10 text-blue-100';
+    if (matchAnalysisScore >= 40) return 'border-amber-500/30 bg-amber-500/10 text-amber-100';
+    return 'border-red-500/30 bg-red-500/10 text-red-100';
+  })();
   const previousMatchAnalysisScore =
     matchAnalysisHistory.length > 1
       ? matchAnalysisHistory[matchAnalysisHistory.length - 2]?.payload?.score ?? null
@@ -1962,40 +2089,38 @@ function ApplicationPackageModal({
     matchAnalysisScore !== null && previousMatchAnalysisScore !== null
       ? matchAnalysisScore - previousMatchAnalysisScore
       : null;
-  const matchAnalysisScoreDeltaLabel =
-    matchAnalysisScoreDelta === null
-      ? null
-      : matchAnalysisScoreDelta > 0
-        ? `+${matchAnalysisScoreDelta} vs previous`
-        : `${matchAnalysisScoreDelta} vs previous`;
+  const matchAnalysisScoreDeltaLabel = (() => {
+    if (matchAnalysisScoreDelta === null) return null;
+    if (matchAnalysisScoreDelta > 0) return `+${matchAnalysisScoreDelta} vs previous`;
+    return `${matchAnalysisScoreDelta} vs previous`;
+  })();
   const matchAnalysisPrepWorkloadScore =
     (matchAnalysis?.gaps.length ?? 0) +
     (matchAnalysis?.attentionAreas.length ?? 0) +
     (matchAnalysis?.riskFlags.length ?? 0);
-  const matchAnalysisPrepWorkloadLabel =
-    matchAnalysis === null
-      ? 'Unknown prep workload'
-      : matchAnalysisPrepWorkloadScore <= 3
-        ? 'Low prep workload'
-        : matchAnalysisPrepWorkloadScore <= 7
-          ? 'Medium prep workload'
-          : 'High prep workload';
-  const fallbackMatchAnalysisDecisionLabel =
-    matchAnalysisScore === null
-      ? 'Analyze before deciding'
-      : matchAnalysisScore >= 75 && matchAnalysisPrepWorkloadScore <= 7
-        ? 'Apply now'
-        : matchAnalysisScore >= 60
-          ? 'Prepare before applying'
-          : 'Deprioritise or rebuild evidence';
-  const fallbackMatchAnalysisDecisionHint =
-    matchAnalysisScore === null
-      ? 'Run Analyze Match to turn the job/CV comparison into an application decision.'
-      : matchAnalysisScore >= 75 && matchAnalysisPrepWorkloadScore <= 7
-        ? 'The fit is strong enough to move forward. Review risks and tailor talking points.'
-        : matchAnalysisScore >= 60
-          ? 'The fit is plausible, but address the listed gaps before sending the application.'
-          : 'The current evidence is weak for this posting. Apply only if there is a strategic reason.';
+  const matchAnalysisPrepWorkloadLabel = (() => {
+    if (matchAnalysis === null) return 'Unknown prep workload';
+    if (matchAnalysisPrepWorkloadScore <= 3) return 'Low prep workload';
+    if (matchAnalysisPrepWorkloadScore <= 7) return 'Medium prep workload';
+    return 'High prep workload';
+  })();
+  const fallbackMatchAnalysisDecisionLabel = (() => {
+    if (matchAnalysisScore === null) return 'Analyze before deciding';
+    if (matchAnalysisScore >= 75 && matchAnalysisPrepWorkloadScore <= 7) return 'Apply now';
+    if (matchAnalysisScore >= 60) return 'Prepare before applying';
+    return 'Deprioritise or rebuild evidence';
+  })();
+  const fallbackMatchAnalysisDecisionHint = (() => {
+    if (matchAnalysisScore === null)
+      return 'Run Analyze Match to turn the job/CV comparison into an application decision.';
+    if (matchAnalysisScore >= 75 && matchAnalysisPrepWorkloadScore <= 7) {
+      return 'The fit is strong enough to move forward. Review risks and tailor talking points.';
+    }
+    if (matchAnalysisScore >= 60) {
+      return 'The fit is plausible, but address the listed gaps before sending the application.';
+    }
+    return 'The current evidence is weak for this posting. Apply only if there is a strategic reason.';
+  })();
   const matchAnalysisDecisionLabel =
     matchAnalysis?.recommendedDecision ?? fallbackMatchAnalysisDecisionLabel;
   const matchAnalysisDecisionHint =
@@ -2007,25 +2132,24 @@ function ApplicationPackageModal({
   const matchAnalysisDecisionChanged =
     previousMatchAnalysisDecision !== null &&
     matchAnalysisDecisionLabel !== previousMatchAnalysisDecision;
-  const matchAnalysisDecisionClassName =
-    matchAnalysisDecisionLabel === 'Apply now'
-      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100'
-      : matchAnalysisDecisionLabel === 'Prepare before applying'
-        ? 'border-amber-500/30 bg-amber-500/10 text-amber-100'
-        : matchAnalysisDecisionLabel === 'Deprioritise or rebuild evidence'
-          ? 'border-red-500/30 bg-red-500/10 text-red-100'
-          : matchAnalysisScore === null
-      ? 'border-border/50 bg-background/35 text-gray-300'
-      : matchAnalysisScore >= 75 && matchAnalysisPrepWorkloadScore <= 7
-        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100'
-        : matchAnalysisScore >= 60
-          ? 'border-amber-500/30 bg-amber-500/10 text-amber-100'
-          : 'border-red-500/30 bg-red-500/10 text-red-100';
+  const matchAnalysisDecisionClassName = (() => {
+    if (matchAnalysisDecisionLabel === 'Apply now')
+      return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100';
+    if (matchAnalysisDecisionLabel === 'Prepare before applying')
+      return 'border-amber-500/30 bg-amber-500/10 text-amber-100';
+    if (matchAnalysisDecisionLabel === 'Deprioritise or rebuild evidence')
+      return 'border-red-500/30 bg-red-500/10 text-red-100';
+    if (matchAnalysisScore === null) return 'border-border/50 bg-background/35 text-gray-300';
+    if (matchAnalysisScore >= 75 && matchAnalysisPrepWorkloadScore <= 7)
+      return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100';
+    if (matchAnalysisScore >= 60) return 'border-amber-500/30 bg-amber-500/10 text-amber-100';
+    return 'border-red-500/30 bg-red-500/10 text-red-100';
+  })();
 
   const getMatchAnalysisEntityJson = useCallback((): Record<string, unknown> | null => {
     if (visibleApplication === null || jobListing === null) return null;
     const canonicalApplicationKey =
-      visibleApplication.canonicalApplicationKey ?? visibleApplication.id;
+      visibleApplication.canonicalApplicationKey;
     return {
       id: `${canonicalApplicationKey}:match-analysis`,
       applicationContext: {
@@ -2110,51 +2234,59 @@ function ApplicationPackageModal({
 
   const handleCopyMatchAnalysis = (): void => {
     if (matchAnalysis === null) return;
-    const lines = [
-      `Match score: ${matchAnalysis.score ?? 'n/a'}${
-        matchAnalysis.scoreLabel ? ` (${matchAnalysis.scoreLabel})` : ''
-      }`,
-      `Recommended decision: ${matchAnalysisDecisionLabel}`,
-      `Decision source: ${matchAnalysisDecisionSource}`,
-      `Analysis freshness: ${matchAnalysisFreshnessLabel}`,
-      matchAnalysisSnapshotLabel
-        ? `Analyzed application snapshot: ${matchAnalysisSnapshotLabel}`
-        : null,
-      visibleApplicationUpdatedLabel
-        ? `Current application updated: ${visibleApplicationUpdatedLabel}`
-        : null,
-      matchAnalysisDecisionHint ? `Decision reason: ${matchAnalysisDecisionHint}` : null,
-      matchAnalysis.summary ? `Summary: ${matchAnalysis.summary}` : null,
-      matchAnalysis.changeSincePrevious
-        ? `Change since previous: ${matchAnalysis.changeSincePrevious}`
-        : null,
-      matchAnalysis.strongMatches.length > 0
-        ? `Strong matches:\n${matchAnalysis.strongMatches.map((item: string) => `- ${item}`).join('\n')}`
-        : null,
-      matchAnalysis.gaps.length > 0
-        ? `Gaps:\n${matchAnalysis.gaps.map((item: string) => `- ${item}`).join('\n')}`
-        : null,
-      matchAnalysis.attentionAreas.length > 0
-        ? `Attention areas:\n${matchAnalysis.attentionAreas
-            .map((area) =>
-              `- ${area.area ?? 'Attention'}${
-                area.recommendedAction ? `: ${area.recommendedAction}` : ''
-              }`
-            )
-            .join('\n')}`
-        : null,
-      matchAnalysis.riskFlags.length > 0
-        ? `Risk flags:\n${matchAnalysis.riskFlags.map((item: string) => `- ${item}`).join('\n')}`
-        : null,
-      matchAnalysis.interviewTalkingPoints.length > 0
-        ? `Interview talking points:\n${matchAnalysis.interviewTalkingPoints
-            .map((item: string) => `- ${item}`)
-            .join('\n')}`
-        : null,
-      matchAnalysis.learningPlan.length > 0
-        ? `Preparation plan:\n${matchAnalysis.learningPlan.map((item: string) => `- ${item}`).join('\n')}`
-        : null,
-    ].filter((line): line is string => line !== null);
+    const lines: string[] = [];
+    const addLine = (line: string | null | undefined): void => {
+      if (isNonEmptyString(line)) lines.push(line);
+    };
+    addLine(`Match score: ${matchAnalysis.score ?? 'n/a'}${
+      isNonEmptyString(matchAnalysis.scoreLabel) ? ` (${matchAnalysis.scoreLabel})` : ''
+    }`);
+    addLine(`Recommended decision: ${matchAnalysisDecisionLabel}`);
+    addLine(`Decision source: ${matchAnalysisDecisionSource}`);
+    addLine(`Analysis freshness: ${matchAnalysisFreshnessLabel}`);
+    if (matchAnalysisSnapshotLabel !== null) addLine(`Analyzed application snapshot: ${matchAnalysisSnapshotLabel}`);
+    if (visibleApplicationUpdatedLabel !== null) addLine(`Current application updated: ${visibleApplicationUpdatedLabel}`);
+    if (isNonEmptyString(matchAnalysisDecisionHint))
+      addLine(`Decision reason: ${matchAnalysisDecisionHint}`);
+    if (isNonEmptyString(matchAnalysis.summary)) addLine(`Summary: ${matchAnalysis.summary}`);
+    if (isNonEmptyString(matchAnalysis.changeSincePrevious))
+      addLine(`Change since previous: ${matchAnalysis.changeSincePrevious}`);
+    if (matchAnalysis.strongMatches.length > 0) {
+      addLine(`Strong matches:\n${matchAnalysis.strongMatches.map((item: string) => `- ${item}`).join('\n')}`);
+    }
+    if (matchAnalysis.gaps.length > 0) {
+      addLine(`Gaps:\n${matchAnalysis.gaps.map((item: string) => `- ${item}`).join('\n')}`);
+    }
+    if (matchAnalysis.attentionAreas.length > 0) {
+      addLine(
+        `Attention areas:\n${matchAnalysis.attentionAreas
+          .map((area) => {
+            const areaLabel = isNonEmptyString(area.area) ? area.area : 'Attention';
+            const recommendation = isNonEmptyString(area.recommendedAction)
+              ? `: ${area.recommendedAction}`
+              : '';
+            return `- ${areaLabel}${recommendation}`;
+          })
+          .join('\n')}`
+      );
+    }
+    if (matchAnalysis.riskFlags.length > 0) {
+      addLine(`Risk flags:\n${matchAnalysis.riskFlags.map((item: string) => `- ${item}`).join('\n')}`);
+    }
+    if (matchAnalysis.interviewTalkingPoints.length > 0) {
+      addLine(
+        `Interview talking points:\n${matchAnalysis.interviewTalkingPoints
+          .map((item: string) => `- ${item}`)
+          .join('\n')}`
+      );
+    }
+    if (matchAnalysis.learningPlan.length > 0) {
+      addLine(
+        `Preparation plan:\n${matchAnalysis.learningPlan
+          .map((item: string) => `- ${item}`)
+          .join('\n')}`
+      );
+    }
     void navigator.clipboard
       .writeText(lines.join('\n\n'))
       .then((): void => {
@@ -2168,48 +2300,50 @@ function ApplicationPackageModal({
 
   const handleCopyMatchPreparationPlan = (): void => {
     if (matchAnalysis === null) return;
-    const lines = [
-      `Application readiness: ${matchAnalysisReadinessLabel}`,
-      `Recommended decision: ${matchAnalysisDecisionLabel}`,
-      `Decision source: ${matchAnalysisDecisionSource}`,
-      `Analysis freshness: ${matchAnalysisFreshnessLabel}`,
-      matchAnalysisSnapshotLabel
-        ? `Analyzed application snapshot: ${matchAnalysisSnapshotLabel}`
-        : null,
-      visibleApplicationUpdatedLabel
-        ? `Current application updated: ${visibleApplicationUpdatedLabel}`
-        : null,
-      matchAnalysisDecisionHint ? `Decision reason: ${matchAnalysisDecisionHint}` : null,
-      `Match score: ${matchAnalysis.score ?? 'n/a'}${
-        matchAnalysis.scoreLabel ? ` (${matchAnalysis.scoreLabel})` : ''
-      }`,
-      matchAnalysis.gaps.length > 0
-        ? `Gaps to address:\n${matchAnalysis.gaps.map((item: string) => `- ${item}`).join('\n')}`
-        : null,
-      matchAnalysis.attentionAreas.length > 0
-        ? `Action checklist:\n${matchAnalysis.attentionAreas
-            .map(
-              (area, index: number) =>
-                `${index + 1}. ${area.area ?? 'Attention area'}${
-                  area.recommendedAction ? `: ${area.recommendedAction}` : ''
-                }`
-            )
-            .join('\n')}`
-        : null,
-      matchAnalysis.riskFlags.length > 0
-        ? `Risks to prepare for:\n${matchAnalysis.riskFlags
-            .map((item: string) => `- ${item}`)
-            .join('\n')}`
-        : null,
-      matchAnalysis.interviewTalkingPoints.length > 0
-        ? `Interview talking points:\n${matchAnalysis.interviewTalkingPoints
-            .map((item: string) => `- ${item}`)
-            .join('\n')}`
-        : null,
-      matchAnalysis.learningPlan.length > 0
-        ? `Focused prep:\n${matchAnalysis.learningPlan.map((item: string) => `- ${item}`).join('\n')}`
-        : null,
-    ].filter((line): line is string => line !== null);
+    const lines: string[] = [];
+    const addLine = (line: string | null | undefined): void => {
+      if (isNonEmptyString(line)) lines.push(line);
+    };
+    addLine(`Application readiness: ${matchAnalysisReadinessLabel}`);
+    addLine(`Recommended decision: ${matchAnalysisDecisionLabel}`);
+    addLine(`Decision source: ${matchAnalysisDecisionSource}`);
+    addLine(`Analysis freshness: ${matchAnalysisFreshnessLabel}`);
+    if (matchAnalysisSnapshotLabel !== null) addLine(`Analyzed application snapshot: ${matchAnalysisSnapshotLabel}`);
+    if (visibleApplicationUpdatedLabel !== null) addLine(`Current application updated: ${visibleApplicationUpdatedLabel}`);
+    if (isNonEmptyString(matchAnalysisDecisionHint))
+      addLine(`Decision reason: ${matchAnalysisDecisionHint}`);
+    addLine(`Match score: ${matchAnalysis.score ?? 'n/a'}${
+      isNonEmptyString(matchAnalysis.scoreLabel) ? ` (${matchAnalysis.scoreLabel})` : ''
+    }`);
+    if (matchAnalysis.gaps.length > 0) {
+      addLine(`Gaps to address:\n${matchAnalysis.gaps.map((item: string) => `- ${item}`).join('\n')}`);
+    }
+    if (matchAnalysis.attentionAreas.length > 0) {
+      addLine(
+        `Action checklist:\n${matchAnalysis.attentionAreas
+          .map((area, index: number) => {
+            const areaLabel = isNonEmptyString(area.area) ? area.area : 'Attention area';
+            const recommendation = isNonEmptyString(area.recommendedAction)
+              ? `: ${area.recommendedAction}`
+              : '';
+            return `${index + 1}. ${areaLabel}${recommendation}`;
+          })
+          .join('\n')}`
+      );
+    }
+    if (matchAnalysis.riskFlags.length > 0) {
+      addLine(`Risks to prepare for:\n${matchAnalysis.riskFlags.map((item: string) => `- ${item}`).join('\n')}`);
+    }
+    if (matchAnalysis.interviewTalkingPoints.length > 0) {
+      addLine(
+        `Interview talking points:\n${matchAnalysis.interviewTalkingPoints
+          .map((item: string) => `- ${item}`)
+          .join('\n')}`
+      );
+    }
+    if (matchAnalysis.learningPlan.length > 0) {
+      addLine(`Focused prep:\n${matchAnalysis.learningPlan.map((item: string) => `- ${item}`).join('\n')}`);
+    }
     void navigator.clipboard
       .writeText(lines.join('\n\n'))
       .then((): void => {
@@ -2485,11 +2619,13 @@ function ApplicationPackageModal({
     if (!visibleApplication || selectedCoverLetterVersion === null) return;
     setIsExportingCoverLetterPdf(true);
     try {
-      const coverLetterApplicationId =
-        selectedCoverLetterVersion.storageApplicationId?.trim() ||
-        selectedCoverLetterVersion.id;
-      const query = selectedCoverLetterVersion.artifactVersionId
-        ? `?coverLetterVersionId=${encodeURIComponent(selectedCoverLetterVersion.artifactVersionId)}`
+      const storageCoverLetterApplicationId = selectedCoverLetterVersion.storageApplicationId?.trim() ?? '';
+      const coverLetterApplicationId = isNonEmptyString(storageCoverLetterApplicationId)
+        ? storageCoverLetterApplicationId
+        : selectedCoverLetterVersion.id;
+      const artifactVersionId = selectedCoverLetterVersion.artifactVersionId?.trim() ?? '';
+      const query = isNonEmptyString(artifactVersionId)
+        ? `?coverLetterVersionId=${encodeURIComponent(artifactVersionId)}`
         : '';
       const response = await fetch(
         `/api/filemaker/job-applications/${encodeURIComponent(
@@ -2702,8 +2838,14 @@ function ApplicationPackageModal({
               </div>
               <ol className='space-y-1.5 border-l border-border/70 pl-3'>
                 {(application.applicationLog as FilemakerJobApplicationLogEntry[]).map(
-                  (entry: FilemakerJobApplicationLogEntry, i: number) => (
-                    <li key={entry.id ?? i} className='flex flex-wrap items-center gap-x-2 gap-y-0.5'>
+                  (entry: FilemakerJobApplicationLogEntry): React.JSX.Element => {
+                    const personLabel = (() => {
+                      if (isNonEmptyString(entry.personName)) return ` · ${entry.personName}`;
+                      if (isNonEmptyString(entry.personId)) return ` · ${entry.personId}`;
+                      return null;
+                    })();
+                    return (
+                    <li key={entry.id} className='flex flex-wrap items-center gap-x-2 gap-y-0.5'>
                       <span className='text-xs font-medium text-gray-100'>
                         {entry.toStatus !== null && entry.toStatus !== undefined
                           ? entry.toStatus.charAt(0).toUpperCase() + entry.toStatus.slice(1)
@@ -2715,10 +2857,10 @@ function ApplicationPackageModal({
                       <span className='text-[11px] text-gray-500'>
                         {formatTimestamp(entry.appliedAt)}
                       </span>
-                      {entry.personName !== null ? (
-                        <span className='text-[11px] text-gray-500'>{entry.personName}</span>
-                      ) : entry.personId !== null ? (
-                        <span className='text-[11px] text-gray-500'>{entry.personId}</span>
+                      {personLabel !== null ? (
+                        <span className='text-[11px] text-gray-500'>
+                          {personLabel}
+                        </span>
                       ) : null}
                       <button
                         type='button'
@@ -2732,7 +2874,8 @@ function ApplicationPackageModal({
                         <Trash2 className='h-3 w-3' aria-hidden='true' />
                       </button>
                     </li>
-                  )
+                    );
+                  }
                 )}
               </ol>
             </div>
@@ -2868,7 +3011,7 @@ function ApplicationPackageModal({
                 </div>
               </section>
 
-              {hasApplicationEmail ? (
+              {visibleApplicationForEmail !== null ? (
                 <section className='space-y-2'>
                   <div className='flex flex-wrap items-center justify-between gap-2'>
                     <h4 className='text-sm font-semibold text-white'>Application email</h4>
@@ -2891,16 +3034,15 @@ function ApplicationPackageModal({
                         className='h-8 gap-1.5'
                         onClick={(): void => {
                           const filename = createDownloadFilename(
-                            visibleApplication?.applicationEmail?.subject,
-                            visibleApplication?.id ?? application.id
+                            visibleApplicationForEmail.applicationEmail?.subject,
+                            visibleApplicationForEmail.id
+                          );
+                          const applicationEmailText = composeApplicationEmailText(
+                            visibleApplicationForEmail
                           );
                           downloadBlob(
                             new Blob(
-                              [
-                                visibleApplication !== null
-                                  ? composeApplicationEmailText(visibleApplication)
-                                  : '',
-                              ],
+                              [applicationEmailText],
                               {
                                 type: 'text/plain;charset=utf-8',
                               }
@@ -2919,14 +3061,14 @@ function ApplicationPackageModal({
                   <div className='rounded-md border border-border/50 bg-background/30 p-3'>
                     <div className='mb-2 text-sm font-medium text-gray-100'>
                       {formatNullableText(
-                        visibleApplication?.applicationEmail?.subject,
+                        visibleApplicationForEmail.applicationEmail?.subject,
                         'Application email'
                       )}
                     </div>
                     <pre className='whitespace-pre-wrap text-xs leading-5 text-gray-300'>
                       {formatNullableText(
-                        visibleApplication?.applicationEmail?.bodyText ??
-                          visibleApplication?.applicationEmail?.bodyMarkdown,
+                        visibleApplicationForEmail.applicationEmail?.bodyText ??
+                          visibleApplicationForEmail.applicationEmail?.bodyMarkdown,
                         'No application email content was generated.'
                       )}
                     </pre>
@@ -3073,18 +3215,20 @@ function ApplicationPackageModal({
                 </a>
               </p>
             ) : null}
-            {visibleApplication?.matchAnalysisUpdatedAt ? (
+            {visibleApplicationMatchAnalysisUpdatedAt !== null &&
+            visibleApplicationMatchAnalysisUpdatedAt.length > 0 ? (
               <p className='mt-1 text-[11px] text-emerald-300'>
-                Last analysis: {formatTimestamp(visibleApplication.matchAnalysisUpdatedAt)}
+                Last analysis: {formatTimestamp(visibleApplicationMatchAnalysisUpdatedAt)}
                 {matchAnalysisHistory.length > 0 ? ` · ${matchAnalysisHistory.length} saved` : ''}
-                {visibleApplication.matchAnalysisSourceEntityId ? (
+                {visibleApplicationMatchAnalysisSourceEntityId !== null &&
+                visibleApplicationMatchAnalysisSourceEntityId.length > 0 ? (
                   <>
                     {' · '}
                     <a
                       href={`/admin/ai-paths/queue?tab=paths-all&query=${encodeURIComponent(
-                        visibleApplication.matchAnalysisSourceEntityId
+                        visibleApplicationMatchAnalysisSourceEntityId
                       )}&runId=${encodeURIComponent(
-                        visibleApplication.matchAnalysisSourceEntityId
+                        visibleApplicationMatchAnalysisSourceEntityId
                       )}&status=all`}
                       className='text-blue-300 underline-offset-2 hover:underline'
                     >
@@ -3197,9 +3341,10 @@ function ApplicationPackageModal({
                   stale
                 </Badge>
               ) : null}
-              {visibleApplication?.matchAnalysisUpdatedAt ? (
+              {visibleApplicationMatchAnalysisUpdatedAt !== null &&
+              visibleApplicationMatchAnalysisUpdatedAt.length > 0 ? (
                 <Badge variant='outline'>
-                  Updated {formatTimestamp(visibleApplication.matchAnalysisUpdatedAt)}
+                  Updated {formatTimestamp(visibleApplicationMatchAnalysisUpdatedAt)}
                 </Badge>
               ) : null}
               {matchAnalysisSnapshotLabel !== null ? (
@@ -3416,12 +3561,18 @@ function ApplicationPackageModal({
             No match analysis yet. Run Analyze Match to score fit and surface preparation gaps.
           </p>
         )}
-        {visibleMatchAnalysisHistory.length > 0 ? (
-          <div className='space-y-2 rounded-md border border-border/50 bg-background/30 p-3'>
-            <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500'>
-              Recent analysis history
-            </div>
-            {visibleMatchAnalysisHistory.map((entry, index: number) => (
+            {visibleMatchAnalysisHistory.length > 0 ? (
+              <div className='space-y-2 rounded-md border border-border/50 bg-background/30 p-3'>
+                <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500'>
+                  Recent analysis history
+                </div>
+              {visibleMatchAnalysisHistory.map((entry, index: number) => {
+                const payload = entry.payload;
+                const firstGap = payload !== null ? payload.gaps[0] : null;
+                const modelId = entry.modelId;
+                const snapshot = entry.applicationUpdatedAtSnapshot;
+                const sourceRunId = entry.sourceRunId;
+                return (
               <div
                 key={entry.id}
                 className='rounded-md border border-border/40 bg-background/35 px-2 py-1.5 text-xs text-gray-300'
@@ -3433,56 +3584,62 @@ function ApplicationPackageModal({
                   <span className='text-gray-500'>
                     {entry.createdAt !== null ? formatTimestamp(entry.createdAt) : 'Unknown time'}
                   </span>
-                  {entry.modelId ? <span className='text-gray-500'>{entry.modelId}</span> : null}
-                  {entry.applicationUpdatedAtSnapshot ? (
+                {modelId !== null && modelId.length > 0 ? (
+                  <span className='text-gray-500'>{modelId}</span>
+                ) : null}
+                  {snapshot !== null && snapshot.length > 0 ? (
                     <span
                       className='text-gray-500'
                       title='Prepared application timestamp used for this analysis'
                     >
-                      App {formatTimestamp(entry.applicationUpdatedAtSnapshot)}
+                      App {formatTimestamp(snapshot)}
                     </span>
                   ) : null}
                   <span className='font-semibold text-gray-100'>
-                    {entry.payload?.score ?? 'n/a'}
-                    {entry.payload?.scoreLabel ? ` · ${entry.payload.scoreLabel}` : ''}
+                    {payload?.score ?? 'n/a'}
+                    {payload?.scoreLabel !== null && payload.scoreLabel.length > 0
+                      ? ` · ${payload.scoreLabel}`
+                      : ''}
                   </span>
-                  {entry.payload?.recommendedDecision ? (
+                  {payload?.recommendedDecision !== null ? (
                     <Badge
                       variant={
-                        entry.payload.recommendedDecision === 'Apply now' ? 'success' : 'outline'
+                        payload.recommendedDecision === 'Apply now' ? 'success' : 'outline'
                       }
                       title={
-                        entry.payload.recommendedDecisionReason
-                          ? `AI recommendation: ${entry.payload.recommendedDecisionReason}`
+                        payload.recommendedDecisionReason !== null &&
+                        payload.recommendedDecisionReason.length > 0
+                          ? `AI recommendation: ${payload.recommendedDecisionReason}`
                           : 'AI recommendation'
                       }
                     >
-                      {entry.payload.recommendedDecision}
+                      {payload.recommendedDecision}
                     </Badge>
                   ) : null}
                 </div>
-                {entry.payload?.summary ? (
-                  <p className='mt-1 line-clamp-2 text-gray-400'>{entry.payload.summary}</p>
+                {payload?.summary !== null && payload.summary.length > 0 ? (
+                  <p className='mt-1 line-clamp-2 text-gray-400'>{payload.summary}</p>
                 ) : null}
-                {entry.payload?.recommendedDecisionReason ? (
+                {payload?.recommendedDecisionReason !== null &&
+                payload.recommendedDecisionReason.length > 0 ? (
                   <p className='mt-1 line-clamp-1 text-[11px] text-gray-400'>
-                    Decision: {entry.payload.recommendedDecisionReason}
+                    Decision: {payload.recommendedDecisionReason}
                   </p>
                 ) : null}
-                {entry.payload?.changeSincePrevious ? (
+                {payload?.changeSincePrevious !== null && payload.changeSincePrevious.length > 0 ? (
                   <p className='mt-1 line-clamp-1 text-[11px] text-cyan-200'>
-                    Change: {entry.payload.changeSincePrevious}
+                    Change: {payload.changeSincePrevious}
                   </p>
                 ) : null}
-                {entry.payload?.gaps?.[0] ? (
+                {isNonEmptyString(firstGap) ? (
                   <p className='mt-1 line-clamp-1 text-[11px] text-amber-200'>
-                    Gap: {entry.payload.gaps[0]}
+                    Gap: {firstGap}
                   </p>
                 ) : null}
-                {entry.sourceRunId ? (
+                {sourceRunId !== null && sourceRunId.length > 0 ? (
                   <a
                     href={`/admin/ai-paths/queue?tab=paths-all&query=${encodeURIComponent(
-                      entry.sourceRunId
+                      sourceRunId
                     )}&runId=${encodeURIComponent(entry.sourceRunId)}&status=all`}
                     className='mt-1 inline-flex text-[11px] text-blue-300 underline-offset-2 hover:underline'
                   >
@@ -3490,8 +3647,9 @@ function ApplicationPackageModal({
                   </a>
                 ) : null}
               </div>
-            ))}
-          </div>
+              );
+              })}
+            </div>
         ) : null}
       </section>
       <PreparedApplicationVersionHistory
@@ -3629,6 +3787,10 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     () => groupApplicationsByJobListing(applicationsState.applications),
     [applicationsState.applications]
   );
+  const applicationsByJobListingRawId = useMemo(
+    () => groupApplicationsByJobListingId(applicationsState.applications),
+    [applicationsState.applications]
+  );
   const preparedApplications = useMemo(
     () => Array.from(applicationsByJobListingId.values()).flat(),
     [applicationsByJobListingId]
@@ -3716,82 +3878,97 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
   }, [loadApplications]);
 
   useEffect(() => {
-    if (organizationId.trim().length === 0) return;
+    if (organizationId.trim().length === 0) return undefined;
     const pollableEntries = jobApplicationRunEntries.filter(
       (entry: JobApplicationRunEntry): boolean =>
         entry.context.organizationId === organizationId &&
         entry.runId !== null &&
         JOB_APPLICATION_ACTIVE_RUN_STATUSES.has(entry.status)
     );
-    if (pollableEntries.length === 0) return;
+    if (pollableEntries.length === 0) return undefined;
 
     const controller = new AbortController();
     let isDisposed = false;
     let isPolling = false;
 
-    const pollEntries = async (): Promise<void> => {
-      if (isPolling) return;
+    const pollEntries = (): Promise<void> => {
+      if (isPolling) return Promise.resolve();
       isPolling = true;
-      const updates = await Promise.all(
-        pollableEntries.map(async (entry: JobApplicationRunEntry): Promise<JobApplicationRunEntry | null> => {
-          if (entry.runId === null) return null;
-          try {
-            const response = await getAiPathRun(entry.runId, {
-              cache: 'no-store',
-              signal: controller.signal,
-              timeoutMs: 10_000,
-            });
-            if (!response.ok) return null;
-            const run = readRecord(response.data.run);
-            return run !== null ? resolvePolledJobApplicationRunEntry(entry, run) : null;
-          } catch (error) {
-            if (!controller.signal.aborted) logClientError(error);
-            return null;
-          }
-        })
-      );
-      isPolling = false;
-      if (isDisposed || controller.signal.aborted) return;
-
-      const updatesById = new Map(
-        updates
-          .filter((entry): entry is JobApplicationRunEntry => entry !== null)
-          .map((entry: JobApplicationRunEntry): [string, JobApplicationRunEntry] => [entry.id, entry])
-      );
-      if (updatesById.size === 0) return;
-
-      const shouldReloadApplications = Array.from(updatesById.values()).some(
-        (update: JobApplicationRunEntry): boolean =>
-          update.status === 'completed' &&
-          pollableEntries.some(
-            (entry: JobApplicationRunEntry): boolean =>
-              entry.id === update.id && entry.status !== 'completed'
+      return (async (): Promise<void> => {
+        const updates = await Promise.all(
+          pollableEntries.map(
+            async (entry: JobApplicationRunEntry): Promise<JobApplicationRunEntry | null> => {
+              if (entry.runId === null) return null;
+              try {
+                const response = await getAiPathRun(entry.runId, {
+                  cache: 'no-store',
+                  signal: controller.signal,
+                  timeoutMs: 10_000,
+                });
+                if (!response.ok) return null;
+                const run = readRecord(response.data.run);
+                return run !== null ? resolvePolledJobApplicationRunEntry(entry, run) : null;
+              } catch (error) {
+                if (!controller.signal.aborted) logClientError(error);
+                return null;
+              }
+            }
           )
-      );
-      setJobApplicationRunEntries((current: JobApplicationRunEntry[]): JobApplicationRunEntry[] => {
-        let changed = false;
-        const next = current.map((entry: JobApplicationRunEntry): JobApplicationRunEntry => {
-          const update = updatesById.get(entry.id);
-          if (update === undefined) return entry;
-          if (
-            entry.status === update.status &&
-            entry.error === update.error &&
-            entry.updatedAt === update.updatedAt
-          ) {
-            return entry;
-          }
-          changed = true;
-          return update;
+        );
+        if (isDisposed || controller.signal.aborted) return;
+
+        const updatesById = new Map(
+          updates
+            .filter((entry): entry is JobApplicationRunEntry => entry !== null)
+            .map((entry: JobApplicationRunEntry): [string, JobApplicationRunEntry] => [entry.id, entry])
+        );
+        if (updatesById.size === 0) return;
+
+        const shouldReloadApplications = Array.from(updatesById.values()).some(
+          (update: JobApplicationRunEntry): boolean =>
+            update.status === 'completed' &&
+            pollableEntries.some(
+              (entry: JobApplicationRunEntry): boolean =>
+                entry.id === update.id && entry.status !== 'completed'
+            )
+        );
+        setJobApplicationRunEntries((current: JobApplicationRunEntry[]): JobApplicationRunEntry[] => {
+          const next = current.map((entry: JobApplicationRunEntry): JobApplicationRunEntry => {
+            const update = updatesById.get(entry.id);
+            if (update === undefined) return entry;
+            if (
+              entry.status === update.status &&
+              entry.error === update.error &&
+              entry.updatedAt === update.updatedAt
+            ) {
+              return entry;
+            }
+            return update;
+          });
+          return next.some(
+            (entry: JobApplicationRunEntry, index: number): boolean => entry !== current[index]
+          )
+            ? next
+            : current;
         });
-        return changed ? next : current;
+        if (shouldReloadApplications) {
+          void loadApplications();
+        }
+      })().finally(() => {
+        isPolling = false;
       });
-      if (shouldReloadApplications) void loadApplications();
     };
 
-    void pollEntries();
-    const intervalId = safeSetInterval(() => {
-      void pollEntries();
-    }, JOB_APPLICATION_RUN_POLL_INTERVAL_MS);
+    const triggerPollEntries = (): void => {
+      pollEntries().catch((error: unknown): void => {
+        if (!controller.signal.aborted) {
+          logClientError(error);
+        }
+      });
+    };
+
+    triggerPollEntries();
+    const intervalId = safeSetInterval(triggerPollEntries, JOB_APPLICATION_RUN_POLL_INTERVAL_MS);
     return () => {
       isDisposed = true;
       controller.abort();
@@ -4019,7 +4196,10 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
   );
 
   const handleManualAppliedMark = useCallback(
-    async (listing: FilemakerJobListing): Promise<void> => {
+    async (
+      listing: FilemakerJobListing,
+      manualAppliedRemovalTarget?: ManualAppliedLogRemovalTarget | null
+    ): Promise<void> => {
       const personId = defaultApplicationPersonId.trim();
       if (organizationId.trim().length === 0 || listing.id.trim().length === 0) return;
       if (personId.length === 0) {
@@ -4028,33 +4208,58 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         });
         return;
       }
+
+      const isUnmarkingManualApplication =
+        manualAppliedRemovalTarget !== undefined && manualAppliedRemovalTarget !== null;
       setMarkingAppliedJobListingId(listing.id);
+
       try {
-        const response = await fetch('/api/filemaker/job-applications', {
-          method: 'POST',
-          headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({
-            action: 'mark_applied_manual',
-            jobListingId: listing.id,
-            jobTitle: listing.title,
-            organizationId,
-            organizationName,
-            personId,
-            personName: defaultApplicationPersonName,
-            sourceSite: listing.sourceSite ?? null,
-            sourceUrl: listing.sourceUrl ?? null,
-          }),
-        });
+        const response = isUnmarkingManualApplication
+          ? await fetch(
+              `/api/filemaker/job-applications/${encodeURIComponent(
+                manualAppliedRemovalTarget.applicationId
+              )}`,
+              {
+                method: 'PATCH',
+                headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({
+                  removeLogEntryId: manualAppliedRemovalTarget.logEntryId,
+                  status: 'draft',
+                }),
+              }
+            )
+          : await fetch('/api/filemaker/job-applications', {
+              method: 'POST',
+              headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+              body: JSON.stringify({
+                action: 'mark_applied_manual',
+                jobListingId: listing.id,
+                jobTitle: listing.title,
+                organizationId,
+                organizationName,
+                personId,
+                personName: defaultApplicationPersonName,
+                sourceSite: listing.sourceSite ?? null,
+                sourceUrl: listing.sourceUrl ?? null,
+              }),
+            });
         if (!response.ok) {
-          throw new Error(`Failed to mark application applied (${response.status}).`);
+          throw new Error(
+            isUnmarkingManualApplication
+              ? `Failed to unmark application (${response.status}).`
+              : `Failed to mark application as applied (${response.status}).`
+          );
         }
-        const payload = (await response.json()) as ManualAppliedJobApplicationResponse;
+
+        const payload =
+          isUnmarkingManualApplication
+            ? ((await response.json()) as { application?: FilemakerJobApplication })
+            : ((await response.json()) as ManualAppliedJobApplicationResponse);
         const nextApplication = payload.application;
         if (nextApplication !== undefined) {
           setApplicationsState((current: JobApplicationsState): JobApplicationsState => {
             const existingIndex = current.applications.findIndex(
-              (application: FilemakerJobApplication): boolean =>
-                application.id === nextApplication.id
+              (application: FilemakerJobApplication): boolean => application.id === nextApplication.id
             );
             if (existingIndex === -1) {
               return {
@@ -4071,25 +4276,31 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
             };
           });
         }
+
         await loadApplications();
+        const targetPersonName =
+          defaultApplicationPersonLabel.length > 0 ? defaultApplicationPersonLabel : personId;
         toast(
-          `Marked applied for ${
-            defaultApplicationPersonLabel.length > 0 ? defaultApplicationPersonLabel : personId
-          }.`,
+          isUnmarkingManualApplication
+            ? `Unmarked applied for ${targetPersonName}.`
+            : `Marked applied for ${targetPersonName}.`,
           { variant: 'success' }
         );
       } catch (error: unknown) {
         logClientError(error);
+        const manualApplicationFailureMessage = isUnmarkingManualApplication
+          ? 'Failed to unmark job listing application.'
+          : 'Failed to mark job listing as applied.';
         setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
           ...current,
           error:
-            error instanceof Error
-              ? error.message
-              : 'Failed to mark job listing as applied.',
+            error instanceof Error ? error.message : manualApplicationFailureMessage,
         }));
-        toast(error instanceof Error ? error.message : 'Failed to mark job listing as applied.', {
-          variant: 'error',
-        });
+        const applicationErrorMessage = error instanceof Error ? error.message : manualApplicationFailureMessage;
+        toast(
+          applicationErrorMessage,
+          { variant: 'error' }
+        );
       } finally {
         setMarkingAppliedJobListingId(null);
       }
@@ -4204,7 +4415,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
               .filter(
                 (term): term is FilemakerLexiconTerm =>
                   term !== undefined && term.typeKey !== 'address'
-              );
+            );
             const editableLexiconTermIds = selectedLexiconTerms.map(
               (term: FilemakerLexiconTerm): string => term.id
             );
@@ -4213,28 +4424,41 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
               editableLexiconTermIds
             );
             const applications = applicationsByJobListingId.get(listing.id) ?? [];
+            const rawApplications = applicationsByJobListingRawId.get(listing.id) ?? [];
+            const manualAppliedLogRemovalTarget = getManualAppliedLogRemovalTarget(
+              rawApplications,
+              defaultApplicationPersonId
+            );
             const isAppliedForDefaultPerson =
               defaultApplicationPersonId.length > 0 &&
-              applications.some(
-                (application: PreparedJobApplication): boolean =>
+              rawApplications.some(
+                (application: FilemakerJobApplication): boolean =>
                   application.status === 'applied' &&
-                  application.personId === defaultApplicationPersonId
+                  application.personId.trim() === defaultApplicationPersonId
               );
-            const hasAppliedApplication = applications.some(
-              (application: PreparedJobApplication): boolean => application.status === 'applied'
+            const manualAppliedStatusOnlyTarget = isAppliedForDefaultPerson
+              ? getManualAppliedStatusOnlyTarget(rawApplications, defaultApplicationPersonId)
+              : null;
+            const manualAppliedRemovalTarget =
+              manualAppliedLogRemovalTarget ?? manualAppliedStatusOnlyTarget;
+            const canUnmarkManualApplied = manualAppliedRemovalTarget !== null;
+            const hasAppliedApplication = rawApplications.some(
+              (application: FilemakerJobApplication): boolean => application.status === 'applied'
             );
             const isMarkingApplied = markingAppliedJobListingId === listing.id;
             const canMarkAppliedManually =
               defaultApplicationPersonId.length > 0 &&
-              !isAppliedForDefaultPerson &&
+              (!isAppliedForDefaultPerson || canUnmarkManualApplied) &&
               !applicationsState.isLoading &&
               !isMarkingApplied;
             let manualAppliedButtonTitle = `Mark applied for ${defaultApplicationPersonLabel}`;
             if (defaultApplicationPersonId.length === 0) {
               manualAppliedButtonTitle =
                 'Set a Filemaker default person before marking applications manually';
-            } else if (isAppliedForDefaultPerson) {
+            } else if (isAppliedForDefaultPerson && !canUnmarkManualApplied) {
               manualAppliedButtonTitle = `Already applied for ${defaultApplicationPersonLabel}`;
+            } else if (isAppliedForDefaultPerson && canUnmarkManualApplied) {
+              manualAppliedButtonTitle = `Unmark applied for ${defaultApplicationPersonLabel}`;
             }
             const runEntries = jobApplicationRunEntries.filter(
               (entry: JobApplicationRunEntry): boolean =>
@@ -4260,7 +4484,10 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                       size='sm'
                       className='h-8 gap-1.5'
                       onClick={(): void => {
-                        void handleManualAppliedMark(listing);
+                        void handleManualAppliedMark(
+                          listing,
+                          isAppliedForDefaultPerson ? manualAppliedRemovalTarget : null
+                        );
                       }}
                       disabled={!canMarkAppliedManually}
                       aria-label={`Mark applied manually for ${

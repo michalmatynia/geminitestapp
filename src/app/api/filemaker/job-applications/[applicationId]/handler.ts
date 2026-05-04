@@ -58,29 +58,28 @@ export async function patchHandler(
   if (!result.ok) return result.response;
 
   const applicationId = resolveApplicationId(params);
-  if (
-    result.data.status === undefined &&
-    result.data.activeArtifacts === undefined &&
-    result.data.removeLogEntryId === undefined
-  ) {
-    const application = await requireMongoFilemakerJobApplicationById(applicationId);
-    return Response.json({ application });
-  }
+  const hasStatusUpdate = result.data.status !== undefined;
+  const hasActiveArtifactsUpdate = result.data.activeArtifacts !== undefined;
+  const hasLogEntryRemoval = result.data.removeLogEntryId !== undefined;
+  let updatedApplication = await requireMongoFilemakerJobApplicationById(applicationId);
 
-  let application =
-    result.data.removeLogEntryId !== undefined
-      ? await removeMongoFilemakerJobApplicationLogEntry(applicationId, result.data.removeLogEntryId)
-      : result.data.status !== undefined
-        ? await updateMongoFilemakerJobApplicationStatus(applicationId, result.data.status)
-        : await requireMongoFilemakerJobApplicationById(applicationId);
-  if (result.data.activeArtifacts !== undefined) {
-    application = await updateMongoFilemakerJobApplicationActiveArtifacts(applicationId, {
+  if (hasLogEntryRemoval) {
+    updatedApplication = await removeMongoFilemakerJobApplicationLogEntry(
+      applicationId,
+      result.data.removeLogEntryId
+    );
+  }
+  if (hasStatusUpdate) {
+    updatedApplication = await updateMongoFilemakerJobApplicationStatus(applicationId, result.data.status);
+  }
+  if (hasActiveArtifactsUpdate) {
+    updatedApplication = await updateMongoFilemakerJobApplicationActiveArtifacts(applicationId, {
       applicationEmailVersionId: result.data.activeArtifacts.applicationEmailVersionId ?? null,
       coverLetterVersionId: result.data.activeArtifacts.coverLetterVersionId ?? null,
       tailoredCvVersionId: result.data.activeArtifacts.tailoredCvVersionId ?? null,
     });
   }
-  return Response.json({ application });
+  return Response.json({ application: updatedApplication });
 }
 
 export async function deleteHandler(

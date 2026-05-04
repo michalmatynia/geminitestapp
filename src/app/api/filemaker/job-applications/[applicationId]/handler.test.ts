@@ -108,6 +108,31 @@ describe('filemaker job application by-id handler', () => {
     expect(body.application).toMatchObject({ id: 'application-1', applicationLog: [] });
   });
 
+  it('removes a log entry and updates status in a single patch', async () => {
+    const draftApplication = { ...baseApplication, status: 'draft' };
+    updateMongoFilemakerJobApplicationStatusMock.mockResolvedValueOnce(draftApplication);
+    const response = await patchHandler(
+      new NextRequest('http://localhost/api/filemaker/job-applications/application-1', {
+        body: JSON.stringify({ removeLogEntryId: 'log-entry-uuid-1', status: 'draft' }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+      }),
+      requestContext,
+      { applicationId: 'application-1' }
+    );
+
+    expect(removeMongoFilemakerJobApplicationLogEntryMock).toHaveBeenCalledWith(
+      'application-1',
+      'log-entry-uuid-1'
+    );
+    expect(updateMongoFilemakerJobApplicationStatusMock).toHaveBeenCalledWith(
+      'application-1',
+      'draft'
+    );
+    const body = (await response.json()) as { application: unknown };
+    expect(body.application).toMatchObject({ id: 'application-1', status: 'draft' });
+  });
+
   it('rejects removeLogEntryId that is empty', async () => {
     const response = await patchHandler(
       new NextRequest('http://localhost/api/filemaker/job-applications/application-1', {

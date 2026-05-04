@@ -42,6 +42,66 @@ const resolveOrganizationPageItemName = ({
   return organizationName ?? (isPageLoading ? 'Loading...' : null);
 };
 
+function OrganizationDetailsTab(): React.JSX.Element {
+  return (
+    <TabsContent value='details' className='m-0 space-y-4 outline-none'>
+      <OrganizationBasicInfoSection />
+      <OrganizationAddressesSection />
+    </TabsContent>
+  );
+}
+
+function OrganizationJobListingsTab({
+  jobListingsHref,
+}: {
+  jobListingsHref: string | null;
+}): React.JSX.Element {
+  return (
+    <TabsContent value='job-listings' className='m-0 space-y-4 outline-none'>
+      {jobListingsHref !== null ? (
+        <div className='flex justify-end'>
+          <a
+            href={jobListingsHref}
+            className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 px-3 text-xs text-gray-300 hover:bg-white/5'
+          >
+            Open full job listings page
+          </a>
+        </div>
+      ) : null}
+      <OrganizationJobListingsSection />
+    </TabsContent>
+  );
+}
+
+function OrganizationLinkedRecordsTab(): React.JSX.Element {
+  return (
+    <TabsContent value='linked-records' className='m-0 space-y-4 outline-none'>
+      <OrganizationLegacyDemandSection />
+      <OrganizationBankAccountsSection />
+      <OrganizationDocumentsSection />
+      <OrganizationPersonsSection />
+      <OrganizationEventsSection />
+      <OrganizationAnyTextsSection />
+      <OrganizationAnyParamsSection />
+      <OrganizationEmailsSection />
+      <OrganizationWebsitesSection />
+    </TabsContent>
+  );
+}
+
+function OrganizationActivityTab(): React.JSX.Element {
+  return (
+    <TabsContent value='activity' className='m-0 space-y-4 outline-none'>
+      <OrganizationLegacyMetadataSection />
+      <OrganizationMongoSummarySection />
+      <OrganizationImportedMetadataSection />
+      <OrganizationContactLogsSection />
+      <OrganizationEmailLogSection />
+      <OrganizationCampaignDeliveriesSection />
+    </TabsContent>
+  );
+}
+
 function OrganizationEditTabs({ isCreateMode }: { isCreateMode: boolean }): React.JSX.Element {
   const { organization } = useAdminFilemakerOrganizationEditPageStateContext();
   const organizationId = organization?.id ?? '';
@@ -50,56 +110,29 @@ function OrganizationEditTabs({ isCreateMode }: { isCreateMode: boolean }): Reac
       ? `/admin/filemaker/organizations/${encodeURIComponent(organizationId)}/job-listings`
       : null;
 
+  if (isCreateMode) {
+    return (
+      <Tabs defaultValue='details' className='w-full space-y-4'>
+        <TabsList className='bg-card/40' aria-label='Organization page tabs'>
+          <TabsTrigger value='details'>Organization Details</TabsTrigger>
+        </TabsList>
+        <OrganizationDetailsTab />
+      </Tabs>
+    );
+  }
+
   return (
     <Tabs defaultValue='details' className='w-full space-y-4'>
       <TabsList className='bg-card/40' aria-label='Organization page tabs'>
         <TabsTrigger value='details'>Organization Details</TabsTrigger>
-        {!isCreateMode ? <TabsTrigger value='job-listings'>Job Listings</TabsTrigger> : null}
-        {!isCreateMode ? <TabsTrigger value='linked-records'>Linked Records</TabsTrigger> : null}
-        {!isCreateMode ? <TabsTrigger value='activity'>Metadata & Activity</TabsTrigger> : null}
+        <TabsTrigger value='job-listings'>Job Listings</TabsTrigger>
+        <TabsTrigger value='linked-records'>Linked Records</TabsTrigger>
+        <TabsTrigger value='activity'>Metadata & Activity</TabsTrigger>
       </TabsList>
-      <TabsContent value='details' className='m-0 space-y-4 outline-none'>
-        <OrganizationBasicInfoSection />
-        <OrganizationAddressesSection />
-      </TabsContent>
-      {!isCreateMode ? (
-        <TabsContent value='job-listings' className='m-0 space-y-4 outline-none'>
-          {jobListingsHref !== null ? (
-            <div className='flex justify-end'>
-              <a
-                href={jobListingsHref}
-                className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 px-3 text-xs text-gray-300 hover:bg-white/5'
-              >
-                Open full job listings page
-              </a>
-            </div>
-          ) : null}
-          <OrganizationLegacyDemandSection />
-          <OrganizationJobListingsSection />
-        </TabsContent>
-      ) : null}
-      {!isCreateMode ? (
-        <TabsContent value='linked-records' className='m-0 space-y-4 outline-none'>
-          <OrganizationBankAccountsSection />
-          <OrganizationDocumentsSection />
-          <OrganizationPersonsSection />
-          <OrganizationEventsSection />
-          <OrganizationAnyTextsSection />
-          <OrganizationAnyParamsSection />
-          <OrganizationEmailsSection />
-          <OrganizationWebsitesSection />
-        </TabsContent>
-      ) : null}
-      {!isCreateMode ? (
-        <TabsContent value='activity' className='m-0 space-y-4 outline-none'>
-          <OrganizationLegacyMetadataSection />
-          <OrganizationMongoSummarySection />
-          <OrganizationImportedMetadataSection />
-          <OrganizationContactLogsSection />
-          <OrganizationEmailLogSection />
-          <OrganizationCampaignDeliveriesSection />
-        </TabsContent>
-      ) : null}
+      <OrganizationDetailsTab />
+      <OrganizationJobListingsTab jobListingsHref={jobListingsHref} />
+      <OrganizationLinkedRecordsTab />
+      <OrganizationActivityTab />
     </Tabs>
   );
 }

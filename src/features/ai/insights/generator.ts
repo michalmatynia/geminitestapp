@@ -57,7 +57,9 @@ const AI_INSIGHTS_MODEL_RETRY_BASE_MS = Math.max(
 );
 
 const sleep = async (ms: number): Promise<void> =>
-  new Promise((resolve) => safeSetTimeout(resolve, ms));
+  new Promise<void>((resolve) => {
+    safeSetTimeout(resolve, ms);
+  });
 
 export type InsightScheduleSettings = {
   analyticsEnabled: boolean;
@@ -279,7 +281,7 @@ export async function generateAiInsightByType(
 
     return insight;
   } catch (error) {
-    ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error);
     if (type === 'runtime_analytics') {
       await recordBrainInsightAnalytics({
         type: 'analytics',
@@ -290,8 +292,6 @@ export async function generateAiInsightByType(
     throw error;
   }
 }
-
-
 
 export async function generateAnalyticsInsight(options?: {
   source?: AiInsightSource;

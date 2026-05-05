@@ -26,7 +26,7 @@ export function useStepFormState(): {
   registrySaveError: string | null;
   setRegistrySaveError: React.Dispatch<React.SetStateAction<string | null>>;
 } {
-  const { isCreateStepOpen, editingStep } = usePlaywrightStepSequencer() as PlaywrightStepSequencerContextType;
+  const { isCreateStepOpen, editingStep } = usePlaywrightStepSequencer();
   const [draft, setDraft] = useState<StepDraft>(buildEmpty);
   const [registrySaveMessage, setRegistrySaveMessage] = useState<string | null>(null);
   const [registrySaveError, setRegistrySaveError] = useState<string | null>(null);
@@ -45,7 +45,7 @@ export function useStepFormState(): {
 
   const selectedRegistryProfile = selectorBinding?.selectorProfile ?? 
     draft.selectorProfile ?? 
-    (SELECTOR_REGISTRY_DEFAULT_PROFILES[selectedRegistryNamespace as keyof typeof SELECTOR_REGISTRY_DEFAULT_PROFILES] ?? '');
+    (SELECTOR_REGISTRY_DEFAULT_PROFILES[selectedRegistryNamespace] ?? '');
 
   const registryQuery = useSelectorRegistry({
     namespace: selectedRegistryNamespace,
@@ -54,7 +54,7 @@ export function useStepFormState(): {
   });
 
   const registrySelectorEntries = useMemo(
-    () => (Array.isArray(registryQuery.data?.entries) ? (registryQuery.data.entries as SelectorRegistryEntry[]) : [])
+    () => (Array.isArray(registryQuery.data?.entries) ? (registryQuery.data.entries) : [])
         .filter((entry) => entry.kind === 'selectors' || entry.kind === 'selector')
         .sort((left, right) => 
           `${left.namespace}:${left.profile}:${left.group}:${left.key}`.localeCompare(

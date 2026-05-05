@@ -31,43 +31,13 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
-export type WorkspaceRecordFetchAttempt = {
-  key: string;
-  url: string;
-  scope: 'light' | 'heavy';
-};
+import type {
+  WorkspaceRecordFetchAttempt,
+  WorkspaceRecordAttemptResult,
+  FetchAttemptsArgs,
+} from './workspace-persistence/types';
+import { resolveDetachedPayloadRequiredFileId } from './workspace-persistence/fetch-helpers';
 
-export type WorkspaceRecordAttemptResult =
-  | {
-      status: 'resolved';
-      workspace: CaseResolverWorkspace;
-      attemptKey: string;
-      scope: 'light' | 'heavy';
-    }
-  | {
-      status: 'incomplete';
-      lastFailureMessage: string;
-      sawMissingRequiredFile: boolean;
-      lastMissingRequiredAttemptKey: string | null;
-      sawTransportFailure: boolean;
-      budgetExhausted: boolean;
-    };
-
-const resolveDetachedPayloadRequiredFileId = ({
-  workspace,
-  requiredFileId,
-}: {
-  workspace: CaseResolverWorkspace;
-  requiredFileId: string;
-}): string => {
-  if (requiredFileId.length === 0) return '';
-  const requiredFile = workspace.files.find((file): boolean => file.id === requiredFileId);
-  if (!requiredFile) return requiredFileId;
-  if (requiredFile.fileType === 'document' || requiredFile.fileType === 'scanfile') {
-    return requiredFileId;
-  }
-  return '';
-};
 
 const fetchWorkspaceRecordByKeyAttempts = async ({
   source,

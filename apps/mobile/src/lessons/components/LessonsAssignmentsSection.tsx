@@ -1,8 +1,9 @@
 import { Text, View } from 'react-native';
 import { KangurMobileCard as Card } from '../../shared/KangurMobileUi';
 import { LessonsAssignmentRow } from '../lesson-row-primitives';
+import { type KangurMobileLessonsAssignmentItem } from '../useKangurMobileLessonsAssignments';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
-import { type UseKangurMobileLessonsAssignmentsResult, type KangurMobileLessonsAssignmentItem } from '../useKangurMobileLessonsAssignments';
+import { type UseKangurMobileLessonsAssignmentsResult } from '../useKangurMobileLessonsAssignments';
 
 interface LessonsAssignmentsSectionProps {
     isPreparingLessonsView: boolean;
@@ -36,7 +37,7 @@ export function LessonsAssignmentsSection({
             ) : (
                 <View style={{ gap: 10 }}>
                     {lessonsAssignments.assignmentItems.map((item: KangurMobileLessonsAssignmentItem) => (
-                        <LessonsAssignmentRow key={item.assignment.id} item={item} />
+                        <LessonsAssignmentRow key={item.id} item={item} />
                     ))}
                 </View>
             )}

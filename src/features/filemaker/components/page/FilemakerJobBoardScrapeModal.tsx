@@ -64,94 +64,13 @@ import {
   type OfferProgressTracker,
 } from './job-board-scrape-progress';
 
-type FilemakerJobBoardScrapeModalProps = {
-  onClose: () => void;
-  onCompleted: () => void;
-  open: boolean;
-};
+import type {
+  FilemakerJobBoardScrapeModalProps,
+  ScrapeDraft,
+  ActiveScrapeRequest,
+  LivePreviewState,
+} from './FilemakerJobBoardScrapeModal.types';
 
-type ScrapeDraft = {
-  delayMs: string;
-  duplicateStrategy: FilemakerJobBoardDuplicateStrategy;
-  extractDescriptions: boolean;
-  extractSalaries: boolean;
-  extractionPath: FilemakerJobBoardScrapeExtractionPath;
-  humanizeMouse: boolean;
-  maxOffers: string;
-  maxPages: string;
-  personaId: string;
-  provider: FilemakerJobBoardScrapeProvider;
-  sourceUrl: string;
-  status: FilemakerJobListingStatus;
-  timeoutMs: string;
-};
-
-type ScrapeModalInitialState = {
-  draft: ScrapeDraft;
-};
-
-type ActiveScrapeRequest = {
-  controller: AbortController;
-  id: number;
-  mode: FilemakerJobBoardScrapeMode;
-};
-
-type LivePreviewState = {
-  discoveredUrls: string[];
-  final: boolean;
-  messages: string[];
-  offers: FilemakerJobBoardScrapeOfferResult[];
-  progress: OfferProgressTracker;
-  warnings: string[];
-  writes: FilemakerJobBoardScrapeWriteResult[];
-};
-
-type ScrapedOfferPill = FilemakerJobBoardScrapedOffer['pills'][number];
-type ScrapedOfferUnclassifiedPill =
-  FilemakerJobBoardScrapedOffer['unclassifiedPills'][number];
-type LexiconKnownTermContextEntry = Record<string, unknown> & {
-  classificationRole: 'authoritative' | 'supporting_only';
-  label: string;
-  normalizedLabel: string;
-  occurrenceCount: number;
-  sourceSite: string | undefined;
-  typeKey: string;
-};
-type LexiconTypeSampleTermContextEntry = Record<string, unknown> & {
-  label: string;
-  normalizedLabel: string;
-  occurrenceCount: number;
-  sourceSite: string | undefined;
-};
-type LexiconTypeContextEntry = Record<string, unknown> & {
-  description: string;
-  key: string;
-  label: string;
-  sampleTerms: LexiconTypeSampleTermContextEntry[];
-  sortOrder: number;
-};
-type LexiconValidationPatternContextEntry = Record<string, unknown> & {
-  classificationPolicy: 'classify' | 'keep_unclassified';
-  confidence: number;
-  directlyApplicableToUnclassified: boolean;
-  id: string;
-  label: string;
-  matchMode: string;
-  notes: string | undefined;
-  pattern: string;
-  priority: number;
-  sourceScope: string;
-  targetTypeKey: string;
-  version: number;
-};
-type LexiconContext = Record<string, unknown> & {
-  directValidationPatterns: LexiconValidationPatternContextEntry[];
-  knownTerms: LexiconKnownTermContextEntry[];
-  rules: string[];
-  types: LexiconTypeContextEntry[];
-  validationPatterns: LexiconValidationPatternContextEntry[];
-  validationPatternUsage: string;
-};
 
 const SCRAPE_DRAFT_SETTINGS_KEYS = [
   'delayMs',

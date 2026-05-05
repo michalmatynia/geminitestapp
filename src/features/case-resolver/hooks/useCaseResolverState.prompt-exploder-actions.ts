@@ -34,37 +34,12 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 
 
-const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY =
-  'case_resolver:applied_prompt_exploder_transfer_ids';
-const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT = 80;
+import {
+  CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY,
+  CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT,
+} from './prompt-exploder/constants';
+import type { UseCaseResolverPromptExploderValue } from './prompt-exploder/types';
 
-export interface UseCaseResolverPromptExploderValue {
-  pendingPromptExploderPayload: CaseResolverPromptExploderPendingPayload | null;
-  promptExploderPartyProposal: CaseResolverCaptureProposalState | null;
-  setPromptExploderPartyProposal: React.Dispatch<
-    React.SetStateAction<CaseResolverCaptureProposalState | null>
-  >;
-  isPromptExploderPartyProposalOpen: boolean;
-  setIsPromptExploderPartyProposalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  isApplyingPromptExploderPartyProposal: boolean;
-  setIsApplyingPromptExploderPartyProposal: (
-    value: boolean | ((current: boolean) => boolean)
-  ) => void;
-  promptExploderPayloadRefreshVersion: number;
-  promptExploderApplyDiagnostics: CaseResolverPromptExploderApplyUiDiagnostics | null;
-  setPromptExploderApplyDiagnostics: React.Dispatch<
-    React.SetStateAction<CaseResolverPromptExploderApplyUiDiagnostics | null>
-  >;
-  refreshPendingPromptExploderPayload: () => void;
-  handleDiscardPendingPromptExploderPayload: () => void;
-  handleApplyPendingPromptExploderPayload: () => Promise<boolean>;
-  transitionPromptExploderApplyDiagnostics: (input: {
-    nextStatus: PromptExploderTransferUiStatus;
-    reason?: string | null;
-    force?: boolean;
-    patch?: Partial<CaseResolverPromptExploderApplyUiDiagnostics>;
-  }) => void;
-}
 
 export function useCaseResolverPromptExploder({
   workspace,

@@ -36,51 +36,17 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
-const readCaptureApplyNowMs = (): number =>
-  typeof performance !== 'undefined' && typeof performance.now === 'function'
-    ? performance.now()
-    : Date.now();
+import {
+  readCaptureApplyNowMs,
+  resolveCaptureApplyDurationMs,
+} from './utils';
+import type { UseApplyCaptureProposalArgs, CaptureApplyDiagnostics } from './types';
 
-const resolveCaptureApplyDurationMs = (startAtMs: number | null): number | null => {
-  if (startAtMs === null) return null;
-  const now = readCaptureApplyNowMs();
-  return Math.round(now - startAtMs);
-};
-
-export function useApplyCaptureProposal(args: {
-  workspaceRef: React.MutableRefObject<CaseResolverWorkspace>;
-  filemakerDatabase: FilemakerDatabase;
-  isPromptExploderPartyProposalOpen: boolean;
-  setIsPromptExploderPartyProposalOpen: (val: boolean) => void;
-  promptExploderPartyProposal: CaseResolverCaptureProposalState | null;
-  setPromptExploderPartyProposal: (val: CaseResolverCaptureProposalState | null) => void;
-  setIsApplyingPromptExploderPartyProposal: (val: boolean) => void;
-  editingDocumentDraft: CaseResolverFileEditDraft | null;
-  setEditingDocumentDraft: React.Dispatch<React.SetStateAction<CaseResolverFileEditDraft | null>>;
-  updateWorkspace: CaseResolverStateValue['updateWorkspace'];
-  refetchSettingsStore: () => void;
-  setEditorContentRevisionSeed: React.Dispatch<React.SetStateAction<number>>;
-  promptExploderProposalDraft: CaseResolverCaptureProposalState | null;
-  setPromptExploderProposalDraft: (val: CaseResolverCaptureProposalState | null) => void;
-  captureMappingDismissedRef: React.MutableRefObject<boolean>;
-}) {
   const { toast } = useToast();
   const updateSetting = useUpdateSetting();
   const captureApplyInFlightRef = useRef(false);
 
-  const [captureApplyDiagnostics, setCaptureApplyDiagnostics] = useState<{
-    status: 'idle' | 'success' | 'failed';
-    stage: 'precheck' | 'mutation' | 'rebase' | null;
-    message: string;
-    targetFileId: string | null;
-    resolvedTargetFileId: string | null;
-    workspaceRevision: number;
-    attempts: number;
-    at: string;
-    cleanupDurationMs?: number | null;
-    mutationDurationMs?: number | null;
-    totalDurationMs?: number | null;
-  } | null>(null);
+  const [captureApplyDiagnostics, setCaptureApplyDiagnostics] = useState<CaptureApplyDiagnostics | null>(null);
 
   const handleApplyPromptExploderProposal = useCallback((): void => {
     const applyGuardReason = resolveCaptureMappingApplyGuardReason({

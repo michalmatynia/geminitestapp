@@ -207,7 +207,7 @@ const resolveDatabaseSchemaInput = async (
 
   const schemaResult = await getCachedSchema();
   if (schemaResult.ok) {
-    return schemaResult.data as SchemaResponse;
+    return schemaResult.data;
   }
   return null;
 };

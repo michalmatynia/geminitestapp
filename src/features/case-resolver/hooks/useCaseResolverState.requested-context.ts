@@ -31,70 +31,18 @@ import {
   type RequestedContextEvent,
 } from '../runtime';
 
-const CASE_RESOLVER_REQUESTED_CONTEXT_FETCH_ATTEMPT_TIMEOUT_MS = 2_200;
-const CASE_RESOLVER_REQUESTED_CONTEXT_FETCH_MAX_TOTAL_MS = 6_500;
-const CASE_RESOLVER_REQUESTED_CONTEXT_STORE_HYDRATION_GRACE_MS = 1_200;
-export const CASE_RESOLVER_REQUESTED_CONTEXT_LOADING_WATCHDOG_MS = 10_000;
+import {
+  CASE_RESOLVER_REQUESTED_CONTEXT_FETCH_ATTEMPT_TIMEOUT_MS,
+  CASE_RESOLVER_REQUESTED_CONTEXT_FETCH_MAX_TOTAL_MS,
+  CASE_RESOLVER_REQUESTED_CONTEXT_STORE_HYDRATION_GRACE_MS,
+  CASE_RESOLVER_REQUESTED_CONTEXT_LOADING_WATCHDOG_MS,
+} from './requested-context/constants';
+import type { UseCaseResolverRequestedContextValue } from './requested-context/types';
+import {
+  mapRequestedContextRuntimeToStatus,
+  createInitialRequestedContextRuntimeState,
+} from './requested-context/utils';
 
-type RequestedContextInFlightState = {
-  requestKey: string;
-  requestedFileId: string;
-  startedAtMs: number;
-};
-
-type RequestedContextTransitionResolvedVia =
-  | 'workspace_presence'
-  | 'snapshot_fetch'
-  | 'watchdog'
-  | 'manual'
-  | 'auto_clear'
-  | 'none';
-
-const mapRequestedContextRuntimeToStatus = (
-  status: CaseResolverRuntimeRequestedContextSlice['status']
-): CaseResolverRequestedCaseStatus => {
-  if (status === 'loading') return 'loading';
-  if (status === 'missing_not_found' || status === 'missing_unavailable') {
-    return 'missing';
-  }
-  return 'ready';
-};
-
-const createInitialRequestedContextRuntimeState = (
-  requestedFileId: string | null
-): CaseResolverRuntimeRequestedContextSlice => {
-  const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
-  if (!normalizedRequestedFileId) {
-    return {
-      requestedFileId: null,
-      retryTick: 0,
-      status: 'idle',
-      issue: null,
-      inFlightRequestKey: null,
-      attemptedRequestKey: null,
-      startedAtMs: null,
-    };
-  }
-  return {
-    requestedFileId: normalizedRequestedFileId,
-    retryTick: 0,
-    status: 'loading',
-    issue: null,
-    inFlightRequestKey: null,
-    attemptedRequestKey: null,
-    startedAtMs: null,
-  };
-};
-
-export interface UseCaseResolverRequestedContextValue {
-  requestedCaseStatus: CaseResolverRequestedCaseStatus;
-  requestedCaseIssue: CaseResolverRequestedCaseIssue | null;
-  requestedContextAutoClearRequestKey: string | null;
-  setRequestedCaseStatus: (status: CaseResolverRequestedCaseStatus) => void;
-  handleAcknowledgeRequestedContextAutoClear: (requestKey: string | null) => void;
-  handleRetryCaseContext: () => void;
-  resetRequestedContextState: () => void;
-}
 
 export function useCaseResolverStateRequestedContext({
   requestedFileId,

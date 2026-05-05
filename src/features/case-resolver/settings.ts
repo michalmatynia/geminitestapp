@@ -53,69 +53,9 @@ export {
   resolveCaseResolverUploadFolder,
 } from './settings-workspace-helpers';
 
-const readParsedDefaultDocumentFormatCandidates = (parsed: unknown): unknown[] => {
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    return [parsed];
-  }
-  const record = parsed as Record<string, unknown>;
-  return [parsed, record['defaultDocumentFormat'], record['editorType']];
-};
+import { parseCaseResolverDefaultDocumentFormat } from './settings/document-format';
 
-const resolveParsedDefaultDocumentFormat = (
-  parsed: unknown
-): CaseResolverDefaultDocumentFormat | null => {
-  for (const candidate of readParsedDefaultDocumentFormatCandidates(parsed)) {
-    const normalized = normalizeCaseResolverDefaultDocumentFormatValue(candidate);
-    if (normalized) return normalized;
-  }
-  return null;
-};
-
-export const parseCaseResolverDefaultDocumentFormat = (
-  raw: string | null | undefined,
-  fallback: CaseResolverDefaultDocumentFormat = 'wysiwyg'
-): CaseResolverDefaultDocumentFormat => {
-  const direct = normalizeCaseResolverDefaultDocumentFormatValue(raw);
-  if (direct) return direct;
-
-  if (typeof raw !== 'string') return fallback;
-
-  const parsedFormat = resolveParsedDefaultDocumentFormat(parseJsonSetting<unknown>(raw, null));
-  if (parsedFormat) return parsedFormat;
-
-  return fallback;
-};
-
-const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => {
-  if (typeof input === 'string') return DEFAULT_CASE_RESOLVER_SETTINGS;
-  if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    return DEFAULT_CASE_RESOLVER_SETTINGS;
-  }
-  const record = input as Record<string, unknown>;
-  const ocrModel = typeof record['ocrModel'] === 'string' ? record['ocrModel'].trim() : '';
-  const ocrPrompt = typeof record['ocrPrompt'] === 'string' ? record['ocrPrompt'].trim() : '';
-  const rawFormatCandidate =
-    typeof record['defaultDocumentFormat'] === 'string' ? record['defaultDocumentFormat'] : null;
-  const normalizedDefaultDocumentFormat =
-    normalizeCaseResolverDefaultDocumentFormatValue(rawFormatCandidate);
-  const defaultDocumentFormat: CaseResolverDefaultDocumentFormat =
-    normalizedDefaultDocumentFormat ?? 'wysiwyg';
-  const confirmDeleteDocument = record['confirmDeleteDocument'] !== false;
-  const defaultAddresserPartyKind =
-    normalizeCaseResolverPartySearchKindValue(record['defaultAddresserPartyKind']) ??
-    DEFAULT_CASE_RESOLVER_SETTINGS.defaultAddresserPartyKind;
-  const defaultAddresseePartyKind =
-    normalizeCaseResolverPartySearchKindValue(record['defaultAddresseePartyKind']) ??
-    DEFAULT_CASE_RESOLVER_SETTINGS.defaultAddresseePartyKind;
-  return {
-    ocrModel,
-    ocrPrompt: ocrPrompt || DEFAULT_CASE_RESOLVER_SETTINGS.ocrPrompt,
-    defaultDocumentFormat,
-    confirmDeleteDocument,
-    defaultAddresserPartyKind,
-    defaultAddresseePartyKind,
-  };
-};
+import { normalizeCaseResolverSettings } from './settings/normalize-settings';
 
 export const parseCaseResolverSettings = (raw: string | null | undefined): CaseResolverSettings => {
   return normalizeCaseResolverSettings(

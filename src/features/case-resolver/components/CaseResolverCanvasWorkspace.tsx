@@ -49,8 +49,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     .filter((n) => n.type === 'prompt')
     .map((n) => ({
       value: n.id,
-      label: (n.title ?? n.id) as string,
-      description: (n.description ?? undefined) as string | undefined,
+      label: (n.title ?? n.id),
+      description: (n.description ?? undefined),
     }))
     .sort((a, b) => a.label.localeCompare(b.label)), [nodes]);
 

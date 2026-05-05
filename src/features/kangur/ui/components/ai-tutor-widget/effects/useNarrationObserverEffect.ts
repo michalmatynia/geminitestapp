@@ -1,7 +1,7 @@
 import { useLayoutEffect } from 'react';
 import type { RefObject } from 'react';
 import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-import { extractNarrationTextFromElement } from '../kangur-narrator-utils';
+import { extractNarrationTextFromElement } from '../../kangur-narrator-utils';
 
 export function useNarrationObserverEffect(input: {
   observationKey: string;

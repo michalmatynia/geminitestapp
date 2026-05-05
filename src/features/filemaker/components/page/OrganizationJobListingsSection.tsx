@@ -96,112 +96,17 @@ import type {
   FilemakerJobApplicationArtifactVersion,
 } from '../../filemaker-job-application.types';
 
-const JOB_STATUS_OPTIONS: Array<{ value: FilemakerJobListingStatus; label: string }> = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'open', label: 'Open' },
-  { value: 'paused', label: 'Paused' },
-  { value: 'closed', label: 'Closed' },
-];
-
-const SALARY_PERIOD_OPTIONS: Array<{ value: FilemakerJobListingSalaryPeriod; label: string }> = [
-  { value: 'hourly', label: 'Hourly' },
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'yearly', label: 'Yearly' },
-  { value: 'fixed', label: 'Fixed' },
-];
-
-const APPLICATION_STATUS_OPTIONS: Array<{ value: FilemakerJobApplicationStatus; label: string }> = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'ready', label: 'Ready' },
-  { value: 'applied', label: 'Applied' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'archived', label: 'Archived' },
-];
-
-const toCampaignOption = (campaign: FilemakerEmailCampaign): MultiSelectOption => ({
-  value: campaign.id,
-  label: campaign.name.trim().length > 0 ? campaign.name : campaign.id,
-});
-
-const toLexiconOption = (
-  term: FilemakerLexiconTerm,
-  typeMetadata: FilemakerLexiconTypeMetadataMap
-): MultiSelectOption => ({
-  value: term.id,
-  label: `${term.label} (${formatFilemakerLexiconCategory(term.typeKey, typeMetadata)})`,
-});
-
-const lexiconTermHref = (term: FilemakerLexiconTerm): string => {
-  const params = new URLSearchParams({
-    type: term.typeKey,
-    query: term.label,
-  });
-  return `/admin/filemaker/lexicon?${params.toString()}`;
-};
-
-const groupLexiconTermsByCategory = (
-  terms: FilemakerLexiconTerm[],
-  typeMetadata: FilemakerLexiconTypeMetadataMap
-): Array<{ typeKey: FilemakerLexiconTerm['typeKey']; terms: FilemakerLexiconTerm[] }> => {
-  const groups = new Map<FilemakerLexiconTerm['typeKey'], FilemakerLexiconTerm[]>();
-  terms.forEach((term: FilemakerLexiconTerm): void => {
-    const existing = groups.get(term.typeKey) ?? [];
-    existing.push(term);
-    groups.set(term.typeKey, existing);
-  });
-  return Array.from(groups.entries())
-    .map(([typeKey, groupTerms]) => ({
-      typeKey,
-      terms: groupTerms,
-    }))
-    .sort((left, right): number =>
-      compareFilemakerLexiconTypeKeys(left.typeKey, right.typeKey, typeMetadata)
-    );
-};
-
-const RESPONSIBILITY_ITEM_START_RE =
-  /(Tworzenie|Budowanie|Integracja|Wsparcie|Dbanie|Optymalizacja|Debugowanie|Rozw[oó]j|Projektowanie|Implementacja|Utrzymanie|Wsp[oó]łpraca|Przygotowywanie|Prowadzenie|Analiza|Testowanie|Dokumentowanie|Creating|Building|Integrating|Supporting|Maintaining|Designing|Implementing|Optimizing|Debugging|Developing|Updating)\b/giu;
-
-const RESPONSIBILITY_HEADING_RE =
-  /^(tw[oó]j zakres obowi[aą]zk[oó]w|zakres obowi[aą]zk[oó]w|responsibilities|your responsibilities|role responsibilities)\s*/iu;
-
-const splitResponsibilityTermLabel = (label: string): string[] => {
-  const normalized = label.replace(/\s+/g, ' ').trim();
-  if (normalized.length === 0) return [];
-  const withoutHeading = normalized.replace(RESPONSIBILITY_HEADING_RE, '').trim();
-  const withBreaks = withoutHeading
-    .replace(RESPONSIBILITY_ITEM_START_RE, '\n$1')
-    .replace(/([.!?])\s+/g, '$1\n');
-  const items = withBreaks
-    .split(/\n+|[;•]+/u)
-    .map((item: string): string => item.trim())
-    .filter((item: string): boolean => item.length > 0);
-  return items.length > 0 ? items : [normalized];
-};
-
-function ResponsibilityLexiconTerms(props: {
-  terms: FilemakerLexiconTerm[];
-}): React.JSX.Element {
-  return (
-    <ul className='mt-1 list-disc space-y-1 pl-4 text-xs leading-relaxed text-gray-300'>
-      {props.terms.flatMap((term: FilemakerLexiconTerm): React.JSX.Element[] =>
-        splitResponsibilityTermLabel(term.label).map(
-          (item: string, itemIndex: number): React.JSX.Element => (
-            <li key={`${term.id}-${itemIndex}`}>
-              <a
-                href={lexiconTermHref(term)}
-                className='underline-offset-4 hover:text-white hover:underline'
-                title={`Open Responsibility lexicon term: ${term.label}`}
-              >
-                {item}
-              </a>
-            </li>
-          )
-        )
-      )}
-    </ul>
-  );
-}
+import {
+  JOB_STATUS_OPTIONS,
+  SALARY_PERIOD_OPTIONS,
+  APPLICATION_STATUS_OPTIONS,
+} from './OrganizationJobListingsSection.constants';
+import {
+  toCampaignOption,
+  toLexiconOption,
+  groupLexiconTermsByCategory,
+} from './OrganizationJobListingsSection.utils';
+import { ResponsibilityLexiconTerms } from './ResponsibilityLexiconTerms';
 
 const addMissingCampaignOptions = (
   options: MultiSelectOption[],

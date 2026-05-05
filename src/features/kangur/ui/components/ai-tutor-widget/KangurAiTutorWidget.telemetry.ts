@@ -3,8 +3,8 @@
 import { useMemo, type MutableRefObject } from 'react';
 
 import {
-  useKangurAiTutorFocusTelemetryEffect,
-  useKangurAiTutorSupplementalTelemetryEffects,
+  useTutorFocusTelemetryEffect as useKangurAiTutorFocusTelemetryEffect,
+  useSupplementalTelemetryEffects as useKangurAiTutorSupplementalTelemetryEffects,
 } from './KangurAiTutorWidget.effects';
 
 import type { TutorProactiveNudge } from '../KangurAiTutorPanelBody.context';

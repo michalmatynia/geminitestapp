@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+ 
 
 export const JOB_BOARD_PROVIDER_IDS = ['pracuj_pl', 'justjoin_it', 'nofluffjobs'] as const;
 

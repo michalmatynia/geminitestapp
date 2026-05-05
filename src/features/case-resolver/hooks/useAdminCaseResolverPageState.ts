@@ -40,64 +40,26 @@ import { useAdminCaseResolverMetadataActions } from './useAdminCaseResolverMetad
 import { useAdminCaseResolverRelationActions } from './useAdminCaseResolverRelationActions';
 import { buildCaseMetadataDraft, buildCaseMetadataPatch } from '../case-overview-draft';
 
+import { useAdminCaseResolverPageNavigation } from './page-state/useAdminCaseResolverPageNavigation';
+import { useAdminCaseResolverPageEditor } from './page-state/useAdminCaseResolverPageEditor';
+import { useAdminCaseResolverPageMetadata } from './page-state/useAdminCaseResolverPageMetadata';
+
 export function useAdminCaseResolverPageState() {
-  const state: CaseResolverStateValue = useCaseResolverState();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const state = useCaseResolverState();
+  const navigation = useAdminCaseResolverPageNavigation();
+  const editor = useAdminCaseResolverPageEditor();
+  const metadata = useAdminCaseResolverPageMetadata();
   const { toast } = useToast();
 
-  const {
-    workspace,
-    workspaceRef,
-    selectedFileId,
-    selectedAssetId,
-    setSelectedFileId,
-    setSelectedAssetId,
-    setSelectedFolderPath,
-    editingDocumentDraft,
-    editingDocumentNodeContext,
-    setEditingDocumentDraft,
-    isUploadingScanDraftFiles,
-    caseResolverTags,
-    caseResolverIdentifiers,
-    caseResolverCategories,
-    caseResolverSettings,
-    filemakerDatabase,
-    requestedFileId,
-    requestedContextAutoClearRequestKey,
-    handleAcknowledgeRequestedContextAutoClear,
-    handleResetCaseContext: resetCaseContextState,
-    shouldOpenEditorFromQuery,
-    handleUploadScanFiles,
-    handleRunScanFileOcr,
-    handleOpenFileEditor,
-    handleRenameFolder,
-    updateWorkspace,
-    promptExploderPartyProposal,
-    setPromptExploderPartyProposal,
-    isPromptExploderPartyProposalOpen,
-    setIsPromptExploderPartyProposalOpen,
-    isApplyingPromptExploderPartyProposal,
-    setIsApplyingPromptExploderPartyProposal,
-    refetchSettingsStore,
-    confirmAction,
-    setActiveMainView,
-    handleSelectFile,
-    handleCreateFile,
-    setWorkspace,
-    handleDiscardFileEditorDraft,
-  } = state;
-
-  const openEditorFromQueryHandledRef = useRef<string | null>(null);
-  const autoClearRequestKeyHandledRef = useRef<string | null>(null);
-  const editorDirtyEvalDurationMsRef = useRef<number | null>(null);
-  const lastActiveCaseMetadataDraftFileIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!shouldOpenEditorFromQuery || !requestedFileId) {
-      openEditorFromQueryHandledRef.current = null;
-      return;
-    }
+  // Return the combined state
+  return {
+    ...state,
+    ...navigation,
+    ...editor,
+    ...metadata,
+    toast,
+  };
+}
     if (openEditorFromQueryHandledRef.current === requestedFileId) return;
     if (editingDocumentDraft?.id === requestedFileId) {
       openEditorFromQueryHandledRef.current = requestedFileId;

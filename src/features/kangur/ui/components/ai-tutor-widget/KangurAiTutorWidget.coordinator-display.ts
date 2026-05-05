@@ -14,8 +14,10 @@ import {
 } from './KangurAiTutorWidget.coordinator.helpers';
 import { useKangurAiTutorGuidedDisplayState } from './KangurAiTutorWidget.display';
 import {
-  useKangurAiTutorGuidanceCompletionEffects,
-  useKangurAiTutorNarrationObserverEffect,
+  useResetGuidanceEffect,
+  useSectionGuidanceEffect,
+  useSelectionGuidanceEffect,
+  useNarrationObserverEffect as useKangurAiTutorNarrationObserverEffect,
 } from './KangurAiTutorWidget.effects';
 import { type useKangurAiTutorWidgetEnvironment } from './KangurAiTutorWidget.environment';
 import {
@@ -255,28 +257,38 @@ export function useKangurAiTutorWidgetCoordinatorDisplayState({
     ? activeSelectionRect ?? guidedSelectionRect
     : activeSelectionRect;
 
-  useKangurAiTutorGuidanceCompletionEffects({
+  useResetGuidanceEffect({
     activeSelectedText: effectiveSelectedText,
-    contextualTutorMode,
     highlightedSection,
+    selectionResponseCompleteTimeoutRef,
+    sectionResponseCompleteTimeoutRef,
+    setSelectionResponseComplete,
+    setSectionResponseComplete,
+    setSectionResponsePending,
+  });
+
+  useSectionGuidanceEffect({
+    isLoading,
+    isOpen,
+    isSectionGuidedMode: isSectionGuidedTutorMode,
+    sectionResponsePending,
+    setSectionResponseComplete,
+    setSectionResponsePending,
+    telemetryContext,
+  });
+
+  useSelectionGuidanceEffect({
+    contextualTutorMode,
     isLoading,
     isOpen,
     panelShellMode,
-    isSectionGuidedMode: isSectionGuidedTutorMode,
     isSelectionGuidedMode: isSelectionGuidedTutorMode,
-    sectionResponseComplete,
-    sectionResponseCompleteTimeoutRef,
-    sectionResponsePending,
     selectionConversationSelectedText: selectionConversationContext?.selectedText ?? null,
     selectionConversationStartIndex: selectionConversationContext?.messageStartIndex ?? null,
     selectionGuidanceHandoffText,
     messages,
     selectionResponseComplete,
-
-    selectionResponseCompleteTimeoutRef,
     selectionResponsePending,
-    setSectionResponseComplete,
-    setSectionResponsePending,
     setSelectionGuidanceCalloutVisibleText,
     setSelectionResponseComplete,
     setSelectionResponsePending,

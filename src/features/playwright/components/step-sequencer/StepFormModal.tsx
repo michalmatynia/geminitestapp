@@ -23,7 +23,7 @@ export function StepFormModal(): React.JSX.Element | null {
     isSaving,
     websites,
     flows,
-  } = usePlaywrightStepSequencer() as PlaywrightStepSequencerContextType;
+  } = usePlaywrightStepSequencer();
 
   const {
     draft, setDraft,
@@ -176,7 +176,7 @@ export function StepFormModal(): React.JSX.Element | null {
   const handleSaveFallbackAsRegistryOverride = async (): Promise<void> => {
     if (selectedRegistryEntry == null) return;
     const selector = selectorFallback.trim();
-    if (selector === "") return;
+    if (selector === '') return;
     const valueJson = buildRegistryOverrideValueJson(selectedRegistryEntry, selector);
     if (valueJson == null) {
       setRegistrySaveMessage(null);
@@ -211,7 +211,7 @@ export function StepFormModal(): React.JSX.Element | null {
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     const name = draft.name?.trim();
-    if (name == null || name === "" || draft.type == null) return;
+    if (name == null || name === '' || draft.type == null) return;
     
     const inputBindings = getProcessedInputBindings(draft, selectedRegistryEntry);
     const selector = draft.selector?.trim() ?? null;
@@ -256,7 +256,7 @@ function getProcessedInputBindings(
 
   if (SELECTOR_TYPES.includes(draft.type ?? 'click')) {
     const selectorBinding = inputBindings['selector'];
-    if (selectorBinding != null && selectorBinding.mode === 'selectorRegistry') {
+    if (selectorBinding?.mode === 'selectorRegistry') {
       const selectorNamespace = inferSelectorRegistryNamespace({
         namespace: selectorBinding.selectorNamespace ?? draft.selectorNamespace ?? null,
         selectorKey: selectorBinding.selectorKey ?? draft.selectorKey ?? null,
@@ -270,7 +270,7 @@ function getProcessedInputBindings(
         selectorRole: selectorBinding.selectorRole ?? selectedRegistryEntry?.role ?? null,
         fallbackSelector: selectorBinding.fallbackSelector?.trim() ?? selector,
       };
-    } else if (selectorBinding != null && selectorBinding.mode === 'disabled') {
+    } else if (selectorBinding?.mode === 'disabled') {
       inputBindings['selector'] = {
         mode: 'disabled',
         disabledReason: selectorBinding.disabledReason?.trim() ?? 'Selector intentionally disabled',
@@ -326,7 +326,7 @@ function getProcessedInputBindings(
               set={set}
               setSelectorBinding={setSelectorBinding}
               selectorBindingMode={selectorBindingMode}
-              selectedRegistryNamespace={selectedRegistryNamespace as string}
+              selectedRegistryNamespace={selectedRegistryNamespace}
               selectedRegistryProfile={selectedRegistryProfile as string}
               registryNamespacesForSelect={registryNamespacesForSelect}
               registryProfilesForSelect={registryProfilesForSelect}

@@ -55,66 +55,6 @@ const simulateAddressBarTyping = async (url: string): Promise<void> => {
   if (preEnterReviewMs > 0) await sleepMs(preEnterReviewMs);
 };
 
-const LIVE_SCRIPTER_SESSION_IDLE_MS = 5 * 60 * 1000;
-const LIVE_SCRIPTER_CONCURRENT_SESSION_CAP = 3;
-const LIVE_SCRIPTER_MAX_SELECTOR_DEPTH = 6;
-const LIVE_SCRIPTER_MAX_FRAME_DIMENSION = 1600;
-const LIVE_SCRIPTER_BRIDGE_KEY = '__geminitestappPlaywrightLiveScripterBridge';
-const LIVE_SCRIPTER_STATE_KEY = '__geminitestappPlaywrightLiveScripterState';
-const LIVE_SCRIPTER_DEV_FIXTURE_PATH = '/playwright-fixtures/live-scripter-fixture';
-const LIVE_SCRIPTER_TITLE_SETTLE_TIMEOUT_MS = 2_000;
-const LIVE_SCRIPTER_TITLE_SETTLE_POLL_MS = 100;
-const LIVE_SCRIPTER_TITLE_SETTLE_STABLE_MS = 250;
-const URL_SCHEME_PATTERN = /^[a-z][a-z\d+\-.]*:/i;
-
-type LiveScripterSocket = WebSocket;
-
-type LiveScripterSession = {
-  id: string;
-  ownerUserId: string;
-  browser: Browser;
-  context: BrowserContext;
-  page: Page;
-  cdp: CDPSession;
-  viewport: LiveScripterViewport;
-  personaId: string | null;
-  selectorProfile: string | null;
-  createdAt: number;
-  lastActivityAt: number;
-  timeoutId: SafeTimerId | null;
-  sockets: Set<LiveScripterSocket>;
-  lastFrame: Extract<LiveScripterServerMessage, { type: 'frame' }> | null;
-  lastNavigation: Extract<LiveScripterServerMessage, { type: 'navigated' }> | null;
-  lastPicked: Extract<LiveScripterServerMessage, { type: 'picked' }> | null;
-  lastProbe: Extract<LiveScripterServerMessage, { type: 'probe_result' }> | null;
-  disposed: boolean;
-  pendingAction: Promise<void>;
-};
-
-type LiveScripterProbeCandidate = LiveScripterPickedElement & {
-  repeatedSiblingCount: number;
-  childLinkCount: number;
-  childImageCount: number;
-};
-
-type LiveScripterBridge = {
-  attachClient: (sessionId: string, socket: LiveScripterSocket) => Promise<boolean>;
-};
-
-type LiveScripterState = {
-  sessions: Map<string, LiveScripterSession>;
-  bridge: LiveScripterBridge;
-};
-
-type ScreencastFrameEvent = {
-  data: string;
-  sessionId: number;
-  metadata?: {
-    deviceWidth?: number;
-    deviceHeight?: number;
-  };
-};
-
 const createId = (): string => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();

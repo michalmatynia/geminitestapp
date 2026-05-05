@@ -84,21 +84,9 @@ import {
   resolveRunArtifactsDir,
 } from './playwright-node-runner.helpers';
 
-const nodeFs = getFsPromises();
-const STICKY_SESSION_ROOT_DIR = path.join(RUN_ROOT_DIR, 'sticky-sessions');
-const STICKY_SESSION_TTL_MS = RUN_TTL_MS;
-const PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS = (() => {
-  const raw = Number(process.env['PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS']);
-  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 2_000;
-})();
-const PLAYWRIGHT_STARTUP_TIMEOUT_MS = (() => {
-  const raw = Number(process.env['PLAYWRIGHT_STARTUP_TIMEOUT_MS']);
-  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 45_000;
-})();
-const HOSTILE_STICKY_IDENTITY_PROFILES = new Set<PlaywrightSettings['identityProfile']>([
-  'search',
-  'marketplace',
-]);
+import { browserManager } from './playwright-node-runner/browser';
+import { nodeFs, STICKY_SESSION_ROOT_DIR, STICKY_SESSION_TTL_MS, runtimeConfig } from './playwright-node-runner/runtime';
+
 const chromiumRuntimePacingChains = new Map<string, Promise<void>>();
 const chromiumRuntimePacingNextAllowedAt = new Map<string, number>();
 

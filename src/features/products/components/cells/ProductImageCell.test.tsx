@@ -162,11 +162,13 @@ describe('ProductImageCell', () => {
 
     expect(noteButton).toHaveStyle({ backgroundColor: '#bfdbfe' });
     expect(noteButton.className).toContain('cursor-pointer');
-    expect(noteButton.className).toContain('w-8');
-    expect(noteButton.className).toContain('-translate-x-[12px]');
-    expect(noteButton.className).toContain('hover:w-11');
-    expect(noteButton.className).toContain('hover:-translate-x-[16px]');
+    expect(noteButton.className).toContain('w-11');
+    expect(noteButton.className).toContain('translate-x-0');
+    expect(noteButton.className).toContain('focus-visible:-translate-x-9');
+    expect(noteButton.className).not.toContain('hover:w-11');
+    expect(noteButton.className).not.toContain('hover:-translate-x-[16px]');
     expect(noteButton.className).not.toContain('group-hover:w-7');
+    expect(thumbnailWrapper?.className).toContain('isolate');
     expect(thumbnailWrapper?.className).toContain('h-16 w-16');
     expect(thumbnailWrapper?.className).not.toContain('w-[72px]');
     expect(thumbnailWrapper?.className).not.toContain('pl-2');
@@ -343,7 +345,7 @@ describe('ProductImageCell', () => {
     expect(thumbnail.className).not.toContain('hover:opacity-80');
   });
 
-  it('does not render the note indicator when the product has no note', () => {
+  it('extrudes the add-note tab when hovering the left side of the thumbnail', () => {
     render(
       <ProductImageCell
         imageUrl='/images/product.jpg'
@@ -352,12 +354,69 @@ describe('ProductImageCell', () => {
       />
     );
 
-    expect(
-      screen.queryByRole('button', { name: 'View note for Gaming Bottle Opener' })
-    ).not.toBeInTheDocument();
+    const noteButton = screen.getByRole('button', { name: 'Add note for Gaming Bottle Opener' });
+    const thumbnailWrapper = noteButton.parentElement;
+
+    expect(noteButton.className.split(/\s+/)).not.toContain('-translate-x-9');
+
+    fireEvent.mouseMove(thumbnailWrapper as HTMLElement, { clientX: 8, clientY: 12 });
+
+    expect(noteButton.className.split(/\s+/)).toContain('-translate-x-9');
+
+    fireEvent.mouseMove(thumbnailWrapper as HTMLElement, { clientX: 60, clientY: 12 });
+
+    expect(noteButton.className.split(/\s+/)).not.toContain('-translate-x-9');
   });
 
-  it('does not render the note indicator when note text is empty', () => {
+  it('opens a blank note modal and saves a first note from the add-note tab', async () => {
+    updateProductMock.mockResolvedValue({
+      id: 'product-1',
+      notes: {
+        text: 'First product note.',
+        color: '#f5e7c3',
+      },
+    });
+
+    render(
+      <ProductImageCell
+        imageUrl='/images/product.jpg'
+        productId='product-1'
+        productName='Gaming Bottle Opener'
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add note for Gaming Bottle Opener' }));
+
+    expect(hidePreviewMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('product-note-modal')).toBeInTheDocument();
+    expect(screen.getByLabelText('Edit note for Gaming Bottle Opener')).toHaveDisplayValue('');
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(screen.getByTestId('product-note-modal')).toHaveStyle({
+      backgroundColor: '#f5e7c3',
+    });
+
+    fireEvent.change(screen.getByLabelText('Edit note for Gaming Bottle Opener'), {
+      target: { value: 'First product note.' },
+    });
+
+    const saveButton = screen.getByRole('button', { name: 'Save' });
+    expect(saveButton).toBeEnabled();
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(updateProductMock).toHaveBeenCalledWith('product-1', {
+        notes: {
+          text: 'First product note.',
+          color: '#f5e7c3',
+        },
+      });
+    });
+    expect(queryClientSetQueriesDataMock).toHaveBeenCalled();
+    expect(queryClientSetQueryDataMock).toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith('Product note created', { variant: 'success' });
+  });
+
+  it('renders the add-note tab when note text is empty', () => {
     render(
       <ProductImageCell
         imageUrl='/images/product.jpg'
@@ -370,8 +429,8 @@ describe('ProductImageCell', () => {
       />
     );
 
-    expect(
-      screen.queryByRole('button', { name: 'View note for Gaming Bottle Opener' })
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add note for Gaming Bottle Opener' })).toHaveStyle({
+      backgroundColor: '#f5e7c3',
+    });
   });
 });

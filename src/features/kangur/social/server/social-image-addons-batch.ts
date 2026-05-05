@@ -218,7 +218,9 @@ import { safeSetTimeout } from '@/shared/lib/timers';
 // ... (existing imports)
 
 const sleep = async (ms: number): Promise<void> =>
-  await new Promise((resolve) => safeSetTimeout(resolve, ms));
+  new Promise<void>((resolve) => {
+    safeSetTimeout(resolve, ms);
+  });
 
 const toRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : null;

@@ -460,6 +460,13 @@ export type AiPathsMasterTreeAdapter = {
 export type AiPathsMasterTreePanelProps = {
   activePathId?: string | null;
   adapter?: AiPathsMasterTreeAdapter;
+  handleCreatePath?: AiPathsMasterTreeAdapter["handleCreatePath"];
+  handleDeletePath?: AiPathsMasterTreeAdapter["handleDeletePath"];
+  handleDuplicatePath?: AiPathsMasterTreeAdapter["handleDuplicatePath"];
+  handleMoveFolder?: AiPathsMasterTreeAdapter["handleMoveFolder"];
+  handleMovePathToFolder?: AiPathsMasterTreeAdapter["handleMovePathToFolder"];
+  handleRenameFolder?: AiPathsMasterTreeAdapter["handleRenameFolder"];
+  handleSwitchPath?: AiPathsMasterTreeAdapter["handleSwitchPath"];
   bodyClassName?: string | undefined;
   emptyLabel?: string | undefined;
   headerDescription?: string | undefined;
@@ -488,15 +495,15 @@ export function AiPathsMasterTreePanel(props: AiPathsMasterTreePanelProps): Reac
   const adapter = useMemo((): AiPathsMasterTreeAdapter => {
     if (props.adapter) return props.adapter;
     return {
-      handleCreatePath: actionsContext.handleCreatePath,
-      handleDeletePath: actionsContext.handleDeletePath,
-      handleDuplicatePath: actionsContext.handleDuplicatePath,
-      handleMoveFolder: actionsContext.handleMoveFolder,
-      handleMovePathToFolder: actionsContext.handleMovePathToFolder,
-      handleRenameFolder: actionsContext.handleRenameFolder,
-      handleSwitchPath: actionsContext.handleSwitchPath,
+      handleCreatePath: props.handleCreatePath ?? actionsContext?.handleCreatePath ?? (() => {}),
+      handleDeletePath: props.handleDeletePath ?? actionsContext?.handleDeletePath ?? (async () => {}),
+      handleDuplicatePath: props.handleDuplicatePath ?? actionsContext?.handleDuplicatePath ?? (() => {}),
+      handleMoveFolder: props.handleMoveFolder ?? actionsContext?.handleMoveFolder ?? (async () => {}),
+      handleMovePathToFolder: props.handleMovePathToFolder ?? actionsContext?.handleMovePathToFolder ?? (async () => {}),
+      handleRenameFolder: props.handleRenameFolder ?? actionsContext?.handleRenameFolder ?? (async () => {}),
+      handleSwitchPath: props.handleSwitchPath ?? actionsContext?.handleSwitchPath ?? (() => {}),
     };
-  }, [props.adapter, actionsContext]);
+  }, [props.adapter, props.handleCreatePath, props.handleDeletePath, props.handleDuplicatePath, props.handleMoveFolder, props.handleMovePathToFolder, props.handleRenameFolder, props.handleSwitchPath, actionsContext]);
 
   const {
     bodyClassName,

@@ -40,7 +40,7 @@ export const buildAnalyticsPrompt = async (options?: { contextRegistry?: Context
   const systemPrompt = [
     promptValue ?? DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
     buildAnalyticsInsightContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
-  ].filter((p): p is string => !!p).join('\n\n');
+  ].filter((p): p is string => Boolean(p)).join('\n\n');
   const userPrompt = `Current Analytics Summary:
 ${JSON.stringify(summary, null, 2)}
 
@@ -62,7 +62,7 @@ export const buildRuntimeAnalyticsPrompt = async (range: AiPathRuntimeAnalyticsR
   const systemPrompt = [
     promptValue ?? DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
     buildRuntimeAnalyticsInsightContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
-  ].filter((p): p is string => !!p).join('\n\n');
+  ].filter((p): p is string => Boolean(p)).join('\n\n');
   const userPrompt = `AI Path Runtime Analytics Summary (${range}):
 ${JSON.stringify(summary, null, 2)}
 
@@ -104,3 +104,19 @@ ${JSON.stringify(log, null, 2)}`;
     name: `Log Interpretation - ${new Date().toLocaleDateString()}`,
   };
 }
+
+export const INSIGHT_BUILDERS: Record<
+  string,
+  (options?: InsightBuilderOptions) => Promise<{
+    systemPrompt: string;
+    userPrompt: string;
+    name: string;
+    metadata?: Record<string, unknown>;
+  }>
+> = {
+  analytics: buildAnalyticsPrompt,
+  logs: buildLogsPrompt,
+  system_logs: buildLogsPrompt,
+  runtime_analytics: (options?: InsightBuilderOptions) =>
+    buildRuntimeAnalyticsPrompt(options?.range ?? '24h', options),
+};

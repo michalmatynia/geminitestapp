@@ -27,7 +27,7 @@ export const ProductImageCell = memo(
           unoptimized={controller.unoptimized}
           updatePreview={controller.updatePreview}
         />
-        {controller.resolvedNote !== null ? (
+        {controller.noteModalOpen || controller.resolvedNote !== null ? (
           <ProductNoteModal controller={controller} productName={productName} />
         ) : null}
       </>

@@ -55,62 +55,21 @@ import { getProductRepository } from '@/shared/lib/products/services/product-rep
 import { normalizeParameterValuesByLanguage } from '@/shared/lib/products/utils/parameter-values';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-const BASE_INTEGRATION_SLUGS = new Set(['base', 'base-com', 'baselinker']);
-const BASE_DETAILS_BATCH_SIZE = 100;
-const RUN_PROGRESS_FLUSH_EVERY_ITEMS = 25;
-const RUN_PROGRESS_FLUSH_EVERY_MS = 20_000;
+import {
+  BASE_INTEGRATION_SLUGS,
+  BASE_DETAILS_BATCH_SIZE,
+  RUN_PROGRESS_FLUSH_EVERY_ITEMS,
+  RUN_PROGRESS_FLUSH_EVERY_MS,
+} from './product-sync-processor/constants';
+import type {
+  BaseConnectionContext,
+  LinkedProductSyncResult,
+  LinkedProductSyncPlan,
+  BaseSyncResolvedTarget,
+  ResolvedProductSyncTarget,
+  ProductSyncBaseFieldPresentationMetadata,
+} from './product-sync-processor/types';
 
-export type BaseConnectionContext = {
-  integrationId: string;
-  connectionId: string;
-  connectionName: string | null;
-  inventoryId: string;
-  token: string;
-};
-
-export type LinkedProductSyncResult = {
-  status: 'success' | 'skipped' | 'failed';
-  localChanges: string[];
-  baseChanges: string[];
-  message: string | null;
-  errorMessage: string | null;
-};
-
-export type LinkedProductSyncPlan = {
-  fields: ProductSyncFieldPreview[];
-  localPatch: Record<string, unknown>;
-  basePayload: Record<string, unknown>;
-  localChanges: string[];
-  baseChanges: string[];
-};
-
-export type BaseSyncResolvedTarget = {
-  baseProductId: string | null;
-  linkedVia: 'product' | 'listing' | 'sku_backfill' | 'none';
-};
-
-export type ResolvedProductSyncTarget = {
-  product: ProductWithImages;
-  target: BaseSyncResolvedTarget;
-};
-
-export type ProductSyncBaseFieldPresentationMetadata = {
-  warehousesByIdentifier: Map<
-    string,
-    {
-      name: string;
-      isDefault: boolean;
-    }
-  >;
-  priceGroupsByIdentifier: Map<
-    string,
-    {
-      name: string;
-      currencyCode: string | null;
-      isDefault: boolean;
-    }
-  >;
-};
 
 export const isTerminalRunStatus = (status: ProductSyncRunStatus): boolean =>
   status === 'completed' || status === 'partial_success' || status === 'failed';

@@ -106,7 +106,11 @@ export const applySavedProductNoteOverride = (
         notes: normalizeProductNotes(noteOverride),
       };
 
-export const buildProductNoteUpdate = (nextText: string, color: string): ProductNoteUpdate => {
+export const buildProductNoteUpdate = (
+  nextText: string,
+  color: string,
+  hasExistingNote = true
+): ProductNoteUpdate => {
   if (nextText.length === 0) {
     return {
       hasText: false,
@@ -121,7 +125,7 @@ export const buildProductNoteUpdate = (nextText: string, color: string): Product
     hasText: true,
     nextNotes,
     payload: { notes: nextNotes },
-    toastMessage: 'Product note updated',
+    toastMessage: hasExistingNote ? 'Product note updated' : 'Product note created',
   };
 };
 

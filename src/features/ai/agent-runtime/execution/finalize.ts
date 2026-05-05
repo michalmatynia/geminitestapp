@@ -18,7 +18,7 @@ export interface FinalizeAgentRunResult { verificationContext: string | null; ve
 
 export async function finalizeAgentRun(input: FinalizeRunInput): Promise<FinalizeAgentRunResult> {
   const { context: ctx, planSteps: steps, taskType, overallOk: ok, requiresHuman: human, lastError: err, summaryCheckpoint: cp } = input;
-  const typedCtx = ctx as AgentExecutionContext;
+  const typedCtx = ctx;
   const { run, settings, preferences, contextRegistry: reg, memoryContext: mem, configs: cnf, plannerModel: pm, memorySummarizationModel: msm } = typedCtx;
   
   await updateChatbotRunStatus({ runId: run.id, runPrompt: run.prompt, settings, preferences, contextRegistry: reg ?? null, planSteps: steps, requiresHuman: human, overallOk: ok, lastError: err, summaryCheckpoint: cp });

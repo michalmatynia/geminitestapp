@@ -1,0 +1,11 @@
+export const LIVE_SCRIPTER_SESSION_IDLE_MS = 5 * 60 * 1000;
+export const LIVE_SCRIPTER_CONCURRENT_SESSION_CAP = 3;
+export const LIVE_SCRIPTER_MAX_SELECTOR_DEPTH = 6;
+export const LIVE_SCRIPTER_MAX_FRAME_DIMENSION = 1600;
+export const LIVE_SCRIPTER_BRIDGE_KEY = '__geminitestappPlaywrightLiveScripterBridge';
+export const LIVE_SCRIPTER_STATE_KEY = '__geminitestappPlaywrightLiveScripterState';
+export const LIVE_SCRIPTER_DEV_FIXTURE_PATH = '/playwright-fixtures/live-scripter-fixture';
+export const LIVE_SCRIPTER_TITLE_SETTLE_TIMEOUT_MS = 2_000;
+export const LIVE_SCRIPTER_TITLE_SETTLE_POLL_MS = 100;
+export const LIVE_SCRIPTER_TITLE_SETTLE_STABLE_MS = 250;
+export const URL_SCHEME_PATTERN = /^[a-z][a-z\d+\-.]*:/i;

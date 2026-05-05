@@ -66,7 +66,8 @@ import type {
   FilemakerMailSyncResult,
   FilemakerMailThread,
   FilemakerMailThreadDetail,
-} from '../types';
+} from './mail-service/types';
+
 
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
@@ -80,15 +81,9 @@ import {
   recordFilemakerMailBounceSuppressions,
   recordFilemakerMailComplaintSuppressions,
 } from './campaign-suppression';
-import { createImapClient, listImapMailboxes } from './mail/mail-imap';
-import {
-  isLikelyFilemakerMailBounceMessage,
-  isLikelyFilemakerMailComplaintMessage,
-  parseFilemakerMailComplaintReport,
-  parseFilemakerMailDsnReport,
-} from './mail/mail-dsn';
-import { parseMailSource } from './mail/mail-processor';
-import * as storage from './mail/mail-storage';
+import { imapService } from './mail-service/imap';
+import { mailProcessor } from './mail-service/processor';
+import { mailStorage as storage } from './mail-service/storage';
 
 /* eslint-disable
    @typescript-eslint/explicit-function-return-type,

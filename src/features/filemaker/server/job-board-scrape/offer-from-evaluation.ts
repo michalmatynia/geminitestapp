@@ -19,105 +19,12 @@ import type {
   FilemakerLexiconValidationPatternSourceScope,
 } from '../../types';
 
-import {
-  asRecord,
-  buildScrapedOfferLexiconExtraction,
-  clipProfileText,
-  normalizeLexiconLabel,
-  normalizeLexiconKey,
-  normalizeJobBoardSourceUrl,
-  normalizeSalaryPeriod,
-  recordNullableString,
-  recordString,
-  toNullableNumber,
-  toStringValue,
-  uniqueStrings,
-} from './normalizers';
-import { classifyFilemakerLexiconLabelWithPatterns } from './lexicon-validation-patterns';
+import { lexiconClassifier } from './offer-from-evaluation/classifier';
+import { jobOfferNormalizer } from './offer-from-evaluation/normalizer';
 
-type ScrapedOfferPill = FilemakerJobBoardScrapedOffer['pills'][number];
+import { type ScrapedOfferPill, type LabeledProfileLine } from "./offer-from-evaluation/types";
 
-type LabeledProfileLine = {
-  label: string;
-  value: string;
-};
-
-const POSTED_AT_KEYS = [
-  'postedAt',
-  'datePosted',
-  'publicationDate',
-  'publishedAt',
-  'publishedDate',
-  'createdAt',
-  'listedAt',
-] as const;
-
-const EXPIRES_AT_KEYS = [
-  'expiresAt',
-  'validThrough',
-  'validUntil',
-  'validTo',
-  'expirationDate',
-  'expiryDate',
-  'applicationDeadline',
-  'deadline',
-] as const;
-
-const POSTED_AT_FACT_KEYWORDS = [
-  'date posted',
-  'data publikacji',
-  'dodano',
-  'opublikowano',
-  'posted',
-  'published',
-  'publikacji',
-] as const;
-
-const EXPIRES_AT_FACT_KEYWORDS = [
-  'application deadline',
-  'aplikuj do',
-  'deadline',
-  'expires',
-  'termin aplikowania',
-  'valid through',
-  'valid until',
-  'valid',
-  'wazna do',
-  'wazna',
-] as const;
-
-const COMPANY_NAME_FACT_KEYS = [
-  'company',
-  'employer',
-  'firma',
-  'nazwa',
-  'nazwa firmy',
-  'pracodawca',
-] as const;
-
-const GENERIC_JOB_BOARD_COMPANY_NAME_KEYS = new Set([
-  'company',
-  'company profile',
-  'employer profile',
-  'employer',
-  'employers',
-  'firma',
-  'hiring organization',
-  'informacje i opinie o pracodawcach',
-  'jobs',
-  'nazwa firmy',
-  'odkrywaj najlepsze miejsca pracy',
-  'oferty pracy',
-  'organization',
-  'organisation',
-  'praca',
-  'pracodawca',
-  'pracodawcy',
-  'profil pracodawcow',
-  'profile pracodawcow',
-  'profile pracodawcy',
-  'profil pracodawcy',
-]);
+import { POSTED_AT_KEYS, EXPIRES_AT_KEYS, POSTED_AT_FACT_KEYWORDS, EXPIRES_AT_FACT_KEYWORDS, COMPANY_NAME_FACT_KEYS, GENERIC_JOB_BOARD_COMPANY_NAME_KEYS } from "./offer-from-evaluation/constants";
 
 const normalizeCompanyNameGuardKey = (value: string): string =>
   value

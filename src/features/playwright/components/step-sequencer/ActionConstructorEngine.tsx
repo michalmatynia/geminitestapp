@@ -68,87 +68,11 @@ import { StepCodePreviewDialog } from './StepCodePreviewDialog';
 import { StepSetCodePreviewDialog } from './StepSetCodePreviewDialog';
 import { StepTypeIcon } from './StepTypeIcon';
 
-type RuntimeStepGroup = {
-  id: string;
-  label: string;
-  stepIds: readonly StepId[];
-};
+import { RUNTIME_STEP_GROUPS } from './engine/constants';
+import type { ActionConstructorEngineProps } from './engine/types';
 
-const RUNTIME_STEP_GROUPS: readonly RuntimeStepGroup[] = [
-  {
-    id: 'browser_session',
-    label: 'Browser & Session',
-    stepIds: [
-      'browser_preparation',
-      'browser_open',
-      'browser_close',
-      'cookie_accept',
-      'auth_check',
-      'auth_login',
-      'auth_manual',
-    ],
-  },
-  {
-    id: 'shared_listing',
-    label: 'Shared Listing',
-    stepIds: [
-      'sync_check',
-      'image_upload',
-      'title_fill',
-      'description_fill',
-      'price_set',
-      'category_select',
-      'publish',
-      'publish_verify',
-    ],
-  },
-  {
-    id: 'tradera',
-    label: 'Tradera',
-    stepIds: [
-      'duplicate_check',
-      'deep_duplicate_check',
-      'sell_page_open',
-      'image_cleanup',
-      'listing_format_select',
-      'attribute_select',
-      'shipping_set',
-      'overview_open',
-      'search_active',
-      'inspect_active',
-      'search_unsold',
-      'inspect_unsold',
-      'search_sold',
-      'inspect_sold',
-      'resolve_status',
-    ],
-  },
-  {
-    id: 'vinted',
-    label: 'Vinted',
-    stepIds: ['brand_fill', 'condition_set', 'size_set'],
-  },
-];
-
-const toNullableInteger = (value: string): number | null => {
-  const trimmed = value.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-
-  const parsed = Number.parseInt(trimmed, 10);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-const toNullableFloat = (value: string): number | null => {
-  const trimmed = value.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-
-  const parsed = Number.parseFloat(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-};
+import { toNullableInteger, toNullableFloat } from './engine/utils';
+import { useActionConstructorEngineLogic } from './engine/hooks';
 
 const toPermissionList = (value: string): string[] =>
   value
@@ -427,9 +351,13 @@ function ActionSequenceItem({
 // ---------------------------------------------------------------------------
 
 export function ActionConstructorEngine(): React.JSX.Element {
-  const [previewStep, setPreviewStep] = useState<PlaywrightStep | null>(null);
-  const [previewStepSet, setPreviewStepSet] = useState<PlaywrightStepSet | null>(null);
-  const [isActionCodePreviewOpen, setIsActionCodePreviewOpen] = useState(false);
+  const {
+    isCodePreviewOpen,
+    setIsCodePreviewOpen,
+    selectedActionBlock,
+    setSelectedActionBlock,
+    toggleCodePreview,
+  } = useActionConstructorEngineLogic();
   const {
     steps,
     stepSets,

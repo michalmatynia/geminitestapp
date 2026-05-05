@@ -67,22 +67,15 @@ const normalizeCaptureTextLine = (value: string): string =>
 const normalizeCaptureWordToken = (token: string): string =>
   token.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
 
-const lineContainsComparableHint = (line: string, hints: string[]): boolean => {
-  const normalizedLine = normalizeCaseResolverComparable(line);
-  if (!normalizedLine) return false;
-  const paddedLine = ` ${normalizedLine} `;
-  return hints.some((hint: string): boolean => {
-    const normalizedHint = normalizeCaseResolverComparable(hint);
-    if (!normalizedHint) return false;
-    return paddedLine.includes(` ${normalizedHint} `);
-  });
-};
+import { lineContainsComparableHint } from './cleanup/hint-utils';
+
+// ... (remaining code)
 
 const isLikelyCapturePersonNameLine = (line: string): boolean => {
   const tokens = line
     .split(/\s+/)
     .map((token: string): string => normalizeCaptureWordToken(token))
-    .filter(Boolean);
+    .filter((token: string): boolean => token.length > 0);
   if (tokens.length < 2 || tokens.length > 4) return false;
   if (tokens.some((token: string): boolean => /\d/.test(token))) return false;
 
@@ -93,7 +86,7 @@ const isLikelyCapturePersonNameLine = (line: string): boolean => {
     const first = token.charAt(0);
     if (first !== first.toLocaleUpperCase()) return false;
     const rest = token.slice(1);
-    if (!rest) return true;
+    if (rest.length === 0) return true;
     if (token === token.toLocaleUpperCase()) return true;
     return rest === rest.toLocaleLowerCase();
   });
@@ -101,32 +94,32 @@ const isLikelyCapturePersonNameLine = (line: string): boolean => {
 
 const isLikelyCaptureOrganizationLine = (line: string): boolean => {
   const trimmed = line.trim();
-  if (!trimmed) return false;
-  const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
+  if (trimmed.length === 0) return false;
+  const wordCount = trimmed.split(/\s+/).filter((token: string): boolean => token.length > 0).length;
   if (wordCount === 0 || wordCount > 10) return false;
   return lineContainsComparableHint(trimmed, CAPTURE_ORGANIZATION_HINTS);
 };
 
 const isLikelyCaptureAddressContinuationLine = (line: string): boolean => {
   const trimmed = line.trim();
-  if (!trimmed) return false;
+  if (trimmed.length === 0) return false;
   if (extractCaseResolverDocumentDate(trimmed)) return false;
   if (trimmed.length > 100) return false;
   const normalized = normalizeCaseResolverComparable(trimmed);
-  const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
+  const wordCount = trimmed.split(/\s+/).filter((token: string): boolean => token.length > 0).length;
   if (wordCount > 10) return false;
   if (CAPTURE_POSTAL_CODE_PATTERN.test(trimmed)) return true;
   if (/\d/.test(trimmed)) return true;
   if (CAPTURE_STREET_HINT_PATTERN.test(trimmed)) return true;
-  return CAPTURE_COUNTRY_HINTS.some((hint: string): boolean => normalized === hint);
+  return CAPTURE_COUNTRY_HINTS.some((hint: string): boolean => normalized !== null && normalized === hint);
 };
 
 const isLikelyCaptureHeaderPartyLine = (line: string): boolean => {
   const trimmed = line.trim();
-  if (!trimmed) return false;
+  if (trimmed.length === 0) return false;
   if (extractCaseResolverDocumentDate(trimmed)) return false;
   if (trimmed.length > 90) return false;
-  const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
+  const wordCount = trimmed.split(/\s+/).filter((token: string): boolean => token.length > 0).length;
   if (wordCount > 10) return false;
   if (isLikelyCaptureAddressContinuationLine(trimmed)) return true;
   if (CAPTURE_PARTY_LABEL_LINE_PATTERN.test(trimmed)) return true;
@@ -267,16 +260,16 @@ const collectCandidateAddressLines = (
   const city = candidate.city?.trim() ?? '';
   const country = candidate.country?.trim() ?? '';
 
-  if (street && streetNumber && houseNumber) {
+  if (street.length > 0 && streetNumber.length > 0 && houseNumber.length > 0) {
     pushLine(`${street} ${streetNumber}/${houseNumber}`);
   }
-  if (street && streetNumber) {
+  if (street.length > 0 && streetNumber.length > 0) {
     pushLine(`${street} ${streetNumber}`);
   }
-  if (street && houseNumber && !streetNumber) {
+  if (street.length > 0 && houseNumber.length > 0 && streetNumber.length === 0) {
     pushLine(`${street} ${houseNumber}`);
   }
-  if (postalCode && city) {
+  if (postalCode.length > 0 && city.length > 0) {
     pushLine(`${postalCode} ${city}`);
   }
   pushLine(country);
@@ -288,19 +281,19 @@ const collectCandidateAddressLines = (
   (candidate.rawText ?? '')
     .split(/\r?\n/)
     .map((line: string): string => line.trim())
-    .filter(Boolean)
+    .filter((line: string): boolean => line.length > 0)
     .forEach((line: string): void => {
       const normalizedLine = normalizeCaptureTextLine(line);
-      if (!normalizedLine) return;
-      if (normalizedStreet && normalizedLine.includes(normalizedStreet)) {
+      if (normalizedLine.length === 0) return;
+      if (normalizedStreet !== null && normalizedLine.includes(normalizedStreet)) {
         pushLine(line);
         return;
       }
-      if (normalizedPostalCode && normalizedLine.includes(normalizedPostalCode)) {
+      if (normalizedPostalCode !== null && normalizedLine.includes(normalizedPostalCode)) {
         pushLine(line);
         return;
       }
-      if (normalizedCountry && normalizedLine === normalizedCountry) {
+      if (normalizedCountry !== null && normalizedLine === normalizedCountry) {
         pushLine(line);
       }
     });

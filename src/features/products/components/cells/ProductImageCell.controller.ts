@@ -68,13 +68,41 @@ interface ProductNoteSaveOptions extends ProductNoteState {
   toast: Toast;
 }
 
+interface ProductNoteSaveRequest {
+  color: string;
+  hasChanges: boolean;
+  nextText: string;
+}
+
+function resolveProductNoteSaveRequest({
+  draftNoteText,
+  noteColor,
+  resolvedNote,
+}: Pick<
+  ProductNoteSaveOptions,
+  'draftNoteText' | 'noteColor' | 'resolvedNote'
+>): ProductNoteSaveRequest {
+  const nextText = draftNoteText.trim();
+  const currentText = resolvedNote?.text ?? '';
+
+  return {
+    color: resolvedNote?.color ?? noteColor,
+    hasChanges: nextText !== currentText,
+    nextText,
+  };
+}
+
 function useProductNoteState(note: ProductNoteValue): ProductNoteState {
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [draftNoteText, setDraftNoteText] = useState('');
   const [isSavingNote, setIsSavingNote] = useState(false);
   const resolvedNote = useMemo((): ResolvedProductNote | null => resolveProductNote(note), [note]);
   const noteColor = resolvedNote?.color ?? DEFAULT_NOTE_COLOR;
-  const hasDraftChanges = resolvedNote !== null && draftNoteText !== resolvedNote.text;
+  const trimmedDraftNoteText = draftNoteText.trim();
+  const hasDraftChanges =
+    resolvedNote === null
+      ? trimmedDraftNoteText.length > 0
+      : trimmedDraftNoteText !== resolvedNote.text;
 
   useEffect(() => {
     if (noteModalOpen === true && resolvedNote !== null) {
@@ -116,6 +144,7 @@ function useProductNoteSave({
   closeNoteModalIfRequested,
   draftNoteText,
   isSavingNote,
+  noteColor,
   productId,
   resolvedNote,
   setIsSavingNote,
@@ -126,24 +155,24 @@ function useProductNoteSave({
   return useCallback(
     async (options: SaveNoteOptions = {}): Promise<void> => {
       const closeAfter = options.closeAfter === true;
-      if (resolvedNote === null) {
-        closeNoteModalIfRequested(closeAfter);
-        return;
-      }
       if (isSavingNote === true) {
         closeNoteModalIfRequested(closeAfter);
         return;
       }
 
-      const nextText = draftNoteText.trim();
-      if (nextText === resolvedNote.text) {
+      const saveRequest = resolveProductNoteSaveRequest({
+        draftNoteText,
+        noteColor,
+        resolvedNote,
+      });
+      if (saveRequest.hasChanges === false) {
         closeNoteModalIfRequested(closeAfter);
         return;
       }
 
       try {
         setIsSavingNote(true);
-        const noteUpdate = buildProductNoteUpdate(nextText, resolvedNote.color);
+        const noteUpdate = buildProductNoteUpdate(saveRequest.nextText, saveRequest.color, resolvedNote !== null);
         const savedProduct = await updateProduct(productId, noteUpdate.payload);
         syncSavedProduct(savedProduct, noteUpdate.nextNotes);
         toast(noteUpdate.toastMessage, { variant: 'success' });
@@ -161,6 +190,7 @@ function useProductNoteSave({
       closeNoteModalIfRequested,
       draftNoteText,
       isSavingNote,
+      noteColor,
       productId,
       resolvedNote,
       setIsSavingNote,
@@ -201,6 +231,8 @@ export function useProductImageCellController({
   const cancelNoteModal = useCallback((): void => {
     if (noteState.resolvedNote !== null) {
       noteState.setDraftNoteText(noteState.resolvedNote.text);
+    } else {
+      noteState.setDraftNoteText('');
     }
     noteState.setNoteModalOpen(false);
   }, [noteState]);

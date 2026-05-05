@@ -10,94 +10,24 @@ import {
   runBrainChatCompletion,
 } from '@/shared/lib/ai-brain/server-runtime-client';
 
-const EVALUATOR_DEFAULT_SYSTEM_PROMPT =
-  'Evaluate the current page state and describe what you observe.';
-
-const INJECTOR_DEFAULT_SYSTEM_PROMPT = `You are a Playwright automation expert and code generator.
-
-You will receive a goal, context about the current page state, and optional prior evaluation results. Your job is to generate a focused Playwright TypeScript code snippet that progresses toward the goal.
-
-Rules:
-1. Respond ONLY with a valid JSON object — no markdown, no code fences, no extra text.
-2. JSON shape: { "code": string, "done": boolean, "reasoning": string }
-3. "code" must be a self-contained async Playwright snippet. Available variable: page (Playwright Page).
-4. "done" must be true if the goal is achieved or can be achieved by executing this code, false if more iterations will be needed.
-5. "reasoning" must briefly explain what the code does and what remains if done=false.
-6. Do not use require() or import statements. Do not wrap in async function declarations.
-7. Keep code minimal and targeted. One clear action per iteration.
-8. Read runtime['aiEvaluatorOutput'] to access the last AI Evaluator analysis.
-9. When a screenshot is provided, use it to understand the current visual state of the page before writing code.
-10. When "Prior execution error" is present, your previous code threw that error. Fix the approach — do NOT repeat the same failing code.`;
-
-export type PlaywrightStepEvaluateOptions = {
-  inputSource: 'screenshot' | 'html' | 'text_content' | 'selector_text';
-  data: string;
-  systemPrompt?: string | null | undefined;
-  capability?: AiBrainCapabilityKey | null | undefined;
-  defaultModelId?: string | null | undefined;
-};
-
-export type PlaywrightStepEvaluateResult = {
-  output: string;
-  modelId: string;
-};
-
-export type PlaywrightStructuredScreenshotEvaluationOptions<TParsed> = {
-  screenshotBase64: string | null;
-  systemPrompt: string;
-  promptPayload?: unknown;
-  responseSchema: z.ZodType<TParsed>;
-  capability?: AiBrainCapabilityKey | null | undefined;
-  defaultModelId?: string | null | undefined;
-};
-
-export type PlaywrightStructuredScreenshotEvaluationResult<TParsed> = {
-  parsed: TParsed | null;
-  rawOutput: string | null;
-  modelId: string | null;
-  error: string | null;
-};
-
-export type PlaywrightObservationArtifacts = {
-  html?: ((key: string) => Promise<unknown>) | null | undefined;
-  file?: ((
-    key: string,
-    data: Buffer,
-    options: { extension: string; mimeType: string; kind: string }
-  ) => Promise<string | null | undefined>) | null | undefined;
-  json?: ((key: string, data: unknown) => Promise<unknown>) | null | undefined;
-};
-
-export type PlaywrightCapturedPageObservation = {
-  currentUrl: string | null;
-  pageTitle: string | null;
-  pageTextSnippet: string | null;
-  screenshotBase64: string | null;
-  screenshotArtifactName: string | null;
-  htmlArtifactName: string | null;
-  fingerprint: string;
-  observedAt: string;
-};
+import {
+  EVALUATOR_DEFAULT_SYSTEM_PROMPT,
+  INJECTOR_DEFAULT_SYSTEM_PROMPT,
+} from './ai-step-service/constants';
+import type {
+  PlaywrightStepEvaluateOptions,
+  PlaywrightStepEvaluateResult,
+  PlaywrightStructuredScreenshotEvaluationOptions,
+  PlaywrightStructuredScreenshotEvaluationResult,
+  PlaywrightObservationArtifacts,
+  PlaywrightCapturedPageObservation,
+} from './ai-step-service/types';
 
 export type PlaywrightVerificationInjectionConfig<TReview> = {
-  /**
-   * Return true to trigger the injector after this evaluation result.
-   * The current page capture is provided as a second argument for URL/screenshot-based decisions.
-   */
   shouldInject: (review: TReview, capture: PlaywrightCapturedPageObservation) => boolean;
-  /**
-   * Natural-language goal for the AI code injector, or a function deriving it from the review
-   * and current page capture.
-   */
   goal: string | ((review: TReview, capture: PlaywrightCapturedPageObservation) => string);
-  /** Optional system prompt override for the injector */
   systemPrompt?: string | null | undefined;
-  /** Maximum injector iterations per observation (default: 3) */
   maxIterations?: number | null | undefined;
-  /**
-   * Serialize the evaluation result into a text context string for the injector (default: JSON).
-   * The current page capture is provided as a second argument.
-   */
   buildEvaluatorContext?: ((review: TReview, capture: PlaywrightCapturedPageObservation) => string) | null | undefined;
   /**
    * When true, re-captures the page state and re-runs the evaluate function after injection
@@ -474,100 +404,9 @@ async function saveIterationArtifacts(
   return { screenshot: iterScreenshotArtifactName, html: iterHtmlArtifactName };
 }
 
-async function runPlaywrightIterationEvaluation(
-  options: {
-    iterationsRun: number;
-    maxIterations: number;
-    screenshotBase64: string | null;
-    dom: string | null;
-    activeUrl: string;
-    config: PlaywrightVerificationInjectionConfig<any>;
-  }
-): Promise<{ done: boolean; context: string; reasoning: string }> {
-  if (typeof options.config.evaluateCapture !== 'function') {
-    return { done: false, context: '', reasoning: '' };
-  }
+import { runPlaywrightIterationEvaluation } from './ai-step-service/evaluator';
+import { performInjectionIteration, executeInjectionIterationCode } from './ai-step-service/injector';
 
-  const iterEval = await options.config.evaluateCapture({
-    screenshotBase64: options.screenshotBase64,
-    dom: options.dom,
-    url: options.activeUrl,
-    iteration: options.iterationsRun,
-    maxIterations: options.maxIterations,
-  });
-
-  return {
-    done: iterEval.done ?? false,
-    context: iterEval.context ?? '',
-    reasoning: (iterEval.reasoning ?? '').trim(),
-  };
-}
-
-async function performInjectionIteration<TReview>(
-  options: {
-    iterationsRun: number;
-    maxIterations: number;
-    activeUrl: string;
-    dom: string | null;
-    screenshotBase64: string | null;
-    evaluatorContext: string;
-    iterationFreshContext: string | null;
-    priorInjectorReasoning: string | null;
-    priorExecutionError: string | null;
-    useHistory: boolean;
-    conversationHistory: PlaywrightInjectionConversationMessage[];
-    config: PlaywrightVerificationInjectionConfig<TReview>;
-    review: TReview;
-    capture: PlaywrightCapturedPageObservation;
-  }
-): Promise<PlaywrightInjectionResult> {
-  const isContinuation = options.useHistory && options.conversationHistory.length > 0;
-  const goal = typeof options.config.goal === 'function' 
-    ? options.config.goal(options.review, options.capture) 
-    : options.config.goal;
-
-  return injectCodeWithAI({
-    goal,
-    systemPrompt: options.config.systemPrompt ?? null,
-    context: {
-      iteration: options.iterationsRun,
-      maxIterations: options.maxIterations,
-      url: options.activeUrl,
-      dom: options.dom,
-      screenshotBase64: options.screenshotBase64,
-      priorEvaluation: isContinuation ? null : options.evaluatorContext,
-      priorInjectorReasoning: isContinuation ? null : options.priorInjectorReasoning,
-      freshEvaluation: options.iterationFreshContext,
-      priorExecutionError: options.priorExecutionError,
-      isContinuation,
-    },
-    conversationHistory: options.useHistory ? options.conversationHistory : null,
-  });
-}
-
-async function executeInjectionIterationCode(
-  options: {
-    page: Page;
-    code: string;
-    shouldWaitForNavigation: boolean;
-    iterationDelayMs: number;
-  }
-): Promise<string | null> {
-  if (options.code === '') return null;
-  
-  try {
-    await executeInjectedPlaywrightCode(options.page, options.code);
-    if (options.shouldWaitForNavigation) {
-      await options.page.waitForLoadState('domcontentloaded', { timeout: 10000 }).catch(() => {
-        // timeout is fine, we just want to give it a chance to start loading
-      });
-    }
-    await new Promise((r) => setTimeout(r, options.iterationDelayMs));
-    return null;
-  } catch (err) {
-    return err instanceof Error ? err.message : String(err ?? 'Unknown error');
-  }
-}
 
 async function runPlaywrightVerificationInjectionLoop<TReview>(
   page: Page,

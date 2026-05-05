@@ -49,9 +49,7 @@ import type {
 import { resolveJobBoardOriginLabel } from '../job-board-origin';
 import { upsertFilemakerCampaignSettingValue } from './campaign-settings-store';
 
-type ScrapedCompanyCandidate = {
-  organization: FilemakerOrganization;
-};
+import type { ScrapedCompanyCandidate, ApplyImportInput, CentralizedScrapeResult, FilemakerJobBoardScrapeRunOptions, ClassificationPillBuildResult, ScrapeProgressHandlers } from "./filemaker-job-board-scrape/types";
 
 type ApplyImportInput = {
   database: FilemakerDatabase;

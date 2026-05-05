@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import type { ChangeEvent, KeyboardEvent, JSX } from 'react';
+import { useState, type ChangeEvent, type KeyboardEvent, type JSX, type MouseEvent } from 'react';
 
 import { AppModal } from '@/shared/ui/feedback.public';
 import { FormActions } from '@/shared/ui/FormActions';
@@ -10,6 +10,7 @@ import { cn } from '@/shared/utils/ui-utils';
 
 import {
   BLUR_PLACEHOLDER,
+  DEFAULT_NOTE_COLOR,
   hasImageUrl,
   type ResolvedProductNote,
 } from './ProductImageCell.helpers';
@@ -31,30 +32,49 @@ interface ProductNoteModalProps {
   productName: string;
 }
 
+const NOTE_PEEK_EDGE_RATIO = 0.5;
+const PRODUCT_THUMBNAIL_SIZE = 64;
+
+function isPointerOnThumbnailNoteSide(event: MouseEvent<HTMLDivElement>): boolean {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const width = rect.width > 0 ? rect.width : PRODUCT_THUMBNAIL_SIZE;
+  return event.clientX - rect.left <= width * NOTE_PEEK_EDGE_RATIO;
+}
+
 function ProductNoteHandle({
   controller,
+  isPeekActive,
+  noteColor,
   productName,
   resolvedNote,
 }: {
   controller: PreviewController;
+  isPeekActive: boolean;
+  noteColor: string;
   productName: string;
-  resolvedNote: ResolvedProductNote;
+  resolvedNote: ResolvedProductNote | null;
 }): JSX.Element {
+  const isExistingNote = resolvedNote !== null;
+  const ariaLabel = isExistingNote ? `View note for ${productName}` : `Add note for ${productName}`;
+  const noteText = resolvedNote?.text ?? '';
+  const resolvedNoteColor = resolvedNote?.color ?? noteColor;
+
   return (
     <button
       type='button'
-      aria-label={`View note for ${productName}`}
-      title={`View note for ${productName}`}
+      aria-label={ariaLabel}
+      title={ariaLabel}
       aria-haspopup='dialog'
       className={cn(
-        'absolute left-0 top-1/2 z-0 h-11 w-8 -translate-y-1/2 -translate-x-[12px] cursor-pointer rounded-l-sm rounded-r-md border border-black/10',
-        'shadow-[0_10px_24px_rgba(15,23,42,0.22)] transition-[width,transform,box-shadow] duration-300 ease-in-out',
-        'hover:w-11 focus-visible:w-11',
-        'hover:-translate-x-[16px] focus-visible:-translate-x-[16px]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+        'absolute left-0 top-1/2 z-0 h-11 w-11 -translate-y-1/2 translate-x-0 cursor-pointer rounded-l-sm rounded-r-md border border-black/10',
+        'shadow-[0_8px_18px_rgba(15,23,42,0.14)] transition-[transform,box-shadow] duration-300 ease-in-out',
+        'focus-visible:-translate-x-9 focus-visible:shadow-[0_12px_30px_rgba(15,23,42,0.28)]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950',
+        isPeekActive && '-translate-x-9 shadow-[0_12px_30px_rgba(15,23,42,0.28)]'
       )}
-      style={{ backgroundColor: resolvedNote.color }}
+      style={{ backgroundColor: resolvedNoteColor }}
       onMouseEnter={(event) => {
+        if (resolvedNote === null) return;
         controller.showPreview({
           kind: 'note',
           productName,
@@ -66,7 +86,7 @@ function ProductNoteHandle({
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        controller.openNoteModal(resolvedNote.text);
+        controller.openNoteModal(noteText);
       }}
     />
   );
@@ -87,7 +107,7 @@ function ProductImagePreviewTrigger({
 
   return (
     <div
-      className='group/image relative z-10 h-16 w-16'
+      className='group/image relative z-10 h-16 w-16 overflow-hidden rounded-md bg-slate-950'
       onMouseEnter={(event) => {
         if (previewImageUrl === null) return;
         showPreview({
@@ -132,22 +152,36 @@ export function ProductImageFrame({
   updatePreview,
 }: ProductImageFrameProps): JSX.Element {
   const controller = { hidePreview, openNoteModal, showPreview, unoptimized, updatePreview };
+  const [isNotePeekActive, setIsNotePeekActive] = useState(false);
+  const noteColor = resolvedNote?.color ?? DEFAULT_NOTE_COLOR;
+
+  const updateNotePeek = (event: MouseEvent<HTMLDivElement>): void => {
+    const nextIsNotePeekActive = isPointerOnThumbnailNoteSide(event);
+    setIsNotePeekActive((previous) =>
+      previous === nextIsNotePeekActive ? previous : nextIsNotePeekActive
+    );
+  };
 
   return (
     <div
-      className='relative inline-flex h-16 w-16 items-center justify-end overflow-visible'
-      onMouseLeave={hidePreview}
+      className='isolate relative inline-flex h-16 w-16 items-center justify-end overflow-visible'
+      onMouseEnter={updateNotePeek}
+      onMouseLeave={() => {
+        setIsNotePeekActive(false);
+        hidePreview();
+      }}
       onMouseMove={(event) => {
+        updateNotePeek(event);
         updatePreview(event);
       }}
     >
-      {resolvedNote !== null ? (
-        <ProductNoteHandle
-          controller={controller}
-          productName={productName}
-          resolvedNote={resolvedNote}
-        />
-      ) : null}
+      <ProductNoteHandle
+        controller={controller}
+        isPeekActive={isNotePeekActive}
+        noteColor={noteColor}
+        productName={productName}
+        resolvedNote={resolvedNote}
+      />
       <ProductImagePreviewTrigger
         imageUrl={imageUrl}
         productName={productName}

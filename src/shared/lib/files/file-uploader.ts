@@ -1,3 +1,15 @@
+/**
+ * File Upload Service
+ * 
+ * Server-side file upload handling and processing.
+ * Provides:
+ * - Secure file upload with validation and size limits
+ * - Image processing and optimization
+ * - Multiple storage backend support (local, cloud)
+ * - File metadata management and database integration
+ * - Temporary file cleanup and error handling
+ */
+
 import 'server-only';
 
 import { randomUUID } from 'crypto';

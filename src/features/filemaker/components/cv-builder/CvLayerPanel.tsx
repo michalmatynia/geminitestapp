@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/public';
+import { MasterFolderTreeViewport } from '@/shared/lib/foldertree/public';
 
 import type { CvBlock } from './cv-block-model';
 import { useCvLayerPanel } from './useCvLayerPanel';
@@ -22,7 +22,7 @@ export function CvLayerPanel({
   onSelectBlock,
   className,
 }: CvLayerPanelProps): React.JSX.Element {
-  const { controller, runtime } = useCvLayerPanel({
+  const { tree, runtime } = useCvLayerPanel({
     blocks,
     onChange,
     selectedBlockId,
@@ -34,11 +34,10 @@ export function CvLayerPanel({
       <div className='text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
         CV layers
       </div>
-      <FolderTreeViewportV2
-        controller={controller}
+      <MasterFolderTreeViewport
+        tree={tree}
         enableDnd
         emptyLabel='Add a section to start.'
-        rootDropUi={{ enabled: true, label: 'Drop CV section here' }}
         runtime={runtime}
       />
     </div>

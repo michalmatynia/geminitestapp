@@ -17,31 +17,60 @@ vi.mock('@/shared/lib/foldertree/v2', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/foldertree/v2')>();
   return {
     ...actual,
-    createMasterFolderTreeTransactionAdapter: ({
-      onApply,
-    }: {
-      onApply?: (tx: {
-        nextNodes: unknown[];
-        previousNodes: unknown[];
-        operation: { type: string };
-      }) => Promise<void> | void;
-    }) => ({
-      prepare: async (tx: unknown) => ({ tx, preparedAt: Date.now() }),
-      apply: async (tx: {
-        nextNodes: unknown[];
-        previousNodes: unknown[];
-        operation: { type: string };
-      }) => {
-        await onApply?.(tx);
-        return { tx, appliedAt: Date.now() };
-      },
-      commit: async () => {},
-      rollback: async () => {},
-    }),
     useMasterFolderTreeShell: (options: unknown) => {
       latestTreeOptions = options;
       return useMasterFolderTreeShellMock(options);
     },
+    useMasterFolderTreeViewModel: (options: unknown) => {
+      latestTreeOptions = options;
+      const shell = useMasterFolderTreeShellMock(options);
+
+      return {
+        ...shell,
+        searchState: {
+          isActive: false,
+          results: [],
+          matchNodeIds: new Set(),
+        },
+      };
+    },
+    MasterFolderTreeViewport: ({
+      tree,
+      renderNode,
+    }: {
+      tree: {
+        controller: {
+          nodes: Array<{ id: string; name: string; parentId: string | null }>;
+        };
+      };
+      renderNode: (input: {
+        node: { id: string; name: string; parentId: string | null };
+        depth: number;
+        hasChildren: boolean;
+        isExpanded: boolean;
+        isSelected: boolean;
+        isDragging: boolean;
+        select: () => void;
+        toggleExpand: () => void;
+      }) => React.ReactNode;
+    }) => (
+      <div>
+        {tree.controller.nodes.map((node) => (
+          <div key={node.id}>
+            {renderNode({
+              node,
+              depth: node.parentId ? 1 : 0,
+              hasChildren: tree.controller.nodes.some((candidate) => candidate.parentId === node.id),
+              isExpanded: true,
+              isSelected: false,
+              isDragging: false,
+              select: () => {},
+              toggleExpand: () => {},
+            })}
+          </div>
+        ))}
+      </div>
+    ),
     FolderTreeViewportV2: ({
       controller,
       renderNode,

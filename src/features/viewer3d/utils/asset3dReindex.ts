@@ -80,8 +80,7 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
     };
   }
 
-  const createdIds: string[] = [];
-  for (const filename of missing) {
+  const createdIds: string[] = await Promise.all(missing.map(async (filename) => {
     const ext = `.${filename.split('.').pop() ?? ''}`.toLowerCase() as Supported3DExtension;
     const format = SUPPORTED_3D_FORMATS[ext];
     const stat = await fs.stat(path.join(assets3dDiskDir, filename));
@@ -100,8 +99,8 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
       metadata: {},
       isPublic: false,
     });
-    createdIds.push(record.id);
-  }
+    return record.id;
+  }));
 
   return {
     diskFiles: diskFiles.length,

@@ -80,6 +80,12 @@ vi.mock('@/shared/lib/document-editor/components/DocumentWysiwygEditor', () => (
   ),
 }));
 
+vi.mock('@/shared/lib/oauth/components/GoogleOAuthCredentialsSettings', () => ({
+  GoogleOAuthCredentialsSettings: ({ id }: { id?: string }) => (
+    <section id={id} data-testid='google-oauth-credentials-settings' />
+  ),
+}));
+
 vi.mock('@/shared/ui/FolderTreePanel', () => ({
   FolderTreePanel: ({
     header,
@@ -96,6 +102,19 @@ vi.mock('@/shared/ui/FolderTreePanel', () => ({
 }));
 
 vi.mock('@/shared/lib/foldertree/public', () => ({
+  useMasterFolderTreeViewModel: ({
+    nodes,
+    selectedNodeId,
+  }: {
+    nodes: Array<Record<string, unknown>>;
+    selectedNodeId?: string | null;
+  }) => ({
+    controller: { nodes, selectedNodeId: selectedNodeId ?? null },
+    appearance: { rootDropUi: null },
+    capabilities: { multiSelect: {}, search: {} },
+    searchState: { isActive: false, results: [], matchNodeIds: new Set() },
+    viewport: { scrollToNodeRef: { current: null } },
+  }),
   useMasterFolderTreeShell: ({
     nodes,
     selectedNodeId,
@@ -107,6 +126,53 @@ vi.mock('@/shared/lib/foldertree/public', () => ({
     appearance: { rootDropUi: null },
     viewport: { scrollToNodeRef: { current: null } },
   }),
+  MasterFolderTreeViewport: ({
+    tree,
+    renderNode,
+    emptyLabel,
+  }: {
+    tree: {
+      controller: {
+        nodes: Array<Record<string, unknown>>;
+        selectedNodeId?: string | null;
+      };
+    };
+    renderNode: (input: {
+      node: Record<string, unknown>;
+      depth: number;
+      hasChildren: boolean;
+      isExpanded: boolean;
+      isSelected: boolean;
+      select: (event: React.MouseEvent<HTMLButtonElement>) => void;
+      toggleExpand: () => void;
+    }) => React.ReactNode;
+    emptyLabel?: string;
+  }) => {
+    const nodes = tree.controller.nodes ?? [];
+    if (nodes.length === 0) return <div>{emptyLabel ?? 'No nodes'}</div>;
+    return (
+      <div>
+        {nodes.map((node) => {
+          const nodeId = String(node['id'] ?? '');
+          const parentId = node['parentId'];
+          const hasChildren = nodes.some((entry) => entry['parentId'] === nodeId);
+          return (
+            <div key={nodeId}>
+              {renderNode({
+                node,
+                depth: parentId ? 1 : 0,
+                hasChildren,
+                isExpanded: true,
+                isSelected: tree.controller.selectedNodeId === nodeId,
+                select: () => {},
+                toggleExpand: () => {},
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+  },
   FolderTreeViewportV2: ({
     controller,
     renderNode,

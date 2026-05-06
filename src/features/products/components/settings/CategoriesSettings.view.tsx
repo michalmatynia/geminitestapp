@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
-import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/public';
+import { MasterFolderTreeViewport } from '@/shared/lib/foldertree/public';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import { CompactEmptyState, EmptyState } from '@/shared/ui/empty-state';
@@ -100,10 +100,9 @@ const CategoryTreePanelContent = ({
       />
     ) : (
       <CategoryTreeNodeRuntimeProvider value={controller.treeShell.runtimeValue}>
-        <FolderTreeViewportV2
-          controller={controller.treeShell.controller}
+        <MasterFolderTreeViewport
+          tree={controller.treeShell.tree}
           className='space-y-0.5'
-          rootDropUi={controller.treeShell.rootDropUi}
           canStartDrag={controller.treeShell.canStartCategoryDrag}
           resolveDropPosition={controller.treeShell.resolveCategoryDropPosition}
           renderNode={(nodeProps) => <CategoryTreeNodeRenderer {...nodeProps} />}

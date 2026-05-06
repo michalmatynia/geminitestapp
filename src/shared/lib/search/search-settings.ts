@@ -1,3 +1,15 @@
+/**
+ * Search Settings Configuration
+ * 
+ * Configuration management for external search API providers.
+ * Provides:
+ * - Search provider API key management
+ * - Multiple search engine support (Brave, Google, SerpAPI)
+ * - Secure settings retrieval for search credentials
+ * - Default API endpoint configuration
+ * - Search provider settings validation
+ */
+
 import 'server-only';
 
 import { readSecretSettingValue } from '@/shared/lib/settings/secret-settings';

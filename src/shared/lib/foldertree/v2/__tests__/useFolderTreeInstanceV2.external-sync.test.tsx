@@ -104,6 +104,51 @@ describe('useFolderTreeInstanceV2 external sync replace', () => {
     expect(commit).not.toHaveBeenCalled();
   });
 
+  it('applies metadata and icon changes during external sync', async () => {
+    const initialNodes: MasterTreeNode[] = [
+      {
+        ...buildNode('folder-a', 'Folder A'),
+        icon: 'folder',
+        metadata: {
+          status: 'draft',
+          nested: {
+            count: 1,
+          },
+        },
+      },
+    ];
+    const nextNodes: MasterTreeNode[] = [
+      {
+        ...buildNode('folder-a', 'Folder A'),
+        icon: 'folder-open',
+        metadata: {
+          nested: {
+            count: 2,
+          },
+          status: 'published',
+        },
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useFolderTreeInstanceV2({
+        initialNodes,
+      })
+    );
+
+    await act(async () => {
+      await result.current.replaceNodes(nextNodes, 'external_sync');
+    });
+
+    expect(result.current.nodes[0]?.icon).toBe('folder-open');
+    expect(result.current.nodes[0]?.metadata).toEqual({
+      nested: {
+        count: 2,
+      },
+      status: 'published',
+    });
+  });
+
   it('routes focused instance to runtime when selection changes', async () => {
     const initialNodes = [buildNode('folder-a', 'Folder A')];
     const runtime = createTestRuntime();

@@ -1,3 +1,20 @@
+/**
+ * settings-graph.ts
+ *
+ * Sanitises and validates a raw CaseResolver prompt graph (the AI-paths node
+ * canvas used to compose document prompts). Called whenever a graph is loaded
+ * from persisted JSON to ensure structural integrity before it reaches the UI
+ * or the compiler.
+ *
+ * Responsibilities:
+ *  - Sanitize nodeMeta and edgeMeta, coercing unknown values to safe defaults.
+ *  - Validate that text/explanatory nodes use the canonical port layout and
+ *    throw a `validationError` when they don't (hard contract violation).
+ *  - Drop edges that reference non-existent nodes or use invalid port names.
+ *  - Sanitize per-node file-link, source-file, and asset-ID maps, discarding
+ *    entries whose node IDs are no longer in the graph.
+ *  - Validate the optional documentDropNode type.
+ */
 import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS, DEFAULT_CASE_RESOLVER_EDGE_META, DEFAULT_CASE_RESOLVER_NODE_META, DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID } from '@/shared/contracts/case-resolver/constants';
 import { type AiNode, type CaseResolverEdge, type CaseResolverEdgeMeta, type CaseResolverGraph, type CaseResolverNodeMeta, type CaseResolverPdfExtractionPresetId } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
@@ -6,6 +23,12 @@ import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
+/**
+ * Sanitises the raw nodeMeta map. For each entry:
+ *  - Coerces role, quoteMode to known enum values (defaults on unknown).
+ *  - Validates textColor as a 3- or 6-digit hex string (drops invalid values).
+ *  - Falls back to DEFAULT_CASE_RESOLVER_NODE_META for all boolean flags.
+ */
 const sanitizeNodeMeta = (
   source: Record<string, CaseResolverNodeMeta> | null | undefined
 ): Record<string, CaseResolverNodeMeta> => {
@@ -67,6 +90,7 @@ const sanitizeNodeMeta = (
   return next;
 };
 
+// Sanitises the raw edgeMeta map, coercing joinMode to a known value.
 const sanitizeEdgeMeta = (
   source: Record<string, CaseResolverEdgeMeta> | null | undefined
 ): Record<string, CaseResolverEdgeMeta> => {
@@ -86,6 +110,8 @@ const sanitizeEdgeMeta = (
   return next;
 };
 
+// Sanitises the documentFileLinksByNode map, keeping only entries whose node
+// ID is still present in the graph and deduplicating the file-ID arrays.
 const sanitizeDocumentFileLinksByNode = (
   source: unknown,
   validNodeIds: Set<string>
@@ -111,6 +137,8 @@ const sanitizeDocumentFileLinksByNode = (
   return result;
 };
 
+// Sanitises the documentSourceFileIdByNode map (one source file per node).
+// Sanitises the documentSourceFileIdByNode map (one source file per node).
 const sanitizeDocumentSourceFileIdByNode = (
   source: unknown,
   validNodeIds: Set<string>
@@ -131,6 +159,7 @@ const sanitizeDocumentSourceFileIdByNode = (
   return result;
 };
 
+// Sanitises the nodeFileAssetIdByNode map (one asset file per node).
 const sanitizeNodeFileAssetIdByNode = (
   source: unknown,
   validNodeIds: Set<string>
@@ -151,6 +180,11 @@ const sanitizeNodeFileAssetIdByNode = (
   return result;
 };
 
+/**
+ * Enforces that all text/explanatory nodes use the canonical prompt node type
+ * and port layout. Throws a `validationError` when a node violates the
+ * contract (e.g. a text_note node with type 'template' or wrong ports).
+ */
 const enforceCanonicalDocumentPromptNodes = (
   nodes: AiNode[],
   nodeMeta: Record<string, CaseResolverNodeMeta>,
@@ -198,6 +232,12 @@ const enforceCanonicalDocumentPromptNodes = (
     return node;
   });
 
+/**
+ * Validates that edges connected to text/explanatory nodes use only the
+ * canonical port names. Drops edges with invalid port references rather than
+ * throwing (soft validation — the graph remains usable but the bad edge is
+ * silently removed).
+ */
 const validateTextNodeEdgePorts = (
   edges: CaseResolverEdge[],
   textNodeIds: Set<string>,
@@ -230,6 +270,11 @@ const validateTextNodeEdgePorts = (
   });
 };
 
+/**
+ * Main entry point: sanitises and validates a raw graph object.
+ * Throws `validationError` on hard contract violations (wrong node type, wrong
+ * ports). Logs and drops malformed edges. Returns a fully-sanitised graph.
+ */
 export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const graphRecord = graph && typeof graph === 'object' ? (graph as Record<string, unknown>) : {};
   const rawNodes = Array.isArray(graphRecord['nodes']) ? (graphRecord['nodes'] as AiNode[]) : [];
@@ -340,6 +385,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   };
 };
 
+// Returns an empty graph with all required fields initialised to safe defaults.
 export const createEmptyCaseResolverGraph = (): CaseResolverGraph => ({
   nodes: [],
   edges: [],

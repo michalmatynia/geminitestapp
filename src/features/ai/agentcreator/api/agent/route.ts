@@ -138,146 +138,100 @@ async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       'Agent Runtime is disabled in AI Brain. Enable it in /admin/brain?tab=routing before queuing runs.'
     );
   }
-  let body: {
-    prompt?: string;
-    model?: string;
-    personaId?: string;
-    tools?: string[];
-    searchProvider?: string;
-    agentBrowser?: string;
-    runHeadless?: boolean;
-    ignoreRobotsTxt?: boolean;
-    requireHumanApproval?: boolean;
-    contextRegistry?: unknown;
-    planSettings?: {
-      maxSteps?: number;
-      maxStepAttempts?: number;
-      maxReplanCalls?: number;
-      replanEverySteps?: number;
-      maxSelfChecks?: number;
-      loopGuardThreshold?: number;
-      loopBackoffBaseMs?: number;
-      loopBackoffMaxMs?: number;
-    };
-  };
+const clampInt = (value: unknown, min: number, max: number, fallback: number): number => {
+    const numeric = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+    if (!Number.isFinite(numeric)) return fallback;
+    return Math.min(Math.max(Math.round(numeric), min), max);
+};
 
-  try {
-    body = (await req.json()) as typeof body;
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    throw badRequestError('Invalid JSON payload');
-  }
-
-  if (!body.prompt?.trim()) {
-    throw badRequestError('Prompt is required.');
-  }
-  let contextRegistry = null;
-  if (body.contextRegistry !== undefined) {
-    const parsedContextRegistry = contextRegistryConsumerEnvelopeSchema.safeParse(
-      body.contextRegistry
-    );
-    if (!parsedContextRegistry.success) {
-      throw badRequestError('Invalid context registry payload.');
-    }
-    contextRegistry = await resolveAgentRuntimeContextRegistryEnvelope(parsedContextRegistry.data);
-  }
-  const normalizePlanSettings = (input?: {
-    maxSteps?: number;
-    maxStepAttempts?: number;
-    maxReplanCalls?: number;
-    replanEverySteps?: number;
-    maxSelfChecks?: number;
-    loopGuardThreshold?: number;
-    loopBackoffBaseMs?: number;
-    loopBackoffMaxMs?: number;
-  }) => {
+const normalizePlanSettings = (input: any) => {
     if (!input) return null;
-    const clampInt = (value: unknown, min: number, max: number, fallback: number) => {
-      const numeric =
-        typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
-      if (!Number.isFinite(numeric)) return fallback;
-      return Math.min(Math.max(Math.round(numeric), min), max);
-    };
     return {
-      maxSteps: clampInt(input.maxSteps, 1, 20, 12),
-      maxStepAttempts: clampInt(input.maxStepAttempts, 1, 5, 2),
-      maxReplanCalls: clampInt(input.maxReplanCalls, 0, 6, 2),
-      replanEverySteps: clampInt(input.replanEverySteps, 1, 10, 2),
-      maxSelfChecks: clampInt(input.maxSelfChecks, 0, 8, 4),
-      loopGuardThreshold: clampInt(input.loopGuardThreshold, 1, 5, 2),
-      loopBackoffBaseMs: clampInt(input.loopBackoffBaseMs, 250, 20000, 2000),
-      loopBackoffMaxMs: clampInt(input.loopBackoffMaxMs, 1000, 60000, 12000),
+        maxSteps: clampInt(input.maxSteps, 1, 20, 12),
+        maxStepAttempts: clampInt(input.maxStepAttempts, 1, 5, 2),
+        maxReplanCalls: clampInt(input.maxReplanCalls, 0, 6, 2),
+        replanEverySteps: clampInt(input.replanEverySteps, 1, 10, 2),
+        maxSelfChecks: clampInt(input.maxSelfChecks, 0, 8, 4),
+        loopGuardThreshold: clampInt(input.loopGuardThreshold, 1, 5, 2),
+        loopBackoffBaseMs: clampInt(input.loopBackoffBaseMs, 250, 20000, 2000),
+        loopBackoffMaxMs: clampInt(input.loopBackoffMaxMs, 1000, 60000, 12000),
     };
-  };
+};
 
-  const planSettings = normalizePlanSettings(body.planSettings);
+async function handleAgentCreate(
+    req: NextRequest, 
+    chatbotAgentRun: any, 
+    logInfo: (msg: string, data: any) => void
+): Promise<Response> {
+    const body = await req.json().catch(() => { throw badRequestError('Invalid JSON payload'); });
+    if (!body.prompt?.trim()) throw badRequestError('Prompt is required.');
 
-  if (DEBUG_CHATBOT) {
-    void ErrorSystem.logInfo('Request', {
-      service: 'agent-api',
-      promptLength: body.prompt.trim().length,
-      model: body.model?.trim() || null,
-      personaId: body.personaId?.trim() || null,
-      tools: body.tools ?? [],
-      searchProvider: body.searchProvider?.trim() || null,
-      agentBrowser: body.agentBrowser?.trim() || null,
-      runHeadless: body.runHeadless ?? true,
-      ignoreRobotsTxt: body.ignoreRobotsTxt ?? false,
-      requireHumanApproval: body.requireHumanApproval ?? false,
-      contextRegistryRefCount: contextRegistry?.refs.length ?? 0,
-      contextRegistryDocumentCount: contextRegistry?.resolved?.documents.length ?? 0,
-      planSettings,
+    let contextRegistry = null;
+    if (body.contextRegistry !== undefined) {
+        const parsed = contextRegistryConsumerEnvelopeSchema.safeParse(body.contextRegistry);
+        if (!parsed.success) throw badRequestError('Invalid context registry payload.');
+        contextRegistry = await resolveAgentRuntimeContextRegistryEnvelope(parsed.data);
+    }
+
+    const planSettings = normalizePlanSettings(body.planSettings);
+    const hasPreferenceOverrides = body.ignoreRobotsTxt !== undefined || body.requireHumanApproval !== undefined;
+    const shouldAttachPlanState = Boolean(planSettings || hasPreferenceOverrides || contextRegistry);
+
+    const run = await chatbotAgentRun.create<AgentRunCreateRecord>({
+        data: {
+            prompt: body.prompt.trim(),
+            model: body.model?.trim() || null,
+            personaId: body.personaId?.trim() || null,
+            tools: body.tools ?? [],
+            searchProvider: body.searchProvider?.trim() || null,
+            agentBrowser: body.agentBrowser?.trim() || null,
+            runHeadless: body.runHeadless ?? true,
+            logLines: [`[${new Date().toISOString()}] Run queued.`],
+            ...(shouldAttachPlanState
+                ? {
+                    planState: {
+                        ...(planSettings ? { settings: planSettings } : {}),
+                        preferences: {
+                            ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
+                            requireHumanApproval: Boolean(body.requireHumanApproval),
+                        },
+                        ...(contextRegistry ? { contextRegistry } : {}),
+                    } as InputJsonValue,
+                }
+                : {}),
+        },
     });
+
+    await logAgentAudit(run.id, 'info', 'Agent run queued.', {
+        model: run.model,
+        tools: run.tools,
+        searchProvider: run.searchProvider,
+        agentBrowser: run.agentBrowser,
+    });
+    startAgentQueue();
+    return NextResponse.json({ runId: run.id, status: run.status });
+}
+
+async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const requestStart = Date.now();
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (!chatbotAgentRun) throw internalError('Agent run storage is unavailable.');
+  
+  const agentRuntimeBrain = await getBrainAssignmentForFeature('agent_runtime');
+  if (!agentRuntimeBrain.enabled) {
+    throw configurationError('Agent Runtime is disabled in AI Brain.');
   }
 
-  const hasPreferenceOverrides =
-    body.ignoreRobotsTxt !== undefined || body.requireHumanApproval !== undefined;
-  const shouldAttachPlanState = Boolean(planSettings || hasPreferenceOverrides || contextRegistry);
-
-  const run = await chatbotAgentRun.create<AgentRunCreateRecord>({
-    data: {
-      prompt: body.prompt.trim(),
-      model: body.model?.trim() || null,
-      personaId: body.personaId?.trim() || null,
-      tools: body.tools ?? [],
-      searchProvider: body.searchProvider?.trim() || null,
-      agentBrowser: body.agentBrowser?.trim() || null,
-      runHeadless: body.runHeadless ?? true,
-      logLines: [`[${new Date().toISOString()}] Run queued.`],
-      ...(shouldAttachPlanState
-        ? {
-          planState: {
-            ...(planSettings ? { settings: planSettings } : {}),
-            preferences: {
-              ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
-              requireHumanApproval: Boolean(body.requireHumanApproval),
-            },
-            ...(contextRegistry ? { contextRegistry } : {}),
-          } as InputJsonValue,
-        }
-        : {}),
-    },
+  const response = await handleAgentCreate(req, chatbotAgentRun, (msg, data) => {
+      if (DEBUG_CHATBOT) void ErrorSystem.logInfo(msg, { service: 'agent-api', ...data });
   });
-  await logAgentAudit(run.id, 'info', 'Agent run queued.', {
-    model: run.model,
-    tools: run.tools,
-    searchProvider: run.searchProvider,
-    agentBrowser: run.agentBrowser,
-  });
-
-  startAgentQueue();
 
   if (DEBUG_CHATBOT) {
-    void ErrorSystem.logInfo('Queued', {
-      service: 'agent-api',
-      runId: run.id,
-      status: run.status,
-      durationMs: Date.now() - requestStart,
-    });
+    void ErrorSystem.logInfo('Queued', { service: 'agent-api', durationMs: Date.now() - requestStart });
   }
 
-  const response: AgentRunEnqueueResponse = { runId: run.id, status: run.status };
-  return NextResponse.json(response);
+  return response;
+}
 }
 
 async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

@@ -13,10 +13,10 @@ import {
   toCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
 import {
-  FolderTreeViewportV2,
   handleMasterTreeDrop,
+  MasterFolderTreeViewport,
   resolveFolderTreeIconSet,
-  useMasterFolderTreeShell,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
@@ -340,16 +340,17 @@ export const CaseListPanel = memo((): React.JSX.Element => {
     []
   );
 
-  const {
-    appearance: { resolveIcon, rootDropUi },
-    controller,
-    panel: { hasPersistedState: hasPersistedUiState },
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: CASE_RESOLVER_CASES_MASTER_INSTANCE,
     nodes: masterNodes,
     adapter,
+    searchQuery: treeSearchQuery,
   });
+  const {
+    appearance: { resolveIcon },
+    controller,
+    panel: { hasPersistedState: hasPersistedUiState },
+  } = tree;
 
   useCaseListAutoExpandBootstrap({
     isUiStateReady: !settingsStore.isLoading && !settingsStore.isFetching,
@@ -784,13 +785,11 @@ export const CaseListPanel = memo((): React.JSX.Element => {
             <CaseListSorting className='mb-3' />
             <CaseListHeldDock />
             <CaseListNodeRuntimeProvider value={caseListNodeRuntimeValue}>
-              <FolderTreeViewportV2
-                controller={controller}
-                scrollToNodeRef={scrollToNodeRef}
+              <MasterFolderTreeViewport
+                tree={tree}
                 enableDnd={!isHierarchyLocked}
                 canStartDrag={canStartDrag}
                 canDrop={canDrop}
-                rootDropUi={rootDropUi}
                 onNodeDrop={(input, treeController): void => {
                   void handleNodeDrop(input, treeController);
                 }}

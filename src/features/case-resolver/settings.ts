@@ -1,3 +1,11 @@
+/**
+ * settings.ts — Public barrel for the case-resolver settings layer.
+ *
+ * Re-exports everything from the individual settings sub-modules so that
+ * consumers only need a single import path. Also owns the top-level
+ * `parseCaseResolverSettings` and `parseCaseResolverWorkspace` functions
+ * which are the primary entry points for deserialising persisted JSON.
+ */
 import { type CaseResolverWorkspace, type CaseResolverDefaultDocumentFormat, type CaseResolverSettings } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
@@ -57,12 +65,17 @@ import { parseCaseResolverDefaultDocumentFormat } from './settings/document-form
 
 import { normalizeCaseResolverSettings } from './settings/normalize-settings';
 
+// Deserialises and normalises the CaseResolver feature settings from a raw
+// JSON string (as stored in the settings table). Falls back to
+// DEFAULT_CASE_RESOLVER_SETTINGS for any missing or invalid fields.
 export const parseCaseResolverSettings = (raw: string | null | undefined): CaseResolverSettings => {
   return normalizeCaseResolverSettings(
     parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS)
   );
 };
 
+// Quick check used before attempting a full workspace parse — avoids
+// unnecessary work when the stored payload is clearly not a workspace object.
 export const hasCaseResolverWorkspaceFilesArray = (raw: string | null | undefined): boolean => {
   const parsed = parseJsonSetting<unknown>(raw, null);
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
@@ -70,6 +83,11 @@ export const hasCaseResolverWorkspaceFilesArray = (raw: string | null | undefine
   return Array.isArray(record['files']);
 };
 
+/**
+ * Strict workspace parser — throws a `validationError` on invalid JSON or a
+ * non-object payload. Use `safeParseCaseResolverWorkspace` in UI contexts
+ * where a fallback is preferable to an error boundary.
+ */
 export const parseCaseResolverWorkspace = (
   raw: string | null | undefined
 ): CaseResolverWorkspace => {
@@ -99,6 +117,11 @@ export const parseCaseResolverWorkspace = (
   return normalizeCaseResolverWorkspace(parsed as CaseResolverWorkspace);
 };
 
+/**
+ * Diagnostics attached to a workspace object after a safe parse.
+ * Consumers can inspect these to show warnings or trigger re-save logic
+ * when a fallback was applied.
+ */
 export type CaseResolverWorkspaceSafeParseDiagnostics = {
   parseFallbackApplied: boolean;
   parseFallbackReason: string | null;
@@ -112,6 +135,8 @@ const CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY: CaseResolverWorkspac
     parseFallbackClass: 'none',
   };
 
+// Diagnostics are stored in a WeakMap keyed by the workspace object so they
+// don't affect serialisation and are GC'd with the workspace instance.
 const caseResolverWorkspaceSafeParseDiagnosticsByWorkspace = new WeakMap<
   CaseResolverWorkspace,
   CaseResolverWorkspaceSafeParseDiagnostics
@@ -146,6 +171,11 @@ const resolveWorkspaceParseFallbackClass = (
   return 'default_workspace_fallback';
 };
 
+/**
+ * Safe workspace parser — never throws. On any parse failure it returns a
+ * default empty workspace and attaches diagnostics describing what went wrong.
+ * Use `getCaseResolverWorkspaceSafeParseDiagnostics` to inspect the result.
+ */
 export const safeParseCaseResolverWorkspace = (
   raw: string | null | undefined
 ): CaseResolverWorkspace => {
@@ -167,6 +197,8 @@ export const safeParseCaseResolverWorkspace = (
   }
 };
 
+// Attempts to parse a single date token in ISO (YYYY-MM-DD), dotted
+// (DD.MM.YYYY), or slash (MM/DD/YYYY) format. Returns null on no match.
 const parseDateTokenToIso = (token: string): string | null => {
   const trimmed = token.trim();
   const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -190,6 +222,11 @@ const parseDateTokenToIso = (token: string): string | null => {
   return null;
 };
 
+/**
+ * Scans free-form document text for the first recognisable date string and
+ * returns it normalised to ISO format (YYYY-MM-DD). Returns null when no
+ * date is found. Used to pre-fill the document date field during OCR import.
+ */
 export const extractCaseResolverDocumentDate = (
   content: string | null | undefined
 ): string | null => {

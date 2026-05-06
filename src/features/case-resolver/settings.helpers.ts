@@ -1,7 +1,24 @@
+/**
+ * settings.helpers.ts
+ *
+ * Shared normalisation and validation helpers used across the case-resolver
+ * settings layer. These functions coerce raw user input or persisted JSON
+ * values into safe, canonical forms.
+ *
+ * Responsibilities:
+ *  - Folder path normalisation (backslash → forward slash, sanitise segments).
+ *  - Timestamp normalisation (coerce to ISO string or fallback).
+ *  - ID sanitisation (trim, deduplicate, filter empty).
+ *  - Enum coercion (file type, party search kind, document format, etc.).
+ *  - Date formatting (ISO YYYY-MM-DD).
+ */
 import { type CaseResolverDocumentDateProposal, type CaseResolverDocumentFormatVersion, type CaseResolverFileType, type CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
 
 import { type CaseResolverPartySearchKind } from './settings.constants';
 
+// Normalises a folder path: converts backslashes to forward slashes, trims
+// segments, removes `.` and `..` traversals, replaces non-alphanumeric chars
+// with underscores. Returns an empty string for the root folder.
 export const normalizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
   const parts = normalized
@@ -13,6 +30,8 @@ export const normalizeFolderPath = (value: string): string => {
   return parts.join('/');
 };
 
+// Expands a folder path into all its ancestor paths. E.g. "a/b/c" becomes
+// ["a", "a/b", "a/b/c"]. Used to ensure all parent folders exist.
 export const expandFolderPath = (value: string): string[] => {
   const normalized = normalizeFolderPath(value);
   if (!normalized) return [];
@@ -20,6 +39,8 @@ export const expandFolderPath = (value: string): string[] => {
   return parts.map((_: string, index: number) => parts.slice(0, index + 1).join('/'));
 };
 
+// Normalises an array of folder paths, expanding each to include all
+// ancestors, deduplicating, and sorting lexicographically.
 export const normalizeFolderPaths = (folders: string[]): string[] => {
   const set = new Set<string>();
   folders
@@ -30,18 +51,25 @@ export const normalizeFolderPaths = (folders: string[]): string[] => {
   return Array.from(set).sort((left: string, right: string) => left.localeCompare(right));
 };
 
+// Coerces a value to a non-empty ISO timestamp string, falling back to
+// `fallback` when the value is missing or invalid.
 export const normalizeTimestamp = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
 
+// Same as normalizeTimestamp but returns null instead of a fallback when the
+// value is missing or invalid (used for optional timestamp fields).
 export const normalizeOptionalTimestamp = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 
+// Coerces a value to a trimmed non-empty string ID, or null when invalid.
 export const sanitizeOptionalId = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
 };
 
+// Sanitises an array of IDs: filters out non-strings, trims, deduplicates,
+// and removes empty strings.
 export const sanitizeOptionalIdArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
   const unique = new Set<string>();

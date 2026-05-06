@@ -115,6 +115,7 @@ export const QUERY_KEYS = {
     mutation: (name: string) => [...QUERY_KEYS.settings.mutations(), name] as const,
     scope: (scope: string) => [...QUERY_KEYS.settings.all, scope] as const,
     composed: () => [...QUERY_KEYS.settings.all, 'composed'] as const,
+    googleOAuthCredentials: () => [...QUERY_KEYS.settings.all, 'google-oauth-credentials'] as const,
   },
   kangur: {
     all: ['kangur'] as const,

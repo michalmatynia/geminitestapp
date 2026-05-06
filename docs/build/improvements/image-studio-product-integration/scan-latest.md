@@ -8,7 +8,7 @@ canonical: true
 ---
 # Image Studio product integration Improvement Track
 
-Generated at: 2026-05-06T11:28:21.086Z
+Generated at: 2026-05-06T11:44:17.516Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-05-06T11:28:21.086Z
 - Category: `quality`
 - Included in default read-only bundle: no
 - Overall status: `passed`
-- Latest report timestamp: 2026-04-30T09:41:39.301Z
+- Latest report timestamp: 2026-05-06T11:44:17.513Z
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Verifies Product modal handoff to Image Studio, Studio project persistence, gene
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `passed` | 2 | 1 | 1 | 0 | 0 |
 | `classify` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `dry-run` | `passed` | 1 | 1 | 0 | 0 | 0 |
@@ -48,6 +48,8 @@ Verifies Product modal handoff to Image Studio, Studio project persistence, gene
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
+| `audit` | `manual` | `manual` | `image-studio-product-runtime-audit` | manual |
+| `audit` | `passed` | `automatic` | `image-studio-product-regression-tests` | `test:image-studio-product` |
 | `classify` | `manual` | `manual` | `image-studio-product-failure-classification` | manual |
 | `dry-run` | `passed` | `automatic` | `image-studio-product-regression-tests` | `test:image-studio-product` |
 

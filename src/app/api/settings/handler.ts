@@ -1,3 +1,19 @@
+/**
+ * Settings API Handler
+ *
+ * Central API for managing application settings across all scopes.
+ * Handles:
+ * - CRUD operations for system settings
+ * - Kangur-specific settings with validation
+ * - AI Paths configuration
+ * - Database provider settings
+ * - Cache invalidation for setting changes
+ * - Setting-specific side effects (revalidation, seeding)
+ *
+ * This handler orchestrates settings management across multiple
+ * subsystems and ensures proper cache invalidation and runtime updates.
+ */
+
 import { primeFrontPageSettingRuntime } from '@/app/(frontend)/home/home-helpers';
 import { type WithId } from 'mongodb';
 import { type NextRequest, NextResponse } from 'next/server';
@@ -70,6 +86,14 @@ import {
 import { parseAndValidatePlaywrightActionsSettingValue } from '@/shared/lib/browser-execution/playwright-actions-settings-validation';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { resetServerLoggingControlsCache } from '@/shared/lib/observability/logging-controls-server';
+import {
+  SECRET_SETTING_REDACTED_VALUE,
+  isSecretSettingKey,
+} from '@/shared/lib/settings/secret-setting-keys';
+import {
+  deleteSecretSettingValues,
+  upsertSecretSettingValue,
+} from '@/shared/lib/settings/secret-settings';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import {
   AI_PATHS_CONFIG_PREFIX,
@@ -216,6 +240,7 @@ const readSeededKangurAppearanceSettingValue = async (
 const readCurrentSettingValue = async (
   key: string
 ): Promise<string | null> => {
+  if (isSecretSettingKey(key)) return null;
   if (isKangurSettingKey(key)) {
     const seededCanonicalValue = await readSeededKangurAppearanceSettingValue(key);
     if (seededCanonicalValue !== null) {
@@ -342,9 +367,18 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
   const baseSettings = docs
     .map((doc: WithId<MongoPersistedStringSettingDocument>) => ({
       key: doc.key ?? String(doc._id),
-      value: decodeSettingValue(doc.key ?? String(doc._id), doc.value),
+      value: doc.value,
     }))
-    .filter((doc: SettingRecord) => typeof doc.key === 'string' && typeof doc.value === 'string');
+    .filter(
+      (doc): doc is SettingRecord =>
+        typeof doc.key === 'string' &&
+        typeof doc.value === 'string' &&
+        !isSecretSettingKey(doc.key)
+    )
+    .map((doc) => ({
+      key: doc.key,
+      value: decodeSettingValue(doc.key, doc.value),
+    }));
   if (scope === 'heavy') {
     return baseSettings;
   }
@@ -886,6 +920,17 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   if (isAiPathsSettingKey(key)) {
     await upsertAiPathsSetting(key, value);
     return NextResponse.json({ success: true });
+  }
+  if (isSecretSettingKey(key)) {
+    if (value.trim().length > 0) {
+      await upsertSecretSettingValue(key, value);
+    } else {
+      await deleteSecretSettingValues([key]);
+    }
+    return NextResponse.json({
+      key,
+      value: SECRET_SETTING_REDACTED_VALUE,
+    });
   }
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] upserting', {

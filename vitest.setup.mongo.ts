@@ -1,3 +1,15 @@
+/**
+ * Vitest MongoDB Test Setup
+ * 
+ * Test environment configuration for MongoDB-based testing.
+ * Provides:
+ * - MongoDB test database configuration
+ * - Mock server setup and teardown
+ * - Database provider cache invalidation
+ * - Environment variable configuration for testing
+ * - Test isolation and cleanup utilities
+ */
+
 import 'dotenv/config';
 
 import { afterAll, afterEach, beforeAll } from 'vitest';

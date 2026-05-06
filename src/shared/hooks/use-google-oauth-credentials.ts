@@ -1,0 +1,60 @@
+'use client';
+
+import type {
+  GoogleOAuthCredentialsStatus,
+  UpdateGoogleOAuthCredentialsInput,
+} from '@/shared/contracts/google-oauth-credentials';
+import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
+import { api } from '@/shared/lib/api-client';
+import {
+  createUpdateMutationV2,
+  useSingleQueryV2,
+} from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+const GOOGLE_OAUTH_CREDENTIALS_ENDPOINT = '/api/settings/google-oauth';
+
+export function useGoogleOAuthCredentialsStatus(): SingleQuery<GoogleOAuthCredentialsStatus> {
+  return useSingleQueryV2<GoogleOAuthCredentialsStatus>({
+    id: 'global-google-oauth-credentials',
+    queryKey: QUERY_KEYS.settings.googleOAuthCredentials(),
+    queryFn: (): Promise<GoogleOAuthCredentialsStatus> =>
+      api.get<GoogleOAuthCredentialsStatus>(GOOGLE_OAUTH_CREDENTIALS_ENDPOINT),
+    staleTime: 30_000,
+    meta: {
+      source: 'shared.hooks.useGoogleOAuthCredentialsStatus',
+      operation: 'detail',
+      resource: 'settings.google-oauth',
+      domain: 'settings',
+      tags: ['settings', 'google-oauth'],
+      description: 'Loads shared Google OAuth credential configuration status.',
+    },
+  });
+}
+
+export function useUpdateGoogleOAuthCredentials(): MutationResult<
+  GoogleOAuthCredentialsStatus,
+  UpdateGoogleOAuthCredentialsInput
+> {
+  return createUpdateMutationV2<
+    GoogleOAuthCredentialsStatus,
+    UpdateGoogleOAuthCredentialsInput
+  >({
+    mutationKey: QUERY_KEYS.settings.mutation('update-google-oauth-credentials'),
+    mutationFn: (payload): Promise<GoogleOAuthCredentialsStatus> =>
+      api.post<GoogleOAuthCredentialsStatus>(GOOGLE_OAUTH_CREDENTIALS_ENDPOINT, payload),
+    invalidate: async (queryClient) => {
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.settings.googleOAuthCredentials(),
+      });
+    },
+    meta: {
+      source: 'shared.hooks.useUpdateGoogleOAuthCredentials',
+      operation: 'update',
+      resource: 'settings.google-oauth',
+      domain: 'settings',
+      tags: ['settings', 'google-oauth', 'update'],
+      description: 'Updates shared Google OAuth credentials.',
+    },
+  });
+}

@@ -56,9 +56,31 @@ vi.mock('@/shared/lib/foldertree/public', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/foldertree/public')>();
   return {
     ...actual,
-    createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),
+    createMasterFolderTreeOrderedItemsAdapter: vi.fn(() => ({ apply: vi.fn() })),
     FolderTreeSearchBar: () => <div data-testid='folder-tree-search' />,
     FolderTreeViewportV2: (props: {
+      renderNode: (input: any) => React.ReactNode;
+    }) => (
+      <div data-testid='folder-tree-viewport'>
+        {latestNodesState.value.map((node, index) => (
+          <div key={String(node.id ?? index)}>
+            {props.renderNode({
+              node,
+              depth: 0,
+              isSelected: false,
+              isExpanded: false,
+              isDragging: false,
+              isSearchMatch: false,
+              hasChildren: false,
+              select: () => undefined,
+              toggleExpand: () => undefined,
+              startRename: () => undefined,
+            })}
+          </div>
+        ))}
+      </div>
+    ),
+    MasterFolderTreeViewport: (props: {
       renderNode: (input: any) => React.ReactNode;
     }) => (
       <div data-testid='folder-tree-viewport'>
@@ -84,6 +106,22 @@ vi.mock('@/shared/lib/foldertree/public', async (importOriginal) => {
       const options = args[0];
       latestNodesState.value = Array.isArray(options?.nodes) ? [...options.nodes] : [];
       return useMasterFolderTreeShellMock(...args);
+    },
+    useMasterFolderTreeViewModel: (
+      ...args: Parameters<typeof actual.useMasterFolderTreeShell>
+    ) => {
+      const options = args[0];
+      latestNodesState.value = Array.isArray(options?.nodes) ? [...options.nodes] : [];
+      const shell = useMasterFolderTreeShellMock(...args);
+
+      return {
+        ...shell,
+        searchState: {
+          isActive: false,
+          results: [],
+          matchNodeIds: new Set(),
+        },
+      };
     },
     useMasterFolderTreeSearch: () => ({
       isActive: false,

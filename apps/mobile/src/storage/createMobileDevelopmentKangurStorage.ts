@@ -1,7 +1,6 @@
 import {
   createMemoryKangurClientStorage,
   type KangurClientStorageAdapter,
-  type KangurStorageChange,
 } from '@kangur/platform';
 
 let mobileDevelopmentMemoryStorage: KangurClientStorageAdapter | null = null;
@@ -29,25 +28,21 @@ const getSharedMemoryStorage = (): KangurClientStorageAdapter => {
 
 // ... (remaining implementation)
 
+const createStorage = (mode: string, options: CreateMobileDevelopmentKangurStorageOptions): KangurClientStorageAdapter => {
+    if (mode === 'memory') return getSharedMemoryStorage();
+    if (mode === 'browser') {
+        mobileDevelopmentBrowserStorage ??= createBrowserBackedMobileStorage();
+        return mobileDevelopmentBrowserStorage;
+    }
+    mobileDevelopmentNativeStorage ??= createNativeFileBackedMobileStorage(
+        (options.nativeFileSystem ?? loadExpoFileSystem()) as any,
+        options.nativeStorageNamespace ?? MOBILE_DEVELOPMENT_NATIVE_STORAGE_NAMESPACE,
+    );
+    return mobileDevelopmentNativeStorage;
+};
+
 export const createMobileDevelopmentKangurStorage = (
   options: CreateMobileDevelopmentKangurStorageOptions = {},
 ): KangurClientStorageAdapter => {
-  const storageMode = options.mode ?? 'auto';
-
-  if (storageMode === 'memory') {
-    return getSharedMemoryStorage();
-  }
-
-  if (storageMode === 'browser') {
-    mobileDevelopmentBrowserStorage ??= createBrowserBackedMobileStorage();
-    return mobileDevelopmentBrowserStorage;
-  }
-
-  mobileDevelopmentNativeStorage ??= createNativeFileBackedMobileStorage(
-    options.nativeFileSystem ?? loadExpoFileSystem(),
-    options.nativeStorageNamespace ??
-      MOBILE_DEVELOPMENT_NATIVE_STORAGE_NAMESPACE,
-  );
-
-  return mobileDevelopmentNativeStorage;
+  return createStorage(options.mode ?? 'auto', options);
 };

@@ -79,40 +79,12 @@ function getSyncError(
   return null;
 }
 
-function useSyncProofSnapshot(
-    enabled: boolean,
-    expectedCorrectAnswers: number,
-    expectedTotalQuestions: number,
-    leaderboardItems: KangurLeaderboardItem[],
-    locale: KangurMobileLocale,
-    operation: KangurPracticeOperation,
-    progress: KangurProgressState,
-    runStartedAt: number,
-    scores: KangurScore[]
-): KangurPracticeSyncProofSnapshot {
-    return useMemo(() => calculateSnapshot({
-        enabled,
-        expectedCorrectAnswers,
-        expectedTotalQuestions,
-        leaderboardItems,
-        locale,
-        operation,
-        progress,
-        runStartedAt,
-        scores,
-    }), [
-        enabled, expectedCorrectAnswers, expectedTotalQuestions, 
-        leaderboardItems, locale, operation, progress, runStartedAt, scores
-    ]);
+function useSyncProofSnapshot(params: SnapshotParams): KangurPracticeSyncProofSnapshot {
+    return useMemo(() => calculateSnapshot(params), [params]);
 }
 
-export const useKangurPracticeSyncProof = ({
-  enabled,
-  expectedCorrectAnswers,
-  expectedTotalQuestions,
-  operation,
-  runStartedAt,
-}: UseKangurPracticeSyncProofOptions): UseKangurPracticeSyncProofResult => {
+export const useKangurPracticeSyncProof = (options: UseKangurPracticeSyncProofOptions): UseKangurPracticeSyncProofResult => {
+  const { enabled, expectedCorrectAnswers, expectedTotalQuestions, operation, runStartedAt } = options;
   const { progressStore } = useKangurMobileRuntime();
   const { copy, locale } = useKangurMobileI18n();
   const progress = useSyncExternalStore(
@@ -120,10 +92,27 @@ export const useKangurPracticeSyncProof = ({
     progressStore.loadProgress,
     createDefaultKangurProgressState,
   );
-  const scoresQuery = useKangurMobileScoreHistory({ enabled, limit: 40, sort: '-created_date' });
-  const leaderboard = useKangurMobileLeaderboard({ enabled, limit: 100 });
+  const scoresQuery = useKangurMobileScoreHistory({
+    enabled,
+    limit: 40,
+    sort: '-created_date',
+  });
+  const leaderboard = useKangurMobileLeaderboard({
+    enabled,
+    limit: 100,
+  });
 
-  const snapshot = useSyncProofSnapshot(enabled, expectedCorrectAnswers, expectedTotalQuestions, leaderboard.items, locale, operation, progress, runStartedAt, scoresQuery.scores);
+  const snapshot = useSyncProofSnapshot({
+    enabled,
+    expectedCorrectAnswers,
+    expectedTotalQuestions,
+    leaderboardItems: leaderboard.items,
+    locale,
+    operation,
+    progress,
+    runStartedAt,
+    scores: scoresQuery.scores,
+  });
 
   const error = useMemo(
     () => getSyncError(leaderboard.error, scoresQuery.error instanceof Error ? scoresQuery.error : null, copy),

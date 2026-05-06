@@ -3,10 +3,10 @@ import { useLocale } from '@/shared/lib/i18n';
 import { useLessonsState } from './useLessonsState';
 import { useLessonsUiState } from './useLessonsUiState';
 import { resolveKangurAdminLocale } from '../../kangur-admin-locale';
-import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
-import { buildLessonsManagerErrorReport } from '../../AdminKangurLessonsManagerPage.shared';
+import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import { TREE_MODE_STORAGE_KEY } from '../../constants';
 import { 
+  countLessonsRequiringLegacyImport,
   supportsLessonComponentContentAuthoring,
 } from '../../utils';
 import { getKangurLessonAuthoringStatus } from '../../content-creator-insights';
@@ -17,14 +17,36 @@ import { useLessonsManagerFiltering } from './useLessonsManagerFiltering';
 import { useLessonsManagerTree } from './useLessonsManagerTree';
 import { useLessonsManagerHandlers } from './useLessonsManagerHandlers';
 import type { KangurAdminLocale } from '../../kangur-admin-locale';
+import {
+  KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+  KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS,
+} from '../../../settings';
 
-const formatLocaleLabel = (l: string): string => 
-  l === 'pl' ? 'Polish' : l === 'uk' ? 'Ukrainian' : 'English';
+const formatLocaleLabel = (l: string): string => {
+  if (l === 'pl') {
+    return 'Polish';
+  }
+
+  if (l === 'uk') {
+    return 'Ukrainian';
+  }
+
+  return 'English';
+};
+
+const countMissingLessonComponents = (
+  lessons: readonly KangurLesson[],
+  componentIds: readonly KangurLessonComponentId[]
+): number => {
+  const existingComponentIds = new Set(lessons.map((lesson) => lesson.componentId));
+  return componentIds.filter((componentId) => !existingComponentIds.has(componentId)).length;
+};
 
 export type UseAdminKangurLessonsManagerLogicReturn = ReturnType<typeof useAdminKangurLessonsManagerLogic>;
 
 export function useAdminKangurLessonsManagerLogic() {
   const routeLocale = useLocale();
+  const structuralContentLocale = useMemo(() => resolveKangurAdminLocale(routeLocale), [routeLocale]);
   const [contentLocale, setContentLocale] = React.useState<KangurAdminLocale>(() => resolveKangurAdminLocale(routeLocale));
   
   const state = useLessonsState(contentLocale);
@@ -32,11 +54,29 @@ export function useAdminKangurLessonsManagerLogic() {
   
   const contentLocaleOptions = useMemo(() => ['en', 'pl', 'uk'].map((l) => ({ value: l, label: formatLocaleLabel(l) })), []);
   const contentLocaleLabel = useMemo(() => formatLocaleLabel(contentLocale), [contentLocale]);
-  const isPrimaryContentLocale = contentLocale === 'en';
+  const isPrimaryContentLocale = contentLocale === structuralContentLocale;
   const isSaving = state.lessonsQuery.isPending || state.lessonDocumentsQuery.isPending || state.templatesQuery.isPending;
+  const legacyImportCount = useMemo(
+    () => countLessonsRequiringLegacyImport(state.lessons, state.lessonDocuments),
+    [state.lessonDocuments, state.lessons]
+  );
+  const geometryPackAddedCount = useMemo(
+    () => countMissingLessonComponents(state.lessons, KANGUR_GEOMETRY_LESSON_COMPONENT_IDS),
+    [state.lessons]
+  );
+  const logicPackAddedCount = useMemo(
+    () => countMissingLessonComponents(state.lessons, KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS),
+    [state.lessons]
+  );
 
   const filtering = useLessonsManagerFiltering(state.lessons, state.lessonDocuments);
-  const tree = useLessonsManagerTree(filtering.filteredLessons, ui.treeMode);
+  const tree = useLessonsManagerTree({
+    filteredLessons: filtering.filteredLessons,
+    lessons: state.lessons,
+    lessonById: state.lessonById,
+    treeMode: ui.treeMode,
+    onPersistLessons: state.updateLessons.mutateAsync,
+  });
   
   const showComponentContentEditor = supportsLessonComponentContentAuthoring(ui.formData.componentId);
 
@@ -81,7 +121,7 @@ export function useAdminKangurLessonsManagerLogic() {
       <LessonTreeRow
         input={input} lessonById={state.lessonById} authoringStatus={getAuthoringStatus}
         onEdit={handlers.handleEdit} onEditContent={handlers.handleEditContent}
-        onQuickSvg={handlers.handleQuickAddSvg || (() => {})} onDelete={ui.setLessonToDelete} isUpdating={isSaving}
+        onQuickSvg={handlers.handleQuickAddSvg ?? (() => undefined)} onDelete={ui.setLessonToDelete} isUpdating={isSaving}
       />
     ),
     [getAuthoringStatus, handlers, isSaving, state.lessonById, ui.setLessonToDelete]
@@ -90,6 +130,7 @@ export function useAdminKangurLessonsManagerLogic() {
   return {
     ...state, ...ui, ...filtering, ...tree, ...handlers,
     contentLocale, setContentLocale, contentLocaleOptions, contentLocaleLabel, isSaving,
+    legacyImportCount, geometryPackAddedCount, logicPackAddedCount,
     showComponentContentEditor, setTreeModeAndPersist, handleToggleTreeMode, renderTreeNode,
     isCatalogMode: ui.treeMode === 'catalog',
     isSectionsMode: ui.treeMode === 'sections'

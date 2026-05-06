@@ -2,7 +2,10 @@
 
 import React, { useMemo, useState } from 'react';
 
-import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/shared/lib/foldertree/public';
+import {
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
+} from '@/shared/lib/foldertree/public';
 import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button } from '@/shared/ui/primitives.public';
@@ -134,12 +137,7 @@ export function ComponentTreePanel(): React.ReactNode {
     [applySectionMoveInTree]
   );
 
-  const {
-    profile: treeProfile,
-    appearance: { placeholderClasses: treePlaceholderClasses, rootDropUi: treeRootDropUi },
-    controller: structureController,
-    panel: { collapsed: panelCollapsed, setCollapsed: setPanelCollapsed },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'cms_page_builder',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
@@ -147,6 +145,12 @@ export function ComponentTreePanel(): React.ReactNode {
     externalRevision: structureRevision,
     adapter: cmsTreeAdapter,
   });
+  const {
+    profile: treeProfile,
+    appearance: { placeholderClasses: treePlaceholderClasses, rootDropUi: treeRootDropUi },
+    controller: structureController,
+    panel: { collapsed: panelCollapsed, setCollapsed: setPanelCollapsed },
+  } = tree;
   const {
     moveNode: moveMasterNode,
     startDrag: startMasterDrag,
@@ -290,8 +294,8 @@ export function ComponentTreePanel(): React.ReactNode {
             </div>
           ) : (
             <ComponentTreeNodeRuntimeProvider value={nodeRuntimeContextValue}>
-              <FolderTreeViewportV2
-                controller={structureController}
+              <MasterFolderTreeViewport
+                tree={tree}
                 enableDnd={false}
                 className='space-y-0.5'
                 renderNode={(input) => <ComponentTreeNodeRenderer {...input} />}

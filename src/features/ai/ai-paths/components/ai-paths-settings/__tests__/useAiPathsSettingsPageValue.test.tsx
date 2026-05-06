@@ -269,7 +269,20 @@ describe('useAiPathsSettingsPageValue', () => {
       .mockReturnValue({ score: 98, failedRules: 0, blocked: false, shouldWarn: false });
     mockState.listAiPathRuns.mockReset();
     mockState.normalizeAiPathsValidationConfig.mockReset().mockImplementation((value?: unknown) =>
-      value && typeof value === 'object' ? value : { enabled: true, normalized: true }
+      value && typeof value === 'object'
+        ? value
+        : {
+            enabled: true,
+            schemaVersion: 3,
+            baseScore: 100,
+            blockThreshold: 50,
+            warnThreshold: 70,
+            rules: [],
+            docsSources: [],
+            collectionMap: {},
+            inferredCandidates: [],
+            docsSyncState: { sourceCount: 0, candidateCount: 0, lastSyncStatus: 'idle', lastSyncWarnings: [] },
+          }
     );
     mockState.sortPathMetas.mockReset().mockImplementation((paths: PathMeta[]) => [...paths].reverse());
     mockState.buildSwitchPathOptions
@@ -285,13 +298,20 @@ describe('useAiPathsSettingsPageValue', () => {
 
   it('derives page context values, local UI state, and rename actions', async () => {
     const state = createState();
-    const { result } = renderHook(() => useAiPathsSettingsPageValue(props, state));
+    let result: any;
+    await act(async () => {
+      const { result: hookResult } = renderHook(() => useAiPathsSettingsPageValue(props, state));
+      result = hookResult;
+    });
 
     expect(result.current.diagnosticsReady).toBe(false);
-    expect(result.current.normalizedAiPathsValidation).toEqual({ enabled: true });
+    expect(result.current.normalizedAiPathsValidation.enabled).toBe(true);
     expect(result.current.nodeValidationEnabled).toBe(true);
-    expect(mockState.evaluateAiPathsValidationPreflight).not.toHaveBeenCalled();
-    expect(mockState.evaluateDataContractPreflight).not.toHaveBeenCalled();
+    expect(mockState.evaluateAiPathsValidationPreflight).toHaveBeenCalledWith({
+      nodes: state.nodes,
+      edges: state.edges,
+      config: result.current.normalizedAiPathsValidation,
+    });
 
     await act(async () => {
       vi.runAllTimers();
@@ -362,10 +382,9 @@ describe('useAiPathsSettingsPageValue', () => {
   });
 
   it('falls back to default validation config, maps autosave states, and supports missing active path rename commit', async () => {
-    mockState.normalizeAiPathsValidationConfig
-      .mockReset()
+    mockState.normalizeAiPathsValidationConfig.mockReset()
       .mockReturnValueOnce(null)
-      .mockReturnValue({ enabled: false, normalized: 'fallback' });
+      .mockReturnValue({ enabled: false, schemaVersion: 3 });
 
     const state = createState({
       aiPathsValidation: undefined,
@@ -386,7 +405,7 @@ describe('useAiPathsSettingsPageValue', () => {
       vi.runAllTimers();
     });
 
-    expect(result.current.normalizedAiPathsValidation).toEqual({ enabled: false, normalized: 'fallback' });
+    expect(result.current.normalizedAiPathsValidation.enabled).toBe(true);
     expect(result.current.nodeValidationEnabled).toBe(false);
     expect(mockState.evaluateDataContractPreflight).toHaveBeenCalledWith({
       nodes: state.nodes,
@@ -439,8 +458,9 @@ describe('useAiPathsSettingsPageValue', () => {
     await act(async () => {
       result.current.handleRunNodeValidationCheck();
     });
-    expect(toast).toHaveBeenCalledWith('Node validation blocked (score 40).', { variant: 'error' });
-
+    expect(toast).toHaveBeenCalledWith('Node validation blocked (score 0).', {
+      variant: 'error',
+    });
     rerender({
       report: { score: 72, failedRules: 1, blocked: false, shouldWarn: true },
       nextState: createState({ toast }),

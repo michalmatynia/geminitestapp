@@ -1,3 +1,15 @@
+/**
+ * Country Code Constants
+ * 
+ * Comprehensive list of country codes and names for international support.
+ * Provides:
+ * - ISO 3166-1 alpha-2 country codes
+ * - Human-readable country names
+ * - Type-safe country selection options
+ * - Standardized country data for forms and dropdowns
+ * - Complete global coverage for internationalization
+ */
+
 export type CountryCodeOption = {
   code: string;
   name: string;

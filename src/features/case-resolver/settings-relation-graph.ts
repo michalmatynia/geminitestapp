@@ -1,21 +1,47 @@
-import { CASE_RESOLVER_RELATION_ROOT_FOLDER_ID, DEFAULT_CASE_RESOLVER_RELATION_EDGE_META, DEFAULT_CASE_RESOLVER_RELATION_NODE_META } from '@/shared/contracts/case-resolver/constants';
+/**
+ * settings-relation-graph.ts
+ *
+ * Builds and sanitizes the CaseResolver relation graph — a visual node/edge
+ * diagram that maps the structural relationships between cases, folders, and
+ * asset files in a workspace.
+ *
+ * The graph is persisted as JSON in the workspace settings. On every load it
+ * is rebuilt from the live workspace data (folders, case files, assets) so
+ * that structural nodes/edges always reflect reality, while user-created
+ * custom nodes and edges are preserved.
+ *
+ * Key concepts:
+ *  - Structural nodes/edges  – auto-generated from workspace data; cannot be
+ *    deleted by the user (isStructural: true).
+ *  - Custom nodes/edges      – user-created; survive rebuilds as long as their
+ *    referenced node IDs still exist.
+ *  - nodeMeta / edgeMeta     – per-node/edge metadata (entity type, label,
+ *    timestamps) stored alongside the graph and used to detect drift.
+ */
 import { type AiNode, type CaseResolverEdge, type CaseResolverAssetFile, type CaseResolverFile, type CaseResolverRelationEdgeKind, type CaseResolverRelationEdgeMeta, type CaseResolverRelationEntityType, type CaseResolverRelationFileKind, type CaseResolverRelationGraph, type CaseResolverRelationNodeMeta } from '@/shared/contracts/case-resolver';
 import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { AiNodeSchema } from './types/relation-graph';
+import { RelationNodeMetaSchema, RelationEdgeMetaSchema } from './types/relation-meta';
 
 
+// Returns value unchanged if it is a non-empty ISO string, otherwise falls
+// back to the provided fallback (typically `now`).
 const normalizeTimestamp = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
 
+// Coerces an unknown value to a trimmed non-empty string, or null.
 const sanitizeOptionalId = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
 };
 
+// Normalises a raw folder path: converts backslashes, trims segments,
+// removes `.` / `..` traversals, and replaces non-alphanumeric characters
+// with underscores. Returns an empty string for the root folder.
 const normalizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
   const parts = normalized
@@ -27,8 +53,10 @@ const normalizeFolderPath = (value: string): string => {
   return parts.join('/');
 };
 
+// Visual column groups used to auto-place nodes that have no saved position.
 type CaseResolverRelationNodeGroup = 'case' | 'folder' | 'file' | 'custom';
 
+// Starting (x, y) pixel offsets for each group column in the canvas.
 const RELATION_NODE_BASE_OFFSETS: Record<CaseResolverRelationNodeGroup, { x: number; y: number }> =
   {
     case: { x: 120, y: 120 },
@@ -37,10 +65,15 @@ const RELATION_NODE_BASE_OFFSETS: Record<CaseResolverRelationNodeGroup, { x: num
     custom: { x: 1320, y: 120 },
   };
 
+// Vertical spacing between rows of nodes in the same column.
 const RELATION_NODE_GRID_STEP_Y = 130;
+// Number of columns in each group before wrapping to the next row.
 const RELATION_NODE_GRID_COLUMNS = 2;
+// Horizontal spacing between columns within a group.
 const RELATION_NODE_GRID_STEP_X = 260;
 
+// Calculates the default (x, y) position for a node based on its group and
+// index within that group. Nodes are laid out in a 2-column grid per group.
 const getRelationNodePosition = (
   group: CaseResolverRelationNodeGroup,
   index: number
@@ -54,6 +87,7 @@ const getRelationNodePosition = (
   };
 };
 
+// Maps a CaseResolver entity type to the corresponding AI-node visual style.
 const RELATION_NODE_TYPE_MAP: Record<CaseResolverRelationEntityType, AiNode['type']> = {
   folder: 'database',
   file: 'prompt',
@@ -64,9 +98,17 @@ const resolveRelationNodeType = (entityType: CaseResolverRelationEntityType): Ai
   return RELATION_NODE_TYPE_MAP[entityType] ?? 'template';
 };
 
+// Type guard: returns true only if the string is a recognised AiNode type
+// (i.e. has a corresponding entry in the typeStyles map).
 const hasKnownRelationNodeType = (value: string): value is AiNode['type'] =>
   Object.prototype.hasOwnProperty.call(typeStyles, value);
 
+/**
+ * Parses and sanitizes the raw `nodes` array from persisted JSON.
+ * Skips entries with missing/duplicate IDs or unrecognised node types.
+ * Falls back to safe defaults for missing optional fields (position, ports,
+ * timestamps, etc.).
+ */
 const sanitizeRelationNodes = (value: unknown): AiNode[] => {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
@@ -137,6 +179,12 @@ const sanitizeRelationNodes = (value: unknown): AiNode[] => {
   return nodes;
 };
 
+/**
+ * Parses and sanitizes the raw `edges` array from persisted JSON.
+ * Validates each edge via `parseCanonicalCaseResolverEdge`, then discards
+ * edges with missing IDs, dangling node references, or duplicate IDs.
+ * `validNodeIds` is the set of node IDs that survived `sanitizeRelationNodes`.
+ */
 const sanitizeRelationEdges = (value: unknown, validNodeIds: Set<string>): CaseResolverEdge[] => {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
@@ -168,14 +216,18 @@ const sanitizeRelationEdges = (value: unknown, validNodeIds: Set<string>): CaseR
   return edges;
 };
 
+// Coerces an unknown value to a valid CaseResolverRelationEntityType,
+// defaulting to 'custom' for unrecognised values.
 const sanitizeRelationEntityType = (value: unknown): CaseResolverRelationEntityType =>
   value === 'case' || value === 'folder' || value === 'file' || value === 'custom'
     ? value
     : 'custom';
 
+// Returns null for unrecognised file kinds (treated as non-file nodes).
 const sanitizeRelationFileKind = (value: unknown): CaseResolverRelationFileKind | null =>
   value === 'case_file' || value === 'asset_file' ? value : null;
 
+// Coerces an unknown value to a valid edge kind, defaulting to 'related'.
 const sanitizeRelationEdgeKind = (value: unknown): CaseResolverRelationEdgeKind =>
   value === 'contains' ||
   value === 'located_in' ||
@@ -186,8 +238,12 @@ const sanitizeRelationEdgeKind = (value: unknown): CaseResolverRelationEdgeKind 
     ? value
     : 'related';
 
-import { RelationNodeMetaSchema, RelationEdgeMetaSchema } from './types/relation-meta';
-
+/**
+ * Parses and sanitizes the raw `nodeMeta` map from persisted JSON.
+ * Only entries whose key exists in `validNodeIds` are kept.
+ * Each entry is validated through RelationNodeMetaSchema; invalid entries
+ * are silently dropped.
+ */
 const sanitizeRelationNodeMeta = (
   value: unknown,
   validNodeIds: Set<string>,
@@ -217,6 +273,10 @@ const sanitizeRelationNodeMeta = (
   return result;
 };
 
+/**
+ * Parses and sanitizes the raw `edgeMeta` map from persisted JSON.
+ * Only entries whose key exists in `validEdgeIds` are kept.
+ */
 const sanitizeRelationEdgeMeta = (
   value: unknown,
   validEdgeIds: Set<string>,
@@ -244,12 +304,17 @@ const sanitizeRelationEdgeMeta = (
   return result;
 };
 
+// Produces a deterministic edge ID for structural (auto-generated) edges so
+// that the same structural relationship always maps to the same ID across
+// rebuilds, enabling stable upsert semantics.
 const structuralRelationEdgeId = (
   relationType: CaseResolverRelationEdgeKind,
   source: string,
   target: string
 ): string => `struct:${relationType}:${encodeURIComponent(source)}:${encodeURIComponent(target)}`;
 
+// ─── Stable node-ID helpers ──────────────────────────────────────────────────
+// Each entity type gets a namespaced prefix so IDs never collide across types.
 export const toCaseResolverRelationCaseNodeId = (caseId: string): string => `case:${caseId}`;
 export const toCaseResolverRelationFolderNodeId = (folderPath: string): string =>
   `folder:${folderPath.trim() || CASE_RESOLVER_RELATION_ROOT_FOLDER_ID}`;
@@ -258,6 +323,8 @@ export const toCaseResolverRelationCaseFileNodeId = (caseId: string): string =>
 export const toCaseResolverRelationAssetFileNodeId = (assetId: string): string =>
   `file:asset:${assetId}`;
 
+// Internal shape used to drive both node creation and nodeMeta population
+// from a single source of truth during the graph rebuild.
 type CaseResolverRelationNodeSeed = {
   id: string;
   entityType: CaseResolverRelationEntityType;
@@ -272,6 +339,9 @@ type CaseResolverRelationNodeSeed = {
   isStructural: boolean;
 };
 
+// Returns the existing updatedAt timestamp when the node's semantic fields
+// haven't changed, preserving the original modification time. Returns `now`
+// when any field has drifted (entity type, label, file kind, etc.).
 const resolveRelationNodeMetaUpdatedAt = (
   existing: CaseResolverRelationNodeMeta | undefined,
   seed: CaseResolverRelationNodeSeed,
@@ -292,6 +362,7 @@ const resolveRelationNodeMetaUpdatedAt = (
   return now;
 };
 
+// Same semantics as resolveRelationNodeMetaUpdatedAt but for edge metadata.
 const resolveRelationEdgeMetaUpdatedAt = (
   existing: CaseResolverRelationEdgeMeta | undefined,
   input: { relationType: CaseResolverRelationEdgeKind; label: string; isStructural: boolean },
@@ -308,19 +379,26 @@ const resolveRelationEdgeMetaUpdatedAt = (
   return now;
 };
 
+// ─── Folder path ↔ entity-ID helpers ─────────────────────────────────────────
+// The root folder is represented by a sentinel constant rather than an empty
+// string so it can be stored as a map key without ambiguity.
+
 const relationFolderEntityIdFromPath = (folderPath: string): string => {
   const normalizedFolderPath = normalizeFolderPath(folderPath);
   return normalizedFolderPath || CASE_RESOLVER_RELATION_ROOT_FOLDER_ID;
 };
 
+// Returns null for the root folder (its path is the empty string).
 const relationFolderPathFromEntityId = (entityId: string): string | null =>
   entityId === CASE_RESOLVER_RELATION_ROOT_FOLDER_ID ? '' : entityId;
 
+// Normalises a folder path for storage in nodeMeta; returns null for root.
 const normalizeRelationMetaFolderPath = (value: string | null | undefined): string | null => {
   const normalized = normalizeFolderPath(value ?? '');
   return normalized.length > 0 ? normalized : null;
 };
 
+// Walks up one level in the folder hierarchy. Returns null at the root.
 const parentRelationFolderEntityId = (entityId: string): string | null => {
   if (entityId === CASE_RESOLVER_RELATION_ROOT_FOLDER_ID) return null;
   const folderPath = relationFolderPathFromEntityId(entityId) ?? '';
@@ -329,6 +407,24 @@ const parentRelationFolderEntityId = (entityId: string): string | null => {
   return relationFolderEntityIdFromPath(parentFolderPath);
 };
 
+/**
+ * Rebuilds the full CaseResolver relation graph from live workspace data.
+ *
+ * Algorithm (in order):
+ *  1. Parse and sanitize any previously persisted nodes, edges, and metadata
+ *     from `source` (the raw JSON stored in the workspace setting).
+ *  2. Collect all unique folder paths implied by the provided folders, case
+ *     files, and asset files — including every ancestor up to root.
+ *  3. Upsert structural nodes for folders, cases, and assets, preserving any
+ *     user-adjusted canvas positions from the previous save.
+ *  4. Re-add user-created custom nodes that are not marked structural.
+ *  5. Upsert structural edges (folder containment, parent-case, references,
+ *     asset containment) using deterministic IDs.
+ *  6. Re-add user-created custom edges whose source/target nodes still exist.
+ *
+ * The result is a graph where structural elements always reflect the current
+ * workspace state, while user customisations are preserved where possible.
+ */
 export const buildCaseResolverRelationGraph = ({
   source,
   folders,

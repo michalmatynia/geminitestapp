@@ -1,3 +1,15 @@
+/**
+ * File Handling Constants
+ * 
+ * Configuration constants for file upload and storage systems.
+ * Provides:
+ * - File size limits for different content types
+ * - Allowed MIME types and validation rules
+ * - Storage backend configuration keys
+ * - File storage source definitions
+ * - Cloud storage provider settings
+ */
+
 export const tempFolderName = 'temp';
 
 export const MAX_IMAGE_BYTES = 30 * 1024 * 1024; // 30MB

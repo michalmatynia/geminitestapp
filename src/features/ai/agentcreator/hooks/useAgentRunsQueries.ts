@@ -29,11 +29,11 @@ export function useAgentRuns(): ListQuery<AgentRunRecord> {
 }
 
 export function useAgentSnapshots(runId: string | null): ListQuery<AgentBrowserSnapshotRecord> {
-  const queryKey = agentRunsKeys.snapshots(runId || '');
+  const queryKey = agentRunsKeys.snapshots(runId ?? '');
   return createListQueryV2<AgentBrowserSnapshotRecord>({
     queryKey,
-    queryFn: () => api.getAgentSnapshots(runId!),
-    enabled: Boolean(runId),
+    queryFn: () => (runId !== null ? api.getAgentSnapshots(runId) : Promise.reject(new Error('runId is null'))),
+    enabled: runId !== null,
     meta: {
       source: 'agentRuns.hooks.useAgentSnapshots',
       operation: 'list',
@@ -49,11 +49,11 @@ export function useAgentLogs(
   runId: string | null,
   options?: { refetchInterval?: number | false }
 ): ListQuery<AgentBrowserLogRecord> {
-  const queryKey = agentRunsKeys.logs(runId || '');
+  const queryKey = agentRunsKeys.logs(runId ?? '');
   return createListQueryV2<AgentBrowserLogRecord>({
     queryKey,
-    queryFn: () => api.getAgentLogs(runId!),
-    enabled: Boolean(runId),
+    queryFn: () => (runId !== null ? api.getAgentLogs(runId) : Promise.reject(new Error('runId is null'))),
+    enabled: runId !== null,
     refetchInterval: options?.refetchInterval ?? false,
     meta: {
       source: 'agentRuns.hooks.useAgentLogs',
@@ -70,11 +70,11 @@ export function useAgentAudits(
   runId: string | null,
   options?: { refetchInterval?: number | false }
 ): ListQuery<AgentAuditLogRecord> {
-  const queryKey = agentRunsKeys.audits(runId || '');
+  const queryKey = agentRunsKeys.audits(runId ?? '');
   return createListQueryV2<AgentAuditLogRecord>({
     queryKey,
-    queryFn: () => api.getAgentAudits(runId!),
-    enabled: Boolean(runId),
+    queryFn: () => (runId !== null ? api.getAgentAudits(runId) : Promise.reject(new Error('runId is null'))),
+    enabled: runId !== null,
     refetchInterval: options?.refetchInterval ?? false,
     meta: {
       source: 'agentRuns.hooks.useAgentAudits',

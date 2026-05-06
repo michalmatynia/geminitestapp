@@ -6,6 +6,7 @@ import type {
 } from '@/shared/contracts/observability';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { hasConfiguredMongoSourceEnv } from '@/shared/lib/db/mongo-source-env';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { withTransientRecovery } from './transient-recovery/with-recovery';
@@ -30,7 +31,7 @@ type NotificationConfig = {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  if (!hasConfiguredMongoSourceEnv()) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)

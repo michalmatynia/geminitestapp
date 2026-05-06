@@ -1,3 +1,18 @@
+/**
+ * settings.files.ts
+ *
+ * Normalises and validates CaseResolver file records (case files, scan files,
+ * and asset files). Called during workspace normalisation to ensure all file
+ * fields are correctly typed and internally consistent.
+ *
+ * Responsibilities:
+ *  - Coerce missing/invalid fields to safe defaults.
+ *  - Repair broken parent-case and reference-case links (drop dangling IDs).
+ *  - Normalise document content (HTML vs. plain text, version migration).
+ *  - Trim document history to the configured limit.
+ *  - Sanitise the prompt graph embedded in each file.
+ *  - Deduplicate scan slots and party references.
+ */
 import {
   deriveDocumentContentSync,
   ensureHtmlForPreview,
@@ -28,8 +43,13 @@ import {
   sanitizePartyReference,
 } from './settings.helpers';
 
+// Maximum number of document history snapshots to keep per file. Older
+// snapshots are dropped during normalisation to prevent unbounded growth.
 const CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT = 120;
 
+// Repairs broken parent-case and reference-case links by dropping IDs that
+// don't correspond to any file in the workspace. Returns a new array of files
+// with repaired links.
 export const normalizeCaseResolverRelatedFileLinks = (
   files: CaseResolverFile[]
 ): CaseResolverFile[] => {

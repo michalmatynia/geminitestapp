@@ -182,44 +182,46 @@ const resolveFilterChipContent = (
   </Pressable>
 );
 
+const getContainerDefaults = (props: KangurMobileFilterChipProps): {
+    fullWidth: boolean,
+    borderRadius: number,
+    selected: boolean,
+    selectedBorderColor: string,
+    selectedBackgroundColor: string,
+    centered: boolean,
+    minHeight?: number,
+    horizontalPadding: number,
+    verticalPadding: number
+} => ({
+    fullWidth: props.fullWidth ?? false,
+    borderRadius: props.borderRadius ?? 999,
+    selected: props.selected,
+    selectedBorderColor: props.selectedBorderColor ?? '#1d4ed8',
+    selectedBackgroundColor: props.selectedBackgroundColor ?? '#dbeafe',
+    centered: props.centered ?? false,
+    minHeight: props.minHeight,
+    horizontalPadding: props.horizontalPadding ?? 14,
+    verticalPadding: props.verticalPadding ?? 10,
+});
+
+const getFilterChipStyles = (props: KangurMobileFilterChipProps): { chipStyle: ViewStyle, chipTextStyle: TextStyle } => {
+    const containerDefaults = getContainerDefaults(props);
+    const chipStyle = getFilterChipContainerStyle(containerDefaults);
+    const chipTextStyle = getFilterChipTextStyle({
+        selected: props.selected,
+        selectedTextColor: props.selectedTextColor ?? '#1d4ed8',
+        idleTextColor: props.idleTextColor ?? '#334155',
+        centered: props.centered ?? false,
+        fullWidth: props.fullWidth ?? false,
+    });
+    return { chipStyle, chipTextStyle };
+};
+
 export function KangurMobileFilterChip(
   props: KangurMobileFilterChipProps,
 ): React.JSX.Element {
-  const {
-    borderRadius = 999,
-    centered = false,
-    href,
-    fullWidth = false,
-    horizontalPadding = 14,
-    idleTextColor = '#334155',
-    selected,
-    selectedBackgroundColor = '#dbeafe',
-    selectedBorderColor = '#1d4ed8',
-    selectedTextColor = '#1d4ed8',
-    textStyle,
-    verticalPadding = 10,
-  } = props;
-
-  const chipStyle = getFilterChipContainerStyle({
-    fullWidth,
-    borderRadius,
-    selected,
-    selectedBorderColor,
-    selectedBackgroundColor,
-    centered,
-    minHeight: props.minHeight,
-    horizontalPadding,
-    verticalPadding,
-  });
-
-  const chipTextStyle = getFilterChipTextStyle({
-    selected,
-    selectedTextColor,
-    idleTextColor,
-    centered,
-    fullWidth,
-  });
-
+  const { href, textStyle } = props;
+  const { chipStyle, chipTextStyle } = getFilterChipStyles(props);
   const content = resolveFilterChipContent(props, chipStyle, chipTextStyle, textStyle);
 
   if (href !== undefined) {

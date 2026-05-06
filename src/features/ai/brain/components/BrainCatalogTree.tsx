@@ -1,19 +1,21 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import {
-  createMasterFolderTreeTransactionAdapter,
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  createMasterFolderTreeOrderedItemsAdapter,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
-  type FolderTreeViewportV2Props,
+  type MasterFolderTreeViewportProps,
+  type MasterFolderTreeAdapterV3,
 } from '@/shared/lib/foldertree/public';
 
 import {
   buildBrainCatalogMasterNodes,
   createBrainCatalogNodeEntryMap,
   resolveBrainCatalogOrderFromNodes,
+  toBrainCatalogNodeId,
 } from './brain-catalog-master-tree';
 import { BrainCatalogNodeItem, BrainCatalogNodeItemRuntimeContext } from './BrainCatalogNodeItem';
 
@@ -28,8 +30,8 @@ export interface BrainCatalogTreeProps {
 }
 
 type BrainCatalogTreeViewportRuntimeValue = Pick<
-  FolderTreeViewportV2Props,
-  'controller' | 'scrollToNodeRef' | 'rootDropUi' | 'renderNode'
+  MasterFolderTreeViewportProps,
+  'tree' | 'renderNode'
 > & {
   isPending: boolean;
 };
@@ -48,18 +50,56 @@ function useBrainCatalogTreeViewportRuntime(): BrainCatalogTreeViewportRuntimeVa
 }
 
 function BrainCatalogTreeViewport(): React.JSX.Element {
-  const { controller, scrollToNodeRef, rootDropUi, renderNode, isPending } =
+  const { tree, renderNode, isPending } =
     useBrainCatalogTreeViewportRuntime();
   return (
-    <FolderTreeViewportV2
-      controller={controller}
-      scrollToNodeRef={scrollToNodeRef}
-      rootDropUi={rootDropUi}
+    <MasterFolderTreeViewport
+      tree={tree}
       renderNode={renderNode}
       enableDnd={!isPending}
       emptyLabel='No catalog entries'
     />
   );
+}
+
+function useBrainCatalogTreeAdapter({
+  entries,
+  entryByNodeId,
+  onChange,
+}: {
+  entries: AiBrainCatalogEntry[];
+  entryByNodeId: Map<string, AiBrainCatalogEntry>;
+  onChange: (entries: AiBrainCatalogEntry[]) => void;
+}): MasterFolderTreeAdapterV3 {
+  return useMemo(
+    () =>
+      createMasterFolderTreeOrderedItemsAdapter({
+        items: entries,
+        itemById: entryByNodeId,
+        getItemId: toBrainCatalogNodeId,
+        resolveOrderedItemsFromNodes: resolveBrainCatalogOrderFromNodes,
+        onPersistItems: onChange,
+      }),
+    [entries, entryByNodeId, onChange]
+  );
+}
+
+function useBrainCatalogTreeData({
+  entries,
+  onChange,
+}: {
+  entries: AiBrainCatalogEntry[];
+  onChange: (entries: AiBrainCatalogEntry[]) => void;
+}): {
+  masterNodes: ReturnType<typeof buildBrainCatalogMasterNodes>;
+  entryByNodeId: Map<string, AiBrainCatalogEntry>;
+  adapter: MasterFolderTreeAdapterV3;
+} {
+  const masterNodes = useMemo(() => buildBrainCatalogMasterNodes(entries), [entries]);
+  const entryByNodeId = useMemo(() => createBrainCatalogNodeEntryMap(entries), [entries]);
+  const adapter = useBrainCatalogTreeAdapter({ entries, entryByNodeId, onChange });
+
+  return { masterNodes, entryByNodeId, adapter };
 }
 
 export function BrainCatalogTree({
@@ -69,38 +109,9 @@ export function BrainCatalogTree({
   onRemove,
   isPending = false,
 }: BrainCatalogTreeProps): React.JSX.Element {
-  const masterNodes = useMemo(() => buildBrainCatalogMasterNodes(entries), [entries]);
-  const entryByNodeId = useMemo(() => createBrainCatalogNodeEntryMap(entries), [entries]);
+  const { masterNodes, entryByNodeId, adapter } = useBrainCatalogTreeData({ entries, onChange });
 
-  const entryByNodeIdRef = useRef(entryByNodeId);
-  useEffect(() => {
-    entryByNodeIdRef.current = entryByNodeId;
-  }, [entryByNodeId]);
-
-  const onChangeRef = useRef(onChange);
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  }, [onChange]);
-
-  const adapter = useMemo(
-    () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: async (tx) => {
-          const reordered = resolveBrainCatalogOrderFromNodes(
-            tx.nextNodes,
-            entryByNodeIdRef.current
-          );
-          onChangeRef.current(reordered);
-        },
-      }),
-    []
-  );
-
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'brain_catalog_tree',
     nodes: masterNodes,
     adapter,
@@ -133,13 +144,11 @@ export function BrainCatalogTree({
   );
   const viewportRuntimeValue = useMemo<BrainCatalogTreeViewportRuntimeValue>(
     () => ({
-      controller,
-      scrollToNodeRef,
-      rootDropUi,
+      tree,
       renderNode,
       isPending,
     }),
-    [controller, scrollToNodeRef, rootDropUi, renderNode, isPending]
+    [tree, renderNode, isPending]
   );
 
   return (

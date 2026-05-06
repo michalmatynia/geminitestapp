@@ -1277,10 +1277,14 @@ for (const selector of selectorsToTest) {
       matchedSelector = selector;
       try {
         domSnippet = await elements[0].evaluate(function(el) { return el.outerHTML.substring(0, 1000); });
-      } catch (_e) {}
+      } catch (e) {
+        logSystemEvent({ level: 'error', message: 'Failed to extract DOM snippet', source: 'selector-registry', error: e });
+      }
       break;
     }
-  } catch (_e) {}
+  } catch (e) {
+    logSystemEvent({ level: 'error', message: 'Selector probe failed', source: 'selector-registry', error: e });
+  }
 }
 return { matchCount, domSnippet, matchedSelector };
 `.trim();

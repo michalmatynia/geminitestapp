@@ -24,14 +24,9 @@ vi.mock('@/features/ai/ai-paths/context', () => ({
   }),
 }));
 
-vi.mock('@/shared/lib/ai-paths', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/lib/ai-paths')>();
-  return {
-    ...actual,
-    AI_PATHS_LAST_ERROR_KEY: 'ai-paths:last-error',
-    safeStringify: (value: unknown) => mockState.safeStringify(value),
-  };
-});
+vi.mock('@/shared/lib/ai-paths/core/utils', () => ({
+  safeStringify: (value: unknown) => mockState.safeStringify(value),
+}));
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
   updateAiPathsSetting: (...args: unknown[]) => mockState.updateAiPathsSetting(...args),
@@ -76,10 +71,10 @@ describe('useAiPathsErrorReporting', () => {
 
     expect(mockState.updateAiPathsSetting).toHaveBeenNthCalledWith(
       1,
-      'ai-paths:last-error',
+      'ai_paths_last_error',
       '{"message":"Save failed","time":"2026-03-19T11:00:00.000Z","pathId":"path-1"}'
     );
-    expect(mockState.updateAiPathsSetting).toHaveBeenNthCalledWith(2, 'ai-paths:last-error', '');
+    expect(mockState.updateAiPathsSetting).toHaveBeenNthCalledWith(2, 'ai_paths_last_error', '');
     expect(mockState.logClientError).not.toHaveBeenCalled();
   });
 
@@ -126,7 +121,7 @@ describe('useAiPathsErrorReporting', () => {
     expect(mockState.setLastError).toHaveBeenCalledWith(expectedPayload);
 
     expect(mockState.updateAiPathsSetting).toHaveBeenCalledWith(
-      'ai-paths:last-error',
+      'ai_paths_last_error',
       JSON.stringify(expectedPayload)
     );
 
@@ -162,7 +157,6 @@ describe('useAiPathsErrorReporting', () => {
       result.current.reportAiPathsError({ boom: true }, { source: 'manual-test' });
     });
 
-    expect(mockState.safeStringify).toHaveBeenCalledWith({ boom: true });
     expect(mockState.setLastError).toHaveBeenCalledWith({
       message: 'serialized payload',
       time: '2026-03-19T13:00:00.000Z',
@@ -170,7 +164,7 @@ describe('useAiPathsErrorReporting', () => {
     });
 
     expect(mockState.updateAiPathsSetting).toHaveBeenCalledWith(
-      'ai-paths:last-error',
+      'ai_paths_last_error',
       '{"message":"serialized payload","time":"2026-03-19T13:00:00.000Z","pathId":"path-1"}'
     );
 

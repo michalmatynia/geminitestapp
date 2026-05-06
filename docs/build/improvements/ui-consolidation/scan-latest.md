@@ -8,15 +8,15 @@ canonical: true
 ---
 # UI consolidation Improvement Track
 
-Generated at: 2026-05-06T11:28:21.086Z
+Generated at: 2026-05-06T11:44:17.516Z
 
 ## Snapshot
 
 - Track id: `ui-consolidation`
 - Category: `ui`
 - Included in default read-only bundle: yes
-- Overall status: `attention`
-- Latest report timestamp: 2026-04-15T10:54:26.139Z
+- Overall status: `failed`
+- Latest report timestamp: 2026-05-06T11:44:17.513Z
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Runs the shared UI consolidation guardrail so broad improvement sweeps account f
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `failed` | 1 | 1 | 0 | 1 | 0 |
 | `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
@@ -48,6 +48,7 @@ Runs the shared UI consolidation guardrail so broad improvement sweeps account f
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
+| `audit` | `failed` | `automatic` | `ui-consolidation-guardrail` | `check:ui-consolidation` |
 | `apply` | `manual` | `manual` | `ui-consolidation-apply` | manual |
 
 ## Related Docs

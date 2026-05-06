@@ -4,10 +4,10 @@ import { FileText, Folder, FolderOpen, GripVertical } from 'lucide-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
-  FolderTreeViewportV2,
   handleMasterTreeDrop,
+  MasterFolderTreeViewport,
   resolveFolderTreeIconSet,
-  useMasterFolderTreeShell,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import {
@@ -66,18 +66,18 @@ export function NotesAppFolderTree(): React.JSX.Element {
     () => createNotesMasterTreeAdapter(operations as NotesAppFolderTreeOperations),
     [operations]
   );
-  const {
-    appearance: { rootDropUi, resolveIcon },
-    controller,
-    panel: { collapsed: panelCollapsed, setCollapsed: setPanelCollapsed },
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'notes',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
     initiallyExpandedNodeIds: initialExpandedFolderNodeIds,
     adapter: notesAdapter,
   });
+  const {
+    appearance: { resolveIcon },
+    controller,
+    panel: { collapsed: panelCollapsed, setCollapsed: setPanelCollapsed },
+  } = tree;
 
   useEffect(() => {
     setIsFolderTreeCollapsed(panelCollapsed);
@@ -152,10 +152,8 @@ export function NotesAppFolderTree(): React.JSX.Element {
     >
       <NotesAppTreeNodeRuntimeProvider value={treeNodeRuntimeContextValue}>
         <div className='min-h-0 flex-1 overflow-auto p-2'>
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
-            rootDropUi={rootDropUi}
+          <MasterFolderTreeViewport
+            tree={tree}
             resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): string | null => {
               const noteId = getNoteDragId(event.dataTransfer, draggedNoteId);
               if (noteId) return toNoteMasterNodeId(noteId);

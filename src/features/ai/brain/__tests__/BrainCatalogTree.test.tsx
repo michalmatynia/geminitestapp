@@ -13,14 +13,17 @@ vi.mock('@/shared/lib/foldertree/v2', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/foldertree/v2')>();
   return {
     ...actual,
-    createMasterFolderTreeTransactionAdapter: ({
-      onApply,
+    createMasterFolderTreeOrderedItemsAdapter: ({
+      itemById,
+      resolveOrderedItemsFromNodes,
+      onPersistItems,
     }: {
-      onApply?: (tx: {
-        nextNodes: unknown[];
-        previousNodes: unknown[];
-        operation: { type: string };
-      }) => Promise<void> | void;
+      itemById: Map<string, AiBrainCatalogEntry>;
+      resolveOrderedItemsFromNodes: (
+        nodes: unknown[],
+        itemById: Map<string, AiBrainCatalogEntry>
+      ) => AiBrainCatalogEntry[];
+      onPersistItems: (items: AiBrainCatalogEntry[]) => Promise<unknown> | void;
     }) => ({
       prepare: async (tx: unknown) => ({ tx, preparedAt: Date.now() }),
       apply: async (tx: {
@@ -28,7 +31,7 @@ vi.mock('@/shared/lib/foldertree/v2', async (importOriginal) => {
         previousNodes: unknown[];
         operation: { type: string };
       }) => {
-        await onApply?.(tx);
+        await onPersistItems(resolveOrderedItemsFromNodes(tx.nextNodes, itemById));
         return { tx, appliedAt: Date.now() };
       },
       commit: async () => {},
@@ -38,6 +41,51 @@ vi.mock('@/shared/lib/foldertree/v2', async (importOriginal) => {
       latestTreeOptions = options;
       return useMasterFolderTreeShellMock(options);
     },
+    useMasterFolderTreeViewModel: (options: unknown) => {
+      latestTreeOptions = options;
+      const shell = useMasterFolderTreeShellMock(options);
+
+      return {
+        ...shell,
+        searchState: {
+          isActive: false,
+          results: [],
+          matchNodeIds: new Set(),
+        },
+      };
+    },
+    MasterFolderTreeViewport: ({
+      tree,
+    }: {
+      tree: {
+        controller: {
+          nodes: Array<{ id: string; name: string; sortOrder: number }>;
+          reorderNode?: (
+            draggedNodeId: string,
+            targetNodeId: string,
+            position: 'before' | 'after'
+          ) => Promise<unknown> | unknown;
+        };
+      };
+    }) => (
+      <div>
+        {tree.controller.nodes.map((node) => (
+          <div key={node.id}>{node.name}</div>
+        ))}
+        <button
+          type='button'
+          onClick={() => {
+            void tree.controller.reorderNode?.(
+              tree.controller.nodes[0]?.id ?? '',
+              tree.controller.nodes[tree.controller.nodes.length - 1]?.id ?? '',
+              'after'
+            );
+          }}
+        >
+          Simulate Reorder
+        </button>
+      </div>
+    ),
     FolderTreeViewportV2: ({
       controller,
     }: {

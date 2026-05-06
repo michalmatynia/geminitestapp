@@ -17,6 +17,7 @@ import type {
   SystemLogLevelDto as SystemLogLevel,
   SystemLogRecordDto as SystemLogRecord,
 } from '@/shared/contracts/observability';
+import { hasConfiguredMongoSourceEnv } from '@/shared/lib/db/mongo-source-env';
 
 import {
   isSensitiveKey,
@@ -26,6 +27,7 @@ import {
 } from './log-redaction';
 import {
   getObservabilityLoggingControlTypeForSystemLogLevel,
+  type ObservabilityLoggingControlType,
 } from './logging-controls';
 import {
   getCentralLoggingRuntimeStats as getCentralLoggingRuntimeStatsInternal,
@@ -63,7 +65,11 @@ const shouldPersistSystemLogsToDatabase = (env: NodeJS.ProcessEnv = process.env)
     return explicit;
   }
 
-  return env['NODE_ENV'] !== 'development';
+  if (env['NODE_ENV'] !== 'development') {
+    return true;
+  }
+
+  return hasConfiguredMongoSourceEnv(env);
 };
 
 const isProductionBuildPhase = (env: NodeJS.ProcessEnv = process.env): boolean =>
@@ -440,6 +446,7 @@ export const getErrorFingerprint = (input: {
 
 export type SystemLogInput = {
   level?: SystemLogLevel;
+  controlType?: ObservabilityLoggingControlType;
   message: string;
   source?: string;
   service?: string;
@@ -462,10 +469,9 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     const isBrowser = typeof window !== 'undefined';
 
     if (!isBrowser) {
-      const loggingControlType = getObservabilityLoggingControlTypeForSystemLogLevel(
-        level,
-        Boolean(input.critical)
-      );
+      const loggingControlType =
+        input.controlType ??
+        getObservabilityLoggingControlTypeForSystemLogLevel(level, Boolean(input.critical));
       try {
         const { isServerLoggingEnabled } = await import('./logging-controls-server');
         if (!(await isServerLoggingEnabled(loggingControlType))) {

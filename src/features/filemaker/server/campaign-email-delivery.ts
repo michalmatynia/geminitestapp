@@ -19,6 +19,7 @@ import 'server-only';
 import { createTransport, type Transporter } from 'nodemailer';
 
 import { AUTH_SECRET_SETTINGS_KEYS } from '@/shared/lib/auth/auth-secret-settings';
+import { FILEMAKER_CAMPAIGN_EMAIL_SECRET_SETTINGS_KEYS } from '@/shared/lib/settings/secret-setting-keys';
 import { readSecretSettingValues } from '@/shared/lib/settings/secret-settings';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
@@ -45,8 +46,11 @@ import * as mailStorage from './mail/mail-storage';
 import {
   buildThreadId,
   pickAnchorAddress,
-  resolveAccountSecretSettingKey,
 } from './mail/mail-utils';
+import {
+  resolveFilemakerMailSmtpCredential,
+  type FilemakerMailCredential,
+} from './mail/mail-auth';
 import { buildFilemakerCampaignOneClickUnsubscribeUrl } from './campaign-unsubscribe-token';
 
 /* eslint-disable
@@ -153,15 +157,7 @@ const buildRecordDeliverabilityHeaders = (input: {
     runId: input.record.runId,
   });
 
-export const FILEMAKER_CAMPAIGN_EMAIL_SECRET_SETTINGS_KEYS = {
-  webhookUrl: 'filemaker_campaign_email_webhook_url',
-  webhookSecret: 'filemaker_campaign_email_webhook_secret',
-  smtpHost: 'filemaker_campaign_smtp_host',
-  smtpPort: 'filemaker_campaign_smtp_port',
-  smtpUser: 'filemaker_campaign_smtp_user',
-  smtpPass: 'filemaker_campaign_smtp_pass',
-  smtpFrom: 'filemaker_campaign_smtp_from',
-} as const;
+export { FILEMAKER_CAMPAIGN_EMAIL_SECRET_SETTINGS_KEYS };
 
 type SmtpConfig = {
   host: string;
@@ -446,7 +442,7 @@ const resolveAccountDeliveryConfig = async (input: {
   replyToEmail: string | null;
 }): Promise<{
   account: FilemakerMailAccount;
-  password: string;
+  credential: FilemakerMailCredential;
   dkimPrivateKey: string | null;
   fromName: string | null;
   replyToEmail: string | null;
@@ -466,12 +462,15 @@ const resolveAccountDeliveryConfig = async (input: {
     });
   }
 
-  const smtpSecretKey = resolveAccountSecretSettingKey(account, 'smtp_password');
   const dkimSecretKey = account.dkimPrivateKeySettingKey?.trim() || null;
-  const secretKeysToRead = [smtpSecretKey, ...(dkimSecretKey ? [dkimSecretKey] : [])];
-  const values = await readSecretSettingValues(secretKeysToRead);
-  const password = values[smtpSecretKey] ?? null;
-  if (!password) {
+  const values = dkimSecretKey ? await readSecretSettingValues([dkimSecretKey]) : {};
+  let credential: FilemakerMailCredential;
+  try {
+    credential = await resolveFilemakerMailSmtpCredential(account);
+  } catch (error) {
+    throw toCampaignDeliveryError(error);
+  }
+  if (typeof credential === 'string' && credential.length === 0) {
     throw new FilemakerCampaignEmailDeliveryError({
       message: `SMTP password missing for mail account ${account.name || account.id}.`,
       provider: null,
@@ -483,7 +482,7 @@ const resolveAccountDeliveryConfig = async (input: {
 
   return {
     account,
-    password,
+    credential,
     dkimPrivateKey,
     fromName: input.fromName?.trim() || account.fromName?.trim() || null,
     replyToEmail: input.replyToEmail?.trim() || account.replyToEmail?.trim() || null,
@@ -632,7 +631,7 @@ export const sendFilemakerCampaignEmail = async (input: {
 
     const transport = createSmtpTransport(
       accountConfig.account,
-      accountConfig.password,
+      accountConfig.credential,
       accountConfig.dkimPrivateKey
     );
     const deliverabilityHeaders = buildRecordDeliverabilityHeaders({

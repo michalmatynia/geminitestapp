@@ -1,3 +1,15 @@
+/**
+ * Tree Context Provider
+ * 
+ * React context for managing tree component state and interactions.
+ * Provides:
+ * - Tree node selection state management (single/multi-select)
+ * - Expansion state tracking for collapsible nodes
+ * - Selection toggle and expansion handlers
+ * - Type-safe context value access
+ * - Hierarchical tree navigation support
+ */
+
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';

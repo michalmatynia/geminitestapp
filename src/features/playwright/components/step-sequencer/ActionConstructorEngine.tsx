@@ -38,9 +38,8 @@ import {
   playwrightProxySessionModeOptions,
 } from '@/shared/lib/playwright/settings';
 import {
-  createMasterFolderTreeTransactionAdapter,
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import {
@@ -434,32 +433,17 @@ export function ActionConstructorEngine(): React.JSX.Element {
     masterNodesRef.current = masterNodes;
   }, [masterNodes]);
 
-  const adapter = useMemo(
-    () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: async () => {
-          // Read-only tree — no persistence needed, just acknowledge
-        },
-      }),
-    []
-  );
-
   const treeRevision = useMemo(() => masterNodes.map((n) => n.id).join(','), [masterNodes]);
   const expandedNodeIds = useMemo(
     () => masterNodes.filter((n) => n.type === 'folder').map((n) => n.id),
     [masterNodes]
   );
 
-  const {
-    controller,
-    appearance: { rootDropUi },
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'playwright_step_seq_constructor',
     nodes: masterNodes,
     initiallyExpandedNodeIds: expandedNodeIds,
     externalRevision: treeRevision,
-    adapter,
   });
 
   return (
@@ -481,13 +465,11 @@ export function ActionConstructorEngine(): React.JSX.Element {
           </div>
         ) : (
           <div className='flex-1 overflow-y-auto rounded border border-border/60 bg-card/30 p-1'>
-            <FolderTreeViewportV2
-              controller={controller}
-              scrollToNodeRef={scrollToNodeRef}
+            <MasterFolderTreeViewport
+              tree={tree}
               enableDnd={false}
               className='space-y-0.5'
               emptyLabel='No step sets'
-              rootDropUi={rootDropUi}
               renderNode={(input) => (
                 <ActionConstructorTreeNode
                   {...input}

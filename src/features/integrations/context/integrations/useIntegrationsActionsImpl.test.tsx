@@ -28,6 +28,7 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
   useDeleteConnection: () => ({ mutateAsync: vi.fn() }),
   useDisconnectAllegro: () => ({ mutateAsync: vi.fn() }),
   useDisconnectLinkedIn: () => ({ mutateAsync: vi.fn() }),
+  useDisconnectGoogle: () => ({ mutateAsync: vi.fn() }),
   useTestConnection: () => ({
     mutateAsync: (...args: unknown[]) => testConnectionMutateAsyncMock(...args),
   }),

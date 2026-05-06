@@ -29,6 +29,37 @@ import { type AgentToolRequest, type AgentToolResult, type AgentLlmContext } fro
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
+const enforceRobotsPolicy = async (
+    url: string,
+    ignoreRobotsTxt: boolean,
+    log: any
+): Promise<boolean> => {
+    if (ignoreRobotsTxt) return true;
+    if (url === '' || url === 'about:blank') return true;
+    const robots = await loadRobotsTxt(url);
+    if (!robots.ok) {
+      await log('warning', 'Robots.txt unavailable; proceeding.', {
+        url,
+        status: robots.status,
+        error: robots.error ?? null,
+      });
+      return true;
+    }
+    const parsed = parseRobotsRules(robots.content);
+    const rules = parsed.get('*') ?? [];
+    const pathName = new URL(url).pathname || '/';
+    const evaluation = evaluateRobotsRules(rules, pathName);
+    if (!evaluation.allowed) {
+      await log('warning', 'Blocked by robots.txt.', {
+        url,
+        path: pathName,
+        matchedRule: evaluation.matchedRule,
+      });
+      return false;
+    }
+    return true;
+};
+
 export async function runAgentTool(
   request: AgentToolRequest,
   injectedBrowser?: Browser,
@@ -76,33 +107,7 @@ export async function runAgentTool(
   });
 
   const activeStepId = stepId ?? null;
-
-  const enforceRobotsPolicy = async (url: string): Promise<boolean> => {
-    if (ignoreRobotsTxt) return true;
-    if (!url || url === 'about:blank') return true;
-    const robots = await loadRobotsTxt(url);
-    if (!robots.ok) {
-      await log('warning', 'Robots.txt unavailable; proceeding.', {
-        url,
-        status: robots.status,
-        error: robots.error ?? null,
-      });
-      return true;
-    }
-    const parsed = parseRobotsRules(robots.content);
-    const rules = parsed.get('*') ?? [];
-    const pathName = new URL(url).pathname || '/';
-    const evaluation = evaluateRobotsRules(rules, pathName);
-    if (!evaluation.allowed) {
-      await log('warning', 'Blocked by robots.txt.', {
-        url,
-        path: pathName,
-        matchedRule: evaluation.matchedRule,
-      });
-      return false;
-    }
-    return true;
-  };
+// ... (rest of function with updated enforceRobotsPolicy calls)
 
   let page: Page | null;
   if (injectedContext && context.pages().length > 0) {
@@ -224,7 +229,7 @@ export async function runAgentTool(
         const fallback = resolvedPicked || (allowedResults.length ? allowedResults[0]?.url : null);
 
         if (fallback) {
-          if (!(await enforceRobotsPolicy(fallback))) {
+          if (!(await enforceRobotsPolicy(fallback, ignoreRobotsTxt, log))) {
             return { ok: false, error: 'Blocked by robots.txt.' };
           }
           await page.goto(fallback, {
@@ -241,7 +246,7 @@ export async function runAgentTool(
       }
 
       if (!navigatedViaSearch) {
-        if (!(await enforceRobotsPolicy(targetUrl))) {
+        if (!(await enforceRobotsPolicy(targetUrl, ignoreRobotsTxt, log))) {
           return { ok: false, error: 'Blocked by robots.txt.' };
         }
         try {
@@ -307,7 +312,7 @@ export async function runAgentTool(
           }
 
           if (searchUrl) {
-            if (!(await enforceRobotsPolicy(searchUrl))) {
+            if (!(await enforceRobotsPolicy(searchUrl, ignoreRobotsTxt, log))) {
               return { ok: false, error: 'Blocked by robots.txt.' };
             }
             await page.goto(searchUrl, {
@@ -400,3 +405,4 @@ export async function runAgentTool(
     }
   }
 }
+

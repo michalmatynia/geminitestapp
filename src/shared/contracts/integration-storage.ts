@@ -21,6 +21,8 @@ export type IntegrationConnectionRecord = Omit<
   | 'traderaApiTokenUpdatedAt'
   | 'linkedinTokenUpdatedAt'
   | 'linkedinExpiresAt'
+  | 'googleTokenUpdatedAt'
+  | 'googleExpiresAt'
 > &
   LegacyIntegrationConnectionPlaywrightSettings & {
     createdAt: string | Date;
@@ -29,6 +31,8 @@ export type IntegrationConnectionRecord = Omit<
     traderaApiTokenUpdatedAt?: string | Date | null;
     linkedinTokenUpdatedAt?: string | Date | null;
     linkedinExpiresAt?: string | Date | null;
+    googleTokenUpdatedAt?: string | Date | null;
+    googleExpiresAt?: string | Date | null;
   };
 
 type NullablePlaywrightConnectionOverrideKey =

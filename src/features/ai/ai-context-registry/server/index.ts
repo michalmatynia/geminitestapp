@@ -1,3 +1,15 @@
+/**
+ * AI Context Registry Server Module
+ * 
+ * Server-side AI context management and retrieval system.
+ * Provides:
+ * - Context registry backend and storage
+ * - Context retrieval service for AI operations
+ * - Runtime context providers for AI paths and Kangur features
+ * - Proposal management (creation, updates, retrieval)
+ * - Context pack registry and organization
+ */
+
 import 'server-only';
 
 import { registryBackend } from '../registry/index';

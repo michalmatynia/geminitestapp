@@ -33,9 +33,9 @@ type UseKangurMobileLearnerProfileResult = {
 
 const getKangurMobileProfileDisplayName = (fullName: string | null | undefined, learnerDisplayName: string | null | undefined, fallbackLabel: string): string => {
   const activeLearner = learnerDisplayName?.trim();
-  if (activeLearner && activeLearner !== '') return activeLearner;
+  if (activeLearner !== undefined && activeLearner !== '') return activeLearner;
   const userName = fullName?.trim();
-  return userName && userName !== '' ? userName : fallbackLabel;
+  return (userName !== undefined && userName !== '') ? userName : fallbackLabel;
 };
 
 const PAGE_HREF_MAP: Record<string, () => Href | null> = {
@@ -43,17 +43,20 @@ const PAGE_HREF_MAP: Record<string, () => Href | null> = {
   ParentDashboard: createKangurParentDashboardHref,
 };
 
-const createKangurMobileActionHref = (action: KangurLearnerRecommendationAction): Href | null => {
-  if (action.page === 'Lessons') {
-    const focus = action.query?.['focus']?.trim();
-    return focus && focus !== '' ? { pathname: '/lessons', params: { focus } } : '/lessons';
-  }
+const getLessonsHref = (query: Record<string, string | string[]> | undefined): Href => {
+    const focus = query?.['focus']?.trim();
+    return (focus !== undefined && focus !== '') ? { pathname: '/lessons', params: { focus } } : '/lessons';
+};
 
-  if (action.page === 'Game') {
-    const resolved = resolvePreferredKangurPracticeOperation(action.query?.['operation'] ?? action.query?.['focus']) ?? 'mixed';
+const getGameHref = (query: Record<string, string | string[]> | undefined): Href => {
+    const operation = (query?.['operation'] ?? query?.['focus']) as string | undefined;
+    const resolved = (resolvePreferredKangurPracticeOperation(operation) as string | undefined) ?? 'mixed';
     return { pathname: '/practice', params: { operation: resolved } };
-  }
+};
 
+const createKangurMobileActionHref = (action: KangurLearnerRecommendationAction): Href | null => {
+  if (action.page === 'Lessons') return getLessonsHref(action.query);
+  if (action.page === 'Game') return getGameHref(action.query);
   return PAGE_HREF_MAP[action.page]?.() ?? null;
 };
 

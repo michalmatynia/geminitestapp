@@ -1,3 +1,18 @@
+/**
+ * AI Paths Access Control
+ * 
+ * Server-side authorization and rate limiting for AI Paths feature.
+ * Provides:
+ * - Permission-based access control (ai_paths.manage, products.manage)
+ * - Internal request authentication for AI workflow automation
+ * - Rate limiting to prevent abuse (runs per minute, active runs)
+ * - Global queue limits to prevent system overload
+ * - User-specific run quotas and throttling
+ * 
+ * This module ensures secure and controlled access to the AI Paths
+ * visual workflow builder and execution engine.
+ */
+
 import 'server-only';
 
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
@@ -16,11 +31,15 @@ import { AI_PATHS_CANONICAL_RUN_SOURCE_FILTER } from '@/shared/lib/ai-paths/run-
 import type { NextRequest } from 'next/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
+// Required permissions for AI Paths access
 export const AI_PATHS_PERMISSION = 'ai_paths.manage';
 const AI_PATHS_RUNNER_PERMISSION = 'products.manage';
 const DEV_INTERNAL_HEADER_VALUE = 'dev-internal-header-value-change-me';
 
+/**
+ * Get expected internal authentication header value
+ * Priority: AI_PATHS_INTERNAL_TOKEN > AUTH_SECRET > NEXTAUTH_SECRET > dev fallback
+ */
 const getExpectedInternalHeaderValue = (): string | null => {
   if (process.env['AI_PATHS_INTERNAL_TOKEN']) return process.env['AI_PATHS_INTERNAL_TOKEN'];
   if (process.env['AUTH_SECRET']) return process.env['AUTH_SECRET'];
@@ -29,6 +48,10 @@ const getExpectedInternalHeaderValue = (): string | null => {
   return null;
 };
 
+/**
+ * Check if request is from internal AI Paths automation
+ * Used to bypass user authentication for automated workflows
+ */
 export const isAiPathsInternalRequest = (request: NextRequest): boolean => {
   const expectedHeaderValue = getExpectedInternalHeaderValue();
   if (!expectedHeaderValue) return false;
@@ -36,18 +59,25 @@ export const isAiPathsInternalRequest = (request: NextRequest): boolean => {
   return Boolean(header && header === expectedHeaderValue);
 };
 
+/**
+ * User access context for AI Paths operations
+ */
 export type AiPathsAccessContext = {
   userId: string;
   permissions: string[];
   isElevated: boolean;
 };
 
+/**
+ * Parse environment variable as number with fallback
+ */
 const parseNumber = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+// Rate limiting configuration from environment
 const RUN_RATE_WINDOW_SECONDS = parseNumber(
   process.env['AI_PATHS_RUN_RATE_LIMIT_WINDOW_SECONDS'],
   60

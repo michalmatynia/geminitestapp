@@ -1,10 +1,31 @@
+/**
+ * CSRF Protection
+ * 
+ * Cross-Site Request Forgery protection for the application.
+ * Provides:
+ * - CSRF token generation and validation
+ * - Cookie-based token storage with secure attributes
+ * - Header-based token transmission
+ * - Session cookie detection for protection activation
+ * - Loopback origin handling for development
+ * - Safe HTTP method exemption (GET, HEAD, OPTIONS)
+ * 
+ * This module implements double-submit cookie pattern for CSRF protection,
+ * ensuring state-changing requests are authenticated and authorized.
+ */
+
 import { type NextRequest, type NextResponse } from 'next/server';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
+// CSRF protection constants
 export const CSRF_COOKIE_NAME = 'csrf-token';
 export const CSRF_HEADER_NAME = 'x-csrf-token';
 export const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+/**
+ * Session cookie names to detect authenticated sessions
+ * Covers both secure and non-secure variants for different environments
+ */
 const SESSION_COOKIE_NAMES = [
   'authjs.session-token',
   '__Secure-authjs.session-token',
@@ -12,9 +33,17 @@ const SESSION_COOKIE_NAMES = [
   '__Secure-next-auth.session-token',
 ];
 
+/**
+ * Check if request has an active session cookie
+ * Used to determine if CSRF protection should be enforced
+ */
 export const hasSessionCookie = (request: NextRequest): boolean =>
   SESSION_COOKIE_NAMES.some((name: string) => Boolean(request.cookies.get(name)));
 
+/**
+ * Convert bytes to base64url encoding (URL-safe base64)
+ * Used for generating cryptographically secure CSRF tokens
+ */
 const toBase64Url = (bytes: Uint8Array): string => {
   let binary = '';
   bytes.forEach((byte: number) => {
@@ -24,6 +53,10 @@ const toBase64Url = (bytes: Uint8Array): string => {
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 };
 
+/**
+ * Generate cryptographically secure CSRF token
+ * Prefers crypto.randomUUID, falls back to crypto.getRandomValues, then Math.random
+ */
 export const generateCsrfToken = (): string => {
   if (globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID().replace(/-/g, '');
@@ -36,16 +69,30 @@ export const generateCsrfToken = (): string => {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 };
 
+/**
+ * Extract CSRF token from request cookies
+ */
 export const getCsrfTokenFromRequest = (request: NextRequest): string | null =>
   request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
 
+/**
+ * Extract CSRF token from request headers
+ */
 export const getCsrfTokenFromHeaders = (request: NextRequest): string | null =>
   request.headers.get(CSRF_HEADER_NAME) ?? null;
 
+// Loopback hostnames for development environment handling
 const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']);
 
+/**
+ * Check if hostname is a loopback address
+ */
 const isLoopbackHostname = (hostname: string): boolean => LOOPBACK_HOSTNAMES.has(hostname);
 
+/**
+ * Check if two origins are equivalent loopback addresses
+ * Allows CSRF protection to work across different loopback formats in development
+ */
 const isEquivalentLoopbackOrigin = (candidateOrigin: string, requestOrigin: string): boolean => {
   try {
     const candidate = new URL(candidateOrigin);

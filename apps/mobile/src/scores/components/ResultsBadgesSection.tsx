@@ -15,6 +15,58 @@ interface ResultsBadgesSectionProps {
   profileHref: string;
 }
 
+function BadgesSummarySection({ resultsBadges, copy }: { resultsBadges: ResultsBadgesSectionProps['resultsBadges'], copy: ResultsBadgesSectionProps['copy'] }): React.JSX.Element {
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <KangurMobileSummaryChip
+          label={copy({
+            de: `Freigeschaltet ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
+            en: `Unlocked ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
+            pl: `Odblokowane ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
+          })}
+        />
+        <KangurMobileSummaryChip
+          label={copy({
+            de: `Offen ${resultsBadges.remainingBadges}`,
+            en: `Remaining ${resultsBadges.remainingBadges}`,
+            pl: `Do zdobycia ${resultsBadges.remainingBadges}`,
+          })}
+          backgroundColor='#fffbeb'
+          borderColor='#fde68a'
+          textColor='#b45309'
+        />
+    </View>
+  );
+}
+
+function RecentBadgesSection({ recentBadges, copy }: { recentBadges: ResultsBadgesSectionProps['resultsBadges']['recentBadges'], copy: ResultsBadgesSectionProps['copy'] }): React.JSX.Element {
+  if (recentBadges.length === 0) return <></>;
+  return (
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+            {copy({ de: 'Zuletzt freigeschaltet', en: 'Recently unlocked', pl: 'Ostatnio odblokowane' })}
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {recentBadges.map((item) => (
+                <ResultsBadgeChip key={item.id} item={item} />
+            ))}
+        </View>
+      </View>
+  );
+}
+
+function EmptyBadgesSection({ copy }: { copy: ResultsBadgesSectionProps['copy'] }): React.JSX.Element {
+  return (
+    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+      {copy({
+        de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
+        en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
+        pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
+      })}
+    </Text>
+  );
+}
+
 export function ResultsBadgesSection({
   resultsBadges,
   copy,
@@ -38,46 +90,12 @@ export function ResultsBadgesSection({
         </Text>
       </View>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <KangurMobileSummaryChip
-          label={copy({
-            de: `Freigeschaltet ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
-            en: `Unlocked ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
-            pl: `Odblokowane ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
-          })}
-        />
-        <KangurMobileSummaryChip
-          label={copy({
-            de: `Offen ${resultsBadges.remainingBadges}`,
-            en: `Remaining ${resultsBadges.remainingBadges}`,
-            pl: `Do zdobycia ${resultsBadges.remainingBadges}`,
-          })}
-          backgroundColor='#fffbeb'
-          borderColor='#fde68a'
-          textColor='#b45309'
-        />
-      </View>
+      <BadgesSummarySection resultsBadges={resultsBadges} copy={copy} />
 
-      {resultsBadges.recentBadges.length === 0 ? (
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
-            en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
-            pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
-          })}
-        </Text>
-      ) : (
-        <View style={{ gap: 10 }}>
-          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-            {copy({ de: 'Zuletzt freigeschaltet', en: 'Recently unlocked', pl: 'Ostatnio odblokowane' })}
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {resultsBadges.recentBadges.map((item) => (
-              <ResultsBadgeChip key={item.id} item={item} />
-            ))}
-          </View>
-        </View>
-      )}
+      {resultsBadges.recentBadges.length === 0 
+        ? <EmptyBadgesSection copy={copy} /> 
+        : <RecentBadgesSection recentBadges={resultsBadges.recentBadges} copy={copy} />
+      }
 
       <LinkButton
         href={profileHref}

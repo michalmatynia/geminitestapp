@@ -3,7 +3,10 @@
 import { Folder, Inbox, MailOpen, UserRound } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
-import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/shared/lib/foldertree/public';
+import {
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
+} from '@/shared/lib/foldertree/public';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import { Badge } from '@/shared/ui/primitives.public';
 import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
@@ -220,11 +223,7 @@ export function MailClientAccountsTree({
   const treeNodes = useClientTreeNodes({ accounts, folders, threads });
   const selectedNodeId = useSelectedTreeNodeId(selection);
   const initiallyExpandedNodeIds = useExpandedTreeNodeIds(accounts, selection);
-  const {
-    controller,
-    appearance: { rootDropUi },
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'filemaker_mail',
     nodes: treeNodes,
     selectedNodeId,
@@ -245,10 +244,8 @@ export function MailClientAccountsTree({
       header={<MailClientAccountsTreeHeader />}
     >
       <div className='min-h-0 overflow-auto p-2'>
-        <FolderTreeViewportV2
-          controller={controller}
-          scrollToNodeRef={scrollToNodeRef}
-          rootDropUi={rootDropUi}
+        <MasterFolderTreeViewport
+          tree={tree}
           enableDnd={false}
           emptyLabel={isLoading ? 'Loading accounts...' : 'No mailboxes configured'}
           renderNode={renderNode}

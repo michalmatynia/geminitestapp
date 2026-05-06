@@ -64,46 +64,107 @@ const prefersCompetitionGameTarget = (
   return COMPETITION_MODE_HINTS.some((hint) => normalizedModeToken.includes(hint));
 };
 
+const resolveLessonsPage = (query: Record<string, string> | undefined): Href | null => 
+    createKangurLessonHref(query?.['focus']);
+
+const getCompetitionHref = (
+    query: Record<string, string> | undefined
+): Href => {
+    return createKangurCompetitionHref(
+        normalizeQueryToken(query?.['mode']) ??
+          normalizeQueryToken(query?.['focus']),
+    );
+};
+
+const getPracticeHref = (
+    query: Record<string, string> | undefined
+): Href => {
+    const resolvedOperation =
+      resolvePreferredKangurPracticeOperation(query?.['operation']) ??
+      resolvePreferredKangurPracticeOperation(query?.['focus']) ??
+      'mixed';
+    return createKangurPracticeHref(resolvedOperation);
+};
+
+const resolveGamePage = (
+    query: Record<string, string> | undefined,
+    options: ResolveKangurMobileActionHrefOptions
+): Href | null => {
+    if (prefersCompetitionGameTarget(query, options)) {
+        return getCompetitionHref(query);
+    }
+    return getPracticeHref(query);
+};
+
+const resolveDuelsPage = (query: Record<string, string> | undefined): Href | null =>
+    createKangurDuelsHref({
+      joinSessionId: normalizeQueryToken(query?.['join']),
+      sessionId: normalizeQueryToken(query?.['sessionId']),
+      spectate: query?.['spectate'] === '1',
+    });
+
 export const resolveKangurMobileActionHref = (
   action: KangurMobileActionLike,
   options: ResolveKangurMobileActionHrefOptions = {},
 ): Href | null => {
-  if (action.page === 'Lessons') {
-    return createKangurLessonHref(action.query?.['focus']);
+  switch (action.page) {
+    case 'Lessons': return resolveLessonsPage(action.query);
+    case 'Game': return resolveGamePage(action.query, options);
+    case 'LearnerProfile': return '/profile' as Href;
+    case 'ParentDashboard': return createKangurParentDashboardHref();
+    case 'Duels': return resolveDuelsPage(action.query);
+    default: return null;
   }
+};
 
-  if (action.page === 'Game') {
-    if (prefersCompetitionGameTarget(action.query, options)) {
-      return createKangurCompetitionHref(
-        normalizeQueryToken(action.query?.['mode']) ??
-          normalizeQueryToken(action.query?.['focus']),
-      );
+const resolveHelpRouteMedia = (leadSegment: string, args: ResolveWebsiteHelpHrefArgs): Href | null => {
+    switch (leadSegment) {
+        case 'competition': return createKangurCompetitionHref();
+        case 'duels': return createKangurDuelsHref();
+        case 'game':
+        case 'practice':
+            return args.options.gameTarget === 'competition'
+                ? createKangurCompetitionHref()
+                : createKangurPracticeHref('mixed');
+        default: return null;
     }
+};
 
-    const resolvedOperation =
-      resolvePreferredKangurPracticeOperation(action.query?.['operation']) ??
-      resolvePreferredKangurPracticeOperation(action.query?.['focus']) ??
-      'mixed';
-    return createKangurPracticeHref(resolvedOperation);
-  }
+const resolveHelpRouteContent = (leadSegment: string, args: ResolveWebsiteHelpHrefArgs): Href | null => {
+    switch (leadSegment) {
+        case 'lesson':
+        case 'lessons':
+            return createKangurLessonHref(args.parsedRoute.searchParams.get('focus'));
+        case 'leaderboard': return '/leaderboard' as Href;
+        case 'parent-dashboard': return createKangurParentDashboardHref();
+        case 'plan': return createKangurPlanHref();
+        default: return null;
+    }
+};
 
-  if (action.page === 'LearnerProfile') {
-    return '/profile' as Href;
-  }
+const resolveHelpRouteProfile = (leadSegment: string): Href | null => {
+    switch (leadSegment) {
+        case 'learner-profile':
+        case 'profile': return '/profile' as Href;
+        case 'results':
+        case 'scores': return createKangurResultsHref();
+        case 'test':
+        case 'tests': return createKangurTestsHref();
+        default: return null;
+    }
+};
 
-  if (action.page === 'ParentDashboard') {
-    return createKangurParentDashboardHref();
-  }
-
-  if (action.page === 'Duels') {
-    return createKangurDuelsHref({
-      joinSessionId: normalizeQueryToken(action.query?.['join']),
-      sessionId: normalizeQueryToken(action.query?.['sessionId']),
-      spectate: action.query?.['spectate'] === '1',
-    });
-  }
-
-  return null;
+const resolveWebsiteHelpRoute = (
+    leadSegment: string,
+    args: ResolveWebsiteHelpHrefArgs
+): Href | null => {
+    const media = resolveHelpRouteMedia(leadSegment, args);
+    if (media !== null) return media;
+    
+    const content = resolveHelpRouteContent(leadSegment, args);
+    if (content !== null) return content;
+    
+    return resolveHelpRouteProfile(leadSegment);
 };
 
 export const resolveKangurMobileWebsiteHelpHref = (
@@ -111,9 +172,7 @@ export const resolveKangurMobileWebsiteHelpHref = (
   options: ResolveKangurMobileActionHrefOptions = {},
 ): Href | null => {
   const rawRoute = normalizeQueryToken(target.route);
-  if (rawRoute === null) {
-    return null;
-  }
+  if (rawRoute === null) return null;
 
   const parsedRoute = new URL(
     rawRoute.startsWith('/') ? rawRoute : `/${rawRoute}`,
@@ -125,37 +184,7 @@ export const resolveKangurMobileWebsiteHelpHref = (
     .filter(Boolean);
   const leadSegment = segments[0] ?? '';
 
-  if (leadSegment === '') {
-    return '/' as Href;
-  }
+  if (leadSegment === '') return '/' as Href;
 
-  const routeResolvers: Partial<
-    Record<string, (args: ResolveWebsiteHelpHrefArgs) => Href | null>
-  > = {
-    competition: () => createKangurCompetitionHref(),
-    duels: () => createKangurDuelsHref(),
-    game: ({ options: resolverOptions }) =>
-      resolverOptions.gameTarget === 'competition'
-        ? createKangurCompetitionHref()
-        : createKangurPracticeHref('mixed'),
-    practice: ({ options: resolverOptions }) =>
-      resolverOptions.gameTarget === 'competition'
-        ? createKangurCompetitionHref()
-        : createKangurPracticeHref('mixed'),
-    lesson: ({ parsedRoute: route }) =>
-      createKangurLessonHref(route.searchParams.get('focus')),
-    lessons: ({ parsedRoute: route }) =>
-      createKangurLessonHref(route.searchParams.get('focus')),
-    leaderboard: () => '/leaderboard' as Href,
-    'learner-profile': () => '/profile' as Href,
-    'parent-dashboard': () => createKangurParentDashboardHref(),
-    plan: () => createKangurPlanHref(),
-    profile: () => '/profile' as Href,
-    results: () => createKangurResultsHref(),
-    scores: () => createKangurResultsHref(),
-    test: () => createKangurTestsHref(),
-    tests: () => createKangurTestsHref(),
-  };
-
-  return routeResolvers[leadSegment]?.({ options, parsedRoute }) ?? null;
+  return resolveWebsiteHelpRoute(leadSegment, { options, parsedRoute });
 };

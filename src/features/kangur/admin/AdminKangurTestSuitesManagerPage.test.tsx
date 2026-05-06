@@ -5,7 +5,12 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { FolderTreeViewportV2Props } from '@/shared/lib/foldertree/public';
+import type {
+  FolderTreeTransaction,
+  FolderTreeViewportV2Props,
+  MasterFolderTreeAdapterV3,
+} from '@/shared/lib/foldertree/public';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const { settingsStoreMock, mutateAsyncMock, useMasterFolderTreeShellMock, toastMock, folderTreeViewportMock } =
   vi.hoisted(() => ({
@@ -54,13 +59,39 @@ vi.mock('@/shared/lib/foldertree/public', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/foldertree/public')>();
   return {
     ...actual,
-    createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),
     FolderTreeSearchBar: ({ placeholder }: { placeholder?: string }) => (
       <div data-testid='folder-tree-search'>{placeholder}</div>
     ),
     FolderTreeViewportV2: (props: FolderTreeViewportV2Props) => {
       folderTreeViewportMock(props);
       return <div data-testid='folder-tree-viewport' />;
+    },
+    MasterFolderTreeViewport: (
+      props: Omit<FolderTreeViewportV2Props, 'controller' | 'scrollToNodeRef'> & {
+        tree: {
+          controller: FolderTreeViewportV2Props['controller'];
+          viewport: { scrollToNodeRef: FolderTreeViewportV2Props['scrollToNodeRef'] };
+        };
+      }
+    ) => {
+      folderTreeViewportMock({
+        ...props,
+        controller: props.tree.controller,
+        scrollToNodeRef: props.tree.viewport.scrollToNodeRef,
+      });
+      return <div data-testid='folder-tree-viewport' />;
+    },
+    useMasterFolderTreeViewModel: (...args: unknown[]) => {
+      const shell = useMasterFolderTreeShellMock(...args);
+
+      return {
+        ...shell,
+        searchState: {
+          isActive: false,
+          results: [],
+          matchNodeIds: new Set(),
+        },
+      };
     },
     useMasterFolderTreeShell: (...args: unknown[]) => useMasterFolderTreeShellMock(...args),
     useMasterFolderTreeSearch: () => ({
@@ -69,6 +100,13 @@ vi.mock('@/shared/lib/foldertree/public', async (importOriginal) => {
     }),
   };
 });
+
+vi.mock('@/shared/lib/foldertree/v2/components/FolderTreeViewportV2', () => ({
+  FolderTreeViewportV2: (props: FolderTreeViewportV2Props) => {
+    folderTreeViewportMock(props);
+    return <div data-testid='folder-tree-viewport' />;
+  },
+}));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: () => ({
@@ -94,6 +132,15 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: () => emptyPageContentEntryMock,
 }));
 
+vi.mock('./KangurQuestionsManagerPanel', () => ({
+  KangurQuestionsManagerPanel: () => (
+    <div>
+      <div>Question review</div>
+      <button disabled>Save Question</button>
+    </div>
+  ),
+}));
+
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
 import { toKangurTestSuiteNodeId } from './kangur-test-suites-master-tree';
 import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-suites/questions';
@@ -111,6 +158,27 @@ const getLatestViewportProps = (): FolderTreeViewportV2Props => {
 
 const renderTreeNode = (node: React.ReactNode): void => {
   render(node);
+};
+
+const buildSuiteNode = (suiteId: string, sortOrder: number): MasterTreeNode => ({
+  id: toKangurTestSuiteNodeId(suiteId),
+  type: 'file',
+  kind: 'kangur-test-suite',
+  parentId: null,
+  name: suiteId,
+  path: suiteId,
+  sortOrder,
+});
+
+const getLatestTreeAdapter = (): MasterFolderTreeAdapterV3 => {
+  const latestCall = useMasterFolderTreeShellMock.mock.calls.at(-1)?.[0] as
+    | { adapter?: MasterFolderTreeAdapterV3 }
+    | undefined;
+  const adapter = latestCall?.adapter;
+  if (!adapter) {
+    throw new Error('Expected useMasterFolderTreeShell to receive a tree adapter.');
+  }
+  return adapter;
 };
 
 describe('AdminKangurTestSuitesManagerPage', () => {
@@ -337,6 +405,52 @@ describe('AdminKangurTestSuitesManagerPage', () => {
     expectText('Test Suite Library');
     expectText('Search suites...');
     expect(screen.getByTestId('folder-tree-viewport')).toBeInTheDocument();
+  });
+
+  it('persists ordered suite changes from the tree transaction next nodes', async () => {
+    render(<AdminKangurTestSuitesManagerPage />);
+
+    const adapter = getLatestTreeAdapter();
+    const nextNodes = [
+      buildSuiteNode('suite-2', 1000),
+      buildSuiteNode('suite-1', 2000),
+      buildSuiteNode('suite-3', 3000),
+    ];
+    const tx: FolderTreeTransaction = {
+      id: 'tx-suite-reorder',
+      version: 1,
+      createdAt: Date.now(),
+      operation: {
+        type: 'reorder',
+        nodeId: toKangurTestSuiteNodeId('suite-2'),
+        targetId: toKangurTestSuiteNodeId('suite-1'),
+        position: 'before',
+      },
+      previousNodes: [],
+      nextNodes,
+    };
+
+    const prepared = await adapter.prepare(tx);
+    await adapter.apply(tx, prepared);
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          key: KANGUR_TEST_SUITES_SETTING_KEY,
+        })
+      );
+    });
+
+    const suitesUpdate = mutateAsyncMock.mock.calls.find(
+      ([input]) => input?.key === KANGUR_TEST_SUITES_SETTING_KEY
+    )?.[0];
+    const nextSuites = JSON.parse(String(suitesUpdate?.value));
+
+    expect(nextSuites.map((suite: { id: string }) => suite.id)).toEqual([
+      'suite-2',
+      'suite-1',
+      'suite-3',
+    ]);
   });
 
   it('creates a persisted test group from the group modal', async () => {

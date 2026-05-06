@@ -1,2 +1,3 @@
 phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
+audit,application-performance-fast-gate,Run the fast performance operations gate,failed,automatic,false,perf:ops:fast,,2026-05-06T11:44:17.513Z,artifacts/improvements/audit-report.json
 apply,application-performance-apply,Apply performance fixes through targeted implementation work,manual,manual,true,,,2026-04-15T10:54:26.139Z,artifacts/improvements/apply-report.json

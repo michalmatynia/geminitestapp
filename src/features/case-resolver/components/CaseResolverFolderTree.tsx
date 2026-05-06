@@ -6,13 +6,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 
 import {
-  FolderTreeViewportV2,
   handleMasterTreeDrop,
+  MasterFolderTreeViewport,
   resolveFolderTreeIconSet,
-  useMasterFolderTreeShell,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
-import { useMasterFolderTreeSearch } from '@/shared/lib/foldertree/public';
 import type { MasterTreeDropInput } from '@/shared/lib/foldertree/public';
 import type { CaseResolverTreeDragPayload } from '@/shared/contracts/case-resolver/base';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -105,22 +104,19 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     };
   }, [clearDragHandleArming]);
 
-  const {
-    capabilities,
-    appearance: { resolveIcon, rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'case_resolver',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
     initiallyExpandedNodeIds: initialExpandedFolderNodeIds,
     adapter,
+    searchQuery: treeSearchQuery,
   });
-
-  const searchState = useMasterFolderTreeSearch(masterNodes, treeSearchQuery, {
-    config: capabilities.search,
-  });
+  const {
+    capabilities,
+    appearance: { resolveIcon },
+    controller,
+  } = tree;
 
   const canStartTreeDrag = React.useCallback(
     ({
@@ -342,13 +338,9 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     >
       <div className='min-h-0 flex-1 overflow-auto p-2'>
         <CaseResolverTreeNodeRuntimeProvider value={caseResolverTreeNodeRuntimeValue}>
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
-            searchState={searchState}
-            multiSelectConfig={capabilities.multiSelect}
+          <MasterFolderTreeViewport
+            tree={tree}
             canStartDrag={canStartTreeDrag}
-            rootDropUi={rootDropUi}
             canDrop={({ draggedNodeId, targetId, position, defaultAllowed }): boolean => {
               const draggedNode = controller.nodes.find(
                 (candidate: MasterTreeNode): boolean => candidate.id === draggedNodeId

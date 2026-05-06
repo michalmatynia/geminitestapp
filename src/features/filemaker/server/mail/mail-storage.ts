@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { filemakerMailAccountSchema } from '@/shared/contracts/filemaker-mail';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   FilemakerMailAccount,
@@ -21,6 +22,11 @@ const MAIL_THREADS_COLLECTION = 'filemaker_mail_threads';
 const MAIL_MESSAGES_COLLECTION = 'filemaker_mail_messages';
 const MAIL_SYNC_STATES_COLLECTION = 'filemaker_mail_sync_states';
 const MAIL_OUTBOX_COLLECTION = 'filemaker_mail_outbox';
+
+const normalizeMailAccountDocument = (
+  document: FilemakerMailAccountDocument | null
+): FilemakerMailAccount | null =>
+  document === null ? null : filemakerMailAccountSchema.parse(document);
 
 export const ensureMailIndexes = async (): Promise<void> => {
   const mongo = await getMongoDb();
@@ -72,12 +78,21 @@ export const upsertMailAccount = async (account: FilemakerMailAccount): Promise<
 
 export const getMailAccountById = async (id: string): Promise<FilemakerMailAccount | null> => {
   const mongo = await getMongoDb();
-  return await mongo.collection<FilemakerMailAccountDocument>(MAIL_ACCOUNTS_COLLECTION).findOne({ id });
+  const document = await mongo
+    .collection<FilemakerMailAccountDocument>(MAIL_ACCOUNTS_COLLECTION)
+    .findOne({ id });
+  return normalizeMailAccountDocument(document);
 };
 
 export const listMailAccounts = async (): Promise<FilemakerMailAccount[]> => {
   const mongo = await getMongoDb();
-  return await mongo.collection<FilemakerMailAccountDocument>(MAIL_ACCOUNTS_COLLECTION).find().toArray();
+  const documents = await mongo
+    .collection<FilemakerMailAccountDocument>(MAIL_ACCOUNTS_COLLECTION)
+    .find()
+    .toArray();
+  return documents
+    .map((document) => normalizeMailAccountDocument(document))
+    .filter((account): account is FilemakerMailAccount => account !== null);
 };
 
 export const deleteMailAccount = async (id: string): Promise<void> => {

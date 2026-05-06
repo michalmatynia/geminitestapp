@@ -3,6 +3,7 @@
 /* eslint-disable complexity, max-lines, max-lines-per-function */
 
 import {
+  BotMessageSquare,
   BriefcaseBusiness,
   CheckCircle2,
   Download,
@@ -3604,7 +3605,11 @@ function ApplicationPackageModal({
   );
 }
 
-export function OrganizationJobListingsSection(): React.JSX.Element | null {
+export function OrganizationJobListingsSection({
+  onAutomateUrl,
+}: {
+  onAutomateUrl?: ((url: string) => void) | null;
+}): React.JSX.Element | null {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const { jobListings, organization } = useAdminFilemakerOrganizationEditPageStateContext();
@@ -4490,7 +4495,16 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                           <MoreVertical className='h-3.5 w-3.5' aria-hidden='true' />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end' className='z-[95] w-44'>
+                      <DropdownMenuContent align='end' className='z-[95] w-48'>
+                        {onAutomateUrl !== undefined && onAutomateUrl !== null && (listing.sourceUrl ?? '').trim() !== '' ? (
+                          <DropdownMenuItem
+                            className='gap-2'
+                            onSelect={(): void => onAutomateUrl((listing.sourceUrl ?? '').trim())}
+                          >
+                            <BotMessageSquare className='h-3.5 w-3.5' aria-hidden='true' />
+                            Automate this URL
+                          </DropdownMenuItem>
+                        ) : null}
                         <DropdownMenuItem
                           className='gap-2 text-rose-300 focus:text-rose-200'
                           onSelect={(): void => removeListing(listing.id)}

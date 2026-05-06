@@ -53,7 +53,7 @@ function renderScoreItem(
       </Text>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <LinkButton href={createKangurPracticeHref(score.operation)} label={copy({ de: 'Trainieren', en: 'Train', pl: 'Trenuj' })} />
-        {lessonHref !== undefined && lessonHref !== null && (
+        {lessonHref !== null && (
           <LinkButton href={lessonHref} label={copy({ de: 'Lektion', en: 'Lesson', pl: 'Lekcja' })} />
         )}
       </View>

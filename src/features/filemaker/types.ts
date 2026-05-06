@@ -165,6 +165,8 @@ export type {
 
 export type {
   FilemakerMailAccount,
+  FilemakerMailAuthMode,
+  FilemakerMailAuthModeDto,
   FilemakerMailAccountDto,
   FilemakerMailAccountDraft,
   FilemakerMailAccountDraftDto,

@@ -1,3 +1,19 @@
+/**
+ * Button Component
+ * 
+ * Accessible, customizable button component with multiple variants and states.
+ * Features:
+ * - Multiple visual variants (default, primary, solid, destructive, etc.)
+ * - Size options (xs, sm, default, lg, icon)
+ * - Loading state with spinner
+ * - Disabled state handling
+ * - Accessibility compliance (ARIA labels, keyboard navigation)
+ * - Polymorphic rendering (can render as different elements via asChild)
+ * - Focus management and visual feedback
+ * 
+ * Built with Radix UI primitives and class-variance-authority for type-safe variants.
+ */
+
 'use client';
 
 import { Slot, Slottable } from '@radix-ui/react-slot';
@@ -9,10 +25,16 @@ import type { DataAttributes } from '@/shared/contracts/ui/base';
 import { cn } from '@/shared/utils/ui-utils';
 import { resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 
+/**
+ * Button variant styles using class-variance-authority
+ * Provides type-safe variant composition with Tailwind classes
+ */
 const buttonVariants = cva(
+  // Base styles applied to all buttons
   'inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-transparent text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background cursor-pointer',
   {
     variants: {
+      // Visual style variants
       variant: {
         default:
           'border-foreground/15 bg-transparent text-foreground/90 hover:bg-foreground/8 hover:text-foreground',
@@ -29,6 +51,7 @@ const buttonVariants = cva(
         ghost: 'bg-transparent hover:bg-foreground/8',
         link: 'text-foreground/80 underline-offset-4 hover:underline hover:text-foreground',
       },
+      // Size variants
       size: {
         default: 'h-9 px-3.5 py-2',
         xs: 'h-7 rounded-md px-2 text-xs',

@@ -3,17 +3,11 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
-  FolderTreeViewportV2,
-  useFolderTreeInstanceV2,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
   useSharedMasterFolderTreeRuntime,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
-import { useMasterFolderTreeSearch } from '@/shared/lib/foldertree/public';
-import { useFolderTreeProfile } from '@/shared/lib/foldertree/public';
-import {
-  resolveFolderTreeMultiSelectConfig,
-  resolveFolderTreeSearchConfig,
-} from '@/shared/utils/folder-tree-profiles-v2';
 import type {
   MasterTreeDropPosition,
   MasterTreeNode,
@@ -89,15 +83,12 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
     );
   }
 
-  const profile = useFolderTreeProfile(resolvedInstance);
-  const searchConfig = useMemo(() => resolveFolderTreeSearchConfig(profile), [profile]);
-  const multiSelectConfig = useMemo(() => resolveFolderTreeMultiSelectConfig(profile), [profile]);
   const runtime = useSharedMasterFolderTreeRuntime({ bindWindowKeydown: false });
-  const controller = useFolderTreeInstanceV2({
-    initialNodes: resolvedNodes,
-    profile,
-    instanceId: resolvedInstance,
+  const tree = useMasterFolderTreeViewModel({
+    instance: resolvedInstance,
+    nodes: resolvedNodes,
     runtime,
+    searchQuery: resolvedSearchQuery,
   });
 
   const dragArmedFileIdRef = useRef<string | null>(null);
@@ -129,13 +120,12 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
   }, [clearDragHandleArm]);
 
   useEffect(() => {
-    void controller.replaceNodes(resolvedNodes, 'external_sync');
     logCaseResolverWorkspaceEvent({
       source: 'relation_tree_browser',
       action: 'relation_tree_built',
       message: `instance=${resolvedInstance} mode=${mode} nodes=${resolvedNodes.length}`,
     });
-  }, [controller.replaceNodes, resolvedInstance, mode, resolvedNodes]);
+  }, [resolvedInstance, mode, resolvedNodes]);
 
   useEffect(() => {
     if (!resolvedSearchQuery || resolvedSearchQuery.trim().length === 0) return;
@@ -147,10 +137,6 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
         .slice(0, 64)}`,
     });
   }, [resolvedInstance, mode, resolvedSearchQuery]);
-
-  const searchState = useMasterFolderTreeSearch(resolvedNodes, resolvedSearchQuery, {
-    config: searchConfig,
-  });
 
   const handleArmDragHandle = useCallback(
     (fileId: string): void => {
@@ -276,12 +262,10 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
 
   return (
     <RelationTreeNodeRuntimeProvider value={nodeRuntimeContextValue}>
-      <FolderTreeViewportV2
-        controller={controller}
+      <MasterFolderTreeViewport
+        tree={tree}
         className={className}
         emptyLabel={emptyLabel}
-        searchState={searchState}
-        multiSelectConfig={multiSelectConfig}
         enableDnd={mode === 'add_to_node_canvas'}
         runtime={runtime}
         canStartDrag={mode === 'add_to_node_canvas' ? canStartDrag : undefined}

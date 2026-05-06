@@ -12,21 +12,10 @@
 
 import 'server-only';
 
+import { AUTH_SECRET_SETTINGS_KEYS } from '@/shared/lib/settings/secret-setting-keys';
 import { readSecretSettingValues } from '@/shared/lib/settings/secret-settings';
 
-export const AUTH_SECRET_SETTINGS_KEYS = {
-  googleClientId: 'auth_google_client_id',
-  googleClientSecret: 'auth_google_client_secret',
-  facebookClientId: 'auth_facebook_client_id',
-  facebookClientSecret: 'auth_facebook_client_secret',
-  emailWebhookUrl: 'auth_email_webhook_url',
-  emailWebhookSecret: 'auth_email_webhook_secret',
-  smtpHost: 'auth_smtp_host',
-  smtpPort: 'auth_smtp_port',
-  smtpUser: 'auth_smtp_user',
-  smtpPass: 'auth_smtp_pass',
-  smtpFrom: 'auth_smtp_from',
-} as const;
+export { AUTH_SECRET_SETTINGS_KEYS };
 
 export type AuthOAuthSecrets = {
   google: {

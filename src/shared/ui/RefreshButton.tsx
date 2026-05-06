@@ -1,3 +1,15 @@
+/**
+ * Refresh Button Component
+ * 
+ * Reusable refresh button with loading state and animation.
+ * Provides:
+ * - Spinning refresh icon during loading state
+ * - Configurable button variants and sizes
+ * - Accessibility support with proper labeling
+ * - Customizable refresh action handling
+ * - Visual feedback for user interactions
+ */
+
 'use client';
 
 import { RefreshCcw } from 'lucide-react';

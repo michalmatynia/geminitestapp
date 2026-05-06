@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb';
 
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { hasConfiguredMongoSourceEnv } from '@/shared/lib/db/mongo-source-env';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -25,7 +26,7 @@ const CACHE_TTL_MS = 30000;
 let cached: CacheState | null = null;
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  if (!hasConfiguredMongoSourceEnv()) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoStringSettingRecord<string | ObjectId>>('settings')

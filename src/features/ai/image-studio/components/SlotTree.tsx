@@ -17,11 +17,11 @@ import {
   resolveImageStudioExternalDropAction,
 } from '@/features/ai/image-studio/utils/studio-master-tree-external-drop';
 import {
-  FolderTreeViewportV2,
   handleMasterTreeDrop,
   isInternalMasterTreeNode,
+  MasterFolderTreeViewport,
   resolveFolderTreeIconSet,
-  useMasterFolderTreeShell,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { IdDataDto } from '@/shared/contracts/base';
@@ -116,18 +116,18 @@ export function SlotTree({
     [persistMoveFolder, persistMoveSlot, persistRenameFolder, renameSlot, slotById]
   );
 
-  const {
-    profile,
-    appearance: { placeholderClasses, rootDropUi, resolveIcon },
-    controller,
-    panel: { collapsed: panelCollapsed, setCollapsed: setPanelCollapsed },
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'image_studio',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
     adapter: slotTreeAdapter,
   });
+  const {
+    profile,
+    appearance: { placeholderClasses, resolveIcon },
+    controller,
+    panel: { collapsed: panelCollapsed, setCollapsed: setPanelCollapsed },
+  } = tree;
 
   const stickySelectionMode = profile.interactions.selectionBehavior === 'toggle_only';
   const clearSelectionOnAwayClick = profile.interactions.selectionBehavior === 'click_away';
@@ -339,12 +339,10 @@ export function SlotTree({
             clearSelection();
           }}
         >
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
+          <MasterFolderTreeViewport
+            tree={tree}
             className='space-y-0.5'
             emptyLabel='No folders yet. Create a folder or add cards here.'
-            rootDropUi={rootDropUi}
             resolveDropPosition={(event, { targetId }, ctlr): MasterTreeDropPosition => {
               const targetNode = ctlr.nodes.find(
                 (candidate: MasterTreeNode): boolean => candidate.id === targetId

@@ -320,6 +320,8 @@ const renderWithProviders = ({
     handleAllegroSandboxConnect: noopAsync,
     handleLinkedInAuthorize: vi.fn(),
     handleLinkedInDisconnect: noopAsync,
+    handleGoogleAuthorize: vi.fn(),
+    handleGoogleDisconnect: noopAsync,
     handleBaseApiRequest: noopAsync,
     handleAllegroApiRequest: noopAsync,
     onCloseModal: vi.fn(),

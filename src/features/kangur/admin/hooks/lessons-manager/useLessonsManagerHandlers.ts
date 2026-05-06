@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
-import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonTemplate } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonTemplateComponentContent } from '@/shared/contracts/kangur-lesson-templates';
 import { useToast } from '@/features/kangur/shared/ui';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import { buildLessonsManagerErrorReport } from '../../AdminKangurLessonsManagerPage.shared';
 import { 
-  createKangurLessonId, 
   upsertLesson, 
   sanitizeSvgMarkup, 
   toLocalizedLessonFormData, 
@@ -22,6 +22,7 @@ import {
   hasKangurLessonDocumentContent 
 } from '../../../lesson-documents';
 import { 
+  createKangurLessonId,
   KANGUR_LESSON_SORT_ORDER_GAP, 
   parseKangurLessonTemplateComponentContentJson, 
   canonicalizeKangurLessons, 
@@ -32,7 +33,6 @@ import {
 } from '../../../settings';
 import { importLegacyKangurLessonDocument } from '../../../lessons/import-legacy';
 import { clearLessonContentEditorDraft } from '../../lesson-content-editor-drafts';
-import type { KangurLesson, KangurLessonTemplate } from '@/features/kangur/shared/contracts/kangur';
 import type { LessonFormData } from '../../types';
 import type { UseLessonsUiStateReturn } from './useLessonsUiState';
 import type { UseMutationResult } from '@tanstack/react-query';
@@ -215,7 +215,8 @@ export function useLessonsManagerHandlers(params: {
         const pages = resolveKangurLessonDocumentPages(ui.contentDraft);
         const nextDocument = updateKangurLessonDocumentPages(ui.contentDraft, pages);
         const nextLesson = buildPersistedLessonRecord(ui.editingContentLesson.id, ui.editingContentLesson, ui.editingContentLesson.sortOrder);
-        const nextLessons = upsertLesson(lessons, nextLesson);
+        const baseLessons = lessonById.has(ui.editingContentLesson.id) ? lessons : upsertLesson(lessons, ui.editingContentLesson);
+        const nextLessons = upsertLesson(baseLessons, nextLesson);
         await updateLessons.mutateAsync(nextLessons);
         await saveLocalizedLessonTemplate(nextLesson);
         await updateLessonDocuments.mutateAsync({ ...lessonDocuments, [ui.editingContentLesson.id]: nextDocument });

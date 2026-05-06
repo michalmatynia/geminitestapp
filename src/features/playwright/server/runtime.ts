@@ -1,3 +1,20 @@
+/**
+ * runtime.ts — Playwright engine runtime facade
+ *
+ * Server-side entry point for executing Playwright automation scripts. This
+ * module wraps the AI-paths Playwright node runner and provides a simplified
+ * API for enqueueing and reading automation runs.
+ *
+ * Key responsibilities:
+ *  - Enqueue Playwright script execution requests (sync or async).
+ *  - Read run records and artifacts from the database.
+ *  - Validate script syntax before execution.
+ *  - Type re-exports for consistent naming across the codebase.
+ *
+ * The runtime supports multiple instance families (product scans, listing
+ * scrapes, connection tests) and can wait for results or return immediately
+ * with a run ID for polling.
+ */
 import 'server-only';
 
 import {

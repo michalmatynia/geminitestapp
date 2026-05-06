@@ -4,8 +4,8 @@ import React, { useMemo } from 'react';
 
 import type { FilterField } from '@/shared/contracts/ui/panels';
 import {
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import { MasterTreeSettingsButton, Pagination } from '@/shared/ui/navigation-and-layout.public';
 import { Badge } from '@/shared/ui/primitives.public';
@@ -146,11 +146,7 @@ function EventListHeader(props: EventListState): React.JSX.Element {
 }
 
 function EventListViewport(props: EventListState): React.JSX.Element {
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: FILEMAKER_EVENT_TREE_INSTANCE,
     nodes: props.nodes,
   });
@@ -158,10 +154,8 @@ function EventListViewport(props: EventListState): React.JSX.Element {
 
   return (
     <div className='relative'>
-      <FolderTreeViewportV2
-        controller={controller}
-        scrollToNodeRef={scrollToNodeRef}
-        rootDropUi={rootDropUi}
+      <MasterFolderTreeViewport
+        tree={tree}
         enableDnd={false}
         emptyLabel={hasQuery ? 'No events found' : 'No events found'}
         estimateRowHeight={82}

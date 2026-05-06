@@ -17,7 +17,7 @@ import type { UseAdminKangurLessonsManagerStateReturn } from './AdminKangurLesso
 
 export function LessonsManagerContent({ standalone = true }: { standalone?: boolean }): React.JSX.Element {
   const state = useLessonsManager();
-  
+
   const {
     contentLocale, setContentLocale, isLoading, contentLocaleOptions, contentLocaleLabel, lessons,
     showModal, setShowModal, showContentModal, setShowContentModal, editingLesson, setEditingLesson,
@@ -25,10 +25,10 @@ export function LessonsManagerContent({ standalone = true }: { standalone?: bool
     componentContentJson, setComponentContentJson, contentDraft, setContentDraft, treeMode, setTreeModeAndPersist,
     authoringFilter, setAuthoringFilter, ageGroupFilter, setAgeGroupFilter, isSaving, authoringFilterCounts,
     authoringFilteredLessons, geometryPackAddedCount, logicPackAddedCount, legacyImportCount, filteredLessons,
-    handleCreate, handleToggleTreeMode, handleCanonicalize, handleAppendMissing, handleAddGeometryPack, 
+    handleCreate, handleToggleTreeMode, handleCanonicalize, handleAppendMissing, handleAddGeometryPack,
     handleAddLogicalThinkingPack, handleImportAllLessonsToEditor, handleSave, handleCloseModal,
-    handleDelete, handleSaveContent, handleClearContent, handleImportLegacy, controller, scrollToNodeRef,
-    rootDropUi, renderTreeNode, capabilities, searchState, treeSearchQuery, handleTreeSearchChange,
+    handleDelete, handleSaveContent, handleClearContent, handleImportLegacy, tree,
+    renderTreeNode, treeSearchQuery, handleTreeSearchChange,
     ageGroupCounts, activeAgeGroupLabel, isCatalogMode, isSectionsMode, handleComponentChange
   } = state;
 
@@ -74,8 +74,8 @@ export function LessonsManagerContent({ standalone = true }: { standalone?: bool
             filterCounts={authoringFilterCounts} authoringFilter={authoringFilter} onAuthoringFilterChange={setAuthoringFilter}
             authoringFilteredLessonCount={authoringFilteredLessons.length} ageGroupFilter={ageGroupFilter} onAgeGroupFilterChange={setAgeGroupFilter}
             ageGroupCounts={ageGroupCounts} filteredLessonCount={filteredLessons.length} activeAgeGroupLabel={activeAgeGroupLabel}
-            treeSearchQuery={treeSearchQuery} onTreeSearchChange={handleTreeSearchChange} searchEnabled={capabilities.search.enabled}
-            searchState={searchState} controller={controller} scrollToNodeRef={scrollToNodeRef} rootDropUi={rootDropUi}
+            treeSearchQuery={treeSearchQuery} onTreeSearchChange={handleTreeSearchChange} searchEnabled={tree.capabilities.search.enabled}
+            tree={tree}
             renderNode={renderTreeNode} onAddGeometryPack={() => void handleAddGeometryPack()} onAddLogicalThinkingPack={() => void handleAddLogicalThinkingPack()}
             onImportAllLessonsToEditor={() => void handleImportAllLessonsToEditor()} onAddLesson={handleCreate} onSelectOrderedView={() => setTreeModeAndPersist('ordered')}
             onSelectCatalogView={() => setTreeModeAndPersist('catalog')} onSelectSectionsView={() => setTreeModeAndPersist('sections')}

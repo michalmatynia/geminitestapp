@@ -1,3 +1,20 @@
+/**
+ * scanner-settings.normalize.ts
+ *
+ * Normalises and validates product scanner settings from raw JSON. The scanner
+ * settings control how the Playwright-based product scraper behaves when
+ * searching for products on Amazon and 1688.
+ *
+ * Key responsibilities:
+ *  - Coerce missing/invalid fields to safe defaults.
+ *  - Validate enum values (captcha behavior, image search providers, etc.).
+ *  - Normalise nested Playwright settings (browser, persona, timeouts).
+ *  - Sanitise candidate evaluator configurations (AI-based filtering).
+ *  - Ensure numeric fields are within valid ranges.
+ *
+ * The normalised settings are used by the product scanner workers to configure
+ * browser automation, image search strategies, and result filtering.
+ */
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type {
   ProductScanner1688Settings,

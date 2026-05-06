@@ -1,3 +1,15 @@
+/**
+ * Debounce Hook
+ * 
+ * React hook for debouncing rapidly changing values.
+ * Provides:
+ * - Configurable delay for value updates
+ * - Automatic cleanup of pending timers
+ * - Type-safe value handling
+ * - Performance optimization for search inputs and form fields
+ * - Memory leak prevention with proper timer management
+ */
+
 'use client';
 
 import { useEffect } from 'react';

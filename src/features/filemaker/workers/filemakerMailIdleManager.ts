@@ -9,10 +9,12 @@ import {
   safeClearTimeout,
 } from '@/shared/lib/timers';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { readSecretSettingValues } from '@/shared/lib/settings/secret-settings';
 
 import { listFilemakerMailAccounts } from '../server/filemaker-mail-service';
-import * as mailServerUtils from '../server/mail/mail-utils';
+import {
+  resolveFilemakerMailImapCredential,
+  type FilemakerMailCredential,
+} from '../server/mail/mail-auth';
 import { createImapClient } from '../server/mail/mail-imap';
 import type { FilemakerMailAccount } from '../types';
 import { enqueueFilemakerMailSyncJob, startFilemakerMailSyncQueue } from './filemakerMailSyncQueue';
@@ -93,20 +95,21 @@ const resolveActiveIdleAccount = async (
   return account;
 };
 
-const resolveImapPassword = async (account: FilemakerMailAccount): Promise<string | null> => {
-  const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
-  const secrets = await readSecretSettingValues([passwordKey]);
-  const password = secrets[passwordKey] ?? '';
-  if (password.length === 0) {
+const resolveIdleCredential = async (
+  account: FilemakerMailAccount
+): Promise<FilemakerMailCredential | null> => {
+  try {
+    return await resolveFilemakerMailImapCredential(account);
+  } catch (error) {
     await logSystemEvent({
       level: 'warn',
       source: LOG_SOURCE,
-      message: `IMAP password missing for ${account.emailAddress}; idle disabled.`,
+      message: `IMAP credential missing for ${account.emailAddress}; idle disabled.`,
+      error,
       context: { accountId: account.id },
     }).catch(() => {});
     return null;
   }
-  return password;
 };
 
 const createIdleErrorHandler = (
@@ -175,9 +178,9 @@ const startIdleConnection = async (state: AccountState): Promise<void> => {
   if (state.stopped) return;
   const account = await resolveActiveIdleAccount(state);
   if (account === null) return;
-  const password = await resolveImapPassword(account);
-  if (password === null) return;
-  const client = createImapClient(account, password);
+  const credential = await resolveIdleCredential(account);
+  if (credential === null) return;
+  const client = createImapClient(account, credential);
   patchIdleAccountState(state.accountId, { client });
   const handleError = createIdleErrorHandler(state, account);
   attachIdleClientHandlers(client, state, handleError);

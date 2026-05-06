@@ -3,6 +3,7 @@ import 'server-only';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { hasConfiguredMongoSourceEnv } from '@/shared/lib/db/mongo-source-env';
 import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { findProviderForKey } from '@/shared/lib/db/settings-registry';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
@@ -35,16 +36,22 @@ const shouldReadServerLoggingControlsFromStorage = (
     return explicit;
   }
 
-  return env['NODE_ENV'] !== 'development';
+  if (env['NODE_ENV'] !== 'development') {
+    return true;
+  }
+
+  return hasConfiguredMongoSourceEnv(env);
 };
 
 const readStoredLoggingControlValue = async (key: string): Promise<string | null> => {
   const provider = await findProviderForKey(key);
-  if (provider) {
+  if (provider !== null) {
     return await provider.readValue(key);
   }
 
-  if (!process.env['MONGODB_URI']) return null;
+  if (!hasConfiguredMongoSourceEnv()) {
+    return null;
+  }
 
   const mongo = await getMongoDb();
   const doc = await mongo

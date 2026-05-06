@@ -1,3 +1,19 @@
+/**
+ * settings.workspace.ts
+ *
+ * Normalises and validates a raw CaseResolver workspace object. Called
+ * whenever a workspace is loaded from persisted JSON to ensure all fields are
+ * present, correctly typed, and internally consistent.
+ *
+ * Responsibilities:
+ *  - Coerce missing/invalid fields to safe defaults.
+ *  - Deduplicate file/asset IDs and repair broken parent-case references.
+ *  - Expand folder paths to include all ancestors.
+ *  - Rebuild the relation graph from live workspace data.
+ *  - Sanitise node-file relations (drop dangling references).
+ *  - Attach normalisation diagnostics (repair counts) to the workspace object
+ *    via a WeakMap so callers can inspect what was fixed.
+ */
 import { type CaseResolverAssetFile, type CaseResolverFile, type CaseResolverFileType, type CaseResolverFolderRecord, type CaseResolverWorkspace, type CaseResolverWorkspaceNormalizationDiagnostics } from '@/shared/contracts/case-resolver';
 
 import { sanitizeCaseResolverGraphNodeFileRelations } from './nodefile-relations';
@@ -30,6 +46,8 @@ const CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorks
     droppedDuplicateCount: 0,
   };
 
+// Normalisation diagnostics are stored in a WeakMap keyed by the workspace
+// object so they don't affect serialisation and are GC'd with the workspace.
 const caseResolverWorkspaceNormalizationDiagnosticsByWorkspace = new WeakMap<
   CaseResolverWorkspace,
   CaseResolverWorkspaceNormalizationDiagnostics

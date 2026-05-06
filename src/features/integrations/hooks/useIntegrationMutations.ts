@@ -282,6 +282,29 @@ export function useDisconnectLinkedIn() {
   });
 }
 
+export function useDisconnectGoogle() {
+  const mutationKey = QUERY_KEYS.integrations.connections();
+  return createMutationV2<IntegrationDisconnectResponse, IntegrationConnectionActionTarget>({
+    mutationFn: ({ integrationId, connectionId }): Promise<IntegrationDisconnectResponse> =>
+      api.post<IntegrationDisconnectResponse>(
+        `/api/v2/integrations/${integrationId}/connections/${connectionId}/google/disconnect`,
+        { integrationId, connectionId }
+      ),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useDisconnectGoogle',
+      operation: 'action',
+      resource: 'integrations.connections.google.disconnect',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'connections', 'google', 'disconnect'],
+      description: 'Runs integrations connections google disconnect.',
+    },
+    invalidate: (queryClient, _data, variables) =>
+      refreshIntegrationConnectionQueries(queryClient, variables.integrationId),
+  });
+}
+
 export function useBaseApiRequest() {
   const mutationKey = QUERY_KEYS.integrations.connections();
   return createMutationV2<IntegrationBaseApiResponse, IntegrationBaseApiRequest>({

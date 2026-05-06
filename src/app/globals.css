@@ -1,3 +1,16 @@
+/**
+ * Global CSS Styles
+ * 
+ * Application-wide styling and CSS custom properties.
+ * Provides:
+ * - Tailwind CSS configuration and imports
+ * - CSS custom properties for design system colors
+ * - Dark/light theme color definitions
+ * - Typography font family variables
+ * - Base styling for HTML elements
+ * - Consistent design tokens across the application
+ */
+
 @config "../../tailwind.config.ts";
 @import 'tailwindcss';
 @layer base {

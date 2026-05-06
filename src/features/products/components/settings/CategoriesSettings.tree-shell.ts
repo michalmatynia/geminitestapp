@@ -5,7 +5,10 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';
 import { useReorderCategoryMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import { resolveFolderTreeIconSet, useMasterFolderTreeShell } from '@/shared/lib/foldertree/public';
+import {
+  resolveFolderTreeIconSet,
+  useMasterFolderTreeViewModel,
+} from '@/shared/lib/foldertree/public';
 import type { ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
@@ -17,16 +20,16 @@ import { canStartCategoryDrag } from './CategoriesSettings.drag';
 import { createReorderToastContext } from './CategoriesSettings.helpers';
 
 type ToastFn = (message: string, options?: { variant?: 'success' | 'error' | 'info' }) => void;
-type MasterFolderTreeShellResult = ReturnType<typeof useMasterFolderTreeShell>;
+type MasterFolderTreeShellResult = ReturnType<typeof useMasterFolderTreeViewModel>;
 
 export type CategoriesTreeShell = {
   canStartCategoryDrag: typeof canStartCategoryDrag;
   controller: MasterFolderTreeShellResult['controller'];
   panelCollapsed: boolean;
   resolveCategoryDropPosition: (event: React.DragEvent<HTMLElement>) => 'before' | 'after' | 'inside';
-  rootDropUi: MasterFolderTreeShellResult['appearance']['rootDropUi'];
   runtimeValue: CategoryTreeNodeRuntimeContextValue;
   setPanelCollapsed: MasterFolderTreeShellResult['panel']['setCollapsed'];
+  tree: MasterFolderTreeShellResult;
 };
 
 type CategoriesTreeShellInput = {
@@ -76,7 +79,7 @@ const useCategoryMasterShell = ({
     (): string[] => masterNodes.map((node: MasterTreeNode): string => node.id),
     [masterNodes]
   );
-  return useMasterFolderTreeShell({
+  return useMasterFolderTreeViewModel({
     instance: 'product_categories', nodes: masterNodes,
     initiallyExpandedNodeIds: initialExpandedNodeIds,
     externalRevision: masterRevision, adapter: categoryAdapter,
@@ -136,6 +139,6 @@ export const useCategoriesTreeShell = (input: CategoriesTreeShellInput): Categor
   });
   const runtimeValue = useCategoryRuntimeValue({ ...input, shell });
   return { canStartCategoryDrag, controller: shell.controller, panelCollapsed: shell.panel.collapsed,
-    resolveCategoryDropPosition: useCategoryDropPosition(), rootDropUi: shell.appearance.rootDropUi,
-    runtimeValue, setPanelCollapsed: shell.panel.setCollapsed };
+    resolveCategoryDropPosition: useCategoryDropPosition(), runtimeValue, setPanelCollapsed: shell.panel.setCollapsed,
+    tree: shell };
 };

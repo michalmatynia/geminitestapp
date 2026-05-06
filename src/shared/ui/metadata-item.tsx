@@ -1,3 +1,15 @@
+/**
+ * Metadata Item Component
+ * 
+ * Flexible component for displaying labeled metadata with various styling options.
+ * Provides:
+ * - Label-value pair display with customizable layouts
+ * - Multiple visual variants (card, minimal, subtle)
+ * - Icon support and monospace text option
+ * - Responsive wrapping and overflow handling
+ * - Consistent styling with design system
+ */
+
 import React, { type ReactNode } from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';

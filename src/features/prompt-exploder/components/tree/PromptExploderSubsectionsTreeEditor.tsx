@@ -13,9 +13,9 @@ import {
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
-  createMasterFolderTreeTransactionAdapter,
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  createMasterFolderTreeProjectionAdapter,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import { Badge, Button, Card, Input, Textarea } from '@/shared/ui/primitives.public';
@@ -207,12 +207,13 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
 
   const adapter = useMemo(
     () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: async (tx) => {
-          const nextSubsections = rebuildPromptExploderSubsectionsFromMasterNodes({
+      createMasterFolderTreeProjectionAdapter({
+        project: (tx) =>
+          rebuildPromptExploderSubsectionsFromMasterNodes({
             nodes: tx.nextNodes,
             previousSubsections: subsectionsRef.current,
-          });
+          }),
+        onPersistProjection: (nextSubsections) => {
           updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
             ...current,
             subsections: nextSubsections,
@@ -222,16 +223,13 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
     [selectedSegment.id, updateSegment]
   );
 
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'prompt_exploder_hierarchy',
     nodes: masterNodes,
     externalRevision: treeRevision,
     adapter,
   });
+  const { controller } = tree;
 
   const { armDragHandle, releaseDragHandle, canStartHandleOnlyDrag } =
     usePromptExploderHandleOnlyDrag();
@@ -367,13 +365,11 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
         >
           <PromptExploderTreeNodeRuntimeProvider value={treeNodeRuntimeContextValue}>
             <div className='max-h-[320px] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
-              <FolderTreeViewportV2
-                controller={controller}
-                scrollToNodeRef={scrollToNodeRef}
+              <MasterFolderTreeViewport
+                tree={tree}
                 enableDnd
                 className='space-y-0.5'
                 emptyLabel='No subsections detected.'
-                rootDropUi={rootDropUi}
                 canStartDrag={canStartHandleOnlyDrag}
                 canDrop={({ draggedNodeId, targetId, position, defaultAllowed }) => {
                   if (!defaultAllowed) return false;

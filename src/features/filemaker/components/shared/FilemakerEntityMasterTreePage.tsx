@@ -4,8 +4,8 @@ import React from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import {
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import { SearchInput } from '@/shared/ui/forms-and-actions.public';
@@ -100,11 +100,7 @@ function FilemakerEntityMasterTreePanel(
   const { instance, query, nodes, defaultExpandedNodeIds, renderNode } = props;
   const isSearching = query.trim().length > 0;
 
-  const {
-    controller,
-    appearance: { rootDropUi },
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance,
     nodes,
     initiallyExpandedNodeIds: defaultExpandedNodeIds,
@@ -121,10 +117,8 @@ function FilemakerEntityMasterTreePanel(
       contentClassName='space-y-3'
     >
       <div className='relative'>
-        <FolderTreeViewportV2
-          controller={controller}
-          scrollToNodeRef={scrollToNodeRef}
-          rootDropUi={rootDropUi}
+        <MasterFolderTreeViewport
+          tree={tree}
           enableDnd={false}
           emptyLabel={props.emptyLabel}
           estimateRowHeight={64}

@@ -1,3 +1,16 @@
+/**
+ * Root Layout Component
+ * 
+ * Top-level layout for the Next.js application providing global setup.
+ * Handles:
+ * - Global provider configuration and context setup
+ * - Internationalization and locale management
+ * - Accessibility features and skip navigation
+ * - Font loading and typography configuration
+ * - Metadata and viewport settings
+ * - CSS imports and global styling
+ */
+
 // Root layout component for the Next.js application
 // Handles global providers, metadata, and accessibility setup
 import { getTranslations } from 'next-intl/server';

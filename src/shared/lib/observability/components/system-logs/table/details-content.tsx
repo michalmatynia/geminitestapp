@@ -3,7 +3,8 @@ import { Monitor, SearchIcon } from 'lucide-react';
 
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { Alert, Button, Card } from '@/shared/ui/primitives.public';
-import { Hint, MetadataItem, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { MetadataItem, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import { formatTimestamp } from '@/shared/lib/observability/utils/formatTimestamp';
 import {

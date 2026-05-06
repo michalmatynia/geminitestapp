@@ -104,6 +104,7 @@ export interface MailPageState {
   recentCampaignId: string;
   recentRunId: string;
   recentDeliveryId: string;
+  googleAuthErrorMessage: string | null;
   attentionAccounts: FilemakerMailAccount[];
   selectedAccount: FilemakerMailAccount | null;
   selectedFolder: FilemakerMailFolderSummary | null;
@@ -118,6 +119,7 @@ export interface MailPageState {
   tableActions: PanelAction[];
   handleSaveAccount: () => Promise<void>;
   handleSyncAccount: (accountId: string) => Promise<void>;
+  handleDisconnectGoogleAccount: (accountId: string) => Promise<void>;
   loadNavigation: () => Promise<void>;
   onNewMailbox: () => void;
   router: ReturnType<typeof useRouter>;
@@ -138,6 +140,12 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   const rawRequestedRecentCampaignId = searchParams.get('campaignId') ?? '';
   const rawRequestedRecentRunId = searchParams.get('runId') ?? '';
   const rawRequestedRecentDeliveryId = searchParams.get('deliveryId') ?? '';
+  const rawGoogleAuth = searchParams.get('googleAuth') ?? '';
+  const rawGoogleAuthMessage = searchParams.get('message') ?? '';
+  const googleAuthErrorMessage =
+    rawGoogleAuth === 'error'
+      ? rawGoogleAuthMessage || 'Google account connection failed.'
+      : null;
 
   const requestedPanel =
     rawRequestedPanel === 'attention'
@@ -280,6 +288,7 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   const recentPreviewAccountIdRef = useRef<string | null>(null);
   const routeSyncHrefRef = useRef<string | null>(null);
   const routeSyncSourceKeyRef = useRef<string | null>(null);
+  const googleAuthNoticeRef = useRef<string | null>(null);
   const hasPendingRouteSync = routeSyncHrefRef.current !== null;
   const isPendingRequestedRouteStale =
     hasPendingRouteSync && routeSyncHrefRef.current !== requestedSelectionHref;
@@ -464,6 +473,19 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   useEffect(() => {
     void loadNavigation();
   }, [loadNavigation]);
+
+  useEffect(() => {
+    if (rawGoogleAuth !== 'connected' && rawGoogleAuth !== 'error') return;
+    const noticeKey = `${rawGoogleAuth}:${rawGoogleAuthMessage}`;
+    if (googleAuthNoticeRef.current === noticeKey) return;
+    googleAuthNoticeRef.current = noticeKey;
+    toast(
+      rawGoogleAuth === 'connected'
+        ? 'Google account connected.'
+        : rawGoogleAuthMessage || 'Google account connection failed.',
+      { variant: rawGoogleAuth === 'connected' ? 'success' : 'error' }
+    );
+  }, [rawGoogleAuth, rawGoogleAuthMessage, toast]);
 
   useEffect(() => {
     if (shouldHoldLocalSelectionFromRoute) {
@@ -985,6 +1007,28 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     [loadNavigation, toast]
   );
 
+  const handleDisconnectGoogleAccount = useCallback(
+    async (accountId: string): Promise<void> => {
+      try {
+        const result = await fetchJson<{ account: FilemakerMailAccount }>(
+          '/api/filemaker/mail/google/oauth/disconnect',
+          {
+            method: 'POST',
+            body: JSON.stringify({ accountId }),
+          }
+        );
+        toast('Google account disconnected.', { variant: 'success' });
+        await loadNavigation();
+        setSelection({ accountId: result.account.id, mailboxPath: null, panel: 'settings' });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to disconnect Google account.', {
+          variant: 'error',
+        });
+      }
+    },
+    [loadNavigation, toast]
+  );
+
   const selectedAccountLabel = selectedAccount?.name ?? 'New mailbox account';
   const selectedFolderLabel = selectedFolder
     ? formatFilemakerMailFolderLabel(selectedFolder.mailboxPath, selectedFolder.mailboxRole)
@@ -1233,6 +1277,7 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     recentCampaignId: effectiveRecentCampaignId,
     recentRunId: effectiveRecentRunId,
     recentDeliveryId: effectiveRecentDeliveryId,
+    googleAuthErrorMessage,
     attentionAccounts,
     selectedAccountId,
     selectedMailboxPath,
@@ -1250,6 +1295,7 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     tableActions,
     handleSaveAccount,
     handleSyncAccount,
+    handleDisconnectGoogleAccount,
     loadNavigation,
     onNewMailbox,
     router,

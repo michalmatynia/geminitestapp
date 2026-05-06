@@ -11,6 +11,17 @@ import { formatKangurMobileScoreDateTime } from '../mobileScoreSummary';
 import { getAccuracyTone } from '../results-primitives';
 import type { KangurMobileResultsLessonMasteryItem } from '../useKangurMobileResultsLessonMastery';
 
+function PracticeLink({ href, label }: { href: Href; label: string }): React.JSX.Element {
+  return (
+    <LinkButton
+      href={href}
+      label={label}
+      style={{ paddingHorizontal: 12 }}
+      verticalPadding={9}
+    />
+  );
+}
+
 export function LessonMasteryRow({
   insight,
   title,
@@ -20,30 +31,16 @@ export function LessonMasteryRow({
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const masteryTone = getAccuracyTone(insight.masteryPercent);
-  const lastAttemptLabel =
-    insight.lastCompletedAt !== null && insight.lastCompletedAt !== undefined
+  const lastAttemptLabel = typeof insight.lastCompletedAt === 'string'
       ? formatKangurMobileScoreDateTime(insight.lastCompletedAt, locale)
-      : copy({
-          de: 'kein Datum',
-          en: 'no date',
-          pl: 'brak daty',
-        });
+      : copy({ de: 'kein Datum', en: 'no date', pl: 'brak daty' });
 
   return (
     <InsetPanel gap={10}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 12,
-        }}
-      >
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
-          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-            {insight.emoji} {insight.title}
-          </Text>
+          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>{insight.emoji} {insight.title}</Text>
           <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
             {copy({
               de: `Versuche ${insight.attempts} • letztes Ergebnis ${insight.lastScorePercent}%`,
@@ -66,45 +63,18 @@ export function LessonMasteryRow({
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton
           href={insight.lessonHref}
-          label={copy({
-            de: 'Lektion öffnen',
-            en: 'Open lesson',
-            pl: 'Otwórz lekcję',
-          })}
+          label={copy({ de: 'Lektion öffnen', en: 'Open lesson', pl: 'Otwórz lekcję' })}
           style={{ paddingHorizontal: 12 }}
           tone='primary'
           verticalPadding={9}
         />
-        {renderResultsPracticeLink({
-          href: insight.practiceHref,
-          label: copy({
-            de: 'Danach trainieren',
-            en: 'Practice after',
-            pl: 'Potem trenuj',
-          }),
-        })}
+        {typeof insight.practiceHref === 'string' && (
+          <PracticeLink 
+            href={insight.practiceHref as Href} 
+            label={copy({ de: 'Danach trainieren', en: 'Practice after', pl: 'Potem trenuj' })} 
+          />
+        )}
       </View>
     </InsetPanel>
-  );
-}
-
-export function renderResultsPracticeLink({
-  href,
-  label,
-}: {
-  href: Href | null;
-  label: string;
-}): React.JSX.Element | null {
-  if (href === null || href === undefined) {
-    return null;
-  }
-
-  return (
-    <LinkButton
-      href={href}
-      label={label}
-      style={{ paddingHorizontal: 12 }}
-      verticalPadding={9}
-    />
   );
 }

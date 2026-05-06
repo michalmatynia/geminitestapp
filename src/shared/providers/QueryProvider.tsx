@@ -1,3 +1,21 @@
+/**
+ * Query Provider
+ * 
+ * React Query (TanStack Query) provider with advanced features.
+ * Provides:
+ * - Global query client management with singleton pattern
+ * - Query batching for performance optimization
+ * - Global error handling and recovery
+ * - Query lifecycle hooks and monitoring
+ * - Smart caching and cache warming
+ * - Offline support and persistence
+ * - Performance monitoring and analytics
+ * - Development vs production middleware
+ * 
+ * This provider wraps the entire application to enable
+ * efficient data fetching, caching, and synchronization.
+ */
+
 'use client';
 
 import {
@@ -26,18 +44,25 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type QueryProviderProps = {
   children: React.ReactNode;
-  mode?: QueryProviderMode;
+  mode?: QueryProviderMode; // 'full' enables all features, 'light' for minimal setup
 };
 
 export type QueryProviderMode = 'full' | 'light';
 
+// Environment-based feature flags
 const isDevelopment = process.env['NODE_ENV'] === 'development';
 const envEnableAdvancedRuntime =
   process.env['NEXT_PUBLIC_QUERY_ADVANCED_RUNTIME'] === 'true' || !isDevelopment;
 const envEnableWarmup = process.env['NEXT_PUBLIC_QUERY_WARMUP'] === 'true' || !isDevelopment;
 
+// Singleton query client for browser (prevents recreation on re-renders)
 let browserQueryClient: QueryClient | null = null;
 
+/**
+ * Get or create query client
+ * Server-side: creates new client per request
+ * Client-side: reuses singleton instance
+ */
 const getQueryClient = (): QueryClient => {
   if (typeof window === 'undefined') {
     return createQueryClient();

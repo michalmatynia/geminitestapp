@@ -3,10 +3,9 @@ import type { ReactNode } from 'react';
 
 import {
   FolderTreeSearchBar,
-  FolderTreeViewportV2,
+  MasterFolderTreeViewport,
   type FolderTreeViewportRenderNodeInput,
-  type MasterFolderTreeSearchState,
-  type MasterFolderTreeShell,
+  type MasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import { KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import type { KangurLessonAgeGroup } from '@/features/kangur/shared/contracts/kangur';
@@ -15,9 +14,6 @@ import { cn } from '@/features/kangur/shared/utils';
 
 import type { KangurLessonAuthoringFilter } from '../content-creator-insights';
 import { renderKangurAdminWorkspaceIntroCard } from './KangurAdminWorkspaceIntroCard';
-
-type FolderTreeShell = MasterFolderTreeShell;
-type FolderTreeSearchState = MasterFolderTreeSearchState;
 
 type AdminKangurLessonsManagerTreePanelProps = {
   standalone: boolean;
@@ -40,10 +36,7 @@ type AdminKangurLessonsManagerTreePanelProps = {
   treeSearchQuery: string;
   onTreeSearchChange: (query: string) => void;
   searchEnabled: boolean;
-  searchState: FolderTreeSearchState;
-  controller: FolderTreeShell['controller'];
-  scrollToNodeRef: FolderTreeShell['viewport']['scrollToNodeRef'];
-  rootDropUi: FolderTreeShell['appearance']['rootDropUi'];
+  tree: MasterFolderTreeViewModel;
   renderNode: (input: FolderTreeViewportRenderNodeInput) => ReactNode;
   onAddGeometryPack: () => void;
   onAddLogicalThinkingPack: () => void;
@@ -71,7 +64,6 @@ const renderAdminKangurLessonsManagerTreePanel = ({
   ageGroupFilter,
   authoringFilter,
   authoringFilteredLessonCount,
-  controller,
   enableDnd,
   filterCounts,
   filterSectionLabelClassName,
@@ -95,11 +87,9 @@ const renderAdminKangurLessonsManagerTreePanel = ({
   onSelectOrderedView,
   onSelectSectionsView,
   renderNode,
-  rootDropUi,
-  scrollToNodeRef,
   searchEnabled,
-  searchState,
   standalone,
+  tree,
   toolbarButtonClassName,
   treeSearchQuery,
   onTreeSearchChange,
@@ -317,9 +307,9 @@ const renderAdminKangurLessonsManagerTreePanel = ({
                       : 'Search lessons, ids, or component types...'
                   }
                 />
-                {searchState.isActive ? (
+                {tree.searchState.isActive ? (
                   <div className='text-[11px] text-muted-foreground/80'>
-                    {searchState.matchNodeIds.size} results
+                    {tree.searchState.matchNodeIds.size} results
                   </div>
                 ) : null}
               </div>
@@ -336,11 +326,9 @@ const renderAdminKangurLessonsManagerTreePanel = ({
         </div>
       ) : (
         <div className='min-h-0 flex-1 overflow-auto p-2'>
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
-            searchState={searchState}
-            rootDropUi={isCatalogMode ? { ...rootDropUi, enabled: false } : rootDropUi}
+          <MasterFolderTreeViewport
+            tree={tree}
+            rootDropUi={isCatalogMode ? { ...tree.appearance.rootDropUi, enabled: false } : undefined}
             renderNode={renderNode}
             enableDnd={enableDnd}
             emptyLabel={
@@ -376,10 +364,7 @@ export function AdminKangurLessonsManagerTreePanel({
   treeSearchQuery,
   onTreeSearchChange,
   searchEnabled,
-  searchState,
-  controller,
-  scrollToNodeRef,
-  rootDropUi,
+  tree,
   renderNode,
   onAddGeometryPack,
   onAddLogicalThinkingPack,
@@ -421,10 +406,7 @@ export function AdminKangurLessonsManagerTreePanel({
     treeSearchQuery,
     onTreeSearchChange,
     searchEnabled,
-    searchState,
-    controller,
-    scrollToNodeRef,
-    rootDropUi,
+    tree,
     renderNode,
     onAddGeometryPack,
     onAddLogicalThinkingPack,

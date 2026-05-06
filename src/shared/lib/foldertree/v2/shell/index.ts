@@ -1,7 +1,9 @@
 export * from './useFolderTreeAppearance';
 export * from './useFolderTreeProfileConfig';
 export * from './useFolderTreeUiState';
+export * from './useMasterFolderTreeControllerViewModel';
 export * from './useMasterFolderTreeShell';
+export * from './useMasterFolderTreeViewModel';
 export { type MasterFolderTreeShell } from './useMasterFolderTreeShell';
 export * from './resolveFolderTreeIconSet';
 export * from './useFolderTreeShellRuntime';

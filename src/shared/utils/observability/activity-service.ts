@@ -80,6 +80,7 @@ export async function logActivity(data: CreateActivityLog): Promise<ActivityLog>
   // We use catch to avoid blocking activity writes if logging fails.
   logSystemEvent({
     level: 'info',
+    controlType: 'activity',
     message: `Activity: ${data.type} - ${data.description}`,
     source: data.entityType ?? 'activity-service',
     userId: data.userId ?? null,

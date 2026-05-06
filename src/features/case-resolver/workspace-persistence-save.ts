@@ -1,3 +1,26 @@
+/**
+ * workspace-persistence-save.ts
+ *
+ * Handles saving a CaseResolver workspace to the settings table. The workspace
+ * is split across up to 3 setting records when it exceeds the single-record
+ * size limit:
+ *
+ *  1. Main workspace (CASE_RESOLVER_WORKSPACE_KEY) — always present; contains
+ *     the core workspace data minus detached documents/history when those are
+ *     split out.
+ *  2. Detached documents (CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY) — created
+ *     when the main payload is too large; holds the `documents` array.
+ *  3. Detached history (CASE_RESOLVER_WORKSPACE_HISTORY_KEY) — created when
+ *     the main payload is still too large after detaching documents; holds the
+ *     `history` array.
+ *
+ * The save operation is atomic: all records are written in a single
+ * transaction. If any write fails the entire save is rolled back.
+ *
+ * The function also trims the history array to the configured limit before
+ * saving and logs performance metrics when the payload size exceeds the
+ * warning threshold.
+ */
 import { type CaseResolverWorkspace, type PersistCaseResolverWorkspaceResult } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
 
@@ -36,7 +59,10 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
+// Maximum number of history snapshots to keep in the persisted workspace.
+// Older snapshots are dropped during save to prevent unbounded growth.
 const CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT_DEFAULT = 12;
+// Payload size (in bytes) above which a warning is logged with profiling data.
 const CASE_RESOLVER_WORKSPACE_PAYLOAD_PROFILE_WARN_BYTES_DEFAULT = 900_000;
 
 const CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT = readPositiveIntegerEnv(

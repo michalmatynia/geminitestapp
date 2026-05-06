@@ -3,8 +3,8 @@
 import React, { useCallback, useMemo } from 'react';
 
 import {
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import { internalError } from '@/shared/errors/app-error';
@@ -75,11 +75,7 @@ export function BrainRoutingTree(props: BrainRoutingTreeProps): React.JSX.Elemen
     []
   );
 
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'brain_routing_tree',
     nodes: masterNodes,
     initiallyExpandedNodeIds: initialExpandedNodeIds,
@@ -160,10 +156,8 @@ export function BrainRoutingTree(props: BrainRoutingTreeProps): React.JSX.Elemen
 
   return (
     <BrainRoutingCapabilityNodeItemRuntimeContext.Provider value={capabilityNodeRuntimeValue}>
-      <FolderTreeViewportV2
-        controller={controller}
-        scrollToNodeRef={scrollToNodeRef}
-        rootDropUi={rootDropUi}
+      <MasterFolderTreeViewport
+        tree={tree}
         renderNode={renderNode}
         enableDnd={false}
         emptyLabel='No routing capabilities'

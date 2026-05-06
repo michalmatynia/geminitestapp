@@ -50,8 +50,8 @@ export function ResultsAssignmentsSection({
         </Text>
       ) : (
         <View style={{ gap: 10 }}>
-          {assignmentItems.map((item) => (
-            <ResultsAssignmentRow key={item.assignment.id} item={item} />
+          {assignmentItems.map((item: KangurMobileResultsAssignmentItem) => (
+            <ResultsAssignmentRow key={(item.assignment as { id: string }).id} item={item} />
           ))}
         </View>
       )}

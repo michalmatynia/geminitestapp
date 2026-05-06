@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/public';
+import { MasterFolderTreeViewport } from '@/shared/lib/foldertree/public';
 import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
 
 import { ValidatorPatternTreeGroupSettingsPanel } from './ValidatorPatternTreeGroupSettingsPanel';
@@ -134,10 +134,8 @@ export function ValidatorPatternTree(): React.JSX.Element {
   return (
     <ValidatorPatternTreeContext.Provider value={contextValue}>
       <FolderTreePanel masterInstance='validator_pattern_tree' className='h-auto min-h-0'>
-        <FolderTreeViewportV2
-          controller={treeShell.controller}
-          scrollToNodeRef={treeShell.scrollToNodeRef}
-          rootDropUi={treeShell.rootDropUi}
+        <MasterFolderTreeViewport
+          tree={treeShell.tree}
           renderNode={renderNode}
           enableDnd={!isPending}
           emptyLabel='No patterns — click Add Pattern to create the first one'

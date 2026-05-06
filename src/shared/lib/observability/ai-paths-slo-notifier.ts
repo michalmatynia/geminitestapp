@@ -17,6 +17,7 @@ import { createHash } from 'crypto';
 import type { AiPathRunQueueSloStatus } from '@/shared/contracts/ai-paths-runtime';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { hasConfiguredMongoSourceEnv } from '@/shared/lib/db/mongo-source-env';
 import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
 import { getRedisConnection } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -62,7 +63,7 @@ export type NotifyAiPathsSloResult = {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  if (!hasConfiguredMongoSourceEnv()) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)

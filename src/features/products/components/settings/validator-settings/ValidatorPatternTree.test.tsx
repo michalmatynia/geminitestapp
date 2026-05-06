@@ -19,8 +19,21 @@ vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
 }));
 
 vi.mock('@/shared/lib/foldertree/public', () => ({
-  createMasterFolderTreeTransactionAdapter: () => ({}),
+  createMasterFolderTreeProjectionAdapter: () => ({}),
   FolderTreeViewportV2: () => <div data-testid='tree-viewport' />,
+  MasterFolderTreeViewport: () => <div data-testid='tree-viewport' />,
+  useMasterFolderTreeViewModel: (...args: unknown[]) => {
+    const shell = useMasterFolderTreeShellMock(...args);
+
+    return {
+      ...shell,
+      searchState: {
+        isActive: false,
+        results: [],
+        matchNodeIds: new Set(),
+      },
+    };
+  },
   useMasterFolderTreeShell: (...args: unknown[]) => useMasterFolderTreeShellMock(...args),
 }));
 

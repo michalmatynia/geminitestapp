@@ -5,6 +5,7 @@ import { configurationError } from '@/shared/errors/app-error';
 import type {
   FilemakerMailAccount,
 } from '../../types';
+import type { FilemakerMailCredential } from './mail-auth';
 
 export type FilemakerMailDkimConfig = {
   domainName: string;
@@ -31,7 +32,7 @@ const isInvalidSmtpEndpoint = (host: string, port: number): boolean =>
 
 export const createSmtpTransport = (
   account: FilemakerMailAccount,
-  password?: string,
+  credential?: FilemakerMailCredential,
   dkimPrivateKey?: string | null
 ): Transporter => {
   const host = account.smtpHost.trim();
@@ -42,15 +43,24 @@ export const createSmtpTransport = (
 
   const dkim = resolveFilemakerMailDkimConfig(account, dkimPrivateKey);
   const user = account.smtpUser.trim() !== '' ? account.smtpUser : account.emailAddress;
+  const password = typeof credential === 'string' ? credential : '';
+  const auth =
+    typeof credential === 'object' && credential.accessToken.length > 0
+      ? {
+          type: 'OAuth2' as const,
+          user,
+          accessToken: credential.accessToken,
+        }
+      : {
+          user,
+          pass: password,
+        };
 
   return createTransport({
     host,
     port,
     secure: account.smtpSecure,
-    auth: {
-      user,
-      pass: password ?? '',
-    },
+    auth,
     ...(dkim !== null ? { dkim } : {}),
   });
 };

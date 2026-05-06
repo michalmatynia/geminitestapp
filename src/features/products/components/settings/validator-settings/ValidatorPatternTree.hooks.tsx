@@ -8,8 +8,8 @@ import type {
   SequenceGroupDraft,
 } from '@/shared/contracts/products/validation';
 import {
-  createMasterFolderTreeTransactionAdapter,
-  useMasterFolderTreeShell,
+  createMasterFolderTreeProjectionAdapter,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 
@@ -28,7 +28,7 @@ import type { ValidatorPatternTreeContextValue } from './ValidatorPatternTreeCon
 import type { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
 type ValidatorSettingsContextValue = ReturnType<typeof useValidatorSettingsContext>;
-type MasterFolderTreeShell = ReturnType<typeof useMasterFolderTreeShell>;
+type MasterFolderTreeShell = ReturnType<typeof useMasterFolderTreeViewModel>;
 
 export type ValidatorPatternTreeSelection = {
   selectedGroupId: string | null;
@@ -40,9 +40,8 @@ export type ValidatorPatternTreeSelection = {
 };
 
 type ValidatorPatternTreeShellModel = {
+  tree: MasterFolderTreeShell;
   controller: MasterFolderTreeShell['controller'];
-  rootDropUi: MasterFolderTreeShell['appearance']['rootDropUi'];
-  scrollToNodeRef: MasterFolderTreeShell['viewport']['scrollToNodeRef'];
   reorderPending: boolean;
 };
 
@@ -96,12 +95,13 @@ export const useValidatorPatternTreeShellModel = ({
 
   const adapter = useMemo(
     () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: async (tx): Promise<void> => {
-          const updates = resolveValidatorPatternReorderUpdates({
+      createMasterFolderTreeProjectionAdapter({
+        project: (tx) =>
+          resolveValidatorPatternReorderUpdates({
             previousNodes: tx.previousNodes,
             nextNodes: tx.nextNodes,
-          });
+          }),
+        onPersistProjection: async (updates, tx): Promise<void> => {
           if (updates.length === 0) return;
 
           try {
@@ -119,11 +119,7 @@ export const useValidatorPatternTreeShellModel = ({
       }),
     []
   );
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'validator_pattern_tree',
     nodes: masterNodes,
     initiallyExpandedNodeIds: masterNodes
@@ -133,9 +129,8 @@ export const useValidatorPatternTreeShellModel = ({
   });
 
   return {
-    controller,
-    rootDropUi,
-    scrollToNodeRef,
+    tree,
+    controller: tree.controller,
     reorderPending: reorderPatternsMutation.isPending,
   };
 };

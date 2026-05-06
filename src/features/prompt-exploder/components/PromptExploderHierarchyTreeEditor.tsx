@@ -12,9 +12,9 @@ import {
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
-  createMasterFolderTreeTransactionAdapter,
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  createMasterFolderTreeProjectionAdapter,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import { Badge, Button, Input, Label } from '@/shared/ui/primitives.public';
@@ -227,29 +227,27 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
 
   const adapter = useMemo(
     () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: async (tx) => {
-          const nextItems = rebuildPromptExploderListFromMasterNodes({
+      createMasterFolderTreeProjectionAdapter({
+        project: (tx) =>
+          rebuildPromptExploderListFromMasterNodes({
             nodes: tx.nextNodes,
             previousItems: itemsRef.current,
-          });
+          }),
+        onPersistProjection: (nextItems) => {
           onChangeRef.current(nextItems);
         },
       }),
     []
   );
 
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'prompt_exploder_hierarchy',
     nodes: masterNodes,
     initiallyExpandedNodeIds: expandedNodeIds,
     externalRevision: treeRevision,
     adapter,
   });
+  const { controller } = tree;
   const { armDragHandle, releaseDragHandle, canStartHandleOnlyDrag } =
     usePromptExploderHandleOnlyDrag();
   const treeNodeRuntimeContextValue = useMemo(
@@ -356,13 +354,11 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
 
       <PromptExploderTreeNodeRuntimeProvider value={treeNodeRuntimeContextValue}>
         <div className='max-h-[260px] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
+          <MasterFolderTreeViewport
+            tree={tree}
             enableDnd
             className='space-y-0.5'
             emptyLabel={emptyLabel}
-            rootDropUi={rootDropUi}
             canStartDrag={canStartHandleOnlyDrag}
             renderNode={(input) => <PromptExploderTreeNode {...input} />}
           />

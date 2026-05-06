@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import {
-  createMasterFolderTreeTransactionAdapter,
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  createMasterFolderTreeOrderedItemsAdapter,
+  MasterFolderTreeViewport,
+  type MasterFolderTreeAdapterV3,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
@@ -29,49 +30,34 @@ export interface ValidatorListTreeProps {
   isPending: boolean;
 }
 
-function useSyncedRef<T>(value: T): React.MutableRefObject<T> {
-  const ref = useRef(value);
-
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-
-  return ref;
-}
-
 function useValidatorListTreeAdapter(
+  lists: ValidatorPatternList[],
   listById: Map<string, ValidatorPatternList>,
   onReorder: (reorderedLists: ValidatorPatternList[]) => void
-): ReturnType<typeof createMasterFolderTreeTransactionAdapter> {
-  const listByIdRef = useSyncedRef(listById);
-  const onReorderRef = useSyncedRef(onReorder);
-
+): MasterFolderTreeAdapterV3 {
   return useMemo(
     () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: (tx) => {
-          const reordered = resolveValidatorListOrderFromNodes(tx.nextNodes, listByIdRef.current);
-          onReorderRef.current(reordered);
-        },
+      createMasterFolderTreeOrderedItemsAdapter({
+        items: lists,
+        itemById: listById,
+        getItemId: (list) => list.id,
+        resolveOrderedItemsFromNodes: resolveValidatorListOrderFromNodes,
+        onPersistItems: onReorder,
       }),
-    [listByIdRef, onReorderRef]
+    [listById, lists, onReorder]
   );
 }
 
 function ValidatorListTreeViewport(): React.JSX.Element {
   const {
-    controller: treeController,
+    tree,
     isPending: treePending,
-    scrollToNodeRef,
-    rootDropUi,
     renderNode,
   } = useValidatorListTreeContext();
 
   return (
-    <FolderTreeViewportV2
-      controller={treeController}
-      scrollToNodeRef={scrollToNodeRef}
-      rootDropUi={rootDropUi}
+    <MasterFolderTreeViewport
+      tree={tree}
       renderNode={renderNode}
       enableDnd={!treePending}
       emptyLabel='No validation pattern lists'
@@ -89,17 +75,14 @@ export function ValidatorListTree({
 }: ValidatorListTreeProps): React.JSX.Element {
   const masterNodes = useMemo(() => buildValidatorListMasterNodes(lists), [lists]);
   const listById = useMemo(() => new Map(lists.map((l) => [l.id, l])), [lists]);
-  const adapter = useValidatorListTreeAdapter(listById, onReorder);
+  const adapter = useValidatorListTreeAdapter(lists, listById, onReorder);
 
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'validator_list_tree',
     nodes: masterNodes,
     adapter,
   });
+  const { controller } = tree;
 
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
@@ -111,8 +94,7 @@ export function ValidatorListTree({
   const contextValue = useMemo(
     () => ({
       controller,
-      scrollToNodeRef,
-      rootDropUi,
+      tree,
       renderNode,
       listById,
       onEdit,
@@ -122,8 +104,7 @@ export function ValidatorListTree({
     }),
     [
       controller,
-      scrollToNodeRef,
-      rootDropUi,
+      tree,
       renderNode,
       listById,
       onEdit,

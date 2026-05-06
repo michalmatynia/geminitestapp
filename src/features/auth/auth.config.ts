@@ -1,15 +1,35 @@
+/**
+ * NextAuth.js Configuration
+ * 
+ * Central authentication configuration for the application.
+ * Handles:
+ * - Session management and JWT tokens
+ * - Role-based access control (RBAC)
+ * - Permission-based route protection
+ * - Account status validation (banned/disabled)
+ * - Secure cookie configuration for production
+ * - Development fallbacks for easier local testing
+ * 
+ * This configuration is edge-compatible and runs in middleware
+ * to protect routes before they're rendered.
+ */
+
 import type { NextAuthConfig, Session, User } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 
+// Secret key for JWT signing - required in production
 const devFallbackSecret = 'dev-secret-change-me';
 const secret =
   process.env['AUTH_SECRET'] ??
   process.env['NEXTAUTH_SECRET'] ??
   (process.env['NODE_ENV'] === 'development' ? devFallbackSecret : undefined);
-const isProd = process.env['NODE_ENV'] === 'production';
-const securePrefix = isProd ? '__Secure-' : '';
-const hostPrefix = isProd ? '__Host-' : '';
 
+// Environment detection for secure cookie configuration
+const isProd = process.env['NODE_ENV'] === 'production';
+const securePrefix = isProd ? '__Secure-' : ''; // Secure cookies in production
+const hostPrefix = isProd ? '__Host-' : ''; // Host-locked cookies in production
+
+// Warn in development if no secret is configured
 if (
   process.env['NODE_ENV'] === 'development' &&
   process.env['AUTH_SECRET'] === undefined &&
@@ -21,14 +41,31 @@ if (
   })();
 }
 
-// Basic config that is edge-compatible
+/**
+ * Route prefixes that require admin access
+ * These routes are protected by role-based checks
+ */
 const adminOnlyPrefixes = ['/admin/auth', '/admin/products'];
+
+/**
+ * Roles that have elevated privileges
+ * Users with these roles bypass some permission checks
+ */
 const elevatedRoles = new Set(['admin', 'super_admin', 'superuser']);
+
+/**
+ * Detect if running in Playwright test environment
+ * Used to adjust auth behavior during automated testing
+ */
 const isPlaywrightRuntime = Boolean(
   (process.env['PLAYWRIGHT_RUNTIME_LEASE_KEY'] ?? '') !== '' ||
     (process.env['PLAYWRIGHT_RUNTIME_AGENT_ID'] ?? '') !== ''
 );
 
+/**
+ * Permission rules mapping route prefixes to required permissions
+ * Routes are checked in order, first match wins
+ */
 const permissionRules: Array<{ prefix: string; permissions: string[] }> = [
   { prefix: '/admin/auth/permissions', permissions: ['auth.users.write'] },
   { prefix: '/admin/auth/settings', permissions: ['auth.users.write'] },
@@ -51,6 +88,10 @@ const permissionRules: Array<{ prefix: string; permissions: string[] }> = [
   { prefix: '/admin/cms', permissions: ['settings.manage'] },
 ];
 
+/**
+ * Resolve required permissions for a given pathname
+ * Returns the permissions array for the first matching rule
+ */
 const resolveRequiredPermissions = (pathname: string): string[] => {
   for (const rule of permissionRules) {
     if (pathname.startsWith(rule.prefix)) {
@@ -60,6 +101,10 @@ const resolveRequiredPermissions = (pathname: string): string[] => {
   return [];
 };
 
+/**
+ * User authentication information interface
+ * Extracted from session/JWT for authorization checks
+ */
 interface AuthUserInfo {
   role?: string;
   isElevated?: boolean;
@@ -69,6 +114,10 @@ interface AuthUserInfo {
   permissions?: string[];
 }
 
+/**
+ * Check if user account is in good standing
+ * Returns redirect info if account is disabled or banned
+ */
 const checkAccountStatus = (
   authUser: AuthUserInfo
 ): { redirect: string; error: string } | undefined => {

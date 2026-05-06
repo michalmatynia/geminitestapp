@@ -1,3 +1,15 @@
+/**
+ * External Link Component
+ * 
+ * Accessible external link component with visual indicators.
+ * Provides:
+ * - External link icon with configurable positioning
+ * - Accessibility attributes for screen readers
+ * - Security attributes (rel="noopener noreferrer")
+ * - Customizable styling and icon display
+ * - Text content extraction for aria-label generation
+ */
+
 'use client';
 
 import { ExternalLink as ExternalLinkIcon } from 'lucide-react';

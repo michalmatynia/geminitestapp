@@ -23,6 +23,10 @@ vi.mock('../LinkedInSettings', () => ({
   LinkedInSettings: () => <div data-testid='linkedin-settings' />,
 }));
 
+vi.mock('../GoogleOAuthSettings', () => ({
+  GoogleOAuthSettings: () => <div data-testid='google-oauth-settings' />,
+}));
+
 vi.mock('../PlaywrightTabContent', () => ({
   PlaywrightTabContent: () => <div data-testid='playwright-tab-content'>playwright-settings</div>,
 }));

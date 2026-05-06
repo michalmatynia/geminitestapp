@@ -101,6 +101,12 @@ type IntegrationConnectionDocument = {
   linkedinTokenUpdatedAt?: Date | null;
   linkedinPersonUrn?: string | null;
   linkedinProfileUrl?: string | null;
+  googleAccessToken?: string | null;
+  googleRefreshToken?: string | null;
+  googleTokenType?: string | null;
+  googleScope?: string | null;
+  googleExpiresAt?: Date | null;
+  googleTokenUpdatedAt?: Date | null;
   jobApplicationPersonId?: string | null;
   jobApplicationPersonName?: string | null;
   baseApiToken?: string | null;

@@ -40,6 +40,22 @@ vi.mock('@/shared/lib/foldertree/public', async () => {
   return {
     ...actual,
     useMasterFolderTreeShell: (options: unknown): unknown => useMasterFolderTreeShellMock(options),
+    useMasterFolderTreeViewModel: (options: unknown): unknown => {
+      const shell = useMasterFolderTreeShellMock(options);
+
+      return {
+        ...(shell as Record<string, unknown>),
+        searchState: {
+          isActive: false,
+          results: [],
+          matchNodeIds: new Set(),
+        },
+      };
+    },
+    MasterFolderTreeViewport: (props: FolderTreeViewportV2Props & { tree?: unknown }): React.JSX.Element => {
+      viewportPropsMock(props);
+      return <div data-testid='folder-tree-viewport' />;
+    },
     FolderTreeViewportV2: (props: FolderTreeViewportV2Props): React.JSX.Element => {
       viewportPropsMock(props);
       return <div data-testid='folder-tree-viewport' />;

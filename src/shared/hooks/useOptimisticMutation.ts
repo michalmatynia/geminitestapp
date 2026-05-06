@@ -1,3 +1,15 @@
+/**
+ * Optimistic Mutation Hook
+ * 
+ * React hook for mutations with optimistic UI updates and automatic rollback.
+ * Provides:
+ * - Immediate UI updates before server confirmation
+ * - Automatic rollback on mutation failure
+ * - Type-safe optimistic update functions
+ * - Error handling with client-side logging
+ * - Cache synchronization and consistency management
+ */
+
 'use client';
 
 import { type UseMutationResult } from '@tanstack/react-query';

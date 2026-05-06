@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import {
+  useMasterFolderTreeControllerViewModel,
   useFolderTreeInstanceV2,
   useSharedMasterFolderTreeRuntime,
 } from '@/shared/lib/foldertree/public';
@@ -17,7 +18,7 @@ interface UseEmailLayerPanelProps {
 }
 
 interface UseEmailLayerPanelResult {
-  controller: ReturnType<typeof useFolderTreeInstanceV2>;
+  tree: ReturnType<typeof useMasterFolderTreeControllerViewModel>;
   runtime: ReturnType<typeof useSharedMasterFolderTreeRuntime>;
 }
 
@@ -45,6 +46,7 @@ export function useEmailLayerPanel({
   );
 
   const initialNodes = useMemo(() => projectBlocksToMasterNodes(blocksRef.current), []);
+  const projectedNodes = useMemo(() => projectBlocksToMasterNodes(blocks), [blocks]);
   const runtime = useSharedMasterFolderTreeRuntime({ bindWindowKeydown: false });
   const controller = useFolderTreeInstanceV2({
     adapter,
@@ -56,12 +58,11 @@ export function useEmailLayerPanel({
 
   const lastProjectedSignatureRef = useRef<string>(JSON.stringify(initialNodes));
   useEffect(() => {
-    const projected = projectBlocksToMasterNodes(blocks);
-    const signature = JSON.stringify(projected);
+    const signature = JSON.stringify(projectedNodes);
     if (signature === lastProjectedSignatureRef.current) return;
     lastProjectedSignatureRef.current = signature;
-    void controller.replaceNodes(projected, 'external_sync');
-  }, [blocks, controller]);
+    void controller.replaceNodes(projectedNodes, 'external_sync');
+  }, [controller, projectedNodes]);
 
   useEffect(() => {
     if (controller.selectedNodeId !== selectedBlockId) {
@@ -75,5 +76,11 @@ export function useEmailLayerPanel({
     }
   }, [selectedBlockId]);
 
-  return { controller, runtime };
+  const tree = useMasterFolderTreeControllerViewModel({
+    controller,
+    profile: emailBuilderTreeProfile,
+    nodes: projectedNodes,
+  });
+
+  return { tree, runtime };
 }

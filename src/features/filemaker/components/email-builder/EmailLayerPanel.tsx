@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/public';
+import { MasterFolderTreeViewport } from '@/shared/lib/foldertree/public';
 import type { EmailBlock } from './block-model';
 import { useEmailLayerPanel } from './useEmailLayerPanel';
 
@@ -21,7 +21,7 @@ export function EmailLayerPanel({
   onSelectBlock,
   className,
 }: EmailLayerPanelProps): React.JSX.Element {
-  const { controller, runtime } = useEmailLayerPanel({
+  const { tree, runtime } = useEmailLayerPanel({
     blocks,
     onChange,
     selectedBlockId,
@@ -33,11 +33,10 @@ export function EmailLayerPanel({
       <div className='text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
         Email layers
       </div>
-      <FolderTreeViewportV2
-        controller={controller}
+      <MasterFolderTreeViewport
+        tree={tree}
         enableDnd
         emptyLabel='Add a section to start.'
-        rootDropUi={{ enabled: true, label: 'Drop section here' }}
         runtime={runtime}
       />
     </div>

@@ -12,8 +12,8 @@ type UseKangurMobileScoreHistoryOptions = {
   sort?: string;
 };
 
-type UseKangurMobileScoreHistoryResult = {
-  error: unknown;
+export type UseKangurMobileScoreHistoryResult = {
+  error: Error | null;
   isEnabled: boolean;
   isLoadingAuth: boolean;
   isLoading: boolean;
@@ -61,7 +61,7 @@ export const useKangurMobileScoreHistory = (
   });
 
   return {
-    error: scoresQuery.error,
+    error: scoresQuery.error instanceof Error ? scoresQuery.error : null,
     isEnabled,
     isLoading: isRestoringAuth || scoresQuery.isLoading,
     isLoadingAuth,

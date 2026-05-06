@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { areTutorSelectionTextsEquivalent } from '../KangurAiTutorWidget.helpers';
 import type { KangurAiTutorTelemetryContextDto, KangurAiTutorRuntimeMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';

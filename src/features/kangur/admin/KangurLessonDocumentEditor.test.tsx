@@ -587,7 +587,7 @@ describe('KangurLessonDocumentEditor', () => {
 
     renderEditor({ version: 1, blocks: [] }, handleChange);
 
-    fireEvent.click(screen.getByRole('button', { name: /add svg gallery/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add SVG gallery/i }));
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
       blocks: Array<{
@@ -608,7 +608,7 @@ describe('KangurLessonDocumentEditor', () => {
 
     renderEditor({ version: 1, blocks: [] }, handleChange);
 
-    fireEvent.click(screen.getByRole('button', { name: /add svg mosaic/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add SVG mosaic/i }));
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
       blocks: Array<{
@@ -784,7 +784,7 @@ describe('KangurLessonDocumentEditor', () => {
 
     render(<StatefulEditorHarness value={initialValue} onChange={handleChange} />);
 
-    fireEvent.change(screen.getByLabelText(/column start/i), { target: { value: '2' } });
+    fireEvent.change(screen.getByRole('textbox', { name: /column span/i }), { target: { value: '2' } });
     fireEvent.change(screen.getByLabelText(/row start/i), { target: { value: '3' } });
 
     const firstUpdate = handleChange.mock.calls[0]?.[0] as {
@@ -841,7 +841,7 @@ describe('KangurLessonDocumentEditor', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText(/column span/i), { target: { value: '2' } });
+    fireEvent.change(screen.getByRole('textbox', { name: /column span/i }), { target: { value: '2' } });
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
       blocks: Array<{ items?: Array<{ colSpan: number; columnStart: number | null }> }>;
@@ -873,7 +873,7 @@ describe('KangurLessonDocumentEditor', () => {
       handleChange
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /svg gallery page/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add SVG gallery/i }));
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
       blocks: Array<{
@@ -907,7 +907,7 @@ describe('KangurLessonDocumentEditor', () => {
       handleChange
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /svg mosaic page/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add SVG gallery/i }));
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
       blocks: Array<{

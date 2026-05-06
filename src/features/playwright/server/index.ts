@@ -1,3 +1,16 @@
+/**
+ * Playwright Feature Server Module
+ * 
+ * Server-side exports for Playwright automation and testing functionality.
+ * Provides:
+ * - Test runtime and execution environment
+ * - Connection management and testing utilities
+ * - Script task automation and programmable interfaces
+ * - Test session persistence and debugging
+ * - Automation flow orchestration
+ * - Test result listing and context management
+ */
+
 export * from './runtime';
 export * from './settings';
 export * from './connection-runtime';

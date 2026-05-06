@@ -1,3 +1,23 @@
+/**
+ * master-tree.ts
+ *
+ * Builds a hierarchical master-tree representation of a CaseResolver workspace
+ * for use in the folder/file navigation UI. The tree includes:
+ *
+ *  - Workspace root
+ *  - Folders (nested by path)
+ *  - Case files (grouped under their folder)
+ *  - Asset files (grouped under their folder)
+ *  - Case content folders (virtual folders inside a case file)
+ *  - Case content files (files inside a case's virtual folder structure)
+ *
+ * Each node is assigned a stable, deterministic ID so the UI can track
+ * selection and expansion state across rebuilds.
+ *
+ * The tree is built from the workspace's `files`, `assets`, and `folders`
+ * arrays. Case content nodes are derived from the `graph.documentFileLinksByNode`
+ * map embedded in each case file.
+ */
 import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { DecodedMasterTreeNode as SharedDecodedMasterTreeNode } from '@/shared/contracts/master-folder-tree';
@@ -5,12 +25,16 @@ import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
+// Node ID prefixes used to namespace different entity types so IDs never
+// collide across types.
 const FOLDER_NODE_PREFIX = 'folder:';
 const FILE_NODE_PREFIX = 'file:';
 const ASSET_NODE_PREFIX = 'asset:';
 const CASE_NODE_PREFIX = 'case:';
 const CASE_CONTENT_FOLDER_NODE_PREFIX = 'case_content_folder:';
 const CASE_CONTENT_FILE_NODE_PREFIX = 'case_content_file:';
+// Separator used in case-content node IDs to delimit the case ID from the
+// folder path or file ID.
 const CASE_CONTENT_NODE_SEPARATOR = '::';
 
 export type CaseResolverMasterNodeRef =
@@ -36,6 +60,7 @@ export type CaseResolverCaseContentFileMasterNodeRef = {
   nodeId: string;
 };
 
+// Produces a stable node ID for a workspace folder.
 export const toCaseResolverFolderNodeId = (folderPath: string): string =>
   `${FOLDER_NODE_PREFIX}${folderPath}`;
 

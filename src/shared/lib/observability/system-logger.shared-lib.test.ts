@@ -58,6 +58,9 @@ vi.mock('@/shared/utils/observability/internal-observability-fallback', () => ({
 describe('system-logger', () => {
   const originalNodeEnv = process.env['NODE_ENV'];
   const originalNextPhase = process.env['NEXT_PHASE'];
+  const originalMongoUri = process.env['MONGODB_URI'];
+  const originalMongoLocalUri = process.env['MONGODB_LOCAL_URI'];
+  const originalMongoCloudUri = process.env['MONGODB_CLOUD_URI'];
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -65,6 +68,9 @@ describe('system-logger', () => {
     vi.mocked(isServerLoggingEnabled).mockResolvedValue(true);
     process.env['NODE_ENV'] = 'test';
     delete process.env['NEXT_PHASE'];
+    delete process.env['MONGODB_URI'];
+    delete process.env['MONGODB_LOCAL_URI'];
+    delete process.env['MONGODB_CLOUD_URI'];
     delete process.env['ENABLE_DEV_SYSTEM_LOG_PERSISTENCE'];
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -85,10 +91,27 @@ describe('system-logger', () => {
 
     if (originalNextPhase === undefined) {
       delete process.env['NEXT_PHASE'];
-      return;
+    } else {
+      process.env['NEXT_PHASE'] = originalNextPhase;
     }
 
-    process.env['NEXT_PHASE'] = originalNextPhase;
+    if (originalMongoUri === undefined) {
+      delete process.env['MONGODB_URI'];
+    } else {
+      process.env['MONGODB_URI'] = originalMongoUri;
+    }
+
+    if (originalMongoLocalUri === undefined) {
+      delete process.env['MONGODB_LOCAL_URI'];
+    } else {
+      process.env['MONGODB_LOCAL_URI'] = originalMongoLocalUri;
+    }
+
+    if (originalMongoCloudUri === undefined) {
+      delete process.env['MONGODB_CLOUD_URI'];
+    } else {
+      process.env['MONGODB_CLOUD_URI'] = originalMongoCloudUri;
+    }
   });
 
   describe('normalizeErrorInfo', () => {
@@ -168,8 +191,9 @@ describe('system-logger', () => {
       });
     });
 
-    it('skips database persistence for development logs by default', async () => {
+    it('skips database persistence for development logs when persistence is explicitly disabled', async () => {
       process.env['NODE_ENV'] = 'development';
+      process.env['ENABLE_DEV_SYSTEM_LOG_PERSISTENCE'] = 'false';
 
       await logSystemEvent({ message: 'Dev log', source: 'test' });
 
@@ -182,6 +206,38 @@ describe('system-logger', () => {
         );
       });
       expect(createSystemLog).not.toHaveBeenCalled();
+    });
+
+    it('persists development logs when Mongo-backed observability is available', async () => {
+      process.env['NODE_ENV'] = 'development';
+      process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+
+      await logSystemEvent({ message: 'Dev Mongo log', source: 'test' });
+
+      await vi.waitFor(() => {
+        expect(createSystemLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            level: 'info',
+            message: 'Dev Mongo log',
+          })
+        );
+      });
+    });
+
+    it('persists development logs when a local Mongo source is configured', async () => {
+      process.env['NODE_ENV'] = 'development';
+      process.env['MONGODB_LOCAL_URI'] = 'mongodb://localhost:27017/test';
+
+      await logSystemEvent({ message: 'Dev local Mongo log', source: 'test' });
+
+      await vi.waitFor(() => {
+        expect(createSystemLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            level: 'info',
+            message: 'Dev local Mongo log',
+          })
+        );
+      });
     });
 
     it('skips async persistence side effects during the production build phase', async () => {
@@ -201,6 +257,26 @@ describe('system-logger', () => {
       expect(createSystemLog).not.toHaveBeenCalled();
       expect(emitOtelLogRecord).not.toHaveBeenCalled();
       expect(console.log).not.toHaveBeenCalled();
+    });
+
+    it('uses an explicit activity logging control for activity-level info events', async () => {
+      vi.mocked(isServerLoggingEnabled).mockImplementation(async (type) => type === 'activity');
+
+      await logSystemEvent({
+        level: 'info',
+        controlType: 'activity',
+        message: 'Activity: auth.login - Signed in',
+        source: 'auth',
+      });
+
+      await vi.waitFor(() => {
+        expect(createSystemLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            level: 'info',
+            message: 'Activity: auth.login - Signed in',
+          })
+        );
+      });
     });
 
     it('should skip warn and error logs when error logging is disabled', async () => {

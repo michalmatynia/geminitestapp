@@ -44,9 +44,8 @@ import {
 } from '@/shared/lib/browser-execution/selector-registry-metadata';
 import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
 import {
-  createMasterFolderTreeTransactionAdapter,
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
@@ -1144,24 +1143,11 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
   );
 
   const treeRevision = useMemo(() => masterNodes.map((node) => node.id).join(','), [masterNodes]);
-  const adapter = useMemo(
-    () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: () => Promise.resolve(undefined),
-      }),
-    []
-  );
-
-  const {
-    controller,
-    appearance: { rootDropUi },
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: HISTORY_TREE_INSTANCE,
     nodes: masterNodes,
     initiallyExpandedNodeIds: expandedNodeIds,
     externalRevision: treeRevision,
-    adapter,
   });
 
   const handleSelectRun = useCallback((runId: string): void => {
@@ -1371,11 +1357,9 @@ export function AdminPlaywrightActionRunsPageRuntime(): React.JSX.Element {
 
             return (
               <div className='max-h-[640px] overflow-auto rounded border border-border/60 bg-background/20 p-1'>
-                <FolderTreeViewportV2
-                  controller={controller}
-                  scrollToNodeRef={scrollToNodeRef}
+                <MasterFolderTreeViewport
+                  tree={tree}
                   enableDnd={false}
-                  rootDropUi={rootDropUi}
                   renderNode={(input) => (
                     <RunHistoryTreeNode
                       {...input}

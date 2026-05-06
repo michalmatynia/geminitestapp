@@ -4,8 +4,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
-  useMasterFolderTreeSearch,
-  useMasterFolderTreeShell,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
@@ -74,14 +73,17 @@ export function useSocialCaptureBrowserState() {
     [sections, lessons]
   );
 
-  const shell = useMasterFolderTreeShell({ instance: TREE_INSTANCE, nodes });
-
   // ─── Search ────────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
-  const search = useMasterFolderTreeSearch(nodes, searchQuery, { profile: shell.profile });
+  const tree = useMasterFolderTreeViewModel({
+    instance: TREE_INSTANCE,
+    nodes,
+    searchQuery,
+  });
+  const { searchState: search } = tree;
 
   // ─── Selected slide ────────────────────────────────────────────────────────
-  const selectedNodeId = shell.controller.selectedNodeId;
+  const selectedNodeId = tree.controller.selectedNodeId;
   const selectedSlide = useMemo(
     () => (selectedNodeId ? parseSocialCaptureSlideNodeId(selectedNodeId) : null),
     [selectedNodeId]
@@ -212,7 +214,7 @@ export function useSocialCaptureBrowserState() {
   }, [selectedSlideKey, updateSlide]);
 
   return {
-    shell,
+    tree,
     search,
     searchQuery,
     setSearchQuery,

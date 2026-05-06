@@ -12,10 +12,10 @@ import {
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
-  createMasterFolderTreeTransactionAdapter,
-  FolderTreeViewportV2,
+  createMasterFolderTreeProjectionAdapter,
   handleMasterTreeDrop,
-  useMasterFolderTreeShell,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import { internalError } from '@/shared/errors/app-error';
@@ -213,29 +213,27 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
 
   const adapter = useMemo(
     () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: async (tx) => {
-          const nextSegments = rebuildPromptExploderSegmentsFromMasterNodes({
+      createMasterFolderTreeProjectionAdapter({
+        project: (tx) =>
+          rebuildPromptExploderSegmentsFromMasterNodes({
             nodes: tx.nextNodes,
             previousSegments: segmentsRef.current,
-          });
+          }),
+        onPersistProjection: (nextSegments) => {
           replaceSegments(nextSegments);
         },
       }),
     [replaceSegments]
   );
 
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'prompt_exploder_segments',
     nodes: masterNodes,
     selectedNodeId,
     externalRevision: treeRevision,
     adapter,
   });
+  const { controller } = tree;
 
   const { armDragHandle, releaseDragHandle, canStartHandleOnlyDrag } =
     usePromptExploderHandleOnlyDrag();
@@ -289,13 +287,11 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
       </div>
       <PromptExploderTreeNodeRuntimeProvider value={treeNodeRuntimeContextValue}>
         <div className='max-h-[65vh] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
+          <MasterFolderTreeViewport
+            tree={tree}
             enableDnd
             className='space-y-0.5'
             emptyLabel='No segments yet'
-            rootDropUi={rootDropUi}
             canStartDrag={canStartHandleOnlyDrag}
             canDrop={({ targetId, position, defaultAllowed }) => {
               if (targetId === null) return defaultAllowed;

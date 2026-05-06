@@ -6,8 +6,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import {
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
@@ -395,11 +395,7 @@ function OrganizationListHeader(props: OrganizationListState): React.JSX.Element
 }
 
 function OrganizationListViewport(props: OrganizationListState): React.JSX.Element {
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: FILEMAKER_ORGANIZATION_TREE_INSTANCE,
     nodes: props.nodes,
   });
@@ -408,10 +404,8 @@ function OrganizationListViewport(props: OrganizationListState): React.JSX.Eleme
   return (
     <div className='relative space-y-1'>
       <OrganizationTableHeader {...props} />
-      <FolderTreeViewportV2
-        controller={controller}
-        scrollToNodeRef={scrollToNodeRef}
-        rootDropUi={rootDropUi}
+      <MasterFolderTreeViewport
+        tree={tree}
         enableDnd={false}
         emptyLabel={hasQuery ? 'No organisations found' : 'No organisations found'}
         estimateRowHeight={72}

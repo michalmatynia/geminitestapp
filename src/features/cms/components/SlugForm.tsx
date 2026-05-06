@@ -28,6 +28,49 @@ export interface SlugFormProps {
   domains: CmsDomain[];
 }
 
+function renderZoningSection(
+    zoningEnabled: boolean,
+    domains: CmsDomain[],
+    domainIds: string[],
+    setDomainIds: React.Dispatch<React.SetStateAction<string[]>>
+): React.JSX.Element | null {
+  if (!zoningEnabled) return null;
+
+  return (
+    <FormSection
+      title='Zone Availability'
+      description='Assign this route to specific hostnames.'
+      className='p-6'
+    >
+      <SearchableList
+        items={domains}
+        selectedIds={domainIds}
+        onToggle={(id) => {
+          setDomainIds((prev) =>
+            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+          );
+        }}
+        getId={(d) => d.id}
+        getLabel={(d) => d.domain}
+        searchPlaceholder='Filter domains...'
+        emptyMessage='No domains available for assignment.'
+        maxHeight='max-h-48'
+        countLabel='selected'
+        renderItem={(domain) => (
+          <div className='flex flex-col'>
+            <span className='text-sm text-gray-300'>{domain.domain}</span>
+            {typeof domain.aliasOf === 'string' && domain.aliasOf !== '' && (
+              <span className='text-[10px] text-gray-500 italic'>
+                Alias of {domains.find((d) => d.id === domain.aliasOf)?.domain}
+              </span>
+            )}
+          </div>
+        )}
+      />
+    </FormSection>
+  );
+}
+
 export function SlugForm(props: SlugFormProps): React.JSX.Element {
   const { initialData, onSubmit, isSaving, onCancel, submitText, domains } = props;
 
@@ -36,6 +79,7 @@ export function SlugForm(props: SlugFormProps): React.JSX.Element {
   const [domainIds, setDomainIds] = useState<string[]>(initialData?.domainIds ?? []);
   const [error, setError] = useState<string | null>(null);
   const { zoningEnabled } = useCmsDomainSelection();
+  
   const slugInputRef = React.useCallback((node: HTMLInputElement | null): void => {
     node?.focus();
   }, []);
@@ -57,7 +101,7 @@ export function SlugForm(props: SlugFormProps): React.JSX.Element {
           <div className='space-y-4'>
             <FormField
               label='Slug'
-              error={error}
+              error={error ?? undefined}
               description='URL segment for this route.'
               required
             >
@@ -81,39 +125,7 @@ export function SlugForm(props: SlugFormProps): React.JSX.Element {
           </div>
         </FormSection>
 
-        {zoningEnabled && (
-          <FormSection
-            title='Zone Availability'
-            description='Assign this route to specific hostnames.'
-            className='p-6'
-          >
-            <SearchableList
-              items={domains}
-              selectedIds={domainIds}
-              onToggle={(id) => {
-                setDomainIds((prev) =>
-                  prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-                );
-              }}
-              getId={(d) => d.id}
-              getLabel={(d) => d.domain}
-              searchPlaceholder='Filter domains...'
-              emptyMessage='No domains available for assignment.'
-              maxHeight='max-h-48'
-              countLabel='selected'
-              renderItem={(domain) => (
-                <div className='flex flex-col'>
-                  <span className='text-sm text-gray-300'>{domain.domain}</span>
-                  {domain.aliasOf && (
-                    <span className='text-[10px] text-gray-500 italic'>
-                      Alias of {domains.find((d) => d.id === domain.aliasOf)?.domain}
-                    </span>
-                  )}
-                </div>
-              )}
-            />
-          </FormSection>
-        )}
+        {renderZoningSection(zoningEnabled, domains, domainIds, setDomainIds)}
 
         <FormActions
           onCancel={onCancel}

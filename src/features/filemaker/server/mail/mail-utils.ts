@@ -4,6 +4,7 @@ import {
   dedupeFilemakerMailParticipants,
 } from '../../mail-utils';
 import { normalizeString, toIdToken } from '../../filemaker-settings.helpers';
+import { FILEMAKER_MAIL_ACCOUNT_SECRET_SETTING_PREFIX } from '@/shared/lib/settings/secret-setting-keys';
 import type {
   FilemakerMailAccount,
   FilemakerMailFlags,
@@ -95,8 +96,8 @@ export const buildSyncStateId = (accountId: string, mailboxPath: string): string
 
 export const buildAccountSecretSettingKey = (
   accountId: string,
-  kind: 'imap_password' | 'smtp_password'
-): string => `filemaker_mail_account_${accountId}_${kind}`;
+  kind: 'imap_password' | 'smtp_password' | 'google_oauth_refresh_token'
+): string => `${FILEMAKER_MAIL_ACCOUNT_SECRET_SETTING_PREFIX}${accountId}_${kind}`;
 
 export const resolveAccountSecretSettingKey = (
   account: Pick<FilemakerMailAccount, 'id' | 'imapPasswordSettingKey' | 'smtpPasswordSettingKey'>,

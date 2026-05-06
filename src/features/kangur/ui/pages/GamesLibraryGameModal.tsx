@@ -8,6 +8,7 @@ import {
   getLocalizedKangurLessonTitle,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 
 import { useGamesLibraryGameModalState } from './GamesLibraryGameModal.hooks';
 import {
@@ -113,7 +114,7 @@ export function GamesLibraryGameModal(props: GamesLibraryGameModalProps): React.
   const state = useGamesLibraryGameModalState(props);
 
   if (!game) {
-    console.log('GamesLibraryGameModal: game prop is null');
+    logSystemEvent({ level: 'info', message: 'GamesLibraryGameModal: game prop is null', source: 'kangur-ui' });
     return null;
   }
 

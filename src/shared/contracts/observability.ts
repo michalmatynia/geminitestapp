@@ -1,3 +1,19 @@
+/**
+ * Observability Contracts
+ * 
+ * Type definitions and schemas for observability and monitoring.
+ * Provides:
+ * - Error categorization and classification
+ * - Metrics and telemetry data structures
+ * - Log entry schemas with severity levels
+ * - System log DTOs for structured logging
+ * - Trace ID propagation for distributed tracing
+ * - Activity logging contracts
+ * 
+ * These contracts ensure consistent observability data
+ * across the application for debugging and monitoring.
+ */
+
 import { z } from 'zod';
 
 import {
@@ -9,18 +25,22 @@ import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import { activityLogSchema } from './system';
 
+/**
+ * Error categories for classification and routing
+ * Used to determine error handling strategy and alerting
+ */
 export const ERROR_CATEGORY = {
-  SYSTEM: 'SYSTEM',
-  NETWORK: 'NETWORK',
-  AUTH: 'AUTH',
-  VALIDATION: 'VALIDATION',
-  DATABASE: 'DATABASE',
-  INTEGRATION: 'INTEGRATION',
-  AI: 'AI',
-  UI: 'UI',
-  UNKNOWN: 'UNKNOWN',
-  USER: 'USER',
-  EXTERNAL: 'EXTERNAL',
+  SYSTEM: 'SYSTEM',           // Internal system errors
+  NETWORK: 'NETWORK',         // Network and connectivity issues
+  AUTH: 'AUTH',               // Authentication and authorization failures
+  VALIDATION: 'VALIDATION',   // Input validation errors
+  DATABASE: 'DATABASE',       // Database operation failures
+  INTEGRATION: 'INTEGRATION', // Third-party service errors
+  AI: 'AI',                   // AI/ML service errors
+  UI: 'UI',                   // User interface errors
+  UNKNOWN: 'UNKNOWN',         // Unclassified errors
+  USER: 'USER',               // User-caused errors (not bugs)
+  EXTERNAL: 'EXTERNAL',       // External service failures
 } as const;
 
 export type ErrorCategory = (typeof ERROR_CATEGORY)[keyof typeof ERROR_CATEGORY];
@@ -28,7 +48,7 @@ export type ErrorCategory = (typeof ERROR_CATEGORY)[keyof typeof ERROR_CATEGORY]
 export const errorCategorySchema = z.nativeEnum(ERROR_CATEGORY);
 
 /**
- * Metric DTO
+ * Metric DTO for performance and usage tracking
  */
 export const metricSchema = dtoBaseSchema.extend({
   name: z.string(),
@@ -40,20 +60,21 @@ export const metricSchema = dtoBaseSchema.extend({
 export type Metric = z.infer<typeof metricSchema>;
 
 /**
- * Log Entry DTO
+ * Log Entry DTO with severity levels
+ * Supports structured logging with metadata and trace correlation
  */
 export const logEntrySchema = dtoBaseSchema.extend({
   level: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']),
   message: z.string(),
   source: z.string(),
   metadata: z.record(z.string(), z.unknown()).nullable(),
-  traceId: z.string().nullable(),
+  traceId: z.string().nullable(), // For distributed tracing
 });
 
 export type LogEntry = z.infer<typeof logEntrySchema>;
 
 /**
- * System Log DTOs
+ * System Log DTOs for operational monitoring
  */
 export const systemLogLevelSchema = z.enum(['info', 'warn', 'error']);
 export type SystemLogLevel = z.infer<typeof systemLogLevelSchema>;

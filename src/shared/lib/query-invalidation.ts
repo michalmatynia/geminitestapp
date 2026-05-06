@@ -1,3 +1,20 @@
+/**
+ * Query Cache Invalidation System
+ *
+ * Centralized cache invalidation logic for TanStack Query with real-time updates.
+ * Provides:
+ * - Automatic cache invalidation in response to mutations and events
+ * - Real-time Redis pub/sub event handling for distributed cache updates
+ * - Optimistic updates with rollback capabilities
+ * - Deduplication to prevent redundant refetches
+ * - Targeted invalidation strategies for performance optimization
+ * - Recent mutation tracking to avoid stale cache reads
+ *
+ * This system ensures data consistency across the application while
+ * maintaining optimal performance through intelligent cache management.
+ * It handles complex scenarios like AI run queues, product updates,
+ * and cross-feature data dependencies.
+ */
 import { type QueryClient, type QueryKey } from '@tanstack/react-query';
 
 import {
@@ -18,12 +35,17 @@ import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import { QUERY_KEYS } from './query-keys';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
-
+// AI Paths node sources for filtering
 const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
+
+// Recent enqueue tracking for deduplication
 const RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY = 'ai-path-run-recent-enqueue';
 const RECENT_AI_PATH_RUN_ENQUEUE_TTL_MS = 60_000;
 let inMemoryRecentAiPathRunEnqueue: RecentAiPathRunEnqueueRecord | null = null;
 
+/**
+ * Record of recent AI path run enqueue for deduplication
+ */
 type RecentAiPathRunEnqueueRecord = {
   type: 'run-enqueued';
   runId: string;

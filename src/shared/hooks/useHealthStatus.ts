@@ -1,3 +1,15 @@
+/**
+ * Health Status Hook
+ * 
+ * React hook for monitoring application health status with automatic polling.
+ * Provides:
+ * - Real-time health status monitoring
+ * - Configurable polling intervals for continuous monitoring
+ * - Stale-while-revalidate caching strategy
+ * - Error handling and retry logic
+ * - Integration with observability system
+ */
+
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';

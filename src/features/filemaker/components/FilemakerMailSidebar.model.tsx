@@ -3,7 +3,7 @@
 import { useRouter } from 'nextjs-toploader/app';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { useMasterFolderTreeShell } from '@/shared/lib/foldertree/public';
+import { useMasterFolderTreeViewModel } from '@/shared/lib/foldertree/public';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -202,7 +202,7 @@ const useSidebarTreeModel = (input: {
     selectedMailboxPath: input.selection.mailboxPath,
     visibleRecentCount: visibleRecentThreads.length,
   });
-  const treeShell = useMasterFolderTreeShell({
+  const treeShell = useMasterFolderTreeViewModel({
     initiallyExpandedNodeIds,
     instance: 'filemaker_mail',
     nodes: treeNodes,

@@ -81,6 +81,7 @@ const collectPositiveIntegerErrors = (
 const createDefaultFilemakerMailDraft = (): FilemakerMailAccountDraft => ({
   name: '',
   emailAddress: '',
+  authMode: 'password',
   status: 'active',
   imapHost: '',
   imapPort: 993,
@@ -109,6 +110,7 @@ const toDraftFromFilemakerMailAccount = (
   id: account.id,
   name: account.name,
   emailAddress: account.emailAddress,
+  authMode: account.authMode,
   status: account.status,
   imapHost: account.imapHost,
   imapPort: account.imapPort,
@@ -137,7 +139,7 @@ const validateFilemakerMailAccountDraft = (
   return {
     ...collectRequiredStringErrors(draft, REQUIRED_ACCOUNT_TEXT_FIELDS),
     ...collectPositiveIntegerErrors(draft),
-    ...(!hasText(draft.id)
+    ...(!hasText(draft.id) && draft.authMode !== 'google_oauth'
       ? collectRequiredStringErrors(draft, CREATE_REQUIRED_SECRET_FIELDS)
       : {}),
   };

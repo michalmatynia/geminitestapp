@@ -41,7 +41,39 @@ vi.mock('@/features/playwright/action-runs-master-tree', () => ({
 }));
 
 vi.mock('@/shared/lib/foldertree/public', () => ({
-  createMasterFolderTreeTransactionAdapter: () => ({}),
+  MasterFolderTreeViewport: ({
+    renderNode,
+  }: {
+    renderNode: (input: {
+      node: Record<string, unknown>;
+      depth: number;
+      hasChildren: boolean;
+      isExpanded: boolean;
+      isSelected: boolean;
+      isDragging: boolean;
+      dropPosition: null;
+      select: () => void;
+      toggleExpand: () => void;
+    }) => React.ReactNode;
+  }) => (
+    <div data-testid='folder-tree'>
+      {masterNodesMock().map((node: Record<string, unknown>) => (
+        <React.Fragment key={String(node.id)}>
+          {renderNode({
+            node,
+            depth: 0,
+            hasChildren: false,
+            isExpanded: false,
+            isSelected: false,
+            isDragging: false,
+            dropPosition: null,
+            select: () => undefined,
+            toggleExpand: () => undefined,
+          })}
+        </React.Fragment>
+      ))}
+    </div>
+  ),
   FolderTreeViewportV2: ({
     renderNode,
   }: {
@@ -79,6 +111,13 @@ vi.mock('@/shared/lib/foldertree/public', () => ({
     controller: {},
     appearance: { rootDropUi: null },
     viewport: { scrollToNodeRef: { current: null } },
+  }),
+  useMasterFolderTreeViewModel: () => ({
+    controller: {},
+    appearance: { rootDropUi: null },
+    capabilities: { multiSelect: null },
+    viewport: { scrollToNodeRef: { current: null } },
+    searchState: null,
   }),
 }));
 

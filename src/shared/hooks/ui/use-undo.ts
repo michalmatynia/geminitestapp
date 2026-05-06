@@ -1,3 +1,15 @@
+/**
+ * Undo/Redo Hook
+ * 
+ * React hook for managing undo/redo functionality with history tracking.
+ * Provides:
+ * - State history management with configurable limits
+ * - Undo and redo operations with boundary checks
+ * - History navigation and reset capabilities
+ * - Memory-efficient circular buffer implementation
+ * - Type-safe state management for any data type
+ */
+
 'use client';
 
 import { useState, useCallback, useRef } from 'react';

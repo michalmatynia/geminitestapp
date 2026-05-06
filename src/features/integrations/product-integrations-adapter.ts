@@ -1,3 +1,20 @@
+/**
+ * product-integrations-adapter.ts
+ *
+ * Public barrel for the product integrations feature. Re-exports all
+ * components, hooks, and utilities needed by other features to interact with
+ * marketplace integrations (Tradera, Vinted, Base, etc.).
+ *
+ * Key exports:
+ *  - Modal components (ListProductModal, MassListProductModal, etc.)
+ *  - Query hooks (fetchProductListings, fetchIntegrationsWithConnections)
+ *  - Mutation hooks (useCreateListingMutation, useGenericExportToBaseMutation)
+ *  - Operation hooks (useIntegrationOperations, useIntegrationModalOperations)
+ *  - Type definitions (IntegrationWithConnections, etc.)
+ *
+ * This adapter layer isolates the integrations feature's internal structure
+ * from its consumers, allowing refactoring without breaking imports.
+ */
 export type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 
 export { default as ListProductModal } from './components/listings/ListProductModal';

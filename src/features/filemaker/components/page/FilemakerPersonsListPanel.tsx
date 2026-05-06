@@ -6,8 +6,8 @@ import React, { useEffect, useMemo } from 'react';
 
 import type { FilterField, PanelAction } from '@/shared/contracts/ui/panels';
 import {
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
@@ -386,11 +386,7 @@ function PersonListHeader(props: PersonListState): React.JSX.Element {
 }
 
 function PersonListViewport(props: PersonListState): React.JSX.Element {
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: FILEMAKER_PERSON_TREE_INSTANCE,
     nodes: props.nodes,
   });
@@ -399,10 +395,8 @@ function PersonListViewport(props: PersonListState): React.JSX.Element {
   return (
     <div className='relative space-y-1'>
       <PersonTableHeader {...props} />
-      <FolderTreeViewportV2
-        controller={controller}
-        scrollToNodeRef={scrollToNodeRef}
-        rootDropUi={rootDropUi}
+      <MasterFolderTreeViewport
+        tree={tree}
         enableDnd={false}
         emptyLabel={hasQuery ? 'No persons found' : 'No persons found'}
         estimateRowHeight={72}

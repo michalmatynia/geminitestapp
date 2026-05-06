@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type {
   FolderTreeViewportRenderNodeInput,
-  useMasterFolderTreeShell,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import type { useRouter } from 'nextjs-toploader/app';
 import type { MailPageState } from '../pages/AdminFilemakerMailPage.hooks';
@@ -12,7 +12,7 @@ import type {
 } from '../types';
 import type { FilemakerMailSidebarContextValue } from './FilemakerMailSidebarContext';
 
-export type FilemakerMailTreeShell = ReturnType<typeof useMasterFolderTreeShell>;
+export type FilemakerMailTreeShell = ReturnType<typeof useMasterFolderTreeViewModel>;
 
 export type FilemakerMailSidebarRouter = ReturnType<typeof useRouter>;
 
@@ -78,7 +78,6 @@ export type FilemakerMailSidebarModel = {
   clearRecentFilters: () => void;
   clearSearchQuery: () => void;
   contextValue: FilemakerMailSidebarContextValue;
-  controller: FilemakerMailTreeShell['controller'];
   errorAccountCount: number;
   foldersCount: number;
   handleCompose: () => void;
@@ -94,8 +93,7 @@ export type FilemakerMailSidebarModel = {
   recentQuery: string | null;
   recentUnreadOnly: boolean;
   renderNode: (input: FolderTreeViewportRenderNodeInput) => React.JSX.Element;
-  rootDropUi: FilemakerMailTreeShell['appearance']['rootDropUi'];
-  scrollToNodeRef: FilemakerMailTreeShell['viewport']['scrollToNodeRef'];
+  tree: FilemakerMailTreeShell;
   selectedAccountId: string | null;
   selectedMailboxPath: string | null;
   showRecentControls: boolean;

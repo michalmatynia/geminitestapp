@@ -1,3 +1,15 @@
+/**
+ * Authentication Management Utilities
+ * 
+ * Role-based access control (RBAC) management and permission system.
+ * Provides:
+ * - Default permission and role definitions
+ * - User role mapping and assignment
+ * - Permission hierarchy and inheritance
+ * - Settings keys for auth configuration
+ * - Type-safe RBAC contract exports
+ */
+
 import type { AuthPermission, AuthRole, AuthUserRoleMap } from '@/shared/contracts/auth';
 import { AUTH_SETTINGS_KEYS } from '@/shared/lib/auth/constants';
 

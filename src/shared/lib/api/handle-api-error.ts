@@ -1,13 +1,18 @@
 /**
  * API Error Handler
  * 
- * Centralized error handling for API routes.
+ * Centralized error handling and response formatting for API routes.
  * Provides:
- * - Error response formatting
- * - Service source resolution
- * - Error tracking and reporting
- * - UUID generation for error tracking
- * - Server-only error processing
+ * - Standardized error response formatting with consistent structure
+ * - Error classification and HTTP status code mapping
+ * - Request context extraction (headers, query params, method)
+ * - Error tracking with unique IDs for correlation
+ * - Service source resolution for distributed system debugging
+ * - Observability integration with error reporting
+ * - Security-conscious error details filtering
+ * 
+ * This handler ensures consistent error responses across all API endpoints
+ * while maintaining security and providing comprehensive debugging information.
  */
 
 import 'server-only';
@@ -21,7 +26,9 @@ import { validationError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { reportError } from '@/shared/utils/observability/report-error';
 
-
+/**
+ * Configuration options for API error handling
+ */
 type ApiErrorOptions = {
   request?: Request | undefined;
   source?: string | undefined;
@@ -35,8 +42,13 @@ type ApiErrorOptions = {
   correlationId?: string | undefined;
 };
 
+// Security limit for query parameter extraction
 const MAX_QUERY_KEYS = 20;
 
+/**
+ * Safely extract header value from request
+ * Returns null if header access fails or request is undefined
+ */
 const getRequestHeader = (request: Request | undefined, name: string): string | null => {
   const headers = request?.headers;
   if (!headers || typeof headers.get !== 'function') {

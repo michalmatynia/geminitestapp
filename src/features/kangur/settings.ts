@@ -1,3 +1,22 @@
+/**
+ * settings.ts — Kangur feature settings layer
+ *
+ * Parses and normalises Kangur-specific settings from the settings table.
+ * Handles lesson configuration, TTS voice preferences, launch routes, and
+ * lesson documents.
+ *
+ * Key responsibilities:
+ *  - Parse and validate lesson arrays from JSON settings.
+ *  - Coerce age groups, subjects, content modes to known enum values.
+ *  - Build section lookups and apply defaults for missing lesson components.
+ *  - Normalise TTS voice settings with fallback to default voice.
+ *  - Validate and sanitise launch route preferences.
+ *
+ * Exported setting keys:
+ *  - KANGUR_LESSONS_SETTING_KEY — main lesson catalog
+ *  - KANGUR_LESSON_DOCUMENTS_SETTING_KEY — lesson document metadata
+ *  - KANGUR_LAUNCH_ROUTE_SETTINGS_KEY — preferred launch route
+ */
 import {
   KANGUR_TTS_DEFAULT_VOICE,
   KANGUR_TTS_VOICE_OPTIONS,

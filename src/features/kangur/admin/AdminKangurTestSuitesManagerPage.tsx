@@ -4,8 +4,9 @@ import React, { useCallback, useMemo } from 'react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2/components/types';
 import {
-  createMasterFolderTreeTransactionAdapter,
-  useMasterFolderTreeShell,
+  createMasterFolderTreeOrderedItemsAdapter,
+  type MasterFolderTreeAdapterV3,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
@@ -17,7 +18,6 @@ import {
 import {
   KANGUR_TEST_SUITES_SETTING_KEY,
   canonicalizeKangurTestSuites,
-  KANGUR_TEST_SUITE_SORT_ORDER_GAP,
 } from '../test-suites';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { TestSuiteTreeRow } from './components/TestSuiteTreeRow';
@@ -34,33 +34,22 @@ import { QuestionsManagerWorkspace } from './test-suites-manager/QuestionsManage
 import { ORDERED_TREE_INSTANCE, CATALOG_TREE_INSTANCE } from './test-suites-manager/test-suites-manager.contracts';
 
 import { MainWorkspace } from './test-suites-manager/MainWorkspace';
-import { useMasterFolderTreeSearch } from '@/shared/lib/foldertree/public';
 
 function useTestSuitesTreeAdapter(
   treeMode: string,
   logic: ReturnType<typeof useTestSuitesManagerLogic>,
   updateSetting: ReturnType<typeof useUpdateSetting>
-): ReturnType<typeof createMasterFolderTreeTransactionAdapter> {
+): MasterFolderTreeAdapterV3 {
   return useMemo(
     () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: async (transaction): Promise<void> => {
-          if (treeMode === 'catalog') return;
-          const internalAdapter = createMasterFolderTreeTransactionAdapter({ onApply: () => {} });
-          const applied = await internalAdapter.apply(transaction, {
-            tx: transaction,
-            preparedAt: Date.now(),
-          });
-          if (applied?.nodes === undefined) return;
-          const nextOrder = resolveKangurTestSuiteOrderFromNodes(applied.nodes, logic.suiteById);
-          const nextSuites = canonicalizeKangurTestSuites(
-            logic.suites.map((suite: KangurTestSuite) => ({
-              ...suite,
-              sortOrder:
-                (nextOrder.findIndex((ns) => ns.id === suite.id) + 1) *
-                KANGUR_TEST_SUITE_SORT_ORDER_GAP,
-            }))
-          );
+      createMasterFolderTreeOrderedItemsAdapter({
+        items: logic.suites,
+        itemById: logic.suiteById,
+        getItemId: (suite) => suite.id,
+        resolveOrderedItemsFromNodes: resolveKangurTestSuiteOrderFromNodes,
+        normalizeItems: canonicalizeKangurTestSuites,
+        shouldPersist: () => treeMode !== 'catalog',
+        onPersistItems: async (nextSuites): Promise<void> => {
           await updateSetting.mutateAsync({
             key: KANGUR_TEST_SUITES_SETTING_KEY,
             value: serializeSetting(nextSuites),
@@ -153,11 +142,11 @@ function TestSuitesManagerInner({ standalone }: { standalone: boolean }): React.
   );
 
   const adapter = useTestSuitesTreeAdapter(state.treeMode, logic, updateSetting);
-  const { controller, capabilities, appearance: { rootDropUi }, viewport: { scrollToNodeRef } } =
-    useMasterFolderTreeShell({ instance: activeTreeInstance, nodes: masterNodes, adapter });
-
-  const searchState = useMasterFolderTreeSearch(masterNodes, state.searchQuery, {
-    config: capabilities.search,
+  const tree = useMasterFolderTreeViewModel({
+    instance: activeTreeInstance,
+    nodes: masterNodes,
+    adapter,
+    searchQuery: state.searchQuery,
   });
 
   const renderNode = useTestSuiteTreeRenderer(logic, state);
@@ -166,9 +155,8 @@ function TestSuitesManagerInner({ standalone }: { standalone: boolean }): React.
 
   const workspace = (
     <MainWorkspace
-      logic={logic} state={state} controller={{ ...controller, capabilities }}
-      scrollToNodeRef={scrollToNodeRef} searchState={searchState}
-      rootDropUi={rootDropUi} renderNode={renderNode} settingsStore={settingsStore}
+      logic={logic} state={state} tree={tree}
+      renderNode={renderNode} settingsStore={settingsStore}
     />
   );
 

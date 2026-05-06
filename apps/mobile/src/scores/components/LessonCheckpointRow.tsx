@@ -76,8 +76,8 @@ export function LessonCheckpointRow({
           })}: ${item.title}`}
           tone='primary'
         />
-        {item.practiceHref && (
-          <PracticeButton practiceHref={item.practiceHref} title={item.title} />
+        {typeof item.practiceHref === 'string' && item.practiceHref !== '' && (
+          <PracticeButton practiceHref={item.practiceHref as Href} title={item.title} />
         )}
       </View>
     </InsetPanel>

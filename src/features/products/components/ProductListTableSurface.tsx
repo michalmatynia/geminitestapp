@@ -114,7 +114,12 @@ function ProductListAlerts(): JSX.Element | null {
 
   if (loadErrorAlert === null && actionErrorAlert === null) return null;
 
-  return <div className='flex flex-col gap-2'>{[loadErrorAlert, actionErrorAlert]}</div>;
+  return (
+    <div className='flex flex-col gap-2'>
+      {loadErrorAlert !== null ? <div key='load-error'>{loadErrorAlert}</div> : null}
+      {actionErrorAlert !== null ? <div key='action-error'>{actionErrorAlert}</div> : null}
+    </div>
+  );
 }
 
 const MemoizedProductListAlerts = memo(ProductListAlerts);

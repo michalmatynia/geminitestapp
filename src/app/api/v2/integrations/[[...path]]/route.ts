@@ -23,6 +23,10 @@ import * as linkedinAuthorize from '../[id]/connections/[connectionId]/linkedin/
 import * as linkedinCallbackLegacy from '../[id]/connections/[connectionId]/linkedin/callback/route-handler';
 import * as linkedinCallbackStable from '../linkedin/callback/route-handler';
 import * as linkedinDisconnect from '../[id]/connections/[connectionId]/linkedin/disconnect/route-handler';
+import * as googleAuthorize from '../[id]/connections/[connectionId]/google/authorize/route-handler';
+import * as googleCallbackLegacy from '../[id]/connections/[connectionId]/google/callback/route-handler';
+import * as googleCallbackStable from '../google/callback/route-handler';
+import * as googleDisconnect from '../[id]/connections/[connectionId]/google/disconnect/route-handler';
 import * as baseInventories from '../[id]/connections/[connectionId]/base/inventories/route-handler';
 import * as baseProducts from '../[id]/connections/[connectionId]/base/products/route-handler';
 import * as baseRequest from '../[id]/connections/[connectionId]/base/request/route-handler';
@@ -101,6 +105,10 @@ const ROUTES = [
   { pattern: [{ param: 'id' }, 'connections', { param: 'connectionId' }, 'linkedin', 'authorize'], module: linkedinAuthorize },
   { pattern: [{ param: 'id' }, 'connections', { param: 'connectionId' }, 'linkedin', 'callback'], module: linkedinCallbackLegacy },
   { pattern: [{ param: 'id' }, 'connections', { param: 'connectionId' }, 'linkedin', 'disconnect'], module: linkedinDisconnect },
+  { pattern: ['google', 'callback'], module: googleCallbackStable },
+  { pattern: [{ param: 'id' }, 'connections', { param: 'connectionId' }, 'google', 'authorize'], module: googleAuthorize },
+  { pattern: [{ param: 'id' }, 'connections', { param: 'connectionId' }, 'google', 'callback'], module: googleCallbackLegacy },
+  { pattern: [{ param: 'id' }, 'connections', { param: 'connectionId' }, 'google', 'disconnect'], module: googleDisconnect },
   { pattern: [{ param: 'id' }, 'connections', { param: 'connectionId' }, 'base', 'inventories'], module: baseInventories },
   { pattern: [{ param: 'id' }, 'connections', { param: 'connectionId' }, 'base', 'products'], module: baseProducts },
   { pattern: [{ param: 'id' }, 'connections', { param: 'connectionId' }, 'base', 'request'], module: baseRequest },

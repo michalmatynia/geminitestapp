@@ -6,18 +6,6 @@ import {
   KangurMobileLinkButton as LinkButton,
   KangurMobileMutedActionChip as MutedActionChip,
   KangurMobilePill as Pill,
-} from '../../shared/KangurMobileUi';
-import { translateKangurMobileActionLabel } from '../../shared/translateKangurMobileActionLabel';
-import type { KangurMobileResultsAssignmentItem } from '../useKangurMobileResultsAssignments';
-
-import { Text, View } from 'react-native';
-
-import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
-import {
-  KangurMobileInsetPanel as InsetPanel,
-  KangurMobileLinkButton as LinkButton,
-  KangurMobileMutedActionChip as MutedActionChip,
-  KangurMobilePill as Pill,
   type KangurMobileTone as Tone,
 } from '../../shared/KangurMobileUi';
 import { translateKangurMobileActionLabel } from '../../shared/translateKangurMobileActionLabel';
@@ -35,11 +23,11 @@ const getPriorityLabel = (priority: string, copy: ReturnType<typeof useKangurMob
   return copy({ de: 'Niedrige Priorität', en: 'Low priority', pl: 'Priorytet niski' });
 };
 
-function PriorityBadge({ priority, copy }: { priority: string; copy: ReturnType<typeof useKangurMobileI18n>['copy'] }) {
+function PriorityBadge({ priority, copy }: { priority: string; copy: ReturnType<typeof useKangurMobileI18n>['copy'] }): React.JSX.Element {
   return <Pill label={getPriorityLabel(priority, copy)} tone={getPriorityTone(priority)} />;
 }
 
-function AssignmentInfo({ item, copy }: { item: KangurMobileResultsAssignmentItem; copy: ReturnType<typeof useKangurMobileI18n>['copy'] }) {
+function AssignmentInfo({ item, copy }: { item: KangurMobileResultsAssignmentItem; copy: ReturnType<typeof useKangurMobileI18n>['copy'] }): React.JSX.Element {
   return (
     <>
       <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>{item.title}</Text>
@@ -51,9 +39,9 @@ function AssignmentInfo({ item, copy }: { item: KangurMobileResultsAssignmentIte
   );
 }
 
-function AssignmentAction({ item, copy, locale }: { item: KangurMobileResultsAssignmentItem; copy: ReturnType<typeof useKangurMobileI18n>['copy']; locale: string }) {
+function AssignmentAction({ item, copy, locale }: { item: KangurMobileResultsAssignmentItem; copy: ReturnType<typeof useKangurMobileI18n>['copy']; locale: string }): React.JSX.Element {
   const label = translateKangurMobileActionLabel(item.action.label, locale);
-  if (item.href) return <LinkButton href={item.href} label={label} tone='primary' />;
+  if (typeof item.href === 'string' && item.href !== '') return <LinkButton href={item.href} label={label} tone='primary' />;
   
   return (
     <MutedActionChip

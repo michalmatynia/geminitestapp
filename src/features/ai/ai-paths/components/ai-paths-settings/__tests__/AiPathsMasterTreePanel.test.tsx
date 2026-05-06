@@ -25,6 +25,33 @@ vi.mock('@/shared/utils/folder-tree-profiles-v2', () => ({
 }));
 
 vi.mock('@/shared/lib/foldertree/public', () => ({
+  MasterFolderTreeViewport: ({
+    tree,
+    renderNode,
+  }: {
+    tree: { controller: { nodes: Array<Record<string, unknown>> } };
+    renderNode: (input: Record<string, unknown>) => React.ReactNode;
+  }) => (
+    <div data-testid='folder-tree-viewport'>
+      {tree.controller.nodes.map((node) => (
+        <React.Fragment key={String(node['id'])}>
+          {renderNode({
+            node,
+            depth: 0,
+            hasChildren: false,
+            isExpanded: true,
+            isSelected: false,
+            isRenaming: false,
+            isDropTarget: false,
+            dropPosition: null,
+            select: vi.fn(),
+            toggleExpand: vi.fn(),
+            startRename: vi.fn(),
+          })}
+        </React.Fragment>
+      ))}
+    </div>
+  ),
   FolderTreeViewportV2: ({
     controller,
     renderNode,
@@ -90,6 +117,29 @@ vi.mock('@/shared/lib/foldertree/public', () => ({
       },
     },
   }),
+  useMasterFolderTreeViewModel: ({ nodes }: { nodes: Array<Record<string, unknown>> }) => ({
+    profile: {},
+    capabilities: {
+      search: {},
+    },
+    appearance: {
+      rootDropUi: null,
+      resolveIcon: () => null,
+    },
+    controller: {
+      expandNode: vi.fn(),
+      nodes,
+      renameDraft: '',
+      cancelRename: vi.fn(),
+      updateRenameDraft: vi.fn(),
+    },
+    viewport: {
+      scrollToNodeRef: {
+        current: null,
+      },
+    },
+    searchState: null,
+  }),
 }));
 
 vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
@@ -123,7 +173,7 @@ vi.mock('@/shared/ui/data-display.public', () => ({
     'aria-level'?: number;
     'aria-selected'?: boolean;
   }) => (
-    <div className={className} className={className} role={role} aria-level={ariaLevel} aria-selected={ariaSelected}>
+    <div className={className} role={role} aria-level={ariaLevel} aria-selected={ariaSelected}>
       {children}
     </div>
   ),

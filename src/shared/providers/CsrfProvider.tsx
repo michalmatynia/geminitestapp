@@ -1,3 +1,15 @@
+/**
+ * CSRF Protection Provider
+ * 
+ * Client-side CSRF token injection for fetch requests.
+ * Provides:
+ * - Automatic CSRF header injection for unsafe HTTP methods
+ * - Same-origin request validation
+ * - Global fetch API patching for transparent protection
+ * - Error handling and logging for CSRF failures
+ * - Integration with server-side CSRF validation
+ */
+
 'use client';
 
 import { useEffect } from 'react';

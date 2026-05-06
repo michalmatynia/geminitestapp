@@ -1,122 +1,38 @@
-import { Text, View } from 'react-native';
-import React, { useState, useMemo } from 'react';
-
-import { useKangurMobileI18n, type KangurMobileCopy } from '../i18n/kangurMobileI18n';
-import {
-  BASE_TONE,
-  INDIGO_TONE,
-  OutlineLink,
-  PrimaryButton,
-  SectionCard,
-  StatusPill,
-  SUCCESS_TONE,
-  WARNING_TONE,
-} from '../shared/KangurAssessmentUi';
+import { useState, useMemo } from 'react';
+import { View, Text } from 'react-native';
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { useKangurMobileTests } from './useKangurMobileTests';
 import { KangurMobileScrollScreen } from '../shared/KangurMobileUi';
-import {
-  ChoiceButton,
-  formatPointsLabel,
-  formatQuestionCount,
-  formatQuestionProgress,
-  formatSuiteMeta,
-  resolveQuestionStatusTone,
-  RESULTS_ROUTE,
+import { 
+  SectionCard, 
+  StatusPill, 
+  ChoiceButton, 
+  PrimaryButton, 
+  TestPlayerResultsView, 
+  TestExplanationView, 
+  TestSuiteCard 
 } from './tests-primitives';
-import {
-  useKangurMobileTests,
-  type KangurMobileTestSuiteItem,
-} from './useKangurMobileTests';
+import { 
+    WARNING_TONE, 
+    INDIGO_TONE, 
+    BASE_TONE, 
+    SUCCESS_TONE 
+} from '../shared/KangurMobileUi';
+import { 
+    formatQuestionProgress, 
+    formatPointsLabel, 
+    resolveQuestionStatusTone 
+} from '../scores/mobileScoreSummary';
+import { type KangurTestSuiteItem, type KangurTestQuestion } from '@kangur/contracts/kangur-tests';
 
-const TestPlayerResultsView = ({
-  score,
-  maxScore,
-  scorePercent,
-  summaryTone,
-  onBackToCatalog,
-  copy,
-}: {
-  score: number;
-  maxScore: number;
-  scorePercent: number;
-  summaryTone: { backgroundColor: string; borderColor: string; textColor: string };
-  onBackToCatalog: () => void;
-  copy: KangurMobileCopy;
-}): React.JSX.Element => (
-  <SectionCard title={copy({ de: 'Testergebnis', en: 'Test result', pl: 'Wynik testu' })}>
-    <View style={{ alignItems: 'center', gap: 12, paddingVertical: 12 }}>
-      <StatusPill
-        label={copy({ de: 'Test abgeschlossen', en: 'Test finished', pl: 'Test zakończony' })}
-        tone={summaryTone}
-      />
-      <Text style={{ color: '#0f172a', fontSize: 32, fontWeight: '800' }}>
-        {`${scorePercent}%`}
-      </Text>
-      <Text style={{ color: '#475569', fontSize: 15 }}>
-        {`${score} / ${maxScore} points`}
-      </Text>
-    </View>
-    <View style={{ flexDirection: 'column', gap: 12 }}>
-      <PrimaryButton
-        label={copy({ de: 'Wróć', en: 'Back to catalog', pl: 'Wróć do katalogu' })}
-        onPress={onBackToCatalog}
-      />
-      <OutlineLink
-        href={RESULTS_ROUTE}
-        label={copy({ de: 'Wyniki', en: 'See all results', pl: 'Zobacz wyniki' })}
-      />
-    </View>
-  </SectionCard>
-);
-
-const TestExplanationView = ({
-  currentQuestion,
-  selectedChoice,
-  correctChoice,
-  copy,
-}: {
-  currentQuestion: KangurMobileTestSuiteItem['questions'][number];
-  selectedChoice: KangurMobileTestSuiteItem['questions'][number]['choices'][number] | null;
-  correctChoice: KangurMobileTestSuiteItem['questions'][number]['choices'][number] | null;
-  copy: KangurMobileCopy;
-}): React.JSX.Element => (
-  <View
-    style={{
-      backgroundColor: '#f8fafc',
-      borderColor: '#cbd5e1',
-      borderRadius: 20,
-      borderWidth: 1,
-      gap: 8,
-      padding: 16,
-    }}
-  >
-    <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '700' }}>
-      {selectedChoice?.label === currentQuestion.correctChoiceLabel
-        ? copy({ de: 'Dobra', en: 'Correct answer', pl: 'Dobra odpowiedź' })
-        : copy({ de: 'Sprawdzona', en: 'Answer reviewed', pl: 'Sprawdzona odpowiedź' })}
-    </Text>
-    {selectedChoice !== null && (
-      <Text style={{ color: '#475569', fontSize: 14 }}>
-        {`Wybrano: ${selectedChoice.label}. ${selectedChoice.text}`}
-      </Text>
-    )}
-    {correctChoice !== null && (
-      <Text style={{ color: '#475569', fontSize: 14 }}>
-        {`Poprawnie: ${correctChoice.label}. ${correctChoice.text}`}
-      </Text>
-    )}
-    {currentQuestion.explanation !== undefined && currentQuestion.explanation.trim().length > 0 && (
-      <Text style={{ color: '#334155', fontSize: 14 }}>
-        {currentQuestion.explanation.trim()}
-      </Text>
-    )}
-  </View>
-);
+// Mock/Stub imports for missing test components
+// ... (Imports)
 
 function KangurMobileTestPlayer({
   item,
   onBackToCatalog,
 }: {
-  item: KangurMobileTestSuiteItem;
+  item: KangurTestSuiteItem;
   onBackToCatalog: () => void;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
@@ -125,109 +41,180 @@ function KangurMobileTestPlayer({
   const [finished, setFinished] = useState(false);
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({});
 
-  const currentQuestion = item.questions[currentIndex] ?? null;
-  const selectedLabel = currentQuestion !== null ? (answers[currentQuestion.id] ?? null) : null;
-  const isAnswered = selectedLabel !== null;
-  const showAnswer = currentQuestion !== null ? Boolean(revealedAnswers[currentQuestion.id]) : false;
+  const questions = item.questions as KangurTestQuestion[];
 
-  const score = useMemo(() => item.questions.reduce((total, q) =>
-    answers[q.id] === q.correctChoiceLabel ? total + q.pointValue : total, 0), [answers, item.questions]);
-
-  const maxScore = useMemo(() => item.questions.reduce((total, q) => total + q.pointValue, 0), [item.questions]);
-  const scorePercent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-  const summaryTone = resolveQuestionStatusTone(scorePercent);
-
-  const handleSelect = (label: string): void => {
-    if (currentQuestion === null || showAnswer) return;
-    setAnswers((p) => ({ ...p, [currentQuestion.id]: label }));
-  };
-
-  const handleRevealAnswer = (): void => {
-    if (currentQuestion === null || !isAnswered || showAnswer) return;
-    setRevealedAnswers((p) => ({ ...p, [currentQuestion.id]: true }));
-  };
-
-  const handleNext = (): void => {
-    if (currentIndex < item.questions.length - 1) {
-      setCurrentIndex((p) => p + 1);
-    } else {
-      setFinished(true);
-    }
-  };
+  const scoreInfo = useMemo(() => {
+      const score = questions.reduce((total, q) => answers[q.id] === q.correctChoiceLabel ? total + q.pointValue : total, 0);
+      const maxScore = questions.reduce((total, q) => total + q.pointValue, 0);
+      const scorePercent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+      return { score, maxScore, scorePercent };
+  }, [questions, answers]);
 
   if (finished) {
     return (
       <TestPlayerResultsView
-        score={score}
-        maxScore={maxScore}
-        scorePercent={scorePercent}
-        summaryTone={summaryTone}
+        score={scoreInfo.score}
+        maxScore={scoreInfo.maxScore}
+        scorePercent={scoreInfo.scorePercent}
+        summaryTone={resolveQuestionStatusTone(scoreInfo.scorePercent)}
         onBackToCatalog={onBackToCatalog}
         copy={copy}
       />
     );
   }
 
-  if (currentQuestion === null) return <SectionCard title='Error'><Text>No question.</Text></SectionCard>;
-
-  const selectedChoice = currentQuestion.choices.find((c) => c.label === selectedLabel) ?? null;
-  const correctChoice = currentQuestion.choices.find((c) => c.label === currentQuestion.correctChoiceLabel) ?? null;
+  const currentQuestion = questions[currentIndex] ?? null;
+  if (currentQuestion === null) {
+      return <SectionCard title='Error'><Text>No question.</Text></SectionCard>;
+  }
 
   return (
-    <>
-      <SectionCard title={formatQuestionProgress(currentIndex + 1, item.questions.length, locale)}>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <StatusPill label={formatPointsLabel(currentQuestion.pointValue, locale)} tone={WARNING_TONE} />
-        </View>
-        <Text style={{ fontSize: 16, fontWeight: '700' }}>{currentQuestion.prompt}</Text>
-        <View style={{ gap: 10 }}>
-          {currentQuestion.choices.map((choice) => (
-            <ChoiceButton
-              choice={choice}
-              disabled={showAnswer}
-              isCorrect={choice.label === currentQuestion.correctChoiceLabel}
-              isRevealed={showAnswer}
-              isSelected={choice.label === selectedLabel}
-              key={choice.label}
-              label={choice.label}
-              locale={locale}
-              onPress={() => { handleSelect(choice.label); }}
-            />
-          ))}
-        </View>
-        {showAnswer && <TestExplanationView copy={copy} currentQuestion={currentQuestion} selectedChoice={selectedChoice} correctChoice={correctChoice} />}
-        <View style={{ gap: 10 }}>
-          <PrimaryButton disabled={!isAnswered || showAnswer} label={copy({ de: 'Prüfen', en: 'Reveal', pl: 'Sprawdź' })} onPress={handleRevealAnswer} />
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <PrimaryButton disabled={currentIndex === 0} label='Prev' onPress={() => setCurrentIndex((p) => p - 1)} tone={BASE_TONE} />
-            <PrimaryButton disabled={!showAnswer} label='Next' onPress={handleNext} tone={SUCCESS_TONE} />
-          </View>
-        </View>
-      </SectionCard>
-    </>
+    <TestPlayerQuestionView
+        currentQuestion={currentQuestion}
+        currentIndex={currentIndex}
+        totalQuestions={questions.length}
+        locale={locale as 'de' | 'en' | 'pl'}
+        copy={copy}
+        answers={answers}
+        setAnswers={setAnswers}
+        revealedAnswers={revealedAnswers}
+        setRevealedAnswers={setRevealedAnswers}
+        setCurrentIndex={setCurrentIndex}
+        setFinished={setFinished}
+    />
   );
 }
 
-const TestSuiteCard = ({ item, onOpen, copy, locale }: {
-  item: KangurMobileTestSuiteItem;
-  onOpen: (id: string) => void;
-  copy: KangurMobileCopy;
-  locale: 'de' | 'en' | 'pl';
-}): React.JSX.Element => (
-  <SectionCard title={item.suite.title}>
-    <View style={{ flexDirection: 'row', gap: 8 }}>
-      <StatusPill label={formatQuestionCount(item.questions.length, locale)} tone={INDIGO_TONE} />
-      <StatusPill label={formatSuiteMeta(item.suite, locale)[0] ?? ''} tone={BASE_TONE} />
-    </View>
-    <Text style={{ color: '#475569', fontSize: 14 }}>{item.suite.description}</Text>
-    <PrimaryButton label={copy({ de: 'Start', en: 'Start', pl: 'Start' })} onPress={() => onOpen(item.suite.id)} />
-  </SectionCard>
-);
+function QuestionChoices({
+    currentQuestion,
+    selectedLabel,
+    showAnswer,
+    handleSelect
+}: {
+    currentQuestion: KangurTestQuestion,
+    selectedLabel: string | null,
+    showAnswer: boolean,
+    handleSelect: (label: string) => void
+}): React.JSX.Element {
+    return (
+        <View style={{ gap: 10 }}>
+            {currentQuestion.choices.map((choice) => (
+                <ChoiceButton
+                    choice={choice}
+                    disabled={showAnswer}
+                    isCorrect={choice.label === currentQuestion.correctChoiceLabel}
+                    isRevealed={showAnswer}
+                    isSelected={choice.label === selectedLabel}
+                    key={choice.label}
+                    label={choice.label}
+                    onPress={() => handleSelect(choice.label)}
+                />
+            ))}
+        </View>
+    );
+}
+
+function TestControls({
+    currentIndex,
+    totalQuestions,
+    isAnswered,
+    showAnswer,
+    handleReveal,
+    handleNext,
+    setCurrentIndex
+}: {
+    currentIndex: number,
+    totalQuestions: number,
+    isAnswered: boolean,
+    showAnswer: boolean,
+    handleReveal: () => void,
+    handleNext: () => void,
+    setCurrentIndex: React.Dispatch<React.SetStateAction<number>>
+}): React.JSX.Element {
+    return (
+        <View style={{ gap: 10 }}>
+            <PrimaryButton disabled={!isAnswered || showAnswer} label='Reveal' onPress={handleReveal} />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+                <PrimaryButton disabled={currentIndex === 0} label='Prev' onPress={() => setCurrentIndex((p) => p - 1)} tone={BASE_TONE} />
+                <PrimaryButton disabled={!showAnswer} label='Next' onPress={handleNext} tone={SUCCESS_TONE} />
+            </View>
+        </View>
+    );
+}
+
+interface TestPlayerQuestionViewProps {
+    currentQuestion: KangurTestQuestion;
+    currentIndex: number;
+    totalQuestions: number;
+    locale: 'de' | 'en' | 'pl';
+    copy: (text: Record<string, string>) => string;
+    answers: Record<string, string>;
+    setAnswers: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+    revealedAnswers: Record<string, boolean>;
+    setRevealedAnswers: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+    setCurrentIndex: React.Dispatch<React.SetStateAction<number>>;
+    setFinished: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+function TestPlayerQuestionView(props: TestPlayerQuestionViewProps): React.JSX.Element {
+    const { 
+        currentQuestion, currentIndex, totalQuestions, locale, copy, answers, 
+        setAnswers, revealedAnswers, setRevealedAnswers, setCurrentIndex, setFinished 
+    } = props;
+    
+    const selectedLabel = answers[currentQuestion.id] ?? null;
+    const isAnswered = selectedLabel !== null;
+    const showAnswer = Boolean(revealedAnswers[currentQuestion.id]);
+
+    const handleSelect = (label: string): void => {
+        if (!showAnswer) setAnswers((p) => ({ ...p, [currentQuestion.id]: label }));
+    };
+
+    const handleReveal = (): void => {
+        if (isAnswered && !showAnswer) setRevealedAnswers((p) => ({ ...p, [currentQuestion.id]: true }));
+    };
+
+    const handleNext = (): void => {
+        if (currentIndex < totalQuestions - 1) setCurrentIndex((p) => p + 1);
+        else setFinished(true);
+    };
+
+    const selectedChoice = currentQuestion.choices.find((c) => c.label === selectedLabel) ?? null;
+    const correctChoice = currentQuestion.choices.find((c) => c.label === currentQuestion.correctChoiceLabel) ?? null;
+
+    return (
+        <SectionCard title={formatQuestionProgress(currentIndex + 1, totalQuestions, locale)}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+                <StatusPill label={formatPointsLabel(currentQuestion.pointValue, locale)} tone={WARNING_TONE} />
+            </View>
+            <Text style={{ fontSize: 16, fontWeight: '700' }}>{currentQuestion.prompt}</Text>
+            
+            <QuestionChoices 
+                currentQuestion={currentQuestion} 
+                selectedLabel={selectedLabel} 
+                showAnswer={showAnswer} 
+                handleSelect={handleSelect} 
+            />
+            
+            {showAnswer && <TestExplanationView copy={copy} currentQuestion={currentQuestion} selectedChoice={selectedChoice} correctChoice={correctChoice} />}
+            
+            <TestControls 
+                currentIndex={currentIndex} 
+                totalQuestions={totalQuestions} 
+                isAnswered={isAnswered} 
+                showAnswer={showAnswer} 
+                handleReveal={handleReveal} 
+                handleNext={handleNext} 
+                setCurrentIndex={setCurrentIndex} 
+            />
+        </SectionCard>
+    );
+}
 
 export function KangurTestsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
 
-  const { suites, isLoading, error, refresh } = useKangurMobileTests();
+  const { suites, isLoading, error, refresh } = useKangurMobileTests(null);
   const [activeSuiteId, setActiveSuiteId] = useState<string | null>(null);
 
   const activeSuite = activeSuiteId !== null ? suites.find((s) => s.suite.id === activeSuiteId) ?? null : null;

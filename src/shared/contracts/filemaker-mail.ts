@@ -6,6 +6,10 @@ export const filemakerMailProviderSchema = z.enum(['imap_smtp']);
 export type FilemakerMailProviderDto = z.infer<typeof filemakerMailProviderSchema>;
 export type FilemakerMailProvider = FilemakerMailProviderDto;
 
+export const filemakerMailAuthModeSchema = z.enum(['password', 'google_oauth']);
+export type FilemakerMailAuthModeDto = z.infer<typeof filemakerMailAuthModeSchema>;
+export type FilemakerMailAuthMode = FilemakerMailAuthModeDto;
+
 export const filemakerMailAccountStatusSchema = z.enum(['active', 'paused']);
 export type FilemakerMailAccountStatusDto = z.infer<typeof filemakerMailAccountStatusSchema>;
 export type FilemakerMailAccountStatus = FilemakerMailAccountStatusDto;
@@ -65,6 +69,7 @@ export const filemakerMailAccountSchema = dtoBaseSchema.extend({
   name: z.string(),
   emailAddress: z.string(),
   provider: filemakerMailProviderSchema.default('imap_smtp'),
+  authMode: filemakerMailAuthModeSchema.default('password'),
   status: filemakerMailAccountStatusSchema.default('active'),
   imapHost: z.string(),
   imapPort: z.number().int().positive(),
@@ -87,6 +92,10 @@ export const filemakerMailAccountSchema = dtoBaseSchema.extend({
   dkimDomain: z.string().nullable().optional(),
   dkimKeySelector: z.string().nullable().optional(),
   dkimPrivateKeySettingKey: z.string().nullable().optional(),
+  oauthProvider: z.literal('google').nullable().optional(),
+  oauthRefreshTokenSettingKey: z.string().nullable().optional(),
+  oauthConnectedAt: z.string().nullable().optional(),
+  oauthScopes: z.array(z.string()).default([]),
 });
 export type FilemakerMailAccountDto = z.infer<typeof filemakerMailAccountSchema>;
 export type FilemakerMailAccount = FilemakerMailAccountDto;
@@ -240,6 +249,7 @@ export const filemakerMailAccountDraftSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1),
   emailAddress: z.string().min(1),
+  authMode: filemakerMailAuthModeSchema.default('password'),
   status: filemakerMailAccountStatusSchema.default('active'),
   imapHost: z.string().min(1),
   imapPort: z.number().int().positive(),

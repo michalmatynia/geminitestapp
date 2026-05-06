@@ -6,6 +6,7 @@ import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens'
 import { useKangurLessonEditorController } from './document-editor/useKangurLessonEditorController';
 import { LessonPagesPanel } from './document-editor/LessonPagesPanel';
 import { LessonWorkspace } from './document-editor/LessonWorkspace';
+import { KangurLessonQuickInsert } from './components/KangurLessonQuickInsert';
 import { KangurLessonPreviewPanel } from './components/KangurLessonPreviewPanel';
 
 export function KangurLessonDocumentEditor(): React.JSX.Element {
@@ -16,6 +17,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
       <div className='space-y-4'>
         <LessonPagesPanel controller={controller} />
         <LessonWorkspace controller={controller} />
+        <KangurLessonQuickInsert activePage={controller.activePage} updateDocument={controller.mutations.updateDocument} />
       </div>
       <KangurLessonPreviewPanel document={controller.mutations.value} activePageId={controller.activePageId} />
     </div>

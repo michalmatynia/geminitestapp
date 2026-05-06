@@ -23,6 +23,8 @@ export interface IntegrationsActions {
   handleAllegroSandboxConnect: () => Promise<void>;
   handleLinkedInAuthorize: () => void;
   handleLinkedInDisconnect: () => Promise<void>;
+  handleGoogleAuthorize: (scope?: string) => void;
+  handleGoogleDisconnect: () => Promise<void>;
   handleBaseApiRequest: () => Promise<void>;
   handleAllegroApiRequest: () => Promise<void>;
   onCloseModal: () => void;

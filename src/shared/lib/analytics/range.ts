@@ -1,3 +1,15 @@
+/**
+ * Analytics Range Utilities
+ * 
+ * Time range calculation utilities for analytics data.
+ * Provides:
+ * - Date range resolution for analytics queries
+ * - Predefined time windows (24h, 7d, 30d)
+ * - Consistent time window calculations
+ * - Analytics period management
+ * - Date boundary handling
+ */
+
 import type { AnalyticsRange } from '@/shared/contracts/analytics';
 
 export const resolveAnalyticsRangeWindow = (

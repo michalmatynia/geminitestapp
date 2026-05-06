@@ -91,6 +91,10 @@
       "mode": "complete_direct_files"
     },
     {
+      "path": "docs/build/improvements/image-studio-product-integration",
+      "mode": "complete_direct_files"
+    },
+    {
       "path": "docs/build/improvements/products-category-schema-normalization",
       "mode": "complete_direct_files"
     },
@@ -304,6 +308,8 @@
     "docs/build/improvements/scan-latest.md",
     "docs/build/improvements/application-performance/README.md",
     "docs/build/improvements/application-performance/scan-latest.md",
+    "docs/build/improvements/image-studio-product-integration/README.md",
+    "docs/build/improvements/image-studio-product-integration/scan-latest.md",
     "docs/build/improvements/products-category-schema-normalization/README.md",
     "docs/build/improvements/products-category-schema-normalization/scan-latest.md",
     "docs/build/improvements/products-parameter-integrity/README.md",
@@ -364,6 +370,9 @@
     "docs/metrics/testing-suite-inventory-latest.md",
     "docs/metrics/timer-cleanup-latest.md",
     "docs/metrics/trend-index-latest.md",
+    "docs/metrics/type-clusters-domain-scan-latest.md",
+    "docs/metrics/type-clusters-latest.md",
+    "docs/metrics/type-clusters-plan-latest.md",
     "docs/metrics/type-clusters-domain-scan-latest.md",
     "docs/metrics/type-clusters-latest.md",
     "docs/metrics/type-clusters-plan-latest.md",

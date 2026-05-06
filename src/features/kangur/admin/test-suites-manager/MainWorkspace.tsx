@@ -1,15 +1,12 @@
 'use client';
 
 import React from 'react';
-import type {
-  MasterFolderTreeController,
-  MasterFolderTreeSearchState,
-} from '@/shared/contracts/master-folder-tree';
-import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
-import type { ResolvedFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
-import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2/components/types';
-import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/v2/components/FolderTreeViewportV2';
-import { FolderTreeSearchBar } from '@/shared/lib/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
+import {
+  FolderTreeSearchBar,
+  MasterFolderTreeViewport,
+  type MasterFolderTreeViewModel,
+} from '@/shared/lib/foldertree/public';
 import {
   FolderTreePanel,
   Skeleton,
@@ -37,20 +34,14 @@ interface TestSuitesManagerLogic {
 function TestSuiteTreePanelSection({
   logic,
   state,
-  controller,
-  scrollToNodeRef,
-  searchState,
-  rootDropUi,
+  tree,
   renderNode,
   settingsStore,
 }: {
   logic: TestSuitesManagerLogic;
   state: TestSuitesManagerContextValue;
-  controller: MasterFolderTreeController & { capabilities: { search: ResolvedFolderTreeSearchConfig } };
-  scrollToNodeRef: React.MutableRefObject<((nodeId: MasterTreeId) => void) | null>;
-  searchState: MasterFolderTreeSearchState;
-  rootDropUi: { label: string; idleClassName: string; activeClassName: string; enabled?: boolean };
-  renderNode: (input: any) => any;
+  tree: MasterFolderTreeViewModel;
+  renderNode: (input: FolderTreeViewportRenderNodeInput) => React.ReactNode;
   settingsStore: SettingsStoreValue;
 }): React.JSX.Element {
   const isCatalog = state.treeMode === 'catalog';
@@ -62,7 +53,7 @@ function TestSuiteTreePanelSection({
         <div className='space-y-4'>
           <TestSuiteLibraryHeader />
 
-          {controller.capabilities.search.enabled === true && (
+          {tree.capabilities.search.enabled === true && (
             <div className='rounded-2xl border border-border/60 bg-card/25 p-4'>
               <FolderTreeSearchBar
                 value={state.searchQuery}
@@ -82,11 +73,9 @@ function TestSuiteTreePanelSection({
         </div>
       ) : (
         <div className='min-h-0 flex-1 overflow-auto p-2'>
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
-            searchState={searchState}
-            rootDropUi={isCatalog ? { ...rootDropUi, enabled: false } : rootDropUi}
+          <MasterFolderTreeViewport
+            tree={tree}
+            rootDropUi={isCatalog ? { ...tree.appearance.rootDropUi, enabled: false } : undefined}
             renderNode={renderNode}
             enableDnd={!isCatalog && !logic.isUpdating}
             emptyLabel='No test suites yet. Add the first suite or import legacy data.'
@@ -100,20 +89,14 @@ function TestSuiteTreePanelSection({
 export function MainWorkspace({
   logic,
   state,
-  controller,
-  scrollToNodeRef,
-  searchState,
-  rootDropUi,
+  tree,
   renderNode,
   settingsStore,
 }: {
   logic: TestSuitesManagerLogic;
   state: TestSuitesManagerContextValue;
-  controller: MasterFolderTreeController & { capabilities: { search: ResolvedFolderTreeSearchConfig } };
-  scrollToNodeRef: React.MutableRefObject<((nodeId: MasterTreeId) => void) | null>;
-  searchState: MasterFolderTreeSearchState;
-  rootDropUi: { label: string; idleClassName: string; activeClassName: string; enabled?: boolean };
-  renderNode: (input: any) => any;
+  tree: MasterFolderTreeViewModel;
+  renderNode: (input: FolderTreeViewportRenderNodeInput) => React.ReactNode;
   settingsStore: SettingsStoreValue;
 }): React.JSX.Element {
   return (
@@ -135,10 +118,7 @@ export function MainWorkspace({
       <TestSuiteTreePanelSection
         logic={logic}
         state={state}
-        controller={controller}
-        scrollToNodeRef={scrollToNodeRef}
-        searchState={searchState}
-        rootDropUi={rootDropUi}
+        tree={tree}
         renderNode={renderNode}
         settingsStore={settingsStore}
       />
@@ -147,4 +127,3 @@ export function MainWorkspace({
     </div>
   );
 }
-

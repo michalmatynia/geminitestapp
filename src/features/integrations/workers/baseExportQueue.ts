@@ -36,7 +36,7 @@ const finalizeFailedBaseExportRun = async (
   const repo = await getPathRunRepository();
   const latest = await repo.findRunById(data.runId).catch(() => null);
   const failedAt = new Date().toISOString();
-  const errorMessage = error.message.trim() || 'Base export queue job failed.';
+  const errorMessage = (error.message.trim() !== '') ? error.message.trim() : 'Base export queue job failed.';
   const queueFailureMeta = {
     jobId,
     failedAt,

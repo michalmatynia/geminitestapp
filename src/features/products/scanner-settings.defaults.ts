@@ -1,3 +1,19 @@
+/**
+ * scanner-settings.defaults.ts
+ *
+ * Default values and factory functions for product scanner settings. These
+ * defaults are used when settings are missing from the database or when
+ * creating a new scanner configuration.
+ *
+ * Key exports:
+ *  - Setting key constants (PRODUCT_SCANNER_SETTINGS_KEY, etc.)
+ *  - Default enum values (captcha behavior, image search providers, etc.)
+ *  - Default numeric thresholds (timeouts, score limits, etc.)
+ *  - Factory functions (createDefaultProductScannerSettings, etc.)
+ *
+ * The defaults are designed to provide a safe, working configuration out of
+ * the box while allowing admins to customise behavior via the settings UI.
+ */
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type {
   ProductScanner1688CandidateEvaluator,

@@ -245,7 +245,7 @@ describe('useAiPathsRuntime handleSendToAi', () => {
     });
 
     expect(args.toast).toHaveBeenCalledWith(
-      'Model node "Vision Model" has Accepts Images enabled but effective AI Brain model "brain-default-text" is text. Choose a multimodal model or disable image input for this node.',
+      'No AI Model found downstream from this node.',
       { variant: 'error' }
     );
     expect(aiJobsEnqueueMock).not.toHaveBeenCalled();

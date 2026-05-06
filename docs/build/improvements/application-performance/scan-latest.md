@@ -8,15 +8,15 @@ canonical: true
 ---
 # Application performance Improvement Track
 
-Generated at: 2026-05-06T11:28:21.086Z
+Generated at: 2026-05-06T11:44:17.516Z
 
 ## Snapshot
 
 - Track id: `application-performance`
 - Category: `performance`
 - Included in default read-only bundle: yes
-- Overall status: `attention`
-- Latest report timestamp: 2026-04-15T10:54:26.139Z
+- Overall status: `failed`
+- Latest report timestamp: 2026-05-06T11:44:17.513Z
 
 ## Purpose
 
@@ -39,7 +39,7 @@ Adds app-level performance regression checks to the improvement portfolio so bro
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `failed` | 1 | 1 | 0 | 1 | 0 |
 | `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
@@ -49,6 +49,7 @@ Adds app-level performance regression checks to the improvement portfolio so bro
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
+| `audit` | `failed` | `automatic` | `application-performance-fast-gate` | `perf:ops:fast` |
 | `apply` | `manual` | `manual` | `application-performance-apply` | manual |
 
 ## Related Docs

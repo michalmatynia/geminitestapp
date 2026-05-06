@@ -5,7 +5,7 @@ import { Folder, FolderOpen, Image } from 'lucide-react';
 
 import {
   FolderTreeSearchBar,
-  FolderTreeViewportV2,
+  MasterFolderTreeViewport,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import { cn } from '@/shared/utils/ui-utils';
@@ -43,7 +43,7 @@ function SlideStatusDot({ active, disabled }: SlideStatusDotProps): React.JSX.El
 
 export function SocialCaptureBrowserTreePanel(): React.JSX.Element {
   const state = useSocialCaptureBrowser();
-  const { shell, search, searchQuery, setSearchQuery, slideMap } = state;
+  const { tree, search, searchQuery, setSearchQuery, slideMap } = state;
   const [engineModalOpen, setEngineModalOpen] = React.useState(false);
 
   const renderNode = React.useCallback(
@@ -112,10 +112,9 @@ export function SocialCaptureBrowserTreePanel(): React.JSX.Element {
           placeholder='Search lessons…'
         />
         <div className='flex-1 min-h-0 overflow-hidden rounded border border-border/40'>
-          <FolderTreeViewportV2
-            controller={shell.controller}
+          <MasterFolderTreeViewport
+            tree={tree}
             renderNode={renderNode}
-            searchState={search}
             emptyLabel={
               search.isActive
                 ? 'No lessons match your search.'

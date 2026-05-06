@@ -57,11 +57,24 @@ vi.mock('@/shared/lib/foldertree/public', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/foldertree/public')>();
   return {
     ...actual,
-    createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),
+    createMasterFolderTreeOrderedItemsAdapter: vi.fn(() => ({ apply: vi.fn() })),
     FolderTreeSearchBar: ({ placeholder }: { placeholder?: string }) => (
       <div data-testid='folder-tree-search'>{placeholder}</div>
     ),
     FolderTreeViewportV2: () => <div data-testid='folder-tree-viewport' />,
+    MasterFolderTreeViewport: () => <div data-testid='folder-tree-viewport' />,
+    useMasterFolderTreeViewModel: (...args: unknown[]) => {
+      const shell = useMasterFolderTreeShellMock(...args);
+
+      return {
+        ...shell,
+        searchState: {
+          isActive: false,
+          results: [],
+          matchNodeIds: new Set(),
+        },
+      };
+    },
     useMasterFolderTreeShell: (...args: unknown[]) => useMasterFolderTreeShellMock(...args),
     useMasterFolderTreeSearch: () => ({
       isActive: false,

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -6,6 +7,7 @@ import type { NodeFileDocumentSearchRow } from '@/features/case-resolver/compone
 import { RelationTreeBrowser } from '@/features/case-resolver/relation-search/components/RelationTreeBrowser';
 import { RelationTreeBrowserRuntimeContext } from '@/features/case-resolver/relation-search/components/RelationTreeBrowserRuntimeContext';
 import { buildRelationMasterTree } from '@/features/case-resolver/relation-search/tree/relation-master-tree';
+import { ToastProvider } from '@/shared/ui/primitives.public';
 
 const logCaseResolverWorkspaceEventMock = vi.fn();
 
@@ -69,6 +71,23 @@ const expandVisibleNodes = (): void => {
   }
 };
 
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+const withProviders = (ui: React.ReactElement): React.ReactElement => (
+  <QueryClientProvider client={createTestQueryClient()}>
+    <ToastProvider>{ui}</ToastProvider>
+  </QueryClientProvider>
+);
+
+const renderWithProviders = (ui: React.ReactElement): ReturnType<typeof render> =>
+  render(withProviders(ui));
+
 describe('RelationTreeBrowser', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -91,7 +110,7 @@ describe('RelationTreeBrowser', () => {
     ];
     const relationTree = buildRelationMasterTree({ rows });
 
-    const { rerender } = render(
+    const { rerender } = renderWithProviders(
       <RelationTreeBrowser
         instance='case_resolver_document_relations'
         mode='link_relations'
@@ -106,24 +125,28 @@ describe('RelationTreeBrowser', () => {
     expect(screen.getByText('Doc In Folder')).toBeInTheDocument();
 
     rerender(
-      <RelationTreeBrowser
-        instance='case_resolver_document_relations'
-        mode='link_relations'
-        nodes={relationTree.nodes}
-        lookup={relationTree.lookup}
-        searchQuery='Doc'
-      />
+      withProviders(
+        <RelationTreeBrowser
+          instance='case_resolver_document_relations'
+          mode='link_relations'
+          nodes={relationTree.nodes}
+          lookup={relationTree.lookup}
+          searchQuery='Doc'
+        />
+      )
     );
     expect(screen.getByText('Doc In Folder')).toBeInTheDocument();
 
     rerender(
-      <RelationTreeBrowser
-        instance='case_resolver_document_relations'
-        mode='link_relations'
-        nodes={relationTree.nodes}
-        lookup={relationTree.lookup}
-        searchQuery=''
-      />
+      withProviders(
+        <RelationTreeBrowser
+          instance='case_resolver_document_relations'
+          mode='link_relations'
+          nodes={relationTree.nodes}
+          lookup={relationTree.lookup}
+          searchQuery=''
+        />
+      )
     );
     expect(screen.getByText('Doc In Folder')).toBeInTheDocument();
   });
@@ -135,7 +158,7 @@ describe('RelationTreeBrowser', () => {
     const relationTree = buildRelationMasterTree({ rows });
     const dataTransfer = createDataTransfer();
 
-    render(
+    renderWithProviders(
       <RelationTreeBrowser
         instance='case_resolver_nodefile_relations'
         mode='add_to_node_canvas'
@@ -191,7 +214,7 @@ describe('RelationTreeBrowser', () => {
     const relationTree = buildRelationMasterTree({ rows });
     const dataTransfer = createDataTransfer();
 
-    render(
+    renderWithProviders(
       <RelationTreeBrowser
         instance='case_resolver_nodefile_relations'
         mode='add_to_node_canvas'
@@ -229,7 +252,7 @@ describe('RelationTreeBrowser', () => {
     const onToggleFileSelection = vi.fn();
     const onLinkFile = vi.fn();
 
-    render(
+    renderWithProviders(
       <RelationTreeBrowser
         instance='case_resolver_document_relations'
         mode='link_relations'
@@ -260,7 +283,7 @@ describe('RelationTreeBrowser', () => {
     const onToggleFileSelection = vi.fn();
     const onLinkFile = vi.fn();
 
-    render(
+    renderWithProviders(
       <RelationTreeBrowserRuntimeContext.Provider
         value={{
           instance: 'case_resolver_document_relations',

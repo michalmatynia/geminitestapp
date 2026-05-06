@@ -1,3 +1,16 @@
+/**
+ * Form State Management Hook
+ * 
+ * Comprehensive React hook for managing form state with validation and submission.
+ * Provides:
+ * - Type-safe form field management
+ * - Async validation with error handling
+ * - Submission state tracking and error reporting
+ * - Dirty state detection for unsaved changes
+ * - Reset and field-level update capabilities
+ * - Integration with client-side error logging
+ */
+
 'use client';
 
 import { useState, useCallback, useRef, useMemo } from 'react';

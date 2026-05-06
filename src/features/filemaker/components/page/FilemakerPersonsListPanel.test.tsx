@@ -20,6 +20,14 @@ vi.mock('@/shared/providers/AdminLayoutProvider', () => ({
 
 vi.mock('@/shared/lib/foldertree/public', () => ({
   FolderTreeViewportV2: () => <div data-testid='person-tree'>Tree</div>,
+  MasterFolderTreeViewport: () => <div data-testid='person-tree'>Tree</div>,
+  useMasterFolderTreeViewModel: () => ({
+    appearance: { rootDropUi: null },
+    capabilities: { multiSelect: {}, search: {} },
+    controller: {},
+    searchState: { isActive: false, results: [], matchNodeIds: new Set() },
+    viewport: { scrollToNodeRef: { current: null } },
+  }),
   useMasterFolderTreeShell: () => ({
     appearance: { rootDropUi: null },
     controller: {},

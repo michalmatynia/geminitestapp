@@ -1,3 +1,27 @@
+/**
+ * composer.ts
+ *
+ * Compiles a CaseResolver node graph into a flat prompt string and a set of
+ * per-node output segments. The compilation walks the graph in topological
+ * order (roots first, then depth-first by canvas position) and propagates
+ * text through edges, merging incoming values at each node according to the
+ * node's join mode, quote mode, and role.
+ *
+ * Node roles:
+ *  - 'text_note'   – plain content node; its text is the primary output.
+ *  - 'explanatory' – appends its own text to incoming text and also
+ *                    contributes to the wysiwygContent output channel.
+ *  - 'ai_prompt'   – treated like text_note for compilation purposes.
+ *
+ * Output channels per node:
+ *  - wysiwygText        – rich HTML text (used in the editor preview).
+ *  - plaintextContent   – stripped plain text for the final prompt.
+ *  - plainText          – alias used by explanatory nodes.
+ *  - wysiwygContent     – explanatory-only rich content channel.
+ *
+ * The final `prompt` / `combinedContent` is assembled from the leaf nodes'
+ * `plaintextContent` outputs, joined with double newlines.
+ */
 import type { CaseResolverCompiledSegment, CaseResolverCompileResult } from '@/shared/contracts/case-resolver/capture';
 import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT, DEFAULT_CASE_RESOLVER_EDGE_META, DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver/constants';
 import { type AiNode, type CaseResolverEdge, type CaseResolverEdgeMeta, type CaseResolverGraph, type CaseResolverJoinMode, type CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
@@ -18,6 +42,7 @@ export type CaseResolverCompileOptions = {
   transformPlainTextOutput?: (input: CaseResolverPlainTextTransformInput) => string;
 };
 
+// Maps a CaseResolverJoinMode to the literal string inserted between values.
 const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
   newline: '\n',
   tab: '\t',
@@ -25,13 +50,16 @@ const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
   none: '',
 };
 
+// Named port constants derived from the shared contract so port comparisons
+// are centralised and survive contract renames.
 const DOCUMENT_WYSIWYG_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
 const DOCUMENT_PLAINTEXT_CONTENT_PORT =
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'plaintextContent';
 const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
 const DOCUMENT_WYSIWYG_CONTENT_PORT = CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
 
-// Refactored helper: resolveNodeMeta
+// Merges DEFAULT_CASE_RESOLVER_NODE_META with any stored overrides for the
+// given node, so callers always receive a fully-populated meta object.
 const resolveNodeMeta = (
   nodeId: string,
   nodeMeta: Record<string, CaseResolverNodeMeta>
@@ -90,7 +118,7 @@ const resolveWysiwygText = (ctx: CompileContext): string => {
   ...(nodeMeta[nodeId] ?? {}),
 });
 
-// Refactored helper: resolveEdgeMeta
+// Returns the stored edge meta or the default if none exists.
 const resolveEdgeMeta = (
   edgeId: string,
   edgeMeta: Record<string, CaseResolverEdgeMeta>
@@ -111,6 +139,8 @@ const collectIncoming = (
 ) => { /* ... */ };
 
 
+// Extracts the plain-text content from a node's config. Prefers the prompt
+// template; falls back to the notes text. Returns '' when neither is set.
 const resolveNodeText = (node: AiNode): string => {
   const promptTemplate = node.config?.prompt?.template;
   if (typeof promptTemplate === 'string' && promptTemplate.trim().length > 0) {
@@ -123,6 +153,7 @@ const resolveNodeText = (node: AiNode): string => {
   return '';
 };
 
+// Same as resolveNodeText but preserves HTML markup (used for wysiwygText).
 const resolveNodeWysiwygText = (node: AiNode): string => {
   const promptTemplate = node.config?.prompt?.template;
   if (typeof promptTemplate === 'string' && promptTemplate.trim().length > 0) {
@@ -135,6 +166,8 @@ const resolveNodeWysiwygText = (node: AiNode): string => {
   return '';
 };
 
+// Applies quote mode, surround prefix/suffix, trailing newline, AND an
+// optional HTML color wrapper (skipped for explanatory nodes).
 const wrapByQuoteMode = (value: string, meta: CaseResolverNodeMeta): string => {
   const wrappedValue = wrapByQuoteModeWithoutColor(value, meta);
   if (!wrappedValue) return wrappedValue;
@@ -149,6 +182,8 @@ const wrapByQuoteMode = (value: string, meta: CaseResolverNodeMeta): string => {
   return `<span style="color: ${normalizedColor};">${wrappedValue}</span>`;
 };
 
+// Same as wrapByQuoteMode but without the color <span> wrapper — used when
+// producing plain-text output that must not contain HTML.
 const wrapByQuoteModeWithoutColor = (value: string, meta: CaseResolverNodeMeta): string => {
   if (!value) return value;
   const quotedValue =
@@ -158,6 +193,8 @@ const wrapByQuoteModeWithoutColor = (value: string, meta: CaseResolverNodeMeta):
   }`;
 };
 
+// Sorts node IDs top-to-bottom, left-to-right by canvas position so the
+// compilation visit order is deterministic and visually intuitive.
 const sortNodeIdsByPosition = (nodes: AiNode[]): string[] =>
   [...nodes]
     .sort((left: AiNode, right: AiNode) => {
@@ -167,12 +204,16 @@ const sortNodeIdsByPosition = (nodes: AiNode[]): string[] =>
     })
     .map((node: AiNode) => node.id);
 
+// Concatenates `value` onto `current` using the separator for `joinMode`.
+// Returns the non-empty side unchanged when the other side is empty.
 const appendWithJoin = (current: string, value: string, joinMode: CaseResolverJoinMode): string => {
   if (!value) return current;
   if (!current) return value;
   return `${current}${JOIN_VALUE_MAP[joinMode]}${value}`;
 };
 
+// Sorts edges by the canvas position of their source node so that when
+// multiple edges arrive at the same target the merge order is predictable.
 const sortEdgesBySourcePosition = (edges: CaseResolverEdge[], nodeById: Map<string, AiNode>): CaseResolverEdge[] => {
   return [...edges].sort((left: CaseResolverEdge, right: CaseResolverEdge) => {
     const leftNode = left.source ? nodeById.get(left.source) : undefined;
@@ -194,6 +235,9 @@ const sortEdgesBySourcePosition = (edges: CaseResolverEdge[], nodeById: Map<stri
   });
 };
 
+// Picks the correct output string from a source node's compiled outputs based
+// on which named port the edge is connected to. Falls back to `fallback` when
+// the port name is unrecognised.
 const resolveSourceOutputValue = (
   sourceOutputs:
     | {
@@ -241,6 +285,25 @@ const isPlainTextInputPort = (port: string | null | undefined): boolean =>
 const isWysiwygContentInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_WYSIWYG_CONTENT_PORT;
 
+/**
+ * Compiles the CaseResolver node graph into a prompt string.
+ *
+ * @param graph          - The full graph (nodes, edges, nodeMeta, edgeMeta).
+ * @param selectedNodeId - When set, compilation starts from this node instead
+ *                         of all root nodes (used for single-node preview).
+ * @param options        - Optional `transformPlainTextOutput` hook that lets
+ *                         callers post-process plain-text values (e.g. to
+ *                         apply validation highlighting).
+ *
+ * Returns a `CaseResolverCompileResult` with:
+ *  - `prompt` / `combinedContent` – the final assembled plain-text prompt.
+ *  - `outputsByNode`              – per-node output channels for the editor.
+ *  - `segments`                   – ordered list of compiled node segments.
+ *  - `warnings`                   – non-fatal issues encountered during compile.
+ *
+ * On unexpected errors the function returns an empty result with the error
+ * message in `warnings` rather than throwing.
+ */
 export const compileCaseResolverPrompt = (
   graph: CaseResolverGraph,
   selectedNodeId: string | null,

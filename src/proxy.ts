@@ -1,3 +1,23 @@
+/**
+ * Next.js Middleware (Proxy)
+ * 
+ * Central request routing and processing layer that runs on Edge runtime.
+ * Handles:
+ * - Internationalization (i18n) routing with next-intl
+ * - Authentication checks for admin routes
+ * - CSRF protection via cookie management
+ * - Traffic guard for security filtering
+ * - Canonical URL redirects for admin routes
+ * - Locale detection and cookie synchronization
+ * - StudiQ/Kangur routing to separate origin
+ * 
+ * This middleware runs before every request and determines:
+ * 1. Whether to allow the request
+ * 2. Which locale to use
+ * 3. Whether authentication is required
+ * 4. Whether to redirect to a canonical URL
+ */
+
 import createIntlMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -15,8 +35,14 @@ import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
 
 import type { Session } from 'next-auth';
 
+// Initialize next-intl middleware for i18n routing
 const intlMiddleware = createIntlMiddleware(siteRouting);
 
+/**
+ * Admin route canonical redirects
+ * Maps old/deprecated admin URLs to their current canonical locations
+ * Ensures consistent URL structure across the admin interface
+ */
 const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
   ['/admin/ai-paths/jobs', '/admin/ai-paths/queue'],
   ['/admin/databases', '/admin/databases/engine'],
@@ -45,12 +71,19 @@ const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
   ['/admin/system/upload-events', '/admin/ai-paths/queue?tab=file-uploads'],
 ]);
 
+/**
+ * Finalize response with CSRF protection
+ * Ensures every response has a valid CSRF token cookie
+ */
 const finalizeResponse = (request: NextRequest, response: NextResponse): NextResponse => {
   const existing = request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
   ensureCsrfCookie(response, existing);
   return response;
 };
 
+/**
+ * Base proxy handler - passes request through with optional custom headers
+ */
 const baseProxy = (request: NextRequest, requestHeaders?: Headers): NextResponse => {
   const response = requestHeaders ? NextResponse.next({ request: { headers: requestHeaders } }) : NextResponse.next();
   return finalizeResponse(request, response);
@@ -60,28 +93,48 @@ type NextRequestHandler = NonNullable<typeof handler>;
 type HandlerContext = Parameters<NextRequestHandler>[1];
 type AuthenticatedProxyRequest = NextRequest & { auth?: Session | null };
 
+// StudiQ web origin for Kangur routing (if separate deployment)
 const STUDIQ_WEB_ORIGIN = process.env['STUDIQ_WEB_ORIGIN'] || '';
 
+/**
+ * Check if request is for Kangur/StudiQ pages
+ */
 const isKangurPageRequest = (pathname: string): boolean => {
   const stripped = stripSiteLocalePrefix(pathname);
   return stripped === '/kangur' || stripped.startsWith('/kangur/');
 };
 
+/**
+ * Check if request is for API routes
+ */
 const isApiRequest = (pathname: string): boolean =>
   pathname === '/api' ||
   pathname.startsWith('/api/') ||
   pathname === '/kangur-api' ||
   pathname.startsWith('/kangur-api/');
 
+/**
+ * Check if request is for admin routes
+ */
 const isAdminRequest = (pathname: string): boolean =>
   pathname === '/admin' || pathname.startsWith('/admin/');
 
+/**
+ * Check if request is for Playwright test fixtures
+ */
 const isPlaywrightFixturePath = (pathname: string): boolean =>
   pathname === '/__playwright' || pathname.startsWith('/__playwright/');
 
+/**
+ * Check if HTTP method is safe (GET/HEAD)
+ */
 const isSafePageMethod = (request: NextRequest): boolean =>
   request.method === 'GET' || request.method === 'HEAD';
 
+/**
+ * Paths that can bypass locale prefix for default locale
+ * These paths work without /en/ prefix when English is default
+ */
 const isDefaultLocaleBypassPath = (pathname: string): boolean => {
   return (
     pathname === '/' ||
@@ -97,6 +150,9 @@ const isDefaultLocaleBypassPath = (pathname: string): boolean => {
   );
 };
 
+/**
+ * Get locale cookie name from routing config
+ */
 const getLocaleCookieName = (): string | null =>
   siteRouting.localeCookie === false
     ? null
@@ -104,6 +160,10 @@ const getLocaleCookieName = (): string | null =>
       ? 'NEXT_LOCALE'
       : (siteRouting.localeCookie?.name ?? 'NEXT_LOCALE');
 
+/**
+ * Synchronize locale cookie with detected locale
+ * Ensures cookie matches the locale being used
+ */
 const syncExplicitLocaleCookie = (
   request: NextRequest,
   response: NextResponse,
@@ -128,6 +188,10 @@ const syncExplicitLocaleCookie = (
   return response;
 };
 
+/**
+ * Determine if default locale prefix can be omitted
+ * Allows cleaner URLs for default language
+ */
 const shouldBypassIntlRewriteForDefaultLocale = (request: NextRequest): boolean => {
   const pathname = request.nextUrl.pathname;
   if (getPathLocale(pathname)) {
@@ -144,6 +208,10 @@ const shouldBypassIntlRewriteForDefaultLocale = (request: NextRequest): boolean 
   return resolvedLocale === getDefaultSiteLocaleCode() && isDefaultLocaleBypassPath(pathname);
 };
 
+/**
+ * Resolve locale-aware response for public routes
+ * Handles i18n routing and locale detection
+ */
 const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null => {
   if (!isSafePageMethod(request)) {
     return null;
@@ -152,6 +220,8 @@ const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null 
   const pathname = request.nextUrl.pathname;
   const pathLocale = getPathLocale(pathname);
   const strippedPathname = stripSiteLocalePrefix(pathname);
+  
+  // Playwright fixtures bypass locale handling
   if (isPlaywrightFixturePath(strippedPathname)) {
     return pathLocale
       ? syncExplicitLocaleCookie(request, baseProxy(request), pathLocale)
@@ -160,17 +230,24 @@ const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null 
 
   const defaultLocale = getDefaultSiteLocaleCode();
 
+  // Non-default locale: sync cookie and pass through
   if (pathLocale && pathLocale !== defaultLocale) {
     return syncExplicitLocaleCookie(request, baseProxy(request), pathLocale);
   }
 
+  // Default locale bypass: skip i18n middleware for cleaner URLs
   if (shouldBypassIntlRewriteForDefaultLocale(request)) {
     return baseProxy(request);
   }
 
+  // Standard i18n routing
   return finalizeResponse(request, intlMiddleware(request));
 };
 
+/**
+ * Resolve admin canonical redirects
+ * Redirects deprecated admin URLs to current locations
+ */
 const resolveAdminRedirectResponse = (request: NextRequest): NextResponse | null => {
   if (!isSafePageMethod(request)) {
     return null;
@@ -184,6 +261,10 @@ const resolveAdminRedirectResponse = (request: NextRequest): NextResponse | null
   return finalizeResponse(request, NextResponse.redirect(new URL(destination, request.url), 307));
 };
 
+/**
+ * Build request headers with admin session data
+ * Injects session information for admin routes
+ */
 const buildAdminRequestHeaders = (request: AuthenticatedProxyRequest): Headers | null => {
   const sessionHeaderValue = buildAdminLayoutSessionHeaderValue(request.auth ?? null);
   if (!sessionHeaderValue) return null;
@@ -193,6 +274,10 @@ const buildAdminRequestHeaders = (request: AuthenticatedProxyRequest): Headers |
   return forwardedHeaders;
 };
 
+/**
+ * Authenticated handler for admin routes
+ * Wraps admin requests with NextAuth authentication
+ */
 const handler =
   typeof auth === 'function'
     ? auth(
@@ -207,35 +292,50 @@ const handler =
     )
     : null;
 
+/**
+ * Main proxy/middleware function
+ * Routes all requests through appropriate handlers:
+ * 1. Traffic guard (security)
+ * 2. API routes (pass through)
+ * 3. Kangur routes (redirect to StudiQ origin if configured)
+ * 4. Public routes (i18n handling)
+ * 5. Admin routes (authentication + canonical redirects)
+ */
 export function proxy(
   request: NextRequest,
   context?: HandlerContext
 ): Promise<Response> | Response {
   const resolvedContext = context ?? ({ params: {} } as HandlerContext);
   const pathname = request.nextUrl.pathname;
+  
+  // Security: Apply traffic guard first
   const trafficGuardResponse = applyEdgeTrafficGuard(request);
-
   if (trafficGuardResponse) {
     return trafficGuardResponse;
   }
 
+  // API routes: pass through without modification
   if (isApiRequest(pathname)) {
     return baseProxy(request);
   }
 
+  // Kangur routes: redirect to separate origin if configured
   if (STUDIQ_WEB_ORIGIN && isKangurPageRequest(pathname)) {
     const target = new URL(pathname, STUDIQ_WEB_ORIGIN);
     target.search = request.nextUrl.search;
     return NextResponse.redirect(target.toString(), 307);
   }
 
+  // Public routes: handle i18n
   if (!isAdminRequest(pathname)) {
     return resolvePublicLocaleResponse(request) ?? baseProxy(request);
   }
 
+  // Admin routes: authentication + redirects
   if (!handler || typeof handler !== 'function') {
     return resolveAdminRedirectResponse(request) ?? baseProxy(request);
   }
+  
   const result = handler(request, resolvedContext);
   if (result instanceof Promise) {
     return result.then((response) => response ?? baseProxy(request));
@@ -245,6 +345,10 @@ export function proxy(
 
 export default proxy;
 
+/**
+ * Middleware matcher configuration
+ * Excludes Next.js internal routes and static files
+ */
 export const config = {
   matcher: ['/((?!_next|_vercel|.*\\..*).*)'],
 };

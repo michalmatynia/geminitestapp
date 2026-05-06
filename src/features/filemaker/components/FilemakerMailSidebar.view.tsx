@@ -3,7 +3,7 @@
 import { FilterX } from 'lucide-react';
 import React from 'react';
 
-import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/public';
+import { MasterFolderTreeViewport } from '@/shared/lib/foldertree/public';
 import { Badge, Button, Checkbox, Input } from '@/shared/ui/primitives.public';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
@@ -216,13 +216,11 @@ export const FilemakerMailSidebarView = ({
         header={<SidebarHeader actions={actions} model={model} />}
       >
         <div className='min-h-0 overflow-auto p-2'>
-          <FolderTreeViewportV2
-            controller={model.controller}
+          <MasterFolderTreeViewport
+            tree={model.tree}
             emptyLabel={model.isLoading ? 'Loading mailboxes...' : 'No mailboxes configured'}
             enableDnd={false}
             renderNode={model.renderNode}
-            rootDropUi={model.rootDropUi}
-            scrollToNodeRef={model.scrollToNodeRef}
           />
         </div>
       </FolderTreePanel>

@@ -1,6 +1,7 @@
 
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { hasConfiguredMongoSourceEnv } from '@/shared/lib/db/mongo-source-env';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 
@@ -114,7 +115,7 @@ const stringifyEntries = (
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  if (!hasConfiguredMongoSourceEnv()) return null;
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
@@ -132,7 +133,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 };
 
 const writeMongoSetting = async (key: string, value: string): Promise<boolean> => {
-  if (!process.env['MONGODB_URI']) return false;
+  if (!hasConfiguredMongoSourceEnv()) return false;
   try {
     const mongo = await getMongoDb();
     const now = new Date();

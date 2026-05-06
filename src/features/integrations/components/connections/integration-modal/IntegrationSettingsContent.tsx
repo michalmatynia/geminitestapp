@@ -7,6 +7,7 @@ import type { IntegrationConnection } from '@/shared/contracts/integrations/conn
 
 import { AllegroSettings } from '../AllegroSettings';
 import { BaselinkerSettings } from '../BaselinkerSettings';
+import { GoogleOAuthSettings } from '../GoogleOAuthSettings';
 import { LinkedInSettings } from '../LinkedInSettings';
 import { ConnectionEditModal } from '../manager/ConnectionEditModal';
 import { PlaywrightTabContent } from '../PlaywrightTabContent';
@@ -210,6 +211,7 @@ export function IntegrationSettingsContent(): React.JSX.Element {
     showVintedBrowserSettings ||
     show1688BrowserSettings ||
     showPracujBrowserSettings;
+  const showGoogleOAuthSettings = !isLinkedIn;
 
   return (
     <div>
@@ -220,7 +222,15 @@ export function IntegrationSettingsContent(): React.JSX.Element {
       ) : isBaselinker ? (
         <BaselinkerSettings />
       ) : (
-        <div className='min-h-[220px]' />
+        null
+      )}
+
+      {showGoogleOAuthSettings ? (
+        <div className={isAllegro || isBaselinker ? 'mt-4' : ''}>
+          <GoogleOAuthSettings />
+        </div>
+      ) : (
+        null
       )}
 
       {showTraderaBrowserSettings && (

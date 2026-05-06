@@ -1,3 +1,15 @@
+/**
+ * Environment Variable Validation
+ * 
+ * Runtime environment variable validation and type safety.
+ * Provides:
+ * - Zod-based environment schema validation
+ * - Type-safe environment variable access
+ * - Runtime validation with error reporting
+ * - Environment-specific configuration
+ * - Critical error handling and logging
+ */
+
 import { z } from 'zod';
 import { logger } from '@/shared/utils/logger';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';

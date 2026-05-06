@@ -1,3 +1,19 @@
+/**
+ * MongoDB Client Management
+ * 
+ * Centralized MongoDB connection management with observability.
+ * Features:
+ * - Connection pooling with configurable limits
+ * - Automatic reconnection and error recovery
+ * - Performance monitoring and slow query detection
+ * - Connection event logging and metrics
+ * - Multi-source database support (local, cloud)
+ * - Environment-based configuration
+ * 
+ * This module ensures reliable database connectivity with
+ * comprehensive monitoring and error handling.
+ */
+
 import { createRequire } from 'module';
 
 import { configurationError } from '@/shared/errors/app-error';
@@ -9,24 +25,27 @@ import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-r
 import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 import type { MongoSource } from '@/shared/contracts/database';
 
-
+/**
+ * Parse positive integer from environment variable with fallback
+ */
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 };
 
 // ---------------------------------------------------------------------------
-// Observability helpers — dynamic import to avoid circular dependency with the
-// observability layer (which itself may use MongoDB for storage).
+// Observability Configuration
+// Dynamic import to avoid circular dependency with observability layer
 // ---------------------------------------------------------------------------
 
-const POOL_LOG_COOLDOWN_MS = 30_000; // suppress repeated events of the same type
+const POOL_LOG_COOLDOWN_MS = 30_000; // Suppress repeated events of same type
 const SLOW_COMMAND_THRESHOLD_MS = parsePositiveInt(process.env['MONGODB_SLOW_COMMAND_MS'], 3_000);
 const MONITOR_COMMANDS = process.env['MONGODB_MONITOR_COMMANDS'] === 'true';
 const DEBUG_MONGODB_POOL = process.env['DEBUG_MONGODB_POOL'] === 'true';
 const DEFAULT_MONGO_SERVER_SELECTION_TIMEOUT_MS = 5_000;
 const DEFAULT_MONGO_CONNECT_TIMEOUT_MS = 5_000;
 
+// Track last log time for each event type to prevent spam
 const poolLoggedAt = new Map<string, number>();
 const shouldEmit = (key: string): boolean => {
   const now = Date.now();
@@ -35,6 +54,10 @@ const shouldEmit = (key: string): boolean => {
   return true;
 };
 
+/**
+ * Log MongoDB events to system logger
+ * Uses dynamic import to avoid circular dependencies
+ */
 const mongoLog = (
   level: 'info' | 'warn' | 'error',
   message: string,
@@ -45,7 +68,7 @@ const mongoLog = (
     .catch(() => {});
 };
 
-// Track which clients already have listeners so we never double-attach.
+// Track instrumented clients to prevent duplicate event listeners
 const instrumented = new WeakSet<object>();
 
 type MongoClientEventMap = {

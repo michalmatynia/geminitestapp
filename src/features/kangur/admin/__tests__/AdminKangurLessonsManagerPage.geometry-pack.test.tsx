@@ -28,7 +28,7 @@ vi.mock('@/shared/lib/foldertree/public', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/foldertree/public')>();
   return {
     ...actual,
-    createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),
+    createMasterFolderTreeOrderedItemsAdapter: vi.fn(() => ({ apply: vi.fn() })),
     FolderTreeSearchBar: (props: { placeholder?: string }) => {
       folderTreeSearchBarMock(props);
       return <div data-testid='folder-tree-search'>{props.placeholder}</div>;
@@ -36,6 +36,29 @@ vi.mock('@/shared/lib/foldertree/public', async (importOriginal) => {
     FolderTreeViewportV2: (props: unknown) => {
       folderTreeViewportMock(props);
       return <div data-testid='folder-tree-viewport' />;
+    },
+    MasterFolderTreeViewport: (
+      props: Record<string, unknown> & {
+        tree?: {
+          controller?: unknown;
+          viewport?: { scrollToNodeRef?: unknown };
+        };
+      }
+    ) => {
+      folderTreeViewportMock({
+        ...props,
+        controller: props.tree?.controller,
+        scrollToNodeRef: props.tree?.viewport?.scrollToNodeRef,
+      });
+      return <div data-testid='folder-tree-viewport' />;
+    },
+    useMasterFolderTreeViewModel: (...args: unknown[]) => {
+      const shell = useMasterFolderTreeShellMock(...args);
+
+      return {
+        ...shell,
+        searchState: searchStateMock,
+      };
     },
     useMasterFolderTreeShell: (...args: unknown[]) => useMasterFolderTreeShellMock(...args),
     useMasterFolderTreeSearch: () => searchStateMock,

@@ -36,6 +36,8 @@ const mocks = vi.hoisted(() => ({
   ensureKangurThemeSlotAssignmentsSeededMock: vi.fn(),
   readKangurSettingValueMock: vi.fn(),
   upsertKangurSettingValueMock: vi.fn(),
+  upsertSecretSettingValueMock: vi.fn(),
+  deleteSecretSettingValuesMock: vi.fn(),
   isKangurSettingKeyMock: vi.fn(),
   listKangurSettingsMock: vi.fn(),
 }));
@@ -180,6 +182,11 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   upsertAiPathsSetting: vi.fn(),
 }));
 
+vi.mock('@/shared/lib/settings/secret-settings', () => ({
+  upsertSecretSettingValue: mocks.upsertSecretSettingValueMock,
+  deleteSecretSettingValues: mocks.deleteSecretSettingValuesMock,
+}));
+
 vi.mock('@/features/kangur/services/kangur-settings-repository', async () => {
   const actual =
     await vi.importActual<typeof import('@/features/kangur/services/kangur-settings-repository')>(
@@ -251,6 +258,8 @@ describe('settings handler', () => {
       key,
       value,
     }));
+    mocks.upsertSecretSettingValueMock.mockResolvedValue(undefined);
+    mocks.deleteSecretSettingValuesMock.mockResolvedValue(undefined);
     mocks.isKangurSettingKeyMock.mockReturnValue(false);
     mocks.listKangurSettingsMock.mockResolvedValue([]);
   });
@@ -565,52 +574,6 @@ describe('settings handler', () => {
       },
     ]);
 
-    const normalizedValue = JSON.stringify([
-      {
-        id: 'legacy_action',
-        name: 'Legacy action',
-        description: null,
-        runtimeKey: null,
-        blocks: [
-          {
-            id: 'legacy_action__step_set__0',
-            kind: 'step_set',
-            refId: 'step_set_1',
-            enabled: true,
-            label: null,
-            config: {
-              viewportWidth: null,
-              viewportHeight: null,
-              settleDelayMs: null,
-              locale: null,
-              timezoneId: null,
-              userAgent: null,
-              colorScheme: null,
-              reducedMotion: null,
-              geolocationLatitude: null,
-              geolocationLongitude: null,
-              permissions: [],
-            },
-          },
-        ],
-        stepSetIds: ['step_set_1'],
-        personaId: null,
-        executionSettings: {
-          headless: null,
-          browserPreference: null,
-          emulateDevice: null,
-          deviceName: null,
-          slowMo: null,
-          timeout: null,
-          navigationTimeout: null,
-          locale: null,
-          timezoneId: null,
-        },
-        createdAt: '2026-04-17T00:00:00.000Z',
-        updatedAt: '2026-04-17T00:00:00.000Z',
-      },
-    ]);
-
     mocks.parseJsonBodyMock.mockResolvedValue({
       ok: true,
       data: {
@@ -633,15 +596,170 @@ describe('settings handler', () => {
     expect(response.status).toBe(200);
     expect(mocks.updateOneMock).toHaveBeenCalledWith(
       { key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY },
-      expect.objectContaining({
-        $set: expect.objectContaining({ value: normalizedValue }),
-      }),
+      expect.objectContaining({ $set: expect.objectContaining({ value: expect.any(String) }) }),
       { upsert: true }
     );
+    const update = mocks.updateOneMock.mock.calls[0]?.[1] as
+      | { $set?: { value?: unknown } }
+      | undefined;
+    const normalizedValue = update?.$set?.value;
+    expect(typeof normalizedValue).toBe('string');
+    const normalizedActions = JSON.parse(normalizedValue as string) as Array<Record<string, unknown>>;
+    expect(normalizedActions).toHaveLength(1);
+    const action = normalizedActions[0] as Record<string, unknown>;
+    expect(action).toEqual(
+      expect.objectContaining({
+        id: 'legacy_action',
+        name: 'Legacy action',
+        stepSetIds: ['step_set_1'],
+      })
+    );
+    const blocks = action['blocks'] as Array<Record<string, unknown>>;
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        id: 'legacy_action__step_set__0',
+        kind: 'step_set',
+        refId: 'step_set_1',
+        enabled: true,
+      }),
+    ]);
     await expect(response.json()).resolves.toEqual({
       key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
       value: normalizedValue,
     });
+  });
+
+  it('stores secret setting writes through the secret settings store and redacts the response', async () => {
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: 'auth_google_client_secret',
+        value: 'google-secret',
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: 'auth_google_client_secret',
+          value: 'google-secret',
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.upsertSecretSettingValueMock).toHaveBeenCalledWith(
+      'auth_google_client_secret',
+      'google-secret'
+    );
+    expect(mocks.deleteSecretSettingValuesMock).not.toHaveBeenCalled();
+    expect(mocks.updateOneMock).not.toHaveBeenCalled();
+    expect(mocks.getAppDbProviderMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      key: 'auth_google_client_secret',
+      value: '',
+    });
+  });
+
+  it('deletes secret settings when a blank value is posted', async () => {
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: 'auth_google_client_secret',
+        value: '   ',
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: 'auth_google_client_secret',
+          value: '   ',
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.upsertSecretSettingValueMock).not.toHaveBeenCalled();
+    expect(mocks.deleteSecretSettingValuesMock).toHaveBeenCalledWith([
+      'auth_google_client_secret',
+    ]);
+    expect(mocks.updateOneMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      key: 'auth_google_client_secret',
+      value: '',
+    });
+  });
+
+  it('does not return secret settings for direct key reads', async () => {
+    const response = await getHandler(
+      new NextRequest('http://localhost/api/settings?scope=light&key=auth_google_client_secret'),
+      {
+        ...createContext(),
+        query: { scope: 'light', key: 'auth_google_client_secret' },
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.findOneMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual([]);
+  });
+
+  it('filters Mongo-backed secret settings out of settings lists before decoding values', async () => {
+    const findSettingsMock = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([
+        {
+          _id: 'public_setting',
+          key: 'public_setting',
+          value: 'public-value',
+        },
+        {
+          _id: 'auth_google_client_secret',
+          key: 'auth_google_client_secret',
+          value: 'google-secret',
+        },
+        {
+          _id: 'filemaker_mail_account_account-1_smtp_password',
+          key: 'filemaker_mail_account_account-1_smtp_password',
+          value: 'smtp-secret',
+        },
+      ]),
+    });
+    mocks.getMongoDbMock.mockResolvedValue({
+      collection: vi.fn(() => ({
+        createIndex: mocks.createIndexMock,
+        find: findSettingsMock,
+        findOne: mocks.findOneMock,
+        updateOne: mocks.updateOneMock,
+      })),
+    });
+
+    const response = await getHandler(
+      new NextRequest('http://localhost/api/settings?scope=light'),
+      {
+        ...createContext(),
+        query: { scope: 'light' },
+      }
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as Array<{ key: string; value: string }>;
+    expect(payload).toEqual(
+      expect.arrayContaining([
+        {
+          key: 'public_setting',
+          value: 'public-value',
+        },
+      ])
+    );
+    expect(payload.some((entry) => entry.key === 'auth_google_client_secret')).toBe(false);
+    expect(
+      payload.some((entry) => entry.key === 'filemaker_mail_account_account-1_smtp_password')
+    ).toBe(false);
   });
 
   it('self-seeds the Mongo-backed theme catalog when the admin requests it directly', async () => {

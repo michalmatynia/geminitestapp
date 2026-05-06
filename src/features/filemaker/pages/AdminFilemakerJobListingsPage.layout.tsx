@@ -7,8 +7,8 @@ import React, { type JSX, useEffect, useMemo } from 'react';
 import type { FilterField } from '@/shared/contracts/ui/panels';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import {
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
+  MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
@@ -238,11 +238,7 @@ function JobListingsTableHeader(): React.JSX.Element {
 }
 
 function JobListingsListViewport(props: JobListingsListPanelProps): React.JSX.Element {
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: FILEMAKER_JOB_LISTINGS_TREE_INSTANCE,
     nodes: props.nodes,
   });
@@ -251,10 +247,8 @@ function JobListingsListViewport(props: JobListingsListPanelProps): React.JSX.El
   return (
     <div className='relative space-y-1'>
       <JobListingsTableHeader />
-      <FolderTreeViewportV2
-        controller={controller}
-        scrollToNodeRef={scrollToNodeRef}
-        rootDropUi={rootDropUi}
+      <MasterFolderTreeViewport
+        tree={tree}
         enableDnd={false}
         emptyLabel={hasQuery ? 'No job listings found' : 'No job listings found'}
         estimateRowHeight={82}

@@ -11,52 +11,70 @@ import RichTextBlock, { type RichTextContent } from './RichTextBlock';
 
 type CmsSideMenuComponent = NonNullable<Page['components']>[number];
 
-export default function CmsSideMenu(): React.JSX.Element {
-  const { page, setPage } = useCmsEditor();
+function ComponentList({
+  components,
+  handleContentChange,
+  addComponent
+}: {
+  components: CmsSideMenuComponent[];
+  handleContentChange: (index: number, content: RichTextContent) => void;
+  addComponent: (type: string) => void;
+}): React.JSX.Element {
+  return (
+    <>
+      <h3 className='font-bold mb-2'>Template</h3>
+      {components.map((component, index) => {
+        if (component.type === 'RichText') {
+          return (
+            <RichTextBlock
+              key={index}
+              content={component.content.settings as RichTextContent}
+              onChange={(content: RichTextContent): void => handleContentChange(index, content)}
+            />
+          );
+        }
+        return null;
+      })}
+      <Button onClick={() => addComponent('RichText')}>Add Section</Button>
+    </>
+  );
+}
 
+const useCmsComponentHandlers = (
+  setPage: React.Dispatch<React.SetStateAction<Page | null>>
+): {
+  addComponent: (type: string) => void;
+  handleContentChange: (index: number, content: RichTextContent) => void;
+} => {
   const addComponent = (type: string): void => {
-    setPage((prev) => {
-      if (!prev) return prev; // nothing to update yet
+    setPage((prev: Page | null) => {
+      if (!prev) return prev;
       const sectionId = `section-${Date.now()}-${prev.components.length}`;
       const newComponent: CmsSideMenuComponent = {
         type,
         order: prev.components.length,
-        content: {
-          zone: 'template',
-          settings: {},
-          blocks: [],
-          sectionId,
-          parentSectionId: null,
-        },
+        content: { zone: 'template', settings: {}, blocks: [], sectionId, parentSectionId: null },
       };
-      return {
-        ...prev,
-        components: [...prev.components, newComponent],
-      };
+      return { ...prev, components: [...prev.components, newComponent] };
     });
   };
 
   const handleContentChange = (index: number, content: RichTextContent): void => {
-    setPage((prev) => {
+    setPage((prev: Page | null) => {
       if (!prev) return prev;
       const nextComponents = [...prev.components];
-
-      if (!nextComponents[index]) return prev; // out of range safety
       const component = nextComponents[index];
-      nextComponents[index] = {
-        ...component,
-        content: {
-          ...component.content,
-          settings: { ...content },
-        },
-      };
-
-      return {
-        ...prev,
-        components: nextComponents,
-      };
+      if (!component) return prev;
+      nextComponents[index] = { ...component, content: { ...component.content, settings: { ...content } } };
+      return { ...prev, components: nextComponents };
     });
   };
+  return { addComponent, handleContentChange };
+};
+
+export default function CmsSideMenu(): React.JSX.Element {
+  const { page, setPage } = useCmsEditor();
+  const { addComponent, handleContentChange } = useCmsComponentHandlers(setPage);
 
   if (!page) {
     return (
@@ -77,34 +95,11 @@ export default function CmsSideMenu(): React.JSX.Element {
       contentClassName='p-4'
     >
       <div className='space-y-4'>
+        <div><h3 className='font-bold mb-2'>Header</h3></div>
         <div>
-          <h3 className='font-bold mb-2'>Header</h3>
-          {/* Header components will be listed here */}
+          <ComponentList components={page.components} handleContentChange={handleContentChange} addComponent={addComponent} />
         </div>
-
-        <div>
-          <h3 className='font-bold mb-2'>Template</h3>
-
-          {page.components.map((component: CmsSideMenuComponent, index: number) => {
-            if (component?.type === 'RichText') {
-              return (
-                <RichTextBlock
-                  key={index}
-                  content={component.content.settings as RichTextContent}
-                  onChange={(content: RichTextContent): void => handleContentChange(index, content)}
-                />
-              );
-            }
-            return null;
-          })}
-
-          <Button onClick={() => addComponent('RichText')}>Add Section</Button>
-        </div>
-
-        <div>
-          <h3 className='font-bold mb-2'>Footer</h3>
-          {/* Footer components will be listed here */}
-        </div>
+        <div><h3 className='font-bold mb-2'>Footer</h3></div>
       </div>
     </SidePanel>
   );

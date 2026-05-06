@@ -3,10 +3,12 @@ import { Card, LinkButton } from '../../shared/KangurMobileUi';
 import { LessonCheckpointRow } from './LessonCheckpointRow';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
 
+import type { Href } from 'expo-router';
+
 interface ResultsCheckpointsSectionProps {
   checkpoints: { componentId: string }[];
   copy: KangurMobileCopy;
-  lessonsHref: any;
+  lessonsHref: Href;
 }
 
 export function ResultsCheckpointsSection({

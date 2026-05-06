@@ -1,3 +1,15 @@
+/**
+ * CMS Data Provider Service
+ * 
+ * Content Management System database provider resolution and configuration.
+ * Provides:
+ * - CMS database provider selection and routing
+ * - Database engine policy integration
+ * - Provider configuration validation
+ * - Fallback provider handling
+ * - Server-only CMS data access coordination
+ */
+
 import 'server-only';
 
 import type { AppProviderValue as CmsDbProvider } from '@/shared/contracts/system';

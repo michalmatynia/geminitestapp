@@ -127,10 +127,13 @@ const resolveButtonBaseProps = (params: {
   stretch?: boolean;
   tone?: 'brand' | 'ghost' | 'primary' | 'secondary';
   verticalPadding?: number;
-}): ResolvedButtonBaseProps => ({
-  ...DEFAULT_BUTTON_BASE_PROPS,
-  ...params,
-} as ResolvedButtonBaseProps);
+}): ResolvedButtonBaseProps => {
+  const base: ResolvedButtonBaseProps = {
+    ...DEFAULT_BUTTON_BASE_PROPS,
+    ...params,
+  };
+  return base;
+};
 
 export const getButtonContainerStyle = (params: {
   borderRadius?: number;

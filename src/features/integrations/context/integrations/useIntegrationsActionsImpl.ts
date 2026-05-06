@@ -17,6 +17,7 @@ import {
   useDeleteConnection,
   useDisconnectAllegro,
   useDisconnectLinkedIn,
+  useDisconnectGoogle,
   useTestConnection,
   useBaseApiRequest,
   useAllegroApiRequest,
@@ -84,6 +85,7 @@ export function useIntegrationsActionsImpl(args: {
   const deleteConnectionMutation = useDeleteConnection();
   const disconnectAllegroMutation = useDisconnectAllegro();
   const disconnectLinkedInMutation = useDisconnectLinkedIn();
+  const disconnectGoogleMutation = useDisconnectGoogle();
   const testConnectionMutation = useTestConnection();
   const baseApiRequestMutation = useBaseApiRequest();
   const allegroApiRequestMutation = useAllegroApiRequest();
@@ -588,6 +590,38 @@ export function useIntegrationsActionsImpl(args: {
     }
   };
 
+  const handleGoogleAuthorize = (scope?: string): void => {
+    if (!args.activeIntegration || !activeConnection) {
+      toast('Create a connection first.', { variant: 'error' });
+      return;
+    }
+    const normalizedScope = scope?.trim() ?? '';
+    const query = normalizedScope.length > 0
+      ? `?scope=${encodeURIComponent(normalizedScope)}`
+      : '';
+    window.location.href =
+      `/api/v2/integrations/${args.activeIntegration.id}/connections/${activeConnection.id}/google/authorize${query}`;
+  };
+
+  const handleGoogleDisconnect = async (): Promise<void> => {
+    if (!args.activeIntegration || !activeConnection) return;
+    try {
+      await disconnectGoogleMutation.mutateAsync({
+        integrationId: args.activeIntegration.id,
+        connectionId: activeConnection.id,
+      });
+      toast('Google disconnected.', { variant: 'success' });
+    } catch (error: unknown) {
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'disconnectGoogle',
+        integrationId: args.activeIntegration.id,
+        connectionId: activeConnection.id,
+      });
+      toast('Failed to disconnect Google.', { variant: 'error' });
+    }
+  };
+
   const handleBaseApiRequest = async (): Promise<void> => {
     if (!args.activeIntegration || !activeConnection) {
       toast('Create a Base.com connection first.', { variant: 'error' });
@@ -721,6 +755,8 @@ export function useIntegrationsActionsImpl(args: {
     handleAllegroSandboxConnect,
     handleLinkedInAuthorize,
     handleLinkedInDisconnect,
+    handleGoogleAuthorize,
+    handleGoogleDisconnect,
     handleBaseApiRequest,
     handleAllegroApiRequest,
     onCloseModal,

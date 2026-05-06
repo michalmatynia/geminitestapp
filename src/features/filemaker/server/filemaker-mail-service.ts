@@ -20,6 +20,7 @@ import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import { configurationError, validationError } from '@/shared/errors/app-error';
 import { findProviderForKey } from '@/shared/lib/db/settings-registry';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { hasConfiguredMongoSourceEnv } from '@/shared/lib/db/mongo-source-env';
 import { clearSecretSettingCache, readSecretSettingValues } from '@/shared/lib/settings/secret-settings';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
@@ -81,6 +82,10 @@ import {
   parseFilemakerMailComplaintReport,
   parseFilemakerMailDsnReport,
 } from './mail/mail-dsn';
+import {
+  resolveFilemakerMailImapCredential,
+  resolveFilemakerMailSmtpCredential,
+} from './mail/mail-auth';
 import { createImapClient, listImapMailboxes } from './mail/mail-imap';
 import { parseMailSource } from './mail/mail-processor';
 
@@ -166,8 +171,8 @@ const upsertSecretSettingValue = async (key: string, value: string): Promise<voi
     invalidateSettingsCaches();
     return;
   }
-  if (!process.env['MONGODB_URI']) {
-    throw configurationError('MONGODB_URI is not set.');
+  if (!hasConfiguredMongoSourceEnv()) {
+    throw configurationError('No MongoDB source is configured.');
   }
   const mongo = await getMongoDb();
   const now = new Date();
@@ -867,6 +872,8 @@ export const upsertFilemakerMailAccount = async (
   const id = existing?.id ?? draft.id ?? `mail-account-${toIdToken(draft.emailAddress) || randomUUID()}`;
   const now = new Date().toISOString();
   const isCreate = !existing;
+  const authMode = draft.authMode ?? existing?.authMode ?? 'password';
+  const isGoogleOAuth = authMode === 'google_oauth';
   const existingImapPasswordSettingKey = normalizeString(existing?.imapPasswordSettingKey);
   const existingSmtpPasswordSettingKey = normalizeString(existing?.smtpPasswordSettingKey);
   const imapPasswordSettingKey =
@@ -894,6 +901,7 @@ export const upsertFilemakerMailAccount = async (
     name: normalizeString(draft.name),
     emailAddress: normalizeString(draft.emailAddress).toLowerCase(),
     provider: 'imap_smtp',
+    authMode,
     status: draft.status,
     imapHost: normalizeString(draft.imapHost),
     imapPort: draft.imapPort,
@@ -916,12 +924,18 @@ export const upsertFilemakerMailAccount = async (
     dkimDomain: dkimDomain ?? existing?.dkimDomain ?? null,
     dkimKeySelector: dkimKeySelector ?? existing?.dkimKeySelector ?? null,
     dkimPrivateKeySettingKey: dkimPrivateKeySettingKey ?? null,
+    oauthProvider: isGoogleOAuth ? existing?.oauthProvider ?? 'google' : null,
+    oauthRefreshTokenSettingKey: isGoogleOAuth
+      ? existing?.oauthRefreshTokenSettingKey ?? null
+      : null,
+    oauthConnectedAt: isGoogleOAuth ? existing?.oauthConnectedAt ?? null : null,
+    oauthScopes: isGoogleOAuth ? existing?.oauthScopes ?? [] : [],
   };
 
-  if (isCreate && !normalizeString(draft.imapPassword)) {
+  if (isCreate && !isGoogleOAuth && !normalizeString(draft.imapPassword)) {
     throw validationError('IMAP password is required when creating a mailbox account.');
   }
-  if (isCreate && !normalizeString(draft.smtpPassword)) {
+  if (isCreate && !isGoogleOAuth && !normalizeString(draft.smtpPassword)) {
     throw validationError('SMTP password is required when creating a mailbox account.');
   }
 
@@ -1105,19 +1119,12 @@ export const syncFilemakerMailAccount = async (
 ): Promise<FilemakerMailSyncResult & { lastSyncError: string | null }> => {
   const account = await getFilemakerMailAccount(id);
   const completedAt = new Date().toISOString();
-  const imapPasswordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
   const defaultFolders =
     account.folderAllowlist.length > 0 ? account.folderAllowlist : ['INBOX'];
 
   try {
-    const secrets = await readSecretSettingValues([imapPasswordKey]);
-    const imapPassword = secrets[imapPasswordKey];
-    if (!imapPassword) {
-      throw configurationError(
-        `IMAP password not configured for ${account.emailAddress}. Set it on the mail account before syncing.`
-      );
-    }
-    const client = createImapClient(account, imapPassword);
+    const credential = await resolveFilemakerMailImapCredential(account);
+    const client = createImapClient(account, credential);
     const touchedThreadIds = new Set<string>();
     let foldersScanned = defaultFolders;
     let fetchedMessageCount = 0;
@@ -1306,11 +1313,10 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
   outboxEntry: FilemakerMailOutboxEntry;
 }> => {
   const account = await getFilemakerMailAccount(input.accountId);
-  const smtpPasswordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'smtp_password');
+  const smtpCredential = await resolveFilemakerMailSmtpCredential(account);
   const dkimPrivateKeySettingKey = account.dkimPrivateKeySettingKey?.trim() || null;
-  const secretKeys = [smtpPasswordKey, ...(dkimPrivateKeySettingKey ? [dkimPrivateKeySettingKey] : [])];
+  const secretKeys = dkimPrivateKeySettingKey ? [dkimPrivateKeySettingKey] : [];
   const secrets = await readSecretSettingValues(secretKeys);
-  const password = secrets[smtpPasswordKey];
   const dkimPrivateKey = dkimPrivateKeySettingKey ? secrets[dkimPrivateKeySettingKey] ?? null : null;
 
   const to = dedupeFilemakerMailParticipants(input.to);
@@ -1367,7 +1373,7 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
   };
   await storage.upsertOutboxEntry(queuedOutbox);
 
-  const transport = smtp.createSmtpTransport(account, password ?? undefined, dkimPrivateKey);
+  const transport = smtp.createSmtpTransport(account, smtpCredential, dkimPrivateKey);
   const attachments = (input.attachments ?? []).map((attachment) => ({
     filename: attachment.fileName,
     contentType: attachment.contentType,
@@ -1543,30 +1549,26 @@ export const updateFilemakerMailMessageFlags = async (
   });
 
   if (typeof message.providerUid === 'number' && (adds.length > 0 || removes.length > 0)) {
-    const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
-    const secrets = await readSecretSettingValues([passwordKey]);
-    const password = secrets[passwordKey];
-    if (password) {
-      const client = createImapClient(account, password);
+    const credential = await resolveFilemakerMailImapCredential(account);
+    const client = createImapClient(account, credential);
+    try {
+      await client.connect();
+      const lock = await client.getMailboxLock(message.mailboxPath);
       try {
-        await client.connect();
-        const lock = await client.getMailboxLock(message.mailboxPath);
-        try {
-          if (adds.length > 0) {
-            await client.messageFlagsAdd({ uid: message.providerUid }, adds, { uid: true });
-          }
-          if (removes.length > 0) {
-            await client.messageFlagsRemove({ uid: message.providerUid }, removes, { uid: true });
-          }
-        } finally {
-          lock.release();
+        if (adds.length > 0) {
+          await client.messageFlagsAdd({ uid: message.providerUid }, adds, { uid: true });
+        }
+        if (removes.length > 0) {
+          await client.messageFlagsRemove({ uid: message.providerUid }, removes, { uid: true });
         }
       } finally {
-        try {
-          await client.logout();
-        } catch {
-          client.close();
-        }
+        lock.release();
+      }
+    } finally {
+      try {
+        await client.logout();
+      } catch {
+        client.close();
       }
     }
   }
@@ -1619,14 +1621,8 @@ export const moveFilemakerMailMessage = async (input: {
     throw validationError('Message has no provider UID and cannot be moved.');
   }
   const account = await getFilemakerMailAccount(message.accountId);
-  const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
-  const secrets = await readSecretSettingValues([passwordKey]);
-  const password = secrets[passwordKey];
-  if (!password) {
-    throw configurationError(`IMAP password not configured for ${account.emailAddress}.`);
-  }
-
-  const client = createImapClient(account, password);
+  const credential = await resolveFilemakerMailImapCredential(account);
+  const client = createImapClient(account, credential);
   let resolvedPath = input.targetMailboxPath ?? null;
   try {
     await client.connect();
@@ -1677,12 +1673,10 @@ export const appendFilemakerMailToSentFolder = async (input: {
   account: FilemakerMailAccount;
   rawMessage: string | Buffer;
 }): Promise<void> => {
-  const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(input.account, 'imap_password');
-  const secrets = await readSecretSettingValues([passwordKey]);
-  const password = secrets[passwordKey];
-  if (!password) return;
-  const client = createImapClient(input.account, password);
+  let client: ReturnType<typeof createImapClient> | null = null;
   try {
+    const credential = await resolveFilemakerMailImapCredential(input.account);
+    client = createImapClient(input.account, credential);
     await client.connect();
     const sentPath = await resolveMailboxPathByRole(client, 'sent');
     if (!sentPath) return;
@@ -1695,10 +1689,12 @@ export const appendFilemakerMailToSentFolder = async (input: {
       error,
     }).catch(() => {});
   } finally {
-    try {
-      await client.logout();
-    } catch {
-      client.close();
+    if (client !== null) {
+      try {
+        await client.logout();
+      } catch {
+        client.close();
+      }
     }
   }
 };

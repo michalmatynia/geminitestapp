@@ -8,8 +8,8 @@ import { createKangurPracticeHref } from '../practice/practiceHref';
 import type { KangurMobileParentAssignmentItem, KangurMobileParentAssignmentMonitoring } from './parent-dashboard-types';
 
 const buildAssignmentMonitoring = (assignments: KangurAssignmentSnapshot[]): KangurMobileParentAssignmentMonitoring =>
-  assignments.reduce<KangurMobileParentAssignmentMonitoring>(
-    (summary, assignment) => {
+  assignments.reduce(
+    (summary: KangurMobileParentAssignmentMonitoring, assignment: KangurAssignmentSnapshot) => {
       const isHigh = assignment.priority === 'high';
       const isLesson = assignment.target.type === 'lesson';
       const isPractice = assignment.target.type === 'practice';
@@ -26,9 +26,16 @@ const buildAssignmentMonitoring = (assignments: KangurAssignmentSnapshot[]): Kan
         totalCount: summary.totalCount + 1,
       };
     },
-    { completedCount: 0, highPriorityCount: 0, inProgressCount: 0, lessonCount: 0, notStartedCount: 0, practiceCount: 0, totalCount: 0 },
+    { 
+        completedCount: 0, 
+        highPriorityCount: 0, 
+        inProgressCount: 0, 
+        lessonCount: 0, 
+        notStartedCount: 0, 
+        practiceCount: 0, 
+        totalCount: 0 
+    } satisfies KangurMobileParentAssignmentMonitoring,
   );
-
 const resolveAssignmentHref = (assignment: KangurAssignmentSnapshot): Href | null => {
   const target = assignment.target;
   if (target.type === 'lesson') return createKangurLessonHref(target.lessonComponentId);

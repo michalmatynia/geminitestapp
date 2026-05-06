@@ -4,7 +4,9 @@ import React, { startTransition } from 'react';
 
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 
+import { FilemakerGoalAutomationPanel } from '../components/shared/FilemakerGoalAutomationPanel';
 import { OrganizationJobListingsSection } from '../components/page/OrganizationJobListingsSection';
 import {
   AdminFilemakerOrganizationEditPageProvider,
@@ -44,9 +46,28 @@ function AdminFilemakerOrganizationJobListingsPageInner(): React.JSX.Element {
   const { isLoading, organization, router } =
     useAdminFilemakerOrganizationEditPageStateContext();
   const [hasMounted, setHasMounted] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState('listings');
+  const [automationUrl, setAutomationUrl] = React.useState('');
 
   React.useEffect(() => {
     setHasMounted(true);
+  }, []);
+
+  // Pre-populate automation URL from the organization's job board source once loaded
+  React.useEffect(() => {
+    if (!organization) return;
+    const defaultUrl =
+      organization.jobBoardSourceUrl?.trim() ??
+      organization.jobBoardCompanyWebsiteUrl?.trim() ??
+      '';
+    if (defaultUrl !== '' && automationUrl === '') {
+      setAutomationUrl(defaultUrl);
+    }
+  }, [organization, automationUrl]);
+
+  const handleAutomateUrl = React.useCallback((url: string): void => {
+    setAutomationUrl(url);
+    setActiveTab('automation');
   }, []);
 
   const isPageLoading = !hasMounted || isLoading;
@@ -94,9 +115,18 @@ function AdminFilemakerOrganizationJobListingsPageInner(): React.JSX.Element {
         actionsClassName='relative z-0 min-w-0 flex-1 justify-end pt-0'
       />
       {!isPageLoading ? (
-        <>
-          <OrganizationJobListingsSection />
-        </>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value='listings'>Job Listings</TabsTrigger>
+            <TabsTrigger value='automation'>Goal Automation</TabsTrigger>
+          </TabsList>
+          <TabsContent value='listings'>
+            <OrganizationJobListingsSection onAutomateUrl={handleAutomateUrl} />
+          </TabsContent>
+          <TabsContent value='automation' className='pt-2'>
+            <FilemakerGoalAutomationPanel defaultUrl={automationUrl} />
+          </TabsContent>
+        </Tabs>
       ) : null}
     </div>
   );

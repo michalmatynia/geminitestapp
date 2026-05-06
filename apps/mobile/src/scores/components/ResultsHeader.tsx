@@ -1,5 +1,4 @@
 import { Text } from 'react-native';
-import { type Href } from 'expo-router';
 import { Card, LinkButton } from '../../shared/KangurMobileUi';
 import { createKangurPlanHref } from '../../plan/planHref';
 

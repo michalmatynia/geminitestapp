@@ -1,3 +1,15 @@
+/**
+ * Settings Store Provider
+ * 
+ * React context provider for global settings state management.
+ * Provides:
+ * - Centralized settings store with React Query integration
+ * - Optimistic updates and background revalidation
+ * - Error handling and fallback state management
+ * - Path-aware settings loading and caching
+ * - Type-safe settings access throughout the application
+ */
+
 'use client';
 
 import { usePathname } from 'next/navigation';

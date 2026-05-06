@@ -1,3 +1,15 @@
+/**
+ * Base Marketplace Checkboxes Configuration
+ * 
+ * Configuration for marketplace exclusion checkboxes in product integrations.
+ * Provides:
+ * - Marketplace platform definitions (Allegro, Amazon, etc.)
+ * - Checkbox option configurations with labels and aliases
+ * - Market exclusion settings for product listings
+ * - Integration-specific marketplace handling
+ * - Custom field definitions for marketplace selection
+ */
+
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 

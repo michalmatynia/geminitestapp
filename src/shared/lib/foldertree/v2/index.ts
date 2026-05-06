@@ -1,8 +1,12 @@
 /** @deprecated Do not import from this barrel! Use specific sub-barrel instead */
 export * from './adapter/createMasterFolderTreeAdapterV3';
+export * from './adapter/createMasterFolderTreeNodesAdapter';
+export * from './adapter/createMasterFolderTreeOrderedItemsAdapter';
+export * from './adapter/createMasterFolderTreeProjectionAdapter';
 export * from './adapter/createMasterFolderTreeTransactionAdapter';
 export * from './components/FolderTreeContextMenu';
 export * from './components/FolderTreeViewportV2';
+export * from './components/MasterFolderTreeViewport';
 export * from './hooks/useFolderTreeInstanceV2';
 export * from './hooks/useFolderTreeKeyboardNav';
 export * from './hooks/useFolderTreeProfile';

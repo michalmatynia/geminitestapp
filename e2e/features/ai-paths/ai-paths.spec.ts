@@ -44,7 +44,7 @@ const ensureSignedInForAdmin = async (page: Page): Promise<void> => {
   if (!(await signInHeading.isVisible().catch(() => false))) return;
 
   await page.getByLabel('Email').fill(E2E_ADMIN_EMAIL);
-  await page.getByLabel('Password').fill(E2E_ADMIN_PASSWORD);
+  await page.locator('input[type="password"]').fill(E2E_ADMIN_PASSWORD);
   await page.getByRole('button', { name: /sign in/i }).click();
   await page.waitForURL((url) => url.pathname.startsWith('/admin'), {
     timeout: 20_000,

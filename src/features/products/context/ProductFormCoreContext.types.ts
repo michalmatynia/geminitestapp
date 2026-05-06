@@ -1,3 +1,15 @@
+/**
+ * Product Form Core Context Types
+ * 
+ * Type definitions for product form state management and validation.
+ * Provides:
+ * - Form registration and validation interfaces
+ * - Product draft and image management types
+ * - Form state tracking (unsaved changes, errors)
+ * - Note selection and generation error handling
+ * - React Hook Form integration types
+ */
+
 import type { BaseSyntheticEvent, ComponentType, ReactNode } from 'react';
 import type {
   FieldErrors,

@@ -163,14 +163,19 @@ const logRetryEvent = (params: LogRetryAttemptParams): void => {
   logSystemEvent({
     level: 'warn',
     message: `Retry attempt ${attempt}/${maxAttempts} after ${nextDelay}ms`,
-    source,
+    source: source ?? 'retry-utility',
     error,
     context: {
       attempt,
       maxAttempts,
       delayMs: nextDelay,
     },
-  }).catch((logError) => logger.error('Failed to log retry event', logError));
+  }).catch((logError) => logSystemEvent({
+    level: 'error',
+    message: 'Failed to log retry event',
+    source: 'retry-utility',
+    error: logError,
+  }));
 };
 
 const resolveRetryDecision = (
@@ -370,7 +375,12 @@ export async function withCircuitBreaker<T>(
           failures: state.failures,
           resetTimeoutMs,
         },
-      }).catch((logError) => logger.error('Failed to log circuit breaker event', logError));
+      }).catch((logError) => logSystemEvent({
+        level: 'error',
+        message: 'Failed to log circuit breaker event',
+        source: 'circuit-breaker',
+        error: logError,
+      }));
     }
 
     throw error;

@@ -14,11 +14,10 @@ import {
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import type { PathMeta } from '@/shared/contracts/ai-paths';
 import {
-  FolderTreeViewportV2,
   handleMasterTreeDrop,
+  MasterFolderTreeViewport,
   resolveFolderTreeIconSet,
-  useMasterFolderTreeSearch,
-  useMasterFolderTreeShell,
+  useMasterFolderTreeViewModel,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import { FolderTreePanel } from '@/shared/ui/navigation-and-layout.public';
@@ -57,7 +56,7 @@ type AiPathsMasterTreeContextValue = {
   onCopyPathJson?: ((pathId: string) => void) | undefined;
   openPath: (pathId: string) => void;
   pathClickBehavior: PathClickBehavior;
-  profile: ReturnType<typeof useMasterFolderTreeShell>['profile'];
+  profile: ReturnType<typeof useMasterFolderTreeViewModel>['profile'];
   selectedPathFolderById: Map<string, string>;
   setSelectedTreeNodeId: React.Dispatch<React.SetStateAction<string | null>>;
   showPathHoverActions: boolean;
@@ -555,22 +554,18 @@ export function AiPathsMasterTreePanel(props: AiPathsMasterTreePanelProps): Reac
     [handleMoveFolder, handleMovePathToFolder, handleRenameFolder]
   );
 
-  const {
-    profile,
-    capabilities,
-    appearance: { rootDropUi, resolveIcon },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
+  const tree = useMasterFolderTreeViewModel({
     instance: 'ai_paths',
     nodes: masterNodes,
     selectedNodeId: selectedTreeNodeId,
     adapter: treeAdapter,
+    searchQuery,
   });
-
-  const searchState = useMasterFolderTreeSearch(masterNodes, searchQuery, {
-    config: capabilities.search,
-  });
+  const {
+    profile,
+    appearance: { resolveIcon },
+    controller,
+  } = tree;
 
   const icons = React.useMemo(
     () =>
@@ -609,8 +604,8 @@ export function AiPathsMasterTreePanel(props: AiPathsMasterTreePanelProps): Reac
     findAiPathMasterNodeAncestorIds(masterNodes, nextSelectedNodeId).forEach((ancestorId: string) => {
       controller.expandNode(ancestorId);
     });
-    scrollToNodeRef.current?.(nextSelectedNodeId);
-  }, [activePathId, controller, masterNodes, scrollToNodeRef]);
+    tree.viewport.scrollToNodeRef.current?.(nextSelectedNodeId);
+  }, [activePathId, controller, masterNodes, tree.viewport.scrollToNodeRef]);
 
   const selectedFolderPath = React.useMemo((): string => {
     if (selectedTreeNodeId) {
@@ -731,13 +726,10 @@ export function AiPathsMasterTreePanel(props: AiPathsMasterTreePanelProps): Reac
         }
       >
         <div className={viewportClassName ?? 'min-h-0 flex-1 overflow-auto p-2'}>
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
+          <MasterFolderTreeViewport
+            tree={tree}
             className='space-y-0.5'
             emptyLabel={emptyLabel}
-            rootDropUi={rootDropUi}
-            searchState={searchState}
             resolveDropPosition={(event, { targetId }, ctlr): MasterTreeDropPosition => {
               const targetNode = ctlr.nodes.find(
                 (candidate: MasterTreeNode): boolean => candidate.id === targetId

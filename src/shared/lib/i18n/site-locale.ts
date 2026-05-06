@@ -1,13 +1,18 @@
 /**
  * Site Locale Utilities
  * 
- * Locale management and URL handling for internationalization.
+ * Comprehensive locale management for internationalization.
  * Provides:
- * - Locale list generation from config
- * - URL segment normalization
- * - Localized text handling
- * - Default locale configuration
- * - Locale-aware routing utilities
+ * - Locale detection from URL paths and headers
+ * - Locale validation and normalization
+ * - Default locale fallback handling
+ * - URL prefix stripping and manipulation
+ * - Accept-Language header parsing
+ * - Locale preference resolution
+ * 
+ * This module handles all aspects of locale detection and routing
+ * for the multi-language application, ensuring consistent behavior
+ * across different entry points and user preferences.
  */
 
 import {
@@ -16,18 +21,34 @@ import {
   type SiteI18nConfig,
 } from '@/shared/contracts/site-i18n';
 
+/**
+ * Normalize URL segment by removing leading/trailing slashes
+ */
 const normalizeSegment = (value: string): string => value.trim().replace(/^\/+|\/+$/g, '');
 
+/**
+ * Extract enabled locale codes from configuration
+ */
 const toLocaleList = (config?: SiteI18nConfig): string[] =>
   (config ?? DEFAULT_SITE_I18N_CONFIG).locales
     .filter((locale) => locale.enabled)
     .map((locale) => locale.code.toLowerCase());
 
+/**
+ * Get list of enabled locale codes
+ */
 export const getEnabledSiteLocaleCodes = (config?: SiteI18nConfig): string[] => toLocaleList(config);
 
+/**
+ * Get the default locale code
+ */
 export const getDefaultSiteLocaleCode = (config?: SiteI18nConfig): string =>
   (config ?? DEFAULT_SITE_I18N_CONFIG).defaultLocale.toLowerCase();
 
+/**
+ * Normalize locale string with fallback to default
+ * Ensures returned locale is always valid and supported
+ */
 export const normalizeSiteLocale = (
   locale: string | null | undefined,
   config?: SiteI18nConfig
@@ -42,6 +63,9 @@ export const normalizeSiteLocale = (
     : getDefaultSiteLocaleCode(config);
 };
 
+/**
+ * Check if locale is supported by the application
+ */
 export const isSupportedSiteLocale = (
   locale: string | null | undefined,
   config?: SiteI18nConfig

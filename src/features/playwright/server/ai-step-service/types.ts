@@ -56,4 +56,20 @@ export type PlaywrightVerificationInjectionConfig<TReview> = {
   goal: string | ((review: TReview, capture: PlaywrightCapturedPageObservation) => string);
   systemPrompt?: string | null | undefined;
   maxIterations?: number | null | undefined;
+  capability?: string | null | undefined;
+  defaultModelId?: string | null | undefined;
+};
+
+export type PlaywrightInjectionConversationMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+export type PlaywrightInjectionResult = {
+  code: string;
+  done: boolean;
+  reasoning: string;
+  modelId: string;
+  rawText: string;
+  userMessageText: string;
 };

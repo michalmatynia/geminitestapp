@@ -1,3 +1,15 @@
+/**
+ * Base UI Contracts
+ * 
+ * Foundational type definitions for UI components and interactions.
+ * Provides:
+ * - Option and selection types for dropdowns and pickers
+ * - List response patterns with pagination
+ * - Status and request state management
+ * - Modal state and interaction contracts
+ * - Common UI component prop interfaces
+ */
+
 import type { ReactNode, MouseEvent } from 'react';
 
 export type {

@@ -128,7 +128,12 @@ const buildCategorySequencerContext = (
   actionKey: 'tradera_fetch_categories',
   emit: () => undefined,
   log: (msg, ctx) => {
-    logger.info(msg, ctx as Record<string, unknown>);
+    logSystemEvent({
+      level: 'info',
+      message: msg,
+      source: 'tradera-fetch-categories',
+      context: ctx as Record<string, unknown>,
+    });
   },
 });
 
@@ -142,19 +147,26 @@ const logCategoryFetchResult = (
 ): void => {
   const withParent = categories.filter(isChildCategory);
 
-  logger.info(config.logLabel, {
-    categorySource: result.categorySource,
-    total: categories.length,
-    withParentCount: withParent.length,
-    rootCount: categories.length - withParent.length,
-    scrapedFrom: result.scrapedFrom,
+  logSystemEvent({
+    level: 'info',
+    message: config.logLabel,
+    source: 'tradera-fetch-categories',
+    context: {
+      categorySource: result.categorySource,
+      total: categories.length,
+      withParentCount: withParent.length,
+      rootCount: categories.length - withParent.length,
+      scrapedFrom: result.scrapedFrom,
+    },
+  });
+  return {
     sampleCategories: categories.slice(0, 5).map((category) => ({
       id: category.id,
       name: category.name,
       parentId: category.parentId,
     })),
     crawlStats: result.crawlStats,
-  });
+  };
 };
 
 function assertCategoryFetchResult(

@@ -1,3 +1,15 @@
+/**
+ * Product Security Module
+ * 
+ * Comprehensive security layer for product-related operations.
+ * Provides:
+ * - Input sanitization and XSS prevention
+ * - Rate limiting and DoS protection
+ * - Secure file upload handling
+ * - Security middleware integration
+ * - Threat detection and logging
+ */
+
 // Input sanitization
 export * from './input-sanitization';
 

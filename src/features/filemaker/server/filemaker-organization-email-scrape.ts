@@ -260,7 +260,14 @@ export const buildFilemakerOrganizationEmailScrapeScript = (): string => `
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
           await page.goto(href, { waitUntil: 'domcontentloaded', timeout: 30000 });
-          try { await page.waitForLoadState('networkidle', { timeout: 5000 }); } catch (e) {}
+          try { await page.waitForLoadState('networkidle', { timeout: 5000 }); } catch (e) {
+            logSystemEvent({
+              level: 'warn',
+              message: 'Network idle wait timed out, proceeding',
+              source: 'filemaker-scraper',
+              context: { error: String(e) }
+            });
+          }
           return true;
         } catch (error) {
           lastError = error;

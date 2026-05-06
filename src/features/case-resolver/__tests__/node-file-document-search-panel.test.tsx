@@ -1,9 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { NodeFileDocumentSearchPanel } from '@/features/case-resolver/components/NodeFileDocumentSearchPanel';
 import { buildRelationMasterTree } from '@/features/case-resolver/relation-search/tree/relation-master-tree';
+import { ToastProvider } from '@/shared/ui/primitives.public';
 
 const contextValue = (() => {
   const row = {
@@ -68,7 +70,20 @@ const expandVisibleNodes = (): void => {
 
 describe('NodeFileDocumentSearchPanel tree mode', () => {
   it('adds selected document from tree action button to canvas', () => {
-    render(<NodeFileDocumentSearchPanel />);
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <NodeFileDocumentSearchPanel />
+        </ToastProvider>
+      </QueryClientProvider>
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /explanatory node/i }));
 

@@ -1,13 +1,18 @@
 /**
  * Application Logger
  * 
- * Centralized logging utility with observability integration.
+ * Centralized logging utility with comprehensive observability integration.
  * Features:
- * - Consistent logging interface across client and server
+ * - Consistent logging interface across client and server environments
  * - OpenTelemetry context integration for distributed tracing
- * - Configurable log handlers for different environments
- * - Error reporting and observability fallbacks
+ * - Request context propagation (requestId, traceId, userId)
+ * - Configurable log handlers for different output targets
+ * - Error reporting with observability fallbacks
  * - Structured logging with metadata support
+ * - Environment-aware logging (browser vs server)
+ * 
+ * This logger provides a unified interface while integrating with
+ * the application's observability stack for comprehensive monitoring.
  */
 
 import { getActiveOtelContextAttributes } from '@/shared/lib/observability/otel-context';
@@ -15,13 +20,13 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 /**
- * Simple logger utility to provide a consistent interface for logging.
- * This can be expanded to log to external services or files if needed.
- * Integrates with observability systems for comprehensive monitoring.
+ * Log level enumeration for consistent severity classification
  */
-
 type LogLevel = 'info' | 'warn' | 'error' | 'log';
 
+/**
+ * Log handler function signature for pluggable output targets
+ */
 export type LogHandler = (
   level: LogLevel,
   message: string,
@@ -29,6 +34,9 @@ export type LogHandler = (
   context?: Record<string, unknown>
 ) => void;
 
+/**
+ * Request context snapshot for correlation across distributed systems
+ */
 type RequestContextSnapshot = {
   requestId?: string;
   traceId?: string;
@@ -36,16 +44,27 @@ type RequestContextSnapshot = {
   userId?: string | null;
 };
 
+/**
+ * Request context storage reader interface
+ */
 type RequestContextStorageReader = {
   getStore(): RequestContextSnapshot | undefined;
 };
 
+/**
+ * Global type extension for request context storage
+ */
 type RequestContextGlobal = typeof globalThis & {
   __geminitestappRequestContextStorage?: RequestContextStorageReader;
 };
 
+// Registry of log handlers for different output targets
 const handlers: LogHandler[] = [];
 
+/**
+ * Read current request context for correlation
+ * Returns undefined in browser environments
+ */
 const readRequestContext = (): RequestContextSnapshot | undefined => {
   if (typeof window !== 'undefined') {
     return undefined;

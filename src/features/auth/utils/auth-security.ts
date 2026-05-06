@@ -1,3 +1,15 @@
+/**
+ * Authentication Security Utilities
+ * 
+ * Security policy management and validation for authentication system.
+ * Provides:
+ * - Default security policy configuration
+ * - Password strength requirements
+ * - Account lockout and rate limiting settings
+ * - Security policy validation and clamping
+ * - IP-based rate limiting configuration
+ */
+
 import type { AuthSecurityPolicy } from '@/shared/contracts/auth';
 
 export type { AuthSecurityPolicy };

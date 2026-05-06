@@ -6,6 +6,7 @@ import {
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { buildKangurGameLaunchHref } from '@/features/kangur/ui/services/game-launch';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { resolveModalAgeGroupAccent, resolveModalStatusAccent } from './GamesLibraryGameModal.utils';
 import type {
   GamesLibraryGameModalContextValue,
@@ -37,10 +38,9 @@ export function GamesLibraryGameModalProvider({
 
   const value = useMemo<GamesLibraryGameModalContextValue | null>(() => {
     if (!game) {
-      console.log('GamesLibraryGameModalProvider: game is null');
+      logSystemEvent({ level: 'info', message: 'GamesLibraryGameModalProvider: game is null', source: 'kangur-context' });
       return null;
     }
-
     const resolvedAgeGroupLabel = game.ageGroup
       ? getLocalizedKangurAgeGroupLabel(game.ageGroup, locale)
       : translations('labels.allAgeGroups');

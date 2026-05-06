@@ -15,10 +15,33 @@ import { useKangurMobileResultsLessonMastery } from './useKangurMobileResultsLes
 import { useKangurMobileResultsBadges } from './useKangurMobileResultsBadges';
 import { useKangurMobileResultsDuels } from './useKangurMobileResultsDuels';
 import { KangurMobileScrollScreen } from '../shared/KangurMobileUi';
+import type { ReactElement } from 'react';
 
 const DUELS_ROUTE = createKangurDuelsHref();
 const PROFILE_ROUTE = '/profile' as Href;
 const LESSONS_ROUTE = '/lessons' as Href;
+
+import { type UseKangurMobileResultsResult } from './useKangurMobileResults';
+import { type UseKangurMobileResultsAssignmentsResult } from './useKangurMobileResultsAssignments';
+import { type UseKangurMobileResultsBadgesResult } from './useKangurMobileResultsBadges';
+import { type UseKangurMobileResultsLessonMasteryResult } from './useKangurMobileResultsLessonMastery';
+import { type UseKangurMobileLearnerDuelsSummaryResult } from '../duels/useKangurMobileLearnerDuelsSummary';
+import { type UseKangurMobileLessonCheckpointsResult } from '../lessons/useKangurMobileLessonCheckpoints';
+
+interface ResultsContentProps {
+  results: UseKangurMobileResultsResult;
+  resultsAssignments: UseKangurMobileResultsAssignmentsResult;
+  resultsBadges: UseKangurMobileResultsBadgesResult;
+  lessonMastery: UseKangurMobileResultsLessonMasteryResult;
+  duelResults: UseKangurMobileLearnerDuelsSummaryResult;
+  lessonCheckpoints: UseKangurMobileLessonCheckpointsResult;
+  filterFamily: string | undefined;
+  filterOperation: string | undefined;
+  lessonFocusSummary: string | null;
+  copy: (text: Record<string, string>) => string;
+  locale: string;
+  openDuelSession: (sessionId: string) => void;
+}
 
 function ResultsContent({ 
     results, 
@@ -33,7 +56,7 @@ function ResultsContent({
     copy, 
     locale, 
     openDuelSession 
-}: any) {
+}: ResultsContentProps): ReactElement {
   return (
     <>
       <ResultsOverview results={results} copy={copy} />
@@ -47,6 +70,28 @@ function ResultsContent({
   );
 }
 
+function resolveLessonFocusSummary(
+  weakest: { title: string } | null, 
+  strongest: { title: string } | null, 
+  copy: (text: Record<string, string>) => string
+): string | null {
+  if (weakest !== null) {
+    return copy({
+      de: `Fokus nach den Ergebnissen: ${weakest.title} braucht noch eine schnelle Wiederholung, bevor du wieder Tempo aufbaust.`,
+      en: `Post-results focus: ${weakest.title} still needs a quick review before you build momentum again.`,
+      pl: `Fokus po wynikach: ${weakest.title} potrzebuje jeszcze szybkiej powtórki, zanim znowu wejdziesz w tempo.`,
+    });
+  }
+  if (strongest !== null) {
+    return copy({
+      de: `Stabile Stärke: ${strongest.title} hält das Niveau und eignet sich für einen kurzen sicheren Einstieg.`,
+      en: `Stable strength: ${strongest.title} is holding its level and works well for a short confidence run.`,
+      pl: `Stabilna mocna strona: ${strongest.title} trzyma poziom i nadaje się na krótkie, pewne wejście.`,
+    });
+  }
+  return null;
+}
+
 export function KangurResultsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
@@ -54,35 +99,25 @@ export function KangurResultsScreen(): React.JSX.Element {
     family?: string | string[];
     operation?: string | string[];
   }>();
+  
   const filterFamily = resolveResultsFilterFamily(params.family);
   const filterOperation = resolveResultsFilterOperation(params.operation);
   
-  const results = useKangurMobileResults({
-    family: filterOperation != null ? 'all' : filterFamily,
+  const results: UseKangurMobileResultsResult = useKangurMobileResults({
+    family: filterOperation !== null ? 'all' : filterFamily,
     operation: filterOperation,
   });
-  const duelResults = useKangurMobileResultsDuels();
-  const resultsAssignments = useKangurMobileResultsAssignments();
-  const lessonMastery = useKangurMobileResultsLessonMastery();
-  const resultsBadges = useKangurMobileResultsBadges();
-  const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
-  
-  const weakestLesson = lessonMastery.weakest[0] ?? null;
-  const strongestLesson = lessonMastery.strongest[0] ?? null;
-  
-  const lessonFocusSummary = weakestLesson
-    ? copy({
-        de: `Fokus nach den Ergebnissen: ${weakestLesson.title} braucht noch eine schnelle Wiederholung, bevor du wieder Tempo aufbaust.`,
-        en: `Post-results focus: ${weakestLesson.title} still needs a quick review before you build momentum again.`,
-        pl: `Fokus po wynikach: ${weakestLesson.title} potrzebuje jeszcze szybkiej powtórki, zanim znowu wejdziesz w tempo.`,
-      })
-    : strongestLesson
-      ? copy({
-          de: `Stabile Stärke: ${strongestLesson.title} hält das Niveau und eignet sich für einen kurzen sicheren Einstieg.`,
-          en: `Stable strength: ${strongestLesson.title} is holding its level and works well for a short confidence run.`,
-          pl: `Stabilna mocna strona: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie, pewne wejście.`,
-        })
-      : null;
+  const duelResults: UseKangurMobileLearnerDuelsSummaryResult = useKangurMobileResultsDuels();
+  const resultsAssignments: UseParentDashboardAssignmentsResult = useParentDashboardAssignments() as UseParentDashboardAssignmentsResult;
+  const lessonMastery: UseKangurMobileResultsLessonMasteryResult = useKangurMobileResultsLessonMastery();
+  const resultsBadges: UseKangurMobileResultsBadgesResult = useKangurMobileResultsBadges();
+  const lessonCheckpoints: UseKangurMobileLessonCheckpointsResult = useKangurMobileLessonCheckpoints({ limit: 2 });
+
+  const lessonFocusSummary = resolveLessonFocusSummary(
+      lessonMastery.weakest[0] ?? null, 
+      lessonMastery.strongest[0] ?? null, 
+      copy
+  );
       
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));

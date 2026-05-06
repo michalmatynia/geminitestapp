@@ -34,11 +34,11 @@ export function AdminKangurLessonsManagerPage({
   );
 }
 
-function LessonsManagerContent({ 
-  logic, standalone 
-}: { 
-  logic: UseAdminKangurLessonsManagerLogicReturn; 
-  standalone: boolean 
+function LessonsManagerContent({
+  logic, standalone
+}: {
+  logic: UseAdminKangurLessonsManagerLogicReturn;
+  standalone: boolean
 }): React.JSX.Element {
   const registrySource = useMemo(() => ({
     label: 'Kangur admin lessons manager workspace',
@@ -128,11 +128,8 @@ function LessonsManagerTreePanel({ logic, standalone }: { logic: UseAdminKangurL
       activeAgeGroupLabel={logic.activeAgeGroupLabel}
       treeSearchQuery={logic.treeSearchQuery}
       onTreeSearchChange={logic.handleTreeSearchChange}
-      searchEnabled={logic.capabilities.search.enabled}
-      searchState={logic.searchState}
-      controller={logic.controller}
-      scrollToNodeRef={logic.scrollToNodeRef}
-      rootDropUi={logic.rootDropUi}
+      searchEnabled={logic.tree.capabilities.search.enabled}
+      tree={logic.tree}
       renderNode={logic.renderTreeNode}
       onAddGeometryPack={() => { void logic.handleAddGeometryPack(); }}
       onAddLogicalThinkingPack={() => { void logic.handleAddLogicalThinkingPack(); }}

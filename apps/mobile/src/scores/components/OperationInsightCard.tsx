@@ -15,30 +15,9 @@ import {
 import { createKangurResultsHref } from '../resultsHref';
 import { getOperationTone } from '../results-primitives';
 
-export function OperationInsightCard({
-  description,
-  lessonHref,
-  operation,
-  practiceLabel,
-  title,
-}: {
-  description: string;
-  lessonHref?: Href;
-  operation: KangurMobileOperationPerformance;
-  practiceLabel: string;
-  title: string;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
+function InsightPills({ operation, copy }: { operation: KangurMobileOperationPerformance, copy: ReturnType<typeof useKangurMobileI18n>['copy'] }): React.JSX.Element {
   const operationTone = getOperationTone(operation.family);
-
   return (
-    <InsetPanel gap={10} style={{ flexBasis: '48%' }}>
-      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
-      <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-        {formatKangurMobileScoreOperation(operation.operation, locale)}
-      </Text>
-      <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>{description}</Text>
-
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Pill
           label={copy({
@@ -61,6 +40,33 @@ export function OperationInsightCard({
           }}
         />
       </View>
+  );
+}
+
+export function OperationInsightCard({
+  description,
+  lessonHref,
+  operation,
+  practiceLabel,
+  title,
+}: {
+  description: string;
+  lessonHref?: Href;
+  operation: KangurMobileOperationPerformance;
+  practiceLabel: string;
+  title: string;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+
+  return (
+    <InsetPanel gap={10} style={{ flexBasis: '48%' }}>
+      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
+      <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+        {formatKangurMobileScoreOperation(operation.operation, locale)}
+      </Text>
+      <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>{description}</Text>
+
+      <InsightPills operation={operation} copy={copy} />
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton
@@ -69,7 +75,7 @@ export function OperationInsightCard({
           tone='primary'
         />
 
-        {lessonHref !== undefined && lessonHref !== null ? (
+        {typeof lessonHref === 'string' && lessonHref !== '' && (
           <LinkButton
             href={lessonHref}
             label={copy({
@@ -78,12 +84,10 @@ export function OperationInsightCard({
               pl: 'Otwórz lekcję',
             })}
           />
-        ) : null}
+        )}
 
         <LinkButton
-          href={createKangurResultsHref({
-            operation: operation.operation,
-          })}
+          href={createKangurResultsHref({ operation: operation.operation })}
           label={copy({
             de: 'Modusverlauf',
             en: 'Mode history',

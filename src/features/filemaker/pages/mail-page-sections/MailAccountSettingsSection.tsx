@@ -1,6 +1,7 @@
-import { RefreshCcw } from 'lucide-react';
+import { KeyRound, RefreshCcw, ShieldCheck, Unlink } from 'lucide-react';
 import React, { useMemo } from 'react';
 
+import { GoogleOAuthCredentialsSettings } from '@/shared/lib/oauth/components/GoogleOAuthCredentialsSettings';
 import { Button } from '@/shared/ui/primitives.public';
 
 import { evaluateFilemakerMailAccountDmarcAlignment } from '../../mail-utils';
@@ -8,6 +9,8 @@ import { useMailPageContext } from '../FilemakerMail.context';
 import { MailAccountSettingsForm } from './MailAccountSettingsSection.form';
 
 import type { MailPageState } from '../AdminFilemakerMailPage.hooks';
+
+const GOOGLE_OAUTH_CREDENTIALS_SECTION_ID = 'filemaker-google-oauth-credentials';
 
 const hasStoredDkimPrivateKey = (settingKey: string | null | undefined): boolean =>
   (settingKey ?? '').trim().length > 0;
@@ -17,14 +20,67 @@ const formatNullableTimestamp = (value: string | null | undefined): string => {
   return normalized.length > 0 ? new Date(normalized).toLocaleString() : 'Never';
 };
 
+const GoogleAuthActions = ({
+  selectedAccount,
+  handleDisconnectGoogleAccount,
+}: Pick<
+  MailPageState,
+  'selectedAccount' | 'handleDisconnectGoogleAccount'
+>): React.JSX.Element | null => {
+  if (selectedAccount === null) return null;
+  return (
+    <>
+      <Button
+        type='button'
+        size='sm'
+        variant='outline'
+        onClick={(): void => {
+          window.location.assign(
+            `/api/filemaker/mail/google/oauth/start?accountId=${encodeURIComponent(
+              selectedAccount.id
+            )}`
+          );
+        }}
+      >
+        <ShieldCheck className='mr-2 size-4' />
+        {selectedAccount.authMode === 'google_oauth' ? 'Reconnect Google' : 'Connect Google'}
+      </Button>
+      <Button type='button' size='sm' variant='outline' asChild>
+        <a href={`#${GOOGLE_OAUTH_CREDENTIALS_SECTION_ID}`}>
+          <KeyRound className='mr-2 size-4' />
+          Configure credentials
+        </a>
+      </Button>
+      {selectedAccount.authMode === 'google_oauth' ? (
+        <Button
+          type='button'
+          size='sm'
+          variant='outline'
+          onClick={(): void => {
+            handleDisconnectGoogleAccount(selectedAccount.id).catch(() => undefined);
+          }}
+        >
+          <Unlink className='mr-2 size-4' />
+          Disconnect Google
+        </Button>
+      ) : null}
+    </>
+  );
+};
+
 const AccountHeader = ({
   selectedAccountLabel,
   selectedAccount,
   syncingAccountId,
   handleSyncAccount,
+  handleDisconnectGoogleAccount,
 }: Pick<
   MailPageState,
-  'selectedAccountLabel' | 'selectedAccount' | 'syncingAccountId' | 'handleSyncAccount'
+  | 'selectedAccountLabel'
+  | 'selectedAccount'
+  | 'syncingAccountId'
+  | 'handleSyncAccount'
+  | 'handleDisconnectGoogleAccount'
 >): React.JSX.Element => (
   <div className='flex flex-wrap items-center justify-between gap-3'>
     <div>
@@ -36,27 +92,59 @@ const AccountHeader = ({
       </div>
     </div>
     {selectedAccount !== null ? (
-      <Button
-        type='button'
-        size='sm'
-        variant='outline'
-        disabled={syncingAccountId === selectedAccount.id}
-        onClick={(): void => {
-          handleSyncAccount(selectedAccount.id).catch(() => undefined);
-        }}
-      >
-        <RefreshCcw className='mr-2 size-4' />
-        {syncingAccountId === selectedAccount.id ? 'Syncing...' : 'Sync'}
-      </Button>
+      <div className='flex flex-wrap gap-2'>
+        <GoogleAuthActions
+          selectedAccount={selectedAccount}
+          handleDisconnectGoogleAccount={handleDisconnectGoogleAccount}
+        />
+        <Button
+          type='button'
+          size='sm'
+          variant='outline'
+          disabled={syncingAccountId === selectedAccount.id}
+          onClick={(): void => {
+            handleSyncAccount(selectedAccount.id).catch(() => undefined);
+          }}
+        >
+          <RefreshCcw className='mr-2 size-4' />
+          {syncingAccountId === selectedAccount.id ? 'Syncing...' : 'Sync'}
+        </Button>
+      </div>
     ) : null}
   </div>
 );
+
+const GoogleAuthErrorBanner = ({
+  googleAuthErrorMessage,
+}: Pick<MailPageState, 'googleAuthErrorMessage'>): React.JSX.Element | null => {
+  if (googleAuthErrorMessage === null) return null;
+  return (
+    <div
+      role='alert'
+      className='rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100'
+    >
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='space-y-1'>
+          <p className='font-medium text-amber-50'>Google connection needs credentials</p>
+          <p>{googleAuthErrorMessage}</p>
+        </div>
+        <Button type='button' size='sm' variant='warning' asChild>
+          <a href={`#${GOOGLE_OAUTH_CREDENTIALS_SECTION_ID}`}>
+            <KeyRound className='mr-2 size-4' />
+            Configure Google OAuth
+          </a>
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 const AccountSummary = ({
   selectedAccount,
 }: Pick<MailPageState, 'selectedAccount'>): React.JSX.Element | null => {
   if (selectedAccount === null) return null;
   const lastSyncError = selectedAccount.lastSyncError?.trim() ?? '';
+  const authMode = selectedAccount.authMode;
   return (
     <div className='grid gap-3 text-xs text-gray-500 md:grid-cols-3'>
       <div>Last sync: {formatNullableTimestamp(selectedAccount.lastSyncedAt)}</div>
@@ -67,6 +155,12 @@ const AccountSummary = ({
           : 'Auto'}
       </div>
       <div>Status: {selectedAccount.status}</div>
+      <div>
+        Auth:{' '}
+        {authMode === 'google_oauth'
+          ? `Google OAuth, connected ${formatNullableTimestamp(selectedAccount.oauthConnectedAt)}`
+          : 'Password/App password'}
+      </div>
       {lastSyncError.length > 0 ? (
         <div className='md:col-span-3 text-red-400'>{lastSyncError}</div>
       ) : null}
@@ -104,8 +198,11 @@ export function MailAccountSettingsSection(): React.JSX.Element {
         selectedAccount={state.selectedAccount}
         syncingAccountId={state.syncingAccountId}
         handleSyncAccount={state.handleSyncAccount}
+        handleDisconnectGoogleAccount={state.handleDisconnectGoogleAccount}
       />
+      <GoogleAuthErrorBanner googleAuthErrorMessage={state.googleAuthErrorMessage} />
       <AccountSummary selectedAccount={state.selectedAccount} />
+      <GoogleOAuthCredentialsSettings id={GOOGLE_OAUTH_CREDENTIALS_SECTION_ID} />
       <MailAccountSettingsForm
         draft={state.draft}
         setDraft={state.setDraft}

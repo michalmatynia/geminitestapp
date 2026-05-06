@@ -7,6 +7,13 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
+export interface FileManagerActionsLogic {
+  deleteSelected: () => Promise<void>;
+  applyTags: () => Promise<void>;
+  deleteFile: (fileId: string) => Promise<void>;
+  isPending: boolean;
+}
+
 export function useFileManagerActionsLogic(
   selectedFiles: ImageFileSelection[],
   setSelectedFiles: (files: ImageFileSelection[]) => void,
@@ -15,7 +22,7 @@ export function useFileManagerActionsLogic(
   bulkTagMode: 'add' | 'replace',
   fileById: Map<string, ExpandedImageFile>,
   parseTagInput: (input: string) => string[]
-) {
+): FileManagerActionsLogic {
   const { toast } = useToast();
   const { confirm } = useConfirm();
   const deleteFileMutation = useDeleteFile();

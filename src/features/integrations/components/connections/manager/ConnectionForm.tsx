@@ -42,6 +42,12 @@ export function ConnectionForm(): React.JSX.Element {
     }
   };
 
+  const handleCreateClick = (): void => {
+    handleCreate().catch(() => {
+      setIsSaving(false);
+    });
+  };
+
   return (
     <FormSection title='Add connection' className='p-4'>
       <div className='space-y-3'>
@@ -52,9 +58,9 @@ export function ConnectionForm(): React.JSX.Element {
           mode='create'
         />
         <FormActions
-          onSave={() => void handleCreate()}
+          onSave={handleCreateClick}
           onCancel={resetForm}
-          saveText='Save connection'
+          saveText='Add connection'
           cancelText='Clear form'
           isSaving={isSaving}
           className='flex-col !gap-2 *:w-full'

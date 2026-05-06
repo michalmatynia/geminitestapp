@@ -9,23 +9,19 @@ export type KangurMobileScoreScope = {
 export const resolveKangurMobileScoreScope = (
   user: KangurUser | null | undefined,
 ): KangurMobileScoreScope | null => {
-  const learnerId = user?.activeLearner?.id?.trim();
-  if (learnerId) {
+  const learnerId = user?.activeLearner?.id;
+  if (typeof learnerId === 'string' && learnerId.trim() !== '') {
     return {
-      identityKey: `learner:${learnerId}`,
-      query: {
-        learner_id: learnerId,
-      },
+      identityKey: `learner:${learnerId.trim()}`,
+      query: { learner_id: learnerId.trim() },
     };
   }
 
-  const email = user?.email?.trim();
-  if (email) {
+  const email = user?.email;
+  if (typeof email === 'string' && email.trim() !== '') {
     return {
-      identityKey: `email:${email.toLowerCase()}`,
-      query: {
-        created_by: email.toLowerCase(),
-      },
+      identityKey: `email:${email.trim().toLowerCase()}`,
+      query: { created_by: email.trim().toLowerCase() },
     };
   }
 

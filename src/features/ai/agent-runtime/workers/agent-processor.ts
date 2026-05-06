@@ -19,7 +19,7 @@ type AgentRunStoreError = {
 };
 
 const isMissingAgentRunStoreError = (error: unknown): error is AgentRunStoreError => {
-  if (!error || typeof error !== 'object') {
+  if (error === null || error === undefined || typeof error !== 'object') {
     return false;
   }
 
@@ -146,10 +146,8 @@ export async function recoverStuckRuns(): Promise<void> {
       }),
     []
   );
-  const rawStuckRuns = stuckRuns as unknown[];
-  if (Array.isArray(rawStuckRuns) && rawStuckRuns.length > 0) {
-    const typedRuns = stuckRuns as any[];
-    await Promise.all(typedRuns.map(async (run) => {
+  if (stuckRuns.length > 0) {
+    await Promise.all(stuckRuns.map(async (run) => {
       const resumePlanState =
         run.planState !== null && typeof run.planState === 'object'
           ? {

@@ -14,7 +14,10 @@
 
 import React, { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 
-import { useIntegrationListingBadges } from '@/features/integrations/product-integrations-adapter';
+import {
+  useDefaultTraderaConnection,
+  useIntegrationListingBadges,
+} from '@/features/integrations/product-integrations-adapter';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
@@ -206,9 +209,13 @@ const useProductListRowRuntimeStoreState = (
 ): ProductListRowRuntimeStoreState => {
   const productIds = useMemo(() => value.data.map((product) => product.id), [value.data]);
   const visibleProductIdSet = useMemo(() => new Set(productIds), [productIds]);
+  const defaultTraderaConnectionQuery = useDefaultTraderaConnection();
+  const isDefaultTraderaConnectionReady =
+    !defaultTraderaConnectionQuery.isLoading && !defaultTraderaConnectionQuery.isPending;
 
   const badgeState = useIntegrationListingBadges(productIds, {
-    enabled: value.rowRuntimeReady ?? true,
+    enabled: (value.rowRuntimeReady ?? true) && isDefaultTraderaConnectionReady,
+    traderaConnectionId: defaultTraderaConnectionQuery.data?.connectionId ?? null,
   });
 
   useProductListListingStatuses({

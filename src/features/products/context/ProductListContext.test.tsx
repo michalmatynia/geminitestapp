@@ -8,11 +8,17 @@ import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/fi
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const {
+  useDefaultTraderaConnectionMock,
   useIntegrationListingBadgesMock,
   useProductListListingStatusesMock,
 } = vi.hoisted(() => ({
+  useDefaultTraderaConnectionMock: vi.fn(),
   useIntegrationListingBadgesMock: vi.fn(),
   useProductListListingStatusesMock: vi.fn(),
+}));
+
+vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
+  useDefaultTraderaConnection: () => useDefaultTraderaConnectionMock(),
 }));
 
 vi.mock('@/features/integrations/hooks/useIntegrationOperations', () => ({
@@ -274,6 +280,11 @@ describe('ProductListProvider runtime bridge', () => {
       )
     );
     useProductListListingStatusesMock.mockImplementation(() => undefined);
+    useDefaultTraderaConnectionMock.mockReturnValue({
+      data: { connectionId: 'connection-tradera-1' },
+      isLoading: false,
+      isPending: false,
+    });
   });
 
   it('updates row runtime without rerendering table-context consumers when badge polling changes', async () => {
@@ -349,6 +360,7 @@ describe('ProductListProvider runtime bridge', () => {
 
     expect(useIntegrationListingBadgesMock).toHaveBeenCalledWith(['product-1'], {
       enabled: false,
+      traderaConnectionId: 'connection-tradera-1',
     });
   });
 

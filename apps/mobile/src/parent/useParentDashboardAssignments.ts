@@ -1,24 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import type { Href } from 'expo-router';
 import type { KangurAssignmentSnapshot } from '@kangur/contracts/kangur';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { createKangurLessonHref } from '../lessons/lessonHref';
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import type { KangurMobileParentAssignmentItem, KangurMobileParentAssignmentMonitoring } from './parent-dashboard-types';
-
-const resolveAssignmentHref = (assignment: KangurAssignmentSnapshot) => {
-  if (assignment.target.type === 'lesson') return createKangurLessonHref(assignment.target.lessonComponentId);
-  if (assignment.target.type === 'practice') return createKangurPracticeHref(assignment.target.operation);
-  return null;
-};
-
-const getPriorityRank = (priority: KangurAssignmentSnapshot['priority']) => (priority === 'high' ? 0 : priority === 'medium' ? 1 : 2);
-
-const sortAssignments = (assignments: KangurAssignmentSnapshot[]) =>
-  [...assignments].sort((left, right) => {
-    const priorityDelta = getPriorityRank(left.priority) - getPriorityRank(right.priority);
-    return priorityDelta !== 0 ? priorityDelta : Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
-  });
 
 const buildAssignmentMonitoring = (assignments: KangurAssignmentSnapshot[]): KangurMobileParentAssignmentMonitoring =>
   assignments.reduce<KangurMobileParentAssignmentMonitoring>(
@@ -28,7 +15,7 @@ const buildAssignmentMonitoring = (assignments: KangurAssignmentSnapshot[]): Kan
       const isPractice = assignment.target.type === 'practice';
       const isCompleted = assignment.progress.status === 'completed';
       const isInProgress = assignment.progress.status === 'in_progress';
-      
+
       return {
         highPriorityCount: summary.highPriorityCount + (isHigh ? 1 : 0),
         lessonCount: summary.lessonCount + (isLesson ? 1 : 0),
@@ -42,10 +29,37 @@ const buildAssignmentMonitoring = (assignments: KangurAssignmentSnapshot[]): Kan
     { completedCount: 0, highPriorityCount: 0, inProgressCount: 0, lessonCount: 0, notStartedCount: 0, practiceCount: 0, totalCount: 0 },
   );
 
-export function useParentDashboardAssignments(canAccessDashboard: boolean, selectedLearnerId: string | null) {
+const resolveAssignmentHref = (assignment: KangurAssignmentSnapshot): Href | null => {
+  const target = assignment.target;
+  if (target.type === 'lesson') return createKangurLessonHref(target.lessonComponentId);
+  return createKangurPracticeHref(target.operation);
+};
+
+const getPriorityRank = (priority: KangurAssignmentSnapshot['priority']): number => {
+    switch (priority) {
+        case 'high': return 0;
+        case 'medium': return 1;
+        default: return 2;
+    }
+};
+
+const sortAssignments = (assignments: KangurAssignmentSnapshot[]): KangurAssignmentSnapshot[] =>
+  [...assignments].sort((left, right) => {
+    const priorityDelta = getPriorityRank(left.priority) - getPriorityRank(right.priority);
+    return priorityDelta !== 0 ? priorityDelta : Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
+  });
+
+export function useParentDashboardAssignments(
+    canAccessDashboard: boolean, 
+    selectedLearnerId: string | null
+): { 
+    assignmentsQuery: UseQueryResult<KangurAssignmentSnapshot[], Error>; 
+    assignmentMonitoring: KangurMobileParentAssignmentMonitoring; 
+    assignmentItems: KangurMobileParentAssignmentItem[] 
+} {
   const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
   
-  const assignmentsQuery = useQuery({
+  const assignmentsQuery = useQuery<KangurAssignmentSnapshot[], Error>({
     enabled: canAccessDashboard && selectedLearnerId !== null,
     queryKey: ['kangur-mobile', 'parent-dashboard', 'assignments', apiBaseUrl, selectedLearnerId ?? 'none'],
     queryFn: async (): Promise<KangurAssignmentSnapshot[]> => apiClient.listAssignments({ includeArchived: false }, { cache: 'no-store' }),

@@ -684,7 +684,7 @@ export function LessonsCatalog() {
     if (typeof window === 'undefined') return;
 
 
-    let timeoutId: number | null = null;
+    const timeoutId: number | null = null;
     const frameId = safeRequestAnimationFrame(() => {
       setIsPageContentReady(true);
     });

@@ -72,18 +72,17 @@ import type {
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import { readFilemakerCampaignSettingValue } from './campaign-settings-store';
-import {
-  detectFilemakerCampaignReplyContext,
-  recordFilemakerCampaignReply,
-} from './campaign-reply-detector';
-import {
-  filterFilemakerMailSuppressionEntries,
-  recordFilemakerMailBounceSuppressions,
-  recordFilemakerMailComplaintSuppressions,
-} from './campaign-suppression';
-import { imapService } from './mail-service/imap';
-import { mailProcessor } from './mail-service/processor';
+import { campaignReplyService } from './mail-service/campaign-reply';
+import { suppressionService } from './mail-service/suppression';
 import { mailStorage as storage } from './mail-service/storage';
+import {
+  isLikelyFilemakerMailBounceMessage,
+  isLikelyFilemakerMailComplaintMessage,
+  parseFilemakerMailComplaintReport,
+  parseFilemakerMailDsnReport,
+} from './mail/mail-dsn';
+import { createImapClient, listImapMailboxes } from './mail/mail-imap';
+import { parseMailSource } from './mail/mail-processor';
 
 /* eslint-disable
    @typescript-eslint/explicit-function-return-type,
@@ -671,7 +670,7 @@ const syncMailboxMessages = async (input: {
 
         let campaignReplyContext = existingMessage?.campaignContext ?? null;
         if (!campaignReplyContext && direction === 'inbound' && referenceIds.length > 0) {
-          campaignReplyContext = await detectFilemakerCampaignReplyContext({
+          campaignReplyContext = await campaignReplyService.detectContext({
             accountId: input.account.id,
             references: referenceIds,
           });
@@ -714,7 +713,7 @@ const syncMailboxMessages = async (input: {
         await storage.upsertMailMessage(nextMessage);
 
         if (!existingMessage && campaignReplyContext && direction === 'inbound') {
-          void recordFilemakerCampaignReply({
+          void campaignReplyService.recordReply({
             campaignContext: campaignReplyContext,
             replyMessage: nextMessage,
           }).catch(() => {});
@@ -727,7 +726,7 @@ const syncMailboxMessages = async (input: {
         ) {
           const report = parseFilemakerMailDsnReport(parsed);
           if (report.isPermanent && report.bouncedAddresses.length > 0) {
-            void recordFilemakerMailBounceSuppressions({
+            void suppressionService.recordBounce({
               addresses: report.bouncedAddresses,
               notes: `Auto-suppressed after inbound DSN${
                 report.status ? ` (status ${report.status})` : ''
@@ -746,7 +745,7 @@ const syncMailboxMessages = async (input: {
         ) {
           const complaint = parseFilemakerMailComplaintReport(parsed);
           if (complaint.complainedAddresses.length > 0) {
-            void recordFilemakerMailComplaintSuppressions({
+            void suppressionService.recordComplaint({
               addresses: complaint.complainedAddresses,
               notes: `Auto-suppressed after ARF complaint${
                 complaint.feedbackType ? ` (${complaint.feedbackType})` : ''
@@ -1320,7 +1319,7 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
   const recipientSummary = dedupeFilemakerMailParticipants([...to, ...cc, ...bcc]);
 
   if (!input.overrideSuppression) {
-    const suppressed = await filterFilemakerMailSuppressionEntries(
+    const suppressed = await suppressionService.filterEntries(
       recipientSummary.map((participant) => participant.address)
     );
     if (suppressed.length > 0) {

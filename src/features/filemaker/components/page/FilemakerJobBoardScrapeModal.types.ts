@@ -5,7 +5,6 @@ import type {
   FilemakerJobBoardScrapeMode,
   FilemakerJobBoardScrapeOfferResult,
   FilemakerJobBoardScrapeWriteResult,
-  FilemakerJobBoardScrapedOffer,
 } from '@/features/filemaker/filemaker-job-board-scrape-contracts';
 import type { FilemakerJobListingStatus } from '@/features/filemaker/types';
 import type { OfferProgressTracker } from './job-board-scrape-progress';

@@ -24,10 +24,8 @@ const HOME_BADGE_RECENT_LIMIT = 3;
 
 let badgeById: Map<string, { id: string; emoji: string; name: string }> | null = null;
 
-const getBadgeById = () => {
-  if (!badgeById) {
-    badgeById = new Map(KANGUR_BADGES.map((badge) => [badge.id, badge]));
-  }
+const getBadgeById = (): Map<string, { id: string; emoji: string; name: string }> => {
+  badgeById ??= new Map(KANGUR_BADGES.map((badge) => [badge.id, badge]));
   return badgeById;
 };
 

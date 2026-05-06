@@ -249,6 +249,72 @@ const isPersonLastNameCompatible = (
   return false;
 };
 
+const findBestPersonMatch = (
+  database: FilemakerDatabase,
+  candidate: PromptExploderCaseResolverPartyCandidate,
+  personFirst: string,
+  personLast: string
+): { id: string; score: number; name: string } | null => {
+  let bestPerson: { id: string; score: number; name: string } | null = null;
+  for (const person of database.persons) {
+    const first = normalizeCaseResolverComparable(person.firstName);
+    const last = normalizeCaseResolverComparable(person.lastName);
+    if (personFirst && first !== personFirst) continue;
+    if (personLast && !isPersonLastNameCompatible(personLast, last)) continue;
+    
+    const addressScore = scoreAddressCompatibility(candidate, {
+      street: person.street,
+      streetNumber: person.streetNumber,
+      city: person.city,
+      postalCode: person.postalCode,
+      country: person.country,
+    });
+    if (addressScore === null) continue;
+    
+    const nameScore = (personFirst ? 3 : 0) + (personLast ? 3 : 0);
+    const score = nameScore + addressScore;
+    if (!bestPerson || score > bestPerson.score) {
+      bestPerson = {
+        id: person.id,
+        score,
+        name: `${person.firstName} ${person.lastName}`.trim(),
+      };
+    }
+  }
+  return bestPerson;
+};
+
+const findBestOrganizationMatch = (
+  database: FilemakerDatabase,
+  candidate: PromptExploderCaseResolverPartyCandidate,
+  organizationName: string
+): { id: string; score: number; name: string } | null => {
+  let bestOrganization: { id: string; score: number; name: string } | null = null;
+  for (const organization of database.organizations) {
+    const nameScore = scoreOrganizationNameCompatibility(organizationName, organization.name);
+    if (nameScore === 0) continue;
+    
+    const addressScore = scoreAddressCompatibility(candidate, {
+      street: organization.street,
+      streetNumber: organization.streetNumber,
+      city: organization.city,
+      postalCode: organization.postalCode,
+      country: organization.country,
+    });
+    if (addressScore === null) continue;
+    
+    const score = nameScore + addressScore;
+    if (!bestOrganization || score > bestOrganization.score) {
+      bestOrganization = {
+        id: organization.id,
+        score,
+        name: organization.name,
+      };
+    }
+  }
+  return bestOrganization;
+};
+
 export const findExistingFilemakerPartyReference = (
   database: FilemakerDatabase,
   candidate: PromptExploderCaseResolverPartyCandidate
@@ -258,74 +324,30 @@ export const findExistingFilemakerPartyReference = (
   const personFirst = normalizeCaseResolverComparable(personName.firstName);
   const personLast = normalizeCaseResolverComparable(personName.lastName);
 
-  let bestPerson: { id: string; score: number; name: string } | null = null;
   if (kindHint !== 'organization' && (personFirst || personLast)) {
-    for (const person of database.persons) {
-      const first = normalizeCaseResolverComparable(person.firstName);
-      const last = normalizeCaseResolverComparable(person.lastName);
-      if (personFirst && first !== personFirst) continue;
-      if (personLast && !isPersonLastNameCompatible(personLast, last)) continue;
-      const addressScore = scoreAddressCompatibility(candidate, {
-        street: person.street,
-        streetNumber: person.streetNumber,
-        city: person.city,
-        postalCode: person.postalCode,
-        country: person.country,
-      });
-      if (addressScore === null) continue;
-      const nameScore = (personFirst ? 3 : 0) + (personLast ? 3 : 0);
-      const score = nameScore + addressScore;
-      if (!bestPerson || score > bestPerson.score) {
-        bestPerson = {
-          id: person.id,
-          score,
-          name: `${person.firstName} ${person.lastName}`.trim(),
-        };
-      }
+    const bestPerson = findBestPersonMatch(database, candidate, personFirst, personLast);
+    if (bestPerson && bestPerson.score >= 4) {
+      return {
+        kind: 'person',
+        id: String(bestPerson.id),
+        displayName: bestPerson.name,
+      };
     }
-  }
-
-  if (bestPerson && bestPerson.score >= 4) {
-    return {
-      kind: 'person',
-      id: String(bestPerson.id),
-      displayName: bestPerson.name,
-    };
   }
 
   const organizationName =
     (candidate.organizationName ?? '').trim() ||
     (candidate.kind === 'organization' ? (candidate.displayName || '').trim() : '');
-  let bestOrganization: { id: string; score: number; name: string } | null = null;
-  if (kindHint !== 'person' && organizationName) {
-    for (const organization of database.organizations) {
-      const nameScore = scoreOrganizationNameCompatibility(organizationName, organization.name);
-      if (nameScore === 0) continue;
-      const addressScore = scoreAddressCompatibility(candidate, {
-        street: organization.street,
-        streetNumber: organization.streetNumber,
-        city: organization.city,
-        postalCode: organization.postalCode,
-        country: organization.country,
-      });
-      if (addressScore === null) continue;
-      const score = nameScore + addressScore;
-      if (!bestOrganization || score > bestOrganization.score) {
-        bestOrganization = {
-          id: organization.id,
-          score,
-          name: organization.name,
-        };
-      }
-    }
-  }
 
-  if (bestOrganization && bestOrganization.score >= 4) {
-    return {
-      kind: 'organization',
-      id: String(bestOrganization.id),
-      displayName: bestOrganization.name,
-    };
+  if (kindHint !== 'person' && organizationName) {
+    const bestOrganization = findBestOrganizationMatch(database, candidate, organizationName);
+    if (bestOrganization && bestOrganization.score >= 4) {
+      return {
+        kind: 'organization',
+        id: String(bestOrganization.id),
+        displayName: bestOrganization.name,
+      };
+    }
   }
   return null;
 };

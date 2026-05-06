@@ -173,4 +173,29 @@ describe('ConnectionList', () => {
       })
     );
   });
+
+  it('marks disabled Tradera connections and blocks test/login actions', () => {
+    useIntegrationsDataMock.mockReturnValue({
+      activeIntegration: {
+        id: 'integration-tradera-1',
+        slug: 'tradera',
+      },
+      connections: [
+        {
+          id: 'conn-tradera-1',
+          integrationId: 'integration-tradera-1',
+          name: 'Tradera Browser',
+          username: 'seller@example.com',
+          enabled: false,
+        },
+      ],
+    });
+
+    render(<ConnectionList />);
+
+    expect(screen.getByText('Disabled')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Test' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Login window' })).toBeDisabled();
+  });
 });

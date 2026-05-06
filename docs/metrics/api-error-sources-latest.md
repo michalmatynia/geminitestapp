@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-15'
+last_reviewed: '2026-05-06'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,24 +8,32 @@ canonical: true
 ---
 # API Error Sources Check
 
-Generated at: 2026-04-15T10:54:05.929Z
+Generated at: 2026-05-06T10:36:24.920Z
 
 ## Summary
 
-- Status: PASSED
-- Route files scanned: 313
-- Handler files scanned: 450
+- Status: WARN
+- Route files scanned: 391
+- Handler files scanned: 538
 - Errors: 0
-- Warnings: 0
+- Warnings: 5
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| unchecked-req-json | 0 | 4 | 0 |
+| raw-new-response | 0 | 1 | 0 |
 
 ## Issues
 
-All API error sources are consistent.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | raw-new-response | src/app/api/ai-paths/runs/[runId]/stream/handler.ts:469 | Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse. |
+| WARN | unchecked-req-json | src/app/api/filemaker/cvs/export-pdf/handler.ts:16 | req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation. |
+| WARN | unchecked-req-json | src/app/api/filemaker/invoices/export-pdf/handler.ts:21 | req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation. |
+| WARN | unchecked-req-json | src/app/api/filemaker/organizations/job-board-scrape/classifications/handler.ts:10 | req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation. |
+| WARN | unchecked-req-json | src/app/api/playwright/scripters/handler.ts:22 | req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation. |
 
 ## Notes
 

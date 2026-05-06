@@ -1,52 +1,83 @@
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
-import { useKangurMobileScoreHistory } from '../scores/useKangurMobileScoreHistory';
-import { useParentDashboardAssignments } from './useParentDashboardAssignments';
-import { useParentDashboardProgress } from './useParentDashboardProgress';
+import { useKangurMobileScoreHistory, type UseKangurMobileScoreHistoryResult } from '../scores/useKangurMobileScoreHistory';
+import { useParentDashboardAssignments, type UseParentDashboardAssignmentsResult } from './useParentDashboardAssignments';
+import { useParentDashboardProgress, type UseParentDashboardProgressResult } from './useParentDashboardProgress';
 import { useParentDashboardResults } from './useParentDashboardResults';
 import { useParentDashboardLearner } from './useParentDashboardLearner';
 import { type UseKangurMobileParentDashboardResult } from './parent-dashboard-types';
 
+function resolveDashboardError(
+  error: Error | null,
+  copy: (text: Record<string, string>) => string,
+  type: 'assignments' | 'progress' | 'results'
+): string | null {
+    if (!(error instanceof Error)) return null;
+    const labels = {
+      assignments: { de: 'Aufgaben-Ladefehler.', en: 'Assignment load error.', pl: 'Błąd ładowania zadań.' },
+      progress: { de: 'Fortschritts-Ladefehler.', en: 'Progress load error.', pl: 'Błąd ładowania postępu.' },
+      results: { de: 'Ergebnis-Ladefehler.', en: 'Result load error.', pl: 'Błąd ładowania wyników.' },
+    };
+    return copy(labels[type]);
+}
+
+function useDashboardErrors(
+  assignments: UseParentDashboardAssignmentsResult,
+  progress: UseParentDashboardProgressResult,
+  recentResults: UseKangurMobileScoreHistoryResult,
+  copy: (text: Record<string, string>) => string
+): { assignmentsError: string | null; progressError: string | null; resultsError: string | null } {
+    const assignmentsError = resolveDashboardError(assignments.assignmentsQuery.error, copy, 'assignments');
+    const progressError = resolveDashboardError(progress.progressQuery.error, copy, 'progress');
+    const resultsError = resolveDashboardError(recentResults.error instanceof Error ? recentResults.error : null, copy, 'results');
+    return { assignmentsError, progressError, resultsError };
+}
+
+function useDashboardLoading(
+    isAuthorized: boolean,
+    assignments: UseParentDashboardAssignmentsResult,
+    progress: UseParentDashboardProgressResult,
+    recentResults: UseKangurMobileScoreHistoryResult
+): { isLoadingAssignments: boolean; isLoadingProgress: boolean; isLoadingResults: boolean } {
+    const isLoadingAssignments = Boolean(isAuthorized && assignments.assignmentsQuery.isLoading);
+    const isLoadingProgress = Boolean(isAuthorized && progress.progressQuery.isLoading);
+    const isLoadingResults = recentResults.isLoading;
+    return { isLoadingAssignments, isLoadingProgress, isLoadingResults };
+}
+
 export const useKangurMobileParentDashboard = (): UseKangurMobileParentDashboardResult => {
   const { copy, locale } = useKangurMobileI18n();
   const { isLoadingAuth, session, supportsLearnerCredentials } = useKangurMobileAuth();
-  
+
   const learnerState = useParentDashboardLearner();
   const canAccessDashboard = session.status === 'authenticated' && Boolean(session.user?.canManageLearners);
-  
-  const assignments = useParentDashboardAssignments(canAccessDashboard, learnerState.selectedLearnerId);
-  const recentResults = useKangurMobileScoreHistory({
-    enabled: canAccessDashboard && learnerState.selectedLearnerId !== null,
-    limit: 5,
-    sort: '-created_date',
+
+  const assignments: UseParentDashboardAssignmentsResult = useParentDashboardAssignments(canAccessDashboard, learnerState.selectedLearnerId);
+  const recentResults: UseKangurMobileScoreHistoryResult = useKangurMobileScoreHistory({
+      enabled: canAccessDashboard && learnerState.selectedLearnerId !== null,
+      limit: 5,
+      sort: '-created_date',
   });
-  const progress = useParentDashboardProgress(canAccessDashboard, learnerState.selectedLearnerId, recentResults.scores, locale);
+  const progress: UseParentDashboardProgressResult = useParentDashboardProgress(canAccessDashboard, learnerState.selectedLearnerId, recentResults.scores, locale);
   const recentResultItems = useParentDashboardResults(recentResults);
 
   const isAuthorized = canAccessDashboard && learnerState.selectedLearnerId !== null;
+  const errors = useDashboardErrors(assignments, progress, recentResults, copy);
+  const loading = useDashboardLoading(isAuthorized, assignments, progress, recentResults);
 
   return {
-    activeLearner: learnerState.activeLearner,
-    assignmentItems: assignments.assignmentItems,
-    assignmentMonitoring: assignments.assignmentMonitoring,
-    assignmentsError: assignments.assignmentsQuery.error instanceof Error ? copy({ de: 'Aufgaben-Ladefehler.', en: 'Assignment load error.', pl: 'Błąd ładowania zadań.' }) : null,
-    canAccessDashboard,
-    isAuthenticated: session.status === 'authenticated',
-    isLoadingAssignments: Boolean(isAuthorized && assignments.assignmentsQuery.isLoading),
-    isLoadingAuth,
-    isLoadingProgress: Boolean(isAuthorized && progress.progressQuery.isLoading),
-    isLoadingResults: recentResults.isLoading,
-    learners: learnerState.learners,
-    parentDisplayName: learnerState.parentDisplayName,
-    progressError: progress.progressQuery.error instanceof Error ? copy({ de: 'Fortschritts-Ladefehler.', en: 'Progress load error.', pl: 'Błąd ładowania postępu.' }) : null,
-    recentResultItems,
-    refreshDashboard: async () => {},
-    resultsError: recentResults.error instanceof Error ? copy({ de: 'Ergebnis-Ladefehler.', en: 'Result load error.', pl: 'Błąd ładowania wyników.' }) : null,
-    selectLearner: async () => {},
-    selectedLearnerId: learnerState.selectedLearnerId,
-    selectionError: learnerState.selectionError,
-    snapshot: progress.snapshot,
-    supportsLearnerCredentials,
-    switchingLearnerId: learnerState.switchingLearnerId,
+      ...learnerState,
+      ...errors,
+      ...loading,
+      assignmentItems: assignments.assignmentItems,
+      assignmentMonitoring: assignments.assignmentMonitoring,
+      canAccessDashboard,
+      isAuthenticated: session.status === 'authenticated',
+      isLoadingAuth,
+      recentResultItems,
+      refreshDashboard: async () => {},
+      selectLearner: async () => {},
+      snapshot: progress.snapshot,
+      supportsLearnerCredentials,
   };
 };

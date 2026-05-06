@@ -97,7 +97,7 @@ function InvitesEmpty({ copy }: { copy: ReturnType<typeof useKangurMobileI18n>['
   );
 }
 
-function InvitesStatusSwitch({
+function getInvitesStatusContent({
   invites,
   copy,
 }: {
@@ -111,7 +111,13 @@ function InvitesStatusSwitch({
     return <InvitesDeferred copy={copy} />;
   }
   if (invites.error !== null && invites.error !== '') {
-    return <InvitesError copy={copy} error={invites.error} refresh={() => { void invites.refresh(); }} />;
+    return (
+      <InvitesError 
+        copy={copy} 
+        error={invites.error} 
+        refresh={() => { void invites.refresh(); }} 
+      />
+    );
   }
   if (invites.invites.length === 0) {
     return <InvitesEmpty copy={copy} />;
@@ -129,7 +135,7 @@ export function AuthenticatedHomeInvitesContent({
   if (!areDeferredHomePanelsReady) return <DeferredDuelSectionPlaceholder />;
   if (!areDeferredHomeDuelSecondaryReady) return <DeferredDuelAdvancedSectionPlaceholder />;
 
-  const statusContent = <InvitesStatusSwitch invites={invites} copy={copy} />;
+  const statusContent = getInvitesStatusContent({ invites, copy });
   if (statusContent !== null) return statusContent;
 
   return (

@@ -460,13 +460,13 @@ export type AiPathsMasterTreeAdapter = {
 export type AiPathsMasterTreePanelProps = {
   activePathId?: string | null;
   adapter?: AiPathsMasterTreeAdapter;
-  handleCreatePath?: AiPathsMasterTreeAdapter["handleCreatePath"];
-  handleDeletePath?: AiPathsMasterTreeAdapter["handleDeletePath"];
-  handleDuplicatePath?: AiPathsMasterTreeAdapter["handleDuplicatePath"];
-  handleMoveFolder?: AiPathsMasterTreeAdapter["handleMoveFolder"];
-  handleMovePathToFolder?: AiPathsMasterTreeAdapter["handleMovePathToFolder"];
-  handleRenameFolder?: AiPathsMasterTreeAdapter["handleRenameFolder"];
-  handleSwitchPath?: AiPathsMasterTreeAdapter["handleSwitchPath"];
+  handleCreatePath?: AiPathsMasterTreeAdapter['handleCreatePath'];
+  handleDeletePath?: AiPathsMasterTreeAdapter['handleDeletePath'];
+  handleDuplicatePath?: AiPathsMasterTreeAdapter['handleDuplicatePath'];
+  handleMoveFolder?: AiPathsMasterTreeAdapter['handleMoveFolder'];
+  handleMovePathToFolder?: AiPathsMasterTreeAdapter['handleMovePathToFolder'];
+  handleRenameFolder?: AiPathsMasterTreeAdapter['handleRenameFolder'];
+  handleSwitchPath?: AiPathsMasterTreeAdapter['handleSwitchPath'];
   bodyClassName?: string | undefined;
   emptyLabel?: string | undefined;
   headerDescription?: string | undefined;

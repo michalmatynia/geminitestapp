@@ -39,6 +39,19 @@ export const KangurMobileHomeProgressSnapshotProvider = ({
   </KangurMobileHomeProgressSnapshotContext.Provider>
 );
 
+const resolveHomeProgressServerSnapshot = (
+  shouldSubscribeToProgressStore: boolean,
+  providedProgress: KangurProgressState | null,
+): (() => KangurProgressState) => {
+  if (shouldSubscribeToProgressStore) {
+    return providedProgress !== null
+      ? () => providedProgress
+      : createDefaultKangurProgressState;
+  }
+
+  return () => providedProgress ?? createDefaultKangurProgressState();
+};
+
 export const useKangurMobileHomeProgressSnapshot = (): KangurProgressState => {
   const providedProgressSnapshot = useContext(KangurMobileHomeProgressSnapshotContext);
   const { progressStore } = useKangurMobileRuntime();
@@ -54,16 +67,10 @@ export const useKangurMobileHomeProgressSnapshot = (): KangurProgressState => {
     ? progressStore.loadProgress
     : () => providedProgress ?? createDefaultKangurProgressState();
 
-  let getServerSnapshot: () => KangurProgressState;
-  if (shouldSubscribeToProgressStore) {
-    if (providedProgress) {
-      getServerSnapshot = () => providedProgress;
-    } else {
-      getServerSnapshot = createDefaultKangurProgressState;
-    }
-  } else {
-    getServerSnapshot = () => providedProgress ?? createDefaultKangurProgressState();
-  }
+  const getServerSnapshot = resolveHomeProgressServerSnapshot(
+    shouldSubscribeToProgressStore,
+    providedProgress,
+  );
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 };

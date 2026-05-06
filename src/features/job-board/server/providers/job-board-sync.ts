@@ -228,17 +228,23 @@ const createRuntimeRequestCommon = async (input: {
   const config = getJobBoardProviderConfig(input.provider);
   const actionRuntimeSettings = await resolveJobBoardActionRuntimeSettings();
   const actionSettingsOverrides = actionRuntimeSettings.settingsOverrides;
+  const hasPersonaId = (input.personaId?.trim() ?? '').length > 0;
   const effectiveHeadless =
     typeof input.headless === 'boolean' ? input.headless : actionSettingsOverrides.headless;
   const launchOptions = buildJobBoardLaunchOptions({
     browserPreference: actionRuntimeSettings.browserPreference,
     headless: effectiveHeadless,
   });
-  const settingsOverrides: Record<string, unknown> = {
-    ...actionSettingsOverrides,
-    identityProfile: actionSettingsOverrides.identityProfile ?? 'search',
-    humanizeMouse: input.humanizeMouse ?? actionSettingsOverrides.humanizeMouse ?? true,
-  };
+  const settingsOverrides: Record<string, unknown> = hasPersonaId
+    ? {}
+    : {
+        ...actionSettingsOverrides,
+        identityProfile: actionSettingsOverrides.identityProfile ?? 'search',
+        humanizeMouse: input.humanizeMouse ?? actionSettingsOverrides.humanizeMouse ?? true,
+      };
+  if (hasPersonaId && typeof input.humanizeMouse === 'boolean') {
+    settingsOverrides.humanizeMouse = input.humanizeMouse;
+  }
   if (typeof effectiveHeadless === 'boolean') {
     settingsOverrides.headless = effectiveHeadless;
   }

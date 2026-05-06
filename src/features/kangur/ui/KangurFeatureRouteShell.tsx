@@ -2,7 +2,7 @@
 
 import { useRouter } from 'nextjs-toploader/app';
 import { usePathname, useSearchParams, useSelectedLayoutSegments } from 'next/navigation';
-import { startTransition, useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import {
@@ -394,39 +394,67 @@ function KangurDedicatedAppLaunchPrompt({
 // lifetime of the Kangur shell mount. Cleans up on unmount so the class
 // doesn't linger if the shell is conditionally rendered.
 function useSyncKangurFeatureRouteShellActiveClass(): void {
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof document === 'undefined') {
       return;
     }
 
-    const serverShell = document.querySelector<HTMLElement>('[data-kangur-server-shell]');
-    const previousAriaHidden = serverShell?.getAttribute('aria-hidden') ?? null;
-    const previousHidden = serverShell?.hasAttribute('hidden') ?? false;
+    const syncedServerShells = new Map<
+      HTMLElement,
+      {
+        ariaHidden: string | null;
+        hidden: boolean;
+      }
+    >();
+    const syncServerShells = (): void => {
+      document
+        .querySelectorAll<HTMLElement>('[data-kangur-server-shell]')
+        .forEach((serverShell) => {
+          if (!syncedServerShells.has(serverShell)) {
+            syncedServerShells.set(serverShell, {
+              ariaHidden: serverShell.getAttribute('aria-hidden'),
+              hidden: serverShell.hasAttribute('hidden'),
+            });
+          }
+
+          serverShell.setAttribute('aria-hidden', 'true');
+          serverShell.setAttribute('hidden', '');
+        });
+    };
 
     document.documentElement.classList.add(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
     document.body.classList.add(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
-    serverShell?.setAttribute('aria-hidden', 'true');
-    serverShell?.setAttribute('hidden', '');
+    syncServerShells();
+
+    const observer =
+      typeof MutationObserver === 'undefined'
+        ? null
+        : new MutationObserver(() => {
+            syncServerShells();
+          });
+    observer?.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
 
     return () => {
+      observer?.disconnect();
       document.documentElement.classList.remove(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
       document.body.classList.remove(KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME);
 
-      if (!serverShell) {
-        return;
-      }
+      syncedServerShells.forEach(({ ariaHidden, hidden }, serverShell) => {
+        if (ariaHidden === null) {
+          serverShell.removeAttribute('aria-hidden');
+        } else {
+          serverShell.setAttribute('aria-hidden', ariaHidden);
+        }
 
-      if (previousAriaHidden === null) {
-        serverShell.removeAttribute('aria-hidden');
-      } else {
-        serverShell.setAttribute('aria-hidden', previousAriaHidden);
-      }
-
-      if (previousHidden) {
-        serverShell.setAttribute('hidden', '');
-      } else {
-        serverShell.removeAttribute('hidden');
-      }
+        if (hidden) {
+          serverShell.setAttribute('hidden', '');
+        } else {
+          serverShell.removeAttribute('hidden');
+        }
+      });
     };
   }, []);
 }

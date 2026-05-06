@@ -185,7 +185,7 @@ export const canPreviewDrafts = async (session: Session | null): Promise<boolean
 
 export const shouldApplyFrontPageAppSelection = (): boolean => {
   const value = (process.env['ENABLE_FRONT_PAGE_APP_REDIRECT'] ?? '').trim().toLowerCase();
-  return value !== '' && value !== 'false' && value !== '0';
+  return value !== 'false' && value !== '0';
 };
 
 const readBootstrappedFrontPageSetting = async (): Promise<FrontPageSelectableApp | null> => {

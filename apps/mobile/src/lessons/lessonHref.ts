@@ -8,7 +8,7 @@ export const createKangurLessonsCatalogHref = (): Href =>
 
 export const createKangurLessonHref = (focus: string | null | undefined): Href => {
   const trimmedFocus = focus?.trim();
-  if (!trimmedFocus) {
+  if (trimmedFocus === '' || trimmedFocus === undefined) {
     return createKangurLessonsCatalogHref();
   }
 
@@ -24,5 +24,5 @@ export const createKangurLessonHrefForPracticeOperation = (
   operation: string | null | undefined,
 ): Href | null => {
   const focus = resolveKangurLessonFocusForPracticeOperation(operation);
-  return focus ? createKangurLessonHref(focus) : null;
+  return focus !== null ? createKangurLessonHref(focus) : null;
 };

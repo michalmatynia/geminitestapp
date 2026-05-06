@@ -79,7 +79,6 @@ import {
 import type {
   FilemakerDatabase,
   FilemakerCv,
-  FilemakerEmailCampaign,
   FilemakerJobApplication,
   FilemakerJobApplicationApplyRun,
   FilemakerJobApplicationApplyRunResponse,
@@ -105,6 +104,7 @@ import {
   toCampaignOption,
   toLexiconOption,
   groupLexiconTermsByCategory,
+  lexiconTermHref,
 } from './OrganizationJobListingsSection.utils';
 import { ResponsibilityLexiconTerms } from './ResponsibilityLexiconTerms';
 

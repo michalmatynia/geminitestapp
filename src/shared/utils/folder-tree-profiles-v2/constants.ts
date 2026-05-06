@@ -161,6 +161,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: filemaker_organization',
     folderHint: 'Example: filemaker_organization_group',
   },
+  filemaker_job_listings: {
+    title: 'Filemaker Job Listings',
+    description: 'Controls the job listing master tree shown in Filemaker.',
+    fileHint: 'Example: filemaker_job_listing',
+    folderHint: 'Not used (job listings render as flat entries).',
+  },
   filemaker_persons: {
     title: 'Filemaker Persons',
     description: 'Controls the person master tree shown in Filemaker.',
@@ -329,6 +335,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Organization tree updated.',
+  },
+  filemaker_job_listings: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Job listing tree updated.',
   },
   filemaker_persons: {
     notifySuccess: false,

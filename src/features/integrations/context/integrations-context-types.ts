@@ -31,6 +31,7 @@ export type {
 
 export const createEmptyConnectionForm = (): ConnectionFormState => ({
   name: '',
+  enabled: true,
   username: '',
   password: '',
   scanner1688StartUrl: 'https://www.1688.com/',

@@ -9,6 +9,9 @@ const { pathToFileURL } = require('url');
 const { resolveWebSocketUpgradeTarget } = require('./scripts/runtime/server-upgrade-routing.cjs');
 
 const dev = process.env.NODE_ENV !== 'production';
+if (dev && !process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development';
+}
 const nodeVersion = process.versions.node || '';
 const nodeMajor = Number((nodeVersion.split('.')[0] || '').trim());
 const allowUnsupportedNodeDev = process.env['ALLOW_UNSUPPORTED_NODE_DEV'] === '1';

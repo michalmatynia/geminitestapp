@@ -102,8 +102,8 @@ const stopAgentQueueInternal = async (): Promise<void> => {
   }
   queueState.recoveryJobRegistered = false;
   if (!queueState.workerStarted) return;
-  await queue.stopWorker();
   queueState.workerStarted = false;
+  await queue.stopWorker();
 };
 
 export function startAgentQueue(): void {
@@ -116,19 +116,17 @@ export function startAgentQueue(): void {
         return;
       }
 
-      const { workerStarted, recoveryJobRegistered } = queueState;
-
-      if (!workerStarted) {
+      if (!queueState.workerStarted) {
         queue.startWorker();
         queueState.workerStarted = true;
       }
 
-      if (!recoveryJobRegistered) {
+      if (!queueState.recoveryJobRegistered) {
+        queueState.recoveryJobRegistered = true;
         await queue.enqueue(
           { runId: '__recovery__', type: 'recovery' },
           { repeat: { every: AGENT_RECOVERY_REPEAT_EVERY_MS }, jobId: 'agent-recovery' }
         );
-        queueState.recoveryJobRegistered = true;
       }
     } catch (err) {
       await ErrorSystem.captureException(err, {

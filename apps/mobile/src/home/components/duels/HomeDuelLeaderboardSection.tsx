@@ -67,6 +67,43 @@ function LeaderboardEmpty({ copy }: { copy: LeaderboardSectionProps['copy'] }): 
   );
 }
 
+function LeaderboardSnapshot({
+  isAuthenticated,
+  currentLearnerDuelEntry,
+  currentLearnerDuelRank,
+  copy,
+  locale,
+}: {
+  isAuthenticated: boolean;
+  currentLearnerDuelEntry: KangurDuelLeaderboardEntry | null;
+  currentLearnerDuelRank: number;
+  copy: LeaderboardSectionProps['copy'];
+  locale: string;
+}): React.JSX.Element | null {
+  if (!isAuthenticated) return null;
+
+  if (currentLearnerDuelEntry !== null) {
+    return (
+      <DuelLeaderboardSnapshotCard
+        copy={copy}
+        entry={currentLearnerDuelEntry}
+        locale={locale}
+        rank={currentLearnerDuelRank + 1}
+      />
+    );
+  }
+
+  return (
+    <Text style={{ color: '#64748b', lineHeight: 20 }}>
+      {copy({
+        de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar.',
+        en: 'Your account is not visible in this duel standing yet.',
+        pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków.',
+      })}
+    </Text>
+  );
+}
+
 function LeaderboardEntries({
   entries,
   activeDuelLearnerId,
@@ -84,33 +121,15 @@ function LeaderboardEntries({
   copy: LeaderboardSectionProps['copy'];
   locale: string;
 }): React.JSX.Element {
-  let snapshotContent: React.ReactNode = null;
-  if (isAuthenticated) {
-    if (currentLearnerDuelEntry !== null) {
-      snapshotContent = (
-        <DuelLeaderboardSnapshotCard
-          copy={copy}
-          entry={currentLearnerDuelEntry}
-          locale={locale}
-          rank={currentLearnerDuelRank + 1}
-        />
-      );
-    } else {
-      snapshotContent = (
-        <Text style={{ color: '#64748b', lineHeight: 20 }}>
-          {copy({
-            de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar.',
-            en: 'Your account is not visible in this duel standing yet.',
-            pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków.',
-          })}
-        </Text>
-      );
-    }
-  }
-
   return (
     <View style={{ gap: 12 }}>
-      {snapshotContent}
+      <LeaderboardSnapshot
+        copy={copy}
+        currentLearnerDuelEntry={currentLearnerDuelEntry}
+        currentLearnerDuelRank={currentLearnerDuelRank}
+        isAuthenticated={isAuthenticated}
+        locale={locale}
+      />
       {entries.map((entry, index) => (
         <DuelLeaderboardEntryCard
           key={entry.learnerId}
@@ -130,6 +149,14 @@ function LeaderboardEntries({
   );
 }
 
+function calculateCurrentLearnerRank(
+  activeDuelLearnerId: string | null,
+  entries: KangurDuelLeaderboardEntry[]
+): number {
+  if (activeDuelLearnerId === null || activeDuelLearnerId === '') return -1;
+  return entries.findIndex((e) => e.learnerId === activeDuelLearnerId);
+}
+
 function LeaderboardContent({
   activeDuelLearnerId,
   isAuthenticated,
@@ -140,14 +167,15 @@ function LeaderboardContent({
   if (duelLeaderboard.isLoading) return <LeaderboardLoading copy={copy} />;
   
   if (duelLeaderboard.error !== null && duelLeaderboard.error !== '') {
-    return <LeaderboardError copy={copy} error={duelLeaderboard.error} refresh={duelLeaderboard.refresh} />;
+    const handleRefresh = (): void => {
+      void duelLeaderboard.refresh();
+    };
+    return <LeaderboardError copy={copy} error={duelLeaderboard.error} refresh={handleRefresh} />;
   }
   
   if (duelLeaderboard.entries.length === 0) return <LeaderboardEmpty copy={copy} />;
 
-  const currentLearnerDuelRank = activeDuelLearnerId !== null && activeDuelLearnerId !== '' 
-    ? duelLeaderboard.entries.findIndex((e) => e.learnerId === activeDuelLearnerId) 
-    : -1;
+  const currentLearnerDuelRank = calculateCurrentLearnerRank(activeDuelLearnerId, duelLeaderboard.entries);
   const currentLearnerDuelEntry = currentLearnerDuelRank >= 0 ? (duelLeaderboard.entries[currentLearnerDuelRank] ?? null) : null;
 
   return (

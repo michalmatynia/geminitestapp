@@ -1,19 +1,83 @@
 {
-  "generatedAt": "2026-04-15T10:54:05.929Z",
-  "status": "passed",
+  "generatedAt": "2026-05-06T10:36:24.920Z",
+  "status": "warn",
   "summary": {
-    "total": 0,
+    "total": 5,
     "errorCount": 0,
-    "warningCount": 0,
+    "warningCount": 5,
     "infoCount": 0,
-    "status": "passed",
-    "routeFileCount": 313,
-    "handlerFileCount": 450
+    "status": "warn",
+    "routeFileCount": 391,
+    "handlerFileCount": 538
   },
   "scope": {
     "root": "src/app/api"
   },
-  "issues": [],
-  "rules": [],
-  "durationMs": 128
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "raw-new-response",
+      "message": "Direct `new Response()` usage. Consider using createErrorResponse/createSuccessResponse.",
+      "file": "src/app/api/ai-paths/runs/[runId]/stream/handler.ts",
+      "line": 469,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/filemaker/cvs/export-pdf/handler.ts",
+      "line": 16,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/filemaker/invoices/export-pdf/handler.ts",
+      "line": 21,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/filemaker/organizations/job-board-scrape/classifications/handler.ts",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/playwright/scripters/handler.ts",
+      "line": 22,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "unchecked-req-json",
+      "errorCount": 0,
+      "warningCount": 4,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "raw-new-response",
+      "errorCount": 0,
+      "warningCount": 1,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 173
 }

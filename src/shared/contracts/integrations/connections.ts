@@ -15,6 +15,7 @@ export const programmablePlaywrightLegacyBrowserMigrationSchema = z.object({
 
 export const integrationConnectionSchema = namedDtoSchema.extend({
   integrationId: z.string(),
+  enabled: z.boolean().optional(),
   username: z.string().optional(),
   password: z.string().optional(),
   hasPlaywrightStorageState: z.boolean().optional(),
@@ -168,6 +169,7 @@ export type ConnectionDependencyCounts = {
 
 export type ConnectionFormState = {
   name: string;
+  enabled: boolean;
   username: string;
   password: string;
   scanner1688StartUrl: string;

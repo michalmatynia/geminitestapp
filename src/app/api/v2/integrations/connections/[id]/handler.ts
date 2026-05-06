@@ -28,6 +28,7 @@ import { resolveJobApplicationPersonFields } from '../../_shared/job-application
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),
+  enabled: z.boolean().optional(),
   username: z.string().trim().optional(),
   password: z.string().trim().optional(),
   jobApplicationPersonId: z.string().trim().nullable().optional(),
@@ -221,6 +222,7 @@ export async function putHandler(
 
   const connection = await repo.updateConnection(id, {
     name: data.name,
+    ...(typeof data.enabled === 'boolean' ? { enabled: data.enabled } : {}),
     ...(typeof normalizedUsername === 'string' ? { username: normalizedUsername } : {}),
     ...(typeof normalizedPassword === 'string' && normalizedPassword
       ? (() => {
@@ -366,6 +368,7 @@ export async function putHandler(
     id: connection.id,
     integrationId: connection.integrationId,
     name: connection.name,
+    enabled: connection.enabled ?? true,
     username: connection.username,
     createdAt: connection.createdAt,
     updatedAt: connection.updatedAt,

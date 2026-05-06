@@ -38,7 +38,7 @@ export async function buildRuntimeAnalyticsPrompt(
   const rawPrompt = await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem);
   const runtimeAnalyticsPromptSystem = (rawPrompt !== null && rawPrompt !== undefined && rawPrompt !== '') ? rawPrompt : DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT;
   const registryPrompt = buildRuntimeAnalyticsInsightContextRegistrySystemPrompt(options?.contextRegistry?.resolved);
-  const systemPrompt = [runtimeAnalyticsPromptSystem, registryPrompt].filter((p): p is string => !!p).join('\n\n');
+  const systemPrompt = [runtimeAnalyticsPromptSystem, registryPrompt].filter((p): p is string => Boolean(p)).join('\n\n');
   const userPrompt = `AI Path Runtime Analytics Summary (${range}):
 ${JSON.stringify(summary, null, 2)}
 

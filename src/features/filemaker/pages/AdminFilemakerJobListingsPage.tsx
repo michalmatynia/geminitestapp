@@ -1,23 +1,32 @@
 'use client';
 
-import { useDeferredValue } from 'react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, {
+  startTransition,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { z } from 'zod';
 
+import { filemakerJobListingSchema } from '@/shared/contracts/filemaker';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
-import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
+import { FilemakerJobListingMasterTreeNode } from '../components/shared/FilemakerJobListingMasterTreeNode';
+import { buildFilemakerJobListingListNodes } from '../entity-master-tree';
 import {
   FILEMAKER_JOB_APPLICATION_SETTINGS_KEY,
   parseFilemakerJobApplicationSettings,
 } from '../filemaker-job-application-settings';
 import type { EnrichedJobListing } from './AdminFilemakerJobListingsPage.components';
 import {
-  JobListingsControls,
-  JobListingsNotice,
+  FilemakerJobListingsListPanel,
   getDisplayPersonName,
-  renderListSection,
 } from './AdminFilemakerJobListingsPage.layout';
 
 const jobApplicationLogEntrySchema = z.object({
@@ -29,27 +38,12 @@ const jobApplicationLogEntrySchema = z.object({
   toStatus: z.string().nullable().optional(),
 });
 
-const enrichedJobListingSchema = z
-  .object({
-    id: z.string(),
-    organizationId: z.string(),
-    title: z.string(),
-    status: z.enum(['open', 'draft', 'paused', 'closed']),
-    organizationName: z.string().nullable().optional(),
-    isApplied: z.boolean(),
-    applicationId: z.string().nullable(),
-    applicationLog: z.array(jobApplicationLogEntrySchema),
-    updatedAt: z.string(),
-    postedAt: z.string().nullable().optional(),
-    location: z.string().nullable().optional(),
-    salaryText: z.string().nullable().optional(),
-    salaryMin: z.number().nullable().optional(),
-    salaryMax: z.number().nullable().optional(),
-    salaryCurrency: z.string().nullable().optional(),
-    sourceSite: z.string().nullable().optional(),
-    sourceUrl: z.string().nullable().optional(),
-  })
-  .passthrough();
+const enrichedJobListingSchema = filemakerJobListingSchema.extend({
+  organizationName: z.string().nullable().optional(),
+  isApplied: z.boolean(),
+  applicationId: z.string().nullable(),
+  applicationLog: z.array(jobApplicationLogEntrySchema),
+});
 
 const jobListingsResponseSchema = z.object({
   listings: z.array(enrichedJobListingSchema),
@@ -135,7 +129,7 @@ type UsePageDataStateResult = {
   listings: EnrichedJobListing[];
   onSearch: (query: string) => void;
   onStatus: (status: string) => void;
-  onResetSearch: () => void;
+  onResetFilters: () => void;
   onRefresh: () => void;
   displayPersonName: string | null;
 };
@@ -177,8 +171,9 @@ const usePageDataState = (): UsePageDataStateResult => {
     listings,
     onSearch: setRawQuery,
     onStatus: setStatus,
-    onResetSearch: () => {
+    onResetFilters: () => {
       setRawQuery('');
+      setStatus('');
     },
     onRefresh: requestRefreshListings,
     displayPersonName: getDisplayPersonName({
@@ -189,7 +184,47 @@ const usePageDataState = (): UsePageDataStateResult => {
   };
 };
 
+function useJobListingRenderNode(input: {
+  defaultPersonId: string;
+  defaultPersonName: string;
+  listings: EnrichedJobListing[];
+  onRefresh: () => void;
+  onOpenJobListing: (organizationId: string, jobListingId: string) => void;
+}): {
+  nodes: MasterTreeNode[];
+  renderNode: (nodeInput: FolderTreeViewportRenderNodeInput) => React.ReactNode;
+} {
+  const { defaultPersonId, defaultPersonName, listings, onOpenJobListing, onRefresh } = input;
+  const nodes = useMemo(() => buildFilemakerJobListingListNodes(listings), [listings]);
+  const jobListingById = useMemo(
+    () =>
+      new Map<string, EnrichedJobListing>(
+        listings.map((listing: EnrichedJobListing): [string, EnrichedJobListing] => [
+          listing.id,
+          listing,
+        ])
+      ),
+    [listings]
+  );
+  const renderNode = useCallback(
+    (nodeInput: FolderTreeViewportRenderNodeInput): React.ReactNode => (
+      <FilemakerJobListingMasterTreeNode
+        {...nodeInput}
+        jobListingById={jobListingById}
+        personId={defaultPersonId}
+        personName={defaultPersonName}
+        onOpenJobListing={onOpenJobListing}
+        onRefreshListings={onRefresh}
+      />
+    ),
+    [defaultPersonId, defaultPersonName, jobListingById, onOpenJobListing, onRefresh]
+  );
+
+  return { nodes, renderNode };
+}
+
 export function AdminFilemakerJobListingsPage(): React.JSX.Element {
+  const router = useRouter();
   const {
     rawQuery,
     status,
@@ -204,40 +239,44 @@ export function AdminFilemakerJobListingsPage(): React.JSX.Element {
     listings,
     onSearch,
     onStatus,
-    onResetSearch,
+    onResetFilters,
     onRefresh,
   } = usePageDataState();
+  const onOpenJobListing = useCallback(
+    (organizationId: string, jobListingId: string): void => {
+      startTransition(() => {
+        router.push(
+          `/admin/filemaker/organizations/${encodeURIComponent(
+            organizationId
+          )}/job-listings#job-listing-${encodeURIComponent(jobListingId)}`
+        );
+      });
+    },
+    [router]
+  );
+  const { nodes, renderNode } = useJobListingRenderNode({
+    defaultPersonId,
+    defaultPersonName,
+    listings,
+    onOpenJobListing,
+    onRefresh,
+  });
 
   return (
-    <div className='w-full max-w-none space-y-3 pb-4 pt-0'>
-      <AdminTitleBreadcrumbHeader
-        title={<h1 className='text-3xl font-bold tracking-tight text-white'>Job Listings</h1>}
-        breadcrumb={<AdminFilemakerBreadcrumbs current='Job Listings' />}
-        titleStackClassName='shrink-0 min-w-max'
-        actionsClassName='relative z-0 min-w-0 flex-1 justify-end pt-0'
-      />
-      <JobListingsNotice
-        settingsLoading={settingsLoading}
-        hasDefaultPerson={hasDefaultPerson}
-        displayPersonName={displayPersonName}
-      />
-      <JobListingsControls
-        rawQuery={rawQuery}
-        status={status}
-        isLoading={isLoading}
-        listingCount={listingCount}
-        onSearch={onSearch}
-        onStatus={onStatus}
-        onResetSearch={onResetSearch}
-      />
-      {renderListSection({
-        error,
-        isLoading,
-        listings,
-        onRefresh,
-        defaultPersonId,
-        defaultPersonName,
-      })}
-    </div>
+    <FilemakerJobListingsListPanel
+      error={error}
+      isLoading={isLoading}
+      listingCount={listingCount}
+      nodes={nodes}
+      rawQuery={rawQuery}
+      renderNode={renderNode}
+      status={status}
+      settingsLoading={settingsLoading}
+      hasDefaultPerson={hasDefaultPerson}
+      displayPersonName={displayPersonName}
+      onSearch={onSearch}
+      onStatus={onStatus}
+      onResetFilters={onResetFilters}
+    />
   );
 }

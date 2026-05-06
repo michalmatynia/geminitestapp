@@ -18,7 +18,7 @@ export const toDuelsSummaryErrorMessage = (
 ): string | null => {
   if (error === null || error === undefined || error === false) return null;
 
-  if (typeof error === 'object' && error !== null && 'status' in error && (error as { status?: number }).status === 401) {
+  if (typeof error === 'object' && 'status' in error && (error as { status?: number }).status === 401) {
     return copy({
       de: 'Melde dich an, um Duellstatistiken zu laden.',
       en: 'Sign in to load duel stats.',

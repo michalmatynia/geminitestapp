@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileLessonsLessonMastery } from './useKangurMobileLessonsLessonMastery';
-import { type LessonViewModel } from './lessons-types';
+import { type LessonViewModel, type LessonMastery } from './lessons-types';
 
 export function useLessonsViewModel(): LessonViewModel {
   const { copy, locale } = useKangurMobileI18n();
@@ -17,7 +17,7 @@ export function useLessonsViewModel(): LessonViewModel {
   return {
     copy,
     locale,
-    lessonMastery: lessonMastery as any, // Simplified for now, will type properly next
+    lessonMastery: lessonMastery as LessonMastery,
     tutorContext,
   };
 }

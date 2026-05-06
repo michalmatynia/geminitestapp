@@ -10,6 +10,7 @@ import {
 import { BASE_EXPORT_RUN_PATH_ID } from '@/features/integrations/services/base-export-segments/constants';
 import { useTraderaQuickListFeedback } from '@/features/integrations/hooks/useTraderaQuickListFeedback';
 import { useVintedQuickListFeedback } from '@/features/integrations/hooks/useVintedQuickListFeedback';
+import { useDefaultTraderaConnection } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
 import {
   areProductListingsRecoveryContextsEqual,
@@ -411,8 +412,19 @@ export function ProductListingsProvider({
       }),
     [filterIntegrationSlug, resolvedRecoveryContext]
   );
+  const defaultTraderaConnectionQuery = useDefaultTraderaConnection();
+  const shouldScopeTraderaConnection = isTraderaIntegrationSlug(resolvedFilterIntegrationSlug);
+  const isScopedTraderaConnectionReady =
+    !shouldScopeTraderaConnection ||
+    (!defaultTraderaConnectionQuery.isLoading && !defaultTraderaConnectionQuery.isPending);
+  const scopedTraderaConnectionId = shouldScopeTraderaConnection
+    ? defaultTraderaConnectionQuery.data?.connectionId ?? null
+    : null;
 
-  const listingsQuery = useProductListings(product.id);
+  const listingsQuery = useProductListings(product.id, {
+    enabled: isScopedTraderaConnectionReady,
+    traderaConnectionId: scopedTraderaConnectionId,
+  });
   const listings = listingsQuery.data ?? [];
   const isListingsLoading =
     listingsQuery.isLoading || (listingsQuery.isFetching && listings.length === 0);

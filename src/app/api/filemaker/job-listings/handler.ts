@@ -29,6 +29,22 @@ const hasApplicableManualLog = (application: FilemakerJobApplication): boolean =
       (entry.toStatus === undefined || entry.toStatus === null || entry.toStatus === 'applied')
   );
 
+const hasQueryMatch = (
+  listing: FilemakerJobListing,
+  organizationName: string | null,
+  query: string
+): boolean => {
+  if (query.length === 0) return true;
+  return [
+    listing.title,
+    listing.organizationId,
+    organizationName ?? '',
+    listing.location ?? '',
+    listing.sourceSite ?? '',
+    listing.sourceUrl ?? '',
+  ].some((value: string): boolean => value.toLowerCase().includes(query));
+};
+
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
 
@@ -39,24 +55,22 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
 
   let listings = await listAllSettingsFilemakerJobListings();
 
-  if (rawQuery.length > 0) {
-    listings = listings.filter((listing: FilemakerJobListing): boolean =>
-      listing.title.toLowerCase().includes(rawQuery) ||
-      listing.organizationId.toLowerCase().includes(rawQuery) ||
-      (listing.location?.toLowerCase().includes(rawQuery) ?? false)
-    );
-  }
-
   if (STATUSES.has(rawStatus)) {
     listings = listings.filter(
       (listing: FilemakerJobListing): boolean => listing.status === rawStatus
     );
   }
 
-  listings = listings.slice().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-
-  const orgIds = listings.map((l) => l.organizationId);
+  const orgIds = [...new Set(listings.map((listing) => listing.organizationId))];
   const orgNames = await getMongoFilemakerOrganizationNamesByIds(orgIds);
+
+  if (rawQuery.length > 0) {
+    listings = listings.filter((listing: FilemakerJobListing): boolean =>
+      hasQueryMatch(listing, orgNames.get(listing.organizationId) ?? null, rawQuery)
+    );
+  }
+
+  listings = listings.slice().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
   const appliedListingIds = new Set<string>();
   const appliedApplicationByListingId = new Map<

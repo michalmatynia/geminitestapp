@@ -13,6 +13,7 @@ import { JOB_BOARD_PROVIDER_IDS } from '@/shared/lib/job-board/job-board-provide
 
 export const FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT =
   '/api/filemaker/organizations/job-board-scrape';
+export const FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH = '/admin/settings/playwright';
 
 export const filemakerJobBoardScrapeModeSchema = z.enum(['preview', 'import']);
 export const filemakerJobBoardOrganizationScopeSchema = z.preprocess(

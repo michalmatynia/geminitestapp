@@ -159,3 +159,8 @@ export function KangurTopNavigationHost({
 export const useOptionalKangurTopNavigation = (): KangurTopNavigationActionsContextValue | null => {
   return useContext(KangurTopNavigationActionsContext);
 };
+
+export const useOptionalKangurTopNavigationState =
+  (): KangurTopNavigationStateContextValue | null => {
+    return useContext(KangurTopNavigationStateContext);
+  };

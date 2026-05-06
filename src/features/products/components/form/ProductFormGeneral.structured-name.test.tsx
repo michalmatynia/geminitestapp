@@ -561,7 +561,7 @@ describe('ProductFormGeneral structured name editing', () => {
     });
   });
 
-  it('preserves an existing specific Polish base even when it matches the generated title', async () => {
+  it('keeps syncing an existing generated Polish title when the English title changes', async () => {
     useProductFormMetadataMock.mockReturnValue({
       filteredLanguages: [
         { code: 'en', name: 'English' },
@@ -592,7 +592,7 @@ describe('ProductFormGeneral structured name editing', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
-        'Scout Regiment | 7 cm | Plastic | Anime Keychain | Naruto'
+        'Survey Corps | 7 cm | Plastic | Anime Keychain | Naruto'
       );
     });
   });

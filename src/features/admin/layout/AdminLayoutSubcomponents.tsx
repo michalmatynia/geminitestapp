@@ -34,17 +34,19 @@ export function getContentClassName(
   return 'pl-56 xl:pl-64';
 }
 
+const PRODUCT_LIST_ROUTES = new Set<string>([
+  '/admin/products',
+  '/admin/filemaker/job-listings',
+  '/admin/filemaker/organizations',
+  '/admin/filemaker/persons',
+  '/admin/validator',
+  '/admin/validator/lists',
+  '/admin/ai-paths/queue',
+  '/admin/system/logs',
+]);
+
 function isProductsListRoute(pathname: string): boolean {
-  return (
-    pathname === '/admin/products' ||
-    pathname === '/admin/filemaker/organizations' ||
-    pathname === '/admin/filemaker/persons' ||
-    pathname.startsWith('/admin/filemaker/persons/') ||
-    pathname === '/admin/validator' ||
-    pathname === '/admin/validator/lists' ||
-    pathname === '/admin/ai-paths/queue' ||
-    pathname === '/admin/system/logs'
-  );
+  return PRODUCT_LIST_ROUTES.has(pathname) || pathname.startsWith('/admin/filemaker/persons/');
 }
 
 function isEmbeddedKangurRoute(pathname: string): boolean {

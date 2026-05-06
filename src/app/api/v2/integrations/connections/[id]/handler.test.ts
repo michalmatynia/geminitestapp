@@ -92,6 +92,7 @@ describe('integration connection by-id handler', () => {
       ok: true,
       data: {
         name: 'Tradera browser',
+        enabled: false,
         playwrightBrowser: 'chromium',
         traderaBrowserMode: 'scripted',
         playwrightListingScript: 'export default async function run() {}',
@@ -109,6 +110,7 @@ describe('integration connection by-id handler', () => {
       id: 'conn-tradera-1',
       integrationId: 'integration-tradera-1',
       name: 'Tradera browser',
+      enabled: false,
       username: 'seller@example.com',
       createdAt: '2026-04-02T10:00:00.000Z',
       updatedAt: '2026-04-02T11:00:00.000Z',
@@ -160,11 +162,13 @@ describe('integration connection by-id handler', () => {
 
     expect(updateConnectionMock).toHaveBeenCalledWith('conn-tradera-1', {
       name: 'Tradera browser',
+      enabled: false,
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
     });
     expect(payload).toMatchObject({
       id: 'conn-tradera-1',
+      enabled: false,
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
       hasPlaywrightListingScript: true,

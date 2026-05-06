@@ -1,0 +1,938 @@
+{
+  "totalFiles": 458,
+  "filesWithErrors": 52,
+  "totalErrors": 209,
+  "totalWarnings": 1,
+  "errorCountsByRule": {
+    "fatal": 1,
+    "@typescript-eslint/no-unused-vars": 21,
+    "@typescript-eslint/no-explicit-any": 13,
+    "@typescript-eslint/no-unsafe-return": 4,
+    "@typescript-eslint/no-unsafe-member-access": 12,
+    "@typescript-eslint/explicit-function-return-type": 19,
+    "@typescript-eslint/no-unnecessary-condition": 12,
+    "complexity": 12,
+    "@typescript-eslint/no-unsafe-assignment": 46,
+    "@typescript-eslint/no-unsafe-call": 9,
+    "max-lines": 2,
+    "@typescript-eslint/no-unsafe-argument": 4,
+    "@typescript-eslint/strict-boolean-expressions": 20,
+    "max-lines-per-function": 12,
+    "no-nested-ternary": 8,
+    "@typescript-eslint/no-redundant-type-constituents": 1,
+    "no-void": 3,
+    "eqeqeq": 1,
+    "@typescript-eslint/no-redeclare": 8,
+    "@typescript-eslint/consistent-type-assertions": 1,
+    "quotes": 1
+  },
+  "files": [
+    {
+      "filePath": "/apps/mobile/src/home/useKangurMobileHomeDuelsInvites.ts",
+      "errorCount": 19,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 21,
+          "message": "'MOBILE_HOME_DUELS_INVITES_DISPLAY_LIMIT' is assigned a value but never used. Allowed unused vars must match /^_/u."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 38,
+          "message": "Unexpected any. Specify a different type."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-return",
+          "line": 39,
+          "message": "Unsafe return of a value of type `any`."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/home/useKangurMobileHomeDuelsSpotlight.ts",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 57,
+          "message": "'refreshSpotlight' is defined but never used. Allowed unused vars must match /^_/u."
+        },
+        {
+          "ruleId": "complexity",
+          "line": 64,
+          "message": "Arrow function has a complexity of 13. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/lessons/lesson-row-primitives.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines",
+          "line": 325,
+          "message": "File has too many lines (395). Maximum allowed is 300."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/lessons/useKangurMobileLessons.ts",
+      "errorCount": 3,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-member-access",
+          "line": 52,
+          "message": "Unsafe member access .lessonMastery on a type that cannot be resolved."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-argument",
+          "line": 70,
+          "message": "Unsafe argument of type error typed assigned to a parameter of type `Pick<{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }, \"lessonMastery\">`."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 71,
+          "message": "Unexpected value in conditional. A boolean expression is required."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/lessons/useKangurMobileLessonsDuels.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 7,
+          "message": "Missing return type on function."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/lessons/useLessonsScreenState.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 9,
+          "message": "Missing return type on function."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/lessons/useLessonsViewModel.ts",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 20,
+          "message": "Unsafe assignment of an `any` value."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 20,
+          "message": "Unexpected any. Specify a different type."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/parent/components/ParentHeroCard.tsx",
+      "errorCount": 4,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 23,
+          "message": "Function 'ParentHeroCard' has too many lines (90). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 23,
+          "message": "Missing return type on function."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 64,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/parent/components/ParentLearnerSection.tsx",
+      "errorCount": 4,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 16,
+          "message": "Function 'ParentLearnerSection' has too many lines (118). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 58,
+          "message": "Arrow function has too many lines (67). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "complexity",
+          "line": 58,
+          "message": "Arrow function has a complexity of 10. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/parent/components/ParentTabsSection.tsx",
+      "errorCount": 5,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 3,
+          "message": "'BASE_TONE' is defined but never used. Allowed unused vars must match /^_/u."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 6,
+          "message": "'Pill' is defined but never used. Allowed unused vars must match /^_/u."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 13,
+          "message": "Unexpected any. Specify a different type."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/parent/parent-dashboard-types.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 5,
+          "message": "'KangurProgressState' is defined but never used. Allowed unused vars must match /^_/u."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/parent/useKangurMobileParentDashboard.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "complexity",
+          "line": 10,
+          "message": "Arrow function has a complexity of 10. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/parent/useParentDashboardAssignments.ts",
+      "errorCount": 6,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 9,
+          "message": "Missing return type on function."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 11,
+          "message": "Unnecessary conditional, comparison is always true, since `\"practice\" === \"practice\"` is true."
+        },
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 15,
+          "message": "Missing return type on function."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/parent/useParentDashboardLearner.ts",
+      "errorCount": 3,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 5,
+          "message": "Missing return type on function."
+        },
+        {
+          "ruleId": "complexity",
+          "line": 5,
+          "message": "Function 'useParentDashboardLearner' has a complexity of 11. Maximum allowed is 8."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 15,
+          "message": "Unnecessary optional chain on a non-nullish value."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/parent/useParentDashboardProgress.ts",
+      "errorCount": 5,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 8,
+          "message": "Missing return type on function."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 11,
+          "message": "Unexpected any. Specify a different type."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 12,
+          "message": "Unexpected any. Specify a different type."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/parent/useParentDashboardResults.ts",
+      "errorCount": 9,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 7,
+          "message": "Missing return type on function."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 7,
+          "message": "Unexpected any. Specify a different type."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 11,
+          "message": "Unsafe assignment of an `any` value."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/plan/KangurDailyPlanScreen.tsx",
+      "errorCount": 17,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 29,
+          "message": "'PlanSections' is defined but never used. Allowed unused vars must match /^_/u."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 56,
+          "message": "Unsafe assignment of an error typed value."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 57,
+          "message": "Unsafe assignment of an error typed value."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/practice/PracticeCompletionCard.tsx",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 58,
+          "message": "Unsafe assignment of an error typed value."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 184,
+          "message": "Unsafe assignment of an error typed value."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/practice/PracticePreparationCard.tsx",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 60,
+          "message": "Unsafe assignment of an error typed value."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-call",
+          "line": 60,
+          "message": "Unsafe call of a type that could not be resolved."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/practice/PracticeScreenContent.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-redundant-type-constituents",
+          "line": 15,
+          "message": "'PracticeCompletionCardProps' is an 'error' type that acts as 'any' and overrides all other types in this union type."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/practice/useKangurPracticeActions.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-argument",
+          "line": 95,
+          "message": "Unsafe argument of type error typed assigned to a parameter of type `PracticePlayerSession`."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/practice/useKangurPracticeSyncProof.ts",
+      "errorCount": 3,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 106,
+          "message": "Unsafe assignment of an error typed value."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-return",
+          "line": 106,
+          "message": "Unsafe return of a value of type error."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 140,
+          "message": "Unsafe assignment of an error typed value."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/profile/components/ProfileResultsHubCard.tsx",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "complexity",
+          "line": 37,
+          "message": "Function 'ResultsHubMetrics' has a complexity of 10. Maximum allowed is 8."
+        },
+        {
+          "ruleId": "no-void",
+          "line": 68,
+          "message": "Expected 'undefined' and instead saw 'void'."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/profile/mobileScoreScope.ts",
+      "errorCount": 3,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 12,
+          "message": "Unnecessary optional chain on a non-nullish value."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 13,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 23,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/profile/profile-duels-card.tsx",
+      "errorCount": 6,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 109,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+        },
+        {
+          "ruleId": "no-nested-ternary",
+          "line": 175,
+          "message": "Do not nest ternary expressions."
+        },
+        {
+          "ruleId": "no-nested-ternary",
+          "line": 177,
+          "message": "Do not nest ternary expressions."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/profile/profile-primitives.tsx",
+      "errorCount": 11,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 2,
+          "message": "'getLocalizedKangurCoreLessonTitle' is defined but never used. Allowed unused vars must match /^_/u."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 3,
+          "message": "'KangurAssignmentPlan' is defined but never used. Allowed unused vars must match /^_/u."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 5,
+          "message": "'KangurLessonMasteryInsight' is defined but never used. Allowed unused vars must match /^_/u."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/profile/useKangurMobileLearnerProfile.ts",
+      "errorCount": 4,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 36,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 38,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+        },
+        {
+          "ruleId": "complexity",
+          "line": 46,
+          "message": "Arrow function has a complexity of 13. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/providers/KangurRuntimeContext.runtime.ts",
+      "errorCount": 3,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 39,
+          "message": "Unnecessary conditional, the types have no overlap."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 49,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 103,
+          "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/KangurResultsScreen.tsx",
+      "errorCount": 24,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 23,
+          "message": "Missing return type on function."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 36,
+          "message": "Unexpected any. Specify a different type."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 39,
+          "message": "Unsafe assignment of an `any` value."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/components/LessonCheckpointRow.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 79,
+          "message": "Unexpected value in conditional. A boolean expression is required."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/components/LessonMasteryRow.tsx",
+      "errorCount": 3,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 14,
+          "message": "Function 'LessonMasteryRow' has too many lines (73). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 24,
+          "message": "Unnecessary conditional, the types have no overlap."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 98,
+          "message": "Unnecessary conditional, the types have no overlap."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/components/OperationInsightCard.tsx",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 18,
+          "message": "Function 'OperationInsightCard' has too many lines (74). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 72,
+          "message": "Unnecessary conditional, the types have no overlap."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/components/ResultsAssignmentRow.tsx",
+      "errorCount": 13,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-redeclare",
+          "line": 13,
+          "message": "'Text' is already defined."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 13,
+          "message": "'View' is defined but never used. Allowed unused vars must match /^_/u."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-redeclare",
+          "line": 15,
+          "message": "'useKangurMobileI18n' is already defined."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/components/ResultsAssignmentsSection.tsx",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 54,
+          "message": "Unsafe assignment of an error typed value."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-member-access",
+          "line": 54,
+          "message": "Unsafe member access .id on a type that cannot be resolved."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/components/ResultsBadgesSection.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 18,
+          "message": "Function 'ResultsBadgesSection' has too many lines (72). Maximum allowed is 60."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/components/ResultsCheckpointsSection.tsx",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 9,
+          "message": "Unexpected any. Specify a different type."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 50,
+          "message": "Unsafe assignment of an `any` value."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/components/ResultsHeader.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 2,
+          "message": "'Href' is defined but never used. Allowed unused vars must match /^_/u."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/components/ResultsLessonMasterySection.tsx",
+      "errorCount": 4,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 19,
+          "message": "Missing return type on function."
+        },
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 53,
+          "message": "Missing return type on function."
+        },
+        {
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 75,
+          "message": "Missing return type on function."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/components/ResultsListSection.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 56,
+          "message": "Unnecessary conditional, the types have no overlap."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/persistedKangurMobileRecentResults.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "complexity",
+          "line": 10,
+          "message": "Arrow function has a complexity of 9. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/scores/results-duels-card.tsx",
+      "errorCount": 9,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-call",
+          "line": 49,
+          "message": "Unsafe call of a type that could not be resolved."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 64,
+          "message": "Unsafe assignment of an error typed value."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-call",
+          "line": 64,
+          "message": "Unsafe call of a type that could not be resolved."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/shared/KangurAssessmentUi.tsx",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 42,
+          "message": "Function 'ChoiceCardButton' has too many lines (72). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 107,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/shared/KangurMobileUiButtons.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/consistent-type-assertions",
+          "line": 130,
+          "message": "Always prefer const x: T = { ... }."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/shared/KangurMobileUiDisplay.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "complexity",
+          "line": 185,
+          "message": "Function 'KangurMobileFilterChip' has a complexity of 11. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/shared/resolveKangurMobileActionHref.ts",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "complexity",
+          "line": 70,
+          "message": "Arrow function has a complexity of 19. Maximum allowed is 8."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 98,
+          "message": "Unnecessary conditional, comparison is always true, since `\"Duels\" === \"Duels\"` is true."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/storage/createMobileDevelopmentKangurStorage.ts",
+      "errorCount": 6,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "line": 4,
+          "message": "'KangurStorageChange' is defined but never used. Allowed unused vars must match /^_/u."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 19,
+          "message": "Unexpected any. Specify a different type."
+        },
+        {
+          "ruleId": "complexity",
+          "line": 34,
+          "message": "Arrow function has a complexity of 9. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/tests/KangurTestsScreen.tsx",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 115,
+          "message": "Function 'KangurMobileTestPlayer' has too many lines (85). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "complexity",
+          "line": 115,
+          "message": "Function 'KangurMobileTestPlayer' has a complexity of 12. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/tests/tests-primitives.tsx",
+      "errorCount": 3,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "no-nested-ternary",
+          "line": 132,
+          "message": "Do not nest ternary expressions."
+        },
+        {
+          "ruleId": "no-nested-ternary",
+          "line": 133,
+          "message": "Do not nest ternary expressions."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 144,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/tests/testsHref.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 5,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/tests/useKangurMobileTests.ts",
+      "errorCount": 4,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 112,
+          "message": "Arrow function has too many lines (82). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 131,
+          "message": "Unsafe assignment of an `any` value."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unsafe-member-access",
+          "line": 140,
+          "message": "Unsafe member access ['key'] on an `any` value."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/studiq-web/next-env.d.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "quotes",
+          "line": 3,
+          "message": "Strings must use singlequote."
+        }
+      ]
+    }
+  ]
+}

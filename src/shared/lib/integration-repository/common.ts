@@ -19,7 +19,9 @@ export const ACTIVE_TEMPLATE_SETTING_KEY = 'base_export_active_template_id';
 export const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
 
 export const CONNECTION_DEFAULTS = {
+  enabled: true,
   traderaBrowserMode: 'builtin' as const,
+  traderaCategoryStrategy: 'mapper' as const,
   playwrightListingScript: null,
   playwrightImportScript: null,
   playwrightImportBaseUrl: null,
@@ -276,6 +278,7 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     id,
     integrationId: String(d['integrationId'] ?? ''),
     name: String(d['name'] ?? ''),
+    enabled: typeof d['enabled'] === 'boolean' ? d['enabled'] : CONNECTION_DEFAULTS.enabled,
     username: d['username'] ? String(d['username']) : undefined,
     password: d['password'] ? String(d['password']) : undefined,
     playwrightStorageState: (d['playwrightStorageState'] as string) ?? null,
@@ -444,6 +447,10 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     baseLastInventoryId: (d['baseLastInventoryId'] as string) ?? null,
     traderaBrowserMode:
       d['traderaBrowserMode'] === 'scripted' ? 'scripted' : CONNECTION_DEFAULTS.traderaBrowserMode,
+    traderaCategoryStrategy:
+      d['traderaCategoryStrategy'] === 'top_suggested'
+        ? 'top_suggested'
+        : CONNECTION_DEFAULTS.traderaCategoryStrategy,
     traderaDefaultTemplateId:
       (d['traderaDefaultTemplateId'] as string) ?? CONNECTION_DEFAULTS.traderaDefaultTemplateId,
     traderaDefaultDurationHours:

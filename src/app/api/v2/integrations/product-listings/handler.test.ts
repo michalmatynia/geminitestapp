@@ -83,6 +83,47 @@ describe('integration product listings handler', () => {
     });
   });
 
+  it('scopes Tradera badges to the requested connection id', async () => {
+    listProductListingsByProductIdsMock.mockResolvedValue([
+      {
+        id: 'listing-active',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        status: 'active',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+      },
+      {
+        id: 'listing-auth',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-2',
+        status: 'auth_required',
+        updatedAt: '2026-04-02T18:05:00.000Z',
+      },
+    ]);
+
+    const response = await getHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1&traderaConnectionId=connection-tradera-2'
+      ),
+      {
+        query: {
+          productIds: ['product-1'],
+          traderaConnectionId: 'connection-tradera-2',
+        },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      'product-1': {
+        tradera: 'auth_required',
+      },
+    });
+  });
+
   it('keeps an active Tradera badge when an older live listing still exists', async () => {
     listProductListingsByProductIdsMock.mockResolvedValue([
       {

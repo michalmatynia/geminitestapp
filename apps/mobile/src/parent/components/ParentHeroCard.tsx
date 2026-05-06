@@ -20,6 +20,25 @@ interface ParentHeroCardProps {
   refreshDashboard: () => void;
 }
 
+function ParentActionLink({ isAuthenticated, canAccessDashboard, refreshDashboard, copy }: { 
+    isAuthenticated: boolean, 
+    canAccessDashboard: boolean, 
+    refreshDashboard: () => void, 
+    copy: ParentHeroCardProps['copy'] 
+}): React.JSX.Element {
+    if (!isAuthenticated) {
+        return <OutlineLink href={HOME_ROUTE} label={copy({ de: 'Zum Login', en: 'Go to sign in', pl: 'Przejdź do logowania' })} />;
+    }
+    if (!canAccessDashboard) {
+        return <OutlineLink href={PROFILE_ROUTE} label={copy({ de: 'Lernprofil öffnen', en: 'Open learner profile', pl: 'Otwórz profil ucznia' })} />;
+    }
+    return <ActionButton
+        label={copy({ de: 'Elternbereich aktualisieren', en: 'Refresh parent dashboard', pl: 'Odśwież panel rodzica' })}
+        onPress={refreshDashboard}
+        tone='secondary'
+    />;
+}
+
 export function ParentHeroCard({
   copy,
   description,
@@ -28,22 +47,14 @@ export function ParentHeroCard({
   isAuthenticated,
   canAccessDashboard,
   refreshDashboard,
-}: ParentHeroCardProps) {
+}: ParentHeroCardProps): React.JSX.Element {
   return (
     <Card>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-        {copy({
-          de: 'Überblick und Planung',
-          en: 'Oversight and planning',
-          pl: 'Nadzór i planowanie',
-        })}
+        {copy({ de: 'Überblick und Planung', en: 'Oversight and planning', pl: 'Nadzór i planowanie' })}
       </Text>
       <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
-        {copy({
-          de: 'Elternbereich',
-          en: 'Parent dashboard',
-          pl: 'Panel rodzica',
-        })}
+        {copy({ de: 'Elternbereich', en: 'Parent dashboard', pl: 'Panel rodzica' })}
       </Text>
       <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
         {description}
@@ -60,54 +71,30 @@ export function ParentHeroCard({
             tone={INDIGO_TONE}
           />
           <Pill
-            label={
-              activeLearnerName
-                ? copy({
-                    de: `Aktiv ${activeLearnerName}`,
-                    en: `Active ${activeLearnerName}`,
-                    pl: `Aktywny ${activeLearnerName}`,
-                  })
-                : copy({
-                    de: 'Lernenden wählen',
-                    en: 'Choose learner',
-                    pl: 'Wybierz ucznia',
-                  })
-            }
-            tone={SUCCESS_TONE}
-          />
-        </View>
+          label={
+            activeLearnerName !== undefined
+              ? copy({
+                  de: `Aktiv ${activeLearnerName}`,
+                  en: `Active ${activeLearnerName}`,
+                  pl: `Aktywny ${activeLearnerName}`,
+                })
+              : copy({
+                  de: 'Lernenden wählen',
+                  en: 'Choose learner',
+                  pl: 'Wybierz ucznia',
+                })
+          }
+          tone={SUCCESS_TONE}
+          />        </View>
       )}
 
       <View style={{ gap: 10 }}>
-        {!isAuthenticated ? (
-          <OutlineLink
-            href={HOME_ROUTE}
-            label={copy({
-              de: 'Zum Login',
-              en: 'Go to sign in',
-              pl: 'Przejdź do logowania',
-            })}
-          />
-        ) : !canAccessDashboard ? (
-          <OutlineLink
-            href={PROFILE_ROUTE}
-            label={copy({
-              de: 'Lernprofil öffnen',
-              en: 'Open learner profile',
-              pl: 'Otwórz profil ucznia',
-            })}
-          />
-        ) : (
-          <ActionButton
-            label={copy({
-              de: 'Elternbereich aktualisieren',
-              en: 'Refresh parent dashboard',
-              pl: 'Odśwież panel rodzica',
-            })}
-            onPress={refreshDashboard}
-            tone='secondary'
-          />
-        )}
+        <ParentActionLink 
+            isAuthenticated={isAuthenticated} 
+            canAccessDashboard={canAccessDashboard} 
+            refreshDashboard={refreshDashboard} 
+            copy={copy} 
+        />
       </View>
     </Card>
   );

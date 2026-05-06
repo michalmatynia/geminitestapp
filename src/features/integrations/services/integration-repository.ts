@@ -27,6 +27,7 @@ const toIntegrationConnectionBasic = (
   id: connection.id,
   name: connection.name,
   integrationId: connection.integrationId,
+  enabled: connection.enabled ?? true,
   hasPlaywrightStorageState: Boolean(connection.playwrightStorageState),
   traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
   hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),

@@ -1,5 +1,5 @@
 import { Text } from 'react-native';
-import { SectionCard, PrimaryButton } from '../homeScreenPrimitives';
+import { SectionCard } from '../homeScreenPrimitives';
 import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 
 export function DeferredResultsHubSummaryPlaceholder(): React.JSX.Element {

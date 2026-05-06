@@ -4,5 +4,5 @@ products-category-schema-normalization,Products category and schema normalizatio
 ui-consolidation,UI consolidation,ui,true,attention,2026-04-15T10:54:26.139Z,not-selected,not-selected,not-selected,not-selected,manual
 application-performance,Application performance,performance,true,attention,2026-04-15T10:54:26.139Z,not-selected,not-selected,not-selected,not-selected,manual
 testing-quality-baseline,Testing quality baseline,testing,false,no-data,,not-selected,not-selected,not-selected,not-selected,not-selected
-image-studio-product-integration,Image Studio product integration,quality,false,passed,2026-04-30T09:41:39.533Z,passed,manual,manual,passed,not-selected
-repo-quality-baseline,Repository quality baseline,quality,true,attention,2026-04-15T10:54:26.139Z,not-selected,not-selected,not-selected,not-selected,manual
+image-studio-product-integration,Image Studio product integration,quality,false,passed,2026-04-30T09:41:39.301Z,not-selected,manual,not-selected,passed,not-selected
+repo-quality-baseline,Repository quality baseline,quality,true,failed,2026-05-06T11:28:21.083Z,failed,not-selected,manual,not-selected,manual

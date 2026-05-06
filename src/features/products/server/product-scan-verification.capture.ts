@@ -50,12 +50,12 @@ export const createProductScanVerificationBarrierEvaluationInput = (options: {
 }): ProductScanVerificationBarrierEvaluationInput => ({
   provider: options.provider,
   stage: options.stage,
-  currentUrl: options.capture.currentUrl,
-  pageTitle: options.capture.pageTitle,
-  pageTextSnippet: options.capture.pageTextSnippet,
-  screenshotBase64: options.capture.screenshotBase64,
-  screenshotArtifactName: options.capture.screenshotArtifactName,
-  htmlArtifactName: options.capture.htmlArtifactName,
+  currentUrl: options.capture.currentUrl as string | null,
+  pageTitle: options.capture.pageTitle as string | null,
+  pageTextSnippet: options.capture.pageTextSnippet as string | null,
+  screenshotBase64: options.capture.screenshotBase64 as string | null,
+  screenshotArtifactName: options.capture.screenshotArtifactName as string | null,
+  htmlArtifactName: options.capture.htmlArtifactName as string | null,
   objective: options.objective,
 });
 

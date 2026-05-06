@@ -94,6 +94,64 @@ export function FileManagerProvider(props: {
   showTagSearch?: boolean;
   filepathFilter?: (filepath: string) => boolean;
 }): React.JSX.Element {
+  return (
+    <FileManagerSearchProvider>
+      <FileManagerConfigProvider {...props}>
+        <InternalFileManagerProvider {...props}>{props.children}</InternalFileManagerProvider>
+      </FileManagerConfigProvider>
+    </FileManagerSearchProvider>
+  );
+}
+
+function FileManagerSearchProvider({ children }: { children: ReactNode }) {
+  const [filenameSearch, setFilenameSearch] = useState('');
+  const [productNameSearch, setProductNameSearch] = useState('');
+  const [tagSearch, setTagSearch] = useState('');
+
+  const searchValue = useMemo<FileManagerSearch>(
+    () => ({
+      filenameSearch,
+      setFilenameSearch,
+      productNameSearch,
+      setProductNameSearch,
+      tagSearch,
+      setTagSearch,
+    }),
+    [filenameSearch, productNameSearch, tagSearch]
+  );
+
+  return <SearchContext.Provider value={searchValue}>{children}</SearchContext.Provider>;
+}
+
+function FileManagerConfigProvider(props: {
+  children: ReactNode;
+  onSelectFile?: (files: ImageFileSelection[]) => void;
+  mode?: 'view' | 'select';
+  selectionMode?: 'single' | 'multiple';
+  autoConfirmSelection?: boolean;
+  showFolderFilter?: boolean;
+  defaultFolder?: string;
+  showBulkActions?: boolean;
+  showTagSearch?: boolean;
+  filepathFilter?: (filepath: string) => boolean;
+}) {
+  const { children, ...config } = props;
+  const configValue = useMemo<FileManagerConfig>(() => config, [config]);
+  return <ConfigContext.Provider value={configValue}>{children}</ConfigContext.Provider>;
+}
+
+function InternalFileManagerProvider(props: {
+  children: ReactNode;
+  onSelectFile?: (files: ImageFileSelection[]) => void;
+  mode?: 'view' | 'select';
+  selectionMode?: 'single' | 'multiple';
+  autoConfirmSelection?: boolean;
+  showFolderFilter?: boolean;
+  defaultFolder?: string;
+  showBulkActions?: boolean;
+  showTagSearch?: boolean;
+  filepathFilter?: (filepath: string) => boolean;
+}): React.JSX.Element {
   const {
     children,
     onSelectFile,
@@ -109,9 +167,9 @@ export function FileManagerProvider(props: {
 
   const uiState = useFileManagerUIStateLogic('uploads');
 
-  const [filenameSearch, setFilenameSearch] = useState('');
-  const [productNameSearch, setProductNameSearch] = useState('');
-  const [tagSearch, setTagSearch] = useState('');
+  const config = useFileManagerConfig();
+  const search = useFileManagerSearch();
+
   const [bulkTagInput, setBulkTagInput] = useState('');
   const [bulkTagMode, setBulkTagMode] = useState<'add' | 'replace'>('add');
   const [localFolderFilter, setLocalFolderFilter] = useState<string | null>(null);
@@ -372,12 +430,12 @@ export function FileManagerProvider(props: {
     }),
     [
       bulkTagInput,
+      setBulkTagInput,
       bulkTagMode,
+      setBulkTagMode,
       localFolderFilter,
-      uiState.previewFile,
-      uiState.previewAsset,
-      uiState.activeTab,
-      uiState.selectedFiles,
+      setLocalFolderFilter,
+      uiState
     ]
   );
 
@@ -388,14 +446,13 @@ export function FileManagerProvider(props: {
       folderOptions,
       tagOptions,
       filteredFiles,
-      folderFilter,
+      folderFilter: localFolderFilter ?? '',
       isPending: actions.isPending,
-      }),
-      [
+    }),
+    [
       files,
       assets3d,
       folderOptions,
-      tagOptions,
       filteredFiles,
       folderFilter,
       actions.isPending
@@ -417,7 +474,7 @@ export function FileManagerProvider(props: {
     () => ({
       handleToggleSelect: actions.toggleFileSelection,
       handleConfirmSelection: props.onSelectFile ? () => props.onSelectFile?.(uiState.selectedFiles) : () => undefined,
-      handleSelectAll: () => undefined, // Placeholder for actual implementation if needed
+      handleSelectAll: () => undefined,
       handleClearSelection: () => uiState.setSelectedFiles([]),
       handleDeleteSelected: actions.deleteSelected,
       handleApplyTags: actions.applyTags,

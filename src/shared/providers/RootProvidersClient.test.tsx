@@ -51,15 +51,18 @@ const {
   settingsStoreProviderMock: vi.fn(
     ({
       children,
+      initialEntries,
       mode,
       suppressOwnQuery,
     }: {
       children: ReactNode;
+      initialEntries?: ReadonlyArray<readonly [string, string]>;
       mode: 'admin' | 'lite';
       suppressOwnQuery?: boolean;
     }) => (
       <div
         data-testid='settings-store-provider'
+        data-initial-count={String(initialEntries?.length ?? 0)}
         data-mode={mode}
         data-suppress-own-query={String(Boolean(suppressOwnQuery))}
       >
@@ -122,13 +125,15 @@ vi.mock('@/shared/providers/QueryProvider', () => ({
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   SettingsStoreProvider: ({
     children,
+    initialEntries,
     mode,
     suppressOwnQuery,
   }: {
     children: ReactNode;
+    initialEntries?: ReadonlyArray<readonly [string, string]>;
     mode: 'admin' | 'lite';
     suppressOwnQuery?: boolean;
-  }) => settingsStoreProviderMock({ children, mode, suppressOwnQuery }),
+  }) => settingsStoreProviderMock({ children, initialEntries, mode, suppressOwnQuery }),
 }));
 
 vi.mock('@/shared/providers/theme-provider', () => ({
@@ -199,6 +204,10 @@ describe('RootProvidersClient', () => {
 
     expect(screen.getByTestId('route-child')).toBeInTheDocument();
     expect(screen.getByTestId('query-provider')).toHaveAttribute('data-mode', 'light');
+    expect(screen.getByTestId('settings-store-provider')).toHaveAttribute(
+      'data-initial-count',
+      '0'
+    );
     expect(screen.queryByTestId('background-sync-provider')).not.toBeInTheDocument();
     expect(screen.queryByTestId('client-error-reporter')).not.toBeInTheDocument();
     expect(screen.queryByTestId('page-analytics-tracker')).not.toBeInTheDocument();
@@ -223,6 +232,33 @@ describe('RootProvidersClient', () => {
     });
     expect(screen.getByTestId('page-analytics-tracker')).toBeInTheDocument();
     expect(screen.getByTestId('url-guard-provider')).toBeInTheDocument();
+  });
+
+  it('seeds the lite settings store from server-rendered entries', async () => {
+    const initialLiteSettings = [
+      ['kangur_storefront_default_mode_v1', 'default'],
+      ['kangur_cms_theme_daily_v1', '{"backgroundColor":"#eef3fa"}'],
+    ] as const;
+    const { RootProvidersClient } = await import('./RootProvidersClient');
+
+    render(
+      <RootProvidersClient initialLiteSettings={initialLiteSettings}>
+        <div data-testid='route-child'>public page</div>
+      </RootProvidersClient>
+    );
+
+    expect(settingsStoreProviderMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        initialEntries: initialLiteSettings,
+      })
+    );
+    expect(screen.getByTestId('settings-store-provider')).toHaveAttribute(
+      'data-initial-count',
+      '2'
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId('csrf-provider')).toBeInTheDocument();
+    });
   });
 
   it('renders the full runtime immediately on admin routes', async () => {

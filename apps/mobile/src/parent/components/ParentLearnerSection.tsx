@@ -13,6 +13,95 @@ interface ParentLearnerSectionProps {
   selectionError: string | null;
 }
 
+function getStatusLabel(learner: KangurLearnerProfile, copy: (text: Record<string, string>) => string): string {
+    return learner.status === 'active'
+        ? copy({ de: 'Aktiv', en: 'Active', pl: 'Aktywny' })
+        : copy({ de: 'Deaktiviert', en: 'Disabled', pl: 'Wyłączony' });
+}
+
+function getActionLabel(isActive: boolean, isPending: boolean, copy: (text: Record<string, string>) => string): string {
+    if (isActive) return copy({ de: 'Jetzt ausgewählt', en: 'Selected now', pl: 'Wybrany teraz' });
+    if (isPending) return copy({ de: 'Wird gewechselt', en: 'Switching', pl: 'Przełączamy' });
+    return copy({ de: 'Tippen zum Wechseln', en: 'Tap to switch', pl: 'Dotknij, aby przełączyć' });
+}
+
+function ParentLearnerItem({
+  learner,
+  isActive,
+  isPending,
+  selectLearner,
+  copy,
+}: {
+  learner: KangurLearnerProfile;
+  isActive: boolean;
+  isPending: boolean;
+  selectLearner: (id: string) => void;
+  copy: (text: Record<string, string>) => string;
+}): React.JSX.Element {
+  const statusLabel = getStatusLabel(learner, copy);
+  const actionLabel = getActionLabel(isActive, isPending, copy);
+
+  return (
+    <Pressable
+      accessibilityRole='button'
+      disabled={isActive || isPending}
+      key={learner.id}
+      onPress={() => selectLearner(learner.id)}
+      style={{
+        backgroundColor: isActive ? '#eff6ff' : '#ffffff',
+        borderColor: isActive ? '#60a5fa' : '#cbd5e1',
+        borderRadius: 18,
+        borderWidth: 1,
+        gap: 8,
+        opacity: isPending ? 0.7 : 1,
+        padding: 14,
+      }}
+    >
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+        {learner.displayName}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Pill label={statusLabel} tone={isActive ? INDIGO_TONE : BASE_TONE} />
+        <Pill label={actionLabel} tone={isActive ? SUCCESS_TONE : BASE_TONE} />
+      </View>
+    </Pressable>
+  );
+}
+
+function LearnerList({ learners, selectedLearnerId, switchingLearnerId, selectLearner, copy }: { 
+    learners: KangurLearnerProfile[],
+    selectedLearnerId: string | null,
+    switchingLearnerId: string | null,
+    selectLearner: (id: string) => void,
+    copy: (text: Record<string, string>) => string
+}): React.JSX.Element {
+    if (learners.length === 0) {
+        return (
+            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+              {copy({
+                de: 'Dieses Elternkonto hat noch keine Lernprofile.',
+                en: 'This parent account does not have any learner profiles yet.',
+                pl: 'To konto rodzica nie ma jeszcze żadnych profili uczniów.',
+              })}
+            </Text>
+        );
+    }
+    return (
+        <View style={{ gap: 10 }}>
+          {learners.map((learner) => (
+            <ParentLearnerItem
+              copy={copy}
+              isActive={learner.id === selectedLearnerId}
+              isPending={learner.id === switchingLearnerId}
+              key={learner.id}
+              learner={learner}
+              selectLearner={selectLearner}
+            />
+          ))}
+        </View>
+    );
+}
+
 export function ParentLearnerSection({
   copy,
   learners,
@@ -24,18 +113,10 @@ export function ParentLearnerSection({
   return (
     <Card>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-        {copy({
-          de: 'Lernendenverwaltung',
-          en: 'Learner management',
-          pl: 'Zarządzanie uczniami',
-        })}
+        {copy({ de: 'Lernendenverwaltung', en: 'Learner management', pl: 'Zarządzanie uczniami' })}
       </Text>
       <Text style={{ color: '#0f172a', fontSize: 22, fontWeight: '800' }}>
-        {copy({
-          de: 'Lernenden wählen',
-          en: 'Choose learner',
-          pl: 'Wybierz ucznia',
-        })}
+        {copy({ de: 'Lernenden wählen', en: 'Choose learner', pl: 'Wybierz ucznia' })}
       </Text>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
         {copy({
@@ -45,86 +126,13 @@ export function ParentLearnerSection({
         })}
       </Text>
 
-      {learners.length === 0 ? (
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Dieses Elternkonto hat noch keine Lernprofile.',
-            en: 'This parent account does not have any learner profiles yet.',
-            pl: 'To konto rodzica nie ma jeszcze żadnych profili uczniów.',
-          })}
-        </Text>
-      ) : (
-        <View style={{ gap: 10 }}>
-          {learners.map((learner) => {
-            const isActive = learner.id === selectedLearnerId;
-            const isPending = learner.id === switchingLearnerId;
-
-            return (
-              <Pressable
-                accessibilityRole='button'
-                disabled={isActive || isPending}
-                key={learner.id}
-                onPress={() => {
-                  selectLearner(learner.id);
-                }}
-                style={{
-                  backgroundColor: isActive ? '#eff6ff' : '#ffffff',
-                  borderColor: isActive ? '#60a5fa' : '#cbd5e1',
-                  borderRadius: 18,
-                  borderWidth: 1,
-                  gap: 8,
-                  opacity: isPending ? 0.7 : 1,
-                  padding: 14,
-                }}
-              >
-                <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-                  {learner.displayName}
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  <Pill
-                    label={
-                      learner.status === 'active'
-                        ? copy({
-                            de: 'Aktiv',
-                            en: 'Active',
-                            pl: 'Aktywny',
-                          })
-                        : copy({
-                            de: 'Deaktiviert',
-                            en: 'Disabled',
-                            pl: 'Wyłączony',
-                          })
-                    }
-                    tone={isActive ? INDIGO_TONE : BASE_TONE}
-                  />
-                  <Pill
-                    label={
-                      isActive
-                        ? copy({
-                            de: 'Jetzt ausgewählt',
-                            en: 'Selected now',
-                            pl: 'Wybrany teraz',
-                          })
-                        : isPending
-                          ? copy({
-                              de: 'Wird gewechselt',
-                              en: 'Switching',
-                              pl: 'Przełączamy',
-                            })
-                          : copy({
-                              de: 'Tippen zum Wechseln',
-                              en: 'Tap to switch',
-                              pl: 'Dotknij, aby przełączyć',
-                            })
-                    }
-                    tone={isActive ? SUCCESS_TONE : BASE_TONE}
-                  />
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
+      <LearnerList 
+        learners={learners} 
+        selectedLearnerId={selectedLearnerId} 
+        switchingLearnerId={switchingLearnerId} 
+        selectLearner={selectLearner} 
+        copy={copy} 
+      />
 
       {Boolean(selectionError) && (
         <Text style={{ color: '#b91c1c', fontSize: 13, lineHeight: 18 }}>
@@ -134,3 +142,4 @@ export function ParentLearnerSection({
     </Card>
   );
 }
+

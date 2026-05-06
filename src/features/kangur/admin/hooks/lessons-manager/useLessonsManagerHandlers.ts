@@ -112,10 +112,10 @@ export function useLessonsManagerHandlers(params: {
   const buildPersistedLessonRecord = useCallback(
     (lessonId: string, source: LessonFormData | KangurLesson, sortOrder: number): KangurLesson => {
       const existingLesson = lessonById.get(lessonId);
-      const useExisting = !isPrimaryContentLocale && !!existingLesson;
+      const useExisting = !isPrimaryContentLocale && Boolean(existingLesson);
 
       const pick = <K extends keyof KangurLesson>(key: K): KangurLesson[K] => 
-        (useExisting && existingLesson![key] !== undefined) ? existingLesson![key] : (source as any)[key];
+        (useExisting && existingLesson[key] !== undefined) ? existingLesson[key] : (source as any)[key];
 
       return {
         id: lessonId,

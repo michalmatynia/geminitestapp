@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import {
   GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
-  GAME_HOME_UTILITY_IDLE_DELAY_MS,
 } from '@/features/kangur/ui/pages/GameHome.constants';
 import { resolveKangurGameHomeVisibility } from '@/features/kangur/ui/pages/GameHome.visibility';
 import { GameHomeScreen } from '@/features/kangur/ui/pages/Game.screen-components';
@@ -17,6 +16,7 @@ import {
   KangurGameRuntimeBoundary,
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { KangurGameNavigationWidget } from '@/features/kangur/ui/components/game-runtime/KangurGameNavigationWidget';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import dynamic from 'next/dynamic';
@@ -34,11 +34,6 @@ const XpToast = dynamic(() => import('@/features/kangur/ui/components/game-runti
 
 const GameDeferredHomeEnhancements = dynamic(
   () => import('@/features/kangur/ui/pages/GameDeferredHomeEnhancements'),
-  { ssr: false }
-);
-
-const GameDeferredNavigationWidget = dynamic(
-  () => import('@/features/kangur/ui/pages/GameDeferredNavigationWidget'),
   { ssr: false }
 );
 
@@ -188,18 +183,6 @@ function GameContent(): React.JSX.Element {
   });
   const shouldMountDeferredHomeEnhancements =
     !shouldDelayInitialStandaloneHomeEnhancements || homeEnhancementsIdleReady;
-  const shouldDelayInitialStandaloneHomeUtilitiesRef = useRef<boolean | null>(null);
-  shouldDelayInitialStandaloneHomeUtilitiesRef.current ??=
-    screen === 'home' && routing?.embedded !== true;
-  const shouldDelayInitialStandaloneHomeUtilities =
-    shouldDelayInitialStandaloneHomeUtilitiesRef.current;
-  const homeUtilitiesIdleReady = useKangurIdleReady({
-    minimumDelayMs: shouldDelayInitialStandaloneHomeUtilities
-      ? GAME_HOME_UTILITY_IDLE_DELAY_MS
-      : 0,
-  });
-  const shouldMountDeferredHomeUtilities =
-    !shouldDelayInitialStandaloneHomeUtilities || homeUtilitiesIdleReady;
   const isGamePageReady = resolveGamePageReady({
     routeTransitionState,
     screen,
@@ -240,7 +223,7 @@ function GameContent(): React.JSX.Element {
             />
           ) : null
         }
-        navigation={shouldMountDeferredHomeUtilities ? <GameDeferredNavigationWidget /> : null}
+        navigation={<KangurGameNavigationWidget />}
         afterNavigation={(
           <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
             {translations('statusAnnouncement', { label: currentScreenLabel })}

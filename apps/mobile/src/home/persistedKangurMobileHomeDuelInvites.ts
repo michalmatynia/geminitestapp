@@ -6,40 +6,49 @@ import { MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT } from './homeDuelLobbyQuery';
 const KANGUR_MOBILE_HOME_DUEL_INVITES_STORAGE_KEY =
   'kangur.mobile.home.duels.privateLobby';
 
+function updateAccumulator(
+    acc: Record<string, KangurDuelLobbyEntry[]>,
+    key: string,
+    data: KangurDuelLobbyEntry[]
+): Record<string, KangurDuelLobbyEntry[]> {
+    return { ...acc, [key]: data };
+}
+
+function processEntry(
+  acc: Record<string, KangurDuelLobbyEntry[]>,
+  [identityKey, value]: [string, unknown]
+): Record<string, KangurDuelLobbyEntry[]> {
+  const result = kangurDuelLobbyEntrySchema
+    .array()
+    .max(MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT)
+    .safeParse(value);
+  if (!result.success) return acc;
+  return updateAccumulator(acc, identityKey, result.data);
+}
+
+function tryParseSnapshot(normalized: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(normalized) as unknown;
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 const parsePersistedHomeDuelInvitesStore = (
   rawSnapshot: string | null,
 ): Record<string, KangurDuelLobbyEntry[]> => {
-  const normalizedRawSnapshot = rawSnapshot?.trim() ?? '';
-  if (!normalizedRawSnapshot) {
-    return {};
-  }
+  const normalized = rawSnapshot?.trim() ?? '';
+  if (normalized === '') return {};
+  
+  const parsedSnapshot = tryParseSnapshot(normalized);
+  if (!parsedSnapshot) return {};
 
-  try {
-    const parsedSnapshot = JSON.parse(normalizedRawSnapshot) as unknown;
-    if (
-      !parsedSnapshot ||
-      typeof parsedSnapshot !== 'object' ||
-      Array.isArray(parsedSnapshot)
-    ) {
-      return {};
-    }
-
-    return Object.entries(parsedSnapshot).reduce<Record<string, KangurDuelLobbyEntry[]>>(
-      (snapshot, [identityKey, value]) => {
-        const parsedEntries = kangurDuelLobbyEntrySchema
-          .array()
-          .max(MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT)
-          .safeParse(value);
-        if (parsedEntries.success) {
-          snapshot[identityKey] = parsedEntries.data;
-        }
-        return snapshot;
-      },
-      {},
-    );
-  } catch {
-    return {};
-  }
+  return Object.entries(parsedSnapshot).reduce<Record<string, KangurDuelLobbyEntry[]>>(
+    processEntry,
+    {},
+  );
 };
 
 export const resolvePersistedKangurMobileHomeDuelInvites = ({
@@ -64,7 +73,7 @@ export const persistKangurMobileHomeDuelInvites = ({
   learnerIdentity: string;
   storage: KangurClientStorageAdapter;
 }): void => {
-  if (!learnerIdentity) {
+  if (learnerIdentity === '') {
     return;
   }
   const currentStore = parsePersistedHomeDuelInvitesStore(

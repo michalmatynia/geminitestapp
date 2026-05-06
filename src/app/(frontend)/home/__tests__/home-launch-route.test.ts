@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   getCmsRepositoryMock,
-  getKangurConfiguredLaunchRouteMock,
   resolveFrontPageSelectionMock,
   getSlugsForDomainMock,
   redirectMock,
@@ -10,7 +9,6 @@ const {
   resolveCmsDomainFromHeadersMock,
 } = vi.hoisted(() => ({
   getCmsRepositoryMock: vi.fn(),
-  getKangurConfiguredLaunchRouteMock: vi.fn(),
   resolveFrontPageSelectionMock: vi.fn(),
   getSlugsForDomainMock: vi.fn(),
   redirectMock: vi.fn(),
@@ -46,17 +44,6 @@ vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   resolveFrontPageSelection: resolveFrontPageSelectionMock,
 }));
 
-vi.mock('@/features/kangur/public', () => ({
-  getKangurPublicLaunchHref: (route?: string) =>
-    route === 'dedicated_app' ? '/kangur?__kangurLaunch=dedicated_app' : '/kangur',
-}));
-
-vi.mock('@/features/kangur/server/launch-route', () => {
-  return {
-    getKangurConfiguredLaunchRoute: getKangurConfiguredLaunchRouteMock,
-  };
-});
-
 describe('frontend home launch route', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -74,49 +61,23 @@ describe('frontend home launch route', () => {
     });
   });
 
-  it('redirects the root home route into the web shell with a dedicated-app launch hint', async () => {
-    getKangurConfiguredLaunchRouteMock.mockResolvedValue('dedicated_app');
-
+  it('mounts the StudiQ shell directly on the root home route when StudiQ owns home', async () => {
     const { default: Home } = await import('@/app/(frontend)/page');
 
-    await expect(Home()).rejects.toThrow('redirect:/kangur?__kangurLaunch=dedicated_app');
-    expect(redirectMock).toHaveBeenCalledWith('/kangur?__kangurLaunch=dedicated_app');
+    await expect(Home()).resolves.toBeNull();
+    expect(redirectMock).not.toHaveBeenCalled();
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
 
-  it('redirects the web mount to the /kangur alias route when Kangur owns home', async () => {
-    getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
-
-    const { default: Home } = await import('@/app/(frontend)/page');
-    await expect(Home()).rejects.toThrow('redirect:/kangur');
-    expect(redirectMock).toHaveBeenCalledWith('/kangur');
-    expect(getCmsRepositoryMock).not.toHaveBeenCalled();
-  });
-
-  it('omits the default locale prefix on dedicated-app web handoff routes', async () => {
-    getKangurConfiguredLaunchRouteMock.mockResolvedValue('dedicated_app');
-
+  it('mounts the StudiQ shell directly on localized home routes when StudiQ owns home', async () => {
     const { default: LocalizedHome } = await import('@/app/[locale]/(frontend)/page');
 
     await expect(
       LocalizedHome({
         params: Promise.resolve({ locale: 'pl' }),
       })
-    ).rejects.toThrow('redirect:/kangur?__kangurLaunch=dedicated_app');
-    expect(redirectMock).toHaveBeenCalledWith('/kangur?__kangurLaunch=dedicated_app');
-    expect(getCmsRepositoryMock).not.toHaveBeenCalled();
-  });
-
-  it('redirects localized home routes to the localized /kangur alias when Kangur owns home', async () => {
-    getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
-
-    const { default: LocalizedHome } = await import('@/app/[locale]/(frontend)/page');
-    await expect(
-      LocalizedHome({
-        params: Promise.resolve({ locale: 'en' }),
-      })
-    ).rejects.toThrow('redirect:/en/kangur');
-    expect(redirectMock).toHaveBeenCalledWith('/en/kangur');
+    ).resolves.toBeNull();
+    expect(redirectMock).not.toHaveBeenCalled();
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
   });
 });

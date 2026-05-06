@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 import { KangurMobileCard as Card, KangurMobileLinkButton as LinkButton } from '../../shared/KangurMobileUi';
 import { LessonRecentResultRow } from '../lesson-row-primitives';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
-import { type UseKangurMobileLessonsRecentResultsResult, type KangurMobileLessonsRecentResultItem } from '../useKangurMobileLessonsRecentResults';
+import { type UseKangurMobileLessonsRecentResultsResult } from '../useKangurMobileLessonsRecentResults';
 import type { Href } from 'expo-router';
 
 interface LessonsRecentResultsSectionProps {
@@ -35,7 +35,7 @@ function RecentResultsContent({
     );
   }
 
-  if (lessonRecentResults.error) {
+  if (lessonRecentResults.error !== null) {
     return <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>{lessonRecentResults.error}</Text>;
   }
 

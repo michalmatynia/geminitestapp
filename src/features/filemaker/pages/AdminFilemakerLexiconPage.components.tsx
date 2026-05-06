@@ -12,7 +12,13 @@ import type { FilemakerLexiconTypeOption } from './AdminFilemakerLexiconPage.typ
 import { createFilemakerLexiconColumns } from './AdminFilemakerLexiconColumns';
 import type { FilemakerLexiconPageViewProps } from './AdminFilemakerLexiconPage.types';
 
+/**
+ * Top-level view for the Filemaker Lexicon admin page.
+ * Renders the page header, filterable data table, and all modals.
+ * State and mutations are owned by the parent page component.
+ */
 export function FilemakerLexiconPageView(props: FilemakerLexiconPageViewProps): React.JSX.Element {
+  // Build column definitions with row-level edit/delete callbacks.
   const columns = createFilemakerLexiconColumns({
     onDeleteTerm: props.onDeleteTerm,
     onEditTerm: props.onEditTerm,
@@ -44,15 +50,21 @@ export function FilemakerLexiconPageView(props: FilemakerLexiconPageViewProps): 
         maxHeight='70vh'
         getRowId={(row) => row.term.id}
       />
+      {/* All modals are rendered here so they sit outside the table scroll container. */}
       <Modals {...props} />
       <props.ConfirmationModal />
     </div>
   );
 }
 
+/**
+ * Groups all three lexicon modals (term editor, type manager, validation patterns)
+ * into a single component to keep the main view clean.
+ */
 function Modals(props: FilemakerLexiconPageViewProps): React.JSX.Element {
   return (
     <>
+      {/* Create / edit a single lexicon term. */}
       <FilemakerLexiconEditorModal
         editCategoryOptions={props.editCategoryOptions}
         editor={props.editor}
@@ -61,6 +73,7 @@ function Modals(props: FilemakerLexiconPageViewProps): React.JSX.Element {
         onClose={props.onEditorClose}
         onSave={() => { void props.onEditorSave(); }}
       />
+      {/* Manage the set of lexicon type definitions (labels, sort order, descriptions). */}
       <FilemakerLexiconTypesModal
         drafts={props.typeEditor.drafts}
         isSaving={props.isLoading}
@@ -69,6 +82,7 @@ function Modals(props: FilemakerLexiconPageViewProps): React.JSX.Element {
         onSave={() => { void props.typeEditor.save(); }}
         open={props.typeEditor.open}
       />
+      {/* Manage regex validation patterns used to auto-classify scraped terms. */}
       <FilemakerLexiconValidationPatternsModal
         drafts={props.patternEditor.drafts}
         editCategoryOptions={props.editCategoryOptions}
@@ -84,22 +98,28 @@ function Modals(props: FilemakerLexiconPageViewProps): React.JSX.Element {
   );
 }
 
+/**
+ * Filter bar rendered above the lexicon data table.
+ * Provides a category type selector and a free-text search input.
+ */
 function FilemakerLexiconFilters(props: {
   categoryOptions: Array<FilemakerLexiconTypeOption | { label: string; value: 'all' }>;
-  categoryFilter: any;
+  categoryFilter: FilemakerLexiconTypeOption['value'] | 'all';
   query: string;
-  setCategoryFilter: (value: any) => void;
+  setCategoryFilter: (value: FilemakerLexiconTypeOption['value'] | 'all') => void;
   setQuery: (value: string) => void;
 }): React.JSX.Element {
   return (
     <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+      {/* Dropdown to filter the table by lexicon type category. */}
       <SelectSimple
         ariaLabel='Lexicon type'
         value={props.categoryFilter}
-        options={props.categoryOptions as any}
+        options={props.categoryOptions}
         onValueChange={(value) => props.setCategoryFilter(parseFilemakerLexiconCategoryFilter(value))}
       />
       <div className='w-full max-w-sm'>
+        {/* Free-text search across term labels. */}
         <SearchInput
           value={props.query}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => props.setQuery(event.target.value)}

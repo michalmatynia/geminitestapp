@@ -197,6 +197,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   } = props;
 
   const isCreateMode = mode === 'create';
+  const isEditMode = mode === 'edit';
   const isTradera = isTraderaIntegrationSlug(integrationSlug);
   const isTraderaBrowser = isTradera;
   const is1688 = is1688IntegrationSlug(integrationSlug);
@@ -501,6 +502,26 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
       )}
       {isTradera && (
         <>
+          {isEditMode && (
+            <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} py-1`}>
+              <Checkbox
+                id={`${idPrefix}-enabled`}
+                checked={form.enabled}
+                onCheckedChange={(checked: boolean): void =>
+                  setForm((prev) => ({
+                    ...prev,
+                    enabled: checked,
+                  }))
+                }
+              />
+              <Label
+                htmlFor={`${idPrefix}-enabled`}
+                className='text-xs font-medium text-gray-300'
+              >
+                Connection enabled
+              </Label>
+            </div>
+          )}
           {isTraderaBrowser && (
             <>
               <FormField label='Browser automation mode'>

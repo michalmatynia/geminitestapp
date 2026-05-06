@@ -105,6 +105,7 @@ describe('useIntegrationsActionsImpl', () => {
       name: 'Tradera Browser',
       username: 'seller@example.com',
       password: 'secret',
+      enabled: false,
       traderaBrowserMode: 'scripted' as const,
       playwrightListingScript: 'export default async function run() {}',
     };
@@ -119,6 +120,7 @@ describe('useIntegrationsActionsImpl', () => {
         integrationId: activeIntegration.id,
         payload: expect.objectContaining({
           name: 'Tradera Browser',
+          enabled: false,
           username: 'seller@example.com',
           password: 'secret',
           traderaBrowserMode: 'scripted',

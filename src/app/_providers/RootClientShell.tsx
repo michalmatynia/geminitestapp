@@ -14,6 +14,16 @@ import type { ReactNode } from 'react';
 
 import { RootProvidersClient } from '@/shared/providers/RootProvidersClient';
 
-export function RootClientShell({ children }: { children: ReactNode }): React.JSX.Element {
-  return <RootProvidersClient>{children}</RootProvidersClient>;
+export function RootClientShell({
+  children,
+  initialLiteSettings,
+}: {
+  children: ReactNode;
+  initialLiteSettings?: ReadonlyArray<readonly [string, string]>;
+}): React.JSX.Element {
+  return (
+    <RootProvidersClient initialLiteSettings={initialLiteSettings}>
+      {children}
+    </RootProvidersClient>
+  );
 }

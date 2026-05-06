@@ -93,7 +93,7 @@ describe('FrontendPublicOwnerKangurShell', () => {
     expect(screen.queryByTestId('kangur-vercel-analytics')).not.toBeInTheDocument();
     expect(kangurFeatureRouteShellMock).toHaveBeenCalledWith({
       basePath: '/',
-      embedded: true,
+      embedded: false,
       forceBodyScrollLock: false,
     });
   });
@@ -156,5 +156,19 @@ describe('FrontendPublicOwnerKangurShell', () => {
       }),
       undefined
     );
+  });
+
+  it('still supports an explicit embedded override for CMS-owned mounts', async () => {
+    const { FrontendPublicOwnerKangurShell } = await import(
+      '@/features/kangur/ui/FrontendPublicOwnerKangurShell'
+    );
+
+    render(<FrontendPublicOwnerKangurShell embeddedOverride />);
+
+    expect(kangurFeatureRouteShellMock).toHaveBeenCalledWith({
+      basePath: '/',
+      embedded: true,
+      forceBodyScrollLock: false,
+    });
   });
 });

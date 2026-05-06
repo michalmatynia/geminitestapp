@@ -16,6 +16,9 @@ export const {
   DIFFICULTY_OPTIONS,
   SERIES_BEST_OF_OPTIONS,
   DUEL_STATUS_LABELS,
+  HOME_ROUTE,
+  LESSONS_ROUTE,
+  PROFILE_ROUTE,
 } = Constants;
 
 export const MODE_FILTER_OPTIONS: readonly { value: string; label: KangurMobileLocalizedValue<string> }[] = Constants.MODE_FILTER_OPTIONS;

@@ -62,6 +62,7 @@ describe('getIntegrationsWithConnections', () => {
             id: 'conn-tradera-1',
             integrationId: 'integration-tradera-1',
             name: 'Tradera browser',
+            enabled: true,
             hasPlaywrightStorageState: false,
             traderaBrowserMode: 'scripted',
             hasPlaywrightListingScript: true,

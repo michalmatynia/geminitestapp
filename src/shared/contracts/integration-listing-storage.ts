@@ -41,7 +41,12 @@ export type ProductListingRepository = {
     Array<
       Pick<
         ProductListing,
-        'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'
+        | 'productId'
+        | 'status'
+        | 'integrationId'
+        | 'connectionId'
+        | 'marketplaceData'
+        | 'updatedAt'
       >
     >
   >;

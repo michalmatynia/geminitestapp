@@ -410,6 +410,14 @@ vi.mock('@/features/kangur/ui/context/KangurTopNavigationContext', () => ({
       <>{fallback ?? null}</>
     ),
   KangurTopNavigationProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useOptionalKangurTopNavigationState: () => ({
+    visibleRegistration: topNavigationHostVisibleMock()
+      ? {
+          navigation: {},
+          ownerId: 'kangur-top-navigation:test',
+        }
+      : null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurTutorAnchorContext', () => ({
@@ -615,6 +623,8 @@ export async function setupKangurFeatureAppTest() {
   vi.resetModules();
   clearLatchedKangurTopBarHeightCssValue();
   document.documentElement.style.removeProperty('--kangur-top-bar-height');
+  delete (window as Window & { __kangurInitialHomeBootComplete?: boolean })
+    .__kangurInitialHomeBootComplete;
 
   settingsStoreStateMock.mockReturnValue({
     map: new Map(),

@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2 } from 'lucide-react';
 import React from 'react';
 import { Badge, Button } from '@/shared/ui/primitives.public';
-import type { FilemakerLexiconTerm, FilemakerLexiconTermCategory } from '../types';
+import type { FilemakerLexiconTerm } from '../types';
 import type { FilemakerLexiconTermRow } from './AdminFilemakerLexiconPage.helpers';
 import { formatTimestamp } from './filemaker-page-utils';
 import { formatFilemakerLexiconCategory, type FilemakerLexiconTypeMetadataMap } from './AdminFilemakerLexiconPage.type-metadata';

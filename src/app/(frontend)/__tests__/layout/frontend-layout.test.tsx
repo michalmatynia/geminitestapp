@@ -275,7 +275,7 @@ describe('frontend layout bootstrap', () => {
     60_000
   );
 
-  it('skips Kangur bootstrap work on the root route when Kangur home will redirect immediately', async () => {
+  it('loads Kangur bootstrap work on the root route when StudiQ owns home', async () => {
     headersMock.mockResolvedValue(
       new Headers({
         'x-app-request-pathname': '/',
@@ -289,13 +289,38 @@ describe('frontend layout bootstrap', () => {
       source: 'runtime',
       fallbackReason: null,
     });
+    getKangurStorefrontInitialStateMock.mockResolvedValue({
+      initialMode: 'dark',
+      initialThemeSettings: {
+        dark: '{"backgroundColor":"#020617"}',
+        dawn: '{"backgroundColor":"#f59e0b"}',
+        default: '{"backgroundColor":"#123456"}',
+        sunset: '{"backgroundColor":"#ef4444"}',
+      },
+    });
 
-    await renderResolvedFrontendLayout(<div>root-redirect</div>);
+    await renderResolvedFrontendLayout(<div>root-home</div>);
 
-    expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
-    expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
+    expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
+    expect(getKangurAuthBootstrapScriptMock).toHaveBeenCalledTimes(1);
     expect(kangurSSRSkeletonMock).not.toHaveBeenCalled();
-    expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
+    expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        publicOwner: 'kangur',
+        initialAppearance: {
+          mode: 'dark',
+          themeSettings: {
+            dark: '{"backgroundColor":"#020617"}',
+            dawn: '{"backgroundColor":"#f59e0b"}',
+            default: '{"backgroundColor":"#123456"}',
+            sunset: '{"backgroundColor":"#ef4444"}',
+          },
+        },
+        renderStandaloneKangurShell: true,
+      }),
+      undefined
+    );
+    expect(kangurServerShellMock).toHaveBeenCalledTimes(1);
   });
 
   it('loads Kangur storefront bootstrap on standalone Kangur routes like lessons', async () => {
@@ -412,9 +437,9 @@ describe('frontend layout bootstrap', () => {
     expect(timingScript?.textContent).toContain('"routeFamily":"studiq"');
     expect(timingScript?.textContent).toContain('"frontPageSelection"');
     expect(timingScript?.textContent).toContain('"frontPageSelectionSource":"mongo"');
-    expect(timingScript?.textContent).toContain('"expectsRootRedirectToKangur":true');
-    expect(timingScript?.textContent).not.toContain('"kangurStorefrontInitialState"');
-    expect(timingScript?.textContent).not.toContain('"kangurAuthBootstrapScript"');
+    expect(timingScript?.textContent).toContain('"expectsRootRedirectToKangur":false');
+    expect(timingScript?.textContent).toContain('"kangurStorefrontInitialState"');
+    expect(timingScript?.textContent).toContain('"kangurAuthBootstrapScript"');
   });
 
   it('classifies product routes separately from StudiQ in the frontend layout shell metadata', async () => {
@@ -550,16 +575,23 @@ describe('frontend layout bootstrap', () => {
       render(resolvedLayout as React.ReactElement);
 
       expect(resolveFrontPageSelectionMock).toHaveBeenCalledTimes(1);
-      expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
+      expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
       expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
-      expect(frontendPublicOwnerShellClientMock).not.toHaveBeenCalled();
+      expect(frontendPublicOwnerShellClientMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          publicOwner: 'kangur',
+          renderStandaloneKangurShell: true,
+        }),
+        undefined
+      );
+      expect(kangurServerShellMock).toHaveBeenCalledTimes(1);
       const timingScript = document.querySelector('#__FRONTEND_LAYOUT_TIMING__');
       expect(timingScript?.textContent).toContain('"requestHeadersTimedOut":true');
       expect(timingScript?.textContent).toContain('"frontPageSelectionSource":"lite"');
       expect(timingScript?.textContent).toContain(
         '"frontPageSelectionFallbackReason":"transient-mongo-error"'
       );
-      expect(timingScript?.textContent).toContain('"expectsRootRedirectToKangur":true');
+      expect(timingScript?.textContent).toContain('"expectsRootRedirectToKangur":false');
     } finally {
       if (originalDebugFrontendTiming === undefined) {
         delete process.env['DEBUG_FRONTEND_TIMING'];

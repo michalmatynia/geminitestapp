@@ -4,6 +4,7 @@ import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { AiNodeSchema } from './types/relation-graph';
 
 
 const normalizeTimestamp = (value: unknown, fallback: string): string =>
@@ -53,11 +54,14 @@ const getRelationNodePosition = (
   };
 };
 
+const RELATION_NODE_TYPE_MAP: Record<CaseResolverRelationEntityType, AiNode['type']> = {
+  folder: 'database',
+  file: 'prompt',
+  custom: 'template',
+};
+
 const resolveRelationNodeType = (entityType: CaseResolverRelationEntityType): AiNode['type'] => {
-  if (entityType === 'folder') return 'database';
-  if (entityType === 'file') return 'prompt';
-  if (entityType === 'custom') return 'template';
-  return 'template';
+  return RELATION_NODE_TYPE_MAP[entityType] ?? 'template';
 };
 
 const hasKnownRelationNodeType = (value: string): value is AiNode['type'] =>
@@ -182,44 +186,34 @@ const sanitizeRelationEdgeKind = (value: unknown): CaseResolverRelationEdgeKind 
     ? value
     : 'related';
 
+import { RelationNodeMetaSchema, RelationEdgeMetaSchema } from './types/relation-meta';
+
 const sanitizeRelationNodeMeta = (
   value: unknown,
   validNodeIds: Set<string>,
   now: string
 ): Record<string, CaseResolverRelationNodeMeta> => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {};
-  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const record = value as Record<string, unknown>;
+  
   const result: Record<string, CaseResolverRelationNodeMeta> = {};
-  Object.entries(value as Record<string, unknown>).forEach(
-    ([nodeId, entry]: [string, unknown]): void => {
-      if (!validNodeIds.has(nodeId)) return;
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-      const record = entry as Record<string, unknown>;
-      const label =
-        typeof record['label'] === 'string' && record['label'].trim().length > 0
-          ? record['label'].trim()
-          : nodeId;
-      const entityId =
-        typeof record['entityId'] === 'string' && record['entityId'].trim().length > 0
-          ? record['entityId'].trim()
-          : nodeId;
-      const createdAt = normalizeTimestamp(record['createdAt'], now);
-      const updatedAt = normalizeTimestamp(record['updatedAt'], createdAt);
-      result[nodeId] = {
-        ...DEFAULT_CASE_RESOLVER_RELATION_NODE_META,
-        entityType: sanitizeRelationEntityType(record['entityType']),
-        entityId,
-        label,
-        fileKind: sanitizeRelationFileKind(record['fileKind']),
-        folderPath: sanitizeOptionalId(record['folderPath']),
-        sourceFileId: sanitizeOptionalId(record['sourceFileId']),
-        isStructural: record['isStructural'] === true,
-        createdAt,
-        updatedAt,
-      };
+  
+  Object.entries(record).forEach(([nodeId, entry]) => {
+    if (!validNodeIds.has(nodeId)) return;
+    
+    const parsed = RelationNodeMetaSchema.safeParse({
+        ...(typeof entry === 'object' ? entry : {}),
+        entityId: (typeof entry === 'object' && 'entityId' in entry!) ? (entry as any).entityId : nodeId,
+        label: (typeof entry === 'object' && 'label' in entry!) ? (entry as any).label : nodeId,
+        createdAt: normalizeTimestamp((typeof entry === 'object' && 'createdAt' in entry!) ? (entry as any).createdAt : null, now),
+        updatedAt: normalizeTimestamp((typeof entry === 'object' && 'updatedAt' in entry!) ? (entry as any).updatedAt : null, now),
+    });
+    
+    if (parsed.success) {
+        result[nodeId] = parsed.data;
     }
-  );
+  });
+  
   return result;
 };
 
@@ -228,30 +222,25 @@ const sanitizeRelationEdgeMeta = (
   validEdgeIds: Set<string>,
   now: string
 ): Record<string, CaseResolverRelationEdgeMeta> => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {};
-  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const record = value as Record<string, unknown>;
+  
   const result: Record<string, CaseResolverRelationEdgeMeta> = {};
-  Object.entries(value as Record<string, unknown>).forEach(
-    ([edgeId, entry]: [string, unknown]): void => {
-      if (!validEdgeIds.has(edgeId)) return;
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-      const record = entry as Record<string, unknown>;
-      const createdAt = normalizeTimestamp(record['createdAt'], now);
-      const updatedAt = normalizeTimestamp(record['updatedAt'], createdAt);
-      result[edgeId] = {
-        ...DEFAULT_CASE_RESOLVER_RELATION_EDGE_META,
-        relationType: sanitizeRelationEdgeKind(record['relationType']),
-        label:
-          typeof record['label'] === 'string'
-            ? record['label']
-            : DEFAULT_CASE_RESOLVER_RELATION_EDGE_META.label,
-        isStructural: record['isStructural'] === true,
-        createdAt,
-        updatedAt,
-      };
+  
+  Object.entries(record).forEach(([edgeId, entry]) => {
+    if (!validEdgeIds.has(edgeId)) return;
+    
+    const parsed = RelationEdgeMetaSchema.safeParse({
+        ...(typeof entry === 'object' ? entry : {}),
+        createdAt: normalizeTimestamp((typeof entry === 'object' && 'createdAt' in entry!) ? (entry as any).createdAt : null, now),
+        updatedAt: normalizeTimestamp((typeof entry === 'object' && 'updatedAt' in entry!) ? (entry as any).updatedAt : null, now),
+    });
+    
+    if (parsed.success) {
+        result[edgeId] = parsed.data;
     }
-  );
+  });
+  
   return result;
 };
 

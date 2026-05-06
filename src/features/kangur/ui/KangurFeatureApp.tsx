@@ -12,6 +12,7 @@ import {
   LazyMotionDiv,
   usePrefersReducedMotion,
 } from '@/features/kangur/ui/components/LazyAnimatePresence';
+import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 
 import { KANGUR_CMS_PROJECT_SETTING_KEY } from '@/features/kangur/cms-builder/project-contracts';
 import { hasKangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/runtime-screen-presence';
@@ -39,7 +40,29 @@ const KangurDeferredSyncEffectsClient = dynamic(
     })),
   { ssr: false }
 );
-import { KangurAppProviders } from './app-shell';
+import {
+  KangurAuthProvider,
+  useKangurAuthActions,
+  useKangurAuthSessionState,
+  useKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
+import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
+import { KangurFocusProvider } from '@/features/kangur/ui/context/KangurFocusProvider';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
+import {
+  KangurLoginModalProvider,
+  useKangurLoginModalState,
+} from '@/features/kangur/ui/context/KangurLoginModalContext';
+import {
+  KangurRouteTransitionProvider,
+  useKangurRouteTransitionState,
+} from '@/features/kangur/ui/context/KangurRouteTransitionContext';
+import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import {
+  KangurTopNavigationHost,
+  KangurTopNavigationProvider,
+  useOptionalKangurTopNavigationState,
+} from '@/features/kangur/ui/context/KangurTopNavigationContext';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import {
   useKangurPendingRouteLoadingSnapshot,
@@ -48,6 +71,9 @@ import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRout
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
 import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
+import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 import { useSettingsStore, useSettingsStoreLoading } from '@/shared/providers/SettingsStoreProvider';
@@ -57,9 +83,13 @@ import { KangurDeferredAiTutorWidgetMount } from '@/features/kangur/ui/KangurDef
 
 import type { JSX } from 'react';
 
-// Minimum time (ms) the boot skeleton stays visible to avoid a flash when
+// Minimum time (ms) the boot loader stays visible to avoid a flash when
 // theme settings resolve almost immediately.
 const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
+// Minimum time (ms) the standalone home skeleton stays visible after the boot
+// loader. This gives the routed shell one stable frame before revealing the
+// real home content.
+const INITIAL_HOME_SKELETON_MIN_VISIBLE_MS = 650;
 // Delay (ms) before showing the navigation skeleton during a route transition.
 // Set to 0 so the skeleton appears immediately when a transition is triggered
 // from a known source (e.g. nav link click).
@@ -120,6 +150,26 @@ type LatchedNavigationSkeletonState = {
   embedded: boolean;
   pageKey: string;
   variant: KangurRouteTransitionSkeletonVariant | null;
+};
+type KangurInitialHomeBootPhase = 'loader' | 'page-skeleton' | 'interactive';
+
+const isKangurRootBasePath = (basePath: string | null | undefined): boolean =>
+  basePath?.trim() === '/';
+
+type KangurInitialHomeBootWindow = Window & {
+  __kangurInitialHomeBootComplete?: boolean;
+};
+
+const hasCompletedKangurInitialHomeBoot = (): boolean =>
+  typeof window !== 'undefined' &&
+  (window as KangurInitialHomeBootWindow).__kangurInitialHomeBootComplete === true;
+
+const markKangurInitialHomeBootComplete = (): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  (window as KangurInitialHomeBootWindow).__kangurInitialHomeBootComplete = true;
 };
 
 // Renders the login modal only when it is explicitly open. Keeping this as a
@@ -302,12 +352,12 @@ const KangurRenderedRouteSkeletonOverlay = memo(({
 });
 
 function KangurResolvedRouteContent({
+  rawCmsProject,
   resolvedPageKey,
 }: {
+  rawCmsProject: string | null | undefined;
   resolvedPageKey: string | null;
 }): JSX.Element {
-  const settingsStore = useSettingsStore();
-
   if (resolvedPageKey === null) {
     return <PageNotFound />;
   }
@@ -317,7 +367,6 @@ function KangurResolvedRouteContent({
     return <PageNotFound />;
   }
 
-  const rawCmsProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
   const shouldUseCmsRuntimeScreen = hasKangurCmsRuntimeScreen(rawCmsProject, resolvedPageKey);
 
   return shouldUseCmsRuntimeScreen ? (
@@ -356,10 +405,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const isStandaloneHomeReady = useKangurDeferredStandaloneHomeReady();
   const { pageKey, embedded, requestedPath, requestedHref, basePath } = useKangurRouting();
   const queryClient = useQueryClient();
+  const settingsStore = useSettingsStore();
+  const topNavigationState = useOptionalKangurTopNavigationState();
   const routeLocale = normalizeSiteLocale(useLocale());
   const isCoarsePointer = useKangurCoarsePointer();
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
+  const rawCmsProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
   const homeHref = getKangurHomeHref(basePath);
   // Unauthenticated users who land directly on the parent dashboard are
   // silently redirected to the home page rather than shown an auth error.
@@ -394,6 +446,11 @@ const AuthenticatedApp = (): JSX.Element | null => {
   // resolves if the theme hasn't arrived yet.
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
   const isThemeBootLoading = isLoadingSettings;
+  const isSettingsRefresh = Boolean(settingsStore.isFetching);
+  const isStandaloneHomeRoute = !embedded && resolvedPageKey === KANGUR_MAIN_PAGE;
+  const shouldSkipClientBootLoader = isStandaloneHomeRoute && isKangurRootBasePath(basePath);
+  const hasStandaloneHomeTopNavigationRegistration =
+    !isStandaloneHomeRoute || topNavigationState?.visibleRegistration !== null;
   // A navigation transition is active during any of the four phases:
   // acknowledging → pending → waiting_for_ready → revealing.
   const isNavigationTransitionActive =
@@ -411,9 +468,12 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeContent = useMemo(
     () =>
       hasRouteContent ? (
-        <KangurResolvedRouteContent resolvedPageKey={resolvedPageKey} />
+        <KangurResolvedRouteContent
+          rawCmsProject={rawCmsProject}
+          resolvedPageKey={resolvedPageKey}
+        />
       ) : null,
-    [hasRouteContent, resolvedPageKey]
+    [hasRouteContent, rawCmsProject, resolvedPageKey]
   );
   // hasPresentedInteractiveShell: latched to true once the shell has been
   // shown to the user at least once. Prevents the boot loader from re-appearing
@@ -426,15 +486,35 @@ const AuthenticatedApp = (): JSX.Element | null => {
   // following mount, ensuring the lazy-loaded main page has painted before the
   // skeleton overlay is removed.
   const [hasInitialContentSettled, setHasInitialContentSettled] = useState(false);
-  const shouldShowBootLoader = isThemeBootLoading && !hasPresentedInteractiveShell;
-  const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
+  const shouldRunInitialHomeBootRef = useRef<boolean | null>(null);
+  shouldRunInitialHomeBootRef.current ??=
+    isStandaloneHomeRoute && !isSettingsRefresh && !hasCompletedKangurInitialHomeBoot();
+  const shouldRunInitialHomeBoot = shouldRunInitialHomeBootRef.current;
+  const [initialHomeBootPhase, setInitialHomeBootPhase] =
+    useState<KangurInitialHomeBootPhase>(() =>
+      shouldRunInitialHomeBoot
+        ? shouldSkipClientBootLoader
+          ? 'page-skeleton'
+          : 'loader'
+        : 'interactive'
+    );
+  const isInitialHomeLoaderPhase = initialHomeBootPhase === 'loader';
+  const isInitialHomeSkeletonPhase = initialHomeBootPhase === 'page-skeleton';
+  const shouldShowFallbackBootLoader =
+    isThemeBootLoading && !hasPresentedInteractiveShell && routeContent === null;
+  const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(
+    isInitialHomeLoaderPhase || shouldShowFallbackBootLoader
+  );
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
   const [latchedNavigationTopBarHeightCssValue, setLatchedNavigationTopBarHeightCssValue] =
     useState<string | null>(null);
   const preloadedHotRoutesRef = useRef<Set<string>>(new Set());
   const prefetchedPageContentLocalesRef = useRef<Set<string>>(new Set());
   const bootSkeletonShownAtRef = useRef<number | null>(
-    shouldShowBootLoader ? Date.now() : null
+    isInitialHomeLoaderPhase || shouldShowFallbackBootLoader ? Date.now() : null
+  );
+  const initialHomeSkeletonShownAtRef = useRef<number | null>(
+    isInitialHomeSkeletonPhase ? Date.now() : null
   );
   const navigationSkeletonShownRef = useRef(false);
   const latchedNavigationSkeletonRef = useRef<LatchedNavigationSkeletonState | null>(null);
@@ -466,12 +546,15 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }) ?? embedded;
   const snapshotTransitionTopBarHeightCssValue =
     pendingRouteLoadingSnapshot?.topBarHeightCssValue ?? null;
-  // Only keep the initial route skeleton around while the route content has
-  // not resolved yet. Once the page content exists, leaving this overlay on
-  // top of the screen causes the cold `/ -> /[locale]/kangur` redirect path
-  // to hide the home actions until a later rerender.
+  // The standalone home route intentionally boots in phases: loader, full
+  // page skeleton, then interactive content. Other routes keep the older
+  // fallback skeleton behavior and only show it while route content is absent.
   const isInitialMountSkeletonVisible =
-    routeContent === null && !hasInitialContentSettled && !hasPresentedInteractiveShell;
+    (isInitialHomeSkeletonPhase &&
+      isStandaloneHomeRoute &&
+      !isNavigationTransitionActive &&
+      !isPendingRouteSnapshotVisible) ||
+    (routeContent === null && !hasInitialContentSettled && !hasPresentedInteractiveShell);
   const isRouteSkeletonVisible =
     shouldShowAcknowledgingNavigationSkeleton ||
     isNavigationSkeletonVisible ||
@@ -513,22 +596,26 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const shouldClipRouteContentDuringTransition =
     !shouldKeepRouteContentVisibleDuringTransition &&
     (isPendingRouteSnapshotVisible || isRouteSkeletonVisible);
-  const isRouteContentVisuallyHidden = !shouldKeepRouteContentVisibleDuringTransition &&
-    (transitionPhase === 'waiting_for_ready' ||
-      ((transitionPhase === 'pending' ||
-        (transitionPhase === 'acknowledging' &&
-          shouldShowAcknowledgingNavigationSkeleton)) &&
-        isRouteSkeletonVisible) ||
-      isPendingRouteSnapshotVisible);
+  const isRouteContentVisuallyHidden =
+    (isInitialHomeLoaderPhase && !isRouteSkeletonVisible) ||
+    isInitialMountSkeletonVisible ||
+    (!shouldKeepRouteContentVisibleDuringTransition &&
+      (transitionPhase === 'waiting_for_ready' ||
+        ((transitionPhase === 'pending' ||
+          (transitionPhase === 'acknowledging' &&
+            shouldShowAcknowledgingNavigationSkeleton)) &&
+          isRouteSkeletonVisible) ||
+        isPendingRouteSnapshotVisible));
   const isRouteContentInteractionBlocked =
     !isRouteInteractionReady ||
     isPendingRouteSnapshotVisible ||
     (isRouteSkeletonVisible && transitionPhase !== 'revealing');
-  const hasVisibleRouteContent = routeContent !== null && !isRouteContentVisuallyHidden;
   // isRouteCaptureReady: data attribute consumed by the social screenshot
   // pipeline to know when the page is fully settled and safe to capture.
   const isRouteCaptureReady =
     routeContent !== null &&
+    !isInitialHomeLoaderPhase &&
+    !isInitialHomeSkeletonPhase &&
     !isBootLoading &&
     !isThemeBootLoading &&
     !isNavigationTransitionActive &&
@@ -537,8 +624,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     authErrorType !== 'auth_required';
   // When the boot loader is blocking navigation, hide the top navigation so
   // the skeleton covers the full viewport without a nav bar peeking through.
-  const isBootLoaderBlockingNavigation =
-    isBootSkeletonVisible && !isRouteSkeletonVisible && !hasVisibleRouteContent;
+  const isBootLoaderBlockingNavigation = isBootSkeletonVisible && !isRouteSkeletonVisible;
   const shouldHideTopNavigationDuringBoot = isBootLoaderBlockingNavigation;
   const shouldKeepShellTopNavigationDuringTransition =
     isRouteSkeletonVisible && isLanguageSwitcherTransition;
@@ -718,7 +804,28 @@ const AuthenticatedApp = (): JSX.Element | null => {
   ]);
 
   useEffect(() => {
+    if (shouldRunInitialHomeBoot && initialHomeBootPhase === 'interactive') {
+      markKangurInitialHomeBootComplete();
+    }
+  }, [initialHomeBootPhase, shouldRunInitialHomeBoot]);
+
+  useEffect(() => {
+    if (initialHomeBootPhase === 'interactive' || isStandaloneHomeRoute) {
+      return;
+    }
+
+    initialHomeSkeletonShownAtRef.current = null;
+    bootSkeletonShownAtRef.current = null;
+    setIsBootSkeletonVisible(false);
+    setInitialHomeBootPhase('interactive');
+  }, [initialHomeBootPhase, isStandaloneHomeRoute]);
+
+  useEffect(() => {
     if (hasPresentedInteractiveShell) {
+      return;
+    }
+
+    if (shouldRunInitialHomeBoot && initialHomeBootPhase !== 'interactive') {
       return;
     }
 
@@ -739,11 +846,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
     setHasPresentedInteractiveShell(true);
   }, [
     hasPresentedInteractiveShell,
+    initialHomeBootPhase,
     isBootLoading,
     isRouteContentVisuallyHidden,
     isRouteSkeletonVisible,
     isThemeBootLoading,
     routeContent,
+    shouldRunInitialHomeBoot,
   ]);
 
   // Redirect to login when the server returns an auth_required error (e.g.
@@ -768,7 +877,31 @@ const AuthenticatedApp = (): JSX.Element | null => {
   }, [homeHref, routeNavigator, shouldRedirectToHome]);
 
   useEffect(() => {
-    if (shouldShowBootLoader) {
+    if (isInitialHomeLoaderPhase) {
+      if (bootSkeletonShownAtRef.current === null) {
+        bootSkeletonShownAtRef.current = Date.now();
+      }
+      setIsBootSkeletonVisible(true);
+
+      if (isBootLoading || isThemeBootLoading) {
+        return;
+      }
+
+      const shownAt = bootSkeletonShownAtRef.current;
+      const remainingMs = Math.max(0, BOOT_SKELETON_MIN_VISIBLE_MS - (Date.now() - shownAt));
+      const timeoutId = safeSetTimeout(() => {
+        bootSkeletonShownAtRef.current = null;
+        initialHomeSkeletonShownAtRef.current = Date.now();
+        setIsBootSkeletonVisible(false);
+        setInitialHomeBootPhase('page-skeleton');
+      }, remainingMs);
+
+      return () => {
+        safeClearTimeout(timeoutId);
+      };
+    }
+
+    if (shouldShowFallbackBootLoader) {
       if (bootSkeletonShownAtRef.current === null) {
         bootSkeletonShownAtRef.current = Date.now();
       }
@@ -791,7 +924,50 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return () => {
       safeClearTimeout(timeoutId);
     };
-  }, [shouldShowBootLoader]);
+  }, [
+    isBootLoading,
+    isInitialHomeLoaderPhase,
+    isThemeBootLoading,
+    shouldShowFallbackBootLoader,
+  ]);
+
+  useEffect(() => {
+    if (!isInitialHomeSkeletonPhase) {
+      return;
+    }
+
+    if (
+      isBootLoading ||
+      isThemeBootLoading ||
+      !hasStandaloneHomeTopNavigationRegistration ||
+      !hasInitialContentSettled ||
+      routeContent === null
+    ) {
+      return;
+    }
+
+    const shownAt = initialHomeSkeletonShownAtRef.current ?? Date.now();
+    initialHomeSkeletonShownAtRef.current = shownAt;
+    const remainingMs = Math.max(
+      0,
+      INITIAL_HOME_SKELETON_MIN_VISIBLE_MS - (Date.now() - shownAt)
+    );
+    const timeoutId = safeSetTimeout(() => {
+      initialHomeSkeletonShownAtRef.current = null;
+      setInitialHomeBootPhase('interactive');
+    }, remainingMs);
+
+    return () => {
+      safeClearTimeout(timeoutId);
+    };
+  }, [
+    hasInitialContentSettled,
+    hasStandaloneHomeTopNavigationRegistration,
+    isBootLoading,
+    isInitialHomeSkeletonPhase,
+    isThemeBootLoading,
+    routeContent,
+  ]);
 
   useEffect(() => {
     if (isNavigationTransitionActive) {
@@ -936,7 +1112,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
         offsetTopBar={shouldReserveTopBarOffset}
         visible={isBootLoaderBlockingNavigation}
       />
-      <Suspense fallback={<KangurSuspenseRouteFallback pageKey={resolvedPageKey} />}>
+      <Suspense
+        fallback={
+          isInitialHomeLoaderPhase || isInitialHomeSkeletonPhase ? null : (
+            <KangurSuspenseRouteFallback pageKey={resolvedPageKey} />
+          )
+        }
+      >
         <LazyAnimatePresence
           loadMotion={isStandaloneHomeReady}
           mode={shouldSkipRouteContentPresence ? 'sync' : 'wait'}

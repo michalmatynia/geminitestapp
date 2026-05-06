@@ -106,7 +106,7 @@ const mapLessonCheckpointEntriesToItems = (entries: Array<[string, KangurLessonM
       lastScorePercent: mastery.lastScorePercent,
       lessonHref: createKangurLessonHref(componentId),
       masteryPercent: mastery.masteryPercent,
-      practiceHref: practiceOperation ? createKangurPracticeHref(practiceOperation) : null,
+      practiceHref: practiceOperation !== null ? createKangurPracticeHref(practiceOperation) : null,
       title: getLocalizedKangurCoreLessonTitle(componentId, locale, lessonCatalogEntry?.title),
     };
   });

@@ -1,12 +1,12 @@
-import { normalizeCaseResolverComparable } from '../utils';
+import { normalizeCaseResolverComparable } from '@/features/case-resolver/public';
 
 export const lineContainsComparableHint = (line: string, hints: string[]): boolean => {
   const normalizedLine = normalizeCaseResolverComparable(line);
-  if (normalizedLine === null) return false;
+  if (normalizedLine.length === 0) return false;
   const paddedLine = ` ${normalizedLine} `;
   return hints.some((hint: string): boolean => {
     const normalizedHint = normalizeCaseResolverComparable(hint);
-    if (normalizedHint === null) return false;
+    if (normalizedHint.length === 0) return false;
     return paddedLine.includes(` ${normalizedHint} `);
   });
 };

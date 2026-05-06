@@ -8,6 +8,7 @@ import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { toDuelsSummaryErrorMessage } from './useKangurMobileLearnerDuelsSummary.errors';
 import { useSummaryIdentity } from './useDuelsSummaryIdentity';
 import { useDuelsSummaryRematch } from './useDuelsSummaryRematch';
+export type { UseKangurMobileLearnerDuelsSummaryResult } from './duels-summary-types';
 import type { UseKangurMobileLearnerDuelsSummaryResult } from './duels-summary-types';
 import type { DuelApiClient } from './useKangurMobileDuelsLobbyQueries';
 

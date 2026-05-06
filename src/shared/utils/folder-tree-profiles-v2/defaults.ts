@@ -216,6 +216,36 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  filemaker_job_listings: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to job listing',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'briefcase',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_job_listing: 'briefcase',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
   filemaker_persons: {
     version: 2,
     placeholders: {

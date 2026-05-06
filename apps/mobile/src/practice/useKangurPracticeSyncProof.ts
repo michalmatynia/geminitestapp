@@ -63,7 +63,7 @@ function calculateSnapshot(params: SnapshotParams): KangurPracticeSyncProofSnaps
 
 function getSyncError(
   leaderboardError: string | null,
-  scoresQueryError: unknown,
+  scoresQueryError: Error | null | undefined,
   copy: (v: Record<string, string>) => string
 ): string | null {
   if (leaderboardError !== null) {
@@ -77,6 +77,33 @@ function getSyncError(
     });
   }
   return null;
+}
+
+function useSyncProofSnapshot(
+    enabled: boolean,
+    expectedCorrectAnswers: number,
+    expectedTotalQuestions: number,
+    leaderboardItems: KangurLeaderboardItem[],
+    locale: KangurMobileLocale,
+    operation: KangurPracticeOperation,
+    progress: KangurProgressState,
+    runStartedAt: number,
+    scores: KangurScore[]
+): KangurPracticeSyncProofSnapshot {
+    return useMemo(() => calculateSnapshot({
+        enabled,
+        expectedCorrectAnswers,
+        expectedTotalQuestions,
+        leaderboardItems,
+        locale,
+        operation,
+        progress,
+        runStartedAt,
+        scores,
+    }), [
+        enabled, expectedCorrectAnswers, expectedTotalQuestions, 
+        leaderboardItems, locale, operation, progress, runStartedAt, scores
+    ]);
 }
 
 export const useKangurPracticeSyncProof = ({
@@ -93,40 +120,13 @@ export const useKangurPracticeSyncProof = ({
     progressStore.loadProgress,
     createDefaultKangurProgressState,
   );
-  const scoresQuery = useKangurMobileScoreHistory({
-    enabled,
-    limit: 40,
-    sort: '-created_date',
-  });
-  const leaderboard = useKangurMobileLeaderboard({
-    enabled,
-    limit: 100,
-  });
+  const scoresQuery = useKangurMobileScoreHistory({ enabled, limit: 40, sort: '-created_date' });
+  const leaderboard = useKangurMobileLeaderboard({ enabled, limit: 100 });
 
-  const snapshot = useMemo(() => calculateSnapshot({
-    enabled,
-    expectedCorrectAnswers,
-    expectedTotalQuestions,
-    leaderboardItems: leaderboard.items,
-    locale,
-    operation,
-    progress,
-    runStartedAt,
-    scores: scoresQuery.scores,
-  }), [
-    enabled,
-    expectedCorrectAnswers,
-    expectedTotalQuestions,
-    leaderboard.items,
-    locale,
-    operation,
-    progress,
-    runStartedAt,
-    scoresQuery.scores,
-  ]);
+  const snapshot = useSyncProofSnapshot(enabled, expectedCorrectAnswers, expectedTotalQuestions, leaderboard.items, locale, operation, progress, runStartedAt, scoresQuery.scores);
 
   const error = useMemo(
-    () => getSyncError(leaderboard.error, scoresQuery.error, copy),
+    () => getSyncError(leaderboard.error, scoresQuery.error instanceof Error ? scoresQuery.error : null, copy),
     [leaderboard.error, scoresQuery.error, copy]
   );
 

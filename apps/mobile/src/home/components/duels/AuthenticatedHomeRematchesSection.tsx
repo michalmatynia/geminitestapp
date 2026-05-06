@@ -121,7 +121,12 @@ export function AuthenticatedHomeRematchesSection({
   if (!areDeferredHomePanelsReady) content = <DeferredDuelSectionPlaceholder />;
   else if (!areDeferredHomeDuelAdvancedReady) content = <DeferredDuelAdvancedSectionPlaceholder />;
   else if (duelRematches.isRestoringAuth || duelRematches.isLoading) content = <RematchesLoading copy={copy} />;
-  else if (duelRematches.error !== null && duelRematches.error !== '') content = <RematchesError copy={copy} error={duelRematches.error} refresh={duelRematches.refresh} />;
+  else if (duelRematches.error !== null && duelRematches.error !== '') {
+    const handleRefresh = (): void => {
+      void duelRematches.refresh();
+    };
+    content = <RematchesError copy={copy} error={duelRematches.error} refresh={handleRefresh} />;
+  }
   else if (duelRematches.opponents.length === 0) content = <RematchesEmpty copy={copy} />;
   else {
     content = (

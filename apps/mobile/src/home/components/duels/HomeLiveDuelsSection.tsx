@@ -101,7 +101,10 @@ export function HomeLiveDuelsSection({
   if (duelSpotlight.isLoading) {
     content = <LiveDuelsLoading copy={copy} />;
   } else if (duelSpotlight.error !== null && duelSpotlight.error !== '') {
-    content = <LiveDuelsError copy={copy} error={duelSpotlight.error} refresh={duelSpotlight.refresh} />;
+    const handleRefresh = (): void => {
+      void duelSpotlight.refresh();
+    };
+    content = <LiveDuelsError copy={copy} error={duelSpotlight.error} refresh={handleRefresh} />;
   } else if (duelSpotlight.entries.length === 0) {
     content = <LiveDuelsEmpty copy={copy} />;
   } else {

@@ -8,6 +8,7 @@ export const integrationConnectionBasicSchema = z.object({
   id: z.string(),
   name: z.string(),
   integrationId: z.string(),
+  enabled: z.boolean().optional(),
   hasPlaywrightStorageState: z.boolean().optional(),
   traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
   hasPlaywrightListingScript: z.boolean().optional(),

@@ -58,6 +58,10 @@ vi.mock('@/features/jobs/server', () => ({
     enqueueTraderaListingJobMock(...args),
   buildTraderaListingQueueJobId: (...args: unknown[]) =>
     buildTraderaListingQueueJobIdMock(...args),
+  TRADERA_LISTING_QUEUE_NAMES: {
+    sequential: 'tradera-listings',
+    concurrent: 'tradera-listings-concurrent',
+  },
   enqueueVintedListingJob: (...args: unknown[]) =>
     enqueueVintedListingJobMock(...args),
   enqueuePlaywrightListingJob: vi.fn(),
@@ -131,6 +135,62 @@ describe('integration product listings handler', () => {
         id: 'listing-1',
         productId: 'product-1',
         status: 'ended',
+      },
+    ]);
+  });
+
+  it('filters Tradera listings by requested connection while keeping other marketplaces', async () => {
+    listCanonicalBaseProductListingsMock.mockResolvedValue([
+      {
+        id: 'listing-tradera-1',
+        productId: 'product-1',
+        connectionId: 'connection-tradera-1',
+        status: 'active',
+        integration: { id: 'integration-tradera-1', name: 'Tradera', slug: 'tradera' },
+        connection: { id: 'connection-tradera-1', name: 'Tradera 1' },
+      },
+      {
+        id: 'listing-tradera-2',
+        productId: 'product-1',
+        connectionId: 'connection-tradera-2',
+        status: 'auth_required',
+        integration: { id: 'integration-tradera-1', name: 'Tradera', slug: 'tradera' },
+        connection: { id: 'connection-tradera-2', name: 'Tradera 2' },
+      },
+      {
+        id: 'listing-base-1',
+        productId: 'product-1',
+        connectionId: 'connection-base-1',
+        status: 'active',
+        integration: { id: 'integration-base-1', name: 'Base', slug: 'base' },
+        connection: { id: 'connection-base-1', name: 'Base 1' },
+      },
+    ]);
+
+    const response = await getHandler(
+      new Request(
+        'http://localhost/api?traderaConnectionId=connection-tradera-2'
+      ) as never,
+      {} as never,
+      { id: 'product-1' }
+    );
+
+    await expect(response.json()).resolves.toEqual([
+      {
+        id: 'listing-tradera-2',
+        productId: 'product-1',
+        connectionId: 'connection-tradera-2',
+        status: 'auth_required',
+        integration: { id: 'integration-tradera-1', name: 'Tradera', slug: 'tradera' },
+        connection: { id: 'connection-tradera-2', name: 'Tradera 2' },
+      },
+      {
+        id: 'listing-base-1',
+        productId: 'product-1',
+        connectionId: 'connection-base-1',
+        status: 'active',
+        integration: { id: 'integration-base-1', name: 'Base', slug: 'base' },
+        connection: { id: 'connection-base-1', name: 'Base 1' },
       },
     ]);
   });

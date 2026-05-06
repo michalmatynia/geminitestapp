@@ -8,7 +8,7 @@ let deferredHomePanelsInteractionTask:
   | ReturnType<typeof InteractionManager.runAfterInteractions>
   | null = null;
 let deferredHomePanelsFallbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
-let cancelDeferredHomePanelsFrame = () => {};
+let cancelDeferredHomePanelsFrame = (): void => {};
 let isDeferredHomePanelsFrameScheduled = false;
 
 const scheduleDeferredHomePanelsFrame = (callback: () => void): (() => void) => {
@@ -41,10 +41,10 @@ const clearDeferredHomePanelsFallbackTimeout = (): void => {
 
 const clearDeferredHomePanelsSchedule = (): void => {
   clearDeferredHomePanelsFallbackTimeout();
-  deferredHomePanelsInteractionTask?.cancel?.();
+  deferredHomePanelsInteractionTask?.cancel();
   deferredHomePanelsInteractionTask = null;
   cancelDeferredHomePanelsFrame();
-  cancelDeferredHomePanelsFrame = () => {};
+  cancelDeferredHomePanelsFrame = (): void => {};
   isDeferredHomePanelsFrameScheduled = false;
 };
 
@@ -120,11 +120,11 @@ export const useHomeScreenDeferredPanelSequence = <const TPanelKeys extends read
   useEffect(() => {
     if (isBlocked) {
       setReadyCount(0);
-      return;
+      return () => {};
     }
 
     if (currentPanelKey === null) {
-      return;
+      return () => {};
     }
 
     let isDisposed = false;
@@ -164,7 +164,7 @@ export const useHomeScreenDeferredPanelGroup = <const TPanelKeys extends readonl
   useEffect(() => {
     if (isBlocked || panelKeys.length === 0) {
       setArePanelsReady(false);
-      return;
+      return () => {};
     }
 
     setArePanelsReady(false);
@@ -199,7 +199,7 @@ export const useHomeScreenDeferredPanels = (
   useEffect(() => {
     if (isBlocked) {
       setArePanelsReady(false);
-      return undefined;
+      return () => {};
     }
 
     setArePanelsReady(false);

@@ -1,10 +1,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
-import type { FrontendPublicOwnerKangurShellInitialAppearance } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
+import {
+  FrontendPublicOwnerKangurShell,
+  type FrontendPublicOwnerKangurShellInitialAppearance,
+} from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 
 import type { JSX } from 'react';
 import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
@@ -57,22 +60,6 @@ const scheduleKangurWarmupTask = (callback: () => void): (() => void) => {
   return () => {
     safeClearTimeout(timeoutId);
   };
-};
-
-type FrontendPublicOwnerKangurShellComponent = (props: {
-  initialAppearance?: FrontendPublicOwnerKangurShellInitialAppearance;
-}) => JSX.Element;
-
-let frontendPublicOwnerKangurShellPromise:
-  | Promise<FrontendPublicOwnerKangurShellComponent>
-  | null = null;
-
-const loadFrontendPublicOwnerKangurShell = async (): Promise<FrontendPublicOwnerKangurShellComponent> => {
-  frontendPublicOwnerKangurShellPromise ??= import(
-    '@/features/kangur/ui/FrontendPublicOwnerKangurShell'
-  ).then((module) => module.FrontendPublicOwnerKangurShell);
-
-  return frontendPublicOwnerKangurShellPromise;
 };
 
 export type FrontendPublicOwnerShellProps = {
@@ -129,20 +116,17 @@ const resolveFrontendPublicOwnerShellRouteState = ({
 const renderFrontendPublicOwnerShell = ({
   children,
   initialAppearance,
-  kangurShellComponent,
   shouldRenderStandaloneKangurShell,
 }: {
   children: JSX.Element;
   initialAppearance: FrontendPublicOwnerKangurShellInitialAppearance | undefined;
-  kangurShellComponent: FrontendPublicOwnerKangurShellComponent | null;
   shouldRenderStandaloneKangurShell: boolean;
 }): JSX.Element => {
-  if (!shouldRenderStandaloneKangurShell || !kangurShellComponent) {
+  if (!shouldRenderStandaloneKangurShell) {
     return children;
   }
 
-  const KangurShellComponent = kangurShellComponent;
-  return <KangurShellComponent initialAppearance={initialAppearance} />;
+  return <FrontendPublicOwnerKangurShell initialAppearance={initialAppearance} />;
 };
 
 const warmupKangurAuth = (): void => {
@@ -170,37 +154,6 @@ const useKangurAuthWarmup = ({
   }, [publicOwner]);
 };
 
-const useStandaloneKangurShellLoader = ({
-  shouldRenderStandaloneKangurShell,
-}: {
-  shouldRenderStandaloneKangurShell: boolean;
-}): FrontendPublicOwnerKangurShellComponent | null => {
-  const [kangurShellComponent, setKangurShellComponent] =
-    useState<FrontendPublicOwnerKangurShellComponent | null>(null);
-
-  useEffect(() => {
-    if (!shouldRenderStandaloneKangurShell || kangurShellComponent !== null) {
-      return undefined;
-    }
-
-    let cancelled = false;
-
-    loadFrontendPublicOwnerKangurShell()
-      .then((component) => {
-        if (!cancelled) {
-          setKangurShellComponent(() => component);
-        }
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [kangurShellComponent, shouldRenderStandaloneKangurShell]);
-
-  return kangurShellComponent;
-};
-
 export default function FrontendPublicOwnerShellClient({
   publicOwner,
   initialAppearance,
@@ -220,15 +173,11 @@ export default function FrontendPublicOwnerShellClient({
     });
   const shouldRenderStandaloneKangurShell =
     renderStandaloneKangurShell ?? inferredShouldRenderStandaloneKangurShell;
-  const kangurShellComponent = useStandaloneKangurShellLoader({
-    shouldRenderStandaloneKangurShell,
-  });
   useKangurAuthWarmup({ publicOwner });
 
   return renderFrontendPublicOwnerShell({
     children,
     initialAppearance,
-    kangurShellComponent,
     shouldRenderStandaloneKangurShell,
   });
 }

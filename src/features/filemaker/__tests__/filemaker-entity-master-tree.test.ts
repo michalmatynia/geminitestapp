@@ -2,17 +2,20 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildFilemakerEventListNodes,
+  buildFilemakerJobListingListNodes,
   buildFilemakerOrganizationListNodes,
   buildFilemakerOrganizationMasterNodes,
   buildFilemakerPersonMasterNodes,
   buildFilemakerValueMasterNodes,
   fromFilemakerEventNodeId,
+  fromFilemakerJobListingNodeId,
   fromFilemakerOrganizationEventNodeId,
   fromFilemakerOrganizationJobListingNodeId,
   fromFilemakerOrganizationNodeId,
   fromFilemakerPersonNodeId,
   fromFilemakerValueNodeId,
   toFilemakerEventNodeId,
+  toFilemakerJobListingNodeId,
   toFilemakerOrganizationEventNodeId,
   toFilemakerOrganizationJobListingNodeId,
   toFilemakerOrganizationNodeId,
@@ -215,6 +218,38 @@ describe('filemaker entity master tree', () => {
     expect(nodes[0]?.parentId).toBeNull();
     expect(nodes[0]?.name).toBe('Festiwal Średniowieczny');
     expect(fromFilemakerEventNodeId(toFilemakerEventNodeId('event-1'))).toBe('event-1');
+  });
+
+  it('creates flat decodable job listing nodes for the job listings page', () => {
+    const jobListings: FilemakerJobListing[] = [
+      {
+        id: 'job-1',
+        organizationId: 'org-1',
+        title: 'Coordinator',
+        description: '',
+        location: 'Remote',
+        salaryMin: null,
+        salaryMax: null,
+        salaryCurrency: '',
+        salaryPeriod: 'monthly',
+        status: 'open',
+        sourceSite: 'pracuj.pl',
+        sourceUrl: 'https://example.test/job-1',
+        targetedCampaignIds: [],
+        lastTargetedAt: null,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    ];
+
+    const nodes = buildFilemakerJobListingListNodes(jobListings);
+
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0]?.parentId).toBeNull();
+    expect(nodes[0]?.kind).toBe('filemaker_job_listing');
+    expect(nodes[0]?.name).toBe('Coordinator');
+    expect(nodes[0]?.metadata?.['organizationId']).toBe('org-1');
+    expect(fromFilemakerJobListingNodeId(toFilemakerJobListingNodeId('job-1'))).toBe('job-1');
   });
 
   it('builds hierarchical value nodes using parent value records', () => {

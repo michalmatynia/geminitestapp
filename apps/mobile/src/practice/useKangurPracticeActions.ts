@@ -1,83 +1,25 @@
 import { useCallback, useRef } from 'react';
-import { completeKangurPracticeSession, type KangurPracticeCompletionResult, type KangurPracticeOperation, type KangurPracticeQuestion } from '@kangur/core';
-import type { KangurQuestionChoice } from '@kangur/contracts/kangur';
-import type { QueryClient } from '@tanstack/react-query';
-import { resolvePracticePlayerName, type PracticePlayerSession } from './practice-utils';
+import { completeKangurPracticeSession } from '@kangur/core';
+import { resolvePracticePlayerName } from './practice-utils';
 import { 
     buildAwaitingAuthRetryState, 
     buildLocalOnlySyncState, 
     buildSyncedState, 
     buildSyncingState, 
-    buildUnexpectedSyncFailureState, 
-    type PracticeScoreSyncState 
+    buildUnexpectedSyncFailureState
 } from './practiceScoreSyncState';
-import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
-import type { KangurAuthSession } from '@kangur/platform';
-
-export interface SyncInput {
-  correctAnswers: number;
-  completedRunId: number;
-  operation: KangurPracticeOperation;
-  totalQuestions: number;
-}
-
-export interface ProgressStore {
-  loadProgress: () => unknown;
-  saveProgress: (p: unknown) => void;
-}
-
-export interface ApiClient {
-  createScore: (data: {
-    player_name: string;
-    score: number;
-    operation: KangurPracticeOperation;
-    subject: 'maths';
-    total_questions: number;
-    correct_answers: number;
-    time_taken: number;
-  }) => Promise<void>;
-}
-
-export interface PracticeActionData {
-  currentIndex: number;
-  selectedChoice: KangurQuestionChoice | null;
-  questions: KangurPracticeQuestion[];
-  operation: KangurPracticeOperation;
-  runId: number;
-  correctAnswers: number;
-  runStartedAt: React.MutableRefObject<number>;
-  progressStore: ProgressStore;
-  apiClient: ApiClient;
-  queryClient: QueryClient;
-  session: KangurAuthSession;
-  isLoadingAuth: boolean;
-  locale: KangurMobileLocale;
-  setCorrectAnswers: (val: number | ((prev: number) => number)) => void;
-  setCurrentIndex: (val: number | ((prev: number) => number)) => void;
-  setSelectedChoice: (val: KangurQuestionChoice | null) => void;
-  setCompletion: (val: KangurPracticeCompletionResult | null) => void;
-  setScoreSyncState: (val: PracticeScoreSyncState | null) => void;
-}
-
-interface KangurPracticeActionsResult {
-  handleNext: () => void;
-  syncScoreRecord: (input: SyncInput) => Promise<void>;
-}
+import { type PracticeActionData, type KangurPracticeActionsResult, type SyncInput } from './types';
 
 async function performSync(
   input: SyncInput,
   data: PracticeActionData,
-  pendingScoreSync: { current: SyncInput | null }
+  pendingScoreSync: React.MutableRefObject<SyncInput | null>,
 ): Promise<void> {
-  const { 
-    apiClient, session, isLoadingAuth, locale, runStartedAt,
-    setScoreSyncState, queryClient 
-  } = data;
+  const { apiClient, locale, queryClient, runStartedAt, session, setScoreSyncState, isLoadingAuth } = data;
 
   if (session.status !== 'authenticated') {
     if (isLoadingAuth) {
-      const ref = pendingScoreSync;
-      ref.current = input;
+      pendingScoreSync.current = input;
       setScoreSyncState(buildAwaitingAuthRetryState(locale));
       return;
     }
@@ -85,14 +27,13 @@ async function performSync(
     return;
   }
 
-  const ref = pendingScoreSync;
-  ref.current = null;
+  pendingScoreSync.current = null;
   setScoreSyncState(buildSyncingState(locale));
 
   const timeTakenSeconds = Math.max(0, Math.round((Date.now() - runStartedAt.current) / 1000));
   try {
     await apiClient.createScore({
-      player_name: resolvePracticePlayerName(session as unknown as PracticePlayerSession, locale),
+      player_name: resolvePracticePlayerName({ user: session.user }, locale),
       score: input.correctAnswers,
       operation: input.operation,
       subject: 'maths',
@@ -105,7 +46,7 @@ async function performSync(
       queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'leaderboard'] }),
       queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'scores'] }),
     ]);
-  } catch (error) {
+  } catch (error: unknown) {
     const err = error as { status?: number };
     const status = err.status;
     if (status === 401 || status === 403 || error instanceof TypeError) {
@@ -150,7 +91,7 @@ export function useKangurPracticeActions(data: PracticeActionData): KangurPracti
     setCorrectAnswers(nextCorrectAnswers);
     setCurrentIndex((c: number) => c + 1);
     setSelectedChoice(null);
-  }, [questions, data.currentIndex, data.selectedChoice, correctAnswers, runId, syncScoreRecord, setCorrectAnswers, setCurrentIndex, setSelectedChoice, setCompletion, operation, progressStore]);
+  }, [questions, data, correctAnswers, runId, syncScoreRecord, setCorrectAnswers, setCurrentIndex, setSelectedChoice, setCompletion, operation, progressStore]);
 
   return { handleNext, syncScoreRecord };
 }

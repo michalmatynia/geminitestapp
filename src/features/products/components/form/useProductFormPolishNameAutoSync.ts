@@ -6,6 +6,8 @@ import type { UseFormGetValues, UseFormSetValue } from 'react-hook-form';
 import { useTitleTerms } from '@/features/products/hooks/useProductMetadataQueries';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import {
+  normalizeStructuredProductName,
+  normalizeTitleTermName,
   syncPolishStructuredProductName,
   type PolishStructuredProductNameSyncResult,
 } from '@/shared/lib/products/title-terms';
@@ -33,6 +35,16 @@ type BuildGeneratedPolishNameInput = Parameters<typeof syncPolishStructuredProdu
   languageTabValues: string[];
 };
 
+const normalizeGeneratedTitleComparisonKey = (value: string): string =>
+  normalizeTitleTermName(normalizeStructuredProductName(value));
+
+const matchesGeneratedPolishTitle = (
+  currentNamePl: string,
+  generatedPolishTitle: string
+): boolean =>
+  normalizeGeneratedTitleComparisonKey(currentNamePl) ===
+  normalizeGeneratedTitleComparisonKey(generatedPolishTitle);
+
 const resolvePolishBaseNameAutoSyncStateUpdate = ({
   currentNamePl,
   syncResult,
@@ -40,7 +52,10 @@ const resolvePolishBaseNameAutoSyncStateUpdate = ({
   currentNamePl: string;
   syncResult: PolishStructuredProductNameSyncResult;
 }): PolishBaseNameAutoSyncStateUpdate => {
-  if (syncResult.baseNameSynced) {
+  if (
+    syncResult.baseNameSynced ||
+    matchesGeneratedPolishTitle(currentNamePl, syncResult.generatedPolishTitle)
+  ) {
     return {
       generatedPolishTitle: syncResult.generatedPolishTitle,
       shouldDisableAutoSync: false,

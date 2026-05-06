@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-30'
+last_reviewed: '2026-05-06'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Improvement Operations Portfolio
 
-Generated at: 2026-04-30T09:41:39.599Z
+Generated at: 2026-05-06T11:28:21.086Z
 
 ## Snapshot
 
 - Total tracks: 7
 - Default read-only tracks: 5
 - Tracks with data: 6
-- Failed tracks: 0
-- Attention tracks: 4
+- Failed tracks: 1
+- Attention tracks: 3
 
 ## Canonical Bundles
 
@@ -46,8 +46,8 @@ Generated at: 2026-04-30T09:41:39.599Z
 | `ui-consolidation` | `ui` | yes | `attention` | 2026-04-15T10:54:26.139Z | [README](./ui-consolidation/README.md) | [scan](./ui-consolidation/scan-latest.md) |
 | `application-performance` | `performance` | yes | `attention` | 2026-04-15T10:54:26.139Z | [README](./application-performance/README.md) | [scan](./application-performance/scan-latest.md) |
 | `testing-quality-baseline` | `testing` | no | `no-data` | not available | [README](./testing-quality-baseline/README.md) | [scan](./testing-quality-baseline/scan-latest.md) |
-| `image-studio-product-integration` | `quality` | no | `passed` | 2026-04-30T09:41:39.533Z | [README](./image-studio-product-integration/README.md) | [scan](./image-studio-product-integration/scan-latest.md) |
-| `repo-quality-baseline` | `quality` | yes | `attention` | 2026-04-15T10:54:26.139Z | [README](./repo-quality-baseline/README.md) | [scan](./repo-quality-baseline/scan-latest.md) |
+| `image-studio-product-integration` | `quality` | no | `passed` | 2026-04-30T09:41:39.301Z | [README](./image-studio-product-integration/README.md) | [scan](./image-studio-product-integration/scan-latest.md) |
+| `repo-quality-baseline` | `quality` | yes | `failed` | 2026-05-06T11:28:21.083Z | [README](./repo-quality-baseline/README.md) | [scan](./repo-quality-baseline/scan-latest.md) |
 
 ## Notes
 

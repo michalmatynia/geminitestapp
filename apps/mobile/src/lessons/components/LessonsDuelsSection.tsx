@@ -1,26 +1,16 @@
 import { Text, View } from 'react-native';
 import type { ReactElement } from 'react';
 import { KangurMobileCard as Card, KangurMobilePill as Pill, KangurMobileActionButton as ActionButton, KangurMobileInsetPanel as InsetPanel, KangurMobilePendingActionButton, KangurMobileLinkButton as LinkButton } from '../../shared/KangurMobileUi';
-import { createKangurDuelsHref } from '../duels/duelsHref';
+import { createKangurDuelsHref } from '../../duels/duelsHref';
 import type { KangurDuelOpponentEntry, KangurDuelLeaderboardEntry } from '@kangur/contracts/kangur-duels';
+import { type UseKangurMobileLearnerDuelsSummaryResult } from '../../duels/useKangurMobileLearnerDuelsSummary';
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
 
 interface LessonDuelsSectionProps {
     isPreparingLessonsView: boolean;
-    copy: (text: { de: string; en: string; pl: string }) => string;
+    copy: KangurMobileCopy;
     duelSectionDescription: string;
-    lessonDuels: {
-        opponents: KangurDuelOpponentEntry[];
-        currentRank: number | null;
-        isRestoringAuth?: boolean | null;
-        isLoading?: boolean | null;
-        error?: string | null;
-        refresh: () => void;
-        isAuthenticated?: boolean | null;
-        currentEntry?: (KangurDuelLeaderboardEntry & { displayName: string }) | null;
-        actionError?: string | null;
-        pendingOpponentLearnerId?: string | null;
-        createRematch: (learnerId: string) => Promise<string | null>;
-    };
+    lessonDuels: UseKangurMobileLearnerDuelsSummaryResult;
     locale: string;
     openDuelSession: (sessionId: string) => void;
 }
@@ -179,8 +169,8 @@ function DuelContent({
         return <DuelLoadingState copy={copy} />;
     }
 
-    if (lessonDuels.error !== null && lessonDuels.error !== undefined) {
-        return <DuelErrorState error={lessonDuels.error} refresh={lessonDuels.refresh} copy={copy} />;
+    if (lessonDuels.error !== null) {
+        return <DuelErrorState error={lessonDuels.error} refresh={() => { void lessonDuels.refresh(); }} copy={copy} />;
     }
 
     if (lessonDuels.isAuthenticated !== true) {
@@ -195,7 +185,7 @@ function DuelContent({
                 copy={copy}
             />
 
-            {lessonDuels.actionError !== null && lessonDuels.actionError !== undefined ? (
+            {lessonDuels.actionError !== null ? (
                 <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>{lessonDuels.actionError}</Text>
             ) : null}
 
@@ -211,7 +201,7 @@ function DuelContent({
             <View style={{ alignSelf: 'stretch', gap: 10 }}>
                 <ActionButton
                     label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })}
-                    onPress={() => lessonDuels.refresh()}
+                    onPress={() => { void lessonDuels.refresh(); }}
                     stretch
                     tone='secondary'
                 />

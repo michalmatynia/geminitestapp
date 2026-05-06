@@ -8,7 +8,7 @@ import {
   KangurMobileLinkButton as LinkButton,
 } from '../../shared/KangurMobileUi';
 import { getMasteryTone, renderLessonPracticeLink } from '../lessons-screen-primitives';
-import { getKangurMobileLocaleTag } from '../i18n/kangurMobileI18n';
+import { getKangurMobileLocaleTag, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
 
 interface CatalogItemLesson {
   id: string;
@@ -54,7 +54,7 @@ interface CheckpointSummaryProps {
 }
 
 const CheckpointSummary: React.FC<CheckpointSummaryProps> = ({ summary, locale, copy }) => {
-  const localeTag: string = (getKangurMobileLocaleTag(locale) as string | undefined) ?? 'en';
+  const localeTag: string = (getKangurMobileLocaleTag as (l: KangurMobileLocale) => string)(locale as KangurMobileLocale);
   const dateObj = new Date(summary.lastCompletedAt);
   const dateFormatted = dateObj.toLocaleDateString(localeTag, { dateStyle: 'medium' });
   const timeFormatted = dateObj.toLocaleTimeString(localeTag, { timeStyle: 'short' });

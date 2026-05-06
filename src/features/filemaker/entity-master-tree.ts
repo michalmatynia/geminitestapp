@@ -21,6 +21,7 @@ const ORGANIZATION_EVENTS_FOLDER_NODE_PREFIX = 'filemaker-organization-events-fo
 const ORGANIZATION_JOBS_FOLDER_NODE_PREFIX = 'filemaker-organization-jobs-folder:';
 const ORGANIZATION_EVENT_NODE_PREFIX = 'filemaker-organization-event:';
 const ORGANIZATION_JOB_LISTING_NODE_PREFIX = 'filemaker-organization-job-listing:';
+const JOB_LISTING_NODE_PREFIX = 'filemaker-job-listing:';
 const EVENT_NODE_PREFIX = 'filemaker-event:';
 const INVOICE_NODE_PREFIX = 'filemaker-invoice:';
 const PERSON_GROUP_NODE_PREFIX = 'filemaker-person-group:';
@@ -130,6 +131,14 @@ export const fromFilemakerOrganizationJobListingNodeId = (
     return null;
   }
   return { jobListingId, organizationId };
+};
+
+export const toFilemakerJobListingNodeId = (jobListingId: string): string =>
+  `${JOB_LISTING_NODE_PREFIX}${encodeNodePart(jobListingId)}`;
+
+export const fromFilemakerJobListingNodeId = (nodeId: string): string | null => {
+  if (!nodeId.startsWith(JOB_LISTING_NODE_PREFIX)) return null;
+  return decodeNodePart(nodeId.slice(JOB_LISTING_NODE_PREFIX.length));
 };
 
 export const toFilemakerPersonGroupNodeId = (group: string): string =>
@@ -501,6 +510,34 @@ export const buildFilemakerEventListNodes = (events: FilemakerEvent[]): MasterTr
         rawId: event.id,
         address: formatFilemakerAddress(event),
         updatedAt: event.updatedAt,
+      },
+    };
+  });
+
+export const buildFilemakerJobListingListNodes = (
+  listings: FilemakerJobListing[]
+): MasterTreeNode[] =>
+  listings.map((listing: FilemakerJobListing, index): MasterTreeNode => {
+    const normalizedTitle = listing.title.trim();
+    const label = normalizedTitle.length > 0 ? normalizedTitle : listing.id;
+    return {
+      id: toFilemakerJobListingNodeId(listing.id),
+      type: 'file',
+      kind: 'filemaker_job_listing',
+      parentId: null,
+      name: label,
+      path: `job-listings/${label}`,
+      sortOrder: index,
+      metadata: {
+        entity: 'filemaker_job_listing',
+        expiresAt: listing.expiresAt ?? '',
+        location: listing.location ?? '',
+        organizationId: listing.organizationId,
+        postedAt: listing.postedAt ?? '',
+        rawId: listing.id,
+        sourceSite: listing.sourceSite ?? '',
+        status: listing.status,
+        updatedAt: listing.updatedAt,
       },
     };
   });

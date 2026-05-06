@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-30'
+last_reviewed: '2026-05-06'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Repository quality baseline Improvement Track
 
-Generated at: 2026-04-30T09:41:39.599Z
+Generated at: 2026-05-06T11:28:21.086Z
 
 ## Snapshot
 
 - Track id: `repo-quality-baseline`
 - Category: `quality`
 - Included in default read-only bundle: yes
-- Overall status: `attention`
-- Latest report timestamp: 2026-04-15T10:54:26.139Z
+- Overall status: `failed`
+- Latest report timestamp: 2026-05-06T11:28:21.083Z
 
 ## Purpose
 
@@ -37,9 +37,9 @@ Runs the core read-only quality checks that establish the current repository bas
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `failed` | 2 | 2 | 0 | 1 | 0 |
 | `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `manual` | 1 | 0 | 1 | 0 | 0 |
 
@@ -47,6 +47,9 @@ Runs the core read-only quality checks that establish the current repository bas
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
+| `audit` | `passed` | `automatic` | `repo-quality-api-error-sources` | `check:api-error-sources` |
+| `audit` | `failed` | `automatic` | `repo-quality-canonical-sitewide` | `canonical:check:sitewide` |
+| `plan` | `manual` | `manual` | `repo-quality-baseline-plan` | manual |
 | `apply` | `manual` | `manual` | `repo-quality-baseline-apply` | manual |
 
 ## Related Docs

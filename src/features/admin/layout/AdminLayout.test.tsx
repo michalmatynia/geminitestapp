@@ -77,7 +77,9 @@ vi.mock('@/features/admin/components/AiInsightsNotificationsDrawer', () => ({
 }));
 
 vi.mock('@/features/admin/components/Menu', () => ({
-  default: () => <nav data-testid='admin-menu' />,
+  default: ({ sidebarCollapseControl }: { sidebarCollapseControl?: React.ReactNode }) => (
+    <nav data-testid='admin-menu'>{sidebarCollapseControl}</nav>
+  ),
 }));
 
 vi.mock('@/features/admin/components/UserNav', () => ({
@@ -237,18 +239,21 @@ describe('AdminLayout', () => {
     });
   });
 
-  it('uses product-list vertical spacing for the organizations list route', () => {
-    pathnameMock = '/admin/filemaker/organizations';
+  it.each(['/admin/filemaker/organizations', '/admin/filemaker/job-listings'])(
+    'uses product-list vertical spacing for %s',
+    (pathname) => {
+      pathnameMock = pathname;
 
-    render(
-      <AdminLayout>
-        <div data-testid='content'>content</div>
-      </AdminLayout>
-    );
+      render(
+        <AdminLayout>
+          <div data-testid='content'>content</div>
+        </AdminLayout>
+      );
 
-    expect(screen.getByRole('main')).toHaveClass('p-6');
-    expect(screen.getByRole('main')).not.toHaveClass('pt-16');
-  });
+      expect(screen.getByRole('main')).toHaveClass('p-6');
+      expect(screen.getByRole('main')).not.toHaveClass('pt-16');
+    }
+  );
 
   it('defers the remote admin menu preference lookup until after initial mount when no seed preference exists', async () => {
     render(

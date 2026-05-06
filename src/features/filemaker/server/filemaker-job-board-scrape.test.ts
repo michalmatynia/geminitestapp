@@ -95,6 +95,7 @@ vi.mock('./filemaker-organizations-mongo', () => ({
 }));
 
 import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
+import { FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH } from '../filemaker-job-board-scrape-contracts';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
 import {
   applyFilemakerJobBoardLexiconClassifications,
@@ -328,6 +329,136 @@ describe('runFilemakerJobBoardScrape', () => {
         organizationId: 'org-1',
         organizationName: 'Acme Inc',
       },
+    });
+  });
+
+  it('collects deeper candidates when existing listings consume the skip budget', async () => {
+    const secondExistingOfferUrl =
+      'https://www.pracuj.pl/praca/developer-krakow,oferta,1002';
+    const newOfferUrl = 'https://www.pracuj.pl/praca/developer-poznan,oferta,1003';
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValueOnce(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-1',
+            organizationId: 'org-1',
+            title: 'Developer',
+            description: 'Existing listing',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+            status: 'open',
+          },
+          {
+            id: 'listing-2',
+            organizationId: 'org-1',
+            title: 'Developer Krakow',
+            description: 'Existing listing',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: secondExistingOfferUrl,
+            status: 'open',
+          },
+        ],
+      })
+    );
+    mocks.collectJobBoardOfferUrlsMock
+      .mockResolvedValueOnce({
+        links: [
+          { title: 'Developer', url: offerUrl },
+          { title: 'Developer Krakow', url: secondExistingOfferUrl },
+        ],
+        provider: 'pracuj_pl',
+        runId: 'collect-run-initial',
+        sourceSite: 'pracuj.pl',
+        sourceUrl,
+        visitedUrls: [sourceUrl],
+        warnings: [],
+      })
+      .mockResolvedValueOnce({
+        links: [
+          { title: 'Developer', url: offerUrl },
+          { title: 'Developer Krakow', url: secondExistingOfferUrl },
+          { title: 'New Developer', url: newOfferUrl },
+        ],
+        provider: 'pracuj_pl',
+        runId: 'collect-run-expanded',
+        sourceSite: 'pracuj.pl',
+        sourceUrl,
+        visitedUrls: [sourceUrl],
+        warnings: [],
+      });
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'New Developer',
+          description: 'Build new products',
+          city: 'Poznan',
+          salary: {
+            min: 13_000,
+            max: 19_000,
+            currency: 'PLN',
+            period: 'monthly',
+            raw: '13 000 - 19 000 PLN',
+          },
+          postedAt: '2026-04-29T09:00:00.000Z',
+          expiresAt: '2026-05-29T23:59:59.000Z',
+        },
+        confidence: 0.94,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-29T10:00:00.000Z',
+      },
+      finalUrl: newOfferUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-new',
+      sourceSite: 'pracuj.pl',
+      sourceUrl: newOfferUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      duplicateStrategy: 'skip',
+      maxOffers: 2,
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(mocks.collectJobBoardOfferUrlsMock).toHaveBeenCalledTimes(2);
+    expect(mocks.collectJobBoardOfferUrlsMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ maxOffers: 2 })
+    );
+    expect(mocks.collectJobBoardOfferUrlsMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ maxOffers: 250 })
+    );
+    expect(mocks.probeJobBoardOfferMock).toHaveBeenCalledTimes(1);
+    expect(mocks.probeJobBoardOfferMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceUrl: newOfferUrl })
+    );
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      skippedOffers: 2,
+      updatedListings: 0,
+    });
+    expect(result.offers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ listingId: 'listing-1', status: 'skipped' }),
+        expect.objectContaining({ listingId: 'listing-2', status: 'skipped' }),
+        expect.objectContaining({
+          offer: expect.objectContaining({ sourceUrl: newOfferUrl, title: 'New Developer' }),
+          status: 'created',
+        }),
+      ])
+    );
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings).toHaveLength(3);
+    expect(persisted.jobListings[2]).toMatchObject({
+      sourceUrl: newOfferUrl,
+      title: 'New Developer',
     });
   });
 
@@ -800,6 +931,11 @@ describe('runFilemakerJobBoardScrape', () => {
     expect(result.summary.scrapedOffers).toBe(0);
     expect(mocks.probeJobBoardOfferMock).not.toHaveBeenCalled();
     expect(result.warnings).toContain(`No job offer links were found on ${sourceUrl}.`);
+    expect(
+      result.warnings.some((warning) =>
+        warning.includes(FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH)
+      )
+    ).toBe(true);
   });
 
   it('emits live scrape events while collecting and probing offers', async () => {

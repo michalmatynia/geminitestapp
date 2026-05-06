@@ -3,6 +3,8 @@ import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_WYSI
 import { type AiNode, type CaseResolverEdge, type CaseResolverEdgeMeta, type CaseResolverGraph, type CaseResolverJoinMode, type CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { stripHtml } from "./utils/text-sanitization";
+import type { CompileContext, NodeOutput } from './types/composer';
 
 
 export type CaseResolverPlainTextTransformInput = {
@@ -38,6 +40,56 @@ const resolveNodeMeta = (
   ...(nodeMeta[nodeId] ?? {}),
 });
 
+const resolveNodeOutput = (ctx: CompileContext): NodeOutput => {
+  const { meta, nodeText, nodeWysiwygText, incoming, options } = ctx;
+  const isExplanatory = meta.role === 'explanatory';
+
+  // 1. Resolve primary Wysiwyg Text
+  const incomingWysiwyg = incoming['wysiwygText'];
+  const incomingText = incomingWysiwyg?.value ?? '';
+  const resolvedWysiwygText = (isExplanatory && incomingText.trim().length > 0 && nodeText.trim().length > 0)
+    ? appendWithJoin(incomingText, nodeText, (incomingWysiwyg?.firstJoinMode ?? 'newline') as CaseResolverJoinMode)
+    : incomingText.trim().length > 0
+      ? incomingText
+      : nodeText;
+
+  // 2. Resolve Secondary Outputs (PlainText / PlainTextContent)
+  const wrappedWysiwygText = wrapByQuoteModeWithoutColor(resolvedWysiwygText, meta);
+  const plainTextOutput = options.transformPlainTextOutput
+    ? wrappedWysiwygText
+    : stripHtml(wrappedWysiwygText);
+
+  let plaintextContent = isExplanatory ? incoming.plainText?.value ?? '' : incoming.plaintextContent?.value ?? '';
+  
+  if (meta.includeInOutput && wrapByQuoteMode(resolvedWysiwygText, meta).trim().length > 0) {
+    const joinMode = (isExplanatory ? incoming.plainText?.firstJoinMode : incoming.plaintextContent?.firstJoinMode) || 'newline';
+    plaintextContent = appendWithJoin(plaintextContent, wrapByQuoteMode(resolvedWysiwygText, meta), joinMode as CaseResolverJoinMode);
+  }
+
+  if (isExplanatory && !options.transformPlainTextOutput) {
+    plaintextContent = stripHtml(plaintextContent);
+  }
+
+};
+const resolveWysiwygText = (ctx: CompileContext): string => {
+  const { meta, nodeText, incoming } = ctx;
+  const isExplanatory = meta.role === "explanatory";
+  const incomingWysiwyg = incoming["wysiwygText"];
+
+  if (!incomingWysiwyg) return nodeText;
+
+  const incomingText = incomingWysiwyg.value;
+  
+  if (isExplanatory && incomingText.trim().length > 0 && nodeText.trim().length > 0) {
+    return appendWithJoin(incomingText, nodeText, (incomingWysiwyg.firstJoinMode ?? "newline") as CaseResolverJoinMode);
+  }
+  
+  return incomingText.trim().length > 0 ? incomingText : nodeText;
+};
+
+  ...(nodeMeta[nodeId] ?? {}),
+});
+
 // Refactored helper: resolveEdgeMeta
 const resolveEdgeMeta = (
   edgeId: string,
@@ -50,49 +102,14 @@ const _getNodeContent = (node: AiNode, output: 'plainText' | 'plaintextContent' 
   return resolveNodeWysiwygText(node);
 };
 
+const collectIncoming = ( 
+  graph: CaseResolverGraph, 
+  edgeMeta: Record<string, CaseResolverEdgeMeta>, 
+  outputsByNode: Record<string, CaseResolverCompileResult>, 
+  nodeId: string, 
+  type: "plainText" | "plaintextContent" | "wysiwygText" | "wysiwygContent" 
+) => { /* ... */ };
 
-const decodeBasicHtmlEntities = (value: string): string =>
-  value
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&apos;|&#39;/gi, '\'')
-    .replace(/&quot;/gi, '"')
-    .replace(/&gt;/gi, '>')
-    .replace(/&lt;/gi, '<')
-    .replace(/&amp;/gi, '&');
-
-const decodeHtmlEntity = (value: string): string => {
-  const basicDecoded = decodeBasicHtmlEntities(value);
-  try {
-    if (typeof window === 'undefined') return basicDecoded;
-    const textarea = document.createElement('textarea');
-    textarea.innerHTML = basicDecoded;
-    return decodeBasicHtmlEntities(textarea.value);
-  } catch (error) {
-    logClientError(error);
-    return basicDecoded;
-  }
-};
-
-const stripHtmlTagsPreserveBreaks = (value: string): string =>
-  value
-    .replace(/<br\s*\/?\s*>/gi, '\n')
-    .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|blockquote)>/gi, '\n')
-    .replace(/<li>/gi, '• ')
-    .replace(/<\/?[a-z][^>]*>/gi, '');
-
-const stripHtml = (html: string): string => {
-  // Decode first so escaped HTML tags (e.g. &lt;b&gt;) are stripped as markup, not emitted as text.
-  const decoded = decodeHtmlEntity(html);
-  const stripped = stripHtmlTagsPreserveBreaks(decoded);
-  // Decode once more for any remaining entities and strip again to handle double-encoded wrappers.
-  const normalized = stripHtmlTagsPreserveBreaks(decodeHtmlEntity(stripped));
-  return normalized
-    .split('\n')
-    .map((line: string) => line.trim())
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-};
 
 const resolveNodeText = (node: AiNode): string => {
   const promptTemplate = node.config?.prompt?.template;
@@ -321,99 +338,11 @@ export const compileCaseResolverPrompt = (
       const nodeWysiwygText = resolveNodeWysiwygText(node);
       const incomingEdges = sortEdgesBySourcePosition(incomingByNode.get(node.id) ?? [], nodeById);
 
-      const collectIncoming = (
-        type: 'wysiwygText' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
-      ): { value: string; firstJoinMode: CaseResolverJoinMode | null } => {
-        let value = '';
-        let firstJoinMode: CaseResolverJoinMode | null = null;
-
-        incomingEdges.forEach((edge: CaseResolverEdge): void => {
-          const acceptsEdge =
-            type === 'wysiwygText'
-              ? isWysiwygTextInputPort(edge.targetHandle)
-              : type === 'plaintextContent'
-                ? isPlaintextContentInputPort(edge.targetHandle)
-                : type === 'plainText'
-                  ? isPlainTextInputPort(edge.targetHandle)
-                  : isWysiwygContentInputPort(edge.targetHandle);
-          if (!acceptsEdge) return;
-          if (!edge.source) return;
-          const sourceOutputs = outputsByNode[edge.source];
-          const rawSourceValue = resolveSourceOutputValue(sourceOutputs, edge.sourceHandle, type);
-          const sourceValue = type === 'plainText' ? stripHtml(rawSourceValue) : rawSourceValue;
-          if (!sourceValue) return;
-          const edgeJoinMode = resolveEdgeMeta(edge.id, graph.edgeMeta || {}).joinMode ?? 'newline';
+        plainText: collectIncoming("plainText"), 
+        wysiwygContent: collectIncoming("wysiwygContent"), 
+      }; 
+      outputsByNode[node.id] = resolveNodeOutput(meta, nodeText, nodeWysiwygText, incoming, options);
           if (!firstJoinMode) firstJoinMode = edgeJoinMode;
-          value = appendWithJoin(value, sourceValue, edgeJoinMode);
-        });
-
-        return { value, firstJoinMode };
-      };
-
-      const incomingWysiwygText = collectIncoming('wysiwygText');
-      const incomingPlaintextContent = collectIncoming('plaintextContent');
-      const incomingPlainText = collectIncoming('plainText');
-      const incomingWysiwygContent = collectIncoming('wysiwygContent');
-      const hasIncomingWysiwygText = incomingWysiwygText.value.trim().length > 0;
-      const hasIncomingPlaintextContent = incomingPlaintextContent.value.trim().length > 0;
-      const hasIncomingPlainText = incomingPlainText.value.trim().length > 0;
-      const hasIncomingWysiwygContent = incomingWysiwygContent.value.trim().length > 0;
-      const isExplanatoryPlainTextInputFlow = meta.role === 'explanatory' && hasIncomingPlainText;
-      const incomingText = hasIncomingWysiwygText
-        ? incomingWysiwygText.value
-        : hasIncomingPlainText
-          ? incomingPlainText.value
-          : meta.role === 'explanatory' && hasIncomingPlaintextContent
-            ? incomingPlaintextContent.value
-            : '';
-      const incomingTextJoinMode =
-        (hasIncomingWysiwygText
-          ? incomingWysiwygText.firstJoinMode
-          : hasIncomingPlainText
-            ? incomingPlainText.firstJoinMode
-            : meta.role === 'explanatory' && hasIncomingPlaintextContent
-              ? incomingPlaintextContent.firstJoinMode
-              : null) ?? DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
-      const resolvedWysiwygText =
-        meta.role === 'explanatory' && incomingText.trim().length > 0 && nodeText.trim().length > 0
-          ? appendWithJoin(incomingText, nodeText, incomingTextJoinMode as CaseResolverJoinMode)
-          : incomingText.trim().length > 0
-            ? incomingText
-            : nodeText;
-      const hasWysiwygTextOnlyIncoming =
-        hasIncomingWysiwygText &&
-        !hasIncomingPlaintextContent &&
-        !hasIncomingPlainText &&
-        !hasIncomingWysiwygContent;
-      const secondaryOutputSeed = isExplanatoryPlainTextInputFlow
-        ? nodeText
-        : hasWysiwygTextOnlyIncoming
-          ? nodeText
-          : resolvedWysiwygText;
-      const wrappedWysiwygTextOutput = wrapByQuoteModeWithoutColor(resolvedWysiwygText, meta);
-      const wrappedSecondaryPlainTextSeed = wrapByQuoteModeWithoutColor(secondaryOutputSeed, meta);
-      let plainTextOutput = options.transformPlainTextOutput
-        ? wrappedSecondaryPlainTextSeed
-        : stripHtml(wrappedSecondaryPlainTextSeed);
-      const wrappedText = wrapByQuoteMode(resolvedWysiwygText, meta);
-      const wrappedSecondaryText = wrapByQuoteMode(secondaryOutputSeed, meta);
-      let plaintextContentOutput = isExplanatoryPlainTextInputFlow
-        ? incomingPlainText.value
-        : incomingPlaintextContent.value;
-      if (meta.includeInOutput && wrappedSecondaryText.trim().length > 0) {
-        const joinMode: CaseResolverJoinMode =
-          (isExplanatoryPlainTextInputFlow
-            ? incomingPlainText.firstJoinMode
-            : incomingPlaintextContent.firstJoinMode) ||
-          (DEFAULT_CASE_RESOLVER_EDGE_META.joinMode ?? 'newline');
-        plaintextContentOutput = appendWithJoin(
-          plaintextContentOutput,
-          wrappedSecondaryText,
-          joinMode
-        );
-      }
-      if (meta.role === 'explanatory' && !options.transformPlainTextOutput) {
-        plaintextContentOutput = stripHtml(plaintextContentOutput);
       }
       if (options.transformPlainTextOutput) {
         plainTextOutput = options.transformPlainTextOutput({

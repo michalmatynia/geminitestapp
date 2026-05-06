@@ -78,16 +78,25 @@ import { ConnectionFormFields } from './ConnectionFormFields';
 
 const fetchMock = vi.fn();
 
-function renderFields(integrationSlug: string): void {
+function renderFields(
+  integrationSlug: string,
+  options: {
+    mode?: 'create' | 'edit';
+    initialForm?: Partial<ReturnType<typeof createEmptyConnectionForm>>;
+  } = {}
+): void {
   function Wrapper(): React.JSX.Element {
-    const [form, setForm] = React.useState(createEmptyConnectionForm());
+    const [form, setForm] = React.useState({
+      ...createEmptyConnectionForm(),
+      ...(options.initialForm ?? {}),
+    });
 
     return (
       <ConnectionFormFields
         integrationSlug={integrationSlug}
         form={form}
         setForm={setForm}
-        mode='create'
+        mode={options.mode ?? 'create'}
       />
     );
   }
@@ -152,6 +161,20 @@ describe('ConnectionFormFields', () => {
     expect(
       screen.getByText('Lets Tradera choose the category automatically during listing.')
     ).toBeInTheDocument();
+  });
+
+  it('shows a Tradera enabled toggle in edit mode', () => {
+    renderFields('tradera', {
+      mode: 'edit',
+      initialForm: { enabled: false },
+    });
+
+    const enabledToggle = screen.getByLabelText('Connection enabled') as HTMLInputElement;
+    expect(enabledToggle.checked).toBe(false);
+
+    fireEvent.click(enabledToggle);
+
+    expect(enabledToggle.checked).toBe(true);
   });
 
   it('shows optional Vinted credential fields for reusable browser sessions', () => {

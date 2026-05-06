@@ -261,6 +261,23 @@ describe('proxy api routing', () => {
     expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
   });
 
+  it('lets browser-facing Kangur API paths through without locale rewriting', async () => {
+    const request = createRequest(
+      'http://localhost/kangur-api/ai-tutor/page-content?locale=en',
+      {
+        acceptLanguage: 'en-US,en;q=0.9',
+      }
+    );
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(response.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(response.headers.get('location')).toBeNull();
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
   it('canonicalizes admin redirect-only routes inside the auth-protected proxy path', async () => {
     const request = createRequest('http://localhost/admin/settings/ai');
 

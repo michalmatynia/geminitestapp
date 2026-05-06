@@ -59,6 +59,8 @@ body[data-kangur-shell='true'] {
 
 html.kangur-surface-active,
 body.kangur-surface-active,
+html.kangur-surface-active #app-content,
+body.kangur-surface-active #app-content,
 #app-content.kangur-surface-active {
   overflow-x: hidden;
 }
@@ -863,6 +865,8 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
     scrollbar-gutter: auto;
   }
 
+  html.kangur-surface-active #app-content,
+  body.kangur-surface-active #app-content,
   #app-content.kangur-surface-active {
     height: var(--kangur-shell-viewport-height, 100dvh);
     min-height: var(--kangur-shell-viewport-height, 100dvh);
@@ -879,7 +883,9 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
     scrollbar-gutter: stable;
   }
 
-  .kangur-surface-active {
+  .kangur-surface-active,
+  html.kangur-surface-active #app-content,
+  body.kangur-surface-active #app-content {
     background: var(
       --kangur-page-background,
       radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%)

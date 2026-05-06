@@ -21,7 +21,10 @@ import { resolvePendingTraderaExecutionAction } from '@/features/integrations/ut
 import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
+import {
+  optionalCsvQueryStringArray,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -151,10 +154,12 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
 const PRODUCT_IDS_PARAM_LIMIT = 250;
 const productIdsBodySchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1).max(PRODUCT_IDS_PARAM_LIMIT),
+  traderaConnectionId: z.string().trim().min(1).nullable().optional(),
 });
 
 export const querySchema = z.object({
   productIds: optionalCsvQueryStringArray(),
+  traderaConnectionId: optionalTrimmedQueryString(),
 });
 
 const safeDecode = (value: string): string => {
@@ -171,14 +176,22 @@ const normalizeRequestedProductIds = (productIds: readonly string[]): string[] =
     new Set(productIds.map((value) => safeDecode(value).trim()).filter((value) => value.length > 0))
   );
 
+const normalizeOptionalId = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 const buildPayload = async (
   requestedProductIds: string[],
-  timings?: Record<string, number | null | undefined>
+  timings?: Record<string, number | null | undefined>,
+  options?: { traderaConnectionId?: string | null | undefined }
 ): Promise<Response> => {
   const normalizedRequestedProductIds = normalizeRequestedProductIds(requestedProductIds).slice(
     0,
     PRODUCT_IDS_PARAM_LIMIT
   );
+  const traderaConnectionId = normalizeOptionalId(options?.traderaConnectionId ?? null);
 
   const integrationRepository = await getIntegrationRepository();
   const lookupStart = performance.now();
@@ -241,8 +254,16 @@ const buildPayload = async (
       integrationMarketplaceById.get(listing.integrationId) ??
       inferMarketplaceFromListingMetadata(
         (listing as { marketplaceData?: unknown }).marketplaceData
-    );
-    if (!marketplace) continue;
+      );
+    if (marketplace === null) continue;
+    if (
+      marketplace === 'tradera' &&
+      traderaConnectionId !== null &&
+      normalizeOptionalId((listing as { connectionId?: string | null }).connectionId ?? null) !==
+        traderaConnectionId
+    ) {
+      continue;
+    }
 
     if (
       marketplace === 'tradera' &&
@@ -312,7 +333,9 @@ export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Pr
   const timings: Record<string, number | null | undefined> = {};
   const totalStart = performance.now();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
-  const response = await buildPayload(query.productIds ?? [], timings);
+  const response = await buildPayload(query.productIds ?? [], timings, {
+    traderaConnectionId: query.traderaConnectionId ?? null,
+  });
   timings['total'] = performance.now() - totalStart;
   attachTimingHeaders(response, timings);
   if (shouldLogTiming()) {
@@ -341,7 +364,9 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     return parsed.response;
   }
 
-  const response = await buildPayload(parsed.data.productIds, timings);
+  const response = await buildPayload(parsed.data.productIds, timings, {
+    traderaConnectionId: parsed.data.traderaConnectionId ?? null,
+  });
   timings['total'] = performance.now() - totalStart;
   attachTimingHeaders(response, timings);
   if (shouldLogTiming()) {

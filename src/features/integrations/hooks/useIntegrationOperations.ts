@@ -40,6 +40,11 @@ type IntegrationListingBadgeState = {
   scrapedSourceBadgeStatuses: Map<string, string>;
 };
 
+type IntegrationListingBadgesOptions = {
+  enabled?: boolean;
+  traderaConnectionId?: string | null | undefined;
+};
+
 const EMPTY_INTEGRATION_LISTING_BADGE_STATE: IntegrationListingBadgeState = {
   integrationBadgeIds: new Set<string>(),
   integrationBadgeStatuses: new Map<string, string>(),
@@ -62,6 +67,12 @@ const normalizeProductIds = (productIds: readonly string[]): string[] =>
       productIds.map((productId) => productId.trim()).filter((productId) => productId.length > 0)
     )
   ).sort();
+
+const normalizeOptionalId = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
 
 const areStringSetsEqual = (
   previous: ReadonlySet<string>,
@@ -213,15 +224,21 @@ const resolveEffectiveMarketplaceBadgeStatus = (
 };
 
 export const resolveEffectiveListingBadgesPayload = (
-  payload: ListingBadgesPayload
+  payload: ListingBadgesPayload,
+  options?: { traderaConnectionId?: string | null | undefined }
 ): ListingBadgesPayload => {
   const nextPayload: ListingBadgesPayload = {};
+  const traderaConnectionId = normalizeOptionalId(options?.traderaConnectionId);
 
   for (const [productId, rawMarketplaces] of Object.entries(payload)) {
     const marketplaces = toMarketplaceEntry(rawMarketplaces);
-    const traderaFeedbackStatus = normalizeMarketplaceBadgeStatus(
-      readPersistedTraderaQuickListFeedback(productId)?.status
-    );
+    const traderaFeedback = readPersistedTraderaQuickListFeedback(productId);
+    const traderaFeedbackMatchesConnection =
+      traderaConnectionId === null ||
+      normalizeOptionalId(traderaFeedback?.connectionId ?? null) === traderaConnectionId;
+    const traderaFeedbackStatus = traderaFeedbackMatchesConnection
+      ? normalizeMarketplaceBadgeStatus(traderaFeedback?.status)
+      : '';
     const vintedFeedbackStatus = normalizeMarketplaceBadgeStatus(
       readPersistedVintedQuickListFeedback(productId)?.status
     );
@@ -284,12 +301,23 @@ export const resolveListingBadgeRefetchInterval = (
 
 export function useIntegrationListingBadges(
   productIds: readonly string[] = [],
-  { enabled = true }: { enabled?: boolean } = {}
+  { enabled = true, traderaConnectionId }: IntegrationListingBadgesOptions = {}
 ): IntegrationListingBadgeState {
   const scopedProductIds = useMemo(() => normalizeProductIds(productIds), [productIds]);
+  const scopedTraderaConnectionId = useMemo(
+    () => normalizeOptionalId(traderaConnectionId ?? null),
+    [traderaConnectionId]
+  );
   const scopedListingBadgesQueryKey = useMemo(
-    () => [...listingBadgesQueryKey, { productIds: scopedProductIds }] as const,
-    [scopedProductIds]
+    () =>
+      [
+        ...listingBadgesQueryKey,
+        {
+          productIds: scopedProductIds,
+          traderaConnectionId: scopedTraderaConnectionId ?? 'all',
+        },
+      ] as const,
+    [scopedProductIds, scopedTraderaConnectionId]
   );
   const badgeStateRef = useRef<IntegrationListingBadgeState>(EMPTY_INTEGRATION_LISTING_BADGE_STATE);
 
@@ -299,7 +327,12 @@ export function useIntegrationListingBadges(
       try {
         return await api.post<ListingBadgesPayload>(
           '/api/v2/integrations/product-listings',
-          { productIds: scopedProductIds },
+          {
+            productIds: scopedProductIds,
+            ...(scopedTraderaConnectionId !== null
+              ? { traderaConnectionId: scopedTraderaConnectionId }
+              : {}),
+          },
           {
             cache: 'no-store',
             timeout: LISTING_BADGE_QUERY_TIMEOUT_MS,
@@ -315,7 +348,9 @@ export function useIntegrationListingBadges(
     refetchInterval: (query) =>
       resolveListingBadgeRefetchInterval(
         query.state.data
-          ? resolveEffectiveListingBadgesPayload(query.state.data)
+          ? resolveEffectiveListingBadgesPayload(query.state.data, {
+              traderaConnectionId: scopedTraderaConnectionId,
+            })
           : query.state.data
       ),
     refetchIntervalInBackground: false,
@@ -332,7 +367,8 @@ export function useIntegrationListingBadges(
   return useMemo(() => {
     const nextState = buildIntegrationListingBadgeState(
       resolveEffectiveListingBadgesPayload(
-        listingsBadgeQuery.data ?? EMPTY_LISTING_BADGES_PAYLOAD
+        listingsBadgeQuery.data ?? EMPTY_LISTING_BADGES_PAYLOAD,
+        { traderaConnectionId: scopedTraderaConnectionId }
       )
     );
     if (areIntegrationListingBadgeStatesEqual(badgeStateRef.current, nextState)) {
@@ -341,7 +377,7 @@ export function useIntegrationListingBadges(
 
     badgeStateRef.current = nextState;
     return nextState;
-  }, [listingsBadgeQuery.data]);
+  }, [listingsBadgeQuery.data, scopedTraderaConnectionId]);
 }
 
 export function useIntegrationModalOperations(): {

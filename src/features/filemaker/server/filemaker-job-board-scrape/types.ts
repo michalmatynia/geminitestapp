@@ -1,5 +1,6 @@
 import type { 
   JobBoardProvider,
+  FilemakerJobBoardScrapeLiveEvent,
   FilemakerJobBoardScrapeOfferResult,
   FilemakerJobBoardScrapeWriteResult,
   FilemakerJobBoardScrapedOffer,
@@ -28,7 +29,7 @@ export type CentralizedScrapeResult = {
 };
 
 export type FilemakerJobBoardScrapeRunOptions = {
-  onEvent?: any; // Replace with concrete type if possible, or keep 'any' for now.
+  onEvent?: (event: FilemakerJobBoardScrapeLiveEvent) => Promise<void> | void;
   signal?: AbortSignal;
   waitWhilePaused?: () => Promise<void>;
 };

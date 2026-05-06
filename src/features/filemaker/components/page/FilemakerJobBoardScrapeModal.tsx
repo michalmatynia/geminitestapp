@@ -8,6 +8,7 @@ import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 
 import {
   FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT,
+  FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH,
   filemakerJobBoardLexiconClassificationApplyResponseSchema,
   type FilemakerJobBoardScrapeProvider,
   type FilemakerJobBoardScrapeDraftSaveRequest,
@@ -52,7 +53,13 @@ import {
   type FilemakerLexiconTypeMetadataMap,
 } from '../../pages/AdminFilemakerLexiconPage.type-metadata';
 import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../../settings';
-import type { FilemakerDatabase, FilemakerLexiconTerm } from '../../types';
+import type {
+  FilemakerDatabase,
+  FilemakerLexiconTerm,
+  FilemakerLexiconTypeKey,
+  FilemakerLexiconValidationPatternMatchMode,
+  FilemakerLexiconValidationPatternSourceScope,
+} from '../../types';
 import { JobBoardOriginBadge } from '../shared/JobBoardOriginBadge';
 import { useJobBoardScrapeBrowserModeSetting } from './useJobBoardScrapeBrowserModeSetting';
 import {
@@ -61,7 +68,6 @@ import {
   computeMatchSummary,
   createEmptyOfferProgress,
   formatSecondsAgo,
-  type OfferProgressTracker,
 } from './job-board-scrape-progress';
 
 import type {
@@ -71,6 +77,58 @@ import type {
   LivePreviewState,
 } from './FilemakerJobBoardScrapeModal.types';
 
+type ScrapedOfferPill = FilemakerJobBoardScrapedOffer['pills'][number];
+type ScrapedOfferUnclassifiedPill =
+  FilemakerJobBoardScrapedOffer['unclassifiedPills'][number];
+type ScrapeModalInitialState = {
+  draft: ScrapeDraft;
+};
+
+type LexiconTypeContextEntry = {
+  description: string;
+  key: FilemakerLexiconTypeKey;
+  label: string;
+  sampleTerms: Array<{
+    label: string;
+    normalizedLabel: string;
+    occurrenceCount: number;
+    sourceSite: string;
+  }>;
+  sortOrder: number;
+};
+
+type LexiconKnownTermContextEntry = {
+  classificationRole: 'authoritative' | 'supporting_only';
+  label: string;
+  normalizedLabel: string;
+  occurrenceCount: number;
+  sourceSite: string;
+  typeKey: FilemakerLexiconTypeKey;
+};
+
+type LexiconValidationPatternContextEntry = {
+  classificationPolicy: 'classify' | 'keep_unclassified';
+  confidence: number;
+  directlyApplicableToUnclassified: boolean;
+  id: string;
+  label: string;
+  matchMode: FilemakerLexiconValidationPatternMatchMode;
+  notes: string | undefined;
+  pattern: string;
+  priority: number;
+  sourceScope: FilemakerLexiconValidationPatternSourceScope;
+  targetTypeKey: FilemakerLexiconTypeKey;
+  version: number;
+};
+
+type LexiconContext = {
+  directValidationPatterns: LexiconValidationPatternContextEntry[];
+  knownTerms: LexiconKnownTermContextEntry[];
+  rules: string[];
+  types: LexiconTypeContextEntry[];
+  validationPatternUsage: string;
+  validationPatterns: LexiconValidationPatternContextEntry[];
+};
 
 const SCRAPE_DRAFT_SETTINGS_KEYS = [
   'delayMs',
@@ -263,14 +321,7 @@ const buildLexiconTypesContext = (
     }));
 };
 
-const buildKnownTermIndex = (database: FilemakerDatabase): Array<{
-  classificationRole: 'authoritative' | 'supporting_only';
-  label: string;
-  normalizedLabel: string;
-  occurrenceCount: number;
-  sourceSite: string | undefined;
-  typeKey: string;
-}> =>
+const buildKnownTermIndex = (database: FilemakerDatabase): LexiconKnownTermContextEntry[] =>
   database.lexiconTerms
     .slice()
     .sort((left, right) => right.occurrenceCount - left.occurrenceCount)
@@ -287,7 +338,9 @@ const buildKnownTermIndex = (database: FilemakerDatabase): Array<{
       typeKey: term.typeKey,
     }));
 
-const isDirectUnclassifiedValidationPattern = (sourceScope: string): boolean =>
+const isDirectUnclassifiedValidationPattern = (
+  sourceScope: FilemakerLexiconValidationPatternSourceScope
+): boolean =>
   sourceScope === 'all' || sourceScope === 'unclassified';
 
 const buildValidationPatternContext = (
@@ -322,7 +375,7 @@ const buildLexiconContext = (
   const validationPatterns = buildValidationPatternContext(database);
   return {
     directValidationPatterns: validationPatterns.filter(
-      (pattern) => pattern.directlyApplicableToUnclassified
+      (pattern) => pattern.directlyApplicableToUnclassified === true
     ),
     knownTerms: buildKnownTermIndex(database),
     types: buildLexiconTypesContext(database, typeMetadata),
@@ -634,6 +687,25 @@ const buildDraftSaveRequest = (
 
 const appendCapped = (items: string[], next: string, maxItems = 8): string[] =>
   [...items, next].slice(-maxItems);
+
+const WarningText = ({ value }: { value: string }): React.JSX.Element => {
+  const setupIndex = value.indexOf(FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH);
+  if (setupIndex < 0) return <>{value}</>;
+  const before = value.slice(0, setupIndex);
+  const after = value.slice(setupIndex + FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH.length);
+  return (
+    <>
+      {before}
+      <a
+        href={FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH}
+        className='font-medium underline underline-offset-2 hover:text-amber-100'
+      >
+        {FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH}
+      </a>
+      {after}
+    </>
+  );
+};
 
 const mergeLiveOffer = (
   offers: FilemakerJobBoardScrapeOfferResult[],
@@ -1182,28 +1254,6 @@ const postScrapeRequest = async (
     return readLiveScrapeStream(response, input.onEvent);
   }
   return normalizeScrapeResponse(await response.json());
-};
-
-const postScrapeRuntimeStartRequest = async (
-  input: Omit<PostScrapeRequestInput, 'onEvent' | 'onRunId'>
-): Promise<FilemakerJobBoardScrapeRuntimeRun> => {
-  const response = await fetch(FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT, {
-    method: 'POST',
-    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(buildRequest(input.draft, input.mode)),
-    signal: input.signal,
-  });
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
-  }
-  const body = (await response.json()) as unknown;
-  const run = normalizeRuntimeRun(isRecord(body) ? body['run'] : null);
-  if (run !== null) return run;
-  const runId = response.headers.get('x-filemaker-job-board-scrape-run-id')?.trim() ?? '';
-  if (runId.length > 0) {
-    return buildClientRuntimeRun(runId, input.draft, input.mode);
-  }
-  throw new Error('Job-board scrape run was not created.');
 };
 
 const postSaveDraftsRequest = async (
@@ -1894,27 +1944,12 @@ export function FilemakerJobBoardScrapeModal(
       ],
     });
     try {
-      await browserMode.persist();
-      if (mode === 'import') {
-        const run = await postScrapeRuntimeStartRequest({
-          draft,
-          mode,
-          signal: request.controller.signal,
-        });
-        if (isActiveScrapeRequest(request)) {
-          writeStoredRuntimeRunId(run.id);
-          setActiveRuntimeRun(run);
-          setModeInFlight(isRuntimeRunActive(run) ? run.mode : null);
-          setLivePreview((current) => ({
-            ...current,
-            messages: appendCapped(
-              current.messages,
-              'Import queued. Scraping will continue in the background.'
-            ),
-          }));
-        }
-        return;
+      const savedDraft = writeSavedDraft(draft);
+      if (savedDraft) {
+        setSavedDraftBaseline(draft);
+        setDraftSavedAt(Date.now());
       }
+      await browserMode.persist();
       const nextResult = await postScrapeRequest({
         draft,
         mode,
@@ -1938,7 +1973,10 @@ export function FilemakerJobBoardScrapeModal(
 
   const closeModal = (): void => {
     const activeRequest = activeRequestRef.current;
-    if (activeRequest !== null && activeRequest.mode !== 'import') {
+    if (
+      activeRequest !== null &&
+      (activeRequest.mode !== 'import' || saveDraftsInFlight !== null)
+    ) {
       activeRequest.controller.abort();
       activeRequestRef.current = null;
       setModeInFlight(null);
@@ -1988,7 +2026,7 @@ export function FilemakerJobBoardScrapeModal(
           return;
         }
         if (await applyLatestActiveRun()) return;
-        applyRuntimeSnapshot(snapshot, { notifyCompletion: true });
+        applyRuntimeSnapshot(snapshot, { notifyCompletion: false });
       } catch (error) {
         if (isAbortLikeError(error, controller.signal)) return;
         toast(error instanceof Error ? error.message : 'Failed to load latest job-board scrape run.', {
@@ -2289,7 +2327,17 @@ export function FilemakerJobBoardScrapeModal(
         </div>
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <FormField label='Persona ID'>
+          <FormField
+            label='Persona ID'
+            actions={
+              <a
+                href={FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH}
+                className='text-xs font-medium text-primary hover:underline'
+              >
+                Set up
+              </a>
+            }
+          >
             <Input
               value={draft.personaId}
               onChange={(event) => updateDraft('personaId', event.target.value)}
@@ -2493,7 +2541,9 @@ export function FilemakerJobBoardScrapeModal(
             {livePreview.warnings.length > 0 ? (
               <div className='space-y-1 text-xs text-amber-300'>
                 {livePreview.warnings.slice(-3).map((warning, index) => (
-                  <p key={`live-warning-${index}-${warning}`}>{warning}</p>
+                  <p key={`live-warning-${index}-${warning}`}>
+                    <WarningText value={warning} />
+                  </p>
                 ))}
               </div>
             ) : null}
@@ -2567,7 +2617,9 @@ export function FilemakerJobBoardScrapeModal(
             {result.warnings.length > 0 ? (
               <div className='space-y-1 text-xs text-amber-300'>
                 {result.warnings.slice(0, 3).map((warning, index) => (
-                  <p key={`result-warning-${index}-${warning}`}>{warning}</p>
+                  <p key={`result-warning-${index}-${warning}`}>
+                    <WarningText value={warning} />
+                  </p>
                 ))}
               </div>
             ) : null}

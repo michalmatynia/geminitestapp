@@ -2,7 +2,7 @@
 
 'use no memo';
 
-import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useStudioProjects } from '@/features/ai/public';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';

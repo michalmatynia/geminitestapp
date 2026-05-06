@@ -1,3 +1,5 @@
+import type { QueryClient } from '@tanstack/react-query';
+
 import type {
   BaseActiveTemplatePreferencePayload,
   BaseActiveTemplatePreferenceResponse,
@@ -58,6 +60,48 @@ type UpsertConnectionVariables = {
   id?: string; // Standardize for createSaveMutation if needed, but here we use connectionId
 };
 
+const upsertConnectionCacheEntry = <TConnection extends IntegrationConnection>(
+  current: TConnection[] | undefined,
+  savedConnection: TConnection
+): TConnection[] | undefined => {
+  if (!current) return current;
+  const existingIndex = current.findIndex((connection) => connection.id === savedConnection.id);
+  if (existingIndex === -1) return [...current, savedConnection];
+  return current.map((connection, index) =>
+    index === existingIndex ? savedConnection : connection
+  );
+};
+
+const setUpsertedConnectionCache = (
+  queryClient: QueryClient,
+  integrationId: string,
+  savedConnection: IntegrationConnection
+): void => {
+  const updateCache = (
+    current: IntegrationConnection[] | undefined
+  ): IntegrationConnection[] | undefined =>
+    upsertConnectionCacheEntry(current, savedConnection);
+
+  queryClient.setQueryData<IntegrationConnection[]>(
+    QUERY_KEYS.integrations.connections(integrationId),
+    updateCache
+  );
+  queryClient.setQueryData<IntegrationConnection[]>(
+    QUERY_KEYS.integrations.connections(),
+    updateCache
+  );
+};
+
+const refreshIntegrationConnectionQueries = async (
+  queryClient: QueryClient,
+  integrationId: string
+): Promise<void> => {
+  await Promise.all([
+    invalidateIntegrationConnections(queryClient, integrationId),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.withConnections() }),
+  ]);
+};
+
 export function useUpsertConnection() {
   const mutationKey = QUERY_KEYS.integrations.connections();
   return createMutationV2<IntegrationConnection, UpsertConnectionVariables & { id?: string }>({
@@ -81,8 +125,9 @@ export function useUpsertConnection() {
       mutationKey,
       tags: ['integrations', 'connections', 'upsert'],
       description: 'Runs integrations connections.'},
-    invalidate: (queryClient, _data, variables) => {
-      void invalidateIntegrationConnections(queryClient, variables.integrationId);
+    invalidate: async (queryClient, data, variables) => {
+      setUpsertedConnectionCache(queryClient, variables.integrationId, data);
+      await refreshIntegrationConnectionQueries(queryClient, variables.integrationId);
     },
   });
 }
@@ -114,8 +159,9 @@ export function useUpsertProgrammableConnection() {
       tags: ['integrations', 'connections', 'upsert', 'playwright-programmable'],
       description: 'Runs programmable integrations connections.',
     },
-    invalidate: (queryClient, _data, variables) => {
-      void invalidateIntegrationConnections(queryClient, variables.integrationId);
+    invalidate: async (queryClient, data, variables) => {
+      setUpsertedConnectionCache(queryClient, variables.integrationId, data);
+      await refreshIntegrationConnectionQueries(queryClient, variables.integrationId);
     },
   });
 }
@@ -153,9 +199,8 @@ export function useDeleteConnection() {
       mutationKey,
       tags: ['integrations', 'connections', 'delete'],
       description: 'Deletes integrations connections.'},
-    invalidate: (queryClient, _data, variables) => {
-      void invalidateIntegrationConnections(queryClient, variables.integrationId);
-    },
+    invalidate: (queryClient, _data, variables) =>
+      refreshIntegrationConnectionQueries(queryClient, variables.integrationId),
   });
 }
 
@@ -209,9 +254,8 @@ export function useDisconnectAllegro() {
       tags: ['integrations', 'connections', 'allegro', 'disconnect'],
       description: 'Runs integrations connections allegro disconnect.',
     },
-    invalidate: (queryClient, _data, variables) => {
-      void invalidateIntegrationConnections(queryClient, variables.integrationId);
-    },
+    invalidate: (queryClient, _data, variables) =>
+      refreshIntegrationConnectionQueries(queryClient, variables.integrationId),
   });
 }
 
@@ -233,9 +277,8 @@ export function useDisconnectLinkedIn() {
       tags: ['integrations', 'connections', 'linkedin', 'disconnect'],
       description: 'Runs integrations connections linkedin disconnect.',
     },
-    invalidate: (queryClient, _data, variables) => {
-      void invalidateIntegrationConnections(queryClient, variables.integrationId);
-    },
+    invalidate: (queryClient, _data, variables) =>
+      refreshIntegrationConnectionQueries(queryClient, variables.integrationId),
   });
 }
 

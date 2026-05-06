@@ -114,7 +114,7 @@ const useMultiValueInputTypeCondition = (condition: OrganizationAdvancedFilterCo
   isOrganizationAdvancedMultiValueOperator(condition.operator);
 
 /* eslint-disable complexity, max-lines-per-function */
-const OrganizationAdvancedConditionEditor = memo((props: {
+export const OrganizationAdvancedConditionEditor = memo((props: {
   canMoveDown: boolean;
   canMoveUp: boolean;
   condition: OrganizationAdvancedFilterCondition;

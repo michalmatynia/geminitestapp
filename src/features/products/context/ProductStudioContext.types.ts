@@ -1,6 +1,8 @@
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { Product } from '@/shared/contracts/products/product';
 import type { ProductStudioAuditEntry, ProductStudioRunStatus, ProductStudioVariantsResponse } from '@/shared/contracts/products/studio';
+import type { ContextRegistryPageSource } from '@/shared/lib/ai-context-registry/page-context-shared';
 
 export type ProductImageSlotPreview = {
   index: number;
@@ -70,7 +72,7 @@ export type ProductStudioRunState = {
 export type ProductStudioBaseState = {
   imageLinks: string[];
   imageSlotPreviews: ProductImageSlotPreview[];
-  product: any; // Using any to avoid circularity if needed, but ideally typed
+  product: Product | null;
   productId: string | null;
   productImagesExternalBaseUrl: string;
   refreshImagesFromProduct: () => Promise<void>;
@@ -91,10 +93,16 @@ export type ProductStudioLoadedState = {
     refreshAudit: () => Promise<void>;
   };
   derivedState: {
-    registrySource: any;
+    variants: ImageStudioSlotRecord[];
+    selectedVariant: ImageStudioSlotRecord | null;
+    selectedSourcePreview: ProductImageSlotPreview | null;
+    sourceImageSrc: string | null;
+    variantImageSrc: string | null;
+    canCompareWithSource: boolean;
+    sequenceReadinessMessage: string | null;
+    blockSendForSequenceReadiness: boolean;
     pendingVariantPlaceholderCount: number;
-    // ... rest of derived state used in controller
-    [key: string]: any;
+    registrySource: ContextRegistryPageSource | null;
   };
   variantsState: {
     variantsData: ProductStudioVariantsResponse | null;

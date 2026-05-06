@@ -91,6 +91,29 @@ describe('useIntegrationOperations listing badges query', () => {
     });
   });
 
+  it('requests Tradera badges for the selected connection only', async () => {
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    renderHook(
+      () =>
+        useIntegrationListingBadges(['product-1'], {
+          traderaConnectionId: ' connection-tradera-2 ',
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/integrations/product-listings',
+        { productIds: ['product-1'], traderaConnectionId: 'connection-tradera-2' },
+        { cache: 'no-store', timeout: 45_000 }
+      );
+    });
+  });
+
   it('keeps listing badge polling cold when explicitly disabled', async () => {
     const queryClient = createQueryClient();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -193,6 +216,35 @@ describe('useIntegrationOperations listing badges query', () => {
     ).toEqual({
       'product-1': {
         tradera: 'active',
+      },
+    });
+  });
+
+  it('ignores persisted Tradera quick-export feedback from another connection', () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'completed',
+          connectionId: 'connection-tradera-1',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    expect(
+      resolveEffectiveListingBadgesPayload(
+        {
+          'product-1': {
+            tradera: 'auth_required',
+          },
+        },
+        { traderaConnectionId: 'connection-tradera-2' }
+      )
+    ).toEqual({
+      'product-1': {
+        tradera: 'auth_required',
       },
     });
   });

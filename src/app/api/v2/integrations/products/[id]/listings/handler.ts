@@ -28,7 +28,10 @@ import {
 } from '@/features/jobs/server';
 import { getProductRepository, parseJsonBody } from '@/features/products/server';
 import { productListingCreatePayloadSchema } from '@/shared/contracts/integrations/listings';
-import { type ProductListingCreateResponse } from '@/shared/contracts/integrations';
+import {
+  type ProductListingCreateResponse,
+  type ProductListingWithDetails,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
@@ -46,19 +49,42 @@ const toRecord = (value: unknown): Record<string, unknown> =>
     ? (value as Record<string, unknown>)
     : {};
 
+const normalizeOptionalId = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const resolveTraderaConnectionFilter = (req: NextRequest): string | null =>
+  normalizeOptionalId(new URL(req.url).searchParams.get('traderaConnectionId'));
+
+const filterListingsByTraderaConnection = (
+  listings: ProductListingWithDetails[],
+  traderaConnectionId: string | null
+): ProductListingWithDetails[] => {
+  if (traderaConnectionId === null) return listings;
+  return listings.filter((listing) => {
+    if (!isTraderaIntegrationSlug(listing.integration.slug)) return true;
+    return normalizeOptionalId(listing.connectionId) === traderaConnectionId;
+  });
+};
+
 /**
  * GET /api/v2/integrations/products/[id]/listings
  * Fetches all listings for a specific product.
  */
 export async function getHandler(
-  _req: NextRequest,
+  req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
   try {
     const productId = requireProductId(params.id);
+    const traderaConnectionId = resolveTraderaConnectionFilter(req);
     const listings = await listCanonicalBaseProductListings(productId);
-    const response = NextResponse.json(listings);
+    const response = NextResponse.json(
+      filterListingsByTraderaConnection(listings, traderaConnectionId)
+    );
     response.headers.set('Cache-Control', 'no-store');
     return response;
   } catch (error) {

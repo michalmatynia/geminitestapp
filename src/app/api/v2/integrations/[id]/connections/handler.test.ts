@@ -150,6 +150,7 @@ describe('integration connections handler', () => {
       ok: true,
       data: {
         name: 'Tradera browser',
+        enabled: false,
         username: 'seller@example.com',
         password: 'secret',
         traderaBrowserMode: 'scripted',
@@ -160,6 +161,7 @@ describe('integration connections handler', () => {
       id: 'conn-tradera-1',
       integrationId: 'integration-tradera-1',
       name: 'Tradera browser',
+      enabled: false,
       username: 'seller@example.com',
       createdAt: '2026-04-02T10:00:00.000Z',
       updatedAt: '2026-04-02T11:00:00.000Z',
@@ -246,6 +248,7 @@ describe('integration connections handler', () => {
 
     expect(createConnectionMock).toHaveBeenCalledWith('integration-tradera-1', {
       name: 'Tradera browser',
+      enabled: false,
       username: 'seller@example.com',
       password: 'enc:secret',
       traderaBrowserMode: 'scripted',
@@ -253,6 +256,7 @@ describe('integration connections handler', () => {
     });
     expect(payload).toMatchObject({
       id: 'conn-tradera-1',
+      enabled: false,
       traderaBrowserMode: 'scripted',
       playwrightListingScript: 'export default async function run() {}',
       hasPlaywrightListingScript: true,

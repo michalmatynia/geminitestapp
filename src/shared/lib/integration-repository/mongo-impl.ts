@@ -40,6 +40,7 @@ type IntegrationDocument = {
 type IntegrationConnectionDocument = {
   integrationId: string;
   name: string;
+  enabled?: boolean;
   username: string;
   password: string;
   traderaBrowserMode?: 'builtin' | 'scripted';

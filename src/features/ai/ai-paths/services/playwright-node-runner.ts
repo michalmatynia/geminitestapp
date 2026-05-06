@@ -42,7 +42,6 @@ import { sanitizePlaywrightStorageState } from '@/shared/lib/playwright/storage-
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { recordPlaywrightActionRunSnapshot } from '@/shared/lib/playwright/action-run-history-recorder.server';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
-import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import {
   isSensitiveKey,
@@ -56,9 +55,9 @@ import { parseUserScript, safeStringify } from './playwright-node-runner.parser'
 import {
   evaluateStepWithAI,
   injectCodeWithAI,
-  type PlaywrightStepEvaluateOptions,
   type PlaywrightStepInjectOptions,
 } from '@/features/playwright/server/ai-step-service';
+import type { PlaywrightStepEvaluateOptions } from '@/features/playwright/server/ai-step-service/types';
 import { findRuntimeEntry } from './playwright-node-runner.runtime-registry';
 export { validatePlaywrightNodeScript } from './playwright-node-runner.parser';
 export * from './playwright-node-runner.types';
@@ -84,19 +83,11 @@ import {
   resolveRunArtifactsDir,
 } from './playwright-node-runner.helpers';
 
-import { browserManager } from './playwright-node-runner/browser';
-import { nodeFs, STICKY_SESSION_ROOT_DIR, STICKY_SESSION_TTL_MS, runtimeConfig } from './playwright-node-runner/runtime';
+import { nodeFs, STICKY_SESSION_ROOT_DIR, STICKY_SESSION_TTL_MS } from './playwright-node-runner/runtime';
 
-const chromiumRuntimePacingChains = new Map<string, Promise<void>>();
-const chromiumRuntimePacingNextAllowedAt = new Map<string, number>();
+import type { StickySessionDescriptor } from './playwright-node-runner/session';
+import { chromiumRuntimePacingChains, chromiumRuntimePacingNextAllowedAt } from './playwright-node-runner/pacing';
 
-type StickySessionDescriptor = {
-  key: string;
-  path: string;
-  profile: PlaywrightSettings['identityProfile'];
-  origin: string;
-  scopeLabel: string;
-};
 
 type ChromiumRuntimePacingDescriptor = {
   key: string;
@@ -157,6 +148,24 @@ type RuntimePostureSnapshot = {
     };
   };
 };
+
+const HOSTILE_STICKY_IDENTITY_PROFILES = new Set<PlaywrightSettings['identityProfile']>([
+  'search',
+  'marketplace',
+]);
+
+const readTimeoutEnv = (key: string, fallbackMs: number): number => {
+  const raw = process.env[key];
+  if (raw === undefined) return fallbackMs;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallbackMs;
+};
+
+const PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS = readTimeoutEnv(
+  'PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS',
+  5_000
+);
+const PLAYWRIGHT_STARTUP_TIMEOUT_MS = readTimeoutEnv('PLAYWRIGHT_STARTUP_TIMEOUT_MS', 30_000);
 
 const ensureRunRoot = async (): Promise<void> => {
   await nodeFs.mkdir(RUN_ROOT_DIR, { recursive: true });

@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { type Page } from 'playwright';
 
 export const executeInjectedPlaywrightCode = async (page: Page, code: string): Promise<void> => {
   if (code.trim() === '') return;

@@ -18,6 +18,7 @@ import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/layout';
 import { settingSections } from './ProductSettingsConstants';
 import { ProductDefaultsForm } from './product-settings/ProductDefaultsForm';
 import { ProductLabelingSettings } from './product-settings/ProductLabelingSettings';
+import { ProductTraderaConnectionSettings } from './product-settings/ProductTraderaConnectionSettings';
 import { TaxationSettingsPanel } from './product-settings/TaxationSettingsPanel';
 import { useProductSettingsController } from './product-settings/useProductSettingsController';
 import type {
@@ -53,6 +54,7 @@ const ProductDefaultsSettingsSection = (): JSX.Element => {
         onSave={ctrl.saveSettings}
         isSaving={ctrl.isSaving}
       />
+      <ProductTraderaConnectionSettings />
       <ProductLabelingSettings settings={ctrl.settings} onUpdate={ctrl.handleUpdate} />
       <TaxationSettingsPanel settings={ctrl.settings} onUpdate={ctrl.handleUpdate} />
     </div>

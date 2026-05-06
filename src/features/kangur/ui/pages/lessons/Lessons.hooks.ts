@@ -237,7 +237,7 @@ export function useLessonsLogic() {
       return;
     }
 
-    let timeoutId: number | null = null;
+    const timeoutId: number | null = null;
     const frameId = safeRequestAnimationFrame(() => {
       setIsDeferredContentReady(true);
     });

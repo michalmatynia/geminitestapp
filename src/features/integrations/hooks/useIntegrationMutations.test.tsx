@@ -8,6 +8,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 const createMutationV2Mock = vi.hoisted(() => vi.fn());
 const createUpdateMutationV2Mock = vi.hoisted(() => vi.fn());
 const apiPostMock = vi.hoisted(() => vi.fn());
+const apiPutMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/query-factories-v2', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/query-factories-v2')>();
@@ -21,11 +22,13 @@ vi.mock('@/shared/lib/query-factories-v2', async (importOriginal) => {
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
     post: apiPostMock,
+    put: apiPutMock,
   },
 }));
 
 import {
   useTestConnection,
+  useUpsertConnection,
   useUpdateDefaultTraderaConnection,
   useUpdateDefaultVintedConnection,
 } from './useIntegrationMutations';
@@ -36,6 +39,64 @@ describe('useIntegrationMutations', () => {
     createMutationV2Mock.mockReturnValue({ kind: 'mutation' });
     createUpdateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
     apiPostMock.mockResolvedValue({ connectionId: 'conn-tradera-1' });
+    apiPutMock.mockResolvedValue({ id: 'conn-tradera-1' });
+  });
+
+  it('updates the connection cache immediately after editing a connection', async () => {
+    const { result } = renderHook(() => useUpsertConnection());
+    const config = createMutationV2Mock.mock.calls[0]?.[0];
+    const setQueryDataMock = vi.fn();
+    const invalidateQueriesMock = vi.fn().mockResolvedValue(undefined);
+
+    expect(result.current).toEqual({ kind: 'mutation' });
+
+    await config.invalidate(
+      {
+        setQueryData: setQueryDataMock,
+        invalidateQueries: invalidateQueriesMock,
+      },
+      {
+        id: 'conn-tradera-1',
+        integrationId: 'integration-tradera-1',
+        name: 'Tradera Browser',
+        enabled: false,
+        traderaBrowserMode: 'scripted',
+      },
+      {
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+        payload: {},
+      }
+    );
+
+    expect(setQueryDataMock).toHaveBeenCalledWith(
+      QUERY_KEYS.integrations.connections('integration-tradera-1'),
+      expect.any(Function)
+    );
+
+    const updateCache = setQueryDataMock.mock.calls[0]?.[1] as (
+      current: Array<Record<string, unknown>>
+    ) => Array<Record<string, unknown>>;
+    expect(
+      updateCache([
+        {
+          id: 'conn-tradera-1',
+          integrationId: 'integration-tradera-1',
+          name: 'Old Tradera Browser',
+          enabled: true,
+          traderaBrowserMode: 'builtin',
+        },
+      ])
+    ).toEqual([
+      expect.objectContaining({
+        id: 'conn-tradera-1',
+        enabled: false,
+        traderaBrowserMode: 'scripted',
+      }),
+    ]);
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: QUERY_KEYS.integrations.withConnections(),
+    });
   });
 
   it('posts Tradera preferred connection updates to the dedicated endpoint', async () => {

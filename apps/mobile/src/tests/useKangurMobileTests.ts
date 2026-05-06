@@ -123,79 +123,34 @@ export const useKangurMobileTests = (
         cache: 'no-store',
         credentials: 'include',
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch lite settings (${response.status})`);
-      }
-
+      if (!response.ok) throw new Error(`Failed to fetch lite settings (${response.status})`);
       const payload = await response.json();
-      if (!Array.isArray(payload)) {
-        return [];
-      }
-
+      if (!Array.isArray(payload)) return [];
+      
       return payload.filter(
-        (entry): entry is KangurLiteSettingRecord =>
-          typeof entry === 'object' &&
-          entry !== null &&
-          typeof entry['key'] === 'string' &&
-          typeof entry['value'] === 'string',
-      );
+        (entry: unknown): entry is KangurLiteSettingRecord =>
+          typeof entry === 'object' && entry !== null && 'key' in entry && 'value' in entry
+      ).map((entry: unknown) => {
+          const item = entry as KangurLiteSettingRecord;
+          return { key: String(item.key), value: String(item.value) };
+      });
     },
     staleTime: 30_000,
   });
 
-  const suites = useMemo(() => {
-    const settingsByKey = new Map(
-      (settingsQuery.data ?? []).map((entry) => [entry.key, entry.value]),
-    );
-    const parsedSuites = parseJsonValue(
-      settingsByKey.get(KANGUR_TEST_SUITES_SETTING_KEY),
-      kangurTestSuitesSchema,
-      [],
-    )
-      .filter(isLiveSuite)
-      .sort((left, right) => {
-        const orderDelta = left.sortOrder - right.sortOrder;
-        if (orderDelta !== 0) {
-          return orderDelta;
-        }
-
-        return left.id.localeCompare(right.id);
-      });
-    const questionStore = parseJsonValue(
-      settingsByKey.get(KANGUR_TEST_QUESTIONS_SETTING_KEY),
-      kangurTestQuestionStoreSchema,
-      {},
-    );
-
-    return parsedSuites.map((suite) => {
-      const questions = getPublishedQuestionsForSuite(questionStore, suite.id);
-      return {
-        questionCount: questions.length,
-        questions,
-        suite,
-      };
-    });
+  const questionStore = useMemo(() => {
+    const settingsByKey = new Map((settingsQuery.data ?? []).map((entry) => [entry.key, entry.value]));
+    return parseJsonValue(settingsByKey.get(KANGUR_TEST_QUESTIONS_SETTING_KEY), kangurTestQuestionStoreSchema, {});
   }, [settingsQuery.data]);
 
+  const suites = useMemo(() => getProcessedSuites(settingsQuery.data, questionStore), [settingsQuery.data, questionStore]);
+
   return {
-    error:
-      settingsQuery.error instanceof Error
-        ? copy({
-            de: 'Die Tests konnten nicht geladen werden.',
-            en: 'Could not load the tests.',
-            pl: 'Nie udało się pobrać testów.',
-          })
-        : null,
+    error: settingsQuery.error instanceof Error ? copy({ de: 'Die Tests konnten nicht geladen werden.', en: 'Could not load the tests.', pl: 'Nie udało się pobrać testów.' }) : null,
     focusToken,
-    focusedSuiteId:
-      focusToken !== null && suites.length > 0
-        ? resolveFocusedSuiteId(focusToken, suites)
-        : null,
+    focusedSuiteId: focusToken !== null && suites.length > 0 ? resolveFocusedSuiteId(focusToken, suites) : null,
     isLoading: settingsQuery.isLoading,
-    refresh: async () => {
-      await settingsQuery.refetch();
-    },
+    refresh: async () => { await settingsQuery.refetch(); },
     suites,
   };
 };

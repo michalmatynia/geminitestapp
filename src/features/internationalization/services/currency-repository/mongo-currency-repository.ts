@@ -82,6 +82,29 @@ const updateRelatedToCurrencyCode = async (
   }
 };
 
+const handleCurrencyUpdate = async (
+  db: Db,
+  id: string,
+  data: { code?: string; name?: string; symbol?: string | null },
+  now: Date
+): Promise<string> => {
+  if (data.code !== undefined && data.code !== id) {
+    await updateRelatedToCurrencyCode(db, id, data.code, now);
+  }
+
+  const nextId = data.code ?? id;
+  await db.collection<CurrencyDoc>(COLLECTION).updateOne({ id }, {
+    $set: {
+      ...(data.code !== undefined && { id: data.code, code: data.code }),
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.symbol !== undefined && { symbol: data.symbol }),
+      updatedAt: now,
+    },
+  });
+
+  return nextId;
+};
+
 export const mongoCurrencyRepository: CurrencyRepository = {
   async listCurrencies(filters?: { skip?: number; limit?: number }): Promise<CurrencyRecord[]> {
     const db = await getMongoDb();
@@ -138,24 +161,13 @@ export const mongoCurrencyRepository: CurrencyRepository = {
     if (existing === null) throw notFoundError('Currency not found', { id });
 
     const now = new Date();
-    if (data.code !== undefined && data.code !== id) {
-      await updateRelatedToCurrencyCode(db, id, data.code, now);
-    }
-
-    const nextId = data.code ?? id;
-    await collection.updateOne({ id }, {
-      $set: {
-        ...(data.code !== undefined && { id: data.code, code: data.code }),
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.symbol !== undefined && { symbol: data.symbol }),
-        updatedAt: now,
-      },
-    });
+    const nextId = await handleCurrencyUpdate(db, id, data, now);
 
     const updated = await collection.findOne({ id: nextId });
     if (updated === null) throw internalError('Failed to update currency', { id: nextId });
     return toCurrencyDomain(updated);
   },
+
 
   async deleteCurrency(id: string): Promise<void> {
     const db = await getMongoDb();

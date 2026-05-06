@@ -22,10 +22,7 @@ import type {
   FilemakerLexiconTermCategory,
   FilemakerLexiconValidationPattern,
 } from '../types';
-import {
-  createFilemakerLexiconColumns,
-  FilemakerLexiconPageView,
-} from './AdminFilemakerLexiconPage.components';
+import { FilemakerLexiconPageView } from './AdminFilemakerLexiconPage.components';
 import {
   buildFilemakerLexiconTypeMetadata,
   getFilemakerLexiconCreateCategory,
@@ -329,7 +326,6 @@ const useFilemakerLexiconPatternEditor = (input: {
   return { addPattern, changePattern, close, drafts, open, openEditor, removePattern, save };
 };
 
-// eslint-disable-next-line max-lines-per-function
 export function AdminFilemakerLexiconPage(): React.JSX.Element {
   const router = useRouter();
   const settingsStore = useSettingsStore();
@@ -339,8 +335,7 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
   const { categoryFilter, query, setCategoryFilter, setQuery } = useUrlBackedLexiconFilters();
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
-  const { categoryOptions, editCategoryOptions, typeMetadata } =
-    useFilemakerLexiconTypeUi(database);
+  const { categoryOptions, editCategoryOptions } = useFilemakerLexiconTypeUi(database);
   const filteredRows = useFilemakerLexiconRows(database, categoryFilter, query);
   const persistDatabase = usePersistFilemakerLexiconDatabase({
     settingsStore,
@@ -356,15 +351,6 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
     persistDatabase,
     toast,
   });
-  const columns = useMemo(
-    () =>
-      createFilemakerLexiconColumns({
-        onDeleteTerm: editor.deleteTerm,
-        onEditTerm: editor.openEdit,
-        typeMetadata,
-      }),
-    [editor.deleteTerm, editor.openEdit, typeMetadata]
-  );
   const actions = useMemo(
     () =>
       buildLexiconPageActions(
@@ -380,7 +366,6 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
       actions={actions}
       categoryOptions={categoryOptions}
       categoryFilter={categoryFilter}
-      columns={columns}
       ConfirmationModal={ConfirmationModal}
       data={filteredRows}
       editCategoryOptions={editCategoryOptions}
@@ -390,6 +375,8 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
       onEditorChange={editor.changeEditorForm}
       onEditorClose={editor.closeEditor}
       onEditorSave={editor.saveEditor}
+      onDeleteTerm={editor.deleteTerm}
+      onEditTerm={editor.openEdit}
       query={query}
       setQuery={setQuery}
       typeEditor={typeEditor}

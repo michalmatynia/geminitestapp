@@ -59,7 +59,42 @@ type ResultsQuery = {
 const canPersist = (
   identityKey: string | null,
   resultsQuery: ResultsQuery,
-): boolean => identityKey !== null && shouldPersist(identityKey, resultsQuery);
+): boolean => {
+  if (identityKey === null) {
+    return false;
+  }
+
+  return (
+    resultsQuery.isEnabled &&
+    !resultsQuery.isLoading &&
+    !resultsQuery.isRestoringAuth &&
+    !resultsQuery.isPlaceholderData &&
+    resultsQuery.error === null
+  );
+};
+
+function buildRecentResultsResult({
+  resultsQuery,
+  results,
+  copy,
+}: {
+  resultsQuery: ReturnType<typeof useKangurMobileScoreHistory>;
+  results: KangurScore[];
+  copy: (params: { de: string; en: string; pl: string }) => string;
+}): UseKangurMobileRecentResultsResult {
+  return {
+    error: resultsQuery.error instanceof Error ? getErrorMessage(copy) : null,
+    isEnabled: resultsQuery.isEnabled,
+    isLoading: resultsQuery.isLoading,
+    isRestoringAuth: resultsQuery.isRestoringAuth,
+    refresh: async () => {
+      if (resultsQuery.isEnabled) {
+        await resultsQuery.refresh();
+      }
+    },
+    results,
+  };
+}
 
 export const useKangurMobileRecentResults = (
   options: UseKangurMobileRecentResultsOptions = {},
@@ -88,14 +123,16 @@ export const useKangurMobileRecentResults = (
     placeholderData: persistedResults ?? undefined,
     sort: '-created_date',
   });
-  const results = (
-    resultsQuery.isEnabled || !persistedResults ? resultsQuery.scores : persistedResults
-  ).slice(0, limit);
+
+  const results = useMemo(() => {
+    const scores = resultsQuery.isEnabled || !persistedResults ? resultsQuery.scores : persistedResults;
+    return scores.slice(0, limit);
+  }, [limit, persistedResults, resultsQuery.isEnabled, resultsQuery.scores]);
 
   useEffect(() => {
-    if (canPersist(scoreScopeIdentityKey, resultsQuery)) {
+    if (canPersist(scoreScopeIdentityKey, resultsQuery) && scoreScopeIdentityKey !== null) {
       persistKangurMobileRecentResults({
-        identityKey: scoreScopeIdentityKey!,
+        identityKey: scoreScopeIdentityKey,
         results,
         storage,
       });
@@ -111,16 +148,9 @@ export const useKangurMobileRecentResults = (
     storage,
   ]);
 
-  return {
-    error: resultsQuery.error instanceof Error ? getErrorMessage(copy) : null,
-    isEnabled: resultsQuery.isEnabled,
-    isLoading: resultsQuery.isLoading,
-    isRestoringAuth: resultsQuery.isRestoringAuth,
-    refresh: async () => {
-      if (resultsQuery.isEnabled) {
-        await resultsQuery.refresh();
-      }
-    },
+  return buildRecentResultsResult({
+    resultsQuery,
     results,
-  };
+    copy,
+  });
 };

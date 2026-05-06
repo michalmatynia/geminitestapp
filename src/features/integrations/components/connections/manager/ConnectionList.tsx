@@ -33,10 +33,16 @@ const resolveConnectionDescription = (
 ): React.ReactNode => {
   const personLabel = resolveConnectionPersonLabel(connection);
   const isActive = activeConnectionId === connection.id;
-  if (personLabel.length === 0 && !isActive) return undefined;
+  const isDisabled = connection.enabled === false;
+  if (personLabel.length === 0 && !isActive && !isDisabled) return undefined;
 
   return (
     <div className='flex flex-wrap items-center gap-2'>
+      {isDisabled && (
+        <span className='text-[10px] uppercase tracking-wide text-rose-300 font-bold'>
+          Disabled
+        </span>
+      )}
       {personLabel.length > 0 && (
         <span className='text-[10px] uppercase tracking-wide text-sky-300 font-bold'>
           Person: {personLabel}
@@ -49,6 +55,13 @@ const resolveConnectionDescription = (
       )}
     </div>
   );
+};
+
+const runConnectionAction = (action: () => Promise<void> | void): void => {
+  const result = action();
+  if (result !== undefined) {
+    result.catch(() => undefined);
+  }
 };
 
 export function ConnectionList(): React.JSX.Element {
@@ -93,59 +106,73 @@ export function ConnectionList(): React.JSX.Element {
           original: connection,
         }))}
         emptyMessage='No connections yet.'
-        renderActions={(item) => (
-          <div className='flex items-center gap-2'>
-            <Button
-              variant='outline'
-              size='xs'
-              className='h-7 text-[10px] uppercase font-bold text-gray-200 hover:text-white'
-              type='button'
-              onClick={(): void => {
-                setEditingConnectionId(item.original.id);
-                setConnectionToEdit(item.original);
-              }}
-            >
-              Edit
-            </Button>
-            <Button
-              variant='outline'
-              size='xs'
-              className={`h-7 text-[10px] uppercase font-bold ${
-                isBaselinker
-                  ? 'text-purple-300 hover:text-purple-200'
-                  : isAllegro
-                    ? 'text-amber-300 hover:text-amber-200'
-                    : 'text-sky-300 hover:text-sky-200'
-              }`}
-              type='button'
-              onClick={(): void => {
-                if (isBaselinker) void handleBaselinkerTest(item.original);
-                else if (isAllegro) void handleAllegroTest(item.original);
-                else void handleTestConnection(item.original);
-              }}
-              disabled={isTesting}
-            >
-              {isTesting ? 'Testing...' : 'Test'}
-            </Button>
-            {isBrowserAutomation && (
+        renderActions={(item) => {
+          const isConnectionDisabled = item.original.enabled === false;
+          const isActionDisabled = isTesting || isConnectionDisabled;
+
+          return (
+            <div className='flex items-center gap-2'>
               <Button
                 variant='outline'
                 size='xs'
-                className='h-7 text-[10px] uppercase font-bold text-emerald-300 hover:text-emerald-200'
+                className='h-7 text-[10px] uppercase font-bold text-gray-200 hover:text-white'
                 type='button'
                 onClick={(): void => {
-                  if (is1688) void handle1688ManualLogin(item.original);
-                  else if (isVinted) void handleVintedManualLogin(item.original);
-                  else if (isPracuj) void handlePracujManualLogin(item.original);
-                  else void handleTraderaManualLogin(item.original);
+                  setEditingConnectionId(item.original.id);
+                  setConnectionToEdit(item.original);
                 }}
-                disabled={isTesting}
               >
-                {isTesting ? 'Starting...' : 'Login window'}
+                Edit
               </Button>
-            )}
-          </div>
-        )}
+              <Button
+                variant='outline'
+                size='xs'
+                className={`h-7 text-[10px] uppercase font-bold ${
+                  isBaselinker
+                    ? 'text-purple-300 hover:text-purple-200'
+                    : isAllegro
+                      ? 'text-amber-300 hover:text-amber-200'
+                      : 'text-sky-300 hover:text-sky-200'
+                }`}
+                type='button'
+                onClick={(): void => {
+                  if (isBaselinker) {
+                    runConnectionAction(() => handleBaselinkerTest(item.original));
+                  } else if (isAllegro) {
+                    runConnectionAction(() => handleAllegroTest(item.original));
+                  } else {
+                    runConnectionAction(() => handleTestConnection(item.original));
+                  }
+                }}
+                disabled={isActionDisabled}
+              >
+                {isTesting ? 'Testing...' : 'Test'}
+              </Button>
+              {isBrowserAutomation && (
+                <Button
+                  variant='outline'
+                  size='xs'
+                  className='h-7 text-[10px] uppercase font-bold text-emerald-300 hover:text-emerald-200'
+                  type='button'
+                  onClick={(): void => {
+                    if (is1688) {
+                      runConnectionAction(() => handle1688ManualLogin(item.original));
+                    } else if (isVinted) {
+                      runConnectionAction(() => handleVintedManualLogin(item.original));
+                    } else if (isPracuj) {
+                      runConnectionAction(() => handlePracujManualLogin(item.original));
+                    } else {
+                      runConnectionAction(() => handleTraderaManualLogin(item.original));
+                    }
+                  }}
+                  disabled={isActionDisabled}
+                >
+                  {isTesting ? 'Starting...' : 'Login window'}
+                </Button>
+              )}
+            </div>
+          );
+        }}
         onDelete={(item) => handleDeleteConnection(item.original)}
       />
       <ConnectionEditModal

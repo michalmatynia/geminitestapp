@@ -99,7 +99,7 @@ function ChallengesEmpty({ copy }: { copy: ReturnType<typeof useKangurMobileI18n
   );
 }
 
-function ChallengesStatusSwitch({
+function getChallengesStatusContent({
   invites,
   copy,
 }: {
@@ -113,7 +113,13 @@ function ChallengesStatusSwitch({
     return <ChallengesDeferred copy={copy} />;
   }
   if (invites.error !== null && invites.error !== '') {
-    return <ChallengesError copy={copy} error={invites.error} refresh={() => { void invites.refresh(); }} />;
+    return (
+      <ChallengesError 
+        copy={copy} 
+        error={invites.error} 
+        refresh={() => { void invites.refresh(); }} 
+      />
+    );
   }
   if (invites.outgoingChallenges.length === 0) {
     return <ChallengesEmpty copy={copy} />;
@@ -136,7 +142,7 @@ function ChallengesList({
   sharingDuelSessionId: string | null;
   onShare: (sessionId: string) => void;
 }): React.JSX.Element {
-  const statusContent = <ChallengesStatusSwitch invites={invites} copy={copy} />;
+  const statusContent = getChallengesStatusContent({ invites, copy });
   if (statusContent !== null) return statusContent;
 
   return (

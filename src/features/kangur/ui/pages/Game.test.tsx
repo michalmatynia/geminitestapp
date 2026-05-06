@@ -405,7 +405,7 @@ describe('Game page', () => {
     expect(homeActionsPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ hideWhenScreenMismatch: false })
     );
-    expect(screen.queryByTestId('kangur-game-navigation-widget')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
   });
 
   it('does not prefetch other Kangur pages while the game shell mounts', () => {

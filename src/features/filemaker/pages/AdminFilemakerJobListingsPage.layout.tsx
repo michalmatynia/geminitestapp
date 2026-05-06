@@ -1,77 +1,62 @@
-import { BriefcaseBusiness, Search, X } from 'lucide-react';
-import React, { type JSX } from 'react';
+'use client';
 
-import { JobListingRow } from './AdminFilemakerJobListingsPage.row';
-import type { EnrichedJobListing } from './AdminFilemakerJobListingsPage.components';
+import { BriefcaseBusiness, Building2 } from 'lucide-react';
+import Link from 'next/link';
+import React, { type JSX, useEffect, useMemo } from 'react';
 
-type ListingSectionInput = {
-  error: string | null;
-  isLoading: boolean;
-  listings: ReadonlyArray<Record<string, unknown>>;
-  onRefresh: () => Promise<void> | void;
-  defaultPersonId: string;
-  defaultPersonName: string;
-};
+import type { FilterField } from '@/shared/contracts/ui/panels';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
+import {
+  FolderTreeViewportV2,
+  useMasterFolderTreeShell,
+} from '@/shared/lib/foldertree/public';
+import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
+import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
+import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
+import {
+  FocusModeTogglePortal,
+  MasterTreeSettingsButton,
+} from '@/shared/ui/navigation-and-layout.public';
+import { Badge } from '@/shared/ui/primitives.public';
+import { FilterPanel, StandardDataTablePanel } from '@/shared/ui/templates.public';
+import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-const toListingForRender = (listing: Record<string, unknown>): EnrichedJobListing | null => {
-  const candidateId = listing.id;
-  if (typeof candidateId !== 'string') return null;
-  return listing as EnrichedJobListing;
-};
+const FILEMAKER_JOB_LISTINGS_TREE_INSTANCE: FolderTreeInstance = 'filemaker_job_listings';
 
-export const renderListSection = (input: ListingSectionInput): JSX.Element => {
-  if (input.error !== null) {
-    return (
-      <p className='rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive'>
-        {input.error}
-      </p>
-    );
-  }
-
-  if (input.isLoading) {
-    return (
-      <div className='space-y-2'>
-        {Array.from({ length: 6 }).map((_, index) => (
-          <div
-            key={index}
-            className='h-16 animate-pulse rounded-md border border-border/30 bg-background/20'
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (input.listings.length === 0) {
-    return (
-      <div className='flex flex-col items-center gap-2 py-12 text-center text-gray-500'>
-        <BriefcaseBusiness className='size-8 opacity-30' />
-        <p className='text-sm'>No job listings found.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className='space-y-1.5'>
-      {input.listings
-        .map(toListingForRender)
-        .filter((listing): listing is EnrichedJobListing => listing !== null)
-        .map((listing) => (
-          <JobListingRow
-            key={listing.id}
-            listing={listing}
-            personId={input.defaultPersonId}
-            personName={input.defaultPersonName}
-            onRefreshListings={input.onRefresh}
-          />
-        ))}
-    </div>
-  );
-};
+const JOB_LISTING_FILTER_FIELDS: FilterField[] = [
+  {
+    key: 'status',
+    label: 'Status',
+    type: 'select',
+    options: [
+      { label: 'All statuses', value: '' },
+      { label: 'Open', value: 'open' },
+      { label: 'Draft', value: 'draft' },
+      { label: 'Paused', value: 'paused' },
+      { label: 'Closed', value: 'closed' },
+    ],
+    width: '180px',
+  },
+];
 
 type JobListingsNoticeProps = {
   settingsLoading: boolean;
   hasDefaultPerson: boolean;
   displayPersonName: string | null;
+};
+
+type JobListingsListPanelProps = JobListingsNoticeProps & {
+  error: string | null;
+  isLoading: boolean;
+  listingCount: number;
+  nodes: MasterTreeNode[];
+  onResetFilters: () => void;
+  onSearch: (query: string) => void;
+  onStatus: (status: string) => void;
+  rawQuery: string;
+  renderNode: (input: FolderTreeViewportRenderNodeInput) => React.ReactNode;
+  status: string;
 };
 
 export const JobListingsNotice = ({
@@ -92,106 +77,10 @@ export const JobListingsNotice = ({
   if (displayPersonName === null) return null;
   return (
     <p className='text-xs text-gray-500'>
-      Marking applied as:{' '}
-      <span className='text-gray-300'>{displayPersonName}</span>
+      Marking applied as: <span className='text-gray-300'>{displayPersonName}</span>
     </p>
   );
 };
-
-type JobListingSearchInputProps = {
-  rawQuery: string;
-  onSearch: (query: string) => void;
-  onResetSearch: () => void;
-};
-
-const JobListingSearchInput = ({
-  rawQuery,
-  onSearch,
-  onResetSearch,
-}: JobListingSearchInputProps): JSX.Element => (
-  <div className='relative flex min-w-0 flex-1 items-center'>
-    <label htmlFor='job-listing-search' className='sr-only'>
-      Search job listings
-    </label>
-    <Search className='absolute left-2.5 size-3.5 text-gray-500' aria-hidden='true' />
-    <input
-      aria-label='Search job listings'
-      id='job-listing-search'
-      type='text'
-      value={rawQuery}
-      onChange={(e): void => {
-        onSearch(e.target.value);
-      }}
-      placeholder='Search title, organisation, location…'
-      className='h-8 w-full rounded-md border border-border/60 bg-background/40 pl-8 pr-8 text-xs text-gray-200 placeholder:text-gray-600 focus:border-border focus:outline-none focus:ring-1 focus:ring-ring'
-    />
-    {rawQuery.length > 0 ? (
-      <button
-        type='button'
-        onClick={onResetSearch}
-        className='absolute right-2.5 text-gray-500 hover:text-gray-300'
-        aria-label='Clear search'
-      >
-        <X className='size-3.5' />
-      </button>
-    ) : null}
-  </div>
-);
-
-type JobListingStatusFilterProps = {
-  status: string;
-  onStatus: (status: string) => void;
-};
-
-const STATUS_OPTIONS: Array<{ label: string; value: string }> = [
-  { label: 'All statuses', value: '' },
-  { label: 'Open', value: 'open' },
-  { label: 'Draft', value: 'draft' },
-  { label: 'Paused', value: 'paused' },
-  { label: 'Closed', value: 'closed' },
-];
-
-const JobListingStatusFilter = ({ status, onStatus }: JobListingStatusFilterProps): JSX.Element => (
-  <select
-    value={status}
-    onChange={(e): void => {
-      onStatus(e.target.value);
-    }}
-    className='h-8 rounded-md border border-border/60 bg-background/40 px-2 text-xs text-gray-200 focus:border-border focus:outline-none focus:ring-1 focus:ring-ring'
-  >
-    {STATUS_OPTIONS.map((opt) => (
-      <option key={opt.value} value={opt.value}>
-        {opt.label}
-      </option>
-    ))}
-  </select>
-);
-
-type JobListingsControlsProps = {
-  rawQuery: string;
-  status: string;
-  isLoading: boolean;
-  listingCount: number;
-  onSearch: (query: string) => void;
-  onStatus: (status: string) => void;
-  onResetSearch: () => void;
-};
-
-export const JobListingsControls = ({
-  rawQuery,
-  status,
-  isLoading,
-  listingCount,
-  onSearch,
-  onStatus,
-  onResetSearch,
-}: JobListingsControlsProps): JSX.Element => (
-  <div className='flex flex-wrap items-center gap-2'>
-    <JobListingSearchInput rawQuery={rawQuery} onSearch={onSearch} onResetSearch={onResetSearch} />
-    <JobListingStatusFilter status={status} onStatus={onStatus} />
-    {!isLoading ? <span className='text-xs text-gray-500'>{listingCount} listing{listingCount !== 1 ? 's' : ''}</span> : null}
-  </div>
-);
 
 export const getDisplayPersonName = (input: {
   hasDefaultPerson: boolean;
@@ -201,3 +90,196 @@ export const getDisplayPersonName = (input: {
   if (!input.hasDefaultPerson) return null;
   return input.defaultPersonName.length > 0 ? input.defaultPersonName : input.defaultPersonId;
 };
+
+function JobListingsBadges(props: Pick<
+  JobListingsListPanelProps,
+  'error' | 'isLoading' | 'listingCount' | 'nodes'
+>): React.JSX.Element {
+  const hasError = props.error !== null && props.error.length > 0;
+  return (
+    <div className='flex flex-wrap items-center gap-2'>
+      <Badge variant='outline' className='text-[10px]'>
+        Listings: {props.listingCount}
+      </Badge>
+      <Badge variant='outline' className='text-[10px]'>
+        Shown: {props.nodes.length}
+      </Badge>
+      {props.isLoading ? (
+        <Badge variant='outline' className='text-[10px]'>
+          Loading
+        </Badge>
+      ) : null}
+      {hasError ? (
+        <Badge variant='destructive' className='text-[10px]'>
+          {props.error}
+        </Badge>
+      ) : null}
+    </div>
+  );
+}
+
+function JobListingsFilters(props: Pick<
+  JobListingsListPanelProps,
+  'onResetFilters' | 'onSearch' | 'onStatus' | 'rawQuery' | 'status'
+>): React.JSX.Element {
+  const filterValues = useMemo(
+    () => ({
+      status: props.status,
+    }),
+    [props.status]
+  );
+  const activeFilterValues = useMemo(
+    () => ({
+      status: props.status,
+    }),
+    [props.status]
+  );
+
+  return (
+    <FilterPanel
+      filters={JOB_LISTING_FILTER_FIELDS}
+      values={filterValues}
+      activeValues={activeFilterValues}
+      search={props.rawQuery}
+      searchPlaceholder='Search title, organisation, location, or source.'
+      onFilterChange={(key: string, value: unknown): void => {
+        if (key !== 'status') return;
+        props.onStatus(typeof value === 'string' ? value : '');
+      }}
+      onSearchChange={props.onSearch}
+      onReset={props.onResetFilters}
+      showHeader={false}
+      collapsible
+      defaultExpanded
+    />
+  );
+}
+
+function JobListingsTitleBreadcrumbHeader(): React.JSX.Element {
+  return (
+    <AdminTitleBreadcrumbHeader
+      title={<h1 className='text-3xl font-bold tracking-tight text-white'>Job Listings</h1>}
+      breadcrumb={<AdminFilemakerBreadcrumbs current='Job Listings' />}
+      titleStackClassName='shrink-0 min-w-max'
+      actions={
+        <Link
+          href='/admin/filemaker/organizations'
+          className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 px-3 text-xs text-gray-300 hover:bg-white/5'
+          title='View organisations'
+        >
+          <Building2 className='size-3.5' aria-hidden='true' />
+          Organisations
+        </Link>
+      }
+      actionsClassName='relative z-0 min-w-0 flex-1 justify-center'
+    />
+  );
+}
+
+function JobListingsListHeader(props: JobListingsListPanelProps): React.JSX.Element {
+  const { isMenuHidden } = useAdminLayoutState();
+  const { setIsMenuHidden } = useAdminLayoutActions();
+
+  useEffect(() => {
+    return (): void => {
+      setIsMenuHidden(false);
+    };
+  }, [setIsMenuHidden]);
+
+  return (
+    <div className='space-y-4'>
+      <FocusModeTogglePortal
+        isFocusMode={!isMenuHidden}
+        onToggleFocusMode={() => setIsMenuHidden(!isMenuHidden)}
+      />
+      <div className='space-y-3'>
+        <JobListingsTitleBreadcrumbHeader />
+        <JobListingsNotice
+          settingsLoading={props.settingsLoading}
+          hasDefaultPerson={props.hasDefaultPerson}
+          displayPersonName={props.displayPersonName}
+        />
+        <JobListingsBadges
+          error={props.error}
+          isLoading={props.isLoading}
+          listingCount={props.listingCount}
+          nodes={props.nodes}
+        />
+        <JobListingsFilters
+          rawQuery={props.rawQuery}
+          status={props.status}
+          onSearch={props.onSearch}
+          onStatus={props.onStatus}
+          onResetFilters={props.onResetFilters}
+        />
+      </div>
+    </div>
+  );
+}
+
+function JobListingsTableHeader(): React.JSX.Element {
+  return (
+    <div
+      data-testid='job-listings-table-header'
+      className='flex items-center gap-2 rounded border border-white/10 bg-muted/20 px-2 py-1.5'
+    >
+      <div className='hidden w-9 shrink-0 md:block' aria-hidden='true' />
+      <div className='min-w-0 flex-1'>
+        <div className='inline-flex h-7 items-center gap-2 px-2 text-xs font-semibold text-gray-400'>
+          <BriefcaseBusiness className='size-3.5' aria-hidden='true' />
+          Job Listing
+        </div>
+      </div>
+      <div className='hidden w-48 shrink-0 justify-end px-2 text-xs font-semibold text-gray-400 md:flex'>
+        Actions
+      </div>
+    </div>
+  );
+}
+
+function JobListingsListViewport(props: JobListingsListPanelProps): React.JSX.Element {
+  const {
+    appearance: { rootDropUi },
+    controller,
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
+    instance: FILEMAKER_JOB_LISTINGS_TREE_INSTANCE,
+    nodes: props.nodes,
+  });
+  const hasQuery = props.rawQuery.trim().length > 0;
+
+  return (
+    <div className='relative space-y-1'>
+      <JobListingsTableHeader />
+      <FolderTreeViewportV2
+        controller={controller}
+        scrollToNodeRef={scrollToNodeRef}
+        rootDropUi={rootDropUi}
+        enableDnd={false}
+        emptyLabel={hasQuery ? 'No job listings found' : 'No job listings found'}
+        estimateRowHeight={82}
+        renderNode={props.renderNode}
+      />
+      <MasterTreeSettingsButton instance={FILEMAKER_JOB_LISTINGS_TREE_INSTANCE} />
+    </div>
+  );
+}
+
+export function FilemakerJobListingsListPanel(
+  props: JobListingsListPanelProps
+): React.JSX.Element {
+  return (
+    <StandardDataTablePanel
+      variant='flat'
+      className='[&>div:first-child]:mb-3'
+      header={<JobListingsListHeader {...props} />}
+      columns={[]}
+      data={[]}
+      isLoading={false}
+      showTable={false}
+      contentClassName='space-y-3'
+    >
+      <JobListingsListViewport {...props} />
+    </StandardDataTablePanel>
+  );
+}

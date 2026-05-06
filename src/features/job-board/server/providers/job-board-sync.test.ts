@@ -94,7 +94,7 @@ describe('job-board-sync', () => {
       personaId: 'persona-search',
       launchOptions: { headless: false },
       settingsOverrides: {
-        identityProfile: 'search',
+        headless: false,
         humanizeMouse: true,
       },
       input: {

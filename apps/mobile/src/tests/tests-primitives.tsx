@@ -118,6 +118,19 @@ type ChoiceButtonProps = {
   onPress: () => void;
 };
 
+const getChoiceTone = (
+    isRevealed: boolean,
+    isCorrect: boolean,
+    isSelected: boolean
+): Tone => {
+    if (isRevealed) {
+        if (isCorrect) return SUCCESS_TONE;
+        if (isSelected) return ERROR_TONE;
+        return BASE_TONE;
+    }
+    return isSelected ? INDIGO_TONE : BASE_TONE;
+};
+
 export function ChoiceButton(props: ChoiceButtonProps): React.JSX.Element {
   const {
     choice,
@@ -129,22 +142,15 @@ export function ChoiceButton(props: ChoiceButtonProps): React.JSX.Element {
     locale,
     onPress,
   } = props;
-  const tone = isRevealed
-    ? isCorrect
-      ? SUCCESS_TONE
-      : isSelected
-        ? ERROR_TONE
-        : BASE_TONE
-    : isSelected
-      ? INDIGO_TONE
-      : BASE_TONE;
+  
+  const tone = getChoiceTone(isRevealed, isCorrect, isSelected);
 
   return (
     <ChoiceCardButton
-      description={choice.description || undefined}
+      description={typeof choice.description === 'string' && choice.description !== '' ? choice.description : undefined}
       disabled={disabled}
       helperText={
-        choice.svgContent.trim().length > 0 ? (
+        choice.svgContent.trim() !== '' ? (
           <Text
             style={{
               color: '#64748b',

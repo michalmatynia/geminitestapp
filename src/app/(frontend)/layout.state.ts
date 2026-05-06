@@ -67,19 +67,16 @@ const resolveFrontPageSelectionForLayout = async ({
 
 const shouldRenderStandaloneKangurShell = ({
   canonicalPublicLogin,
-  expectsRootRedirectToKangur,
   explicitKangurAlias,
   publicOwner,
 }: {
   canonicalPublicLogin: boolean;
-  expectsRootRedirectToKangur: boolean;
   explicitKangurAlias: boolean;
   publicOwner: FrontendPublicOwner;
 }): boolean =>
   publicOwner === 'kangur' &&
   !explicitKangurAlias &&
-  !canonicalPublicLogin &&
-  !expectsRootRedirectToKangur;
+  !canonicalPublicLogin;
 
 const resolveKangurInitialAppearance = (
   kangurInitialState: Awaited<ReturnType<typeof getKangurStorefrontInitialState>> | null
@@ -128,23 +125,18 @@ const resolveKangurAuthBootstrapScript = async ({
 const resolveKangurBootstrapState = async ({
   canonicalPublicLogin,
   explicitKangurAlias,
-  isRootPublicRoute,
   layoutTiming,
   publicOwner,
   requestHeaders,
 }: {
   canonicalPublicLogin: boolean;
   explicitKangurAlias: boolean;
-  isRootPublicRoute: boolean;
   layoutTiming: LayoutTimingRecorder;
   publicOwner: FrontendPublicOwner;
   requestHeaders: Headers | null;
 }): Promise<KangurBootstrapState> => {
-  const expectsRootRedirectToKangur =
-    publicOwner === 'kangur' && isRootPublicRoute;
   const renderStandaloneKangurShell = shouldRenderStandaloneKangurShell({
     canonicalPublicLogin,
-    expectsRootRedirectToKangur,
     explicitKangurAlias,
     publicOwner,
   });
@@ -220,12 +212,10 @@ export async function resolveResolvedFrontendLayoutState({
     pathname: requestPathname,
     publicOwner,
   });
-  const expectsRootRedirectToKangur =
-    publicOwner === 'kangur' && isRootPublicRoute;
+  const expectsRootRedirectToKangur = false;
   const kangurBootstrapState = await resolveKangurBootstrapState({
     canonicalPublicLogin,
     explicitKangurAlias,
-    isRootPublicRoute,
     layoutTiming,
     publicOwner,
     requestHeaders,

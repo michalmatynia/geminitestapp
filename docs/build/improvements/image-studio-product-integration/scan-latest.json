@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-30T09:41:39.599Z",
+  "generatedAt": "2026-05-06T11:28:21.086Z",
   "track": {
     "id": "image-studio-product-integration",
     "title": "Image Studio product integration",
@@ -125,54 +125,25 @@
     "defaultSelected": false,
     "description": "Verifies Product modal handoff to Image Studio, Studio project persistence, generated variant intake, and runtime stability of Studio controls.",
     "overallStatus": "passed",
-    "latestGeneratedAt": "2026-04-30T09:41:39.533Z",
+    "latestGeneratedAt": "2026-04-30T09:41:39.301Z",
     "docDir": "docs/build/improvements/image-studio-product-integration",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-30T09:41:38.928Z",
+        "generatedAt": "2026-05-06T10:36:28.276Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 2,
-        "automaticStepCount": 1,
-        "manualStepCount": 1,
-        "passedStepCount": 1,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [
-          {
-            "id": "image-studio-product-runtime-audit",
-            "title": "Audit Product modal Image Studio runtime health",
-            "trackId": "image-studio-product-integration",
-            "phase": "audit",
-            "mode": "manual",
-            "writes": false,
-            "status": "manual",
-            "outputs": [],
-            "instructions": [
-              "Open the Product edit modal and switch to the Studio tab with a product that has image slots.",
-              "Confirm the Studio project field, source image selector, action bar, variant grid, and audit history render without React maximum update depth errors.",
-              "Verify the selected Studio project can be changed without repeated autosave requests for the same value."
-            ]
-          },
-          {
-            "id": "image-studio-product-regression-tests",
-            "title": "Run Product modal and Image Studio integration regression tests",
-            "trackId": "image-studio-product-integration",
-            "phase": "audit",
-            "mode": "automatic",
-            "writes": false,
-            "status": "passed",
-            "outputs": [],
-            "instructions": [],
-            "script": "test:image-studio-product",
-            "durationMs": 13439
-          }
-        ],
-        "status": "passed"
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "classify",
@@ -209,36 +180,20 @@
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-04-30T09:41:39.533Z",
+        "generatedAt": "2026-05-06T11:28:21.083Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,
-        "stepCount": 1,
+        "stepCount": 0,
         "automaticStepCount": 0,
-        "manualStepCount": 1,
+        "manualStepCount": 0,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [
-          {
-            "id": "image-studio-product-integration-plan",
-            "title": "Plan Product modal Image Studio recovery work",
-            "trackId": "image-studio-product-integration",
-            "phase": "plan",
-            "mode": "manual",
-            "writes": false,
-            "status": "manual",
-            "outputs": [],
-            "instructions": [
-              "Start with idempotent state updates in Product modal and Studio project synchronization.",
-              "Keep shared primitive changes API-compatible with current Product form usage.",
-              "Validate with npm run test:image-studio-product plus the focused shared primitive tests before broader app checks."
-            ]
-          }
-        ],
-        "status": "manual"
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "dry-run",

@@ -5,9 +5,11 @@ import {
   type KangurLessonMasteryPresentation,
   type KangurPortableLesson,
   getKangurPracticeOperationForLessonComponent,
-  type KangurProgressState,
 } from '@kangur/core';
-import { createDefaultKangurProgressState, type KangurLessonMasteryEntry } from '@kangur/contracts/kangur';
+import { 
+    createDefaultKangurProgressState, 
+    type KangurProgressState 
+} from '@kangur/contracts/kangur';
 import type { Href } from 'expo-router';
 import { useMemo, useState, useSyncExternalStore, useCallback } from 'react';
 
@@ -31,7 +33,7 @@ export type KangurMobileLessonItem = {
   practiceHref: Href | null;
 };
 
-type UseKangurMobileLessonsResult = {
+export type UseKangurMobileLessonsResult = {
   actionError: string | null;
   focusToken: string | null;
   lessons: KangurMobileLessonItem[];
@@ -49,7 +51,7 @@ const transformLesson = (
   locale: KangurMobileLocale,
   selectedLessonId: string | null
 ): KangurMobileLessonItem => {
-  const checkpoint = progress.lessonMastery[lesson.componentId] as KangurLessonMasteryEntry | undefined;
+  const checkpoint = progress.lessonMastery[lesson.componentId];
   const practiceOperation = getKangurPracticeOperationForLessonComponent(lesson.componentId);
 
   let checkpointSummary: KangurMobileLessonItem['checkpointSummary'] = null;
@@ -68,7 +70,7 @@ const transformLesson = (
     isFocused: lesson.id === selectedLessonId,
     lesson,
     mastery: getKangurLessonMasteryPresentation(lesson, progress, locale),
-    practiceHref: practiceOperation ? createKangurPracticeHref(practiceOperation) : null,
+    practiceHref: practiceOperation !== null ? createKangurPracticeHref(practiceOperation) : null,
   };
 };
 
@@ -78,8 +80,8 @@ export const useKangurMobileLessons = (
   const { copy, locale } = useKangurMobileI18n();
   const { progressStore } = useKangurMobileRuntime();
   const [actionError, setActionError] = useState<string | null>(null);
-  const progress = useSyncExternalStore(
-    progressStore.subscribeToProgress,
+  const progress: KangurProgressState = useSyncExternalStore(
+    progressStore.subscribeToProgress as (onStoreChange: () => void) => () => void,
     progressStore.loadProgress,
     createDefaultKangurProgressState,
   );

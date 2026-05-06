@@ -1,5 +1,5 @@
-import { Page } from 'playwright';
-import { PlaywrightVerificationInjectionConfig, PlaywrightCapturedPageObservation, PlaywrightInjectionResult, PlaywrightInjectionConversationMessage } from './types';
+import { type Page } from 'playwright';
+import { type PlaywrightVerificationInjectionConfig, type PlaywrightCapturedPageObservation, type PlaywrightInjectionResult, type PlaywrightInjectionConversationMessage } from './types';
 import { executeInjectedPlaywrightCode } from './utils';
 
 export async function performInjectionIteration<TReview>(

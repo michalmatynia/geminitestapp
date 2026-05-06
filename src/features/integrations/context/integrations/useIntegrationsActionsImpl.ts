@@ -247,6 +247,7 @@ export function useIntegrationsActionsImpl(args: {
         : {}),
       ...(isTraderaIntegration
         ? {
+          enabled: formData.enabled,
           ...(isTraderaBrowserIntegration
             ? {
               traderaBrowserMode: formData.traderaBrowserMode,

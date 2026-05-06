@@ -57,6 +57,12 @@ export function ConnectionEditModal(props: ConnectionEditModalProps): React.JSX.
     }
   };
 
+  const handleUpdateClick = (): void => {
+    handleUpdate().catch(() => {
+      setIsSaving(false);
+    });
+  };
+
   return (
     <DetailModal
       isOpen={Boolean(connection)}
@@ -66,7 +72,7 @@ export function ConnectionEditModal(props: ConnectionEditModalProps): React.JSX.
       size='lg'
       footer={
         <FormActions
-          onSave={() => void handleUpdate()}
+          onSave={handleUpdateClick}
           onCancel={onClose}
           saveText='Update connection'
           isSaving={isSaving}

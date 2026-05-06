@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
 const IDLE_READY_FALLBACK_TIMEOUT_MS = 1;
 type UseKangurIdleReadyOptions = {
   minimumDelayMs?: number;

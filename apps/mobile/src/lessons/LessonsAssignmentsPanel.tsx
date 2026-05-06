@@ -42,7 +42,7 @@ export function LessonsAssignmentsPanel({
       ) : (
         <View style={{ gap: 10 }}>
           {lessonsAssignments.assignmentItems.map((item) => (
-            <LessonsAssignmentRow key={item.assignment.id} item={item} />
+            <LessonsAssignmentRow key={item.id} item={item} />
           ))}
         </View>
       )}

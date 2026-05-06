@@ -2,6 +2,7 @@ import { useMemo, useCallback } from 'react';
 import { useFileAsset3dList } from '@/features/files/hooks/useFileAsset3dQueries';
 import { useFileQueries } from '@/features/files/hooks/useFileQueries';
 import type { ExpandedImageFile } from '@/shared/contracts/products/drafts';
+import type { FileManagerData } from '@/features/files/contexts/FileManagerContext.types';
 import type { Asset3DRecord, Asset3DListFilters } from '@/shared/contracts/viewer3d';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -50,7 +51,8 @@ export function useFileManagerDataLogic(options: {
   tagSearchList: string[];
   enableTagSearch: boolean;
   filepathFilter?: (filepath: string) => boolean;
-}): FileManagerDataLogic {
+  folderFilter: string;
+}): FileManagerData {
   const {
     filenameSearch,
     productNameSearch,
@@ -91,6 +93,10 @@ export function useFileManagerDataLogic(options: {
     files,
     visibleFiles,
     assets3d,
-    getFileKind,
+    folderOptions: [],
+    tagOptions: [],
+    filteredFiles: visibleFiles,
+    folderFilter,
+    isPending: false,
   };
 }

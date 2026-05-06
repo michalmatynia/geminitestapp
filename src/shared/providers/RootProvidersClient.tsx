@@ -96,10 +96,12 @@ const useDeferredRootServices = (eager: boolean): boolean => {
 
 function RootProviderFrame({
   children,
+  initialLiteSettings,
   isSyntheticKangurCapture,
   queryProviderMode,
 }: {
   children: React.ReactNode;
+  initialLiteSettings?: ReadonlyArray<readonly [string, string]>;
   isSyntheticKangurCapture: boolean;
   queryProviderMode: QueryProviderMode;
 }): React.JSX.Element {
@@ -144,7 +146,11 @@ function RootProviderFrame({
       <RouteAccessibilityAnnouncer />
       <ToastProvider>
         <QueryProvider mode={queryProviderMode}>
-          <SettingsStoreProvider mode='lite' suppressOwnQuery={isSyntheticKangurCapture}>
+          <SettingsStoreProvider
+            initialEntries={initialLiteSettings}
+            mode='lite'
+            suppressOwnQuery={isSyntheticKangurCapture}
+          >
             <AppFontProvider />
             {shouldUseFullRuntime ? (
               <BackgroundSyncProvider>{providerChildren}</BackgroundSyncProvider>
@@ -160,9 +166,11 @@ function RootProviderFrame({
 
 function SearchParamAwareRootProviders({
   children,
+  initialLiteSettings,
   queryProviderMode,
 }: {
   children: React.ReactNode;
+  initialLiteSettings?: ReadonlyArray<readonly [string, string]>;
   queryProviderMode: QueryProviderMode;
 }): React.JSX.Element {
   const searchParams = useSearchParams();
@@ -171,6 +179,7 @@ function SearchParamAwareRootProviders({
 
   return (
     <RootProviderFrame
+      initialLiteSettings={initialLiteSettings}
       isSyntheticKangurCapture={isSyntheticKangurCapture}
       queryProviderMode={queryProviderMode}
     >
@@ -181,8 +190,10 @@ function SearchParamAwareRootProviders({
 
 export function RootProvidersClient({
   children,
+  initialLiteSettings,
 }: {
   children: React.ReactNode;
+  initialLiteSettings?: ReadonlyArray<readonly [string, string]>;
 }): React.JSX.Element {
   const pathname = usePathname();
   const queryProviderMode = resolveQueryProviderModeForPath(pathname);
@@ -191,6 +202,7 @@ export function RootProvidersClient({
     <Suspense
       fallback={
         <RootProviderFrame
+          initialLiteSettings={initialLiteSettings}
           isSyntheticKangurCapture={false}
           queryProviderMode={queryProviderMode}
         >
@@ -198,7 +210,10 @@ export function RootProvidersClient({
         </RootProviderFrame>
       }
     >
-      <SearchParamAwareRootProviders queryProviderMode={queryProviderMode}>
+      <SearchParamAwareRootProviders
+        initialLiteSettings={initialLiteSettings}
+        queryProviderMode={queryProviderMode}
+      >
         {children}
       </SearchParamAwareRootProviders>
     </Suspense>

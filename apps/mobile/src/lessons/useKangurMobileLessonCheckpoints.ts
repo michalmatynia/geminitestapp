@@ -42,7 +42,7 @@ type LessonCheckpointEntry = [
 ];
 
 const resolveTimestamp = (value: string | null): number => {
-  if (!value) {
+  if (value === null || value === '') {
     return Number.NEGATIVE_INFINITY;
   }
 
@@ -60,8 +60,9 @@ const compareLessonCheckpointEntries = (
     return timestampDelta;
   }
 
-  if (rightMastery.lastScorePercent !== leftMastery.lastScorePercent) {
-    return rightMastery.lastScorePercent - leftMastery.lastScorePercent;
+  const scoreDelta = rightMastery.lastScorePercent - leftMastery.lastScorePercent;
+  if (scoreDelta !== 0) {
+    return scoreDelta;
   }
 
   return leftComponentId.localeCompare(rightComponentId);
@@ -126,7 +127,9 @@ export const getKangurMobileLessonCheckpoints = (
           lastScorePercent: mastery.lastScorePercent,
           lessonHref: createKangurLessonHref(componentId),
           masteryPercent: mastery.masteryPercent,
-          practiceHref: practiceOperation ? createKangurPracticeHref(practiceOperation) : null,
+          practiceHref: practiceOperation !== null
+            ? createKangurPracticeHref(practiceOperation)
+            : null,
           title: getLocalizedKangurCoreLessonTitle(
             componentId,
             locale,

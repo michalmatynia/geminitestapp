@@ -1,5 +1,5 @@
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type { KangurDuelOpponentEntry } from '@kangur/contracts/kangur-duels';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
@@ -12,6 +12,7 @@ import {
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { resolveMobileDuelErrorMessage } from '../duels/mobileDuelErrorMessages';
+import type { DuelApiClient } from '../duels/useKangurMobileDuelsLobbyQueries';
 
 const MOBILE_HOME_DUELS_REMATCH_LIMIT = 4;
 
@@ -34,6 +35,21 @@ type UseKangurMobileHomeDuelsRematchesOptions = {
 function resolveRematchesIdentity(session: ReturnType<typeof useKangurMobileAuth>['session']): string {
     const user = session.user;
     return user?.activeLearner?.id ?? user?.email ?? user?.id ?? 'guest';
+}
+
+async function performRematch(
+  apiClient: DuelApiClient,
+  queryClient: QueryClient,
+  rematchesQueryKey: readonly string[],
+  opponentLearnerId: string
+): Promise<string | null> {
+    const response = await apiClient.createDuel({
+        mode: 'challenge', visibility: 'private', opponentLearnerId,
+        operation: MOBILE_DUEL_DEFAULT_OPERATION, difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
+        questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT, timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
+    }, { cache: 'no-store' });
+    await queryClient.invalidateQueries({ queryKey: rematchesQueryKey });
+    return response.session.id;
 }
 
 export const useKangurMobileHomeDuelsRematches = ({
@@ -70,13 +86,7 @@ export const useKangurMobileHomeDuelsRematches = ({
       setActionError(null);
       setIsActionPending(true);
       try {
-        const response = await apiClient.createDuel({
-            mode: 'challenge', visibility: 'private', opponentLearnerId,
-            operation: MOBILE_DUEL_DEFAULT_OPERATION, difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
-            questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT, timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
-        }, { cache: 'no-store' });
-        await queryClient.invalidateQueries({ queryKey: rematchesQueryKey });
-        return response.session.id;
+        return await performRematch(apiClient, queryClient, rematchesQueryKey, opponentLearnerId);
       } catch (err: unknown) {
         const fallback = { de: 'Der private Rückkampf konnte nicht erstellt werden.', en: 'Could not create the private rematch.', pl: 'Nie udało się utworzyć prywatnego rewanżu.' };
         setActionError(resolveMobileDuelErrorMessage({

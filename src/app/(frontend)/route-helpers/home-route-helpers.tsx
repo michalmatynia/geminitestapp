@@ -4,8 +4,6 @@ import { type JSX } from 'react';
 
 import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import { getCmsRepository, getSlugsForDomain, isDomainZoningEnabled, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
-import { getKangurConfiguredLaunchRoute } from '@/features/kangur/server/launch-route';
 import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { applyCacheLife } from '@/shared/lib/next/cache-life';
@@ -138,7 +136,6 @@ const resolveHomeDomainWithRecovery = async (
 async function handleFrontPageRedirects(
   selection: Awaited<ReturnType<typeof resolveFrontPageSelection>>,
   resolvedLocale: string | undefined,
-  withTiming: <T>(label: string, fn: () => Promise<T>) => Promise<T>,
   flush: () => Promise<void>
 ): Promise<void> {
   if (!selection.enabled) return;
@@ -147,12 +144,6 @@ async function handleFrontPageRedirects(
   if (typeof redirectPath === 'string' && redirectPath !== '') {
     await flush();
     redirect(localizePublicPath(redirectPath, resolvedLocale));
-  }
-
-  if (selection.publicOwner === 'kangur') {
-    const route = await withTiming('kangurLaunchRoute', getKangurConfiguredLaunchRoute);
-    await flush();
-    redirect(localizePublicPath(getKangurPublicLaunchHref(route), resolvedLocale));
   }
 }
 
@@ -165,7 +156,12 @@ export const renderHomeRoute = async ({
   const { withTiming, flush } = createHomeTimingRecorder();
 
   const frontPageSelection = await withTiming('frontPageSelection', resolveFrontPageSelection);
-  await handleFrontPageRedirects(frontPageSelection, resolvedLocale, withTiming, flush);
+  await handleFrontPageRedirects(frontPageSelection, resolvedLocale, flush);
+
+  if (frontPageSelection.publicOwner === 'kangur') {
+    await flush();
+    return null;
+  }
 
   let hdrs: RequestHeaders | null | undefined = null;
   let content: JSX.Element;

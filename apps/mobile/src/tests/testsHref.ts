@@ -2,7 +2,7 @@ import type { Href } from 'expo-router';
 
 export const createKangurTestsHref = (focus?: string | null): Href => {
   const trimmedFocus = focus?.trim();
-  if (!trimmedFocus) {
+  if (typeof trimmedFocus !== 'string' || trimmedFocus === '') {
     return '/tests' as Href;
   }
 

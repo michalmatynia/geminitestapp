@@ -100,7 +100,11 @@ const getClientIp = (request: Pick<NextRequest, 'headers'>): string => {
   return 'unknown';
 };
 
-const isApiRequest = (pathname: string): boolean => pathname === '/api' || pathname.startsWith('/api/');
+const isApiRequest = (pathname: string): boolean =>
+  pathname === '/api' ||
+  pathname.startsWith('/api/') ||
+  pathname === '/kangur-api' ||
+  pathname.startsWith('/kangur-api/');
 
 const isAdminRequest = (pathname: string): boolean =>
   pathname === '/admin' || pathname.startsWith('/admin/');

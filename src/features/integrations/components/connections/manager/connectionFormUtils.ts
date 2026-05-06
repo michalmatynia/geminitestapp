@@ -3,6 +3,7 @@ import type { IntegrationConnection } from '@/shared/contracts/integrations/conn
 
 export const toConnectionFormState = (connection: IntegrationConnection): ConnectionFormState => ({
   name: connection.name,
+  enabled: connection.enabled ?? true,
   username: connection.username ?? '',
   password: '',
   scanner1688StartUrl: connection.scanner1688StartUrl ?? 'https://www.1688.com/',

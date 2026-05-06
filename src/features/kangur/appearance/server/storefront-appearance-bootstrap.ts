@@ -12,6 +12,8 @@ import {
 const KANGUR_SURFACE_BOOTSTRAP_SELECTORS = [
   'html.kangur-surface-active',
   'body.kangur-surface-active',
+  'html.kangur-surface-active #app-content',
+  'body.kangur-surface-active #app-content',
   '#app-content.kangur-surface-active',
 ].join(',\n');
 

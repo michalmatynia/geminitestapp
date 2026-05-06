@@ -17,6 +17,7 @@ import type { Metadata, Viewport } from 'next';
 
 import './fonts.css';
 import './globals.css';
+import '../../apps/studiq-web/src/app/kangur/kangur.css';
 
 // Generate metadata for SEO and social sharing
 export async function generateMetadata(): Promise<Metadata> {
@@ -59,7 +60,10 @@ export default async function RootLayout({
 
   const fontSetId =
     liteSettings.find((s) => s.key === APP_FONT_SET_SETTING_KEY)?.value ?? 'system';
-  
+  const liteSettingsEntries = liteSettings.map(
+    (setting) => [setting.key, setting.value] as const
+  );
+
   const commonMessages = messages['Common'] as Record<string, unknown> | undefined;
   const skipToMainContentLabel =
     commonMessages !== undefined &&
@@ -94,9 +98,13 @@ export default async function RootLayout({
             <SkipToContentLink>{skipToMainContentLabel}</SkipToContentLink>
             <main id='main-content' className='min-h-screen' role='main'>
               <h1 className='sr-only'>{siteTitle}</h1>
-              <Suspense fallback={<div className='min-h-screen' aria-busy='true' />}>
-                <RootClientShell>{children}</RootClientShell>
-              </Suspense>
+              <div id='app-content' className='min-h-screen'>
+                <Suspense fallback={<div className='min-h-screen' aria-busy='true' />}>
+                  <RootClientShell initialLiteSettings={liteSettingsEntries}>
+                    {children}
+                  </RootClientShell>
+                </Suspense>
+              </div>
             </main>
           </AccessibilityProvider>
         </AppIntlProvider>

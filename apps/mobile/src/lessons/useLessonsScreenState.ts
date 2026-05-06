@@ -6,7 +6,18 @@ import { useLessonsScreenBootState } from './useLessonsScreenBootState';
 import { getKangurPortableLessonBody } from '@kangur/core';
 import { type LessonBody } from './lessons-types';
 
-export function useLessonsScreenState() {
+export function useLessonsScreenState(): {
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  locale: ReturnType<typeof useKangurMobileI18n>['locale'];
+  router: ReturnType<typeof useRouter>;
+  focusToken: string | null;
+  actionError: string | null;
+  lessons: ReturnType<typeof useKangurMobileLessons>['lessons'];
+  saveLessonCheckpoint: ReturnType<typeof useKangurMobileLessons>['saveLessonCheckpoint'];
+  selectedLesson: ReturnType<typeof useKangurMobileLessons>['selectedLesson'];
+  isPreparing: boolean;
+  selectedLessonBody: LessonBody | null;
+} {
   const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
@@ -21,6 +32,7 @@ export function useLessonsScreenState() {
 
   return {
     copy,
+    locale,
     router,
     focusToken,
     actionError,

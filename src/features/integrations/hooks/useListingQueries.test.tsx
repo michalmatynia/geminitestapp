@@ -61,4 +61,16 @@ describe('useListingQueries', () => {
       { cache: 'no-store' }
     );
   });
+
+  it('scopes product listings by Tradera connection when requested', async () => {
+    apiGetMock.mockResolvedValue([{ id: 'listing-1' }]);
+
+    await expect(
+      fetchProductListings('product-2', { traderaConnectionId: ' connection-tradera-2 ' })
+    ).resolves.toEqual([{ id: 'listing-1' }]);
+    expect(apiGetMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/products/product-2/listings?traderaConnectionId=connection-tradera-2',
+      { cache: 'no-store' }
+    );
+  });
 });

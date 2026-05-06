@@ -1,16 +1,12 @@
 import { Text, View } from 'react-native';
 
-import { BASE_TONE } from '../../shared/KangurAssessmentUi';
-import {
-  KangurMobileCard as Card,
-  KangurMobilePill as Pill,
-} from '../../shared/KangurMobileUi';
+import { KangurMobileCard as Card } from '../../shared/KangurMobileUi';
 import { TabButton } from '../parent-dashboard-primitives';
 
 interface ParentTabsSectionProps {
   copy: (text: Record<string, string>) => string;
   activeTab: string;
-  setActiveTab: (tab: any) => void;
+  setActiveTab: (tab: string) => void;
   activeTabDescription: string;
 }
 
@@ -19,7 +15,15 @@ export function ParentTabsSection({
   activeTab,
   setActiveTab,
   activeTabDescription,
-}: ParentTabsSectionProps) {
+}: ParentTabsSectionProps): React.JSX.Element {
+  const tabs = [
+    { id: 'progress', label: copy({ de: 'Fortschritt', en: 'Progress', pl: 'Postęp' }) },
+    { id: 'results', label: copy({ de: 'Ergebnisse', en: 'Results', pl: 'Wyniki' }) },
+    { id: 'assignments', label: copy({ de: 'Aufgaben', en: 'Assignments', pl: 'Zadania' }) },
+    { id: 'monitoring', label: copy({ de: 'Überwachung', en: 'Monitoring', pl: 'Monitorowanie' }) },
+    { id: 'aiTutor', label: 'AI Tutor' },
+  ];
+
   return (
     <Card>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -40,58 +44,18 @@ export function ParentTabsSection({
         {activeTabDescription}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <TabButton
-          active={activeTab === 'progress'}
-          label={copy({
-            de: 'Fortschritt',
-            en: 'Progress',
-            pl: 'Postęp',
-          })}
-          onPress={() => {
-            setActiveTab('progress');
-          }}
-        />
-        <TabButton
-          active={activeTab === 'results'}
-          label={copy({
-            de: 'Ergebnisse',
-            en: 'Results',
-            pl: 'Wyniki',
-          })}
-          onPress={() => {
-            setActiveTab('results');
-          }}
-        />
-        <TabButton
-          active={activeTab === 'assignments'}
-          label={copy({
-            de: 'Aufgaben',
-            en: 'Assignments',
-            pl: 'Zadania',
-          })}
-          onPress={() => {
-            setActiveTab('assignments');
-          }}
-        />
-        <TabButton
-          active={activeTab === 'monitoring'}
-          label={copy({
-            de: 'Überwachung',
-            en: 'Monitoring',
-            pl: 'Monitorowanie',
-          })}
-          onPress={() => {
-            setActiveTab('monitoring');
-          }}
-        />
-        <TabButton
-          active={activeTab === 'aiTutor'}
-          label='AI Tutor'
-          onPress={() => {
-            setActiveTab('aiTutor');
-          }}
-        />
+        {tabs.map((tab) => (
+          <TabButton
+            active={activeTab === tab.id}
+            key={tab.id}
+            label={tab.label}
+            onPress={() => {
+              setActiveTab(tab.id);
+            }}
+          />
+        ))}
       </View>
     </Card>
   );
 }
+

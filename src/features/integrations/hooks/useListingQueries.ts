@@ -8,12 +8,42 @@ import { integrationKeys } from '@/shared/lib/query-key-exports';
 
 const PRODUCT_LISTINGS_STALE_TIME_MS = 30_000;
 
-export const productListingsQueryKey = (productId: string): readonly unknown[] =>
-  integrationKeys.listings(productId);
+export type ProductListingsRequestOptions = {
+  enabled?: boolean;
+  traderaConnectionId?: string | null | undefined;
+};
 
-export const fetchProductListings = (productId: string): Promise<ProductListingWithDetails[]> =>
+const normalizeOptionalId = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const buildProductListingsUrl = (
+  productId: string,
+  options?: ProductListingsRequestOptions
+): string => {
+  const baseUrl = `/api/v2/integrations/products/${productId}/listings`;
+  const traderaConnectionId = normalizeOptionalId(options?.traderaConnectionId);
+  if (traderaConnectionId === null) return baseUrl;
+  return `${baseUrl}?traderaConnectionId=${encodeURIComponent(traderaConnectionId)}`;
+};
+
+export const productListingsQueryKey = (
+  productId: string,
+  options?: ProductListingsRequestOptions
+): readonly unknown[] => {
+  const traderaConnectionId = normalizeOptionalId(options?.traderaConnectionId);
+  if (traderaConnectionId === null) return integrationKeys.listings(productId);
+  return [...integrationKeys.listings(productId), { traderaConnectionId }] as const;
+};
+
+export const fetchProductListings = (
+  productId: string,
+  options?: ProductListingsRequestOptions
+): Promise<ProductListingWithDetails[]> =>
   api.get<ProductListingWithDetails[]>(
-    `/api/v2/integrations/products/${productId}/listings`,
+    buildProductListingsUrl(productId, options),
     { cache: 'no-store' }
   );
 
@@ -22,12 +52,15 @@ export const isMissingProductListingsError = (error: unknown): error is ApiError
   error.status === 404 &&
   error.message.trim().toLowerCase() === 'product not found';
 
-export function useProductListings(productId: string): ListQuery<ProductListingWithDetails> {
-  const queryKey = productListingsQueryKey(productId);
+export function useProductListings(
+  productId: string,
+  options?: ProductListingsRequestOptions
+): ListQuery<ProductListingWithDetails> {
+  const queryKey = productListingsQueryKey(productId, options);
   return createListQueryV2({
     queryKey,
-    queryFn: () => fetchProductListings(productId),
-    enabled: Boolean(productId),
+    queryFn: () => fetchProductListings(productId, options),
+    enabled: Boolean(productId) && (options?.enabled ?? true),
     staleTime: PRODUCT_LISTINGS_STALE_TIME_MS,
     refetchOnMount: 'always',
     refetchInterval: (
@@ -49,7 +82,7 @@ export function useProductListings(productId: string): ListQuery<ProductListingW
         'in_progress',
       ]);
       const hasInFlight = data.some((listing: ProductListingWithDetails) =>
-        activeStatuses.has((listing.status ?? '').trim().toLowerCase())
+        activeStatuses.has(listing.status.trim().toLowerCase())
       );
       return hasInFlight ? 2500 : false;
     },

@@ -14,34 +14,17 @@ import type { ProductStudioLoadedState, ProductStudioRunState } from './ProductS
 const VARIANT_POLL_INTERVAL_MS = 4000;
 const RUN_TIMEOUT_MS = 5 * 60 * 1000;
 
-export const useProductStudioRunEffects = (
+const useProductStudioAutoPollEffect = (
   loaded: ProductStudioLoadedState,
-  runState: ProductStudioRunState
+  runState: ProductStudioRunState,
+  baselineIdsRef: React.MutableRefObject<string[]>,
+  selectedVariantSlotIdRef: React.MutableRefObject<string | null>
 ): void => {
   const { pendingVariantPlaceholderCount } = loaded.derivedState;
-  const { refreshVariants, selectedVariantSlotId, setSelectedVariantSlotId } = loaded.variantsState;
-  const { refreshAudit } = loaded.auditState;
-  const {
-    activeRunId,
-    activeRunBaselineVariantIds,
-    pendingExpectedOutputs,
-    runStatus,
-    setActiveRunBaselineVariantIds,
-    setActiveRunId,
-    setPendingExpectedOutputs,
-    setRunStatus,
-  } = runState;
+  const { refreshVariants, setSelectedVariantSlotId } = loaded.variantsState;
 
-  // Stable refs so interval callbacks read current values without effect churn
-  const baselineIdsRef = useRef(activeRunBaselineVariantIds);
-  baselineIdsRef.current = activeRunBaselineVariantIds;
-  const selectedVariantSlotIdRef = useRef(selectedVariantSlotId);
-  selectedVariantSlotIdRef.current = selectedVariantSlotId;
-  const prevPlaceholderCountRef = useRef(pendingVariantPlaceholderCount);
-
-  // Auto-poll variants while generation is in progress; auto-select first new variant
   useEffect(() => {
-    if (pendingVariantPlaceholderCount === 0) return;
+    if (pendingVariantPlaceholderCount === 0) return undefined;
     const id = safeSetInterval(() => {
       refreshVariants()
         .then((result) => {
@@ -57,18 +40,41 @@ export const useProductStudioRunEffects = (
         .catch(() => undefined);
     }, VARIANT_POLL_INTERVAL_MS);
     return () => safeClearInterval(id);
-  }, [pendingVariantPlaceholderCount, refreshVariants, setSelectedVariantSlotId]);
+  }, [pendingVariantPlaceholderCount, refreshVariants, setSelectedVariantSlotId, baselineIdsRef, selectedVariantSlotIdRef]);
+};
 
-  // Advance status from 'queued' to 'running' once the first output variant arrives
+const useProductStudioStatusAdvanceEffect = (
+  loaded: ProductStudioLoadedState,
+  runState: ProductStudioRunState
+): void => {
+  const { pendingVariantPlaceholderCount } = loaded.derivedState;
+  const { pendingExpectedOutputs, runStatus, setRunStatus } = runState;
+
   useEffect(() => {
     if (runStatus !== 'queued' || pendingExpectedOutputs === 0) return;
     const variantsArrived = pendingExpectedOutputs - pendingVariantPlaceholderCount;
     if (variantsArrived > 0) setRunStatus('running');
   }, [pendingExpectedOutputs, pendingVariantPlaceholderCount, runStatus, setRunStatus]);
+};
 
-  // Clear run state and refresh audit once all expected variants have arrived
+const useProductStudioCompletionEffect = (
+  loaded: ProductStudioLoadedState,
+  runState: ProductStudioRunState,
+  prevPlaceholderCountRef: React.MutableRefObject<number>
+): void => {
+  const { pendingVariantPlaceholderCount } = loaded.derivedState;
+  const { refreshAudit } = loaded.auditState;
+  const {
+    activeRunId,
+    setActiveRunBaselineVariantIds,
+    setActiveRunId,
+    setPendingExpectedOutputs,
+    setRunStatus,
+  } = runState;
+
   useEffect(() => {
     const prev = prevPlaceholderCountRef.current;
+    // eslint-disable-next-line no-param-reassign
     prevPlaceholderCountRef.current = pendingVariantPlaceholderCount;
     if (prev > 0 && pendingVariantPlaceholderCount === 0 && activeRunId !== null) {
       setRunStatus(null);
@@ -85,11 +91,22 @@ export const useProductStudioRunEffects = (
     setActiveRunId,
     setPendingExpectedOutputs,
     setRunStatus,
+    prevPlaceholderCountRef,
   ]);
+};
 
-  // Restore run state from Redis-persisted active run on modal reopen.
-  // Skip restoration if all expected variants have already arrived to avoid
-  // a phantom "running" badge when the user reopens after a completed run.
+const useProductStudioRestorationEffect = (
+  loaded: ProductStudioLoadedState,
+  runState: ProductStudioRunState
+): void => {
+  const {
+    activeRunId,
+    setActiveRunBaselineVariantIds,
+    setActiveRunId,
+    setPendingExpectedOutputs,
+    setRunStatus,
+  } = runState;
+
   useEffect(() => {
     const activeRun = loaded.variantsState.variantsData?.activeRun ?? null;
     if (activeRun === null || activeRunId !== null) return;
@@ -109,10 +126,22 @@ export const useProductStudioRunEffects = (
     setPendingExpectedOutputs,
     setRunStatus,
   ]);
+};
 
-  // Safety timeout: force-clear run state if the server run never delivers all expected outputs
+const useProductStudioTimeoutEffect = (
+  loaded: ProductStudioLoadedState,
+  runState: ProductStudioRunState
+): void => {
+  const { pendingVariantPlaceholderCount } = loaded.derivedState;
+  const {
+    setActiveRunBaselineVariantIds,
+    setActiveRunId,
+    setPendingExpectedOutputs,
+    setRunStatus,
+  } = runState;
+
   useEffect(() => {
-    if (pendingVariantPlaceholderCount === 0) return;
+    if (pendingVariantPlaceholderCount === 0) return undefined;
     const id = safeSetTimeout(() => {
       setRunStatus(null);
       setActiveRunId(null);
@@ -127,4 +156,26 @@ export const useProductStudioRunEffects = (
     setPendingExpectedOutputs,
     setRunStatus,
   ]);
+};
+
+export const useProductStudioRunEffects = (
+  loaded: ProductStudioLoadedState,
+  runState: ProductStudioRunState
+): void => {
+  const { pendingVariantPlaceholderCount } = loaded.derivedState;
+  const { selectedVariantSlotId } = loaded.variantsState;
+  const { activeRunBaselineVariantIds } = runState;
+
+  // Stable refs so interval callbacks read current values without effect churn
+  const baselineIdsRef = useRef(activeRunBaselineVariantIds);
+  baselineIdsRef.current = activeRunBaselineVariantIds;
+  const selectedVariantSlotIdRef = useRef(selectedVariantSlotId);
+  selectedVariantSlotIdRef.current = selectedVariantSlotId;
+  const prevPlaceholderCountRef = useRef(pendingVariantPlaceholderCount);
+
+  useProductStudioAutoPollEffect(loaded, runState, baselineIdsRef, selectedVariantSlotIdRef);
+  useProductStudioStatusAdvanceEffect(loaded, runState);
+  useProductStudioCompletionEffect(loaded, runState, prevPlaceholderCountRef);
+  useProductStudioRestorationEffect(loaded, runState);
+  useProductStudioTimeoutEffect(loaded, runState);
 };

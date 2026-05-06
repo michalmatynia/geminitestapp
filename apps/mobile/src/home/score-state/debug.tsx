@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import {
   buildKangurHomeDebugProofViewModel,
   resolveKangurHomeDebugProofOperation,
+  type KangurHomeDebugProofViewModel,
 } from '../homeDebugProof';
 import { type KangurScore } from '@kangur/contracts/kangur';
 import { type KangurMobileOperationPerformance } from '../../scores/mobileScoreSummary';
@@ -14,8 +15,8 @@ export const createHomeDebugProofViewModel = (input: {
   recentResults: KangurScore[];
   strongestOperation: KangurMobileOperationPerformance | null;
   weakestOperation: KangurMobileOperationPerformance | null;
-}) =>
-  input.operation
+}): KangurHomeDebugProofViewModel | null =>
+  input.operation !== null && input.operation !== ''
     ? buildKangurHomeDebugProofViewModel(input)
     : null;
 

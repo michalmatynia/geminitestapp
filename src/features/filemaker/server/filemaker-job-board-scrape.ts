@@ -18,6 +18,7 @@ import {
 } from '@/shared/lib/job-board/job-board-providers';
 
 import {
+  FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH,
   filemakerJobBoardLexiconClassificationApplyRequestSchema,
   filemakerJobBoardScrapeDraftSaveRequestSchema,
   filemakerJobBoardScrapeRequestSchema,
@@ -49,8 +50,6 @@ import type {
 import { resolveJobBoardOriginLabel } from '../job-board-origin';
 import { upsertFilemakerCampaignSettingValue } from './campaign-settings-store';
 
-import type { ScrapedCompanyCandidate, ApplyImportInput, CentralizedScrapeResult, FilemakerJobBoardScrapeRunOptions, ClassificationPillBuildResult, ScrapeProgressHandlers } from "./filemaker-job-board-scrape/types";
-
 type ApplyImportInput = {
   database: FilemakerDatabase;
   onWrite?: (write: FilemakerJobBoardScrapeWriteResult) => Promise<void> | void;
@@ -65,6 +64,10 @@ type CentralizedScrapeResult = {
   skippedResults: FilemakerJobBoardScrapeOfferResult[];
   sourceSite: string;
   warnings: string[];
+};
+
+type ScrapedCompanyCandidate = {
+  organization: FilemakerOrganization;
 };
 
 type FilemakerJobBoardScrapeRunOptions = {
@@ -104,6 +107,9 @@ type ScrapeProgressHandlers = {
 };
 
 const DEFAULT_WARNINGS: string[] = [];
+const MAX_JOB_BOARD_LINK_CANDIDATES = 250;
+const JOB_BOARD_ACCESS_SETUP_WARNING =
+  `If the job board returned HTTP 403 or blocked the scraper, configure a Playwright persona at ${FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH} and enter that Persona ID in Scrape Jobs.`;
 
 import {
   emitLiveEvent,
@@ -1765,7 +1771,8 @@ const usesDeterministicFirstExtractionPath = (
   extractionPath === 'deterministic' || extractionPath === 'deterministic_then_playwright';
 
 const collectOfferLinks = async (
-  options: FilemakerJobBoardScrapeRequest
+  options: FilemakerJobBoardScrapeRequest,
+  maxOfferCandidates = options.maxOffers
 ): Promise<{
   provider: JobBoardProvider;
   runId: string | null;
@@ -1794,7 +1801,7 @@ const collectOfferLinks = async (
     delayMs: options.delayMs,
     headless: options.headless,
     humanizeMouse: options.humanizeMouse,
-    maxOffers: options.maxOffers,
+    maxOffers: maxOfferCandidates,
     maxPages: options.maxPages,
     personaId: options.personaId,
     provider,
@@ -1818,7 +1825,7 @@ const collectOfferLinks = async (
         provider,
         runId: deterministicCollected.runId,
         sourceSite: deterministicCollected.sourceSite,
-        urls: deterministicUrls.slice(0, options.maxOffers),
+        urls: deterministicUrls.slice(0, maxOfferCandidates),
         warnings: deterministicCollected.warnings,
       };
     }
@@ -1832,7 +1839,7 @@ const collectOfferLinks = async (
       provider,
       runId: fallbackCollected.runId ?? deterministicCollected.runId,
       sourceSite: fallbackCollected.sourceSite,
-      urls: fallbackUrls.slice(0, options.maxOffers),
+      urls: fallbackUrls.slice(0, maxOfferCandidates),
       warnings:
         fallbackUrls.length === 0
           ? [...deterministicCollected.warnings, ...fallbackCollected.warnings]
@@ -1855,7 +1862,7 @@ const collectOfferLinks = async (
         provider,
         runId: collected.runId ?? deterministicCollected.runId,
         sourceSite: deterministicCollected.sourceSite,
-        urls: deterministicUrls.slice(0, options.maxOffers),
+        urls: deterministicUrls.slice(0, maxOfferCandidates),
         warnings: [
           ...collected.warnings,
           'Browser link collection returned no offer links; deterministic fallback was used.',
@@ -1868,9 +1875,45 @@ const collectOfferLinks = async (
     provider,
     runId: collected.runId,
     sourceSite: collected.sourceSite,
-    urls: urls.slice(0, options.maxOffers),
+    urls: urls.slice(0, maxOfferCandidates),
     warnings: collected.warnings,
   };
+};
+
+const hasExistingListingSourceIdentity = (
+  database: FilemakerDatabase,
+  sourceSite: string,
+  sourceUrl: string
+): boolean =>
+  findExistingListingIndexesBySourceIdentity(database.jobListings, {
+    sourceSite,
+    sourceUrl,
+  }).length > 0;
+
+const countNewJobBoardCandidateUrls = (
+  database: FilemakerDatabase,
+  sourceSite: string,
+  urls: readonly string[]
+): number =>
+  urls.filter(
+    (url: string): boolean => !hasExistingListingSourceIdentity(database, sourceSite, url)
+  ).length;
+
+const shouldCollectMoreJobBoardCandidates = (
+  options: FilemakerJobBoardScrapeRequest,
+  database: FilemakerDatabase,
+  collected: {
+    sourceSite: string;
+    urls: string[];
+  }
+): boolean => {
+  if (options.duplicateStrategy !== 'skip') return false;
+  if (options.maxOffers >= MAX_JOB_BOARD_LINK_CANDIDATES) return false;
+  if (collected.urls.length < options.maxOffers) return false;
+  return (
+    countNewJobBoardCandidateUrls(database, collected.sourceSite, collected.urls) <
+    options.maxOffers
+  );
 };
 
 const scrapeOffersViaJobBoardSequencer = async (
@@ -1881,12 +1924,23 @@ const scrapeOffersViaJobBoardSequencer = async (
 ): Promise<CentralizedScrapeResult> => {
   throwIfScrapeAborted(signal);
   await progress.onStatus?.('Collecting job-board offer links.');
-  const collected = await collectOfferLinks(options);
+  let collected = await collectOfferLinks(options);
+  if (shouldCollectMoreJobBoardCandidates(options, database, collected)) {
+    await progress.onStatus?.(
+      'Existing job listings filled the first collected batch; collecting deeper candidates.'
+    );
+    const expandedCollected = await collectOfferLinks(options, MAX_JOB_BOARD_LINK_CANDIDATES);
+    collected = {
+      ...expandedCollected,
+      warnings: uniqueStrings([...collected.warnings, ...expandedCollected.warnings]),
+    };
+  }
   throwIfScrapeAborted(signal);
   const offers: FilemakerJobBoardScrapedOffer[] = [];
   const skippedResults: FilemakerJobBoardScrapeOfferResult[] = [];
   const warnings = [...collected.warnings];
   let runId = collected.runId;
+  let probedNewOfferCount = 0;
   await progress.onLinks?.({
     provider: collected.provider,
     runId: collected.runId,
@@ -1900,6 +1954,8 @@ const scrapeOffersViaJobBoardSequencer = async (
     const warning = `No job offer links were found on ${options.sourceUrl}.`;
     warnings.push(warning);
     await progress.onWarning?.(warning);
+    warnings.push(JOB_BOARD_ACCESS_SETUP_WARNING);
+    await progress.onWarning?.(JOB_BOARD_ACCESS_SETUP_WARNING);
   }
 
   for (const [index, url] of collected.urls.entries()) {
@@ -1934,6 +1990,10 @@ const scrapeOffersViaJobBoardSequencer = async (
         continue;
       }
     }
+    if (probedNewOfferCount >= options.maxOffers) {
+      break;
+    }
+    probedNewOfferCount += 1;
     await progress.onStatus?.(
       `Scraping offer ${index + 1} of ${collected.urls.length}: ${url}`
     );
@@ -1975,7 +2035,11 @@ const scrapeOffersViaJobBoardSequencer = async (
       });
       if (offer) {
         offers.push(offer);
-        await progress.onOffer?.({ index: index + 1, offer, total: collected.urls.length });
+        await progress.onOffer?.({
+          index: index + 1,
+          offer,
+          total: collected.urls.length,
+        });
       } else {
         const warning = probe.error ?? `Could not extract a job offer from ${url}.`;
         warnings.push(warning);

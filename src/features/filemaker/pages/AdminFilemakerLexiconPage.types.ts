@@ -11,6 +11,7 @@ import type {
   FilemakerLexiconTermRow,
 } from './AdminFilemakerLexiconPage.helpers';
 import type {
+  FilemakerLexiconTypeDraft,
   FilemakerLexiconTypeMetadataMap,
   FilemakerLexiconTypeOption,
 } from './AdminFilemakerLexiconPage.type-metadata';
@@ -18,10 +19,10 @@ import type {
 export type FilemakerLexiconTypeEditorViewState = {
   changeDraft: (
     key: string,
-    patch: Partial<any>
+    patch: Partial<FilemakerLexiconTypeDraft>
   ) => void;
   close: () => void;
-  drafts: any[];
+  drafts: FilemakerLexiconTypeDraft[];
   open: boolean;
   save: () => Promise<void>;
 };

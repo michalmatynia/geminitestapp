@@ -36,7 +36,7 @@ const mapInsightToHomeItem = (
   return {
     ...insight,
     lessonHref: createKangurLessonHref(insight.componentId),
-    practiceHref: practiceOperation
+    practiceHref: practiceOperation !== null
       ? createKangurPracticeHref(practiceOperation)
       : null,
   };

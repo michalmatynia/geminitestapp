@@ -75,6 +75,35 @@ export async function ensureInternationalizationDefaults(
     languages.map((language: { code: string; id: string }) => [language.code, language.id])
   );
 
+  const { countryCurrencyRows, languageCountryRows } = buildMappingRows(
+    countryByCode,
+    currencyByCode,
+    languageByCode
+  );
+
+  if (countryCurrencyRows.length > 0) {
+    await tx.countryCurrency.createMany({
+      data: countryCurrencyRows,
+      skipDuplicates: true,
+    });
+  }
+
+  if (languageCountryRows.length > 0) {
+    await tx.languageCountry.createMany({
+      data: languageCountryRows,
+      skipDuplicates: true,
+    });
+  }
+}
+
+function buildMappingRows(
+  countryByCode: Map<string, string>,
+  currencyByCode: Map<string, string>,
+  languageByCode: Map<string, string>
+): {
+  countryCurrencyRows: Array<{ countryId: string; currencyId: string }>;
+  languageCountryRows: Array<{ countryId: string; languageId: string }>;
+} {
   const countryCurrencyRows: Array<{
     countryId: string;
     currencyId: string;
@@ -88,29 +117,18 @@ export async function ensureInternationalizationDefaults(
     const countryId = countryByCode.get(mapping.countryCode);
     const currencyId = currencyByCode.get(mapping.currencyCode);
 
-    if (countryId && currencyId) {
+    if (countryId !== undefined && currencyId !== undefined) {
       countryCurrencyRows.push({ countryId, currencyId });
     }
 
     for (const languageCode of mapping.languageCodes) {
       const languageId = languageByCode.get(languageCode);
-      if (countryId && languageId) {
+      if (countryId !== undefined && languageId !== undefined) {
         languageCountryRows.push({ countryId, languageId });
       }
     }
   }
 
-  if (countryCurrencyRows.length) {
-    await tx.countryCurrency.createMany({
-      data: countryCurrencyRows,
-      skipDuplicates: true,
-    });
-  }
-
-  if (languageCountryRows.length) {
-    await tx.languageCountry.createMany({
-      data: languageCountryRows,
-      skipDuplicates: true,
-    });
-  }
+  return { countryCurrencyRows, languageCountryRows };
 }
+

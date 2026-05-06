@@ -80,6 +80,10 @@ describe('RootLayout', () => {
     expect(liteSettingsScript?.props.dangerouslySetInnerHTML?.__html).toContain(
       '__LITE_SETTINGS__'
     );
+    const rootClientShell = findElementByType(layout, rootClientShellMock);
+    expect(rootClientShell?.props.initialLiteSettings).toEqual([
+      ['observability.infoEnabled', 'true'],
+    ]);
   });
 
   it('still injects lite settings for explicit Kangur alias routes', async () => {
@@ -99,10 +103,73 @@ describe('RootLayout', () => {
       '__LITE_SETTINGS__'
     );
   });
+
+  it('provides the app-content wrapper targeted by Kangur surface styles', async () => {
+    const { default: RootLayout } = await import('@/app/layout');
+
+    const layout = await RootLayout({
+      children: <div>content</div>,
+    });
+
+    const appContent = findElementById(layout, 'app-content');
+
+    expect(appContent).toBeDefined();
+    expect(appContent?.props.className).toContain('min-h-screen');
+  });
 });
 
 const readRootLayoutBodyChildren = (layout: React.JSX.Element): ReactNode[] => {
   const htmlElement = layout as ReactElement<{ children?: ReactNode }>;
-  const bodyElement = htmlElement.props.children as ReactElement<{ children?: ReactNode }>;
-  return Children.toArray(bodyElement.props.children);
+  const bodyElement = Children.toArray(htmlElement.props.children).find(
+    (child): child is ReactElement<{ children?: ReactNode }> =>
+      isValidElement(child) && child.type === 'body'
+  );
+  expect(bodyElement).toBeDefined();
+  return Children.toArray(bodyElement!.props.children);
+};
+
+const findElementById = (
+  node: ReactNode,
+  id: string
+): ReactElement<{ id?: string; className?: string; children?: ReactNode }> | null => {
+  if (!isValidElement<{ id?: string; className?: string; children?: ReactNode }>(node)) {
+    return null;
+  }
+
+  if (node.props.id === id) {
+    return node;
+  }
+
+  const children = Children.toArray(node.props.children);
+  for (const child of children) {
+    const match = findElementById(child, id);
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+};
+
+const findElementByType = (
+  node: ReactNode,
+  type: unknown
+): ReactElement<{ initialLiteSettings?: ReadonlyArray<readonly [string, string]>; children?: ReactNode }> | null => {
+  if (!isValidElement<{ initialLiteSettings?: ReadonlyArray<readonly [string, string]>; children?: ReactNode }>(node)) {
+    return null;
+  }
+
+  if (node.type === type) {
+    return node;
+  }
+
+  const children = Children.toArray(node.props.children);
+  for (const child of children) {
+    const match = findElementByType(child, type);
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
 };

@@ -48,6 +48,7 @@ export const folderTreeInstanceValues = [
   'admin_menu_layout',
   'filemaker_mail',
   'filemaker_organizations',
+  'filemaker_job_listings',
   'filemaker_persons',
   'filemaker_events',
   'filemaker_invoices',

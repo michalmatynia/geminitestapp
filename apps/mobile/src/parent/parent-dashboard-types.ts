@@ -2,24 +2,27 @@ import type { Href } from 'expo-router';
 import type {
   KangurAssignmentSnapshot,
   KangurLearnerProfile,
-  KangurProgressState,
   KangurScore,
+  KangurProgressState,
 } from '@kangur/contracts/kangur';
 import { type KangurLearnerProfileSnapshot } from '@kangur/core';
+import { type UseQueryResult } from '@tanstack/react-query';
+import { type KangurMobileParentAssignmentMonitoring } from './useParentDashboardAssignments';
 
 export type KangurMobileParentAssignmentItem = {
   assignment: KangurAssignmentSnapshot;
   href: Href | null;
 };
 
-export type KangurMobileParentAssignmentMonitoring = {
-  completedCount: number;
-  highPriorityCount: number;
-  inProgressCount: number;
-  lessonCount: number;
-  notStartedCount: number;
-  practiceCount: number;
-  totalCount: number;
+export type UseParentDashboardAssignmentsResult = {
+    assignmentsQuery: UseQueryResult<KangurAssignmentSnapshot[], Error>;
+    assignmentMonitoring: KangurMobileParentAssignmentMonitoring;
+    assignmentItems: KangurMobileParentAssignmentItem[];
+};
+
+export type UseParentDashboardProgressResult = {
+    progressQuery: UseQueryResult<KangurProgressState, Error>;
+    snapshot: KangurLearnerProfileSnapshot | null;
 };
 
 export type KangurMobileParentRecentResultItem = {

@@ -19,12 +19,37 @@ import type {
   FilemakerLexiconValidationPatternSourceScope,
 } from '../../types';
 
-import { lexiconClassifier } from './offer-from-evaluation/classifier';
-import { jobOfferNormalizer } from './offer-from-evaluation/normalizer';
+import {
+  asRecord,
+  buildScrapedOfferLexiconExtraction,
+  clipProfileText,
+  normalizeJobBoardSourceUrl,
+  normalizeLexiconKey,
+  normalizeLexiconLabel,
+  normalizeSalaryPeriod,
+  recordNullableString,
+  recordString,
+  toNullableNumber,
+  toStringValue,
+  uniqueStrings,
+} from './normalizers';
+import { classifyFilemakerLexiconLabelWithPatterns } from './lexicon-validation-patterns';
 
-import { type ScrapedOfferPill, type LabeledProfileLine } from "./offer-from-evaluation/types";
+import {
+  POSTED_AT_KEYS,
+  EXPIRES_AT_KEYS,
+  POSTED_AT_FACT_KEYWORDS,
+  EXPIRES_AT_FACT_KEYWORDS,
+  COMPANY_NAME_FACT_KEYS,
+  GENERIC_JOB_BOARD_COMPANY_NAME_KEYS,
+} from './offer-from-evaluation/constants';
 
-import { POSTED_AT_KEYS, EXPIRES_AT_KEYS, POSTED_AT_FACT_KEYWORDS, EXPIRES_AT_FACT_KEYWORDS, COMPANY_NAME_FACT_KEYS, GENERIC_JOB_BOARD_COMPANY_NAME_KEYS } from "./offer-from-evaluation/constants";
+type ScrapedOfferPill = FilemakerJobBoardScrapedOffer['pills'][number];
+
+type LabeledProfileLine = {
+  label: string;
+  value: string;
+};
 
 const normalizeCompanyNameGuardKey = (value: string): string =>
   value

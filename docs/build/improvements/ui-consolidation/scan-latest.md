@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-30'
+last_reviewed: '2026-05-06'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # UI consolidation Improvement Track
 
-Generated at: 2026-04-30T09:41:39.599Z
+Generated at: 2026-05-06T11:28:21.086Z
 
 ## Snapshot
 

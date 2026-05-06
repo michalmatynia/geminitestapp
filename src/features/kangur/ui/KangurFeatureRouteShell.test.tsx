@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearLatchedKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
@@ -194,6 +194,26 @@ describe('KangurFeatureRouteShell', () => {
 
     expect(document.documentElement.classList.contains('kangur-client-shell-active')).toBe(false);
     expect(document.body.classList.contains('kangur-client-shell-active')).toBe(false);
+    expect(serverShell.hasAttribute('hidden')).toBe(false);
+    expect(serverShell.hasAttribute('aria-hidden')).toBe(false);
+
+    serverShell.remove();
+  });
+
+  it('hides server shells inserted after the client shell mounts', async () => {
+    const { unmount } = render(<KangurFeatureRouteShell />);
+    const serverShell = document.createElement('div');
+    serverShell.setAttribute('data-kangur-server-shell', '');
+
+    document.body.appendChild(serverShell);
+
+    await waitFor(() => {
+      expect(serverShell.getAttribute('aria-hidden')).toBe('true');
+      expect(serverShell.hasAttribute('hidden')).toBe(true);
+    });
+
+    unmount();
+
     expect(serverShell.hasAttribute('hidden')).toBe(false);
     expect(serverShell.hasAttribute('aria-hidden')).toBe(false);
 

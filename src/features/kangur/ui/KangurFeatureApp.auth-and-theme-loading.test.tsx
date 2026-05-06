@@ -37,7 +37,7 @@ describe('KangurFeatureApp auth and theme loading', () => {
     vi.restoreAllMocks();
   });
 
-  it('keeps core routes visible during boot loading states', () => {
+  it('keeps the initial home route behind the boot loader during boot loading states', () => {
     authStateMock.mockReturnValue({
       isLoadingAuth: true,
       isLoadingPublicSettings: false,
@@ -55,11 +55,12 @@ describe('KangurFeatureApp auth and theme loading', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
       'data-route-capture-ready',
       'false'
     );
-    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
   });
 

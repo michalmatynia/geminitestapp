@@ -40,6 +40,8 @@ import {
 } from '@/features/kangur/ui/KangurFeatureApp.test-support';
 
 let KangurFeatureApp: typeof import('@/features/kangur/ui/KangurFeatureApp').KangurFeatureApp;
+const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
+const INITIAL_HOME_SKELETON_MIN_VISIBLE_MS = 650;
 
 describe('KangurFeatureApp', () => {
   beforeEach(async () => {
@@ -169,7 +171,7 @@ describe('KangurFeatureApp', () => {
     );
   });
 
-  it('does not cover the initial home route with a transition skeleton while theme settings are still hydrating', () => {
+  it('boots the initial home route through the loader and full page skeleton before revealing content', async () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Game',
       embedded: false,
@@ -179,7 +181,7 @@ describe('KangurFeatureApp', () => {
     });
     settingsStoreStateMock.mockReturnValue({
       map: new Map(),
-      isLoading: true,
+      isLoading: false,
       isFetching: false,
       error: null,
       get: vi.fn(),
@@ -192,7 +194,110 @@ describe('KangurFeatureApp', () => {
 
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(BOOT_SKELETON_MIN_VISIBLE_MS);
+    });
+
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Game:default'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-inline-top-navigation-skeleton',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(INITIAL_HOME_SKELETON_MIN_VISIBLE_MS + 50);
+    });
+
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveAttribute('aria-hidden');
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+      'data-route-capture-ready',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
+  });
+
+  it('uses the server loader handoff directly into the full page skeleton on the public root home route', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/',
+      requestedHref: '/',
+      basePath: '/',
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Game:default'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('reveals the initial home shell without waiting for deferred home utilities', async () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+    useKangurDeferredStandaloneHomeReadyMock.mockReturnValue(false);
+
+    render(<KangurFeatureApp />);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(BOOT_SKELETON_MIN_VISIBLE_MS);
+    });
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(INITIAL_HOME_SKELETON_MIN_VISIBLE_MS + 50);
+    });
+
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveAttribute('aria-hidden');
+    expect(screen.queryByTestId('kangur-ai-tutor-widget')).toBeNull();
+  });
+
+  it('does not replay the initial root skeleton after the home handoff already completed', () => {
+    (window as Window & { __kangurInitialHomeBootComplete?: boolean })
+      .__kangurInitialHomeBootComplete = true;
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/',
+      requestedHref: '/',
+      basePath: '/',
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveAttribute('aria-hidden');
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute(
+      'data-route-capture-ready',
+      'true'
+    );
   });
 
   it('keeps sync side effects unmounted until the standalone home idle gate opens', () => {

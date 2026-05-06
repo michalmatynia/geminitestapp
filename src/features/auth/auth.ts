@@ -178,10 +178,10 @@ const credentialsProvider = Credentials({
 const buildProviders = async (): Promise<Provider[]> => {
   const providers: Provider[] = [credentialsProvider];
   const secrets = await getAuthOAuthSecrets();
-  if (secrets.google.clientId !== undefined && secrets.google.clientSecret !== undefined) {
+  if (secrets.google.clientId !== null && secrets.google.clientSecret !== null) {
     providers.push(Google({ clientId: secrets.google.clientId, clientSecret: secrets.google.clientSecret }));
   }
-  if (secrets.facebook.clientId !== undefined && secrets.facebook.clientSecret !== undefined) {
+  if (secrets.facebook.clientId !== null && secrets.facebook.clientSecret !== null) {
     providers.push(Facebook({ clientId: secrets.facebook.clientId, clientSecret: secrets.facebook.clientSecret }));
   }
   return providers;
@@ -212,23 +212,27 @@ const getUpdatedToken = async (uid: string, token: JWT): Promise<JWT> => {
   };
 };
 
+const getTokenFlags = (token: JWT): { isElevated: boolean; roleAssigned: boolean; accountDisabled: boolean; accountBanned: boolean } => ({
+  isElevated: token.isElevated ?? false,
+  roleAssigned: token.roleAssigned ?? false,
+  accountDisabled: token.accountDisabled ?? false,
+  accountBanned: token.accountBanned ?? false,
+});
+
 const getSessionUser = (token: JWT, current: User): User => {
   return {
     ...current,
-    id: String(token['sub'] ?? current.id),
-    role: (token['role']) ?? null,
-    permissions: (token['permissions']) ?? [],
-    roleLevel: (token['roleLevel']) ?? null,
-    isElevated: (token['isElevated']) ?? false,
-    roleAssigned: (token['roleAssigned']) ?? false,
-    accountDisabled: (token['accountDisabled']) ?? false,
-    accountBanned: (token['accountBanned']) ?? false,
+    id: String(token.sub ?? current.id),
+    role: token.role ?? null,
+    permissions: token.permissions ?? [],
+    roleLevel: token.roleLevel ?? null,
+    ...getTokenFlags(token),
   };
 };
 
 const logSignInActivity = async (u: User): Promise<void> => {
   const uid = u.id;
-  if (uid === undefined) return;
+  if (uid === undefined || uid === '') return;
   const authUser = u as User & { activitySurface?: string; authFlow?: string; loginMethod?: string };
   const surface = authUser.activitySurface ?? '';
   if (surface.trim() !== 'kangur') return;
@@ -255,10 +259,16 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
     adapter,
     providers: await providersPromise,
     callbacks: {
-      ...(authConfig.callbacks ?? {}),
+      ...authConfig.callbacks,
       async jwt({ token, user }): Promise<JWT> {
-        const userId = user?.id ?? (token['sub']);
-        if (userId === undefined || (user === undefined && !checkRefreshRequired(token))) return token;
+        const maybeUser = user as User | null;
+        const userId = maybeUser?.id ?? token.sub;
+        if (userId === undefined || userId === '') {
+          return token;
+        }
+        if (maybeUser === null && !checkRefreshRequired(token)) {
+          return token;
+        }
         try {
           return await getUpdatedToken(userId, token);
         } catch (e: unknown) {
@@ -267,22 +277,21 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         }
       },
       session({ session, token }): Session {
-        const updated = { ...session };
-        if (updated.user !== undefined) {
-          updated.user = getSessionUser(token, updated.user);
-        }
-        return updated;
+        return {
+          ...session,
+          user: getSessionUser(token, session.user),
+        };
       },
     },
     debug: process.env['AUTH_DEBUG'] === 'true',
     events: {
-      async signIn({ user }) {
+      async signIn({ user }): Promise<void> {
         await logSignInActivity(user);
       },
-      async signOut(message) {
-        const token = 'token' in message ? (message.token) : null;
-        const sub = token ? (token['sub']) : undefined;
-        if (sub !== undefined && sub !== null) {
+      async signOut(message): Promise<void> {
+        const token = 'token' in message ? message.token : null;
+        const sub = token?.sub;
+        if (sub !== undefined && sub !== '') {
           await logActivity({ type: ActivityTypes.AUTH.LOGOUT, description: 'User logged out', userId: sub });
         }
       },

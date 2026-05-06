@@ -7,7 +7,10 @@ vi.mock('server-only', () => ({}));
 
 describe('storefront-appearance-bootstrap', () => {
   it('serializes dark-mode surface vars for the SSR shell bootstrap', async () => {
-    const { getKangurSurfaceBootstrapStyle } = await import('./storefront-appearance-bootstrap');
+    const {
+      getKangurSurfaceBootstrapStyle,
+      KANGUR_SURFACE_HINT_SCRIPT,
+    } = await import('./storefront-appearance-bootstrap');
 
     const css = getKangurSurfaceBootstrapStyle({
       mode: 'dark',
@@ -21,6 +24,8 @@ describe('storefront-appearance-bootstrap', () => {
 
     expect(css).toContain('html.kangur-surface-active');
     expect(css).toContain('body.kangur-surface-active');
+    expect(css).toContain('html.kangur-surface-active #app-content');
+    expect(KANGUR_SURFACE_HINT_SCRIPT).not.toContain('app-content');
     expect(css).toContain('--kangur-soft-card-border:');
     expect(css).toContain('--kangur-glass-panel-border:');
   });

@@ -405,7 +405,12 @@ const mongoRepository: ProductListingRepository = {
     Array<
       Pick<
         ProductListing,
-        'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'
+        | 'productId'
+        | 'status'
+        | 'integrationId'
+        | 'connectionId'
+        | 'marketplaceData'
+        | 'updatedAt'
       >
     >
   > => {
@@ -418,6 +423,7 @@ const mongoRepository: ProductListingRepository = {
             productId: 1,
             status: 1,
             integrationId: 1,
+            connectionId: 1,
             marketplaceData: 1,
             updatedAt: 1,
           },
@@ -428,6 +434,7 @@ const mongoRepository: ProductListingRepository = {
       productId: normalizeLookupIdOrFallback(l.productId),
       status: l.status,
       integrationId: normalizeLookupIdOrFallback(l.integrationId),
+      connectionId: normalizeLookupIdOrFallback(l.connectionId),
       marketplaceData: l.marketplaceData ?? null,
       updatedAt: l.updatedAt.toISOString(),
     }));
@@ -501,7 +508,12 @@ export async function listProductListingsByProductIdsAcrossProviders(
   Array<
     Pick<
       ProductListing,
-      'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'
+      | 'productId'
+      | 'status'
+      | 'integrationId'
+      | 'connectionId'
+      | 'marketplaceData'
+      | 'updatedAt'
     >
   >
 > {
@@ -517,6 +529,7 @@ export async function listProductListingsByProductIdsAcrossProviders(
         productId: 1,
         status: 1,
         integrationId: 1,
+        connectionId: 1,
         marketplaceData: 1,
         updatedAt: 1,
       },
@@ -527,14 +540,25 @@ export async function listProductListingsByProductIdsAcrossProviders(
     productId: normalizeLookupIdOrFallback(listing.productId),
     status: listing.status,
     integrationId: normalizeLookupIdOrFallback(listing.integrationId),
+    connectionId: normalizeLookupIdOrFallback(listing.connectionId),
     marketplaceData: listing.marketplaceData ?? null,
     updatedAt: listing.updatedAt.toISOString(),
   }));
 }
 
 export async function listAllProductListingsAcrossProviders(): Promise<
-  Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'>>
-  > {
+  Array<
+    Pick<
+      ProductListing,
+      | 'productId'
+      | 'status'
+      | 'integrationId'
+      | 'connectionId'
+      | 'marketplaceData'
+      | 'updatedAt'
+    >
+  >
+> {
   return mongoRepository.listAllListings();
 }
 

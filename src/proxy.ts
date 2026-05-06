@@ -37,6 +37,7 @@ const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
     '/admin/integrations/aggregators/base-com/category-mapping',
   ],
   ['/admin/products/jobs', '/admin/ai-paths/queue?tab=paths-external'],
+  ['/admin/products/constructor', '/admin/products/settings'],
   ['/admin/prompt-engine', '/admin/prompt-engine/validation'],
   ['/admin/settings/ai', '/admin/brain?tab=routing'],
   ['/admin/settings/brain', '/admin/brain?tab=routing'],
@@ -66,7 +67,11 @@ const isKangurPageRequest = (pathname: string): boolean => {
   return stripped === '/kangur' || stripped.startsWith('/kangur/');
 };
 
-const isApiRequest = (pathname: string): boolean => pathname === '/api' || pathname.startsWith('/api/');
+const isApiRequest = (pathname: string): boolean =>
+  pathname === '/api' ||
+  pathname.startsWith('/api/') ||
+  pathname === '/kangur-api' ||
+  pathname.startsWith('/kangur-api/');
 
 const isAdminRequest = (pathname: string): boolean =>
   pathname === '/admin' || pathname.startsWith('/admin/');

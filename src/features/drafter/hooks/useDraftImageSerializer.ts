@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 
 const TOTAL_IMAGE_SLOTS = 15;
 
@@ -11,40 +12,55 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-export const useDraftImageSerializer = (images: any, draftId?: string | null) => {
+type ImageSerializerState = {
+  imageSlots: ProductImageManagerController['imageSlots'];
+  imageLinks: string[];
+  imageBase64s: string[];
+};
+
+const serializeSlot = async (
+  index: number,
+  state: ImageSerializerState,
+  draftId: string | null | undefined
+): Promise<string | null> => {
+  const base64 = state.imageBase64s[index]?.trim();
+  if (base64 !== undefined && base64 !== '') {
+    return base64;
+  }
+
+  const link = state.imageLinks[index]?.trim();
+  if (link !== undefined && link !== '') {
+    return link;
+  }
+
+  const slot = state.imageSlots[index];
+  if (slot === undefined || slot === null) {
+    return null;
+  }
+
+  if (slot.type === 'existing') {
+    const path = slot.data?.filepath?.trim();
+    return path !== undefined && path !== '' ? path : null;
+  }
+
+  try {
+    return await fileToDataUrl(slot.data as File);
+  } catch (err) {
+    logClientCatch(err, { source: 'DraftCreator', action: 'serializeDraftImage', draftId });
+    return null;
+  }
+};
+
+export const useDraftImageSerializer = (images: ImageSerializerState, draftId?: string | null) => {
   return useCallback(async (): Promise<string[]> => {
     const promises: Promise<string | null>[] = [];
 
     for (let i = 0; i < TOTAL_IMAGE_SLOTS; i += 1) {
-      const base64 = images.imageBase64s[i]?.trim();
-      if (base64 !== undefined && base64 !== '') {
-        promises.push(Promise.resolve(base64));
-        continue;
-      }
-      const link = images.imageLinks[i]?.trim();
-      if (link !== undefined && link !== '') {
-        promises.push(Promise.resolve(link));
-        continue;
-      }
-      const slot = images.imageSlots[i];
-      if (slot === undefined || slot === null) {
-        promises.push(Promise.resolve(null));
-        continue;
-      }
-      if (slot.type === 'existing') {
-        const path = slot.data?.filepath?.trim();
-        promises.push(Promise.resolve(path !== undefined && path !== '' ? path : null));
-        continue;
-      }
-      
-      promises.push(
-        fileToDataUrl(slot.data as File).catch((err) => {
-          logClientCatch(err, { source: 'DraftCreator', action: 'serializeDraftImage', draftId });
-          return null;
-        })
-      );
+      promises.push(serializeSlot(i, images, draftId));
     }
+
     const results = await Promise.all(promises);
     return results.filter((r): r is string => r !== null && r !== '');
   }, [draftId, images]);
 };
+

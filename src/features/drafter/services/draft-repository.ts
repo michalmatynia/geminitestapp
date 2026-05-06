@@ -120,6 +120,30 @@ const buildDraftIdFilter = (id: string): Filter<MongoDraftDoc> => {
   return { $or: filters };
 };
 
+const mapMongoDocLocalization = (doc: MongoDraftDoc) => ({
+  name_en: doc.name_en ?? null,
+  name_pl: doc.name_pl ?? null,
+  name_de: doc.name_de ?? null,
+  description_en: doc.description_en ?? null,
+  description_pl: doc.description_pl ?? null,
+  description_de: doc.description_de ?? null,
+});
+
+const mapMongoDocPhysical = (doc: MongoDraftDoc) => ({
+  weight: doc.weight ?? null,
+  sizeLength: doc.sizeLength ?? null,
+  sizeWidth: doc.sizeWidth ?? null,
+  length: doc.length ?? null,
+});
+
+const mapMongoDocSupplier = (doc: MongoDraftDoc) => ({
+  price: doc.price ?? null,
+  supplierName: doc.supplierName ?? null,
+  supplierLink: doc.supplierLink ?? null,
+  priceComment: doc.priceComment ?? null,
+  stock: doc.stock ?? null,
+});
+
 const mapMongoDocToDraft = (doc: MongoDraftDoc): ProductDraft => {
   return {
     id: String(doc.id ?? doc._id),
@@ -131,21 +155,9 @@ const mapMongoDocToDraft = (doc: MongoDraftDoc): ProductDraft => {
     ean: doc.ean ?? null,
     gtin: doc.gtin ?? null,
     asin: doc.asin ?? null,
-    name_en: doc.name_en ?? null,
-    name_pl: doc.name_pl ?? null,
-    name_de: doc.name_de ?? null,
-    description_en: doc.description_en ?? null,
-    description_pl: doc.description_pl ?? null,
-    description_de: doc.description_de ?? null,
-    weight: doc.weight ?? null,
-    sizeLength: doc.sizeLength ?? null,
-    sizeWidth: doc.sizeWidth ?? null,
-    length: doc.length ?? null,
-    price: doc.price ?? null,
-    supplierName: doc.supplierName ?? null,
-    supplierLink: doc.supplierLink ?? null,
-    priceComment: doc.priceComment ?? null,
-    stock: doc.stock ?? null,
+    ...mapMongoDocLocalization(doc),
+    ...mapMongoDocPhysical(doc),
+    ...mapMongoDocSupplier(doc),
     catalogIds: Array.isArray(doc.catalogIds) ? doc.catalogIds : [],
     categoryId: typeof doc.categoryId === 'string' ? doc.categoryId : null,
     tagIds: Array.isArray(doc.tagIds) ? doc.tagIds : [],
@@ -188,6 +200,30 @@ const getDraftMongo = async (id: string): Promise<ProductDraft | null> => {
   return mapMongoDocToDraft(draft);
 };
 
+const buildCreateDraftDocLocalization = (input: CreateProductDraftInput) => ({
+  name_en: input.name_en ?? null,
+  name_pl: input.name_pl ?? null,
+  name_de: input.name_de ?? null,
+  description_en: input.description_en ?? null,
+  description_pl: input.description_pl ?? null,
+  description_de: input.description_de ?? null,
+});
+
+const buildCreateDraftDocPhysical = (input: CreateProductDraftInput) => ({
+  weight: input.weight ?? null,
+  sizeLength: input.sizeLength ?? null,
+  sizeWidth: input.sizeWidth ?? null,
+  length: input.length ?? null,
+});
+
+const buildCreateDraftDocSupplier = (input: CreateProductDraftInput) => ({
+  price: input.price ?? null,
+  supplierName: input.supplierName ?? null,
+  supplierLink: input.supplierLink ?? null,
+  priceComment: input.priceComment ?? null,
+  stock: input.stock ?? null,
+});
+
 const buildCreateDraftDoc = (input: CreateProductDraftInput, id: string, now: Date): MongoDraftDoc => ({
   _id: id,
   ...input,
@@ -198,21 +234,9 @@ const buildCreateDraftDoc = (input: CreateProductDraftInput, id: string, now: Da
   ean: input.ean ?? null,
   gtin: input.gtin ?? null,
   asin: input.asin ?? null,
-  name_en: input.name_en ?? null,
-  name_pl: input.name_pl ?? null,
-  name_de: input.name_de ?? null,
-  description_en: input.description_en ?? null,
-  description_pl: input.description_pl ?? null,
-  description_de: input.description_de ?? null,
-  weight: input.weight ?? null,
-  sizeLength: input.sizeLength ?? null,
-  sizeWidth: input.sizeWidth ?? null,
-  length: input.length ?? null,
-  price: input.price ?? null,
-  supplierName: input.supplierName ?? null,
-  supplierLink: input.supplierLink ?? null,
-  priceComment: input.priceComment ?? null,
-  stock: input.stock ?? null,
+  ...buildCreateDraftDocLocalization(input),
+  ...buildCreateDraftDocPhysical(input),
+  ...buildCreateDraftDocSupplier(input),
   baseProductId: input.baseProductId ?? null,
   importSource: input.importSource ?? null,
   defaultPriceGroupId: input.defaultPriceGroupId ?? null,
@@ -243,52 +267,58 @@ const createDraftMongo = async (input: CreateProductDraftInput): Promise<Product
   return mapMongoDocToDraft(draft);
 };
 
+const getUpdatePayload = (
+  input: UpdateProductDraftInput
+): Record<string, unknown> => {
+  const payload: Record<string, unknown> = {};
+  if ('categoryId' in input) {
+    payload['categoryId'] = (typeof input.categoryId === 'string' && input.categoryId.trim() !== '')
+      ? input.categoryId.trim()
+      : null;
+  }
+
+  if ('draftKind' in input) {
+    payload['draftKind'] = normalizeDraftKind(input.draftKind);
+  }
+
+  if ('scrapeProfileId' in input) {
+    payload['scrapeProfileId'] = normalizeNullableString(input.scrapeProfileId);
+  }
+
+  if ('producerIds' in input) {
+    payload['producerIds'] = normalizeStringArray(input.producerIds);
+  }
+
+  if ('iconColorMode' in input) {
+    payload['iconColorMode'] = normalizeIconColorMode(input.iconColorMode);
+  }
+
+  if ('iconColor' in input) {
+    payload['iconColor'] = normalizeIconColor(input.iconColor);
+  }
+
+  if ('openProductFormTab' in input) {
+    payload['openProductFormTab'] = normalizeOpenProductFormTab(input.openProductFormTab);
+  }
+  return payload;
+};
+
 const updateDraftMongo = async (
   id: string,
   input: UpdateProductDraftInput
 ): Promise<ProductDraft | null> => {
   const mongo = await getMongoDb();
   const now = new Date();
-  const updatePayload: Record<string, unknown> = {};
+  const updatePayload = getUpdatePayload(input);
 
   (Object.keys(input) as (keyof UpdateProductDraftInput)[]).forEach(
     (key: keyof UpdateProductDraftInput) => {
       const val = input[key];
-      if (val !== undefined) {
+      if (val !== undefined && !(key in updatePayload)) {
         updatePayload[key] = val;
       }
     }
   );
-
-  if ('categoryId' in input) {
-    updatePayload['categoryId'] = (typeof input.categoryId === 'string' && input.categoryId.trim() !== '')
-      ? input.categoryId.trim()
-      : null;
-  }
-
-  if ('draftKind' in input) {
-    updatePayload['draftKind'] = normalizeDraftKind(input.draftKind);
-  }
-
-  if ('scrapeProfileId' in input) {
-    updatePayload['scrapeProfileId'] = normalizeNullableString(input.scrapeProfileId);
-  }
-
-  if ('producerIds' in input) {
-    updatePayload['producerIds'] = normalizeStringArray(input.producerIds);
-  }
-
-  if ('iconColorMode' in input) {
-    updatePayload['iconColorMode'] = normalizeIconColorMode(input.iconColorMode);
-  }
-
-  if ('iconColor' in input) {
-    updatePayload['iconColor'] = normalizeIconColor(input.iconColor);
-  }
-
-  if ('openProductFormTab' in input) {
-    updatePayload['openProductFormTab'] = normalizeOpenProductFormTab(input.openProductFormTab);
-  }
 
   const result = await mongo.collection<MongoDraftDoc>('product_drafts').findOneAndUpdate(
     buildDraftIdFilter(id),

@@ -72,6 +72,24 @@ describe('edge traffic guard', () => {
     ).toBeNull();
   });
 
+  it('bypasses the guard for browser-facing Kangur API traffic', () => {
+    const request = createRequest('/kangur-api/ai-tutor/page-content', {
+      userAgent: 'curl/8.7.1',
+      ip: '203.0.113.13',
+    });
+
+    expect(
+      applyEdgeTrafficGuard(request, {
+        suspiciousPageMax: 1,
+      })
+    ).toBeNull();
+    expect(
+      applyEdgeTrafficGuard(request, {
+        suspiciousPageMax: 1,
+      })
+    ).toBeNull();
+  });
+
   it('allows known search bots to pass through without page burst throttling', () => {
     const request = createRequest('/products/123', {
       userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',

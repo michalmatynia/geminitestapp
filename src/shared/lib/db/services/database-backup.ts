@@ -5,6 +5,8 @@ import path from 'path';
 
 import type {
   DatabaseBackupResult,
+  DatabaseEngineManagedMongoApplication,
+  DatabaseEngineManagedMongoApplicationTarget,
   DatabaseEngineMongoSyncBackup,
   DatabaseEngineMongoSyncBackupRole,
   DatabaseEngineMongoSyncDirection,
@@ -28,6 +30,7 @@ import {
   type MongoBackupApplication,
   execFileAsync as mongoExecFileAsync,
 } from '@/shared/lib/db/utils/mongo';
+import { resolveManagedMongoSourceConfig } from '@/shared/lib/db/services/managed-mongo-databases';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { DatabaseBackupResult };
@@ -224,6 +227,68 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     backupName: geminitestapp.backupName,
     warning: warning ?? undefined,
     log: logContent,
+  };
+};
+
+export const createMongoApplicationLocalBackup = async (
+  application: DatabaseEngineManagedMongoApplication
+): Promise<DatabaseBackupResult> => {
+  assertBackupsAllowed();
+  const timestamp = Date.now();
+  const config = await resolveManagedMongoSourceConfig(application, 'local');
+  const databaseName = requireMongoConfigValue(config.dbName, 'local database name');
+  const result = await runMongoBackup({
+    application,
+    mongoUri: requireMongoConfigValue(config.uri, 'local URI'),
+    databaseName,
+    backupName: buildMongoBackupName(databaseName, timestamp),
+  });
+
+  return {
+    message:
+      result.warning !== null && result.warning !== ''
+        ? 'Backup created with warnings'
+        : 'Backup created',
+    backupName: result.backupName,
+    warning: result.warning ?? undefined,
+    log: result.logContent,
+  };
+};
+
+export const createMongoManagedBackup = async (
+  application: DatabaseEngineManagedMongoApplicationTarget = 'all'
+): Promise<DatabaseBackupResult> => {
+  if (application !== 'all') {
+    return createMongoApplicationLocalBackup(application);
+  }
+
+  const applications: DatabaseEngineManagedMongoApplication[] = [
+    'geminitestapp',
+    'studiq',
+    'cms-builder',
+  ];
+  const results: Array<DatabaseBackupResult & { application: DatabaseEngineManagedMongoApplication }> = [];
+  for (const managedApplication of applications) {
+    const result = await createMongoApplicationLocalBackup(managedApplication);
+    results.push({ ...result, application: managedApplication });
+  }
+
+  const warnings = results
+    .map((result) => result.warning)
+    .filter((value): value is string => typeof value === 'string' && value.length > 0);
+  const warning = warnings.length > 0 ? warnings.join('\n') : undefined;
+  const log = results
+    .map(
+      (result) =>
+        `--- ${result.application}: ${result.backupName} ---\n${result.log ?? 'No log available.'}`
+    )
+    .join('\n\n');
+
+  return {
+    message: warning ? 'Backups created with warnings' : 'Backups created',
+    backupName: results[0]?.backupName ?? '',
+    warning,
+    log,
   };
 };
 

@@ -32,7 +32,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
 
   const parsed = await parseObjectJsonBody(req, {
-    logPrefix: 'databases.delete',
+    logPrefix: 'database-engine-web.databases.delete',
   });
   if (!parsed.ok) {
     return parsed.response;

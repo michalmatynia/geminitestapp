@@ -2,9 +2,14 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
+import {
+  databaseEngineManagedMongoApplicationSchema,
+  mongoSourceSchema,
+} from '@/shared/contracts/database';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
+import { createManagedMongoClient } from '@/shared/lib/db/services/managed-mongo-databases';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -12,6 +17,8 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const databaseExecuteRequestSchema = z.object({
   sql: z.string().trim().min(1).optional(),
   type: z.enum(['mongodb', 'auto']).optional().default('auto'),
+  application: databaseEngineManagedMongoApplicationSchema.optional(),
+  source: mongoSourceSchema.optional(),
   collection: z.string().trim().min(1).optional(),
   operation: z
     .enum(['find', 'insertOne', 'updateOne', 'deleteOne', 'deleteMany', 'aggregate', 'countDocuments'])
@@ -29,7 +36,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
 
   const parsedBody = await parseJsonBody(req, databaseExecuteRequestSchema, {
-    logPrefix: 'databases.execute',
+    logPrefix: 'database-engine-web.databases.execute',
   });
   if (!parsedBody.ok) {
     return parsedBody.response;
@@ -66,12 +73,14 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 async function handleMongoOperation(parsed: {
   collection?: string;
   operation?: string;
+  application?: z.infer<typeof databaseEngineManagedMongoApplicationSchema>;
+  source?: z.infer<typeof mongoSourceSchema>;
   filter?: Record<string, unknown>;
   document?: Record<string, unknown>;
   update?: Record<string, unknown>;
   pipeline?: Record<string, unknown>[];
 }): Promise<Response> {
-  const { collection: collName, operation, filter, document, update, pipeline } = parsed;
+  const { collection: collName, operation, application, source, filter, document, update, pipeline } = parsed;
 
   if (!collName) {
     throw badRequestError('Collection name is required for MongoDB operations.');
@@ -80,74 +89,83 @@ async function handleMongoOperation(parsed: {
     throw badRequestError('Operation is required for MongoDB operations.');
   }
 
-  const mongoClient = await getMongoClient();
-  const dbName = process.env['MONGODB_DB'] ?? 'stardb';
-  const db = mongoClient.db(dbName);
+  const managedMongo = application
+    ? await createManagedMongoClient(application, source ?? 'local')
+    : null;
+  const mongoClient = managedMongo?.client ?? (await getMongoClient());
+  const dbName = managedMongo?.dbName ?? process.env['MONGODB_DB'] ?? 'stardb';
+  const db = managedMongo?.db ?? mongoClient.db(dbName);
   const collection = db.collection(collName);
   const startTime = Date.now();
 
   let result: unknown;
   let rowCount: number;
 
-  switch (operation) {
-    case 'find': {
-      const docs = await collection
-        .find(filter ?? {})
-        .limit(200)
-        .toArray();
-      result = docs;
-      rowCount = docs.length;
-      break;
-    }
-    case 'insertOne': {
-      if (!document) {
-        throw badRequestError('Document is required for insertOne.');
+  try {
+    switch (operation) {
+      case 'find': {
+        const docs = await collection
+          .find(filter ?? {})
+          .limit(200)
+          .toArray();
+        result = docs;
+        rowCount = docs.length;
+        break;
       }
-      const insertResult = await collection.insertOne(document);
-      result = [{ insertedId: insertResult.insertedId }];
-      rowCount = insertResult.acknowledged ? 1 : 0;
-      break;
-    }
-    case 'updateOne': {
-      if (!update) {
-        throw badRequestError('Update object is required for updateOne.');
+      case 'insertOne': {
+        if (!document) {
+          throw badRequestError('Document is required for insertOne.');
+        }
+        const insertResult = await collection.insertOne(document);
+        result = [{ insertedId: insertResult.insertedId }];
+        rowCount = insertResult.acknowledged ? 1 : 0;
+        break;
       }
-      const updateResult = await collection.updateOne(filter ?? {}, update);
-      result = [
-        { matchedCount: updateResult.matchedCount, modifiedCount: updateResult.modifiedCount },
-      ];
-      rowCount = updateResult.modifiedCount;
-      break;
-    }
-    case 'deleteOne': {
-      const deleteResult = await collection.deleteOne(filter ?? {});
-      result = [{ deletedCount: deleteResult.deletedCount }];
-      rowCount = deleteResult.deletedCount;
-      break;
-    }
-    case 'deleteMany': {
-      const deleteManyResult = await collection.deleteMany(filter ?? {});
-      result = [{ deletedCount: deleteManyResult.deletedCount }];
-      rowCount = deleteManyResult.deletedCount;
-      break;
-    }
-    case 'countDocuments': {
-      const count = await collection.countDocuments(filter ?? {});
-      result = [{ count }];
-      rowCount = 1;
-      break;
-    }
-    case 'aggregate': {
-      if (!pipeline) {
-        throw badRequestError('Pipeline is required for aggregate.');
+      case 'updateOne': {
+        if (!update) {
+          throw badRequestError('Update object is required for updateOne.');
+        }
+        const updateResult = await collection.updateOne(filter ?? {}, update);
+        result = [
+          { matchedCount: updateResult.matchedCount, modifiedCount: updateResult.modifiedCount },
+        ];
+        rowCount = updateResult.modifiedCount;
+        break;
       }
-      const aggDocs = await collection.aggregate(pipeline).toArray();
-      result = aggDocs;
-      rowCount = aggDocs.length;
-      break;
+      case 'deleteOne': {
+        const deleteResult = await collection.deleteOne(filter ?? {});
+        result = [{ deletedCount: deleteResult.deletedCount }];
+        rowCount = deleteResult.deletedCount;
+        break;
+      }
+      case 'deleteMany': {
+        const deleteManyResult = await collection.deleteMany(filter ?? {});
+        result = [{ deletedCount: deleteManyResult.deletedCount }];
+        rowCount = deleteManyResult.deletedCount;
+        break;
+      }
+      case 'countDocuments': {
+        const count = await collection.countDocuments(filter ?? {});
+        result = [{ count }];
+        rowCount = 1;
+        break;
+      }
+      case 'aggregate': {
+        if (!pipeline) {
+          throw badRequestError('Pipeline is required for aggregate.');
+        }
+        const aggDocs = await collection.aggregate(pipeline).toArray();
+        result = aggDocs;
+        rowCount = aggDocs.length;
+        break;
+      }
+      default:
+        throw badRequestError(`Unsupported operation: ${operation}`);
     }
-    default:
-      throw badRequestError(`Unsupported operation: ${operation}`);
+  } finally {
+    if (managedMongo !== null) {
+      await managedMongo.client.close().catch(() => undefined);
+    }
   }
 
   const duration = Date.now() - startTime;

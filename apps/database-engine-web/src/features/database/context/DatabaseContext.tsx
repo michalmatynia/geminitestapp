@@ -20,6 +20,8 @@ import type {
   DatabaseUiConfig,
   DatabaseData,
   DatabasePagination,
+  DatabaseEngineManagedMongoApplication,
+  MongoSource,
 } from '@/shared/contracts/database';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
@@ -56,13 +58,15 @@ function useDatabaseValues(
     dbType: DatabaseType;
     mode: DatabasePreviewMode;
     backupName: string | undefined;
+    application?: DatabaseEngineManagedMongoApplication | undefined;
+    source?: MongoSource | undefined;
     refetch: () => Promise<unknown>;
     data: DatabasePreviewPayload | undefined | null;
     isLoading: boolean;
     error: Error | null;
   }
 ): { configValue: DatabaseUiConfig; dataValue: DatabaseData } {
-  const { dbType, mode, backupName, refetch, data, isLoading, error } = props;
+  const { dbType, mode, backupName, application, source, refetch, data, isLoading, error } = props;
   const tableDetails = useMemo(() => data?.tableDetails ?? [], [data]);
   const groups = useMemo(() => data?.groups ?? [], [data]);
   const tables = useMemo(() => data?.tables ?? [], [data]);
@@ -70,7 +74,10 @@ function useDatabaseValues(
   const enums = useMemo(() => data?.enums ?? [], [data]);
   const databaseSize = data?.databaseSize ?? '';
 
-  const configValue = useMemo(() => ({ dbType, setDbType: () => {}, mode, backupName }), [dbType, mode, backupName]);
+  const configValue = useMemo(
+    () => ({ dbType, setDbType: () => {}, mode, backupName, application, source }),
+    [dbType, mode, backupName, application, source]
+  );
 
   const dataValue = useMemo(() => ({
     tableDetails,
@@ -94,11 +101,15 @@ export function DatabaseProvider({
   defaultDbType = 'mongodb',
   mode = 'current',
   backupName,
+  application,
+  source,
 }: {
   children: React.ReactNode;
   defaultDbType?: DatabaseType;
   mode?: DatabasePreviewMode;
   backupName?: string | undefined;
+  application?: DatabaseEngineManagedMongoApplication | undefined;
+  source?: MongoSource | undefined;
 }): React.JSX.Element {
   const [dbType, setDbType] = useState<DatabaseType>(defaultDbType);
   const [page, setPage] = useState(1);
@@ -110,6 +121,8 @@ export function DatabaseProvider({
     page,
     pageSize,
     backupName,
+    application,
+    source,
     enabled: true,
   });
 
@@ -117,6 +130,8 @@ export function DatabaseProvider({
     dbType,
     mode,
     backupName,
+    application,
+    source,
     refetch,
     data,
     isLoading,

@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
   settingsMap: new Map<string, string>(),
   updateSettingsBulkMutateAsync: vi.fn(),
+  backupManagedMongoMutateAsync: vi.fn(),
+  syncManagedMongoMutateAsync: vi.fn(),
   syncMongoSourcesMutateAsync: vi.fn(),
   searchParams: 'view=engine&foo=bar',
   pathname: '/admin/databases/engine',
@@ -40,6 +42,7 @@ const mocks = vi.hoisted(() => ({
       }
     | undefined,
   mongoSourceRefetch: vi.fn(),
+  managedMongoRefetch: vi.fn(),
   providerPreviewRefetch: vi.fn(),
   schemaRefetch: vi.fn(),
   redisOverviewRefetch: vi.fn(),
@@ -92,6 +95,11 @@ vi.mock('./useDatabaseQueries', () => ({
     isPending: false,
     refetch: mocks.mongoSourceRefetch,
   }),
+  useDatabaseEngineManagedMongoDatabases: () => ({
+    data: undefined,
+    isPending: false,
+    refetch: mocks.managedMongoRefetch,
+  }),
   useDatabaseEngineProviderPreview: () => ({
     data: undefined,
     isPending: false,
@@ -100,6 +108,14 @@ vi.mock('./useDatabaseQueries', () => ({
   useSyncDatabaseEngineMongoSourceMutation: () => ({
     isPending: false,
     mutateAsync: mocks.syncMongoSourcesMutateAsync,
+  }),
+  useBackupDatabaseEngineManagedMongoMutation: () => ({
+    isPending: false,
+    mutateAsync: mocks.backupManagedMongoMutateAsync,
+  }),
+  useSyncDatabaseEngineManagedMongoMutation: () => ({
+    isPending: false,
+    mutateAsync: mocks.syncManagedMongoMutateAsync,
   }),
   useAllCollectionsSchema: () => ({
     data: { collections: [] },
@@ -120,6 +136,8 @@ describe('useDatabaseEngineState', () => {
     mocks.toast.mockReset();
     mocks.settingsMap = new Map<string, string>();
     mocks.updateSettingsBulkMutateAsync.mockReset();
+    mocks.backupManagedMongoMutateAsync.mockReset();
+    mocks.syncManagedMongoMutateAsync.mockReset();
     mocks.syncMongoSourcesMutateAsync.mockReset();
     mocks.searchParams = 'view=engine&foo=bar';
     mocks.pathname = '/admin/databases/engine';
@@ -129,6 +147,7 @@ describe('useDatabaseEngineState', () => {
     mocks.mongoSourceData = undefined;
     mocks.mongoSourceRefetch.mockReset();
     mocks.mongoSourceRefetch.mockResolvedValue({ data: undefined });
+    mocks.managedMongoRefetch.mockReset();
     mocks.providerPreviewRefetch.mockReset();
     mocks.schemaRefetch.mockReset();
     mocks.redisOverviewRefetch.mockReset();

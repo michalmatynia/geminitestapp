@@ -52,8 +52,11 @@ export interface SiteFooterContent {
 }
 
 export interface SiteSearchContent {
+  dialogAriaLabel: string;
+  inputAriaLabel: string;
   placeholder: string;
   closeLabel: string;
+  closeAriaLabel: string;
   shortcutLabel: string;
   trendingLabel: string;
   trendingSearches: string[];
@@ -61,6 +64,14 @@ export interface SiteSearchContent {
   collectionCards: SiteCollectionCardContent[];
   noResultsPrefix: string;
   noResultsHelp: string;
+  addedToastTitle: string;
+  loadingResultsLabel: string;
+  liveLabel: string;
+  resultSingular: string;
+  resultPlural: string;
+  resultsForLabel: string;
+  quickAddLabel: string;
+  viewAllPrefix: string;
 }
 
 export interface SiteCollectionCardContent {
@@ -134,6 +145,18 @@ export interface SiteBackToTopContent {
   ariaLabel: string;
 }
 
+export interface SiteNotFoundContent {
+  code: string;
+  eyebrow: string;
+  titleLines: string[];
+  body: string;
+  primaryLabel: string;
+  primaryHref: string;
+  secondaryLabel: string;
+  secondaryHref: string;
+  collectionLinks: SiteLinkContent[];
+}
+
 export interface SiteContent {
   nav: SiteNavContent;
   footer: SiteFooterContent;
@@ -143,6 +166,7 @@ export interface SiteContent {
   auth: SiteAuthContent;
   quickView: SiteQuickViewContent;
   backToTop: SiteBackToTopContent;
+  notFound: SiteNotFoundContent;
 }
 
 export interface SiteContentValidationResult {
@@ -228,8 +252,11 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
     ],
   },
   search: {
+    dialogAriaLabel: 'Search',
+    inputAriaLabel: 'Search',
     placeholder: 'Search objects, materials, categories...',
     closeLabel: 'Close',
+    closeAriaLabel: 'Close search',
     shortcutLabel: 'Esc',
     trendingLabel: 'Trending searches',
     trendingSearches: ['Anime', 'Attack on Titan', 'Keychain', 'Elden Ring', 'Ghibli'],
@@ -242,6 +269,14 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
     ],
     noResultsPrefix: 'No results for',
     noResultsHelp: 'Try a different term or browse our collections',
+    addedToastTitle: 'Added to bag',
+    loadingResultsLabel: 'Searching...',
+    liveLabel: 'live',
+    resultSingular: 'result',
+    resultPlural: 'results',
+    resultsForLabel: 'for',
+    quickAddLabel: 'Quick Add',
+    viewAllPrefix: 'View all',
   },
   cookieConsent: {
     storageKey: 'arcana-cookie-consent',
@@ -301,6 +336,21 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
   },
   backToTop: {
     ariaLabel: 'Back to top',
+  },
+  notFound: {
+    code: '404',
+    eyebrow: 'Object not found',
+    titleLines: ['This page has', 'left the archive'],
+    body: 'The page you are looking for may have moved, been renamed, or never existed. Return home or browse our collections.',
+    primaryLabel: 'Return home',
+    primaryHref: '/',
+    secondaryLabel: 'Browse Objects',
+    secondaryHref: '/collections/objects',
+    collectionLinks: [
+      { label: 'Anime', href: '/collections/womenswear' },
+      { label: 'Gaming', href: '/collections/menswear' },
+      { label: 'Film & TV', href: '/collections/accessories' },
+    ],
   },
 };
 
@@ -550,6 +600,7 @@ export function validateSiteContent(input: unknown): SiteContentValidationResult
   const auth = isRecord(root['auth']) ? root['auth'] : {};
   const quickView = isRecord(root['quickView']) ? root['quickView'] : {};
   const backToTop = isRecord(root['backToTop']) ? root['backToTop'] : {};
+  const notFound = isRecord(root['notFound']) ? root['notFound'] : {};
 
   const content: SiteContent = {
     nav: {
@@ -708,6 +759,22 @@ export function validateSiteContent(input: unknown): SiteContentValidationResult
       legalLinks: readLinks(footer['legalLinks'], SITE_CONTENT_DEFAULTS.footer.legalLinks, 8, errors, 'footer.legalLinks'),
     },
     search: {
+      dialogAriaLabel: readString(
+        search,
+        'dialogAriaLabel',
+        SITE_CONTENT_DEFAULTS.search.dialogAriaLabel,
+        TEXT_LIMITS.short,
+        errors,
+        'search.dialogAriaLabel',
+      ),
+      inputAriaLabel: readString(
+        search,
+        'inputAriaLabel',
+        SITE_CONTENT_DEFAULTS.search.inputAriaLabel,
+        TEXT_LIMITS.short,
+        errors,
+        'search.inputAriaLabel',
+      ),
       placeholder: readString(
         search,
         'placeholder',
@@ -723,6 +790,14 @@ export function validateSiteContent(input: unknown): SiteContentValidationResult
         TEXT_LIMITS.short,
         errors,
         'search.closeLabel',
+      ),
+      closeAriaLabel: readString(
+        search,
+        'closeAriaLabel',
+        SITE_CONTENT_DEFAULTS.search.closeAriaLabel,
+        TEXT_LIMITS.short,
+        errors,
+        'search.closeAriaLabel',
       ),
       shortcutLabel: readString(
         search,
@@ -776,6 +851,70 @@ export function validateSiteContent(input: unknown): SiteContentValidationResult
         TEXT_LIMITS.medium,
         errors,
         'search.noResultsHelp',
+      ),
+      addedToastTitle: readString(
+        search,
+        'addedToastTitle',
+        SITE_CONTENT_DEFAULTS.search.addedToastTitle,
+        TEXT_LIMITS.short,
+        errors,
+        'search.addedToastTitle',
+      ),
+      loadingResultsLabel: readString(
+        search,
+        'loadingResultsLabel',
+        SITE_CONTENT_DEFAULTS.search.loadingResultsLabel,
+        TEXT_LIMITS.short,
+        errors,
+        'search.loadingResultsLabel',
+      ),
+      liveLabel: readString(
+        search,
+        'liveLabel',
+        SITE_CONTENT_DEFAULTS.search.liveLabel,
+        TEXT_LIMITS.short,
+        errors,
+        'search.liveLabel',
+      ),
+      resultSingular: readString(
+        search,
+        'resultSingular',
+        SITE_CONTENT_DEFAULTS.search.resultSingular,
+        TEXT_LIMITS.short,
+        errors,
+        'search.resultSingular',
+      ),
+      resultPlural: readString(
+        search,
+        'resultPlural',
+        SITE_CONTENT_DEFAULTS.search.resultPlural,
+        TEXT_LIMITS.short,
+        errors,
+        'search.resultPlural',
+      ),
+      resultsForLabel: readString(
+        search,
+        'resultsForLabel',
+        SITE_CONTENT_DEFAULTS.search.resultsForLabel,
+        TEXT_LIMITS.short,
+        errors,
+        'search.resultsForLabel',
+      ),
+      quickAddLabel: readString(
+        search,
+        'quickAddLabel',
+        SITE_CONTENT_DEFAULTS.search.quickAddLabel,
+        TEXT_LIMITS.short,
+        errors,
+        'search.quickAddLabel',
+      ),
+      viewAllPrefix: readString(
+        search,
+        'viewAllPrefix',
+        SITE_CONTENT_DEFAULTS.search.viewAllPrefix,
+        TEXT_LIMITS.short,
+        errors,
+        'search.viewAllPrefix',
       ),
     },
     cookieConsent: {
@@ -1114,6 +1253,70 @@ export function validateSiteContent(input: unknown): SiteContentValidationResult
         TEXT_LIMITS.short,
         errors,
         'backToTop.ariaLabel',
+      ),
+    },
+    notFound: {
+      code: readString(notFound, 'code', SITE_CONTENT_DEFAULTS.notFound.code, 12, errors, 'notFound.code'),
+      eyebrow: readString(
+        notFound,
+        'eyebrow',
+        SITE_CONTENT_DEFAULTS.notFound.eyebrow,
+        TEXT_LIMITS.short,
+        errors,
+        'notFound.eyebrow',
+      ),
+      titleLines: readStringList(
+        notFound['titleLines'],
+        SITE_CONTENT_DEFAULTS.notFound.titleLines,
+        4,
+        TEXT_LIMITS.short,
+        errors,
+        'notFound.titleLines',
+      ),
+      body: readString(
+        notFound,
+        'body',
+        SITE_CONTENT_DEFAULTS.notFound.body,
+        TEXT_LIMITS.long,
+        errors,
+        'notFound.body',
+      ),
+      primaryLabel: readString(
+        notFound,
+        'primaryLabel',
+        SITE_CONTENT_DEFAULTS.notFound.primaryLabel,
+        TEXT_LIMITS.short,
+        errors,
+        'notFound.primaryLabel',
+      ),
+      primaryHref: readHref(
+        notFound,
+        'primaryHref',
+        SITE_CONTENT_DEFAULTS.notFound.primaryHref,
+        errors,
+        'notFound.primaryHref',
+      ),
+      secondaryLabel: readString(
+        notFound,
+        'secondaryLabel',
+        SITE_CONTENT_DEFAULTS.notFound.secondaryLabel,
+        TEXT_LIMITS.short,
+        errors,
+        'notFound.secondaryLabel',
+      ),
+      secondaryHref: readHref(
+        notFound,
+        'secondaryHref',
+        SITE_CONTENT_DEFAULTS.notFound.secondaryHref,
+        errors,
+        'notFound.secondaryHref',
+      ),
+      collectionLinks: readLinks(
+        notFound['collectionLinks'],
+        SITE_CONTENT_DEFAULTS.notFound.collectionLinks,
+        8,
+        errors,
+        'notFound.collectionLinks',
       ),
     },
   };

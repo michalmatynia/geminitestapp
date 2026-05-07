@@ -145,6 +145,8 @@ const mocks = vi.hoisted(() => ({
     },
     redisOverview: null,
     isSyncingMongoSources: false,
+    isBackingUpManagedMongo: false,
+    isSyncingManagedMongo: false,
   },
   actions: {
     updatePolicy: vi.fn(),
@@ -152,6 +154,8 @@ const mocks = vi.hoisted(() => ({
     updateCollectionRoute: vi.fn(),
     updateOperationControls: vi.fn(),
     syncMongoSources: vi.fn(),
+    backupManagedMongo: vi.fn(),
+    syncManagedMongo: vi.fn(),
     setActiveView: vi.fn(),
     saveSettings: vi.fn(),
     refetchAll: vi.fn(),
@@ -296,6 +300,198 @@ const createState = () => ({
   },
   redisOverview: null,
   isSyncingMongoSources: false,
+  isBackingUpManagedMongo: false,
+  isSyncingManagedMongo: false,
+  managedMongoDatabases: {
+    timestamp: '2026-04-09T05:00:00.000Z',
+    backupRoot: '/tmp/database/mongo-backups',
+    canBackupAllLocal: true,
+    canPushAllToCloud: true,
+    canPullAllFromCloud: true,
+    issues: [],
+    databases: [
+      {
+        application: 'geminitestapp' as const,
+        label: 'GeminiTest App',
+        canBackupLocal: true,
+        canPushToCloud: true,
+        canPullFromCloud: true,
+        syncIssue: null,
+        local: {
+          source: 'local' as const,
+          configured: true,
+          dbName: 'app_local',
+          maskedUri: 'mongodb://localhost:27017/app_local',
+          usesLegacyEnv: false,
+          reachable: true,
+          healthError: null,
+          databaseSizeBytes: 4096,
+          storageSizeBytes: 2048,
+          dataSizeBytes: 1024,
+          indexSizeBytes: 256,
+          collectionsSizeBytes: 1280,
+          collectionCount: 1,
+          collections: [
+            {
+              name: 'users',
+              documentCount: 12,
+              storageSizeBytes: 1024,
+              dataSizeBytes: 768,
+              indexSizeBytes: 256,
+              totalSizeBytes: 1280,
+              statsError: null,
+            },
+          ],
+        },
+        cloud: {
+          source: 'cloud' as const,
+          configured: true,
+          dbName: 'app_cloud',
+          maskedUri: 'mongodb+srv://cluster.example/app_cloud',
+          usesLegacyEnv: false,
+          reachable: true,
+          healthError: null,
+          databaseSizeBytes: 8192,
+          storageSizeBytes: 4096,
+          dataSizeBytes: 2048,
+          indexSizeBytes: 512,
+          collectionsSizeBytes: 2560,
+          collectionCount: 1,
+          collections: [
+            {
+              name: 'users',
+              documentCount: 12,
+              storageSizeBytes: 2048,
+              dataSizeBytes: 1536,
+              indexSizeBytes: 512,
+              totalSizeBytes: 2560,
+              statsError: null,
+            },
+          ],
+        },
+      },
+      {
+        application: 'studiq' as const,
+        label: 'StudiQ',
+        canBackupLocal: true,
+        canPushToCloud: true,
+        canPullFromCloud: true,
+        syncIssue: null,
+        local: {
+          source: 'local' as const,
+          configured: true,
+          dbName: 'studiq_local',
+          maskedUri: 'mongodb://localhost:27018/studiq_local',
+          usesLegacyEnv: false,
+          reachable: true,
+          healthError: null,
+          databaseSizeBytes: 2048,
+          storageSizeBytes: 1024,
+          dataSizeBytes: 512,
+          indexSizeBytes: 128,
+          collectionsSizeBytes: 640,
+          collectionCount: 1,
+          collections: [
+            {
+              name: 'studiq_coll',
+              documentCount: 4,
+              storageSizeBytes: 512,
+              dataSizeBytes: 384,
+              indexSizeBytes: 128,
+              totalSizeBytes: 640,
+              statsError: null,
+            },
+          ],
+        },
+        cloud: {
+          source: 'cloud' as const,
+          configured: true,
+          dbName: 'studiq_db',
+          maskedUri: 'mongodb+srv://cluster.example/studiq_db',
+          usesLegacyEnv: false,
+          reachable: true,
+          healthError: null,
+          databaseSizeBytes: 2048,
+          storageSizeBytes: 1024,
+          dataSizeBytes: 512,
+          indexSizeBytes: 128,
+          collectionsSizeBytes: 640,
+          collectionCount: 1,
+          collections: [
+            {
+              name: 'studiq_coll',
+              documentCount: 4,
+              storageSizeBytes: 512,
+              dataSizeBytes: 384,
+              indexSizeBytes: 128,
+              totalSizeBytes: 640,
+              statsError: null,
+            },
+          ],
+        },
+      },
+      {
+        application: 'cms-builder' as const,
+        label: 'CMS Builder',
+        canBackupLocal: true,
+        canPushToCloud: true,
+        canPullFromCloud: true,
+        syncIssue: null,
+        local: {
+          source: 'local' as const,
+          configured: true,
+          dbName: 'cms_builder_local',
+          maskedUri: 'mongodb://localhost:27019/cms_builder_local',
+          usesLegacyEnv: false,
+          reachable: true,
+          healthError: null,
+          databaseSizeBytes: 1024,
+          storageSizeBytes: 512,
+          dataSizeBytes: 256,
+          indexSizeBytes: 64,
+          collectionsSizeBytes: 320,
+          collectionCount: 1,
+          collections: [
+            {
+              name: 'pages',
+              documentCount: 3,
+              storageSizeBytes: 256,
+              dataSizeBytes: 192,
+              indexSizeBytes: 64,
+              totalSizeBytes: 320,
+              statsError: null,
+            },
+          ],
+        },
+        cloud: {
+          source: 'cloud' as const,
+          configured: true,
+          dbName: 'cms_builder_db',
+          maskedUri: 'mongodb+srv://cluster.example/cms_builder_db',
+          usesLegacyEnv: false,
+          reachable: true,
+          healthError: null,
+          databaseSizeBytes: 1024,
+          storageSizeBytes: 512,
+          dataSizeBytes: 256,
+          indexSizeBytes: 64,
+          collectionsSizeBytes: 320,
+          collectionCount: 1,
+          collections: [
+            {
+              name: 'pages',
+              documentCount: 3,
+              storageSizeBytes: 256,
+              dataSizeBytes: 192,
+              indexSizeBytes: 64,
+              totalSizeBytes: 320,
+              statsError: null,
+            },
+          ],
+        },
+      },
+    ],
+  },
 });
 
 vi.mock('../context/DatabaseEngineContext', () => ({
@@ -333,10 +529,14 @@ vi.mock('@/shared/ui/admin.public', () => ({
 vi.mock('@/shared/ui/primitives.public', () => ({
   Badge: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
   Button: ({
+    asChild: _asChild,
     children,
     onClick,
     ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    asChild?: boolean;
+    children?: React.ReactNode;
+  }) => (
     <button type='button' onClick={onClick} {...props}>
       {children}
     </button>
@@ -465,10 +665,14 @@ describe('DatabaseEnginePage', () => {
     mocks.actions.updateCollectionRoute.mockReset();
     mocks.actions.updateOperationControls.mockReset();
     mocks.actions.syncMongoSources.mockReset();
+    mocks.actions.backupManagedMongo.mockReset();
+    mocks.actions.syncManagedMongo.mockReset();
     mocks.actions.setActiveView.mockReset();
     mocks.actions.saveSettings.mockReset();
     mocks.actions.refetchAll.mockReset();
     mocks.actions.syncMongoSources.mockResolvedValue(undefined);
+    mocks.actions.backupManagedMongo.mockResolvedValue(undefined);
+    mocks.actions.syncManagedMongo.mockResolvedValue(undefined);
   });
 
   it('renders Mongo source details and explains env-managed switching', () => {
@@ -519,8 +723,8 @@ describe('DatabaseEnginePage', () => {
       screen.getByText('Backup log: /tmp/backups/local-target-pre-sync.archive.log')
     ).toBeInTheDocument();
     expect(screen.getAllByText('Connection: Reachable')).toHaveLength(2);
-    expect(screen.getByText('mongodb://localhost:27017/app_local')).toBeInTheDocument();
-    expect(screen.getByText('mongodb+srv://cluster.example/app_cloud')).toBeInTheDocument();
+    expect(screen.getAllByText('mongodb://localhost:27017/app_local')).toHaveLength(2);
+    expect(screen.getAllByText('mongodb+srv://cluster.example/app_cloud')).toHaveLength(2);
     expect(
       screen.getByText(
         'To activate this target, add or update MONGODB_ACTIVE_SOURCE_DEFAULT=cloud in the effective env file (.env.local overrides .env in development) and restart the server.'
@@ -533,6 +737,34 @@ describe('DatabaseEnginePage', () => {
     render(<DatabaseEnginePage />);
 
     expect(screen.getByText('Healthy')).toBeInTheDocument();
+  });
+
+  it('renders managed app database sizes and runs per-app and group actions', () => {
+    render(<DatabaseEnginePage />);
+
+    expect(screen.getByRole('heading', { name: 'Managed Application Databases' })).toBeInTheDocument();
+    expect(screen.getByText('Backup root: /tmp/database/mongo-backups')).toBeInTheDocument();
+    expect(screen.getByText('GeminiTest App')).toBeInTheDocument();
+    expect(screen.getByText('StudiQ')).toBeInTheDocument();
+    expect(screen.getByText('CMS Builder')).toBeInTheDocument();
+    expect(screen.getByText('Database size: 4.00 KB')).toBeInTheDocument();
+    expect(screen.getByText('Database size: 8.00 KB')).toBeInTheDocument();
+    expect(screen.getAllByText('studiq_coll')).toHaveLength(2);
+    expect(screen.getAllByText('pages')).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Backup All' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Push All' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Pull All' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Backup' })[1]!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Push' })[1]!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Pull' })[1]!);
+
+    expect(mocks.actions.backupManagedMongo).toHaveBeenNthCalledWith(1, 'all');
+    expect(mocks.actions.syncManagedMongo).toHaveBeenNthCalledWith(1, 'local_to_cloud', 'all');
+    expect(mocks.actions.syncManagedMongo).toHaveBeenNthCalledWith(2, 'cloud_to_local', 'all');
+    expect(mocks.actions.backupManagedMongo).toHaveBeenNthCalledWith(2, 'studiq');
+    expect(mocks.actions.syncManagedMongo).toHaveBeenNthCalledWith(3, 'local_to_cloud', 'studiq');
+    expect(mocks.actions.syncManagedMongo).toHaveBeenNthCalledWith(4, 'cloud_to_local', 'studiq');
   });
 
   it('surfaces blocking issue counts in the engine status badge', () => {

@@ -196,8 +196,46 @@ function productTag(doc: ProductDoc): string | undefined {
   return undefined;
 }
 
-const MAIN_APP_URL = (process.env.NEXT_PUBLIC_MAIN_APP_URL ?? '').replace(/\/$/, '');
+const normalizeBaseUrl = (value: string | undefined): string => {
+  const raw = value?.trim();
+  if (!raw) return '';
+  try {
+    return new URL(raw).toString().replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+};
+
+const MAIN_APP_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_MAIN_APP_URL);
+const FILE_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_FILE_BASE_URL);
 const PRODUCT_UPLOAD_PREFIX = '/uploads/products/';
+
+function isLocalHostname(hostname: string): boolean {
+  return ['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(hostname.toLowerCase());
+}
+
+function isMainAppOrigin(url: URL): boolean {
+  if (!MAIN_APP_URL) return false;
+  try {
+    return url.origin === new URL(MAIN_APP_URL).origin;
+  } catch {
+    return false;
+  }
+}
+
+function toConfiguredFileUrl(productUploadPath: string): string {
+  if (!FILE_BASE_URL) return productUploadPath;
+  return `${FILE_BASE_URL}${productUploadPath}`;
+}
+
+function normalizeProductUploadPath(value: string): string | undefined {
+  const normalized = value
+    .replace(/^\/?public\/uploads\//i, '/uploads/')
+    .replace(/^\/?uploads\//i, '/uploads/');
+  const uploadIndex = normalized.indexOf(PRODUCT_UPLOAD_PREFIX);
+  if (uploadIndex < 0) return undefined;
+  return normalized.slice(uploadIndex);
+}
 
 function normalizeProductImageUrl(value: string | null | undefined): string | undefined {
   const raw = typeof value === 'string' ? value.trim() : '';
@@ -206,25 +244,24 @@ function normalizeProductImageUrl(value: string | null | undefined): string | un
   if (/^https?:\/\//i.test(raw)) {
     try {
       const url = new URL(raw);
-      const localUpload = normalizeProductImageUrl(url.pathname);
-      return localUpload ?? raw;
+      const productUploadPath = normalizeProductUploadPath(url.pathname);
+      if (productUploadPath && FILE_BASE_URL && (isLocalHostname(url.hostname) || isMainAppOrigin(url))) {
+        return toConfiguredFileUrl(productUploadPath);
+      }
+      return raw;
     } catch {
       return raw;
     }
   }
 
-  const normalized = raw
-    .replace(/^\/?public\/uploads\//i, '/uploads/')
-    .replace(/^\/?uploads\//i, '/uploads/');
-  const uploadIndex = normalized.indexOf(PRODUCT_UPLOAD_PREFIX);
-  if (uploadIndex >= 0) return normalized.slice(uploadIndex);
-  return undefined;
+  const productUploadPath = normalizeProductUploadPath(raw);
+  return productUploadPath ? toConfiguredFileUrl(productUploadPath) : undefined;
 }
 
 function buildLocalSkuImageUrl(sku: string | null | undefined): string | undefined {
   const key = typeof sku === 'string' ? sku.trim() : '';
   if (!/^[A-Za-z0-9._-]+$/.test(key)) return undefined;
-  return `${PRODUCT_UPLOAD_PREFIX}${encodeURIComponent(key)}/__primary.png`;
+  return toConfiguredFileUrl(`${PRODUCT_UPLOAD_PREFIX}${encodeURIComponent(key)}/__primary.png`);
 }
 
 function buildImageUrl(doc: ProductDoc): string | undefined {

@@ -4,4 +4,4 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 
 import { postHandler } from './handler';
 
-export const POST = apiHandler(postHandler, { source: 'databases.json-restore.POST' });
+export const POST = apiHandler(postHandler, { source: 'database-engine-web.databases.json-restore.POST' });

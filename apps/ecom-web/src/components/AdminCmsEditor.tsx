@@ -28,6 +28,7 @@ import {
   type SiteLinkContent,
   type SiteNavContent,
   type SiteNewsletterContent,
+  type SiteNotFoundContent,
   type SiteQuickViewContent,
   type SiteSearchContent,
   type SiteSocialLinkContent,
@@ -1127,6 +1128,16 @@ export function AdminCmsEditor(): JSX.Element {
     }));
   }
 
+  function updateNotFound<K extends keyof SiteNotFoundContent>(key: K, value: SiteNotFoundContent[K]): void {
+    setSiteContent((current) => ({
+      ...current,
+      notFound: {
+        ...current.notFound,
+        [key]: value,
+      },
+    }));
+  }
+
   function updateAboutHero<K extends keyof AboutHeroContent>(key: K, value: AboutHeroContent[K]): void {
     setAboutContent((current) => ({
       ...current,
@@ -1827,12 +1838,23 @@ export function AdminCmsEditor(): JSX.Element {
               <TextArea label="Footer columns" rows={9} value={footerColumnsToText(siteContent.footer.columns)} onChange={(value) => updateFooter('columns', textToFooterColumns(value))} />
               <TextArea label="Legal links" rows={4} value={linksToText(siteContent.footer.legalLinks)} onChange={(value) => updateFooter('legalLinks', textToLinks(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                <Field label="Search dialog aria label" value={siteContent.search.dialogAriaLabel} onChange={(value) => updateSiteSearch('dialogAriaLabel', value)} />
+                <Field label="Search input aria label" value={siteContent.search.inputAriaLabel} onChange={(value) => updateSiteSearch('inputAriaLabel', value)} />
                 <Field label="Search placeholder" value={siteContent.search.placeholder} onChange={(value) => updateSiteSearch('placeholder', value)} />
                 <Field label="Search close label" value={siteContent.search.closeLabel} onChange={(value) => updateSiteSearch('closeLabel', value)} />
+                <Field label="Search close aria label" value={siteContent.search.closeAriaLabel} onChange={(value) => updateSiteSearch('closeAriaLabel', value)} />
                 <Field label="Search shortcut label" value={siteContent.search.shortcutLabel} onChange={(value) => updateSiteSearch('shortcutLabel', value)} />
                 <Field label="Trending label" value={siteContent.search.trendingLabel} onChange={(value) => updateSiteSearch('trendingLabel', value)} />
                 <Field label="Browse collections label" value={siteContent.search.browseCollectionsLabel} onChange={(value) => updateSiteSearch('browseCollectionsLabel', value)} />
                 <Field label="No results prefix" value={siteContent.search.noResultsPrefix} onChange={(value) => updateSiteSearch('noResultsPrefix', value)} />
+                <Field label="Search added toast title" value={siteContent.search.addedToastTitle} onChange={(value) => updateSiteSearch('addedToastTitle', value)} />
+                <Field label="Search loading label" value={siteContent.search.loadingResultsLabel} onChange={(value) => updateSiteSearch('loadingResultsLabel', value)} />
+                <Field label="Search live label" value={siteContent.search.liveLabel} onChange={(value) => updateSiteSearch('liveLabel', value)} />
+                <Field label="Result singular" value={siteContent.search.resultSingular} onChange={(value) => updateSiteSearch('resultSingular', value)} />
+                <Field label="Result plural" value={siteContent.search.resultPlural} onChange={(value) => updateSiteSearch('resultPlural', value)} />
+                <Field label="Results for label" value={siteContent.search.resultsForLabel} onChange={(value) => updateSiteSearch('resultsForLabel', value)} />
+                <Field label="Quick add label" value={siteContent.search.quickAddLabel} onChange={(value) => updateSiteSearch('quickAddLabel', value)} />
+                <Field label="View all prefix" value={siteContent.search.viewAllPrefix} onChange={(value) => updateSiteSearch('viewAllPrefix', value)} />
               </div>
               <TextArea label="No results help" value={siteContent.search.noResultsHelp} onChange={(value) => updateSiteSearch('noResultsHelp', value)} />
               <TextArea label="Trending searches" rows={4} value={siteContent.search.trendingSearches.join('\n')} onChange={(value) => updateSiteSearch('trendingSearches', splitLines(value))} />
@@ -1923,6 +1945,25 @@ export function AdminCmsEditor(): JSX.Element {
                 <Field label="Full details label" value={siteContent.quickView.fullDetailsLabel} onChange={(value) => updateQuickView('fullDetailsLabel', value)} />
                 <Field label="Back to top aria label" value={siteContent.backToTop.ariaLabel} onChange={(value) => updateBackToTop('ariaLabel', value)} />
               </div>
+            </div>
+          </div>
+
+          <div style={{ border: '1px solid rgba(210,116,102,0.18)', padding: '1.25rem' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 300, color: 'var(--fg)', marginBottom: '1rem' }}>
+              Not Found Page
+            </h3>
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                <Field label="Background code" value={siteContent.notFound.code} onChange={(value) => updateNotFound('code', value)} />
+                <Field label="Eyebrow" value={siteContent.notFound.eyebrow} onChange={(value) => updateNotFound('eyebrow', value)} />
+                <Field label="Primary button label" value={siteContent.notFound.primaryLabel} onChange={(value) => updateNotFound('primaryLabel', value)} />
+                <Field label="Primary button href" value={siteContent.notFound.primaryHref} onChange={(value) => updateNotFound('primaryHref', value)} />
+                <Field label="Secondary button label" value={siteContent.notFound.secondaryLabel} onChange={(value) => updateNotFound('secondaryLabel', value)} />
+                <Field label="Secondary button href" value={siteContent.notFound.secondaryHref} onChange={(value) => updateNotFound('secondaryHref', value)} />
+              </div>
+              <TextArea label="Title lines" rows={3} value={siteContent.notFound.titleLines.join('\n')} onChange={(value) => updateNotFound('titleLines', splitLines(value))} />
+              <TextArea label="Body" value={siteContent.notFound.body} onChange={(value) => updateNotFound('body', value)} />
+              <TextArea label="Collection links" rows={4} value={linksToText(siteContent.notFound.collectionLinks)} onChange={(value) => updateNotFound('collectionLinks', textToLinks(value))} />
             </div>
           </div>
 

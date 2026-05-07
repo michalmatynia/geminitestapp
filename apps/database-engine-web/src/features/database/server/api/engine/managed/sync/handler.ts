@@ -1,0 +1,49 @@
+import { type NextRequest, NextResponse } from 'next/server';
+
+import { assertDatabaseEngineManageAccess } from '@/features/database/server';
+import {
+  databaseEngineMongoSyncRequestSchema,
+  type DatabaseEngineMongoSyncResponse,
+} from '@/shared/contracts/database';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
+import { invalidateAppDbProviderCache } from '@/shared/lib/db/app-db-provider';
+import { invalidateCollectionProviderMapCache } from '@/shared/lib/db/collection-provider-map';
+import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-engine-policy';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
+import { syncMongoSources } from '@/shared/lib/db/services/mongo-source-sync';
+import { invalidateMongoClientCache } from '@/shared/lib/db/mongo-client';
+import { clearSettingsCache } from '@/shared/lib/settings-cache';
+import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
+
+const clearMongoSyncDependentCaches = async (): Promise<void> => {
+  await invalidateMongoClientCache();
+  invalidateAppDbProviderCache();
+  invalidateCollectionProviderMapCache();
+  invalidateDatabaseEnginePolicyCache();
+  clearSettingsCache();
+  clearLiteSettingsServerCache();
+};
+
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
+  await assertDatabaseEngineOperationEnabled('allowManualFullSync');
+
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'database-engine-web.databases.engine.managed.sync.POST',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const body = databaseEngineMongoSyncRequestSchema.parse(parsed.data);
+  const payload: DatabaseEngineMongoSyncResponse = await syncMongoSources(
+    body.direction,
+    body.application
+  );
+  await clearMongoSyncDependentCaches();
+
+  return NextResponse.json(payload, {
+    headers: { 'Cache-Control': 'no-store' },
+  });
+}

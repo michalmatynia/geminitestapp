@@ -67,7 +67,7 @@ export function useCrudPanelState(props: {
   dbType?: DatabaseType;
 }): UseCrudPanelStateReturn {
   const dbKeys = QUERY_KEYS.system.databases;
-  const { dbType: contextDbType } = useDatabaseConfig();
+  const { dbType: contextDbType, application, source } = useDatabaseConfig();
   const { tableDetails: contextTableDetails } = useDatabaseData();
   const dbType = props.dbType ?? contextDbType;
   const tableDetails = props.tableDetails ?? contextTableDetails;
@@ -79,7 +79,8 @@ export function useCrudPanelState(props: {
   const [editingRow, setEditingRow] = useState<Record<string, unknown> | null>(null);
   const [deletingRow, setDeletingRow] = useState<Record<string, unknown> | null>(null);
 
-  const mutations = useCrudMutations();
+  const mutationTarget = useMemo(() => ({ application, source }), [application, source]);
+  const mutations = useCrudMutations(mutationTarget);
 
   const tableDetail = useMemo(
     () => tableDetails.find((t) => t.name === selectedTable),
@@ -87,7 +88,7 @@ export function useCrudPanelState(props: {
   );
 
   const rowsQuery = createListQueryV2<CrudRowsResult, CrudRowsResult>({
-    queryKey: dbKeys.crudRows({ dbType, selectedTable, page, pageSize }),
+    queryKey: dbKeys.crudRows({ dbType, selectedTable, page, pageSize, application, source }),
     enabled: selectedTable !== '',
     queryFn: async () => {
       if (selectedTable === '') return { rows: [], totalRows: 0 };
@@ -95,6 +96,8 @@ export function useCrudPanelState(props: {
 
       const mongoResult = await executeSqlQuery({
         type: 'mongodb',
+        application,
+        source,
         collection: selectedTable,
         operation: 'find',
         filter: {},

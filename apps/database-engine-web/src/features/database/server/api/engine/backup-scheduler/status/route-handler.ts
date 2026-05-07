@@ -5,5 +5,5 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getHandler } from './handler';
 
 export const GET = apiHandler(getHandler, {
-  source: 'databases.engine.backup-scheduler.status.GET',
+  source: 'database-engine-web.databases.engine.backup-scheduler.status.GET',
 });

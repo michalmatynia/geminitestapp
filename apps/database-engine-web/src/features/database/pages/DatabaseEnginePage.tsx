@@ -2,9 +2,14 @@
 
 import type { JSX } from 'react';
 
-import type { DatabaseEngineWorkspaceView } from '@/shared/contracts/database';
+import type {
+  DatabaseEngineManagedMongoApplication,
+  DatabaseEngineWorkspaceView,
+  MongoSource,
+} from '@/shared/contracts/database';
 import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
@@ -31,6 +36,16 @@ const DATABASE_ENGINE_VIEWS: Array<{
 
 const resolveViewLabel = (view: DatabaseEngineWorkspaceView): string =>
   DATABASE_ENGINE_VIEWS.find((item) => item.value === view)?.label ?? 'Database Engine';
+
+const parseManagedMongoApplication = (
+  value: string | null
+): DatabaseEngineManagedMongoApplication | undefined =>
+  value === 'geminitestapp' || value === 'studiq' || value === 'cms-builder'
+    ? value
+    : undefined;
+
+const parseMongoSource = (value: string | null): MongoSource | undefined =>
+  value === 'local' || value === 'cloud' ? value : undefined;
 
 function DatabaseEngineHeaderActions({
   canSave,
@@ -95,13 +110,17 @@ function DatabaseEngineActiveView({
 }: {
   activeView: DatabaseEngineWorkspaceView;
 }): JSX.Element {
+  const searchParams = useSearchParams();
+  const application = parseManagedMongoApplication(searchParams.get('application'));
+  const source = parseMongoSource(searchParams.get('source')) ?? (application ? 'local' : undefined);
+
   switch (activeView) {
     case 'backups':
       return <DatabaseBackupsPanel />;
     case 'operations':
-      return <DatabaseOperationsPanel defaultTab='sql' />;
+      return <DatabaseOperationsPanel defaultTab='sql' application={application} source={source} />;
     case 'crud':
-      return <DatabaseOperationsPanel defaultTab='crud' />;
+      return <DatabaseOperationsPanel defaultTab='crud' application={application} source={source} />;
     case 'preview':
       return (
         <div className='space-y-3'>

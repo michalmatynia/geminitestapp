@@ -101,7 +101,7 @@ describe('databases engine source sync handler', () => {
     expect(mocks.assertDatabaseEngineOperationEnabled).toHaveBeenCalledWith(
       'allowManualFullSync'
     );
-    expect(mocks.syncMongoSources).toHaveBeenCalledWith('cloud_to_local');
+    expect(mocks.syncMongoSources).toHaveBeenCalledWith('cloud_to_local', 'all');
     expect(mocks.invalidateMongoClientCache).toHaveBeenCalled();
     expect(mocks.clearSettingsCache).toHaveBeenCalled();
     expect(data.success).toBe(true);

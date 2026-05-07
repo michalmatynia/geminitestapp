@@ -6,6 +6,7 @@ import { StatusBadge } from '@/shared/ui/data-display.public';
 import { FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { Button, Card } from '@/shared/ui/primitives.public';
 import { useDatabaseEngineActionsContext, useDatabaseEngineStateContext } from '../../context/DatabaseEngineContext';
+import { DatabaseEngineManagedMongoSection } from './DatabaseEngineManagedMongoSection';
 import { MongoSourceSection } from './DatabaseEngineMongoSourceSection';
 
 import type { JSX } from 'react';
@@ -53,6 +54,8 @@ export function DatabaseEngineSettingsTab(): JSX.Element {
       <FormSection title='Engine Status'>
         <StatusBadge status={engineStatusBadge.status} variant={engineStatusBadge.variant} />
       </FormSection>
+
+      <DatabaseEngineManagedMongoSection />
 
       <MongoSourceSection
         mongoSourceState={mongoSourceState}

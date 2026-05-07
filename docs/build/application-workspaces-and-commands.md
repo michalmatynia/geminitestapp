@@ -114,19 +114,23 @@ Example:
   `apps/database-engine-web`.
 - Serves backups, operations, CRUD, control panel, preview, and Engine pages at
   `/admin/databases/*`.
+- Manages the local and cloud MongoDB targets for `geminitestapp`, `studiq`,
+  and `cms-builder`, including per-app and group backup/sync operations.
 - Owns the local Database Engine auth pages, NextAuth route endpoints, session
   provider, CSRF provider, and `/admin/databases/*` proxy protection.
-- Owns `/api/databases/*` route wrappers; database API implementations live
-  under `apps/database-engine-web/src/features/database/server/api`.
+- Owns `/api/databases/*` route wrappers under
+  `apps/database-engine-web/src/app/api`; database API implementations live as
+  `route-handler.ts` modules under
+  `apps/database-engine-web/src/features/database/server/api`.
 - Can receive root-platform database admin and `/api/databases/*` traffic when
   `DATABASE_ENGINE_WEB_ORIGIN` is configured in the root app environment.
 - Loads repo-root environment files in both the runtime wrapper and
   `apps/database-engine-web/next.config.mjs`, so the root `.env*` files remain
   the source of truth.
-- Reuses repo-root feature/shared code through aliases for non-database
-  `@/features/*`, `@/shared`, `@/server`, `@/i18n`, and `@docs`. It does not
-  expose a `@/app` alias; Database Engine page, feature, and API route
-  ownership stays local to `apps/database-engine-web`.
+- Reuses repo-root `@/shared` modules as the shared library surface. It does
+  not expose root `@/app`, root `@/features`, root `@/server`, root `@/i18n`,
+  or `@docs` aliases; Database Engine page, feature, and API route ownership
+  stays local to `apps/database-engine-web`.
 - Uses port `3400` so it can run beside the ecommerce workspace on `3300`.
 - Use this when you want an isolated Database Engine workspace without running
   the full root platform app.
@@ -177,6 +181,8 @@ Example:
   [`apps/ecom-web/README.md`](../../apps/ecom-web/README.md)
 - Standalone Database Engine workspace guide:
   [`apps/database-engine-web/README.md`](../../apps/database-engine-web/README.md)
+- Database Engine managed MongoDB guide:
+  [`docs/build/database-engine-managed-mongo.md`](./database-engine-managed-mongo.md)
 - Kangur application topology:
   [`docs/kangur/studiq-application.md`](../kangur/studiq-application.md)
 - Kangur mobile runtime guide: [`apps/mobile/README.md`](../../apps/mobile/README.md)

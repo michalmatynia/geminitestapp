@@ -1,9 +1,12 @@
 import {
   type DatabaseEngineBackupRunNowResponse,
   type DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
+  type DatabaseEngineManagedMongoApplicationTarget,
+  type DatabaseEngineManagedMongoDatabasesResponse,
   type DatabaseEngineMongoSourceState as DatabaseEngineMongoSourceStateResponse,
   type DatabaseEngineMongoSyncDirection,
   type DatabaseEngineMongoSyncResponse as DatabaseEngineMongoSyncResponsePayload,
+  type DatabaseBackupResponse,
   type DatabaseEngineBackupSchedulerTickResponse,
   type DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
   type DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
@@ -28,11 +31,33 @@ export const getDatabaseEngineMongoSource =
   async (): Promise<DatabaseEngineMongoSourceStateResponse> =>
     api.get<DatabaseEngineMongoSourceStateResponse>('/api/databases/engine/source');
 
+export const getDatabaseEngineManagedMongoDatabases =
+  async (): Promise<DatabaseEngineManagedMongoDatabasesResponse> =>
+    api.get<DatabaseEngineManagedMongoDatabasesResponse>('/api/databases/engine/managed');
+
+export const backupDatabaseEngineManagedMongo = async (
+  application: DatabaseEngineManagedMongoApplicationTarget
+): Promise<DatabaseBackupResponse> =>
+  api.post<DatabaseBackupResponse>('/api/databases/engine/managed/backup', {
+    application,
+  });
+
 export const syncDatabaseEngineMongoSource = async (
   direction: DatabaseEngineMongoSyncDirection
 ): Promise<DatabaseEngineMongoSyncResponsePayload> =>
   api.post<DatabaseEngineMongoSyncResponsePayload>('/api/databases/engine/source/sync', {
     direction,
+  }, {
+    timeout: MONGO_SOURCE_SYNC_TIMEOUT_MS,
+  });
+
+export const syncDatabaseEngineManagedMongo = async (
+  direction: DatabaseEngineMongoSyncDirection,
+  application: DatabaseEngineManagedMongoApplicationTarget
+): Promise<DatabaseEngineMongoSyncResponsePayload> =>
+  api.post<DatabaseEngineMongoSyncResponsePayload>('/api/databases/engine/managed/sync', {
+    direction,
+    application,
   }, {
     timeout: MONGO_SOURCE_SYNC_TIMEOUT_MS,
   });

@@ -16,6 +16,8 @@ import type {
   DatabaseBackupFile as DatabaseInfoResponse,
   DatabaseBackupResponse,
   DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
+  DatabaseEngineManagedMongoApplicationTarget,
+  DatabaseEngineManagedMongoDatabasesResponse,
   DatabaseEngineMongoSourceState as DatabaseEngineMongoSourceStateResponse,
   DatabaseEngineMongoSyncDirection,
   DatabaseEngineMongoSyncResponse as DatabaseEngineMongoSyncResponsePayload,
@@ -30,6 +32,8 @@ import type {
   DatabasePreviewMode,
   DatabasePreviewPayload,
   DatabaseType,
+  DatabaseEngineManagedMongoApplication,
+  MongoSource,
   SqlQueryResult,
 } from '@/shared/contracts/database';
 import type { ApiPayloadResult } from '@/shared/contracts/http';
@@ -56,6 +60,8 @@ import {
   executeCrudOperation,
   executeSqlQuery,
   fetchAllCollectionsSchema,
+  backupDatabaseEngineManagedMongo,
+  getDatabaseEngineManagedMongoDatabases,
   fetchDatabaseBackups,
   fetchDatabaseEngineBackupSchedulerStatus,
   getDatabaseEngineMongoSource,
@@ -67,6 +73,7 @@ import {
   fetchRedisOverview,
   restoreDatabaseBackup,
   restoreJsonBackup,
+  syncDatabaseEngineManagedMongo,
   syncDatabaseEngineMongoSource,
   uploadDatabaseBackup,
 } from '../api';
@@ -87,6 +94,10 @@ export const invalidateEngineSchedulerStatus = (queryClient: QueryClient): void 
 
 export const invalidateEngineMongoSource = (queryClient: QueryClient): void => {
   void queryClient.invalidateQueries({ queryKey: dbKeys.engineMongoSource() });
+};
+
+export const invalidateEngineManagedMongo = (queryClient: QueryClient): void => {
+  void queryClient.invalidateQueries({ queryKey: dbKeys.engineManagedMongo() });
 };
 
 export function useDatabaseBackups(dbType: DatabaseType): ListQuery<DatabaseInfoResponse> {
@@ -203,15 +214,19 @@ export function useDatabasePreview(input: {
   type?: DatabaseType;
   page?: number;
   pageSize?: number;
+  application?: DatabaseEngineManagedMongoApplication | undefined;
+  source?: MongoSource | undefined;
   enabled?: boolean;
 }): SingleQuery<DatabasePreviewPayload> {
-  const { backupName, mode, type, page, pageSize, enabled = true } = input;
+  const { backupName, mode, type, page, pageSize, application, source, enabled = true } = input;
   const queryKey = dbKeys.preview({
     backupName,
     mode,
     type,
     page,
     pageSize,
+    application,
+    source,
   });
 
   return createSingleQueryV2({
@@ -224,6 +239,8 @@ export function useDatabasePreview(input: {
         type: type ?? 'mongodb',
         page,
         pageSize,
+        application,
+        source,
       });
       if (!result.ok) {
         const message = resolvePayloadErrorMessage(
@@ -251,6 +268,8 @@ export function useSqlQueryMutation(): MutationResult<
   {
     sql?: string;
     type: DatabaseType;
+    application?: DatabaseEngineManagedMongoApplication | undefined;
+    source?: MongoSource | undefined;
     collection?: string;
     operation?: string;
     filter?: Record<string, unknown>;
@@ -366,6 +385,25 @@ export function useDatabaseEngineMongoSource(): SingleQuery<DatabaseEngineMongoS
   });
 }
 
+export function useDatabaseEngineManagedMongoDatabases(): SingleQuery<DatabaseEngineManagedMongoDatabasesResponse> {
+  const queryKey = dbKeys.engineManagedMongo();
+  return createSingleQueryV2({
+    id: 'engine-managed-mongo',
+    queryKey,
+    queryFn: getDatabaseEngineManagedMongoDatabases,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    meta: {
+      source: 'database.hooks.useDatabaseEngineManagedMongoDatabases',
+      operation: 'polling',
+      resource: 'system.databases.engine-managed-mongo',
+      domain: 'database',
+      tags: ['database', 'engine', 'managed-mongo'],
+      description: 'Polls managed MongoDB application database status.',
+    },
+  });
+}
+
 export function useDatabaseBackupSchedulerStatus(): SingleQuery<DatabaseEngineBackupSchedulerStatusResponse> {
   const queryKey = dbKeys.engineBackupSchedulerStatus();
   return createSingleQueryV2({
@@ -448,6 +486,63 @@ export function useSyncDatabaseEngineMongoSourceMutation(): MutationResult<
       description: 'Synchronizes local and cloud MongoDB sources.',
     },
     invalidateKeys: [
+      dbKeys.engineMongoSource(),
+      dbKeys.engineStatus(),
+      dbKeys.schema({ provider: 'all', includeCounts: true }),
+    ],
+  });
+}
+
+export function useBackupDatabaseEngineManagedMongoMutation(): MutationResult<
+  DatabaseBackupResponse,
+  DatabaseEngineManagedMongoApplicationTarget
+> {
+  const mutationKey = dbKeys.all;
+  return createMutationV2({
+    mutationFn: (application: DatabaseEngineManagedMongoApplicationTarget) =>
+      backupDatabaseEngineManagedMongo(application),
+    mutationKey,
+    meta: {
+      source: 'database.hooks.useBackupDatabaseEngineManagedMongoMutation',
+      operation: 'action',
+      resource: 'system.databases.engine-managed-mongo-backup',
+      domain: 'database',
+      mutationKey,
+      tags: ['database', 'engine', 'managed-mongo', 'backup'],
+      description: 'Creates a local backup for one or all managed MongoDB application databases.',
+    },
+    invalidateKeys: [
+      dbKeys.backups('mongodb'),
+      dbKeys.engineManagedMongo(),
+    ],
+  });
+}
+
+export function useSyncDatabaseEngineManagedMongoMutation(): MutationResult<
+  DatabaseEngineMongoSyncResponsePayload,
+  {
+    direction: DatabaseEngineMongoSyncDirection;
+    application: DatabaseEngineManagedMongoApplicationTarget;
+  }
+> {
+  const mutationKey = dbKeys.all;
+  return createMutationV2({
+    mutationFn: (input: {
+      direction: DatabaseEngineMongoSyncDirection;
+      application: DatabaseEngineManagedMongoApplicationTarget;
+    }) => syncDatabaseEngineManagedMongo(input.direction, input.application),
+    mutationKey,
+    meta: {
+      source: 'database.hooks.useSyncDatabaseEngineManagedMongoMutation',
+      operation: 'action',
+      resource: 'system.databases.engine-managed-mongo-sync',
+      domain: 'database',
+      mutationKey,
+      tags: ['database', 'engine', 'managed-mongo', 'sync'],
+      description: 'Synchronizes managed MongoDB application databases.',
+    },
+    invalidateKeys: [
+      dbKeys.engineManagedMongo(),
       dbKeys.engineMongoSource(),
       dbKeys.engineStatus(),
       dbKeys.schema({ provider: 'all', includeCounts: true }),

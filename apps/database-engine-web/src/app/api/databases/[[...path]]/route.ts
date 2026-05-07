@@ -25,6 +25,11 @@ import * as schema from '@/features/database/server/api/schema/route-handler';
 import * as upload from '@/features/database/server/api/upload/route-handler';
 import * as engineProviderPreview from '@/features/database/server/api/engine/provider-preview/route-handler';
 import * as engineStatus from '@/features/database/server/api/engine/status/route-handler';
+import * as engineSource from '@/features/database/server/api/engine/source/route-handler';
+import * as engineSourceSync from '@/features/database/server/api/engine/source/sync/route-handler';
+import * as engineManaged from '@/features/database/server/api/engine/managed/route-handler';
+import * as engineManagedBackup from '@/features/database/server/api/engine/managed/backup/route-handler';
+import * as engineManagedSync from '@/features/database/server/api/engine/managed/sync/route-handler';
 import * as engineBackupSchedulerTick from '@/features/database/server/api/engine/backup-scheduler/tick/route-handler';
 import * as engineBackupSchedulerRunNow from '@/features/database/server/api/engine/backup-scheduler/run-now/route-handler';
 import * as engineBackupSchedulerStatus from '@/features/database/server/api/engine/backup-scheduler/status/route-handler';
@@ -48,6 +53,11 @@ const ROUTES = [
   { pattern: ['upload'], module: upload },
   { pattern: ['engine', 'provider-preview'], module: engineProviderPreview },
   { pattern: ['engine', 'status'], module: engineStatus },
+  { pattern: ['engine', 'source'], module: engineSource },
+  { pattern: ['engine', 'source', 'sync'], module: engineSourceSync },
+  { pattern: ['engine', 'managed'], module: engineManaged },
+  { pattern: ['engine', 'managed', 'backup'], module: engineManagedBackup },
+  { pattern: ['engine', 'managed', 'sync'], module: engineManagedSync },
   { pattern: ['engine', 'backup-scheduler', 'tick'], module: engineBackupSchedulerTick },
   { pattern: ['engine', 'backup-scheduler', 'run-now'], module: engineBackupSchedulerRunNow },
   { pattern: ['engine', 'backup-scheduler', 'status'], module: engineBackupSchedulerStatus },

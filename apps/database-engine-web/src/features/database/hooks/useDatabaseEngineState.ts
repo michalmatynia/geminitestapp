@@ -20,6 +20,8 @@ import type {
   DatabaseEngineStatus,
   DatabaseEngineOperationsJobs,
   DatabaseEngineBackupSchedulerStatus,
+  DatabaseEngineManagedMongoApplicationTarget,
+  DatabaseEngineManagedMongoDatabasesResponse,
   DatabaseEngineMongoSourceState,
   DatabaseEngineMongoSyncDirection,
   RedisOverview,
@@ -56,9 +58,12 @@ import {
 } from './database-engine-settings-parsing';
 import {
   useDatabaseBackupSchedulerStatus,
+  useBackupDatabaseEngineManagedMongoMutation,
+  useDatabaseEngineManagedMongoDatabases,
   useDatabaseEngineOperationsJobs,
   useDatabaseEngineMongoSource,
   useDatabaseEngineProviderPreview,
+  useSyncDatabaseEngineManagedMongoMutation,
   useSyncDatabaseEngineMongoSourceMutation,
   useDatabaseEngineStatus,
   useAllCollectionsSchema,
@@ -75,6 +80,7 @@ export interface UseDatabaseEngineStateReturn {
   operationsJobs: DatabaseEngineOperationsJobs | undefined;
   providerPreview: DatabaseEngineProviderPreview | undefined;
   mongoSourceState: DatabaseEngineMongoSourceState | undefined;
+  managedMongoDatabases: DatabaseEngineManagedMongoDatabasesResponse | undefined;
   redisOverview: RedisOverview | undefined;
   activeView: DatabaseEngineWorkspaceView;
   setActiveView: (view: DatabaseEngineWorkspaceView) => void;
@@ -92,11 +98,18 @@ export interface UseDatabaseEngineStateReturn {
   updateBackupSchedule: (updates: Partial<DatabaseEngineBackupSchedule>) => void;
   updateOperationControls: (updates: Partial<DatabaseEngineOperationControls>) => void;
   syncMongoSources: (direction: 'cloud_to_local' | 'local_to_cloud') => Promise<void>;
+  backupManagedMongo: (application: DatabaseEngineManagedMongoApplicationTarget) => Promise<void>;
+  syncManagedMongo: (
+    direction: 'cloud_to_local' | 'local_to_cloud',
+    application: DatabaseEngineManagedMongoApplicationTarget
+  ) => Promise<void>;
   saveSettings: () => Promise<void>;
   isDirty: boolean;
   refetchAll: () => void;
   validationErrors: string[];
   isSyncingMongoSources: boolean;
+  isBackingUpManagedMongo: boolean;
+  isSyncingManagedMongo: boolean;
 }
 
 const isMongoSyncTimeoutError = (error: unknown): error is Error =>
@@ -139,6 +152,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const backupSchedulerStatusQuery = useDatabaseBackupSchedulerStatus();
   const operationsJobsQuery = useDatabaseEngineOperationsJobs(30);
   const mongoSourceQuery = useDatabaseEngineMongoSource();
+  const managedMongoQuery = useDatabaseEngineManagedMongoDatabases();
   const providerPreviewQuery = useDatabaseEngineProviderPreview();
   const redisOverviewQuery = useRedisOverview();
   const schemaQuery = useAllCollectionsSchema();
@@ -166,6 +180,8 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const { data: settingsMap, isPending: settingsLoading } = useSettingsMap({ scope: 'all' });
 
   const updateSettingsBulk = useUpdateSettingsBulk();
+  const backupManagedMongoMutation = useBackupDatabaseEngineManagedMongoMutation();
+  const syncManagedMongoMutation = useSyncDatabaseEngineManagedMongoMutation();
   const syncMongoSourcesMutation = useSyncDatabaseEngineMongoSourceMutation();
 
   const [policy, setPolicy] = useState<DatabaseEnginePolicy>(DEFAULT_DATABASE_ENGINE_POLICY);
@@ -379,6 +395,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     backupSchedulerStatus: backupSchedulerStatusQuery.data,
     operationsJobs: operationsJobsQuery.data,
     mongoSourceState: mongoSourceQuery.data,
+    managedMongoDatabases: managedMongoQuery.data,
     providerPreview: providerPreviewQuery.data,
     redisOverview: redisOverviewQuery.data,
     activeView,
@@ -389,6 +406,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       backupSchedulerStatusQuery.isPending ||
       operationsJobsQuery.isPending ||
       mongoSourceQuery.isPending ||
+      managedMongoQuery.isPending ||
       settingsLoading,
     isSaving: updateSettingsBulk.isPending,
     policy,
@@ -444,6 +462,34 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
         toast(nextToast.message, { variant: nextToast.variant });
       }
     },
+    backupManagedMongo: async (application) => {
+      try {
+        const response = await backupManagedMongoMutation.mutateAsync(application);
+        const fallbackLabel = application === 'all' ? 'all managed databases' : application;
+        toast(response.message ?? `Backup created for ${fallbackLabel}.`, {
+          variant: 'success',
+        });
+        void managedMongoQuery.refetch();
+      } catch (error) {
+        logClientError(error);
+        toast(extractMutationErrorMessage(error, 'Failed to create managed MongoDB backup.'), {
+          variant: 'error',
+        });
+      }
+    },
+    syncManagedMongo: async (direction, application) => {
+      const requestStartedAtMs = Date.now();
+      try {
+        const response = await syncManagedMongoMutation.mutateAsync({ direction, application });
+        toast(response.message, { variant: 'success' });
+        void managedMongoQuery.refetch();
+        void mongoSourceQuery.refetch();
+      } catch (error) {
+        logClientError(error);
+        const nextToast = await resolveMongoSyncToast(error, direction, requestStartedAtMs);
+        toast(nextToast.message, { variant: nextToast.variant });
+      }
+    },
     saveSettings: handleSave,
     isDirty,
     refetchAll: () => {
@@ -451,11 +497,14 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       void backupSchedulerStatusQuery.refetch();
       void operationsJobsQuery.refetch();
       void mongoSourceQuery.refetch();
+      void managedMongoQuery.refetch();
       void providerPreviewQuery.refetch();
       void schemaQuery.refetch();
       void redisOverviewQuery.refetch();
     },
     validationErrors,
     isSyncingMongoSources: syncMongoSourcesMutation.isPending,
+    isBackingUpManagedMongo: backupManagedMongoMutation.isPending,
+    isSyncingManagedMongo: syncManagedMongoMutation.isPending,
   };
 }

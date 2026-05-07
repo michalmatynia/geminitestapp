@@ -6,6 +6,6 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getHandler, querySchema } from './handler';
 
 export const GET = apiHandler(getHandler, {
-  source: 'databases.browse.GET',
+  source: 'database-engine-web.databases.browse.GET',
   querySchema,
 });

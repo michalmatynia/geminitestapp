@@ -1,0 +1,9 @@
+import { describe, expect, it } from 'vitest';
+
+import { POST } from './route-handler';
+
+describe('databases crud route handler module', () => {
+  it('exports the supported route handlers', () => {
+    expect(typeof POST).toBe('function');
+  });
+});

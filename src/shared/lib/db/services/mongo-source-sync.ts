@@ -6,6 +6,7 @@ import path from 'path';
 import { MongoClient } from 'mongodb';
 
 import type {
+  DatabaseEngineManagedMongoApplicationTarget,
   DatabaseEngineMongoLastSync,
   DatabaseEngineMongoSyncApplicationTransfer,
   DatabaseEngineMongoSyncBackup,
@@ -242,10 +243,12 @@ const prepareMongoSyncContext = async (
 };
 
 const prepareMongoSyncContexts = async (
-  direction: DatabaseEngineMongoSyncDirection
+  direction: DatabaseEngineMongoSyncDirection,
+  applicationTarget: DatabaseEngineManagedMongoApplicationTarget
 ): Promise<MongoSyncContext[]> => {
   const timestamp = Date.now();
-  const applications: MongoBackupApplication[] = ['geminitestapp', 'studiq', 'cms-builder'];
+  const applications: MongoBackupApplication[] =
+    applicationTarget === 'all' ? ['geminitestapp', 'studiq', 'cms-builder'] : [applicationTarget];
   const contexts: MongoSyncContext[] = [];
 
   for (const application of applications) {
@@ -455,17 +458,20 @@ const runMongoTransfer = async (
 };
 
 export async function syncMongoSources(
-  direction: DatabaseEngineMongoSyncDirection
+  direction: DatabaseEngineMongoSyncDirection,
+  applicationTarget: DatabaseEngineManagedMongoApplicationTarget = 'all'
 ): Promise<DatabaseEngineMongoSyncResponse> {
   if (process.env['NODE_ENV'] === 'production') {
     throw forbiddenError('MongoDB source sync is disabled in production.');
   }
 
-  await assertMongoSourceSyncReady();
+  if (applicationTarget === 'all' || applicationTarget === 'geminitestapp') {
+    await assertMongoSourceSyncReady();
+  }
 
   const releaseSyncLock = await acquireMongoSyncLock(direction);
   try {
-    const contexts = await prepareMongoSyncContexts(direction);
+    const contexts = await prepareMongoSyncContexts(direction, applicationTarget);
     const primaryContext =
       contexts.find((context) => context.application === 'geminitestapp') ?? contexts[0];
     if (primaryContext === undefined) {
@@ -494,7 +500,7 @@ export async function syncMongoSources(
       await recordMongoSourceSync(syncSnapshot);
       const message = [
         `MongoDB sync completed and verified: ${primaryContext.source} -> ${primaryContext.target}.`,
-        `Synced ${applicationTransfers.length} application databases and created ${preSyncBackups.length} pre-sync backups before restore.`,
+        `Synced ${applicationTransfers.length} application database${applicationTransfers.length === 1 ? '' : 's'} and created ${preSyncBackups.length} pre-sync backups before restore.`,
       ].join(' ');
       return {
         success: true,

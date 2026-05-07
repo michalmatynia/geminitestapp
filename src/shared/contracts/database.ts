@@ -62,6 +62,8 @@ export const databasePreviewRequestSchema = z.object({
   type: databaseTypeSchema,
   mode: databasePreviewModeSchema,
   backupName: z.string().nullable().optional(),
+  application: z.enum(['geminitestapp', 'studiq', 'cms-builder']).optional(),
+  source: z.enum(['local', 'cloud']).optional(),
   page: z.number().optional(),
   pageSize: z.number().optional(),
   table: z.string().optional(),
@@ -165,6 +167,97 @@ export type DatabaseEnginePrimaryProvider = z.infer<typeof databaseEnginePrimary
 export const mongoSourceSchema = z.enum(['local', 'cloud']);
 export type MongoSource = z.infer<typeof mongoSourceSchema>;
 
+export const databaseEngineManagedMongoApplicationSchema = z.enum([
+  'geminitestapp',
+  'studiq',
+  'cms-builder',
+]);
+
+export type DatabaseEngineManagedMongoApplication = z.infer<
+  typeof databaseEngineManagedMongoApplicationSchema
+>;
+
+export const databaseEngineManagedMongoApplicationTargetSchema = z.union([
+  databaseEngineManagedMongoApplicationSchema,
+  z.literal('all'),
+]);
+
+export type DatabaseEngineManagedMongoApplicationTarget = z.infer<
+  typeof databaseEngineManagedMongoApplicationTargetSchema
+>;
+
+export const databaseEngineManagedMongoCollectionStatsSchema = z.object({
+  name: z.string(),
+  documentCount: z.number().nullable(),
+  storageSizeBytes: z.number().nullable(),
+  dataSizeBytes: z.number().nullable(),
+  indexSizeBytes: z.number().nullable(),
+  totalSizeBytes: z.number().nullable(),
+  statsError: z.string().nullable(),
+});
+
+export type DatabaseEngineManagedMongoCollectionStats = z.infer<
+  typeof databaseEngineManagedMongoCollectionStatsSchema
+>;
+
+export const databaseEngineManagedMongoEndpointSchema = z.object({
+  source: mongoSourceSchema,
+  configured: z.boolean(),
+  dbName: z.string().nullable(),
+  maskedUri: z.string().nullable(),
+  usesLegacyEnv: z.boolean(),
+  reachable: z.boolean().nullable(),
+  healthError: z.string().nullable(),
+  databaseSizeBytes: z.number().nullable(),
+  storageSizeBytes: z.number().nullable(),
+  dataSizeBytes: z.number().nullable(),
+  indexSizeBytes: z.number().nullable(),
+  collectionsSizeBytes: z.number().nullable(),
+  collectionCount: z.number(),
+  collections: z.array(databaseEngineManagedMongoCollectionStatsSchema),
+});
+
+export type DatabaseEngineManagedMongoEndpoint = z.infer<
+  typeof databaseEngineManagedMongoEndpointSchema
+>;
+
+export const databaseEngineManagedMongoDatabaseSchema = z.object({
+  application: databaseEngineManagedMongoApplicationSchema,
+  label: z.string(),
+  local: databaseEngineManagedMongoEndpointSchema,
+  cloud: databaseEngineManagedMongoEndpointSchema,
+  canBackupLocal: z.boolean(),
+  canPushToCloud: z.boolean(),
+  canPullFromCloud: z.boolean(),
+  syncIssue: z.string().nullable(),
+});
+
+export type DatabaseEngineManagedMongoDatabase = z.infer<
+  typeof databaseEngineManagedMongoDatabaseSchema
+>;
+
+export const databaseEngineManagedMongoDatabasesResponseSchema = z.object({
+  timestamp: z.string(),
+  backupRoot: z.string(),
+  databases: z.array(databaseEngineManagedMongoDatabaseSchema),
+  canBackupAllLocal: z.boolean(),
+  canPushAllToCloud: z.boolean(),
+  canPullAllFromCloud: z.boolean(),
+  issues: z.array(z.string()),
+});
+
+export type DatabaseEngineManagedMongoDatabasesResponse = z.infer<
+  typeof databaseEngineManagedMongoDatabasesResponseSchema
+>;
+
+export const databaseEngineManagedMongoBackupRequestSchema = z.object({
+  application: databaseEngineManagedMongoApplicationTargetSchema.default('all'),
+});
+
+export type DatabaseEngineManagedMongoBackupRequest = z.infer<
+  typeof databaseEngineManagedMongoBackupRequestSchema
+>;
+
 export const databaseEngineServiceSchema = z.enum([
   'app',
   'auth',
@@ -246,6 +339,8 @@ export type CrudOperation = z.infer<typeof crudOperationSchema>;
 
 export const crudRequestSchema = z.object({
   type: z.enum(['mongodb', 'auto']).optional(),
+  application: databaseEngineManagedMongoApplicationSchema.optional(),
+  source: mongoSourceSchema.optional(),
   table: z.string(),
   operation: crudOperationSchema,
   data: z.record(z.string(), z.unknown()).optional(),
@@ -451,11 +546,8 @@ export type DatabaseEngineMongoSyncDirection = z.infer<
   typeof databaseEngineMongoSyncDirectionSchema
 >;
 
-export const databaseEngineMongoSyncApplicationSchema = z.enum([
-  'geminitestapp',
-  'studiq',
-  'cms-builder',
-]);
+export const databaseEngineMongoSyncApplicationSchema =
+  databaseEngineManagedMongoApplicationSchema;
 
 export type DatabaseEngineMongoSyncApplication = z.infer<
   typeof databaseEngineMongoSyncApplicationSchema
@@ -586,6 +678,7 @@ export type DatabaseEngineMongoSourceState = z.infer<
 
 export const databaseEngineMongoSyncRequestSchema = z.object({
   direction: databaseEngineMongoSyncDirectionSchema,
+  application: databaseEngineManagedMongoApplicationTargetSchema.default('all'),
 });
 
 export type DatabaseEngineMongoSyncRequest = z.infer<
@@ -810,6 +903,8 @@ export interface DatabaseUiConfig {
   setDbType: (type: DatabaseType) => void;
   mode: DatabasePreviewMode;
   backupName?: string | undefined;
+  application?: DatabaseEngineManagedMongoApplication | undefined;
+  source?: MongoSource | undefined;
 }
 
 export interface DatabaseData {

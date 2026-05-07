@@ -82,7 +82,7 @@ export async function postDatabasesRestoreHandler(
   }
 
   const parsed = await parseObjectJsonBody(req, {
-    logPrefix: 'databases.restore',
+    logPrefix: 'database-engine-web.databases.restore',
   });
   if (!parsed.ok) {
     return parsed.response;

@@ -38,7 +38,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   await assertDatabaseEngineOperationEnabled('allowManualBackupRunNow');
 
   const parsed = await parseJsonBody(req, runNowSchema, {
-    logPrefix: 'databases.engine.backup-scheduler.run-now.POST',
+    logPrefix: 'database-engine-web.databases.engine.backup-scheduler.run-now.POST',
   });
   if (!parsed.ok) {
     return parsed.response;

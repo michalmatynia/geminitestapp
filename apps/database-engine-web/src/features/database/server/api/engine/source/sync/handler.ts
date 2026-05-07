@@ -30,14 +30,17 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   await assertDatabaseEngineOperationEnabled('allowManualFullSync');
 
   const parsed = await parseObjectJsonBody(req, {
-    logPrefix: 'databases.engine.source.sync.POST',
+    logPrefix: 'database-engine-web.databases.engine.source.sync.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
 
   const body = databaseEngineMongoSyncRequestSchema.parse(parsed.data);
-  const payload: DatabaseEngineMongoSyncResponse = await syncMongoSources(body.direction);
+  const payload: DatabaseEngineMongoSyncResponse = await syncMongoSources(
+    body.direction,
+    body.application
+  );
   await clearMongoSyncDependentCaches();
 
   return NextResponse.json(payload, {

@@ -3,6 +3,7 @@ import {
   type DatabasePreviewPayload,
   type DatabasePreviewRequest,
   type DatabasePreviewTable,
+  type DatabaseTableDetail,
   type DatabaseTablePreviewData,
 } from '@/shared/contracts/database';
 import { type ApiPayloadResult } from '@/shared/contracts/http';
@@ -33,6 +34,7 @@ export const getDatabasePreview = async (
     const groups = normalizeGroups(raw['groups'] ?? rawStats?.['groups']);
     const tables = (raw['tables'] ?? rawStats?.['tables'] ?? []) as DatabasePreviewTable[];
     const tableRows = (raw['tableRows'] ?? raw['data'] ?? []) as DatabaseTablePreviewData[];
+    const tableDetails = (raw['tableDetails'] ?? []) as DatabaseTableDetail[];
     const finalPage = raw['page'] ?? input.page;
     const finalPageSize = raw['pageSize'] ?? input.pageSize;
 
@@ -40,6 +42,7 @@ export const getDatabasePreview = async (
       groups,
       tables,
       tableRows,
+      tableDetails,
       total: (raw['total'] ?? rawStats?.['total'] ?? 0) as number,
       page: typeof finalPage === 'string' ? parseInt(finalPage, 10) : (finalPage as number) || 1,
       pageSize:

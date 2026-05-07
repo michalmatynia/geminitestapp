@@ -1,7 +1,9 @@
 import {
   type CrudRequest,
   type CrudResult,
+  type DatabaseEngineManagedMongoApplication,
   type DatabaseType,
+  type MongoSource,
   type SqlQueryResult,
 } from '@/shared/contracts/database';
 import { api } from '@/shared/lib/api-client';
@@ -9,6 +11,8 @@ import { api } from '@/shared/lib/api-client';
 export const executeSqlQuery = async (input: {
   sql?: string;
   type: DatabaseType;
+  application?: DatabaseEngineManagedMongoApplication | undefined;
+  source?: MongoSource | undefined;
   collection?: string;
   operation?: string;
   filter?: Record<string, unknown>;

@@ -3,9 +3,14 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
+import {
+  databaseEngineManagedMongoApplicationSchema,
+  mongoSourceSchema,
+} from '@/shared/contracts/database';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
+import { createManagedMongoClient } from '@/shared/lib/db/services/managed-mongo-databases';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -21,6 +26,8 @@ const databaseCrudRequestSchema = z.union([
     table: z.string().trim().regex(SAFE_NAME_RE, 'Valid table/collection name is required.'),
     operation: z.literal('insert'),
     type: z.enum(['mongodb', 'auto']).optional().default('auto'),
+    application: databaseEngineManagedMongoApplicationSchema.optional(),
+    source: mongoSourceSchema.optional(),
     data: nonEmptyRecordSchema,
     primaryKey: z.record(z.string(), z.unknown()).optional(),
   }),
@@ -28,6 +35,8 @@ const databaseCrudRequestSchema = z.union([
     table: z.string().trim().regex(SAFE_NAME_RE, 'Valid table/collection name is required.'),
     operation: z.literal('update'),
     type: z.enum(['mongodb', 'auto']).optional().default('auto'),
+    application: databaseEngineManagedMongoApplicationSchema.optional(),
+    source: mongoSourceSchema.optional(),
     data: nonEmptyRecordSchema,
     primaryKey: nonEmptyRecordSchema,
   }),
@@ -35,6 +44,8 @@ const databaseCrudRequestSchema = z.union([
     table: z.string().trim().regex(SAFE_NAME_RE, 'Valid table/collection name is required.'),
     operation: z.literal('delete'),
     type: z.enum(['mongodb', 'auto']).optional().default('auto'),
+    application: databaseEngineManagedMongoApplicationSchema.optional(),
+    source: mongoSourceSchema.optional(),
     data: z.record(z.string(), z.unknown()).optional(),
     primaryKey: nonEmptyRecordSchema,
   }),
@@ -47,15 +58,15 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
 
   const parsedBody = await parseJsonBody(req, databaseCrudRequestSchema, {
-    logPrefix: 'databases.crud',
+    logPrefix: 'database-engine-web.databases.crud',
   });
   if (!parsedBody.ok) {
     return parsedBody.response;
   }
 
   const parsed = parsedBody.data;
-  const { table, operation, data, primaryKey } = parsed;
-  return handleMongoCrud(table, operation, data, primaryKey);
+  const { table, operation, data, primaryKey, application, source } = parsed;
+  return handleMongoCrud(table, operation, data, primaryKey, application, source);
 }
 
 function toObjectId(value: unknown): ObjectId | unknown {
@@ -74,54 +85,64 @@ async function handleMongoCrud(
   collectionName: string,
   operation: 'insert' | 'update' | 'delete',
   data?: Record<string, unknown>,
-  primaryKey?: Record<string, unknown>
+  primaryKey?: Record<string, unknown>,
+  application?: z.infer<typeof databaseEngineManagedMongoApplicationSchema>,
+  source?: z.infer<typeof mongoSourceSchema>
 ): Promise<Response> {
-  const mongoClient = await getMongoClient();
-  const dbName = process.env['MONGODB_DB'] ?? 'stardb';
-  const db = mongoClient.db(dbName);
+  const managedMongo = application
+    ? await createManagedMongoClient(application, source ?? 'local')
+    : null;
+  const mongoClient = managedMongo?.client ?? (await getMongoClient());
+  const dbName = managedMongo?.dbName ?? process.env['MONGODB_DB'] ?? 'stardb';
+  const db = managedMongo?.db ?? mongoClient.db(dbName);
   const collection = db.collection(collectionName);
 
-  if (operation === 'insert') {
-    if (!data || Object.keys(data).length === 0) {
-      throw badRequestError('Data is required for insert.');
+  try {
+    if (operation === 'insert') {
+      if (!data || Object.keys(data).length === 0) {
+        throw badRequestError('Data is required for insert.');
+      }
+      const result = await collection.insertOne(data);
+      return NextResponse.json({
+        success: result.acknowledged,
+        rowCount: result.acknowledged ? 1 : 0,
+        returning: [{ _id: result.insertedId, ...data }],
+      });
     }
-    const result = await collection.insertOne(data);
-    return NextResponse.json({
-      success: result.acknowledged,
-      rowCount: result.acknowledged ? 1 : 0,
-      returning: [{ _id: result.insertedId, ...data }],
-    });
-  }
 
-  if (operation === 'update') {
-    if (!data || Object.keys(data).length === 0) {
-      throw badRequestError('Data is required for update.');
+    if (operation === 'update') {
+      if (!data || Object.keys(data).length === 0) {
+        throw badRequestError('Data is required for update.');
+      }
+      if (!primaryKey || Object.keys(primaryKey).length === 0) {
+        throw badRequestError('Primary key is required for update.');
+      }
+      const filter: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(primaryKey)) {
+        filter[k] = k === '_id' ? toObjectId(v) : v;
+      }
+      const result = await collection.updateOne(filter, { $set: data });
+      return NextResponse.json({
+        success: result.acknowledged,
+        rowCount: result.modifiedCount,
+      });
     }
+
     if (!primaryKey || Object.keys(primaryKey).length === 0) {
-      throw badRequestError('Primary key is required for update.');
+      throw badRequestError('Primary key is required for delete.');
     }
     const filter: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(primaryKey)) {
       filter[k] = k === '_id' ? toObjectId(v) : v;
     }
-    const result = await collection.updateOne(filter, { $set: data });
+    const result = await collection.deleteOne(filter);
     return NextResponse.json({
       success: result.acknowledged,
-      rowCount: result.modifiedCount,
+      rowCount: result.deletedCount,
     });
+  } finally {
+    if (managedMongo !== null) {
+      await managedMongo.client.close().catch(() => undefined);
+    }
   }
-
-  // delete
-  if (!primaryKey || Object.keys(primaryKey).length === 0) {
-    throw badRequestError('Primary key is required for delete.');
-  }
-  const filter: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(primaryKey)) {
-    filter[k] = k === '_id' ? toObjectId(v) : v;
-  }
-  const result = await collection.deleteOne(filter);
-  return NextResponse.json({
-    success: result.acknowledged,
-    rowCount: result.deletedCount,
-  });
 }

@@ -23,6 +23,7 @@ const rootAppAlias = ['@', 'app'].join('/');
 const rootAppApiAlias = ['@', 'app', 'api'].join('/');
 const rootJobsFeatureAlias = ['@', 'features', 'jobs'].join('/');
 const rootKangurFeatureAlias = ['@', 'features', 'kangur'].join('/');
+const staleDatabaseSourcePattern = new RegExp(String.raw`\b(?:source|logPrefix): ['"]databases\.`);
 
 const requiredPageRoutes = [
   'page.tsx',
@@ -64,11 +65,7 @@ const routeFileForEndpoint = (endpoint: string): string => {
     return path.join(routeRoot, 'api/auth/[...nextauth]/route.ts');
   }
 
-  if (
-    endpoint.startsWith('/api/databases/') &&
-    endpoint !== '/api/databases/engine/source' &&
-    endpoint !== '/api/databases/engine/source/sync'
-  ) {
+  if (endpoint.startsWith('/api/databases/')) {
     return path.join(routeRoot, 'api/databases/[[...path]]/route.ts');
   }
 
@@ -91,6 +88,16 @@ const discoverLocalApiEndpoints = (): string[] => {
 
 const listWorkspaceApiRouteFiles = (): string[] =>
   listSourceFiles('apps/database-engine-web/src/app/api').filter((file) => file.endsWith('route.ts'));
+
+const listDatabaseApiRouteFiles = (): string[] =>
+  listSourceFiles('apps/database-engine-web/src/app/api/databases').filter((file) =>
+    file.endsWith(`${path.sep}route.ts`)
+  );
+
+const listFeatureApiRouteWrapperFiles = (): string[] =>
+  listSourceFiles('apps/database-engine-web/src/features/database/server/api').filter((file) =>
+    file.endsWith(`${path.sep}route.ts`)
+  );
 
 const listWorkspaceSourceFiles = (): string[] => listSourceFiles('apps/database-engine-web/src');
 
@@ -120,6 +127,14 @@ describe('Database Engine workspace route surface', () => {
     expect(source).not.toContain(`${rootAppApiAlias}/databases`);
   });
 
+  it('routes Database Engine database APIs through one local catch-all route file', () => {
+    const databaseRouteFiles = listDatabaseApiRouteFiles().map((file) =>
+      path.relative(routeRoot, file)
+    );
+
+    expect(databaseRouteFiles).toEqual(['api/databases/[[...path]]/route.ts']);
+  });
+
   it('does not import root app API modules from local API routes', () => {
     const rootApiImports = listWorkspaceApiRouteFiles().flatMap((file) => {
       const source = readFileSync(file, 'utf8');
@@ -127,6 +142,23 @@ describe('Database Engine workspace route surface', () => {
     });
 
     expect(rootApiImports).toEqual([]);
+  });
+
+  it('keeps feature API modules as route handlers instead of Next route wrappers', () => {
+    const featureRouteWrappers = listFeatureApiRouteWrapperFiles().map((file) =>
+      path.relative(rootDir, file)
+    );
+
+    expect(featureRouteWrappers).toEqual([]);
+  });
+
+  it('names Database Engine API sources with the standalone app prefix', () => {
+    const staleSources = listWorkspaceSourceFiles().flatMap((file) => {
+      const source = readFileSync(file, 'utf8');
+      return staleDatabaseSourcePattern.test(source) ? [path.relative(rootDir, file)] : [];
+    });
+
+    expect(staleSources).toEqual([]);
   });
 
   it('does not import root app modules from standalone workspace source', () => {

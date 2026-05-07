@@ -64,7 +64,8 @@ The app works without these variables by using static fallback products.
 | `MONGODB_URI` | For live catalog | none | MongoDB connection string. |
 | `MONGODB_DB` | No | `app` | Database name used by the ecommerce Mongo client. |
 | `MENTIOS_CATALOG_ID` | No | `catalog-mentios` | Catalog id used to filter products and categories. |
-| `NEXT_PUBLIC_MAIN_APP_URL` | No | none | Reserved for future product image URL construction. The current UI renders product visuals as CSS gradient compositions. |
+| `NEXT_PUBLIC_FILE_BASE_URL` | No | none | Public FastComet file origin used to render `/uploads/products/...` records from Vercel. |
+| `NEXT_PUBLIC_MAIN_APP_URL` | No | none | Main Products app origin used only for legacy `/api/files/preview` image fallback and local upload URL rewrites. |
 
 The Mongo client is implemented in `src/lib/mongodb.ts`. In development, it is
 cached on `globalThis._ecomMongoClient` to avoid reconnecting on every Next.js
@@ -172,7 +173,7 @@ Live field mapping:
 | localized `description` | `description` |
 | `price` | `price` and formatted `priceDisplay` |
 | `categoryId` plus `product_categories.name` | `category` and heuristic `collectionSlug` |
-| `imageLinks`, `images.imageFile.filepath`, and SKU upload folders | `imageUrl`, normalized to `/uploads/products/...` when possible |
+| `imageLinks`, `images.imageFile.filepath`, and SKU upload folders | `imageUrl`, preserving absolute URLs and converting `/uploads/products/...` paths through `NEXT_PUBLIC_FILE_BASE_URL` when configured |
 | `isNew` | `isNew` and `New` tag |
 | `stock` | `Last pieces` or `Sold out` tag |
 
@@ -288,7 +289,7 @@ Main CMS routes:
 | Route | Purpose |
 | --- | --- |
 | `/api/cms/home` | Home hero, categories, featured section, manifesto, editorial strip, and recently viewed labels. |
-| `/api/cms/site` | Global nav, announcement, footer, search overlay, cookie consent, cart drawer, auth modal, quick view, and back-to-top labels. |
+| `/api/cms/site` | Global nav, announcement, footer, search overlay, cookie consent, cart drawer, auth modal, quick view, back-to-top, and 404-page labels. |
 | `/api/cms/about` | About page copy and structured sections. |
 | `/api/cms/values` | Values page copy, stats, materials, commitments, and closing CTAs. |
 | `/api/cms/contact` | Contact hero, info links, form labels, subject options, and success state. |
@@ -346,10 +347,10 @@ The design system is local to the ecommerce workspace.
 - Core reusable classes include `type-display-*`, `type-label`,
   `type-price`, `btn-primary`, `btn-ghost`, `product-card`, and `grain`.
 
-Product imagery currently reuses the local `public/uploads/products` folder.
-Static fallback products are temporarily mapped to existing upload files, and
-live catalog products normalize MongoDB image paths or matching SKU folders to
-`/uploads/products/...` when possible.
+Product imagery can render from FastComet by setting
+`NEXT_PUBLIC_FILE_BASE_URL`. Static fallback products and live catalog records
+that still contain `/uploads/products/...` paths are served from that file host;
+absolute product image URLs are preserved.
 
 ## Implementation Status
 

@@ -3,7 +3,11 @@
 import { AlertTriangleIcon, DatabaseIcon } from 'lucide-react';
 import type { JSX } from 'react';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import type { DatabaseType } from '@/shared/contracts/database';
+import type {
+  DatabaseEngineManagedMongoApplication,
+  DatabaseType,
+  MongoSource,
+} from '@/shared/contracts/database';
 import { AdminDatabaseBreadcrumbs } from '@/shared/ui/admin.public';
 import { Alert, Badge } from '@/shared/ui/primitives.public';
 import { ListPanel } from '@/shared/ui/navigation-and-layout.public';
@@ -24,8 +28,12 @@ const DATABASE_OPTIONS: Array<LabeledOptionWithDescriptionDto<DatabaseType>> = [
 
 function DatabaseOperationsPanelContent({
   defaultTab,
+  application,
+  source,
 }: {
   defaultTab: DatabaseOperationsTab;
+  application?: DatabaseEngineManagedMongoApplication | undefined;
+  source?: MongoSource | undefined;
 }): JSX.Element {
   const { dbType, setDbType } = useDatabaseConfig();
   const { tableDetails } = useDatabaseData();
@@ -50,6 +58,11 @@ function DatabaseOperationsPanelContent({
                 <Badge variant='outline' className='border-white/10 text-gray-300'>
                   {tableDetails.length.toLocaleString()} table{tableDetails.length === 1 ? '' : 's'}
                 </Badge>
+                {application ? (
+                  <Badge variant='outline' className='border-white/10 text-gray-300'>
+                    {application} / {source ?? 'local'}
+                  </Badge>
+                ) : null}
               </div>
             )}
           </div>
@@ -90,12 +103,20 @@ function DatabaseOperationsPanelContent({
 
 export function DatabaseOperationsPanel({
   defaultTab = 'sql',
+  application,
+  source,
 }: {
   defaultTab?: DatabaseOperationsTab;
+  application?: DatabaseEngineManagedMongoApplication | undefined;
+  source?: MongoSource | undefined;
 }): JSX.Element {
   return (
-    <DatabaseProvider>
-      <DatabaseOperationsPanelContent defaultTab={defaultTab} />
+    <DatabaseProvider application={application} source={source}>
+      <DatabaseOperationsPanelContent
+        defaultTab={defaultTab}
+        application={application}
+        source={source}
+      />
     </DatabaseProvider>
   );
 }

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-17'
+last_reviewed: '2026-05-07'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -33,6 +33,7 @@ is specifically for shared build, CI, and package-manager workflow guidance.
 ## Current Docs
 
 - [`application-workspaces-and-commands.md`](./application-workspaces-and-commands.md) — app/workspace command map and `npm -w` semantics
+- [`database-engine-managed-mongo.md`](./database-engine-managed-mongo.md) — Database Engine managed MongoDB backups, sync, local/cloud env, and API
 - [`scanner-smoke-tests.md`](./scanner-smoke-tests.md) — which scanner smoke test to run and when
 - [`vercel-deployment.md`](./vercel-deployment.md) — Vercel deploy config and operational constraints
 - [`vercel-studiq-cms-split.md`](./vercel-studiq-cms-split.md) — two-project Vercel setup for StudiQ and CMS
@@ -50,6 +51,7 @@ is specifically for shared build, CI, and package-manager workflow guidance.
 | If you need to... | Open |
 | --- | --- |
 | start the right app or workspace | [`application-workspaces-and-commands.md`](./application-workspaces-and-commands.md) |
+| inspect, back up, edit, or sync managed application MongoDB databases | [`database-engine-managed-mongo.md`](./database-engine-managed-mongo.md) |
 | choose the right scanner smoke suite | [`scanner-smoke-tests.md`](./scanner-smoke-tests.md) |
 | understand repo-wide Bazel lanes | [`bazel.md`](./bazel.md) |
 | understand Bun parity or Bun CI lanes | [`bun.md`](./bun.md) |

@@ -11,7 +11,12 @@
  */
 
 import { useCallback, useState } from 'react';
-import type { CrudResult, CrudRequest } from '@/shared/contracts/database';
+import type {
+  CrudResult,
+  CrudRequest,
+  DatabaseEngineManagedMongoApplication,
+  MongoSource,
+} from '@/shared/contracts/database';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { useCrudMutation } from '../useDatabaseQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -26,6 +31,11 @@ export interface UseCrudMutationsReturn {
   handleEdit: (selectedTable: string, row: Record<string, unknown>, data: Record<string, unknown>, onSuccess: () => void) => void;
   handleDelete: (selectedTable: string, row: Record<string, unknown>, onSuccess: () => void) => void;
 }
+
+type CrudMutationTarget = {
+  application?: DatabaseEngineManagedMongoApplication | undefined;
+  source?: MongoSource | undefined;
+};
 
 const getPrimaryKey = (row: Record<string, unknown>): Record<string, unknown> =>
   row['_id'] !== undefined ? { _id: row['_id'] } : { ...row };
@@ -51,7 +61,7 @@ const createMutationHandler = (
   },
 });
 
-export function useCrudMutations(): UseCrudMutationsReturn {
+export function useCrudMutations(target: CrudMutationTarget = {}): UseCrudMutationsReturn {
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const crudMutation = useCrudMutation();
@@ -60,28 +70,28 @@ export function useCrudMutations(): UseCrudMutationsReturn {
     setSuccessMessage(null);
     setMutationError(null);
     crudMutation.mutate(
-      { table: selectedTable, operation: 'insert', type: 'mongodb', data },
+      { table: selectedTable, operation: 'insert', type: 'mongodb', data, ...target },
       createMutationHandler(setSuccessMessage, setMutationError, 'Record created successfully', onSuccess)
     );
-  }, [crudMutation]);
+  }, [crudMutation, target]);
 
   const handleEdit = useCallback((selectedTable: string, row: Record<string, unknown>, data: Record<string, unknown>, onSuccess: () => void): void => {
     setSuccessMessage(null);
     setMutationError(null);
     crudMutation.mutate(
-      { table: selectedTable, operation: 'update', type: 'mongodb', data, primaryKey: getPrimaryKey(row) },
+      { table: selectedTable, operation: 'update', type: 'mongodb', data, primaryKey: getPrimaryKey(row), ...target },
       createMutationHandler(setSuccessMessage, setMutationError, 'Record updated successfully', onSuccess)
     );
-  }, [crudMutation]);
+  }, [crudMutation, target]);
 
   const handleDelete = useCallback((selectedTable: string, row: Record<string, unknown>, onSuccess: () => void): void => {
     setSuccessMessage(null);
     setMutationError(null);
     crudMutation.mutate(
-      { table: selectedTable, operation: 'delete', type: 'mongodb', primaryKey: getPrimaryKey(row) },
+      { table: selectedTable, operation: 'delete', type: 'mongodb', primaryKey: getPrimaryKey(row), ...target },
       createMutationHandler(setSuccessMessage, setMutationError, 'Record deleted successfully', onSuccess)
     );
-  }, [crudMutation]);
+  }, [crudMutation, target]);
 
   return { mutationError, setMutationError, successMessage, setSuccessMessage, crudMutation, handleAdd, handleEdit, handleDelete };
 }

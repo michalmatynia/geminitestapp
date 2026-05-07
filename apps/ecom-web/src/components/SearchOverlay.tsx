@@ -110,8 +110,8 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
       imageUrl: product.imageUrl,
       quantity: 1,
     });
-    toast({ type: 'success', title: 'Added to bag', message: product.name });
-  }, [addItem, toast]);
+    toast({ type: 'success', title: search.addedToastTitle, message: product.name });
+  }, [addItem, search.addedToastTitle, toast]);
 
   const trimmed = query.trim();
   const showResults = trimmed.length >= 2;
@@ -135,7 +135,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
       {/* Panel */}
       <div
         role="dialog"
-        aria-label="Search"
+        aria-label={search.dialogAriaLabel}
         aria-modal="true"
         className="fixed top-0 left-0 right-0 z-50"
         style={{
@@ -179,7 +179,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
             onChange={(e) => setQuery(e.target.value)}
             placeholder={search.placeholder}
             autoComplete="off"
-            aria-label="Search"
+            aria-label={search.inputAriaLabel}
             style={{
               flex: 1,
               background: 'transparent',
@@ -193,7 +193,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
           />
           <button
             onClick={onClose}
-            aria-label="Close search"
+            aria-label={search.closeAriaLabel}
             className="type-label flex items-center gap-1.5 hover:text-[var(--fg)] transition-colors"
             style={{ color: 'var(--muted)', flexShrink: 0 }}
           >
@@ -286,15 +286,15 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
               <div className="flex items-center gap-3 mb-6">
                 <p className="type-label" style={{ color: 'var(--muted)' }}>
                   {isLoading
-                    ? `Searching…`
-                    : `${results.length} result${results.length !== 1 ? 's' : ''} for “${query}”`}
+                    ? search.loadingResultsLabel
+                    : `${results.length} ${results.length === 1 ? search.resultSingular : search.resultPlural} ${search.resultsForLabel} “${query}”`}
                 </p>
                 {isLoading && (
                   <span
                     className="type-label px-2 py-0.5"
                     style={{ background: 'color-mix(in srgb, var(--accent) 12%, transparent)', color: 'var(--accent)' }}
                   >
-                    live
+                    {search.liveLabel}
                   </span>
                 )}
               </div>
@@ -332,7 +332,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                           style={{ background: 'rgba(255,255,255,0.95)', color: 'var(--fg)', padding: '0.5rem 1rem' }}
                           onClick={(e) => handleQuickAdd(p, e)}
                         >
-                          Quick Add
+                          {search.quickAddLabel}
                         </button>
                       </div>
                     </div>
@@ -352,7 +352,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                     onClick={onClose}
                     className="btn-ghost"
                   >
-                    View all {results.length} results
+                    {search.viewAllPrefix} {results.length} {results.length === 1 ? search.resultSingular : search.resultPlural}
                   </a>
                 </div>
               )}

@@ -13,7 +13,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
 
   const parsed = await parseObjectJsonBody(req, {
-    logPrefix: 'databases.json-restore',
+    logPrefix: 'database-engine-web.databases.json-restore',
   });
   if (!parsed.ok) {
     return parsed.response;

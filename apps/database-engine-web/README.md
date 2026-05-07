@@ -77,12 +77,35 @@ and auth endpoints.
 
 The standalone app owns its page routes, feature implementation, and database
 API route layer. Database API handler implementations live under
-`apps/database-engine-web/src/features/database/server/api`, with shared server
-contracts, backup orchestration, and sync helpers kept in the database feature
-and shared database libraries.
+`apps/database-engine-web/src/features/database/server/api` as
+`route-handler.ts` modules. Next route files stay under
+`apps/database-engine-web/src/app/api`; feature-level `route.ts` wrappers are
+intentionally pruned. Shared server contracts, backup orchestration, and sync
+helpers stay in the database feature and shared database libraries.
+
+## Managed MongoDB Operations
+
+The Database Engine manages three application databases as first-class local
+and cloud MongoDB targets:
+
+- `geminitestapp`
+- `studiq`
+- `cms-builder`
+
+Use `/admin/databases/engine` to inspect local/cloud reachability, database
+size, collection sizes, and per-collection document counts. Each application
+card supports local backup, push local to cloud, pull cloud to local, and an
+Edit Local link into the CRUD workspace. The section also exposes group
+actions for Backup All, Push All, and Pull All.
+
+Backups are stored under the neutral `MONGO_BACKUPS_DIR` root, defaulting to
+`../database/mongo-backups`, with one subfolder per application. Detailed
+environment, backup, sync, and API behavior is documented in the managed
+MongoDB guide.
 
 ## Related Docs
 
 - [`../../docs/build/application-workspaces-and-commands.md`](../../docs/build/application-workspaces-and-commands.md)
+- [`../../docs/build/database-engine-managed-mongo.md`](../../docs/build/database-engine-managed-mongo.md)
 - [`../cms-builder-web/README.md`](../cms-builder-web/README.md)
 - [`../studiq-web/README.md`](../studiq-web/README.md)

@@ -1,0 +1,14 @@
+Options -Indexes
+
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+  Header set X-Content-Type-Options "nosniff"
+  <FilesMatch "\.(avif|gif|jpe?g|pdf|png|webp)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+<FilesMatch "\.(cgi|fcgi|phtml|php|phar|pl|py|rb|sh)$">
+  Require all denied
+</FilesMatch>
+

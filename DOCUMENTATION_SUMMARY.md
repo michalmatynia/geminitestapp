@@ -2,6 +2,22 @@
 
 This document summarizes the explanatory comments and documentation added to the Kangur Platform codebase.
 
+## Current Database Engine Documentation
+
+### `docs/build/database-engine-managed-mongo.md`
+- Added canonical managed MongoDB guide for the standalone Database Engine
+- Documents `geminitestapp`, `studiq`, and `cms-builder` local/cloud targets
+- Covers backup folders, neutral `MONGO_BACKUPS_DIR`, per-app and group actions
+- Covers managed API endpoints, sync behavior, production restrictions, and troubleshooting
+
+### `apps/database-engine-web/README.md`
+- Linked the managed MongoDB guide from the Database Engine workspace README
+- Added a concise managed operations overview for the Database Engine page
+
+### `docs/build/application-workspaces-and-commands.md`
+- Clarified that `@app/database-engine-web` manages all three application MongoDB targets
+- Linked the detailed managed MongoDB guide
+
 ## Files Updated with Inline Comments (Session 7)
 
 ### 17. Settings and Configuration (Session 7)
@@ -465,7 +481,7 @@ This document summarizes the explanatory comments and documentation added to the
 - Added usage examples
 - Clarified cross-platform API access
 
-#### `src/features/database/access.ts`
+#### `apps/database-engine-web/src/features/database/access.ts`
 - Documented database access control
 - Explained dual-access pattern (admin + AI Paths)
 - Clarified collection-level restrictions

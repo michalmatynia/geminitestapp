@@ -1,7 +1,12 @@
+'use client';
+
 import type { JSX } from 'react';
 import { SiteNav } from '@/components/SiteNav';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export default function NotFound(): JSX.Element {
+  const { notFound } = useSiteContent();
+
   return (
     <>
       <SiteNav />
@@ -25,20 +30,25 @@ export default function NotFound(): JSX.Element {
               letterSpacing: '-0.05em',
             }}
           >
-            404
+            {notFound.code}
           </span>
         </div>
 
         {/* Content */}
         <div className="relative z-10 text-center max-w-lg">
           <div className="type-label mb-6" style={{ color: 'var(--accent)' }}>
-            Object not found
+            {notFound.eyebrow}
           </div>
           <h1
             className="type-display-lg mb-6"
             style={{ color: 'var(--fg)' }}
           >
-            This page has<br />left the archive
+            {notFound.titleLines.map((line, index) => (
+              <span key={`${line}-${index}`}>
+                {line}
+                {index < notFound.titleLines.length - 1 ? <br /> : null}
+              </span>
+            ))}
           </h1>
           <p
             style={{
@@ -50,26 +60,21 @@ export default function NotFound(): JSX.Element {
               marginBottom: '2.5rem',
             }}
           >
-            The page you are looking for may have moved, been renamed,
-            or never existed. Return home or browse our collections.
+            {notFound.body}
           </p>
 
           <div className="flex flex-wrap gap-3 justify-center">
-            <a href="/" className="btn-primary">
-              Return home
+            <a href={notFound.primaryHref} className="btn-primary">
+              {notFound.primaryLabel}
             </a>
-            <a href="/collections/objects" className="btn-ghost">
-              Browse Objects
+            <a href={notFound.secondaryHref} className="btn-ghost">
+              {notFound.secondaryLabel}
             </a>
           </div>
 
           {/* Small collection links */}
           <div className="flex flex-wrap gap-5 justify-center mt-12">
-            {[
-              { label: 'Womenswear', href: '/collections/womenswear' },
-              { label: 'Menswear', href: '/collections/menswear' },
-              { label: 'Accessories', href: '/collections/accessories' },
-            ].map((link) => (
+            {notFound.collectionLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}

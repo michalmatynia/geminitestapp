@@ -1,34 +1,11 @@
 'use client';
 
-'use client';
-
 import type { JSX } from 'react';
-
-const FOOTER_LINKS: Record<string, { label: string; href: string }[]> = {
-  Shop: [
-    { label: 'Anime Keychains', href: '/collections/womenswear' },
-    { label: 'Gaming Pins', href: '/collections/menswear' },
-    { label: 'Film Collectibles', href: '/collections/accessories' },
-    { label: 'New Drops', href: '/products?new=1' },
-    { label: 'All Items', href: '/products' },
-  ],
-  Company: [
-    { label: 'About ARCANA', href: '/about' },
-    { label: 'Sourcing & Ethics', href: '/sourcing' },
-    { label: 'Press', href: '/press' },
-    { label: 'Affiliates', href: '/affiliates' },
-    { label: 'Careers', href: '/careers' },
-  ],
-  Support: [
-    { label: 'Sizing Guide', href: '/sizing' },
-    { label: 'Care Guide', href: '/care' },
-    { label: 'Returns', href: '/returns' },
-    { label: 'Shipping', href: '/shipping' },
-    { label: 'Contact', href: '/contact' },
-  ],
-};
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function SiteFooter(): JSX.Element {
+  const { footer } = useSiteContent();
+
   return (
     <footer
       style={{
@@ -53,24 +30,24 @@ export function SiteFooter(): JSX.Element {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--cyan-teal)', boxShadow: '0 0 6px var(--cyan-teal)' }} />
-              <span className="type-label" style={{ color: 'var(--cyan-teal)' }}>Stay Connected</span>
+              <span className="type-label" style={{ color: 'var(--cyan-teal)' }}>{footer.newsletter.eyebrow}</span>
             </div>
             <h3
               className="type-display-md mb-3"
               style={{ color: 'var(--fg)', fontFamily: 'var(--font-display)', fontWeight: 700 }}
             >
-              The Drop Signal
+              {footer.newsletter.title}
             </h3>
             <p className="type-label max-w-xs" style={{ color: 'var(--muted-teal)', lineHeight: 1.8, letterSpacing: '0.08em' }}>
-              New drops, limited runs and universe exclusives — direct to your inbox before the public.
+              {footer.newsletter.body}
             </p>
           </div>
 
           <form onSubmit={(e) => e.preventDefault()} className="flex w-full md:w-auto">
             <input
               type="email"
-              placeholder="your@email.com"
-              aria-label="Email for newsletter"
+              placeholder={footer.newsletter.emailPlaceholder}
+              aria-label={footer.newsletter.emailAriaLabel}
               className="flex-1 md:w-72 px-5 py-3.5 bg-transparent outline-none type-label placeholder:opacity-30"
               style={{
                 border: '1px solid rgba(171,217,208,0.25)',
@@ -81,7 +58,7 @@ export function SiteFooter(): JSX.Element {
               }}
             />
             <button type="submit" className="btn-primary whitespace-nowrap" style={{ padding: '0.75rem 1.75rem' }}>
-              Subscribe
+              {footer.newsletter.submitLabel}
             </button>
           </form>
         </div>
@@ -103,24 +80,20 @@ export function SiteFooter(): JSX.Element {
                   textShadow: '0 0 16px rgba(171,217,208,0.35)',
                 }}
               >
-                ARCANA
+                {footer.brandName}
               </span>
-              <span className="type-label" style={{ color: 'rgba(171,217,208,0.3)' }}>NEXUS</span>
+              <span className="type-label" style={{ color: 'rgba(171,217,208,0.3)' }}>{footer.brandSuffix}</span>
             </div>
             <p className="type-label max-w-xs mb-6" style={{ color: 'var(--muted-teal)', lineHeight: 1.9, letterSpacing: '0.08em' }}>
-              Officially licensed collectibles from the anime, gaming and film universes you love most.
+              {footer.brandDescription}
             </p>
 
             {/* Socials */}
             <div className="flex gap-4">
-              {[
-                { name: 'X', icon: 'X' },
-                { name: 'Instagram', icon: 'IG' },
-                { name: 'TikTok', icon: 'TK' },
-              ].map(({ name, icon }) => (
+              {footer.socials.map(({ name, icon, href }) => (
                 <a
                   key={name}
-                  href="#"
+                  href={href}
                   aria-label={name}
                   className="type-label w-8 h-8 flex items-center justify-center transition-all duration-200"
                   style={{
@@ -145,7 +118,7 @@ export function SiteFooter(): JSX.Element {
           </div>
 
           {/* Link columns */}
-          {Object.entries(FOOTER_LINKS).map(([heading, links]) => (
+          {footer.columns.map(({ heading, links }) => (
             <div key={heading}>
               <div className="type-label mb-5" style={{ color: 'var(--cyan-teal)', letterSpacing: '0.18em' }}>
                 {heading}
@@ -174,17 +147,17 @@ export function SiteFooter(): JSX.Element {
         style={{ borderTop: '1px solid rgba(171,217,208,0.08)' }}
       >
         <span className="type-label" style={{ color: 'rgba(171,217,208,0.25)' }}>
-          © 2026 ARCANA NEXUS. All rights reserved.
+          {footer.copyright}
         </span>
         <div className="flex gap-8">
-          {['Privacy', 'Terms', 'Cookies'].map((item) => (
+          {footer.legalLinks.map((item) => (
             <a
-              key={item}
-              href="#"
+              key={item.label}
+              href={item.href}
               className="type-label hover:text-[var(--cyan-teal)] transition-colors"
               style={{ color: 'rgba(171,217,208,0.25)' }}
             >
-              {item}
+              {item.label}
             </a>
           ))}
         </div>

@@ -5,6 +5,7 @@ import { useQuickView } from '@/context/QuickViewContext';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from '@/context/ToastContext';
+import { useSiteContent } from '@/context/SiteContentContext';
 import { ProductImage } from '@/components/ProductImage';
 
 export function QuickViewModal(): JSX.Element | null {
@@ -12,6 +13,7 @@ export function QuickViewModal(): JSX.Element | null {
   const { addItem, openCart } = useCart();
   const { isWishlisted, toggle: toggleWishlist } = useWishlist();
   const { toast } = useToast();
+  const { quickView } = useSiteContent();
   const [selectedSize, setSelectedSize] = useState('');
   const [adding, setAdding] = useState(false);
 
@@ -46,7 +48,7 @@ export function QuickViewModal(): JSX.Element | null {
     });
     toast({
       type: 'success',
-      title: 'Added to bag',
+      title: quickView.addedToastTitle,
       message: `${product.name}${selectedSize ? ` — ${selectedSize}` : ''}`,
     });
     setTimeout(() => {
@@ -96,7 +98,7 @@ export function QuickViewModal(): JSX.Element | null {
             className="absolute bottom-6 left-6 z-10"
             style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)' }}
           >
-            ARCANA / {product.id}
+            {quickView.brandLabel} / {product.id}
           </div>
         </div>
 
@@ -124,7 +126,7 @@ export function QuickViewModal(): JSX.Element | null {
             </div>
             <button
               onClick={close}
-              aria-label="Close quick view"
+              aria-label={quickView.closeLabel}
               className="text-[var(--muted)] hover:text-[var(--fg)] transition-colors flex-shrink-0 ml-4 mt-1"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -150,7 +152,7 @@ export function QuickViewModal(): JSX.Element | null {
           {/* Sizes */}
           {product.sizes.length > 0 && (
             <div className="mb-6">
-              <div className="type-label mb-3" style={{ color: 'var(--fg)' }}>Select size</div>
+              <div className="type-label mb-3" style={{ color: 'var(--fg)' }}>{quickView.selectSizeLabel}</div>
               <div className="flex flex-wrap gap-2">
                 {product.sizes.map((size) => (
                   <button
@@ -181,14 +183,14 @@ export function QuickViewModal(): JSX.Element | null {
             >
               {adding ? (
                 <>
-                  Added to bag
+                  {quickView.addedButtonLabel}
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <path d="M20 6L9 17l-5-5" />
                   </svg>
                 </>
               ) : (
                 <>
-                  Add to Bag
+                  {quickView.addToBagLabel}
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
@@ -211,7 +213,7 @@ export function QuickViewModal(): JSX.Element | null {
                   });
                   toast({
                     type: wishlisted ? 'info' : 'success',
-                    title: wishlisted ? 'Removed from wishlist' : 'Saved to wishlist',
+                    title: wishlisted ? quickView.removedWishlistToastTitle : quickView.savedWishlistToastTitle,
                     message: product.name,
                   });
                 }}
@@ -228,14 +230,14 @@ export function QuickViewModal(): JSX.Element | null {
                 >
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
-                {wishlisted ? 'Saved' : 'Save'}
+                {wishlisted ? quickView.savedWishlistButtonLabel : quickView.saveWishlistButtonLabel}
               </button>
               <a
                 href={`/products/${product.slug}`}
                 className="btn-ghost flex-1 justify-center"
                 onClick={close}
               >
-                Full details
+                {quickView.fullDetailsLabel}
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>

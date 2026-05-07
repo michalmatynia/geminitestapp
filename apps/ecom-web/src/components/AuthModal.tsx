@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, type JSX } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 interface Props {
   open: boolean;
@@ -10,6 +11,7 @@ interface Props {
 
 export function AuthModal({ open, onClose }: Props): JSX.Element | null {
   const { login, register } = useAuth();
+  const { auth } = useSiteContent();
   const [tab, setTab] = useState<'signin' | 'register'>('signin');
 
   // Sign-in form state
@@ -62,7 +64,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
       await login(siEmail, siPassword);
       onClose();
     } catch (err) {
-      setSiError(err instanceof Error ? err.message : 'Login failed');
+      setSiError(err instanceof Error ? err.message : auth.loginFailedError);
     } finally {
       setSiLoading(false);
     }
@@ -72,7 +74,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
     e.preventDefault();
     setRError('');
     if (rPassword !== rConfirm) {
-      setRError('Passwords do not match');
+      setRError(auth.passwordMismatchError);
       return;
     }
     setRLoading(true);
@@ -80,7 +82,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
       await register(rName, rEmail, rPassword);
       onClose();
     } catch (err) {
-      setRError(err instanceof Error ? err.message : 'Registration failed');
+      setRError(err instanceof Error ? err.message : auth.registrationFailedError);
     } finally {
       setRLoading(false);
     }
@@ -159,7 +161,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
           {/* Close button */}
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={auth.closeLabel}
             style={{
               position: 'absolute',
               top: '1rem',
@@ -230,7 +232,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                   transition: 'color 0.2s',
                 }}
               >
-                {t === 'signin' ? 'Sign In' : 'Create Account'}
+                {t === 'signin' ? auth.signInTabLabel : auth.registerTabLabel}
               </button>
             ))}
           </div>
@@ -240,7 +242,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
             <form onSubmit={handleSignIn} noValidate>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
                 <div>
-                  <label htmlFor="si-email" style={labelStyle}>Email address</label>
+                  <label htmlFor="si-email" style={labelStyle}>{auth.emailLabel}</label>
                   <input
                     id="si-email"
                     type="email"
@@ -254,7 +256,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                   />
                 </div>
                 <div>
-                  <label htmlFor="si-password" style={labelStyle}>Password</label>
+                  <label htmlFor="si-password" style={labelStyle}>{auth.passwordLabel}</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       id="si-password"
@@ -270,7 +272,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                     <button
                       type="button"
                       onClick={() => setSiShowPw(!siShowPw)}
-                      aria-label={siShowPw ? 'Hide password' : 'Show password'}
+                      aria-label={siShowPw ? auth.hidePasswordLabel : auth.showPasswordLabel}
                       style={{
                         position: 'absolute',
                         right: '0.75rem',
@@ -308,7 +310,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                   className="btn-primary"
                   style={{ width: '100%', marginTop: '0.25rem', opacity: siLoading ? 0.7 : 1 }}
                 >
-                  {siLoading ? <LoadingSpinner /> : 'Sign In'}
+                  {siLoading ? <LoadingSpinner label={auth.loadingLabel} /> : auth.signInSubmitLabel}
                 </button>
               </div>
             </form>
@@ -319,7 +321,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
             <form onSubmit={handleRegister} noValidate>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
                 <div>
-                  <label htmlFor="r-name" style={labelStyle}>Full name</label>
+                  <label htmlFor="r-name" style={labelStyle}>{auth.fullNameLabel}</label>
                   <input
                     id="r-name"
                     type="text"
@@ -333,7 +335,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                   />
                 </div>
                 <div>
-                  <label htmlFor="r-email" style={labelStyle}>Email address</label>
+                  <label htmlFor="r-email" style={labelStyle}>{auth.emailLabel}</label>
                   <input
                     id="r-email"
                     type="email"
@@ -347,7 +349,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                   />
                 </div>
                 <div>
-                  <label htmlFor="r-password" style={labelStyle}>Password</label>
+                  <label htmlFor="r-password" style={labelStyle}>{auth.passwordLabel}</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       id="r-password"
@@ -364,7 +366,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                     <button
                       type="button"
                       onClick={() => setRShowPw(!rShowPw)}
-                      aria-label={rShowPw ? 'Hide password' : 'Show password'}
+                      aria-label={rShowPw ? auth.hidePasswordLabel : auth.showPasswordLabel}
                       style={{
                         position: 'absolute',
                         right: '0.75rem',
@@ -394,7 +396,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="r-confirm" style={labelStyle}>Confirm password</label>
+                  <label htmlFor="r-confirm" style={labelStyle}>{auth.confirmPasswordLabel}</label>
                   <input
                     id="r-confirm"
                     type={rShowPw ? 'text' : 'password'}
@@ -416,7 +418,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                   className="btn-primary"
                   style={{ width: '100%', marginTop: '0.25rem', opacity: rLoading ? 0.7 : 1 }}
                 >
-                  {rLoading ? <LoadingSpinner /> : 'Create Account'}
+                  {rLoading ? <LoadingSpinner label={auth.loadingLabel} /> : auth.registerSubmitLabel}
                 </button>
               </div>
             </form>
@@ -443,7 +445,7 @@ function ErrorBox({ message }: { message: string }): JSX.Element {
   );
 }
 
-function LoadingSpinner(): JSX.Element {
+function LoadingSpinner({ label }: { label: string }): JSX.Element {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
       <svg
@@ -458,7 +460,7 @@ function LoadingSpinner(): JSX.Element {
       >
         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
       </svg>
-      Loading…
+      {label}
     </span>
   );
 }

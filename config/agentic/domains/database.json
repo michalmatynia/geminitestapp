@@ -3,8 +3,9 @@
   "label": "Database tooling, providers, and engine administration",
   "riskLevel": "high",
   "sourceRoots": [
-    "src/features/database",
-    "src/app/api/databases",
+    "apps/database-engine-web/src/features/database",
+    "apps/database-engine-web/src/app/api/databases",
+    "apps/database-engine-web/src/server",
     "src/shared/lib/db"
   ],
   "ownedDocs": [

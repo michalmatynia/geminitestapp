@@ -1,55 +1,50 @@
 'use client';
 
 import type { JSX } from 'react';
+import { HOME_CONTENT_DEFAULTS, type HomeEditorialContent } from '@/data/homeContent';
 
-const UNIVERSE_REPORTS = [
+const REPORT_VISUALS = [
   {
-    id: 1,
-    tag: 'Universe Report',
-    title: 'Attack on Titan — The Final Collection',
-    excerpt: 'Survey Corps insignia, crystal-cast pins and wall-break keychains from the most iconic arc in modern anime.',
     gradient: 'linear-gradient(145deg, #0a0d1e 0%, #0d1a35 50%, #142a50 100%)',
     accent: 'rgba(171,217,208,0.7)',
     tagColor: 'var(--cyan-teal)',
   },
   {
-    id: 2,
-    tag: 'Gaming Drop',
-    title: 'Elden Ring Talisman Series',
-    excerpt: 'Gilded pendants, smithing stone charms and Great Rune keychains — forged for Tarnished who survived the Lands Between.',
     gradient: 'linear-gradient(145deg, #1a0d00 0%, #2e1800 50%, #3d2200 100%)',
     accent: 'rgba(250,229,163,0.7)',
     tagColor: 'var(--soft-gold)',
   },
   {
-    id: 3,
-    tag: 'Film Collectible',
-    title: 'Blade Runner 2049 — Off-World Edition',
-    excerpt: 'Origami figures, spinner-craft pendants and neon-etched charms inspired by the rain-soaked skylines of New Los Angeles.',
     gradient: 'linear-gradient(145deg, #150520 0%, #220a35 50%, #30105a 100%)',
     accent: 'rgba(244,185,142,0.7)',
     tagColor: 'var(--peach-orange)',
   },
 ];
 
-export function EditorialStrip(): JSX.Element {
+const DEFAULT_VISUAL = REPORT_VISUALS[0];
+
+export function EditorialStrip({
+  content = HOME_CONTENT_DEFAULTS.editorial,
+}: {
+  content?: HomeEditorialContent;
+}): JSX.Element {
   return (
     <section className="px-6 md:px-10 py-24 max-w-screen-2xl mx-auto">
       <div className="flex items-end justify-between mb-12">
         <div>
           <div className="type-label mb-3" style={{ color: 'var(--cyan-teal)' }}>
-            Universe Reports
+            {content.eyebrow}
           </div>
           <h2 className="type-display-lg" style={{ color: 'var(--fg)' }}>
-            Lore &amp; Drops
+            {content.title}
           </h2>
         </div>
         <a
-          href="#"
+          href={content.ctaHref}
           className="hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all duration-200"
           style={{ color: 'var(--muted-teal)' }}
         >
-          All reports
+          {content.ctaLabel}
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
@@ -57,10 +52,12 @@ export function EditorialStrip(): JSX.Element {
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
-        {UNIVERSE_REPORTS.map((story) => (
+        {content.reports.map((story, index) => {
+          const visual = REPORT_VISUALS[index] ?? DEFAULT_VISUAL;
+          return (
           <a
-            key={story.id}
-            href="#"
+            key={`${story.title}-${index}`}
+            href={story.href}
             className="group block relative overflow-hidden"
             style={{
               aspectRatio: '3/4',
@@ -68,7 +65,7 @@ export function EditorialStrip(): JSX.Element {
               transition: 'border-color 0.35s ease, box-shadow 0.35s ease',
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = story.accent;
+              (e.currentTarget as HTMLElement).style.borderColor = visual.accent;
               (e.currentTarget as HTMLElement).style.boxShadow = `0 0 30px rgba(171,217,208,0.1)`;
             }}
             onMouseLeave={(e) => {
@@ -79,7 +76,7 @@ export function EditorialStrip(): JSX.Element {
             {/* Background */}
             <div
               className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105"
-              style={{ background: story.gradient }}
+              style={{ background: visual.gradient }}
             />
 
             {/* Dot grid overlay */}
@@ -94,14 +91,14 @@ export function EditorialStrip(): JSX.Element {
             />
 
             {/* Corner bracket top-left */}
-            <div className="absolute top-4 left-4 w-5 h-5 z-10 opacity-60" style={{ borderTop: `1px solid ${story.accent}`, borderLeft: `1px solid ${story.accent}` }} />
-            <div className="absolute top-4 right-4 w-5 h-5 z-10 opacity-60" style={{ borderTop: `1px solid ${story.accent}`, borderRight: `1px solid ${story.accent}` }} />
+            <div className="absolute top-4 left-4 w-5 h-5 z-10 opacity-60" style={{ borderTop: `1px solid ${visual.accent}`, borderLeft: `1px solid ${visual.accent}` }} />
+            <div className="absolute top-4 right-4 w-5 h-5 z-10 opacity-60" style={{ borderTop: `1px solid ${visual.accent}`, borderRight: `1px solid ${visual.accent}` }} />
 
             {/* Content */}
             <div className="absolute inset-0 p-7 flex flex-col justify-end z-10">
               <span
                 className="type-label inline-block mb-4 self-start"
-                style={{ color: story.tagColor, background: 'rgba(1,0,13,0.5)', border: `1px solid ${story.accent}`, padding: '0.2rem 0.6rem' }}
+                style={{ color: visual.tagColor, background: 'rgba(1,0,13,0.5)', border: `1px solid ${visual.accent}`, padding: '0.2rem 0.6rem' }}
               >
                 {story.tag}
               </span>
@@ -131,16 +128,17 @@ export function EditorialStrip(): JSX.Element {
               </p>
               <div
                 className="flex items-center gap-2 type-label group-hover:gap-3 transition-all duration-200"
-                style={{ color: story.tagColor }}
+                style={{ color: visual.tagColor }}
               >
-                Read Report
+                {content.readLabel}
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </div>
             </div>
           </a>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

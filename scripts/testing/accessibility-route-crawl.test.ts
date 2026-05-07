@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAccessibilityRouteCrawlHeartbeatLine,
   buildAccessibilityRouteCrawlTitle,
+  filterAccessibilityRouteEntries,
   normalizeAccessibilityRouteEntries,
   resolveAccessibilityRouteCrawlChunkSize,
   resolveAccessibilityRouteCrawlAgentId,
@@ -48,6 +49,7 @@ describe('normalizeAccessibilityRouteEntries', () => {
           audience: 'admin',
           readySelector: '#app-content h1',
           contextSelector: 'body',
+          requiredEnv: 'DATABASE_ENGINE_WEB_ORIGIN',
         },
       ])
     ).toEqual([
@@ -60,6 +62,7 @@ describe('normalizeAccessibilityRouteEntries', () => {
         contextSelector: 'body',
         navigationWaitUntil: null,
         navigationTimeoutMs: null,
+        requiredEnv: ['DATABASE_ENGINE_WEB_ORIGIN'],
       },
     ]);
   });
@@ -86,6 +89,42 @@ describe('normalizeAccessibilityRouteEntries', () => {
         }),
       ])
     );
+  });
+
+  it('skips detached Database Engine routes unless its origin is configured', async () => {
+    const { accessibilityRouteCrawlRoutes } = await import('./config/accessibility-route-crawl.config.mjs');
+    const routes = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes);
+
+    expect(filterAccessibilityRouteEntries(routes, { env: {} })).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'admin-databases',
+        }),
+      ])
+    );
+    expect(
+      filterAccessibilityRouteEntries(routes, {
+        env: { DATABASE_ENGINE_WEB_ORIGIN: 'http://localhost:3400' },
+      })
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'admin-databases',
+          route: '/admin/databases/engine',
+        }),
+      ])
+    );
+  });
+
+  it('reports missing environment when explicitly selecting a detached route', async () => {
+    const { accessibilityRouteCrawlRoutes } = await import('./config/accessibility-route-crawl.config.mjs');
+    const routes = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes);
+
+    expect(() =>
+      filterAccessibilityRouteEntries(routes, {
+        env: { PLAYWRIGHT_ROUTE_CRAWL_IDS: 'admin-databases' },
+      })
+    ).toThrow(/admin-databases requires DATABASE_ENGINE_WEB_ORIGIN/i);
   });
 });
 

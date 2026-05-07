@@ -1,1 +1,18 @@
-export { GET, POST } from '@/app/api/auth/[...nextauth]/route';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+
+import { getHandler, postHandler } from '@/features/auth/server/api/nextauth/handler';
+
+export const GET = apiHandlerWithParams<{ nextauth: string[] }>(
+  async (request, ctx, params) => getHandler(request, { ...ctx, params }),
+  {
+    source: 'cms-builder-web.auth.[...nextauth].GET',
+  }
+);
+
+export const POST = apiHandlerWithParams<{ nextauth: string[] }>(
+  async (request, ctx, params) => postHandler(request, { ...ctx, params }),
+  {
+    source: 'cms-builder-web.auth.[...nextauth].POST',
+    requireCsrf: false,
+  }
+);

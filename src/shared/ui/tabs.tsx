@@ -216,7 +216,7 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
       nextTab.focus();
 
       if (context.activationMode === 'automatic') {
-        const nextValue = nextTab.dataset.tabValue;
+        const nextValue = nextTab.dataset['tabValue'];
         if (typeof nextValue === 'string' && nextValue.length > 0) {
           context.onValueChange(nextValue);
         }

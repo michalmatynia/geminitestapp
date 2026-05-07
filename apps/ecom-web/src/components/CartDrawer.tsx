@@ -2,16 +2,21 @@
 
 import { useEffect, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
+import { useSiteContent } from '@/context/SiteContentContext';
 import { ProductImage } from '@/components/ProductImage';
 
 function QtyControl({
   productId,
   size,
   quantity,
+  decreaseLabel,
+  increaseLabel,
 }: {
   productId: string;
   size: string;
   quantity: number;
+  decreaseLabel: string;
+  increaseLabel: string;
 }): JSX.Element {
   const { setQty } = useCart();
   return (
@@ -20,7 +25,7 @@ function QtyControl({
       style={{ border: '1px solid var(--border)' }}
     >
       <button
-        aria-label="Decrease quantity"
+        aria-label={decreaseLabel}
         onClick={() => setQty(productId, size, quantity - 1)}
         className="w-8 h-8 flex items-center justify-center type-label transition-colors hover:bg-[var(--surface)]"
         style={{ color: 'var(--muted)' }}
@@ -34,7 +39,7 @@ function QtyControl({
         {quantity}
       </span>
       <button
-        aria-label="Increase quantity"
+        aria-label={increaseLabel}
         onClick={() => setQty(productId, size, quantity + 1)}
         className="w-8 h-8 flex items-center justify-center type-label transition-colors hover:bg-[var(--surface)]"
         style={{ color: 'var(--muted)' }}
@@ -47,6 +52,7 @@ function QtyControl({
 
 export function CartDrawer(): JSX.Element {
   const { items, isOpen, totalItems, totalPrice, closeCart, removeItem } = useCart();
+  const { cart } = useSiteContent();
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -79,7 +85,7 @@ export function CartDrawer(): JSX.Element {
       {/* Drawer panel */}
       <div
         role="dialog"
-        aria-label="Shopping bag"
+        aria-label={cart.ariaLabel}
         aria-modal="true"
         className="fixed top-0 right-0 bottom-0 z-50 flex flex-col"
         style={{
@@ -105,15 +111,15 @@ export function CartDrawer(): JSX.Element {
                 color: 'var(--fg)',
               }}
             >
-              Your Bag
+              {cart.title}
             </h2>
             <p className="type-label mt-0.5" style={{ color: 'var(--muted)' }}>
-              {totalItems} {totalItems === 1 ? 'item' : 'items'}
+              {totalItems} {totalItems === 1 ? cart.itemSingular : cart.itemPlural}
             </p>
           </div>
           <button
             onClick={closeCart}
-            aria-label="Close bag"
+            aria-label={cart.closeLabel}
             className="w-9 h-9 flex items-center justify-center transition-colors hover:bg-[var(--surface)]"
             style={{ color: 'var(--muted)' }}
           >
@@ -141,10 +147,10 @@ export function CartDrawer(): JSX.Element {
                   color: 'var(--muted)',
                 }}
               >
-                Your bag is empty
+                {cart.emptyMessage}
               </p>
               <button className="btn-ghost mt-2" onClick={closeCart}>
-                Continue shopping
+                {cart.continueShoppingLabel}
               </button>
             </div>
           ) : (
@@ -189,7 +195,7 @@ export function CartDrawer(): JSX.Element {
                           </p>
                         </div>
                         <button
-                          aria-label={`Remove ${item.name}`}
+                          aria-label={`${cart.removeItemAriaPrefix} ${item.name}`}
                           onClick={() => removeItem(item.productId, item.size)}
                           className="flex-shrink-0 text-[var(--muted)] hover:text-[var(--fg)] transition-colors"
                         >
@@ -206,6 +212,8 @@ export function CartDrawer(): JSX.Element {
                         productId={item.productId}
                         size={item.size}
                         quantity={item.quantity}
+                        decreaseLabel={cart.decreaseQuantityLabel}
+                        increaseLabel={cart.increaseQuantityLabel}
                       />
                       <span className="type-price" style={{ color: 'var(--fg)' }}>
                         € {(item.price * item.quantity).toLocaleString('de-DE')}
@@ -226,14 +234,14 @@ export function CartDrawer(): JSX.Element {
           >
             {/* Subtotal */}
             <div className="flex justify-between items-center mb-2">
-              <span className="type-label" style={{ color: 'var(--muted)' }}>Subtotal</span>
+              <span className="type-label" style={{ color: 'var(--muted)' }}>{cart.subtotalLabel}</span>
               <span className="type-price" style={{ color: 'var(--fg)' }}>
                 € {totalPrice.toLocaleString('de-DE')}
               </span>
             </div>
             <div className="flex justify-between items-center mb-6">
-              <span className="type-label" style={{ color: 'var(--muted)' }}>Shipping</span>
-              <span className="type-label" style={{ color: 'var(--muted)' }}>Calculated at checkout</span>
+              <span className="type-label" style={{ color: 'var(--muted)' }}>{cart.shippingLabel}</span>
+              <span className="type-label" style={{ color: 'var(--muted)' }}>{cart.shippingNote}</span>
             </div>
 
             <div className="divider mb-5" />
@@ -247,7 +255,7 @@ export function CartDrawer(): JSX.Element {
                   color: 'var(--fg)',
                 }}
               >
-                Total
+                {cart.totalLabel}
               </span>
               <span
                 style={{
@@ -261,14 +269,14 @@ export function CartDrawer(): JSX.Element {
             </div>
 
             <a href="/checkout" onClick={closeCart} className="btn-primary w-full justify-center text-center">
-              Proceed to Checkout
+              {cart.checkoutLabel}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </a>
 
             <p className="type-label text-center mt-4" style={{ color: 'var(--muted)' }}>
-              Complimentary shipping on orders over € 400
+              {cart.footerNote}
             </p>
           </div>
         )}

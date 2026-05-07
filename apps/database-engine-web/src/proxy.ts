@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { authConfig } from '@/features/auth/auth.config';
-import { auth } from '@/features/auth/edge';
 import {
   ADMIN_LAYOUT_SESSION_HEADER,
   buildAdminLayoutSessionHeaderValue,
 } from '@/shared/lib/auth/admin-layout-session';
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
+
+import { authConfig } from './auth/server/auth.config';
+import { auth } from './auth/server/edge';
 
 import type { Session } from 'next-auth';
 

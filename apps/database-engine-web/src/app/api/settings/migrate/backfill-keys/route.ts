@@ -1,7 +1,7 @@
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { postHandler } from '@/app/api/settings/migrate/backfill-keys/handler';
+import { postBackfillKeysHandler } from '../../../../../server/settings/handlers';
 
-export const POST = apiHandler(postHandler, {
+export const POST = apiHandler(postBackfillKeysHandler, {
   source: 'database-engine-web.settings.migrate.backfill-keys.POST',
 });

@@ -185,6 +185,7 @@ export const accessibilityRouteCrawlRoutes = [
     name: 'Admin Databases',
     route: '/admin/databases/engine',
     audience: 'admin',
+    requiredEnv: 'DATABASE_ENGINE_WEB_ORIGIN',
   },
   {
     id: 'admin-brain-settings',

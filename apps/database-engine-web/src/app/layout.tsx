@@ -1,13 +1,13 @@
 import { Suspense } from 'react';
 
-import { loadSiteMessages } from '@/i18n/messages';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
-import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
 import { AppIntlProvider } from '@/shared/providers/AppIntlProvider';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { DatabaseEngineRootProviders } from '../components/DatabaseEngineRootProviders';
+import { loadDatabaseEngineMessages } from '../i18n/messages';
+import { getLiteSettingsForHydration } from '../server/settings/lite-ssr';
 
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
@@ -36,7 +36,7 @@ export default async function RootLayout({
 }): Promise<React.JSX.Element> {
   const locale = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
   const [messages, liteSettings] = await Promise.all([
-    loadSiteMessages(locale),
+    loadDatabaseEngineMessages(locale),
     getLiteSettingsForHydration(),
   ]);
 

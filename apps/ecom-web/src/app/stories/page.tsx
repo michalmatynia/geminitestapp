@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { JSX } from 'react';
-import { STORIES } from '@/data/stories';
+import { getStoriesPageContent } from '@/lib/cms';
+import { getAllStories } from '@/lib/storiesCms';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 
@@ -9,8 +10,26 @@ export const metadata: Metadata = {
   description: 'Field reports, maker profiles, and essays on the objects we make and why they matter.',
 };
 
-export default function StoriesPage(): JSX.Element {
-  const [featured, ...rest] = STORIES;
+export default async function StoriesPage(): Promise<JSX.Element> {
+  const [stories, content] = await Promise.all([
+    getAllStories(),
+    getStoriesPageContent(),
+  ]);
+  const [featured, ...rest] = stories;
+  if (!featured) {
+    return (
+      <>
+        <SiteNav />
+        <main style={{ paddingTop: 'var(--nav-h)' }}>
+          <div className="px-8 md:px-16 py-20">
+            <h1 className="type-display-lg" style={{ color: 'var(--fg)' }}>{content.index.emptyTitle}</h1>
+            <p style={{ color: 'var(--muted)', marginTop: '1rem' }}>{content.index.emptyBody}</p>
+          </div>
+        </main>
+        <SiteFooter />
+      </>
+    );
+  }
 
   return (
     <>
@@ -22,11 +41,11 @@ export default function StoriesPage(): JSX.Element {
           style={{ borderBottom: '1px solid var(--border)' }}
         >
           <div className="type-label mb-4" style={{ color: 'var(--accent)' }}>
-            From the field
+            {content.index.eyebrow}
           </div>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <h1 className="type-display-lg" style={{ color: 'var(--fg)' }}>
-              Stories
+              {content.index.title}
             </h1>
             <p
               style={{
@@ -38,7 +57,7 @@ export default function StoriesPage(): JSX.Element {
                 lineHeight: 1.75,
               }}
             >
-              Reports from the workshops, quarries, mills, and fields where our objects are made.
+              {content.index.description}
             </p>
           </div>
         </div>
@@ -68,7 +87,7 @@ export default function StoriesPage(): JSX.Element {
                   className="type-label px-3 py-1"
                   style={{ background: featured.accentColor, color: '#fff' }}
                 >
-                  Featured
+                  {content.index.featuredBadge}
                 </span>
                 <span className="type-label" style={{ color: 'rgba(255,255,255,0.5)' }}>
                   {featured.category} · {featured.readTime} read
@@ -104,7 +123,7 @@ export default function StoriesPage(): JSX.Element {
                 className="flex items-center gap-2 type-label transition-gap duration-200 group-hover:gap-3"
                 style={{ color: featured.textColor, opacity: 0.8 }}
               >
-                Read story
+                {content.index.readLabel}
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
@@ -117,7 +136,7 @@ export default function StoriesPage(): JSX.Element {
         <div className="px-8 md:px-16 py-16 max-w-screen-2xl mx-auto">
           {/* Category filter pills */}
           <div className="flex flex-wrap gap-3 mb-12">
-            {['All', 'Craft', 'Material', 'Maker', 'Object', 'Philosophy'].map((cat) => (
+            {content.index.categoryFilters.map((cat) => (
               <span
                 key={cat}
                 className="type-label px-4 py-2 cursor-default"
@@ -210,7 +229,7 @@ export default function StoriesPage(): JSX.Element {
                   className="flex items-center gap-2 type-label group-hover:gap-3 transition-all duration-200"
                   style={{ color: 'var(--accent)' }}
                 >
-                  Read
+                  {content.index.cardReadLabel}
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>

@@ -11,6 +11,8 @@ import { CartDrawer } from '@/components/CartDrawer';
 import { BackToTop } from '@/components/BackToTop';
 import { QuickViewModal } from '@/components/QuickViewModal';
 import { CookieConsent } from '@/components/CookieConsent';
+import { SiteContentProvider } from '@/context/SiteContentContext';
+import { getSiteContent } from '@/lib/cms';
 
 import './globals.css';
 
@@ -40,7 +42,9 @@ export const metadata: Metadata = {
   description: 'Keychains, pins and jewellery from the universes you love. Anime, gaming and film collectibles — officially licensed, obsessively curated.',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }): JSX.Element {
+export default async function RootLayout({ children }: { children: ReactNode }): Promise<JSX.Element> {
+  const siteContent = await getSiteContent();
+
   return (
     <html
       lang="en"
@@ -48,24 +52,26 @@ export default function RootLayout({ children }: { children: ReactNode }): JSX.E
       className={`dark ${exo2.variable} ${rajdhani.variable} ${shareTechMono.variable}`}
     >
       <body>
-        <ToastProvider>
-          <AuthProvider>
-          <WishlistProvider>
-            <RecentlyViewedProvider>
-            <QuickViewProvider>
-            <CartProvider>
-              {children}
-              <CartDrawer />
-              <ToastContainer />
-              <BackToTop />
-              <QuickViewModal />
-              <CookieConsent />
-            </CartProvider>
-            </QuickViewProvider>
-            </RecentlyViewedProvider>
-          </WishlistProvider>
-          </AuthProvider>
-        </ToastProvider>
+        <SiteContentProvider content={siteContent}>
+          <ToastProvider>
+            <AuthProvider>
+            <WishlistProvider>
+              <RecentlyViewedProvider>
+              <QuickViewProvider>
+              <CartProvider>
+                {children}
+                <CartDrawer />
+                <ToastContainer />
+                <BackToTop />
+                <QuickViewModal />
+                <CookieConsent />
+              </CartProvider>
+              </QuickViewProvider>
+              </RecentlyViewedProvider>
+            </WishlistProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </SiteContentProvider>
       </body>
     </html>
   );

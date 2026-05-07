@@ -10,7 +10,7 @@
  * - Custom field definitions for marketplace selection
  */
 
-import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
+import type { BaseProductRecord } from '@/shared/contracts/integrations/base-api';
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 
 export const BASE_MARKETPLACE_CHECKBOX_OPTIONS = [

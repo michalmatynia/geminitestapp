@@ -15,7 +15,6 @@
  */
 
 import type { ErrorCategory, SuggestedAction } from '@/shared/contracts/observability';
-import { resolveKangurClientEndpoint } from '@/features/kangur/services/resolve-kangur-client-endpoint';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
@@ -73,6 +72,13 @@ type ApiClientCooldownEntry = {
 
 const browserGetInFlightRequests = new Map<string, Promise<unknown>>();
 const browserGetCooldowns = new Map<string, ApiClientCooldownEntry>();
+const KANGUR_API_PREFIX = '/api/kangur';
+const KANGUR_BROWSER_API_PREFIX = '/kangur-api';
+
+const resolveKangurClientEndpoint = (endpoint: string): string => {
+  if (!endpoint.startsWith(KANGUR_API_PREFIX)) return endpoint;
+  return `${KANGUR_BROWSER_API_PREFIX}${endpoint.slice(KANGUR_API_PREFIX.length)}`;
+};
 
 const isAbortSignalInstance = (value: unknown): value is AbortSignal => {
   if (!value || typeof value !== 'object') return false;

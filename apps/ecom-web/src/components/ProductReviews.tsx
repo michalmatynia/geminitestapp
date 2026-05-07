@@ -1,5 +1,6 @@
 import type { JSX } from 'react';
 import { getReviews, getAverageRating, getRatingDistribution } from '@/data/reviews';
+import type { ProductsDetailContent } from '@/data/productsContent';
 
 function Stars({ rating, size = 14 }: { rating: number; size?: number }): JSX.Element {
   return (
@@ -24,7 +25,13 @@ function Stars({ rating, size = 14 }: { rating: number; size?: number }): JSX.El
   );
 }
 
-export function ProductReviews({ slug }: { slug: string }): JSX.Element | null {
+export function ProductReviews({
+  slug,
+  content,
+}: {
+  slug: string;
+  content: ProductsDetailContent;
+}): JSX.Element | null {
   const reviews = getReviews(slug);
   if (reviews.length === 0) return null;
 
@@ -39,10 +46,10 @@ export function ProductReviews({ slug }: { slug: string }): JSX.Element | null {
       <div className="max-w-screen-2xl mx-auto">
         <div className="mb-12">
           <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
-            Customer reviews
+            {content.reviewsEyebrow}
           </div>
           <h2 className="type-display-md" style={{ color: 'var(--fg)' }}>
-            What people say
+            {content.reviewsTitle}
           </h2>
         </div>
 
@@ -65,7 +72,7 @@ export function ProductReviews({ slug }: { slug: string }): JSX.Element | null {
               </div>
               <Stars rating={Math.round(avg)} size={16} />
               <div className="type-label mt-2" style={{ color: 'var(--muted)' }}>
-                {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                {reviews.length} {reviews.length === 1 ? content.reviewSingularLabel : content.reviewPluralLabel}
               </div>
             </div>
 
@@ -128,7 +135,7 @@ export function ProductReviews({ slug }: { slug: string }): JSX.Element | null {
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                             <path d="M20 6L9 17l-5-5" />
                           </svg>
-                          Verified purchase
+                          {content.verifiedPurchaseLabel}
                         </span>
                       )}
                     </div>
@@ -176,11 +183,11 @@ export function ProductReviews({ slug }: { slug: string }): JSX.Element | null {
             {/* Write review CTA */}
             <div>
               <a
-                href="/contact"
+                href={content.writeReviewHref}
                 className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors"
                 style={{ color: 'var(--muted)' }}
               >
-                Write a review
+                {content.writeReviewLabel}
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>

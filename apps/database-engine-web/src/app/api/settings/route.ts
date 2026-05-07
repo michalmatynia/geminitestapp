@@ -5,7 +5,7 @@ import {
   getHandler,
   postHandler,
   querySchema,
-} from '@/app/api/settings/handler';
+} from '../../../server/settings/handlers';
 
 export const GET = apiHandler(getHandler, {
   source: 'database-engine-web.settings.GET',

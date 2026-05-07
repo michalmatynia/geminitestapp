@@ -1,19 +1,21 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { JSX } from 'react';
-import { STORIES, getStory } from '@/data/stories';
+import { getStoriesPageContent } from '@/lib/cms';
+import { getAllStories, getStoryBySlug } from '@/lib/storiesCms';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
-  return STORIES.map((s) => ({ slug: s.slug }));
+  const stories = await getAllStories();
+  return stories.map((s) => ({ slug: s.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const story = getStory(slug);
+  const story = await getStoryBySlug(slug);
   if (!story) return {};
   return {
     title: `${story.title} — ARCANA Stories`,
@@ -23,10 +25,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function StoryPage({ params }: Props): Promise<JSX.Element> {
   const { slug } = await params;
-  const story = getStory(slug);
+  const [story, content] = await Promise.all([
+    getStoryBySlug(slug),
+    getStoriesPageContent(),
+  ]);
   if (!story) notFound();
 
-  const related = STORIES.filter(
+  const stories = await getAllStories();
+  const related = stories.filter(
     (s) => story.relatedSlugs.includes(s.slug),
   );
 
@@ -43,7 +49,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 mb-8">
               <a href="/stories" className="type-label hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                Stories
+                {content.detail.breadcrumbLabel}
               </a>
               <span className="type-label" style={{ color: 'rgba(255,255,255,0.25)' }}>/</span>
               <span className="type-label" style={{ color: 'rgba(255,255,255,0.7)' }}>{story.category}</span>
@@ -99,7 +105,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
             className="absolute right-10 top-1/2 -translate-y-1/2 rotate-90 hidden md:block"
             style={{ color: 'rgba(255,255,255,0.12)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.25em', textTransform: 'uppercase' }}
           >
-            ARCANA Stories · {story.date}
+            {content.detail.issueLabelPrefix} · {story.date}
           </div>
         </div>
 
@@ -206,7 +212,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
           >
             <div className="max-w-screen-2xl mx-auto">
               <div className="type-label mb-10" style={{ color: 'var(--accent)' }}>
-                Continue reading
+                {content.detail.relatedEyebrow}
               </div>
               <div className="grid md:grid-cols-2 gap-8">
                 {related.map((s) => (

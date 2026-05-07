@@ -13,7 +13,7 @@
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { getHandler, querySchema } from './handler';
+import { getHandler, querySchema } from '@/shared/server/api/settings/lite/handler';
 
 const disableSettingsRateLimit = process.env['NODE_ENV'] !== 'production';
 

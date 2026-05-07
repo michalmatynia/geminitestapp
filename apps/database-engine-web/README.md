@@ -12,8 +12,11 @@ canonical: true
 `apps/database-engine-web` is a standalone Next.js workspace for the database
 admin application. It follows the same application split pattern as
 `apps/studiq-web` and `apps/cms-builder-web`: the app runs from its own
-workspace, loads repo-root `.env*` files, and reuses repo-root modules through
-aliases.
+workspace, loads repo-root `.env*` files, maps `@/features/database` to its
+local feature implementation, and reuses repo-root shared modules only where
+platform contracts are still common. It owns its Next, TypeScript, and Vitest
+configuration locally, and intentionally does not expose root `@/app`,
+`@/features`, `@/server`, `@/i18n`, or `@docs` aliases.
 
 ## Workspace Role
 
@@ -25,13 +28,15 @@ aliases.
 - Owns the Engine and preview workspaces at `/admin/databases/engine` and
   `/admin/databases/preview`.
 - Owns local sign-in/register pages and NextAuth route endpoints for this app.
-- Reuses the current Database Engine implementation from `src/features/database`.
+- Owns the Database Engine implementation under `apps/database-engine-web/src/features/database`.
 - Owns local route wrappers for database, auth, settings, client error, and
   query telemetry APIs.
 - Reuses shared handler implementations where the root app and standalone app
   still need the same database orchestration code.
 - Keeps shared database services in the repo root so the engine can still manage
   geminitestapp, StudiQ, and CMS Builder sources together.
+- Does not import root app route modules; page and API route ownership stays
+  local to this workspace.
 
 ## Common Commands
 
@@ -63,17 +68,18 @@ For local development, use:
 DATABASE_ENGINE_WEB_ORIGIN=http://localhost:3400
 ```
 
-When configured, root `/admin/databases/*` requests redirect to matching routes
-in this workspace. API requests are not redirected; the standalone workspace
-owns local route wrappers for the required `/api/databases/*`,
-`/api/settings/*`, and auth endpoints.
+When configured, root `/admin/databases/*` and `/api/databases/*` requests
+redirect to matching routes in this workspace. The standalone workspace owns
+local route wrappers for the required `/api/databases/*`, `/api/settings/*`,
+and auth endpoints.
 
 ## Current Boundary
 
-The standalone app owns its page routes and database API route layer. Database
-API handler implementations live under `src/features/database/server/api`, with
-shared server contracts, backup orchestration, and sync helpers kept in the
-database feature and shared database libraries.
+The standalone app owns its page routes, feature implementation, and database
+API route layer. Database API handler implementations live under
+`apps/database-engine-web/src/features/database/server/api`, with shared server
+contracts, backup orchestration, and sync helpers kept in the database feature
+and shared database libraries.
 
 ## Related Docs
 

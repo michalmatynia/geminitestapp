@@ -1,56 +1,45 @@
 import type { JSX } from 'react';
+import { HOME_CONTENT_DEFAULTS, type HomeCategoriesContent } from '@/data/homeContent';
 
-const CATEGORIES = [
+const CATEGORY_VISUALS = [
   {
     id: 'objects',
-    label: 'All Items',
-    sublabel: 'Keychains · Pins · Charms',
-    fallbackCount: 1800,
     gradient: 'linear-gradient(145deg, #0B0D21 0%, #0d1a30 50%, #122040 100%)',
     accent: 'var(--cyan-teal)',
     accentRgb: '171,217,208',
-    tag: 'Full Catalog',
-    href: '/products',
+    aspectRatio: '2/3',
   },
   {
     id: 'womenswear',
-    label: 'Anime',
-    sublabel: 'Pins · Keychains · Jewellery',
-    fallbackCount: 640,
     gradient: 'linear-gradient(145deg, #21141D 0%, #2e1028 50%, #400a38 100%)',
     accent: 'var(--peach-orange)',
     accentRgb: '244,185,142',
-    tag: 'New Season',
-    href: '/collections/womenswear',
+    aspectRatio: '3/4',
   },
   {
     id: 'menswear',
-    label: 'Gaming',
-    sublabel: 'RPG · FPS · Strategy Drops',
-    fallbackCount: 520,
     gradient: 'linear-gradient(145deg, #0a1500 0%, #142200 50%, #1e3300 100%)',
     accent: 'var(--soft-gold)',
     accentRgb: '250,229,163',
-    tag: 'Hot Drops',
-    href: '/collections/menswear',
+    aspectRatio: '3/4',
   },
   {
     id: 'accessories',
-    label: 'Film & TV',
-    sublabel: 'Cinema · Series · Icons',
-    fallbackCount: 380,
     gradient: 'linear-gradient(145deg, #0f0520 0%, #1a0a35 50%, #28105a 100%)',
     accent: 'var(--mint-white)',
     accentRgb: '224,248,234',
-    tag: 'Collector',
-    href: '/collections/accessories',
+    aspectRatio: '2/3',
   },
 ];
 
+const DEFAULT_VISUAL = CATEGORY_VISUALS[0];
+
 export function CategoriesGrid({
   counts = {},
+  content = HOME_CONTENT_DEFAULTS.categories,
 }: {
   counts?: Record<string, number>;
+  content?: HomeCategoriesContent;
 }): JSX.Element {
   const hasLiveCounts = Object.keys(counts).length > 0;
 
@@ -60,18 +49,18 @@ export function CategoriesGrid({
       <div className="flex items-end justify-between mb-12">
         <div>
           <div className="type-label mb-3" style={{ color: 'var(--cyan-teal)' }}>
-            Browse by Universe
+            {content.eyebrow}
           </div>
           <h2 className="type-display-lg" style={{ color: 'var(--fg)' }}>
-            Choose Your World
+            {content.title}
           </h2>
         </div>
         <a
-          href="/products"
+          href={content.ctaHref}
           className="hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all duration-200"
           style={{ color: 'var(--muted-teal)' }}
         >
-          All collections
+          {content.ctaLabel}
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
@@ -80,7 +69,8 @@ export function CategoriesGrid({
 
       {/* Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {CATEGORIES.map((cat, i) => {
+        {content.cards.map((cat, i) => {
+          const visual = CATEGORY_VISUALS.find((item) => item.id === cat.id) ?? CATEGORY_VISUALS[i] ?? DEFAULT_VISUAL;
           const liveCount = counts[cat.id] ?? (cat.id === 'objects' ? Object.values(counts).reduce((a, b) => a + b, 0) : undefined);
           const displayCount = liveCount != null
             ? `${liveCount.toLocaleString()} items`
@@ -91,10 +81,10 @@ export function CategoriesGrid({
               key={cat.id}
               href={cat.href}
               className="category-card block"
-              style={{ aspectRatio: i === 0 || i === 3 ? '2/3' : '3/4' }}
+              style={{ aspectRatio: visual.aspectRatio }}
             >
               {/* Background */}
-              <div className="cat-bg absolute inset-0" style={{ background: cat.gradient }} />
+              <div className="cat-bg absolute inset-0" style={{ background: visual.gradient }} />
 
               {/* Dot grid */}
               <div className="absolute inset-0 dot-grid opacity-30" />
@@ -109,9 +99,9 @@ export function CategoriesGrid({
 
               {/* Corner brackets */}
               <div className="absolute top-4 left-4 w-6 h-6 z-10 transition-opacity duration-300"
-                style={{ borderTop: `1.5px solid rgba(${cat.accentRgb},0.5)`, borderLeft: `1.5px solid rgba(${cat.accentRgb},0.5)` }} />
+                style={{ borderTop: `1.5px solid rgba(${visual.accentRgb},0.5)`, borderLeft: `1.5px solid rgba(${visual.accentRgb},0.5)` }} />
               <div className="absolute bottom-4 right-4 w-6 h-6 z-10 transition-opacity duration-300"
-                style={{ borderBottom: `1.5px solid rgba(${cat.accentRgb},0.5)`, borderRight: `1.5px solid rgba(${cat.accentRgb},0.5)` }} />
+                style={{ borderBottom: `1.5px solid rgba(${visual.accentRgb},0.5)`, borderRight: `1.5px solid rgba(${visual.accentRgb},0.5)` }} />
 
               {/* Content */}
               <div className="absolute inset-0 p-5 flex flex-col justify-between z-20">
@@ -120,9 +110,9 @@ export function CategoriesGrid({
                   <span
                     className="type-label inline-block"
                     style={{
-                      color: cat.accent,
-                      background: `rgba(${cat.accentRgb},0.1)`,
-                      border: `1px solid rgba(${cat.accentRgb},0.3)`,
+                      color: visual.accent,
+                      background: `rgba(${visual.accentRgb},0.1)`,
+                      border: `1px solid rgba(${visual.accentRgb},0.3)`,
                       padding: '0.2rem 0.55rem',
                     }}
                   >
@@ -145,13 +135,13 @@ export function CategoriesGrid({
                   >
                     {cat.label}
                   </h3>
-                  <p className="type-label mb-2" style={{ color: `rgba(${cat.accentRgb},0.65)`, letterSpacing: '0.1em' }}>
+                  <p className="type-label mb-2" style={{ color: `rgba(${visual.accentRgb},0.65)`, letterSpacing: '0.1em' }}>
                     {cat.sublabel}
                   </p>
-                  <p className="type-label" style={{ color: `rgba(${cat.accentRgb},0.4)` }}>
+                  <p className="type-label" style={{ color: `rgba(${visual.accentRgb},0.4)` }}>
                     {displayCount}
                     {hasLiveCounts && liveCount != null && (
-                      <span style={{ color: cat.accent, opacity: 0.6 }}> · live</span>
+                      <span style={{ color: visual.accent, opacity: 0.6 }}> · live</span>
                     )}
                   </p>
                 </div>

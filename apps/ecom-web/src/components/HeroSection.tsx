@@ -1,6 +1,15 @@
 import type { JSX } from 'react';
+import { HOME_CONTENT_DEFAULTS, type HomeHeroContent } from '@/data/homeContent';
 
-export function HeroSection(): JSX.Element {
+const STAT_COLORS = ['var(--soft-gold)', 'var(--cyan-teal)', 'var(--peach-orange)'];
+
+interface HeroSectionProps {
+  content?: HomeHeroContent;
+}
+
+export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectionProps): JSX.Element {
+  const bottomStripText = [...content.bottomStripItems, ...content.bottomStripItems].join(' \u00a0·\u00a0 ');
+
   return (
     <section
       className="relative min-h-screen flex items-stretch overflow-hidden"
@@ -16,7 +25,7 @@ export function HeroSection(): JSX.Element {
       />
 
       {/* ── Left column ──────────────────────────────────────────────── */}
-      <div className="relative z-10 flex flex-col justify-center px-8 md:px-14 lg:px-20 w-full lg:w-[55%] py-20 lg:py-28">
+      <div className="relative z-10 flex flex-col justify-center px-8 md:px-14 lg:px-16 xl:px-20 w-full lg:w-[55%] py-20 lg:py-28">
 
         {/* Status beacon */}
         <div className="flex items-center gap-3 mb-10 animate-slide-up delay-0">
@@ -25,14 +34,21 @@ export function HeroSection(): JSX.Element {
             style={{ background: 'var(--cyan-teal)', boxShadow: '0 0 8px var(--cyan-teal)', animation: 'neonPulse 2s ease-in-out infinite' }}
           />
           <span className="type-label tracking-[0.22em]" style={{ color: 'var(--cyan-teal)' }}>
-            NEXUS ONLINE — NEW DROPS ACTIVE
+            {content.status}
           </span>
         </div>
 
         {/* Headline */}
         <div className="overflow-hidden mb-1 animate-slide-up delay-1">
-          <h1 className="type-display-xl" style={{ color: 'var(--cream-highlight)' }}>
-            COLLECTOR&apos;S
+          <h1
+            className="type-display-xl"
+            style={{
+              color: 'var(--cream-highlight)',
+              fontSize: 'clamp(3.1rem, 6.2vw, 5.8rem)',
+              maxWidth: '100%',
+            }}
+          >
+            {content.headlineLine1}
           </h1>
         </div>
         <div className="overflow-hidden mb-8 animate-slide-up delay-2">
@@ -40,17 +56,19 @@ export function HeroSection(): JSX.Element {
             className="type-display-xl"
             style={{
               color: 'transparent',
+              fontSize: 'clamp(3.1rem, 6.2vw, 5.8rem)',
+              maxWidth: '100%',
               WebkitTextStroke: '1.5px var(--cyan-teal)',
               textShadow: '0 0 60px rgba(171,217,208,0.25)',
             }}
           >
-            CACHE
+            {content.headlineLine2}
           </h1>
         </div>
 
         {/* Universe tags */}
         <div className="flex flex-wrap gap-2 mb-8 animate-slide-up delay-3">
-          {['Anime', 'Gaming', 'Film', 'Manga', 'Keychains', 'Pins', 'Jewellery'].map((tag) => (
+          {content.tags.map((tag) => (
             <span key={tag} className="neon-tag-cyan">{tag}</span>
           ))}
         </div>
@@ -60,19 +78,19 @@ export function HeroSection(): JSX.Element {
           className="animate-slide-up delay-4 max-w-md mb-10 leading-relaxed"
           style={{ color: 'var(--muted-teal)', fontFamily: 'var(--font-body)', fontSize: '1.05rem', fontWeight: 400 }}
         >
-          Your favourite universes, forged into wearable art. Anime, gaming and film collectibles — officially licensed, obsessively curated.
+          {content.description}
         </p>
 
         {/* CTAs */}
         <div className="flex flex-wrap gap-4 animate-slide-up delay-5">
-          <a href="/products?new=1" className="btn-primary">
-            Shop New Drops
+          <a href={content.primaryCtaHref} className="btn-primary">
+            {content.primaryCtaLabel}
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </a>
-          <a href="/products" className="btn-ghost">
-            Browse All
+          <a href={content.secondaryCtaHref} className="btn-ghost">
+            {content.secondaryCtaLabel}
           </a>
         </div>
 
@@ -81,27 +99,26 @@ export function HeroSection(): JSX.Element {
           className="flex gap-10 mt-14 pt-8 animate-slide-up delay-6"
           style={{ borderTop: '1px solid rgba(171,217,208,0.15)' }}
         >
-          {[
-            { value: '1,800+', label: 'Items', color: 'var(--soft-gold)' },
-            { value: '118', label: 'Categories', color: 'var(--cyan-teal)' },
-            { value: '100+', label: 'Universes', color: 'var(--peach-orange)' },
-          ].map(({ value, label, color }) => (
-            <div key={label}>
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 'clamp(1.5rem, 2.8vw, 2.5rem)',
-                  fontWeight: 800,
-                  color,
-                  lineHeight: 1,
-                  textShadow: `0 0 20px ${color}66`,
-                }}
-              >
-                {value}
+          {content.stats.map(({ value, label }, index) => {
+            const color = STAT_COLORS[index % STAT_COLORS.length];
+            return (
+              <div key={`${label}-${index}`}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 'clamp(1.5rem, 2.8vw, 2.5rem)',
+                    fontWeight: 800,
+                    color,
+                    lineHeight: 1,
+                    textShadow: `0 0 20px ${color}66`,
+                  }}
+                >
+                  {value}
+                </div>
+                <div className="type-label mt-1.5" style={{ color: 'var(--muted-teal)' }}>{label}</div>
               </div>
-              <div className="type-label mt-1.5" style={{ color: 'var(--muted-teal)' }}>{label}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -146,7 +163,7 @@ export function HeroSection(): JSX.Element {
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--soft-gold)', boxShadow: '0 0 6px var(--soft-gold)' }} />
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--cyan-teal)', boxShadow: '0 0 6px var(--cyan-teal)' }} />
               <div className="flex-1 h-px mx-3" style={{ background: 'rgba(171,217,208,0.15)' }} />
-              <span className="type-label" style={{ color: 'rgba(171,217,208,0.4)' }}>UNIT-001 / FEATURED</span>
+              <span className="type-label" style={{ color: 'rgba(171,217,208,0.4)' }}>{content.panelStatus}</span>
             </div>
 
             {/* Collectible SVG art */}
@@ -204,16 +221,16 @@ export function HeroSection(): JSX.Element {
                   marginBottom: '0.5rem',
                 }}
               >
-                Collector&apos;s Edition
+                {content.panelTitle}
               </div>
               <div className="type-label mb-3" style={{ color: 'var(--muted-teal)' }}>
-                Anime · Gaming · Film
+                {content.panelSubtitle}
               </div>
               <div
                 className="type-price"
                 style={{ color: 'var(--soft-gold)', fontSize: '1.1rem', textShadow: '0 0 12px rgba(250,229,163,0.4)' }}
               >
-                From € 15
+                {content.panelPrice}
               </div>
             </div>
           </div>
@@ -228,7 +245,7 @@ export function HeroSection(): JSX.Element {
             className="animate-marquee whitespace-nowrap type-label"
             style={{ color: 'rgba(171,217,208,0.2)', letterSpacing: '0.3em' }}
           >
-            ANIME &nbsp;·&nbsp; GAMING &nbsp;·&nbsp; FILM &nbsp;·&nbsp; MANGA &nbsp;·&nbsp; COSPLAY &nbsp;·&nbsp; COLLECTOR &nbsp;·&nbsp; LIMITED EDITION &nbsp;·&nbsp; RARE DROPS &nbsp;·&nbsp; ANIME &nbsp;·&nbsp; GAMING &nbsp;·&nbsp; FILM &nbsp;·&nbsp; MANGA &nbsp;·&nbsp; COSPLAY &nbsp;·&nbsp; COLLECTOR &nbsp;·&nbsp; LIMITED EDITION &nbsp;·&nbsp; RARE DROPS
+            {bottomStripText}
           </div>
         </div>
       </div>

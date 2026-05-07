@@ -4,21 +4,14 @@ import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAuth } from '@/context/AuthContext';
+import { useSiteContent } from '@/context/SiteContentContext';
 import { SearchOverlay } from '@/components/SearchOverlay';
 import { AuthModal } from '@/components/AuthModal';
 
-const NAV_LINKS = [
-  { label: 'Anime', href: '/collections/womenswear' },
-  { label: 'Gaming', href: '/collections/menswear' },
-  { label: 'Film', href: '/collections/accessories' },
-  { label: 'New Drops', href: '/products?new=1' },
-  { label: 'All Items', href: '/products' },
-];
-
-const BANNER_KEY = 'arcana-banner-v2';
 const BANNER_H = 38;
 
 export function SiteNav() {
+  const { nav } = useSiteContent();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -29,16 +22,21 @@ export function SiteNav() {
   const { user } = useAuth();
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(BANNER_KEY);
-    if (!dismissed) {
-      setBannerVisible(true);
-      document.documentElement.style.setProperty('--nav-h', `${64 + BANNER_H}px`);
+    if (!nav.announcement.enabled) {
+      setBannerVisible(false);
+      document.documentElement.style.setProperty('--nav-h', '64px');
+      return;
     }
-  }, []);
+
+    const dismissed = localStorage.getItem(nav.announcement.dismissKey);
+    const visible = !dismissed;
+    setBannerVisible(visible);
+    document.documentElement.style.setProperty('--nav-h', visible ? `${64 + BANNER_H}px` : '64px');
+  }, [nav.announcement.dismissKey, nav.announcement.enabled]);
 
   const dismissBanner = () => {
     setBannerVisible(false);
-    localStorage.setItem(BANNER_KEY, '1');
+    localStorage.setItem(nav.announcement.dismissKey, '1');
     document.documentElement.style.setProperty('--nav-h', '64px');
   };
 
@@ -72,10 +70,10 @@ export function SiteNav() {
               style={{ background: 'var(--cyan-teal)', boxShadow: '0 0 6px var(--cyan-teal)', animation: 'neonPulse 2s ease-in-out infinite' }}
             />
             <span className="type-label tracking-[0.18em]" style={{ color: 'var(--cyan-teal)' }}>
-              Free shipping on orders over € 60 — New drops every week
+              {nav.announcement.message}
             </span>
-            <a href="/products?new=1" className="type-label underline underline-offset-2 hidden md:inline hover:opacity-80 transition-opacity" style={{ color: 'var(--soft-gold)' }}>
-              Shop New Drops
+            <a href={nav.announcement.ctaHref} className="type-label underline underline-offset-2 hidden md:inline hover:opacity-80 transition-opacity" style={{ color: 'var(--soft-gold)' }}>
+              {nav.announcement.ctaLabel}
             </a>
             <button
               onClick={dismissBanner}
@@ -108,16 +106,16 @@ export function SiteNav() {
                   textShadow: '0 0 16px rgba(171,217,208,0.4)',
                 }}
               >
-                ARCANA
+                {nav.brandName}
               </span>
               <span className="type-label hidden sm:inline" style={{ color: 'rgba(171,217,208,0.3)', letterSpacing: '0.15em' }}>
-                NEXUS
+                {nav.brandSuffix}
               </span>
             </a>
 
             {/* Desktop nav links */}
             <nav className="hidden md:flex items-center gap-8">
-              {NAV_LINKS.map((link) => (
+              {nav.links.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
@@ -276,7 +274,7 @@ export function SiteNav() {
         {/* Dot grid */}
         <div className="absolute inset-0 dot-grid opacity-20 pointer-events-none" />
         <div className="relative z-10 flex flex-col items-center gap-8">
-          {NAV_LINKS.map((link, i) => (
+          {nav.links.map((link, i) => (
             <a
               key={link.label}
               href={link.href}
@@ -288,7 +286,10 @@ export function SiteNav() {
             </a>
           ))}
           <div className="flex items-center gap-8 mt-4">
-            {[{ label: 'Account', href: '/account' }, { label: 'Wishlist', href: '/wishlist' }].map((link) => (
+            {[
+              { label: nav.mobileAccountLabel, href: '/account' },
+              { label: nav.mobileWishlistLabel, href: '/wishlist' },
+            ].map((link) => (
               <a
                 key={link.label}
                 href={link.href}

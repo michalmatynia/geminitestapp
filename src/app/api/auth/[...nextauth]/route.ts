@@ -1,6 +1,6 @@
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { getHandler, postHandler } from './handler';
+import { getHandler, postHandler } from '@/features/auth/server/api/nextauth/handler';
 
 export const GET = apiHandlerWithParams<{ nextauth: string[] }>(
   async (request, ctx, params) => getHandler(request, { ...ctx, params }),

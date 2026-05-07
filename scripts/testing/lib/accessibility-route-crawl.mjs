@@ -32,6 +32,15 @@ const parseRouteIdFilter = (value) => {
     .filter(Boolean);
 };
 
+const normalizeRequiredEnv = (value) => {
+  const entries = Array.isArray(value) ? value : [value];
+  return entries.map(normalizeString).filter(Boolean);
+};
+
+const entryHasRequiredEnv = (entry, env) =>
+  entry.requiredEnv.length === 0 ||
+  entry.requiredEnv.every((key) => normalizeString(env[key]).length > 0);
+
 const parsePositiveInt = (value) => {
   const parsed = Number.parseInt(value ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -88,6 +97,7 @@ export const normalizeAccessibilityRouteEntries = (entries) => {
     const contextSelector = normalizeOptionalString(entry?.contextSelector);
     const navigationWaitUntil = normalizeOptionalString(entry?.navigationWaitUntil);
     const navigationTimeoutMs = normalizeOptionalPositiveNumber(entry?.navigationTimeoutMs);
+    const requiredEnv = normalizeRequiredEnv(entry?.requiredEnv);
 
     if (!route.startsWith('/')) {
       throw new Error(`Accessibility route crawl entry "${id}" must declare a route starting with "/".`);
@@ -125,6 +135,7 @@ export const normalizeAccessibilityRouteEntries = (entries) => {
       contextSelector,
       navigationWaitUntil: navigationWaitUntil ? navigationWaitUntil.toLowerCase() : null,
       navigationTimeoutMs,
+      requiredEnv,
     };
   });
 };
@@ -132,7 +143,7 @@ export const normalizeAccessibilityRouteEntries = (entries) => {
 export const filterAccessibilityRouteEntries = (routeEntries, { env = process.env } = {}) => {
   const includeIds = parseRouteIdFilter(env['PLAYWRIGHT_ROUTE_CRAWL_IDS']);
   if (includeIds.length === 0) {
-    return routeEntries;
+    return routeEntries.filter((entry) => entryHasRequiredEnv(entry, env));
   }
 
   const includeSet = new Set(includeIds);
@@ -142,6 +153,14 @@ export const filterAccessibilityRouteEntries = (routeEntries, { env = process.en
   if (missing.length > 0) {
     throw new Error(
       `Accessibility route crawl ids not found: ${missing.join(', ')}. Check PLAYWRIGHT_ROUTE_CRAWL_IDS.`
+    );
+  }
+
+  const missingRequiredEnv = filtered.filter((entry) => !entryHasRequiredEnv(entry, env));
+  if (missingRequiredEnv.length > 0) {
+    const details = missingRequiredEnv.map((entry) => `${entry.id} requires ${entry.requiredEnv.join(', ')}`);
+    throw new Error(
+      `Accessibility route crawl ids require missing environment: ${details.join('; ')}.`
     );
   }
 

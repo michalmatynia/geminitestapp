@@ -13,7 +13,7 @@
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { postHandler } from './handler';
+import { postHandler } from '@/shared/server/api/client-errors/handler';
 
 export const POST = apiHandler(postHandler, {
   source: 'client-errors.POST',

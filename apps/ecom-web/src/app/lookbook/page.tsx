@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import type { JSX } from 'react';
-import { EDITORIALS } from '@/data/lookbook';
+import type { Editorial } from '@/data/lookbook';
+import { getLookbookPageContent } from '@/lib/cms';
+import { getAllLookbookEntries } from '@/lib/lookbookCms';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 
@@ -12,9 +14,11 @@ export const metadata: Metadata = {
 function EditorialCard({
   editorial,
   minHeight = '420px',
+  viewLabel,
 }: {
-  editorial: (typeof EDITORIALS)[0];
+  editorial: Editorial;
   minHeight?: string;
+  viewLabel: string;
 }): JSX.Element {
   return (
     <a
@@ -102,7 +106,7 @@ function EditorialCard({
           className="flex items-center gap-2 type-label"
           style={{ color: editorial.textColor, opacity: 0.9 }}
         >
-          View editorial
+          {viewLabel}
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
@@ -128,8 +132,34 @@ function EditorialCard({
   );
 }
 
-export default function LookbookPage(): JSX.Element {
-  const [hero, second, third, fourth, fifth, sixth, seventh, eighth] = EDITORIALS;
+export default async function LookbookPage(): Promise<JSX.Element> {
+  const [entries, content] = await Promise.all([
+    getAllLookbookEntries(),
+    getLookbookPageContent(),
+  ]);
+  const [hero] = entries;
+  if (!hero) {
+    return (
+      <>
+        <SiteNav />
+        <main style={{ paddingTop: 'var(--nav-h)', background: '#0a0908', minHeight: '100vh' }}>
+          <div className="px-8 md:px-16 py-20">
+            <h1 className="type-display-lg" style={{ color: '#f5f0eb' }}>{content.emptyTitle}</h1>
+            <p style={{ color: 'rgba(255,255,255,0.45)', marginTop: '1rem' }}>{content.emptyBody}</p>
+          </div>
+        </main>
+        <SiteFooter />
+      </>
+    );
+  }
+
+  const second = entries[1] ?? hero;
+  const third = entries[2] ?? hero;
+  const fourth = entries[3] ?? hero;
+  const fifth = entries[4] ?? hero;
+  const sixth = entries[5] ?? hero;
+  const seventh = entries[6] ?? hero;
+  const eighth = entries[7] ?? hero;
 
   return (
     <>
@@ -155,7 +185,7 @@ export default function LookbookPage(): JSX.Element {
                 whiteSpace: 'nowrap',
               }}
             >
-              LOOKBOOK
+              {content.masthead.watermark}
             </span>
           </div>
 
@@ -166,7 +196,7 @@ export default function LookbookPage(): JSX.Element {
                   className="type-label mb-3"
                   style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '0.2em' }}
                 >
-                  ARCANA · Visual Archive
+                  {content.masthead.eyebrow}
                 </div>
                 <h1
                   style={{
@@ -178,7 +208,7 @@ export default function LookbookPage(): JSX.Element {
                     letterSpacing: '-0.02em',
                   }}
                 >
-                  Lookbook
+                  {content.masthead.title}
                 </h1>
                 <p
                   className="mt-4"
@@ -191,8 +221,7 @@ export default function LookbookPage(): JSX.Element {
                     maxWidth: '380px',
                   }}
                 >
-                  Eight seasonal studies. Field photography, maker portraits,
-                  and the objects in their natural context.
+                  {content.masthead.description}
                 </p>
               </div>
 
@@ -207,8 +236,8 @@ export default function LookbookPage(): JSX.Element {
                     lineHeight: 2,
                   }}
                 >
-                  <div>Issues 01–08</div>
-                  <div>2024 — 2026</div>
+                  <div>{content.masthead.issueRange}</div>
+                  <div>{content.masthead.dateRange}</div>
                 </div>
               </div>
             </div>
@@ -243,7 +272,7 @@ export default function LookbookPage(): JSX.Element {
               />
               <div className="absolute top-8 left-8 z-10">
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: hero.textColor, opacity: 0.45 }}>
-                  Issue {hero.issue} · Featured
+                  Issue {hero.issue} · {content.featuredLabel}
                 </span>
               </div>
               <div className="absolute inset-0 flex flex-col justify-end p-10 md:p-14 z-10">
@@ -283,7 +312,7 @@ export default function LookbookPage(): JSX.Element {
                     className="flex items-center gap-2 type-label opacity-0 group-hover:opacity-100 transition-all duration-500"
                     style={{ color: hero.textColor, transitionDelay: '0.1s' }}
                   >
-                    View editorial
+                    {content.viewLabel}
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
@@ -302,12 +331,12 @@ export default function LookbookPage(): JSX.Element {
 
           {/* Top-right small */}
           <div style={{ gridColumn: '9 / 13', gridRow: '1 / 2' }}>
-            <EditorialCard editorial={second} minHeight="320px" />
+            <EditorialCard editorial={second} minHeight="320px" viewLabel={content.viewLabel} />
           </div>
 
           {/* Bottom-right small */}
           <div style={{ gridColumn: '9 / 13', gridRow: '2 / 3' }}>
-            <EditorialCard editorial={third} minHeight="320px" />
+            <EditorialCard editorial={third} minHeight="320px" viewLabel={content.viewLabel} />
           </div>
         </div>
 
@@ -348,7 +377,7 @@ export default function LookbookPage(): JSX.Element {
                   {fourth.subtitle}
                 </p>
                 <div className="flex items-center justify-end gap-2 mt-4 type-label group-hover:gap-4 transition-all duration-300" style={{ color: fourth.textColor }}>
-                  View editorial
+                  {content.viewLabel}
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
@@ -364,7 +393,7 @@ export default function LookbookPage(): JSX.Element {
           style={{ gap: '3px', marginTop: '3px' }}
         >
           {[fifth, sixth, seventh].map((ed) => (
-            <EditorialCard key={ed.id} editorial={ed} minHeight="500px" />
+            <EditorialCard key={ed.id} editorial={ed} minHeight="500px" viewLabel={content.viewLabel} />
           ))}
         </div>
 
@@ -373,7 +402,7 @@ export default function LookbookPage(): JSX.Element {
           className="grid grid-cols-1 md:grid-cols-2"
           style={{ gap: '3px', marginTop: '3px' }}
         >
-          <EditorialCard editorial={eighth} minHeight="380px" />
+          <EditorialCard editorial={eighth} minHeight="380px" viewLabel={content.viewLabel} />
 
           {/* CTA panel */}
           <div
@@ -404,7 +433,7 @@ export default function LookbookPage(): JSX.Element {
                 className="type-label mb-6"
                 style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em' }}
               >
-                Issues 01–08 Complete
+                {content.cta.issueLabel}
               </div>
               <h3
                 style={{
@@ -416,7 +445,7 @@ export default function LookbookPage(): JSX.Element {
                   marginBottom: '1.25rem',
                 }}
               >
-                Every object<br />has an origin story
+                {content.cta.titleLine1}<br />{content.cta.titleLine2}
               </h3>
               <p
                 style={{
@@ -429,15 +458,14 @@ export default function LookbookPage(): JSX.Element {
                   maxWidth: '280px',
                 }}
               >
-                Browse the full collection and find the piece
-                whose story speaks to you.
+                {content.cta.body}
               </p>
               <a
-                href="/stories"
+                href={content.cta.href}
                 className="inline-flex items-center gap-3 type-label px-8 py-4 transition-all duration-300 hover:gap-5"
                 style={{ background: '#f5f0eb', color: '#0a0908' }}
               >
-                Read the stories
+                {content.cta.label}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
@@ -460,14 +488,14 @@ export default function LookbookPage(): JSX.Element {
               color: 'rgba(255,255,255,0.2)',
             }}
           >
-            ARCANA Lookbook Archive · Issues 01–08
+            {content.archive.label}
           </span>
           <a
-            href="/"
+            href={content.archive.ctaHref}
             className="type-label flex items-center gap-2 transition-colors hover:text-white"
             style={{ color: 'rgba(255,255,255,0.3)' }}
           >
-            Return to shop
+            {content.archive.ctaLabel}
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>

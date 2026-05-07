@@ -2,76 +2,23 @@ import type { Metadata } from 'next';
 import type { JSX } from 'react';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
+import { getAboutContent } from '@/lib/cms';
 
 export const metadata: Metadata = {
   title: 'About — ARCANA',
   description: 'The story behind ARCANA — why we make what we make, and how.',
 };
 
-const MILESTONES = [
-  { year: '2012', event: 'Founded in Lyon by Clara and Étienne Morin, with a single linen textile run of 200 pieces.' },
-  { year: '2014', event: 'First leather collaboration with the Garonne tannery in Ribérac. The cognac tote sells out in three days.' },
-  { year: '2016', event: 'Opened the Paris atelier on Rue du Temple. Began working with ceramicist Hélène Morin.' },
-  { year: '2018', event: 'First international collection. Stocked in six countries. Still made by fewer than forty artisans.' },
-  { year: '2021', event: 'Launched the Objects line. Furniture, vessels, lights — all repaired or replaced for life.' },
-  { year: '2024', event: 'Committed to zero virgin plastic in all packaging. Switched to reclaimed kraft and linen cloth wrapping.' },
+const ARTISAN_GRADIENTS = [
+  'linear-gradient(145deg, #C4A882 0%, #8C7260 100%)',
+  'linear-gradient(145deg, #2C4A3E 0%, #1A3028 100%)',
+  'linear-gradient(145deg, #5C3D2A 0%, #3E2618 100%)',
+  'linear-gradient(145deg, #4A5A6A 0%, #2C3A48 100%)',
 ];
 
-const ARTISANS = [
-  {
-    name: 'Hélène Morin',
-    role: 'Ceramicist',
-    location: 'Limoges, France',
-    gradient: 'linear-gradient(145deg, #C4A882 0%, #8C7260 100%)',
-    note: 'Makes every Arcana vessel alone, by hand, in a converted stable outside the city. Refuses to work with moulds.',
-  },
-  {
-    name: 'Hendrik De Wolf',
-    role: 'Master Weaver',
-    location: 'Bruges, Belgium',
-    gradient: 'linear-gradient(145deg, #2C4A3E 0%, #1A3028 100%)',
-    note: 'One of three remaining draw-loom weavers in Belgium. Has been weaving linen for forty years. Will not rush.',
-  },
-  {
-    name: 'Lars Bundgaard',
-    role: 'Furniture Maker',
-    location: 'Aarhus, Denmark',
-    gradient: 'linear-gradient(145deg, #5C3D2A 0%, #3E2618 100%)',
-    note: 'Builds furniture without glue or screws. Every joint is mechanical, every surface oiled. Will repair anything he makes, forever.',
-  },
-  {
-    name: 'Catriona MacLeod',
-    role: 'Textile Weaver',
-    location: 'Isle of Lewis, Scotland',
-    gradient: 'linear-gradient(145deg, #4A5A6A 0%, #2C3A48 100%)',
-    note: 'Third-generation operator of the Shawbost Mill. Weaves undyed Shetland wool on a loom built in 1923.',
-  },
-];
+export default async function AboutPage(): Promise<JSX.Element> {
+  const content = await getAboutContent();
 
-const VALUES = [
-  {
-    number: '01',
-    title: 'Made once, kept forever',
-    body: 'We design everything to outlast a trend cycle. If you buy it from us, it should still be with you in twenty years.',
-  },
-  {
-    number: '02',
-    title: 'Named makers only',
-    body: 'Every object on this site was made by a specific person in a specific place. We know them. We will introduce you.',
-  },
-  {
-    number: '03',
-    title: 'Repair over replace',
-    body: 'We maintain a repair service for every object we have ever sold. Bring it back. We will fix it.',
-  },
-  {
-    number: '04',
-    title: 'Slow production',
-    body: 'We do not respond to trends with new collections. We make things when they are ready. Sometimes that takes three years.',
-  },
-];
-
-export default function AboutPage(): JSX.Element {
   return (
     <>
       <SiteNav />
@@ -99,13 +46,13 @@ export default function AboutPage(): JSX.Element {
                 userSelect: 'none',
               }}
             >
-              ARCANA
+              {content.hero.watermark}
             </span>
           </div>
 
           <div className="relative z-10 max-w-2xl">
             <div className="type-label mb-6" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              Founded 2012 — Lyon, France
+              {content.hero.eyebrow}
             </div>
             <h1
               style={{
@@ -117,7 +64,7 @@ export default function AboutPage(): JSX.Element {
                 marginBottom: '1.5rem',
               }}
             >
-              Objects of Enduring Beauty
+              {content.hero.title}
             </h1>
             <p
               style={{
@@ -128,9 +75,7 @@ export default function AboutPage(): JSX.Element {
                 lineHeight: 1.85,
               }}
             >
-              We are a small luxury house making things that last.
-              Everything we sell was made by a person whose name we know,
-              in a place we have visited, using materials we can trace to their source.
+              {content.hero.body}
             </p>
           </div>
         </div>
@@ -140,18 +85,13 @@ export default function AboutPage(): JSX.Element {
           {/* Text */}
           <div className="px-8 md:px-16 py-16 md:py-24" style={{ borderRight: '1px solid var(--border)' }}>
             <div className="type-label mb-6" style={{ color: 'var(--accent)' }}>
-              The beginning
+              {content.origin.eyebrow}
             </div>
             <h2 className="type-display-md mb-8" style={{ color: 'var(--fg)' }}>
-              A linen shirt and a question
+              {content.origin.title}
             </h2>
             <div className="space-y-5">
-              {[
-                'Arcana began with a single question: why does everything fall apart? Clara Morin, then working as a textile designer in Lyon, bought a linen shirt from a market stall in Bruges in 2011. She is still wearing it.',
-                'The shirt was not expensive. It was made by a weaver who had learned from his father, using techniques unchanged in three centuries. The price reflected craft, not brand. She began asking why this was so rare.',
-                'With her husband Étienne — a leather goods maker with a workshop in the Périgord — she spent two years identifying the last remaining practitioners of the techniques they admired: linen weavers, vegetable tanners, stone carvers, ceramicists. The people who had not optimised for speed.',
-                'In 2012, they made 200 linen shirts from the Bruges workshop. They sold them from a table at a Paris design fair. By the end of the weekend, they were gone. Arcana began.',
-              ].map((para, i) => (
+              {content.origin.paragraphs.map((para, i) => (
                 <p
                   key={i}
                   style={{
@@ -170,13 +110,8 @@ export default function AboutPage(): JSX.Element {
 
           {/* Stats column */}
           <div className="px-8 md:px-16 py-16 md:py-24 flex flex-col justify-between gap-12" style={{ background: 'var(--surface)' }}>
-            <div className="type-label mb-4" style={{ color: 'var(--muted)' }}>By the numbers</div>
-            {[
-              { value: '38', label: 'Named artisans', sub: 'across 9 countries' },
-              { value: '840+', label: 'Objects in the archive', sub: 'since 2012' },
-              { value: '∞', label: 'Repair guarantee', sub: 'on everything we make' },
-              { value: '0', label: 'Trend collections', sub: 'we do not do seasons' },
-            ].map(({ value, label, sub }) => (
+            <div className="type-label mb-4" style={{ color: 'var(--muted)' }}>{content.statsEyebrow}</div>
+            {content.stats.map(({ value, label, sub }) => (
               <div key={label} className="flex items-start gap-6" style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
                 <div
                   style={{
@@ -203,9 +138,9 @@ export default function AboutPage(): JSX.Element {
 
         {/* ── Timeline ──────────────────────────────────────────────── */}
         <div className="px-8 md:px-16 py-20 max-w-screen-2xl mx-auto">
-          <div className="type-label mb-12" style={{ color: 'var(--accent)' }}>History</div>
+          <div className="type-label mb-12" style={{ color: 'var(--accent)' }}>{content.historyEyebrow}</div>
           <div className="grid md:grid-cols-3 gap-0">
-            {MILESTONES.map(({ year, event }, i) => (
+            {content.milestones.map(({ year, event }, i) => (
               <div
                 key={year}
                 className="py-8 pr-8"
@@ -248,11 +183,11 @@ export default function AboutPage(): JSX.Element {
           <div className="px-8 md:px-16 py-16 max-w-screen-2xl mx-auto">
             <div className="flex items-end justify-between mb-12">
               <div>
-                <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>The makers</div>
-                <h2 className="type-display-md" style={{ color: 'var(--fg)' }}>Artisans</h2>
+                <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>{content.artisansEyebrow}</div>
+                <h2 className="type-display-md" style={{ color: 'var(--fg)' }}>{content.artisansTitle}</h2>
               </div>
-              <a href="/stories" className="hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all" style={{ color: 'var(--muted)' }}>
-                Read their stories
+              <a href={content.artisansCtaHref} className="hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all" style={{ color: 'var(--muted)' }}>
+                {content.artisansCtaLabel}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
@@ -260,12 +195,12 @@ export default function AboutPage(): JSX.Element {
             </div>
 
             <div className="grid md:grid-cols-4 gap-6">
-              {ARTISANS.map((artisan) => (
+              {content.artisans.map((artisan, index) => (
                 <div key={artisan.name} className="group">
                   {/* Portrait swatch */}
                   <div
                     className="relative mb-5 overflow-hidden"
-                    style={{ aspectRatio: '3/4', background: artisan.gradient }}
+                    style={{ aspectRatio: '3/4', background: ARTISAN_GRADIENTS[index % ARTISAN_GRADIENTS.length] }}
                   >
                     {/* Initials overlay */}
                     <div
@@ -321,9 +256,9 @@ export default function AboutPage(): JSX.Element {
 
         {/* ── Values ────────────────────────────────────────────────── */}
         <div className="px-8 md:px-16 py-20 max-w-screen-2xl mx-auto">
-          <div className="type-label mb-12" style={{ color: 'var(--accent)' }}>How we work</div>
+          <div className="type-label mb-12" style={{ color: 'var(--accent)' }}>{content.valuesEyebrow}</div>
           <div className="grid md:grid-cols-2 gap-x-16 gap-y-0">
-            {VALUES.map(({ number, title, body }) => (
+            {content.values.map(({ number, title, body }) => (
               <div
                 key={number}
                 className="py-10"
@@ -383,25 +318,25 @@ export default function AboutPage(): JSX.Element {
               margin: '0 auto 2.5rem',
             }}
           >
-            &ldquo;Come slowly. Choose carefully. Buy the thing you will still want in fifteen years.&rdquo;
+            &ldquo;{content.closing.quote}&rdquo;
           </p>
           <div className="type-label mb-10" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            — Clara Morin, Founder
+            {content.closing.attribution}
           </div>
           <div className="flex gap-4 justify-center flex-wrap">
             <a
-              href="/"
+              href={content.closing.primaryCtaHref}
               className="btn-primary"
               style={{ background: 'var(--bg)', color: 'var(--fg)' }}
             >
-              Explore the collection
+              {content.closing.primaryCtaLabel}
             </a>
             <a
-              href="/stories"
+              href={content.closing.secondaryCtaHref}
               className="btn-ghost"
               style={{ color: 'var(--bg)', borderColor: 'rgba(255,255,255,0.2)' }}
             >
-              Read our stories
+              {content.closing.secondaryCtaLabel}
             </a>
           </div>
         </div>

@@ -54,7 +54,7 @@ to the canonical repo references.
   `docs/ai-paths/overview.md`
 - AI Brain/model routing: `src/shared/lib/ai-brain/`
 - CMS/frontend rendering: `src/features/cms/`, `src/app/(frontend)/`
-- Database engine routing: `src/features/database/`, `src/shared/lib/db/`
+- Database engine routing: `apps/database-engine-web/src/features/database/`, `src/shared/lib/db/`
 - Observability/logging: `src/features/observability/`,
   `src/shared/lib/observability/`
 - Shared query/data conventions: `src/shared/lib/query-factories-v2.ts`,

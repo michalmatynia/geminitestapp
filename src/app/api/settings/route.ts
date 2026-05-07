@@ -1,7 +1,12 @@
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { disableSettingsRateLimit, getHandler, postHandler, querySchema } from './handler';
+import {
+  disableSettingsRateLimit,
+  getHandler,
+  postHandler,
+  querySchema,
+} from '@/shared/server/api/settings/handler';
 
 export const GET = apiHandler(getHandler, {
   source: 'settings.GET',

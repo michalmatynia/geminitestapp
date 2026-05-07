@@ -15,6 +15,8 @@ export function ProductImage({
   className = 'absolute inset-0',
   sizes = '(max-width: 768px) 50vw, 25vw',
   priority = false,
+  fit = 'cover',
+  position = 'center top',
 }: {
   imageUrl?: string;
   gradient: string;
@@ -22,6 +24,8 @@ export function ProductImage({
   className?: string;
   sizes?: string;
   priority?: boolean;
+  fit?: 'cover' | 'contain';
+  position?: string;
 }): JSX.Element {
   return (
     <div className={`${className} overflow-hidden`}>
@@ -34,7 +38,7 @@ export function ProductImage({
           fill
           sizes={sizes}
           priority={priority}
-          style={{ objectFit: 'cover', objectPosition: 'center top' }}
+          style={{ objectFit: fit, objectPosition: position }}
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).style.display = 'none';
           }}

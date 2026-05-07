@@ -4,8 +4,13 @@ import { useState, useEffect, type JSX } from 'react';
 import { useRecentlyViewed, type RecentlyViewedItem } from '@/context/RecentlyViewedContext';
 import type { Product } from '@/data/products';
 import { ProductImage } from '@/components/ProductImage';
+import { HOME_CONTENT_DEFAULTS, type HomeRecentlyViewedContent } from '@/data/homeContent';
 
-export function RecentlyViewed(): JSX.Element | null {
+export function RecentlyViewed({
+  content = HOME_CONTENT_DEFAULTS.recentlyViewed,
+}: {
+  content?: HomeRecentlyViewedContent;
+}): JSX.Element | null {
   const { items } = useRecentlyViewed();
   const [freshData, setFreshData] = useState<Record<string, Product>>({});
 
@@ -47,7 +52,7 @@ export function RecentlyViewed(): JSX.Element | null {
         <div className="flex items-end justify-between mb-10">
           <div>
             <div className="type-label mb-2" style={{ color: 'var(--accent)' }}>
-              Your trail
+              {content.eyebrow}
             </div>
             <h2
               style={{
@@ -58,15 +63,15 @@ export function RecentlyViewed(): JSX.Element | null {
                 lineHeight: 1.1,
               }}
             >
-              Recently Viewed
+              {content.title}
             </h2>
           </div>
           <a
-            href="/collections/objects"
+            href={content.ctaHref}
             className="hidden md:flex items-center gap-2 type-label transition-colors hover:text-[var(--fg)]"
             style={{ color: 'var(--muted)' }}
           >
-            Browse all
+            {content.ctaLabel}
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>

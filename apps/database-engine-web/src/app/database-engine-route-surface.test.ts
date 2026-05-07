@@ -8,17 +8,21 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.
 const routeRoot = path.join(rootDir, 'apps/database-engine-web/src/app');
 
 const sourceRoots = [
-  'src/features/database/api',
-  'src/features/database/components',
-  'src/features/database/context',
-  'src/features/database/hooks',
-  'src/features/database/pages',
-  'src/features/auth/pages/public',
+  'apps/database-engine-web/src/features/database/api',
+  'apps/database-engine-web/src/features/database/components',
+  'apps/database-engine-web/src/features/database/context',
+  'apps/database-engine-web/src/features/database/hooks',
+  'apps/database-engine-web/src/features/database/pages',
+  'apps/database-engine-web/src/auth/pages/public',
   'src/shared/api/settings-client.ts',
 ] as const;
 
 const apiPathPattern =
   /[`'"](\/api\/(?:auth|client-errors|databases|query-telemetry|settings)[^`'"]*)[`'"]/g;
+const rootAppAlias = ['@', 'app'].join('/');
+const rootAppApiAlias = ['@', 'app', 'api'].join('/');
+const rootJobsFeatureAlias = ['@', 'features', 'jobs'].join('/');
+const rootKangurFeatureAlias = ['@', 'features', 'kangur'].join('/');
 
 const requiredPageRoutes = [
   'page.tsx',
@@ -88,10 +92,13 @@ const discoverLocalApiEndpoints = (): string[] => {
 const listWorkspaceApiRouteFiles = (): string[] =>
   listSourceFiles('apps/database-engine-web/src/app/api').filter((file) => file.endsWith('route.ts'));
 
+const listWorkspaceSourceFiles = (): string[] => listSourceFiles('apps/database-engine-web/src');
+
 describe('Database Engine workspace route surface', () => {
   it('keeps root app database UI and API compatibility routes pruned', () => {
     expect(existsSync(path.join(rootDir, 'src/app/(admin)/admin/databases'))).toBe(false);
     expect(existsSync(path.join(rootDir, 'src/app/api/databases'))).toBe(false);
+    expect(existsSync(path.join(rootDir, 'src/features/database'))).toBe(false);
   });
 
   it('contains the standalone page routes', () => {
@@ -110,16 +117,96 @@ describe('Database Engine workspace route surface', () => {
     const source = readFileSync(path.join(routeRoot, 'api/databases/[[...path]]/route.ts'), 'utf8');
 
     expect(source).toContain('database-engine-web.databases.[[...path]].GET');
-    expect(source).not.toContain('@/app/api/databases');
+    expect(source).not.toContain(`${rootAppApiAlias}/databases`);
   });
 
-  it('does not import root app route files from local API routes', () => {
-    const rootRouteImports = listWorkspaceApiRouteFiles().flatMap((file) => {
+  it('does not import root app API modules from local API routes', () => {
+    const rootApiImports = listWorkspaceApiRouteFiles().flatMap((file) => {
       const source = readFileSync(file, 'utf8');
-      return /@\/app\/api\/.*\/route['"]/.test(source) ? [path.relative(routeRoot, file)] : [];
+      return source.includes(rootAppApiAlias) ? [path.relative(routeRoot, file)] : [];
     });
 
-    expect(rootRouteImports).toEqual([]);
+    expect(rootApiImports).toEqual([]);
+  });
+
+  it('does not import root app modules from standalone workspace source', () => {
+    const rootAppImports = listWorkspaceSourceFiles().flatMap((file) => {
+      const source = readFileSync(file, 'utf8');
+      return source.includes(rootAppAlias) ? [path.relative(rootDir, file)] : [];
+    });
+
+    expect(rootAppImports).toEqual([]);
+  });
+
+  it('does not import non-database feature modules from standalone workspace source', () => {
+    const externalFeatureImports = listWorkspaceSourceFiles().flatMap((file) => {
+      const source = readFileSync(file, 'utf8');
+      const matches = source.match(/@\/features\/(?!database(?:['/]))[A-Za-z0-9_-]+/g) ?? [];
+      return matches.length > 0
+        ? [`${path.relative(rootDir, file)}: ${matches.join(', ')}`]
+        : [];
+    });
+
+    expect(externalFeatureImports).toEqual([]);
+  });
+
+  it('does not expose the root app alias in standalone build config', () => {
+    const tsconfig = readFileSync(path.join(rootDir, 'apps/database-engine-web/tsconfig.json'), 'utf8');
+    const nextConfig = readFileSync(path.join(rootDir, 'apps/database-engine-web/next.config.mjs'), 'utf8');
+
+    expect(tsconfig).not.toContain(`"${rootAppAlias}/*"`);
+    expect(nextConfig).not.toContain(`'${rootAppAlias}'`);
+    expect(nextConfig).not.toContain(`"${rootAppAlias}"`);
+    expect(tsconfig).not.toContain('"@/server/*"');
+    expect(tsconfig).not.toContain('"@/i18n/*"');
+    expect(tsconfig).not.toContain('"@docs/*"');
+    expect(nextConfig).not.toContain("'@/server'");
+    expect(nextConfig).not.toContain("'@/i18n'");
+    expect(nextConfig).not.toContain("'@docs'");
+  });
+
+  it('maps Database Engine feature imports to the standalone workspace implementation', () => {
+    const tsconfig = readFileSync(path.join(rootDir, 'apps/database-engine-web/tsconfig.json'), 'utf8');
+    const nextConfig = readFileSync(path.join(rootDir, 'apps/database-engine-web/next.config.mjs'), 'utf8');
+
+    expect(tsconfig).toContain('"@/features/database/*": ["src/features/database/*"]');
+    expect(nextConfig).toContain("path.resolve(__dirname, 'src/features/database')");
+  });
+
+  it('keeps Database Engine Vitest compatibility local to the standalone workspace', () => {
+    const rootVitestConfig = readFileSync(path.join(rootDir, 'vitest.config.ts'), 'utf8');
+    const workspaceVitestConfig = readFileSync(
+      path.join(rootDir, 'apps/database-engine-web/vitest.config.ts'),
+      'utf8'
+    );
+    const workspacePackage = readFileSync(
+      path.join(rootDir, 'apps/database-engine-web/package.json'),
+      'utf8'
+    );
+
+    expect(rootVitestConfig).not.toContain('./apps/database-engine-web/src/features/database');
+    expect(workspaceVitestConfig).toContain("path.resolve(appDir, 'src/features/database')");
+    expect(workspaceVitestConfig).not.toContain("'@':");
+    expect(workspaceVitestConfig).not.toContain("'@/server'");
+    expect(workspaceVitestConfig).not.toContain("'@/i18n'");
+    expect(workspaceVitestConfig).not.toContain("'@docs'");
+    expect(workspacePackage).toContain('vitest --config vitest.config.ts run');
+  });
+
+  it('uses local Database Engine instrumentation instead of root startup bootstrap', () => {
+    const instrumentation = readFileSync(
+      path.join(rootDir, 'apps/database-engine-web/src/instrumentation.ts'),
+      'utf8'
+    );
+    const nodeInstrumentation = readFileSync(
+      path.join(rootDir, 'apps/database-engine-web/src/instrumentation.node.ts'),
+      'utf8'
+    );
+
+    expect(instrumentation).toContain('registerDatabaseEngineNodeInstrumentation');
+    expect(nodeInstrumentation).not.toContain(rootJobsFeatureAlias);
+    expect(nodeInstrumentation).not.toContain(rootKangurFeatureAlias);
+    expect(nodeInstrumentation).not.toContain('@/shared/server/api/settings/lite/handler');
   });
 
   it('has a local route file for each Database Engine runtime API endpoint', () => {

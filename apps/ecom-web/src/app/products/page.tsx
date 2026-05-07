@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { getMentiosProducts } from '@/lib/mentios';
 import { PRODUCTS } from '@/data/products';
 import { CollectionPageClient } from '@/app/collections/[slug]/CollectionPageClient';
+import { getProductsContent } from '@/lib/cms';
 
 export const metadata: Metadata = { title: 'All Products — ARCANA' };
 export const revalidate = 120;
@@ -19,8 +20,13 @@ export default async function AllProductsPage({
   const params = await (searchParams ?? Promise.resolve({})) as { q?: string; new?: string };
   const search = params.q ?? undefined;
   const newOnly = params.new === '1';
+  const content = await getProductsContent();
 
-  const label = newOnly ? 'New Arrivals' : search ? `Search: "${search}"` : 'All Products';
+  const label = newOnly
+    ? content.collection.newArrivalsLabel
+    : search
+      ? `${content.collection.searchLabelPrefix}: "${search}"`
+      : content.collection.allProductsLabel;
 
   const { products: dbProducts, total: dbTotal } = await getMentiosProducts({
     limit: PAGE_SIZE,
@@ -57,6 +63,7 @@ export default async function AllProductsPage({
       products={products}
       total={total}
       source={source}
+      content={content}
     />
   );
 }

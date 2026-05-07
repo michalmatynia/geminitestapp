@@ -258,7 +258,7 @@ in generic catch-all API groups:
 - `src/app/api/v2/integrations/[[...path]]/route.ts`
 - `src/app/api/agentcreator/[[...path]]/route.ts`
 - `src/app/api/ai-paths/[[...path]]/route.ts`
-- `src/app/api/databases/[[...path]]/route.ts`
+- `apps/database-engine-web/src/app/api/databases/[[...path]]/route.ts`
 - `src/app/api/chatbot/[[...path]]/route.ts`
 
 ### Type consolidation backlog remains real

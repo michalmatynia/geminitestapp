@@ -6,6 +6,7 @@ import { useQuickView } from '@/context/QuickViewContext';
 import { PRODUCTS } from '@/data/products';
 import type { Product } from '@/data/products';
 import { ProductImage } from '@/components/ProductImage';
+import { HOME_CONTENT_DEFAULTS, type HomeFeaturedContent } from '@/data/homeContent';
 
 const FEATURED_SLUGS = [
   'amphora-vessel',
@@ -20,7 +21,7 @@ const STATIC_FEATURED = FEATURED_SLUGS
   .map((slug) => PRODUCTS.find((p) => p.slug === slug))
   .filter((p): p is Product => Boolean(p));
 
-function ProductCard({ product }: { product: Product }): JSX.Element {
+function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLabel: string }): JSX.Element {
   const { addItem } = useCart();
   const { open } = useQuickView();
   const aspect = '3/4';
@@ -118,7 +119,7 @@ function ProductCard({ product }: { product: Product }): JSX.Element {
             style={{ padding: '0.6rem 1rem', fontSize: '0.6rem' }}
             onClick={handleQuickAdd}
           >
-            Add to Bag
+            {quickAddLabel}
           </button>
           <button
             className="btn-ghost flex-shrink-0 px-3 py-0"
@@ -137,7 +138,13 @@ function ProductCard({ product }: { product: Product }): JSX.Element {
   );
 }
 
-export function FeaturedProducts({ products: dbProducts }: { products?: Product[] | null }): JSX.Element {
+export function FeaturedProducts({
+  products: dbProducts,
+  content = HOME_CONTENT_DEFAULTS.featured,
+}: {
+  products?: Product[] | null;
+  content?: HomeFeaturedContent;
+}): JSX.Element {
   const featured = dbProducts && dbProducts.length > 0 ? dbProducts : STATIC_FEATURED;
   const isLive = dbProducts && dbProducts.length > 0;
 
@@ -147,14 +154,14 @@ export function FeaturedProducts({ products: dbProducts }: { products?: Product[
       <div className="flex items-end justify-between mb-12">
         <div>
           <div className="type-label mb-3" style={{ color: 'var(--cyan-teal)' }}>
-            {isLive ? 'Live Catalog' : 'Featured Items'}
+            {isLive ? content.liveEyebrow : content.fallbackEyebrow}
           </div>
           <h2 className="type-display-lg" style={{ color: 'var(--fg)' }}>
-            Fresh Drops
+            {content.title}
           </h2>
         </div>
         <div className="hidden md:flex items-center gap-3">
-          {['All', 'Anime', 'Gaming', 'Film'].map((f, i) => (
+          {content.filters.map((f, i) => (
             <button
               key={f}
               className="type-label px-4 py-2 transition-all duration-200"
@@ -174,14 +181,14 @@ export function FeaturedProducts({ products: dbProducts }: { products?: Product[
       {/* Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {featured.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard key={product.id} product={product} quickAddLabel={content.quickAddLabel} />
         ))}
       </div>
 
       {/* View all CTA */}
       <div className="flex justify-center mt-14">
-        <a href="/products" className="btn-primary px-16">
-          View All {isLive ? '1,800+ Items' : 'Items'}
+        <a href={content.ctaHref} className="btn-primary px-16">
+          {isLive ? content.ctaLiveLabel : content.ctaFallbackLabel}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>

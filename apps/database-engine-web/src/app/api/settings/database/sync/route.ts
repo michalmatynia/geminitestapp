@@ -1,7 +1,7 @@
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { postHandler } from '@/app/api/settings/database/sync/handler';
+import { postDatabaseSyncHandler } from '../../../../../server/settings/handlers';
 
-export const POST = apiHandler(postHandler, {
+export const POST = apiHandler(postDatabaseSyncHandler, {
   source: 'database-engine-web.settings.database.sync.POST',
 });

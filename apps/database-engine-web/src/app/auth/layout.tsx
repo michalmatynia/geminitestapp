@@ -1,6 +1,7 @@
-import { AuthProvider } from '@/features/auth/context/AuthContext';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
+
+import { AuthProvider } from '../../auth/context/AuthContext';
 
 import type { ReactNode } from 'react';
 

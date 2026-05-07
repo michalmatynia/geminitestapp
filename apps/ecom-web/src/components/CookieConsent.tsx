@@ -1,26 +1,28 @@
 'use client';
 
 import { useState, useEffect, type JSX } from 'react';
-
-const KEY = 'arcana-cookie-consent';
+import { SITE_CONTENT_DEFAULTS } from '@/data/siteContent';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function CookieConsent(): JSX.Element | null {
+  const { cookieConsent } = useSiteContent();
+  const storageKey = cookieConsent.storageKey || SITE_CONTENT_DEFAULTS.cookieConsent.storageKey;
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem(KEY)) {
+    if (!localStorage.getItem(storageKey)) {
       const t = setTimeout(() => setVisible(true), 1800);
       return () => clearTimeout(t);
     }
-  }, []);
+  }, [storageKey]);
 
   const accept = () => {
-    localStorage.setItem(KEY, 'accepted');
+    localStorage.setItem(storageKey, 'accepted');
     setVisible(false);
   };
 
   const decline = () => {
-    localStorage.setItem(KEY, 'declined');
+    localStorage.setItem(storageKey, 'declined');
     setVisible(false);
   };
 
@@ -58,12 +60,12 @@ export function CookieConsent(): JSX.Element | null {
               maxWidth: '640px',
             }}
           >
-            We use cookies to remember your preferences, understand how you use ARCANA, and improve your experience.{' '}
+            {cookieConsent.message}{' '}
             <a
-              href="/values"
+              href={cookieConsent.policyHref}
               className="underline underline-offset-2 hover:text-[var(--fg)] transition-colors"
             >
-              Privacy policy
+              {cookieConsent.policyLabel}
             </a>
           </p>
         </div>
@@ -73,14 +75,14 @@ export function CookieConsent(): JSX.Element | null {
             className="type-label px-5 py-2.5 hover:text-[var(--fg)] transition-colors"
             style={{ color: 'var(--muted)' }}
           >
-            Essential only
+            {cookieConsent.essentialLabel}
           </button>
           <button
             onClick={accept}
             className="type-label px-6 py-2.5 transition-all duration-200 hover:opacity-90"
             style={{ background: 'var(--fg)', color: 'var(--bg)' }}
           >
-            Accept all
+            {cookieConsent.acceptLabel}
           </button>
         </div>
       </div>

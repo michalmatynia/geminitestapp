@@ -117,14 +117,16 @@ Example:
 - Owns the local Database Engine auth pages, NextAuth route endpoints, session
   provider, CSRF provider, and `/admin/databases/*` proxy protection.
 - Owns `/api/databases/*` route wrappers; database API implementations live
-  under `src/features/database/server/api`.
-- Can receive root-platform database admin traffic when
+  under `apps/database-engine-web/src/features/database/server/api`.
+- Can receive root-platform database admin and `/api/databases/*` traffic when
   `DATABASE_ENGINE_WEB_ORIGIN` is configured in the root app environment.
 - Loads repo-root environment files in both the runtime wrapper and
   `apps/database-engine-web/next.config.mjs`, so the root `.env*` files remain
   the source of truth.
-- Reuses repo-root code through aliases for `@/app`, `@/features`,
-  `@/shared`, `@/server`, `@/i18n`, and `@docs`.
+- Reuses repo-root feature/shared code through aliases for non-database
+  `@/features/*`, `@/shared`, `@/server`, `@/i18n`, and `@docs`. It does not
+  expose a `@/app` alias; Database Engine page, feature, and API route
+  ownership stays local to `apps/database-engine-web`.
 - Uses port `3400` so it can run beside the ecommerce workspace on `3300`.
 - Use this when you want an isolated Database Engine workspace without running
   the full root platform app.

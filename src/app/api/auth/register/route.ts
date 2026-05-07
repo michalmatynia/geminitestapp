@@ -1,7 +1,7 @@
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { postHandler, registerSchema } from './handler';
+import { postHandler, registerSchema } from '@/features/auth/server/api/register/handler';
 
 export const POST = apiHandler(postHandler, {
   source: 'auth.register.POST',

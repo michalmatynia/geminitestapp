@@ -426,6 +426,37 @@ describe('proxy api routing', () => {
     }
   });
 
+  it('rewrites Database Engine API routes to the configured standalone origin', async () => {
+    process.env['DATABASE_ENGINE_WEB_ORIGIN'] = 'https://database-engine.example.com';
+    try {
+      const schemaRequest = createRequest(
+        'http://localhost/api/databases/schema?provider=all&includeCounts=true'
+      );
+      const schemaResponse = await Promise.resolve(proxy(schemaRequest as never, { params: {} }));
+
+      expect(schemaResponse.status).toBe(200);
+      expect(schemaResponse.headers.get('x-middleware-rewrite')).toBe(
+        'https://database-engine.example.com/api/databases/schema?provider=all&includeCounts=true'
+      );
+      expect(schemaResponse.headers.get('location')).toBeNull();
+
+      const browseRequest = createRequest('http://localhost/api/databases/browse', {
+        method: 'POST',
+      });
+      const browseResponse = await Promise.resolve(proxy(browseRequest as never, { params: {} }));
+
+      expect(browseResponse.status).toBe(200);
+      expect(browseResponse.headers.get('x-middleware-rewrite')).toBe(
+        'https://database-engine.example.com/api/databases/browse'
+      );
+      expect(browseResponse.headers.get('location')).toBeNull();
+      expect(authInvokeMock).not.toHaveBeenCalled();
+      expect(ensureCsrfCookieMock).not.toHaveBeenCalled();
+    } finally {
+      delete process.env['DATABASE_ENGINE_WEB_ORIGIN'];
+    }
+  });
+
   it('skips canonical admin redirects for non-safe methods', async () => {
     const request = createRequest('http://localhost/admin/settings/ai', {
       method: 'POST',

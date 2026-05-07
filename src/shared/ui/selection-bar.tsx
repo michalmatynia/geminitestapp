@@ -47,8 +47,8 @@ type BatchActionsMenuProps = {
 const TRIGGER_CLASS_NAME =
   'h-8 w-full px-3 border border-border/60 bg-card/30 hover:bg-card/50 text-gray-300 hover:text-white sm:w-auto';
 
-const runAsyncAction = (action: () => Promise<void>): void => {
-  action().catch(() => undefined);
+const runAsyncAction = (action: () => Promise<void> | undefined): void => {
+  action()?.catch(() => undefined);
 };
 
 const buildSelectionIdBase = (label: string): string => {

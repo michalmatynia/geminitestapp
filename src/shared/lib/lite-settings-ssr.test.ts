@@ -9,7 +9,7 @@ const originalNodeEnv = process.env['NODE_ENV'];
 
 vi.mock('server-only', () => ({}));
 
-vi.mock('@/app/api/settings/lite/handler', () => ({
+vi.mock('@/shared/server/api/settings/lite/handler', () => ({
   prewarmLiteSettingsServerCache: prewarmLiteSettingsServerCacheMock,
 }));
 

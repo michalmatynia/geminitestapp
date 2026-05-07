@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-import { type SafeTimeout } from '@/shared/lib/runtime/timeout';
+import { clearSafeTimeout, type SafeTimeout } from '@/shared/lib/runtime/timeout';
 import { useQueryClient } from '@tanstack/react-query';
 
 
@@ -123,14 +123,14 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
 
         // Clear existing timeout
         if (batchTimeout.current) {
-          safeClearTimeout(batchTimeout.current);
+          clearSafeTimeout(batchTimeout.current);
         }
 
         // Process batch when full or after delay
         if (batchQueue.current.size >= maxBatchSize) {
           void processBatch();
         } else {
-          batchTimeout.current = safeSetTimeout(() => {
+          batchTimeout.current = setTimeout(() => {
             void processBatch();
           }, batchDelay);
         }
@@ -142,7 +142,7 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
   useEffect((): (() => void) => {
     return (): void => {
       if (batchTimeout.current) {
-        safeClearTimeout(batchTimeout.current);
+        clearSafeTimeout(batchTimeout.current);
       }
     };
   }, []);

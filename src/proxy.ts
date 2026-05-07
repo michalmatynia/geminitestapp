@@ -146,6 +146,9 @@ const isDatabaseEnginePageRequest = (pathname: string): boolean => {
   return stripped === '/admin/databases' || stripped.startsWith('/admin/databases/');
 };
 
+const isDatabaseEngineApiRequest = (pathname: string): boolean =>
+  pathname === '/api/databases' || pathname.startsWith('/api/databases/');
+
 const resolveDatabaseEnginePathname = (pathname: string): string => {
   const stripped = stripSiteLocalePrefix(pathname);
   return stripped;
@@ -387,11 +390,12 @@ const handler =
  * Main proxy/middleware function
  * Routes all requests through appropriate handlers:
  * 1. Traffic guard (security)
- * 2. API routes (pass through)
- * 3. Kangur routes (redirect to StudiQ origin if configured)
- * 4. Database Engine routes (redirect to Database Engine origin if configured)
- * 5. Public routes (i18n handling)
- * 6. Admin routes (authentication + canonical redirects)
+ * 2. Database Engine API handoff if configured
+ * 3. API routes (pass through)
+ * 4. Kangur routes (redirect to StudiQ origin if configured)
+ * 5. Database Engine routes (redirect to Database Engine origin if configured)
+ * 6. Public routes (i18n handling)
+ * 7. Admin routes (authentication + canonical redirects)
  */
 export function proxy(
   request: NextRequest,
@@ -404,6 +408,13 @@ export function proxy(
   const trafficGuardResponse = applyEdgeTrafficGuard(request);
   if (trafficGuardResponse) {
     return trafficGuardResponse;
+  }
+
+  const databaseEngineWebOrigin = getDatabaseEngineWebOrigin();
+  if (databaseEngineWebOrigin && isDatabaseEngineApiRequest(pathname)) {
+    const target = new URL(pathname, databaseEngineWebOrigin);
+    target.search = request.nextUrl.search;
+    return NextResponse.rewrite(target);
   }
 
   // API routes: pass through without modification
@@ -434,7 +445,6 @@ export function proxy(
   }
 
   // Database Engine routes: redirect to separate origin if configured
-  const databaseEngineWebOrigin = getDatabaseEngineWebOrigin();
   if (databaseEngineWebOrigin && isDatabaseEnginePageRequest(pathname)) {
     const target = new URL(resolveDatabaseEnginePathname(pathname), databaseEngineWebOrigin);
     if (!target.search) {

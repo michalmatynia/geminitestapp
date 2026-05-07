@@ -28,7 +28,11 @@ const listTestFiles = (relativeDir) => {
     });
 };
 
-const repoTestFiles = [...listTestFiles('__tests__'), ...listTestFiles('src')].sort();
+const repoTestFiles = [
+  ...listTestFiles('__tests__'),
+  ...listTestFiles('src'),
+  ...listTestFiles('apps/database-engine-web/src'),
+].sort();
 
 describe('vitest integration project manifest', () => {
   it('keeps each declared integration or unit-db test path unique and present on disk', () => {

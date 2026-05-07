@@ -1,0 +1,657 @@
+'use client';
+
+import { useState, useEffect, type JSX } from 'react';
+import { useCart } from '@/context/CartContext';
+import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
+import { SiteNav } from '@/components/SiteNav';
+import type {
+  CheckoutContent,
+  CheckoutFieldContent,
+  CheckoutStepContent,
+  CheckoutStepKey,
+  CheckoutSummaryContent,
+} from '@/data/checkoutContent';
+
+type Step = CheckoutStepKey | 'confirmation';
+
+function StepProgress({
+  current,
+  steps,
+  ariaLabel,
+}: {
+  current: Step;
+  steps: CheckoutStepContent[];
+  ariaLabel: string;
+}): JSX.Element {
+  const currentIdx = steps.findIndex((s) => s.key === current);
+  return (
+    <nav aria-label={ariaLabel} className="flex items-center gap-3">
+      {steps.map((step, i) => {
+        const done = i < currentIdx;
+        const active = step.key === current;
+        return (
+          <div key={step.key} className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0"
+                style={{
+                  background: done || active ? 'var(--fg)' : 'transparent',
+                  border: `1px solid ${done || active ? 'var(--fg)' : 'var(--border)'}`,
+                  color: done || active ? 'var(--bg)' : 'var(--muted)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                {done ? (
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                ) : (
+                  i + 1
+                )}
+              </div>
+              <span
+                className="type-label hidden md:block"
+                style={{ color: active ? 'var(--fg)' : 'var(--muted)' }}
+              >
+                {step.label}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className="w-8 h-px" style={{ background: 'var(--border)' }} />
+            )}
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+
+function FormInput({ field, value, onChange }: {
+  field: CheckoutFieldContent;
+  value: string;
+  onChange: (id: string, v: string) => void;
+}): JSX.Element {
+  return (
+    <div className={field.half ? 'flex-1 min-w-0' : 'w-full'}>
+      <label className="type-label block mb-1.5" style={{ color: 'var(--fg)' }}>
+        {field.label}
+      </label>
+      <input
+        type={field.type ?? 'text'}
+        id={field.id}
+        value={value}
+        onChange={(e) => onChange(field.id, e.target.value)}
+        placeholder={field.placeholder}
+        maxLength={field.maxLength}
+        style={{
+          width: '100%',
+          padding: '0.75rem 1rem',
+          background: 'transparent',
+          border: '1px solid var(--border)',
+          outline: 'none',
+          fontFamily: field.monospace ? 'var(--font-mono)' : 'var(--font-body)',
+          fontSize: '0.875rem',
+          fontWeight: 300,
+          color: 'var(--fg)',
+          letterSpacing: field.monospace ? '0.08em' : undefined,
+          transition: 'border-color 0.2s ease',
+        }}
+        onFocus={(e) => { e.target.style.borderColor = 'var(--fg)'; }}
+        onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; }}
+      />
+    </div>
+  );
+}
+
+function FieldRows({
+  fields,
+  values,
+  onChange,
+}: {
+  fields: CheckoutFieldContent[];
+  values: Record<string, string>;
+  onChange: (id: string, v: string) => void;
+}): JSX.Element {
+  return (
+    <>
+      {fields.map((field, i) => {
+        const prevHalf = i > 0 && fields[i - 1].half;
+        const isFirstOfPair = field.half && !prevHalf;
+        const isSecondOfPair = field.half && prevHalf;
+        if (isFirstOfPair) {
+          const next = fields[i + 1];
+          return (
+            <div key={field.id} className="flex gap-4">
+              <FormInput field={field} value={values[field.id] ?? ''} onChange={onChange} />
+              {next && <FormInput field={next} value={values[next.id] ?? ''} onChange={onChange} />}
+            </div>
+          );
+        }
+        if (isSecondOfPair) return null;
+        return <FormInput key={field.id} field={field} value={values[field.id] ?? ''} onChange={onChange} />;
+      })}
+    </>
+  );
+}
+
+const VALID_CODES: Record<string, number> = {
+  ARCANA10: 0.10,
+  ARCANA15: 0.15,
+  WELCOME20: 0.20,
+};
+
+function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Element {
+  const { items, totalPrice } = useCart();
+  const shipping = 0;
+  const [promoInput, setPromoInput] = useState('');
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState(false);
+  const [promoOpen, setPromoOpen] = useState(false);
+
+  const discountPct = promoCode ? (VALID_CODES[promoCode] ?? 0) : 0;
+  const discountAmt = Math.round(totalPrice * discountPct);
+  const finalTotal = totalPrice - discountAmt + shipping;
+
+  const applyPromo = () => {
+    const upper = promoInput.trim().toUpperCase();
+    if (VALID_CODES[upper] !== undefined) {
+      setPromoCode(upper);
+      setPromoError(false);
+      setPromoOpen(false);
+    } else {
+      setPromoError(true);
+    }
+  };
+
+  return (
+    <div
+      className="sticky top-24 p-8"
+      style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+    >
+      <h2
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: '1.25rem',
+          fontWeight: 300,
+          color: 'var(--fg)',
+          marginBottom: '1.5rem',
+        }}
+      >
+        {content.title}
+      </h2>
+
+      {/* Items */}
+      <div className="space-y-4 mb-6">
+        {items.length === 0 ? (
+          <p className="type-label" style={{ color: 'var(--muted)' }}>{content.emptyBagLabel}</p>
+        ) : (
+          items.map((item) => (
+            <div key={`${item.productId}::${item.size}`} className="flex gap-3">
+              <div className="relative flex-shrink-0">
+                <div
+                  className="w-14 h-16"
+                  style={{ background: item.gradient }}
+                />
+                <span
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] flex items-center justify-center"
+                  style={{ background: 'var(--fg)', color: 'var(--bg)', fontFamily: 'var(--font-mono)' }}
+                >
+                  {item.quantity}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0 flex justify-between gap-2">
+                <div>
+                  <p style={{ fontFamily: 'var(--font-display)', fontSize: '0.9rem', fontWeight: 300, color: 'var(--fg)' }}>
+                    {item.name}
+                  </p>
+                  {item.size && (
+                    <p className="type-label" style={{ color: 'var(--muted)' }}>{item.size}</p>
+                  )}
+                </div>
+                <span className="type-price flex-shrink-0" style={{ color: 'var(--fg)' }}>
+                  € {(item.price * item.quantity).toLocaleString('de-DE')}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Promo code */}
+      <div className="mb-6" style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+        {promoCode ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: '#4A7C5A' }}>
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              <span className="type-label" style={{ color: '#4A7C5A' }}>
+                {promoCode} {content.promoAppliedSuffix}
+              </span>
+            </div>
+            <button
+              onClick={() => { setPromoCode(null); setPromoInput(''); }}
+              className="type-label hover:text-[var(--fg)] transition-colors"
+              style={{ color: 'var(--muted)' }}
+            >
+              {content.removePromoLabel}
+            </button>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={() => setPromoOpen(!promoOpen)}
+              className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors"
+              style={{ color: 'var(--muted)' }}
+            >
+              {content.promoToggleLabel}
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                style={{ transform: promoOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease' }}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {promoOpen && (
+              <div className="flex gap-2 mt-3">
+                <input
+                  type="text"
+                  value={promoInput}
+                  onChange={(e) => { setPromoInput(e.target.value); setPromoError(false); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') applyPromo(); }}
+                  placeholder={content.promoPlaceholder}
+                  style={{
+                    flex: 1,
+                    padding: '0.6rem 0.875rem',
+                    background: 'transparent',
+                    border: `1px solid ${promoError ? 'var(--accent)' : 'var(--border)'}`,
+                    outline: 'none',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.78rem',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'var(--fg)',
+                  }}
+                />
+                <button
+                  onClick={applyPromo}
+                  className="type-label px-4 py-2 transition-colors hover:opacity-80"
+                  style={{ background: 'var(--fg)', color: 'var(--bg)', flexShrink: 0 }}
+                >
+                  {content.promoApplyLabel}
+                </button>
+              </div>
+            )}
+            {promoError && (
+              <p className="type-label mt-1.5" style={{ color: 'var(--accent)' }}>
+                {content.promoInvalidLabel}
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="divider mb-4" />
+
+      {/* Totals */}
+      <div className="space-y-2 mb-4">
+        <div className="flex justify-between">
+          <span className="type-label" style={{ color: 'var(--muted)' }}>{content.subtotalLabel}</span>
+          <span className="type-price" style={{ color: 'var(--fg)' }}>€ {totalPrice.toLocaleString('de-DE')}</span>
+        </div>
+        {discountAmt > 0 && (
+          <div className="flex justify-between">
+            <span className="type-label" style={{ color: '#4A7C5A' }}>
+              {content.discountLabel} ({Math.round(discountPct * 100)}%)
+            </span>
+            <span className="type-price" style={{ color: '#4A7C5A' }}>
+              − € {discountAmt.toLocaleString('de-DE')}
+            </span>
+          </div>
+        )}
+        <div className="flex justify-between">
+          <span className="type-label" style={{ color: 'var(--muted)' }}>{content.shippingLabel}</span>
+          <span className="type-price" style={{ color: shipping === 0 ? '#4A7C5A' : 'var(--fg)' }}>
+            {shipping === 0 ? content.freeLabel : `€ ${shipping}`}
+          </span>
+        </div>
+      </div>
+
+      <div className="divider mb-4" />
+
+      <div className="flex justify-between items-center">
+        <span
+          style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 400, color: 'var(--fg)' }}
+        >
+          {content.totalLabel}
+        </span>
+        <span
+          style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', color: 'var(--fg)' }}
+        >
+          € {finalTotal.toLocaleString('de-DE')}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export function CheckoutPageClient({ content }: { content: CheckoutContent }): JSX.Element {
+  const { items, clearCart } = useCart();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [step, setStep] = useState<Step>('information');
+  const [shipping, setShipping] = useState(content.shippingMethods[0]?.id ?? 'standard');
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [paymentForm, setPaymentForm] = useState<Record<string, string>>({});
+
+  // Pre-fill contact info from the logged-in user's session
+  useEffect(() => {
+    if (!user) return;
+    const nameParts = user.name.trim().split(/\s+/);
+    const firstName = nameParts[0] ?? '';
+    const lastName = nameParts.slice(1).join(' ');
+    setForm((f) => ({
+      ...f,
+      email: f.email || user.email,
+      firstName: f.firstName || firstName,
+      lastName: f.lastName || lastName,
+    }));
+  }, [user]);
+
+  const setField = (id: string, v: string) => setForm((f) => ({ ...f, [id]: v }));
+  const setPaymentField = (id: string, v: string) => setPaymentForm((f) => ({ ...f, [id]: v }));
+
+  const handlePlaceOrder = () => {
+    setStep('confirmation');
+    clearCart();
+    toast({ type: 'success', title: content.orderPlacedToastTitle, message: content.orderPlacedToastMessage });
+  };
+
+  if (step === 'confirmation') {
+    return (
+      <>
+        <SiteNav />
+        <main
+          className="min-h-screen flex flex-col items-center justify-center px-8 text-center"
+          style={{ paddingTop: 'var(--nav-h)' }}
+        >
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mb-8"
+            style={{ background: 'var(--fg)', color: 'var(--bg)' }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+          </div>
+          <h1
+            className="type-display-lg mb-4"
+            style={{ color: 'var(--fg)' }}
+          >
+            {content.confirmationTitle}
+          </h1>
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '0.9rem',
+              fontWeight: 300,
+              color: 'var(--muted)',
+              maxWidth: '400px',
+              lineHeight: 1.8,
+              marginBottom: '2.5rem',
+            }}
+          >
+            {content.confirmationBodyPrefix}{' '}
+            <strong style={{ color: 'var(--fg)' }}>{form.email || content.confirmationEmailFallback}</strong>
+            {content.confirmationBodySuffix}
+          </p>
+          <div className="flex gap-3">
+            <a href={content.continueShoppingHref} className="btn-primary">{content.continueShoppingLabel}</a>
+            <button className="btn-ghost">{content.trackOrderLabel}</button>
+          </div>
+
+          {/* Manifesto quote */}
+          <p
+            className="mt-20"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.1rem',
+              fontWeight: 300,
+              color: 'var(--muted)',
+              fontStyle: 'italic',
+            }}
+          >
+            {content.confirmationQuote}
+          </p>
+        </main>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <SiteNav />
+      <main style={{ paddingTop: 'var(--nav-h)' }}>
+        {/* Header bar */}
+        <div
+          className="px-8 md:px-16 py-5 flex items-center justify-between"
+          style={{ borderBottom: '1px solid var(--border)' }}
+        >
+          <a
+            href="/"
+            style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 300, letterSpacing: '0.25em', color: 'var(--fg)' }}
+          >
+            {content.brandText}
+          </a>
+          <StepProgress current={step} steps={content.steps} ariaLabel={content.stepAriaLabel} />
+          <div /> {/* spacer */}
+        </div>
+
+        {/* Two-column layout */}
+        <div className="grid md:grid-cols-[1fr_400px] lg:grid-cols-[1fr_440px] min-h-[calc(100vh-var(--nav-h)-64px)]">
+          {/* Form column */}
+          <div className="px-8 md:px-16 py-12" style={{ borderRight: '1px solid var(--border)' }}>
+            {/* ── Step: Information ─── */}
+            {step === 'information' && (
+              <div>
+                <h2 className="type-display-md mb-8" style={{ color: 'var(--fg)' }}>
+                  {content.informationTitle}
+                </h2>
+                <div className="space-y-4">
+                  <FieldRows fields={content.informationFields} values={form} onChange={setField} />
+                </div>
+
+                <div className="flex items-center justify-between mt-10">
+                  <a href={content.returnToBagHref} className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M19 12H5M12 5l-7 7 7 7" />
+                    </svg>
+                    {content.returnToBagLabel}
+                  </a>
+                  <button
+                    className="btn-primary"
+                    onClick={() => setStep('shipping')}
+                  >
+                    {content.continueToShippingLabel}
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Step: Shipping ─── */}
+            {step === 'shipping' && (
+              <div>
+                <h2 className="type-display-md mb-8" style={{ color: 'var(--fg)' }}>
+                  {content.shippingTitle}
+                </h2>
+
+                {/* Delivery address recap */}
+                <div
+                  className="p-4 mb-8 flex justify-between items-start gap-4"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                >
+                  <div>
+                    <div className="type-label mb-0.5" style={{ color: 'var(--muted)' }}>{content.deliveryRecapLabel}</div>
+                    <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 300, color: 'var(--fg)' }}>
+                      {form.address || content.deliveryAddressFallback}, {form.city || content.deliveryAddressFallback} {form.postcode || content.deliveryAddressFallback}
+                    </div>
+                  </div>
+                  <button
+                    className="type-label hover:text-[var(--fg)] transition-colors"
+                    style={{ color: 'var(--accent)', flexShrink: 0 }}
+                    onClick={() => setStep('information')}
+                  >
+                    {content.changeLabel}
+                  </button>
+                </div>
+
+                {/* Shipping options */}
+                <div className="space-y-3 mb-10">
+                  {content.shippingMethods.map((method) => (
+                    <label
+                      key={method.id}
+                      className="flex items-center gap-4 p-4 cursor-pointer transition-colors"
+                      style={{
+                        border: `1px solid ${shipping === method.id ? 'var(--fg)' : 'var(--border)'}`,
+                        background: shipping === method.id ? 'var(--surface)' : 'transparent',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="shipping"
+                        value={method.id}
+                        checked={shipping === method.id}
+                        onChange={() => setShipping(method.id)}
+                        className="sr-only"
+                      />
+                      <div
+                        className="w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0"
+                        style={{ borderColor: shipping === method.id ? 'var(--fg)' : 'var(--border)' }}
+                      >
+                        {shipping === method.id && (
+                          <div className="w-2 h-2 rounded-full" style={{ background: 'var(--fg)' }} />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--fg)' }}>
+                          {method.label}
+                        </div>
+                        <div className="type-label" style={{ color: 'var(--muted)' }}>{method.detail}</div>
+                      </div>
+                      <span className="type-price" style={{ color: method.price === 0 ? '#4A7C5A' : 'var(--fg)' }}>
+                        {method.priceLabel}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <button
+                    className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors"
+                    style={{ color: 'var(--muted)' }}
+                    onClick={() => setStep('information')}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M19 12H5M12 5l-7 7 7 7" />
+                    </svg>
+                    {content.backLabel}
+                  </button>
+                  <button className="btn-primary" onClick={() => setStep('payment')}>
+                    {content.continueToPaymentLabel}
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Step: Payment ─── */}
+            {step === 'payment' && (
+              <div>
+                <h2 className="type-display-md mb-8" style={{ color: 'var(--fg)' }}>
+                  {content.paymentTitle}
+                </h2>
+
+                {/* Security note */}
+                <div
+                  className="flex items-center gap-3 p-4 mb-8"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: '#4A7C5A', flexShrink: 0 }}>
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <span className="type-label" style={{ color: 'var(--muted)' }}>
+                    {content.securityNote}
+                  </span>
+                </div>
+
+                {/* Card form */}
+                <div className="space-y-4">
+                  <FieldRows fields={content.paymentFields} values={paymentForm} onChange={setPaymentField} />
+                </div>
+
+                {/* Billing address toggle */}
+                <label className="flex items-center gap-3 mt-6 cursor-pointer">
+                  <input type="checkbox" defaultChecked className="sr-only" />
+                  <div
+                    className="w-4 h-4 flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'var(--fg)', border: '1px solid var(--fg)' }}
+                  >
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                  </div>
+                  <span className="type-label" style={{ color: 'var(--muted)' }}>
+                    {content.billingSameLabel}
+                  </span>
+                </label>
+
+                <div className="flex items-center justify-between mt-10">
+                  <button
+                    className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors"
+                    style={{ color: 'var(--muted)' }}
+                    onClick={() => setStep('shipping')}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M19 12H5M12 5l-7 7 7 7" />
+                    </svg>
+                    {content.backLabel}
+                  </button>
+                  <button
+                    className="btn-primary"
+                    onClick={handlePlaceOrder}
+                    disabled={items.length === 0}
+                    style={{ opacity: items.length === 0 ? 0.5 : 1 }}
+                  >
+                    {items.length === 0 ? content.addItemsFirstLabel : content.placeOrderLabel}
+                    {items.length > 0 && (
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Order summary column */}
+          <div className="px-8 md:px-10 py-12" style={{ background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}>
+            <OrderSummary content={content.orderSummary} />
+          </div>
+        </div>
+      </main>
+    </>
+  );
+}

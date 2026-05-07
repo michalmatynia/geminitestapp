@@ -6,13 +6,10 @@
     "lib": ["dom", "dom.iterable", "es2022"],
     "noEmit": true,
     "paths": {
-      "@/app/*": ["../../src/app/*"],
       "@/components/*": ["src/components/*"],
-      "@/features/*": ["../../src/features/*"],
-      "@/i18n/*": ["../../src/i18n/*"],
-      "@/server/*": ["../../src/server/*"],
-      "@/shared/*": ["../../src/shared/*"],
-      "@docs/*": ["../../docs/*"]
+      "@/features/database": ["src/features/database/public.ts"],
+      "@/features/database/*": ["src/features/database/*"],
+      "@/shared/*": ["../../src/shared/*"]
     },
     "plugins": [
       {
@@ -30,5 +27,11 @@
     "../../vitest.d.ts",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next"]
+  "exclude": [
+    "node_modules",
+    ".next",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
 }

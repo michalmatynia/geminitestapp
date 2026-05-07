@@ -9,6 +9,15 @@ const rootCmsRouteDir = path.join(rootDir, 'src/app/(admin)/admin/cms');
 const workspaceCmsRouteDir = path.join(rootDir, 'apps/cms-builder-web/src/app/admin/cms');
 const workspaceAppDir = path.join(rootDir, 'apps/cms-builder-web/src/app');
 const routeFileNames = new Set(['page.tsx', 'loading.tsx', 'layout.tsx', 'error.tsx', 'not-found.tsx']);
+const migratedSharedApiRouteFiles = [
+  'api/auth/[...nextauth]/route.ts',
+  'api/auth/register/route.ts',
+  'api/client-errors/route.ts',
+  'api/query-telemetry/route.ts',
+  'api/settings/route.ts',
+  'api/settings/heavy/route.ts',
+  'api/settings/lite/route.ts',
+];
 
 const listRouteFiles = (baseDir: string, currentDir = baseDir): string[] =>
   readdirSync(currentDir, { withFileTypes: true }).flatMap((entry) => {
@@ -55,5 +64,14 @@ describe('CMS Builder page route surface', () => {
 
     expect(publicRoutesSource).not.toContain('resolveFrontPageSelection');
     expect(publicRoutesSource).not.toContain('requireAccessibleKangurSlugRoute');
+  });
+
+  it('uses migrated shared API handlers for non-CMS platform wrappers', () => {
+    const staleImports = migratedSharedApiRouteFiles.filter((route) => {
+      const source = readFileSync(path.join(workspaceAppDir, route), 'utf8');
+      return source.includes('@/app/api/');
+    });
+
+    expect(staleImports).toEqual([]);
   });
 });

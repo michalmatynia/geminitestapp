@@ -5,9 +5,8 @@ import { PRODUCTS } from '@/data/products';
 import type { Product } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { useSiteContent } from '@/context/SiteContentContext';
 import { ProductImage } from '@/components/ProductImage';
-
-const TRENDING = ['Anime', 'Attack on Titan', 'Keychain', 'Elden Ring', 'Ghibli'];
 
 type SearchOverlayProps = {
   open: boolean;
@@ -75,6 +74,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
   const inputRef = useRef<HTMLInputElement>(null);
   const { addItem } = useCart();
   const { toast } = useToast();
+  const { search } = useSiteContent();
 
   const { results, isLoading } = useProductSearch(query);
 
@@ -177,7 +177,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search objects, materials, categories…"
+            placeholder={search.placeholder}
             autoComplete="off"
             aria-label="Search"
             style={{
@@ -197,12 +197,12 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
             className="type-label flex items-center gap-1.5 hover:text-[var(--fg)] transition-colors"
             style={{ color: 'var(--muted)', flexShrink: 0 }}
           >
-            <span>Close</span>
+            <span>{search.closeLabel}</span>
             <kbd
               className="px-1.5 py-0.5 text-[10px]"
               style={{ border: '1px solid var(--border)', borderRadius: '2px' }}
             >
-              Esc
+              {search.shortcutLabel}
             </kbd>
           </button>
         </div>
@@ -213,10 +213,10 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
             /* Trending suggestions */
             <div>
               <p className="type-label mb-5" style={{ color: 'var(--muted)' }}>
-                Trending searches
+                {search.trendingLabel}
               </p>
               <div className="flex flex-wrap gap-3">
-                {TRENDING.map((term) => (
+                {search.trendingSearches.map((term) => (
                   <button
                     key={term}
                     onClick={() => setQuery(term)}
@@ -230,15 +230,10 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
 
               <div className="mt-10">
                 <p className="type-label mb-5" style={{ color: 'var(--muted)' }}>
-                  Browse collections
+                  {search.browseCollectionsLabel}
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[
-                    { slug: 'womenswear', label: 'Anime', href: '/collections/womenswear', gradient: 'linear-gradient(135deg, #21141D 0%, #3d0a40 100%)' },
-                    { slug: 'menswear', label: 'Gaming', href: '/collections/menswear', gradient: 'linear-gradient(135deg, #0a1500 0%, #1e3300 100%)' },
-                    { slug: 'accessories', label: 'Film & TV', href: '/collections/accessories', gradient: 'linear-gradient(135deg, #0f0520 0%, #28105a 100%)' },
-                    { slug: 'all', label: 'All Items', href: '/products', gradient: 'linear-gradient(135deg, #0B0D21 0%, #1a1040 100%)' },
-                  ].map((cat) => (
+                  {search.collectionCards.map((cat) => (
                     <a
                       key={cat.slug}
                       href={cat.href}
@@ -279,10 +274,10 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                   marginBottom: '0.5rem',
                 }}
               >
-                No results for &ldquo;{query}&rdquo;
+                {search.noResultsPrefix} &ldquo;{query}&rdquo;
               </p>
               <p className="type-label" style={{ color: 'var(--muted)' }}>
-                Try a different term or browse our collections
+                {search.noResultsHelp}
               </p>
             </div>
           ) : (

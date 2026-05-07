@@ -1,21 +1,11 @@
-import type { JSX } from 'react';
+import { Fragment, type JSX } from 'react';
+import { HOME_CONTENT_DEFAULTS, type HomeManifestoContent } from '@/data/homeContent';
 
-const MARQUEE_ITEMS = [
-  'Official Merch',
-  '◆',
-  'Anime Keychains',
-  '◆',
-  'Gaming Pins',
-  '◆',
-  'Film Collectibles',
-  '◆',
-  'Limited Drops',
-  '◆',
-  'Rare Finds',
-  '◆',
-];
+interface ManifestoBannerProps {
+  content?: HomeManifestoContent;
+}
 
-export function ManifestoBanner(): JSX.Element {
+export function ManifestoBanner({ content = HOME_CONTENT_DEFAULTS.manifesto }: ManifestoBannerProps): JSX.Element {
   return (
     <section className="relative overflow-hidden py-0">
       <div className="divider" />
@@ -52,21 +42,25 @@ export function ManifestoBanner(): JSX.Element {
                 key={group}
                 className="flex shrink-0 items-center gap-8 pr-8"
               >
-                {MARQUEE_ITEMS.map((item, i) => (
-                  <span
-                    key={`${group}-${i}`}
-                    className="shrink-0"
-                    style={{ color: item === '◆' ? 'var(--soft-gold)' : 'var(--cyan-teal)' }}
-                  >
-                    {item}
-                  </span>
+                {content.marqueeItems.map((item, i) => (
+                  <Fragment key={`${group}-${item}-${i}`}>
+                    <span
+                      className="shrink-0"
+                      style={{ color: 'var(--cyan-teal)' }}
+                    >
+                      {item}
+                    </span>
+                    <span className="shrink-0" style={{ color: 'var(--soft-gold)' }}>
+                      ◆
+                    </span>
+                  </Fragment>
                 ))}
               </div>
             ))}
           </div>
         </div>
         <span className="sr-only">
-          Official Merch, Anime Keychains, Gaming Pins, Film Collectibles, Limited Drops, Rare Finds
+          {content.marqueeItems.join(', ')}
         </span>
       </div>
 
@@ -87,7 +81,7 @@ export function ManifestoBanner(): JSX.Element {
         <div className="px-8 md:px-24 py-24 md:py-36 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <div className="type-label mb-8" style={{ color: 'rgba(171,217,208,0.45)' }}>
-              The Collector&apos;s Creed
+              {content.eyebrow}
             </div>
 
             <blockquote
@@ -100,11 +94,14 @@ export function ManifestoBanner(): JSX.Element {
                 marginBottom: '2rem',
               }}
             >
-              &ldquo;Every universe deserves{' '}
-              <em style={{ color: 'var(--cyan-teal)', fontStyle: 'normal', textShadow: '0 0 30px rgba(171,217,208,0.4)' }}>
-                a piece you can hold
-              </em>
-              .&rdquo;
+              &ldquo;{content.quotePrefix}{content.quoteEmphasis ? (
+                <>
+                  {' '}
+                  <em style={{ color: 'var(--cyan-teal)', fontStyle: 'normal', textShadow: '0 0 30px rgba(171,217,208,0.4)' }}>
+                    {content.quoteEmphasis}
+                  </em>
+                </>
+              ) : null}{content.quoteSuffix}&rdquo;
             </blockquote>
 
             <p
@@ -118,7 +115,7 @@ export function ManifestoBanner(): JSX.Element {
                 lineHeight: 1.8,
               }}
             >
-              We source and curate officially licensed collectibles from the anime, gaming and film worlds — so every piece in your collection carries real meaning.
+              {content.body}
             </p>
 
             {/* Divider */}
@@ -128,8 +125,8 @@ export function ManifestoBanner(): JSX.Element {
               <div className="h-px w-16" style={{ background: 'rgba(171,217,208,0.2)' }} />
             </div>
 
-            <a href="/products" className="btn-primary" style={{ display: 'inline-flex' }}>
-              Explore The Cache
+            <a href={content.ctaHref} className="btn-primary" style={{ display: 'inline-flex' }}>
+              {content.ctaLabel}
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>

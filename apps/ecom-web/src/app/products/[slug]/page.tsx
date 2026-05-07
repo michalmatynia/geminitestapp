@@ -4,6 +4,7 @@ import type { JSX } from 'react';
 import { getProduct, PRODUCTS } from '@/data/products';
 import { getMentiosProduct, getMentiosProducts } from '@/lib/mentios';
 import { ProductDetailClient } from './ProductDetailClient';
+import { getProductsContent } from '@/lib/cms';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -43,5 +44,7 @@ export default async function ProductPage({ params }: Props): Promise<JSX.Elemen
     if (filtered.length > 0) related = filtered;
   }
 
-  return <ProductDetailClient product={product} related={related} />;
+  const content = await getProductsContent();
+
+  return <ProductDetailClient product={product} related={related} content={content} />;
 }

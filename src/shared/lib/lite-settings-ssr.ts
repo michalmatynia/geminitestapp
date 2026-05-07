@@ -11,7 +11,7 @@ import 'server-only';
  * - Development vs production timeout optimization
  */
 
-import { prewarmLiteSettingsServerCache } from '@/app/api/settings/lite/handler';
+import { prewarmLiteSettingsServerCache } from '@/shared/server/api/settings/lite/handler';
 import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { cloneLiteSettings, getLiteSettingsCache } from '@/shared/lib/settings-lite-server-cache';
 

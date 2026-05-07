@@ -169,7 +169,7 @@ export async function registerNodeInstrumentation() {
   });
 
   if (shouldRunNodeStartupBootstrap()) {
-    void import('@/app/api/settings/lite/handler')
+    void import('@/shared/server/api/settings/lite/handler')
       .then(({ prewarmLiteSettingsServerCache }) => prewarmLiteSettingsServerCache())
       .catch((error) => {
         logClientError(error);

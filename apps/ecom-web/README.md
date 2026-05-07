@@ -26,6 +26,9 @@ and Next config, and the `@/*` alias for imports inside the ecommerce app.
 - Reads live Mentios catalog products from MongoDB when configured.
 - Falls back to checked-in static demo products when MongoDB is unavailable or
   the Mentios catalog has no matching products.
+- Provides a Super Admin CMS layer for storefront copy, global navigation,
+  editorial content, stories, lookbook entries, contact, wishlist, and checkout
+  content.
 - Keeps cart, wishlist, recently viewed products, quick view, toast, theme,
   announcement, and cookie consent state inside the storefront.
 - Provides a read-only `/api/products` endpoint for product listing data.
@@ -72,17 +75,17 @@ reload.
 | Route | File | Behavior |
 | --- | --- | --- |
 | `/` | `src/app/page.tsx` | Home page. Fetches up to 6 live Mentios products, then falls back to static featured products. |
-| `/collections/[slug]` | `src/app/collections/[slug]/page.tsx` | Collection page for `womenswear`, `menswear`, `objects`, or `accessories`. Fetches live products first, static collection fallback second. |
-| `/products/[slug]` | `src/app/products/[slug]/page.tsx` | Product detail page. Resolves live Mentios product first, static product fallback second. |
-| `/checkout` | `src/app/checkout/page.tsx` | Client checkout UI with information, shipping, payment, and confirmation steps. Clears local cart on mock order placement. |
-| `/wishlist` | `src/app/wishlist/page.tsx` | Local wishlist page. Supports static and live products by using the saved product snapshot. |
-| `/account` | `src/app/account/page.tsx` | Mock customer account dashboard with order history and settings. |
-| `/about` | `src/app/about/page.tsx` | Brand story page. |
-| `/values` | `src/app/values/page.tsx` | Sustainability and values page. |
-| `/lookbook` | `src/app/lookbook/page.tsx` | Editorial lookbook page backed by `src/data/lookbook.ts`. |
-| `/stories` | `src/app/stories/page.tsx` | Story index backed by `src/data/stories.ts`. |
-| `/stories/[slug]` | `src/app/stories/[slug]/page.tsx` | Story detail page. |
-| `/contact` | `src/app/contact/page.tsx` | Contact form UI. Submits locally and shows a toast, with no backend send step yet. |
+| `/collections/[slug]` | `src/app/collections/[slug]/page.tsx` | CMS-labeled collection page for `womenswear`, `menswear`, `objects`, or `accessories`. Fetches live products first, static collection fallback second. |
+| `/products/[slug]` | `src/app/products/[slug]/page.tsx` | CMS-labeled product detail page. Resolves live Mentios product first, static product fallback second. |
+| `/checkout` | `src/app/checkout/page.tsx` | CMS-backed checkout UI with information, shipping, payment, and confirmation steps. Clears local cart on mock order placement. |
+| `/wishlist` | `src/app/wishlist/page.tsx` | CMS-backed local wishlist page. Supports static and live products by using the saved product snapshot. |
+| `/account` | `src/app/account/page.tsx` | CMS-backed mock customer account dashboard with order history, settings, and Super Admin CMS editor access. |
+| `/about` | `src/app/about/page.tsx` | CMS-backed brand story page. |
+| `/values` | `src/app/values/page.tsx` | CMS-backed sustainability and values page. |
+| `/lookbook` | `src/app/lookbook/page.tsx` | CMS-backed editorial lookbook page with database-backed lookbook entries and static fallback. |
+| `/stories` | `src/app/stories/page.tsx` | CMS-backed story index with database-backed stories and static fallback. |
+| `/stories/[slug]` | `src/app/stories/[slug]/page.tsx` | CMS-backed story detail page. |
+| `/contact` | `src/app/contact/page.tsx` | CMS-backed contact form UI. Submits locally and shows a toast, with no backend send step yet. |
 | `/api/products` | `src/app/api/products/route.ts` | Read-only JSON product listing endpoint with live Mentios data and static fallback. |
 
 ## Product API
@@ -226,8 +229,8 @@ Wishlist:
 | Quick view | `src/context/QuickViewContext.tsx` | In memory only. |
 | Toasts | `src/context/ToastContext.tsx` | In memory only. |
 | Theme | `src/components/SiteNav.tsx` | `localStorage` key `arcana-theme`. |
-| Announcement banner | `src/components/SiteNav.tsx` | `localStorage` key `arcana-banner-v1`. |
-| Cookie consent | `src/components/CookieConsent.tsx` | Browser storage in the component. |
+| Announcement banner | `src/components/SiteNav.tsx` | CMS-controlled dismiss key, default `arcana-banner-v2`. |
+| Cookie consent | `src/components/CookieConsent.tsx` | CMS-controlled storage key, default `arcana-cookie-consent`. |
 
 Providers are mounted in `src/app/layout.tsx` around the whole app. Global UI
 such as the cart drawer, toast container, back-to-top button, quick view modal,
@@ -261,6 +264,75 @@ Content data:
 - `src/data/stories.ts`: editorial story content.
 - `src/data/lookbook.ts`: lookbook content.
 - `src/data/reviews.ts`: static review content.
+- `src/data/*Content.ts`: CMS defaults and validators for page/global content.
+
+## CMS Layer
+
+The content CMS is intentionally simple and local to this workspace. It stores
+validated content documents in MongoDB collection `ecom_cms_pages`, keyed by
+`{ page, locale }`, and stores editable story/lookbook entries in dedicated
+collections.
+
+CMS access:
+
+- The editor is mounted on `/account` for Super Admin users.
+- Current Super Admin gate is handled by `src/lib/auth.ts`; the expected admin
+  account is `mmatynia@gmail.com`.
+- Public pages read CMS content server-side through `src/lib/cms.ts`.
+- If MongoDB is unavailable, public pages fall back to checked-in defaults.
+- CMS mutation routes require a Super Admin session and return `403` for public
+  users.
+
+Main CMS routes:
+
+| Route | Purpose |
+| --- | --- |
+| `/api/cms/home` | Home hero, categories, featured section, manifesto, editorial strip, and recently viewed labels. |
+| `/api/cms/site` | Global nav, announcement, footer, search overlay, cookie consent, cart drawer, auth modal, quick view, and back-to-top labels. |
+| `/api/cms/about` | About page copy and structured sections. |
+| `/api/cms/values` | Values page copy, stats, materials, commitments, and closing CTAs. |
+| `/api/cms/contact` | Contact hero, info links, form labels, subject options, and success state. |
+| `/api/cms/account` | Account dashboard, signed-out state, sidebar, orders, settings, and Super Admin console labels. |
+| `/api/cms/wishlist` | Wishlist header, empty state, action labels, and toast labels. |
+| `/api/cms/checkout` | Checkout steps, form fields, shipping methods, payment labels, confirmation text, and order summary labels. |
+| `/api/cms/products` | Product listing, collection filters, product detail labels, size guide, reviews, and shipping/returns copy. |
+| `/api/cms/stories-page` | Story index/detail page labels and filters. |
+| `/api/cms/lookbook-page` | Lookbook masthead, archive, and CTA copy. |
+| `/api/cms/stories` and `/api/cms/stories/[slug]` | Editable story entries in `ecom_stories`. |
+| `/api/cms/lookbook` and `/api/cms/lookbook/[id]` | Editable lookbook entries in `ecom_lookbook`. |
+
+CMS source files:
+
+| File | Role |
+| --- | --- |
+| `src/lib/cms.ts` | Shared `get*Content`, `save*Content`, parser, fallback, and snapshot functions. |
+| `src/lib/storiesCms.ts` | Story collection access with static fallback. |
+| `src/lib/lookbookCms.ts` | Lookbook collection access with static fallback. |
+| `src/components/AdminCmsEditor.tsx` | Super Admin editing surface. |
+| `src/context/SiteContentContext.tsx` | Client context for global site CMS content. |
+| `src/data/homeContent.ts` | Home CMS schema/defaults/validation. |
+| `src/data/siteContent.ts` | Global site CMS schema/defaults/validation. |
+| `src/data/aboutContent.ts` | About page CMS schema/defaults/validation. |
+| `src/data/valuesContent.ts` | Values page CMS schema/defaults/validation. |
+| `src/data/contactContent.ts` | Contact page CMS schema/defaults/validation. |
+| `src/data/accountContent.ts` | Account page CMS schema/defaults/validation. |
+| `src/data/wishlistContent.ts` | Wishlist page CMS schema/defaults/validation. |
+| `src/data/checkoutContent.ts` | Checkout page CMS schema/defaults/validation. |
+| `src/data/productsContent.ts` | Product listing/detail CMS schema/defaults/validation. |
+| `src/data/storiesPageContent.ts` | Stories page CMS schema/defaults/validation. |
+| `src/data/lookbookPageContent.ts` | Lookbook page CMS schema/defaults/validation. |
+
+Operational notes:
+
+- Save actions call `revalidatePath` for the affected public routes.
+- The site-wide CMS document calls `revalidatePath('/', 'layout')` because nav,
+  footer, search, cart, and cookie content are mounted from the root layout.
+- Structured editor fields that represent lists use pipe-delimited rows, for
+  example `label | href` or `id | label | detail | price | priceLabel`.
+- Story and lookbook entry editors use JSON drafts because the entries are
+  larger content records.
+- This CMS covers content only. Styling, layout, product catalog mutations,
+  payments, and order management are still outside this layer.
 
 ## Styling System
 
@@ -292,6 +364,8 @@ Completed or working locally:
 - Multi-step checkout UI with promo-code handling and local confirmation state.
 - Account, contact, about, values, lookbook, and stories surfaces.
 - Read-only product API.
+- Super Admin content CMS for home, global site content, about, values,
+  contact, account, wishlist, checkout, products, stories, and lookbook.
 
 Partial or mocked:
 
@@ -303,8 +377,9 @@ Partial or mocked:
 - Search overlay currently searches only `src/data/products.ts`, not live
   Mentios products.
 - Live products currently map `details`, `care`, and `sizes` to empty arrays.
-- Real product image rendering is not wired yet.
-- There is no admin/catalog mutation surface in this workspace.
+- Product image rendering uses local upload folders and CSS fallback visuals,
+  but still needs a permanent asset/CDN strategy.
+- There is no admin product-catalog mutation surface in this workspace.
 - There is no ecommerce-specific test script yet.
 
 Quality notes:
@@ -345,6 +420,10 @@ Quality notes:
    ```bash
    npm run build:ecom
    ```
+
+6. For CMS work, log in as `mmatynia@gmail.com`, open `/account`, and use the
+   Super Admin CMS editor. Public users should receive `403` from CMS mutation
+   and snapshot routes.
 
 ## Troubleshooting
 

@@ -4,6 +4,7 @@ import type { JSX } from 'react';
 import { COLLECTIONS, getProductsByCollection } from '@/data/products';
 import { getMentiosProducts } from '@/lib/mentios';
 import { CollectionPageClient } from './CollectionPageClient';
+import { getProductsContent } from '@/lib/cms';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -37,6 +38,7 @@ export default async function CollectionPage({ params }: Props): Promise<JSX.Ele
   const products = isLive ? dbProducts : getProductsByCollection(slug);
   const total = isLive ? dbTotal : collection.count;
   const source: 'mentios' | 'static' = isLive ? 'mentios' : 'static';
+  const content = await getProductsContent();
 
   return (
     <CollectionPageClient
@@ -44,6 +46,7 @@ export default async function CollectionPage({ params }: Props): Promise<JSX.Ele
       products={products}
       total={total}
       source={source}
+      content={content}
     />
   );
 }

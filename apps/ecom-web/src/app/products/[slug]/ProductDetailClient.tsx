@@ -10,6 +10,7 @@ import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ProductReviews } from '@/components/ProductReviews';
 import type { Product } from '@/data/products';
+import type { ProductsContent, ProductsDetailContent } from '@/data/productsContent';
 
 const SWATCHES = [0, 1, 2] as const;
 
@@ -74,15 +75,13 @@ function AccordionItem({
   );
 }
 
-const SIZE_GUIDE_ROWS = [
-  { size: 'XS', chest: '82–86', waist: '66–70', hips: '88–92' },
-  { size: 'S',  chest: '86–90', waist: '70–74', hips: '92–96' },
-  { size: 'M',  chest: '90–94', waist: '74–78', hips: '96–100' },
-  { size: 'L',  chest: '94–98', waist: '78–82', hips: '100–104' },
-  { size: 'XL', chest: '98–104', waist: '82–88', hips: '104–110' },
-];
-
-function SizeGuideModal({ onClose }: { onClose: () => void }): JSX.Element {
+function SizeGuideModal({
+  onClose,
+  content,
+}: {
+  onClose: () => void;
+  content: ProductsDetailContent;
+}): JSX.Element {
   return (
     <div
       className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
@@ -100,7 +99,7 @@ function SizeGuideModal({ onClose }: { onClose: () => void }): JSX.Element {
       >
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="type-label mb-1" style={{ color: 'var(--accent)' }}>Sizing</div>
+            <div className="type-label mb-1" style={{ color: 'var(--accent)' }}>{content.sizeGuideEyebrow}</div>
             <h3
               style={{
                 fontFamily: 'var(--font-display)',
@@ -109,12 +108,12 @@ function SizeGuideModal({ onClose }: { onClose: () => void }): JSX.Element {
                 color: 'var(--fg)',
               }}
             >
-              Size Guide
+              {content.sizeGuideTitle}
             </h3>
           </div>
           <button
             onClick={onClose}
-            aria-label="Close size guide"
+            aria-label={content.closeSizeGuideLabel}
             className="text-[var(--muted)] hover:text-[var(--fg)] transition-colors"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -124,13 +123,13 @@ function SizeGuideModal({ onClose }: { onClose: () => void }): JSX.Element {
         </div>
 
         <p className="type-label mb-6" style={{ color: 'var(--muted)' }}>
-          All measurements in centimetres. For the best fit, measure over light clothing.
+          {content.sizeGuideBody}
         </p>
 
         <table className="w-full">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              {['Size', 'Chest', 'Waist', 'Hips'].map((h) => (
+              {content.sizeGuideHeaders.map((h) => (
                 <th
                   key={h}
                   className="type-label pb-3 text-left"
@@ -142,7 +141,7 @@ function SizeGuideModal({ onClose }: { onClose: () => void }): JSX.Element {
             </tr>
           </thead>
           <tbody>
-            {SIZE_GUIDE_ROWS.map((row) => (
+            {content.sizeGuideRows.map((row) => (
               <tr
                 key={row.size}
                 style={{ borderBottom: '1px solid var(--border)' }}
@@ -168,7 +167,7 @@ function SizeGuideModal({ onClose }: { onClose: () => void }): JSX.Element {
         </table>
 
         <p className="type-label mt-6" style={{ color: 'var(--muted)' }}>
-          Unsure? Email us at <a href="mailto:sizing@arcana.com" className="underline underline-offset-2 hover:text-[var(--fg)] transition-colors">sizing@arcana.com</a>
+          {content.sizeGuideHelpPrefix} <a href={`mailto:${content.sizeGuideHelpEmail}`} className="underline underline-offset-2 hover:text-[var(--fg)] transition-colors">{content.sizeGuideHelpEmail}</a>
         </p>
       </div>
     </div>
@@ -178,10 +177,13 @@ function SizeGuideModal({ onClose }: { onClose: () => void }): JSX.Element {
 export function ProductDetailClient({
   product,
   related,
+  content,
 }: {
   product: Product;
   related: Product[];
+  content: ProductsContent;
 }): JSX.Element {
+  const detailContent = content.detail;
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
   const { isWishlisted, toggle: toggleWishlist } = useWishlist();
@@ -232,7 +234,7 @@ export function ProductDetailClient({
     });
     toast({
       type: 'success',
-      title: 'Added to bag',
+      title: detailContent.addedToastTitle,
       message: `${product.name}${selectedSize ? ` — ${selectedSize}` : ''}`,
     });
     setTimeout(() => {
@@ -243,7 +245,7 @@ export function ProductDetailClient({
 
   return (
     <>
-      {sizeGuideOpen && <SizeGuideModal onClose={() => setSizeGuideOpen(false)} />}
+      {sizeGuideOpen && <SizeGuideModal onClose={() => setSizeGuideOpen(false)} content={detailContent} />}
       <SiteNav />
       <main style={{ paddingTop: 'var(--nav-h)' }}>
         {/* Breadcrumb */}
@@ -251,7 +253,7 @@ export function ProductDetailClient({
           className="px-8 md:px-16 py-5 flex items-center gap-2"
           style={{ borderBottom: '1px solid var(--border)' }}
         >
-          <a href="/" className="type-label hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>Home</a>
+          <a href="/" className="type-label hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>{detailContent.homeBreadcrumbLabel}</a>
           <span className="type-label" style={{ color: 'var(--border)' }}>/</span>
           <a href={`/collections/${product.collectionSlug}`} className="type-label hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>
             {product.category}
@@ -296,7 +298,7 @@ export function ProductDetailClient({
                 className="absolute right-8 bottom-12 rotate-[-90deg] origin-bottom-right z-10"
                 style={{ color: 'rgba(255,255,255,0.2)' }}
               >
-                <span className="type-label tracking-[0.2em]">ARCANA / {product.id}</span>
+                <span className="type-label tracking-[0.2em]">{detailContent.rotatedBrandLabel} / {product.id}</span>
               </div>
             </div>
 
@@ -309,7 +311,7 @@ export function ProductDetailClient({
                 <button
                   key={i}
                   onClick={() => setActiveImage(i)}
-                  aria-label={`View image ${i + 1}`}
+                  aria-label={`${detailContent.imageAriaPrefix} ${i + 1}`}
                   className="flex-1 h-20 transition-all duration-200 relative overflow-hidden"
                   style={{
                     background: gradients[i],
@@ -384,14 +386,14 @@ export function ProductDetailClient({
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-3">
                     <span className="type-label" style={{ color: sizeError ? 'var(--accent)' : 'var(--fg)' }}>
-                      {sizeError ? 'Please select a size' : 'Select size'}
+                      {sizeError ? detailContent.sizeRequiredLabel : detailContent.selectSizeLabel}
                     </span>
                     <button
                       className="type-label underline underline-offset-2 hover:text-[var(--fg)] transition-colors"
                       style={{ color: 'var(--muted)' }}
                       onClick={() => setSizeGuideOpen(true)}
                     >
-                      Size guide
+                      {detailContent.sizeGuideLabel}
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -426,14 +428,14 @@ export function ProductDetailClient({
               >
                 {adding ? (
                   <>
-                    Added to bag
+                    {detailContent.addedButtonLabel}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
                   </>
                 ) : (
                   <>
-                    Add to Bag
+                    {detailContent.addToBagLabel}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
@@ -456,7 +458,7 @@ export function ProductDetailClient({
                   });
                   toast({
                     type: isWishlisted(product.id) ? 'info' : 'success',
-                    title: isWishlisted(product.id) ? 'Removed from wishlist' : 'Saved to wishlist',
+                    title: isWishlisted(product.id) ? detailContent.removedWishlistToastTitle : detailContent.savedWishlistToastTitle,
                     message: product.name,
                   });
                 }}
@@ -473,38 +475,32 @@ export function ProductDetailClient({
                 >
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
-                {isWishlisted(product.id) ? 'Saved to Wishlist' : 'Save to Wishlist'}
+                {isWishlisted(product.id) ? detailContent.savedWishlistButtonLabel : detailContent.saveWishlistButtonLabel}
               </button>
             </div>
 
             {/* Accordions */}
             <div>
-              <AccordionItem label="Object Details">{product.details}</AccordionItem>
-              <AccordionItem label="Care Instructions">{product.care}</AccordionItem>
-              <AccordionItem label="Shipping & Returns">
-                {[
-                  'Complimentary shipping on orders over € 400',
-                  'Standard delivery: 3–5 business days',
-                  'Express delivery available at checkout',
-                  'Free returns within 30 days',
-                  'Items must be in original condition',
-                ]}
+              <AccordionItem label={detailContent.detailsAccordionLabel}>{product.details}</AccordionItem>
+              <AccordionItem label={detailContent.careAccordionLabel}>{product.care}</AccordionItem>
+              <AccordionItem label={detailContent.shippingReturnsAccordionLabel}>
+                {detailContent.shippingReturnsItems}
               </AccordionItem>
             </div>
           </div>
         </div>
 
-        <ProductReviews slug={product.slug} />
+        <ProductReviews slug={product.slug} content={detailContent} />
 
         {/* Related products */}
         {related.length > 0 && (
           <section className="px-8 md:px-16 py-20" style={{ borderTop: '1px solid var(--border)' }}>
             <div className="mb-10">
               <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
-                You may also like
+                {detailContent.relatedEyebrow}
               </div>
               <h2 className="type-display-md" style={{ color: 'var(--fg)' }}>
-                From the same collection
+                {detailContent.relatedTitle}
               </h2>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

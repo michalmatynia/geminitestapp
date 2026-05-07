@@ -1,0 +1,224 @@
+/**
+ * @vitest-environment node
+ */
+
+import { NextRequest } from 'next/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { POST as POST_RUN_NOW } from '@/features/database/server/api/engine/backup-scheduler/run-now/route-handler';
+import { POST as POST_TICK } from '@/features/database/server/api/engine/backup-scheduler/tick/route-handler';
+import { assertDatabaseEngineManageAccess } from '@/features/database/server';
+import {
+  getDatabaseBackupSchedulerStatus,
+  markDatabaseBackupJobQueued,
+  tickDatabaseBackupScheduler,
+} from '@/shared/lib/db/services/database-backup-scheduler';
+import {
+  enqueueProductAiJob,
+  startProductAiJobQueue,
+} from '@/features/database/server/jobs';
+import {
+  DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
+  getDatabaseBackupSchedulerQueueStatus,
+  startDatabaseBackupSchedulerQueue,
+} from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
+import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
+import type { ProductAiJobDto } from '@/shared/contracts/jobs';
+
+vi.mock('@/shared/lib/api/api-handler', () => ({
+  apiHandler:
+    (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
+      async (req: NextRequest): Promise<Response> =>
+        handler(req, {
+          requestId: 'test-request-id',
+        }),
+}));
+
+vi.mock('@/features/database/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/database/server')>();
+  return {
+    ...actual,
+    assertDatabaseEngineManageAccess: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
+vi.mock('@/shared/lib/db/database-engine-policy', () => ({
+  getDatabaseEngineOperationControls: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/db/services/database-backup-scheduler', () => ({
+  tickDatabaseBackupScheduler: vi.fn(),
+  getDatabaseBackupSchedulerStatus: vi.fn(),
+  markDatabaseBackupJobQueued: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/db/workers/databaseBackupSchedulerQueue', () => ({
+  DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS: 60_000,
+  startDatabaseBackupSchedulerQueue: vi.fn(),
+  getDatabaseBackupSchedulerQueueStatus: vi.fn(),
+}));
+
+vi.mock('@/features/database/server/jobs', () => ({
+  enqueueProductAiJob: vi.fn(),
+  startProductAiJobQueue: vi.fn(),
+  processProductAiJob: vi.fn().mockResolvedValue(undefined),
+  enqueueProductAiJobToQueue: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/shared/lib/observability/system-logger', () => ({
+  logSystemError: vi.fn().mockResolvedValue(undefined),
+}));
+
+describe('Database Engine backup scheduler actions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getDatabaseEngineOperationControls).mockResolvedValue({
+      allowManualFullSync: true,
+      allowManualCollectionSync: true,
+      allowManualBackfill: true,
+      allowManualBackupRunNow: true,
+      allowManualBackupMaintenance: true,
+      allowBackupSchedulerTick: true,
+      allowOperationJobCancellation: true,
+    });
+    vi.mocked(assertDatabaseEngineManageAccess).mockResolvedValue(undefined);
+  });
+
+  it('POST /api/databases/engine/backup-scheduler/tick runs scheduler tick and returns status payload', async () => {
+    vi.mocked(tickDatabaseBackupScheduler).mockResolvedValue({
+      checkedAt: '2026-02-10T10:00:00.000Z',
+      schedulerEnabled: true,
+      triggered: [{ dbType: 'mongodb', jobId: 'job-1' }],
+      skipped: [],
+    });
+    vi.mocked(getDatabaseBackupSchedulerStatus).mockResolvedValue({
+      timestamp: '2026-02-10T10:00:00.000Z',
+      schedulerEnabled: true,
+      repeatTickEnabled: true,
+      lastCheckedAt: '2026-02-10T10:00:00.000Z',
+      queue: {
+        running: true,
+        healthy: true,
+        processing: false,
+      },
+      repeatEveryMs: 60000,
+      targets: {
+        mongodb: {
+          enabled: true,
+          cadence: 'daily',
+          intervalDays: 1,
+          weekday: 1,
+          timeUtc: '02:00',
+          lastQueuedAt: '2026-02-10T10:00:00.000Z',
+          lastRunAt: null,
+          lastStatus: 'queued',
+          lastJobId: 'job-1',
+          lastError: null,
+          nextDueAt: '2026-02-11T02:00:00.000Z',
+          dueNow: false,
+        },
+      },
+    });
+    vi.mocked(getDatabaseBackupSchedulerQueueStatus).mockResolvedValue({
+      running: true,
+      healthy: true,
+      processing: false,
+      activeJobs: 0,
+      waitingJobs: 0,
+      failedJobs: 0,
+      completedJobs: 2,
+      lastPollTime: 1700000000000,
+      timeSinceLastPoll: 1000,
+    });
+
+    const res = await POST_TICK(
+      new NextRequest('http://localhost/api/databases/engine/backup-scheduler/tick', {
+        method: 'POST',
+      })
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(startDatabaseBackupSchedulerQueue).toHaveBeenCalledTimes(1);
+    expect(tickDatabaseBackupScheduler).toHaveBeenCalledTimes(1);
+    expect(body.success).toBe(true);
+    expect(body.status.repeatEveryMs).toBe(DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS);
+  });
+
+  it('POST /api/databases/engine/backup-scheduler/run-now queues MongoDB backup jobs', async () => {
+    vi.mocked(enqueueProductAiJob).mockResolvedValue({
+      id: 'job-mongo-1',
+      productId: 'system',
+      status: 'pending',
+    } as unknown as ProductAiJobDto);
+
+    const res = await POST_RUN_NOW(
+      new NextRequest('http://localhost/api/databases/engine/backup-scheduler/run-now', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ dbType: 'all' }),
+      })
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body).toEqual({
+      success: true,
+      queued: [{ dbType: 'mongodb', jobId: 'job-mongo-1' }],
+      inlineProcessed: [],
+    });
+    expect(enqueueProductAiJob).toHaveBeenCalledTimes(1);
+    expect(markDatabaseBackupJobQueued).toHaveBeenCalledTimes(1);
+    expect(startProductAiJobQueue).toHaveBeenCalledTimes(1);
+    expect(enqueueProductAiJob).toHaveBeenCalledWith(
+      'system',
+      'db_backup',
+      expect.objectContaining({ dbType: 'mongodb' })
+    );
+  });
+
+  it('POST /api/databases/engine/backup-scheduler/tick returns forbidden when manual tick is disabled', async () => {
+    vi.mocked(getDatabaseEngineOperationControls).mockResolvedValue({
+      allowManualFullSync: true,
+      allowManualCollectionSync: true,
+      allowManualBackfill: true,
+      allowManualBackupRunNow: true,
+      allowManualBackupMaintenance: true,
+      allowBackupSchedulerTick: false,
+      allowOperationJobCancellation: true,
+    });
+
+    await expect(
+      POST_TICK(
+        new NextRequest('http://localhost/api/databases/engine/backup-scheduler/tick', {
+          method: 'POST',
+        })
+      )
+    ).rejects.toThrow('disabled by Database Engine controls');
+    expect(startDatabaseBackupSchedulerQueue).not.toHaveBeenCalled();
+    expect(tickDatabaseBackupScheduler).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/databases/engine/backup-scheduler/run-now returns forbidden when manual backup is disabled', async () => {
+    vi.mocked(getDatabaseEngineOperationControls).mockResolvedValue({
+      allowManualFullSync: true,
+      allowManualCollectionSync: true,
+      allowManualBackfill: true,
+      allowManualBackupRunNow: false,
+      allowManualBackupMaintenance: true,
+      allowBackupSchedulerTick: true,
+      allowOperationJobCancellation: true,
+    });
+
+    await expect(
+      POST_RUN_NOW(
+        new NextRequest('http://localhost/api/databases/engine/backup-scheduler/run-now', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ dbType: 'all' }),
+        })
+      )
+    ).rejects.toThrow('disabled by Database Engine controls');
+    expect(enqueueProductAiJob).not.toHaveBeenCalled();
+  });
+});

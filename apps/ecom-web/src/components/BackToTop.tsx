@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, type JSX } from 'react';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function BackToTop(): JSX.Element {
+  const { backToTop } = useSiteContent();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -16,7 +18,7 @@ export function BackToTop(): JSX.Element {
   return (
     <button
       onClick={scrollToTop}
-      aria-label="Back to top"
+      aria-label={backToTop.ariaLabel}
       style={{
         position: 'fixed',
         bottom: '5.5rem',

@@ -5,11 +5,11 @@ import type { ShippingGroupFilters, ShippingGroupRepository } from '@/shared/con
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import type { Document, Filter, UpdateFilter } from 'mongodb';
+import type { Filter, UpdateFilter } from 'mongodb';
 
 const COLLECTION = 'product_shipping_groups';
 
-interface ProductShippingGroupDoc extends Document {
+interface ProductShippingGroupDoc {
   _id: ObjectId | string;
   name: string;
   description: string | null;

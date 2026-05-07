@@ -11,6 +11,7 @@ import {
   createTempRoot,
   criticalFlowTestsScriptPath,
   criticalPathPerformanceScriptPath,
+  filterAccessibilityRouteEntries,
   normalizeAccessibilityRouteEntries,
   playwrightSuiteScriptPath,
   resolveAccessibilityRouteCrawlChunkSize,
@@ -218,8 +219,9 @@ describe('scanner summary-json envelope', () => {
     const baseUrl = await startFixtureServer();
     const reportPath = seedAccessibilityRouteCrawlReport(root);
     const env = seedAccessibilityCommandHarness(root, { baseUrl, routeCrawlReportPath: reportPath });
-    const expectedRouteCount = normalizeAccessibilityRouteEntries(
-      accessibilityRouteCrawlRoutes
+    const expectedRouteCount = filterAccessibilityRouteEntries(
+      normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes),
+      { env }
     ).length;
     const expectedChunkSize =
       resolveAccessibilityRouteCrawlChunkSize({ env, totalRoutes: expectedRouteCount }) ??

@@ -58,25 +58,17 @@ const nextConfig = {
   turbopack: {
     root: monorepoRoot,
     resolveAlias: {
-      '@/app': path.resolve(monorepoRoot, 'src/app'),
       '@/components': path.resolve(__dirname, 'src/components'),
-      '@/features': path.resolve(monorepoRoot, 'src/features'),
+      '@/features/database': path.resolve(__dirname, 'src/features/database'),
       '@/shared': path.resolve(monorepoRoot, 'src/shared'),
-      '@/server': path.resolve(monorepoRoot, 'src/server'),
-      '@/i18n': path.resolve(monorepoRoot, 'src/i18n'),
-      '@docs': path.resolve(monorepoRoot, 'docs'),
     },
   },
   webpack: (config) => {
     config.resolve ??= {};
     config.resolve.alias ??= {};
-    config.resolve.alias['@/app'] = path.resolve(monorepoRoot, 'src/app');
     config.resolve.alias['@/components'] = path.resolve(__dirname, 'src/components');
-    config.resolve.alias['@/features'] = path.resolve(monorepoRoot, 'src/features');
+    config.resolve.alias['@/features/database'] = path.resolve(__dirname, 'src/features/database');
     config.resolve.alias['@/shared'] = path.resolve(monorepoRoot, 'src/shared');
-    config.resolve.alias['@/server'] = path.resolve(monorepoRoot, 'src/server');
-    config.resolve.alias['@/i18n'] = path.resolve(monorepoRoot, 'src/i18n');
-    config.resolve.alias['@docs'] = path.resolve(monorepoRoot, 'docs');
     return config;
   },
   typescript: {

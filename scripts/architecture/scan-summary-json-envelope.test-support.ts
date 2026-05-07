@@ -8,6 +8,7 @@ import { parseScanOutput } from './lib/scan-output.mjs';
 import { accessibilityRouteCrawlRoutes } from '../testing/config/accessibility-route-crawl.config.mjs';
 import {
   buildAccessibilityRouteCrawlTitle,
+  filterAccessibilityRouteEntries,
   normalizeAccessibilityRouteEntries,
   resolveAccessibilityRouteCrawlChunkSize,
 } from '../testing/lib/accessibility-route-crawl.mjs';
@@ -595,8 +596,11 @@ const seedAccessibilityCommandHarness = (
 
 const startFixtureServer = async (): Promise<string> => 'http://127.0.0.1:4010';
 
-const seedAccessibilityRouteCrawlReport = (root: string): string => {
-  const routeEntries = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes);
+const seedAccessibilityRouteCrawlReport = (root: string, env: NodeJS.ProcessEnv = {}): string => {
+  const routeEntries = filterAccessibilityRouteEntries(
+    normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes),
+    { env }
+  );
   const reportPath = path.join(root, 'tmp', 'accessibility-route-crawl-report.json');
   writeFile(
     root,
@@ -783,6 +787,7 @@ export {
   docsTooltipCoverageScriptPath,
   docsValidatorCoverageScriptPath,
   guardrailsScriptPath,
+  filterAccessibilityRouteEntries,
   normalizeAccessibilityRouteEntries,
   observabilityScriptPath,
   playwrightSuiteScriptPath,

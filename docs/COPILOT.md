@@ -67,7 +67,7 @@ folders unless it is truly route-local.
 - CMS/frontend rendering: `src/features/cms/`, `src/app/(frontend)/`
 - StudiQ/Kangur route support: `src/app/(frontend)/kangur/`,
   `src/features/kangur/`
-- Database engine routing: `src/features/database/`, `src/shared/lib/db/`
+- Database engine routing: `apps/database-engine-web/src/features/database/`, `src/shared/lib/db/`
 - Observability/logging: `src/features/observability/`,
   `src/shared/lib/observability/`
 

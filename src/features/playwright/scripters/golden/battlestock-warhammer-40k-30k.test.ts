@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { loadScripterFromJson } from '../loader';
 import { resolveScripterImportSource } from '../scripter-import-source';
 import { createFixtureDriver } from '../test-utils/fixture-driver';
+import type { ScripterDefinition } from '../types';
 
 const loadBattleStockDefinition = async (): Promise<string> =>
   await readFile(
@@ -66,11 +67,38 @@ const pageTwoHtml = `
   </body>
 </html>`;
 
+type LoadedScripterResult = ReturnType<typeof loadScripterFromJson>;
+type ScripterDraft = Awaited<ReturnType<typeof resolveScripterImportSource>>['drafts'][number];
+
+const expectLoadedDefinition = (loaded: LoadedScripterResult): ScripterDefinition => {
+  expect(loaded.ok).toBe(true);
+  if (!loaded.ok) throw new Error('Expected BattleStock definition to load');
+  return loaded.definition;
+};
+
+const expectSpiritseerDraft = (draft: ScripterDraft | undefined): void => {
+  expect(draft?.externalId).toBe('13033');
+  expect(draft?.draft.name).toBe('40k spiritseer');
+  expect(draft?.draft.price).toBe(60);
+  expect(draft?.draft.supplierLink).toBe(
+    'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033'
+  );
+  expect(draft?.draft.imageLinks).toEqual([
+    '/environment/cache/images/productGfx_34831_1500_1500/40k-spiritseer.jpg',
+  ]);
+  expect(draft?.issues).toEqual([]);
+};
+
+const expectWraithlordDraft = (draft: ScripterDraft | undefined): void => {
+  expect(draft?.externalId).toBe('13034');
+  expect(draft?.draft.name).toBe('40k wraithlord');
+  expect(draft?.draft.price).toBe(180);
+};
+
 describe('BattleStock Warhammer 40k / 30k golden scripter', () => {
   it('extracts product tile identity, price, URL, and images across pagination', async () => {
     const loaded = loadScripterFromJson(await loadBattleStockDefinition());
-    expect(loaded.ok).toBe(true);
-    if (!loaded.ok) return;
+    const definition = expectLoadedDefinition(loaded);
 
     const driver = createFixtureDriver({
       initialUrl: 'https://www.battle-stock.pl/pl/c/Warhammer-40k-30k/45',
@@ -87,7 +115,7 @@ describe('BattleStock Warhammer 40k / 30k golden scripter', () => {
       ],
     });
 
-    const result = await resolveScripterImportSource(loaded.definition, driver, {
+    const result = await resolveScripterImportSource(definition, driver, {
       catalogDefaults: { catalogIds: ['catalog-battlestock'] },
     });
 
@@ -95,19 +123,7 @@ describe('BattleStock Warhammer 40k / 30k golden scripter', () => {
     expect(result.source.scripterId).toBe('battlestock-warhammer-40k-30k');
 
     const [spiritseer, wraithlord] = result.drafts;
-    expect(spiritseer?.externalId).toBe('13033');
-    expect(spiritseer?.draft.name).toBe('40k spiritseer');
-    expect(spiritseer?.draft.price).toBe(60);
-    expect(spiritseer?.draft.supplierLink).toBe(
-      'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033'
-    );
-    expect(spiritseer?.draft.imageLinks).toEqual([
-      '/environment/cache/images/productGfx_34831_1500_1500/40k-spiritseer.jpg',
-    ]);
-    expect(spiritseer?.issues).toEqual([]);
-
-    expect(wraithlord?.externalId).toBe('13034');
-    expect(wraithlord?.draft.name).toBe('40k wraithlord');
-    expect(wraithlord?.draft.price).toBe(180);
+    expectSpiritseerDraft(spiritseer);
+    expectWraithlordDraft(wraithlord);
   });
 });

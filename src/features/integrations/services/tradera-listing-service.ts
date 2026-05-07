@@ -27,7 +27,7 @@ import {
   toTruthyBoolean,
 } from '@/features/integrations/services/tradera-system-settings';
 import type { TraderaListingJobInput } from '@/shared/contracts/integrations/tradera';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { TraderaListingJobInput };

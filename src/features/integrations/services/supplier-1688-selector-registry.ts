@@ -17,7 +17,7 @@ import {
   type Supplier1688SelectorRegistryRuntimeEntry,
   type Supplier1688SelectorRegistrySeedEntry,
 } from '@/shared/lib/browser-execution/selectors/supplier-1688';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 const COLLECTION_NAME = 'integration_supplier_1688_selector_registry';
 const DEFAULT_SELECTOR_PROFILE = SUPPLIER_1688_SELECTOR_REGISTRY_PROFILE;

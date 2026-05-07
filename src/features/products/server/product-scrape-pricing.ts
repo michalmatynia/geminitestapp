@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import type {
   MongoCurrencyDoc,
   MongoPriceGroupDoc,

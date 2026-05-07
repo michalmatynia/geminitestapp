@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId, type Filter, type UpdateFilter, type Document } from 'mongodb';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 import { type CreateProductListingInput, type ProductListingExportEventRecord, type ProductListingRepository } from '@/shared/contracts/integrations/repositories';
 import { type ProductListing, type ProductListingExportEvent, type ProductListingWithDetails } from '@/shared/contracts/integrations/listings';

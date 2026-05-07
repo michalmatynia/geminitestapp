@@ -122,7 +122,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
       <div
         className="fixed inset-0 z-50"
         style={{
-          background: 'rgba(0,0,0,0.55)',
+          background: 'var(--modal-scrim)',
           backdropFilter: 'blur(4px)',
           opacity: open ? 1 : 0,
           pointerEvents: open ? 'auto' : 'none',
@@ -251,7 +251,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                             fontFamily: 'var(--font-display)',
                             fontSize: '1rem',
                             fontWeight: 600,
-                            color: 'var(--cream-highlight)',
+                            color: 'var(--on-media)',
                           }}
                         >
                           {cat.label}

@@ -10,14 +10,15 @@ canonical: true
 # Database Engine Managed MongoDB Guide
 
 This guide documents the standalone Database Engine workspace and the managed
-MongoDB model it uses for three application databases:
+MongoDB model it uses for four application databases:
 
 - `geminitestapp`
 - `studiq`
 - `cms-builder`
+- `products`
 
 The Database Engine can inspect, edit, back up, and sync each local database
-individually, and can also run backup or cloud sync actions for all three as a
+individually, and can also run backup or cloud sync actions for all four as a
 group.
 
 ## Workspace
@@ -44,6 +45,22 @@ with:
 DATABASE_ENGINE_WEB_ORIGIN="http://localhost:3400"
 ```
 
+## Quick Start Checklist
+
+1. Install MongoDB Database Tools so `mongodump` and `mongorestore` are on
+   `PATH`.
+2. Configure all local and cloud MongoDB env keys for the applications you want
+   the engine to manage.
+3. Keep `MONGO_BACKUPS_DIR` outside an application folder, for example
+   `../database/mongo-backups`.
+4. Start local MongoDB instances for `geminitestapp`, StudiQ, CMS Builder, and Products.
+5. Start the Database Engine with `npm run dev:database-engine`.
+6. Open `/admin/databases/engine` and confirm all local/cloud cards are
+   reachable.
+7. Run `Backup All` before the first cloud push.
+8. Use per-app `Push` or `Push All` only after checking database and collection
+   sizes look correct.
+
 ## Managed Databases
 
 The managed database model has a local and cloud endpoint for each application.
@@ -53,15 +70,59 @@ The managed database model has a local and cloud endpoint for each application.
 | `geminitestapp` | `MONGODB_LOCAL_URI`, `MONGODB_LOCAL_DB` | `MONGODB_CLOUD_URI`, `MONGODB_CLOUD_DB` | `geminitestapp/` |
 | `studiq` | `STUDIQ_MONGODB_LOCAL_URI`, `STUDIQ_MONGODB_LOCAL_DB` | `STUDIQ_MONGODB_CLOUD_URI`, `STUDIQ_MONGODB_CLOUD_DB` | `studiq/` |
 | `cms-builder` | `CMS_BUILDER_MONGODB_LOCAL_URI`, `CMS_BUILDER_MONGODB_LOCAL_DB` | `CMS_BUILDER_MONGODB_CLOUD_URI`, `CMS_BUILDER_MONGODB_CLOUD_DB` | `cms-builder/` |
+| `products` | `PRODUCTS_MONGODB_LOCAL_URI`, `PRODUCTS_MONGODB_LOCAL_DB` | `PRODUCTS_MONGODB_CLOUD_URI`, `PRODUCTS_MONGODB_CLOUD_DB` | `products/` |
 
 Legacy aliases are still supported:
 
 - `MONGODB_URI`, `MONGODB_DB`
 - `STUDIQ_MONGODB_URI`, `STUDIQ_MONGODB_DB`
 - `CMS_BUILDER_MONGODB_URI`, `CMS_BUILDER_MONGODB_DB`
+- `PRODUCTS_MONGODB_URI`, `PRODUCTS_MONGODB_DB`
 
 Prefer the split local/cloud keys for Database Engine operations. Do not commit
 real MongoDB credentials into `.env.example`, README files, or docs.
+
+## Products Split
+
+Products has a dedicated local MongoDB runtime so product, product-integration,
+order-import, and ecommerce account data are not stored in the main
+`geminitestapp` database.
+
+Runtime commands:
+
+```bash
+npm run mongo:products:up
+npm run mongo:products:status
+npm run mongo:products:down
+```
+
+Migration commands:
+
+```bash
+npm run mongo:products:migrate:plan
+npm run mongo:products:migrate:apply
+```
+
+The migration copies data from the main MongoDB source into
+`products_local`. It is non-destructive to the source database. The ecommerce
+users copy is stored as `ecom_users`; the shared source `users` collection is
+not pruned because `geminitestapp` still uses it. Integration rows are filtered
+to product-commerce slugs, and connection rows are filtered to those integration
+IDs so non-product integrations stay attached to the main database.
+
+Source cleanup is intentionally a separate step:
+
+```bash
+npm run mongo:products:prune:plan
+npm run mongo:products:prune:apply
+```
+
+`mongo:products:prune:apply` requires the hard-coded confirmation token in the
+script command and removes only the product-commerce source collections plus
+matching product-commerce settings from the main database. The prune script does
+not drop the shared `users` collection, and it only removes product-commerce
+integration records by slug so unrelated LinkedIn/job-board integration records
+can remain in the main database.
 
 ## Environment Example
 
@@ -85,6 +146,12 @@ CMS_BUILDER_MONGODB_LOCAL_DB="cms_builder_local"
 CMS_BUILDER_MONGODB_CLOUD_URI="mongodb+srv://user:password@cluster.example/cms_builder_db"
 CMS_BUILDER_MONGODB_CLOUD_DB="cms_builder_db"
 
+# Products
+PRODUCTS_MONGODB_LOCAL_URI="mongodb://127.0.0.1:27020/products_local"
+PRODUCTS_MONGODB_LOCAL_DB="products_local"
+PRODUCTS_MONGODB_CLOUD_URI="mongodb+srv://user:password@cluster.example/products_db"
+PRODUCTS_MONGODB_CLOUD_DB="products_db"
+
 # neutral backup root, outside geminitestapp app structure
 MONGO_BACKUPS_DIR="../database/mongo-backups"
 ```
@@ -93,6 +160,29 @@ MONGO_BACKUPS_DIR="../database/mongo-backups"
 the generic `geminitestapp` Database Engine source card. Changing it requires a
 server restart. It does not replace the managed per-app local/cloud source
 settings.
+
+## Environment Loading
+
+The Database Engine runtime wrapper loads repo-root env files first, then
+workspace-local env files from `apps/database-engine-web`. Workspace-local files
+override root values.
+
+For a development server, the effective order is:
+
+1. repo-root `.env*` files loaded by Next env config
+2. `apps/database-engine-web/.env`
+3. `apps/database-engine-web/.env.development`
+4. `apps/database-engine-web/.env.local`
+5. `apps/database-engine-web/.env.development.local`
+
+For tests, `.env.local` is skipped by the app env loader and the test-specific
+files have the highest priority.
+
+Set this to inspect loaded Database Engine env keys at startup:
+
+```bash
+DEBUG_DATABASE_ENGINE_WEB_ENV="true"
+```
 
 ## Backup Location
 
@@ -111,6 +201,7 @@ mongo-backups/
   geminitestapp/
   studiq/
   cms-builder/
+  products/
 ```
 
 This neutral root keeps Database Engine backups outside the `geminitestapp`
@@ -143,6 +234,50 @@ Group controls are available above the cards:
 - `Push All`
 - `Pull All`
 
+## UI Workflows
+
+### Check Database And Collection Sizes
+
+1. Open `/admin/databases/engine`.
+2. Find the `Managed Application Databases` section.
+3. Read `Database size` for each local and cloud endpoint.
+4. Expand or scroll the collection table in each endpoint panel.
+5. Compare document counts and collection sizes before deciding whether to push
+   or pull.
+
+### Back Up One Application
+
+1. Open `/admin/databases/engine`.
+2. Find the application card.
+3. Confirm the local endpoint is reachable.
+4. Click `Backup`.
+5. Inspect the resulting archive and `.log` under that application's backup
+   subfolder.
+
+### Back Up All Applications
+
+1. Open `/admin/databases/engine`.
+2. Confirm all four local endpoints are reachable.
+3. Click `Backup All`.
+4. Confirm `geminitestapp/`, `studiq/`, `cms-builder/`, and `products/` each
+   received an archive.
+
+### Push Local Data To Cloud
+
+1. Confirm the local database has the expected data.
+2. Confirm the cloud target is the correct database.
+3. Click per-app `Push` or group `Push All`.
+4. Wait for parity verification to complete.
+5. Review the latest transfer log if verification fails.
+
+### Pull Cloud Data To Local
+
+1. Confirm the cloud database is the intended source of truth.
+2. Confirm a local backup exists or run `Backup` first.
+3. Click per-app `Pull` or group `Pull All`.
+4. Wait for parity verification to complete.
+5. Re-open the CRUD console or collection size table to confirm local data.
+
 ## Editing Local Data
 
 Use the `Edit Local` button on a managed database card. It opens the CRUD
@@ -152,6 +287,7 @@ workspace scoped to the local database:
 /admin/databases/engine?view=crud&application=studiq&source=local
 /admin/databases/engine?view=crud&application=cms-builder&source=local
 /admin/databases/engine?view=crud&application=geminitestapp&source=local
+/admin/databases/engine?view=crud&application=products&source=local
 ```
 
 The CRUD table manager loads collection metadata from the selected application
@@ -160,11 +296,12 @@ local target.
 
 ## Backup Behavior
 
-`Backup All` backs up all three local application databases:
+`Backup All` backs up all four local application databases:
 
 - `geminitestapp` local
 - `studiq` local
 - `cms-builder` local
+- `products` local
 
 Per-card `Backup` backs up only that card's local database.
 
@@ -173,6 +310,23 @@ application subfolder, and a sibling `.log` file records the redacted command
 and MongoDB tool output.
 
 Manual backups are disabled when `NODE_ENV=production`.
+
+## Restore And Preview
+
+The Backup Center lists archive files from all application subfolders. A backup
+name with an application prefix tells the preview/restore path which application
+database it belongs to:
+
+```text
+geminitestapp/app-local-backup-*.archive
+studiq/studiq-local-backup-*.archive
+cms-builder/cms-builder-local-backup-*.archive
+products/products-local-backup-*.archive
+```
+
+Use `/admin/databases/preview` to inspect an archive before restoring it. The
+preview path restores into a temporary preview database and drops that temporary
+database after inspection.
 
 ## Sync Behavior
 
@@ -209,6 +363,24 @@ and sync logs.
 
 Manual sync is disabled when `NODE_ENV=production`.
 
+## Sync Safety Contract
+
+Sync is intentionally conservative because the restore phase drops the target
+database before writing the source archive into it.
+
+- Source and target must be different URI/database pairs.
+- Both source and target must be reachable.
+- A sync lock prevents concurrent MongoDB sync runs.
+- The engine creates source and target pre-sync backups before restore.
+- Credentials are redacted from command logs.
+- Parity verification must pass after restore.
+- Failed verification prevents the run from being recorded as the latest
+  successful sync.
+
+Do not use `Push All` or `Pull All` as a substitute for checking each
+application card. The group action is operational convenience, not automatic
+conflict resolution.
+
 ## API
 
 The standalone Database Engine owns these managed MongoDB endpoints:
@@ -219,6 +391,35 @@ GET /api/databases/engine/managed
 
 Returns local/cloud status, database size, collection sizes, backup root, and
 availability flags for all managed databases.
+
+Response shape, abbreviated:
+
+```json
+{
+  "timestamp": "2026-05-07T12:00:00.000Z",
+  "backupRoot": "../database/mongo-backups",
+  "canBackupAllLocal": true,
+  "canPushAllToCloud": true,
+  "databases": [
+    {
+      "application": "studiq",
+      "label": "StudiQ",
+      "local": {
+        "dbName": "studiq_local",
+        "databaseSizeBytes": 2048,
+        "collectionCount": 1,
+        "collections": [
+          {
+            "name": "studiq_coll",
+            "documentCount": 4,
+            "totalSizeBytes": 640
+          }
+        ]
+      }
+    }
+  ]
+}
+```
 
 ```http
 POST /api/databases/engine/managed/backup
@@ -233,6 +434,7 @@ Content-Type: application/json
 - `geminitestapp`
 - `studiq`
 - `cms-builder`
+- `products`
 
 ```http
 POST /api/databases/engine/managed/sync
@@ -250,6 +452,12 @@ The older source endpoints remain available for the generic Mongo source card:
 
 - `GET /api/databases/engine/source`
 - `POST /api/databases/engine/source/sync`
+
+These endpoints are routed through the standalone catch-all route:
+
+```text
+apps/database-engine-web/src/app/api/databases/[[...path]]/route.ts
+```
 
 ## Mongo Tooling
 
@@ -299,7 +507,10 @@ Key implementation files:
 - `src/shared/lib/db/services/managed-mongo-databases.ts`
 - `src/shared/lib/db/services/database-backup.ts`
 - `src/shared/lib/db/services/mongo-source-sync.ts`
+- `src/shared/lib/db/product-mongo-client.ts`
 - `src/shared/contracts/database.ts`
+- `scripts/db/migrate-products-to-products-mongo.ts`
+- `scripts/db/prune-products-from-main-mongo.ts`
 
 ## Validation
 

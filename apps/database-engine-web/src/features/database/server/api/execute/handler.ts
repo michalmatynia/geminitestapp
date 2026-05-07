@@ -14,12 +14,25 @@ import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
+const MONGO_COLLECTION_NAME_MAX_LENGTH = 255;
+const isValidMongoCollectionName = (value: string): boolean => {
+  if (value.length === 0 || value.length > MONGO_COLLECTION_NAME_MAX_LENGTH) return false;
+  if (value.includes('\0') || value.includes('$')) return false;
+  return !value.startsWith('system.');
+};
+const collectionNameSchema = z
+  .string()
+  .trim()
+  .min(1, 'Collection name is required.')
+  .max(MONGO_COLLECTION_NAME_MAX_LENGTH, 'Collection name is too long.')
+  .refine(isValidMongoCollectionName, 'Valid MongoDB collection name is required.');
+
 const databaseExecuteRequestSchema = z.object({
   sql: z.string().trim().min(1).optional(),
   type: z.enum(['mongodb', 'auto']).optional().default('auto'),
   application: databaseEngineManagedMongoApplicationSchema.optional(),
   source: mongoSourceSchema.optional(),
-  collection: z.string().trim().min(1).optional(),
+  collection: collectionNameSchema.optional(),
   operation: z
     .enum(['find', 'insertOne', 'updateOne', 'deleteOne', 'deleteMany', 'aggregate', 'countDocuments'])
     .optional(),
@@ -27,6 +40,9 @@ const databaseExecuteRequestSchema = z.object({
   document: z.record(z.string(), z.unknown()).optional(),
   update: z.record(z.string(), z.unknown()).optional(),
   pipeline: z.array(z.record(z.string(), z.unknown())).optional(),
+  skip: z.number().int().min(0).optional(),
+  limit: z.number().int().min(1).max(500).optional(),
+  sort: z.record(z.string(), z.union([z.literal(1), z.literal(-1)])).optional(),
 });
 
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -79,8 +95,23 @@ async function handleMongoOperation(parsed: {
   document?: Record<string, unknown>;
   update?: Record<string, unknown>;
   pipeline?: Record<string, unknown>[];
+  skip?: number;
+  limit?: number;
+  sort?: Record<string, 1 | -1>;
 }): Promise<Response> {
-  const { collection: collName, operation, application, source, filter, document, update, pipeline } = parsed;
+  const {
+    collection: collName,
+    operation,
+    application,
+    source,
+    filter,
+    document,
+    update,
+    pipeline,
+    skip,
+    limit,
+    sort,
+  } = parsed;
 
   if (!collName) {
     throw badRequestError('Collection name is required for MongoDB operations.');
@@ -104,12 +135,20 @@ async function handleMongoOperation(parsed: {
   try {
     switch (operation) {
       case 'find': {
-        const docs = await collection
-          .find(filter ?? {})
-          .limit(200)
-          .toArray();
+        const resolvedSkip = Math.max(0, skip ?? 0);
+        const resolvedLimit = Math.min(500, Math.max(1, limit ?? 200));
+        const resolvedFilter = filter ?? {};
+        const [docs, totalCount] = await Promise.all([
+          collection
+            .find(resolvedFilter)
+            .sort(sort ?? { _id: 1 })
+            .skip(resolvedSkip)
+            .limit(resolvedLimit)
+            .toArray(),
+          collection.countDocuments(resolvedFilter),
+        ]);
         result = docs;
-        rowCount = docs.length;
+        rowCount = totalCount;
         break;
       }
       case 'insertOne': {

@@ -53,6 +53,7 @@ import {
   getMongoRestoreCommand,
   isTransientMongoConnectionError,
   resolveCmsBuilderMongoSourceConfig,
+  resolveProductsMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
 } from '@/shared/lib/db/utils/mongo';
 
@@ -83,6 +84,12 @@ describe('shared db mongo utils', () => {
     delete process.env['CMS_BUILDER_MONGODB_LOCAL_DB'];
     delete process.env['CMS_BUILDER_MONGODB_CLOUD_URI'];
     delete process.env['CMS_BUILDER_MONGODB_CLOUD_DB'];
+    delete process.env['PRODUCTS_MONGODB_URI'];
+    delete process.env['PRODUCTS_MONGODB_DB'];
+    delete process.env['PRODUCTS_MONGODB_LOCAL_URI'];
+    delete process.env['PRODUCTS_MONGODB_LOCAL_DB'];
+    delete process.env['PRODUCTS_MONGODB_CLOUD_URI'];
+    delete process.env['PRODUCTS_MONGODB_CLOUD_DB'];
   });
 
   it('creates the neutral backup directory and application subfolders', async () => {
@@ -97,6 +104,9 @@ describe('shared db mongo utils', () => {
       recursive: true,
     });
     expect(mkdirMock).toHaveBeenCalledWith(expect.stringContaining('cms-builder'), {
+      recursive: true,
+    });
+    expect(mkdirMock).toHaveBeenCalledWith(expect.stringContaining('products'), {
       recursive: true,
     });
   });
@@ -183,6 +193,29 @@ describe('shared db mongo utils', () => {
     });
   });
 
+  it('resolves dedicated Products local and cloud source config', () => {
+    process.env['PRODUCTS_MONGODB_LOCAL_URI'] = 'mongodb://localhost:27020/products_local';
+    process.env['PRODUCTS_MONGODB_LOCAL_DB'] = 'products_local';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] =
+      'mongodb+srv://cluster.example/?authSource=admin';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
+
+    expect(resolveProductsMongoSourceConfig('local')).toMatchObject({
+      source: 'local',
+      configured: true,
+      uri: 'mongodb://localhost:27020/products_local',
+      dbName: 'products_local',
+      usesLegacyEnv: false,
+    });
+    expect(resolveProductsMongoSourceConfig('cloud')).toMatchObject({
+      source: 'cloud',
+      configured: true,
+      uri: 'mongodb+srv://cluster.example/?authSource=admin',
+      dbName: 'products_db',
+      usesLegacyEnv: false,
+    });
+  });
+
   it('wraps execFile success output', async () => {
     execFileMock.mockImplementation(
       (
@@ -233,6 +266,7 @@ describe('shared db mongo utils', () => {
     expect(() => assertValidBackupName('geminitestapp/backup-2026-03-25.archive')).not.toThrow();
     expect(() => assertValidBackupName('studiq/studiq-local-backup.archive')).not.toThrow();
     expect(() => assertValidBackupName('cms-builder/cms-builder-local-backup.archive')).not.toThrow();
+    expect(() => assertValidBackupName('products/products-local-backup.archive')).not.toThrow();
     expect(() => assertValidBackupName('backup.txt')).toThrow('Invalid backup file type.');
     expect(() => assertValidBackupName('../backup.archive')).toThrow('Invalid backup name.');
     expect(() => assertValidBackupName('other/backup.archive')).toThrow(
@@ -245,6 +279,7 @@ describe('shared db mongo utils', () => {
     expect(getMongoBackupApplication('cms-builder/cms-builder-local-backup.archive')).toBe(
       'cms-builder'
     );
+    expect(getMongoBackupApplication('products/products-local-backup.archive')).toBe('products');
     expect(getMongoBackupApplication('legacy-backup.archive')).toBe('geminitestapp');
     expect(getMongoBackupPath('geminitestapp/app-backup.archive')).toContain(
       'geminitestapp/app-backup.archive'

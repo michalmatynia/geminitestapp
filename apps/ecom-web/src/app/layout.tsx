@@ -37,6 +37,22 @@ const shareTechMono = Share_Tech_Mono({
   display: 'swap',
 });
 
+const themeInitScript = `
+(() => {
+  try {
+    const storedTheme = localStorage.getItem('arcana-theme');
+    const theme = storedTheme === 'daily' ? 'daily' : 'nightly';
+    const root = document.documentElement;
+    root.classList.remove('daily', 'nightly', 'dark');
+    root.classList.add(theme);
+    if (theme === 'nightly') root.classList.add('dark');
+    root.dataset.theme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'nightly';
+  }
+})();
+`;
+
 export const metadata: Metadata = {
   title: 'ARCANA — Anime · Gaming · Film Collectibles',
   description: 'Keychains, pins and jewellery from the universes you love. Anime, gaming and film collectibles — officially licensed, obsessively curated.',
@@ -49,8 +65,12 @@ export default async function RootLayout({ children }: { children: ReactNode }):
     <html
       lang="en"
       suppressHydrationWarning
-      className={`dark ${exo2.variable} ${rajdhani.variable} ${shareTechMono.variable}`}
+      data-theme="nightly"
+      className={`nightly dark ${exo2.variable} ${rajdhani.variable} ${shareTechMono.variable}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
         <SiteContentProvider content={siteContent}>
           <ToastProvider>

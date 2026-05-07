@@ -4,7 +4,7 @@ import 'server-only';
 import type { ProductStudioConfig } from '@/shared/contracts/products/studio';
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { internalError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

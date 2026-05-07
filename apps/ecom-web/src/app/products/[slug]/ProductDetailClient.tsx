@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, type JSX } from 'react';
+import { useState, useEffect, type JSX, type SyntheticEvent } from 'react';
 import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
@@ -11,6 +11,11 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { ProductReviews } from '@/components/ProductReviews';
 import type { Product } from '@/data/products';
 import type { ProductsContent, ProductsDetailContent } from '@/data/productsContent';
+import {
+  getProductImageFallbackSrc,
+  getProductImageSrc,
+  shouldBypassImageOptimization,
+} from '@/lib/productImages';
 
 const SWATCHES = [0, 1, 2] as const;
 
@@ -193,6 +198,17 @@ export function ProductDetailClient({
   const [adding, setAdding] = useState(false);
   const [sizeError, setSizeError] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const resolvedProductImageUrl = getProductImageSrc(product.imageUrl);
+  const fallbackProductImageUrl = getProductImageFallbackSrc(product.imageUrl);
+  const usesNativeProductImage = shouldBypassImageOptimization(resolvedProductImageUrl);
+  const handleNativeProductImageError = (e: SyntheticEvent<HTMLImageElement>): void => {
+    const image = e.currentTarget;
+    if (fallbackProductImageUrl && image.getAttribute('src') !== fallbackProductImageUrl) {
+      image.src = fallbackProductImageUrl;
+      return;
+    }
+    image.style.display = 'none';
+  };
 
   useEffect(() => {
     track({
@@ -275,14 +291,32 @@ export function ProductDetailClient({
                 transition: 'background 0.6s ease',
               }}
             >
-              {product.imageUrl && activeImage === 0 && (
+              {resolvedProductImageUrl && activeImage === 0 && usesNativeProductImage && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={resolvedProductImageUrl}
+                  alt={product.name}
+                  loading="eager"
+                  decoding="async"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    objectPosition: 'center',
+                  }}
+                  onError={handleNativeProductImageError}
+                />
+              )}
+              {resolvedProductImageUrl && activeImage === 0 && !usesNativeProductImage && (
                 <Image
-                  src={product.imageUrl}
+                  src={resolvedProductImageUrl}
                   alt={product.name}
                   fill
                   priority
                   sizes="(max-width: 768px) 100vw, 55vw"
-                  style={{ objectFit: 'cover', objectPosition: 'center top' }}
+                  style={{ objectFit: 'contain', objectPosition: 'center' }}
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                 />
               )}
@@ -319,13 +353,31 @@ export function ProductDetailClient({
                     outlineOffset: '2px',
                   }}
                 >
-                  {product.imageUrl && i === 0 && (
+                  {resolvedProductImageUrl && i === 0 && usesNativeProductImage && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={resolvedProductImageUrl}
+                      alt={product.name}
+                      loading="lazy"
+                      decoding="async"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        objectPosition: 'center',
+                      }}
+                      onError={handleNativeProductImageError}
+                    />
+                  )}
+                  {resolvedProductImageUrl && i === 0 && !usesNativeProductImage && (
                     <Image
-                      src={product.imageUrl}
+                      src={resolvedProductImageUrl}
                       alt={product.name}
                       fill
                       sizes="80px"
-                      style={{ objectFit: 'cover', objectPosition: 'center top' }}
+                      style={{ objectFit: 'contain', objectPosition: 'center' }}
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}

@@ -1,8 +1,11 @@
 import 'server-only';
 
+import { promises as fs } from 'fs';
+
 import { MongoClient, type Db, type MongoClientOptions } from 'mongodb';
 
 import type {
+  DatabaseEngineBackupStorage,
   DatabaseEngineManagedMongoApplication,
   DatabaseEngineManagedMongoCollectionStats,
   DatabaseEngineManagedMongoDatabase,
@@ -16,6 +19,7 @@ import {
   backupsDir,
   MONGO_BACKUP_APPLICATIONS,
   resolveCmsBuilderMongoSourceConfig,
+  resolveProductsMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
   type MongoApplicationSourceConfig,
   type MongoBackupApplication,
@@ -25,10 +29,28 @@ const MANAGED_MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> =
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
+  products: 'Products',
 };
 
 const DEFAULT_SERVER_SELECTION_TIMEOUT_MS = 5_000;
 const DEFAULT_CONNECT_TIMEOUT_MS = 5_000;
+
+const parseMinimumBackupFreeBytes = (): number => {
+  const raw = Number.parseInt(process.env['DATABASE_BACKUP_MIN_FREE_BYTES'] ?? '', 10);
+  if (!Number.isFinite(raw)) return 2 * 1024 * 1024 * 1024;
+  return Math.max(0, raw);
+};
+
+const formatBytes = (value: number): string => {
+  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+  let nextValue = value;
+  let unitIndex = 0;
+  while (nextValue >= 1024 && unitIndex < units.length - 1) {
+    nextValue /= 1024;
+    unitIndex += 1;
+  }
+  return `${nextValue.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+};
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -111,6 +133,9 @@ export const resolveManagedMongoSourceConfig = async (
   }
   if (application === 'cms-builder') {
     return resolveCmsBuilderMongoSourceConfig(source);
+  }
+  if (application === 'products') {
+    return resolveProductsMongoSourceConfig(source);
   }
   return resolveMongoSourceConfig(source);
 };
@@ -305,17 +330,38 @@ const buildManagedDatabaseStatus = async (
     cloud,
     canBackupLocal: local.configured && local.reachable === true,
     canPushToCloud:
-      local.configured && cloud.configured && local.reachable === true && cloud.reachable === true && !syncIssue,
+      local.configured &&
+      cloud.configured &&
+      local.reachable === true &&
+      cloud.reachable === true &&
+      !syncIssue,
     canPullFromCloud:
-      local.configured && cloud.configured && local.reachable === true && cloud.reachable === true && !syncIssue,
+      local.configured &&
+      cloud.configured &&
+      local.reachable === true &&
+      cloud.reachable === true &&
+      !syncIssue,
     syncIssue,
   };
 };
 
 const collectManagedMongoIssues = (
-  databases: DatabaseEngineManagedMongoDatabase[]
+  databases: DatabaseEngineManagedMongoDatabase[],
+  backupStorage: DatabaseEngineBackupStorage
 ): string[] => {
   const issues: string[] = [];
+  if (!backupStorage.canWriteBackups) {
+    if (backupStorage.statusError) {
+      issues.push(`Backup storage: ${backupStorage.statusError}`);
+    } else if (backupStorage.availableBytes !== null) {
+      issues.push(
+        `Backup storage: ${formatBytes(backupStorage.availableBytes)} free at ${
+          backupStorage.root
+        }; at least ${formatBytes(backupStorage.requiredFreeBytes)} required.`
+      );
+    }
+  }
+
   for (const database of databases) {
     if (database.syncIssue) {
       issues.push(`${database.label}: ${database.syncIssue}`);
@@ -329,20 +375,47 @@ const collectManagedMongoIssues = (
   return issues;
 };
 
+const inspectBackupStorage = async (): Promise<DatabaseEngineBackupStorage> => {
+  const requiredFreeBytes = parseMinimumBackupFreeBytes();
+  try {
+    await fs.mkdir(backupsDir, { recursive: true });
+    const stats = await fs.statfs(backupsDir);
+    const availableBytes = stats.bavail * stats.bsize;
+    return {
+      root: backupsDir,
+      availableBytes,
+      requiredFreeBytes,
+      canWriteBackups: availableBytes >= requiredFreeBytes,
+      statusError: null,
+    };
+  } catch (error) {
+    return {
+      root: backupsDir,
+      availableBytes: null,
+      requiredFreeBytes,
+      canWriteBackups: false,
+      statusError: getErrorMessage(error),
+    };
+  }
+};
+
 export async function getManagedMongoDatabasesStatus(): Promise<DatabaseEngineManagedMongoDatabasesResponse> {
-  const databases = await Promise.all(
-    MONGO_BACKUP_APPLICATIONS.map((application) =>
-      buildManagedDatabaseStatus(application)
-    )
-  );
+  const [databases, backupStorage] = await Promise.all([
+    Promise.all(
+      MONGO_BACKUP_APPLICATIONS.map((application) => buildManagedDatabaseStatus(application))
+    ),
+    inspectBackupStorage(),
+  ]);
 
   return {
     timestamp: new Date().toISOString(),
     backupRoot: backupsDir,
+    backupStorage,
     databases,
-    canBackupAllLocal: databases.every((database) => database.canBackupLocal),
+    canBackupAllLocal:
+      backupStorage.canWriteBackups && databases.every((database) => database.canBackupLocal),
     canPushAllToCloud: databases.every((database) => database.canPushToCloud),
     canPullAllFromCloud: databases.every((database) => database.canPullFromCloud),
-    issues: collectManagedMongoIssues(databases),
+    issues: collectManagedMongoIssues(databases, backupStorage),
   };
 }

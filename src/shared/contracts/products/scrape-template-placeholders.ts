@@ -6,7 +6,32 @@ export type ScrapeTemplatePlaceholderOption = {
 
 export const SCRAPE_TEMPLATE_PLACEHOLDER_OPTIONS: ScrapeTemplatePlaceholderOption[] = [
   { key: 'name', label: 'Product name', description: 'Mapped scrape title.' },
+  {
+    key: 'name(TitleCase)',
+    label: 'Product name TitleCase',
+    description: 'Mapped scrape title with each word capitalized.',
+  },
+  {
+    key: 'name(TitleCase)(remove:"WFB")(trim)',
+    label: 'Product name TitleCase, remove WFB',
+    description: 'Title-cased scrape title with WFB removed and edges trimmed.',
+  },
+  {
+    key: 'nameTitleCase',
+    label: 'Legacy product name title case',
+    description: 'Alias for title-cased product name.',
+  },
   { key: 'title', label: 'Title', description: 'Alias for product name.' },
+  {
+    key: 'title(TitleCase)',
+    label: 'Title TitleCase',
+    description: 'Alias for title-cased product name.',
+  },
+  {
+    key: 'titleTitleCase',
+    label: 'Legacy title title case',
+    description: 'Alias for title-cased product name.',
+  },
   { key: 'description', label: 'Description', description: 'Mapped scrape description.' },
   { key: 'price', label: 'Price', description: 'Mapped scraped price.' },
   { key: 'sourcePrice', label: 'Source price', description: 'Alias for scraped price.' },

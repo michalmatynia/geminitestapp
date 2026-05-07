@@ -1,11 +1,15 @@
 import 'server-only';
 
-import { createMongoBackup } from '@/shared/lib/db/services/database-backup';
+import {
+  createMongoBackup,
+  createMongoManagedBackup,
+} from '@/shared/lib/db/services/database-backup';
 import {
   markDatabaseBackupJobFailed,
   markDatabaseBackupJobRunning,
   markDatabaseBackupJobSucceeded,
 } from '@/shared/lib/db/services/database-backup-scheduler';
+import type { DatabaseEngineManagedMongoApplicationTarget } from '@/shared/contracts/database';
 import type {
   ProductAiJob,
   ProductAiJobRecord,
@@ -14,11 +18,56 @@ import type {
 } from '@/shared/contracts/jobs';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getProductAiJobRepository } from '@/shared/lib/products/services/product-ai-job-repository';
+import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type ProductAiJobWithProduct = Omit<ProductAiJob, 'product'> & {
   product: Record<string, unknown> | null;
+};
+
+type DatabaseBackupQueueJobData = {
+  jobId: string;
+  productId: string;
+  type: string;
+  payload: unknown;
+};
+
+const DATABASE_BACKUP_QUEUE_NAME = 'product-ai';
+const DATABASE_BACKUP_JOB_TIMEOUT_MS = (() => {
+  const raw = Number.parseInt(process.env['DATABASE_ENGINE_BACKUP_JOB_TIMEOUT_MS'] ?? '', 10);
+  if (!Number.isFinite(raw)) return 30 * 60 * 1000;
+  return Math.max(5 * 60 * 1000, raw);
+})();
+const DATABASE_BACKUP_RUNNING_STALE_TTL_MS = (() => {
+  const raw = Number.parseInt(
+    process.env['DATABASE_ENGINE_BACKUP_RUNNING_STALE_TTL_MS'] ?? '',
+    10
+  );
+  if (!Number.isFinite(raw)) return 10 * 60 * 1000;
+  return Math.max(60 * 1000, raw);
+})();
+
+let backupJobRecoveryInFlight = false;
+
+const isManagedMongoApplicationTarget = (
+  value: unknown
+): value is DatabaseEngineManagedMongoApplicationTarget =>
+  value === 'all' ||
+  value === 'geminitestapp' ||
+  value === 'studiq' ||
+  value === 'cms-builder' ||
+  value === 'products';
+
+const resolveManagedBackupApplication = (
+  payload: unknown
+): DatabaseEngineManagedMongoApplicationTarget | null => {
+  if (!isObjectRecord(payload)) return null;
+  const directApplication = payload['application'];
+  if (isManagedMongoApplicationTarget(directApplication)) return directApplication;
+  const managedApplication = payload['managedApplication'];
+  if (isManagedMongoApplicationTarget(managedApplication)) return managedApplication;
+  return null;
 };
 
 const toIsoString = (value?: Date | null): string | null => {
@@ -118,18 +167,49 @@ export async function cancelProductAiJob(jobId: string): Promise<ProductAiJob> {
   return toProductAiJob(updated);
 }
 
-export function startProductAiJobQueue(): void {
-  // The standalone Database Engine runs db_backup jobs inline.
-}
+const runBackupForJob = async (record: ProductAiJobRecord) => {
+  const managedApplication = resolveManagedBackupApplication(record.payload);
+  if (managedApplication !== null) {
+    return createMongoManagedBackup(managedApplication);
+  }
+  return createMongoBackup();
+};
 
-export async function enqueueProductAiJobToQueue(
-  _jobId: string,
-  _productId: string | null | undefined,
-  _runtimeType: string,
-  _payload: unknown
-): Promise<never> {
-  throw operationFailedError('Database Engine job queue is not available in standalone mode.');
-}
+const isStaleRunningBackupJob = (record: ProductAiJobRecord, nowMs: number): boolean => {
+  if (record.status !== 'running') return false;
+  const startedAtMs = record.startedAt instanceof Date ? record.startedAt.getTime() : Number.NaN;
+  if (!Number.isFinite(startedAtMs)) return true;
+  return nowMs - startedAtMs >= DATABASE_BACKUP_RUNNING_STALE_TTL_MS;
+};
+
+const recoverInterruptedBackupJobs = async (): Promise<void> => {
+  if (backupJobRecoveryInFlight) return;
+  backupJobRecoveryInFlight = true;
+
+  try {
+    const repository = await getProductAiJobRepository();
+    const [pending, running] = await Promise.all([
+      repository.findJobs('system', { type: 'db_backup', statuses: ['pending'] }),
+      repository.findJobs('system', { type: 'db_backup', statuses: ['running'] }),
+    ]);
+    const nowMs = Date.now();
+    const jobsToRecover = [
+      ...pending,
+      ...running.filter((record) => isStaleRunningBackupJob(record, nowMs)),
+    ];
+
+    for (const record of jobsToRecover) {
+      await enqueueProductAiJobToQueue(record.id, record.productId, record.type, record.payload);
+    }
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'database-engine-db-backup-queue',
+      action: 'recoverInterruptedBackupJobs',
+    });
+  } finally {
+    backupJobRecoveryInFlight = false;
+  }
+};
 
 export async function processProductAiJob(jobId: string): Promise<ProductAiJob> {
   const repository = await getProductAiJobRepository();
@@ -155,7 +235,7 @@ export async function processProductAiJob(jobId: string): Promise<ProductAiJob> 
   );
 
   try {
-    const result = await createMongoBackup();
+    const result = await runBackupForJob(record);
     await markBackupSucceededSafely(jobId);
     const updated = await repository.updateJob(
       jobId,
@@ -183,22 +263,75 @@ export async function processProductAiJob(jobId: string): Promise<ProductAiJob> 
   }
 }
 
+const queue = createManagedQueue<DatabaseBackupQueueJobData>({
+  name: DATABASE_BACKUP_QUEUE_NAME,
+  concurrency: 1,
+  jobTimeoutMs: DATABASE_BACKUP_JOB_TIMEOUT_MS,
+  defaultJobOptions: {
+    attempts: 1,
+    removeOnComplete: true,
+    removeOnFail: false,
+  },
+  processor: async (data) => processProductAiJob(data.jobId),
+  onFailed: async (_queueJobId, error, data) => {
+    const message = error instanceof Error ? error.message : String(error);
+    await markBackupFailedSafely(data.jobId, message);
+  },
+});
+
+export function startProductAiJobQueue(): void {
+  queue.startWorker();
+  void recoverInterruptedBackupJobs();
+}
+
+export async function enqueueProductAiJobToQueue(
+  jobId: string,
+  productId: string | null | undefined,
+  runtimeType: string,
+  payload: unknown
+): Promise<void> {
+  await queue.enqueue(
+    {
+      jobId,
+      productId: productId ?? 'system',
+      type: runtimeType,
+      payload,
+    },
+    { jobId }
+  );
+}
+
 export async function getQueueStatus(): Promise<Record<string, unknown>> {
   const repository = await getProductAiJobRepository();
-  const pending = await repository.findJobs('system', { type: 'db_backup', statuses: ['pending'] });
-  const running = await repository.findJobs('system', { type: 'db_backup', statuses: ['running'] });
+  const [pending, running, health] = await Promise.all([
+    repository.findJobs('system', { type: 'db_backup', statuses: ['pending'] }),
+    repository.findJobs('system', { type: 'db_backup', statuses: ['running'] }),
+    queue.getHealthStatus().catch(async (error: unknown) => {
+      await ErrorSystem.captureException(error, {
+        service: 'database-engine-db-backup-queue',
+        action: 'getQueueStatus',
+      });
+      return {
+        deliveryMode: 'inline' as const,
+        workerState: 'offline' as const,
+        redisAvailable: false,
+        workerLocal: false,
+        waitingCount: 0,
+        activeCount: 0,
+        completedCount: 0,
+        failedCount: 0,
+        running: false,
+        healthy: false,
+        processing: false,
+      };
+    }),
+  ]);
   return {
-    name: 'database-engine-db-backup-inline',
-    deliveryMode: 'inline',
-    workerState: 'inline',
-    redisAvailable: false,
-    workerLocal: true,
+    name: DATABASE_BACKUP_QUEUE_NAME,
+    ...health,
     waitingCount: pending.length,
     activeCount: running.length,
-    completedCount: 0,
-    failedCount: 0,
-    running: false,
-    healthy: true,
-    processing: false,
+    repositoryPendingCount: pending.length,
+    repositoryRunningCount: running.length,
   };
 }

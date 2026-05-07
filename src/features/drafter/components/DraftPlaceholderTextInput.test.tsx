@@ -18,11 +18,17 @@ function PlaceholderInputHarness(): React.JSX.Element {
   );
 }
 
+const getProductTitleInput = (): HTMLInputElement => {
+  const input = screen.getByRole('textbox', { name: 'Product title' });
+  if (!(input instanceof HTMLInputElement)) throw new Error('Expected product title input.');
+  return input;
+};
+
 describe('DraftPlaceholderTextInput', () => {
   it('opens placeholder choices after typing [ and inserts the selected token', async () => {
     render(<PlaceholderInputHarness />);
 
-    const input = screen.getByRole('textbox', { name: 'Product title' }) as HTMLInputElement;
+    const input = getProductTitleInput();
     fireEvent.change(input, { target: { value: '[' } });
     input.setSelectionRange(1, 1);
     fireEvent.keyDown(input, { key: '[' });
@@ -39,7 +45,7 @@ describe('DraftPlaceholderTextInput', () => {
   it('filters placeholder choices while typing the token name', async () => {
     render(<PlaceholderInputHarness />);
 
-    const input = screen.getByRole('textbox', { name: 'Product title' }) as HTMLInputElement;
+    const input = getProductTitleInput();
     fireEvent.change(input, { target: { value: '[sou' } });
     input.setSelectionRange(4, 4);
     fireEvent.keyUp(input, { key: 'u' });
@@ -55,10 +61,27 @@ describe('DraftPlaceholderTextInput', () => {
     expect(input.value).toBe('[sourceUrl]');
   });
 
+  it('offers transformed title placeholders', async () => {
+    render(<PlaceholderInputHarness />);
+
+    const input = getProductTitleInput();
+    fireEvent.change(input, { target: { value: '[name(' } });
+    input.setSelectionRange(6, 6);
+    fireEvent.keyUp(input, { key: '(' });
+
+    await waitFor(() => {
+      expect(screen.getByText('[name(TitleCase)]')).toBeInTheDocument();
+    });
+
+    fireEvent.mouseDown(screen.getByRole('option', { name: '[name(TitleCase)]' }));
+
+    expect(input.value).toBe('[name(TitleCase)]');
+  });
+
   it('renders placeholder choices in a top-level overlay above panels', async () => {
     render(<PlaceholderInputHarness />);
 
-    const input = screen.getByRole('textbox', { name: 'Product title' }) as HTMLInputElement;
+    const input = getProductTitleInput();
     fireEvent.change(input, { target: { value: '[' } });
     input.setSelectionRange(1, 1);
     fireEvent.keyDown(input, { key: '[' });

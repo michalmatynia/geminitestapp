@@ -234,12 +234,12 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
             overflow: 'hidden',
           }}>
             {/* top glow line */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, var(--cyan-teal), transparent)', opacity: 0.5 }} />
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', opacity: 0.5 }} />
             {/* corner brackets */}
             <div style={{ position: 'absolute', top: 8, right: 8, width: 12, height: 12, borderTop: '1px solid rgba(171,217,208,0.4)', borderRight: '1px solid rgba(171,217,208,0.4)' }} />
             <div style={{ position: 'absolute', bottom: 8, left: 8, width: 12, height: 12, borderBottom: '1px solid rgba(171,217,208,0.4)', borderLeft: '1px solid rgba(171,217,208,0.4)' }} />
 
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.4rem', letterSpacing: '0.3em', color: 'var(--cyan-teal)', textShadow: '0 0 20px rgba(171,217,208,0.4)', marginBottom: '0.25rem' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.4rem', letterSpacing: '0.3em', color: 'var(--accent)', textShadow: '0 0 20px rgba(171,217,208,0.4)', marginBottom: '0.25rem' }}>
               {content.signedOut.brandName}
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', color: 'rgba(171,217,208,0.3)', marginBottom: '2rem' }}>

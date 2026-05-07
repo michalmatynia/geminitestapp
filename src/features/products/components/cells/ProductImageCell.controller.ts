@@ -52,7 +52,17 @@ function useProductNoteState(note: ProductNoteValue): ProductNoteState {
   const [draftNoteText, setDraftNoteText] = useState('');
   const [draftNoteColor, setDraftNoteColor] = useState(DEFAULT_NOTE_COLOR);
   const [isSavingNote, setIsSavingNote] = useState(false);
-  const resolvedNote = useMemo((): ResolvedProductNote | null => resolveProductNote(note), [note]);
+  const [localNoteDeleted, setLocalNoteDeleted] = useState(false);
+  const propResolvedNote = useMemo((): ResolvedProductNote | null => resolveProductNote(note), [note]);
+
+  // Clear the optimistic deletion flag once the prop has caught up with the deletion.
+  useEffect(() => {
+    if (localNoteDeleted && propResolvedNote === null) {
+      setLocalNoteDeleted(false);
+    }
+  }, [localNoteDeleted, propResolvedNote]);
+
+  const resolvedNote = localNoteDeleted ? null : propResolvedNote;
   const noteColor = resolvedNote?.color ?? DEFAULT_NOTE_COLOR;
   const hasDraftChanges = hasProductNoteDraftChanges({
     draftNoteColor,
@@ -68,11 +78,18 @@ function useProductNoteState(note: ProductNoteValue): ProductNoteState {
     setDraftNoteColor(noteColor);
   }, [noteColor, noteModalOpen, resolvedNote]);
 
+  const markNoteDeleted = useCallback((): void => {
+    setLocalNoteDeleted(true);
+    setDraftNoteColor(DEFAULT_NOTE_COLOR);
+    setDraftNoteText('');
+  }, []);
+
   return {
     draftNoteColor,
     draftNoteText,
     hasDraftChanges,
     isSavingNote,
+    markNoteDeleted,
     noteColor: draftNoteColor,
     noteModalOpen,
     resolvedNote,

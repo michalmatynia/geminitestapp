@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { JSX } from 'react';
-import { Input } from '@/shared/ui/primitives.public';
+import { Input, Textarea } from '@/shared/ui/primitives.public';
 import { FormField, FormModal, StatusBadge } from '@/shared/ui/forms-and-actions.public';
 import type { DatabaseColumnInfo } from '@/shared/contracts/database';
 import { useRowForm } from '../../hooks/useRowForm';
@@ -47,14 +47,25 @@ export function RowFormModal(props: RowFormModalProps): JSX.Element {
               {col.isPrimaryKey && (
                 <StatusBadge status='PK' variant='info' size='sm' className='font-bold mb-1' />
               )}
-              <Input
-                value={formData[col.name] ?? ''}
-                onChange={(e) => setFieldValue(col.name, e.target.value)}
-                placeholder={getPlaceholder(col)}
-                className='font-mono text-xs'
-                disabled={mode === 'edit' && col.isPrimaryKey}
-                aria-label={col.name}
-              />
+              {/\b(object|array|json)\b/i.test(col.type) ? (
+                <Textarea
+                  value={formData[col.name] ?? ''}
+                  onChange={(e) => setFieldValue(col.name, e.target.value)}
+                  placeholder={getPlaceholder(col)}
+                  className='min-h-24 font-mono text-xs'
+                  disabled={mode === 'edit' && col.isPrimaryKey}
+                  aria-label={col.name}
+                />
+              ) : (
+                <Input
+                  value={formData[col.name] ?? ''}
+                  onChange={(e) => setFieldValue(col.name, e.target.value)}
+                  placeholder={getPlaceholder(col)}
+                  className='font-mono text-xs'
+                  disabled={mode === 'edit' && col.isPrimaryKey}
+                  aria-label={col.name}
+                />
+              )}
             </div>
           </FormField>
         ))}

@@ -29,6 +29,7 @@ export interface SegmentedControlProps<T extends string> {
   itemClassName?: string;
   activeClassName?: string;
   size?: 'xs' | 'sm' | 'md';
+  disabled?: boolean;
   ariaLabel?: string;
   ariaLabelledBy?: string;
 }

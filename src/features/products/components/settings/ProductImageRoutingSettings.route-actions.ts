@@ -4,10 +4,16 @@ import type { MutationResult } from '@/shared/contracts/ui/queries';
 import type { SystemSetting } from '@/shared/contracts/settings';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  LOCAL_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
   PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY,
 } from '@/shared/lib/products/constants';
-import { normalizeProductImageExternalBaseUrl } from '@/shared/utils/image-routing';
+import {
+  normalizeProductImageExternalBaseUrl,
+  productImageServingRouteByMode,
+  resolveProductImageServingMode,
+  type ProductImageServingMode,
+} from '@/shared/utils/image-routing';
 import type { Toast } from '@/shared/ui/toast';
 
 import {
@@ -25,7 +31,10 @@ export type ProductImageRouteActions = {
   handleAddRoute: () => void;
   handleRemoveRoute: (route: string) => void;
   handleSave: () => void;
+  handleSelectServingMode: (mode: ProductImageServingMode) => void;
+  handleUseFastComet: () => void;
   handleUseLocalhost: () => void;
+  servingMode: ProductImageServingMode;
 };
 
 type ProductImageRouteActionsArgs = ProductImageRoutesState & {
@@ -54,6 +63,13 @@ export function useProductImageRouteActions({
   toast,
   updateSettingsBulk,
 }: ProductImageRouteActionsArgs): ProductImageRouteActions {
+  const setServingRoute = (route: string): void => {
+    setRoutes((previous: string[]) =>
+      previous.includes(route) ? previous : dedupeRoutes([route, ...previous])
+    );
+    setDefaultRoute(route);
+  };
+
   const handleAddRoute = (): void => {
     const normalized = normalizeProductImageExternalBaseUrl(newRoute);
     if (normalized.length === 0) {
@@ -95,14 +111,24 @@ export function useProductImageRouteActions({
   };
 
   const handleUseLocalhost = (): void => {
-    const localhostRoute = DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
-    setRoutes((previous: string[]) =>
-      previous.includes(localhostRoute)
-        ? previous
-        : dedupeRoutes([localhostRoute, ...previous])
-    );
-    setDefaultRoute(localhostRoute);
+    setServingRoute(LOCAL_PRODUCT_IMAGES_EXTERNAL_BASE_URL);
   };
 
-  return { handleAddRoute, handleRemoveRoute, handleSave, handleUseLocalhost };
+  const handleUseFastComet = (): void => {
+    setServingRoute(DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL);
+  };
+
+  const handleSelectServingMode = (mode: ProductImageServingMode): void => {
+    setServingRoute(productImageServingRouteByMode[mode]);
+  };
+
+  return {
+    handleAddRoute,
+    handleRemoveRoute,
+    handleSave,
+    handleSelectServingMode,
+    handleUseFastComet,
+    handleUseLocalhost,
+    servingMode: resolveProductImageServingMode(defaultRoute),
+  };
 }

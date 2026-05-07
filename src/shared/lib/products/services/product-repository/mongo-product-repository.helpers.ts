@@ -2,7 +2,7 @@ import { ObjectId, type Document, type Filter } from 'mongodb';
 
 import { productAdvancedFilterGroupSchema } from '@/shared/contracts/products/filters';
 import { type ProductAdvancedFilterGroup, type ProductParameterValue } from '@/shared/contracts/products';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
 import {

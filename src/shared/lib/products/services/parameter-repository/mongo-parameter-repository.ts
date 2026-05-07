@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb';
 import type { ParameterRepository, ParameterFilters, ParameterCreateInput, ParameterUpdateInput } from '@/shared/contracts/products/drafts';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import { internalError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 import type { Filter, UpdateFilter, Document } from 'mongodb';
 

@@ -7,7 +7,7 @@ import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { normalizeCatalogLanguageSelection } from '@/shared/lib/products/services/catalog-language-normalization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import { ObjectId, type Document, type Filter, type UpdateResult } from 'mongodb';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 type CliOptions = {
   dryRun: boolean;

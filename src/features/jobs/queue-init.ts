@@ -27,7 +27,9 @@ import {
   startTraderaRelistSchedulerQueue,
 } from '@/features/integrations/workers/traderaRelistSchedulerQueue';
 import { startProductAiJobQueue } from '@/server/queues/product-ai';
-import { startProductMarketplaceCopyDebrandBatchQueue } from '@/server/queues/products';
+import {
+  startProductMarketplaceCopyDebrandBatchQueue,
+} from '@/server/queues/products';
 import { startProductSyncSchedulerQueue } from '@/server/queues/product-sync';
 import { startDatabaseBackupSchedulerQueue } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 import { startSystemLogAlertsQueue } from '@/shared/lib/observability/workers/systemLogAlertsQueue';
@@ -71,6 +73,21 @@ const SOCIAL_PUBLISHING_STARTERS = [
   startFilemakerSocialSchedulerQueue,
   startFilemakerSocialPipelineQueue,
 ] as const satisfies readonly QueueStarter[];
+const startProductScrapeProfileQueueRuntime = (): void => {
+  void import('@/features/products/workers/productScrapeProfileQueue')
+    .then(({ startProductScrapeProfileQueue }) => {
+      startProductScrapeProfileQueue();
+    })
+    .catch((error) => {
+      ErrorSystem.captureException(error).catch(() => {});
+      logSystemEvent({
+        level: 'warn',
+        source: LOG_SOURCE,
+        message: 'Product scrape profile queue startup failed',
+        error,
+      }).catch(() => {});
+    });
+};
 const FEATURE_AWARE_STARTERS = [
   startPlaywrightListingQueue,
   startTraderaListingQueue,
@@ -84,6 +101,7 @@ const FEATURE_AWARE_STARTERS = [
   startCaseResolverOcrQueue,
   startFilemakerJobBoardScrapeQueue,
   startProductMarketplaceCopyDebrandBatchQueue,
+  startProductScrapeProfileQueueRuntime,
 ] as const satisfies readonly QueueStarter[];
 
 const parseEnvBoolean = (value: string | undefined): boolean | null => {

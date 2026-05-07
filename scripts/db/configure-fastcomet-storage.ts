@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './load-app-env';
 
 import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
@@ -20,6 +20,7 @@ type CliOptions = {
   authToken: string;
   keepLocalCopy: boolean;
   timeoutMs: number;
+  resolveIp: string;
   dryRun: boolean;
 };
 
@@ -51,6 +52,13 @@ const parseNumber = (
   return Math.min(Math.max(Math.floor(parsed), min), max);
 };
 
+const hasMongoRuntimeConfig = (): boolean =>
+  Boolean(
+    process.env['MONGODB_URI']?.trim() ||
+      process.env['MONGODB_LOCAL_URI']?.trim() ||
+      process.env['MONGODB_CLOUD_URI']?.trim()
+  );
+
 const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
     source:
@@ -60,6 +68,7 @@ const parseArgs = (argv: string[]): CliOptions => {
     deleteEndpoint: normalizeString(process.env['FASTCOMET_STORAGE_DELETE_URL']),
     authToken: normalizeString(process.env['FASTCOMET_STORAGE_AUTH_TOKEN']),
     keepLocalCopy: parseBoolean(process.env['FASTCOMET_STORAGE_KEEP_LOCAL_COPY'], true),
+    resolveIp: normalizeString(process.env['FASTCOMET_STORAGE_RESOLVE_IP']),
     timeoutMs: parseNumber(
       process.env['FASTCOMET_STORAGE_TIMEOUT_MS'],
       DEFAULT_TIMEOUT_MS,
@@ -101,6 +110,10 @@ const parseArgs = (argv: string[]): CliOptions => {
       options.authToken = normalizeString(arg.slice('--auth-token='.length));
       return;
     }
+    if (arg.startsWith('--resolve-ip=')) {
+      options.resolveIp = normalizeString(arg.slice('--resolve-ip='.length));
+      return;
+    }
     if (arg.startsWith('--keep-local-copy=')) {
       options.keepLocalCopy = parseBoolean(arg.slice('--keep-local-copy='.length), true);
       return;
@@ -126,6 +139,7 @@ const buildPayloads = (options: CliOptions): SettingPayload[] => {
     authToken: options.authToken || null,
     keepLocalCopy: options.keepLocalCopy,
     timeoutMs: options.timeoutMs,
+    resolveIp: options.resolveIp || null,
   };
 
   return [
@@ -138,7 +152,6 @@ const buildPayloads = (options: CliOptions): SettingPayload[] => {
 };
 
 const writeMongoSettings = async (payloads: SettingPayload[]): Promise<void> => {
-  if (!process.env['MONGODB_URI']) return;
   const db = await getMongoDb();
   const collection = db.collection<{
     key: string;
@@ -161,8 +174,8 @@ const writeMongoSettings = async (payloads: SettingPayload[]): Promise<void> => 
 };
 
 async function main(): Promise<void> {
-  if (!process.env['MONGODB_URI']) {
-    throw new Error('MONGODB_URI is required.');
+  if (!hasMongoRuntimeConfig()) {
+    throw new Error('MongoDB is required. Set MONGODB_URI or MONGODB_LOCAL_URI.');
   }
   const options = parseArgs(process.argv.slice(2));
 
@@ -210,6 +223,7 @@ async function main(): Promise<void> {
         deleteEndpoint: options.deleteEndpoint || null,
         keepLocalCopy: options.keepLocalCopy,
         timeoutMs: options.timeoutMs,
+        resolveIp: options.resolveIp || null,
       },
       null,
       2
@@ -218,7 +232,7 @@ async function main(): Promise<void> {
 }
 
 const closeResources = async (): Promise<void> => {
-  if (process.env['MONGODB_URI']) {
+  if (hasMongoRuntimeConfig()) {
     const mongoClient = await getMongoClient().catch(() => null);
     await mongoClient?.close().catch(() => {});
   }

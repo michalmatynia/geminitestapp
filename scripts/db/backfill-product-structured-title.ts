@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import { pathToFileURL } from 'node:url';
 
-import { getMongoDb, invalidateMongoClientCache } from '@/shared/lib/db/mongo-client';
+import { getMongoDb, invalidateMongoClientCache } from '@/shared/lib/db/product-mongo-client';
 import { productCollectionName } from '@/shared/lib/products/services/product-repository/mongo-product-repository.helpers';
 
 import { buildProductStructuredTitleBackfillResult } from './lib/product-structured-title-backfill';

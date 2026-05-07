@@ -1,6 +1,6 @@
 import type { Db } from 'mongodb';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 type MongoCollectionProvider = Pick<Db, 'collection'>;
 

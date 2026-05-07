@@ -12,6 +12,7 @@ import {
   getDatabaseBackupSchedulerQueueStatus,
   startDatabaseBackupSchedulerQueue,
 } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
+import { startProductAiJobQueue } from '@/features/database/server/jobs';
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
@@ -34,6 +35,10 @@ vi.mock('@/shared/lib/db/workers/databaseBackupSchedulerQueue', () => ({
 
 vi.mock('@/features/database/server', () => ({
   assertDatabaseEngineManageAccess: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/features/database/server/jobs', () => ({
+  startProductAiJobQueue: vi.fn(),
 }));
 
 const schedulerStatusPayload = {
@@ -92,6 +97,7 @@ describe('GET /api/databases/engine/backup-scheduler/status', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get('Cache-Control')).toBe('no-store');
+    expect(startProductAiJobQueue).toHaveBeenCalledTimes(1);
     expect(startDatabaseBackupSchedulerQueue).toHaveBeenCalledTimes(1);
     expect(getDatabaseBackupSchedulerStatus).toHaveBeenCalledTimes(1);
     expect(getDatabaseBackupSchedulerQueueStatus).toHaveBeenCalledTimes(1);

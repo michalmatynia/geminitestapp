@@ -73,7 +73,7 @@ export function CartDrawer(): JSX.Element {
       <div
         className="fixed inset-0 z-50 transition-opacity duration-400"
         style={{
-          background: 'rgba(0,0,0,0.4)',
+          background: 'var(--modal-scrim)',
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none',
           backdropFilter: isOpen ? 'blur(2px)' : 'none',

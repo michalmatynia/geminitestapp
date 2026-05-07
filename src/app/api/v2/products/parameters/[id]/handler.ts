@@ -9,7 +9,7 @@ import {
   productParameterLinkedTitleTermTypeSchema,
 } from '@/shared/contracts/products/parameters';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 
 const SELECTOR_TYPES = [

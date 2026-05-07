@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import type { ProductShippingGroup, ProductShippingGroupCreateInput, ProductShippingGroupUpdateInput } from '@/shared/contracts/products/shipping-groups';
 import type { ShippingGroupFilters, ShippingGroupRepository } from '@/shared/contracts/products/drafts';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 import type { Filter, UpdateFilter } from 'mongodb';
 

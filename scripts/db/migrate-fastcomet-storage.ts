@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './load-app-env';
 
 import fs from 'fs/promises';
 import path from 'path';
@@ -26,6 +26,7 @@ type ImageFileDocument = {
 };
 
 type CliOptions = {
+  concurrency: number;
   write: boolean;
   limit: number;
   prefix: string | null;
@@ -44,6 +45,8 @@ type MigrationResult = {
 const IMAGE_FILE_COLLECTION = 'image_files';
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_LIMIT = 100;
+const DEFAULT_CONCURRENCY = 1;
+const MAX_CONCURRENCY = 5;
 
 const normalizeString = (value: string | undefined): string => (value ?? '').trim();
 
@@ -58,8 +61,19 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
   return Math.floor(parsed);
 };
 
+const hasMongoRuntimeConfig = (): boolean =>
+  Boolean(
+    process.env['MONGODB_URI']?.trim() ||
+      process.env['MONGODB_LOCAL_URI']?.trim() ||
+      process.env['MONGODB_CLOUD_URI']?.trim()
+  );
+
 const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
+    concurrency: parsePositiveInt(
+      process.env['FASTCOMET_MIGRATION_CONCURRENCY'],
+      DEFAULT_CONCURRENCY
+    ),
     write: false,
     limit: parsePositiveInt(process.env['FASTCOMET_MIGRATION_LIMIT'], DEFAULT_LIMIT),
     prefix: normalizeString(process.env['FASTCOMET_MIGRATION_PREFIX']) || null,
@@ -83,11 +97,19 @@ const parseArgs = (argv: string[]): CliOptions => {
       options.limit = parsePositiveInt(arg.slice('--limit='.length), options.limit);
       return;
     }
+    if (arg.startsWith('--concurrency=')) {
+      options.concurrency = parsePositiveInt(
+        arg.slice('--concurrency='.length),
+        options.concurrency
+      );
+      return;
+    }
     if (arg.startsWith('--prefix=')) {
       options.prefix = normalizeString(arg.slice('--prefix='.length)) || null;
     }
   });
 
+  options.concurrency = Math.min(Math.max(options.concurrency, 1), MAX_CONCURRENCY);
   return options;
 };
 
@@ -233,9 +255,37 @@ const maybeSetSource = async (enabled: boolean): Promise<void> => {
   );
 };
 
+const migrateImageFiles = async (
+  docs: Array<WithId<ImageFileDocument>>,
+  options: CliOptions
+): Promise<MigrationResult[]> => {
+  if (!options.write || options.concurrency === 1) {
+    const results: MigrationResult[] = [];
+    for (const doc of docs) {
+      results.push(await migrateImageFile(doc, options));
+    }
+    return results;
+  }
+
+  let index = 0;
+  const results: MigrationResult[] = [];
+  const workerCount = Math.min(options.concurrency, docs.length);
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (index < docs.length) {
+      const doc = docs[index];
+      index += 1;
+      if (doc !== undefined) {
+        results.push(await migrateImageFile(doc, options));
+      }
+    }
+  });
+  await Promise.all(workers);
+  return results;
+};
+
 async function main(): Promise<void> {
-  if (!process.env['MONGODB_URI']) {
-    throw new Error('MONGODB_URI is required.');
+  if (!hasMongoRuntimeConfig()) {
+    throw new Error('MongoDB is required. Set MONGODB_URI or MONGODB_LOCAL_URI.');
   }
 
   const options = parseArgs(process.argv.slice(2));
@@ -251,10 +301,7 @@ async function main(): Promise<void> {
     .limit(options.limit)
     .toArray();
 
-  const results: MigrationResult[] = [];
-  for (const doc of docs) {
-    results.push(await migrateImageFile(doc, options));
-  }
+  const results = await migrateImageFiles(docs, options);
 
   await maybeSetSource(options.write && options.setSource);
 
@@ -271,6 +318,7 @@ async function main(): Promise<void> {
         uploadEndpoint: settings.fastComet.uploadEndpoint,
         baseUrl: settings.fastComet.baseUrl,
         limit: options.limit,
+        concurrency: options.concurrency,
         prefix: options.prefix,
         setSource: options.write && options.setSource,
         scanned: docs.length,
@@ -284,7 +332,7 @@ async function main(): Promise<void> {
 }
 
 const closeResources = async (): Promise<void> => {
-  if (process.env['MONGODB_URI']) {
+  if (hasMongoRuntimeConfig()) {
     const mongoClient = await getMongoClient().catch(() => null);
     await mongoClient?.close().catch(() => {});
   }

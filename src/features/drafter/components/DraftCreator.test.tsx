@@ -34,7 +34,7 @@ vi.mock('@/shared/lib/icons', () => ({
 
 vi.mock('@/shared/ui/feedback.public', () => ({
   AppModal: ({ children, open }: { children?: React.ReactNode; open?: boolean }) =>
-    open ? <div role='dialog'>{children}</div> : null,
+    open === true ? <div role='dialog'>{children}</div> : null,
 }));
 
 vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
@@ -50,7 +50,19 @@ vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 
-const createFormState = () => ({
+type DraftCreatorFormTestState = {
+  [key: string]: unknown;
+  draftKind: 'scrape_template' | 'standard';
+  scrapeProfileId: string | null;
+  parameterValues: Array<{
+    parameterId: string;
+    value: string;
+    valuesByLanguage?: Record<string, string>;
+    skipParameterInference?: boolean;
+  }>;
+};
+
+const createFormState = (): DraftCreatorFormTestState => ({
   name: ' BattleStock Scrape Template ',
   draftKind: 'scrape_template' as const,
   scrapeProfileId: 'battlestock-warhammer-40k-30k',
@@ -91,7 +103,9 @@ const createFormState = () => ({
   setIsIconLibraryOpen: vi.fn(),
 });
 
-const mockDraftCreatorForm = (stateOverrides: Partial<ReturnType<typeof createFormState>> = {}) => {
+const mockDraftCreatorForm = (
+  stateOverrides: Partial<DraftCreatorFormTestState> = {}
+): void => {
   createDraftMutationMock.mockResolvedValue({ id: 'draft-created' });
   useDraftCreatorFormMock.mockReturnValue({
     state: { ...createFormState(), ...stateOverrides },
@@ -139,89 +153,93 @@ const mockDraftCreatorForm = (stateOverrides: Partial<ReturnType<typeof createFo
 
 import { DraftCreator } from './DraftCreator';
 
+const persistScrapeTemplateMetadata = async (): Promise<void> => {
+  render(<DraftCreator onSaveSuccess={onSaveSuccessMock} />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft from mocked details tab' }));
+
+  await waitFor(() => {
+    expect(createDraftMutationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'BattleStock Scrape Template',
+        draftKind: 'scrape_template',
+        scrapeProfileId: 'battlestock-warhammer-40k-30k',
+        name_pl: '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
+        description_pl: '[description]',
+        supplierName: 'BattleStock',
+        supplierLink: '[sourceUrl]',
+        priceComment: 'Scraped [price] [currency]',
+        stock: 4,
+        catalogIds: ['catalog-battle'],
+        categoryId: 'category-pendants',
+        tagIds: ['tag-warhammer'],
+        producerIds: ['producer-games-workshop'],
+        parameters: [{ parameterId: 'source-brand', value: '[brand]' }],
+      })
+    );
+  });
+  expect(onSaveSuccessMock).toHaveBeenCalledTimes(1);
+};
+
+const dropsStaleScrapeProfileAssignment = async (): Promise<void> => {
+  mockDraftCreatorForm({
+    draftKind: 'standard',
+    scrapeProfileId: 'battlestock-warhammer-40k-30k',
+  });
+
+  render(<DraftCreator onSaveSuccess={onSaveSuccessMock} />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft from mocked details tab' }));
+
+  await waitFor(() => {
+    expect(createDraftMutationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draftKind: 'standard',
+        scrapeProfileId: null,
+      })
+    );
+  });
+};
+
+const preservesLocalizedLinkedParameterMetadata = async (): Promise<void> => {
+  mockDraftCreatorForm({
+    parameterValues: [
+      {
+        parameterId: 'param-material',
+        value: 'Metal',
+        valuesByLanguage: { en: 'Metal', pl: 'Metal PL' },
+        skipParameterInference: true,
+      },
+    ],
+  });
+
+  render(<DraftCreator onSaveSuccess={onSaveSuccessMock} />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft from mocked details tab' }));
+
+  await waitFor(() => {
+    expect(createDraftMutationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parameters: [
+          {
+            parameterId: 'param-material',
+            value: 'Metal',
+            valuesByLanguage: { en: 'Metal', pl: 'Metal PL' },
+            skipParameterInference: true,
+          },
+        ],
+      })
+    );
+  });
+};
+
 describe('DraftCreator', () => {
-  beforeEach(() => {
+  beforeEach((): void => {
     vi.clearAllMocks();
     mockDraftCreatorForm();
   });
 
-  it('persists scrape-template metadata and placeholder text on create', async () => {
-    render(<DraftCreator onSaveSuccess={onSaveSuccessMock} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft from mocked details tab' }));
-
-    await waitFor(() => {
-      expect(createDraftMutationMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'BattleStock Scrape Template',
-          draftKind: 'scrape_template',
-          scrapeProfileId: 'battlestock-warhammer-40k-30k',
-          name_pl: '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
-          description_pl: '[description]',
-          supplierName: 'BattleStock',
-          supplierLink: '[sourceUrl]',
-          priceComment: 'Scraped [price] [currency]',
-          stock: 4,
-          catalogIds: ['catalog-battle'],
-          categoryId: 'category-pendants',
-          tagIds: ['tag-warhammer'],
-          producerIds: ['producer-games-workshop'],
-          parameters: [{ parameterId: 'source-brand', value: '[brand]' }],
-        })
-      );
-    });
-    expect(onSaveSuccessMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('drops stale scrape profile assignment when saving a standard draft', async () => {
-    mockDraftCreatorForm({
-      draftKind: 'standard',
-      scrapeProfileId: 'battlestock-warhammer-40k-30k',
-    });
-
-    render(<DraftCreator onSaveSuccess={onSaveSuccessMock} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft from mocked details tab' }));
-
-    await waitFor(() => {
-      expect(createDraftMutationMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          draftKind: 'standard',
-          scrapeProfileId: null,
-        })
-      );
-    });
-  });
-
-  it('preserves localized linked parameter metadata when saving', async () => {
-    mockDraftCreatorForm({
-      parameterValues: [
-        {
-          parameterId: 'param-material',
-          value: 'Metal',
-          valuesByLanguage: { en: 'Metal', pl: 'Metal PL' },
-          skipParameterInference: true,
-        },
-      ],
-    });
-
-    render(<DraftCreator onSaveSuccess={onSaveSuccessMock} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft from mocked details tab' }));
-
-    await waitFor(() => {
-      expect(createDraftMutationMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          parameters: [
-            {
-              parameterId: 'param-material',
-              value: 'Metal',
-              valuesByLanguage: { en: 'Metal', pl: 'Metal PL' },
-              skipParameterInference: true,
-            },
-          ],
-        })
-      );
-    });
-  });
+  it('persists scrape-template metadata and placeholder text on create', persistScrapeTemplateMetadata);
+  it('drops stale scrape profile assignment when saving a standard draft', dropsStaleScrapeProfileAssignment);
+  it('preserves localized linked parameter metadata when saving', preservesLocalizedLinkedParameterMetadata);
 });

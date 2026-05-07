@@ -1,4 +1,5 @@
 Options -Indexes
+PassengerEnabled off
 
 <IfModule mod_headers.c>
   Header set Access-Control-Allow-Origin "*"
@@ -11,4 +12,3 @@ Options -Indexes
 <FilesMatch "\.(cgi|fcgi|phtml|php|phar|pl|py|rb|sh)$">
   Require all denied
 </FilesMatch>
-

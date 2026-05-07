@@ -24,7 +24,7 @@ import type {
   ProductSyncRunTrigger,
 } from '@/shared/contracts/product-sync';
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 import type { Filter } from 'mongodb';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

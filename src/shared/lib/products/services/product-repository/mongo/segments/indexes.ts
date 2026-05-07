@@ -1,4 +1,4 @@
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { type ProductDocument } from '../../mongo-product-repository-mappers';
 import { productCollectionName } from '../../mongo-product-repository.helpers';

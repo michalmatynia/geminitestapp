@@ -5,7 +5,7 @@ import type { ProductValidationPatternRepository, ProductValidationPatternWriteO
 import type { ProductValidationChainMode, ProductValidationDenyBehavior, ProductValidationInstanceDenyBehaviorMap, ProductValidationInstanceScope, ProductValidationLaunchScopeBehavior, ProductValidationLaunchOperator, ProductValidationLaunchSourceMode, ProductValidationPostAcceptBehavior, ProductValidationRuntimeType, ProductValidationPattern, ProductValidationSemanticAuditRecord, ProductValidationSemanticAuditSource, ProductValidationSemanticState, ProductValidationSeverity, ProductValidationTarget } from '@/shared/contracts/products/validation';
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import {
   PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY,
   PRODUCT_VALIDATION_REPLACEMENT_FIELDS,

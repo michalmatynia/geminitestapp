@@ -15,7 +15,8 @@ export const PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY = 'product_images_extern
 export const PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER = 'KEYCHA000';
 export const PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY =
   'product_studio_sequence_generation_mode';
-export const DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL = 'http://localhost:3000';
+export const LOCAL_PRODUCT_IMAGES_EXTERNAL_BASE_URL = 'http://localhost:3000';
+export const DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL = 'https://sparksofsindri.com';
 export const PRODUCT_PAGE_SIZE_OPTIONS = [12, 24, 48] as const;
 export const PRODUCT_PAGE_SIZE_MAX = 48;
 export const PRODUCT_CATEGORY_FILTER_ALL_VALUE = '__all__';

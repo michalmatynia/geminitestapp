@@ -9,7 +9,7 @@ import type {
   ProductAiJobUpdate,
 } from '@/shared/contracts/jobs';
 import { notFoundError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 const JOBS_COLLECTION = 'product_ai_jobs';
 

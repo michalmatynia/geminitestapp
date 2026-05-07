@@ -11,7 +11,7 @@ import {
   type ProductScanStatus,
   type UpdateProductScanInput,
 } from '@/shared/contracts/product-scans';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   ACTIVE_PRODUCT_PROVIDER_INDEX_NAME,

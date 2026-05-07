@@ -4,7 +4,7 @@ import { ObjectId, type Filter } from 'mongodb';
 
 import type { ExternalProducer, ExternalProducerSyncInput } from '@/shared/contracts/integrations/producers';
 import type { BaseProducer } from '@/shared/contracts/integrations';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 type ExternalProducerRepository = {
   syncFromBase: (connectionId: string, producers: BaseProducer[]) => Promise<number>;

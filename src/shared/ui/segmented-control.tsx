@@ -17,6 +17,7 @@ export function SegmentedControl<T extends string>({
   itemClassName,
   activeClassName,
   size = 'sm',
+  disabled = false,
   ariaLabel,
   ariaLabelledBy,
 }: SegmentedControlProps<T>): React.JSX.Element {
@@ -52,7 +53,7 @@ export function SegmentedControl<T extends string>({
   }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (options.length === 0) return;
+    if (disabled || options.length === 0) return;
 
     const key = event.key;
     let nextIndex = selectedIndex;
@@ -98,10 +99,13 @@ export function SegmentedControl<T extends string>({
           <button
             key={option.value}
             type='button'
-            onClick={() => onChange(option.value)}
+            onClick={() => {
+              if (!disabled) onChange(option.value);
+            }}
             role='radio'
             aria-checked={isActive}
             aria-label={resolvedOptionLabel}
+            disabled={disabled}
             tabIndex={index === selectedIndex ? 0 : -1}
             ref={(node) => {
               optionRefs.current[index] = node;
@@ -111,7 +115,8 @@ export function SegmentedControl<T extends string>({
               sizeStyles[size],
               isActive
                 ? cn('bg-cyan-500/20 text-cyan-200 shadow-sm', activeClassName)
-                : cn('text-gray-400 hover:text-gray-200 hover:bg-white/5', itemClassName)
+                : cn('text-gray-400 hover:text-gray-200 hover:bg-white/5', itemClassName),
+              disabled && 'cursor-not-allowed opacity-60'
             )}
           >
             {Icon && <Icon className='size-3' aria-hidden='true' />}

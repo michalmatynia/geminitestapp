@@ -23,9 +23,12 @@ import {
   getMongoDumpCommand,
   getCmsBuilderMongoConnectionUrl,
   getCmsBuilderMongoDatabaseName,
+  getProductsMongoConnectionUrl,
+  getProductsMongoDatabaseName,
   getStudiqMongoConnectionUrl,
   getStudiqMongoDatabaseName,
   resolveCmsBuilderMongoSourceConfig,
+  resolveProductsMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
   type MongoBackupApplication,
   execFileAsync as mongoExecFileAsync,
@@ -47,6 +50,38 @@ const assertBackupsAllowed = (): void => {
   if (process.env['NODE_ENV'] === 'production') {
     throw forbiddenError('Database backups are disabled in production.');
   }
+};
+
+const parseMinimumFreeBytes = (): number => {
+  const raw = Number.parseInt(process.env['DATABASE_BACKUP_MIN_FREE_BYTES'] ?? '', 10);
+  if (!Number.isFinite(raw)) return 2 * 1024 * 1024 * 1024;
+  return Math.max(0, raw);
+};
+
+const formatBytes = (value: number): string => {
+  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+  let nextValue = value;
+  let unitIndex = 0;
+  while (nextValue >= 1024 && unitIndex < units.length - 1) {
+    nextValue /= 1024;
+    unitIndex += 1;
+  }
+  return `${nextValue.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+};
+
+const assertBackupDiskSpaceAvailable = async (targetDir: string): Promise<void> => {
+  const minimumFreeBytes = parseMinimumFreeBytes();
+  if (minimumFreeBytes <= 0) return;
+
+  const stats = await fs.statfs(targetDir);
+  const availableBytes = stats.bavail * stats.bsize;
+  if (availableBytes >= minimumFreeBytes) return;
+
+  throw operationFailedError('Not enough disk space for MongoDB backup', undefined, {
+    details: `Backup target has ${formatBytes(availableBytes)} free; requires at least ${formatBytes(
+      minimumFreeBytes
+    )}. Free disk space or lower DATABASE_BACKUP_MIN_FREE_BYTES.`,
+  });
 };
 
 const sanitizeBackupSegment = (value: string): string => {
@@ -87,6 +122,12 @@ const readMongoToolOutput = (
   };
 };
 
+const isNoSpaceFailure = (error: unknown, details = ''): boolean => {
+  if ((error as NodeJS.ErrnoException | null)?.code === 'ENOSPC') return true;
+  const message = error instanceof Error ? error.message : String(error);
+  return `${message}\n${details}`.toLowerCase().includes('no space left on device');
+};
+
 const requireMongoConfigValue = (value: string | null, label: string): string => {
   if (value === null || value.trim().length === 0) {
     throw operationFailedError(`MongoDB source backup requires ${label} to be configured.`);
@@ -103,6 +144,9 @@ const resolveApplicationMongoSourceConfig = async (
   }
   if (application === 'cms-builder') {
     return resolveCmsBuilderMongoSourceConfig(source);
+  }
+  if (application === 'products') {
+    return resolveProductsMongoSourceConfig(source);
   }
   return resolveMongoSourceConfig(source);
 };
@@ -130,6 +174,7 @@ const runMongoBackup = async (params: {
   const backupName = buildMongoBackupRelativeName(application, params.backupName);
   const backupPath = path.join(mongoBackupsDir, backupName);
   const logPath = path.join(mongoBackupsDir, `${backupName}.log`);
+  await assertBackupDiskSpaceAvailable(path.dirname(backupPath));
 
   const command = getMongoDumpCommand();
   const args = ['--uri', mongoUri, '--db', databaseName, `--archive=${backupPath}`, '--gzip'];
@@ -163,10 +208,21 @@ const runMongoBackup = async (params: {
     stderr = output.stderr;
 
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\nerror:\n${message}`;
-    await fs.writeFile(logPath, logContent);
+    const logWriteError = await fs.writeFile(logPath, logContent).then(
+      () => null,
+      (writeError: unknown) => writeError
+    );
 
     const trimmedStderr = stderr.trim();
     const details = trimmedStderr.length > 0 ? trimmedStderr : message;
+    if (isNoSpaceFailure(error, details) || isNoSpaceFailure(logWriteError)) {
+      await Promise.all([
+        fs.rm(backupPath, { force: true }).catch(() => undefined),
+        fs.rm(logPath, { force: true }).catch(() => undefined),
+      ]);
+      throw operationFailedError('Failed to create MongoDB backup', error, { details });
+    }
+
     const stat = await fs.stat(backupPath).catch(() => null);
     if (stat !== null && stat.size > 0) {
       return {
@@ -176,6 +232,12 @@ const runMongoBackup = async (params: {
         logPath,
         logContent,
       };
+    }
+
+    if (logWriteError !== null) {
+      throw operationFailedError('Failed to write MongoDB backup log', logWriteError, {
+        details,
+      });
     }
 
     throw operationFailedError('Failed to create MongoDB backup', error, { details });
@@ -188,6 +250,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
   const geminitestappDatabaseName = getMongoDatabaseName();
   const studiqDatabaseName = getStudiqMongoDatabaseName();
   const cmsBuilderDatabaseName = getCmsBuilderMongoDatabaseName();
+  const productsDatabaseName = getProductsMongoDatabaseName();
   const geminitestapp = await runMongoBackup({
     application: 'geminitestapp',
     mongoUri: getMongoConnectionUrl(),
@@ -206,7 +269,18 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     databaseName: cmsBuilderDatabaseName,
     backupName: buildMongoBackupName(cmsBuilderDatabaseName, timestamp),
   });
-  const warnings = [geminitestapp.warning, studiq.warning, cmsBuilder.warning].filter(
+  const products = await runMongoBackup({
+    application: 'products',
+    mongoUri: getProductsMongoConnectionUrl(),
+    databaseName: productsDatabaseName,
+    backupName: buildMongoBackupName(productsDatabaseName, timestamp),
+  });
+  const warnings = [
+    geminitestapp.warning,
+    studiq.warning,
+    cmsBuilder.warning,
+    products.warning,
+  ].filter(
     (value): value is string => typeof value === 'string' && value.length > 0
   );
   const warning = warnings.length > 0 ? warnings.join('\n') : null;
@@ -217,6 +291,8 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     studiq.logContent,
     `--- cms-builder: ${cmsBuilder.backupName} ---`,
     cmsBuilder.logContent,
+    `--- products: ${products.backupName} ---`,
+    products.logContent,
   ].join('\n\n');
 
   return {
@@ -266,6 +342,7 @@ export const createMongoManagedBackup = async (
     'geminitestapp',
     'studiq',
     'cms-builder',
+    'products',
   ];
   const results: Array<DatabaseBackupResult & { application: DatabaseEngineManagedMongoApplication }> = [];
   for (const managedApplication of applications) {

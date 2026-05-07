@@ -14,6 +14,19 @@ import { useState, useRef } from 'react';
 import type { DatabaseColumnInfo } from '@/shared/contracts/database';
 import { parseInputValue } from '../utils/database-utils';
 
+const formatInitialFieldValue = (value: unknown): string => {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (value instanceof Date) return value.toISOString();
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+};
+
 export function useRowForm(
   columns: DatabaseColumnInfo[],
   initialData: Record<string, unknown> | undefined,
@@ -24,10 +37,7 @@ export function useRowForm(
   const [formData, setFormData] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     for (const col of columns) {
-      const val = initialData?.[col.name];
-      initial[col.name] = (typeof val === 'string' || typeof val === 'number') 
-        ? String(val) 
-        : '';
+      initial[col.name] = formatInitialFieldValue(initialData?.[col.name]);
     }
     return initial;
   });
@@ -37,7 +47,7 @@ export function useRowForm(
     const parsed: Record<string, unknown> = {};
     for (const col of columns) {
       const val = formData[col.name] ?? '';
-      const isAutoPK = mode === 'add' && col.isPrimaryKey && typeof col.defaultValue !== 'undefined' && col.defaultValue !== null && val === '';
+      const isAutoPK = mode === 'add' && col.isPrimaryKey && val.trim() === '';
       if (!isAutoPK) {
         parsed[col.name] = parseInputValue(val, col.type);
       }

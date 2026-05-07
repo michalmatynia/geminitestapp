@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 
 type LanguageLookupRow = {

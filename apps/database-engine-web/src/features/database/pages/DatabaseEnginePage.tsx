@@ -40,7 +40,7 @@ const resolveViewLabel = (view: DatabaseEngineWorkspaceView): string =>
 const parseManagedMongoApplication = (
   value: string | null
 ): DatabaseEngineManagedMongoApplication | undefined =>
-  value === 'geminitestapp' || value === 'studiq' || value === 'cms-builder'
+  value === 'geminitestapp' || value === 'studiq' || value === 'cms-builder' || value === 'products'
     ? value
     : undefined;
 

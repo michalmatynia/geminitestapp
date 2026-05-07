@@ -59,12 +59,12 @@ function FilterPanel({
                 <div
                   className="w-4 h-4 flex items-center justify-center flex-shrink-0 transition-colors"
                   style={{
-                    border: `1px solid ${priceRange === range.label ? 'var(--cyan-teal)' : 'var(--border)'}`,
-                    background: priceRange === range.label ? 'rgba(171,217,208,0.2)' : 'transparent',
+                    border: `1px solid ${priceRange === range.label ? 'var(--accent)' : 'var(--border)'}`,
+                    background: priceRange === range.label ? 'rgba(var(--accent-rgb),0.2)' : 'transparent',
                   }}
                 >
                   {priceRange === range.label && (
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-teal)" strokeWidth="3" strokeLinecap="round">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round">
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
                   )}
@@ -79,7 +79,7 @@ function FilterPanel({
                 />
                 <span
                   className="type-label group-hover:text-[var(--fg)] transition-colors"
-                  style={{ color: priceRange === range.label ? 'var(--cyan-teal)' : 'var(--muted)', letterSpacing: '0.06em' }}
+                  style={{ color: priceRange === range.label ? 'var(--accent)' : 'var(--muted)', letterSpacing: '0.06em' }}
                 >
                   {range.label}
                 </span>
@@ -98,9 +98,9 @@ function FilterPanel({
                 onClick={() => toggleSize(size)}
                 className="type-label px-3 py-2 transition-all duration-150"
                 style={{
-                  border: `1px solid ${sizes.includes(size) ? 'var(--cyan-teal)' : 'var(--border)'}`,
-                  background: sizes.includes(size) ? 'rgba(171,217,208,0.15)' : 'transparent',
-                  color: sizes.includes(size) ? 'var(--cyan-teal)' : 'var(--muted)',
+                  border: `1px solid ${sizes.includes(size) ? 'var(--accent)' : 'var(--border)'}`,
+                  background: sizes.includes(size) ? 'rgba(var(--accent-rgb),0.15)' : 'transparent',
+                  color: sizes.includes(size) ? 'var(--accent)' : 'var(--muted)',
                   minWidth: '2.5rem',
                 }}
               >
@@ -178,9 +178,9 @@ function CollectionProductCard({
             <span
               className="type-label px-2 py-1 inline-block"
               style={{
-                background: 'rgba(171,217,208,0.1)',
-                color: 'var(--cyan-teal)',
-                border: '1px solid rgba(171,217,208,0.35)',
+                background: 'rgba(var(--accent-rgb),0.1)',
+                color: 'var(--accent)',
+                border: '1px solid rgba(var(--accent-rgb),0.35)',
               }}
             >
               {product.tag}
@@ -192,7 +192,7 @@ function CollectionProductCard({
         <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
           <button
             className="btn-primary w-full justify-center text-center"
-            style={{ background: 'rgba(171,217,208,0.15)', color: 'var(--cyan-teal)', border: '1px solid rgba(171,217,208,0.4)' }}
+            style={{ background: 'rgba(var(--accent-rgb),0.15)', color: 'var(--accent)', border: '1px solid rgba(var(--accent-rgb),0.4)' }}
             onClick={handleQuickAdd}
           >
             {content.quickAddLabel}
@@ -211,14 +211,14 @@ function CollectionProductCard({
               fontFamily: 'var(--font-display)',
               fontSize: compact ? '0.9rem' : '1rem',
               fontWeight: 600,
-              color: 'var(--cream-highlight)',
+              color: 'var(--fg)',
               lineHeight: 1.3,
             }}
           >
             {product.name}
           </div>
         </div>
-        <span className="type-price flex-shrink-0 mt-1" style={{ color: 'var(--soft-gold)', textShadow: '0 0 8px rgba(250,229,163,0.3)' }}>
+        <span className="type-price flex-shrink-0 mt-1" style={{ color: 'var(--soft-gold)', textShadow: '0 0 8px rgba(var(--gold-rgb),0.3)' }}>
           {product.priceDisplay}
         </span>
       </div>
@@ -426,8 +426,8 @@ export function CollectionPageClient({
                 aria-label={collectionContent.comfortableViewAriaLabel}
                 className="w-8 h-8 flex items-center justify-center transition-colors"
                 style={{
-                  background: viewSize === 'comfortable' ? 'rgba(171,217,208,0.15)' : 'transparent',
-                  color: viewSize === 'comfortable' ? 'var(--cyan-teal)' : 'var(--muted-teal)',
+                  background: viewSize === 'comfortable' ? 'rgba(var(--accent-rgb),0.15)' : 'transparent',
+                  color: viewSize === 'comfortable' ? 'var(--accent)' : 'var(--muted-teal)',
                 }}
               >
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -442,8 +442,8 @@ export function CollectionPageClient({
                 aria-label={collectionContent.compactViewAriaLabel}
                 className="w-8 h-8 flex items-center justify-center transition-colors"
                 style={{
-                  background: viewSize === 'compact' ? 'rgba(171,217,208,0.15)' : 'transparent',
-                  color: viewSize === 'compact' ? 'var(--cyan-teal)' : 'var(--muted-teal)',
+                  background: viewSize === 'compact' ? 'rgba(var(--accent-rgb),0.15)' : 'transparent',
+                  color: viewSize === 'compact' ? 'var(--accent)' : 'var(--muted-teal)',
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">

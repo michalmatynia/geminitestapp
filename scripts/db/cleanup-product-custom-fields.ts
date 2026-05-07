@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { type Document } from 'mongodb';
 
 import { getCustomFieldRepository } from '@/shared/lib/products/services/custom-field-repository';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import {
   allowedProductCustomFieldNames,
   filterProductCustomFieldValuesByAllowedFieldNames,

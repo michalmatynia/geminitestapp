@@ -9,9 +9,13 @@ type CreateMultiQueryInput = {
 };
 
 type CreateMultiQuery = (input: CreateMultiQueryInput) => [];
+type ApiGetMock = (
+  url: string,
+  options?: { params?: Record<string, string> | undefined; cache?: string }
+) => Promise<[]>;
 
 const mocks = vi.hoisted(() => ({
-  apiGetMock: vi.fn<() => Promise<[]>>().mockResolvedValue([]),
+  apiGetMock: vi.fn<ApiGetMock>().mockResolvedValue([]),
   createMultiQueryV2Mock: vi.fn<CreateMultiQuery>(() => []),
   getCategoriesFlatMock: vi.fn<(catalogId: string | null) => Promise<[]>>()
     .mockResolvedValue([]),
@@ -31,7 +35,7 @@ vi.mock('@/features/products/forms.public', () => ({
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
-    get: () => mocks.apiGetMock(),
+    get: (...args: Parameters<ApiGetMock>) => mocks.apiGetMock(...args),
   },
 }));
 
@@ -58,8 +62,13 @@ it('loads categories from the category tree catalog independently of product cat
   await readCreateMultiQueryInput(0).queries[0]?.queryFn();
   await readCreateMultiQueryInput(1).queries[0]?.queryFn();
   await readCreateMultiQueryInput(2).queries[0]?.queryFn();
+  await readCreateMultiQueryInput(3).queries[0]?.queryFn();
 
   expect(mocks.getCategoriesFlatMock).toHaveBeenCalledWith('catalog-mentios');
   expect(mocks.getTagsMock).toHaveBeenCalledWith('catalog-battlestock');
-  expect(mocks.getParametersMock).toHaveBeenCalledWith('catalog-battlestock');
+  expect(mocks.getParametersMock).toHaveBeenCalledWith(null);
+  expect(mocks.apiGetMock).toHaveBeenCalledWith('/api/v2/products/simple-parameters', {
+    params: undefined,
+    cache: 'no-store',
+  });
 });

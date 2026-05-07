@@ -2,7 +2,7 @@ import { type Filter } from 'mongodb';
 
 import { getProductAdvancedFilterMetrics } from '@/shared/contracts/products/filters';
 import { type ProductAdvancedFilterCondition, type ProductAdvancedFilterRule, type ProductFilters } from '@/shared/contracts/products';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { TRADERA_INTEGRATION_SLUGS } from '@/shared/lib/integration-slugs';
 import {
   MARKET_EXCLUSION_FIELD_NAME,

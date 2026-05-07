@@ -1,6 +1,10 @@
 import 'server-only';
 
-import { createMongoBackup } from '@/shared/lib/db/services/database-backup';
+import {
+  createMongoBackup,
+  createMongoManagedBackup,
+} from '@/shared/lib/db/services/database-backup';
+import type { DatabaseEngineManagedMongoApplicationTarget } from '@/shared/contracts/database';
 import {
   markDatabaseBackupJobFailed,
   markDatabaseBackupJobRunning,
@@ -18,6 +22,25 @@ import type { Job } from './product-ai-processors.types';
 
 export type { Job, JobPayload } from './product-ai-processors.types';
 export { processGraphModel };
+
+const isManagedMongoApplicationTarget = (
+  value: unknown
+): value is DatabaseEngineManagedMongoApplicationTarget =>
+  value === 'all' ||
+  value === 'geminitestapp' ||
+  value === 'studiq' ||
+  value === 'cms-builder' ||
+  value === 'products';
+
+const resolveManagedBackupApplication = (
+  payload: Job['payload']
+): DatabaseEngineManagedMongoApplicationTarget | null => {
+  const directApplication = payload['application'];
+  if (isManagedMongoApplicationTarget(directApplication)) return directApplication;
+  const managedApplication = payload['managedApplication'];
+  if (isManagedMongoApplicationTarget(managedApplication)) return managedApplication;
+  return null;
+};
 
 const markDatabaseBackupRunningSafely = async (
   dbType: 'mongodb',
@@ -64,7 +87,11 @@ export async function processDatabaseBackup(job: Job): Promise<Record<string, un
 
   await markDatabaseBackupRunningSafely(dbType, job.id);
   try {
-    const result = await createMongoBackup();
+    const managedApplication = resolveManagedBackupApplication(job.payload);
+    const result =
+      managedApplication === null
+        ? await createMongoBackup()
+        : await createMongoManagedBackup(managedApplication);
     await markDatabaseBackupSucceededSafely(dbType, job.id);
     return { ...result, dbType };
   } catch (error: unknown) {

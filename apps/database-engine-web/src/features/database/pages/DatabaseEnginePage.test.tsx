@@ -305,6 +305,13 @@ const createState = () => ({
   managedMongoDatabases: {
     timestamp: '2026-04-09T05:00:00.000Z',
     backupRoot: '/tmp/database/mongo-backups',
+    backupStorage: {
+      root: '/tmp/database/mongo-backups',
+      availableBytes: 10 * 1024 * 1024 * 1024,
+      requiredFreeBytes: 2 * 1024 * 1024 * 1024,
+      canWriteBackups: true,
+      statusError: null,
+    },
     canBackupAllLocal: true,
     canPushAllToCloud: true,
     canPullAllFromCloud: true,
@@ -744,6 +751,7 @@ describe('DatabaseEnginePage', () => {
 
     expect(screen.getByRole('heading', { name: 'Managed Application Databases' })).toBeInTheDocument();
     expect(screen.getByText('Backup root: /tmp/database/mongo-backups')).toBeInTheDocument();
+    expect(screen.getByText(/Backup free: 10.0 GB \/ required 2.00 GB/)).toBeInTheDocument();
     expect(screen.getByText('GeminiTest App')).toBeInTheDocument();
     expect(screen.getByText('StudiQ')).toBeInTheDocument();
     expect(screen.getByText('CMS Builder')).toBeInTheDocument();
@@ -765,6 +773,39 @@ describe('DatabaseEnginePage', () => {
     expect(mocks.actions.backupManagedMongo).toHaveBeenNthCalledWith(2, 'studiq');
     expect(mocks.actions.syncManagedMongo).toHaveBeenNthCalledWith(3, 'local_to_cloud', 'studiq');
     expect(mocks.actions.syncManagedMongo).toHaveBeenNthCalledWith(4, 'cloud_to_local', 'studiq');
+  });
+
+  it('disables managed backup actions when backup storage is below the free-space threshold', () => {
+    mocks.state = {
+      ...mocks.state,
+      managedMongoDatabases: {
+        ...mocks.state.managedMongoDatabases!,
+        backupStorage: {
+          root: '/tmp/database/mongo-backups',
+          availableBytes: 512 * 1024 * 1024,
+          requiredFreeBytes: 2 * 1024 * 1024 * 1024,
+          canWriteBackups: false,
+          statusError: null,
+        },
+        canBackupAllLocal: false,
+        issues: [
+          'Backup storage: 512.0 MiB free at /tmp/database/mongo-backups; at least 2.0 GiB required.',
+        ],
+      },
+    };
+
+    render(<DatabaseEnginePage />);
+
+    expect(screen.getByText(/Backup free: 512.0 MB \/ required 2.00 GB/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Backup storage: 512.0 MiB free at /tmp/database/mongo-backups; at least 2.0 GiB required.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Backup All' })).toBeDisabled();
+    screen.getAllByRole('button', { name: 'Backup' }).forEach((button) => {
+      expect(button).toBeDisabled();
+    });
   });
 
   it('surfaces blocking issue counts in the engine status badge', () => {

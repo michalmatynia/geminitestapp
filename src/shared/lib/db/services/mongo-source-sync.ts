@@ -35,6 +35,7 @@ import {
   getMongoDumpCommand,
   getMongoRestoreCommand,
   resolveCmsBuilderMongoSourceConfig,
+  resolveProductsMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
   type MongoApplicationSourceConfig,
   type MongoBackupApplication,
@@ -175,6 +176,9 @@ const resolveApplicationMongoSourceConfig = async (
   if (application === 'cms-builder') {
     return resolveCmsBuilderMongoSourceConfig(source);
   }
+  if (application === 'products') {
+    return resolveProductsMongoSourceConfig(source);
+  }
   return resolveMongoSourceConfig(source);
 };
 
@@ -196,6 +200,13 @@ const assertApplicationSourceConfigured = (
     const prefix = `CMS_BUILDER_MONGODB_${source.toUpperCase()}`;
     throw configurationError(
       `CMS Builder MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`
+    );
+  }
+
+  if (application === 'products') {
+    const prefix = `PRODUCTS_MONGODB_${source.toUpperCase()}`;
+    throw configurationError(
+      `Products MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`
     );
   }
 
@@ -248,7 +259,9 @@ const prepareMongoSyncContexts = async (
 ): Promise<MongoSyncContext[]> => {
   const timestamp = Date.now();
   const applications: MongoBackupApplication[] =
-    applicationTarget === 'all' ? ['geminitestapp', 'studiq', 'cms-builder'] : [applicationTarget];
+    applicationTarget === 'all'
+      ? ['geminitestapp', 'studiq', 'cms-builder', 'products']
+      : [applicationTarget];
   const contexts: MongoSyncContext[] = [];
 
   for (const application of applications) {

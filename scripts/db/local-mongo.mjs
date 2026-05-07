@@ -3,8 +3,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 const repoRoot = process.cwd();
-const dataDir = path.join(repoRoot, 'mongo', 'local-data');
-const runtimeDir = path.join(repoRoot, 'mongo', 'runtime');
+const dataDir = path.resolve(repoRoot, process.env.MONGODB_DATA_DIR?.trim() || path.join('mongo', 'local-data'));
+const runtimeDir = path.resolve(repoRoot, process.env.MONGODB_RUNTIME_DIR?.trim() || path.join('mongo', 'runtime'));
 const pidFile = path.join(runtimeDir, 'mongod.pid');
 const logFile = path.join(runtimeDir, 'mongod.log');
 const port = process.env['MONGODB_PORT']?.trim() || '27017';

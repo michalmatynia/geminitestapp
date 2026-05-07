@@ -19,7 +19,12 @@ import path from 'path';
 import type { MongoSource } from '@/shared/contracts/database';
 import { badRequestError, configurationError } from '@/shared/errors/app-error';
 
-export const MONGO_BACKUP_APPLICATIONS = ['geminitestapp', 'studiq', 'cms-builder'] as const;
+export const MONGO_BACKUP_APPLICATIONS = [
+  'geminitestapp',
+  'studiq',
+  'cms-builder',
+  'products',
+] as const;
 export type MongoBackupApplication = (typeof MONGO_BACKUP_APPLICATIONS)[number];
 
 export type MongoApplicationSourceConfig = {
@@ -272,6 +277,69 @@ export const getCmsBuilderMongoConnectionUrl = (): string =>
 
 export const getCmsBuilderMongoDatabaseName = (): string =>
   resolveCmsBuilderMongoSourceConfig('local').dbName ?? 'cms_builder_local';
+
+export const resolveProductsMongoSourceConfig = (
+  source: MongoSource
+): MongoApplicationSourceConfig => {
+  const explicitUri =
+    source === 'local'
+      ? firstTrimmedEnvValue('PRODUCTS_MONGODB_LOCAL_URI', 'MONGODB_PRODUCTS_LOCAL_URI')
+      : firstTrimmedEnvValue('PRODUCTS_MONGODB_CLOUD_URI', 'MONGODB_PRODUCTS_CLOUD_URI');
+  const explicitDbName =
+    source === 'local'
+      ? firstTrimmedEnvValue('PRODUCTS_MONGODB_LOCAL_DB', 'MONGODB_PRODUCTS_LOCAL_DB')
+      : firstTrimmedEnvValue('PRODUCTS_MONGODB_CLOUD_DB', 'MONGODB_PRODUCTS_CLOUD_DB');
+
+  if (explicitUri.length > 0) {
+    return {
+      source,
+      configured: true,
+      uri: explicitUri,
+      dbName: explicitDbName || getDatabaseNameFromMongoUri(explicitUri),
+      usesLegacyEnv: false,
+    };
+  }
+
+  const legacyUri = firstTrimmedEnvValue('PRODUCTS_MONGODB_URI', 'MONGODB_PRODUCTS_URI');
+  const legacyDbName = firstTrimmedEnvValue('PRODUCTS_MONGODB_DB', 'MONGODB_PRODUCTS_DB');
+  if (legacyUri.length > 0) {
+    const legacyIsLocal = isLikelyLocalMongoUri(legacyUri);
+    if ((source === 'local' && legacyIsLocal) || (source === 'cloud' && !legacyIsLocal)) {
+      return {
+        source,
+        configured: true,
+        uri: legacyUri,
+        dbName: legacyDbName || getDatabaseNameFromMongoUri(legacyUri),
+        usesLegacyEnv: true,
+      };
+    }
+  }
+
+  if (source === 'local') {
+    return {
+      source,
+      configured: true,
+      uri: 'mongodb://127.0.0.1:27020/products_local',
+      dbName: 'products_local',
+      usesLegacyEnv: false,
+    };
+  }
+
+  return {
+    source,
+    configured: false,
+    uri: null,
+    dbName: null,
+    usesLegacyEnv: false,
+  };
+};
+
+export const getProductsMongoConnectionUrl = (): string =>
+  resolveProductsMongoSourceConfig('local').uri ??
+  'mongodb://127.0.0.1:27020/products_local';
+
+export const getProductsMongoDatabaseName = (): string =>
+  resolveProductsMongoSourceConfig('local').dbName ?? 'products_local';
 
 const DEFAULT_MONGO_TOOL_MAX_BUFFER_BYTES = 128 * 1024 * 1024;
 

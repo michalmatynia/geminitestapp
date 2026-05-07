@@ -18,60 +18,98 @@ import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json
 import { StorageSourceSection } from '../components/settings/StorageSourceSection';
 import { FastCometConfigSection } from '../components/settings/FastCometConfigSection';
 
+const CURRENT_FASTCOMET_BASE_URL = 'https://sparksofsindri.com';
+const LEGACY_FASTCOMET_HOSTS = new Set(['qubrick.io', 'www.qubrick.io']);
+
 const normalizeSource = (value: string | null | undefined): FileStorageSource =>
   value === 'fastcomet' ? 'fastcomet' : 'local';
+
+const normalizeConfigString = (value: unknown): string =>
+  typeof value === 'string' ? value : '';
+
+const normalizeFastCometUrl = (value: unknown): string => {
+  const raw = normalizeConfigString(value).trim();
+  if (raw.length === 0) return '';
+  try {
+    const url = new URL(raw);
+    if (LEGACY_FASTCOMET_HOSTS.has(url.hostname.toLowerCase())) {
+      const currentUrl = new URL(CURRENT_FASTCOMET_BASE_URL);
+      url.protocol = currentUrl.protocol;
+      url.hostname = currentUrl.hostname;
+      url.port = currentUrl.port;
+    }
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return raw;
+  }
+};
+
+const normalizeOptionalConfigString = (value: unknown): string | null => {
+  const normalized = normalizeConfigString(value).trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const normalizeTimeoutMs = (value: unknown): number => {
+  const timeoutRaw = Number(value);
+  return Number.isFinite(timeoutRaw)
+    ? Math.min(Math.max(Math.floor(timeoutRaw), 1_000), 120_000)
+    : 20_000;
+};
 
 const normalizeFastCometConfig = (raw: string | null | undefined): FastCometStorageConfig => {
   const parsed = parseJsonSetting<Partial<FastCometStorageConfig> | null>(raw, null) ?? {};
 
-  const timeoutRaw = Number(parsed.timeoutMs);
-  const timeoutMs = Number.isFinite(timeoutRaw)
-    ? Math.min(Math.max(Math.floor(timeoutRaw), 1_000), 120_000)
-    : 20_000;
-
-  const baseUrl = typeof parsed.baseUrl === 'string' ? parsed.baseUrl : '';
-  const uploadEndpoint = typeof parsed.uploadEndpoint === 'string' ? parsed.uploadEndpoint : '';
-  
-  const deleteEndpoint =
-    typeof parsed.deleteEndpoint === 'string' && parsed.deleteEndpoint.trim() !== ''
-      ? parsed.deleteEndpoint
-      : null;
-
-  const authToken =
-    typeof parsed.authToken === 'string' && parsed.authToken.trim() !== ''
-      ? parsed.authToken
-      : null;
-
-  const keepLocalCopy = typeof parsed.keepLocalCopy === 'boolean' ? parsed.keepLocalCopy : true;
-
   return {
-    baseUrl,
-    uploadEndpoint,
-    deleteEndpoint,
-    authToken,
-    keepLocalCopy,
-    timeoutMs,
+    baseUrl: normalizeFastCometUrl(parsed.baseUrl),
+    uploadEndpoint: normalizeFastCometUrl(parsed.uploadEndpoint),
+    deleteEndpoint: normalizeOptionalConfigString(normalizeFastCometUrl(parsed.deleteEndpoint)),
+    authToken: normalizeOptionalConfigString(parsed.authToken),
+    keepLocalCopy: typeof parsed.keepLocalCopy === 'boolean' ? parsed.keepLocalCopy : true,
+    timeoutMs: normalizeTimeoutMs(parsed.timeoutMs),
+    resolveIp: normalizeOptionalConfigString(parsed.resolveIp),
   };
 };
 
 const normalizeConfigForSave = (config: FastCometStorageConfig): FastCometStorageConfig => {
-  const deleteEndpoint = config.deleteEndpoint?.trim();
-  const authToken = config.authToken?.trim();
-  
   return {
-    baseUrl: config.baseUrl.trim(),
-    uploadEndpoint: config.uploadEndpoint.trim(),
-    deleteEndpoint: deleteEndpoint !== undefined && deleteEndpoint !== '' ? deleteEndpoint : null,
-    authToken: authToken !== undefined && authToken !== '' ? authToken : null,
+    baseUrl: normalizeFastCometUrl(config.baseUrl),
+    uploadEndpoint: normalizeFastCometUrl(config.uploadEndpoint),
+    deleteEndpoint: normalizeOptionalConfigString(normalizeFastCometUrl(config.deleteEndpoint)),
+    authToken: normalizeOptionalConfigString(config.authToken),
     keepLocalCopy: config.keepLocalCopy,
-    timeoutMs: Math.min(Math.max(Math.floor(config.timeoutMs), 1_000), 120_000),
+    timeoutMs: normalizeTimeoutMs(config.timeoutMs),
+    resolveIp: normalizeOptionalConfigString(config.resolveIp),
   };
 };
 
 const areConfigsEqual = (left: FastCometStorageConfig, right: FastCometStorageConfig): boolean =>
   JSON.stringify(normalizeConfigForSave(left)) === JSON.stringify(normalizeConfigForSave(right));
 
-export function AdminFileStorageSettingsPage(): React.JSX.Element {
+type ToastFn = ReturnType<typeof useToast>['toast'];
+
+const toastSaveError = (toast: ToastFn, error: Error): void => {
+  logClientError(error, {
+    context: { source: 'AdminFileStorageSettingsPage', action: 'saveSettings' },
+  });
+  toast(error.message !== '' ? error.message : 'Failed to save file storage settings.', {
+    variant: 'error',
+  });
+};
+
+type FileStorageSettingsViewModel = {
+  fastCometConfig: FastCometStorageConfig;
+  isDirty: boolean;
+  isFastCometMisconfigured: boolean;
+  isLoading: boolean;
+  isSaving: boolean;
+  resetSettings: () => void;
+  saveSettings: () => void;
+  setFastCometConfig: React.Dispatch<React.SetStateAction<FastCometStorageConfig>>;
+  setSource: React.Dispatch<React.SetStateAction<FileStorageSource>>;
+  source: FileStorageSource;
+};
+
+const useFileStorageSettingsViewModel = (): FileStorageSettingsViewModel => {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
   const updateSettingsBulk = useUpdateSettingsBulk();
@@ -106,6 +144,11 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
   const isFastCometMisconfigured =
     source === 'fastcomet' && normalizedDraft.uploadEndpoint.trim() === '';
 
+  const resetSettings = (): void => {
+    setSource(storedSource);
+    setFastCometConfig(storedFastCometConfig);
+  };
+
   const saveSettings = (): void => {
     const payloads = [
       { key: FILE_STORAGE_SOURCE_SETTING_KEY, value: source },
@@ -117,16 +160,37 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
         toast('File storage settings saved.', { variant: 'success' });
       },
       onError: (error: Error): void => {
-        logClientError(error, {
-          context: { source: 'AdminFileStorageSettingsPage', action: 'saveSettings' },
-        });
-        toast(error.message !== '' ? error.message : 'Failed to save file storage settings.', {
-          variant: 'error',
-        });
+        toastSaveError(toast, error);
       },
     });
   };
 
+  return {
+    fastCometConfig,
+    isDirty,
+    isFastCometMisconfigured,
+    isLoading: settingsQuery.isLoading,
+    isSaving: updateSettingsBulk.isPending,
+    resetSettings,
+    saveSettings,
+    setFastCometConfig,
+    setSource,
+    source,
+  };
+};
+
+const FileStorageSettingsView = ({
+  fastCometConfig,
+  isDirty,
+  isFastCometMisconfigured,
+  isLoading,
+  isSaving,
+  resetSettings,
+  saveSettings,
+  setFastCometConfig,
+  setSource,
+  source,
+}: FileStorageSettingsViewModel): React.JSX.Element => {
   return (
     <AdminSettingsPageLayout
       title='File Storage'
@@ -145,22 +209,18 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
       )}
 
       <FormActions
-        onCancel={(): void => {
-          setSource(storedSource);
-          setFastCometConfig(storedFastCometConfig);
-        }}
+        onCancel={resetSettings}
         onSave={saveSettings}
         saveText='Save Settings'
         cancelText='Reset'
-        isDisabled={
-          isDirty === false ||
-          updateSettingsBulk.isPending ||
-          isFastCometMisconfigured ||
-          settingsQuery.isLoading
-        }
-        isSaving={updateSettingsBulk.isPending}
+        isDisabled={isDirty === false || isSaving || isFastCometMisconfigured || isLoading}
+        isSaving={isSaving}
         className='mt-8'
       />
     </AdminSettingsPageLayout>
   );
+};
+
+export function AdminFileStorageSettingsPage(): React.JSX.Element {
+  return <FileStorageSettingsView {...useFileStorageSettingsViewModel()} />;
 }

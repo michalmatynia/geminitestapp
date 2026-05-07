@@ -15,15 +15,25 @@ import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-// Validate table/collection name to prevent injection
-const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+const MONGO_COLLECTION_NAME_MAX_LENGTH = 255;
+const isValidMongoCollectionName = (value: string): boolean => {
+  if (value.length === 0 || value.length > MONGO_COLLECTION_NAME_MAX_LENGTH) return false;
+  if (value.includes('\0') || value.includes('$')) return false;
+  return !value.startsWith('system.');
+};
+const collectionNameSchema = z
+  .string()
+  .trim()
+  .min(1, 'Collection name is required.')
+  .max(MONGO_COLLECTION_NAME_MAX_LENGTH, 'Collection name is too long.')
+  .refine(isValidMongoCollectionName, 'Valid MongoDB collection name is required.');
 const nonEmptyRecordSchema = z.record(z.string(), z.unknown()).refine(
   (value) => Object.keys(value).length > 0,
   'Object cannot be empty.'
 );
 const databaseCrudRequestSchema = z.union([
   z.object({
-    table: z.string().trim().regex(SAFE_NAME_RE, 'Valid table/collection name is required.'),
+    table: collectionNameSchema,
     operation: z.literal('insert'),
     type: z.enum(['mongodb', 'auto']).optional().default('auto'),
     application: databaseEngineManagedMongoApplicationSchema.optional(),
@@ -32,7 +42,7 @@ const databaseCrudRequestSchema = z.union([
     primaryKey: z.record(z.string(), z.unknown()).optional(),
   }),
   z.object({
-    table: z.string().trim().regex(SAFE_NAME_RE, 'Valid table/collection name is required.'),
+    table: collectionNameSchema,
     operation: z.literal('update'),
     type: z.enum(['mongodb', 'auto']).optional().default('auto'),
     application: databaseEngineManagedMongoApplicationSchema.optional(),
@@ -41,7 +51,7 @@ const databaseCrudRequestSchema = z.union([
     primaryKey: nonEmptyRecordSchema,
   }),
   z.object({
-    table: z.string().trim().regex(SAFE_NAME_RE, 'Valid table/collection name is required.'),
+    table: collectionNameSchema,
     operation: z.literal('delete'),
     type: z.enum(['mongodb', 'auto']).optional().default('auto'),
     application: databaseEngineManagedMongoApplicationSchema.optional(),
@@ -81,6 +91,63 @@ function toObjectId(value: unknown): ObjectId | unknown {
   return value;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const toDate = (value: unknown): Date | unknown => {
+  if (typeof value !== 'string') return value;
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? value : new Date(timestamp);
+};
+
+const normalizeMongoCrudValue = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(normalizeMongoCrudValue);
+  }
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const entries = Object.entries(value);
+  if (entries.length === 1 && typeof value['$oid'] === 'string') {
+    return toObjectId(value['$oid']);
+  }
+  if (entries.length === 1 && typeof value['$date'] === 'string') {
+    return toDate(value['$date']);
+  }
+
+  return Object.fromEntries(
+    entries.map(([key, nestedValue]) => [key, normalizeMongoCrudValue(nestedValue)])
+  );
+};
+
+const normalizeMongoCrudDocument = (
+  data: Record<string, unknown>
+): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(data).map(([key, value]) => [key, normalizeMongoCrudValue(value)])
+  );
+
+const buildPrimaryKeyFilter = (primaryKey: Record<string, unknown>): Record<string, unknown> => {
+  const filter: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(primaryKey)) {
+    filter[key] = key === '_id' ? toObjectId(value) : normalizeMongoCrudValue(value);
+  }
+  return filter;
+};
+
+const stripImmutableMongoFields = (
+  data: Record<string, unknown>,
+  primaryKey: Record<string, unknown>
+): Record<string, unknown> => {
+  const sanitized = { ...data };
+  delete sanitized['_id'];
+  for (const key of Object.keys(primaryKey)) {
+    delete sanitized[key];
+  }
+  return sanitized;
+};
+
 async function handleMongoCrud(
   collectionName: string,
   operation: 'insert' | 'update' | 'delete',
@@ -102,11 +169,12 @@ async function handleMongoCrud(
       if (!data || Object.keys(data).length === 0) {
         throw badRequestError('Data is required for insert.');
       }
-      const result = await collection.insertOne(data);
+      const insertData = normalizeMongoCrudDocument(data);
+      const result = await collection.insertOne(insertData);
       return NextResponse.json({
         success: result.acknowledged,
         rowCount: result.acknowledged ? 1 : 0,
-        returning: [{ _id: result.insertedId, ...data }],
+        returning: [{ _id: result.insertedId, ...insertData }],
       });
     }
 
@@ -117,11 +185,13 @@ async function handleMongoCrud(
       if (!primaryKey || Object.keys(primaryKey).length === 0) {
         throw badRequestError('Primary key is required for update.');
       }
-      const filter: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(primaryKey)) {
-        filter[k] = k === '_id' ? toObjectId(v) : v;
+      const updateData = stripImmutableMongoFields(data, primaryKey);
+      if (Object.keys(updateData).length === 0) {
+        throw badRequestError('At least one non-primary-key field is required for update.');
       }
-      const result = await collection.updateOne(filter, { $set: data });
+      const result = await collection.updateOne(buildPrimaryKeyFilter(primaryKey), {
+        $set: normalizeMongoCrudDocument(updateData),
+      });
       return NextResponse.json({
         success: result.acknowledged,
         rowCount: result.modifiedCount,
@@ -131,11 +201,7 @@ async function handleMongoCrud(
     if (!primaryKey || Object.keys(primaryKey).length === 0) {
       throw badRequestError('Primary key is required for delete.');
     }
-    const filter: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(primaryKey)) {
-      filter[k] = k === '_id' ? toObjectId(v) : v;
-    }
-    const result = await collection.deleteOne(filter);
+    const result = await collection.deleteOne(buildPrimaryKeyFilter(primaryKey));
     return NextResponse.json({
       success: result.acknowledged,
       rowCount: result.deletedCount,

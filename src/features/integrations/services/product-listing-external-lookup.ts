@@ -4,7 +4,7 @@ import type {
   ProductListing,
   ProductListingExportEvent,
 } from '@/shared/contracts/integrations/listings';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 const LISTING_COLLECTION = 'product_listings';
 const EXTERNAL_LISTING_ID_INDEX = 'product_listings_externalListingId';

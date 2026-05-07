@@ -37,8 +37,8 @@ type CrudMutationTarget = {
   source?: MongoSource | undefined;
 };
 
-const getPrimaryKey = (row: Record<string, unknown>): Record<string, unknown> =>
-  row['_id'] !== undefined ? { _id: row['_id'] } : { ...row };
+const getMongoPrimaryKey = (row: Record<string, unknown>): Record<string, unknown> | null =>
+  row['_id'] !== undefined && row['_id'] !== null ? { _id: row['_id'] } : null;
 
 const createMutationHandler = (
   setSuccess: (m: string | null) => void,
@@ -78,8 +78,13 @@ export function useCrudMutations(target: CrudMutationTarget = {}): UseCrudMutati
   const handleEdit = useCallback((selectedTable: string, row: Record<string, unknown>, data: Record<string, unknown>, onSuccess: () => void): void => {
     setSuccessMessage(null);
     setMutationError(null);
+    const primaryKey = getMongoPrimaryKey(row);
+    if (primaryKey === null) {
+      setMutationError('Cannot update this MongoDB document because it has no _id primary key.');
+      return;
+    }
     crudMutation.mutate(
-      { table: selectedTable, operation: 'update', type: 'mongodb', data, primaryKey: getPrimaryKey(row), ...target },
+      { table: selectedTable, operation: 'update', type: 'mongodb', data, primaryKey, ...target },
       createMutationHandler(setSuccessMessage, setMutationError, 'Record updated successfully', onSuccess)
     );
   }, [crudMutation, target]);
@@ -87,8 +92,13 @@ export function useCrudMutations(target: CrudMutationTarget = {}): UseCrudMutati
   const handleDelete = useCallback((selectedTable: string, row: Record<string, unknown>, onSuccess: () => void): void => {
     setSuccessMessage(null);
     setMutationError(null);
+    const primaryKey = getMongoPrimaryKey(row);
+    if (primaryKey === null) {
+      setMutationError('Cannot delete this MongoDB document because it has no _id primary key.');
+      return;
+    }
     crudMutation.mutate(
-      { table: selectedTable, operation: 'delete', type: 'mongodb', primaryKey: getPrimaryKey(row), ...target },
+      { table: selectedTable, operation: 'delete', type: 'mongodb', primaryKey, ...target },
       createMutationHandler(setSuccessMessage, setMutationError, 'Record deleted successfully', onSuccess)
     );
   }, [crudMutation, target]);

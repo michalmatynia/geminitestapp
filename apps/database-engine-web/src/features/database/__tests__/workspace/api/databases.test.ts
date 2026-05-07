@@ -56,6 +56,7 @@ describe('Databases API', () => {
     });
     vi.mocked(assertDatabaseEngineManageAccess).mockResolvedValue(undefined);
     (mongoExecFileAsync as Mock).mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' });
+    vi.spyOn(fs, 'mkdir').mockResolvedValue(undefined);
     vi.mocked(enqueueProductAiJob).mockResolvedValue({
       id: 'job-backup-1',
       productId: 'system',

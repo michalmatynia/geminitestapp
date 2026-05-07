@@ -15,7 +15,7 @@ import type {
   ProductCustomFieldValue,
 } from '@/shared/contracts/products/custom-fields';
 import { internalError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import type { ProductDocument } from '@/shared/lib/products/services/product-repository/mongo-product-repository-mappers';
 import { productCollectionName } from '@/shared/lib/products/services/product-repository/mongo-product-repository.helpers';
 

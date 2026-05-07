@@ -8,6 +8,7 @@ import { FormActions } from '@/shared/ui/FormActions';
 import { FormField, FormSection } from '@/shared/ui/form-section';
 import { Input } from '@/shared/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group';
+import { SegmentedControl } from '@/shared/ui/segmented-control';
 import { SelectSimple } from '@/shared/ui/select-simple';
 import { Separator } from '@/shared/ui/separator';
 import { SimpleSettingsList } from '@/shared/ui/templates/SimpleSettingsList';
@@ -16,6 +17,7 @@ import {
   SEQUENCE_GENERATION_MODE_OPTIONS,
   type ProductImageRoutingSettingsController,
 } from './ProductImageRoutingSettings.controller';
+import { ProductFileStorageSourceSettings } from './ProductFileStorageSourceSettings';
 
 function ImageStudioProjectSection({
   controller,
@@ -160,6 +162,31 @@ function AddProductImageRouteField({
   );
 }
 
+function ProductImageServingModeField({
+  controller,
+}: {
+  controller: ProductImageRoutingSettingsController;
+}): React.JSX.Element {
+  return (
+    <FormField
+      label='Serve Product Images From'
+      description='Switch the image base used for product previews, lists, and modals.'
+    >
+      <SegmentedControl
+        value={controller.servingMode}
+        onChange={controller.handleSelectServingMode}
+        options={[
+          { value: 'fastcomet', label: 'FastComet' },
+          { value: 'local', label: 'Local drive' },
+        ]}
+        disabled={controller.updateSettingsBulkPending}
+        ariaLabel='Product image serving source'
+        className='w-fit'
+      />
+    </FormField>
+  );
+}
+
 function ProductImageRouteList({
   controller,
 }: {
@@ -210,21 +237,11 @@ function ProductImageRouteActions({
   return (
     <FormActions
       onSave={controller.handleSave}
-      saveText='Save'
+      saveText='Save Image Serving'
       isDisabled={controller.updateSettingsBulkPending}
       isSaving={controller.updateSettingsBulkPending}
       className='mt-6 justify-start'
-    >
-      <Button
-        size='sm'
-        type='button'
-        variant='outline'
-        onClick={controller.handleUseLocalhost}
-        disabled={controller.updateSettingsBulkPending}
-      >
-        Use localhost:3000
-      </Button>
-    </FormActions>
+    />
   );
 }
 
@@ -235,9 +252,12 @@ export function ProductImageRouteSections({
 }): React.JSX.Element {
   return (
     <div className='space-y-5'>
+      <ProductFileStorageSourceSettings />
+      <Separator className='bg-border/60' />
       <ImageStudioProjectSection controller={controller} />
       <SequenceGenerationModeSection controller={controller} />
       <Separator className='bg-border/60' />
+      <ProductImageServingModeField controller={controller} />
       <AddProductImageRouteField controller={controller} />
       <ProductImageRouteList controller={controller} />
       <ProductImageRouteActions controller={controller} />

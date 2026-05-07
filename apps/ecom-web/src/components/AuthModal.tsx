@@ -93,8 +93,8 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '0.75rem 1rem',
-    background: 'rgba(11,13,33,0.8)',
-    border: '1px solid rgba(171,217,208,0.2)',
+    background: 'var(--input-bg)',
+    border: '1px solid rgba(var(--accent-rgb),0.2)',
     color: 'var(--fg)',
     fontFamily: 'var(--font-body)',
     fontSize: '0.9rem',
@@ -123,7 +123,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '1rem',
-        background: 'rgba(1,0,13,0.88)',
+        background: 'var(--modal-scrim)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}
@@ -134,9 +134,9 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
         style={{
           width: '100%',
           maxWidth: '420px',
-          background: 'linear-gradient(160deg, #0B0D21 0%, #01000D 100%)',
-          border: '1px solid rgba(171,217,208,0.18)',
-          boxShadow: '0 0 60px rgba(171,217,208,0.08), 0 24px 60px rgba(0,0,0,0.7)',
+          background: 'var(--card-bg)',
+          border: '1px solid rgba(var(--accent-rgb),0.18)',
+          boxShadow: '0 0 60px rgba(var(--accent-rgb),0.08), 0 24px 60px rgba(0,0,0,0.18)',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -149,13 +149,13 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
             left: 0,
             right: 0,
             height: '2px',
-            background: 'linear-gradient(90deg, transparent, var(--cyan-teal), transparent)',
+            background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
             opacity: 0.6,
           }}
         />
         {/* Corner decorations */}
-        <div style={{ position: 'absolute', top: 8, right: 8, width: 12, height: 12, borderTop: '1px solid rgba(171,217,208,0.4)', borderRight: '1px solid rgba(171,217,208,0.4)' }} />
-        <div style={{ position: 'absolute', bottom: 8, left: 8, width: 12, height: 12, borderBottom: '1px solid rgba(171,217,208,0.4)', borderLeft: '1px solid rgba(171,217,208,0.4)' }} />
+        <div style={{ position: 'absolute', top: 8, right: 8, width: 12, height: 12, borderTop: '1px solid rgba(var(--accent-rgb),0.4)', borderRight: '1px solid rgba(var(--accent-rgb),0.4)' }} />
+        <div style={{ position: 'absolute', bottom: 8, left: 8, width: 12, height: 12, borderBottom: '1px solid rgba(var(--accent-rgb),0.4)', borderLeft: '1px solid rgba(var(--accent-rgb),0.4)' }} />
 
         <div style={{ padding: '2rem 2rem 2.5rem' }}>
           {/* Close button */}
@@ -174,7 +174,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
               lineHeight: 1,
               transition: 'color 0.2s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cyan-teal)')}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted-teal)')}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -190,8 +190,8 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
               fontWeight: 800,
               fontSize: '1.4rem',
               letterSpacing: '0.3em',
-              color: 'var(--cyan-teal)',
-              textShadow: '0 0 20px rgba(171,217,208,0.4)',
+              color: 'var(--accent)',
+              textShadow: '0 0 20px rgba(var(--accent-rgb),0.4)',
               marginBottom: '0.25rem',
             }}>
               ARCANA
@@ -200,7 +200,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
               fontFamily: 'var(--font-mono)',
               fontSize: '0.6rem',
               letterSpacing: '0.2em',
-              color: 'rgba(171,217,208,0.3)',
+              color: 'rgba(var(--accent-rgb),0.45)',
             }}>
               NEXUS
             </div>
@@ -209,7 +209,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
           {/* Tabs */}
           <div style={{
             display: 'flex',
-            borderBottom: '1px solid rgba(171,217,208,0.12)',
+            borderBottom: '1px solid rgba(var(--accent-rgb),0.12)',
             marginBottom: '1.75rem',
           }}>
             {(['signin', 'register'] as const).map((t) => (
@@ -226,8 +226,8 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                   fontSize: '0.65rem',
                   letterSpacing: '0.14em',
                   textTransform: 'uppercase',
-                  color: tab === t ? 'var(--cyan-teal)' : 'var(--muted-teal)',
-                  borderBottom: tab === t ? '1px solid var(--cyan-teal)' : '1px solid transparent',
+                  color: tab === t ? 'var(--accent)' : 'var(--muted-teal)',
+                  borderBottom: tab === t ? '1px solid var(--accent)' : '1px solid transparent',
                   marginBottom: '-1px',
                   transition: 'color 0.2s',
                 }}
@@ -251,8 +251,8 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                     onChange={(e) => setSiEmail(e.target.value)}
                     required
                     style={inputStyle}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.5)')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.2)')}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.5)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.2)')}
                   />
                 </div>
                 <div>
@@ -266,8 +266,8 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                       onChange={(e) => setSiPassword(e.target.value)}
                       required
                       style={{ ...inputStyle, paddingRight: '2.75rem' }}
-                      onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.5)')}
-                      onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.2)')}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.5)')}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.2)')}
                     />
                     <button
                       type="button"
@@ -330,8 +330,8 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                     onChange={(e) => setRName(e.target.value)}
                     required
                     style={inputStyle}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.5)')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.2)')}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.5)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.2)')}
                   />
                 </div>
                 <div>
@@ -344,8 +344,8 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                     onChange={(e) => setREmail(e.target.value)}
                     required
                     style={inputStyle}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.5)')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.2)')}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.5)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.2)')}
                   />
                 </div>
                 <div>
@@ -360,8 +360,8 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                       required
                       minLength={8}
                       style={{ ...inputStyle, paddingRight: '2.75rem' }}
-                      onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.5)')}
-                      onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.2)')}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.5)')}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.2)')}
                     />
                     <button
                       type="button"
@@ -405,8 +405,8 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
                     onChange={(e) => setRConfirm(e.target.value)}
                     required
                     style={inputStyle}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.5)')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(171,217,208,0.2)')}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.5)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.2)')}
                   />
                 </div>
 
@@ -433,8 +433,8 @@ function ErrorBox({ message }: { message: string }): JSX.Element {
   return (
     <div style={{
       padding: '0.65rem 1rem',
-      background: 'rgba(210,116,102,0.12)',
-      border: '1px solid rgba(210,116,102,0.35)',
+      background: 'rgba(var(--coral-rgb),0.12)',
+      border: '1px solid rgba(var(--coral-rgb),0.35)',
       fontFamily: 'var(--font-mono)',
       fontSize: '0.68rem',
       letterSpacing: '0.06em',

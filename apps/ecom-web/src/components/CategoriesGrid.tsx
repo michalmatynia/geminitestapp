@@ -5,7 +5,7 @@ const CATEGORY_VISUALS = [
   {
     id: 'objects',
     gradient: 'linear-gradient(145deg, #0B0D21 0%, #0d1a30 50%, #122040 100%)',
-    accent: 'var(--cyan-teal)',
+    accent: 'var(--accent)',
     accentRgb: '171,217,208',
     aspectRatio: '2/3',
   },
@@ -48,7 +48,7 @@ export function CategoriesGrid({
       {/* Section header */}
       <div className="flex items-end justify-between mb-12">
         <div>
-          <div className="type-label mb-3" style={{ color: 'var(--cyan-teal)' }}>
+          <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
             {content.eyebrow}
           </div>
           <h2 className="type-display-lg" style={{ color: 'var(--fg)' }}>
@@ -93,7 +93,7 @@ export function CategoriesGrid({
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  background: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px)',
+                  background: 'repeating-linear-gradient(0deg, transparent, transparent 3px, var(--scanline-soft) 3px, var(--scanline-soft) 4px)',
                 }}
               />
 
@@ -128,7 +128,7 @@ export function CategoriesGrid({
                       fontSize: 'clamp(1.15rem, 2.2vw, 1.9rem)',
                       fontWeight: 800,
                       lineHeight: 1,
-                      color: 'var(--cream-highlight)',
+                      color: 'var(--on-media)',
                       marginBottom: '0.35rem',
                       letterSpacing: '-0.01em',
                     }}

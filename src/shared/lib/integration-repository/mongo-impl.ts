@@ -1,7 +1,8 @@
 import { type ObjectId, type WithId } from 'mongodb';
 
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb as getMainMongoDb } from '@/shared/lib/db/mongo-client';
+import { getProductsMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { isBaseIntegrationSlug, isPlaywrightProgrammableSlug } from '@/shared/lib/integration-slugs';
 
 import {
@@ -128,8 +129,12 @@ type IntegrationConnectionDocument = {
   updatedAt: Date | null;
 };
 
+type IntegrationMongoDbGetter = typeof getMainMongoDb;
+type IntegrationMongoDb = Awaited<ReturnType<IntegrationMongoDbGetter>>;
+
 const countMongoConnectionDependencies = async (
-  connectionId: string
+  connectionId: string,
+  getMongoDb: IntegrationMongoDbGetter
 ): Promise<ConnectionDependencyCounts> => {
   const db = await getMongoDb();
   const filter = buildConnectionReferenceFilter(connectionId);
@@ -162,7 +167,10 @@ const countMongoConnectionDependencies = async (
   });
 };
 
-const cleanupMongoConnectionReferences = async (connectionId: string): Promise<void> => {
+const cleanupMongoConnectionReferences = async (
+  connectionId: string,
+  getMongoDb: IntegrationMongoDbGetter
+): Promise<void> => {
   const db = await getMongoDb();
   const filter = buildConnectionReferenceFilter(connectionId);
 
@@ -179,7 +187,8 @@ const cleanupMongoConnectionReferences = async (connectionId: string): Promise<v
 
 const reassignMongoConnectionReferences = async (
   sourceConnectionId: string,
-  replacementConnectionId: string
+  replacementConnectionId: string,
+  getMongoDb: IntegrationMongoDbGetter
 ): Promise<void> => {
   const db = await getMongoDb();
   const filter = buildConnectionReferenceFilter(sourceConnectionId);
@@ -211,7 +220,8 @@ const reassignMongoConnectionReferences = async (
 
 const updateMongoConnectionScopedSettings = async (
   connectionId: string,
-  replacementConnectionId: string | null
+  replacementConnectionId: string | null,
+  getMongoDb: IntegrationMongoDbGetter
 ): Promise<void> => {
   const db = await getMongoDb();
   const settings = db.collection<{
@@ -297,11 +307,14 @@ const updateMongoConnectionScopedSettings = async (
   }
 };
 
-const resolveMongoReplacementConnectionId = async (input: {
-  connectionId: string;
-  integrationId: string;
-  replacementConnectionId?: string | null | undefined;
-}): Promise<string | null> => {
+const resolveMongoReplacementConnectionId = async (
+  input: {
+    connectionId: string;
+    integrationId: string;
+    replacementConnectionId?: string | null | undefined;
+  },
+  getMongoDb: IntegrationMongoDbGetter
+): Promise<string | null> => {
   const db = await getMongoDb();
   const requestedReplacementId = normalizeOptionalConnectionId(input.replacementConnectionId);
   if (requestedReplacementId) {
@@ -346,7 +359,7 @@ const resolveMongoReplacementConnectionId = async (input: {
 };
 
 const isProgrammableIntegrationId = async (
-  db: Awaited<ReturnType<typeof getMongoDb>>,
+  db: IntegrationMongoDb,
   integrationId: string
 ): Promise<boolean> => {
   const integration = await db
@@ -358,7 +371,9 @@ const isProgrammableIntegrationId = async (
   return isPlaywrightProgrammableSlug(integration?.slug ?? null);
 };
 
-export function getMongoIntegrationRepository(): IntegrationRepository {
+export function createMongoIntegrationRepository(
+  getMongoDb: IntegrationMongoDbGetter
+): IntegrationRepository {
   return {
     async listIntegrations(): Promise<IntegrationRecord[]> {
       const db = await getMongoDb();
@@ -516,15 +531,18 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
       const isBaseConnection = isBaseIntegrationSlug(integration?.slug ?? null);
 
       if (!isBaseConnection) {
-        await cleanupMongoConnectionReferences(id);
-        await updateMongoConnectionScopedSettings(id, null);
+        await cleanupMongoConnectionReferences(id, getMongoDb);
+        await updateMongoConnectionScopedSettings(id, null, getMongoDb);
       } else {
-        const dependencyCounts = await countMongoConnectionDependencies(id);
-        const replacementConnectionId = await resolveMongoReplacementConnectionId({
-          connectionId: id,
-          integrationId: sourceConnection.integrationId,
-          replacementConnectionId: options?.replacementConnectionId,
-        });
+        const dependencyCounts = await countMongoConnectionDependencies(id, getMongoDb);
+        const replacementConnectionId = await resolveMongoReplacementConnectionId(
+          {
+            connectionId: id,
+            integrationId: sourceConnection.integrationId,
+            replacementConnectionId: options?.replacementConnectionId,
+          },
+          getMongoDb
+        );
 
         if (dependencyCounts.total > 0 && !replacementConnectionId) {
           throw conflictError(
@@ -539,10 +557,10 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
         }
 
         if (replacementConnectionId) {
-          await reassignMongoConnectionReferences(id, replacementConnectionId);
-          await updateMongoConnectionScopedSettings(id, replacementConnectionId);
+          await reassignMongoConnectionReferences(id, replacementConnectionId, getMongoDb);
+          await updateMongoConnectionScopedSettings(id, replacementConnectionId, getMongoDb);
         } else {
-          await updateMongoConnectionScopedSettings(id, null);
+          await updateMongoConnectionScopedSettings(id, null, getMongoDb);
         }
       }
 
@@ -553,4 +571,12 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
         } as Record<string, unknown>);
     },
   };
+}
+
+export function getMongoIntegrationRepository(): IntegrationRepository {
+  return createMongoIntegrationRepository(getMainMongoDb);
+}
+
+export function getProductsMongoIntegrationRepository(): IntegrationRepository {
+  return createMongoIntegrationRepository(getProductsMongoDb);
 }

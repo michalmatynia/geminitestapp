@@ -73,6 +73,23 @@ const mocks = vi.hoisted(() => ({
           usesLegacyEnv: false,
         }
   ),
+  resolveProductsMongoSourceConfig: vi.fn((source: 'local' | 'cloud') =>
+    source === 'local'
+      ? {
+          source,
+          configured: true,
+          uri: 'mongodb://localhost:27020/products_local',
+          dbName: 'products_local',
+          usesLegacyEnv: false,
+        }
+      : {
+          source,
+          configured: true,
+          uri: 'mongodb+srv://cluster.example/products_cloud',
+          dbName: 'products_cloud',
+          usesLegacyEnv: false,
+        }
+  ),
   verifyMongoSourceParity: vi.fn(async ({ source, target, sourceDbName, targetDbName }) => ({
     status: 'passed',
     verifiedAt: '2026-04-09T04:31:00.000Z',
@@ -112,6 +129,7 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   getMongoDumpCommand: mocks.getMongoDumpCommand,
   getMongoRestoreCommand: mocks.getMongoRestoreCommand,
   resolveCmsBuilderMongoSourceConfig: mocks.resolveCmsBuilderMongoSourceConfig,
+  resolveProductsMongoSourceConfig: mocks.resolveProductsMongoSourceConfig,
   resolveStudiqMongoSourceConfig: mocks.resolveStudiqMongoSourceConfig,
 }));
 
@@ -311,14 +329,28 @@ describe('mongo-source-sync', () => {
       direction: 'cloud_to_local',
       timestamp: expect.any(Number),
     });
-    expect(result.preSyncBackups).toHaveLength(6);
-    expect(result.applicationTransfers).toHaveLength(3);
+    expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(7, {
+      application: 'products',
+      source: 'cloud',
+      role: 'source',
+      direction: 'cloud_to_local',
+      timestamp: expect.any(Number),
+    });
+    expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(8, {
+      application: 'products',
+      source: 'local',
+      role: 'target',
+      direction: 'cloud_to_local',
+      timestamp: expect.any(Number),
+    });
+    expect(result.preSyncBackups).toHaveLength(8);
+    expect(result.applicationTransfers).toHaveLength(4);
     expect(result.archivePath).toContain('mongo-sync-cloud_to_local-');
     expect(result.logPath).toContain('mongo-sync-cloud_to_local-');
     expect(result.verification?.status).toBe('passed');
     expect(result.syncedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
-    expect(mocks.execFileAsync).toHaveBeenCalledTimes(6);
-    expect(mocks.dropDatabase).toHaveBeenCalledTimes(3);
+    expect(mocks.execFileAsync).toHaveBeenCalledTimes(8);
+    expect(mocks.dropDatabase).toHaveBeenCalledTimes(4);
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(1, {
       source: 'cloud',
       target: 'local',
@@ -343,6 +375,14 @@ describe('mongo-source-sync', () => {
       sourceUri: 'mongodb+srv://cluster.example/cms_builder_cloud',
       targetUri: 'mongodb://localhost:27019/cms_builder_local',
     });
+    expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(4, {
+      source: 'cloud',
+      target: 'local',
+      sourceDbName: 'products_cloud',
+      targetDbName: 'products_local',
+      sourceUri: 'mongodb+srv://cluster.example/products_cloud',
+      targetUri: 'mongodb://localhost:27020/products_local',
+    });
     expect(mocks.recordMongoSourceSync).toHaveBeenCalledWith(
       expect.objectContaining({
         direction: 'cloud_to_local',
@@ -353,6 +393,7 @@ describe('mongo-source-sync', () => {
           expect.objectContaining({ application: 'geminitestapp' }),
           expect.objectContaining({ application: 'studiq' }),
           expect.objectContaining({ application: 'cms-builder' }),
+          expect.objectContaining({ application: 'products' }),
         ]),
         preSyncBackups: expect.arrayContaining([
           expect.objectContaining({ application: 'geminitestapp', role: 'source', source: 'cloud' }),
@@ -361,6 +402,8 @@ describe('mongo-source-sync', () => {
           expect.objectContaining({ application: 'studiq', role: 'target', source: 'local' }),
           expect.objectContaining({ application: 'cms-builder', role: 'source', source: 'cloud' }),
           expect.objectContaining({ application: 'cms-builder', role: 'target', source: 'local' }),
+          expect.objectContaining({ application: 'products', role: 'source', source: 'cloud' }),
+          expect.objectContaining({ application: 'products', role: 'target', source: 'local' }),
         ]),
       })
     );

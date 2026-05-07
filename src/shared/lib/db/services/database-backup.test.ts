@@ -11,14 +11,19 @@ const {
   getMongoDumpCommandMock,
   getCmsBuilderMongoConnectionUrlMock,
   getCmsBuilderMongoDatabaseNameMock,
+  getProductsMongoConnectionUrlMock,
+  getProductsMongoDatabaseNameMock,
   getStudiqMongoConnectionUrlMock,
   getStudiqMongoDatabaseNameMock,
   mongoExecFileAsyncMock,
   resolveMongoSourceConfigMock,
   resolveCmsBuilderMongoSourceConfigMock,
+  resolveProductsMongoSourceConfigMock,
   resolveStudiqMongoSourceConfigMock,
   writeFileMock,
+  rmMock,
   statMock,
+  statfsMock,
   captureExceptionMock,
   logWarningMock,
 } = vi.hoisted(() => ({
@@ -28,14 +33,19 @@ const {
   getMongoDumpCommandMock: vi.fn(),
   getCmsBuilderMongoConnectionUrlMock: vi.fn(),
   getCmsBuilderMongoDatabaseNameMock: vi.fn(),
+  getProductsMongoConnectionUrlMock: vi.fn(),
+  getProductsMongoDatabaseNameMock: vi.fn(),
   getStudiqMongoConnectionUrlMock: vi.fn(),
   getStudiqMongoDatabaseNameMock: vi.fn(),
   mongoExecFileAsyncMock: vi.fn(),
   resolveMongoSourceConfigMock: vi.fn(),
   resolveCmsBuilderMongoSourceConfigMock: vi.fn(),
+  resolveProductsMongoSourceConfigMock: vi.fn(),
   resolveStudiqMongoSourceConfigMock: vi.fn(),
   writeFileMock: vi.fn(),
+  rmMock: vi.fn(),
   statMock: vi.fn(),
+  statfsMock: vi.fn(),
   captureExceptionMock: vi.fn(),
   logWarningMock: vi.fn(),
 }));
@@ -45,7 +55,9 @@ vi.mock('server-only', () => ({}));
 vi.mock('fs', () => ({
   promises: {
     writeFile: writeFileMock,
+    rm: rmMock,
     stat: statMock,
+    statfs: statfsMock,
   },
 }));
 
@@ -59,9 +71,12 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   getMongoDumpCommand: getMongoDumpCommandMock,
   getCmsBuilderMongoConnectionUrl: getCmsBuilderMongoConnectionUrlMock,
   getCmsBuilderMongoDatabaseName: getCmsBuilderMongoDatabaseNameMock,
+  getProductsMongoConnectionUrl: getProductsMongoConnectionUrlMock,
+  getProductsMongoDatabaseName: getProductsMongoDatabaseNameMock,
   getStudiqMongoConnectionUrl: getStudiqMongoConnectionUrlMock,
   getStudiqMongoDatabaseName: getStudiqMongoDatabaseNameMock,
   resolveCmsBuilderMongoSourceConfig: resolveCmsBuilderMongoSourceConfigMock,
+  resolveProductsMongoSourceConfig: resolveProductsMongoSourceConfigMock,
   resolveStudiqMongoSourceConfig: resolveStudiqMongoSourceConfigMock,
   execFileAsync: mongoExecFileAsyncMock,
 }));
@@ -93,6 +108,8 @@ describe('database-backup', () => {
       'mongodb://localhost:27019/cms_builder_local'
     );
     getCmsBuilderMongoDatabaseNameMock.mockReturnValue('cms_builder_local');
+    getProductsMongoConnectionUrlMock.mockReturnValue('mongodb://localhost:27020/products_local');
+    getProductsMongoDatabaseNameMock.mockReturnValue('products_local');
     getMongoDumpCommandMock.mockReturnValue('mongodump');
     ensureMongoBackupsDirMock.mockResolvedValue(undefined);
     resolveMongoSourceConfigMock.mockResolvedValue({
@@ -116,8 +133,17 @@ describe('database-backup', () => {
       dbName: 'cms_builder_cloud',
       usesLegacyEnv: false,
     });
+    resolveProductsMongoSourceConfigMock.mockReturnValue({
+      source: 'cloud',
+      configured: true,
+      uri: 'mongodb+srv://cluster.example/products_cloud',
+      dbName: 'products_cloud',
+      usesLegacyEnv: false,
+    });
     writeFileMock.mockResolvedValue(undefined);
+    rmMock.mockResolvedValue(undefined);
     statMock.mockResolvedValue(null);
+    statfsMock.mockResolvedValue({ bavail: 10 * 1024 * 1024, bsize: 1024 });
   });
 
   afterEach(() => {
@@ -137,7 +163,7 @@ describe('database-backup', () => {
 
     const result = await createMongoBackup();
 
-    expect(ensureMongoBackupsDirMock).toHaveBeenCalledTimes(3);
+    expect(ensureMongoBackupsDirMock).toHaveBeenCalledTimes(4);
     expect(mongoExecFileAsyncMock).toHaveBeenNthCalledWith(1, 'mongodump', [
       '--uri',
       'mongodb://user:secret@localhost:27017/app',
@@ -166,7 +192,17 @@ describe('database-backup', () => {
       ),
       '--gzip',
     ]);
-    expect(writeFileMock).toHaveBeenCalledTimes(3);
+    expect(mongoExecFileAsyncMock).toHaveBeenNthCalledWith(4, 'mongodump', [
+      '--uri',
+      'mongodb://localhost:27020/products_local',
+      '--db',
+      'products_local',
+      expect.stringMatching(
+        /^--archive=\/tmp\/backups\/products\/products_local-backup-\d+\.archive$/
+      ),
+      '--gzip',
+    ]);
+    expect(writeFileMock).toHaveBeenCalledTimes(4);
     expect(writeFileMock).toHaveBeenCalledWith(
       expect.stringMatching(/\.archive\.log$/),
       expect.stringContaining('mongodb://user:***@localhost:27017/app')
@@ -199,6 +235,34 @@ describe('database-backup', () => {
       message: 'Backup created with warnings',
       warning: expect.stringContaining('permission denied'),
       log: expect.stringContaining('permission denied'),
+    });
+  });
+
+  it('rejects before invoking mongo tooling when the backup target is low on disk space', async () => {
+    statfsMock.mockResolvedValue({ bavail: 1, bsize: 1024 });
+
+    await expect(createMongoBackup()).rejects.toThrow(/not enough disk space/i);
+
+    expect(mongoExecFileAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('removes partial archives when mongodump fails because the disk is full', async () => {
+    mongoExecFileAsyncMock.mockRejectedValue({
+      message: 'dump failed',
+      cause: {
+        stdout: '',
+        stderr: 'no space left on device',
+      },
+    });
+    statMock.mockResolvedValue({ size: 128 });
+
+    await expect(createMongoBackup()).rejects.toThrow(/failed to create mongodb backup/i);
+
+    expect(rmMock).toHaveBeenCalledWith(expect.stringMatching(/app-backup-\d+\.archive$/), {
+      force: true,
+    });
+    expect(rmMock).toHaveBeenCalledWith(expect.stringMatching(/app-backup-\d+\.archive\.log$/), {
+      force: true,
     });
   });
 
@@ -320,6 +384,45 @@ describe('database-backup', () => {
         '/tmp/backups/cms-builder/cms-builder-cloud-cms-builder-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
       logPath:
         '/tmp/backups/cms-builder/cms-builder-cloud-cms-builder-cloud-source-pre-sync-cloud-to-local-1712637000000.archive.log',
+      createdAt: new Date(timestamp).toISOString(),
+      warning: null,
+    });
+  });
+
+  it('creates a Products source backup in the Products backup folder for sync workflows', async () => {
+    mongoExecFileAsyncMock.mockResolvedValue({
+      stdout: 'backup stdout',
+      stderr: '',
+    });
+    const timestamp = 1712637000000;
+
+    const result = await createMongoSourceBackup({
+      application: 'products',
+      source: 'cloud',
+      role: 'source',
+      direction: 'cloud_to_local',
+      timestamp,
+    });
+
+    expect(resolveProductsMongoSourceConfigMock).toHaveBeenCalledWith('cloud');
+    expect(mongoExecFileAsyncMock).toHaveBeenCalledWith('mongodump', [
+      '--uri',
+      'mongodb+srv://cluster.example/products_cloud',
+      '--db',
+      'products_cloud',
+      '--archive=/tmp/backups/products/products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+      '--gzip',
+    ]);
+    expect(result).toEqual({
+      application: 'products',
+      role: 'source',
+      source: 'cloud',
+      backupName:
+        'products/products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+      backupPath:
+        '/tmp/backups/products/products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+      logPath:
+        '/tmp/backups/products/products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive.log',
       createdAt: new Date(timestamp).toISOString(),
       warning: null,
     });

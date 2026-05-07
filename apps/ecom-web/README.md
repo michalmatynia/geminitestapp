@@ -229,7 +229,7 @@ Wishlist:
 | Recently viewed | `src/context/RecentlyViewedContext.tsx` | `localStorage` key `arcana-recently-viewed`, max 6 items. |
 | Quick view | `src/context/QuickViewContext.tsx` | In memory only. |
 | Toasts | `src/context/ToastContext.tsx` | In memory only. |
-| Theme | `src/components/SiteNav.tsx` | `localStorage` key `arcana-theme`. |
+| Theme | `src/components/SiteNav.tsx` plus root init script in `src/app/layout.tsx` | `localStorage` key `arcana-theme`, either `nightly` or `daily`. |
 | Announcement banner | `src/components/SiteNav.tsx` | CMS-controlled dismiss key, default `arcana-banner-v2`. |
 | Cookie consent | `src/components/CookieConsent.tsx` | CMS-controlled storage key, default `arcana-cookie-consent`. |
 
@@ -341,16 +341,19 @@ The design system is local to the ecommerce workspace.
 
 - Fonts are loaded in `src/app/layout.tsx` through `next/font/google`:
   `Cormorant_SC`, `Jost`, and `Courier_Prime`.
-- Theme tokens live in `src/app/globals.css` as CSS custom properties.
+- Theme tokens live in `src/app/globals.css` as CSS custom properties. The default
+  theme is `nightly`; `daily` is the light alternate and maps semantic tokens
+  back to the same ARCANA brand palette.
 - Tailwind reads `src/**/*.{ts,tsx}` through `tailwind.config.ts`.
-- Dark mode is class-based and toggled on the document root.
+- Theme mode is class-based and toggled on the document root.
 - Core reusable classes include `type-display-*`, `type-label`,
   `type-price`, `btn-primary`, `btn-ghost`, `product-card`, and `grain`.
 
 Product imagery can render from FastComet by setting
 `NEXT_PUBLIC_FILE_BASE_URL`. Static fallback products and live catalog records
 that still contain `/uploads/products/...` paths are served from that file host;
-absolute product image URLs are preserved.
+legacy `https://qubrick.io/uploads/...` records are rewritten to the configured
+file host.
 
 ## Implementation Status
 

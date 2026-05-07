@@ -1,7 +1,7 @@
 /* eslint-disable max-lines, max-lines-per-function */
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
@@ -48,18 +48,34 @@ vi.mock('@/shared/ui/app-modal', () => ({
   AppModal: ({
     children,
     footer,
+    headerActions,
     isOpen,
+    lockClose,
+    onClose,
+    showClose = true,
     title,
   }: {
     children?: React.ReactNode;
     footer?: React.ReactNode;
+    headerActions?: React.ReactNode;
     isOpen?: boolean;
+    lockClose?: boolean;
+    onClose?: () => void;
+    showClose?: boolean;
     title?: React.ReactNode;
   }) =>
     isOpen === true ? (
       <div role='dialog' aria-label={typeof title === 'string' ? title : 'Modal'}>
+        <div data-testid='app-modal-header-actions'>
+          {headerActions}
+          {showClose ? (
+            <button type='button' onClick={onClose} disabled={lockClose === true}>
+              Close
+            </button>
+          ) : null}
+        </div>
         <div>{children}</div>
-        <div>{footer}</div>
+        {footer !== undefined && footer !== null ? <div>{footer}</div> : null}
       </div>
     ) : null,
 }));
@@ -257,6 +273,26 @@ describe('ProductScrapeProfilesModal', () => {
     window.localStorage.clear();
     apiGetMock.mockImplementation((url: string) => Promise.resolve(handleApiGet(url)));
     apiPostMock.mockResolvedValue(runResponse);
+  });
+
+  it('renders Run Profile in the header before the single Close button', async () => {
+    renderModal();
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+
+    const runButton = screen.getByRole('button', { name: /Run Profile/ });
+    const closeButtons = screen.getAllByRole('button', { name: 'Close' });
+    expect(closeButtons).toHaveLength(1);
+
+    const closeButton = closeButtons[0];
+    if (closeButton === undefined) {
+      throw new Error('Expected modal close button.');
+    }
+
+    const headerActions = screen.getByTestId('app-modal-header-actions');
+    const headerButtons = within(headerActions).getAllByRole('button');
+    expect(headerButtons[0]).toBe(runButton);
+    expect(headerButtons[1]).toBe(closeButton);
   });
 
   it('runs the selected scrape profile with a compatible scrape template', async () => {

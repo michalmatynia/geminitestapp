@@ -28,7 +28,7 @@ const mocks = vi.hoisted(() => ({
   getMongoDb: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/db/mongo-client', () => ({
+vi.mock('@/shared/lib/db/product-mongo-client', () => ({
   getMongoDb: mocks.getMongoDb,
 }));
 

@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { getDatabaseBackupSchedulerStatus } from '@/shared/lib/db/services/database-backup-scheduler';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
+import { startProductAiJobQueue } from '@/features/database/server/jobs';
 import {
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
   getDatabaseBackupSchedulerQueueStatus,
@@ -11,6 +12,7 @@ import {
 
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
+  startProductAiJobQueue();
   startDatabaseBackupSchedulerQueue();
 
   const [status, queue] = await Promise.all([

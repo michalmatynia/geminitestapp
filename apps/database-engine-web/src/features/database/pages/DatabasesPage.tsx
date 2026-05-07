@@ -140,7 +140,7 @@ function DatabasesContentInner(): React.JSX.Element {
     <AdminDatabasePageLayout
       title='Databases - MongoDB'
       current='Backups'
-      description='MongoDB backups use mongodump/mongorestore archives in a neutral backup folder, split into geminitestapp, StudiQ, and CMS Builder subfolders.'
+      description='MongoDB backups use mongodump/mongorestore archives in a neutral backup folder, split into geminitestapp, StudiQ, CMS Builder, and Products subfolders.'
       headerActions={
         <DatabaseHeaderActions
           isProd={isProd}

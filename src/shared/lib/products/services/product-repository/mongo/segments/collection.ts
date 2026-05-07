@@ -1,5 +1,5 @@
 import { type Collection } from 'mongodb';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { type ProductDocument } from '../../mongo-product-repository-mappers';
 import { productCollectionName } from '../../mongo-product-repository.helpers';
 import { ensureProductIndexes } from './indexes';

@@ -11,22 +11,18 @@ export { SCRAPE_TEMPLATE_PLACEHOLDER_OPTIONS } from '@/shared/contracts/products
 export type { ScrapeTemplatePlaceholderOption } from '@/shared/contracts/products/scrape-template-placeholders';
 
 import type { ProductScrapeCandidate } from './product-scrape-profiles.candidates';
-
-type PlaceholderValue = string | number | null | undefined;
-export type ScrapeTemplateValues = Record<string, PlaceholderValue>;
-
-const PLACEHOLDER_PATTERN = /\[([a-zA-Z][a-zA-Z0-9_.-]*)\]/g;
+import {
+  PLACEHOLDER_PATTERN,
+  renderPlaceholderExpression,
+  toTitleCase,
+  type ScrapeTemplateValues,
+} from './product-scrape-template-placeholders';
+export type { ScrapeTemplateValues } from './product-scrape-template-placeholders';
 
 const normalizeTemplateString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
-};
-
-const valueToString = (value: PlaceholderValue): string => {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : '';
-  return value;
 };
 
 const readRawString = (raw: Record<string, unknown>, key: string): string | null => {
@@ -78,7 +74,9 @@ export const buildScrapeTemplateValues = (
 
   return {
     name: candidate.title,
+    nameTitleCase: toTitleCase(candidate.title),
     title: candidate.title,
+    titleTitleCase: toTitleCase(candidate.title),
     description: mapped.description ?? draft.draft.description_en ?? null,
     price: candidate.price,
     sourcePrice: candidate.price,
@@ -102,8 +100,8 @@ export const renderScrapeTemplateText = (
 ): string | null => {
   const template = normalizeTemplateString(value);
   if (template === null) return null;
-  const rendered = template.replace(PLACEHOLDER_PATTERN, (_match, key: string) =>
-    valueToString(values[key])
+  const rendered = template.replace(PLACEHOLDER_PATTERN, (match, expression: string) =>
+    renderPlaceholderExpression(expression, values, match)
   );
   const trimmed = rendered.trim();
   return trimmed.length > 0 ? trimmed : null;

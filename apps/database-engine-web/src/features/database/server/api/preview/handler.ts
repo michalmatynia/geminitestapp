@@ -1,11 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
+import { MongoClient, type Collection, type Db } from 'mongodb';
 import { z } from 'zod';
 
 import {
   databaseEngineManagedMongoApplicationSchema,
   mongoSourceSchema,
   type DatabaseColumnInfo,
+  type DatabaseIndexInfo,
   type DatabaseTableDetail,
   type MongoSource,
   type DatabaseEngineManagedMongoApplication,
@@ -19,6 +20,8 @@ import {
   getMongoRestoreCommand,
   getCmsBuilderMongoConnectionUrl,
   getCmsBuilderMongoDatabaseName,
+  getProductsMongoConnectionUrl,
+  getProductsMongoDatabaseName,
   getStudiqMongoConnectionUrl,
   getStudiqMongoDatabaseName,
   mongoExecFileAsync,
@@ -49,6 +52,12 @@ const resolvePreviewTarget = (
         sourceDbName: getCmsBuilderMongoDatabaseName(),
       };
     }
+    if (application === 'products') {
+      return {
+        mongoUri: getProductsMongoConnectionUrl(),
+        sourceDbName: getProductsMongoDatabaseName(),
+      };
+    }
   }
 
   return {
@@ -71,10 +80,123 @@ const getFieldType = (value: unknown): string => {
   return typeof value;
 };
 
+const getNumber = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.max(0, value);
+};
+
+const sumNullableNumbers = (...values: Array<number | null>): number | null => {
+  const finiteValues = values.filter((value): value is number => value !== null);
+  if (finiteValues.length === 0) return null;
+  return finiteValues.reduce((sum, value) => sum + value, 0);
+};
+
+const formatBytes = (bytes: number | null): string => {
+  if (bytes === null) return 'n/a';
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ['KB', 'MB', 'GB', 'TB'];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`;
+};
+
+const getDatabaseSizeFormatted = async (db: Db): Promise<string> => {
+  try {
+    const stats = (await db.command({ dbStats: 1, scale: 1 })) as Record<string, unknown>;
+    const storageSizeBytes = getNumber(stats['storageSize']);
+    const indexSizeBytes = getNumber(stats['indexSize']);
+    const databaseSizeBytes =
+      getNumber(stats['totalSize']) ?? sumNullableNumbers(storageSizeBytes, indexSizeBytes);
+    return formatBytes(databaseSizeBytes);
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'api/databases/preview',
+      stage: 'database-stats',
+    });
+    return 'n/a';
+  }
+};
+
+const getCollectionSizeFormatted = async (
+  db: Db,
+  collectionName: string
+): Promise<string> => {
+  try {
+    const stats = (await db.command({
+      collStats: collectionName,
+      scale: 1,
+    })) as Record<string, unknown>;
+    const storageSizeBytes = getNumber(stats['storageSize']);
+    const indexSizeBytes = getNumber(stats['totalIndexSize']);
+    const collectionSizeBytes =
+      getNumber(stats['totalSize']) ?? sumNullableNumbers(storageSizeBytes, indexSizeBytes);
+    return formatBytes(collectionSizeBytes);
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'api/databases/preview',
+      stage: 'collection-stats',
+      collectionName,
+    });
+    return 'n/a';
+  }
+};
+
+const buildIndexDefinition = (index: Record<string, unknown>): string | undefined => {
+  const key = index['key'];
+  if (typeof key !== 'object' || key === null || Array.isArray(key)) return undefined;
+
+  return Object.entries(key)
+    .map(([column, direction]) => `${column}: ${String(direction)}`)
+    .join(', ');
+};
+
+const getCollectionIndexes = async (
+  collection: Collection
+): Promise<DatabaseIndexInfo[]> => {
+  try {
+    const indexes = (await collection.indexes()) as Array<Record<string, unknown>>;
+    return indexes
+      .map((index) => {
+        const key = index['key'];
+        const columns =
+          typeof key === 'object' && key !== null && !Array.isArray(key)
+            ? Object.keys(key)
+            : [];
+        const fallbackName = columns.length > 0 ? columns.join('_') : 'index';
+        const name = typeof index['name'] === 'string' ? index['name'] : fallbackName;
+
+        return {
+          name,
+          columns,
+          isUnique: index['unique'] === true,
+          definition: buildIndexDefinition(index),
+        };
+      })
+      .sort((a, b) => {
+        if (a.name === '_id_') return -1;
+        if (b.name === '_id_') return 1;
+        return a.name.localeCompare(b.name);
+      });
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'api/databases/preview',
+      stage: 'collection-indexes',
+      collectionName: collection.collectionName,
+    });
+    return [];
+  }
+};
+
 const buildTableDetail = (
   collectionName: string,
   sample: Record<string, unknown>[],
-  rowEstimate: number
+  indexes: DatabaseIndexInfo[],
+  rowEstimate: number,
+  sizeFormatted: string
 ): DatabaseTableDetail => {
   const fieldTypes = new Map<string, Set<string>>();
   for (const doc of sample) {
@@ -102,10 +224,10 @@ const buildTableDetail = (
   return {
     name: collectionName,
     columns: fields,
-    indexes: [],
+    indexes,
     foreignKeys: [],
     rowEstimate,
-    sizeFormatted: '',
+    sizeFormatted,
   };
 };
 
@@ -195,12 +317,19 @@ export async function postDatabasesPreviewHandler(
   const db = managedMongo?.db ?? mongoClient.db(previewDb);
   let collections: string[] = [];
   let tableRows: { name: string; rows: Record<string, unknown>[]; totalRows: number }[] = [];
-  let tableStats: { name: string; rowEstimate: number }[] = [];
+  let tableStats: { name: string; rowEstimate: number; sizeFormatted: string }[] = [];
   let tableDetails: DatabaseTableDetail[] = [];
+  let databaseSize = 'n/a';
 
   try {
-    const collectionInfos = await db.listCollections().toArray();
-    collections = collectionInfos.map((info: { name: string }) => info.name);
+    const [databaseSizeResult, collectionInfos] = await Promise.all([
+      getDatabaseSizeFormatted(db),
+      db.listCollections().toArray(),
+    ]);
+    databaseSize = databaseSizeResult;
+    collections = collectionInfos
+      .map((info: { name: string }) => info.name)
+      .sort((a, b) => a.localeCompare(b));
 
     tableRows = await Promise.all(
       collections.map(async (collectionName: string) => {
@@ -214,17 +343,28 @@ export async function postDatabasesPreviewHandler(
     tableStats = await Promise.all(
       collections.map(async (collectionName: string) => {
         const collection = db.collection(collectionName);
-        const estimate = await collection.estimatedDocumentCount();
-        return { name: collectionName, rowEstimate: estimate };
+        const [estimate, sizeFormatted] = await Promise.all([
+          collection.estimatedDocumentCount(),
+          getCollectionSizeFormatted(db, collectionName),
+        ]);
+        return { name: collectionName, rowEstimate: estimate, sizeFormatted };
       })
     );
     tableDetails = await Promise.all(
       collections.map(async (collectionName: string) => {
         const collection = db.collection(collectionName);
-        const sample = (await collection.find({}).limit(10).toArray()) as Record<string, unknown>[];
-        const rowEstimate =
-          tableStats.find((table) => table.name === collectionName)?.rowEstimate ?? 0;
-        return buildTableDetail(collectionName, sample, rowEstimate);
+        const [sample, indexes] = await Promise.all([
+          collection.find({}).limit(10).toArray() as Promise<Record<string, unknown>[]>,
+          getCollectionIndexes(collection),
+        ]);
+        const collectionStats = tableStats.find((table) => table.name === collectionName);
+        return buildTableDetail(
+          collectionName,
+          sample,
+          indexes,
+          collectionStats?.rowEstimate ?? 0,
+          collectionStats?.sizeFormatted ?? 'n/a'
+        );
       })
     );
   } finally {
@@ -250,6 +390,7 @@ export async function postDatabasesPreviewHandler(
     },
     data: tableRows,
     tableDetails,
+    databaseSize,
     page,
     pageSize,
   });

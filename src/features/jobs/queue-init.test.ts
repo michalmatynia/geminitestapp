@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   isRedisAvailable: vi.fn(() => true),
-  isRedisReachable: vi.fn(async () => true),
-  logSystemEvent: vi.fn(async () => undefined),
-  captureException: vi.fn(async () => undefined),
+  isRedisReachable: vi.fn(() => Promise.resolve(true)),
+  logSystemEvent: vi.fn(() => Promise.resolve(undefined)),
+  captureException: vi.fn(() => Promise.resolve(undefined)),
   startAllWorkers: vi.fn(),
   startAgentQueue: vi.fn(),
   startAiInsightsQueue: vi.fn(),
@@ -24,12 +24,13 @@ const mocks = vi.hoisted(() => ({
   startPlaywrightListingQueue: vi.fn(),
   startProductAiJobQueue: vi.fn(),
   startProductMarketplaceCopyDebrandBatchQueue: vi.fn(),
+  startProductScrapeProfileQueue: vi.fn(),
   startProductSyncSchedulerQueue: vi.fn(),
   startSystemLogAlertsQueue: vi.fn(),
   startTraderaListingQueue: vi.fn(),
   startTraderaRelistSchedulerQueue: vi.fn(),
   startVintedListingQueue: vi.fn(),
-  tickDatabaseBackupScheduler: vi.fn(async () => undefined),
+  tickDatabaseBackupScheduler: vi.fn(() => Promise.resolve(undefined)),
 }));
 
 vi.mock('@/server/queues/ai', () => ({
@@ -88,6 +89,10 @@ vi.mock('@/server/queues/products', () => ({
     mocks.startProductMarketplaceCopyDebrandBatchQueue,
 }));
 
+vi.mock('@/features/products/workers/productScrapeProfileQueue', () => ({
+  startProductScrapeProfileQueue: mocks.startProductScrapeProfileQueue,
+}));
+
 vi.mock('@/server/queues/product-sync', () => ({
   startProductSyncSchedulerQueue: mocks.startProductSyncSchedulerQueue,
 }));
@@ -128,6 +133,7 @@ import { initializeQueues, shouldStartSocialPublishingQueues, testOnly } from '.
 
 const waitForStartup = async (): Promise<void> => {
   await vi.waitFor(() => expect(mocks.startTraderaListingQueue).toHaveBeenCalled());
+  await vi.waitFor(() => expect(mocks.startProductScrapeProfileQueue).toHaveBeenCalled());
 };
 
 beforeEach(() => {
@@ -142,37 +148,33 @@ beforeEach(() => {
 
 describe('shouldStartSocialPublishingQueues', () => {
   it('defaults to disabled outside production', () => {
-    expect(
-      shouldStartSocialPublishingQueues({
-        NODE_ENV: 'development',
-      } as NodeJS.ProcessEnv)
-    ).toBe(false);
+    const env: NodeJS.ProcessEnv = {
+      NODE_ENV: 'development',
+    };
+    expect(shouldStartSocialPublishingQueues(env)).toBe(false);
   });
 
   it('defaults to enabled in production', () => {
-    expect(
-      shouldStartSocialPublishingQueues({
-        NODE_ENV: 'production',
-      } as NodeJS.ProcessEnv)
-    ).toBe(true);
+    const env: NodeJS.ProcessEnv = {
+      NODE_ENV: 'production',
+    };
+    expect(shouldStartSocialPublishingQueues(env)).toBe(true);
   });
 
   it('honors explicit enable outside production', () => {
-    expect(
-      shouldStartSocialPublishingQueues({
-        NODE_ENV: 'development',
-        ENABLE_SOCIAL_PUBLISHING_WORKERS: 'true',
-      } as NodeJS.ProcessEnv)
-    ).toBe(true);
+    const env: NodeJS.ProcessEnv = {
+      NODE_ENV: 'development',
+      ENABLE_SOCIAL_PUBLISHING_WORKERS: 'true',
+    };
+    expect(shouldStartSocialPublishingQueues(env)).toBe(true);
   });
 
   it('honors explicit disable even in production', () => {
-    expect(
-      shouldStartSocialPublishingQueues({
-        NODE_ENV: 'production',
-        DISABLE_SOCIAL_PUBLISHING_WORKERS: 'true',
-      } as NodeJS.ProcessEnv)
-    ).toBe(false);
+    const env: NodeJS.ProcessEnv = {
+      NODE_ENV: 'production',
+      DISABLE_SOCIAL_PUBLISHING_WORKERS: 'true',
+    };
+    expect(shouldStartSocialPublishingQueues(env)).toBe(false);
   });
 });
 
@@ -218,6 +220,7 @@ describe('initializeQueues', () => {
     initializeQueues();
 
     expect(mocks.startTraderaListingQueue).toHaveBeenCalledTimes(1);
+    expect(mocks.startProductScrapeProfileQueue).toHaveBeenCalledTimes(1);
     expect(mocks.startAllWorkers).toHaveBeenCalledTimes(1);
   });
 });

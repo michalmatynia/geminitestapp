@@ -11,7 +11,7 @@ import type {
   SelectorRegistryValueType,
 } from '@/shared/contracts/integrations/selector-registry';
 import { inferSelectorRegistryRole } from '@/shared/lib/browser-execution/selector-registry-roles';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 const COLLECTION_NAME = 'integration_custom_selector_registry';
 const PROFILE_METADATA_COLLECTION_NAME = 'integration_custom_selector_registry_profiles';

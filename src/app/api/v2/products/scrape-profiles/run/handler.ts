@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { runProductScrapeProfile } from '@/features/products/server/product-scrape-profiles';
+import { initializeQueues } from '@/features/jobs/server';
+import { runProductScrapeProfileViaRedisRuntime } from '@/server/queues/products';
 import {
   productScrapeProfileRunRequestSchema,
   productScrapeProfileRunResponseSchema,
@@ -12,6 +13,7 @@ export { productScrapeProfileRunRequestSchema };
 
 export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as ProductScrapeProfileRunRequest;
-  const result = await runProductScrapeProfile(body, { userId: ctx.userId ?? null });
+  initializeQueues();
+  const result = await runProductScrapeProfileViaRedisRuntime(body, { userId: ctx.userId ?? null });
   return NextResponse.json(productScrapeProfileRunResponseSchema.parse(result));
 }

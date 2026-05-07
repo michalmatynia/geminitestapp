@@ -47,7 +47,29 @@ export const CLOSED_PLACEHOLDER_MENU: DraftPlaceholderMenuState = {
 };
 
 const normalizePlaceholderSearch = (value: string): string =>
-  value.trim().toLowerCase().replace(/[\s_-]+/g, '');
+  value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+const hasDisallowedPlaceholderWhitespace = (value: string): boolean => {
+  let quoteOpen = false;
+  let escaped = false;
+  for (const character of value) {
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (quoteOpen) {
+      if (character === '\\') escaped = true;
+      else if (character === '"') quoteOpen = false;
+      continue;
+    }
+    if (character === '"') {
+      quoteOpen = true;
+      continue;
+    }
+    if (/\s/.test(character)) return true;
+  }
+  return false;
+};
 
 export const getActivePlaceholderRange = (
   value: string,
@@ -59,7 +81,7 @@ export const getActivePlaceholderRange = (
   if (start < 0) return null;
 
   const query = beforeCursor.slice(start + 1);
-  if (query.includes(']') || /\s/.test(query)) return null;
+  if (query.includes(']') || hasDisallowedPlaceholderWhitespace(query)) return null;
 
   return {
     query,

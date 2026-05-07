@@ -10,7 +10,7 @@ import type {
 } from '@/shared/contracts/products/drafts';
 import type { ProductTitleTerm } from '@/shared/contracts/products/title-terms';
 import { internalError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { normalizeTitleTermName } from '@/shared/lib/products/title-terms';
 
 import type { Document, Filter, UpdateFilter } from 'mongodb';

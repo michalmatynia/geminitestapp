@@ -1,6 +1,6 @@
 import type { Document, Filter, ObjectId } from 'mongodb';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 import type { ProductDocument } from './mongo-product-repository-mappers';
 import { buildLookupValues, normalizeLookupId } from './mongo-product-repository.helpers';

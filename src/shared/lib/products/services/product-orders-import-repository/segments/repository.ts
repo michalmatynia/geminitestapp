@@ -1,5 +1,5 @@
 import type { BaseOrderImportPreviewItem, BaseOrderImportPersistResult, ImportedBaseOrderRecord } from '@/shared/contracts/products/orders-import';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { COLLECTION, type ImportedBaseOrderDoc } from './types';
 import { buildImportedOrderId, toDomain } from './mappers';
 

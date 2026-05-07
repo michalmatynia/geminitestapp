@@ -1,19 +1,30 @@
 'use client';
 
 import { EditIcon, Trash2Icon } from 'lucide-react';
-import React, { useMemo } from 'react';
-import type { DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
+import React, { useCallback, useMemo } from 'react';
+import type {
+  DatabaseColumnInfo,
+  DatabaseEngineManagedMongoApplication,
+  DatabaseTableDetail,
+  DatabaseType,
+  MongoSource,
+} from '@/shared/contracts/database';
 import { Button, Card } from '@/shared/ui/primitives.public';
 import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { CompactEmptyState, Pagination } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { CrudPanelProvider } from '../context/CrudPanelContext';
+import {
+  CrudPanelProvider,
+  useCrudPanelActionsContext,
+  useCrudPanelStateContext,
+} from '../context/CrudPanelContext';
+import { useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
 import { useCrudPanelState } from '../hooks/useCrudPanelState';
 import { DatabaseTableSelector } from './crud/DatabaseTableSelector';
+import { DatabaseTreePanel } from './crud/DatabaseTreePanel';
 import { RowFormModal } from './crud/RowFormModal';
 import { formatDatabaseCellValue } from './format-cell-value';
 import type { ColumnDef } from '@tanstack/react-table';
-
 
 export interface CrudPanelProps {
   tableDetails?: DatabaseTableDetail[];
@@ -22,6 +33,26 @@ export interface CrudPanelProps {
 }
 
 interface RowData extends Record<string, unknown> {}
+
+const MANAGED_APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplication, string> = {
+  geminitestapp: 'GeminiTest App',
+  studiq: 'StudiQ',
+  'cms-builder': 'CMS Builder',
+  products: 'Products',
+};
+
+const SOURCE_LABELS: Record<MongoSource, string> = {
+  local: 'Local',
+  cloud: 'Cloud',
+};
+
+const buildDatabaseLabel = (
+  application: DatabaseEngineManagedMongoApplication | undefined,
+  source: MongoSource | undefined
+): string => {
+  if (application === undefined) return 'Current MongoDB';
+  return `${MANAGED_APPLICATION_LABELS[application]} / ${SOURCE_LABELS[source ?? 'local']}`;
+};
 
 const createActionColumn = (
   setEditingRow: (row: RowData) => void,
@@ -54,7 +85,66 @@ const createDataColumns = (keys: string[]): ColumnDef<RowData>[] => {
   }));
 };
 
-import { useCrudPanelStateContext, useCrudPanelActionsContext } from '../context/CrudPanelContext';
+const inferColumnType = (value: unknown): string => {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
+  if (value instanceof Date) return 'date';
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as { constructor?: { name?: string } }).constructor?.name === 'ObjectId'
+  ) {
+    return 'ObjectId';
+  }
+  return typeof value;
+};
+
+const createFallbackColumnInfo = (name: string, value: unknown): DatabaseColumnInfo => ({
+  name,
+  type: inferColumnType(value),
+  nullable: value === null,
+  defaultValue: null,
+  isPrimaryKey: name === '_id',
+  isForeignKey: false,
+});
+
+const mergeColumnInfoWithRows = (
+  baseColumns: DatabaseColumnInfo[],
+  rows: RowData[]
+): DatabaseColumnInfo[] => {
+  const columnsByName = new Map(baseColumns.map((column) => [column.name, column]));
+  for (const row of rows) {
+    for (const [key, value] of Object.entries(row)) {
+      if (!columnsByName.has(key)) {
+        columnsByName.set(key, createFallbackColumnInfo(key, value));
+      }
+    }
+  }
+  return [...columnsByName.values()].sort((left, right) => {
+    if (left.name === '_id') return -1;
+    if (right.name === '_id') return 1;
+    return left.name.localeCompare(right.name);
+  });
+};
+
+const getVisibleColumnKeys = (
+  metadataColumns: DatabaseColumnInfo[],
+  rows: RowData[]
+): string[] => {
+  const keys = new Set<string>();
+  if (metadataColumns.some((column) => column.name === '_id') || rows.some((row) => '_id' in row)) {
+    keys.add('_id');
+  }
+  for (const column of metadataColumns) {
+    if (column.name !== '_id') keys.add(column.name);
+  }
+  for (const row of rows) {
+    for (const key of Object.keys(row)) {
+      if (key !== '_id') keys.add(key);
+    }
+  }
+  return [...keys];
+};
 
 const DataTable = ({
   columnDefs,
@@ -114,6 +204,8 @@ const DataTable = ({
 };
 
 export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
+  const { application, source } = useDatabaseConfig();
+  const { databaseSize } = useDatabaseData();
   const {
     selectedTable,
     setSelectedTable,
@@ -146,16 +238,34 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
   } = useCrudPanelState(props);
 
   const errorMessage = mutationError ?? (rowsQuery.isError && rowsQuery.error instanceof Error ? rowsQuery.error.message : null);
+  const databaseLabel = useMemo(
+    () => buildDatabaseLabel(application, source),
+    [application, source]
+  );
+
+  const handleSelectTable = useCallback(
+    (tableName: string) => {
+      setSelectedTable(tableName);
+      setPage(1);
+      setMutationError(null);
+      setSuccessMessage(null);
+    },
+    [setMutationError, setPage, setSelectedTable, setSuccessMessage]
+  );
 
   const columnDefs = useMemo<ColumnDef<RowData>[]>(() => {
     if (columns.length === 0 && rows.length === 0) return [];
     
     const actionCol = createActionColumn(setEditingRow, setDeletingRow);
-    const keys = rows.length > 0 ? Object.keys(rows[0] ?? {}) : columns.map((c: { name: string }) => c.name);
+    const keys = getVisibleColumnKeys(columns, rows);
     const dataCols = createDataColumns(keys);
 
     return [actionCol, ...dataCols];
   }, [columns, rows, setEditingRow, setDeletingRow]);
+  const modalColumns = useMemo(
+    () => mergeColumnInfoWithRows(tableDetail?.columns ?? [], rows),
+    [rows, tableDetail?.columns]
+  );
 
   return (
     <CrudPanelProvider 
@@ -163,7 +273,16 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
         actionsValue={{ setSelectedTable, onRefresh: fetchRows, onAddRow: () => setShowAddModal(true), setPage, setPageSize, setMutationError, setSuccessMessage }}
     >
       <div className='space-y-4'>
-        <DataTable
+        <div className='grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]'>
+          <DatabaseTreePanel
+            databaseLabel={databaseLabel}
+            databaseSize={databaseSize}
+            isFetching={rowsQuery.isFetching}
+            onSelectTable={handleSelectTable}
+            selectedTable={selectedTable}
+            tableDetails={tableDetails}
+          />
+          <DataTable
             columnDefs={columnDefs}
             rows={rows}
             isLoadingRows={isLoadingRows}
@@ -172,12 +291,12 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
             page={page}
             pageSize={pageSize}
             totalRows={totalRows}
-        />
-        {showAddModal && tableDetail && <RowFormModal columns={tableDetail.columns} mode='add' onSubmit={handleAdd} onClose={() => setShowAddModal(false)} isPending={crudMutation.isPending} />}
-        {editingRow && tableDetail && <RowFormModal columns={tableDetail.columns} initialData={editingRow} mode='edit' onSubmit={handleEdit} onClose={() => setEditingRow(null)} isPending={crudMutation.isPending} />}
+          />
+        </div>
+        {showAddModal && tableDetail && <RowFormModal columns={modalColumns} mode='add' onSubmit={handleAdd} onClose={() => setShowAddModal(false)} isPending={crudMutation.isPending} />}
+        {editingRow && tableDetail && <RowFormModal columns={modalColumns} initialData={editingRow} mode='edit' onSubmit={handleEdit} onClose={() => setEditingRow(null)} isPending={crudMutation.isPending} />}
         <ConfirmModal isOpen={deletingRow !== null} onClose={() => setDeletingRow(null)} onConfirm={handleDelete} title='Delete Row' message='Are you sure?' confirmText='Delete' isDangerous={true} loading={crudMutation.isPending} />
       </div>
     </CrudPanelProvider>
   );
 }
-

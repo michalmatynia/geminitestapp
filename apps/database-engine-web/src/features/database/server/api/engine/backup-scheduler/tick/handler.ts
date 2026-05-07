@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
+import { startProductAiJobQueue } from '@/features/database/server/jobs';
 import {
   getDatabaseBackupSchedulerStatus,
   tickDatabaseBackupScheduler,
@@ -18,6 +19,7 @@ export async function postHandler(_req: NextRequest, _ctx: ApiHandlerContext): P
 
   await assertDatabaseEngineOperationEnabled('allowBackupSchedulerTick');
 
+  startProductAiJobQueue();
   startDatabaseBackupSchedulerQueue();
 
   const tick = await tickDatabaseBackupScheduler();

@@ -161,7 +161,8 @@ const optionalMarketplaceContentOverridesFromFormSchema = z.preprocess(
 );
 
 const optionalProductNotesFromFormSchema = z.preprocess((value: unknown): unknown => {
-  if (value === undefined || value === null) return undefined;
+  if (value === undefined) return undefined;
+  if (value === null) return null;
   if (typeof value === 'object' && !Array.isArray(value)) return value;
   if (typeof value !== 'string') return value;
 

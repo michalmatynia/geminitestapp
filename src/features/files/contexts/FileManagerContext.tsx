@@ -8,6 +8,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type {
   FileManagerActions,

@@ -17,7 +17,7 @@ import {
   type AmazonSelectorRegistrySeedEntry,
   type AmazonSelectorRuntime,
 } from '@/shared/lib/browser-execution/selectors/amazon';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 const COLLECTION_NAME = 'integration_amazon_selector_registry';
 const DEFAULT_SELECTOR_PROFILE = AMAZON_SELECTOR_REGISTRY_PROFILE;

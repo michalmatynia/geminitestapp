@@ -12,7 +12,7 @@ import type {
 } from '@/shared/contracts/integrations/selector-registry';
 import { buildSelectorRegistryProbeSessionClusters } from '@/shared/lib/browser-execution/selector-registry-probe-session-clustering';
 import { buildSelectorRegistryProbeTemplateFingerprint } from '@/shared/lib/browser-execution/selector-registry-probe-template';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 const COLLECTION_NAME = 'integration_selector_registry_probe_sessions';
 

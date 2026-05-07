@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { ObjectId, type UpdateFilter } from 'mongodb';
 import { z } from 'zod';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 

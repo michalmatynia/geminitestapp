@@ -86,6 +86,13 @@ const FastCometConfigFields = ({
       placeholder='https://files.example.com/api/uploads/delete'
     />
     <ConfigField
+      label='DNS override IP'
+      value={config.resolveIp ?? ''}
+      onChange={(val) => setConfig((p) => ({ ...p, resolveIp: val as string }))}
+      hint='Optional temporary IP override used while the public domain is not resolving.'
+      placeholder='209.42.31.54'
+    />
+    <ConfigField
       label='Bearer token'
       type='password'
       value={config.authToken ?? ''}

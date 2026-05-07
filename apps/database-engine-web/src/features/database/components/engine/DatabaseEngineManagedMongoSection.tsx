@@ -223,6 +223,7 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
     isBackingUpManagedMongo ||
     !operationControls.allowManualBackupRunNow ||
     !managedMongoDatabases.canBackupAllLocal;
+  const backupStorageDisabled = !managedMongoDatabases.backupStorage.canWriteBackups;
   const syncDisabled =
     isSyncingManagedMongo ||
     !operationControls.allowManualFullSync ||
@@ -239,6 +240,10 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div className='space-y-1 text-xs text-gray-300'>
               <p>Backup root: {managedMongoDatabases.backupRoot}</p>
+              <p>
+                Backup free: {formatBytes(managedMongoDatabases.backupStorage.availableBytes)} /
+                required {formatBytes(managedMongoDatabases.backupStorage.requiredFreeBytes)}
+              </p>
               <p>Last checked: {managedMongoDatabases.timestamp}</p>
             </div>
             <div className='flex flex-wrap gap-2'>
@@ -296,7 +301,11 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
           <ManagedDatabaseCard
             key={database.application}
             database={database}
-            backupDisabled={isBackingUpManagedMongo || !operationControls.allowManualBackupRunNow}
+            backupDisabled={
+              isBackingUpManagedMongo ||
+              !operationControls.allowManualBackupRunNow ||
+              backupStorageDisabled
+            }
             syncDisabled={isSyncingManagedMongo || !operationControls.allowManualFullSync}
           />
         ))}

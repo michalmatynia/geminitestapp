@@ -77,4 +77,8 @@ export async function getIntegrationsWithConnections(): Promise<IntegrationWithC
   );
 }
 
-export { getMongoIntegrationRepository } from '@/shared/lib/integration-repository';
+export {
+  getMainMongoIntegrationRepository,
+  getMongoIntegrationRepository,
+  getProductsMongoIntegrationRepository,
+} from '@/shared/lib/integration-repository';

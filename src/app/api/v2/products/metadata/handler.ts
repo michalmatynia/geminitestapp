@@ -15,7 +15,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import type {
   MongoCurrencyDoc,
   MongoPriceGroupDoc,

@@ -18,7 +18,7 @@ const templateDraft = {
   name: 'BattleStock pendant template',
   draftKind: 'scrape_template',
   scrapeProfileId: BATTLESTOCK_PROFILE_ID,
-  name_en: '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
+  name_en: '[name(TitleCase)] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
   name_pl: '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
   supplierName: 'BattleStock',
   supplierLink: '[sourceUrl]',
@@ -82,7 +82,7 @@ const mappedTemplateDraft = {
 };
 
 const expectedTemplateCreatePayload = {
-  name_en: '40k spiritseer | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
+  name_en: '40K Spiritseer | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
   name_pl: '40k spiritseer | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
   supplierLink: BATTLESTOCK_SOURCE_URL,
   priceComment: 'Scraped 60 PLN',

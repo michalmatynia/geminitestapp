@@ -30,4 +30,5 @@ export type FastCometStorageConfig = {
   authToken: string | null;
   keepLocalCopy: boolean;
   timeoutMs: number;
+  resolveIp?: string | null;
 };

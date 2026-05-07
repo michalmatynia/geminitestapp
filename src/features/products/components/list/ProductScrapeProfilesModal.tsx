@@ -18,6 +18,19 @@ export function ProductScrapeProfilesModal(
 ): React.JSX.Element {
   const { isOpen, onClose } = props;
   const controller = useProductScrapeProfilesController(isOpen);
+  const runProfileAction = (
+    <Button
+      type='button'
+      size='sm'
+      onClick={controller.onRun}
+      disabled={!controller.canRun}
+      loading={controller.isBusy}
+      loadingText='Running...'
+    >
+      <Play className='size-4' aria-hidden='true' />
+      Run Profile
+    </Button>
+  );
 
   return (
     <AppModal
@@ -27,23 +40,7 @@ export function ProductScrapeProfilesModal(
       subtitle='BattleStock product import'
       size='lg'
       lockClose={controller.isBusy}
-      footer={
-        <>
-          <Button type='button' variant='outline' onClick={onClose} disabled={controller.isBusy}>
-            Close
-          </Button>
-          <Button
-            type='button'
-            onClick={controller.onRun}
-            disabled={!controller.canRun}
-            loading={controller.isBusy}
-            loadingText='Running...'
-          >
-            <Play className='size-4' aria-hidden='true' />
-            Run Profile
-          </Button>
-        </>
-      }
+      headerActions={runProfileAction}
     >
       <ProductScrapeProfilesBody
         dryRun={controller.dryRun}

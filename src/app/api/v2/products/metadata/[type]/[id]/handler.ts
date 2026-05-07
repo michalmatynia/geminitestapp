@@ -11,7 +11,7 @@ import { PRICE_GROUP_SOURCE_PRICE_FIELD } from '@/shared/contracts/products/cata
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import type {
   MongoCurrencyDoc,
   MongoPriceGroupDoc,

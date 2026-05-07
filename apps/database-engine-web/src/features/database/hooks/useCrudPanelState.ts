@@ -68,7 +68,7 @@ export function useCrudPanelState(props: {
 }): UseCrudPanelStateReturn {
   const dbKeys = QUERY_KEYS.system.databases;
   const { dbType: contextDbType, application, source } = useDatabaseConfig();
-  const { tableDetails: contextTableDetails } = useDatabaseData();
+  const { tableDetails: contextTableDetails, refresh: refreshDatabasePreview } = useDatabaseData();
   const dbType = props.dbType ?? contextDbType;
   const tableDetails = props.tableDetails ?? contextTableDetails;
 
@@ -101,6 +101,9 @@ export function useCrudPanelState(props: {
         collection: selectedTable,
         operation: 'find',
         filter: {},
+        skip: (page - 1) * pageSize,
+        limit: pageSize,
+        sort: { _id: 1 },
       });
 
       if (mongoResult.error) throw new ApiError(mongoResult.error, 400);
@@ -125,12 +128,14 @@ export function useCrudPanelState(props: {
     mutations.setMutationError(null);
     mutations.setSuccessMessage(null);
     void rowsQuery.refetch();
-  }, [rowsQuery, selectedTable, mutations]);
+    refreshDatabasePreview();
+  }, [refreshDatabasePreview, rowsQuery, selectedTable, mutations]);
 
   const handleAdd = (data: Record<string, unknown>) => {
     mutations.handleAdd(selectedTable, data, () => {
       setShowAddModal(false);
       void rowsQuery.refetch();
+      refreshDatabasePreview();
     });
   };
 
@@ -139,6 +144,7 @@ export function useCrudPanelState(props: {
     mutations.handleEdit(selectedTable, editingRow, data, () => {
       setEditingRow(null);
       void rowsQuery.refetch();
+      refreshDatabasePreview();
     });
   };
 
@@ -147,6 +153,7 @@ export function useCrudPanelState(props: {
     mutations.handleDelete(selectedTable, deletingRow, () => {
       setDeletingRow(null);
       void rowsQuery.refetch();
+      refreshDatabasePreview();
     });
   };
 

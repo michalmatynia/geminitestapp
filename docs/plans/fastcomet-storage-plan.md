@@ -84,7 +84,7 @@ Added optional env vars in `.env.example`:
 ### 7. Operational scripts
 
 - Configure storage settings:
-  - `npm run storage:configure:fastcomet -- --source=fastcomet --upload-endpoint=https://qubrick.io/api/uploads/index.php --base-url=https://qubrick.io --delete-endpoint=https://qubrick.io/api/uploads/delete/index.php --auth-token=... --keep-local-copy=true --timeout-ms=20000`
+  - `npm run storage:configure:fastcomet -- --source=fastcomet --upload-endpoint=https://sparksofsindri.com/api/uploads/index.php --base-url=https://sparksofsindri.com --delete-endpoint=https://sparksofsindri.com/api/uploads/delete/index.php --auth-token=... --keep-local-copy=true --timeout-ms=20000`
 - Dry run migration:
   - `npm run storage:migrate:fastcomet`
 - Apply migration and switch source:
@@ -106,9 +106,9 @@ Added optional env vars in `.env.example`:
 Copy the scaffold's `public_html/` contents into FastComet `public_html/`.
 Do not use `public_ftp` for the public file host.
 For this FastComet account, support confirmed `s13612.fra1.stableserver.net`
-(`209.42.31.54`) and public file URLs under `qubrick.io`.
-DNS must point `qubrick.io` at `209.42.31.54`; the server hostname itself does
-not serve the `qubrick.io` public web root as the upload endpoint.
+(`209.42.31.54`) and public file URLs under `sparksofsindri.com`.
+DNS must point `sparksofsindri.com` at `209.42.31.54`; the server hostname itself does
+not serve the `sparksofsindri.com` public web root as the upload endpoint.
 
 ### 9. Ecommerce consumption
 

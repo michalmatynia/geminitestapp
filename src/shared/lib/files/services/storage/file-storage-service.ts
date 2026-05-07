@@ -9,12 +9,15 @@ import {
   fileStorageSourceValues,
 } from '@/shared/lib/files/constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import {
+  deleteFromFastComet,
+  isHttpFilepath as isFastCometHttpFilepath,
+  resolveFastCometConfig,
+  toAbsoluteUrl as toFastCometAbsoluteUrl,
+  uploadToFastComet,
+} from './fastcomet-storage-client';
 
 const SETTINGS_COLLECTION = 'settings';
-const DEFAULT_TIMEOUT_MS = 20_000;
-const MIN_TIMEOUT_MS = 1_000;
-const MAX_TIMEOUT_MS = 120_000;
 const CACHE_TTL_MS = 5_000;
 
 type FileStorageSettings = {
@@ -29,58 +32,21 @@ type CacheState = {
 
 let settingsCache: CacheState | null = null;
 
+export const isHttpFilepath = isFastCometHttpFilepath;
+export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
 const normalizeString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
-
-const normalizeNullableString = (value: unknown): string | null => {
-  const trimmed = normalizeString(value);
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const clampTimeout = (value: unknown): number => {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return DEFAULT_TIMEOUT_MS;
-  const int = Math.floor(parsed);
-  return Math.min(Math.max(int, MIN_TIMEOUT_MS), MAX_TIMEOUT_MS);
-};
-
-const normalizeUrl = (value: unknown): string => {
-  const trimmed = normalizeString(value);
-  if (!trimmed) return '';
-  try {
-    const url = new URL(trimmed);
-    return url.toString().replace(/\/$/, '');
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return '';
-  }
-};
-
-const normalizeOptionalUrl = (value: unknown): string | null => {
-  const normalized = normalizeUrl(value);
-  return normalized || null;
-};
-
-const parseBoolean = (value: unknown, fallback: boolean): boolean => {
-  if (typeof value === 'boolean') return value;
-  if (typeof value !== 'string') return fallback;
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) return fallback;
-  if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
-  if (['false', '0', 'no', 'off'].includes(normalized)) return false;
-  return fallback;
-};
 
 const isFileStorageSource = (value: string): value is FileStorageSource =>
   (fileStorageSourceValues as readonly string[]).includes(value);
 
 const parseFileStorageSource = (raw: string | null): FileStorageSource | null => {
   const normalized = normalizeString(raw);
-  if (!normalized) return null;
+  if (normalized.length === 0) return null;
   return isFileStorageSource(normalized) ? normalized : null;
 };
 
 const readMongoSettingValue = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
   try {
     const mongo = await getMongoDb();
     const record = await mongo.collection<MongoStringSettingRecord>(SETTINGS_COLLECTION).findOne({
@@ -95,38 +61,14 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
 
 const readSettingValue = async (key: string): Promise<string | null> => readMongoSettingValue(key);
 
-const resolveFastCometConfig = (raw: string | null): FastCometStorageConfig => {
-  const stored = parseJsonSetting<Partial<FastCometStorageConfig> | null>(raw, null) ?? {};
-
-  return {
-    baseUrl: normalizeUrl(stored.baseUrl ?? process.env['FASTCOMET_STORAGE_BASE_URL']),
-    uploadEndpoint: normalizeUrl(
-      stored.uploadEndpoint ?? process.env['FASTCOMET_STORAGE_UPLOAD_URL']
-    ),
-    deleteEndpoint: normalizeOptionalUrl(
-      stored.deleteEndpoint ?? process.env['FASTCOMET_STORAGE_DELETE_URL']
-    ),
-    authToken: normalizeNullableString(
-      stored.authToken ?? process.env['FASTCOMET_STORAGE_AUTH_TOKEN']
-    ),
-    keepLocalCopy: parseBoolean(
-      stored.keepLocalCopy ?? process.env['FASTCOMET_STORAGE_KEEP_LOCAL_COPY'],
-      true
-    ),
-    timeoutMs: clampTimeout(stored.timeoutMs ?? process.env['FASTCOMET_STORAGE_TIMEOUT_MS']),
-  };
-};
-
-export const isHttpFilepath = (filepath: string): boolean => /^https?:\/\//i.test(filepath.trim());
-
 export const getPublicPathFromStoredPath = (filepath: string): string | null => {
   const trimmed = filepath.trim();
-  if (!trimmed) return null;
+  if (trimmed.length === 0) return null;
 
   if (isHttpFilepath(trimmed)) {
     try {
       const url = new URL(trimmed);
-      const pathname = decodeURIComponent(url.pathname || '/').trim();
+      const pathname = decodeURIComponent(url.pathname.length > 0 ? url.pathname : '/').trim();
       return pathname.startsWith('/') ? pathname : `/${pathname}`;
     } catch (error) {
       void ErrorSystem.captureException(error);
@@ -139,162 +81,9 @@ export const getPublicPathFromStoredPath = (filepath: string): string | null => 
 };
 
 export const resolveAppBaseUrl = (): string =>
-  process.env['NEXT_PUBLIC_APP_URL']?.trim() ||
-  process.env['NEXTAUTH_URL']?.trim() ||
+  process.env['NEXT_PUBLIC_APP_URL']?.trim() ??
+  process.env['NEXTAUTH_URL']?.trim() ??
   'http://localhost:3000';
-
-export const toAbsoluteUrl = (value: string, baseUrl: string): string => {
-  if (isHttpFilepath(value)) return value;
-  if (!baseUrl) return value;
-  try {
-    return new URL(value.startsWith('/') ? value : `/${value}`, `${baseUrl}/`).toString();
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return value;
-  }
-};
-
-const withTimeout = async <T>(
-  timeoutMs: number,
-  task: (signal: AbortSignal) => Promise<T>
-): Promise<T> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-  }, timeoutMs);
-
-  try {
-    return await task(controller.signal);
-  } finally {
-    clearTimeout(timeoutId);
-  }
-};
-
-const resolveUploadResponsePath = (
-  responseBody: unknown,
-  fastComet: FastCometStorageConfig,
-  publicPath: string
-): string => {
-  if (responseBody && typeof responseBody === 'object') {
-    const payload = responseBody as Record<string, unknown>;
-    const candidates = [
-      payload['url'],
-      payload['publicUrl'],
-      payload['filepath'],
-      payload['fileUrl'],
-      payload['path'],
-      payload['location'],
-    ];
-
-    for (const candidate of candidates) {
-      if (typeof candidate === 'string' && candidate.trim().length > 0) {
-        return toAbsoluteUrl(candidate.trim(), fastComet.baseUrl);
-      }
-    }
-  }
-
-  if (fastComet.baseUrl) {
-    return toAbsoluteUrl(publicPath, fastComet.baseUrl);
-  }
-
-  throw new Error(
-    'FastComet upload succeeded but no file URL was returned. Provide baseUrl or return url/filepath in the response.'
-  );
-};
-
-const uploadToFastComet = async (params: {
-  buffer: Buffer;
-  filename: string;
-  mimetype: string;
-  publicPath: string;
-  category: string | null;
-  projectId: string | null;
-  folder: string | null;
-  fastComet: FastCometStorageConfig;
-}): Promise<string> => {
-  const { fastComet } = params;
-  if (!fastComet.uploadEndpoint) {
-    throw new Error(
-      'FastComet storage is enabled but uploadEndpoint is empty. Configure fastcomet_storage_config_v1.'
-    );
-  }
-
-  const form = new FormData();
-  form.append(
-    'file',
-    new Blob([new Uint8Array(params.buffer)], {
-      type: params.mimetype || 'application/octet-stream',
-    }),
-    params.filename
-  );
-  form.append('filename', params.filename);
-  form.append('publicPath', params.publicPath);
-  if (params.category) form.append('category', params.category);
-  if (params.projectId) form.append('projectId', params.projectId);
-  if (params.folder) form.append('folder', params.folder);
-
-  const headers = new Headers();
-  if (fastComet.authToken) {
-    headers.set('Authorization', `Bearer ${fastComet.authToken}`);
-  }
-
-  const response = await withTimeout(fastComet.timeoutMs, async (signal: AbortSignal) =>
-    fetch(fastComet.uploadEndpoint, {
-      method: 'POST',
-      headers,
-      body: form,
-      signal,
-      cache: 'no-store',
-    })
-  );
-
-  if (!response.ok) {
-    const bodyText = await response.text().catch(() => '');
-    throw new Error(
-      `FastComet upload failed (${response.status}). ${bodyText.slice(0, 200)}`.trim()
-    );
-  }
-
-  const responseBody: unknown = await response.json().catch(() => null);
-
-  return resolveUploadResponsePath(responseBody, fastComet, params.publicPath);
-};
-
-const deleteFromFastComet = async (params: {
-  filepath: string;
-  publicPath: string | null;
-  fastComet: FastCometStorageConfig;
-}): Promise<void> => {
-  const endpoint = params.fastComet.deleteEndpoint;
-  if (!endpoint) return;
-
-  const headers = new Headers({
-    'Content-Type': 'application/json',
-  });
-  if (params.fastComet.authToken) {
-    headers.set('Authorization', `Bearer ${params.fastComet.authToken}`);
-  }
-
-  const response = await withTimeout(params.fastComet.timeoutMs, async (signal: AbortSignal) =>
-    fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        filepath: params.filepath,
-        publicPath: params.publicPath,
-      }),
-      signal,
-      cache: 'no-store',
-    })
-  );
-
-  if (!response.ok) {
-    const bodyText = await response.text().catch(() => '');
-    throw new Error(
-      `FastComet delete failed (${response.status}). ${bodyText.slice(0, 200)}`.trim()
-    );
-  }
-};
 
 const readFileStorageSettings = async (): Promise<FileStorageSettings> => {
   const sourceRaw = await readSettingValue(FILE_STORAGE_SOURCE_SETTING_KEY);
@@ -316,16 +105,18 @@ export const getFileStorageSettings = async (options?: {
   force?: boolean;
 }): Promise<FileStorageSettings> => {
   const now = Date.now();
-  if (!options?.force && settingsCache && settingsCache.expiresAt > now) {
-    return settingsCache.value;
+  const cached = settingsCache;
+  if (options?.force !== true && cached !== null && cached.expiresAt > now) {
+    return cached.value;
   }
 
-  const settings = await readFileStorageSettings();
-  settingsCache = {
-    value: settings,
-    expiresAt: now + CACHE_TTL_MS,
-  };
-  return settings;
+  return readFileStorageSettings().then((settings) => {
+    settingsCache = {
+      value: settings,
+      expiresAt: Date.now() + CACHE_TTL_MS,
+    };
+    return settings;
+  });
 };
 
 export const invalidateFileStorageSettingsCache = (): void => {

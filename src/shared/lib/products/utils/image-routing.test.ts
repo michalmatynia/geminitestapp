@@ -14,6 +14,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
 
 import {
   normalizeProductImageExternalBaseUrl,
+  resolveProductImageServingMode,
   resolveProductImageUrl,
 } from './image-routing';
 
@@ -26,6 +27,9 @@ describe('products image-routing utils', () => {
     expect(normalizeProductImageExternalBaseUrl(' example.com/// ')).toBe('http://example.com');
     expect(normalizeProductImageExternalBaseUrl('https://cdn.example.com/base///')).toBe(
       'https://cdn.example.com/base'
+    );
+    expect(normalizeProductImageExternalBaseUrl('https://qubrick.io')).toBe(
+      'https://sparksofsindri.com'
     );
     expect(normalizeProductImageExternalBaseUrl('')).toBe('');
     expect(normalizeProductImageExternalBaseUrl('http:// bad host///')).toBe('http:// bad host');
@@ -53,6 +57,20 @@ describe('products image-routing utils', () => {
     ).toBe('https://cdn.example.com/assets/uploads/image.png?size=lg#preview');
     expect(resolveProductImageUrl('https://images.example.com/remote.png', 'https://cdn.example.com'))
       .toBe('https://images.example.com/remote.png');
+    expect(
+      resolveProductImageUrl(
+        'https://qubrick.io/uploads/products/SKU_123/stored.png',
+        'https://sparksofsindri.com'
+      )
+    ).toBe('https://sparksofsindri.com/uploads/products/SKU_123/stored.png');
+    expect(
+      resolveProductImageUrl(
+        'https://sparksofsindri.com/uploads/products/SKU_123/stored.png',
+        'http://localhost:3000'
+      )
+    ).toBe('/uploads/products/SKU_123/stored.png');
+    expect(resolveProductImageServingMode('http://localhost:3000')).toBe('local');
+    expect(resolveProductImageServingMode('https://sparksofsindri.com')).toBe('fastcomet');
   });
 
   it('normalizes relative paths and falls back safely when parsing absolute urls fails', () => {

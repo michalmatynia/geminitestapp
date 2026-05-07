@@ -19,6 +19,9 @@ export const executeSqlQuery = async (input: {
   document?: Record<string, unknown>;
   update?: Record<string, unknown>;
   pipeline?: Record<string, unknown>[];
+  skip?: number;
+  limit?: number;
+  sort?: Record<string, 1 | -1>;
 }): Promise<SqlQueryResult> => api.post<SqlQueryResult>('/api/databases/execute', input);
 
 export const executeCrudOperation = async (input: CrudRequest): Promise<CrudResult> =>

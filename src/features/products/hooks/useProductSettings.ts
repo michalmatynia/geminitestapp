@@ -18,7 +18,7 @@ import {
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 export type ProductSettingsSnapshot = {
-  /** External image server base URL (never null; defaults to localhost:3000) */
+  /** External image server base URL (never null; defaults to the FastComet file host) */
   imageExternalBaseUrl: string;
   /** Persisted image route JSON string, null when not yet configured */
   imageExternalRoutesRaw: string | null;

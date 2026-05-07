@@ -8,6 +8,13 @@ const mocks = vi.hoisted(() => ({
   getManagedMongoDatabasesStatus: vi.fn(async () => ({
     timestamp: '2026-05-07T12:00:00.000Z',
     backupRoot: '/tmp/database/mongo-backups',
+    backupStorage: {
+      root: '/tmp/database/mongo-backups',
+      availableBytes: 10 * 1024 * 1024 * 1024,
+      requiredFreeBytes: 2 * 1024 * 1024 * 1024,
+      canWriteBackups: true,
+      statusError: null,
+    },
     databases: [],
     canBackupAllLocal: true,
     canPushAllToCloud: true,

@@ -25,6 +25,7 @@ export interface ProductNoteState {
   draftNoteText: string;
   hasDraftChanges: boolean;
   isSavingNote: boolean;
+  markNoteDeleted: () => void;
   noteColor: string;
   noteModalOpen: boolean;
   resolvedNote: ResolvedProductNote | null;
@@ -102,8 +103,7 @@ function applyProductNoteSaveSuccess({
 }: ProductNoteSaveSuccessOptions): void {
   saveOptions.syncSavedProduct(savedProduct, noteUpdate.nextNotes);
   if (noteUpdate.hasText === false) {
-    saveOptions.setDraftNoteColor(DEFAULT_NOTE_COLOR);
-    saveOptions.setDraftNoteText('');
+    saveOptions.markNoteDeleted();
   }
   saveOptions.toast(noteUpdate.toastMessage, { variant: 'success' });
   if (shouldCloseNoteModalAfterSave(closeAfter, noteUpdate.hasText)) {

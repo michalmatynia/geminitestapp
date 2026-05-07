@@ -9,7 +9,7 @@ import {
   normalizeParameterLinkEntries,
 } from '@/features/integrations/services/imports/parameter-import/link-map-preference';
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 import type { Filter } from 'mongodb';
 

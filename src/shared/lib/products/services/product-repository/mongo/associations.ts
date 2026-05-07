@@ -2,7 +2,7 @@ import { type Collection, type Document, type AnyBulkWriteOperation, type Update
 
 import type { ImageFile } from '@/shared/contracts/files';
 import { type ProductImageRecord } from '@/shared/contracts/products/product';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file-service';
 import { mongoCatalogRepository } from '@/shared/lib/products/services/catalog-repository/mongo-catalog-repository';
 

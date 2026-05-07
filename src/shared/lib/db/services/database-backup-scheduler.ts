@@ -151,54 +151,38 @@ const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Pr
   }
 
   invalidateDatabaseEnginePolicyCache();
-  };
+};
 
-  const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise<string> => {
+const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise<string> => {
   const job = await enqueueProductAiJob('system', 'db_backup', {
     dbType,
     entityType: 'system',
     source: 'database_backup_scheduler',
   });
+  const runtimeType = job.jobType ?? job.type ?? 'db_backup';
+  const runtimeJob = {
+    jobId: job.id,
+    productId: job.productId,
+    type: runtimeType,
+    payload: job.payload,
+  };
+
+  const queue = getRegisteredQueue('product-ai');
+  if (!queue) {
+    await ErrorSystem.logWarning(
+      '[database-backup-scheduler] product-ai queue not found in registry',
+      {
+        service: LOG_SOURCE,
+        jobId: job.id,
+      }
+    );
+    throw configurationError('Product AI Redis runtime queue is not registered.');
+  }
+
+  queue.startWorker();
 
   try {
-    const queue = getRegisteredQueue('product-ai');
-    if (queue) {
-      queue.startWorker();
-      const runtimeType = job.jobType ?? job.type ?? 'db_backup';
-      void queue
-        .enqueue({ jobId: job.id, productId: job.productId, type: runtimeType, payload: job.payload })
-        .catch((error: unknown) => {
-          void ErrorSystem.captureException(error, {
-            service: LOG_SOURCE,
-            context: {
-              dbType,
-              jobId: job.id,
-              action: 'enqueueScheduledBackupRuntimeQueue',
-            },
-          });
-          void queue.processInline({ jobId: job.id, productId: job.productId, type: runtimeType, payload: job.payload }).catch((inlineError: unknown) => {
-            void ErrorSystem.captureException(inlineError, {
-              service: LOG_SOURCE,
-              context: {
-                dbType,
-                jobId: job.id,
-                action: 'processScheduledBackupInlineFallback',
-              },
-            });
-          });
-        });
-    } else {
-      void ErrorSystem.logWarning(
-        '[database-backup-scheduler] product-ai queue not found in registry, falling back to inline processing',
-        {
-          service: LOG_SOURCE,
-          jobId: job.id,
-        }
-      );
-      // Fallback to manual inline processing if queue is not registered yet
-      // This is a safety measure if tick happens before registry is fully hydrated
-      // though usually instrumentation ensures hydration.
-    }
+    await queue.enqueue(runtimeJob);
   } catch (error: unknown) {
     void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
@@ -206,9 +190,11 @@ const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Pr
       context: {
         dbType,
         jobId: job.id,
-        action: 'importProductAiQueue',
+        action: 'enqueueScheduledBackupRuntimeQueue',
       },
     });
+
+    await queue.processInline(runtimeJob);
   }
 
   return job.id;

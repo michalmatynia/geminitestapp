@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangleIcon, DatabaseIcon } from 'lucide-react';
+import Link from 'next/link';
 import type { JSX } from 'react';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type {
@@ -9,7 +10,7 @@ import type {
   MongoSource,
 } from '@/shared/contracts/database';
 import { AdminDatabaseBreadcrumbs } from '@/shared/ui/admin.public';
-import { Alert, Badge } from '@/shared/ui/primitives.public';
+import { Alert, Badge, Button } from '@/shared/ui/primitives.public';
 import { ListPanel } from '@/shared/ui/navigation-and-layout.public';
 import { SimpleSettingsList } from '@/shared/ui/templates.public';
 import {
@@ -25,6 +26,19 @@ const DATABASE_OPTIONS: Array<LabeledOptionWithDescriptionDto<DatabaseType>> = [
     description: 'Use the command console for MongoDB-backed operations.',
   },
 ];
+
+const MANAGED_LOCAL_DATABASE_OPTIONS: Array<{
+  application: DatabaseEngineManagedMongoApplication;
+  label: string;
+}> = [
+  { application: 'geminitestapp', label: 'GeminiTest App' },
+  { application: 'studiq', label: 'StudiQ' },
+  { application: 'cms-builder', label: 'CMS Builder' },
+  { application: 'products', label: 'Products' },
+];
+
+const buildCrudHref = (application: DatabaseEngineManagedMongoApplication): string =>
+  `/admin/databases/engine?view=crud&application=${encodeURIComponent(application)}&source=local`;
 
 function DatabaseOperationsPanelContent({
   defaultTab,
@@ -77,23 +91,37 @@ function DatabaseOperationsPanelContent({
         ) : null
       }
       filters={
-        <SimpleSettingsList
-          items={DATABASE_OPTIONS.map((option) => ({
-            id: option.value,
-            title: option.label,
-            description: option.description,
-            icon: (
-              <div className='rounded-md border border-emerald-400/40 bg-emerald-500/20 p-2'>
-                <DatabaseIcon className='size-4 text-emerald-200' />
-              </div>
-            ),
-            original: option,
-          }))}
-          selectedId={dbType}
-          onSelect={(item) => setDbType(item.original.value)}
-          columns={2}
-          padding='md'
-        />
+        <div className='space-y-3'>
+          <SimpleSettingsList
+            items={DATABASE_OPTIONS.map((option) => ({
+              id: option.value,
+              title: option.label,
+              description: option.description,
+              icon: (
+                <div className='rounded-md border border-emerald-400/40 bg-emerald-500/20 p-2'>
+                  <DatabaseIcon className='size-4 text-emerald-200' />
+                </div>
+              ),
+              original: option,
+            }))}
+            selectedId={dbType}
+            onSelect={(item) => setDbType(item.original.value)}
+            columns={2}
+            padding='md'
+          />
+          <div className='flex flex-wrap gap-2'>
+            {MANAGED_LOCAL_DATABASE_OPTIONS.map((option) => (
+              <Button
+                key={option.application}
+                asChild
+                variant={application === option.application ? 'secondary' : 'outline'}
+                size='xs'
+              >
+                <Link href={buildCrudHref(option.application)}>{option.label}</Link>
+              </Button>
+            ))}
+          </div>
+        </div>
       }
     >
       <DatabaseOperationsTabs defaultTab={defaultTab} />

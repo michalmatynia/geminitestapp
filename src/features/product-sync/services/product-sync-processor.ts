@@ -49,7 +49,7 @@ import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductParameterValue, ProductWithImages } from '@/shared/contracts/products/product';
 import type { UpdateProductInput } from '@/shared/contracts/products/io';
 import type { MongoPriceGroupDoc } from '@/shared/lib/db/services/database-sync-types';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { normalizeParameterValuesByLanguage } from '@/shared/lib/products/utils/parameter-values';

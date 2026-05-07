@@ -13,7 +13,7 @@ import type { ProductListingRepository } from '@/shared/contracts/integrations/r
 import type { ProductRepository } from '@/shared/contracts/products/drafts';
 import type { ProductRecord } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

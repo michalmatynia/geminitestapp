@@ -2656,7 +2656,7 @@ export function AdminCmsEditor(): JSX.Element {
       )}
 
       {message && (
-        <div className="type-label" style={{ color: 'var(--cyan-teal)', marginTop: '1rem' }}>{message}</div>
+        <div className="type-label" style={{ color: 'var(--accent)', marginTop: '1rem' }}>{message}</div>
       )}
       {error && (
         <div className="type-label" style={{ color: 'var(--coral-red)', marginTop: '1rem', lineHeight: 1.6 }}>{error}</div>

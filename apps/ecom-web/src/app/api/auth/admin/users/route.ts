@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { getDb } from '@/lib/mongodb';
+import { getEcomAuthDb } from '@/lib/mongodb';
 
 export async function GET(): Promise<NextResponse> {
   const session = await getSession();
@@ -8,8 +8,8 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const db = await getDb();
-  const users = db.collection('users');
+  const db = await getEcomAuthDb();
+  const users = db.collection('ecom_users');
 
   const docs = await users
     .find({}, { projection: { _id: 1, email: 1, name: 1, createdAt: 1 } })

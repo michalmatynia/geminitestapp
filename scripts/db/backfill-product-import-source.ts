@@ -7,7 +7,7 @@ import {
   listBaseImportRunItems,
   listBaseImportRuns,
 } from '@/features/integrations/services/imports/base-import-run-repository';
-import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoClient, getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 import { buildProductImportSourceBackfillPlan } from './lib/product-import-source-backfill';
 

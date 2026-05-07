@@ -71,9 +71,9 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
           <span
             className="type-label px-2 py-1 inline-block"
             style={{
-              background: product.tag === 'New' ? 'rgba(171,217,208,0.15)' : 'rgba(210,116,102,0.15)',
-              color: product.tag === 'New' ? 'var(--cyan-teal)' : 'var(--coral-red)',
-              border: `1px solid ${product.tag === 'New' ? 'rgba(171,217,208,0.4)' : 'rgba(210,116,102,0.4)'}`,
+              background: product.tag === 'New' ? 'rgba(var(--accent-rgb),0.15)' : 'rgba(var(--coral-rgb),0.15)',
+              color: product.tag === 'New' ? 'var(--accent)' : 'var(--coral-red)',
+              border: `1px solid ${product.tag === 'New' ? 'rgba(var(--accent-rgb),0.4)' : 'rgba(var(--coral-rgb),0.4)'}`,
             }}
           >
             {product.tag}
@@ -84,10 +84,10 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
       {/* Static info bar */}
       <div
         className="absolute bottom-0 left-0 right-0 px-4 py-3 flex justify-between items-end z-10"
-        style={{ background: 'linear-gradient(to top, rgba(1,0,13,0.85) 0%, transparent 100%)' }}
+        style={{ background: 'var(--media-overlay)' }}
       >
         <div className="flex-1 min-w-0 pr-2">
-          <div className="type-label mb-0.5 truncate" style={{ color: 'rgba(171,217,208,0.55)' }}>
+          <div className="type-label mb-0.5 truncate" style={{ color: 'var(--on-media-muted)' }}>
             {product.category}
           </div>
           <div
@@ -96,7 +96,7 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
               fontFamily: 'var(--font-display)',
               fontSize: '0.95rem',
               fontWeight: 600,
-              color: 'var(--cream-highlight)',
+              color: 'var(--on-media)',
               lineHeight: 1.1,
             }}
           >
@@ -105,7 +105,7 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
         </div>
         <span
           className="type-price flex-shrink-0"
-          style={{ color: 'var(--soft-gold)', textShadow: '0 0 10px rgba(250,229,163,0.35)' }}
+          style={{ color: 'var(--soft-gold)', textShadow: '0 0 10px rgba(var(--gold-rgb),0.35)' }}
         >
           {product.priceDisplay}
         </span>
@@ -123,7 +123,7 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
           </button>
           <button
             className="btn-ghost flex-shrink-0 px-3 py-0"
-            style={{ padding: '0.6rem 0.8rem', borderColor: 'rgba(171,217,208,0.3)', color: 'var(--cyan-teal)', fontSize: '0.6rem' }}
+            style={{ padding: '0.6rem 0.8rem', borderColor: 'rgba(var(--accent-rgb),0.3)', color: 'var(--accent)', fontSize: '0.6rem' }}
             onClick={handleQuickView}
             aria-label="Quick view"
           >
@@ -153,7 +153,7 @@ export function FeaturedProducts({
       {/* Section header */}
       <div className="flex items-end justify-between mb-12">
         <div>
-          <div className="type-label mb-3" style={{ color: 'var(--cyan-teal)' }}>
+          <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
             {isLive ? content.liveEyebrow : content.fallbackEyebrow}
           </div>
           <h2 className="type-display-lg" style={{ color: 'var(--fg)' }}>
@@ -166,10 +166,10 @@ export function FeaturedProducts({
               key={f}
               className="type-label px-4 py-2 transition-all duration-200"
               style={{
-                background: i === 0 ? 'rgba(171,217,208,0.12)' : 'transparent',
-                color: i === 0 ? 'var(--cyan-teal)' : 'var(--muted-teal)',
-                border: `1px solid ${i === 0 ? 'rgba(171,217,208,0.4)' : 'rgba(171,217,208,0.1)'}`,
-                boxShadow: i === 0 ? '0 0 8px rgba(171,217,208,0.12)' : 'none',
+                background: i === 0 ? 'rgba(var(--accent-rgb),0.12)' : 'transparent',
+                color: i === 0 ? 'var(--accent)' : 'var(--muted-teal)',
+                border: `1px solid ${i === 0 ? 'rgba(var(--accent-rgb),0.4)' : 'rgba(var(--accent-rgb),0.1)'}`,
+                boxShadow: i === 0 ? '0 0 8px rgba(var(--accent-rgb),0.12)' : 'none',
               }}
             >
               {f}

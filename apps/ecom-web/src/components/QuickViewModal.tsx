@@ -64,7 +64,7 @@ export function QuickViewModal(): JSX.Element | null {
     <div
       className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-6"
       onClick={close}
-      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'var(--modal-scrim)', backdropFilter: 'blur(8px)' }}
     >
       <div
         className="w-full md:max-w-3xl overflow-hidden flex flex-col md:flex-row"

@@ -17,7 +17,7 @@ import {
   type TraderaSelectorRegistryRuntimeEntry,
   type TraderaSelectorRegistrySeedEntry,
 } from '@/shared/lib/browser-execution/selectors/tradera';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 const COLLECTION_NAME = 'integration_tradera_selector_registry';
 const DEFAULT_SELECTOR_PROFILE = DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile;

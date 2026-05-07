@@ -176,6 +176,33 @@ describe('image-base64', () => {
     expect(mocks.readFile).toHaveBeenNthCalledWith(2, '/disk/uploads/local-link.png');
   });
 
+  it('fetches legacy fastcomet upload URLs from the current domain and falls back to the local mirror', async () => {
+    mocks.fetchWithOutboundUrlPolicy.mockResolvedValueOnce(
+      new Response(Buffer.from('<html></html>'), {
+        status: 200,
+        headers: { 'content-type': 'text/html; charset=UTF-8' },
+      })
+    );
+    mocks.readFile.mockResolvedValueOnce(Buffer.from('mirrored-image'));
+
+    const result = await buildImageBase64Slots({
+      imageBase64s: [],
+      imageLinks: ['https://qubrick.io/uploads/products/SKU_123/stored.png'],
+      images: [],
+    });
+
+    expect(mocks.fetchWithOutboundUrlPolicy).toHaveBeenCalledWith(
+      'https://sparksofsindri.com/uploads/products/SKU_123/stored.png',
+      { method: 'GET', maxRedirects: 3 }
+    );
+    expect(mocks.getDiskPathFromPublicPath).toHaveBeenCalledWith(
+      '/uploads/products/SKU_123/stored.png'
+    );
+    expect(result.imageBase64s[0]).toBe(
+      `data:image/png;base64,${Buffer.from('mirrored-image').toString('base64')}`
+    );
+  });
+
   it('rethrows unexpected remote fetch failures', async () => {
     const fetchError = new Error('upstream unavailable');
     mocks.fetchWithOutboundUrlPolicy.mockRejectedValueOnce(fetchError);

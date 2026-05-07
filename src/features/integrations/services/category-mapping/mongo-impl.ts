@@ -12,7 +12,7 @@ import type { CategoryMappingAssignment } from '@/shared/contracts/integrations/
 import type { CategoryMapping, CategoryMappingWithDetails, CategoryMappingCreateInput, CategoryMappingUpdateInput, ExternalCategory } from '@/shared/contracts/integrations/listings';
 import { type ProductCategory as InternalCategory } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { INTEGRATION_CONNECTION_COLLECTION } from '@/shared/lib/integration-repository/common';
 
 import {

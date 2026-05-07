@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/mongodb';
+import { getEcomAuthDb } from '@/lib/mongodb';
 import {
   verifyPassword,
   createSessionToken,
@@ -22,8 +22,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
 
-  const db = await getDb();
-  const users = db.collection('users');
+  const db = await getEcomAuthDb();
+  const users = db.collection('ecom_users');
 
   const doc = await users.findOne({ email: email.toLowerCase() });
   if (!doc) {

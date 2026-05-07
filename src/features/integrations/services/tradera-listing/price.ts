@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { PriceGroupForCalculation, ProductWithImages } from '@/shared/contracts/products/product';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import type { MongoPriceGroupDoc } from '@/shared/lib/db/services/database-sync-types';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 import { resolveProductPrimaryCatalogId } from '@/shared/lib/products/utils/effective-shipping-group';

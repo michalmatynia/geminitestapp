@@ -139,6 +139,7 @@ describe('Database Engine backup scheduler actions', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
+    expect(startProductAiJobQueue).toHaveBeenCalledTimes(1);
     expect(startDatabaseBackupSchedulerQueue).toHaveBeenCalledTimes(1);
     expect(tickDatabaseBackupScheduler).toHaveBeenCalledTimes(1);
     expect(body.success).toBe(true);

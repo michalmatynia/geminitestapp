@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 type ProductDoc = {
   _id?: unknown;

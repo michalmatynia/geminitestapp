@@ -4,7 +4,7 @@ import { ObjectId, type Filter } from 'mongodb';
 
 import type { ExternalCategory, ExternalCategoryWithChildren, ExternalCategorySyncInput, BaseCategory } from '@/shared/contracts/integrations/listings';
 import type { ExternalCategoryRepository } from '@/shared/contracts/integrations/repositories';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 function buildCategoryPath(categoryId: string, categoriesById: Map<string, BaseCategory>): string {
   const parts: string[] = [];

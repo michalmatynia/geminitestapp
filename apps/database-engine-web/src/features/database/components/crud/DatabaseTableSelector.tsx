@@ -20,7 +20,9 @@ export function DatabaseTableSelector(): React.JSX.Element {
     () =>
       tableDetails.map((table) => ({
         value: table.name,
-        label: `${table.name} (~${table.rowEstimate} rows)`,
+        label: `${table.name} (${table.rowEstimate.toLocaleString()} rows${
+          table.sizeFormatted ? `, ${table.sizeFormatted}` : ''
+        })`,
       })),
     [tableDetails]
   );

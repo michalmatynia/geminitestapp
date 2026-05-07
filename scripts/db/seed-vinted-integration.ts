@@ -1,4 +1,4 @@
-import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoClient, getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { VINTED_INTEGRATION_SLUG } from '@/features/integrations/constants/slugs';
 async function main() {
   try {

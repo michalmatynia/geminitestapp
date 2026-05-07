@@ -31,6 +31,8 @@ type DraftMetadataQueryConfig<T> = {
   tags: string[];
 };
 
+const CATALOG_AGNOSTIC_SCOPE: string[] = [];
+
 const readQueryData = <T,>(queries: readonly UseQueryResult<T[], Error>[]): T[] =>
   queries.flatMap((query: UseQueryResult<T[], Error>): T[] => query.data ?? []);
 
@@ -98,7 +100,7 @@ export const useDraftMetadata = (
     description: 'Loads products metadata tags.',
     tags: ['products', 'metadata', 'tags', 'multi'],
   });
-  const parameterQueries = useDraftMetadataQueries<ProductParameter>(selectedCatalogIds, {
+  const parameterQueries = useDraftMetadataQueries<ProductParameter>(CATALOG_AGNOSTIC_SCOPE, {
     includeGlobalWhenEmpty: true,
     queryKeyFor: QUERY_KEYS.products.metadata.parameters,
     queryFn: getParameters,
@@ -107,15 +109,18 @@ export const useDraftMetadata = (
     description: 'Loads products metadata parameters.',
     tags: ['products', 'metadata', 'parameters', 'multi'],
   });
-  const simpleParameterQueries = useDraftMetadataQueries<ProductSimpleParameter>(selectedCatalogIds, {
-    includeGlobalWhenEmpty: true,
-    queryKeyFor: QUERY_KEYS.products.metadata.simpleParameters,
-    queryFn: listSimpleParameters,
-    source: 'drafter.hooks.useDraftMetadata.simpleParameters',
-    resource: 'products.metadata.simple-parameters',
-    description: 'Loads products metadata simple parameters.',
-    tags: ['products', 'metadata', 'simple-parameters', 'multi'],
-  });
+  const simpleParameterQueries = useDraftMetadataQueries<ProductSimpleParameter>(
+    CATALOG_AGNOSTIC_SCOPE,
+    {
+      includeGlobalWhenEmpty: true,
+      queryKeyFor: QUERY_KEYS.products.metadata.simpleParameters,
+      queryFn: listSimpleParameters,
+      source: 'drafter.hooks.useDraftMetadata.simpleParameters',
+      resource: 'products.metadata.simple-parameters',
+      description: 'Loads products metadata simple parameters.',
+      tags: ['products', 'metadata', 'simple-parameters', 'multi'],
+    }
+  );
 
   return {
     categories: readQueryData(categoryQueries),

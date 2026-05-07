@@ -62,7 +62,7 @@ export const databasePreviewRequestSchema = z.object({
   type: databaseTypeSchema,
   mode: databasePreviewModeSchema,
   backupName: z.string().nullable().optional(),
-  application: z.enum(['geminitestapp', 'studiq', 'cms-builder']).optional(),
+  application: z.enum(['geminitestapp', 'studiq', 'cms-builder', 'products']).optional(),
   source: z.enum(['local', 'cloud']).optional(),
   page: z.number().optional(),
   pageSize: z.number().optional(),
@@ -171,6 +171,7 @@ export const databaseEngineManagedMongoApplicationSchema = z.enum([
   'geminitestapp',
   'studiq',
   'cms-builder',
+  'products',
 ]);
 
 export type DatabaseEngineManagedMongoApplication = z.infer<
@@ -236,9 +237,20 @@ export type DatabaseEngineManagedMongoDatabase = z.infer<
   typeof databaseEngineManagedMongoDatabaseSchema
 >;
 
+export const databaseEngineBackupStorageSchema = z.object({
+  root: z.string(),
+  availableBytes: z.number().nullable(),
+  requiredFreeBytes: z.number(),
+  canWriteBackups: z.boolean(),
+  statusError: z.string().nullable(),
+});
+
+export type DatabaseEngineBackupStorage = z.infer<typeof databaseEngineBackupStorageSchema>;
+
 export const databaseEngineManagedMongoDatabasesResponseSchema = z.object({
   timestamp: z.string(),
   backupRoot: z.string(),
+  backupStorage: databaseEngineBackupStorageSchema,
   databases: z.array(databaseEngineManagedMongoDatabaseSchema),
   canBackupAllLocal: z.boolean(),
   canPushAllToCloud: z.boolean(),

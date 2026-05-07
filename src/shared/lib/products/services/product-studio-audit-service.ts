@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 
 import type { ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio/run';
 import type { ProductStudioExecutionRoute, ProductStudioRunAuditStatus, ProductStudioRunAuditTimings, ProductStudioSequenceGenerationMode, ProductStudioSequencingDiagnosticsScope } from '@/shared/contracts/products/studio';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 import type { Collection } from 'mongodb';
 

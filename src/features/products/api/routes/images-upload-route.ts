@@ -7,6 +7,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { imageOptimizer } from '@/features/products/performance';
 import { withFileUploadSecurity } from '@/features/products/security';
+import { uploadFile } from '@/shared/lib/files/services/image-file-service';
 
 interface UploadedFile {
   file: File;
@@ -14,11 +15,20 @@ interface UploadedFile {
   hash: string;
 }
 
-async function uploadHandler(_req: NextRequest, files: UploadedFile[]): Promise<Response> {
+const getSkuFromRequest = (req: NextRequest): string | null => {
+  const sku = req.nextUrl.searchParams.get('sku') ?? req.nextUrl.searchParams.get('productSku');
+  const normalized = sku?.trim();
+  return normalized !== undefined && normalized.length > 0 ? normalized : null;
+};
+
+export async function uploadProductImages(
+  req: NextRequest,
+  files: UploadedFile[]
+): Promise<Response> {
+  const sku = getSkuFromRequest(req);
   const results = await Promise.all(
     files.map(async ({ file, sanitizedName, hash }) => {
       const buffer = Buffer.from(await file.arrayBuffer());
-
       const optimizedImages = await imageOptimizer.optimize(buffer, {
         formats: ['webp', 'jpeg'],
         sizes: {
@@ -29,16 +39,24 @@ async function uploadHandler(_req: NextRequest, files: UploadedFile[]): Promise<
           original: { width: 2400, quality: 95 },
         },
       });
+      const imageFile = await uploadFile(file, {
+        category: 'products',
+        sku,
+        filenameOverride: sanitizedName,
+      });
 
       return {
-        id: `img_${hash.slice(0, 8)}`,
+        id: imageFile.id,
+        imageFileId: imageFile.id,
         originalName: file.name,
         sanitizedName,
         hash,
         size: file.size,
         mimeType: file.type,
         optimizedVersions: optimizedImages.length,
-        url: `/api/images/${hash.slice(0, 8)}`,
+        url: imageFile.url ?? imageFile.publicUrl ?? imageFile.filepath,
+        filepath: imageFile.filepath,
+        imageFile,
       };
     })
   );
@@ -48,6 +66,10 @@ async function uploadHandler(_req: NextRequest, files: UploadedFile[]): Promise<
     uploaded: results.length,
     files: results,
   });
+}
+
+async function uploadHandler(req: NextRequest, files: UploadedFile[]): Promise<Response> {
+  return uploadProductImages(req, files);
 }
 
 export const ProductsImagesUploadPOST = withFileUploadSecurity(uploadHandler, {

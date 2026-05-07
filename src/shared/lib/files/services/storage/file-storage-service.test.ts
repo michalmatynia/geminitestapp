@@ -47,6 +47,7 @@ const originalEnv = {
   FASTCOMET_STORAGE_AUTH_TOKEN: process.env['FASTCOMET_STORAGE_AUTH_TOKEN'],
   FASTCOMET_STORAGE_KEEP_LOCAL_COPY: process.env['FASTCOMET_STORAGE_KEEP_LOCAL_COPY'],
   FASTCOMET_STORAGE_TIMEOUT_MS: process.env['FASTCOMET_STORAGE_TIMEOUT_MS'],
+  FASTCOMET_STORAGE_RESOLVE_IP: process.env['FASTCOMET_STORAGE_RESOLVE_IP'],
 };
 
 const createSettingsCollection = () => ({
@@ -65,6 +66,7 @@ describe('file-storage-service', () => {
     delete process.env['FASTCOMET_STORAGE_AUTH_TOKEN'];
     delete process.env['FASTCOMET_STORAGE_KEEP_LOCAL_COPY'];
     delete process.env['FASTCOMET_STORAGE_TIMEOUT_MS'];
+    delete process.env['FASTCOMET_STORAGE_RESOLVE_IP'];
     findOneMock.mockResolvedValue(null);
     getMongoDbMock.mockResolvedValue({
       collection: vi.fn(() => createSettingsCollection()),
@@ -108,10 +110,34 @@ describe('file-storage-service', () => {
         authToken: 'token-1',
         keepLocalCopy: false,
         timeoutMs: 120000,
+        resolveIp: null,
       },
     });
     expect(second).toBe(first);
     expect(findOneMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('rewrites legacy fastcomet domains in stored settings to the current primary domain', async () => {
+    findOneMock
+      .mockResolvedValueOnce({ value: ' fastcomet ' })
+      .mockResolvedValueOnce({
+        value: JSON.stringify({
+          baseUrl: 'https://qubrick.io/',
+          uploadEndpoint: 'https://qubrick.io/api/uploads/index.php',
+          deleteEndpoint: 'https://qubrick.io/api/uploads/delete/index.php',
+          timeoutMs: 5000,
+        }),
+      });
+
+    const settings = await getFileStorageSettings();
+
+    expect(settings.fastComet).toEqual(
+      expect.objectContaining({
+        baseUrl: 'https://sparksofsindri.com',
+        uploadEndpoint: 'https://sparksofsindri.com/api/uploads/index.php',
+        deleteEndpoint: 'https://sparksofsindri.com/api/uploads/delete/index.php',
+      })
+    );
   });
 
   it('uploads to local storage when the configured source is local', async () => {
@@ -149,7 +175,7 @@ describe('file-storage-service', () => {
       });
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ filepath: '/remote/image.png' }),
+      text: async () => JSON.stringify({ filepath: '/remote/image.png' }),
     });
     vi.stubGlobal('fetch', fetchMock);
     const writeLocalCopy = vi.fn().mockResolvedValue(undefined);
@@ -174,10 +200,10 @@ describe('file-storage-service', () => {
     });
   });
 
-  it('uses the provided fastcomet config for direct uploads and falls back to baseUrl', async () => {
+  it('uses the provided fastcomet config for direct uploads and falls back to baseUrl from JSON success', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => null,
+      text: async () => JSON.stringify({ ok: true }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -193,10 +219,68 @@ describe('file-storage-service', () => {
         authToken: 'token-1',
         keepLocalCopy: false,
         timeoutMs: 5000,
+        resolveIp: null,
       },
     });
 
     expect(result).toBe('https://files.example.test/uploads/image.png');
+  });
+
+  it('rejects non-JSON fastcomet upload success responses', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => '<!doctype html><title>Wrong app</title>',
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      uploadBufferToFastComet({
+        buffer: Buffer.from('content'),
+        filename: 'image.png',
+        mimetype: 'image/png',
+        publicPath: '/uploads/image.png',
+        fastComet: {
+          baseUrl: 'https://sparksofsindri.com',
+          uploadEndpoint: 'https://sparksofsindri.com/api/uploads/index.php',
+          deleteEndpoint: null,
+          authToken: 'token-1',
+          keepLocalCopy: false,
+          timeoutMs: 5000,
+          resolveIp: null,
+        },
+      })
+    ).rejects.toThrow('FastComet upload returned a non-JSON success response');
+  });
+
+  it('canonicalizes absolute upload responses to the configured fastcomet base url', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          url: 'https://qubrick.io/uploads/products/SKU_123/stored.png?version=1#main',
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await uploadBufferToFastComet({
+      buffer: Buffer.from('content'),
+      filename: 'stored.png',
+      mimetype: 'image/png',
+      publicPath: '/uploads/products/SKU_123/stored.png',
+      fastComet: {
+        baseUrl: 'https://sparksofsindri.com',
+        uploadEndpoint: 'https://sparksofsindri.com/api/uploads/index.php',
+        deleteEndpoint: null,
+        authToken: null,
+        keepLocalCopy: true,
+        timeoutMs: 5000,
+        resolveIp: null,
+      },
+    });
+
+    expect(result).toBe(
+      'https://sparksofsindri.com/uploads/products/SKU_123/stored.png?version=1#main'
+    );
   });
 
   it('derives public paths from stored local and remote filepaths', () => {

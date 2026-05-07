@@ -276,6 +276,9 @@ export function useSqlQueryMutation(): MutationResult<
     document?: Record<string, unknown>;
     update?: Record<string, unknown>;
     pipeline?: Record<string, unknown>[];
+    skip?: number;
+    limit?: number;
+    sort?: Record<string, 1 | -1>;
   }
   > {
   const mutationKey = dbKeys.all;

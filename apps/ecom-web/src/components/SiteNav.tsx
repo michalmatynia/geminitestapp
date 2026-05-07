@@ -9,6 +9,16 @@ import { SearchOverlay } from '@/components/SearchOverlay';
 import { AuthModal } from '@/components/AuthModal';
 
 const BANNER_H = 38;
+const THEME_STORAGE_KEY = 'arcana-theme';
+type StorefrontTheme = 'nightly' | 'daily';
+
+function applyStorefrontTheme(theme: StorefrontTheme): void {
+  const root = document.documentElement;
+  root.classList.toggle('daily', theme === 'daily');
+  root.classList.toggle('nightly', theme === 'nightly');
+  root.classList.toggle('dark', theme === 'nightly');
+  root.dataset.theme = theme;
+}
 
 export function SiteNav() {
   const { nav } = useSiteContent();
@@ -17,9 +27,25 @@ export function SiteNav() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [theme, setTheme] = useState<StorefrontTheme>('nightly');
   const { totalItems, openCart } = useCart();
   const { total: wishlistTotal } = useWishlist();
   const { user } = useAuth();
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    const rootTheme = document.documentElement.dataset.theme;
+    const nextTheme = storedTheme === 'daily' || rootTheme === 'daily' ? 'daily' : 'nightly';
+    applyStorefrontTheme(nextTheme);
+    setTheme(nextTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'nightly' ? 'daily' : 'nightly';
+    applyStorefrontTheme(nextTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    setTheme(nextTheme);
+  };
 
   useEffect(() => {
     if (!nav.announcement.enabled) {
@@ -46,13 +72,15 @@ export function SiteNav() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const nextThemeLabel = theme === 'nightly' ? 'daily' : 'nightly';
+
   return (
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-50 ${scrolled ? 'nav-scrolled' : ''}`}
         style={{
           transition: 'background 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease',
-          borderBottom: scrolled ? '1px solid rgba(171,217,208,0.15)' : '1px solid transparent',
+          borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
         }}
       >
         {/* Announcement banner */}
@@ -61,15 +89,15 @@ export function SiteNav() {
             className="flex items-center justify-center gap-4 px-6 text-center relative"
             style={{
               height: `${BANNER_H}px`,
-              background: 'rgba(171,217,208,0.08)',
-              borderBottom: '1px solid rgba(171,217,208,0.2)',
+              background: 'rgba(var(--accent-rgb),0.08)',
+              borderBottom: '1px solid rgba(var(--accent-rgb),0.2)',
             }}
           >
             <span
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={{ background: 'var(--cyan-teal)', boxShadow: '0 0 6px var(--cyan-teal)', animation: 'neonPulse 2s ease-in-out infinite' }}
+              style={{ background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)', animation: 'neonPulse 2s ease-in-out infinite' }}
             />
-            <span className="type-label tracking-[0.18em]" style={{ color: 'var(--cyan-teal)' }}>
+            <span className="type-label tracking-[0.18em]" style={{ color: 'var(--accent)' }}>
               {nav.announcement.message}
             </span>
             <a href={nav.announcement.ctaHref} className="type-label underline underline-offset-2 hidden md:inline hover:opacity-80 transition-opacity" style={{ color: 'var(--soft-gold)' }}>
@@ -79,7 +107,7 @@ export function SiteNav() {
               onClick={dismissBanner}
               aria-label="Dismiss announcement"
               className="absolute right-4 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity"
-              style={{ color: 'var(--cyan-teal)' }}
+              style={{ color: 'var(--accent)' }}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -102,13 +130,13 @@ export function SiteNav() {
                   fontWeight: 800,
                   fontSize: '1.15rem',
                   letterSpacing: '0.3em',
-                  color: 'var(--cyan-teal)',
-                  textShadow: '0 0 16px rgba(171,217,208,0.4)',
+                  color: 'var(--accent)',
+                  textShadow: '0 0 16px rgba(var(--accent-rgb),0.4)',
                 }}
               >
                 {nav.brandName}
               </span>
-              <span className="type-label hidden sm:inline" style={{ color: 'rgba(171,217,208,0.3)', letterSpacing: '0.15em' }}>
+              <span className="type-label hidden sm:inline" style={{ color: 'rgba(var(--accent-rgb),0.45)', letterSpacing: '0.15em' }}>
                 {nav.brandSuffix}
               </span>
             </a>
@@ -119,13 +147,13 @@ export function SiteNav() {
                 <a
                   key={link.label}
                   href={link.href}
-                  className="type-label transition-colors duration-200 hover:text-[var(--cyan-teal)] relative group"
+                  className="type-label transition-colors duration-200 hover:text-[var(--accent)] relative group"
                   style={{ color: 'var(--muted-teal)', letterSpacing: '0.16em' }}
                 >
                   {link.label}
                   <span
                     className="absolute -bottom-0.5 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    style={{ background: 'var(--cyan-teal)', boxShadow: '0 0 6px var(--cyan-teal)' }}
+                    style={{ background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)' }}
                   />
                 </a>
               ))}
@@ -133,11 +161,32 @@ export function SiteNav() {
 
             {/* Right actions */}
             <div className="flex items-center gap-5">
+              {/* Theme */}
+              <button
+                type="button"
+                aria-label={`Switch to ${nextThemeLabel} theme`}
+                aria-pressed={theme === 'daily'}
+                title={`Switch to ${nextThemeLabel} theme`}
+                onClick={toggleTheme}
+                className="theme-toggle"
+              >
+                {theme === 'daily' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+              </button>
+
               {/* Search */}
               <button
                 aria-label="Search"
                 onClick={() => setSearchOpen(true)}
-                className="transition-colors duration-200 hover:text-[var(--cyan-teal)]"
+                className="transition-colors duration-200 hover:text-[var(--accent)]"
                 style={{ color: 'var(--muted-teal)' }}
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -150,7 +199,7 @@ export function SiteNav() {
               <button
                 aria-label="Shopping bag"
                 onClick={openCart}
-                className="relative transition-colors duration-200 hover:text-[var(--cyan-teal)]"
+                className="relative transition-colors duration-200 hover:text-[var(--accent)]"
                 style={{ color: 'var(--muted-teal)' }}
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -162,10 +211,10 @@ export function SiteNav() {
                   <span
                     className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] flex items-center justify-center"
                     style={{
-                      background: 'var(--cyan-teal)',
-                      color: 'var(--space-black)',
+                      background: 'var(--accent)',
+                      color: 'var(--accent-contrast)',
                       fontFamily: 'var(--font-mono)',
-                      boxShadow: '0 0 8px rgba(171,217,208,0.5)',
+                      boxShadow: '0 0 8px rgba(var(--accent-rgb),0.5)',
                     }}
                   >
                     {totalItems > 9 ? '9+' : totalItems}
@@ -177,7 +226,7 @@ export function SiteNav() {
               <a
                 href="/wishlist"
                 aria-label={`Wishlist (${wishlistTotal})`}
-                className="relative hidden md:flex transition-colors duration-200 hover:text-[var(--cyan-teal)]"
+                className="relative hidden md:flex transition-colors duration-200 hover:text-[var(--accent)]"
                 style={{ color: 'var(--muted-teal)' }}
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -188,9 +237,9 @@ export function SiteNav() {
                     className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] flex items-center justify-center"
                     style={{
                       background: 'var(--soft-gold)',
-                      color: 'var(--space-black)',
+                      color: 'var(--gold-contrast)',
                       fontFamily: 'var(--font-mono)',
-                      boxShadow: '0 0 8px rgba(250,229,163,0.5)',
+                      boxShadow: '0 0 8px rgba(var(--gold-rgb),0.5)',
                     }}
                   >
                     {wishlistTotal}
@@ -203,12 +252,12 @@ export function SiteNav() {
                 <a
                   href="/account"
                   aria-label="My account"
-                  className="hidden md:flex items-center gap-2 transition-colors duration-200 hover:text-[var(--cyan-teal)]"
+                  className="hidden md:flex items-center gap-2 transition-colors duration-200 hover:text-[var(--accent)]"
                   style={{ color: 'var(--muted-teal)' }}
                 >
                   <span
                     className="type-label"
-                    style={{ color: 'var(--cyan-teal)', letterSpacing: '0.1em' }}
+                    style={{ color: 'var(--accent)', letterSpacing: '0.1em' }}
                   >
                     {user.name.split(' ')[0]}
                   </span>
@@ -217,12 +266,12 @@ export function SiteNav() {
                     style={{
                       width: '26px',
                       height: '26px',
-                      border: '1px solid var(--cyan-teal)',
-                      background: 'rgba(171,217,208,0.08)',
+                      border: '1px solid var(--accent)',
+                      background: 'rgba(var(--accent-rgb),0.08)',
                       fontFamily: 'var(--font-mono)',
                       fontSize: '0.62rem',
                       letterSpacing: '0.04em',
-                      color: 'var(--cyan-teal)',
+                      color: 'var(--accent)',
                     }}
                   >
                     {user.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -232,7 +281,7 @@ export function SiteNav() {
                 <button
                   onClick={() => setAuthModalOpen(true)}
                   aria-label="My account"
-                  className="hidden md:flex transition-colors duration-200 hover:text-[var(--cyan-teal)]"
+                  className="hidden md:flex transition-colors duration-200 hover:text-[var(--accent)]"
                   style={{ color: 'var(--muted-teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -246,7 +295,7 @@ export function SiteNav() {
               <button
                 aria-label="Menu"
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="md:hidden transition-colors duration-200 hover:text-[var(--cyan-teal)]"
+                className="md:hidden transition-colors duration-200 hover:text-[var(--accent)]"
                 style={{ color: 'var(--muted-teal)' }}
               >
                 {menuOpen ? (
@@ -269,7 +318,7 @@ export function SiteNav() {
         className={`fixed inset-0 z-40 flex flex-col justify-center items-center gap-8 transition-all duration-500 md:hidden ${
           menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
-        style={{ background: 'rgba(1,0,13,0.97)', backdropFilter: 'blur(20px)', paddingTop: 'var(--nav-h)' }}
+        style={{ background: 'var(--mobile-menu-bg)', backdropFilter: 'blur(20px)', paddingTop: 'var(--nav-h)' }}
       >
         {/* Dot grid */}
         <div className="absolute inset-0 dot-grid opacity-20 pointer-events-none" />
@@ -279,7 +328,7 @@ export function SiteNav() {
               key={link.label}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="type-display-md hover:text-[var(--cyan-teal)] transition-colors"
+              className="type-display-md hover:text-[var(--accent)] transition-colors"
               style={{ color: 'var(--fg)', animationDelay: `${i * 0.07}s`, textShadow: 'none' }}
             >
               {link.label}
@@ -294,7 +343,7 @@ export function SiteNav() {
                 key={link.label}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="type-label hover:text-[var(--cyan-teal)] transition-colors"
+                className="type-label hover:text-[var(--accent)] transition-colors"
                 style={{ color: 'var(--muted-teal)' }}
               >
                 {link.label}
@@ -303,7 +352,7 @@ export function SiteNav() {
           </div>
         </div>
         {/* Bottom line */}
-        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'rgba(171,217,208,0.15)' }} />
+        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'rgba(var(--accent-rgb),0.15)' }} />
       </div>
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />

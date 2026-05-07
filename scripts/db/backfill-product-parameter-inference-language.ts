@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import { pathToFileURL } from 'node:url';
 
-import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoClient, getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 import { backfillProductParameterLanguageValues } from './lib/product-parameter-inference-language-backfill';
 

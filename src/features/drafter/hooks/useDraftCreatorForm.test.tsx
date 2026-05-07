@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -112,8 +114,8 @@ const createCategory = (
   updatedAt: '2026-04-30T00:00:00.000Z',
 });
 
-const createDraft = (overrides: Partial<ProductDraft> = {}): ProductDraft =>
-  ({
+const createDraft = (overrides: Partial<ProductDraft> = {}): ProductDraft => {
+  const draft: ProductDraft = {
     id: 'draft-template',
     name: 'BattleStock Scrape Template',
     draftKind: 'scrape_template',
@@ -122,216 +124,224 @@ const createDraft = (overrides: Partial<ProductDraft> = {}): ProductDraft =>
     createdAt: '2026-04-30T00:00:00.000Z',
     updatedAt: '2026-04-30T00:00:00.000Z',
     ...overrides,
-  }) as ProductDraft;
+  };
+  return draft;
+};
+const createTermsForType = (type: ProductTitleTermType): ProductTitleTerm[] => {
+  if (type === 'size') return [createTerm('size', '4 cm')];
+  if (type === 'material') return [createTerm('material', 'Metal', 'Metal PL')];
+  return [createTerm('theme', 'Attack On Titan', 'Atak Tytanow')];
+};
+const resetDraftCreatorFormMocks = (): void => {
+  vi.clearAllMocks();
+  draftQueryState.data = undefined;
+  useDraftMetadataMock.mockReturnValue({
+    categories: [createCategory('category-anime-pin', 'Anime Pin', 'Przypinka Anime')],
+    categoryLoading: false,
+    tags: [],
+    tagLoading: false,
+    parameters: [],
+    simpleParameters: [createSimpleParameter('simple-material', 'material')],
+    parametersLoading: false,
+  });
+  useTitleTermsMock.mockImplementation((_catalogId: string, type: ProductTitleTermType) => ({
+    data: createTermsForType(type),
+    isLoading: false,
+  }));
+};
 
-describe('useDraftCreatorForm', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    draftQueryState.data = undefined;
-    useDraftMetadataMock.mockReturnValue({
-      categories: [createCategory('category-anime-pin', 'Anime Pin', 'Przypinka Anime')],
-      categoryLoading: false,
-      tags: [],
-      tagLoading: false,
-      parameters: [],
-      simpleParameters: [createSimpleParameter('simple-material', 'material')],
-      parametersLoading: false,
-    });
-    useTitleTermsMock.mockImplementation((_catalogId: string, type: ProductTitleTermType) => ({
-      data:
-        type === 'size'
-          ? [createTerm('size', '4 cm')]
-          : type === 'material'
-            ? [createTerm('material', 'Metal', 'Metal PL')]
-            : [createTerm('theme', 'Attack On Titan', 'Atak Tytanow')],
-      isLoading: false,
-    }));
+type DraftCreatorFormHookReturn = ReturnType<
+  typeof renderHook<ReturnType<typeof useDraftCreatorForm>, unknown>
+>;
+const renderDraftCreatorFormHook = (): DraftCreatorFormHookReturn =>
+  renderHook(() => useDraftCreatorForm(null, handleSaveSuccessMock));
+type DraftCreatorFormHookResult = ReturnType<typeof renderDraftCreatorFormHook>['result'];
+const assertEditedScrapeTemplateMetadataRetained = async (): Promise<void> => {
+  draftQueryState.data = createDraft();
+
+  const { result } = renderHook(() =>
+    useDraftCreatorForm('draft-template', handleSaveSuccessMock)
+  );
+
+  await waitFor(() => {
+    expect(result.current.state.draftKind).toBe('scrape_template');
+    expect(result.current.state.scrapeProfileId).toBe('battlestock-warhammer-40k-30k');
+  });
+};
+const assertPolishStructuredTitleAutoFills = async (): Promise<void> => {
+  const { result } = renderDraftCreatorFormHook();
+
+  act(() => {
+    result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Attack On Titan');
   });
 
-  it('retains scrape template metadata from an edited draft', async () => {
-    draftQueryState.data = createDraft();
-
-    const { result } = renderHook(() =>
-      useDraftCreatorForm('draft-template', handleSaveSuccessMock)
+  await waitFor(() => {
+    expect(result.current.state.namePl).toBe(
+      'Scout | 4 cm | Metal PL | Przypinka Anime | Atak Tytanow'
     );
+  });
+};
+const assertStructuredTitlePreselectsCategory = async (): Promise<void> => {
+  const { result } = renderDraftCreatorFormHook();
 
-    await waitFor(() => {
-      expect(result.current.state.draftKind).toBe('scrape_template');
-      expect(result.current.state.scrapeProfileId).toBe('battlestock-warhammer-40k-30k');
-    });
+  act(() => {
+    result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Attack On Titan');
   });
 
-  it('auto-fills Polish structured title segments from the draft English title', async () => {
-    const { result } = renderHook(() =>
-      useDraftCreatorForm(null, handleSaveSuccessMock)
+  await waitFor(() => {
+    expect(result.current.state.selectedCategoryId).toBe('category-anime-pin');
+  });
+};
+const assertCustomPolishTitleBasePreserved = async (): Promise<void> => {
+  const { result } = renderDraftCreatorFormHook();
+
+  act(() => {
+    result.current.state.setNamePl(
+      'Wlasny tytul | Old size | Old material | Old category | Old theme'
     );
-
-    act(() => {
-      result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Attack On Titan');
-    });
-
-    await waitFor(() => {
-      expect(result.current.state.namePl).toBe(
-        'Scout | 4 cm | Metal PL | Przypinka Anime | Atak Tytanow'
-      );
-    });
+    result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Attack On Titan');
   });
 
-  it('preselects the matching draft category from the English structured title', async () => {
-    const { result } = renderHook(() =>
-      useDraftCreatorForm(null, handleSaveSuccessMock)
+  await waitFor(() => {
+    expect(result.current.state.namePl).toBe(
+      'Wlasny tytul | 4 cm | Metal PL | Przypinka Anime | Atak Tytanow'
     );
+  });
+};
+const expectedMaterialParameter = {
+  parameterId: 'simple-material',
+  value: 'Metal',
+  valuesByLanguage: {
+    en: 'Metal',
+    pl: 'Metal PL',
+  },
+};
+const assertLinkedParameterInferredWithCatalog = async (): Promise<void> => {
+  const { result } = renderDraftCreatorFormHook();
 
-    act(() => {
-      result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Attack On Titan');
-    });
-
-    await waitFor(() => {
-      expect(result.current.state.selectedCategoryId).toBe('category-anime-pin');
-    });
+  act(() => {
+    result.current.state.setSelectedCatalogIds(['catalog-1']);
+    result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Warhammer 40k');
   });
 
-  it('preserves a custom Polish title base while syncing translated segments', async () => {
-    const { result } = renderHook(() =>
-      useDraftCreatorForm(null, handleSaveSuccessMock)
-    );
+  await waitFor(() => {
+    expect(result.current.state.parameterValues).toEqual([expectedMaterialParameter]);
+  });
+};
 
-    act(() => {
-      result.current.state.setNamePl('Wlasny tytul | Old size | Old material | Old category | Old theme');
-      result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Attack On Titan');
-    });
+const assertLinkedParameterInferredWithoutCatalog = async (): Promise<void> => {
+  const { result } = renderDraftCreatorFormHook();
 
-    await waitFor(() => {
-      expect(result.current.state.namePl).toBe(
-        'Wlasny tytul | 4 cm | Metal PL | Przypinka Anime | Atak Tytanow'
-      );
-    });
+  act(() => {
+    result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Warhammer 40k');
   });
 
-  it('infers linked simple parameter values from the draft English product name', async () => {
-    const { result } = renderHook(() =>
-      useDraftCreatorForm(null, handleSaveSuccessMock)
-    );
+  await waitFor(() => {
+    expect(result.current.state.parameterValues).toEqual([expectedMaterialParameter]);
+  });
+};
 
-    act(() => {
-      result.current.state.setSelectedCatalogIds(['catalog-1']);
-      result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Warhammer 40k');
-    });
+const setManualParameterMetadata = (): void => {
+  useDraftMetadataMock.mockReturnValue({
+    categories: [],
+    categoryLoading: false,
+    tags: [],
+    tagLoading: false,
+    parameters: [],
+    simpleParameters: [
+      createSimpleParameter('simple-material', 'material'),
+      createSimpleParameter('manual-condition'),
+    ],
+    parametersLoading: false,
+  });
+};
 
-    await waitFor(() => {
-      expect(result.current.state.parameterValues).toEqual([
-        {
-          parameterId: 'simple-material',
-          value: 'Metal',
-          valuesByLanguage: {
-            en: 'Metal',
-            pl: 'Metal PL',
-          },
-        },
-      ]);
-    });
+const assertLinkedParameterValueAppears = async (
+  result: DraftCreatorFormHookResult
+): Promise<void> => {
+  act(() => {
+    result.current.state.setSelectedCatalogIds(['catalog-1']);
+    result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Warhammer 40k');
   });
 
-  it('infers linked simple parameter values before a catalog is selected', async () => {
-    const { result } = renderHook(() =>
-      useDraftCreatorForm(null, handleSaveSuccessMock)
-    );
+  await waitFor(() => {
+    expect(result.current.state.parameterValues).toEqual([expectedMaterialParameter]);
+  });
+};
 
-    act(() => {
-      result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Warhammer 40k');
-    });
-
-    await waitFor(() => {
-      expect(result.current.state.parameterValues).toEqual([
-        {
-          parameterId: 'simple-material',
-          value: 'Metal',
-          valuesByLanguage: {
-            en: 'Metal',
-            pl: 'Metal PL',
-          },
-        },
-      ]);
-    });
+const assertManualParameterCanBeAdded = (result: DraftCreatorFormHookResult): void => {
+  act(() => {
+    result.current.state.addParameterValue();
   });
 
-  it('keeps linked title-term parameters derived while manual draft parameters can be created', async () => {
-    useDraftMetadataMock.mockReturnValue({
-      categories: [],
-      categoryLoading: false,
-      tags: [],
-      tagLoading: false,
-      parameters: [],
-      simpleParameters: [
-        createSimpleParameter('simple-material', 'material'),
-        createSimpleParameter('manual-condition'),
-      ],
-      parametersLoading: false,
-    });
+  expect(result.current.state.parameterValues).toEqual([
+    { parameterId: '', value: '' },
+    expectedMaterialParameter,
+  ]);
 
-    const { result } = renderHook(() =>
-      useDraftCreatorForm(null, handleSaveSuccessMock)
-    );
+  act(() => {
+    result.current.state.updateParameterId(0, 'manual-condition');
+    result.current.state.updateParameterValue(0, 'New');
+  });
 
-    act(() => {
-      result.current.state.setSelectedCatalogIds(['catalog-1']);
-      result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Warhammer 40k');
-    });
+  expect(result.current.state.parameterValues).toEqual([
+    { parameterId: 'manual-condition', value: 'New' },
+    expectedMaterialParameter,
+  ]);
+};
 
-    await waitFor(() => {
-      expect(result.current.state.parameterValues).toEqual([
-        {
-          parameterId: 'simple-material',
-          value: 'Metal',
-          valuesByLanguage: {
-            en: 'Metal',
-            pl: 'Metal PL',
-          },
-        },
-      ]);
-    });
+const assertLinkedParameterDropsWhenTitleNoLongerMatches = async (
+  result: DraftCreatorFormHookResult
+): Promise<void> => {
+  act(() => {
+    result.current.state.setNameEn('Scout | 4 cm | Resin | Anime Pin | Warhammer 40k');
+  });
 
-    act(() => {
-      result.current.state.addParameterValue();
-    });
-
-    expect(result.current.state.parameterValues).toEqual([
-      { parameterId: '', value: '' },
-      {
-        parameterId: 'simple-material',
-        value: 'Metal',
-        valuesByLanguage: {
-          en: 'Metal',
-          pl: 'Metal PL',
-        },
-      },
-    ]);
-
-    act(() => {
-      result.current.state.updateParameterId(0, 'manual-condition');
-      result.current.state.updateParameterValue(0, 'New');
-    });
-
+  await waitFor(() => {
     expect(result.current.state.parameterValues).toEqual([
       { parameterId: 'manual-condition', value: 'New' },
-      {
-        parameterId: 'simple-material',
-        value: 'Metal',
-        valuesByLanguage: {
-          en: 'Metal',
-          pl: 'Metal PL',
-        },
-      },
     ]);
-
-    act(() => {
-      result.current.state.setNameEn('Scout | 4 cm | Resin | Anime Pin | Warhammer 40k');
-    });
-
-    await waitFor(() => {
-      expect(result.current.state.parameterValues).toEqual([
-        { parameterId: 'manual-condition', value: 'New' },
-      ]);
-    });
   });
+};
+
+const assertManualAndLinkedParametersCanCoexist = async (): Promise<void> => {
+  setManualParameterMetadata();
+
+  const { result } = renderDraftCreatorFormHook();
+
+  await assertLinkedParameterValueAppears(result);
+  assertManualParameterCanBeAdded(result);
+  await assertLinkedParameterDropsWhenTitleNoLongerMatches(result);
+};
+
+describe('useDraftCreatorForm', () => {
+  beforeEach(resetDraftCreatorFormMocks);
+  it(
+    'retains scrape template metadata from an edited draft',
+    assertEditedScrapeTemplateMetadataRetained
+  );
+  it(
+    'auto-fills Polish structured title segments from the draft English title',
+    assertPolishStructuredTitleAutoFills
+  );
+  it(
+    'preselects the matching draft category from the English structured title',
+    assertStructuredTitlePreselectsCategory
+  );
+  it(
+    'preserves a custom Polish title base while syncing translated segments',
+    assertCustomPolishTitleBasePreserved
+  );
+  it(
+    'infers linked simple parameter values from the draft English product name',
+    assertLinkedParameterInferredWithCatalog
+  );
+  it(
+    'infers linked simple parameter values before a catalog is selected',
+    assertLinkedParameterInferredWithoutCatalog
+  );
+  it(
+    'keeps linked title-term parameters derived while manual draft parameters can be created',
+    assertManualAndLinkedParametersCanCoexist
+  );
 });

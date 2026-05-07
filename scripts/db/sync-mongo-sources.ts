@@ -17,6 +17,7 @@ type MongoDbModules = {
   getMongoSourceState: MongoSourceModule['getMongoSourceState'];
   resolveMongoSourceConfig: MongoSourceModule['resolveMongoSourceConfig'];
   resolveCmsBuilderMongoSourceConfig: MongoUtilsModule['resolveCmsBuilderMongoSourceConfig'];
+  resolveProductsMongoSourceConfig: MongoUtilsModule['resolveProductsMongoSourceConfig'];
   resolveStudiqMongoSourceConfig: MongoUtilsModule['resolveStudiqMongoSourceConfig'];
   verifyMongoSourceParity: MongoSourceParityModule['verifyMongoSourceParity'];
   syncMongoSources: MongoSourceSyncModule['syncMongoSources'];
@@ -96,6 +97,7 @@ const loadDbModules = async (): Promise<MongoDbModules> => {
     getMongoSourceState: mongoSource.getMongoSourceState,
     resolveMongoSourceConfig: mongoSource.resolveMongoSourceConfig,
     resolveCmsBuilderMongoSourceConfig: mongoUtils.resolveCmsBuilderMongoSourceConfig,
+    resolveProductsMongoSourceConfig: mongoUtils.resolveProductsMongoSourceConfig,
     resolveStudiqMongoSourceConfig: mongoUtils.resolveStudiqMongoSourceConfig,
     verifyMongoSourceParity: mongoSourceParity.verifyMongoSourceParity,
     syncMongoSources: mongoSourceSync.syncMongoSources,
@@ -116,6 +118,7 @@ const runVerificationOnly = async (
     'geminitestapp',
     'studiq',
     'cms-builder',
+    'products',
   ];
   const verifications = [];
 
@@ -125,12 +128,16 @@ const runVerificationOnly = async (
         ? modules.resolveStudiqMongoSourceConfig(source)
         : application === 'cms-builder'
           ? modules.resolveCmsBuilderMongoSourceConfig(source)
+          : application === 'products'
+            ? modules.resolveProductsMongoSourceConfig(source)
         : await modules.resolveMongoSourceConfig(source);
     const targetConfig =
       application === 'studiq'
         ? modules.resolveStudiqMongoSourceConfig(target)
         : application === 'cms-builder'
           ? modules.resolveCmsBuilderMongoSourceConfig(target)
+          : application === 'products'
+            ? modules.resolveProductsMongoSourceConfig(target)
         : await modules.resolveMongoSourceConfig(target);
     if (!sourceConfig.configured || !targetConfig.configured) {
       throw new Error(`${application} ${source} and ${target} MongoDB sources must be configured.`);

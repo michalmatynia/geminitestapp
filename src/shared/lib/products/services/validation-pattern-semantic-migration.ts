@@ -1,7 +1,7 @@
 import { ObjectId, type Db } from 'mongodb';
 
 import type { ProductValidationPattern, ProductValidationSemanticAuditRecord, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import {
   getProductValidationSemanticState,
   normalizeProductValidationSemanticAuditRecord,

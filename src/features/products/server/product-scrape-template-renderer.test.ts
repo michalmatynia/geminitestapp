@@ -48,68 +48,111 @@ const draft: ScripterImportDraft = {
   issues: [],
 };
 
-describe('product scrape template renderer', () => {
-  it('renders bracket placeholders from mapped scrape values', () => {
-    const values = buildScrapeTemplateValues(draft, candidate);
+const assertBracketPlaceholdersRender = (): void => {
+  const values = buildScrapeTemplateValues(draft, candidate);
 
-    expect(
-      renderScrapeTemplateText('[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k', values)
-    ).toBe('40k spiritseer | 5 cm | Metal | Gaming Pendant | Warhammer 40k');
-    expect(renderScrapeTemplateText('[brand] / [category] / [price] [currency]', values)).toBe(
-      'Games Workshop / Eldar / Aeldari / 60 PLN'
-    );
+  expect(
+    renderScrapeTemplateText('[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k', values)
+  ).toBe('40k spiritseer | 5 cm | Metal | Gaming Pendant | Warhammer 40k');
+  expect(renderScrapeTemplateText('[name(TitleCase)] custom listing', values)).toBe(
+    '40K Spiritseer custom listing'
+  );
+  expect(renderScrapeTemplateText('[title(TitleCase)] custom listing', values)).toBe(
+    '40K Spiritseer custom listing'
+  );
+  expect(renderScrapeTemplateText('[nameTitleCase] custom listing', values)).toBe(
+    '40K Spiritseer custom listing'
+  );
+  expect(renderScrapeTemplateText('[titleTitleCase] custom listing', values)).toBe(
+    '40K Spiritseer custom listing'
+  );
+  expect(renderScrapeTemplateText('[brand] / [category] / [price] [currency]', values)).toBe(
+    'Games Workshop / Eldar / Aeldari / 60 PLN'
+  );
+};
+
+const assertStackedPlaceholderTransformsRender = (): void => {
+  const values = buildScrapeTemplateValues(draft, {
+    ...candidate,
+    title: 'WFB arco-flagelants',
   });
 
-  it('renders parameter values and drops invalid parameter rows', () => {
-    const values = buildScrapeTemplateValues(draft, candidate);
+  expect(renderScrapeTemplateText('[name(TitleCase)(remove:"WFB")(trim)]', values)).toBe(
+    'Arco-Flagelants'
+  );
+  expect(renderScrapeTemplateText('[name(remove:"WFB")(trim)(TitleCase)]', values)).toBe(
+    'Arco-Flagelants'
+  );
+};
 
-    expect(
-      renderScrapeTemplateParameterValues(
-        [
-          { parameterId: 'material', value: 'Metal' },
-          { parameterId: 'source', value: '[sourceUrl]' },
-          { parameterId: '', value: '[name]' },
-        ],
-        values
-      )
-    ).toEqual([
-      { parameterId: 'material', value: 'Metal' },
-      {
-        parameterId: 'source',
-        value: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
-      },
-    ]);
-  });
+const assertMalformedTransformsStayVisible = (): void => {
+  const values = buildScrapeTemplateValues(draft, candidate);
 
-  it('renders localized parameter values and preserves inference metadata', () => {
-    const values = buildScrapeTemplateValues(draft, candidate);
+  expect(renderScrapeTemplateText('[name(remove:"WFB"] custom listing', values)).toBe(
+    '[name(remove:"WFB"] custom listing'
+  );
+};
 
-    expect(
-      renderScrapeTemplateParameterValues(
-        [
-          {
-            parameterId: 'material',
-            value: '[brand]',
-            valuesByLanguage: {
-              en: '[brand]',
-              pl: '[category]',
-              de: '',
-            },
-            skipParameterInference: true,
+const assertParameterValuesRender = (): void => {
+  const values = buildScrapeTemplateValues(draft, candidate);
+
+  expect(
+    renderScrapeTemplateParameterValues(
+      [
+        { parameterId: 'material', value: 'Metal' },
+        { parameterId: 'source', value: '[sourceUrl]' },
+        { parameterId: '', value: '[name]' },
+      ],
+      values
+    )
+  ).toEqual([
+    { parameterId: 'material', value: 'Metal' },
+    {
+      parameterId: 'source',
+      value: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
+    },
+  ]);
+};
+
+const assertLocalizedParameterValuesRender = (): void => {
+  const values = buildScrapeTemplateValues(draft, candidate);
+
+  expect(
+    renderScrapeTemplateParameterValues(
+      [
+        {
+          parameterId: 'material',
+          value: '[brand]',
+          valuesByLanguage: {
+            en: '[brand]',
+            pl: '[category]',
+            de: '',
           },
-        ],
-        values
-      )
-    ).toEqual([
-      {
-        parameterId: 'material',
-        value: 'Games Workshop',
-        valuesByLanguage: {
-          en: 'Games Workshop',
-          pl: 'Eldar / Aeldari',
+          skipParameterInference: true,
         },
-        skipParameterInference: true,
+      ],
+      values
+    )
+  ).toEqual([
+    {
+      parameterId: 'material',
+      value: 'Games Workshop',
+      valuesByLanguage: {
+        en: 'Games Workshop',
+        pl: 'Eldar / Aeldari',
       },
-    ]);
-  });
+      skipParameterInference: true,
+    },
+  ]);
+};
+
+describe('product scrape template renderer', () => {
+  it('renders bracket placeholders from mapped scrape values', assertBracketPlaceholdersRender);
+  it('renders stacked placeholder transforms from left to right', assertStackedPlaceholderTransformsRender);
+  it('leaves malformed placeholder transforms visible', assertMalformedTransformsStayVisible);
+  it('renders parameter values and drops invalid parameter rows', assertParameterValuesRender);
+  it(
+    'renders localized parameter values and preserves inference metadata',
+    assertLocalizedParameterValuesRender
+  );
 });

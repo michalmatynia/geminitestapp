@@ -10,7 +10,7 @@ import {
 } from '@/features/integrations/services/imports/base-client';
 import { deriveVariantBaseProductRecord } from '@/features/integrations/services/imports/base-client/product-variant-record';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import type { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 
 import {

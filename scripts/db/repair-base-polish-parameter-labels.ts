@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { ObjectId } from 'mongodb';
 
 import { parseScopedCatalogParameterLinkMap } from '@/features/integrations/services/imports/parameter-import/link-map-preference';
-import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoClient, getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 type CliOptions = {
   dryRun: boolean;

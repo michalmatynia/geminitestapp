@@ -11,7 +11,7 @@
  */
 
 import type { Product } from '@/data/products';
-import { getDb, hasMongoConfig } from '@/lib/mongodb';
+import { getProductsDb, hasProductsMongoConfig } from '@/lib/mongodb';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -207,8 +207,29 @@ const normalizeBaseUrl = (value: string | undefined): string => {
 };
 
 const MAIN_APP_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_MAIN_APP_URL);
-const FILE_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_FILE_BASE_URL);
+const DEFAULT_FILE_BASE_URL = 'https://sparksofsindri.com';
 const PRODUCT_UPLOAD_PREFIX = '/uploads/products/';
+const LEGACY_FILE_HOSTS = new Set(['qubrick.io', 'www.qubrick.io']);
+
+const normalizeFileBaseUrl = (value: string | undefined): string => {
+  const normalized = normalizeBaseUrl(value);
+  if (!normalized) return '';
+  try {
+    const url = new URL(normalized);
+    if (LEGACY_FILE_HOSTS.has(url.hostname.toLowerCase())) {
+      const defaultUrl = new URL(DEFAULT_FILE_BASE_URL);
+      url.protocol = defaultUrl.protocol;
+      url.hostname = defaultUrl.hostname;
+      url.port = defaultUrl.port;
+      return url.toString().replace(/\/$/, '');
+    }
+  } catch {
+    return normalized;
+  }
+  return normalized;
+};
+
+const FILE_BASE_URL = normalizeFileBaseUrl(process.env.NEXT_PUBLIC_FILE_BASE_URL) || DEFAULT_FILE_BASE_URL;
 
 function isLocalHostname(hostname: string): boolean {
   return ['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(hostname.toLowerCase());
@@ -221,6 +242,19 @@ function isMainAppOrigin(url: URL): boolean {
   } catch {
     return false;
   }
+}
+
+function isConfiguredFileOrigin(url: URL): boolean {
+  if (!FILE_BASE_URL) return false;
+  try {
+    return url.origin === new URL(FILE_BASE_URL).origin;
+  } catch {
+    return false;
+  }
+}
+
+function isLegacyFileOrigin(url: URL): boolean {
+  return LEGACY_FILE_HOSTS.has(url.hostname.toLowerCase());
 }
 
 function toConfiguredFileUrl(productUploadPath: string): string {
@@ -244,8 +278,17 @@ function normalizeProductImageUrl(value: string | null | undefined): string | un
   if (/^https?:\/\//i.test(raw)) {
     try {
       const url = new URL(raw);
-      const productUploadPath = normalizeProductUploadPath(url.pathname);
-      if (productUploadPath && FILE_BASE_URL && (isLocalHostname(url.hostname) || isMainAppOrigin(url))) {
+      const productUploadPath = normalizeProductUploadPath(`${url.pathname}${url.search}${url.hash}`);
+      if (
+        productUploadPath &&
+        FILE_BASE_URL &&
+        (
+          isLocalHostname(url.hostname) ||
+          isMainAppOrigin(url) ||
+          isConfiguredFileOrigin(url) ||
+          isLegacyFileOrigin(url)
+        )
+      ) {
         return toConfiguredFileUrl(productUploadPath);
       }
       return raw;
@@ -374,7 +417,7 @@ export interface MentiosResult {
 /** Fetch all categories from the Mentios catalog. */
 async function fetchCategories(): Promise<Map<string, { name: string; collection: string }>> {
   try {
-    const db = await getDb();
+    const db = await getProductsDb();
     const docs = await db
       .collection<CategoryDoc>(CATEGORIES_COLLECTION)
       .find({ catalogId: CATALOG_ID })
@@ -389,10 +432,10 @@ async function fetchCategories(): Promise<Map<string, { name: string; collection
 /** Fetch products from the Mentios catalog. Returns empty array on DB error. */
 export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promise<MentiosResult> {
   const { limit = 100, skip = 0 } = opts;
-  if (!hasMongoConfig()) return { products: [], total: 0 };
+  if (!hasProductsMongoConfig()) return { products: [], total: 0 };
 
   try {
-    const db = await getDb();
+    const db = await getProductsDb();
     const col = db.collection<ProductDoc>(PRODUCTS_COLLECTION);
 
     const baseFilter = mentiosFilter();
@@ -472,10 +515,10 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
 
 /** Fetch a single product by its slug (sku-based) or raw _id. */
 export async function getMentiosProduct(slugOrId: string): Promise<Product | null> {
-  if (!hasMongoConfig()) return null;
+  if (!hasProductsMongoConfig()) return null;
 
   try {
-    const db = await getDb();
+    const db = await getProductsDb();
     const col = db.collection<ProductDoc>(PRODUCTS_COLLECTION);
     const normalizedSlug = slugify(slugOrId);
 
@@ -513,10 +556,10 @@ export async function getMentiosProduct(slugOrId: string): Promise<Product | nul
 
 /** Return all slugs currently in the Mentios catalog (for generateStaticParams). */
 export async function getMentiosSlugs(): Promise<string[]> {
-  if (!hasMongoConfig()) return [];
+  if (!hasProductsMongoConfig()) return [];
 
   try {
-    const db = await getDb();
+    const db = await getProductsDb();
     const docs = await db
       .collection<ProductDoc>(PRODUCTS_COLLECTION)
       .find(mentiosFilter(), { projection: { _id: 1, sku: 1 } })
@@ -529,9 +572,9 @@ export async function getMentiosSlugs(): Promise<string[]> {
 
 /** Fetch product count per collection slug in a single DB query. */
 export async function getMentiosCollectionCounts(): Promise<Record<string, number>> {
-  if (!hasMongoConfig()) return {};
+  if (!hasProductsMongoConfig()) return {};
   try {
-    const db = await getDb();
+    const db = await getProductsDb();
     const categoryMap = await fetchCategories();
     const docs = await db
       .collection<ProductDoc>(PRODUCTS_COLLECTION)

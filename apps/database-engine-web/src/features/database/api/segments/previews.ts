@@ -37,12 +37,14 @@ export const getDatabasePreview = async (
     const tableDetails = (raw['tableDetails'] ?? []) as DatabaseTableDetail[];
     const finalPage = raw['page'] ?? input.page;
     const finalPageSize = raw['pageSize'] ?? input.pageSize;
+    const databaseSize = (raw['databaseSize'] ?? rawStats?.['databaseSize'] ?? '') as string;
 
     const payload: DatabasePreviewPayload = {
       groups,
       tables,
       tableRows,
       tableDetails,
+      databaseSize,
       total: (raw['total'] ?? rawStats?.['total'] ?? 0) as number,
       page: typeof finalPage === 'string' ? parseInt(finalPage, 10) : (finalPage as number) || 1,
       pageSize:

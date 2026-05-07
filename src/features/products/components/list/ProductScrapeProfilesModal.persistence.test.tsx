@@ -39,18 +39,34 @@ vi.mock('@/shared/ui/app-modal', () => ({
   AppModal: ({
     children,
     footer,
+    headerActions,
     isOpen,
+    lockClose,
+    onClose,
+    showClose = true,
     title,
   }: {
     children?: React.ReactNode;
     footer?: React.ReactNode;
+    headerActions?: React.ReactNode;
     isOpen?: boolean;
+    lockClose?: boolean;
+    onClose?: () => void;
+    showClose?: boolean;
     title?: React.ReactNode;
   }) =>
     isOpen === true ? (
       <div role='dialog' aria-label={typeof title === 'string' ? title : 'Modal'}>
+        <div data-testid='app-modal-header-actions'>
+          {headerActions}
+          {showClose ? (
+            <button type='button' onClick={onClose} disabled={lockClose === true}>
+              Close
+            </button>
+          ) : null}
+        </div>
         <div>{children}</div>
-        <div>{footer}</div>
+        {footer !== undefined && footer !== null ? <div>{footer}</div> : null}
       </div>
     ) : null,
 }));
@@ -188,24 +204,28 @@ const runResponse: ProductScrapeProfileRunResponse = {
   },
 };
 
+const handleApiGet = (
+  url: string
+): { profiles: ProductScrapeProfile[] } | ProductDraft[] => {
+  if (url === '/api/v2/products/scrape-profiles') {
+    return { profiles: [battleProfile, otherProfile] };
+  }
+  if (url === '/api/drafts') {
+    return [
+      createDraft('template-any', 'Universal scrape template', null),
+      createDraft('template-other', 'Other scrape template', otherProfile.id),
+    ];
+  }
+  throw new Error(`Unexpected GET ${url}`);
+};
+
 import { ProductScrapeProfilesModal } from './ProductScrapeProfilesModal';
 
 describe('ProductScrapeProfilesModal persistence', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
-    apiGetMock.mockImplementation((url: string) => {
-      if (url === '/api/v2/products/scrape-profiles') {
-        return { profiles: [battleProfile, otherProfile] };
-      }
-      if (url === '/api/drafts') {
-        return [
-          createDraft('template-any', 'Universal scrape template', null),
-          createDraft('template-other', 'Other scrape template', otherProfile.id),
-        ];
-      }
-      throw new Error(`Unexpected GET ${url}`);
-    });
+    apiGetMock.mockImplementation((url: string) => handleApiGet(url));
     apiPostMock.mockResolvedValue(runResponse);
   });
 

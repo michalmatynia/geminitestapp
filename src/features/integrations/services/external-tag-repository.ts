@@ -4,7 +4,7 @@ import { ObjectId, type Filter } from 'mongodb';
 
 import type { ExternalTag, ExternalTagSyncInput } from '@/shared/contracts/integrations/listings';
 import type { BaseTag } from '@/shared/contracts/integrations';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 type ExternalTagRepository = {
   syncFromBase: (connectionId: string, tags: BaseTag[]) => Promise<number>;

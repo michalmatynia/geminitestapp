@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 
 import type { CatalogCreateInput, CatalogRecord, CatalogUpdateInput } from '@/shared/contracts/products/catalogs';
 import type { CatalogRepository } from '@/shared/contracts/products/drafts';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { normalizePriceGroupSelectionForStorage } from '@/shared/lib/products/services/price-group-storage-normalization';
 
 import type { WithId } from 'mongodb';

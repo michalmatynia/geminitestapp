@@ -45,7 +45,7 @@ export async function runGoalAutomationStream(
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       const emit = (event: GoalAutomationEvent): void => {
-        controller.enqueue(encoder.encode(JSON.stringify(event) + '\n'));
+        controller.enqueue(encoder.encode(`${JSON.stringify(event)  }\n`));
       };
 
       let browser: import('playwright').Browser | undefined;

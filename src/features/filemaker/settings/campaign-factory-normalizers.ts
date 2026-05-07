@@ -1,3 +1,4 @@
+import { normalizeRecognizedFilemakerEmailStatus } from '../filemaker-email-status';
 import { normalizeString } from '../filemaker-settings.helpers';
 import type {
   FilemakerEmailCampaignAudienceRule,
@@ -11,12 +12,6 @@ import type {
 const FILEMAKER_CAMPAIGN_AUDIENCE_PARTY_KINDS: FilemakerPartyKind[] = [
   'person',
   'organization',
-];
-const FILEMAKER_CAMPAIGN_AUDIENCE_EMAIL_STATUSES: FilemakerEmailStatus[] = [
-  'active',
-  'inactive',
-  'bounced',
-  'unverified',
 ];
 const FILEMAKER_CAMPAIGN_EVENT_TYPES: FilemakerEmailCampaignEvent['type'][] = [
   'created',
@@ -74,10 +69,12 @@ export const normalizePartyKinds = (input: unknown): FilemakerPartyKind[] => {
 export const normalizeEmailStatuses = (input: unknown): FilemakerEmailStatus[] => {
   if (!Array.isArray(input)) return ['active'];
   const values = input
-    .map((entry: unknown) => normalizeString(entry).toLowerCase())
+    .map((entry: unknown): FilemakerEmailStatus | undefined =>
+      normalizeRecognizedFilemakerEmailStatus(entry)
+    )
     .filter(
-      (entry: string): entry is FilemakerEmailStatus =>
-        FILEMAKER_CAMPAIGN_AUDIENCE_EMAIL_STATUSES.includes(entry as FilemakerEmailStatus)
+      (entry: FilemakerEmailStatus | undefined): entry is FilemakerEmailStatus =>
+        entry !== undefined
     );
   return values.length > 0 ? Array.from(new Set(values)) : ['active'];
 };

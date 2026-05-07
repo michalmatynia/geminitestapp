@@ -17,6 +17,7 @@ vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => (
 }));
 
 import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
+import { configurationError } from '@/shared/errors/app-error';
 import { JOB_BOARD_SCRAPE_RUNTIME_KEY } from '@/shared/lib/browser-execution/job-board-runtime-constants';
 
 import {
@@ -448,5 +449,21 @@ describe('job-board-sync', () => {
       },
     });
     expect(request.launchOptions).not.toHaveProperty('channel');
+  });
+
+  it('fails fast when runtime action settings have a critical configuration error', async () => {
+    const error = configurationError(
+      'Job board runtime settings are not configured.'
+    );
+    mocks.resolveRuntimeActionExecutionSettingsMock.mockRejectedValueOnce(error);
+
+    await expect(
+      collectJobBoardOfferUrls({
+        maxOffers: 10,
+        provider: 'auto',
+        sourceUrl: 'https://it.pracuj.pl/praca?its=frontend%2Cbackend%2Cfullstack',
+      })
+    ).rejects.toBe(error);
+    expect(mocks.runPlaywrightEngineTaskMock).not.toHaveBeenCalled();
   });
 });

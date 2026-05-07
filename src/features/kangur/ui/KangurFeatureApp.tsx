@@ -69,7 +69,7 @@ import {
 } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
-import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
+import { isSocialPublishingBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
 import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
@@ -434,7 +434,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   // Synthetic capture mode is used by the social screenshot pipeline. When
   // active, background preloads and prefetches are suppressed to keep the
   // captured page in a clean, deterministic state.
-  const isSyntheticKangurCapture = isKangurSocialBatchCaptureHref(currentRequestedHref);
+  const isSyntheticKangurCapture = isSocialPublishingBatchCaptureHref(currentRequestedHref);
   const pendingRouteLoadingSnapshot = resolvePendingSnapshot({
     currentHref: currentRequestedHref,
     fallbackPageKey: KANGUR_MAIN_PAGE,

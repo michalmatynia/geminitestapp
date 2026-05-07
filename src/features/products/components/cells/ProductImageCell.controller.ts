@@ -3,34 +3,34 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 
-import { updateProduct } from '@/features/products/api';
 import { useProductImagePreview } from '@/features/products/context/ProductImagePreviewContext';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui/toast';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   DEFAULT_NOTE_COLOR,
   applySavedProductNoteOverride,
-  buildProductNoteUpdate,
   hasImageUrl,
   mergeProductIntoListCache,
   resolveProductNote,
-  shouldCloseNoteModalAfterSave,
   shouldSkipOptimization,
   type ProductImageCellProps,
   type ProductListCacheValue,
   type ProductNoteValue,
   type ResolvedProductNote,
 } from './ProductImageCell.helpers';
+import {
+  hasProductNoteDraftChanges,
+  useProductNoteSave,
+  type ProductNoteState,
+  type SaveNoteOptions,
+  type SyncSavedProduct,
+} from './ProductImageCell.note-save';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-
-interface SaveNoteOptions {
-  closeAfter?: boolean;
-}
 
 export interface ProductImageCellController {
   cancelNoteModal: () => void;
+  draftNoteColor: string;
   draftNoteText: string;
   hasDraftChanges: boolean;
   hidePreview: ReturnType<typeof useProductImagePreview>['hidePreview'];
@@ -40,83 +40,43 @@ export interface ProductImageCellController {
   openNoteModal: (text: string) => void;
   resolvedNote: ResolvedProductNote | null;
   saveNote: (options?: SaveNoteOptions) => Promise<void>;
+  setDraftNoteColor: Dispatch<SetStateAction<string>>;
   setDraftNoteText: Dispatch<SetStateAction<string>>;
   showPreview: ReturnType<typeof useProductImagePreview>['showPreview'];
   unoptimized: boolean;
   updatePreview: ReturnType<typeof useProductImagePreview>['updatePreview'];
 }
 
-interface ProductNoteState {
-  draftNoteText: string;
-  hasDraftChanges: boolean;
-  isSavingNote: boolean;
-  noteColor: string;
-  noteModalOpen: boolean;
-  resolvedNote: ResolvedProductNote | null;
-  setDraftNoteText: Dispatch<SetStateAction<string>>;
-  setIsSavingNote: Dispatch<SetStateAction<boolean>>;
-  setNoteModalOpen: Dispatch<SetStateAction<boolean>>;
-}
-
-type SyncSavedProduct = (savedProduct: ProductWithImages, noteOverride?: ProductNoteValue) => void;
-type Toast = ReturnType<typeof useToast>['toast'];
-
-interface ProductNoteSaveOptions extends ProductNoteState {
-  closeNoteModalIfRequested: (closeAfter: boolean) => void;
-  productId: string;
-  syncSavedProduct: SyncSavedProduct;
-  toast: Toast;
-}
-
-interface ProductNoteSaveRequest {
-  color: string;
-  hasChanges: boolean;
-  nextText: string;
-}
-
-function resolveProductNoteSaveRequest({
-  draftNoteText,
-  noteColor,
-  resolvedNote,
-}: Pick<
-  ProductNoteSaveOptions,
-  'draftNoteText' | 'noteColor' | 'resolvedNote'
->): ProductNoteSaveRequest {
-  const nextText = draftNoteText.trim();
-  const currentText = resolvedNote?.text ?? '';
-
-  return {
-    color: resolvedNote?.color ?? noteColor,
-    hasChanges: nextText !== currentText,
-    nextText,
-  };
-}
-
 function useProductNoteState(note: ProductNoteValue): ProductNoteState {
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [draftNoteText, setDraftNoteText] = useState('');
+  const [draftNoteColor, setDraftNoteColor] = useState(DEFAULT_NOTE_COLOR);
   const [isSavingNote, setIsSavingNote] = useState(false);
   const resolvedNote = useMemo((): ResolvedProductNote | null => resolveProductNote(note), [note]);
   const noteColor = resolvedNote?.color ?? DEFAULT_NOTE_COLOR;
-  const trimmedDraftNoteText = draftNoteText.trim();
-  const hasDraftChanges =
-    resolvedNote === null
-      ? trimmedDraftNoteText.length > 0
-      : trimmedDraftNoteText !== resolvedNote.text;
+  const hasDraftChanges = hasProductNoteDraftChanges({
+    draftNoteColor,
+    draftNoteText,
+    resolvedNote,
+  });
 
   useEffect(() => {
-    if (noteModalOpen === true && resolvedNote !== null) {
+    if (noteModalOpen === false) return;
+    if (resolvedNote !== null) {
       setDraftNoteText(resolvedNote.text);
     }
-  }, [noteModalOpen, resolvedNote]);
+    setDraftNoteColor(noteColor);
+  }, [noteColor, noteModalOpen, resolvedNote]);
 
   return {
+    draftNoteColor,
     draftNoteText,
     hasDraftChanges,
     isSavingNote,
-    noteColor,
+    noteColor: draftNoteColor,
     noteModalOpen,
     resolvedNote,
+    setDraftNoteColor,
     setDraftNoteText,
     setIsSavingNote,
     setNoteModalOpen,
@@ -137,67 +97,6 @@ function useSyncSavedProductNote(): SyncSavedProduct {
       queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), mergedSavedProduct);
     },
     [queryClient]
-  );
-}
-
-function useProductNoteSave({
-  closeNoteModalIfRequested,
-  draftNoteText,
-  isSavingNote,
-  noteColor,
-  productId,
-  resolvedNote,
-  setIsSavingNote,
-  setNoteModalOpen,
-  syncSavedProduct,
-  toast,
-}: ProductNoteSaveOptions): ProductImageCellController['saveNote'] {
-  return useCallback(
-    async (options: SaveNoteOptions = {}): Promise<void> => {
-      const closeAfter = options.closeAfter === true;
-      if (isSavingNote === true) {
-        closeNoteModalIfRequested(closeAfter);
-        return;
-      }
-
-      const saveRequest = resolveProductNoteSaveRequest({
-        draftNoteText,
-        noteColor,
-        resolvedNote,
-      });
-      if (saveRequest.hasChanges === false) {
-        closeNoteModalIfRequested(closeAfter);
-        return;
-      }
-
-      try {
-        setIsSavingNote(true);
-        const noteUpdate = buildProductNoteUpdate(saveRequest.nextText, saveRequest.color, resolvedNote !== null);
-        const savedProduct = await updateProduct(productId, noteUpdate.payload);
-        syncSavedProduct(savedProduct, noteUpdate.nextNotes);
-        toast(noteUpdate.toastMessage, { variant: 'success' });
-        if (shouldCloseNoteModalAfterSave(closeAfter, noteUpdate.hasText)) setNoteModalOpen(false);
-      } catch (error) {
-        logClientCatch(error, { source: 'ProductImageCell', action: 'saveNote', productId });
-        toast(error instanceof Error ? error.message : 'Failed to update product note', {
-          variant: 'error',
-        });
-      } finally {
-        setIsSavingNote(false);
-      }
-    },
-    [
-      closeNoteModalIfRequested,
-      draftNoteText,
-      isSavingNote,
-      noteColor,
-      productId,
-      resolvedNote,
-      setIsSavingNote,
-      setNoteModalOpen,
-      syncSavedProduct,
-      toast,
-    ]
   );
 }
 
@@ -230,8 +129,10 @@ export function useProductImageCellController({
 
   const cancelNoteModal = useCallback((): void => {
     if (noteState.resolvedNote !== null) {
+      noteState.setDraftNoteColor(noteState.resolvedNote.color);
       noteState.setDraftNoteText(noteState.resolvedNote.text);
     } else {
+      noteState.setDraftNoteColor(DEFAULT_NOTE_COLOR);
       noteState.setDraftNoteText('');
     }
     noteState.setNoteModalOpen(false);
@@ -239,12 +140,14 @@ export function useProductImageCellController({
 
   const openNoteModal = useCallback((text: string): void => {
     hidePreview();
+    noteState.setDraftNoteColor(noteState.resolvedNote?.color ?? DEFAULT_NOTE_COLOR);
     noteState.setDraftNoteText(text);
     noteState.setNoteModalOpen(true);
   }, [hidePreview, noteState]);
 
   return {
     cancelNoteModal,
+    draftNoteColor: noteState.draftNoteColor,
     draftNoteText: noteState.draftNoteText,
     hasDraftChanges: noteState.hasDraftChanges,
     hidePreview,
@@ -254,6 +157,7 @@ export function useProductImageCellController({
     openNoteModal,
     resolvedNote: noteState.resolvedNote,
     saveNote,
+    setDraftNoteColor: noteState.setDraftNoteColor,
     setDraftNoteText: noteState.setDraftNoteText,
     showPreview,
     unoptimized,

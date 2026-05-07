@@ -59,7 +59,7 @@ export const folderTreeInstanceValues = [
   'kangur_test_suites_manager_catalog',
   'brain_catalog_tree',
   'brain_routing_tree',
-  'kangur_social_capture_browser',
+  'social_publishing_capture_browser',
   'playwright_step_seq_constructor',
   'playwright_step_seq_action_runs',
 ] as const;

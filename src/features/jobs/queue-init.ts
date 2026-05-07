@@ -9,7 +9,11 @@ import {
   startImageStudioSequenceQueue,
 } from '@/server/queues/ai';
 import { startCaseResolverOcrQueue } from '@/server/queues/case-resolver-ocr';
-import { startFilemakerEmailCampaignSchedulerQueue } from '@/server/queues/filemaker';
+import {
+  startFilemakerEmailCampaignSchedulerQueue,
+  startFilemakerSocialPipelineQueue,
+  startFilemakerSocialSchedulerQueue,
+} from '@/server/queues/filemaker';
 import { startFilemakerMailSyncSchedulerQueue } from '@/features/filemaker/workers/filemakerMailSyncSchedulerQueue';
 import { startFilemakerMailIdleManager } from '@/features/filemaker/workers/filemakerMailIdleManager';
 import { startFilemakerCampaignColdPruneSchedulerQueue } from '@/features/filemaker/workers/filemakerCampaignColdPruneSchedulerQueue';
@@ -22,10 +26,6 @@ import {
 import {
   startTraderaRelistSchedulerQueue,
 } from '@/features/integrations/workers/traderaRelistSchedulerQueue';
-import {
-  startKangurSocialPipelineQueue,
-  startKangurSocialSchedulerQueue,
-} from '@/server/queues/kangur';
 import { startProductAiJobQueue } from '@/server/queues/product-ai';
 import { startProductMarketplaceCopyDebrandBatchQueue } from '@/server/queues/products';
 import { startProductSyncSchedulerQueue } from '@/server/queues/product-sync';
@@ -53,9 +53,9 @@ const STARTUP_GATED_QUEUE_NAMES = [
   'tradera-relist-scheduler',
   'product-marketplace-copy-debrand-batch',
 ] as const;
-const KANGUR_SOCIAL_QUEUE_NAMES = [
-  'kangur-social-scheduler',
-  'kangur-social-pipeline',
+const SOCIAL_PUBLISHING_QUEUE_NAMES = [
+  'social-publishing-scheduler',
+  'social-publishing-pipeline',
 ] as const;
 const SPECIALIZED_STARTERS = [
   startDatabaseBackupSchedulerQueue,
@@ -67,9 +67,9 @@ const SPECIALIZED_STARTERS = [
   startFilemakerMailIdleManager,
   startFilemakerCampaignColdPruneSchedulerQueue,
 ] as const satisfies readonly QueueStarter[];
-const KANGUR_SOCIAL_STARTERS = [
-  startKangurSocialSchedulerQueue,
-  startKangurSocialPipelineQueue,
+const SOCIAL_PUBLISHING_STARTERS = [
+  startFilemakerSocialSchedulerQueue,
+  startFilemakerSocialPipelineQueue,
 ] as const satisfies readonly QueueStarter[];
 const FEATURE_AWARE_STARTERS = [
   startPlaywrightListingQueue,
@@ -94,14 +94,14 @@ const parseEnvBoolean = (value: string | undefined): boolean | null => {
   return null;
 };
 
-export const shouldStartKangurSocialQueues = (
+export const shouldStartSocialPublishingQueues = (
   env: NodeJS.ProcessEnv = process.env
 ): boolean => {
-  if (parseEnvBoolean(env['DISABLE_KANGUR_SOCIAL_WORKERS']) === true) {
+  if (parseEnvBoolean(env['DISABLE_SOCIAL_PUBLISHING_WORKERS']) === true) {
     return false;
   }
 
-  const explicitEnable = parseEnvBoolean(env['ENABLE_KANGUR_SOCIAL_WORKERS']);
+  const explicitEnable = parseEnvBoolean(env['ENABLE_SOCIAL_PUBLISHING_WORKERS']);
   if (explicitEnable !== null) {
     return explicitEnable;
   }
@@ -131,22 +131,22 @@ const isQueueStarter = (value: unknown): value is QueueStarter =>
   typeof value === 'function';
 
 const callSpecializedStartup = (
-  shouldStartKangurSocial: boolean
+  shouldStartSocialPublishing: boolean
 ): void => {
   for (const starter of SPECIALIZED_STARTERS) {
     starter();
   }
 
-  if (shouldStartKangurSocial) {
-    for (const starter of KANGUR_SOCIAL_STARTERS) {
+  if (shouldStartSocialPublishing) {
+    for (const starter of SOCIAL_PUBLISHING_STARTERS) {
       starter();
     }
   } else {
     logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
-      message: 'Kangur social workers are disabled for this environment. Set ENABLE_KANGUR_SOCIAL_WORKERS=true to enable them.',
-      context: { queueNames: [...KANGUR_SOCIAL_QUEUE_NAMES] },
+      message: 'Social publishing workers are disabled for this environment. Set ENABLE_SOCIAL_PUBLISHING_WORKERS=true to enable them.',
+      context: { queueNames: [...SOCIAL_PUBLISHING_QUEUE_NAMES] },
     }).catch(() => {});
   }
 };
@@ -182,10 +182,10 @@ export const initializeQueues = (): void => {
         return;
       }
 
-      const shouldStartKangurSocial = shouldStartKangurSocialQueues();
-      const excludedQueueNames = shouldStartKangurSocial ? [...STARTUP_GATED_QUEUE_NAMES] : [...STARTUP_GATED_QUEUE_NAMES, ...KANGUR_SOCIAL_QUEUE_NAMES];
+      const shouldStartSocialPublishing = shouldStartSocialPublishingQueues();
+      const excludedQueueNames = shouldStartSocialPublishing ? [...STARTUP_GATED_QUEUE_NAMES] : [...STARTUP_GATED_QUEUE_NAMES, ...SOCIAL_PUBLISHING_QUEUE_NAMES];
 
-      callSpecializedStartup(shouldStartKangurSocial);
+      callSpecializedStartup(shouldStartSocialPublishing);
       logSystemEvent({ level: 'info', source: LOG_SOURCE, message: 'Starting BullMQ workers...' }).catch(() => {});
       startAllWorkers({ excludeQueueNames: excludedQueueNames });
       startFeatureAwareWorkers();

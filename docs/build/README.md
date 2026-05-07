@@ -35,6 +35,7 @@ is specifically for shared build, CI, and package-manager workflow guidance.
 - [`application-workspaces-and-commands.md`](./application-workspaces-and-commands.md) — app/workspace command map and `npm -w` semantics
 - [`scanner-smoke-tests.md`](./scanner-smoke-tests.md) — which scanner smoke test to run and when
 - [`vercel-deployment.md`](./vercel-deployment.md) — Vercel deploy config and operational constraints
+- [`vercel-studiq-cms-split.md`](./vercel-studiq-cms-split.md) — two-project Vercel setup for StudiQ and CMS
 - [`agentic-ci.md`](./agentic-ci.md) — CI behavior for agent-driven workflows
 - [`agentic-engineering.md`](./agentic-engineering.md) — shared engineering workflow guidance
 - [`bazel.md`](./bazel.md) — Bazel entrypoints and repo lanes
@@ -54,6 +55,7 @@ is specifically for shared build, CI, and package-manager workflow guidance.
 | understand Bun parity or Bun CI lanes | [`bun.md`](./bun.md) |
 | inspect static-analysis or security scanning | [`codeql.md`](./codeql.md) |
 | update Vercel deployment behavior | [`vercel-deployment.md`](./vercel-deployment.md) |
+| split StudiQ and CMS into separate Vercel projects | [`vercel-studiq-cms-split.md`](./vercel-studiq-cms-split.md) |
 | review generated improvement outputs | [`improvements/README.md`](./improvements/README.md) |
 
 ## Canonical Repo Lanes

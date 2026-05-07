@@ -2,9 +2,39 @@
 test-results/
 playwright-report/
 coverage/
+/docs/metrics/
+__tests__/
+**/__tests__/
+e2e/
+tests/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+playwright-debug/
 .eslintcache
 .next/
+**/.next/
+apps/*/.next/
 .next-dev/
+**/.next-dev/
+apps/*/.next-dev/
+.next-*/
+apps/*/.next-*/
+node_modules/
+**/node_modules/
+.turbo/
+**/.turbo/
+dist/
+**/dist/
+*.tsbuildinfo
+.git/
+.claude/
+.vercel/
+.cache/
+.codacy/
+/logs/
+*.log
 
 # Bazel build artifacts
 bazel-*
@@ -12,5 +42,11 @@ bazel-*
 .cache/bazel-repo
 
 # Local databases and transient runtime data
+public/uploads/
+csv/
+data/amazon-scan-diagnostics/
+mongo/backups/
 mongo/local-data/
+mongo/runtime/
+output/
 tmp/playwright-runs/

@@ -28,13 +28,21 @@ describe('folder-tree-profiles-v2', () => {
       'prompt_exploder_hierarchy',
       'admin_menu_layout',
       'filemaker_mail',
+      'filemaker_organizations',
+      'filemaker_job_listings',
+      'filemaker_persons',
+      'filemaker_events',
+      'filemaker_invoices',
+      'filemaker_values',
       'kangur_lessons_manager',
       'kangur_lessons_manager_catalog',
       'kangur_test_suites_manager',
       'kangur_test_suites_manager_catalog',
       'brain_catalog_tree',
       'brain_routing_tree',
-      'kangur_social_capture_browser',
+      'social_publishing_capture_browser',
+      'playwright_step_seq_constructor',
+      'playwright_step_seq_action_runs',
     ]);
   });
 

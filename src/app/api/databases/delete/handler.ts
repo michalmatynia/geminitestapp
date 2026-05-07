@@ -1,11 +1,10 @@
 import { promises as fs } from 'fs';
-import path from 'path';
 
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
-  mongoBackupsDir,
   assertValidMongoBackupName,
+  resolveMongoBackupPath,
 } from '@/features/database/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -52,7 +51,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   assertValidMongoBackupName(backupName);
 
-  const backupPath = path.join(mongoBackupsDir, backupName);
+  const backupPath = await resolveMongoBackupPath(backupName);
   await fs.unlink(backupPath);
   await Promise.all([
     unlinkIfPresent(`${backupPath}.log`),

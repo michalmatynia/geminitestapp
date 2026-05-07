@@ -14,7 +14,6 @@ import {
 } from './tests-primitives';
 import { 
     WARNING_TONE, 
-    INDIGO_TONE, 
     BASE_TONE, 
     SUCCESS_TONE 
 } from '../shared/KangurMobileUi';
@@ -41,7 +40,7 @@ function KangurMobileTestPlayer({
   const [finished, setFinished] = useState(false);
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({});
 
-  const questions = item.questions as KangurTestQuestion[];
+  const questions = Array.isArray(item.questions) ? (item.questions as KangurTestQuestion[]) : [];
 
   const scoreInfo = useMemo(() => {
       const score = questions.reduce((total, q) => answers[q.id] === q.correctChoiceLabel ? total + q.pointValue : total, 0);
@@ -114,9 +113,10 @@ function QuestionChoices({
     );
 }
 
-function TestControls({
+ /* eslint-disable @typescript-eslint/no-unused-vars */ 
+ function TestControls({
     currentIndex,
-    totalQuestions,
+    _totalQuestions,
     isAnswered,
     showAnswer,
     handleReveal,
@@ -124,7 +124,7 @@ function TestControls({
     setCurrentIndex
 }: {
     currentIndex: number,
-    totalQuestions: number,
+    _totalQuestions: number,
     isAnswered: boolean,
     showAnswer: boolean,
     handleReveal: () => void,

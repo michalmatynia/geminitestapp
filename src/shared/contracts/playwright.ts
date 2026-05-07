@@ -135,7 +135,7 @@ export type PlaywrightScriptTemplate = {
   script: string;
 };
 
-/** Generic capture route used by the Playwright engine. Structurally compatible with KangurSocialProgrammableCaptureRoute. */
+/** Generic capture route used by the Playwright engine. Structurally compatible with SocialPublishingProgrammableCaptureRoute. */
 export type PlaywrightCaptureRoute = {
   id: string;
   title: string;

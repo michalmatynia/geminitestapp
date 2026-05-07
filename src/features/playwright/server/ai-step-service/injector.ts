@@ -182,17 +182,22 @@ export async function executeInjectionIterationCode(options: {
   code: string;
   shouldWaitForNavigation: boolean;
   iterationDelayMs: number;
+  urlBeforeExecution?: string | null | undefined;
 }): Promise<string | null> {
   if (options.code === '') return null;
 
   try {
     await executeInjectedPlaywrightCode(options.page, options.code);
-    if (options.shouldWaitForNavigation) {
+    const urlAfter = options.page.url();
+    const urlChanged =
+      options.urlBeforeExecution != null && urlAfter !== options.urlBeforeExecution;
+    if (options.shouldWaitForNavigation && urlChanged) {
       await options.page
-        .waitForLoadState('domcontentloaded', { timeout: 10000 })
+        .waitForLoadState('domcontentloaded', { timeout: 5000 })
         .catch(() => undefined);
+    } else {
+      await options.page.waitForTimeout(options.iterationDelayMs);
     }
-    await new Promise((r) => setTimeout(r, options.iterationDelayMs));
     return null;
   } catch (err) {
     return err instanceof Error ? err.message : String(err ?? 'Unknown error');

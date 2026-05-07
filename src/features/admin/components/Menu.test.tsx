@@ -222,7 +222,7 @@ describe('Menu', () => {
 
       expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/products');
       expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/integrations');
-      expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/kangur/social');
+      expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/filemaker/social');
       expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/settings');
       expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/ai-paths');
       expect(routerPrefetchMock).not.toHaveBeenCalledWith('/admin/cms/pages');

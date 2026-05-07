@@ -49,6 +49,18 @@ const envSchema = z.object({
   MONGODB_LOCAL_DB: z.string().default('app'),
   MONGODB_CLOUD_DB: z.string().default('app'),
   MONGODB_ACTIVE_SOURCE_DEFAULT: z.enum(['local', 'cloud']).optional(),
+  STUDIQ_MONGODB_URI: z.string().url().optional(),
+  STUDIQ_MONGODB_DB: z.string().optional(),
+  STUDIQ_MONGODB_LOCAL_URI: z.string().url().optional(),
+  STUDIQ_MONGODB_LOCAL_DB: z.string().optional(),
+  STUDIQ_MONGODB_CLOUD_URI: z.string().url().optional(),
+  STUDIQ_MONGODB_CLOUD_DB: z.string().optional(),
+  CMS_BUILDER_MONGODB_URI: z.string().url().optional(),
+  CMS_BUILDER_MONGODB_DB: z.string().optional(),
+  CMS_BUILDER_MONGODB_LOCAL_URI: z.string().url().optional(),
+  CMS_BUILDER_MONGODB_LOCAL_DB: z.string().optional(),
+  CMS_BUILDER_MONGODB_CLOUD_URI: z.string().url().optional(),
+  CMS_BUILDER_MONGODB_CLOUD_DB: z.string().optional(),
   APP_DB_PROVIDER: z.enum(['mongodb']).optional(),
 
   // Auth

@@ -54,6 +54,7 @@ These are the maintained feature-owned documentation surfaces.
 | AI Features | [`docs/ai-features/README.md`](../ai-features/README.md) | High-level AI capability guides |
 | AI Paths | [`docs/ai-paths/README.md`](../ai-paths/README.md) | Workflow engine docs, semantic grammar, node docs |
 | Case Resolver | [`docs/case-resolver/index.md`](../case-resolver/index.md) | Feature overview, architecture, APIs, runbooks |
+| Filemaker | [`docs/filemaker/README.md`](../filemaker/README.md) | Admin data workspace, mail and campaign tooling, social publishing |
 | Kangur | [`docs/kangur/README.md`](../kangur/README.md) | Learner product topology, admin, mobile, operations |
 | Playwright automation | [`docs/playwright/README.md`](../playwright/README.md) | Step Sequencer history, code previews, registry bindings |
 | Prompt Exploder | [`docs/prompt-exploder/README.md`](../prompt-exploder/README.md) | Prompt Exploder feature-owned docs |

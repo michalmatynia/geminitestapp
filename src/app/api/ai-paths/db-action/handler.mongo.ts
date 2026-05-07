@@ -157,12 +157,12 @@ export const handlers: Record<string, ActionHandler> = {
   },
 
   deleteOne: async (ctx, normalizedFilter) => {
-    const result = await ctx.collectionRef.deleteOne(normalizedFilter as Record<string, unknown>);
+    const result = await ctx.collectionRef.deleteOne(normalizedFilter);
     return withProviderPayload(ctx.provider, ctx.requestedProvider, { deletedCount: result.deletedCount });
   },
 
   deleteMany: async (ctx, normalizedFilter) => {
-    const result = await ctx.collectionRef.deleteMany(normalizedFilter as Record<string, unknown>);
+    const result = await ctx.collectionRef.deleteMany(normalizedFilter);
     return withProviderPayload(ctx.provider, ctx.requestedProvider, { deletedCount: result.deletedCount });
   },
 

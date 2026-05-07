@@ -147,19 +147,6 @@ export const QUERY_KEYS = {
       ] as const,
     assignments: (options?: { includeArchived?: boolean | undefined }) =>
       [...QUERY_KEYS.kangur.all, 'assignments', { includeArchived: options?.includeArchived ?? false }] as const,
-    socialPosts: (options: {
-      scope: string;
-      limit?: number | null;
-      page?: number | null;
-      pageSize?: number | null;
-      search?: string | null;
-      status?: string | null;
-    }) =>
-      [...QUERY_KEYS.kangur.all, 'social-posts', options] as const,
-    socialPost: (id: string | null) =>
-      [...QUERY_KEYS.kangur.all, 'social-post', id ?? null] as const,
-    socialImageAddons: (options: { limit: number | null; ids?: string[] | null }) =>
-      [...QUERY_KEYS.kangur.all, 'social-image-addons', options] as const,
     observability: {
       all: ['kangur', 'observability'] as const,
       summary: (range: '24h' | '7d' | '30d') =>
@@ -172,6 +159,21 @@ export const QUERY_KEYS = {
       usage: (learnerId: string | null) =>
         [...QUERY_KEYS.kangur.aiTutor.all, 'usage', { learnerId }] as const,
     },
+  },
+  socialPublishing: {
+    all: ['social-publishing'] as const,
+    posts: (options: {
+      scope: string;
+      limit?: number | null;
+      page?: number | null;
+      pageSize?: number | null;
+      search?: string | null;
+      status?: string | null;
+    }) => [...QUERY_KEYS.socialPublishing.all, 'posts', options] as const,
+    post: (id: string | null) =>
+      [...QUERY_KEYS.socialPublishing.all, 'post', id ?? null] as const,
+    imageAddons: (options: { limit: number | null; ids?: string[] | null }) =>
+      [...QUERY_KEYS.socialPublishing.all, 'image-addons', options] as const,
   },
   notes: {
     all: ['notes'] as const,

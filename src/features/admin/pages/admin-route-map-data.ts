@@ -31,8 +31,6 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
     'Monitor Kangur-specific alerts, route health, client telemetry, and recent server activity.',
   '/admin/kangur/lessons-manager':
     'Manage Kangur lessons list, order, and visibility using the Master Folder Tree runtime.',
-  '/admin/kangur/social':
-    'Prepare bilingual Kangur social posts with images, scheduling, and LinkedIn publishing.',
   '/admin/kangur/settings':
     'Configure Kangur narrator voice, narration mode, and documentation tooltip behavior.',
   '/admin/kangur/settings/ai-tutor-content':
@@ -46,6 +44,8 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/filemaker/values': 'Search and review hierarchical Filemaker values.',
   '/admin/filemaker/mail-client':
     'Open the Filemaker email client dashboard for mailbox health, recent activity, and mailbox actions.',
+  '/admin/filemaker/social':
+    'Prepare reusable social posts with images, scheduling, AI generation, and publishing connections.',
   '/admin/filemaker/emails': 'Search and review Filemaker email records and relationship links.',
   '/admin/filemaker/list':
     'Search and review the combined Filemaker person, organization, and event registry.',

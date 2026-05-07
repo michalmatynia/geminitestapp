@@ -1,0 +1,8 @@
+.env*.local
+.next
+node_modules
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+.vercel
+mongo/local-data/
+mongo/runtime/

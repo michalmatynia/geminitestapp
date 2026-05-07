@@ -12,6 +12,8 @@ import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import { isFatalJobBoardError } from './job-board-fatal-errors';
+
 const aiCompanyPartialSchema = z.object({
   name: z.string().nullable().optional(),
   nip: z.string().nullable().optional(),
@@ -105,6 +107,19 @@ const normalizeAiListing = (listing: JobScanAiListingResponse | null): Record<st
       }
     : null;
 
+const buildFailedEvaluation = (
+  error: unknown,
+  modelId: string,
+  evaluatedAt: string
+): NonNullable<JobScanEvaluation> => ({
+  company: null,
+  listing: null,
+  confidence: null,
+  modelId,
+  error: error instanceof Error ? error.message : String(error),
+  evaluatedAt,
+});
+
 export const evaluateJobPageWithAi = async (input: {
   sourceUrl: string;
   pageContent: string;
@@ -156,14 +171,10 @@ export const evaluateJobPageWithAi = async (input: {
       action: 'evaluateJobPageWithAi',
       sourceUrl: input.sourceUrl,
     });
-    return {
-      company: null,
-      listing: null,
-      confidence: null,
-      modelId,
-      error: error instanceof Error ? error.message : String(error),
-      evaluatedAt,
-    };
+    if (isFatalJobBoardError(error)) {
+      throw error;
+    }
+    return buildFailedEvaluation(error, modelId, evaluatedAt);
   }
 };
 

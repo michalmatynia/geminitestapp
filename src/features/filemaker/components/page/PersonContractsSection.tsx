@@ -8,5 +8,5 @@ import { FilemakerContractsSection } from '../shared/FilemakerContractsSection';
 export function PersonContractsSection(): React.JSX.Element {
   const { linkedContracts } = useAdminFilemakerPersonEditPageStateContext();
 
-  return <FilemakerContractsSection contracts={linkedContracts} />;
+  return <FilemakerContractsSection contracts={linkedContracts} defaultCollapsed />;
 }

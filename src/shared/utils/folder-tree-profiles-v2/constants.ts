@@ -227,8 +227,8 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: brain-routing-capability',
     folderHint: 'Example: brain-routing-feature',
   },
-  kangur_social_capture_browser: {
-    title: 'StudiQ Social Capture Browser',
+  social_publishing_capture_browser: {
+    title: 'Social Publishing Capture Browser',
     description: 'Read-only tree for browsing lessons by section in the Social capture content browser.',
     fileHint: 'Example: social-capture-slide',
     folderHint: 'Example: social-capture-section, social-capture-subsection',
@@ -391,7 +391,7 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifyError: true,
     successMessage: 'Routing tree updated.',
   },
-  kangur_social_capture_browser: {
+  social_publishing_capture_browser: {
     notifySuccess: false,
     notifyError: false,
     successMessage: 'Social capture browser updated.',

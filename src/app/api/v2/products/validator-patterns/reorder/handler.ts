@@ -86,12 +86,9 @@ const applyReorderUpdates = async (
   repository: Awaited<ReturnType<typeof getValidationPatternRepository>>,
   updates: ReorderUpdate[]
 ): Promise<ProductValidationPattern[]> => {
-  const updatedPatterns: ProductValidationPattern[] = [];
-  for (const update of updates) {
-    const updated = await repository.updatePattern(update.id, buildReorderUpdateInput(update));
-    updatedPatterns.push(updated);
-  }
-  return updatedPatterns;
+  return Promise.all(
+    updates.map((update) => repository.updatePattern(update.id, buildReorderUpdateInput(update)))
+  );
 };
 
 export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -100,7 +97,7 @@ export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   assertUniqueReorderUpdateIds(updates);
 
   const repository = await getValidationPatternRepository();
-  const currentPatterns = await repository.listPatterns();
+  const currentPatterns: ProductValidationPattern[] = await repository.listPatterns();
   assertReorderUpdatesAreFresh(updates, mapPatternsById(currentPatterns));
 
   const updatedPatterns = await applyReorderUpdates(repository, updates);

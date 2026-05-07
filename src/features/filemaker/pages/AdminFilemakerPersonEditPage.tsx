@@ -66,13 +66,13 @@ function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
         {!isCreateMode ? (
           <TabsContent value='linked-records' className='m-0 space-y-4 outline-none'>
             <PersonBankAccountsSection />
-            <PersonContractsSection />
             <PersonDocumentsSection />
             <PersonOccupationsSection />
             <PersonAnyTextsSection />
             <PersonAnyParamsSection />
             <PersonEmailsSection />
             <PersonWebsitesSection />
+            <PersonContractsSection />
           </TabsContent>
         ) : null}
       </Tabs>

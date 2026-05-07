@@ -17,6 +17,8 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: { captureException: vi.fn() },
 }));
 
+import { configurationError } from '@/shared/errors/app-error';
+
 import { evaluateJobPageWithAi } from './job-scan-ai-evaluator';
 
 describe('evaluateJobPageWithAi', () => {
@@ -119,6 +121,20 @@ describe('evaluateJobPageWithAi', () => {
     expect(result?.error).toBe('rate limited');
     expect(result?.company).toBeNull();
     expect(result?.listing).toBeNull();
+  });
+
+  it('rethrows critical non-retryable AI Brain configuration errors', async () => {
+    const error = configurationError(
+      'Job offer extraction has no model assigned in AI Brain.'
+    );
+    resolveBrainExecutionConfigForCapabilityMock.mockRejectedValueOnce(error);
+
+    await expect(
+      evaluateJobPageWithAi({
+        sourceUrl: 'https://example.com',
+        pageContent: 'x',
+      })
+    ).rejects.toBe(error);
   });
 
   it('returns error result when JSON is malformed', async () => {

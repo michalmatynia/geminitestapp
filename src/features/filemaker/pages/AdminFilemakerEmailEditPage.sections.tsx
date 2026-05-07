@@ -2,12 +2,15 @@
 
 import React from 'react';
 
-import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
 import { FormActions, FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import { Badge, Checkbox, Input } from '@/shared/ui/primitives.public';
 
+import {
+  FILEMAKER_EMAIL_STATUS_OPTIONS,
+  normalizeFilemakerEmailStatus,
+} from '../filemaker-email-status';
 import { formatFilemakerAddress } from '../settings';
 import type {
   FilemakerEmail,
@@ -16,25 +19,6 @@ import type {
   FilemakerPerson,
 } from '../types';
 import { formatTimestamp } from './filemaker-page-utils';
-
-const EMAIL_STATUS_OPTIONS: Array<LabeledOptionWithDescriptionDto<FilemakerEmailStatus>> = [
-  { value: 'active', label: 'Active', description: 'Deliverable and in use.' },
-  { value: 'inactive', label: 'Inactive', description: 'Known email, not currently used.' },
-  { value: 'bounced', label: 'Bounced', description: 'Delivery is failing.' },
-  { value: 'unverified', label: 'Unverified', description: 'Not yet verified.' },
-];
-
-const normalizeEmailStatus = (value: string): FilemakerEmailStatus => {
-  switch (value) {
-    case 'active':
-    case 'inactive':
-    case 'bounced':
-    case 'unverified':
-      return value;
-    default:
-      return 'unverified';
-  }
-};
 
 function EmailEditBreadcrumbs(): React.JSX.Element {
   return (
@@ -157,9 +141,9 @@ export function EmailDetailsSection({
           <SelectSimple
             value={status}
             onValueChange={(value: string): void => {
-              setStatus(normalizeEmailStatus(value));
+              setStatus(normalizeFilemakerEmailStatus(value));
             }}
-            options={EMAIL_STATUS_OPTIONS}
+            options={FILEMAKER_EMAIL_STATUS_OPTIONS}
             placeholder='Select status'
             size='sm'
             ariaLabel='Select status'

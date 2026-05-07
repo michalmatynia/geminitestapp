@@ -3,8 +3,11 @@ import 'server-only';
 import { promises as fs } from 'fs';
 import path from 'path';
 
+import { MongoClient } from 'mongodb';
+
 import type {
   DatabaseEngineMongoLastSync,
+  DatabaseEngineMongoSyncApplicationTransfer,
   DatabaseEngineMongoSyncBackup,
   DatabaseEngineMongoSyncDirection,
   DatabaseEngineMongoSyncResponse,
@@ -17,7 +20,6 @@ import {
   forbiddenError,
   operationFailedError,
 } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { acquireMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import { createMongoSourceBackup } from '@/shared/lib/db/services/database-backup';
 import { verifyMongoSourceParity } from '@/shared/lib/db/services/mongo-source-parity';
@@ -31,13 +33,20 @@ import {
   execFileAsync,
   getMongoDumpCommand,
   getMongoRestoreCommand,
+  resolveCmsBuilderMongoSourceConfig,
+  resolveStudiqMongoSourceConfig,
+  type MongoApplicationSourceConfig,
+  type MongoBackupApplication,
 } from '@/shared/lib/db/utils/mongo';
 
 const mongoRuntimeDir = path.join(process.cwd(), 'mongo', 'runtime');
 
-type ResolvedMongoSourceConfig = Awaited<ReturnType<typeof resolveMongoSourceConfig>>;
+type ResolvedMongoSourceConfig =
+  | Awaited<ReturnType<typeof resolveMongoSourceConfig>>
+  | MongoApplicationSourceConfig;
 
 type MongoSyncContext = {
+  application: MongoBackupApplication;
   direction: DatabaseEngineMongoSyncDirection;
   source: MongoSource;
   target: MongoSource;
@@ -73,10 +82,14 @@ const resolveSyncEndpoints = (
     : { source: 'local', target: 'cloud' };
 
 const buildArchivePaths = (
+  application: MongoBackupApplication,
   direction: DatabaseEngineMongoSyncDirection,
   timestamp: number
 ): { archivePath: string; logPath: string } => {
-  const baseName = `mongo-sync-${direction}-${timestamp}`;
+  const baseName =
+    application === 'geminitestapp'
+      ? `mongo-sync-${direction}-${timestamp}`
+      : `mongo-sync-${application}-${direction}-${timestamp}`;
   return {
     archivePath: path.join(mongoRuntimeDir, `${baseName}.archive`),
     logPath: path.join(mongoRuntimeDir, `${baseName}.log`),
@@ -129,18 +142,21 @@ const requireMongoConfigValue = (value: string | null, label: string): string =>
 };
 
 const createPreSyncBackups = async (
+  application: MongoBackupApplication,
   source: MongoSource,
   target: MongoSource,
   direction: DatabaseEngineMongoSyncDirection,
   timestamp: number
 ): Promise<DatabaseEngineMongoSyncBackup[]> => [
   await createMongoSourceBackup({
+    application,
     source,
     role: 'source',
     direction,
     timestamp,
   }),
   await createMongoSourceBackup({
+    application,
     source: target,
     role: 'target',
     direction,
@@ -148,20 +164,58 @@ const createPreSyncBackups = async (
   }),
 ];
 
+const resolveApplicationMongoSourceConfig = async (
+  application: MongoBackupApplication,
+  source: MongoSource
+): Promise<ResolvedMongoSourceConfig> =>
+  application === 'studiq'
+    ? resolveStudiqMongoSourceConfig(source)
+    : application === 'cms-builder'
+      ? resolveCmsBuilderMongoSourceConfig(source)
+    : resolveMongoSourceConfig(source);
+
+const assertApplicationSourceConfigured = (
+  application: MongoBackupApplication,
+  source: MongoSource,
+  config: ResolvedMongoSourceConfig
+): void => {
+  if (config.configured) return;
+
+  if (application === 'studiq') {
+    const prefix = `STUDIQ_MONGODB_${source.toUpperCase()}`;
+    throw configurationError(
+      `StudiQ MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`
+    );
+  }
+
+  if (application === 'cms-builder') {
+    const prefix = `CMS_BUILDER_MONGODB_${source.toUpperCase()}`;
+    throw configurationError(
+      `CMS Builder MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`
+    );
+  }
+
+  throw configurationError(`MongoDB source "${source}" is not configured.`);
+};
+
 const prepareMongoSyncContext = async (
+  application: MongoBackupApplication,
+  timestamp: number,
   direction: DatabaseEngineMongoSyncDirection
 ): Promise<MongoSyncContext> => {
   const { source, target } = resolveSyncEndpoints(direction);
-  const sourceConfig = await resolveMongoSourceConfig(source);
-  const targetConfig = await resolveMongoSourceConfig(target);
+  const sourceConfig = await resolveApplicationMongoSourceConfig(application, source);
+  const targetConfig = await resolveApplicationMongoSourceConfig(application, target);
+  assertApplicationSourceConfigured(application, source, sourceConfig);
+  assertApplicationSourceConfigured(application, target, targetConfig);
   const syncIssue = getMongoSyncIssue(sourceConfig, targetConfig);
   if (syncIssue !== null && syncIssue !== '') {
     throw configurationError(syncIssue);
   }
 
-  const timestamp = Date.now();
-  const { archivePath, logPath } = buildArchivePaths(direction, timestamp);
+  const { archivePath, logPath } = buildArchivePaths(application, direction, timestamp);
   return {
+    application,
     direction,
     source,
     target,
@@ -174,8 +228,28 @@ const prepareMongoSyncContext = async (
     syncedAt: new Date(timestamp).toISOString(),
     archivePath,
     logPath,
-    preSyncBackups: await createPreSyncBackups(source, target, direction, timestamp),
+    preSyncBackups: await createPreSyncBackups(
+      application,
+      source,
+      target,
+      direction,
+      timestamp
+    ),
   };
+};
+
+const prepareMongoSyncContexts = async (
+  direction: DatabaseEngineMongoSyncDirection
+): Promise<MongoSyncContext[]> => {
+  const timestamp = Date.now();
+  const applications: MongoBackupApplication[] = ['geminitestapp', 'studiq', 'cms-builder'];
+  const contexts: MongoSyncContext[] = [];
+
+  for (const application of applications) {
+    contexts.push(await prepareMongoSyncContext(application, timestamp, direction));
+  }
+
+  return contexts;
 };
 
 const buildMongoTransferCommands = (context: MongoSyncContext): MongoTransferCommands => ({
@@ -205,6 +279,7 @@ const buildMongoTransferCommands = (context: MongoSyncContext): MongoTransferCom
 
 const formatBackupLog = (backup: DatabaseEngineMongoSyncBackup): string =>
   [
+    `application: ${backup.application}`,
     `role: ${backup.role}`,
     `source: ${backup.source}`,
     `backup: ${backup.backupPath}`,
@@ -228,8 +303,16 @@ const getErrorMessage = (error: unknown): string =>
 const dropTargetDatabaseBeforeRestore = async (
   context: MongoSyncContext
 ): Promise<void> => {
-  const targetDb = await getMongoDb(context.target);
-  await targetDb.dropDatabase();
+  const client = new MongoClient(context.targetUri, {
+    connectTimeoutMS: 10_000,
+    serverSelectionTimeoutMS: 10_000,
+  });
+  try {
+    await client.connect();
+    await client.db(context.targetDbName).dropDatabase();
+  } finally {
+    await client.close().catch(() => undefined);
+  }
 };
 
 const writeMongoSyncLog = async (params: {
@@ -243,10 +326,11 @@ const writeMongoSyncLog = async (params: {
   await fs.writeFile(
     context.logPath,
     [
-        'pre-sync backups:',
-        ...context.preSyncBackups.map(formatBackupLog),
-        'target database dropped before restore: true',
-        `dump command: ${formatCommandForLog(commands.dumpCommand, commands.dumpArgs)}`,
+      `application: ${context.application}`,
+      'pre-sync backups:',
+      ...context.preSyncBackups.map(formatBackupLog),
+      'target database dropped before restore: true',
+      `dump command: ${formatCommandForLog(commands.dumpCommand, commands.dumpArgs)}`,
       dumpResult.stdout,
       dumpResult.stderr,
       `restore command: ${formatCommandForLog(commands.restoreCommand, commands.restoreArgs)}`,
@@ -273,6 +357,7 @@ const writeMongoSyncFailureLog = async (params: {
     .writeFile(
       context.logPath,
       [
+        `application: ${context.application}`,
         'pre-sync backups:',
         ...context.preSyncBackups.map(formatBackupLog),
         `failed phase: ${phase}`,
@@ -307,7 +392,9 @@ const assertVerificationPassed = (
   );
 };
 
-const runMongoTransfer = async (context: MongoSyncContext): Promise<DatabaseEngineMongoLastSync> => {
+const runMongoTransfer = async (
+  context: MongoSyncContext
+): Promise<DatabaseEngineMongoSyncApplicationTransfer> => {
   const commands = buildMongoTransferCommands(context);
   let dumpResult: MongoToolResult | null = null;
   let restoreResult: MongoToolResult | null = null;
@@ -348,16 +435,16 @@ const runMongoTransfer = async (context: MongoSyncContext): Promise<DatabaseEngi
     target: context.target,
     sourceDbName: context.sourceDbName,
     targetDbName: context.targetDbName,
+    sourceUri: context.sourceUri,
+    targetUri: context.targetUri,
   });
   await writeMongoSyncLog({ context, commands, dumpResult, restoreResult, verification });
   assertVerificationPassed(context, verification);
 
   return {
-    direction: context.direction,
-    source: context.source,
-    target: context.target,
-    syncedAt: context.syncedAt,
-    preSyncBackups: context.preSyncBackups,
+    application: context.application,
+    sourceDbName: context.sourceDbName,
+    targetDbName: context.targetDbName,
     archivePath: context.archivePath,
     logPath: context.logPath,
     verification,
@@ -375,13 +462,40 @@ export async function syncMongoSources(
 
   const releaseSyncLock = await acquireMongoSyncLock(direction);
   try {
-    const context = await prepareMongoSyncContext(direction);
+    const contexts = await prepareMongoSyncContexts(direction);
+    const primaryContext =
+      contexts.find((context) => context.application === 'geminitestapp') ?? contexts[0];
+    if (primaryContext === undefined) {
+      throw operationFailedError('Failed to prepare MongoDB source sync contexts.');
+    }
+    const preSyncBackups = contexts.flatMap((context) => context.preSyncBackups);
     try {
-      const syncSnapshot = await runMongoTransfer(context);
+      const applicationTransfers: DatabaseEngineMongoSyncApplicationTransfer[] = [];
+      for (const context of contexts) {
+        applicationTransfers.push(await runMongoTransfer(context));
+      }
+      const primaryTransfer =
+        applicationTransfers.find((transfer) => transfer.application === 'geminitestapp') ??
+        applicationTransfers[0];
+      const syncSnapshot: DatabaseEngineMongoLastSync = {
+        direction,
+        source: primaryContext.source,
+        target: primaryContext.target,
+        syncedAt: primaryContext.syncedAt,
+        preSyncBackups,
+        archivePath: primaryTransfer?.archivePath ?? null,
+        logPath: primaryTransfer?.logPath ?? null,
+        verification: primaryTransfer?.verification ?? null,
+        applicationTransfers,
+      };
       await recordMongoSourceSync(syncSnapshot);
+      const message = [
+        `MongoDB sync completed and verified: ${primaryContext.source} -> ${primaryContext.target}.`,
+        `Synced ${applicationTransfers.length} application databases and created ${preSyncBackups.length} pre-sync backups before restore.`,
+      ].join(' ');
       return {
         success: true,
-        message: `MongoDB sync completed and verified: ${context.source} -> ${context.target}. Created ${context.preSyncBackups.length} pre-sync backups before restore.`,
+        message,
         ...syncSnapshot,
       };
     } catch (error) {
@@ -389,7 +503,7 @@ export async function syncMongoSources(
         throw error;
       }
       throw operationFailedError(
-        `Failed to sync MongoDB source ${context.source} -> ${context.target}.`,
+        `Failed to sync MongoDB source ${primaryContext.source} -> ${primaryContext.target}.`,
         error
       );
     }

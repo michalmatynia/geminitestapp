@@ -165,10 +165,38 @@ describe('Databases API', () => {
 
   describe('GET /api/databases/backups', () => {
     it('should return a list of backups', async () => {
-      (vi.spyOn(fs, 'readdir') as Mock).mockResolvedValue([
-        'stardb-backup-123.archive',
-        'restore-log.json',
-      ]);
+      (vi.spyOn(fs, 'readdir') as Mock)
+        .mockResolvedValueOnce([
+          {
+            name: 'geminitestapp',
+            isDirectory: () => true,
+            isFile: () => false,
+          },
+          {
+            name: 'studiq',
+            isDirectory: () => true,
+            isFile: () => false,
+          },
+          {
+            name: 'restore-log.json',
+            isDirectory: () => false,
+            isFile: () => true,
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            name: 'app-backup-123.archive',
+            isDirectory: () => false,
+            isFile: () => true,
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            name: 'studiq-local-backup-123.archive',
+            isDirectory: () => false,
+            isFile: () => true,
+          },
+        ]);
       vi.spyOn(fs, 'readFile').mockResolvedValue('{}');
       vi.spyOn(fs, 'stat').mockResolvedValue({
         size: 1024,
@@ -181,8 +209,11 @@ describe('Databases API', () => {
       );
       const backups = (await res.json()) as { name: string }[];
       expect(res.status).toEqual(200);
-      expect(backups.length).toEqual(1);
-      expect(backups[0]!.name).toEqual('stardb-backup-123.archive');
+      expect(backups.length).toEqual(2);
+      expect(backups.map((backup) => backup.name).sort()).toEqual([
+        'geminitestapp/app-backup-123.archive',
+        'studiq/studiq-local-backup-123.archive',
+      ]);
     });
   });
 
@@ -229,7 +260,7 @@ describe('Databases API', () => {
         })
       );
       expect(res.status).toEqual(200);
-      expect(fs.unlink).toHaveBeenCalledTimes(1);
+      expect(fs.unlink).toHaveBeenCalledTimes(3);
     });
   });
 });

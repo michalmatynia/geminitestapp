@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-17'
+last_reviewed: '2026-05-06'
 status: 'active'
 doc_type: 'reference'
 scope: 'cross-feature'
@@ -38,6 +38,7 @@ Example:
 | Root platform app | repository root | `npm run dev` | Runs `node --max-old-space-size=8192 server.cjs` and starts the main Next.js web, admin, and API application. Default port is `3000` unless `PORT` is overridden. |
 | Root platform app alias | repository root | `npm run dev:web` | Alias for the same root Next.js runtime as `npm run dev`. |
 | Standalone StudiQ web workspace | `apps/studiq-web` / `@app/studiq-web` | `npm run dev -w @app/studiq-web` | Runs the workspace `dev` script and starts the focused StudiQ/Kangur Next.js shell on port `3100`. |
+| Standalone CMS Builder workspace | `apps/cms-builder-web` / `@app/cms-builder-web` | `npm run dev -w @app/cms-builder-web` | Runs the workspace `dev` script and starts the focused CMS Builder Next.js shell on port `3200`. |
 | Kangur mobile | `apps/mobile` / `@kangur/mobile` | `npm run dev:mobile` | Delegates to `npm run dev --workspace @kangur/mobile`, which runs Expo through the shared mobile env wrapper. |
 | Kangur mobile direct workspace entry | `apps/mobile` / `@kangur/mobile` | `npm run dev -w @kangur/mobile` | Starts the same Expo development server as `npm run dev:mobile`, but by targeting the workspace directly. |
 | Kangur mobile web preview | `apps/mobile` / `@kangur/mobile` | `npm run dev:mobile:web` | Delegates to `npm run web --workspace @kangur/mobile` and starts Expo's web preview for the mobile shell. |
@@ -66,6 +67,30 @@ Example:
 - Use this when you want an isolated StudiQ/Kangur web workspace without the
   root app's broader admin and CMS surface.
 
+### `@app/cms-builder-web`
+
+- Owns a focused standalone Next.js shell under `apps/cms-builder-web`.
+- Owns the public CMS storefront/runtime at `/`, `/*`, `/{locale}`, and
+  `/{locale}/*`.
+- Serves the CMS admin surface at `/admin/cms/*` and canonicalizes `/cms/*` to
+  `/admin/cms/*`.
+- Owns the local CMS Builder auth pages, NextAuth route endpoints, session
+  provider, CSRF provider, and `/admin/cms/*` proxy protection.
+- Can receive root-platform CMS traffic when `CMS_WEB_ORIGIN` is configured in
+  the root app environment. `CMS_BUILDER_WEB_ORIGIN` remains supported as a
+  compatibility alias for the admin/builder handoff.
+- Public CMS pages should normally be moved by attaching their domains directly
+  to the CMS Vercel project. For transition cases where traffic still reaches
+  the root project, `CMS_PUBLIC_HOSTS` and `CMS_PUBLIC_PATH_PREFIXES` can
+  explicitly redirect matching public page requests to `CMS_WEB_ORIGIN`.
+- Loads repo-root environment files in both the runtime wrapper and
+  `apps/cms-builder-web/next.config.mjs`, so the root `.env*` files remain the
+  source of truth.
+- Reuses repo-root code through aliases for `@/app`, `@/features`,
+  `@/shared`, `@/server`, `@/i18n`, and `@docs`.
+- Use this when you want an isolated CMS Builder workspace without running the
+  full root platform app.
+
 ### `@kangur/mobile`
 
 - Owns the Expo Router native learner app.
@@ -87,6 +112,9 @@ Example:
 | Start the full root web/admin/API app | `npm run dev` | not applicable |
 | Start the standalone StudiQ web workspace | `npm run dev -w @app/studiq-web` | `npm run --workspace @app/studiq-web dev` |
 | Build the standalone StudiQ web workspace | `npm run build -w @app/studiq-web` | `npm run --workspace @app/studiq-web build` |
+| Start the standalone CMS Builder workspace | `npm run dev:cms-builder` | `npm run dev -w @app/cms-builder-web` |
+| Build the standalone CMS Builder workspace | `npm run build:cms-builder` | `npm run build -w @app/cms-builder-web` |
+| Test the standalone CMS Builder workspace | `npm run test:cms-builder` | `npm run test -w @app/cms-builder-web` |
 | Start Kangur mobile | `npm run dev:mobile` | `npm run dev -w @kangur/mobile` |
 | Preview Kangur mobile on web | `npm run dev:mobile:web` | `npm run web -w @kangur/mobile` |
 | Typecheck the mobile workspace | `npm run typecheck:mobile` | `npm run typecheck -w @kangur/mobile` |
@@ -97,6 +125,8 @@ Example:
 - Build and toolchain hub: [`docs/build/README.md`](./README.md)
 - Standalone StudiQ workspace guide:
   [`apps/studiq-web/README.md`](../../apps/studiq-web/README.md)
+- Standalone CMS Builder workspace guide:
+  [`apps/cms-builder-web/README.md`](../../apps/cms-builder-web/README.md)
 - Kangur application topology:
   [`docs/kangur/studiq-application.md`](../kangur/studiq-application.md)
 - Kangur mobile runtime guide: [`apps/mobile/README.md`](../../apps/mobile/README.md)

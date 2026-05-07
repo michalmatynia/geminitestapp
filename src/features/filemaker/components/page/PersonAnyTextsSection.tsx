@@ -2,11 +2,23 @@
 
 import React from 'react';
 
-import { useAdminFilemakerPersonEditPageStateContext } from '../../context/AdminFilemakerPersonEditPageContext';
+import {
+  useAdminFilemakerPersonEditPageActionsContext,
+  useAdminFilemakerPersonEditPageStateContext,
+} from '../../context/AdminFilemakerPersonEditPageContext';
 import { FilemakerAnyTextsSection } from '../shared/FilemakerAnyTextsSection';
 
 export function PersonAnyTextsSection(): React.JSX.Element {
-  const { linkedAnyTexts } = useAdminFilemakerPersonEditPageStateContext();
+  const { linkedAnyTexts, updateSetting } = useAdminFilemakerPersonEditPageStateContext();
+  const { handleDeleteLinkedRecord, handleUpdateLinkedRecord } =
+    useAdminFilemakerPersonEditPageActionsContext();
 
-  return <FilemakerAnyTextsSection anyTexts={linkedAnyTexts} />;
+  return (
+    <FilemakerAnyTextsSection
+      anyTexts={linkedAnyTexts}
+      isSaving={updateSetting.isPending}
+      onUpdateAnyText={(id, patch) => handleUpdateLinkedRecord('any-text', id, patch)}
+      onDeleteAnyText={(id) => handleDeleteLinkedRecord('any-text', id)}
+    />
+  );
 }

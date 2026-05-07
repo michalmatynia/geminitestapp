@@ -37,6 +37,8 @@ avoid becoming another dumping ground.
   [`docs/case-resolver/`](./case-resolver/index.md),
   [`docs/validator/`](./validator/README.md), and
   [`docs/kangur/`](./kangur/README.md)
+- Filemaker-owned admin and data-workspace docs belong in
+  [`docs/filemaker/`](./filemaker/README.md)
 - Cross-feature runbooks belong in [`docs/runbooks/`](./runbooks/README.md)
 - Cross-feature plans and closeouts belong in [`docs/plans/`](./plans/README.md)
 - Cross-feature decisions and exception registers belong in
@@ -58,6 +60,7 @@ avoid becoming another dumping ground.
 - AI Paths: canonical feature docs under
   [`docs/ai-paths/README.md`](./ai-paths/README.md)
 - Case Resolver: [`docs/case-resolver/index.md`](./case-resolver/index.md)
+- Filemaker: [`docs/filemaker/README.md`](./filemaker/README.md)
 - Validator: [`docs/validator/README.md`](./validator/README.md)
 - Kangur: [`docs/kangur/README.md`](./kangur/README.md)
 - Playwright automation docs: [`docs/playwright/README.md`](./playwright/README.md)

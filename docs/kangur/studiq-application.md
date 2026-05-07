@@ -19,7 +19,7 @@ the public root route or be embedded inside CMS pages.
 ## Application topology
 
 - The repository root remains the canonical Next.js application. It owns the public web shell, CMS routing, `/admin/kangur`, and `/api/kangur/*`.
-- `apps/studiq-web` is a standalone Next.js workspace for the focused StudiQ and Kangur web shell. It reuses repo-root code and loads env from the monorepo root, but it does not replace the root app as the canonical owner of admin, CMS, or API surfaces.
+- `apps/studiq-web` is a standalone Next.js workspace for the focused StudiQ and Kangur web shell. It reuses repo-root code, loads monorepo env first, then overlays `apps/studiq-web/.env*` so its MongoDB database is separate from the root app. It does not replace the root app as the canonical owner of admin, CMS, or API surfaces.
 - `apps/mobile` is the Expo Router application for native Kangur learner flows.
 - `apps/mobile-web` is reserved for a future Expo or React Native Web target and is not part of the active production web topology.
 - Shared cross-platform logic is split across:
@@ -28,13 +28,33 @@ the public root route or be embedded inside CMS pages.
   - `packages/kangur-api-client` for `/api/kangur/*` transport.
   - `packages/kangur-platform` for auth session, storage, and app-facing platform ports.
 
+## StudiQ database isolation
+
+`apps/studiq-web` owns its local MongoDB data under
+`apps/studiq-web/mongo/local-data` and points at
+`mongodb://127.0.0.1:27018/studiq_local` through its app-local env files. The
+workspace runtime normalizes `MONGODB_URI`, `MONGODB_DB`,
+`MONGODB_LOCAL_URI`, and `MONGODB_LOCAL_DB` after loading root env values so
+shared MongoDB modules resolve the StudiQ database instead of the root database.
+
+Use `npm run mongo:copy-from-root -w @app/studiq-web` to copy existing
+Kangur/StudiQ data into the local StudiQ database. Use
+`npm run mongo:detach-root:plan -w @app/studiq-web` to inspect the root
+documents that would be removed after copy verification; the destructive
+`mongo:detach-root` command is intentionally separate and writes an Extended
+JSON backup before deleting the exact backed-up root documents. After detach,
+the copy apply refuses to replace initialized StudiQ target data from an empty
+root source unless an explicit override flag is supplied to the underlying
+script. Use `npm run mongo:restore-root:plan -w @app/studiq-web` to inspect the
+latest detach backup restore path without changing the root database.
+
 ## Surface ownership matrix
 
 | Surface | Canonical location | Responsibility |
 | --- | --- | --- |
 | Public web shell | repository root Next.js app | Owns the public StudiQ frontend, front-page ownership, CMS embedding, localized Kangur routes, and the canonical `/kangur/*` web routes. |
 | Standalone StudiQ web workspace | `apps/studiq-web` | Owns a focused Kangur-only Next.js shell for isolated web runtime work. It reuses repo-root features and shared code, but it does not take over root admin, CMS, or API ownership. |
-| Kangur admin | `src/app/(admin)/admin/kangur/*` | Owns authoring, content management, settings, observability, social publishing, and test or lesson management. |
+| Kangur admin | `src/app/(admin)/admin/kangur/*` | Owns authoring, content management, settings, observability, and test or lesson management. |
 | Kangur backend | `src/app/api/kangur/*` | Owns learner auth, parent auth, progress, lessons, assignments, scores, duels, AI Tutor, and supporting operational endpoints. |
 | Native learner app | `apps/mobile` | Owns Expo routing, native bootstrapping, mobile auth flow, device storage, and mobile learner UI. |
 | Future native web target | `apps/mobile-web` | Reserved only; does not currently own any production web traffic. |
@@ -122,7 +142,7 @@ Key surfaces include:
 - Tests manager and question editor
 - Settings and narration
 - Observability dashboard
-- Social updates composer
+- Social updates content source; social publishing is owned by Filemaker.
 
 Concrete route entrypoints:
 
@@ -135,8 +155,11 @@ Concrete route entrypoints:
 - `src/app/(admin)/admin/kangur/lessons-manager/page.tsx`
 - `src/app/(admin)/admin/kangur/observability/page.tsx`
 - `src/app/(admin)/admin/kangur/settings/page.tsx`
-- `src/app/(admin)/admin/kangur/social/page.tsx`
 - `src/app/(admin)/admin/kangur/tests-manager/page.tsx`
+
+Social publishing entrypoint:
+
+- `src/app/(admin)/admin/filemaker/social/page.tsx`
 
 ## Mobile route map
 

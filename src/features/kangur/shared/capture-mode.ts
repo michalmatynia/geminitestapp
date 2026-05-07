@@ -20,5 +20,5 @@ export const readKangurCaptureModeFromHref = (href: string | null | undefined): 
   }
 };
 
-export const isKangurSocialBatchCaptureHref = (href: string | null | undefined): boolean =>
+export const isSocialPublishingBatchCaptureHref = (href: string | null | undefined): boolean =>
   readKangurCaptureModeFromHref(href) === KANGUR_CAPTURE_MODE_SOCIAL_BATCH;

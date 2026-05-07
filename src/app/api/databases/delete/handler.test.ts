@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   assertDatabaseEngineManageAccess: vi.fn(async () => undefined),
   assertDatabaseEngineOperationEnabled: vi.fn(async () => undefined),
   assertValidMongoBackupName: vi.fn(),
+  resolveMongoBackupPath: vi.fn(async (backupName: string) => `/tmp/mongo-backups/${backupName}`),
   unlink: vi.fn(async () => undefined),
 }));
 
@@ -22,7 +23,7 @@ vi.mock('fs', () => ({
 vi.mock('@/features/database/server', () => ({
   assertDatabaseEngineManageAccess: mocks.assertDatabaseEngineManageAccess,
   assertValidMongoBackupName: mocks.assertValidMongoBackupName,
-  mongoBackupsDir: '/tmp/mongo-backups',
+  resolveMongoBackupPath: mocks.resolveMongoBackupPath,
 }));
 
 vi.mock('@/shared/lib/db/services/database-engine-operation-guards', () => ({

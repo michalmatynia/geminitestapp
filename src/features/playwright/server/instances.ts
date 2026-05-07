@@ -68,12 +68,12 @@ export const PLAYWRIGHT_ENGINE_INSTANCE_DEFINITIONS: Record<
   },
   social_capture_single: {
     family: 'capture',
-    label: 'Kangur social single capture',
+    label: 'Social publishing single capture',
     tags: ['kangur', 'social', 'capture', 'single'],
   },
   social_capture_batch: {
     family: 'capture',
-    label: 'Kangur social batch capture',
+    label: 'Social publishing batch capture',
     tags: ['kangur', 'social', 'capture', 'batch'],
   },
 };

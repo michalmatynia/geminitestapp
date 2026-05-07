@@ -32,6 +32,7 @@ import {
   createFilemakerValueParameter,
   createFilemakerValueParameterLink,
 } from './filemaker-settings.entities';
+import { normalizeFilemakerEmailStatus } from './filemaker-email-status';
 import {
   ensureUniqueId,
   normalizePhoneNumbers,
@@ -66,24 +67,8 @@ import {
 
 const FILEMAKER_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const FILEMAKER_EMAIL_STATUSES: Array<'active' | 'inactive' | 'bounced' | 'unverified'> = [
-  'active',
-  'inactive',
-  'bounced',
-  'unverified',
-];
-
 const isValidEmailAddress = (value: string): boolean =>
   Boolean(value) && FILEMAKER_EMAIL_RE.test(value);
-
-const normalizeEmailStatus = (
-  value: unknown,
-  fallback: 'active' | 'inactive' | 'bounced' | 'unverified' = 'unverified'
-): 'active' | 'inactive' | 'bounced' | 'unverified' => {
-  const normalized = normalizeString(value).toLowerCase();
-  if (!normalized) return fallback;
-  return FILEMAKER_EMAIL_STATUSES.find((status): boolean => status === normalized) ?? fallback;
-};
 
 export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
   version: 2,
@@ -867,7 +852,7 @@ export const normalizeFilemakerDatabase = (
       createFilemakerEmail({
         id,
         email: normalizedEmail,
-        status: normalizeEmailStatus(entry['status']),
+        status: normalizeFilemakerEmailStatus(entry['status']),
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       })

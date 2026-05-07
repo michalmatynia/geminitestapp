@@ -24,12 +24,10 @@ const readPid = async () => {
 const isPidRunning = (pid) => {
   if (!Number.isInteger(pid) || pid <= 0) return false;
   try {
-    const output = execFileSync('ps', ['-p', String(pid), '-o', 'pid='], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-    return output.trim() === String(pid);
-  } catch {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    if (error?.code === 'EPERM') return true;
     return false;
   }
 };

@@ -39,6 +39,40 @@ const mocks = vi.hoisted(() => ({
   resolveMongoSourceConfig: vi.fn(),
   createMongoSourceBackup: vi.fn(),
   recordMongoSourceSync: vi.fn(async () => undefined),
+  resolveStudiqMongoSourceConfig: vi.fn((source: 'local' | 'cloud') =>
+    source === 'local'
+      ? {
+          source,
+          configured: true,
+          uri: 'mongodb://localhost:27018/studiq_local',
+          dbName: 'studiq_local',
+          usesLegacyEnv: false,
+        }
+      : {
+          source,
+          configured: true,
+          uri: 'mongodb+srv://cluster.example/studiq_cloud',
+          dbName: 'studiq_cloud',
+          usesLegacyEnv: false,
+        }
+  ),
+  resolveCmsBuilderMongoSourceConfig: vi.fn((source: 'local' | 'cloud') =>
+    source === 'local'
+      ? {
+          source,
+          configured: true,
+          uri: 'mongodb://localhost:27019/cms_builder_local',
+          dbName: 'cms_builder_local',
+          usesLegacyEnv: false,
+        }
+      : {
+          source,
+          configured: true,
+          uri: 'mongodb+srv://cluster.example/cms_builder_cloud',
+          dbName: 'cms_builder_cloud',
+          usesLegacyEnv: false,
+        }
+  ),
   verifyMongoSourceParity: vi.fn(async ({ source, target, sourceDbName, targetDbName }) => ({
     status: 'passed',
     verifiedAt: '2026-04-09T04:31:00.000Z',
@@ -54,6 +88,8 @@ const mocks = vi.hoisted(() => ({
   })),
   execFileAsync: vi.fn(),
   dropDatabase: vi.fn(async () => undefined),
+  mongoClientClose: vi.fn(async () => undefined),
+  mongoClientConnect: vi.fn(async () => undefined),
   getMongoDb: vi.fn(),
   getMongoDumpCommand: vi.fn(() => 'mongodump'),
   getMongoRestoreCommand: vi.fn(() => 'mongorestore'),
@@ -75,10 +111,24 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   execFileAsync: mocks.execFileAsync,
   getMongoDumpCommand: mocks.getMongoDumpCommand,
   getMongoRestoreCommand: mocks.getMongoRestoreCommand,
+  resolveCmsBuilderMongoSourceConfig: mocks.resolveCmsBuilderMongoSourceConfig,
+  resolveStudiqMongoSourceConfig: mocks.resolveStudiqMongoSourceConfig,
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: mocks.getMongoDb,
+}));
+
+vi.mock('mongodb', () => ({
+  MongoClient: vi.fn(function MongoClient() {
+    return {
+      close: mocks.mongoClientClose,
+      connect: mocks.mongoClientConnect,
+      db: vi.fn(() => ({
+        dropDatabase: mocks.dropDatabase,
+      })),
+    };
+  }),
 }));
 
 vi.mock('@/shared/lib/db/services/database-backup', () => ({
@@ -128,6 +178,7 @@ describe('mongo-source-sync', () => {
     });
     process.env['NODE_ENV'] = 'test';
     mocks.getMongoDb.mockResolvedValue({ dropDatabase: mocks.dropDatabase });
+    mocks.execFileAsync.mockResolvedValue({ stdout: 'mongo tool ok', stderr: '' });
     mocks.verifyMongoSourceParity.mockImplementation(
       async ({ source, target, sourceDbName, targetDbName }) => ({
         status: 'passed',
@@ -143,12 +194,13 @@ describe('mongo-source-sync', () => {
         collections: [],
       })
     );
-    mocks.createMongoSourceBackup.mockImplementation(async ({ source, role, direction, timestamp }) => ({
+    mocks.createMongoSourceBackup.mockImplementation(async ({ application = 'geminitestapp', source, role, direction, timestamp }) => ({
+      application,
       role,
       source,
-      backupName: `${source}-${role}-pre-sync-${direction}.archive`,
-      backupPath: `/tmp/backups/${source}-${role}-pre-sync-${direction}.archive`,
-      logPath: `/tmp/backups/${source}-${role}-pre-sync-${direction}.archive.log`,
+      backupName: `${application}-${source}-${role}-pre-sync-${direction}.archive`,
+      backupPath: `/tmp/backups/${application}-${source}-${role}-pre-sync-${direction}.archive`,
+      logPath: `/tmp/backups/${application}-${source}-${role}-pre-sync-${direction}.archive.log`,
       createdAt:
         typeof timestamp === 'number'
           ? new Date(timestamp).toISOString()
@@ -213,36 +265,83 @@ describe('mongo-source-sync', () => {
         uri: 'mongodb://localhost:27017/app_local',
         dbName: 'app_local',
       });
-    mocks.execFileAsync
-      .mockResolvedValueOnce({ stdout: 'dump ok', stderr: '' })
-      .mockResolvedValueOnce({ stdout: 'restore ok', stderr: '' });
-
     const result = await syncMongoSources('cloud_to_local');
 
     expect(result.success).toBe(true);
     expect(result.direction).toBe('cloud_to_local');
     expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(1, {
+      application: 'geminitestapp',
       source: 'cloud',
       role: 'source',
       direction: 'cloud_to_local',
       timestamp: expect.any(Number),
     });
     expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(2, {
+      application: 'geminitestapp',
       source: 'local',
       role: 'target',
       direction: 'cloud_to_local',
       timestamp: expect.any(Number),
     });
-    expect(result.preSyncBackups).toHaveLength(2);
+    expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(3, {
+      application: 'studiq',
+      source: 'cloud',
+      role: 'source',
+      direction: 'cloud_to_local',
+      timestamp: expect.any(Number),
+    });
+    expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(4, {
+      application: 'studiq',
+      source: 'local',
+      role: 'target',
+      direction: 'cloud_to_local',
+      timestamp: expect.any(Number),
+    });
+    expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(5, {
+      application: 'cms-builder',
+      source: 'cloud',
+      role: 'source',
+      direction: 'cloud_to_local',
+      timestamp: expect.any(Number),
+    });
+    expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(6, {
+      application: 'cms-builder',
+      source: 'local',
+      role: 'target',
+      direction: 'cloud_to_local',
+      timestamp: expect.any(Number),
+    });
+    expect(result.preSyncBackups).toHaveLength(6);
+    expect(result.applicationTransfers).toHaveLength(3);
     expect(result.archivePath).toContain('mongo-sync-cloud_to_local-');
     expect(result.logPath).toContain('mongo-sync-cloud_to_local-');
     expect(result.verification?.status).toBe('passed');
     expect(result.syncedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
-    expect(mocks.verifyMongoSourceParity).toHaveBeenCalledWith({
+    expect(mocks.execFileAsync).toHaveBeenCalledTimes(6);
+    expect(mocks.dropDatabase).toHaveBeenCalledTimes(3);
+    expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(1, {
       source: 'cloud',
       target: 'local',
       sourceDbName: 'app_cloud',
       targetDbName: 'app_local',
+      sourceUri: 'mongodb+srv://cluster.example/app_cloud',
+      targetUri: 'mongodb://localhost:27017/app_local',
+    });
+    expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(2, {
+      source: 'cloud',
+      target: 'local',
+      sourceDbName: 'studiq_cloud',
+      targetDbName: 'studiq_local',
+      sourceUri: 'mongodb+srv://cluster.example/studiq_cloud',
+      targetUri: 'mongodb://localhost:27018/studiq_local',
+    });
+    expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(3, {
+      source: 'cloud',
+      target: 'local',
+      sourceDbName: 'cms_builder_cloud',
+      targetDbName: 'cms_builder_local',
+      sourceUri: 'mongodb+srv://cluster.example/cms_builder_cloud',
+      targetUri: 'mongodb://localhost:27019/cms_builder_local',
     });
     expect(mocks.recordMongoSourceSync).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -250,9 +349,18 @@ describe('mongo-source-sync', () => {
         source: 'cloud',
         target: 'local',
         verification: expect.objectContaining({ status: 'passed' }),
+        applicationTransfers: expect.arrayContaining([
+          expect.objectContaining({ application: 'geminitestapp' }),
+          expect.objectContaining({ application: 'studiq' }),
+          expect.objectContaining({ application: 'cms-builder' }),
+        ]),
         preSyncBackups: expect.arrayContaining([
-          expect.objectContaining({ role: 'source', source: 'cloud' }),
-          expect.objectContaining({ role: 'target', source: 'local' }),
+          expect.objectContaining({ application: 'geminitestapp', role: 'source', source: 'cloud' }),
+          expect.objectContaining({ application: 'geminitestapp', role: 'target', source: 'local' }),
+          expect.objectContaining({ application: 'studiq', role: 'source', source: 'cloud' }),
+          expect.objectContaining({ application: 'studiq', role: 'target', source: 'local' }),
+          expect.objectContaining({ application: 'cms-builder', role: 'source', source: 'cloud' }),
+          expect.objectContaining({ application: 'cms-builder', role: 'target', source: 'local' }),
         ]),
       })
     );

@@ -168,4 +168,25 @@ describe('AdminAiPathsQueuePage', () => {
       'run-import-789'
     );
   });
+
+  it('renders the social publishing panel from both current and legacy tab ids', () => {
+    mocks.useSearchParamsMock.mockReturnValue(new URLSearchParams('tab=social-publishing'));
+
+    const { rerender } = render(
+      <AdminAiPathsQueuePage
+        socialPublishingPanel={<div data-testid='social-publishing-panel'>social</div>}
+      />
+    );
+
+    expect(screen.getByTestId('social-publishing-panel')).toBeInTheDocument();
+
+    mocks.useSearchParamsMock.mockReturnValue(new URLSearchParams('tab=social-publishing'));
+    rerender(
+      <AdminAiPathsQueuePage
+        socialPublishingPanel={<div data-testid='social-publishing-panel'>social</div>}
+      />
+    );
+
+    expect(screen.getByTestId('social-publishing-panel')).toBeInTheDocument();
+  });
 });

@@ -30,3 +30,4 @@ export * from './pages/AdminFilemakerCampaignRunPage';
 export * from './pages/AdminFilemakerCvEditPage';
 export { FilemakerCampaignUnsubscribePage } from './pages/FilemakerCampaignUnsubscribePage';
 export { FilemakerCampaignPreferencesPage } from './pages/FilemakerCampaignPreferencesPage';
+export { AdminFilemakerGoalAutomationPage } from './pages/AdminFilemakerGoalAutomationPage';

@@ -92,15 +92,16 @@ Key paths:
 - Parent dashboard wordmark: `src/features/kangur/ui/components/KangurParentDashboardWordmark.tsx`
 - Duels wordmark: `src/features/kangur/ui/components/KangurDuelsWordmark.tsx`
 
-## LinkedIn social post pipeline (2026-03-17)
+## Social publishing pipeline (2026-03-17, migrated 2026-05-06)
 
-Kangur now ships a full LinkedIn post workflow in the admin UI, including
-bilingual generation, visuals, scheduling, doc updates, and publish automation
-for StudiQ and Kangur product updates.
+Social publishing now lives in Filemaker as a cross-project admin feature. It
+still supports Kangur and StudiQ updates, but the owning route, API, contracts,
+queues, and settings are no longer Kangur-specific.
 
 Highlights:
 
-- Admin surface: `/admin/kangur/social` with draft management and pipeline status.
+- Admin surface: `/admin/filemaker/social` with draft management and pipeline
+  status.
 - Bilingual generation with Brain routing and optional vision model support.
 - Visual analysis from image add-ons, producing highlights and documentation
   update suggestions.
@@ -109,11 +110,13 @@ Highlights:
 
 Key paths:
 
-- Admin entry: `src/features/kangur/admin/AdminKangurSocialPage.tsx`
-- Pipeline UI: `src/features/kangur/admin/admin-kangur-social/*`
-- Social post API: `src/app/api/kangur/social-posts/*`
-- Generation + publishing: `src/features/kangur/server/social-posts-*.ts`
-- Scheduler: `src/features/kangur/workers/kangurSocialSchedulerQueue.ts`
+- Admin entry: `src/features/filemaker/social/AdminFilemakerSocialPage.tsx`
+- Pipeline UI: `src/features/filemaker/social/admin/workspace/*`
+- Social post API: `src/app/api/filemaker/social-posts/*`
+- Generation + publishing:
+  `src/features/filemaker/social/server/social-posts-*.ts`
+- Scheduler:
+  `src/features/filemaker/social/workers/socialPublishingSchedulerQueue.ts`
 
 ## StudiQ lesson navigation parity (2026-03-18)
 
@@ -163,11 +166,16 @@ Highlights:
 
 Key paths:
 
-- Batch capture service: `src/features/kangur/server/social-image-addons-batch.ts`
-- Batch capture API: `src/app/api/kangur/social-image-addons/batch/handler.ts`
-- Capture presets: `src/features/kangur/shared/social-capture-presets.ts`
-- Vision analysis: `src/features/kangur/server/social-posts-vision.ts`
-- Doc update planning: `src/features/kangur/server/social-posts-doc-updates.ts`
+- Batch capture service:
+  `src/features/filemaker/social/server/social-image-addons-batch.ts`
+- Batch capture API:
+  `src/app/api/filemaker/social-image-addons/batch/handler.ts`
+- Capture presets:
+  `src/features/filemaker/social/shared/social-capture-presets.ts`
+- Vision analysis:
+  `src/features/filemaker/social/server/social-posts-vision.ts`
+- Doc update planning:
+  `src/features/filemaker/social/server/social-posts-docs.ts`
 
 ## Scheduled publishing and automation (2026-03-17)
 
@@ -175,16 +183,20 @@ Social posts can be scheduled and published automatically.
 
 Highlights:
 
-- Scheduled posts are published via the `kangur-social-scheduler` queue.
+- Scheduled posts are published via the `social-publishing-scheduler` queue.
 - Manual trigger endpoint for admin operations.
 - Publish flow writes LinkedIn IDs and URLs back to the post record.
 
 Key paths:
 
-- Scheduler queue: `src/features/kangur/workers/kangurSocialSchedulerQueue.ts`
-- Publish orchestrator: `src/features/kangur/server/social-posts-publish.ts`
-- LinkedIn publish integration: `src/features/kangur/server/social-posts-publish.linkedin.ts`
-- Publish scheduled endpoint: `src/app/api/kangur/social-posts/publish-scheduled/handler.ts`
+- Scheduler queue:
+  `src/features/filemaker/social/workers/socialPublishingSchedulerQueue.ts`
+- Publish orchestrator:
+  `src/features/filemaker/social/server/social-posts-publish.ts`
+- LinkedIn publish integration:
+  `src/features/filemaker/social/server/social-posts-publish.linkedin.ts`
+- Publish scheduled endpoint:
+  `src/app/api/filemaker/social-posts/publish-scheduled/handler.ts`
 
 ## Progress and scoring backend improvements (2026-03-06)
 
@@ -288,4 +300,3 @@ Latest commits:
 - Commit: `2fb6dd1a3` (2026-04-09) SD
 
 <!-- AUTO-GENERATED:RECENT_FEATURES_END -->
-

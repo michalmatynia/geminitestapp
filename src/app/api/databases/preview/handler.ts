@@ -1,23 +1,52 @@
-import path from 'path';
-
 import { type NextRequest, NextResponse } from 'next/server';
+import { MongoClient } from 'mongodb';
 import { z } from 'zod';
 
 import {
-  mongoBackupsDir,
   ensureMongoBackupsDir,
   assertValidMongoBackupName,
+  getMongoBackupApplication,
   getMongoConnectionUrl,
   getMongoDatabaseName,
   getMongoRestoreCommand,
+  getCmsBuilderMongoConnectionUrl,
+  getCmsBuilderMongoDatabaseName,
+  getStudiqMongoConnectionUrl,
+  getStudiqMongoDatabaseName,
   mongoExecFileAsync,
+  resolveMongoBackupPath,
 } from '@/features/database/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
-import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+const resolvePreviewTarget = (
+  previewMode: 'backup' | 'current',
+  backupName: string | undefined
+): { mongoUri: string; sourceDbName: string } => {
+  if (previewMode === 'backup' && backupName) {
+    const application = getMongoBackupApplication(backupName);
+    if (application === 'studiq') {
+      return {
+        mongoUri: getStudiqMongoConnectionUrl(),
+        sourceDbName: getStudiqMongoDatabaseName(),
+      };
+    }
+    if (application === 'cms-builder') {
+      return {
+        mongoUri: getCmsBuilderMongoConnectionUrl(),
+        sourceDbName: getCmsBuilderMongoDatabaseName(),
+      };
+    }
+  }
+
+  return {
+    mongoUri: getMongoConnectionUrl(),
+    sourceDbName: getMongoDatabaseName(),
+  };
+};
 
 export async function postDatabasesPreviewHandler(
   req: NextRequest,
@@ -57,8 +86,7 @@ export async function postDatabasesPreviewHandler(
     await ensureMongoBackupsDir();
   }
 
-  const mongoUri = getMongoConnectionUrl();
-  const sourceDbName = getMongoDatabaseName();
+  const { mongoUri, sourceDbName } = resolvePreviewTarget(previewMode, backupName);
   const previewDb = previewMode === 'backup' ? `stardb_preview_${Date.now()}` : sourceDbName;
   const page = Math.max(1, Number.isFinite(body.page) ? Number(body.page) : 1);
   const pageSize = Math.min(
@@ -68,12 +96,12 @@ export async function postDatabasesPreviewHandler(
   const offset = (page - 1) * pageSize;
 
   if (previewMode === 'backup') {
-    const backupPath = path.join(mongoBackupsDir, backupName ?? '');
+    const backupPath = await resolveMongoBackupPath(backupName ?? '');
     try {
       await mongoExecFileAsync(getMongoRestoreCommand(), [
         '--uri',
         mongoUri,
-        `--archive=${  backupPath}`,
+        `--archive=${backupPath}`,
         '--gzip',
         '--nsFrom',
         `${sourceDbName}.*`,
@@ -88,7 +116,8 @@ export async function postDatabasesPreviewHandler(
     }
   }
 
-  const mongoClient = await getMongoClient();
+  const mongoClient = new MongoClient(mongoUri);
+  await mongoClient.connect();
   const db = mongoClient.db(previewDb);
   let collections: string[] = [];
   let tableRows: { name: string; rows: Record<string, unknown>[]; totalRows: number }[] = [];
@@ -127,6 +156,7 @@ export async function postDatabasesPreviewHandler(
         });
       }
     }
+    await mongoClient.close();
   }
 
   return NextResponse.json({

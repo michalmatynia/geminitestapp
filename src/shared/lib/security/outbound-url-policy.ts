@@ -48,7 +48,7 @@ const PRIVATE_METADATA_IPS = new Set<string>(['169.254.169.254', '100.100.100.20
  * Returns the set of `host` strings (hostname[:port]) that belong to this app's own
  * configured asset origin.  Only AI_PATHS_ASSET_BASE_URL is consulted so that broader
  * AI_PATHS_ASSET_BASE_URL takes priority; NEXT_PUBLIC_APP_URL is used as fallback so that
- * features like Kangur Social batch capture can screenshot the app's own pages without
+ * features like Social Publishing batch capture can screenshot the app's own pages without
  * requiring a separate env var in every environment.
  *
  * Set AI_PATHS_ASSET_BASE_URL to override the self-origin (e.g. a public tunnel URL).

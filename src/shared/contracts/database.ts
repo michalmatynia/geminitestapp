@@ -452,6 +452,16 @@ export type DatabaseEngineMongoSyncDirection = z.infer<
   typeof databaseEngineMongoSyncDirectionSchema
 >;
 
+export const databaseEngineMongoSyncApplicationSchema = z.enum([
+  'geminitestapp',
+  'studiq',
+  'cms-builder',
+]);
+
+export type DatabaseEngineMongoSyncApplication = z.infer<
+  typeof databaseEngineMongoSyncApplicationSchema
+>;
+
 export const databaseEngineMongoSyncBackupRoleSchema = z.enum(['source', 'target']);
 
 export type DatabaseEngineMongoSyncBackupRole = z.infer<
@@ -459,6 +469,7 @@ export type DatabaseEngineMongoSyncBackupRole = z.infer<
 >;
 
 export const databaseEngineMongoSyncBackupSchema = z.object({
+  application: databaseEngineMongoSyncApplicationSchema.default('geminitestapp'),
   role: databaseEngineMongoSyncBackupRoleSchema,
   source: mongoSourceSchema,
   backupName: z.string(),
@@ -514,6 +525,19 @@ export type DatabaseEngineMongoSyncVerification = z.infer<
   typeof databaseEngineMongoSyncVerificationSchema
 >;
 
+export const databaseEngineMongoSyncApplicationTransferSchema = z.object({
+  application: databaseEngineMongoSyncApplicationSchema,
+  sourceDbName: z.string(),
+  targetDbName: z.string(),
+  archivePath: z.string(),
+  logPath: z.string(),
+  verification: databaseEngineMongoSyncVerificationSchema,
+});
+
+export type DatabaseEngineMongoSyncApplicationTransfer = z.infer<
+  typeof databaseEngineMongoSyncApplicationTransferSchema
+>;
+
 export const databaseEngineMongoLastSyncSchema = z.object({
   direction: databaseEngineMongoSyncDirectionSchema,
   source: mongoSourceSchema,
@@ -523,6 +547,9 @@ export const databaseEngineMongoLastSyncSchema = z.object({
   archivePath: z.string().nullable(),
   logPath: z.string().nullable(),
   verification: databaseEngineMongoSyncVerificationSchema.nullable().optional(),
+  applicationTransfers: z
+    .array(databaseEngineMongoSyncApplicationTransferSchema)
+    .default([]),
 });
 
 export type DatabaseEngineMongoLastSync = z.infer<
@@ -577,6 +604,9 @@ export const databaseEngineMongoSyncResponseSchema = z.object({
   archivePath: z.string().nullable(),
   logPath: z.string().nullable(),
   verification: databaseEngineMongoSyncVerificationSchema.nullable().optional(),
+  applicationTransfers: z
+    .array(databaseEngineMongoSyncApplicationTransferSchema)
+    .default([]),
 });
 
 export type DatabaseEngineMongoSyncResponse = z.infer<

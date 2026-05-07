@@ -70,7 +70,7 @@ Canonical feature documentation stays under `docs/kangur/*`. Local app and packa
 - `docs/kangur/number-balance-rush-ui.md`
 - `docs/kangur/observability-and-operations.md`
 - `docs/kangur/neo4j-semantic-bridge.md`
-- `docs/kangur/linkedin-posts-runbook.md`
+- `docs/filemaker/social-publishing-runbook.md`
 - `docs/kangur/recent-feature-updates.md`
 - `docs/kangur/plans/README.md`
 - `apps/mobile/README.md`: native route inventory, provider stack, commands, and caveats.

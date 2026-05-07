@@ -1,4 +1,5 @@
 import {
+  BotMessageSquare,
   Building2,
   BookOpen,
   CalendarDays,
@@ -32,6 +33,7 @@ type FilemakerPageKey =
   | 'campaigns'
   | 'control-centre'
   | 'suppressions'
+  | 'goal-automation'
   | 'manage';
 
 const NAV_ITEMS: Array<{
@@ -123,6 +125,13 @@ const NAV_ITEMS: Array<{
     label: 'Suppressions',
     href: '/admin/filemaker/campaigns/suppressions',
     icon: <ShieldOff className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'goal-automation',
+    label: 'Goal Automation',
+    href: '/admin/filemaker/goal-automation',
+    icon: <BotMessageSquare className='size-4' />,
     variant: 'outline',
   },
   {

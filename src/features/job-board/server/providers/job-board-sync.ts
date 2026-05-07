@@ -24,6 +24,8 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { LaunchOptions } from 'playwright';
 
+import { isFatalJobBoardError } from '../job-board-fatal-errors';
+
 export type { JobBoardProvider, JobBoardProviderSelection };
 
 export type JobBoardPageFetchResult = {
@@ -198,6 +200,9 @@ const resolveJobBoardActionRuntimeSettings = async (): Promise<JobBoardActionRun
       action: 'resolveJobBoardActionRuntimeSettings',
       runtimeKey: JOB_BOARD_SCRAPE_RUNTIME_KEY,
     });
+    if (isFatalJobBoardError(error)) {
+      throw error;
+    }
     return { browserPreference: null, settingsOverrides: {} };
   }
 };
@@ -336,6 +341,9 @@ const fetchJobBoardPageWithPlaywright = async (
       sourceUrl,
       provider,
     });
+    if (isFatalJobBoardError(error)) {
+      throw error;
+    }
     return {
       ok: false,
       status: 0,
@@ -389,6 +397,9 @@ export const fetchJobBoardPage = async (
       sourceUrl,
       provider,
     });
+    if (isFatalJobBoardError(error)) {
+      throw error;
+    }
     return {
       ok: false,
       status: 0,
@@ -486,6 +497,9 @@ export const collectJobBoardOfferUrls = async (
       sourceUrl: options.sourceUrl,
       provider,
     });
+    if (isFatalJobBoardError(error)) {
+      throw error;
+    }
     return {
       links: [],
       runId: null,

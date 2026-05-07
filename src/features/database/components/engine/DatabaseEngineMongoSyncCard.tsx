@@ -89,10 +89,10 @@ export function MongoSyncCard({
   const shouldShowButtons = unavailableMessage === null;
   const primaryLabel = shouldShowSyncingState
     ? 'Syncing...'
-    : 'Pull Cloud -> Local (backup both first)';
+    : 'Pull Cloud -> Local (backup all apps first)';
   const secondaryLabel = shouldShowSyncingState
     ? 'Syncing...'
-    : 'Push Local -> Cloud (backup both first)';
+    : 'Push Local -> Cloud (backup all apps first)';
   const buttonsDisabled = shouldShowSyncingState || isSyncingMongoSources;
   const syncProgressMessage = shouldShowSyncingState
     ? `Sync in progress: ${syncInProgress.source} -> ${syncInProgress.target} since ${syncInProgress.acquiredAt}`

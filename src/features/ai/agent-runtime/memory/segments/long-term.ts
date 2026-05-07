@@ -105,7 +105,7 @@ async function prepareMemoryValidation(params: {
     defaultMaxTokens: 500,
     runtimeKind: 'validation',
   });
-  const model = (params.model !== null && params.model.trim() !== '') ? params.model.trim() : config.modelId;
+  const model = (params.model !== null && params.model !== undefined && params.model.trim() !== '') ? params.model.trim() : config.modelId;
   const prompt = params.prompt ?? '';
   if (model === null) {
     throw new Error('AI Brain memory validation model is not configured.');
@@ -187,7 +187,7 @@ async function summarizeMemory(params: {
       runtimeKind: 'chat',
     }
   );
-  const summaryModel = (params.summaryModel !== null && params.summaryModel.trim() !== '') ? params.summaryModel.trim() : config.modelId;
+  const summaryModel = (params.summaryModel !== null && params.summaryModel !== undefined && params.summaryModel.trim() !== '') ? params.summaryModel.trim() : config.modelId;
   if (summaryModel === null) return params.summary ?? null;
 
   try {
@@ -248,11 +248,11 @@ export async function validateAndAddAgentLongTermMemory(params: {
   const summary = await summarizeMemory(params);
   
   const validation = await validateAgentLongTermMemory({
-    ...(params.model !== null && { model: params.model }),
-    ...(params.prompt !== null && { prompt: params.prompt }),
+    ...(params.model !== null && params.model !== undefined && { model: params.model }),
+    ...(params.prompt !== null && params.prompt !== undefined && { prompt: params.prompt }),
     content: params.content,
     ...(summary !== null && { summary }),
-    ...(params.metadata !== null && { metadata: params.metadata }),
+    ...(params.metadata !== null && params.metadata !== undefined && { metadata: params.metadata }),
   });
 
   if (!validation.valid) {
@@ -285,10 +285,10 @@ function getListFilters(params: {
   tags?: string[];
 }): Record<string, unknown> {
   const where: Record<string, unknown> = {};
-  if (params.memoryKey != null && params.memoryKey !== '') {
+  if (params.memoryKey !== null && params.memoryKey !== undefined && params.memoryKey !== '') {
     where.memoryKey = params.memoryKey;
   }
-  if (params.personaId != null && params.personaId !== '') {
+  if (params.personaId !== null && params.personaId !== undefined && params.personaId !== '') {
     where.personaId = params.personaId;
   }
   if (Array.isArray(params.tags) && params.tags.length > 0) {
@@ -304,14 +304,17 @@ export async function listAgentLongTermMemory(params: {
   tags?: string[];
 }): Promise<AgentLongTermMemoryRecord[]> {
   const agentLongTermMemory = getAgentLongTermMemoryDelegate();
-  if (agentLongTermMemory == null) {
+  if (agentLongTermMemory === null) {
     void ErrorSystem.logWarning(
       '[chatbot][agent][memory] Long-term memory table not initialized.',
       { service: 'agent-memory' }
     );
     return [];
   }
-  if ((params.memoryKey == null || params.memoryKey === '') && (params.personaId == null || params.personaId === '')) {
+  if (
+    (params.memoryKey === null || params.memoryKey === undefined || params.memoryKey === '') &&
+    (params.personaId === null || params.personaId === undefined || params.personaId === '')
+  ) {
     return [];
   }
   

@@ -45,7 +45,6 @@ export {
   startBaseExportQueue,
   enqueueBaseExportJob,
 } from '@/server/queues/integrations';
-export { startKangurSocialSchedulerQueue } from '@/server/queues/kangur';
 export {
   startFilemakerEmailCampaignSchedulerQueue,
   startFilemakerEmailCampaignQueue,
@@ -56,6 +55,7 @@ export {
   stopFilemakerMailSyncQueue,
   enqueueFilemakerMailSyncJob,
   startFilemakerCampaignColdPruneSchedulerQueue,
+  startFilemakerSocialSchedulerQueue,
 } from '@/server/queues/filemaker';
 
 export {

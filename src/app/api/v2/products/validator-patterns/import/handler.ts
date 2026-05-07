@@ -26,7 +26,6 @@ import {
   buildProductValidationSemanticAuditRecord,
   describeProductValidationSemanticAuditRecord,
   normalizeProductValidationSemanticState,
-  serializeProductValidationSemanticState,
 } from '@/shared/lib/products/utils/validator-semantic-state';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
@@ -106,110 +105,7 @@ const buildSequenceGroupId = (
   return candidate;
 };
 
-const isStringArrayEqual = (
-  left: readonly string[] | undefined,
-  right: readonly string[] | undefined
-): boolean => {
-  const leftSorted = [...(left ?? [])].sort();
-  const rightSorted = [...(right ?? [])].sort();
-  if (leftSorted.length !== rightSorted.length) return false;
-  return leftSorted.every((value, index) => value === rightSorted[index]);
-};
-
-const hasPatternChanges = (
-  current: ProductValidationPattern,
-  next: CreateProductValidationPatternInput
-): boolean => {
-  if (current.label !== next.label) return true;
-  if (current.target !== next.target) return true;
-  if (normalizeLocale(current.locale) !== normalizeLocale(next.locale)) return true;
-  if (current.regex !== next.regex) return true;
-  if ((current.flags ?? null) !== (next.flags ?? null)) return true;
-  if (current.message !== next.message) return true;
-  if (current.severity !== (next.severity ?? 'error')) return true;
-  if (current.enabled !== (next.enabled ?? true)) return true;
-  if (current.replacementEnabled !== (next.replacementEnabled ?? false)) return true;
-  if ((current.replacementAutoApply ?? false) !== (next.replacementAutoApply ?? false)) {
-    return true;
-  }
-  if (
-    (current.skipNoopReplacementProposal ?? true) !==
-    normalizeProductValidationSkipNoopReplacementProposal(next.skipNoopReplacementProposal)
-  ) {
-    return true;
-  }
-  if ((current.replacementValue ?? null) !== (next.replacementValue ?? null)) return true;
-  if (!isStringArrayEqual(current.replacementFields, next.replacementFields)) return true;
-  if (
-    !isStringArrayEqual(
-      normalizeProductValidationPatternReplacementScopes(current.replacementAppliesToScopes),
-      normalizeProductValidationPatternReplacementScopes(next.replacementAppliesToScopes)
-    )
-  ) {
-    return true;
-  }
-  if (current.runtimeEnabled !== (next.runtimeEnabled ?? false)) return true;
-  if ((current.runtimeType ?? 'none') !== (next.runtimeType ?? 'none')) return true;
-  if ((current.runtimeConfig ?? null) !== (next.runtimeConfig ?? null)) return true;
-  if ((current.postAcceptBehavior ?? 'revalidate') !== (next.postAcceptBehavior ?? 'revalidate')) {
-    return true;
-  }
-  if (
-    (current.denyBehaviorOverride ?? null) !==
-    normalizeProductValidationPatternDenyBehaviorOverride(next.denyBehaviorOverride)
-  ) {
-    return true;
-  }
-  if ((current.validationDebounceMs ?? 0) !== (next.validationDebounceMs ?? 0)) return true;
-  if ((current.sequenceGroupId ?? null) !== (next.sequenceGroupId ?? null)) return true;
-  if ((current.sequenceGroupLabel ?? null) !== (next.sequenceGroupLabel ?? null)) return true;
-  if ((current.sequenceGroupDebounceMs ?? 0) !== (next.sequenceGroupDebounceMs ?? 0)) {
-    return true;
-  }
-  if ((current.sequence ?? null) !== (next.sequence ?? null)) return true;
-  if ((current.chainMode ?? 'continue') !== (next.chainMode ?? 'continue')) return true;
-  if ((current.maxExecutions ?? 1) !== (next.maxExecutions ?? 1)) return true;
-  if ((current.passOutputToNext ?? true) !== (next.passOutputToNext ?? true)) return true;
-  if ((current.launchEnabled ?? false) !== (next.launchEnabled ?? false)) return true;
-  if (
-    !isStringArrayEqual(
-      normalizeProductValidationPatternLaunchScopes(current.launchAppliesToScopes),
-      normalizeProductValidationPatternLaunchScopes(next.launchAppliesToScopes)
-    )
-  ) {
-    return true;
-  }
-  if (
-    (current.launchScopeBehavior ?? 'gate') !==
-    normalizeProductValidationLaunchScopeBehavior(next.launchScopeBehavior)
-  ) {
-    return true;
-  }
-  if (
-    (current.launchSourceMode ?? 'current_field') !== (next.launchSourceMode ?? 'current_field')
-  ) {
-    return true;
-  }
-  if ((current.launchSourceField ?? null) !== (next.launchSourceField ?? null)) return true;
-  if ((current.launchOperator ?? 'equals') !== (next.launchOperator ?? 'equals')) return true;
-  if ((current.launchValue ?? null) !== (next.launchValue ?? null)) return true;
-  if ((current.launchFlags ?? null) !== (next.launchFlags ?? null)) return true;
-  if (
-    !isStringArrayEqual(
-      normalizeProductValidationPatternScopes(current.appliesToScopes),
-      normalizeProductValidationPatternScopes(next.appliesToScopes)
-    )
-  ) {
-    return true;
-  }
-  if (
-    serializeProductValidationSemanticState(current.semanticState) !==
-    serializeProductValidationSemanticState(next.semanticState)
-  ) {
-    return true;
-  }
-  return false;
-};
+import { hasPatternChanges } from './pattern-changes';
 
 const assertValidRegex = (regexSource: string, flags: string | null | undefined): void => {
   const safety = validateRegexSafety(regexSource, flags);
@@ -662,6 +558,67 @@ const toPublicOperations = (operations: PlannedOperation[]): ProductValidatorImp
 
 export const postValidatorPatternsImportSchema = productValidatorImportRequestSchema;
 
+const applyOperation = async (
+  repository: Awaited<ReturnType<typeof getValidationPatternRepository>>,
+  operation: PlannedOperation
+): Promise<PlannedOperation> => {
+  if (operation.action === 'create') {
+    if (operation.createData === undefined) {
+      throw badRequestError('Import operation is missing create data.');
+    }
+    const created = await repository.createPattern(operation.createData, {
+      semanticAuditSource: 'import',
+    });
+    
+    return {
+      ...operation,
+      patternId: created.id,
+      semanticAudit: created.semanticAudit
+        ? {
+            ...created.semanticAudit,
+            summary:
+              describeProductValidationSemanticAuditRecord(created.semanticAudit) ??
+              operation.semanticAudit?.summary ??
+              'Semantic audit recorded.',
+          }
+        : operation.semanticAudit,
+    };
+  } 
+  
+  if (operation.action === 'update') {
+    if (operation.patternId === null || operation.updateData === undefined) {
+      throw badRequestError('Import operation is missing update target or payload.');
+    }
+    const updated = await repository.updatePattern(operation.patternId, operation.updateData, {
+      semanticAuditSource: 'import',
+    });
+    
+    return {
+      ...operation,
+      patternId: updated.id,
+      semanticAudit: updated.semanticAudit
+        ? {
+            ...updated.semanticAudit,
+            summary:
+              describeProductValidationSemanticAuditRecord(updated.semanticAudit) ??
+              operation.semanticAudit?.summary ??
+              'Semantic audit recorded.',
+          }
+        : operation.semanticAudit,
+    };
+  } 
+  
+  if (operation.action === 'delete') {
+    if (operation.patternId === null) {
+      throw badRequestError('Import operation is missing delete target.');
+    }
+    await repository.deletePattern(operation.patternId);
+    return operation;
+  }
+
+  return operation;
+};
+
 export async function postValidatorPatternsImportHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
@@ -693,50 +650,26 @@ export async function postValidatorPatternsImportHandler(
 
   const dryRun = body.dryRun ?? true;
   if (!dryRun) {
-    for (const operation of operations) {
-      if (operation.action === 'create') {
-        if (operation.createData === undefined) {
-          throw badRequestError('Import operation is missing create data.');
-        }
-        const created = await repository.createPattern(operation.createData, {
-          semanticAuditSource: 'import',
-        });
-        operation.patternId = created.id;
-        operation.semanticAudit = created.semanticAudit
-          ? {
-              ...created.semanticAudit,
-              summary:
-                describeProductValidationSemanticAuditRecord(created.semanticAudit) ??
-                operation.semanticAudit?.summary ??
-                'Semantic audit recorded.',
-            }
-          : operation.semanticAudit;
-      } else if (operation.action === 'update') {
-        if (operation.patternId === null || operation.updateData === undefined) {
-          throw badRequestError('Import operation is missing update target or payload.');
-        }
-        const updated = await repository.updatePattern(operation.patternId, operation.updateData, {
-          semanticAuditSource: 'import',
-        });
-        operation.patternId = updated.id;
-        operation.semanticAudit = updated.semanticAudit
-          ? {
-              ...updated.semanticAudit,
-              summary:
-                describeProductValidationSemanticAuditRecord(updated.semanticAudit) ??
-                operation.semanticAudit?.summary ??
-                'Semantic audit recorded.',
-            }
-          : operation.semanticAudit;
-      } else if (operation.action === 'delete') {
-        if (operation.patternId === null) {
-          throw badRequestError('Import operation is missing delete target.');
-        }
-        await repository.deletePattern(operation.patternId);
-      }
-    }
+    const executedOperations = await Promise.all(
+      operations.map((operation) => applyOperation(repository, operation))
+    );
+    
+    // Update original operations array if necessary, or use executedOperations
+    // Since this is the end of the handler, we can just replace the operations
+    // list with the executed ones for the final response.
+    const finalOperations = executedOperations;
 
     invalidateValidationPatternRuntimeCache();
+
+    return NextResponse.json({
+      ok: true,
+      dryRun,
+      scope: body.scope,
+      mode: body.mode,
+      summary,
+      operations: toPublicOperations(finalOperations),
+      errors: [],
+    } satisfies ProductValidatorImportResult);
   }
 
   return NextResponse.json({

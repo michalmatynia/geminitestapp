@@ -41,8 +41,8 @@ describe('admin loading route wrappers', () => {
   });
 
   it('renders the shared admin loading fallback for hot nested admin subsections', async () => {
-    const { default: AdminKangurSocialLoading } = await import(
-      '@/app/(admin)/admin/kangur/social/loading'
+    const { default: AdminFilemakerSocialLoading } = await import(
+      '@/app/(admin)/admin/filemaker/social/loading'
     );
     const { default: AdminCmsPagesLoading } = await import(
       '@/app/(admin)/admin/cms/pages/loading'
@@ -62,7 +62,7 @@ describe('admin loading route wrappers', () => {
 
     render(
       <>
-        <AdminKangurSocialLoading />
+        <AdminFilemakerSocialLoading />
         <AdminCmsPagesLoading />
         <AdminAiPathsQueueLoading />
         <AdminFilemakerPersonsLoading />

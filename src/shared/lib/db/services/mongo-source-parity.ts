@@ -9,7 +9,7 @@ import type {
 } from '@/shared/contracts/database';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import { BSON, type Db, type Document } from 'mongodb';
+import { BSON, MongoClient, type Db, type Document } from 'mongodb';
 
 const DOCUMENT_HASH_BATCH_SIZE = 500;
 
@@ -142,11 +142,10 @@ const fingerprintCollection = async (
   };
 };
 
-const fingerprintMongoSource = async (
-  source: MongoSource,
+const fingerprintMongoDatabase = async (
+  db: Db,
   dbName: string
 ): Promise<MongoSourceFingerprint> => {
-  const db = await getMongoDb(source);
   const collections = (
     (await db.listCollections({}, { nameOnly: false }).toArray()) as MongoCollectionListEntry[]
   )
@@ -165,6 +164,28 @@ const fingerprintMongoSource = async (
     dbName,
     collections: fingerprints,
   };
+};
+
+const fingerprintMongoSource = async (
+  source: MongoSource,
+  dbName: string,
+  uri?: string
+): Promise<MongoSourceFingerprint> => {
+  if (uri !== undefined && uri.trim().length > 0) {
+    const client = new MongoClient(uri, {
+      connectTimeoutMS: 10_000,
+      serverSelectionTimeoutMS: 10_000,
+    });
+    try {
+      await client.connect();
+      return await fingerprintMongoDatabase(client.db(dbName), dbName);
+    } finally {
+      await client.close().catch(() => undefined);
+    }
+  }
+
+  const db = await getMongoDb(source);
+  return fingerprintMongoDatabase(db, dbName);
 };
 
 const recordMissingCollectionMismatch = (
@@ -279,9 +300,19 @@ export const verifyMongoSourceParity = async (params: {
   target: MongoSource;
   sourceDbName: string;
   targetDbName: string;
+  sourceUri?: string;
+  targetUri?: string;
 }): Promise<DatabaseEngineMongoSyncVerification> => {
-  const sourceFingerprint = await fingerprintMongoSource(params.source, params.sourceDbName);
-  const targetFingerprint = await fingerprintMongoSource(params.target, params.targetDbName);
+  const sourceFingerprint = await fingerprintMongoSource(
+    params.source,
+    params.sourceDbName,
+    params.sourceUri
+  );
+  const targetFingerprint = await fingerprintMongoSource(
+    params.target,
+    params.targetDbName,
+    params.targetUri
+  );
 
   const collectionNames = Array.from(
     new Set([

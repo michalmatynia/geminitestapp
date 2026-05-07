@@ -20,6 +20,7 @@ export type GoalAutomationState = {
   iterations: GoalAutomationIterationResult[];
   evaluations: string[];
   done: boolean;
+  finalUrl: string;
   error: string | null;
 };
 
@@ -36,6 +37,7 @@ const INITIAL_STATE: GoalAutomationState = {
   iterations: [],
   evaluations: [],
   done: false,
+  finalUrl: '',
   error: null,
 };
 
@@ -64,7 +66,7 @@ function applyEvent(prev: GoalAutomationState, event: GoalAutomationEvent): Goal
         done: event.done || prev.done,
       };
     case 'completed':
-      return { ...prev, status: 'completed', done: event.done };
+      return { ...prev, status: 'completed', done: event.done, finalUrl: event.finalUrl };
     case 'error':
       return { ...prev, status: 'error', error: event.message };
     default:

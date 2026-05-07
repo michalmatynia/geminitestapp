@@ -1,5 +1,6 @@
 import Papa from 'papaparse';
 
+import { normalizeFilemakerEmailStatusDetails } from './filemaker-email-status';
 import type { FilemakerEmailStatus } from './types';
 import { normalizeString } from './filemaker-settings.helpers';
 import { parseLegacyOrganiserTimestamp } from './filemaker-organisers-import.parser';
@@ -41,7 +42,6 @@ const ORGANIZATION_LEGACY_UUID_FIELDS = [
   'Organization_UUID',
 ] as const;
 
-const EMAIL_STATUSES: FilemakerEmailStatus[] = ['active', 'inactive', 'bounced', 'unverified'];
 const DELIMITER_CANDIDATES = [',', '\t', ';'] as const;
 
 type Delimiter = (typeof DELIMITER_CANDIDATES)[number];
@@ -175,22 +175,6 @@ const optionalString = (value: unknown): string | undefined => {
   return normalized.length > 0 ? normalized : undefined;
 };
 
-const normalizeEmailStatus = (
-  value: unknown
-): Pick<ParsedLegacyEmail, 'legacyStatusRaw' | 'legacyStatusUuid' | 'status'> => {
-  const normalized = normalizeString(value);
-  const status = normalized.toLowerCase();
-  if (EMAIL_STATUSES.includes(status as FilemakerEmailStatus)) {
-    return { status: status as FilemakerEmailStatus };
-  }
-  const legacyStatusUuid = normalizeLegacyUuid(normalized);
-  return {
-    ...(normalized.length > 0 ? { legacyStatusRaw: normalized } : {}),
-    ...(legacyStatusUuid.length > 0 ? { legacyStatusUuid } : {}),
-    status: 'unverified',
-  };
-};
-
 const getLegacyOrganizationValue = (row: LegacyEmailRow): string | undefined =>
   ORGANIZATION_LEGACY_UUID_FIELDS.map((field: string): string => normalizeString(row[field])).find(
     (value: string): boolean => value.length > 0
@@ -215,7 +199,7 @@ export const parseEmailFromRow = (row: LegacyEmailRow): ParsedLegacyEmail | null
     email,
     legacyUuid: legacyUuid.length > 0 ? legacyUuid : undefined,
     ...getLegacyOrganizationReference(row),
-    ...normalizeEmailStatus(row[FIELDS.status]),
+    ...normalizeFilemakerEmailStatusDetails(row[FIELDS.status]),
     updatedAt: parseLegacyOrganiserTimestamp(row[FIELDS.updatedAt]),
     updatedBy: optionalString(row[FIELDS.updatedBy]),
   };

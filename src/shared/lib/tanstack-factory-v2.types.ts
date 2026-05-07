@@ -52,6 +52,7 @@ export type TanstackFactoryDomain =
   | 'observability'
   | 'chatbot'
   | 'kangur'
+  | 'social-publishing'
   | 'agent_creator'
   | 'drafter'
   | 'files'

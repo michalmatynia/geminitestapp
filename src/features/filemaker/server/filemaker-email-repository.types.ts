@@ -22,8 +22,6 @@ export type MongoFilemakerEmailDocument = Document & {
   domainMxCheckedAt?: Date;
   domainMxLookupOutcome?: MxLookupOutcome;
   isRoleAccount?: boolean;
-  legacyStatusRaw?: string;
-  legacyStatusUuid?: string;
   legacyUuid?: string;
   legacyUuids: string[];
   schemaVersion: 1;
@@ -47,8 +45,6 @@ export type MongoFilemakerEmailLinkDocument = Document & {
   legacyOrganizationName?: string;
   legacyOrganizationUuid?: string;
   legacyPersonUuid?: string;
-  legacyStatusUuid?: string;
-  legacyStatusUuids?: string[];
   organizationId?: string;
   partyId?: string;
   partyKind: FilemakerPartyKind;

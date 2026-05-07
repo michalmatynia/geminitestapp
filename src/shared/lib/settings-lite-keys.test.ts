@@ -16,7 +16,7 @@ describe('settings-lite-keys', () => {
     expect(isLiteSettingsKey('cms_domain_settings.v1')).toBe(true);
     expect(isLiteSettingsKey('cms_theme_settings.v1')).toBe(true);
     expect(isLiteSettingsKey(KANGUR_CMS_PROJECT_SETTING_KEY)).toBe(true);
-    expect(isLiteSettingsKey('kangur_social_settings_v1')).toBe(true);
+    expect(isLiteSettingsKey('social_publishing_settings_v1')).toBe(true);
     expect(isLiteSettingsKey('product_images_external_base_url')).toBe(true);
     expect(isLiteSettingsKey('product_images_external_routes')).toBe(true);
     expect(isLiteSettingsKey('product_studio_sequence_generation_mode')).toBe(true);

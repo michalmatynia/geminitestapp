@@ -3,7 +3,7 @@
 const { spawn } = require('node:child_process');
 const path = require('node:path');
 
-const { loadEnvConfig } = require('@next/env');
+const { loadStudiqWebEnv } = require('./studiq-web-env.cjs');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const appDir = path.join(repoRoot, 'apps', 'studiq-web');
@@ -11,7 +11,7 @@ const args = process.argv.slice(2);
 const command = args[0] || 'dev';
 const isDev = command !== 'build' && process.env.NODE_ENV !== 'production';
 
-loadEnvConfig(repoRoot, isDev);
+loadStudiqWebEnv({ repoRoot, appDir, isDev });
 
 const nextBin = require.resolve('next/dist/bin/next', {
   paths: [appDir, repoRoot],

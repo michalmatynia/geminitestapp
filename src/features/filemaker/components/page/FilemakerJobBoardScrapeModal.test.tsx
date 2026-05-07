@@ -792,6 +792,67 @@ describe('FilemakerJobBoardScrapeModal', () => {
     expect(screen.getByRole('option', { name: 'Skip existing' })).toBeInTheDocument();
   });
 
+  it('saves and restores the update-existing duplicate strategy', async () => {
+    const user = userEvent.setup();
+
+    const { unmount } = render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+      />
+    );
+
+    await user.selectOptions(screen.getByLabelText('Duplicates'), 'update');
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Save settings' }));
+    unmount();
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+      />
+    );
+
+    expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
+    expect(screen.getByRole('option', { name: 'Update existing' })).toBeInTheDocument();
+  });
+
+  it('sends duplicateStrategy update in the request body when update-existing is selected', async () => {
+    const user = userEvent.setup();
+    const fetchMock = createJobBoardScrapeFetchMock(async () =>
+      Response.json(successfulResponse)
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+      />
+    );
+
+    await user.selectOptions(screen.getByLabelText('Duplicates'), 'update');
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    const scrapeCalls = await waitForScrapePostCalls(fetchMock, 1);
+    expect(parseRequestBody(scrapeCalls[0][1])).toMatchObject({
+      duplicateStrategy: 'update',
+      mode: 'preview',
+      sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
+    });
+  });
+
   it('uses and saves the shared Job Board Offer Scrape browser mode setting', async () => {
     const user = userEvent.setup();
     mocks.usePlaywrightActionsMock.mockReturnValue({

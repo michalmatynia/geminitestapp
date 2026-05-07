@@ -1,5 +1,7 @@
-import { FileSignature } from 'lucide-react';
-import React from 'react';
+'use client';
+
+import { ChevronDown, ChevronRight, FileSignature } from 'lucide-react';
+import React, { useState } from 'react';
 
 import type {
   FilemakerContract,
@@ -7,11 +9,12 @@ import type {
   FilemakerContractPersonLink,
 } from '../../filemaker-contract.types';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
-import { Badge, Card } from '@/shared/ui/primitives.public';
+import { Badge, Button, Card } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 export interface FilemakerContractsSectionProps {
   contracts: FilemakerContract[];
+  defaultCollapsed?: boolean;
   title?: string;
 }
 
@@ -82,18 +85,43 @@ const FilemakerContractCard = ({
 
 export function FilemakerContractsSection({
   contracts,
+  defaultCollapsed = false,
   title = 'Contracts',
 }: FilemakerContractsSectionProps): React.JSX.Element {
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  const ToggleIcon = isCollapsed ? ChevronRight : ChevronDown;
+
   return (
-    <FormSection title={title} className='space-y-2 p-4'>
-      {contracts.length === 0 ? (
-        <div className='text-xs text-gray-500'>No contracts linked yet.</div>
-      ) : (
-        <div className='grid gap-2'>
-          {contracts.map((contract: FilemakerContract) => (
-            <FilemakerContractCard key={contract.id} contract={contract} />
-          ))}
-        </div>
+    <FormSection
+      title={title}
+      actions={
+        <Button
+          type='button'
+          variant='ghost'
+          size='icon'
+          className='size-7'
+          aria-expanded={!isCollapsed}
+          aria-label={isCollapsed ? 'Expand contracts' : 'Collapse contracts'}
+          title={isCollapsed ? 'Expand contracts' : 'Collapse contracts'}
+          onClick={() => setIsCollapsed((current: boolean): boolean => !current)}
+        >
+          <ToggleIcon className='size-4' aria-hidden='true' />
+        </Button>
+      }
+      className='space-y-2 p-4'
+    >
+      {isCollapsed ? null : (
+        <>
+          {contracts.length === 0 ? (
+            <div className='text-xs text-gray-500'>No contracts linked yet.</div>
+          ) : (
+            <div className='grid gap-2'>
+              {contracts.map((contract: FilemakerContract) => (
+                <FilemakerContractCard key={contract.id} contract={contract} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </FormSection>
   );

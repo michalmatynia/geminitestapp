@@ -21,7 +21,7 @@
       "ownerModules": [
         "src/server/queues/ai.ts",
         "src/server/queues/integrations.ts",
-        "src/server/queues/kangur.ts",
+        "src/server/queues/filemaker.ts",
         "src/server/queues/product-ai.ts",
         "src/server/queues/product-sync.ts"
       ],
@@ -34,8 +34,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
-        "startKangurSocialPipelineQueue",
-        "startKangurSocialSchedulerQueue",
+        "startFilemakerSocialPipelineQueue",
+        "startFilemakerSocialSchedulerQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -54,7 +54,7 @@
       "ownerModules": [
         "src/server/queues/ai.ts",
         "src/server/queues/integrations.ts",
-        "src/server/queues/kangur.ts",
+        "src/server/queues/filemaker.ts",
         "src/server/queues/product-ai.ts",
         "src/server/queues/product-sync.ts"
       ],
@@ -67,8 +67,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
-        "startKangurSocialPipelineQueue",
-        "startKangurSocialSchedulerQueue",
+        "startFilemakerSocialPipelineQueue",
+        "startFilemakerSocialSchedulerQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -87,7 +87,7 @@
       "ownerModules": [
         "src/server/queues/ai.ts",
         "src/server/queues/integrations.ts",
-        "src/server/queues/kangur.ts",
+        "src/server/queues/filemaker.ts",
         "src/server/queues/product-ai.ts",
         "src/server/queues/product-sync.ts"
       ],
@@ -100,8 +100,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
-        "startKangurSocialPipelineQueue",
-        "startKangurSocialSchedulerQueue",
+        "startFilemakerSocialPipelineQueue",
+        "startFilemakerSocialSchedulerQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -179,7 +179,7 @@
       "ownerModules": [
         "src/server/queues/ai.ts",
         "src/server/queues/integrations.ts",
-        "src/server/queues/kangur.ts",
+        "src/server/queues/filemaker.ts",
         "src/server/queues/product-ai.ts",
         "src/server/queues/product-sync.ts"
       ],
@@ -192,8 +192,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
-        "startKangurSocialPipelineQueue",
-        "startKangurSocialSchedulerQueue",
+        "startFilemakerSocialPipelineQueue",
+        "startFilemakerSocialSchedulerQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -253,7 +253,7 @@
       "ownerModules": [
         "src/server/queues/ai.ts",
         "src/server/queues/integrations.ts",
-        "src/server/queues/kangur.ts",
+        "src/server/queues/filemaker.ts",
         "src/server/queues/product-ai.ts",
         "src/server/queues/product-sync.ts"
       ],
@@ -266,8 +266,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
-        "startKangurSocialPipelineQueue",
-        "startKangurSocialSchedulerQueue",
+        "startFilemakerSocialPipelineQueue",
+        "startFilemakerSocialSchedulerQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -286,7 +286,7 @@
       "ownerModules": [
         "src/server/queues/ai.ts",
         "src/server/queues/integrations.ts",
-        "src/server/queues/kangur.ts",
+        "src/server/queues/filemaker.ts",
         "src/server/queues/product-ai.ts",
         "src/server/queues/product-sync.ts"
       ],
@@ -299,8 +299,8 @@
         "startChatbotJobQueue",
         "startImageStudioRunQueue",
         "startImageStudioSequenceQueue",
-        "startKangurSocialPipelineQueue",
-        "startKangurSocialSchedulerQueue",
+        "startFilemakerSocialPipelineQueue",
+        "startFilemakerSocialSchedulerQueue",
         "startPlaywrightListingQueue",
         "startProductAiJobQueue",
         "startProductSyncBackfillQueue",
@@ -311,31 +311,31 @@
       ]
     },
     {
-      "queueName": "kangur-social-pipeline",
-      "file": "src/features/kangur/social/workers/kangurSocialPipelineQueue.ts",
+      "queueName": "social-publishing-pipeline",
+      "file": "src/features/filemaker/social/workers/socialPublishingPipelineQueue.ts",
       "gated": false,
       "repeatManaged": true,
       "explicitlyStarted": true,
       "ownerModules": [
-        "src/server/queues/kangur.ts"
+        "src/server/queues/filemaker.ts"
       ],
       "startExports": [
-        "startKangurSocialPipelineQueue",
-        "startKangurSocialSchedulerQueue"
+        "startFilemakerSocialPipelineQueue",
+        "startFilemakerSocialSchedulerQueue"
       ]
     },
     {
-      "queueName": "kangur-social-scheduler",
-      "file": "src/features/kangur/social/workers/kangurSocialSchedulerQueue.ts",
+      "queueName": "social-publishing-scheduler",
+      "file": "src/features/filemaker/social/workers/socialPublishingSchedulerQueue.ts",
       "gated": false,
       "repeatManaged": true,
       "explicitlyStarted": true,
       "ownerModules": [
-        "src/server/queues/kangur.ts"
+        "src/server/queues/filemaker.ts"
       ],
       "startExports": [
-        "startKangurSocialPipelineQueue",
-        "startKangurSocialSchedulerQueue"
+        "startFilemakerSocialPipelineQueue",
+        "startFilemakerSocialSchedulerQueue"
       ]
     },
     {

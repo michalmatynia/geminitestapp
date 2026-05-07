@@ -36,7 +36,7 @@ const kangurPageLoaders = {
   LearnerProfile: () => import('@/features/kangur/ui/pages/LearnerProfile'),
   Lessons: () => import('@/features/kangur/ui/pages/Lessons'),
   ParentDashboard: () => import('@/features/kangur/ui/pages/ParentDashboard'),
-  SocialUpdates: () => import('@/features/kangur/social/pages/SocialUpdates'),
+  SocialUpdates: () => import('@/features/filemaker/social/pages/SocialUpdates'),
   Tests: () => import('@/features/kangur/ui/pages/Tests'),
 } satisfies Readonly<Record<string, () => Promise<{ default: ComponentType }>>>;
 

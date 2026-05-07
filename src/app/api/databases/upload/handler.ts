@@ -1,12 +1,12 @@
 import fs from 'fs/promises';
-import path from 'path';
 
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
-  mongoBackupsDir,
   ensureMongoBackupsDir,
   assertValidMongoBackupName,
+  buildMongoBackupName,
+  getMongoBackupPath,
 } from '@/features/database/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
@@ -34,10 +34,11 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   assertValidMongoBackupName(file.name);
   await ensureMongoBackupsDir();
 
-  const backupPath = path.join(mongoBackupsDir, file.name);
+  const backupName = buildMongoBackupName('geminitestapp', file.name);
+  const backupPath = getMongoBackupPath(backupName);
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
   await fs.writeFile(backupPath, fileBuffer);
 
-  return NextResponse.json({ message: 'Backup uploaded' });
+  return NextResponse.json({ message: 'Backup uploaded', backupName });
 }

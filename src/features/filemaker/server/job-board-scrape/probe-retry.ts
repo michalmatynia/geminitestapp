@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { probeJobBoardOffer } from '@/features/job-board/server/job-scans-service';
+import { isFatalJobBoardError } from '@/features/job-board/server/job-board-fatal-errors';
 
 import { sleep, throwIfScrapeAborted } from './live-events';
 
@@ -58,6 +59,7 @@ const probeJobBoardOfferAttempt = async (
     return await probeJobBoardOffer(input.probeArgs);
   } catch (error) {
     if (isAbortError(error)) throw error;
+    if (isFatalJobBoardError(error)) throw error;
     if (attempt >= input.attempts) return probeDeterministicFallback(input, error);
     await warnBeforeRetry(input, attempt, error);
     return probeJobBoardOfferAttempt(input, attempt + 1);

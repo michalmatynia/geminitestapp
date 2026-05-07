@@ -32,11 +32,11 @@ const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]): PlanStepSpecInput[]
     const { expectedObservation, successCriteria, phase, priority, dependsOn, ...rest } = step;
     return {
       ...rest,
-      ...(expectedObservation != null && { expectedObservation }),
-      ...(successCriteria != null && { successCriteria }),
-      ...(phase != null && { phase }),
-      ...(priority != null && { priority }),
-      ...(dependsOn != null && { dependsOn }),
+      ...(expectedObservation !== null && { expectedObservation }),
+      ...(successCriteria !== null && { successCriteria }),
+      ...(phase !== null && { phase }),
+      ...(priority !== null && { priority }),
+      ...(dependsOn !== null && { dependsOn }),
     };
   });
 
@@ -102,8 +102,8 @@ export const detectLoopPattern = (
     }
   }
   const stableUrl =
-    urlsThree[0] &&
-    urlsThree.every((url: string | null) => url && url === urlsThree[0]) &&
+    urlsThree[0] !== null &&
+    urlsThree.every((url: string | null) => url !== null && url.length > 0 && url === urlsThree[0]) &&
     statusesThree.filter((status: PlanStep['status']) => status === 'failed').length >= 2;
   if (stableUrl) {
     return {
@@ -238,7 +238,7 @@ export async function buildLoopGuardReview({
       }
     }
     const agentAuditLog = getAgentAuditLogDelegate();
-    if (agentAuditLog && runId) {
+    if (agentAuditLog && runId !== null) {
       await agentAuditLog.create({
         data: {
           runId,
@@ -246,7 +246,7 @@ export async function buildLoopGuardReview({
           message: 'Loop guard completed.',
           metadata: {
             action,
-            reason: parsed.reason ?? null,
+            reason: parsed.reason !== null ? parsed.reason : null,
             loop: loopSignal,
           },
         },

@@ -19,6 +19,7 @@ import {
   type LegacyEmailRow,
   type ParsedLegacyEmail,
 } from '@/features/filemaker/filemaker-emails-import.parser';
+import type { FilemakerEmailStatus } from '@/features/filemaker/types';
 import type { MongoSource } from '@/shared/contracts/database';
 
 loadDotenv({ path: '.env', quiet: true });
@@ -66,12 +67,10 @@ type MongoEmailDocument = Document & {
   id: string;
   importBatchId?: string;
   importedAt?: Date;
-  legacyStatusRaw?: string;
-  legacyStatusUuid?: string;
   legacyUuid?: string;
   legacyUuids: string[];
   schemaVersion: 1;
-  status: 'active' | 'inactive' | 'bounced' | 'unverified';
+  status: FilemakerEmailStatus;
   updatedAt?: string;
   updatedBy?: string;
 };
@@ -89,8 +88,6 @@ type MongoEmailLinkDocument = Document & {
   legacyJoinUuids?: string[];
   legacyOrganizationName?: string;
   legacyOrganizationUuid?: string;
-  legacyStatusUuid?: string;
-  legacyStatusUuids?: string[];
   organizationId?: string;
   partyId?: string;
   partyKind: 'organization';
@@ -211,11 +208,21 @@ const latestIso = (values: Array<string | undefined>): string | undefined =>
 const earliestIso = (values: Array<string | undefined>): string | undefined =>
   uniqueDefined(values).sort()[0];
 
-const chooseStatus = (
-  records: ParsedLegacyEmail[]
-): 'active' | 'inactive' | 'bounced' | 'unverified' =>
-  records.find((record: ParsedLegacyEmail): boolean => record.status !== 'unverified')?.status ??
-  'unverified';
+const EMAIL_STATUS_PRIORITY: Readonly<Record<FilemakerEmailStatus, number>> = {
+  bounced: 3,
+  inactive: 2,
+  active: 1,
+  unverified: 0,
+};
+
+const chooseStatus = (records: ParsedLegacyEmail[]): FilemakerEmailStatus =>
+  records.reduce<FilemakerEmailStatus>(
+    (selected: FilemakerEmailStatus, record: ParsedLegacyEmail): FilemakerEmailStatus =>
+      EMAIL_STATUS_PRIORITY[record.status] > EMAIL_STATUS_PRIORITY[selected]
+        ? record.status
+        : selected,
+    'unverified'
+  );
 
 const buildEmailDocuments = (input: {
   collected: CollectedEmails;
@@ -234,8 +241,6 @@ const buildEmailDocuments = (input: {
         id,
         importBatchId: input.importBatchId,
         importedAt: input.importedAt,
-        legacyStatusRaw: firstDefined(records.map((record) => record.legacyStatusRaw)),
-        legacyStatusUuid: firstDefined(records.map((record) => record.legacyStatusUuid)),
         legacyUuid: legacyUuids[0],
         legacyUuids,
         schemaVersion: 1,
@@ -325,8 +330,6 @@ const buildEmailLinkDocumentFromJoin = (input: {
     legacyJoinUuids: uniqueDefined([input.join.legacyJoinUuid]),
     legacyOrganizationName: input.join.legacyOrganizationName,
     legacyOrganizationUuid: input.join.legacyOrganizationUuid,
-    legacyStatusUuid: input.join.legacyStatusUuid,
-    legacyStatusUuids: uniqueDefined([input.join.legacyStatusUuid]),
     organizationId: input.organizationId,
     partyId: input.organizationId,
     partyKind: 'organization',
@@ -352,13 +355,6 @@ const mergeEmailLinkDocuments = (
     incoming.legacyJoinUuid,
   ]),
   legacyOrganizationName: existing.legacyOrganizationName ?? incoming.legacyOrganizationName,
-  legacyStatusUuid: existing.legacyStatusUuid ?? incoming.legacyStatusUuid,
-  legacyStatusUuids: uniqueDefined([
-    ...(existing.legacyStatusUuids ?? []),
-    ...(incoming.legacyStatusUuids ?? []),
-    existing.legacyStatusUuid,
-    incoming.legacyStatusUuid,
-  ]),
   updatedAt: latestIso([existing.updatedAt, incoming.updatedAt]),
   updatedBy: existing.updatedBy ?? incoming.updatedBy,
 });

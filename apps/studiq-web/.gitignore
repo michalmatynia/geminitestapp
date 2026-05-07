@@ -1,1 +1,5 @@
+.env*.local
+.mongo/
 .vercel
+mongo/local-data/
+mongo/runtime/

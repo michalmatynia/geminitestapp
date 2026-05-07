@@ -224,15 +224,15 @@
       "errors": []
     },
     {
-      "id": "kangur-social-updates",
-      "name": "Kangur Social Updates",
+      "id": "kangur-updates-public",
+      "name": "Kangur Updates",
       "route": "/kangur/social-updates",
       "audience": "public",
       "readySelector": null,
       "contextSelector": null,
       "navigationWaitUntil": null,
       "navigationTimeoutMs": null,
-      "title": "[kangur-social-updates] /kangur/social-updates passes the route-crawl accessibility scan",
+      "title": "[kangur-updates-public] /kangur/social-updates passes the route-crawl accessibility scan",
       "status": "fail",
       "durationMs": 0,
       "errors": []

@@ -17,29 +17,24 @@ export async function postValidatorTemplateHandler(
 
   const repo = await getValidationPatternRepository();
   const existingPatterns = await repo.listPatterns();
-  const outcomes: Array<{
-    action: 'created' | 'updated';
-    target: string;
-    patternId: string;
-    label: string;
-  }> = [];
+  const outcomes = await Promise.all(
+    preset.patterns.map(async (templatePattern) => {
+      const payload = templatePattern.buildPayload();
+      const existingPattern = existingPatterns.find((pattern) =>
+        templatePattern.matchesExisting(pattern)
+      );
+      const persistedPattern = existingPattern
+        ? await repo.updatePattern(existingPattern.id, payload, { semanticAuditSource: 'template' })
+        : await repo.createPattern(payload, { semanticAuditSource: 'template' });
 
-  for (const templatePattern of preset.patterns) {
-    const payload = templatePattern.buildPayload();
-    const existingPattern = existingPatterns.find((pattern) =>
-      templatePattern.matchesExisting(pattern)
-    );
-    const persistedPattern = existingPattern
-      ? await repo.updatePattern(existingPattern.id, payload, { semanticAuditSource: 'template' })
-      : await repo.createPattern(payload, { semanticAuditSource: 'template' });
-
-    outcomes.push({
-      action: existingPattern ? 'updated' : 'created',
-      target: persistedPattern.target,
-      patternId: persistedPattern.id,
-      label: persistedPattern.label,
-    });
-  }
+      return {
+        action: existingPattern ? 'updated' : 'created',
+        target: persistedPattern.target,
+        patternId: persistedPattern.id,
+        label: persistedPattern.label,
+      };
+    })
+  );
 
   return NextResponse.json({ outcomes });
 }

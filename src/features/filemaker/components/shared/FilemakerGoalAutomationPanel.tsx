@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
+import { RotateCcw, Trash2 } from 'lucide-react';
 
 import {
   Badge,
@@ -16,6 +18,8 @@ import {
 } from '@/shared/ui/primitives.public';
 import { useFilemakerGoalAutomation } from '../../hooks/useFilemakerGoalAutomation';
 import type { GoalAutomationIterationResult } from '../../hooks/useFilemakerGoalAutomation';
+import { useGoalAutomationHistory } from '../../hooks/useGoalAutomationHistory';
+import type { GoalAutomationHistoryEntry } from '../../hooks/useGoalAutomationHistory';
 
 type ScreenshotDialogProps = {
   src: string;
@@ -123,6 +127,68 @@ function IterationCard({ iter, isLatest }: IterationCardProps): React.JSX.Elemen
   );
 }
 
+type HistoryEntryCardProps = {
+  entry: GoalAutomationHistoryEntry;
+  onRerun: (url: string, goal: string) => void;
+  onDelete: (id: string) => void;
+};
+
+function HistoryEntryCard({ entry, onRerun, onDelete }: HistoryEntryCardProps): React.JSX.Element {
+  const firstScreenshot = entry.iterations.find((i) => i.screenshotBase64 !== null)?.screenshotBase64 ?? null;
+  const date = new Date(entry.completedAt).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return (
+    <div className='flex items-start gap-3 rounded border border-border bg-muted/20 p-3 text-sm'>
+      {firstScreenshot !== null && (
+        <img
+          src={`data:image/png;base64,${firstScreenshot}`}
+          alt='Run screenshot'
+          className='h-14 w-20 shrink-0 rounded border border-border object-cover object-top'
+        />
+      )}
+      <div className='min-w-0 flex-1'>
+        <div className='mb-0.5 flex items-center gap-2'>
+          <span className='truncate text-xs text-muted-foreground/70'>{date}</span>
+          {entry.done ? (
+            <Badge variant='default' className='bg-green-600 text-xs text-white'>
+              Done
+            </Badge>
+          ) : (
+            <Badge variant='outline' className='text-xs'>
+              {entry.iterationsRun} iters
+            </Badge>
+          )}
+        </div>
+        <p className='truncate text-xs font-medium text-foreground'>{entry.url}</p>
+        <p className='line-clamp-2 text-xs text-muted-foreground'>{entry.goal}</p>
+      </div>
+      <div className='flex shrink-0 flex-col gap-1'>
+        <button
+          type='button'
+          title='Re-run'
+          onClick={() => onRerun(entry.url, entry.goal)}
+          className='rounded p-1 text-muted-foreground hover:text-foreground'
+        >
+          <RotateCcw className='size-3.5' />
+        </button>
+        <button
+          type='button'
+          title='Delete'
+          onClick={() => onDelete(entry.id)}
+          className='rounded p-1 text-muted-foreground hover:text-destructive'
+        >
+          <Trash2 className='size-3.5' />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const GOAL_TEMPLATES: { label: string; goal: string }[] = [
   {
     label: 'Apply to job',
@@ -166,8 +232,8 @@ export function FilemakerGoalAutomationPanel({
   const [goal, setGoal] = useState(defaultGoal);
 
   // Sync when the parent updates the default URL (e.g. listing selection)
-  const prevDefaultUrl = React.useRef(defaultUrl);
-  React.useEffect(() => {
+  const prevDefaultUrl = useRef(defaultUrl);
+  useEffect(() => {
     if (defaultUrl !== prevDefaultUrl.current && defaultUrl.trim() !== '') {
       setUrl(defaultUrl);
       prevDefaultUrl.current = defaultUrl;
@@ -177,8 +243,29 @@ export function FilemakerGoalAutomationPanel({
   const [evaluatorInputSource, setEvaluatorInputSource] = useState<string>('screenshot');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const { state, run, cancel, reset } = useFilemakerGoalAutomation();
+  const { history, addEntry, removeEntry, clearHistory } = useGoalAutomationHistory();
+
+  // Persist completed runs to localStorage history
+  const prevStatusRef = useRef(state.status);
+  const currentRunRef = useRef({ url, goal });
+  currentRunRef.current = { url, goal };
+
+  useEffect(() => {
+    if (prevStatusRef.current !== 'completed' && state.status === 'completed') {
+      addEntry({
+        url: currentRunRef.current.url,
+        goal: currentRunRef.current.goal,
+        iterationsRun: state.iterations.length,
+        done: state.done,
+        finalUrl: state.finalUrl,
+        iterations: state.iterations,
+      });
+    }
+    prevStatusRef.current = state.status;
+  }, [state.status, state.iterations, state.done, state.finalUrl, addEntry]);
 
   const handleRun = (): void => {
     void run({
@@ -191,6 +278,12 @@ export function FilemakerGoalAutomationPanel({
           : (evaluatorInputSource as 'screenshot' | 'html' | 'text_content'),
       systemPrompt: systemPrompt.trim() !== '' ? systemPrompt.trim() : null,
     });
+  };
+
+  const handleRerun = (rerunUrl: string, rerunGoal: string): void => {
+    setUrl(rerunUrl);
+    setGoal(rerunGoal);
+    setShowHistory(false);
   };
 
   const isRunning = state.status === 'running';
@@ -347,6 +440,44 @@ export function FilemakerGoalAutomationPanel({
 
       {isRunning && state.iterations.length === 0 && (
         <p className='text-sm text-muted-foreground'>Starting automation…</p>
+      )}
+
+      {history.length > 0 && (
+        <div className='rounded-lg border border-border'>
+          <button
+            type='button'
+            onClick={() => setShowHistory((v) => !v)}
+            className='flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground'
+          >
+            <span>History ({history.length})</span>
+            <div className='flex items-center gap-3'>
+              <button
+                type='button'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearHistory();
+                }}
+                className='text-xs text-muted-foreground/60 underline underline-offset-2 hover:text-destructive'
+              >
+                Clear all
+              </button>
+              <span className='text-xs'>{showHistory ? '▲' : '▼'}</span>
+            </div>
+          </button>
+
+          {showHistory && (
+            <div className='space-y-2 border-t border-border px-3 pb-3 pt-2'>
+              {history.map((entry) => (
+                <HistoryEntryCard
+                  key={entry.id}
+                  entry={entry}
+                  onRerun={handleRerun}
+                  onDelete={removeEntry}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

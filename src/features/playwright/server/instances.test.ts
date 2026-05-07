@@ -66,12 +66,12 @@ describe('playwright engine instances', () => {
       },
       social_capture_single: {
         family: 'capture',
-        label: 'Kangur social single capture',
+        label: 'Social publishing single capture',
         tags: ['kangur', 'social', 'capture', 'single'],
       },
       social_capture_batch: {
         family: 'capture',
-        label: 'Kangur social batch capture',
+        label: 'Social publishing batch capture',
         tags: ['kangur', 'social', 'capture', 'batch'],
       },
     });
@@ -201,13 +201,13 @@ describe('playwright engine instances', () => {
     expect(createSocialCaptureSinglePlaywrightInstance()).toEqual({
       kind: 'social_capture_single',
       family: 'capture',
-      label: 'Kangur social single capture',
+      label: 'Social publishing single capture',
       tags: ['kangur', 'social', 'capture', 'single'],
     });
     expect(createSocialCaptureBatchPlaywrightInstance()).toEqual({
       kind: 'social_capture_batch',
       family: 'capture',
-      label: 'Kangur social batch capture',
+      label: 'Social publishing batch capture',
       tags: ['kangur', 'social', 'capture', 'batch'],
     });
   });

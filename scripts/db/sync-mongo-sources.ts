@@ -3,6 +3,7 @@ import { config as loadDotenv } from 'dotenv';
 import {
   databaseEngineMongoSyncDirectionSchema,
   type DatabaseEngineMongoSyncDirection,
+  type DatabaseEngineMongoSyncApplication,
   type MongoSource,
 } from '@/shared/contracts/database';
 
@@ -10,10 +11,13 @@ type MongoSourceModule = typeof import('@/shared/lib/db/mongo-source');
 type MongoSourceParityModule = typeof import('@/shared/lib/db/services/mongo-source-parity');
 type MongoSourceSyncModule = typeof import('@/shared/lib/db/services/mongo-source-sync');
 type MongoClientModule = typeof import('@/shared/lib/db/mongo-client');
+type MongoUtilsModule = typeof import('@/shared/lib/db/utils/mongo');
 
 type MongoDbModules = {
   getMongoSourceState: MongoSourceModule['getMongoSourceState'];
   resolveMongoSourceConfig: MongoSourceModule['resolveMongoSourceConfig'];
+  resolveCmsBuilderMongoSourceConfig: MongoUtilsModule['resolveCmsBuilderMongoSourceConfig'];
+  resolveStudiqMongoSourceConfig: MongoUtilsModule['resolveStudiqMongoSourceConfig'];
   verifyMongoSourceParity: MongoSourceParityModule['verifyMongoSourceParity'];
   syncMongoSources: MongoSourceSyncModule['syncMongoSources'];
   invalidateMongoClientCache: MongoClientModule['invalidateMongoClientCache'];
@@ -80,16 +84,19 @@ const loadCliEnv = (): void => {
 };
 
 const loadDbModules = async (): Promise<MongoDbModules> => {
-  const [mongoSource, mongoSourceParity, mongoSourceSync, mongoClient] = await Promise.all([
+  const [mongoSource, mongoSourceParity, mongoSourceSync, mongoClient, mongoUtils] = await Promise.all([
     import('@/shared/lib/db/mongo-source'),
     import('@/shared/lib/db/services/mongo-source-parity'),
     import('@/shared/lib/db/services/mongo-source-sync'),
     import('@/shared/lib/db/mongo-client'),
+    import('@/shared/lib/db/utils/mongo'),
   ]);
 
   return {
     getMongoSourceState: mongoSource.getMongoSourceState,
     resolveMongoSourceConfig: mongoSource.resolveMongoSourceConfig,
+    resolveCmsBuilderMongoSourceConfig: mongoUtils.resolveCmsBuilderMongoSourceConfig,
+    resolveStudiqMongoSourceConfig: mongoUtils.resolveStudiqMongoSourceConfig,
     verifyMongoSourceParity: mongoSourceParity.verifyMongoSourceParity,
     syncMongoSources: mongoSourceSync.syncMongoSources,
     invalidateMongoClientCache: mongoClient.invalidateMongoClientCache,
@@ -105,24 +112,54 @@ const runVerificationOnly = async (
   direction: DatabaseEngineMongoSyncDirection
 ): Promise<void> => {
   const { source, target } = resolveEndpoints(direction);
-  const sourceConfig = await modules.resolveMongoSourceConfig(source);
-  const targetConfig = await modules.resolveMongoSourceConfig(target);
-  const verification = await modules.verifyMongoSourceParity({
-    source,
-    target,
-    sourceDbName: sourceConfig.dbName ?? 'app',
-    targetDbName: targetConfig.dbName ?? 'app',
-  });
+  const applications: DatabaseEngineMongoSyncApplication[] = [
+    'geminitestapp',
+    'studiq',
+    'cms-builder',
+  ];
+  const verifications = [];
+
+  for (const application of applications) {
+    const sourceConfig =
+      application === 'studiq'
+        ? modules.resolveStudiqMongoSourceConfig(source)
+        : application === 'cms-builder'
+          ? modules.resolveCmsBuilderMongoSourceConfig(source)
+        : await modules.resolveMongoSourceConfig(source);
+    const targetConfig =
+      application === 'studiq'
+        ? modules.resolveStudiqMongoSourceConfig(target)
+        : application === 'cms-builder'
+          ? modules.resolveCmsBuilderMongoSourceConfig(target)
+        : await modules.resolveMongoSourceConfig(target);
+    if (!sourceConfig.configured || !targetConfig.configured) {
+      throw new Error(`${application} ${source} and ${target} MongoDB sources must be configured.`);
+    }
+    if (!sourceConfig.uri || !targetConfig.uri || !sourceConfig.dbName || !targetConfig.dbName) {
+      throw new Error(`${application} ${source} and ${target} MongoDB URI/database values are required.`);
+    }
+    verifications.push({
+      application,
+      verification: await modules.verifyMongoSourceParity({
+        source,
+        target,
+        sourceDbName: sourceConfig.dbName,
+        targetDbName: targetConfig.dbName,
+        sourceUri: sourceConfig.uri,
+        targetUri: targetConfig.uri,
+      }),
+    });
+  }
 
   printJson({
     mode: 'verify-only',
     direction,
     source,
     target,
-    verification,
+    verifications,
   });
 
-  if (verification.status !== 'passed') {
+  if (verifications.some((entry) => entry.verification.status !== 'passed')) {
     process.exitCode = 1;
   }
 };
@@ -166,6 +203,7 @@ const runApply = async (
     archivePath: result.archivePath,
     logPath: result.logPath,
     verification: result.verification,
+    applicationTransfers: result.applicationTransfers,
   });
 };
 

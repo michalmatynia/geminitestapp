@@ -72,6 +72,34 @@ export async function postTemplatesHandler(
   throw badRequestError(`Invalid template type: ${type}`);
 }
 
+async function updateExport(id: string, data: ImportExportTemplateCreateInput): Promise<object> {
+  const template = await updateExportTemplate(id, {
+    name: data.name,
+    description: data.description ?? null,
+    mappings: data.mappings,
+    ...(data.exportImagesAsBase64 !== undefined && {
+      exportImagesAsBase64: data.exportImagesAsBase64,
+    }),
+  });
+  if (!template) {
+    throw notFoundError(`Export template not found: ${id}`, { templateId: id });
+  }
+  return template;
+}
+
+async function updateImport(id: string, data: ImportExportTemplateCreateInput): Promise<object> {
+  const template = await updateImportTemplate(id, {
+    name: data.name,
+    description: data.description ?? null,
+    mappings: data.mappings,
+    ...(data.parameterImport ? { parameterImport: data.parameterImport } : {}),
+  });
+  if (!template) {
+    throw notFoundError(`Import template not found: ${id}`, { templateId: id });
+  }
+  return template;
+}
+
 export async function putTemplatesItemHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -87,30 +115,12 @@ export async function putTemplatesItemHandler(
   const data: ImportExportTemplateCreateInput = parsed.data;
 
   if (type === 'export') {
-    const template = await updateExportTemplate(id, {
-      name: data.name,
-      description: data.description ?? null,
-      mappings: data.mappings,
-      ...(data.exportImagesAsBase64 !== undefined && {
-        exportImagesAsBase64: data.exportImagesAsBase64,
-      }),
-    });
-    if (!template) {
-      throw notFoundError(`Export template not found: ${id}`, { templateId: id });
-    }
+    const template = await updateExport(id, data);
     return NextResponse.json(template);
   }
 
   if (type === 'import') {
-    const template = await updateImportTemplate(id, {
-      name: data.name,
-      description: data.description ?? null,
-      mappings: data.mappings,
-      ...(data.parameterImport ? { parameterImport: data.parameterImport } : {}),
-    });
-    if (!template) {
-      throw notFoundError(`Import template not found: ${id}`, { templateId: id });
-    }
+    const template = await updateImport(id, data);
     return NextResponse.json(template);
   }
 

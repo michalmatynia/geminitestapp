@@ -1,14 +1,14 @@
 import { type JSX } from 'react';
 
 import { AdminAiPathsQueuePage } from '@/features/ai/public';
+import { FilemakerSocialPipelineQueuePanel } from '@/features/filemaker/public';
 import { FileUploadEventsPanel } from '@/features/files/public';
-import { KangurSocialPipelineQueuePanel } from '@/features/kangur/public';
 
 export default function Page(): JSX.Element {
   return (
     <AdminAiPathsQueuePage
       fileUploadsPanel={<FileUploadEventsPanel />}
-      kangurSocialPanel={<KangurSocialPipelineQueuePanel />}
+      socialPublishingPanel={<FilemakerSocialPipelineQueuePanel />}
     />
   );
 }

@@ -32,11 +32,11 @@ import {
   imageStudioAnalysisRequestSchema,
 } from '@/shared/contracts/image-studio/analysis';
 import {
-  buildKangurSocialPostCombinedBody,
-  hasKangurSocialLinkedInPublication,
-  hasKangurSocialLinkedInPublicationTarget,
-  parseKangurSocialPostStore,
-} from '@/shared/contracts/kangur-social-posts';
+  buildSocialPublishingPostCombinedBody,
+  hasSocialPublishingPublication,
+  hasSocialPublishingPublicationTarget,
+  parseSocialPublishingPostStore,
+} from '@/shared/contracts/social-publishing-posts';
 import {
   kangurGameCatalogQuerySchema,
   kangurLaunchableGameRuntimeSpecSchema,
@@ -449,51 +449,51 @@ describe('shared contracts runtime smoke', () => {
   });
 
   it('parses kangur social post stores and normalizes helper outputs', () => {
-    expect(buildKangurSocialPostCombinedBody(' Czesc ', ' Hello ')).toBe('Czesc\n---\nHello');
-    expect(buildKangurSocialPostCombinedBody(' Czesc ', '   ')).toBe('Czesc');
-    expect(buildKangurSocialPostCombinedBody('   ', ' Hello ')).toBe('Hello');
-    expect(buildKangurSocialPostCombinedBody('   ', '   ')).toBe('');
+    expect(buildSocialPublishingPostCombinedBody(' Czesc ', ' Hello ')).toBe('Czesc\n---\nHello');
+    expect(buildSocialPublishingPostCombinedBody(' Czesc ', '   ')).toBe('Czesc');
+    expect(buildSocialPublishingPostCombinedBody('   ', ' Hello ')).toBe('Hello');
+    expect(buildSocialPublishingPostCombinedBody('   ', '   ')).toBe('');
 
-    expect(hasKangurSocialLinkedInPublication(undefined)).toBe(false);
+    expect(hasSocialPublishingPublication(undefined)).toBe(false);
     expect(
-      hasKangurSocialLinkedInPublication({
+      hasSocialPublishingPublication({
         status: 'published',
         publishedAt: null,
-        linkedinPostId: null,
-        linkedinUrl: null,
+        publishedPostId: null,
+        publishedUrl: null,
       })
     ).toBe(true);
     expect(
-      hasKangurSocialLinkedInPublication({
+      hasSocialPublishingPublication({
         status: 'draft',
         publishedAt: '2026-03-30T10:00:00.000Z',
-        linkedinPostId: null,
-        linkedinUrl: null,
+        publishedPostId: null,
+        publishedUrl: null,
       })
     ).toBe(true);
     expect(
-      hasKangurSocialLinkedInPublication({
+      hasSocialPublishingPublication({
         status: 'draft',
         publishedAt: null,
-        linkedinPostId: null,
-        linkedinUrl: null,
+        publishedPostId: null,
+        publishedUrl: null,
       })
     ).toBe(false);
     expect(
-      hasKangurSocialLinkedInPublicationTarget({
-        linkedinPostId: 'post-1',
-        linkedinUrl: null,
+      hasSocialPublishingPublicationTarget({
+        publishedPostId: 'post-1',
+        publishedUrl: null,
       })
     ).toBe(true);
     expect(
-      hasKangurSocialLinkedInPublicationTarget({
-        linkedinPostId: '   ',
-        linkedinUrl: 'https://linkedin.com/posts/1',
+      hasSocialPublishingPublicationTarget({
+        publishedPostId: '   ',
+        publishedUrl: 'https://linkedin.com/posts/1',
       })
     ).toBe(true);
-    expect(hasKangurSocialLinkedInPublicationTarget(null)).toBe(false);
+    expect(hasSocialPublishingPublicationTarget(null)).toBe(false);
 
-    const store = parseKangurSocialPostStore({
+    const store = parseSocialPublishingPostStore({
       posts: [
         {
           id: 'post-1',

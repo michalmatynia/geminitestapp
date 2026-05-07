@@ -67,7 +67,7 @@ export const OPEN_KEY = 'adminMenuOpenIds.v2';
 export const POPULAR_ADMIN_PREFETCH_HREFS = [
   '/admin/products',
   '/admin/integrations',
-  '/admin/kangur/social',
+  '/admin/filemaker/social',
   '/admin/settings',
   '/admin/ai-paths',
 ] as const;

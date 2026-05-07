@@ -881,7 +881,7 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
-  kangur_social_capture_browser: {
+  social_publishing_capture_browser: {
     version: 2,
     placeholders: {
       preset: 'sublime',

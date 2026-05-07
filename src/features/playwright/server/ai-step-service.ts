@@ -590,6 +590,7 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
       code: result.code,
       shouldWaitForNavigation,
       iterationDelayMs: config.iterationDelayMs ?? 1000,
+      urlBeforeExecution: urlBeforeExec,
     });
 
     if (executionError !== null) {
@@ -2034,7 +2035,7 @@ export async function injectCodeWithAI(
   const screenshotBase64 = options.context.screenshotBase64;
 
   const userContent: unknown =
-    screenshotBase64 !== null &&
+    screenshotBase64 != null &&
     screenshotBase64.length > 0 &&
     isBrainModelVisionCapable(brainConfig.modelId)
       ? [

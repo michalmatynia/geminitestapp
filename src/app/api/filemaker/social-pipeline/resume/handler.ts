@@ -1,0 +1,24 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import type { Queue } from 'bullmq';
+
+import { getSocialPublishingPipelineQueue } from '@/features/filemaker/social/workers/socialPublishingPipelineQueue';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
+
+export async function postHandler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
+  const managed = getSocialPublishingPipelineQueue();
+  const rawQueue = managed.getQueue() as Queue | null;
+
+  if (!rawQueue) {
+    return NextResponse.json(
+      { success: false, error: 'Redis not available' },
+      { status: 503 }
+    );
+  }
+
+  await rawQueue.resume();
+  return NextResponse.json({ success: true, isPaused: false });
+}

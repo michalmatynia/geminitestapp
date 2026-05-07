@@ -3,6 +3,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import { isFatalJobBoardError } from '@/features/job-board/server/job-board-fatal-errors';
 import type { probeJobBoardOffer } from '@/features/job-board/server/job-scans-service';
 import {
   collectJobBoardOfferUrls,
@@ -2017,6 +2018,7 @@ const scrapeOffersViaJobBoardSequencer = async (
       });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') throw error;
+      if (isFatalJobBoardError(error)) throw error;
       const message = error instanceof Error ? error.message : String(error);
       const warning = `Offer probe failed permanently for ${url}: ${message}.`;
       warnings.push(warning);

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { Briefcase, ListTree } from 'lucide-react';
 import React from 'react';
 
@@ -8,8 +9,12 @@ import type {
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
 import { Badge, Card } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { FilemakerLinkedRecordActions } from './FilemakerLinkedRecordActions';
 
 export interface FilemakerPersonOccupationsSectionProps {
+  isSaving?: boolean;
+  onDeleteOccupation?: (id: string) => Promise<void> | void;
+  onUpdateOccupation?: (id: string, patch: Record<string, unknown>) => Promise<void> | void;
   occupations: FilemakerPersonOccupation[];
   title?: string;
 }
@@ -33,24 +38,84 @@ const occupationPath = (occupation: FilemakerPersonOccupation): string => {
   return occupation.legacyValueUuids.join(' > ');
 };
 
+const splitLines = (value: boolean | string): string[] =>
+  String(value)
+    .split(/\r?\n/)
+    .map((entry: string): string => entry.trim())
+    .filter(Boolean);
+
+const parseJsonArray = (value: boolean | string): unknown[] => {
+  const normalized = String(value).trim();
+  if (normalized.length === 0) return [];
+  const parsed = JSON.parse(normalized) as unknown;
+  if (!Array.isArray(parsed)) throw new Error('Expected a JSON array.');
+  return parsed;
+};
+
 const FilemakerPersonOccupationCard = ({
+  isSaving,
+  onDelete,
+  onUpdate,
   occupation,
 }: {
+  isSaving: boolean;
+  onDelete?: (id: string) => Promise<void> | void;
+  onUpdate?: (id: string, patch: Record<string, unknown>) => Promise<void> | void;
   occupation: FilemakerPersonOccupation;
 }): React.JSX.Element => (
   <Card key={occupation.id} variant='subtle-compact' className='bg-card/20'>
     <div className='space-y-2 p-3'>
-      <div className='flex min-w-0 items-start gap-2'>
-        <Briefcase className='mt-0.5 size-3.5 shrink-0 text-lime-300' />
-        <div className='min-w-0'>
-          <div className='truncate text-sm font-semibold text-white'>
-            {occupationPath(occupation)}
-          </div>
-          <div className='truncate text-[10px] text-gray-600'>
-            Legacy UUID: {formatOptionalValue(occupation.legacyUuid)} | Person UUID:{' '}
-            {formatOptionalValue(occupation.legacyPersonUuid)}
+      <div className='flex min-w-0 items-start justify-between gap-2'>
+        <div className='flex min-w-0 items-start gap-2'>
+          <Briefcase className='mt-0.5 size-3.5 shrink-0 text-lime-300' />
+          <div className='min-w-0'>
+            <div className='truncate text-sm font-semibold text-white'>
+              {occupationPath(occupation)}
+            </div>
+            <div className='truncate text-[10px] text-gray-600'>
+              Legacy UUID: {formatOptionalValue(occupation.legacyUuid)} | Person UUID:{' '}
+              {formatOptionalValue(occupation.legacyPersonUuid)}
+            </div>
           </div>
         </div>
+        <FilemakerLinkedRecordActions
+          deleteLabel='occupation'
+          editTitle='Edit Occupation'
+          isSaving={isSaving}
+          fields={[
+            {
+              key: 'legacyValueUuids',
+              label: 'Legacy Value UUIDs',
+              type: 'textarea',
+              rows: 4,
+              value: occupation.legacyValueUuids.join('\n'),
+              parse: splitLines,
+            },
+            {
+              key: 'valueIds',
+              label: 'Value IDs',
+              type: 'textarea',
+              rows: 4,
+              value: occupation.valueIds.join('\n'),
+              parse: splitLines,
+            },
+            {
+              key: 'values',
+              label: 'Values JSON',
+              type: 'textarea',
+              rows: 8,
+              value: JSON.stringify(occupation.values, null, 2),
+              parse: parseJsonArray,
+            },
+            { key: 'updatedBy', label: 'Modified By', value: occupation.updatedBy ?? '' },
+          ]}
+          onSave={
+            onUpdate === undefined
+              ? undefined
+              : (patch: Record<string, unknown>) => onUpdate(occupation.id, patch)
+          }
+          onDelete={onDelete === undefined ? undefined : () => onDelete(occupation.id)}
+        />
       </div>
       <div className='flex flex-wrap gap-1.5'>
         {occupation.values.map((value: FilemakerPersonOccupationValue) => (
@@ -85,6 +150,9 @@ const FilemakerPersonOccupationCard = ({
 );
 
 export function FilemakerPersonOccupationsSection({
+  isSaving = false,
+  onDeleteOccupation,
+  onUpdateOccupation,
   occupations,
   title = 'Occupations',
 }: FilemakerPersonOccupationsSectionProps): React.JSX.Element {
@@ -95,7 +163,13 @@ export function FilemakerPersonOccupationsSection({
       ) : (
         <div className='grid gap-2'>
           {occupations.map((occupation: FilemakerPersonOccupation) => (
-            <FilemakerPersonOccupationCard key={occupation.id} occupation={occupation} />
+            <FilemakerPersonOccupationCard
+              key={occupation.id}
+              occupation={occupation}
+              isSaving={isSaving}
+              onDelete={onDeleteOccupation}
+              onUpdate={onUpdateOccupation}
+            />
           ))}
         </div>
       )}

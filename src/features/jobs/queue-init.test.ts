@@ -13,12 +13,17 @@ const mocks = vi.hoisted(() => ({
   startChatbotJobQueue: vi.fn(),
   startDatabaseBackupSchedulerQueue: vi.fn(),
   startFilemakerEmailCampaignSchedulerQueue: vi.fn(),
+  startFilemakerCampaignColdPruneSchedulerQueue: vi.fn(),
+  startFilemakerJobBoardScrapeQueue: vi.fn(),
+  startFilemakerMailIdleManager: vi.fn(),
+  startFilemakerMailSyncSchedulerQueue: vi.fn(),
   startImageStudioRunQueue: vi.fn(),
   startImageStudioSequenceQueue: vi.fn(),
-  startKangurSocialPipelineQueue: vi.fn(),
-  startKangurSocialSchedulerQueue: vi.fn(),
+  startFilemakerSocialPipelineQueue: vi.fn(),
+  startFilemakerSocialSchedulerQueue: vi.fn(),
   startPlaywrightListingQueue: vi.fn(),
   startProductAiJobQueue: vi.fn(),
+  startProductMarketplaceCopyDebrandBatchQueue: vi.fn(),
   startProductSyncSchedulerQueue: vi.fn(),
   startSystemLogAlertsQueue: vi.fn(),
   startTraderaListingQueue: vi.fn(),
@@ -43,6 +48,25 @@ vi.mock('@/server/queues/case-resolver-ocr', () => ({
 vi.mock('@/server/queues/filemaker', () => ({
   startFilemakerEmailCampaignSchedulerQueue:
     mocks.startFilemakerEmailCampaignSchedulerQueue,
+  startFilemakerSocialPipelineQueue: mocks.startFilemakerSocialPipelineQueue,
+  startFilemakerSocialSchedulerQueue: mocks.startFilemakerSocialSchedulerQueue,
+}));
+
+vi.mock('@/features/filemaker/workers/filemakerMailSyncSchedulerQueue', () => ({
+  startFilemakerMailSyncSchedulerQueue: mocks.startFilemakerMailSyncSchedulerQueue,
+}));
+
+vi.mock('@/features/filemaker/workers/filemakerMailIdleManager', () => ({
+  startFilemakerMailIdleManager: mocks.startFilemakerMailIdleManager,
+}));
+
+vi.mock('@/features/filemaker/workers/filemakerCampaignColdPruneSchedulerQueue', () => ({
+  startFilemakerCampaignColdPruneSchedulerQueue:
+    mocks.startFilemakerCampaignColdPruneSchedulerQueue,
+}));
+
+vi.mock('@/features/filemaker/server/filemaker-job-board-scrape-runtime', () => ({
+  startFilemakerJobBoardScrapeQueue: mocks.startFilemakerJobBoardScrapeQueue,
 }));
 
 vi.mock('@/server/queues/integrations', () => ({
@@ -55,13 +79,13 @@ vi.mock('@/features/integrations/workers/traderaRelistSchedulerQueue', () => ({
   startTraderaRelistSchedulerQueue: mocks.startTraderaRelistSchedulerQueue,
 }));
 
-vi.mock('@/server/queues/kangur', () => ({
-  startKangurSocialPipelineQueue: mocks.startKangurSocialPipelineQueue,
-  startKangurSocialSchedulerQueue: mocks.startKangurSocialSchedulerQueue,
-}));
-
 vi.mock('@/server/queues/product-ai', () => ({
   startProductAiJobQueue: mocks.startProductAiJobQueue,
+}));
+
+vi.mock('@/server/queues/products', () => ({
+  startProductMarketplaceCopyDebrandBatchQueue:
+    mocks.startProductMarketplaceCopyDebrandBatchQueue,
 }));
 
 vi.mock('@/server/queues/product-sync', () => ({
@@ -90,6 +114,7 @@ vi.mock('@/shared/lib/queue/redis-connection', () => ({
 }));
 
 vi.mock('@/shared/lib/queue/registry', () => ({
+  registerQueue: vi.fn(),
   startAllWorkers: mocks.startAllWorkers,
 }));
 
@@ -99,7 +124,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { initializeQueues, shouldStartKangurSocialQueues, testOnly } from './queue-init';
+import { initializeQueues, shouldStartSocialPublishingQueues, testOnly } from './queue-init';
 
 const waitForStartup = async (): Promise<void> => {
   await vi.waitFor(() => expect(mocks.startTraderaListingQueue).toHaveBeenCalled());
@@ -109,16 +134,16 @@ beforeEach(() => {
   vi.clearAllMocks();
   testOnly.resetInitialized();
   delete process.env['DISABLE_QUEUE_WORKERS'];
-  delete process.env['DISABLE_KANGUR_SOCIAL_WORKERS'];
-  delete process.env['ENABLE_KANGUR_SOCIAL_WORKERS'];
+  delete process.env['DISABLE_SOCIAL_PUBLISHING_WORKERS'];
+  delete process.env['ENABLE_SOCIAL_PUBLISHING_WORKERS'];
   mocks.isRedisAvailable.mockReturnValue(true);
   mocks.isRedisReachable.mockResolvedValue(true);
 });
 
-describe('shouldStartKangurSocialQueues', () => {
+describe('shouldStartSocialPublishingQueues', () => {
   it('defaults to disabled outside production', () => {
     expect(
-      shouldStartKangurSocialQueues({
+      shouldStartSocialPublishingQueues({
         NODE_ENV: 'development',
       } as NodeJS.ProcessEnv)
     ).toBe(false);
@@ -126,7 +151,7 @@ describe('shouldStartKangurSocialQueues', () => {
 
   it('defaults to enabled in production', () => {
     expect(
-      shouldStartKangurSocialQueues({
+      shouldStartSocialPublishingQueues({
         NODE_ENV: 'production',
       } as NodeJS.ProcessEnv)
     ).toBe(true);
@@ -134,18 +159,18 @@ describe('shouldStartKangurSocialQueues', () => {
 
   it('honors explicit enable outside production', () => {
     expect(
-      shouldStartKangurSocialQueues({
+      shouldStartSocialPublishingQueues({
         NODE_ENV: 'development',
-        ENABLE_KANGUR_SOCIAL_WORKERS: 'true',
+        ENABLE_SOCIAL_PUBLISHING_WORKERS: 'true',
       } as NodeJS.ProcessEnv)
     ).toBe(true);
   });
 
   it('honors explicit disable even in production', () => {
     expect(
-      shouldStartKangurSocialQueues({
+      shouldStartSocialPublishingQueues({
         NODE_ENV: 'production',
-        DISABLE_KANGUR_SOCIAL_WORKERS: 'true',
+        DISABLE_SOCIAL_PUBLISHING_WORKERS: 'true',
       } as NodeJS.ProcessEnv)
     ).toBe(false);
   });

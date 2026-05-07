@@ -198,7 +198,7 @@ export function useBrainPersistence({
         ai_paths: Boolean(parsedBrain.assignments.ai_paths),
         chatbot: Boolean(parsedBrain.assignments.chatbot),
         kangur_ai_tutor: Boolean(parsedBrain.assignments.kangur_ai_tutor),
-        kangur_social: Boolean(parsedBrain.assignments.kangur_social),
+        social_publishing: Boolean(parsedBrain.assignments.social_publishing),
         job_board: Boolean(parsedBrain.assignments.job_board),
         products: Boolean(parsedBrain.assignments.products),
         case_resolver: Boolean(parsedBrain.assignments.case_resolver),

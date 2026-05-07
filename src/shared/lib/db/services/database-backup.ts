@@ -14,10 +14,18 @@ import { forbiddenError, operationFailedError } from '@/shared/errors/app-error'
 import { resolveMongoSourceConfig } from '@/shared/lib/db/mongo-source';
 import {
   backupsDir as mongoBackupsDir,
+  buildMongoBackupName as buildMongoBackupRelativeName,
   ensureBackupsDir as ensureMongoBackupsDir,
   getMongoConnectionUrl,
   getMongoDatabaseName,
   getMongoDumpCommand,
+  getCmsBuilderMongoConnectionUrl,
+  getCmsBuilderMongoDatabaseName,
+  getStudiqMongoConnectionUrl,
+  getStudiqMongoDatabaseName,
+  resolveCmsBuilderMongoSourceConfig,
+  resolveStudiqMongoSourceConfig,
+  type MongoBackupApplication,
   execFileAsync as mongoExecFileAsync,
 } from '@/shared/lib/db/utils/mongo';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -84,12 +92,14 @@ const requireMongoConfigValue = (value: string | null, label: string): string =>
 };
 
 const runMongoBackup = async (params: {
+  application: MongoBackupApplication;
   mongoUri: string;
   databaseName: string;
   backupName: string;
 }): Promise<MongoBackupExecutionResult> => {
   await ensureMongoBackupsDir();
-  const { mongoUri, databaseName, backupName } = params;
+  const { application, mongoUri, databaseName } = params;
+  const backupName = buildMongoBackupRelativeName(application, params.backupName);
   const backupPath = path.join(mongoBackupsDir, backupName);
   const logPath = path.join(mongoBackupsDir, `${backupName}.log`);
 
@@ -146,27 +156,53 @@ const runMongoBackup = async (params: {
 
 export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
   assertBackupsAllowed();
-  const mongoUri = getMongoConnectionUrl();
-  const databaseName = getMongoDatabaseName();
   const timestamp = Date.now();
-  const result = await runMongoBackup({
-    mongoUri,
-    databaseName,
-    backupName: buildMongoBackupName(databaseName, timestamp),
+  const geminitestappDatabaseName = getMongoDatabaseName();
+  const studiqDatabaseName = getStudiqMongoDatabaseName();
+  const cmsBuilderDatabaseName = getCmsBuilderMongoDatabaseName();
+  const geminitestapp = await runMongoBackup({
+    application: 'geminitestapp',
+    mongoUri: getMongoConnectionUrl(),
+    databaseName: geminitestappDatabaseName,
+    backupName: buildMongoBackupName(geminitestappDatabaseName, timestamp),
   });
+  const studiq = await runMongoBackup({
+    application: 'studiq',
+    mongoUri: getStudiqMongoConnectionUrl(),
+    databaseName: studiqDatabaseName,
+    backupName: buildMongoBackupName(studiqDatabaseName, timestamp),
+  });
+  const cmsBuilder = await runMongoBackup({
+    application: 'cms-builder',
+    mongoUri: getCmsBuilderMongoConnectionUrl(),
+    databaseName: cmsBuilderDatabaseName,
+    backupName: buildMongoBackupName(cmsBuilderDatabaseName, timestamp),
+  });
+  const warning =
+    [geminitestapp.warning, studiq.warning, cmsBuilder.warning].filter(Boolean).join('\n') ||
+    null;
+  const logContent = [
+    `--- geminitestapp: ${geminitestapp.backupName} ---`,
+    geminitestapp.logContent,
+    `--- studiq: ${studiq.backupName} ---`,
+    studiq.logContent,
+    `--- cms-builder: ${cmsBuilder.backupName} ---`,
+    cmsBuilder.logContent,
+  ].join('\n\n');
 
   return {
     message:
-      result.warning !== null && result.warning !== ''
+      warning !== null && warning !== ''
         ? 'Backup created with warnings'
-        : 'Backup created',
-    backupName: result.backupName,
-    warning: result.warning ?? undefined,
-    log: result.logContent,
+        : 'Backups created',
+    backupName: geminitestapp.backupName,
+    warning: warning ?? undefined,
+    log: logContent,
   };
 };
 
 export const createMongoSourceBackup = async (params: {
+  application?: MongoBackupApplication;
   source: MongoSource;
   role: DatabaseEngineMongoSyncBackupRole;
   direction: DatabaseEngineMongoSyncDirection;
@@ -174,22 +210,32 @@ export const createMongoSourceBackup = async (params: {
 }): Promise<DatabaseEngineMongoSyncBackup> => {
   assertBackupsAllowed();
 
+  const application = params.application ?? 'geminitestapp';
   const { source, role, direction } = params;
   const timestamp = params.timestamp ?? Date.now();
   const createdAt = new Date(timestamp).toISOString();
-  const config = await resolveMongoSourceConfig(source);
+  const config =
+    application === 'studiq'
+      ? resolveStudiqMongoSourceConfig(source)
+      : application === 'cms-builder'
+        ? resolveCmsBuilderMongoSourceConfig(source)
+      : await resolveMongoSourceConfig(source);
   const databaseName = requireMongoConfigValue(config.dbName, `${source} database name`);
   const result = await runMongoBackup({
+    application,
     mongoUri: requireMongoConfigValue(config.uri, `${source} URI`),
     databaseName,
     backupName: buildMongoBackupName(
       databaseName,
       timestamp,
-      `${source}-${role}-pre-sync-${direction}`
+      application === 'geminitestapp'
+        ? `${source}-${role}-pre-sync-${direction}`
+        : `${application}-${source}-${role}-pre-sync-${direction}`
     ),
   });
 
   return {
+    application,
     role,
     source,
     backupName: result.backupName,

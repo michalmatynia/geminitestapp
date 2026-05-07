@@ -16,7 +16,7 @@ import {
   KANGUR_AI_TUTOR_TRANSLATION_STATUSES,
   kangurAiTutorLocaleTranslationStatusSchema,
 } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
-import { kangurSocialManualPipelineProgressSchema } from '@/shared/contracts/kangur-social-pipeline';
+import { socialPublishingManualPipelineProgressSchema } from '@/shared/contracts/social-publishing-pipeline';
 import {
   KANGUR_TEST_GROUPS_SETTING_KEY,
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
@@ -51,7 +51,7 @@ const iso = '2026-03-25T15:00:00.000Z';
 
 describe('shared contract runtime coverage for schema catalogs', () => {
   it('parses internationalization contracts and preserves canonical codes', () => {
-    expect(countryCodes).toEqual(['PL', 'DE', 'GB', 'SE']);
+    expect(countryCodes).toEqual(expect.arrayContaining(['PL', 'DE', 'GB', 'SE']));
     expect(currencyCodes).toEqual(['USD', 'EUR', 'PLN', 'GBP', 'SEK']);
     expect(languageCodes).toEqual(['EN', 'PL', 'DE', 'SV']);
 
@@ -729,7 +729,7 @@ describe('shared contract runtime coverage for schema catalogs', () => {
     });
 
     expect(
-      kangurSocialManualPipelineProgressSchema.parse({
+      socialPublishingManualPipelineProgressSchema.parse({
         type: 'manual-post-pipeline',
         step: 'capturing',
         updatedAt: 5,

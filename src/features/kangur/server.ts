@@ -68,5 +68,3 @@ export {
   primeKangurLaunchRouteRuntime,
 } from '@/features/kangur/server/launch-route';
 export * from '@/features/kangur/server/KangurAliasAppLayout';
-export * from '@/features/kangur/social/workers/kangurSocialSchedulerQueue';
-export * from '@/features/kangur/social/workers/kangurSocialPipelineQueue';

@@ -2,11 +2,23 @@
 
 import React from 'react';
 
-import { useAdminFilemakerPersonEditPageStateContext } from '../../context/AdminFilemakerPersonEditPageContext';
+import {
+  useAdminFilemakerPersonEditPageActionsContext,
+  useAdminFilemakerPersonEditPageStateContext,
+} from '../../context/AdminFilemakerPersonEditPageContext';
 import { FilemakerDocumentsSection } from '../shared/FilemakerDocumentsSection';
 
 export function PersonDocumentsSection(): React.JSX.Element {
-  const { linkedDocuments } = useAdminFilemakerPersonEditPageStateContext();
+  const { linkedDocuments, updateSetting } = useAdminFilemakerPersonEditPageStateContext();
+  const { handleDeleteLinkedRecord, handleUpdateLinkedRecord } =
+    useAdminFilemakerPersonEditPageActionsContext();
 
-  return <FilemakerDocumentsSection documents={linkedDocuments} />;
+  return (
+    <FilemakerDocumentsSection
+      documents={linkedDocuments}
+      isSaving={updateSetting.isPending}
+      onUpdateDocument={(id, patch) => handleUpdateLinkedRecord('document', id, patch)}
+      onDeleteDocument={(id) => handleDeleteLinkedRecord('document', id)}
+    />
+  );
 }

@@ -2,22 +2,27 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 import { type NextRequest, NextResponse } from 'next/server';
+import { MongoClient } from 'mongodb';
 import { z } from 'zod';
 
 import {
-  mongoBackupsDir,
   ensureMongoBackupsDir,
   assertValidMongoBackupName,
+  getMongoBackupApplication,
   getMongoConnectionUrl,
   getMongoDatabaseName,
   getMongoRestoreCommand,
+  getCmsBuilderMongoConnectionUrl,
+  getCmsBuilderMongoDatabaseName,
+  getStudiqMongoConnectionUrl,
+  getStudiqMongoDatabaseName,
   mongoExecFileAsync,
+  resolveMongoBackupPath,
 } from '@/features/database/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -38,6 +43,28 @@ export const querySchema = z.object({
     z.enum(['mongodb']).optional()
   ),
 });
+
+const resolveRestoreTarget = (backupName: string): { mongoUri: string; databaseName: string } => {
+  const application = getMongoBackupApplication(backupName);
+  if (application === 'studiq') {
+    return {
+      mongoUri: getStudiqMongoConnectionUrl(),
+      databaseName: getStudiqMongoDatabaseName(),
+    };
+  }
+
+  if (application === 'cms-builder') {
+    return {
+      mongoUri: getCmsBuilderMongoConnectionUrl(),
+      databaseName: getCmsBuilderMongoDatabaseName(),
+    };
+  }
+
+  return {
+    mongoUri: getMongoConnectionUrl(),
+    databaseName: getMongoDatabaseName(),
+  };
+};
 
 export async function postDatabasesRestoreHandler(
   req: NextRequest,
@@ -77,28 +104,33 @@ export async function postDatabasesRestoreHandler(
   assertValidMongoBackupName(backupName);
   await ensureMongoBackupsDir();
 
-  const backupPath = path.join(mongoBackupsDir, backupName);
-  const mongoUri = getMongoConnectionUrl();
-  const databaseName = getMongoDatabaseName();
+  const backupPath = await resolveMongoBackupPath(backupName);
+  const { mongoUri, databaseName } = resolveRestoreTarget(backupName);
 
   if (truncateBeforeRestore) {
-    const db = await getMongoDb();
-    const collections = await db.listCollections().toArray();
+    const mongoClient = new MongoClient(mongoUri);
+    try {
+      await mongoClient.connect();
+      const db = mongoClient.db(databaseName);
+      const collections = await db.listCollections().toArray();
 
-    for (const collection of collections) {
-      await db.collection(collection.name).drop();
+      for (const collection of collections) {
+        await db.collection(collection.name).drop();
+      }
+    } finally {
+      await mongoClient.close();
     }
   }
 
   stage = 'mongorestore';
-  const logPath = path.join(mongoBackupsDir, `${backupName}.restore.log`);
+  const logPath = `${backupPath}.restore.log`;
   const command = getMongoRestoreCommand();
   const args = [
     '--uri',
     mongoUri,
     '--db',
     databaseName,
-    `--archive=${  backupPath}`,
+    `--archive=${backupPath}`,
     '--gzip',
     '--drop',
   ];
@@ -130,7 +162,7 @@ export async function postDatabasesRestoreHandler(
   await fs.writeFile(logPath, logContent);
 
   stage = 'log';
-  const restoreLogPath = path.join(mongoBackupsDir, 'restore-log.json');
+  const restoreLogPath = path.join(path.dirname(backupPath), 'restore-log.json');
   let logData: Record<string, { date: string; logFile: string }> = {};
 
   try {

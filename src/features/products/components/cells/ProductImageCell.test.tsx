@@ -163,8 +163,10 @@ describe('ProductImageCell', () => {
     expect(noteButton).toHaveStyle({ backgroundColor: '#bfdbfe' });
     expect(noteButton.className).toContain('cursor-pointer');
     expect(noteButton.className).toContain('w-11');
-    expect(noteButton.className).toContain('translate-x-0');
-    expect(noteButton.className).toContain('focus-visible:-translate-x-9');
+    expect(noteButton.className.split(/\s+/)).toContain('-translate-x-2');
+    expect(noteButton.className).toContain('focus-visible:-translate-x-3');
+    expect(noteButton.className).toContain('duration-500');
+    expect(noteButton.className).toContain('will-change-transform');
     expect(noteButton.className).not.toContain('hover:w-11');
     expect(noteButton.className).not.toContain('hover:-translate-x-[16px]');
     expect(noteButton.className).not.toContain('group-hover:w-7');
@@ -191,6 +193,10 @@ describe('ProductImageCell', () => {
     expect(screen.getByTestId('product-note-modal')).toHaveStyle({
       backgroundColor: '#bfdbfe',
     });
+    expect(screen.getByRole('button', { name: 'Set note color Blue' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 
   it('saves note edits from the note modal', async () => {
@@ -231,11 +237,7 @@ describe('ProductImageCell', () => {
     expect(toastMock).toHaveBeenCalledWith('Product note updated', { variant: 'success' });
   });
 
-  it('removes the cached note when the note text is cleared', async () => {
-    updateProductMock.mockResolvedValue({
-      id: 'product-1',
-    });
-
+  it('saves note color changes from the note modal', async () => {
     render(
       <ProductImageCell
         imageUrl='/images/product.jpg'
@@ -251,6 +253,50 @@ describe('ProductImageCell', () => {
     fireEvent.click(screen.getByRole('button', {
       name: 'View note for Gaming Bottle Opener',
     }));
+    fireEvent.click(screen.getByRole('button', { name: 'Set note color Green' }));
+
+    expect(screen.getByTestId('product-note-modal')).toHaveStyle({
+      backgroundColor: '#bbf7d0',
+    });
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateProductMock).toHaveBeenCalledWith('product-1', {
+        notes: {
+          text: 'Check the insert before export.',
+          color: '#bbf7d0',
+        },
+      });
+    });
+    expect(toastMock).toHaveBeenCalledWith('Product note updated', { variant: 'success' });
+  });
+
+  it('removes the cached note and resets note color when the note text is cleared', async () => {
+    updateProductMock.mockResolvedValue({
+      id: 'product-1',
+    });
+
+    const { rerender } = render(
+      <ProductImageCell
+        imageUrl='/images/product.jpg'
+        productId='product-1'
+        productName='Gaming Bottle Opener'
+        note={{
+          text: 'Check the insert before export.',
+          color: '#bfdbfe',
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', {
+      name: 'View note for Gaming Bottle Opener',
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'Set note color Green' }));
+    expect(screen.getByTestId('product-note-modal')).toHaveStyle({
+      backgroundColor: '#bbf7d0',
+    });
 
     fireEvent.change(screen.getByLabelText('Edit note for Gaming Bottle Opener'), {
       target: { value: '   ' },
@@ -302,6 +348,19 @@ describe('ProductImageCell', () => {
       })
     );
     expect(toastMock).toHaveBeenCalledWith('Product note removed', { variant: 'success' });
+
+    rerender(
+      <ProductImageCell
+        imageUrl='/images/product.jpg'
+        productId='product-1'
+        productName='Gaming Bottle Opener'
+        note={null}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Add note for Gaming Bottle Opener' })).toHaveStyle({
+      backgroundColor: '#f5e7c3',
+    });
   });
 
   it('discards note edits when cancel is clicked', () => {
@@ -345,7 +404,7 @@ describe('ProductImageCell', () => {
     expect(thumbnail.className).not.toContain('hover:opacity-80');
   });
 
-  it('extrudes the add-note tab when hovering the left side of the thumbnail', () => {
+  it('extrudes the add-note tab only when hovering left of the thumbnail', () => {
     render(
       <ProductImageCell
         imageUrl='/images/product.jpg'
@@ -357,15 +416,19 @@ describe('ProductImageCell', () => {
     const noteButton = screen.getByRole('button', { name: 'Add note for Gaming Bottle Opener' });
     const thumbnailWrapper = noteButton.parentElement;
 
-    expect(noteButton.className.split(/\s+/)).not.toContain('-translate-x-9');
+    expect(noteButton.className.split(/\s+/)).not.toContain('-translate-x-3');
 
     fireEvent.mouseMove(thumbnailWrapper as HTMLElement, { clientX: 8, clientY: 12 });
 
-    expect(noteButton.className.split(/\s+/)).toContain('-translate-x-9');
+    expect(noteButton.className.split(/\s+/)).not.toContain('-translate-x-3');
 
-    fireEvent.mouseMove(thumbnailWrapper as HTMLElement, { clientX: 60, clientY: 12 });
+    fireEvent.mouseMove(thumbnailWrapper as HTMLElement, { clientX: -8, clientY: 12 });
 
-    expect(noteButton.className.split(/\s+/)).not.toContain('-translate-x-9');
+    expect(noteButton.className.split(/\s+/)).toContain('-translate-x-3');
+
+    fireEvent.mouseMove(thumbnailWrapper as HTMLElement, { clientX: 70, clientY: 12 });
+
+    expect(noteButton.className.split(/\s+/)).not.toContain('-translate-x-3');
   });
 
   it('opens a blank note modal and saves a first note from the add-note tab', async () => {

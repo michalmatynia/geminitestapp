@@ -12,7 +12,7 @@ describe('resolveTrustedSelfOriginHost', () => {
   it('returns the candidate host when localhost and IPv6 loopback aliases share the same port', () => {
     expect(
       resolveTrustedSelfOriginHost({
-        requestUrl: 'http://localhost:3000/api/kangur/social-image-addons/batch',
+        requestUrl: 'http://localhost:3000/api/filemaker/social-image-addons/batch',
         candidateUrl: 'http://[::1]:3000/kangur/game',
       })
     ).toBe('[::1]:3000');
@@ -21,7 +21,7 @@ describe('resolveTrustedSelfOriginHost', () => {
   it('rejects loopback aliases when the port differs', () => {
     expect(
       resolveTrustedSelfOriginHost({
-        requestUrl: 'http://localhost:3000/api/kangur/social-image-addons/batch',
+        requestUrl: 'http://localhost:3000/api/filemaker/social-image-addons/batch',
         candidateUrl: 'http://[::1]:3001/kangur/game',
       })
     ).toBeNull();

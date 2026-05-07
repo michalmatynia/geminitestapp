@@ -5,6 +5,7 @@ import {
 } from '@/shared/contracts/filemaker';
 
 import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
+import { normalizeFilemakerEmailStatus } from '../filemaker-email-status';
 import { createFilemakerEmail } from '../filemaker-settings.entities';
 import { ensureUniqueId, normalizeString, toIdToken } from '../filemaker-settings.helpers';
 import { linkFilemakerEmailToParty } from '../filemaker-settings.links';
@@ -103,11 +104,6 @@ const buildEmailIndex = (database: FilemakerDatabase): EmailIndex => {
   };
 };
 
-const normalizeEmailStatus = (status: FilemakerEmailStatus | null | undefined): FilemakerEmailStatus => {
-  const normalizedStatus = normalizeString(status).toLowerCase();
-  return (normalizedStatus.length > 0 ? normalizedStatus : 'unverified') as FilemakerEmailStatus;
-};
-
 const buildEmailBaseId = (emailValue: string): string => {
   const token = toIdToken(emailValue);
   return `filemaker-email-${token.length > 0 ? token : 'entry'}`;
@@ -193,7 +189,7 @@ export const upsertFilemakerEmailsForParty = (
   const creation = createMissingEmails(
     normalizedDatabase,
     normalizedValues.values,
-    normalizeEmailStatus(input.status)
+    normalizeFilemakerEmailStatus(input.status)
   );
   const linked = linkEmailsToParty(creation.database, normalizedValues.values, creation.idByValue, {
     partyKind: input.partyKind,

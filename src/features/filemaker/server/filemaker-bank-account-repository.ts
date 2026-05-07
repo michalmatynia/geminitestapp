@@ -44,6 +44,7 @@ export type FilemakerBankAccountMongoDocument = Document & {
 type BankAccountOwnerReference = {
   id: string;
   kind: FilemakerBankAccountOwnerKind;
+  legacyBankAccountUuids?: Array<string | undefined>;
   legacyUuid?: string;
 };
 
@@ -60,6 +61,22 @@ const optionalStringProp = <TKey extends string>(
   output[key] = normalized;
   return output;
 };
+
+const normalizeLegacyUuidForLookup = (value: string | undefined): string | undefined => {
+  const normalized = value?.trim().toUpperCase() ?? '';
+  return normalized.length > 0 ? normalized : undefined;
+};
+
+const normalizeLegacyUuidListForLookup = (
+  values: Array<string | undefined> | undefined
+): string[] =>
+  Array.from(
+    new Set(
+      (values ?? [])
+        .map(normalizeLegacyUuidForLookup)
+        .filter((value): value is string => value !== undefined)
+    )
+  );
 
 const toBankAccount = (document: FilemakerBankAccountMongoDocument): FilemakerBankAccount => ({
   accountNumber: document.accountNumber,
@@ -90,12 +107,16 @@ const buildBankAccountOwnerFilter = (
   const clauses: Filter<FilemakerBankAccountMongoDocument>[] = [
     { ownerKind: owner.kind, ownerId: owner.id },
   ];
-  const legacyUuid = owner.legacyUuid?.trim() ?? '';
-  if (legacyUuid.length > 0) {
+  const legacyUuid = normalizeLegacyUuidForLookup(owner.legacyUuid);
+  if (legacyUuid !== undefined) {
     clauses.push(
       { ownerKind: owner.kind, legacyOwnerUuid: legacyUuid },
       { ownerKind: { $exists: false }, legacyOwnerUuid: legacyUuid }
     );
+  }
+  const legacyBankAccountUuids = normalizeLegacyUuidListForLookup(owner.legacyBankAccountUuids);
+  if (legacyBankAccountUuids.length > 0) {
+    clauses.push({ legacyUuid: { $in: legacyBankAccountUuids } });
   }
   return { $or: clauses };
 };
@@ -118,6 +139,10 @@ export const listMongoFilemakerBankAccountsForOrganization = (
   listMongoFilemakerBankAccountsForOwner({
     id: organization.id,
     kind: 'organization',
+    legacyBankAccountUuids: [
+      organization.legacyDefaultBankAccountUuid,
+      organization.legacyDisplayBankAccountUuid,
+    ],
     legacyUuid: organization.legacyUuid,
   });
 
@@ -127,6 +152,10 @@ export const listMongoFilemakerBankAccountsForPerson = (
   listMongoFilemakerBankAccountsForOwner({
     id: person.id,
     kind: 'person',
+    legacyBankAccountUuids: [
+      person.legacyDefaultBankAccountUuid,
+      person.legacyDisplayBankAccountUuid,
+    ],
     legacyUuid: person.legacyUuid,
   });
 

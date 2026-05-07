@@ -12,6 +12,7 @@ import type {
   FilemakerEmailCampaignSuppressionReason,
   FilemakerPartyKind,
 } from '../types';
+import { FILEMAKER_EMAIL_STATUS_OPTIONS } from '../filemaker-email-status';
 import {
   createFilemakerEmailCampaign,
   resolveFilemakerEmailCampaignRetryableDeliveries,
@@ -34,12 +35,8 @@ export const LAUNCH_MODE_OPTIONS: Array<LabeledOptionWithDescriptionDto<Filemake
     { value: 'recurring', label: 'Recurring', description: 'Launch inside recurring windows.' },
   ];
 
-export const EMAIL_STATUS_OPTIONS: Array<LabeledOptionWithDescriptionDto<string>> = [
-  { value: 'active', label: 'Active', description: 'Deliverable and in use.' },
-  { value: 'inactive', label: 'Inactive', description: 'Known but not currently used.' },
-  { value: 'bounced', label: 'Bounced', description: 'Delivery is failing.' },
-  { value: 'unverified', label: 'Unverified', description: 'Still awaiting verification.' },
-];
+export const EMAIL_STATUS_OPTIONS: Array<LabeledOptionWithDescriptionDto<string>> =
+  FILEMAKER_EMAIL_STATUS_OPTIONS.map((option) => ({ ...option }));
 
 export const PARTY_KIND_OPTIONS: Array<LabeledOptionWithDescriptionDto<FilemakerPartyKind>> = [
   { value: 'person', label: 'Persons', description: 'Campaign targets person-linked emails.' },

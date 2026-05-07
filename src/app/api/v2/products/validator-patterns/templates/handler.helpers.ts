@@ -66,19 +66,15 @@ export const applyValidatorTemplatePatterns = async <
   existingPatterns: TPattern[];
   templatePatterns: readonly ValidatorTemplatePattern<TPattern, TPayload>[];
 }): Promise<ValidatorTemplateOutcome[]> => {
-  const outcomes: ValidatorTemplateOutcome[] = [];
+  return Promise.all(
+    templatePatterns.map(async (templatePattern) => {
+      const payload = templatePattern.buildPayload();
+      const existingPattern = findMatchingValidatorTemplatePattern(existingPatterns, templatePattern);
+      const persistedPattern = existingPattern
+        ? await repo.updatePattern(existingPattern.id, payload, VALIDATOR_TEMPLATE_AUDIT_OPTIONS)
+        : await repo.createPattern(payload, VALIDATOR_TEMPLATE_AUDIT_OPTIONS);
 
-  for (const templatePattern of templatePatterns) {
-    const payload = templatePattern.buildPayload();
-    const existingPattern = findMatchingValidatorTemplatePattern(existingPatterns, templatePattern);
-    const persistedPattern = existingPattern
-      ? await repo.updatePattern(existingPattern.id, payload, VALIDATOR_TEMPLATE_AUDIT_OPTIONS)
-      : await repo.createPattern(payload, VALIDATOR_TEMPLATE_AUDIT_OPTIONS);
-
-    outcomes.push(
-      buildValidatorTemplateOutcome(existingPattern ? 'updated' : 'created', persistedPattern)
-    );
-  }
-
-  return outcomes;
+      return buildValidatorTemplateOutcome(existingPattern ? 'updated' : 'created', persistedPattern);
+    })
+  );
 };

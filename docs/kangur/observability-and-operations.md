@@ -180,12 +180,11 @@ stage opens.
 ### Social updates and publishing
 
 - Server sources:
-  - `kangur.social-posts.*`
-  - `kangur.social-pipeline.*`
+  - `social_publishing.*`
 - Operational surfaces:
-  - `/admin/kangur/social`
-  - `/api/kangur/social-pipeline/status`
-  - `/api/kangur/social-posts/*`
+  - `/admin/filemaker/social`
+  - `/api/filemaker/social-pipeline/status`
+  - `/api/filemaker/social-posts/*`
 
 ### Lessons and content catalog
 

@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const execFileMock = vi.hoisted(() => vi.fn());
+const existsSyncMock = vi.hoisted(() => vi.fn(() => true));
 const mkdirMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const readFileSyncMock = vi.hoisted(() => vi.fn(() => JSON.stringify({ workspaces: [] })));
 
 vi.mock('server-only', () => ({}));
 vi.mock('child_process', async (importOriginal) => {
@@ -19,8 +21,12 @@ vi.mock('fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs')>();
   return {
     ...actual,
+    existsSync: existsSyncMock,
+    readFileSync: readFileSyncMock,
     default: {
       ...actual,
+      existsSync: existsSyncMock,
+      readFileSync: readFileSyncMock,
       promises: {
         ...actual.promises,
         mkdir: mkdirMock,
@@ -36,13 +42,18 @@ vi.mock('fs', async (importOriginal) => {
 import {
   assertValidBackupName,
   backupsDir,
+  buildMongoBackupName,
   ensureBackupsDir,
   execFileAsync,
+  getMongoBackupApplication,
+  getMongoBackupPath,
   getMongoConnectionUrl,
   getMongoDatabaseName,
   getMongoDumpCommand,
   getMongoRestoreCommand,
   isTransientMongoConnectionError,
+  resolveCmsBuilderMongoSourceConfig,
+  resolveStudiqMongoSourceConfig,
 } from '@/shared/lib/db/utils/mongo';
 
 describe('shared db mongo utils', () => {
@@ -55,12 +66,34 @@ describe('shared db mongo utils', () => {
     delete process.env['MONGODB_DB'];
     delete process.env['MONGODUMP_PATH'];
     delete process.env['MONGORESTORE_PATH'];
+    delete process.env['STUDIQ_MONGODB_URI'];
+    delete process.env['STUDIQ_MONGODB_DB'];
+    delete process.env['STUDIQ_MONGODB_LOCAL_URI'];
+    delete process.env['STUDIQ_MONGODB_LOCAL_DB'];
+    delete process.env['STUDIQ_MONGODB_CLOUD_URI'];
+    delete process.env['STUDIQ_MONGODB_CLOUD_DB'];
+    delete process.env['CMS_BUILDER_MONGODB_URI'];
+    delete process.env['CMS_BUILDER_MONGODB_DB'];
+    delete process.env['CMS_BUILDER_MONGODB_LOCAL_URI'];
+    delete process.env['CMS_BUILDER_MONGODB_LOCAL_DB'];
+    delete process.env['CMS_BUILDER_MONGODB_CLOUD_URI'];
+    delete process.env['CMS_BUILDER_MONGODB_CLOUD_DB'];
   });
 
-  it('creates the backups directory inside the repo mongo backup folder', async () => {
+  it('creates the neutral backup directory and application subfolders', async () => {
     await ensureBackupsDir();
 
     expect(mkdirMock).toHaveBeenCalledWith(backupsDir, { recursive: true });
+    expect(mkdirMock).toHaveBeenCalledWith(
+      expect.stringContaining('geminitestapp'),
+      { recursive: true }
+    );
+    expect(mkdirMock).toHaveBeenCalledWith(expect.stringContaining('studiq'), {
+      recursive: true,
+    });
+    expect(mkdirMock).toHaveBeenCalledWith(expect.stringContaining('cms-builder'), {
+      recursive: true,
+    });
   });
 
   it('reads mongo env values and falls back to default binaries', () => {
@@ -82,6 +115,52 @@ describe('shared db mongo utils', () => {
   it('throws configuration errors when required mongo env vars are missing', () => {
     expect(() => getMongoConnectionUrl()).toThrow('MONGODB_URI is not set.');
     expect(() => getMongoDatabaseName()).toThrow('MONGODB_DB is not set.');
+  });
+
+  it('resolves dedicated StudiQ local and cloud source config', () => {
+    process.env['STUDIQ_MONGODB_LOCAL_URI'] = 'mongodb://localhost:27018/studiq_local';
+    process.env['STUDIQ_MONGODB_LOCAL_DB'] = 'studiq_local';
+    process.env['STUDIQ_MONGODB_CLOUD_URI'] = 'mongodb+srv://cluster.example/?authSource=admin';
+    process.env['STUDIQ_MONGODB_CLOUD_DB'] = 'studiq_db';
+
+    expect(resolveStudiqMongoSourceConfig('local')).toMatchObject({
+      source: 'local',
+      configured: true,
+      uri: 'mongodb://localhost:27018/studiq_local',
+      dbName: 'studiq_local',
+      usesLegacyEnv: false,
+    });
+    expect(resolveStudiqMongoSourceConfig('cloud')).toMatchObject({
+      source: 'cloud',
+      configured: true,
+      uri: 'mongodb+srv://cluster.example/?authSource=admin',
+      dbName: 'studiq_db',
+      usesLegacyEnv: false,
+    });
+  });
+
+  it('resolves dedicated CMS Builder local and cloud source config', () => {
+    process.env['CMS_BUILDER_MONGODB_LOCAL_URI'] =
+      'mongodb://localhost:27019/cms_builder_local';
+    process.env['CMS_BUILDER_MONGODB_LOCAL_DB'] = 'cms_builder_local';
+    process.env['CMS_BUILDER_MONGODB_CLOUD_URI'] =
+      'mongodb+srv://cluster.example/?authSource=admin';
+    process.env['CMS_BUILDER_MONGODB_CLOUD_DB'] = 'cms_builder_db';
+
+    expect(resolveCmsBuilderMongoSourceConfig('local')).toMatchObject({
+      source: 'local',
+      configured: true,
+      uri: 'mongodb://localhost:27019/cms_builder_local',
+      dbName: 'cms_builder_local',
+      usesLegacyEnv: false,
+    });
+    expect(resolveCmsBuilderMongoSourceConfig('cloud')).toMatchObject({
+      source: 'cloud',
+      configured: true,
+      uri: 'mongodb+srv://cluster.example/?authSource=admin',
+      dbName: 'cms_builder_db',
+      usesLegacyEnv: false,
+    });
   });
 
   it('wraps execFile success output', async () => {
@@ -131,8 +210,25 @@ describe('shared db mongo utils', () => {
 
   it('validates backup archive names', () => {
     expect(() => assertValidBackupName('backup-2026-03-25.archive')).not.toThrow();
+    expect(() => assertValidBackupName('geminitestapp/backup-2026-03-25.archive')).not.toThrow();
+    expect(() => assertValidBackupName('studiq/studiq-local-backup.archive')).not.toThrow();
+    expect(() => assertValidBackupName('cms-builder/cms-builder-local-backup.archive')).not.toThrow();
     expect(() => assertValidBackupName('backup.txt')).toThrow('Invalid backup file type.');
     expect(() => assertValidBackupName('../backup.archive')).toThrow('Invalid backup name.');
+    expect(() => assertValidBackupName('other/backup.archive')).toThrow(
+      'Invalid backup application folder.'
+    );
+    expect(buildMongoBackupName('studiq', 'studiq-local-backup.archive')).toBe(
+      'studiq/studiq-local-backup.archive'
+    );
+    expect(getMongoBackupApplication('studiq/studiq-local-backup.archive')).toBe('studiq');
+    expect(getMongoBackupApplication('cms-builder/cms-builder-local-backup.archive')).toBe(
+      'cms-builder'
+    );
+    expect(getMongoBackupApplication('legacy-backup.archive')).toBe('geminitestapp');
+    expect(getMongoBackupPath('geminitestapp/app-backup.archive')).toContain(
+      'geminitestapp/app-backup.archive'
+    );
   });
 
   it('detects transient mongo connectivity errors', () => {

@@ -19,7 +19,6 @@ export const getWorkspaceNav = (): NavItem => ({
         { id: 'workspace/kangur/builder', label: 'CMS Builder', href: '/admin/kangur/builder' },
         { id: 'workspace/kangur/lessons-manager', label: 'Lessons Manager', href: '/admin/kangur/lessons-manager' },
         { id: 'workspace/kangur/observability', label: 'Observability', href: '/admin/kangur/observability' },
-        { id: 'workspace/kangur/social', label: 'Social', href: '/admin/kangur/social', keywords: ['linkedin', 'social', 'posts', 'updates'] },
         { id: 'workspace/kangur/appearance', label: 'Appearance', href: '/admin/kangur/appearance', keywords: ['theme', 'theming', 'styling', 'brand'] },
         { id: 'workspace/kangur/settings', label: 'Settings', href: '/admin/kangur/settings' },
         { id: 'workspace/kangur/settings/ai-tutor-content', label: 'AI Tutor Content', href: '/admin/kangur/settings/ai-tutor-content', required: true },

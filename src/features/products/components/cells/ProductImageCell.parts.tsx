@@ -8,6 +8,7 @@ import { FormActions } from '@/shared/ui/FormActions';
 import MissingImagePlaceholder from '@/shared/ui/missing-image-placeholder';
 import { cn } from '@/shared/utils/ui-utils';
 
+import { ProductNoteColorPicker } from './ProductImageCell.note-colors';
 import {
   BLUR_PLACEHOLDER,
   DEFAULT_NOTE_COLOR,
@@ -32,13 +33,47 @@ interface ProductNoteModalProps {
   productName: string;
 }
 
-const NOTE_PEEK_EDGE_RATIO = 0.5;
-const PRODUCT_THUMBNAIL_SIZE = 64;
+const NOTE_PEEK_TARGET_WIDTH = 20;
+const NOTE_RESTING_PEEK_CLASS = '-translate-x-2';
+const NOTE_PEEK_CLASS = '-translate-x-3';
 
-function isPointerOnThumbnailNoteSide(event: MouseEvent<HTMLDivElement>): boolean {
+function isPointerLeftOfThumbnail(event: MouseEvent<HTMLDivElement>): boolean {
   const rect = event.currentTarget.getBoundingClientRect();
-  const width = rect.width > 0 ? rect.width : PRODUCT_THUMBNAIL_SIZE;
-  return event.clientX - rect.left <= width * NOTE_PEEK_EDGE_RATIO;
+  return event.clientX - rect.left < 0;
+}
+
+function ProductNotePeekTarget({
+  controller,
+  onPeek,
+  productName,
+  resolvedNote,
+}: {
+  controller: PreviewController;
+  onPeek: () => void;
+  productName: string;
+  resolvedNote: ResolvedProductNote | null;
+}): JSX.Element {
+  return (
+    <div
+      aria-hidden='true'
+      className='absolute right-full top-0 z-0 h-16 cursor-pointer'
+      style={{ width: `${NOTE_PEEK_TARGET_WIDTH}px` }}
+      onMouseEnter={(event) => {
+        onPeek();
+        if (resolvedNote === null) {
+          controller.hidePreview();
+          return;
+        }
+        controller.showPreview({
+          kind: 'note',
+          productName,
+          noteText: resolvedNote.text,
+          noteColor: resolvedNote.color,
+          event,
+        });
+      }}
+    />
+  );
 }
 
 function ProductNoteHandle({
@@ -67,10 +102,11 @@ function ProductNoteHandle({
       aria-haspopup='dialog'
       className={cn(
         'absolute left-0 top-1/2 z-0 h-11 w-11 -translate-y-1/2 translate-x-0 cursor-pointer rounded-l-sm rounded-r-md border border-black/10',
-        'shadow-[0_8px_18px_rgba(15,23,42,0.14)] transition-[transform,box-shadow] duration-300 ease-in-out',
-        'focus-visible:-translate-x-9 focus-visible:shadow-[0_12px_30px_rgba(15,23,42,0.28)]',
+        'shadow-[0_8px_18px_rgba(15,23,42,0.14)] transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform motion-reduce:transition-none',
+        'focus-visible:-translate-x-3 focus-visible:shadow-[0_12px_30px_rgba(15,23,42,0.28)]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950',
-        isPeekActive && '-translate-x-9 shadow-[0_12px_30px_rgba(15,23,42,0.28)]'
+        isExistingNote && NOTE_RESTING_PEEK_CLASS,
+        isPeekActive && `${NOTE_PEEK_CLASS} shadow-[0_12px_30px_rgba(15,23,42,0.28)]`
       )}
       style={{ backgroundColor: resolvedNoteColor }}
       onMouseEnter={(event) => {
@@ -156,7 +192,7 @@ export function ProductImageFrame({
   const noteColor = resolvedNote?.color ?? DEFAULT_NOTE_COLOR;
 
   const updateNotePeek = (event: MouseEvent<HTMLDivElement>): void => {
-    const nextIsNotePeekActive = isPointerOnThumbnailNoteSide(event);
+    const nextIsNotePeekActive = isPointerLeftOfThumbnail(event);
     setIsNotePeekActive((previous) =>
       previous === nextIsNotePeekActive ? previous : nextIsNotePeekActive
     );
@@ -175,6 +211,12 @@ export function ProductImageFrame({
         updatePreview(event);
       }}
     >
+      <ProductNotePeekTarget
+        controller={controller}
+        onPeek={() => setIsNotePeekActive(true)}
+        productName={productName}
+        resolvedNote={resolvedNote}
+      />
       <ProductNoteHandle
         controller={controller}
         isPeekActive={isNotePeekActive}
@@ -268,6 +310,7 @@ export function ProductNoteModal({
       style={{ backgroundColor: controller.noteColor }}
       header={<ProductNoteModalHeader controller={controller} productName={productName} />}
     >
+      <ProductNoteColorPicker controller={controller} />
       <ProductNoteTextarea controller={controller} productName={productName} />
     </AppModal>
   );

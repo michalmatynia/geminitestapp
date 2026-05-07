@@ -507,10 +507,10 @@ describe('DatabaseEnginePage', () => {
     expect(screen.getByText(/Verification: passed at 2026-04-09T04:31:00.000Z/)).toBeInTheDocument();
     expect(screen.getByText('Pre-sync backups: 2')).toBeInTheDocument();
     expect(
-      screen.getByText('Source backup (cloud): cloud-source-pre-sync.archive')
+      screen.getByText('Source backup (geminitestapp cloud): cloud-source-pre-sync.archive')
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Target backup (local): local-target-pre-sync.archive')
+      screen.getByText('Target backup (geminitestapp local): local-target-pre-sync.archive')
     ).toBeInTheDocument();
     expect(
       screen.getByText('Backup file: /tmp/backups/cloud-source-pre-sync.archive')
@@ -553,10 +553,10 @@ describe('DatabaseEnginePage', () => {
     render(<DatabaseEnginePage />);
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Pull Cloud -> Local (backup both first)' })
+      screen.getByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
     );
     fireEvent.click(
-      screen.getByRole('button', { name: 'Push Local -> Cloud (backup both first)' })
+      screen.getByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
     );
 
     expect(mocks.actions.syncMongoSources).toHaveBeenNthCalledWith(1, 'cloud_to_local');
@@ -626,10 +626,10 @@ describe('DatabaseEnginePage', () => {
       )
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup both first)' })
+      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup both first)' })
+      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
     ).not.toBeInTheDocument();
   });
 
@@ -647,7 +647,7 @@ describe('DatabaseEnginePage', () => {
     expect(screen.getByText('No sync recorded yet')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Run a cloud/local sync to create two pre-sync backups and persist the latest transfer archive and log reference here.'
+        'Run a cloud/local sync to create pre-sync backups for each application database and persist the latest transfer archive and log reference here.'
       )
     ).toBeInTheDocument();
   });
@@ -667,10 +667,10 @@ describe('DatabaseEnginePage', () => {
       screen.getByText('Manual full sync is disabled by Database Engine controls.')
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup both first)' })
+      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup both first)' })
+      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
     ).not.toBeInTheDocument();
   });
 
@@ -693,10 +693,10 @@ describe('DatabaseEnginePage', () => {
       )
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup both first)' })
+      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup both first)' })
+      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
     ).not.toBeInTheDocument();
   });
 
@@ -726,10 +726,10 @@ describe('DatabaseEnginePage', () => {
       )
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup both first)' })
+      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup both first)' })
+      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
     ).not.toBeInTheDocument();
   });
 });

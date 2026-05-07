@@ -35,8 +35,9 @@ export const PROVIDER_OPTIONS = [
 ] as const;
 
 export const DUPLICATE_STRATEGY_OPTIONS = [
-  { value: 'skip', label: 'Skip duplicates' },
-  { value: 'overwrite', label: 'Overwrite' },
+  { value: 'skip', label: 'Skip existing' },
+  { value: 'update', label: 'Update existing' },
+  { value: 'add', label: 'Always add' },
 ];
 
 export const EXTRACTION_PATH_OPTIONS = [

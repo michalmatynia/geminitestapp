@@ -95,6 +95,7 @@ vi.mock('./filemaker-organizations-mongo', () => ({
 }));
 
 import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
+import { configurationError } from '@/shared/errors/app-error';
 import { FILEMAKER_JOB_BOARD_SCRAPE_PERSONA_SETUP_PATH } from '../filemaker-job-board-scrape-contracts';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
 import {
@@ -155,7 +156,7 @@ const createCollection = (
 
 describe('runFilemakerJobBoardScrape', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mocks.readFilemakerCampaignSettingValueMock.mockResolvedValue(null);
     mocks.resolveRuntimeActionExecutionSettingsMock.mockResolvedValue({
       ...defaultPlaywrightActionExecutionSettings,
@@ -266,6 +267,22 @@ describe('runFilemakerJobBoardScrape', () => {
       status: 'preview',
     });
     expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
+  });
+
+  it('fails the scrape instead of skipping offers on critical configuration errors', async () => {
+    const error = configurationError(
+      'Job offer extraction has no model assigned in AI Brain.'
+    );
+    mocks.probeJobBoardOfferMock.mockRejectedValueOnce(error);
+
+    await expect(
+      runFilemakerJobBoardScrape({
+        maxOffers: 5,
+        mode: 'preview',
+        sourceUrl,
+      })
+    ).rejects.toBe(error);
+    expect(mocks.probeJobBoardOfferMock).toHaveBeenCalledTimes(1);
   });
 
   it('passes deterministic scraper path to offer probing', async () => {
@@ -500,6 +517,87 @@ describe('runFilemakerJobBoardScrape', () => {
       offer: {
         sourceUrl: offerUrl,
       },
+    });
+  });
+
+  it('does not pre-skip existing offer URLs when update-existing is selected', async () => {
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValueOnce(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-1',
+            organizationId: 'org-1',
+            title: 'Developer',
+            description: 'Existing listing',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+            status: 'open',
+          },
+        ],
+      })
+    );
+
+    const result = await runFilemakerJobBoardScrape({
+      duplicateStrategy: 'update',
+      maxOffers: 5,
+      mode: 'preview',
+      sourceUrl,
+    });
+
+    expect(mocks.probeJobBoardOfferMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceUrl: offerUrl })
+    );
+    expect(result.summary).toMatchObject({
+      scrapedOffers: 1,
+      skippedOffers: 0,
+    });
+    expect(result.offers[0]).toMatchObject({
+      status: 'preview',
+      offer: { sourceUrl: offerUrl },
+    });
+  });
+
+  it('updates an existing listing when update-existing is selected on import', async () => {
+    mocks.readFilemakerCampaignSettingValueMock
+      .mockResolvedValueOnce(
+        settingsDatabase({
+          jobListings: [
+            {
+              id: 'listing-1',
+              organizationId: 'org-1',
+              title: 'Developer',
+              description: 'Old description',
+              sourceSite: 'pracuj.pl',
+              sourceUrl: offerUrl,
+              status: 'open',
+            },
+          ],
+        })
+      )
+      .mockResolvedValueOnce(null);
+    mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue(
+      createCollection()
+    );
+
+    const result = await runFilemakerJobBoardScrape({
+      duplicateStrategy: 'update',
+      maxOffers: 5,
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(mocks.probeJobBoardOfferMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceUrl: offerUrl })
+    );
+    expect(result.summary).toMatchObject({
+      updatedListings: 1,
+      createdListings: 0,
+      skippedOffers: 0,
+    });
+    expect(result.offers[0]).toMatchObject({
+      listingId: 'listing-1',
+      status: 'updated',
+      offer: { sourceUrl: offerUrl },
     });
   });
 
@@ -2418,6 +2516,78 @@ describe('runFilemakerJobBoardScrape', () => {
       status: 'skipped',
     });
     expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
+  });
+
+  it('updates an existing listing when manually saving scraped drafts with update-existing selected', async () => {
+    mocks.readFilemakerCampaignSettingValueMock
+      .mockResolvedValueOnce(
+        settingsDatabase({
+          jobListings: [
+            {
+              id: 'listing-1',
+              organizationId: 'org-1',
+              title: 'Developer',
+              description: 'Old description',
+              sourceExternalId: '1001',
+              sourceSite: 'pracuj.pl',
+              sourceUrl: offerUrl,
+              status: 'open',
+            },
+          ],
+        })
+      )
+      .mockResolvedValueOnce(null);
+
+    const result = await saveFilemakerJobBoardScrapeDrafts({
+      action: 'save_drafts',
+      duplicateStrategy: 'update',
+      importStrategy: 'create_unmatched',
+      minimumMatchConfidence: 85,
+      offers: [
+        {
+          companyName: 'Acme Inc',
+          companyProfile: '',
+          companyProfileUrl: 'https://www.pracuj.pl/pracodawcy/acme,1001',
+          description: 'Updated description from preview',
+          expiresAt: null,
+          location: 'Warszawa',
+          postedAt: null,
+          salaryCurrency: null,
+          salaryMax: null,
+          salaryMin: null,
+          salaryPeriod: 'monthly',
+          salaryText: '',
+          sourceExternalId: '1001',
+          sourceSite: 'pracuj.pl',
+          sourceUrl: offerUrl,
+          pills: [],
+          title: 'Developer',
+        },
+      ],
+      organizationScope: 'all',
+      provider: 'auto',
+      selectedOrganizationIds: [],
+      sourceUrl,
+      status: 'open',
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 0,
+      matchedOffers: 1,
+      scrapedOffers: 1,
+      skippedOffers: 0,
+      updatedListings: 1,
+    });
+    expect(result.offers[0]).toMatchObject({
+      listingId: 'listing-1',
+      status: 'updated',
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0]).toMatchObject({
+      id: 'listing-1',
+      sourceUrl: offerUrl,
+      description: 'Updated description from preview',
+    });
   });
 
   it('stores scraped job-board pills as lexicon terms and maps scraped location to a job listing address', async () => {

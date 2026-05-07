@@ -72,6 +72,21 @@ type MongoFilemakerPersonResponse = {
   person: MongoFilemakerPerson;
 };
 
+export type FilemakerPersonLinkedRecordKind =
+  | 'any-param'
+  | 'any-text'
+  | 'bank-account'
+  | 'document'
+  | 'occupation';
+
+type FilemakerPersonLinkedRecordPatch = Record<string, unknown>;
+
+type LinkedRecordPatchResponse = {
+  kind: FilemakerPersonLinkedRecordKind;
+  patch: FilemakerPersonLinkedRecordPatch;
+  recordId: string;
+};
+
 const toEditableAddress = (
   address: FilemakerAddress,
   input: {
@@ -203,6 +218,15 @@ export type AdminFilemakerPersonEditPageContextValue = {
   database: FilemakerDatabase;
   handleSave: () => Promise<void>;
   handleExtractEmails: () => Promise<void>;
+  handleUpdateLinkedRecord: (
+    kind: FilemakerPersonLinkedRecordKind,
+    recordId: string,
+    patch: FilemakerPersonLinkedRecordPatch
+  ) => Promise<void>;
+  handleDeleteLinkedRecord: (
+    kind: FilemakerPersonLinkedRecordKind,
+    recordId: string
+  ) => Promise<void>;
   updateSetting: { isPending: boolean };
   router: AppRouterInstance;
 };
@@ -685,6 +709,161 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     setEmailExtractionText('');
   }, [database, person, mongoPerson, emailExtractionText, persistDatabase, settingsStore, toast]);
 
+  const applyLinkedRecordPatch = useCallback(
+    (
+      kind: FilemakerPersonLinkedRecordKind,
+      recordId: string,
+      patch: FilemakerPersonLinkedRecordPatch
+    ): void => {
+      if (kind === 'any-param') {
+        setMongoLinkedAnyParams((records: FilemakerAnyParam[]): FilemakerAnyParam[] =>
+          records.map((record: FilemakerAnyParam): FilemakerAnyParam => {
+            if (record.id !== recordId) return record;
+            const nextRecord: FilemakerAnyParam = { ...record, ...patch };
+            return nextRecord;
+          })
+        );
+        return;
+      }
+      if (kind === 'any-text') {
+        setMongoLinkedAnyTexts((records: FilemakerAnyText[]): FilemakerAnyText[] =>
+          records.map((record: FilemakerAnyText): FilemakerAnyText => {
+            if (record.id !== recordId) return record;
+            const nextRecord: FilemakerAnyText = { ...record, ...patch };
+            return nextRecord;
+          })
+        );
+        return;
+      }
+      if (kind === 'bank-account') {
+        setMongoLinkedBankAccounts((records: FilemakerBankAccount[]): FilemakerBankAccount[] =>
+          records.map((record: FilemakerBankAccount): FilemakerBankAccount => {
+            if (record.id !== recordId) return record;
+            const nextRecord: FilemakerBankAccount = { ...record, ...patch };
+            return nextRecord;
+          })
+        );
+        return;
+      }
+      if (kind === 'document') {
+        setMongoLinkedDocuments((records: FilemakerDocument[]): FilemakerDocument[] =>
+          records.map((record: FilemakerDocument): FilemakerDocument => {
+            if (record.id !== recordId) return record;
+            const nextRecord: FilemakerDocument = { ...record, ...patch };
+            return nextRecord;
+          })
+        );
+        return;
+      }
+      setMongoLinkedOccupations((records: FilemakerPersonOccupation[]): FilemakerPersonOccupation[] =>
+        records.map((record: FilemakerPersonOccupation): FilemakerPersonOccupation => {
+          if (record.id !== recordId) return record;
+          const nextRecord: FilemakerPersonOccupation = { ...record, ...patch };
+          return nextRecord;
+        })
+      );
+    },
+    []
+  );
+
+  const removeLinkedRecord = useCallback(
+    (kind: FilemakerPersonLinkedRecordKind, recordId: string): void => {
+      if (kind === 'any-param') {
+        setMongoLinkedAnyParams((records: FilemakerAnyParam[]): FilemakerAnyParam[] =>
+          records.filter((record: FilemakerAnyParam): boolean => record.id !== recordId)
+        );
+        return;
+      }
+      if (kind === 'any-text') {
+        setMongoLinkedAnyTexts((records: FilemakerAnyText[]): FilemakerAnyText[] =>
+          records.filter((record: FilemakerAnyText): boolean => record.id !== recordId)
+        );
+        return;
+      }
+      if (kind === 'bank-account') {
+        setMongoLinkedBankAccounts((records: FilemakerBankAccount[]): FilemakerBankAccount[] =>
+          records.filter((record: FilemakerBankAccount): boolean => record.id !== recordId)
+        );
+        return;
+      }
+      if (kind === 'document') {
+        setMongoLinkedDocuments((records: FilemakerDocument[]): FilemakerDocument[] =>
+          records.filter((record: FilemakerDocument): boolean => record.id !== recordId)
+        );
+        return;
+      }
+      setMongoLinkedOccupations((records: FilemakerPersonOccupation[]): FilemakerPersonOccupation[] =>
+        records.filter((record: FilemakerPersonOccupation): boolean => record.id !== recordId)
+      );
+    },
+    []
+  );
+
+  const handleUpdateLinkedRecord = useCallback(
+    async (
+      kind: FilemakerPersonLinkedRecordKind,
+      recordId: string,
+      patch: FilemakerPersonLinkedRecordPatch
+    ): Promise<void> => {
+      if (mongoPerson === null) {
+        toast('Linked record editing is only available for imported Mongo persons.', {
+          variant: 'warning',
+        });
+        return;
+      }
+      setIsMongoPersonSaving(true);
+      try {
+        const response = await fetch(
+          `/api/filemaker/persons/${encodeURIComponent(mongoPerson.id)}/linked-records/${encodeURIComponent(kind)}/${encodeURIComponent(recordId)}`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch),
+          }
+        );
+        if (!response.ok) throw new Error(`Failed to update linked record (${response.status}).`);
+        const payload = (await response.json()) as LinkedRecordPatchResponse;
+        applyLinkedRecordPatch(payload.kind, payload.recordId, payload.patch);
+        toast('Linked record updated.', { variant: 'success' });
+      } catch (error: unknown) {
+        logClientError(error);
+        toast('Failed to update linked record.', { variant: 'error' });
+        throw error;
+      } finally {
+        setIsMongoPersonSaving(false);
+      }
+    },
+    [applyLinkedRecordPatch, mongoPerson, toast]
+  );
+
+  const handleDeleteLinkedRecord = useCallback(
+    async (kind: FilemakerPersonLinkedRecordKind, recordId: string): Promise<void> => {
+      if (mongoPerson === null) {
+        toast('Linked record deletion is only available for imported Mongo persons.', {
+          variant: 'warning',
+        });
+        return;
+      }
+      setIsMongoPersonSaving(true);
+      try {
+        const response = await fetch(
+          `/api/filemaker/persons/${encodeURIComponent(mongoPerson.id)}/linked-records/${encodeURIComponent(kind)}/${encodeURIComponent(recordId)}`,
+          { method: 'DELETE' }
+        );
+        if (!response.ok) throw new Error(`Failed to delete linked record (${response.status}).`);
+        removeLinkedRecord(kind, recordId);
+        toast('Linked record deleted.', { variant: 'success' });
+      } catch (error: unknown) {
+        logClientError(error);
+        toast('Failed to delete linked record.', { variant: 'error' });
+        throw error;
+      } finally {
+        setIsMongoPersonSaving(false);
+      }
+    },
+    [mongoPerson, removeLinkedRecord, toast]
+  );
+
   return {
     isCreateMode,
     person,
@@ -709,6 +888,8 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     database,
     handleSave,
     handleExtractEmails,
+    handleUpdateLinkedRecord,
+    handleDeleteLinkedRecord,
     updateSetting: {
       isPending: updateSetting.isPending || isMongoPersonLoading || isMongoPersonSaving,
     },

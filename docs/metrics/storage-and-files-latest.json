@@ -1217,13 +1217,13 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(admin)/admin/kangur/social/loading.tsx",
+      "file": "src/app/(admin)/admin/filemaker/social/loading.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(admin)/admin/kangur/social/page.tsx",
+      "file": "src/app/(admin)/admin/filemaker/social/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -5939,103 +5939,103 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-image-addons/batch/handler.ts",
+      "file": "src/app/api/filemaker/social-image-addons/batch/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-image-addons/handler.ts",
+      "file": "src/app/api/filemaker/social-image-addons/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-image-addons/serve/handler.ts",
+      "file": "src/app/api/filemaker/social-image-addons/serve/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 1,
       "strongRootGuard": true
     },
     {
-      "file": "src/app/api/kangur/social-pipeline/jobs/handler.ts",
+      "file": "src/app/api/filemaker/social-pipeline/jobs/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-pipeline/pause/handler.ts",
+      "file": "src/app/api/filemaker/social-pipeline/pause/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-pipeline/resume/handler.ts",
+      "file": "src/app/api/filemaker/social-pipeline/resume/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-pipeline/status/handler.ts",
+      "file": "src/app/api/filemaker/social-pipeline/status/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-pipeline/trigger/handler.ts",
+      "file": "src/app/api/filemaker/social-pipeline/trigger/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-posts/[id]/handler.ts",
+      "file": "src/app/api/filemaker/social-posts/[id]/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-posts/[id]/publish/handler.ts",
+      "file": "src/app/api/filemaker/social-posts/[id]/publish/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-posts/[id]/unpublish/handler.ts",
+      "file": "src/app/api/filemaker/social-posts/[id]/unpublish/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-posts/analyze-visuals/handler.ts",
+      "file": "src/app/api/filemaker/social-posts/analyze-visuals/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-posts/context/handler.ts",
+      "file": "src/app/api/filemaker/social-posts/context/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-posts/delete/handler.ts",
+      "file": "src/app/api/filemaker/social-posts/delete/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-posts/generate/handler.ts",
+      "file": "src/app/api/filemaker/social-posts/generate/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-posts/handler.ts",
+      "file": "src/app/api/filemaker/social-posts/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/api/kangur/social-posts/publish-scheduled/handler.ts",
+      "file": "src/app/api/filemaker/social-posts/publish-scheduled/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -27467,433 +27467,433 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/AdminKangurSocialPage.tsx",
+      "file": "src/features/filemaker/social/admin/AdminSocialPublishingPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.Constants.ts",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPublishingPage.Constants.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.capture-feedback.ts",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPublishingPage.capture-feedback.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.ts",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPublishingPage.hooks.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.types.ts",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPublishingPage.types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.test-support.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPublishingSettingsModal.test-support.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPublishingSettingsModal.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/KangurSocialPipelineQueuePanel.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPublishingPipelineQueuePanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialCaptureBatchHistory.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialCaptureBatchHistory.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialCaptureBrowserContext.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialCaptureBrowserContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialCaptureBrowserPanel.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialCaptureBrowserPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialCaptureBrowserTreePanel.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialCaptureBrowserTreePanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialCaptureSectionSelector.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialJobStatusPill.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialJobStatusPill.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialPost.Editor.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPost.Editor.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialPost.EditorModal.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPost.EditorModal.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialPost.ImagesPanel.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPost.ImagesPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialPost.List.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPost.List.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialPost.Pipeline.test-support.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPost.Pipeline.test-support.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialPost.Pipeline.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPost.Pipeline.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialPost.PlaywrightCaptureModal.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPost.PlaywrightCaptureModal.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialPost.VisualAnalysisModal.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPost.VisualAnalysisModal.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialPost.Visuals.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPost.Visuals.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/SocialPostContext.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/SocialPostContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialCaptureBrowserState.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialCaptureBrowserState.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialCaptureFlows.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialCaptureFlows.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialContext.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialContext.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialEditorSync.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialEditorSync.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialGeneration.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialGeneration.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialImageAddons.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialImageAddons.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialMissingImageAddons.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialMissingImageAddons.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialModelTelemetry.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialModelTelemetry.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test-support.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialPipelineRunner.test-support.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialPipelineRunner.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialPostCrud.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialPostCrud.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/hooks/useSocialSettings.ts",
+      "file": "src/features/filemaker/social/admin/workspace/hooks/useSocialSettings.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/social-post-addon-capture-details.ts",
+      "file": "src/features/filemaker/social/admin/workspace/social-post-addon-capture-details.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/social-post-image-assets.ts",
+      "file": "src/features/filemaker/social/admin/workspace/social-post-image-assets.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/social-settings-modal/SocialSettingsCaptureTab.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/social-settings-modal/SocialSettingsCaptureTab.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/social-settings-modal/SocialSettingsContentBrowserTab.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/social-settings-modal/SocialSettingsContentBrowserTab.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/social-settings-modal/SocialSettingsDocumentationTab.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/social-settings-modal/SocialSettingsDocumentationTab.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/social-settings-modal/SocialSettingsModal.hooks.ts",
+      "file": "src/features/filemaker/social/admin/workspace/social-settings-modal/SocialSettingsModal.hooks.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/social-settings-modal/SocialSettingsModalContext.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/social-settings-modal/SocialSettingsModalContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/social-settings-modal/SocialSettingsModelsTab.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/social-settings-modal/SocialSettingsModelsTab.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/social-settings-modal/SocialSettingsProjectTab.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/social-settings-modal/SocialSettingsProjectTab.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/admin/workspace/social-settings-modal/SocialSettingsPublishingTab.tsx",
+      "file": "src/features/filemaker/social/admin/workspace/social-settings-modal/SocialSettingsPublishingTab.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/hooks/useKangurSocialImageAddons.ts",
+      "file": "src/features/filemaker/social/hooks/useSocialPublishingImageAddons.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/hooks/useKangurSocialPosts.ts",
+      "file": "src/features/filemaker/social/hooks/useSocialPublishingPosts.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/pages/SocialUpdates.tsx",
+      "file": "src/features/filemaker/social/pages/SocialUpdates.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/project-url.ts",
+      "file": "src/features/filemaker/social/project-url.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/server/social-addon-temp-paths.ts",
+      "file": "src/features/filemaker/social/server/social-addon-temp-paths.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/server/social-image-addons-batch-jobs.ts",
+      "file": "src/features/filemaker/social/server/social-image-addons-batch-jobs.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 3,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/server/social-image-addons-batch.ts",
+      "file": "src/features/filemaker/social/server/social-image-addons-batch.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/server/social-image-addons-repository.ts",
+      "file": "src/features/filemaker/social/server/social-image-addons-repository.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/server/social-image-addons-service.ts",
+      "file": "src/features/filemaker/social/server/social-image-addons-service.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": true
     },
     {
-      "file": "src/features/kangur/social/server/social-posts-docs.ts",
+      "file": "src/features/filemaker/social/server/social-posts-docs.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 1,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/server/social-posts-generation.ts",
+      "file": "src/features/filemaker/social/server/social-posts-generation.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/server/social-posts-pipeline.ts",
+      "file": "src/features/filemaker/social/server/social-posts-pipeline.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/server/social-posts-publish.linkedin.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 1,
-      "strongRootGuard": true
-    },
-    {
-      "file": "src/features/kangur/social/server/social-posts-publish.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/kangur/social/server/social-posts-repository.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 1,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/kangur/social/server/social-posts-runtime.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/kangur/social/server/social-posts-vision.ts",
+      "file": "src/features/filemaker/social/server/social-posts-publish.linkedin.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 1,
       "strongRootGuard": true
     },
     {
-      "file": "src/features/kangur/social/settings.ts",
+      "file": "src/features/filemaker/social/server/social-posts-publish.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/shared/social-capture-content-config.ts",
+      "file": "src/features/filemaker/social/server/social-posts-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/filemaker/social/server/social-posts-runtime.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/shared/social-capture-feedback.helpers.ts",
+      "file": "src/features/filemaker/social/server/social-posts-vision.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": true
+    },
+    {
+      "file": "src/features/filemaker/social/settings.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/shared/social-capture-feedback.ts",
+      "file": "src/features/filemaker/social/shared/social-capture-content-config.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/shared/social-capture-master-tree.ts",
+      "file": "src/features/filemaker/social/shared/social-capture-feedback.helpers.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/shared/social-capture-presets.ts",
+      "file": "src/features/filemaker/social/shared/social-capture-feedback.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/shared/social-playwright-capture.ts",
+      "file": "src/features/filemaker/social/shared/social-capture-master-tree.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/workers/kangurSocialPipelineQueue.ts",
+      "file": "src/features/filemaker/social/shared/social-capture-presets.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/kangur/social/workers/kangurSocialSchedulerQueue.ts",
+      "file": "src/features/filemaker/social/shared/social-playwright-capture.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/filemaker/social/workers/socialPublishingPipelineQueue.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/filemaker/social/workers/socialPublishingSchedulerQueue.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -41171,19 +41171,19 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/contracts/kangur-social-image-addons.ts",
+      "file": "src/shared/contracts/social-publishing-image-addons.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/contracts/kangur-social-pipeline.ts",
+      "file": "src/shared/contracts/social-publishing-pipeline.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/contracts/kangur-social-posts.ts",
+      "file": "src/shared/contracts/social-publishing-posts.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -45641,13 +45641,13 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/kangur-social-generated-draft.ts",
+      "file": "src/shared/lib/social-publishing-generated-draft.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/kangur-social-visual-analysis.ts",
+      "file": "src/shared/lib/social-publishing-visual-analysis.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false

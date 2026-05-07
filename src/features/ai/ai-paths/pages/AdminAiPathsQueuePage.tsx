@@ -24,7 +24,7 @@ type QueueTab =
   | 'product-imports'
   | 'file-uploads'
   | 'image-studio'
-  | 'kangur-social';
+  | 'social-publishing';
 
 const QUEUE_TABS: Array<
   IdLabelOptionDto<QueueTab> & { icon: React.ComponentType<{ className?: string }> }
@@ -35,7 +35,7 @@ const QUEUE_TABS: Array<
   { id: 'product-imports', label: 'Product Imports', icon: ActivityIcon },
   { id: 'file-uploads', label: 'File Uploads', icon: UploadCloudIcon },
   { id: 'image-studio', label: 'Image Studio', icon: ImageIcon },
-  { id: 'kangur-social', label: 'StudiQ Social', icon: NewspaperIcon },
+  { id: 'social-publishing', label: 'Social Publishing', icon: NewspaperIcon },
 ];
 
 const toQueueTab = (value: string): QueueTab => {
@@ -44,7 +44,7 @@ const toQueueTab = (value: string): QueueTab => {
   if (value === 'product-imports') return 'product-imports';
   if (value === 'file-uploads') return 'file-uploads';
   if (value === 'image-studio') return 'image-studio';
-  if (value === 'kangur-social') return 'kangur-social';
+  if (value === 'social-publishing' || value === 'social-publishing') return 'social-publishing';
   if (value === 'paths') return 'paths';
   return 'paths-all';
 };
@@ -55,12 +55,12 @@ const getContentId = (tab: QueueTab): string => `${TABS_ID_PREFIX}-content-${tab
 
 export type AdminAiPathsQueuePageProps = {
   fileUploadsPanel?: React.ReactNode;
-  kangurSocialPanel?: React.ReactNode;
+  socialPublishingPanel?: React.ReactNode;
 };
 
 export function AdminAiPathsQueuePage({
   fileUploadsPanel,
-  kangurSocialPanel,
+  socialPublishingPanel,
 }: AdminAiPathsQueuePageProps): React.JSX.Element {
   const searchParams = useSearchParams();
   const requestedTab = searchParams?.get('tab') ?? 'paths-all';
@@ -253,15 +253,15 @@ export function AdminAiPathsQueuePage({
           </section>
         ) : null}
 
-        {activeTab === 'kangur-social' ? (
+        {activeTab === 'social-publishing' ? (
           <section
             role='tabpanel'
-            id={getContentId('kangur-social')}
-            aria-labelledby={getTriggerId('kangur-social')}
+            id={getContentId('social-publishing')}
+            aria-labelledby={getTriggerId('social-publishing')}
             className='space-y-4'
           >
-            {kangurSocialPanel ?? (
-              <Hint>StudiQ Social pipeline is not available in this context.</Hint>
+            {socialPublishingPanel ?? (
+              <Hint>Social Publishing pipeline is not available in this context.</Hint>
             )}
           </section>
         ) : null}

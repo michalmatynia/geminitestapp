@@ -117,6 +117,11 @@ const resolveLastTransferMetrics = (
     metrics.push(verificationSummary);
   }
 
+  const applicationTransferCount = lastSync.applicationTransfers?.length ?? 0;
+  if (applicationTransferCount > 0) {
+    metrics.push(`Application databases synced: ${applicationTransferCount}`);
+  }
+
   metrics.push(`Pre-sync backups: ${lastSync.preSyncBackups.length}`);
 
   return metrics;
@@ -213,8 +218,8 @@ export function MongoLastTransferCard({
         <div className='space-y-2 text-xs leading-relaxed text-gray-300'>
           <p>No sync recorded yet</p>
           <p>
-            Run a cloud/local sync to create two pre-sync backups and persist the latest transfer
-            archive and log reference here.
+            Run a cloud/local sync to create pre-sync backups for each application database and
+            persist the latest transfer archive and log reference here.
           </p>
         </div>
       ) : (
@@ -222,10 +227,18 @@ export function MongoLastTransferCard({
           {resolveLastTransferMetrics(lastSync).map((metric) => (
             <p key={metric}>{metric}</p>
           ))}
+          {(lastSync.applicationTransfers ?? []).map((transfer) => (
+            <div key={`${transfer.application}-${transfer.archivePath}`} className='space-y-1'>
+              <p>{`Application transfer (${transfer.application}): ${transfer.sourceDbName} -> ${transfer.targetDbName}`}</p>
+              <p>{`Transfer archive: ${transfer.archivePath}`}</p>
+              <p>{`Transfer log: ${transfer.logPath}`}</p>
+              <p>{`Verification: ${transfer.verification.status} at ${transfer.verification.verifiedAt}`}</p>
+            </div>
+          ))}
           {lastSync.preSyncBackups.map((backup) => (
             <div key={`${backup.role}-${backup.source}-${backup.backupName}`} className='space-y-1'>
               <p>
-                {`${backup.role === 'source' ? 'Source' : 'Target'} backup (${backup.source}): ${backup.backupName}`}
+                {`${backup.role === 'source' ? 'Source' : 'Target'} backup (${backup.application ?? 'geminitestapp'} ${backup.source}): ${backup.backupName}`}
               </p>
               <p>{`Backup file: ${backup.backupPath}`}</p>
               <p>{`Backup log: ${backup.logPath}`}</p>

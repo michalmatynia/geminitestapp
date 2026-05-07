@@ -96,7 +96,7 @@ export const contextPacks: ContextPack[] = [
     id: 'kangur_recent_features',
     description:
       'Summarizes the most recent Kangur and StudiQ feature updates for release notes, ' +
-      'LinkedIn posts, and AI prompt grounding.',
+      'social publishing, and AI prompt grounding.',
     maxSteps: 4,
     maxNodes: 40,
     maxBytes: 80_000,

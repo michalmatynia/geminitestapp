@@ -2,10 +2,8 @@ import dynamic from 'next/dynamic';
 import React from 'react';
 
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import {
-  resolveStorefrontAppearanceColorSchemes,
-  type CmsStorefrontAppearanceMode,
-} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
+import { type CmsStorefrontAppearanceMode } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance.contracts';
+import { resolveStorefrontAppearanceColorSchemes } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance.logic';
 import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import type { GsapAnimationConfig } from '@/features/gsap/public';

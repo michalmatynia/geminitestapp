@@ -182,6 +182,7 @@ const createRequest = (
     method?: string;
     userAgent?: string;
     cookie?: string;
+    host?: string;
   }
 ): {
   url: string;
@@ -201,6 +202,7 @@ const createRequest = (
   if (options?.cookie) {
     headers.set('cookie', options.cookie);
   }
+  headers.set('host', options?.host ?? parsed.host);
   return {
     url: parsed.toString(),
     method: options?.method ?? 'GET',
@@ -317,6 +319,84 @@ describe('proxy api routing', () => {
     expect(response.status).toBe(307);
     expect(response.headers.get('location')).toBe('http://localhost/admin?denied=1');
     expect(ensureCsrfCookieMock).not.toHaveBeenCalled();
+  });
+
+  it('redirects CMS Builder routes to the configured standalone origin', async () => {
+    process.env['CMS_BUILDER_WEB_ORIGIN'] = 'https://cms-builder.example.com';
+    try {
+      const aliasRequest = createRequest('http://localhost/cms/pages?tab=published');
+      const aliasResponse = await Promise.resolve(proxy(aliasRequest as never, { params: {} }));
+
+      expect(aliasResponse.status).toBe(307);
+      expect(aliasResponse.headers.get('location')).toBe(
+        'https://cms-builder.example.com/admin/cms/pages?tab=published'
+      );
+
+      const adminRequest = createRequest('http://localhost/admin/cms/builder?pageId=page-1');
+      const adminResponse = await Promise.resolve(proxy(adminRequest as never, { params: {} }));
+
+      expect(adminResponse.status).toBe(307);
+      expect(adminResponse.headers.get('location')).toBe(
+        'https://cms-builder.example.com/admin/cms/builder?pageId=page-1'
+      );
+
+      const localizedRequest = createRequest('http://localhost/en/cms/pages');
+      const localizedResponse = await Promise.resolve(
+        proxy(localizedRequest as never, { params: {} })
+      );
+
+      expect(localizedResponse.status).toBe(307);
+      expect(localizedResponse.headers.get('location')).toBe(
+        'https://cms-builder.example.com/admin/cms/pages'
+      );
+      expect(authInvokeMock).not.toHaveBeenCalled();
+      expect(ensureCsrfCookieMock).not.toHaveBeenCalled();
+    } finally {
+      delete process.env['CMS_BUILDER_WEB_ORIGIN'];
+    }
+  });
+
+  it('redirects configured public CMS hosts and path prefixes to the CMS app origin', async () => {
+    process.env['CMS_WEB_ORIGIN'] = 'https://cms.example.com';
+    process.env['CMS_PUBLIC_HOSTS'] = 'cms-public.local,*.cms-sites.test';
+    process.env['CMS_PUBLIC_PATH_PREFIXES'] = '/cms-pages';
+    try {
+      const hostRequest = createRequest('http://root.local/about?preview=1', {
+        host: 'cms-public.local',
+      });
+      const hostResponse = await Promise.resolve(proxy(hostRequest as never, { params: {} }));
+
+      expect(hostResponse.status).toBe(307);
+      expect(hostResponse.headers.get('location')).toBe(
+        'https://cms.example.com/about?preview=1'
+      );
+
+      const wildcardHostRequest = createRequest('http://root.local/contact', {
+        host: 'client.cms-sites.test',
+      });
+      const wildcardHostResponse = await Promise.resolve(
+        proxy(wildcardHostRequest as never, { params: {} })
+      );
+
+      expect(wildcardHostResponse.status).toBe(307);
+      expect(wildcardHostResponse.headers.get('location')).toBe(
+        'https://cms.example.com/contact'
+      );
+
+      const pathRequest = createRequest('http://root.local/en/cms-pages/landing?draft=1');
+      const pathResponse = await Promise.resolve(proxy(pathRequest as never, { params: {} }));
+
+      expect(pathResponse.status).toBe(307);
+      expect(pathResponse.headers.get('location')).toBe(
+        'https://cms.example.com/en/cms-pages/landing?draft=1'
+      );
+      expect(authInvokeMock).not.toHaveBeenCalled();
+      expect(ensureCsrfCookieMock).not.toHaveBeenCalled();
+    } finally {
+      delete process.env['CMS_WEB_ORIGIN'];
+      delete process.env['CMS_PUBLIC_HOSTS'];
+      delete process.env['CMS_PUBLIC_PATH_PREFIXES'];
+    }
   });
 
   it('skips canonical admin redirects for non-safe methods', async () => {

@@ -6,7 +6,7 @@ import {
 } from './storage-state';
 
 describe('playwright storage state sanitization', () => {
-  it('normalizes request cookies into url-scoped Playwright cookies', () => {
+  it('normalizes request cookies into domain-scoped Playwright cookies', () => {
     expect(
       sanitizePlaywrightCookiesFromHeader(
         'session=abc123; theme=dark',
@@ -16,12 +16,14 @@ describe('playwright storage state sanitization', () => {
       {
         name: 'session',
         value: 'abc123',
-        url: 'https://kangur.app',
+        domain: 'kangur.app',
+        path: '/',
       },
       {
         name: 'theme',
         value: 'dark',
-        url: 'https://kangur.app',
+        domain: 'kangur.app',
+        path: '/',
       },
     ]);
   });
@@ -36,13 +38,15 @@ describe('playwright storage state sanitization', () => {
       {
         name: '__Host-next-auth.csrf-token',
         value: 'csrf123',
-        url: 'https://kangur.app',
+        domain: 'kangur.app',
+        path: '/',
         secure: true,
       },
       {
         name: '__Secure-next-auth.session-token',
         value: 'session456',
-        url: 'https://kangur.app',
+        domain: 'kangur.app',
+        path: '/',
         secure: true,
       },
     ]);
@@ -58,7 +62,8 @@ describe('playwright storage state sanitization', () => {
       {
         name: 'theme',
         value: 'dark',
-        url: 'http://example.com',
+        domain: 'example.com',
+        path: '/',
       },
     ]);
   });
@@ -67,13 +72,14 @@ describe('playwright storage state sanitization', () => {
     expect(
       sanitizePlaywrightCookiesFromHeader(
         '__Secure-next-auth.session-token=session456; session=abc123',
-        'http://localhost:3000/admin/kangur/social'
+        'http://localhost:3000/admin/filemaker/social'
       )
     ).toEqual([
       {
         name: 'session',
         value: 'abc123',
-        url: 'http://localhost:3000',
+        domain: 'localhost',
+        path: '/',
       },
     ]);
   });
@@ -115,7 +121,8 @@ describe('playwright storage state sanitization', () => {
         {
           name: '__Host-next-auth.csrf-token',
           value: 'csrf123',
-          url: 'https://kangur.app',
+          domain: 'kangur.app',
+          path: '/login',
           secure: true,
         },
         {
@@ -127,7 +134,8 @@ describe('playwright storage state sanitization', () => {
         {
           name: '__Secure-next-auth.session-token',
           value: 'session456',
-          url: 'https://kangur.app',
+          domain: 'example.com',
+          path: '/',
           secure: true,
         },
       ],
@@ -191,14 +199,15 @@ describe('playwright storage state sanitization', () => {
           ],
           origins: [],
         },
-        { fallbackOrigin: 'http://localhost:3000/admin/kangur/social' }
+        { fallbackOrigin: 'http://localhost:3000/admin/filemaker/social' }
       )
     ).toEqual({
       cookies: [
         {
           name: 'session',
           value: 'abc123',
-          url: 'http://localhost:3000',
+          domain: 'localhost',
+          path: '/',
         },
       ],
       origins: [],

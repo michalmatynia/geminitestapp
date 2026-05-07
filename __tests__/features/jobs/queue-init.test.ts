@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { initializeQueues, __testOnly } from '@/features/jobs/queue-init';
+import { initializeQueues, testOnly } from '@/features/jobs/queue-init';
 import * as redisConnection from '@/shared/lib/queue/redis-connection';
 import * as registry from '@/shared/lib/queue/registry';
 
@@ -27,7 +27,14 @@ vi.mock('ioredis', () => ({
 
 vi.mock('@/shared/lib/queue/redis-connection');
 vi.mock('@/shared/lib/queue/registry');
-vi.mock('@/shared/lib/observability/system-logger');
+vi.mock('@/shared/lib/observability/system-logger', () => ({
+  logSystemEvent: vi.fn(async () => undefined),
+}));
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: vi.fn(async () => undefined),
+  },
+}));
 vi.mock('@/shared/lib/db/services/database-backup-scheduler');
 
 vi.mock('@/server/queues/product-ai', () => ({
@@ -45,10 +52,30 @@ vi.mock('@/shared/lib/db/workers/databaseBackupSchedulerQueue', () => ({
   startDatabaseBackupSchedulerQueue: vi.fn(),
 }));
 vi.mock('@/server/queues/integrations', () => ({
+  startPlaywrightListingQueue: vi.fn(),
+  startTraderaListingQueue: vi.fn(),
+  startVintedListingQueue: vi.fn(),
+}));
+vi.mock('@/features/integrations/workers/traderaRelistSchedulerQueue', () => ({
   startTraderaRelistSchedulerQueue: vi.fn(),
 }));
 vi.mock('@/server/queues/product-sync', () => ({
   startProductSyncSchedulerQueue: vi.fn(),
+}));
+vi.mock('@/server/queues/products', () => ({
+  startProductMarketplaceCopyDebrandBatchQueue: vi.fn(),
+}));
+vi.mock('@/features/filemaker/workers/filemakerMailSyncSchedulerQueue', () => ({
+  startFilemakerMailSyncSchedulerQueue: vi.fn(),
+}));
+vi.mock('@/features/filemaker/workers/filemakerMailIdleManager', () => ({
+  startFilemakerMailIdleManager: vi.fn(),
+}));
+vi.mock('@/features/filemaker/workers/filemakerCampaignColdPruneSchedulerQueue', () => ({
+  startFilemakerCampaignColdPruneSchedulerQueue: vi.fn(),
+}));
+vi.mock('@/features/filemaker/server/filemaker-job-board-scrape-runtime', () => ({
+  startFilemakerJobBoardScrapeQueue: vi.fn(),
 }));
 vi.mock('@/server/queues/case-resolver-ocr', () => ({
   startCaseResolverOcrQueue: vi.fn(),
@@ -56,13 +83,11 @@ vi.mock('@/server/queues/case-resolver-ocr', () => ({
 vi.mock('@/shared/lib/observability/workers/systemLogAlertsQueue', () => ({
   startSystemLogAlertsQueue: vi.fn(),
 }));
-vi.mock('@/server/queues/kangur', () => ({
-  startKangurSocialSchedulerQueue: vi.fn(),
-  startKangurSocialPipelineQueue: vi.fn(),
-}));
 vi.mock('@/server/queues/filemaker', () => ({
   startFilemakerEmailCampaignQueue: vi.fn(),
   startFilemakerEmailCampaignSchedulerQueue: vi.fn(),
+  startFilemakerSocialSchedulerQueue: vi.fn(),
+  startFilemakerSocialPipelineQueue: vi.fn(),
 }));
 
 describe('queue-init', () => {
@@ -71,7 +96,7 @@ describe('queue-init', () => {
     delete process.env['DISABLE_QUEUE_WORKERS'];
     process.env['REDIS_URL'] = 'redis://localhost:6379';
     delete process.env['REDIS_TLS'];
-    __testOnly.resetInitialized();
+    testOnly.resetInitialized();
     vi.mocked(redisConnection.isRedisReachable).mockResolvedValue(false);
   });
 

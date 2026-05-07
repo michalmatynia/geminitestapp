@@ -67,8 +67,8 @@ export const accessibilityRouteCrawlRoutes = [
     audience: 'public',
   },
   {
-    id: 'kangur-social-updates',
-    name: 'Kangur Social Updates',
+    id: 'kangur-updates-public',
+    name: 'Kangur Updates',
     route: '/kangur/social-updates',
     audience: 'public',
   },

@@ -28,8 +28,21 @@ export const querySchema = z.object({
 async function getBackups(): Promise<DatabaseInfo[]> {
   await ensureMongoBackupsDir();
 
-  const files = await fs.readdir(mongoBackupsDir);
-  const backupFiles = files.filter((file: string) => file.endsWith('.archive'));
+  const collectBackupFiles = async (relativeDir = ''): Promise<string[]> => {
+    const dirPath = join(mongoBackupsDir, relativeDir);
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+    const nested = await Promise.all(
+      entries.map(async (entry) => {
+        const relativePath = join(relativeDir, entry.name);
+        if (entry.isDirectory()) {
+          return collectBackupFiles(relativePath);
+        }
+        return entry.isFile() && entry.name.endsWith('.archive') ? [relativePath] : [];
+      })
+    );
+    return nested.flat();
+  };
+  const backupFiles = await collectBackupFiles();
 
   const backups: DatabaseInfo[] = await Promise.all(
     backupFiles.map(async (file) => {

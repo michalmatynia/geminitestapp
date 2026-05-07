@@ -10,6 +10,7 @@
  * - Canonical URL redirects for admin routes
  * - Locale detection and cookie synchronization
  * - StudiQ/Kangur routing to separate origin
+ * - CMS routing to separate origin
  * 
  * This middleware runs before every request and determines:
  * 1. Whether to allow the request
@@ -93,8 +94,35 @@ type NextRequestHandler = NonNullable<typeof handler>;
 type HandlerContext = Parameters<NextRequestHandler>[1];
 type AuthenticatedProxyRequest = NextRequest & { auth?: Session | null };
 
-// StudiQ web origin for Kangur routing (if separate deployment)
-const STUDIQ_WEB_ORIGIN = process.env['STUDIQ_WEB_ORIGIN'] || '';
+// Separate app origins for focused deployments.
+const getStudiqWebOrigin = (): string => process.env['STUDIQ_WEB_ORIGIN'] || '';
+const getCmsWebOrigin = (): string =>
+  process.env['CMS_WEB_ORIGIN'] || process.env['CMS_BUILDER_WEB_ORIGIN'] || '';
+
+const parseCsvEnv = (value: string | undefined): string[] =>
+  (value ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item !== '');
+
+const normalizeHost = (value: string): string => {
+  const raw = value.split(',')[0]?.trim().toLowerCase() ?? '';
+  if (raw === '') return '';
+  try {
+    return new URL(raw.includes('://') ? raw : `http://${raw}`).hostname.toLowerCase();
+  } catch {
+    return raw.split(':')[0] ?? raw;
+  }
+};
+
+const getCmsPublicHosts = (): string[] =>
+  parseCsvEnv(process.env['CMS_PUBLIC_HOSTS']).map(normalizeHost).filter(Boolean);
+
+const getCmsPublicPathPrefixes = (): string[] =>
+  parseCsvEnv(process.env['CMS_PUBLIC_PATH_PREFIXES']).map((prefix) => {
+    const withLeadingSlash = prefix.startsWith('/') ? prefix : `/${prefix}`;
+    return withLeadingSlash.length > 1 ? withLeadingSlash.replace(/\/+$/, '') : withLeadingSlash;
+  });
 
 /**
  * Check if request is for Kangur/StudiQ pages
@@ -103,6 +131,63 @@ const isKangurPageRequest = (pathname: string): boolean => {
   const stripped = stripSiteLocalePrefix(pathname);
   return stripped === '/kangur' || stripped.startsWith('/kangur/');
 };
+
+/**
+ * Check if request is for CMS Builder pages that can move to the standalone app.
+ */
+const isCmsBuilderPageRequest = (pathname: string): boolean => {
+  const stripped = stripSiteLocalePrefix(pathname);
+  return (
+    stripped === '/admin/cms' ||
+    stripped.startsWith('/admin/cms/') ||
+    stripped === '/cms' ||
+    stripped.startsWith('/cms/')
+  );
+};
+
+const resolveCmsBuilderPathname = (pathname: string): string => {
+  const stripped = stripSiteLocalePrefix(pathname);
+  if (stripped === '/cms' || stripped.startsWith('/cms/')) {
+    return `/admin/cms${stripped.slice('/cms'.length)}`;
+  }
+  return stripped;
+};
+
+const getRequestHost = (request: NextRequest): string =>
+  normalizeHost(
+    request.headers.get('x-forwarded-host') ??
+      request.headers.get('host') ??
+      request.nextUrl.host
+  );
+
+const cmsPublicHostMatches = (host: string, configuredHost: string): boolean => {
+  if (configuredHost.startsWith('*.')) {
+    const suffix = configuredHost.slice(2);
+    return host === suffix || host.endsWith(`.${suffix}`);
+  }
+  return host === configuredHost;
+};
+
+const isCmsPublicHostRequest = (request: NextRequest): boolean => {
+  const hosts = getCmsPublicHosts();
+  if (hosts.length === 0) return false;
+
+  const host = getRequestHost(request);
+  return host !== '' && hosts.some((configuredHost) => cmsPublicHostMatches(host, configuredHost));
+};
+
+const isCmsPublicPathRequest = (pathname: string): boolean => {
+  const prefixes = getCmsPublicPathPrefixes();
+  if (prefixes.length === 0) return false;
+
+  const stripped = stripSiteLocalePrefix(pathname);
+  return prefixes.some((prefix) => stripped === prefix || stripped.startsWith(`${prefix}/`));
+};
+
+const isCmsPublicPageHandoffRequest = (request: NextRequest): boolean =>
+  isSafePageMethod(request) &&
+  !isAdminRequest(request.nextUrl.pathname) &&
+  (isCmsPublicHostRequest(request) || isCmsPublicPathRequest(request.nextUrl.pathname));
 
 /**
  * Check if request is for API routes
@@ -320,8 +405,23 @@ export function proxy(
   }
 
   // Kangur routes: redirect to separate origin if configured
-  if (STUDIQ_WEB_ORIGIN && isKangurPageRequest(pathname)) {
-    const target = new URL(pathname, STUDIQ_WEB_ORIGIN);
+  const studiqWebOrigin = getStudiqWebOrigin();
+  if (studiqWebOrigin && isKangurPageRequest(pathname)) {
+    const target = new URL(pathname, studiqWebOrigin);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target.toString(), 307);
+  }
+
+  // CMS routes: redirect to separate origin if configured
+  const cmsWebOrigin = getCmsWebOrigin();
+  if (cmsWebOrigin && isCmsBuilderPageRequest(pathname)) {
+    const target = new URL(resolveCmsBuilderPathname(pathname), cmsWebOrigin);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target.toString(), 307);
+  }
+
+  if (cmsWebOrigin && isCmsPublicPageHandoffRequest(request)) {
+    const target = new URL(pathname, cmsWebOrigin);
     target.search = request.nextUrl.search;
     return NextResponse.redirect(target.toString(), 307);
   }

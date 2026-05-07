@@ -1,0 +1,90 @@
+@font-face {
+  font-family: 'Bebas Neue';
+  src:
+    local('Bebas Neue'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  src:
+    local('DM Sans'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Manrope';
+  src:
+    local('Manrope'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Outfit';
+  src:
+    local('Outfit'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src:
+    local('Plus Jakarta Sans'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src:
+    local('Space Grotesk'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sora';
+  src:
+    local('Sora'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin-ext.woff2')
+      format('woff2'),
+    url('../../../../node_modules/next/dist/next-devtools/server/font/geist-latin.woff2')
+      format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}

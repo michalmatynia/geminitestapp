@@ -1,16 +1,17 @@
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
-import nextEnv from '@next/env';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 const monorepoRoot = path.resolve(__dirname, '..', '..');
 const isDev = process.env.NODE_ENV !== 'production';
-const { loadEnvConfig } = nextEnv;
+const { loadStudiqWebEnv } = require('../../scripts/runtime/studiq-web-env.cjs');
 
-loadEnvConfig(monorepoRoot, isDev);
+loadStudiqWebEnv({ repoRoot: monorepoRoot, appDir: __dirname, isDev });
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const cacheLifeProfiles = {

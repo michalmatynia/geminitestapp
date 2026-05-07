@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines-per-function */
 import { FileText } from 'lucide-react';
 import React from 'react';
 
@@ -5,9 +6,13 @@ import type { FilemakerDocument } from '../../filemaker-document.types';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
 import { Badge, Card } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { FilemakerLinkedRecordActions } from './FilemakerLinkedRecordActions';
 
 export interface FilemakerDocumentsSectionProps {
   documents: FilemakerDocument[];
+  isSaving?: boolean;
+  onDeleteDocument?: (id: string) => Promise<void> | void;
+  onUpdateDocument?: (id: string, patch: Record<string, unknown>) => Promise<void> | void;
   title?: string;
 }
 
@@ -28,20 +33,54 @@ const documentTitle = (document: FilemakerDocument): string =>
 
 const FilemakerDocumentCard = ({
   document,
+  isSaving,
+  onDelete,
+  onUpdate,
 }: {
   document: FilemakerDocument;
+  isSaving: boolean;
+  onDelete?: (id: string) => Promise<void> | void;
+  onUpdate?: (id: string, patch: Record<string, unknown>) => Promise<void> | void;
 }): React.JSX.Element => (
   <Card key={document.id} variant='subtle-compact' className='bg-card/20'>
     <div className='space-y-2 p-3'>
-      <div className='flex min-w-0 items-start gap-2'>
-        <FileText className='mt-0.5 size-3.5 shrink-0 text-indigo-300' />
-        <div className='min-w-0'>
-          <div className='truncate text-sm font-semibold text-white'>{documentTitle(document)}</div>
-          <div className='truncate text-[10px] text-gray-600'>
-            Legacy UUID: {formatOptionalValue(document.legacyUuid)} | Owner UUID:{' '}
-            {formatOptionalValue(document.legacyOwnerUuid)}
+      <div className='flex min-w-0 items-start justify-between gap-2'>
+        <div className='flex min-w-0 items-start gap-2'>
+          <FileText className='mt-0.5 size-3.5 shrink-0 text-indigo-300' />
+          <div className='min-w-0'>
+            <div className='truncate text-sm font-semibold text-white'>
+              {documentTitle(document)}
+            </div>
+            <div className='truncate text-[10px] text-gray-600'>
+              Legacy UUID: {formatOptionalValue(document.legacyUuid)} | Owner UUID:{' '}
+              {formatOptionalValue(document.legacyOwnerUuid)}
+            </div>
           </div>
         </div>
+        <FilemakerLinkedRecordActions
+          deleteLabel='document'
+          editTitle='Edit Document'
+          isSaving={isSaving}
+          fields={[
+            { key: 'documentName', label: 'Document Name', value: document.documentName ?? '' },
+            { key: 'codeA', label: 'Code A', value: document.codeA ?? '' },
+            { key: 'codeB', label: 'Code B', value: document.codeB ?? '' },
+            { key: 'documentTypeLabel', label: 'Type Label', value: document.documentTypeLabel ?? '' },
+            { key: 'documentTypeValueId', label: 'Type Value ID', value: document.documentTypeValueId ?? '' },
+            { key: 'legacyDocumentTypeUuid', label: 'Legacy Type UUID', value: document.legacyDocumentTypeUuid ?? '' },
+            { key: 'issuedBy', label: 'Issued By', value: document.issuedBy ?? '' },
+            { key: 'issueDate', label: 'Issue Date', value: document.issueDate ?? '' },
+            { key: 'expiryDate', label: 'Expiry Date', value: document.expiryDate ?? '' },
+            { key: 'comment', label: 'Comment', type: 'textarea', rows: 5, value: document.comment ?? '' },
+            { key: 'updatedBy', label: 'Modified By', value: document.updatedBy ?? '' },
+          ]}
+          onSave={
+            onUpdate === undefined
+              ? undefined
+              : (patch: Record<string, unknown>) => onUpdate(document.id, patch)
+          }
+          onDelete={onDelete === undefined ? undefined : () => onDelete(document.id)}
+        />
       </div>
       <div className='grid gap-2 text-xs text-gray-300 md:grid-cols-2'>
         <div>Code A: {formatOptionalValue(document.codeA)}</div>
@@ -73,6 +112,9 @@ const FilemakerDocumentCard = ({
 
 export function FilemakerDocumentsSection({
   documents,
+  isSaving = false,
+  onDeleteDocument,
+  onUpdateDocument,
   title = 'Documents',
 }: FilemakerDocumentsSectionProps): React.JSX.Element {
   return (
@@ -82,7 +124,13 @@ export function FilemakerDocumentsSection({
       ) : (
         <div className='grid gap-2'>
           {documents.map((document: FilemakerDocument) => (
-            <FilemakerDocumentCard key={document.id} document={document} />
+            <FilemakerDocumentCard
+              key={document.id}
+              document={document}
+              isSaving={isSaving}
+              onDelete={onDeleteDocument}
+              onUpdate={onUpdateDocument}
+            />
           ))}
         </div>
       )}

@@ -7,7 +7,16 @@
     "dev": "node ../../scripts/runtime/run-studiq-web-next.cjs dev --port 3100",
     "build": "node ../../scripts/runtime/run-studiq-web-next.cjs build",
     "start": "node ../../scripts/runtime/run-studiq-web-next.cjs start --port 3100",
-    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false"
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
+    "mongo:up": "MONGODB_PORT=27018 node ../../scripts/db/local-mongo.mjs up",
+    "mongo:down": "MONGODB_PORT=27018 node ../../scripts/db/local-mongo.mjs down",
+    "mongo:status": "MONGODB_PORT=27018 node ../../scripts/db/local-mongo.mjs status",
+    "mongo:copy-from-root:plan": "node ../../scripts/db/copy-studiq-local-mongo.mjs",
+    "mongo:copy-from-root": "node ../../scripts/db/copy-studiq-local-mongo.mjs --apply",
+    "mongo:detach-root:plan": "node ../../scripts/db/detach-studiq-root-mongo.mjs",
+    "mongo:detach-root": "node ../../scripts/db/detach-studiq-root-mongo.mjs --apply --confirm=detach-studiq-from-root",
+    "mongo:restore-root:plan": "node ../../scripts/db/restore-studiq-root-mongo.mjs",
+    "mongo:restore-root": "node ../../scripts/db/restore-studiq-root-mongo.mjs --apply --confirm=restore-studiq-root"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.1",

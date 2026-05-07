@@ -15,6 +15,7 @@ export const getFilemakerNav = (): NavItem => ({
     { id: 'filemaker/events', label: 'Events', href: '/admin/filemaker/events' },
     { id: 'filemaker/values', label: 'Values', href: '/admin/filemaker/values' },
     { id: 'filemaker/mail-client', label: 'Email Client', href: '/admin/filemaker/mail-client' },
+    { id: 'filemaker/social', label: 'Social Publishing', href: '/admin/filemaker/social', keywords: ['linkedin', 'social', 'posts', 'publishing'] },
     { id: 'filemaker/emails', label: 'Email Records', href: '/admin/filemaker/emails' },
     { id: 'filemaker/list', label: 'Combined List', href: '/admin/filemaker/list' },
     { id: 'filemaker/settings', label: 'Settings', href: '/admin/settings/filemaker' },

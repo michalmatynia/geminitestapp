@@ -13,3 +13,9 @@ export {
 } from '@/features/filemaker/workers/filemakerMailSyncQueue';
 export { startFilemakerMailSyncSchedulerQueue } from '@/features/filemaker/workers/filemakerMailSyncSchedulerQueue';
 export { startFilemakerCampaignColdPruneSchedulerQueue } from '@/features/filemaker/workers/filemakerCampaignColdPruneSchedulerQueue';
+export {
+  startSocialPublishingPipelineQueue as startFilemakerSocialPipelineQueue,
+} from '@/features/filemaker/social/workers/socialPublishingPipelineQueue';
+export {
+  startSocialPublishingSchedulerQueue as startFilemakerSocialSchedulerQueue,
+} from '@/features/filemaker/social/workers/socialPublishingSchedulerQueue';

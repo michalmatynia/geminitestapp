@@ -68,7 +68,7 @@ src/features/kangur/cms-builder/KangurThemePreviewPanel.tsx,feature,feature:kang
 src/features/kangur/ui/components/LogicalPatternsAnimations.tsx,feature,feature:kangur,Unknown,LogicalPatternsAnimations.tsx,766,false,0,0,accentEnd|accentStart|atmosphereA|atmosphereB|height|ids|rx|stroke|testIdPrefix|width|x|y
 src/features/kangur/ui/components/KangurLanguageSwitcher.test.tsx,feature,feature:kangur,Unknown,KangurLanguageSwitcher.test.tsx,765,false,0,0,
 src/features/products/components/list/ProductSelectionActions.test.tsx,feature,feature:products,Unknown,ProductSelectionActions.test.tsx,759,false,0,0,
-src/features/kangur/social/admin/workspace/KangurSocialPipelineQueuePanel.tsx,feature,feature:kangur,Panel,KangurSocialPipelineQueuePanel.tsx,757,true,0,0,
+src/features/filemaker/social/admin/workspace/SocialPublishingPipelineQueuePanel.tsx,feature,feature:filemaker,Panel,SocialPublishingPipelineQueuePanel.tsx,757,true,0,0,
 src/features/ai/image-studio/components/ImageStudioAnalysisTab.tsx,feature,feature:ai,Tab,ImageStudioAnalysisTab.tsx,756,true,0,1,
 src/features/kangur/ui/components/AgenticDiagramFillGame.tsx,feature,feature:kangur,Unknown,AgenticDiagramFillGame.tsx,753,true,0,0,accent|gameId
 src/features/kangur/ui/components/AddingSynthesisGame.tsx,feature,feature:kangur,Unknown,AddingSynthesisGame.tsx,752,true,0,0,
@@ -871,7 +871,7 @@ src/features/products/components/list/ProductParseActionsModal.tsx,feature,featu
 src/features/cms/components/slugs/AttachSlugModal.test.tsx,feature,feature:cms,Unknown,AttachSlugModal.test.tsx,199,false,0,0,
 src/features/drafter/components/DraftStructuredProductNameInput.parts.tsx,feature,feature:drafter,Unknown,DraftStructuredProductNameInput.parts.tsx,199,true,0,1,anchorRef|controller|listboxId
 src/features/kangur/admin/components/observability/MetricCards.tsx,feature,feature:kangur,Unknown,MetricCards.tsx,199,false,0,0,alert|hint|icon|title|value
-src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx,feature,feature:kangur,Modal,AdminKangurSocialSettingsModal.tsx,199,true,0,0,
+src/features/filemaker/social/admin/workspace/SocialPublishingSettingsModal.tsx,feature,feature:filemaker,Modal,SocialPublishingSettingsModal.tsx,199,true,0,0,
 src/features/kangur/ui/components/GeometryBasicsLesson.component-content.test.tsx,feature,feature:kangur,Unknown,GeometryBasicsLesson.component-content.test.tsx,199,false,0,0,
 src/features/kangur/ui/components/KangurTestChoiceCard.tsx,feature,feature:kangur,Card,KangurTestChoiceCard.tsx,199,true,0,0,accent|label
 src/shared/ui/switch.tsx,shared-ui,shared-ui,Unknown,switch.tsx,199,true,0,1,
@@ -2676,7 +2676,7 @@ src/app/(admin)/admin/kangur/appearance/page.tsx,app,app,Page,page.tsx,16,false,
 src/app/(admin)/admin/kangur/documentation/page.tsx,app,app,Page,page.tsx,16,false,0,0,
 src/app/(admin)/admin/kangur/lessons-manager/page.tsx,app,app,Page,page.tsx,16,false,0,0,
 src/app/(admin)/admin/kangur/settings/page.tsx,app,app,Page,page.tsx,16,false,0,0,
-src/app/(admin)/admin/kangur/social/page.tsx,app,app,Page,page.tsx,16,false,0,0,
+src/app/(admin)/admin/filemaker/social/page.tsx,app,app,Page,page.tsx,16,false,0,0,
 src/app/(admin)/admin/kangur/tests-manager/page.tsx,app,app,Page,page.tsx,16,false,0,0,
 src/features/cms/components/page-builder/preview/carousel/CarouselControls.tsx,feature,feature:cms,Unknown,CarouselControls.tsx,16,false,0,1,onNext|onPrev
 src/features/filemaker/pages/AdminFilemakerMailClientPage/components/AttentionPanel.tsx,feature,feature:filemaker,Panel,AttentionPanel.tsx,16,false,0,1,
@@ -3018,7 +3018,7 @@ src/app/(admin)/admin/kangur/lessons-manager/loading.tsx,app,app,Unknown,loading
 src/app/(admin)/admin/kangur/loading.tsx,app,app,Unknown,loading.tsx,6,false,0,0,
 src/app/(admin)/admin/kangur/observability/loading.tsx,app,app,Unknown,loading.tsx,6,false,0,0,
 src/app/(admin)/admin/kangur/settings/loading.tsx,app,app,Unknown,loading.tsx,6,false,0,0,
-src/app/(admin)/admin/kangur/social/loading.tsx,app,app,Unknown,loading.tsx,6,false,0,0,
+src/app/(admin)/admin/filemaker/social/loading.tsx,app,app,Unknown,loading.tsx,6,false,0,0,
 src/app/(admin)/admin/kangur/tests-manager/loading.tsx,app,app,Unknown,loading.tsx,6,false,0,0,
 src/app/(admin)/admin/loading.tsx,app,app,Unknown,loading.tsx,6,false,0,0,
 src/app/(admin)/admin/notes/loading.tsx,app,app,Unknown,loading.tsx,6,false,0,0,

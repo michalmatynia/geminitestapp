@@ -48,6 +48,14 @@ export const shouldRunNodeStartupBootstrap = (
   return env['NODE_ENV'] !== 'development';
 };
 
+export async function prepareNodeDatabaseEnvironment(): Promise<void> {
+  const { validateDatabaseConfig } = await import('@/shared/lib/env');
+  validateDatabaseConfig();
+
+  const { applyActiveMongoSourceEnv } = await import('@/shared/lib/db/mongo-source');
+  await applyActiveMongoSourceEnv();
+}
+
 const hasIgnorableAbortMessage = (value: string): boolean => {
   const normalized = value.toLowerCase();
   return (
@@ -119,8 +127,7 @@ export async function registerNodeInstrumentation() {
   }
   globalScope.__nodeInstrumentationRegistered = true;
 
-  const { validateDatabaseConfig } = await import('@/shared/lib/env');
-  validateDatabaseConfig();
+  await prepareNodeDatabaseEnvironment();
 
   const { initializeNodeOtel } = await import('@/shared/lib/observability/otel-node');
   await initializeNodeOtel();

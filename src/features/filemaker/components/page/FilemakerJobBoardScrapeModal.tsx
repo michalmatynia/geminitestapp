@@ -176,6 +176,7 @@ const PROVIDER_OPTIONS = [
 
 const DUPLICATE_STRATEGY_OPTIONS = [
   { value: 'skip', label: 'Skip existing' },
+  { value: 'update', label: 'Update existing' },
   { value: 'add', label: 'Always add' },
 ] as const;
 
@@ -612,10 +613,6 @@ const readStoredChoice = <T extends string>(
   fallback: T
 ): T => (typeof value === 'string' && allowed.includes(value as T) ? (value as T) : fallback);
 
-const toImportDuplicateStrategy = (
-  strategy: FilemakerJobBoardDuplicateStrategy
-): FilemakerJobBoardDuplicateStrategy => (strategy === 'add' ? 'add' : 'skip');
-
 const areDraftSettingsEqual = (left: ScrapeDraft, right: ScrapeDraft): boolean =>
   SCRAPE_DRAFT_SETTINGS_KEYS.every((key) => left[key] === right[key]);
 
@@ -646,7 +643,7 @@ const buildRequest = (
   mode: FilemakerJobBoardScrapeMode
 ): FilemakerJobBoardScrapeRequest => ({
   delayMs: toNumber(draft.delayMs, 750),
-  duplicateStrategy: toImportDuplicateStrategy(draft.duplicateStrategy),
+  duplicateStrategy: draft.duplicateStrategy,
   extractDescriptions: draft.extractDescriptions,
   extractSalaries: draft.extractSalaries,
   extractionPath: draft.extractionPath,
@@ -1402,7 +1399,7 @@ const normalizeSavedDraft = (value: unknown): ScrapeDraft | null => {
 
   return {
     delayMs: readStoredString(saved['delayMs'], fallback.delayMs),
-    duplicateStrategy: toImportDuplicateStrategy(duplicateStrategy),
+    duplicateStrategy,
     extractDescriptions: readStoredBoolean(saved['extractDescriptions'], fallback.extractDescriptions),
     extractSalaries: readStoredBoolean(saved['extractSalaries'], fallback.extractSalaries),
     extractionPath: readStoredChoice(

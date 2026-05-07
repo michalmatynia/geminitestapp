@@ -25,7 +25,7 @@ describe('AdminDatabasePageLayout', () => {
     expect(screen.getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin');
     expect(screen.getByRole('link', { name: 'Databases' })).toHaveAttribute(
       'href',
-      '/admin/databases/engine'
+      '/admin/databases'
     );
     expect(screen.getByRole('heading', { name: 'Database Engine' })).toBeInTheDocument();
     expect(screen.getByTestId('layout-icon')).toBeInTheDocument();

@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useReducer,
+  useEffect,
   useCallback,
   type ReactNode,
   type JSX,
@@ -18,6 +19,7 @@ export type CartItem = {
   priceDisplay: string;
   size: string;
   gradient: string;
+  imageUrl?: string;
   quantity: number;
 };
 
@@ -32,7 +34,8 @@ type CartAction =
   | { type: 'SET_QTY'; productId: string; size: string; quantity: number }
   | { type: 'OPEN' }
   | { type: 'CLOSE' }
-  | { type: 'CLEAR' };
+  | { type: 'CLEAR' }
+  | { type: 'HYDRATE'; items: CartItem[] };
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
@@ -83,10 +86,14 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return { ...state, isOpen: false };
     case 'CLEAR':
       return { ...state, items: [] };
+    case 'HYDRATE':
+      return { ...state, items: action.items };
     default:
       return state;
   }
 }
+
+const CART_STORAGE_KEY = 'arcana-cart';
 
 type CartContextValue = {
   items: CartItem[];
@@ -105,6 +112,26 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }): JSX.Element {
   const [state, dispatch] = useReducer(cartReducer, { items: [], isOpen: false });
+
+  // Restore cart from localStorage once on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(CART_STORAGE_KEY);
+      if (stored) {
+        const items = JSON.parse(stored) as CartItem[];
+        if (Array.isArray(items) && items.length > 0) {
+          dispatch({ type: 'HYDRATE', items });
+        }
+      }
+    } catch {}
+  }, []);
+
+  // Persist cart to localStorage on every change
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items));
+    } catch {}
+  }, [state.items]);
 
   const addItem = useCallback((item: CartItem) => dispatch({ type: 'ADD', item }), []);
   const removeItem = useCallback(

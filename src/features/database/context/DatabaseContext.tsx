@@ -16,6 +16,7 @@ import React, { useState, useMemo } from 'react';
 import type {
   DatabaseType,
   DatabasePreviewMode,
+  DatabasePreviewPayload,
   DatabaseUiConfig,
   DatabaseData,
   DatabasePagination,
@@ -56,7 +57,7 @@ function useDatabaseValues(
     mode: DatabasePreviewMode;
     backupName: string | undefined;
     refetch: () => Promise<unknown>;
-    data: DatabaseData | undefined | null;
+    data: DatabasePreviewPayload | undefined | null;
     isLoading: boolean;
     error: Error | null;
   }

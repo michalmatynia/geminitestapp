@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, type JSX } from 'react';
+import { useState, useEffect, type JSX } from 'react';
+import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useRecentlyViewed } from '@/context/RecentlyViewedContext';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
+import { ProductReviews } from '@/components/ProductReviews';
 import type { Product } from '@/data/products';
 
 const SWATCHES = [0, 1, 2] as const;
@@ -71,6 +74,107 @@ function AccordionItem({
   );
 }
 
+const SIZE_GUIDE_ROWS = [
+  { size: 'XS', chest: '82–86', waist: '66–70', hips: '88–92' },
+  { size: 'S',  chest: '86–90', waist: '70–74', hips: '92–96' },
+  { size: 'M',  chest: '90–94', waist: '74–78', hips: '96–100' },
+  { size: 'L',  chest: '94–98', waist: '78–82', hips: '100–104' },
+  { size: 'XL', chest: '98–104', waist: '82–88', hips: '104–110' },
+];
+
+function SizeGuideModal({ onClose }: { onClose: () => void }): JSX.Element {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+      onClick={onClose}
+      style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+    >
+      <div
+        className="w-full md:max-w-lg mx-4 md:mx-0"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--bg)',
+          border: '1px solid var(--border)',
+          padding: '2.5rem',
+        }}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="type-label mb-1" style={{ color: 'var(--accent)' }}>Sizing</div>
+            <h3
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.6rem',
+                fontWeight: 300,
+                color: 'var(--fg)',
+              }}
+            >
+              Size Guide
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close size guide"
+            className="text-[var(--muted)] hover:text-[var(--fg)] transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <p className="type-label mb-6" style={{ color: 'var(--muted)' }}>
+          All measurements in centimetres. For the best fit, measure over light clothing.
+        </p>
+
+        <table className="w-full">
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              {['Size', 'Chest', 'Waist', 'Hips'].map((h) => (
+                <th
+                  key={h}
+                  className="type-label pb-3 text-left"
+                  style={{ color: 'var(--muted)', fontWeight: 400 }}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {SIZE_GUIDE_ROWS.map((row) => (
+              <tr
+                key={row.size}
+                style={{ borderBottom: '1px solid var(--border)' }}
+              >
+                <td
+                  className="py-3.5"
+                  style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 400, color: 'var(--fg)' }}
+                >
+                  {row.size}
+                </td>
+                {[row.chest, row.waist, row.hips].map((v, i) => (
+                  <td
+                    key={i}
+                    className="py-3.5"
+                    style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--muted)' }}
+                  >
+                    {v}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <p className="type-label mt-6" style={{ color: 'var(--muted)' }}>
+          Unsure? Email us at <a href="mailto:sizing@arcana.com" className="underline underline-offset-2 hover:text-[var(--fg)] transition-colors">sizing@arcana.com</a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function ProductDetailClient({
   product,
   related,
@@ -81,10 +185,25 @@ export function ProductDetailClient({
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
   const { isWishlisted, toggle: toggleWishlist } = useWishlist();
+  const { track } = useRecentlyViewed();
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes[1] ?? '');
   const [activeImage, setActiveImage] = useState(0);
   const [adding, setAdding] = useState(false);
   const [sizeError, setSizeError] = useState(false);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+
+  useEffect(() => {
+    track({
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      category: product.category,
+      priceDisplay: product.priceDisplay,
+      gradient: product.gradient,
+      imageUrl: product.imageUrl,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
 
   const gradients = [
     product.gradient,
@@ -108,6 +227,7 @@ export function ProductDetailClient({
       priceDisplay: product.priceDisplay,
       size: selectedSize,
       gradient: product.gradient,
+      imageUrl: product.imageUrl,
       quantity: 1,
     });
     toast({
@@ -123,6 +243,7 @@ export function ProductDetailClient({
 
   return (
     <>
+      {sizeGuideOpen && <SizeGuideModal onClose={() => setSizeGuideOpen(false)} />}
       <SiteNav />
       <main style={{ paddingTop: 'var(--nav-h)' }}>
         {/* Breadcrumb */}
@@ -145,13 +266,24 @@ export function ProductDetailClient({
           <div className="flex flex-col">
             {/* Main image */}
             <div
-              className="relative grain flex-1"
+              className="relative grain flex-1 overflow-hidden"
               style={{
                 background: gradients[activeImage],
                 minHeight: '60vh',
                 transition: 'background 0.6s ease',
               }}
             >
+              {product.imageUrl && activeImage === 0 && (
+                <Image
+                  src={product.imageUrl}
+                  alt={product.name}
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, 55vw"
+                  style={{ objectFit: 'cover', objectPosition: 'center top' }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
               {product.tag && (
                 <div className="absolute top-8 left-8 z-10">
                   <span className="type-label px-3 py-1.5" style={{ background: 'var(--accent)', color: '#fff' }}>
@@ -161,7 +293,7 @@ export function ProductDetailClient({
               )}
               {/* Decorative rotated label */}
               <div
-                className="absolute right-8 bottom-12 rotate-[-90deg] origin-bottom-right"
+                className="absolute right-8 bottom-12 rotate-[-90deg] origin-bottom-right z-10"
                 style={{ color: 'rgba(255,255,255,0.2)' }}
               >
                 <span className="type-label tracking-[0.2em]">ARCANA / {product.id}</span>
@@ -178,13 +310,24 @@ export function ProductDetailClient({
                   key={i}
                   onClick={() => setActiveImage(i)}
                   aria-label={`View image ${i + 1}`}
-                  className="flex-1 h-20 transition-all duration-200"
+                  className="flex-1 h-20 transition-all duration-200 relative overflow-hidden"
                   style={{
                     background: gradients[i],
                     outline: activeImage === i ? `2px solid var(--fg)` : '2px solid transparent',
                     outlineOffset: '2px',
                   }}
-                />
+                >
+                  {product.imageUrl && i === 0 && (
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      sizes="80px"
+                      style={{ objectFit: 'cover', objectPosition: 'center top' }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                </button>
               ))}
             </div>
           </div>
@@ -243,7 +386,11 @@ export function ProductDetailClient({
                     <span className="type-label" style={{ color: sizeError ? 'var(--accent)' : 'var(--fg)' }}>
                       {sizeError ? 'Please select a size' : 'Select size'}
                     </span>
-                    <button className="type-label underline underline-offset-2" style={{ color: 'var(--muted)' }}>
+                    <button
+                      className="type-label underline underline-offset-2 hover:text-[var(--fg)] transition-colors"
+                      style={{ color: 'var(--muted)' }}
+                      onClick={() => setSizeGuideOpen(true)}
+                    >
                       Size guide
                     </button>
                   </div>
@@ -302,8 +449,10 @@ export function ProductDetailClient({
                     slug: product.slug,
                     name: product.name,
                     category: product.category,
+                    price: product.price,
                     priceDisplay: product.priceDisplay,
                     gradient: product.gradient,
+                    imageUrl: product.imageUrl,
                   });
                   toast({
                     type: isWishlisted(product.id) ? 'info' : 'success',
@@ -344,6 +493,8 @@ export function ProductDetailClient({
             </div>
           </div>
         </div>
+
+        <ProductReviews slug={product.slug} />
 
         {/* Related products */}
         {related.length > 0 && (

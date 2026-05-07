@@ -60,7 +60,7 @@ export function useCrudMutations(): UseCrudMutationsReturn {
     setSuccessMessage(null);
     setMutationError(null);
     crudMutation.mutate(
-      { collection: selectedTable, operation: 'create', provider: 'mongodb', data },
+      { table: selectedTable, operation: 'insert', type: 'mongodb', data },
       createMutationHandler(setSuccessMessage, setMutationError, 'Record created successfully', onSuccess)
     );
   }, [crudMutation]);
@@ -69,7 +69,7 @@ export function useCrudMutations(): UseCrudMutationsReturn {
     setSuccessMessage(null);
     setMutationError(null);
     crudMutation.mutate(
-      { collection: selectedTable, operation: 'update', provider: 'mongodb', data, filter: getPrimaryKey(row) },
+      { table: selectedTable, operation: 'update', type: 'mongodb', data, primaryKey: getPrimaryKey(row) },
       createMutationHandler(setSuccessMessage, setMutationError, 'Record updated successfully', onSuccess)
     );
   }, [crudMutation]);
@@ -78,7 +78,7 @@ export function useCrudMutations(): UseCrudMutationsReturn {
     setSuccessMessage(null);
     setMutationError(null);
     crudMutation.mutate(
-      { collection: selectedTable, operation: 'deleteOne', provider: 'mongodb', filter: getPrimaryKey(row) },
+      { table: selectedTable, operation: 'delete', type: 'mongodb', primaryKey: getPrimaryKey(row) },
       createMutationHandler(setSuccessMessage, setMutationError, 'Record deleted successfully', onSuccess)
     );
   }, [crudMutation]);

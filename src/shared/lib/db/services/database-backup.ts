@@ -91,6 +91,31 @@ const requireMongoConfigValue = (value: string | null, label: string): string =>
   return value;
 };
 
+const resolveApplicationMongoSourceConfig = async (
+  application: MongoBackupApplication,
+  source: MongoSource
+) => {
+  if (application === 'studiq') {
+    return resolveStudiqMongoSourceConfig(source);
+  }
+  if (application === 'cms-builder') {
+    return resolveCmsBuilderMongoSourceConfig(source);
+  }
+  return resolveMongoSourceConfig(source);
+};
+
+const buildPreSyncBackupDescriptor = (
+  application: MongoBackupApplication,
+  source: MongoSource,
+  role: DatabaseEngineMongoSyncBackupRole,
+  direction: DatabaseEngineMongoSyncDirection
+): string => {
+  if (application === 'geminitestapp') {
+    return `${source}-${role}-pre-sync-${direction}`;
+  }
+  return `${application}-${source}-${role}-pre-sync-${direction}`;
+};
+
 const runMongoBackup = async (params: {
   application: MongoBackupApplication;
   mongoUri: string;
@@ -178,9 +203,10 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     databaseName: cmsBuilderDatabaseName,
     backupName: buildMongoBackupName(cmsBuilderDatabaseName, timestamp),
   });
-  const warning =
-    [geminitestapp.warning, studiq.warning, cmsBuilder.warning].filter(Boolean).join('\n') ||
-    null;
+  const warnings = [geminitestapp.warning, studiq.warning, cmsBuilder.warning].filter(
+    (value): value is string => typeof value === 'string' && value.length > 0
+  );
+  const warning = warnings.length > 0 ? warnings.join('\n') : null;
   const logContent = [
     `--- geminitestapp: ${geminitestapp.backupName} ---`,
     geminitestapp.logContent,
@@ -214,12 +240,7 @@ export const createMongoSourceBackup = async (params: {
   const { source, role, direction } = params;
   const timestamp = params.timestamp ?? Date.now();
   const createdAt = new Date(timestamp).toISOString();
-  const config =
-    application === 'studiq'
-      ? resolveStudiqMongoSourceConfig(source)
-      : application === 'cms-builder'
-        ? resolveCmsBuilderMongoSourceConfig(source)
-      : await resolveMongoSourceConfig(source);
+  const config = await resolveApplicationMongoSourceConfig(application, source);
   const databaseName = requireMongoConfigValue(config.dbName, `${source} database name`);
   const result = await runMongoBackup({
     application,
@@ -228,9 +249,7 @@ export const createMongoSourceBackup = async (params: {
     backupName: buildMongoBackupName(
       databaseName,
       timestamp,
-      application === 'geminitestapp'
-        ? `${source}-${role}-pre-sync-${direction}`
-        : `${application}-${source}-${role}-pre-sync-${direction}`
+      buildPreSyncBackupDescriptor(application, source, role, direction)
     ),
   });
 

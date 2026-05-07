@@ -62,7 +62,7 @@ const DatabaseHeaderActions = ({
       variant='outline'
       onClick={() => {
         startTransition(() => {
-          router.push('/admin/databases/engine?view=operations');
+          router.push('/admin/databases/operations');
         });
       }}
     >

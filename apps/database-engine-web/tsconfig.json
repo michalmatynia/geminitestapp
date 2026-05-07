@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "preserve",
+    "lib": ["dom", "dom.iterable", "es2022"],
+    "noEmit": true,
+    "paths": {
+      "@/app/*": ["../../src/app/*"],
+      "@/components/*": ["src/components/*"],
+      "@/features/*": ["../../src/features/*"],
+      "@/i18n/*": ["../../src/i18n/*"],
+      "@/server/*": ["../../src/server/*"],
+      "@/shared/*": ["../../src/shared/*"],
+      "@docs/*": ["../../docs/*"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "next.config.mjs",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "../../src/global.d.ts",
+    "../../src/types/**/*.d.ts",
+    "../../vitest.d.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

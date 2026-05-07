@@ -14,6 +14,7 @@ export interface CrudPanelContextValue {
   onAddRow: () => void;
   isFetching: boolean;
   setPage: (page: number) => void;
+  setPageSize: (size: number) => void;
   setMutationError: (error: string | null) => void;
   setSuccessMessage: (message: string | null) => void;
 }
@@ -24,6 +25,7 @@ export type CrudPanelStateContextValue = Omit<
   | 'onRefresh'
   | 'onAddRow'
   | 'setPage'
+  | 'setPageSize'
   | 'setMutationError'
   | 'setSuccessMessage'
 >;
@@ -34,6 +36,7 @@ export type CrudPanelActionsContextValue = Pick<
   | 'onRefresh'
   | 'onAddRow'
   | 'setPage'
+  | 'setPageSize'
   | 'setMutationError'
   | 'setSuccessMessage'
 >;

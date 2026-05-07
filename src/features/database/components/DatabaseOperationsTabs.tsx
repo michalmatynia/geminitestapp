@@ -9,12 +9,18 @@ import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
 import { useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
 
-export function DatabaseOperationsTabs(): JSX.Element {
+export type DatabaseOperationsTab = 'sql' | 'crud';
+
+export function DatabaseOperationsTabs({
+  defaultTab = 'sql',
+}: {
+  defaultTab?: DatabaseOperationsTab;
+}): JSX.Element {
   const { dbType } = useDatabaseConfig();
   const { tableDetails, isLoading: previewLoading } = useDatabaseData();
 
   return (
-    <Tabs defaultValue='sql' className='w-full'>
+    <Tabs defaultValue={defaultTab} className='w-full'>
       <TabsList className='mb-4 border border-border/60 bg-card/30'>
         <TabsTrigger value='sql' className='gap-2 text-xs'>
           <TerminalSquareIcon className='size-3.5' />

@@ -16,7 +16,7 @@
  * state management across CRUD operations.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { ApiError } from '@/shared/lib/api-client';
@@ -32,7 +32,8 @@ type CrudRowsResult = {
   totalRows: number;
 };
 
-export interface UseCrudPanelStateReturn extends UseCrudMutationsReturn {
+export interface UseCrudPanelStateReturn
+  extends Omit<UseCrudMutationsReturn, 'handleAdd' | 'handleEdit' | 'handleDelete'> {
   selectedTable: string; // Currently selected database table
   setSelectedTable: (table: string) => void;
   page: number; // Current pagination page
@@ -51,6 +52,9 @@ export interface UseCrudPanelStateReturn extends UseCrudMutationsReturn {
   isLoadingRows: boolean;
   maxPage: number;
   fetchRows: () => void;
+  handleAdd: (data: Record<string, unknown>) => void;
+  handleEdit: (data: Record<string, unknown>) => void;
+  handleDelete: () => void;
   dbType: DatabaseType;
   tableDetails: DatabaseTableDetail[];
   columns: DatabaseColumnInfo[];
@@ -102,6 +106,14 @@ export function useCrudPanelState(props: {
         rows: mongoResult.rows,
         totalRows: mongoResult.rowCount ?? mongoResult.rows.length,
       };
+    },
+    meta: {
+      source: 'database.hooks.useCrudPanelState',
+      operation: 'list',
+      resource: 'system.databases.crud-rows',
+      domain: 'database',
+      tags: ['database', 'crud'],
+      description: 'Loads rows for Database Engine CRUD table management.',
     },
   });
 

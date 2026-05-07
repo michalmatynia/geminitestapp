@@ -14,7 +14,9 @@ import { useDatabasePreviewState } from '../hooks/useDatabasePreviewState';
 import { DatabaseMetrics } from './database-preview/DatabaseMetrics';
 import { TableBrowserSection } from './database-preview/TableBrowserSection';
 import { AdditionalObjectsSection } from './database-preview/AdditionalObjectsSection';
-import { DatabaseIcon, BracesIcon, LayersIcon, HashIcon, FileTextIcon, BoxesIcon, ListIcon, RefreshCwIcon, ShieldCheckIcon as ShieldCheckIconObj } from 'lucide-react';
+import { DatabaseIcon, BracesIcon, LayersIcon, HashIcon, FileTextIcon, BoxesIcon, ListIcon, RefreshCwIcon, ShieldCheckIcon as ShieldCheckIconObj, TableIcon } from 'lucide-react';
+
+export { TableDetailCard } from './database-preview/TableDetailCard';
 
 const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   TABLE: TableIcon,
@@ -91,7 +93,7 @@ function DatabasePreviewContent(): React.JSX.Element {
 
           <div ref={state.consoleSectionRef} className='scroll-mt-6'>
             <CollapsibleSection title='MongoDB Command Console' open={state.showConsole} onOpenChange={state.setShowConsole} className='p-6'>
-              <SqlQueryConsole defaultDbType='mongodb' initialSql={state.consoleSql} />
+              <SqlQueryConsole initialSql={state.consoleSql} />
             </CollapsibleSection>
           </div>
 

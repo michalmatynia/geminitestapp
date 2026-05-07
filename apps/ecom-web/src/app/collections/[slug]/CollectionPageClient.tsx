@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo, type JSX } from 'react';
+import { useState, useMemo, useCallback, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
+import { ProductImage } from '@/components/ProductImage';
 import type { Product } from '@/data/products';
 
 const SORT_OPTIONS = [
@@ -21,6 +22,8 @@ const PRICE_RANGES = [
   { label: '€ 500 – € 1,000', min: 500, max: 1000 },
   { label: 'Over € 1,000', min: 1000, max: Infinity },
 ];
+
+const LOAD_MORE_SIZE = 24;
 
 function FilterPanel({
   sizes,
@@ -68,12 +71,12 @@ function FilterPanel({
                 <div
                   className="w-4 h-4 flex items-center justify-center flex-shrink-0 transition-colors"
                   style={{
-                    border: `1px solid ${priceRange === range.label ? 'var(--fg)' : 'var(--border)'}`,
-                    background: priceRange === range.label ? 'var(--fg)' : 'transparent',
+                    border: `1px solid ${priceRange === range.label ? 'var(--cyan-teal)' : 'var(--border)'}`,
+                    background: priceRange === range.label ? 'rgba(171,217,208,0.2)' : 'transparent',
                   }}
                 >
                   {priceRange === range.label && (
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-teal)" strokeWidth="3" strokeLinecap="round">
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
                   )}
@@ -88,7 +91,7 @@ function FilterPanel({
                 />
                 <span
                   className="type-label group-hover:text-[var(--fg)] transition-colors"
-                  style={{ color: priceRange === range.label ? 'var(--fg)' : 'var(--muted)', letterSpacing: '0.06em' }}
+                  style={{ color: priceRange === range.label ? 'var(--cyan-teal)' : 'var(--muted)', letterSpacing: '0.06em' }}
                 >
                   {range.label}
                 </span>
@@ -107,9 +110,9 @@ function FilterPanel({
                 onClick={() => toggleSize(size)}
                 className="type-label px-3 py-2 transition-all duration-150"
                 style={{
-                  border: `1px solid ${sizes.includes(size) ? 'var(--fg)' : 'var(--border)'}`,
-                  background: sizes.includes(size) ? 'var(--fg)' : 'transparent',
-                  color: sizes.includes(size) ? 'var(--bg)' : 'var(--muted)',
+                  border: `1px solid ${sizes.includes(size) ? 'var(--cyan-teal)' : 'var(--border)'}`,
+                  background: sizes.includes(size) ? 'rgba(171,217,208,0.15)' : 'transparent',
+                  color: sizes.includes(size) ? 'var(--cyan-teal)' : 'var(--muted)',
                   minWidth: '2.5rem',
                 }}
               >
@@ -141,6 +144,7 @@ function CollectionProductCard({ product, compact }: { product: Product; compact
       priceDisplay: product.priceDisplay,
       size: product.sizes[1] ?? '',
       gradient: product.gradient,
+      imageUrl: product.imageUrl,
       quantity: 1,
     });
     toast({ type: 'success', title: 'Added to bag', message: product.name });
@@ -153,14 +157,17 @@ function CollectionProductCard({ product, compact }: { product: Product; compact
         className="relative overflow-hidden mb-4"
         style={{ aspectRatio: compact ? '1/1' : '3/4' }}
       >
-        <div
+        <ProductImage
+          imageUrl={product.imageUrl}
+          gradient={product.gradient}
+          alt={product.name}
           className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105"
-          style={{ background: product.gradient }}
+          sizes="(max-width: 768px) 50vw, 33vw"
         />
 
         {/* Grain */}
         <div
-          className="absolute inset-0 opacity-20 mix-blend-overlay"
+          className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`,
             backgroundSize: '150px',
@@ -170,19 +177,24 @@ function CollectionProductCard({ product, compact }: { product: Product; compact
         {/* Tag */}
         {product.tag && (
           <div className="absolute top-3 left-3 z-10">
-            <span className="type-label px-2 py-1" style={{ background: 'var(--accent)', color: '#fff' }}>
+            <span
+              className="type-label px-2 py-1 inline-block"
+              style={{
+                background: 'rgba(171,217,208,0.1)',
+                color: 'var(--cyan-teal)',
+                border: '1px solid rgba(171,217,208,0.35)',
+              }}
+            >
               {product.tag}
             </span>
           </div>
         )}
 
-        {/* Quick Add — appears on hover */}
-        <div
-          className="absolute bottom-0 left-0 right-0 p-3 translate-y-full opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100"
-        >
+        {/* Quick Add */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
           <button
             className="btn-primary w-full justify-center text-center"
-            style={{ background: 'rgba(255,255,255,0.95)', color: 'var(--fg)' }}
+            style={{ background: 'rgba(171,217,208,0.15)', color: 'var(--cyan-teal)', border: '1px solid rgba(171,217,208,0.4)' }}
             onClick={handleQuickAdd}
           >
             Quick Add
@@ -199,16 +211,16 @@ function CollectionProductCard({ product, compact }: { product: Product; compact
           <div
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: compact ? '0.95rem' : '1.1rem',
-              fontWeight: 300,
-              color: 'var(--fg)',
-              lineHeight: 1.2,
+              fontSize: compact ? '0.9rem' : '1rem',
+              fontWeight: 600,
+              color: 'var(--cream-highlight)',
+              lineHeight: 1.3,
             }}
           >
             {product.name}
           </div>
         </div>
-        <span className="type-price flex-shrink-0 mt-1" style={{ color: 'var(--fg)' }}>
+        <span className="type-price flex-shrink-0 mt-1" style={{ color: 'var(--soft-gold)', textShadow: '0 0 8px rgba(250,229,163,0.3)' }}>
           {product.priceDisplay}
         </span>
       </div>
@@ -218,10 +230,14 @@ function CollectionProductCard({ product, compact }: { product: Product; compact
 
 export function CollectionPageClient({
   collection,
-  products,
+  products: initialProducts,
+  total,
+  source = 'static',
 }: {
   collection: { slug: string; label: string; count: number };
   products: Product[];
+  total?: number;
+  source?: 'mentios' | 'static';
 }): JSX.Element {
   const [sort, setSort] = useState('featured');
   const [viewSize, setViewSize] = useState<ViewSize>('comfortable');
@@ -229,8 +245,40 @@ export function CollectionPageClient({
   const [filterPrice, setFilterPrice] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  // All products accumulated across load-more fetches
+  const [allProducts, setAllProducts] = useState<Product[]>(initialProducts);
+  const [loadedCount, setLoadedCount] = useState(initialProducts.length);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const displayTotal = total ?? collection.count;
+  const canLoadMore = source === 'mentios' && loadedCount < displayTotal;
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const collectionParam = collection.slug !== 'all'
+        ? `&collection=${encodeURIComponent(collection.slug)}`
+        : '';
+      const url = `/api/products?skip=${loadedCount}&limit=${LOAD_MORE_SIZE}${collectionParam}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('fetch failed');
+      const data = await res.json() as { products: Product[] };
+      const newProducts = data.products ?? [];
+      setAllProducts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        return [...prev, ...newProducts.filter((p) => !existingIds.has(p.id))];
+      });
+      setLoadedCount((prev) => prev + newProducts.length);
+    } catch {
+      // silently keep current list
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [collection.slug, isLoadingMore, loadedCount]);
+
   const filteredProducts = useMemo(() => {
-    let result = [...products];
+    let result = [...allProducts];
     if (filterSizes.length > 0) {
       result = result.filter((p) =>
         p.sizes.length === 0 || filterSizes.some((s) => p.sizes.includes(s)),
@@ -241,7 +289,7 @@ export function CollectionPageClient({
       if (range) result = result.filter((p) => p.price >= range.min && p.price < range.max);
     }
     return result;
-  }, [products, filterSizes, filterPrice]);
+  }, [allProducts, filterSizes, filterPrice]);
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sort === 'price-asc') return a.price - b.price;
@@ -264,12 +312,14 @@ export function CollectionPageClient({
           style={{
             background:
               collection.slug === 'womenswear'
-                ? 'linear-gradient(145deg, #C4B4A0 0%, #9E8A78 100%)'
+                ? 'linear-gradient(145deg, #21141D 0%, #2e0a28 50%, #3d0a40 100%)'
                 : collection.slug === 'menswear'
-                ? 'linear-gradient(145deg, #1C1812 0%, #2E261E 100%)'
+                ? 'linear-gradient(145deg, #0a1500 0%, #142200 50%, #1e3300 100%)'
                 : collection.slug === 'objects'
-                ? 'linear-gradient(145deg, #C4BDB4 0%, #A09890 100%)'
-                : 'linear-gradient(145deg, #8B5E3C 0%, #4A2D18 100%)',
+                ? 'linear-gradient(145deg, #0B0D21 0%, #1a1040 50%, #21141D 100%)'
+                : collection.slug === 'all'
+                ? 'linear-gradient(145deg, #01000D 0%, #0B0D21 100%)'
+                : 'linear-gradient(145deg, #0f0520 0%, #1a0a35 50%, #28105a 100%)',
           }}
         >
           {/* Breadcrumb */}
@@ -281,17 +331,14 @@ export function CollectionPageClient({
             <span className="type-label" style={{ color: '#fff' }}>{collection.label}</span>
           </div>
 
-          <h1
-            className="type-display-xl"
-            style={{ color: '#fff', maxWidth: '10ch' }}
-          >
+          <h1 className="type-display-xl" style={{ color: '#fff', maxWidth: '10ch' }}>
             {collection.label}
           </h1>
           <p className="type-label mt-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {products.length} pieces
+            {displayTotal} {source === 'mentios' ? 'products' : 'pieces'}
           </p>
 
-          {/* Decorative element */}
+          {/* Decorative count */}
           <div
             className="absolute right-16 top-1/2 -translate-y-1/2 text-right hidden md:block"
             style={{ color: 'rgba(255,255,255,0.08)' }}
@@ -304,10 +351,10 @@ export function CollectionPageClient({
                 lineHeight: 1,
               }}
             >
-              {collection.count}
+              {displayTotal}
             </div>
             <div className="type-label" style={{ color: 'rgba(255,255,255,0.15)' }}>
-              total objects in collection
+              total in collection
             </div>
           </div>
         </div>
@@ -343,7 +390,8 @@ export function CollectionPageClient({
               )}
             </button>
             <span className="type-label" style={{ color: 'var(--muted)' }}>
-              {sortedProducts.length} result{sortedProducts.length !== 1 ? 's' : ''}
+              {sortedProducts.length}
+              {allProducts.length < displayTotal ? ` of ${displayTotal}` : ''} result{sortedProducts.length !== 1 ? 's' : ''}
             </span>
           </div>
 
@@ -361,6 +409,7 @@ export function CollectionPageClient({
                   fontFamily: 'var(--font-mono)',
                   fontSize: '0.7rem',
                   letterSpacing: '0.1em',
+                  background: 'var(--card-bg)',
                 }}
               >
                 {SORT_OPTIONS.map((o) => (
@@ -376,8 +425,8 @@ export function CollectionPageClient({
                 aria-label="Comfortable view"
                 className="w-8 h-8 flex items-center justify-center transition-colors"
                 style={{
-                  background: viewSize === 'comfortable' ? 'var(--fg)' : 'transparent',
-                  color: viewSize === 'comfortable' ? 'var(--bg)' : 'var(--muted)',
+                  background: viewSize === 'comfortable' ? 'rgba(171,217,208,0.15)' : 'transparent',
+                  color: viewSize === 'comfortable' ? 'var(--cyan-teal)' : 'var(--muted-teal)',
                 }}
               >
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -392,8 +441,8 @@ export function CollectionPageClient({
                 aria-label="Compact view"
                 className="w-8 h-8 flex items-center justify-center transition-colors"
                 style={{
-                  background: viewSize === 'compact' ? 'var(--fg)' : 'transparent',
-                  color: viewSize === 'compact' ? 'var(--bg)' : 'var(--muted)',
+                  background: viewSize === 'compact' ? 'rgba(171,217,208,0.15)' : 'transparent',
+                  color: viewSize === 'compact' ? 'var(--cyan-teal)' : 'var(--muted-teal)',
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
@@ -439,7 +488,7 @@ export function CollectionPageClient({
                   style={{
                     fontFamily: 'var(--font-display)',
                     fontSize: '2rem',
-                    fontWeight: 300,
+                    fontWeight: 600,
                     color: 'var(--muted)',
                   }}
                 >
@@ -464,12 +513,29 @@ export function CollectionPageClient({
               </div>
             )}
 
-            {/* Load more stub */}
-            {sortedProducts.length > 0 && collection.count > sortedProducts.length && (
-              <div className="flex justify-center mt-16">
-                <button className="btn-ghost px-16">
-                  Load more ({collection.count - sortedProducts.length} remaining)
+            {/* Load more */}
+            {canLoadMore && (
+              <div className="flex flex-col items-center mt-16 gap-3">
+                <button
+                  className="btn-ghost px-16 flex items-center gap-3"
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  style={{ opacity: isLoadingMore ? 0.6 : 1 }}
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ animation: 'spin 0.9s linear infinite' }}>
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                      </svg>
+                      Loading…
+                    </>
+                  ) : (
+                    `Load more (${displayTotal - loadedCount} remaining)`
+                  )}
                 </button>
+                <p className="type-label" style={{ color: 'var(--muted)' }}>
+                  Showing {allProducts.length} of {displayTotal}
+                </p>
               </div>
             )}
           </div>

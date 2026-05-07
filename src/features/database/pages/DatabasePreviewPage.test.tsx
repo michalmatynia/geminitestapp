@@ -196,7 +196,7 @@ describe('TableDetailCard', () => {
     expect(screen.getByText('1,234 rows • 2 MB')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Query' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Manage' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Preview (42)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Query' }));
     fireEvent.click(screen.getByRole('button', { name: 'Manage' }));
@@ -224,7 +224,6 @@ describe('TableDetailCard', () => {
 
     render(<TableDetailCard detail={detail} />);
 
-    expect(screen.getByText('No row data available')).toBeInTheDocument();
-    expect(screen.getByText('This table appears to be empty.')).toBeInTheDocument();
+    expect(screen.getByText('No data available')).toBeInTheDocument();
   });
 });

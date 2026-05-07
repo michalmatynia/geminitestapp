@@ -241,16 +241,15 @@ export const sqlQueryResultSchema = z.object({
 
 export type SqlQueryResult = z.infer<typeof sqlQueryResultSchema>;
 
-export const crudOperationSchema = z.enum(['create', 'read', 'update', 'delete']);
+export const crudOperationSchema = z.enum(['insert', 'update', 'delete']);
 export type CrudOperation = z.infer<typeof crudOperationSchema>;
 
 export const crudRequestSchema = z.object({
-  provider: z.literal('mongodb'),
-  collection: z.string(),
+  type: z.enum(['mongodb', 'auto']).optional(),
+  table: z.string(),
   operation: crudOperationSchema,
-  filter: z.record(z.string(), z.unknown()).optional(),
   data: z.record(z.string(), z.unknown()).optional(),
-  id: z.string().optional(),
+  primaryKey: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CrudRequest = z.infer<typeof crudRequestSchema>;

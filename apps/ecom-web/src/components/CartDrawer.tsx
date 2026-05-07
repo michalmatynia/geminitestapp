@@ -2,6 +2,7 @@
 
 import { useEffect, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
+import { ProductImage } from '@/components/ProductImage';
 
 function QtyControl({
   productId,
@@ -153,11 +154,18 @@ export function CartDrawer(): JSX.Element {
                   key={`${item.productId}::${item.size}`}
                   className="flex gap-5 px-8 py-6"
                 >
-                  {/* Swatch thumbnail */}
+                  {/* Thumbnail */}
                   <div
-                    className="flex-shrink-0 w-20 h-24"
-                    style={{ background: item.gradient }}
-                  />
+                    className="flex-shrink-0 w-20 h-24 relative overflow-hidden"
+                  >
+                    <ProductImage
+                      imageUrl={item.imageUrl}
+                      gradient={item.gradient}
+                      alt={item.name}
+                      className="absolute inset-0"
+                      sizes="80px"
+                    />
+                  </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0 flex flex-col justify-between">

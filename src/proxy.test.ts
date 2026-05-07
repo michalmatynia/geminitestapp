@@ -399,6 +399,33 @@ describe('proxy api routing', () => {
     }
   });
 
+  it('redirects Database Engine admin routes to the configured standalone origin', async () => {
+    process.env['DATABASE_ENGINE_WEB_ORIGIN'] = 'https://database-engine.example.com';
+    try {
+      const engineRequest = createRequest('http://localhost/admin/databases/engine?view=backups');
+      const engineResponse = await Promise.resolve(proxy(engineRequest as never, { params: {} }));
+
+      expect(engineResponse.status).toBe(307);
+      expect(engineResponse.headers.get('location')).toBe(
+        'https://database-engine.example.com/admin/databases/engine?view=backups'
+      );
+
+      const directPageRequest = createRequest('http://localhost/admin/databases/crud');
+      const directPageResponse = await Promise.resolve(
+        proxy(directPageRequest as never, { params: {} })
+      );
+
+      expect(directPageResponse.status).toBe(307);
+      expect(directPageResponse.headers.get('location')).toBe(
+        'https://database-engine.example.com/admin/databases/crud'
+      );
+      expect(authInvokeMock).not.toHaveBeenCalled();
+      expect(ensureCsrfCookieMock).not.toHaveBeenCalled();
+    } finally {
+      delete process.env['DATABASE_ENGINE_WEB_ORIGIN'];
+    }
+  });
+
   it('skips canonical admin redirects for non-safe methods', async () => {
     const request = createRequest('http://localhost/admin/settings/ai', {
       method: 'POST',

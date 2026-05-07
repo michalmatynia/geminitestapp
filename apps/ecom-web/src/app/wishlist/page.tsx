@@ -1,36 +1,79 @@
 'use client';
 
-import type { JSX } from 'react';
-import { useWishlist } from '@/context/WishlistContext';
+import { useState, useEffect, useCallback, type JSX } from 'react';
+import { useWishlist, type WishlistItem } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
-import { PRODUCTS } from '@/data/products';
+import { ProductImage } from '@/components/ProductImage';
+import type { Product } from '@/data/products';
+
+// Merge fresh DB data into a wishlist item, keeping stored data as fallback.
+function mergeWithFresh(item: WishlistItem, fresh: Product): WishlistItem {
+  return {
+    ...item,
+    name: fresh.name || item.name,
+    category: fresh.category || item.category,
+    price: fresh.price,
+    priceDisplay: fresh.priceDisplay || item.priceDisplay,
+    gradient: fresh.gradient || item.gradient,
+    imageUrl: fresh.imageUrl ?? item.imageUrl,
+  };
+}
 
 export default function WishlistPage(): JSX.Element {
   const { items, remove, total } = useWishlist();
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
 
-  const handleMoveToCart = (productId: string) => {
-    const product = PRODUCTS.find((p) => p.id === productId);
-    if (!product) return;
+  // Fresh product data fetched from API; keyed by productId.
+  const [freshData, setFreshData] = useState<Record<string, Product>>({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (items.length === 0) return;
+    const ids = items.map((i) => i.productId).join(',');
+    setIsRefreshing(true);
+    fetch(`/api/products?ids=${encodeURIComponent(ids)}`)
+      .then((r) => r.json())
+      .then((data: { products?: Product[] }) => {
+        const map: Record<string, Product> = {};
+        for (const p of data.products ?? []) map[p.id] = p;
+        setFreshData(map);
+      })
+      .catch(() => { /* keep stored data */ })
+      .finally(() => setIsRefreshing(false));
+  // Only re-fetch when the set of IDs changes, not on every render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.map((i) => i.productId).join(',')]);
+
+  const getItem = useCallback(
+    (item: WishlistItem): WishlistItem =>
+      freshData[item.productId] ? mergeWithFresh(item, freshData[item.productId]) : item,
+    [freshData],
+  );
+
+  const handleMoveToCart = useCallback((productId: string) => {
+    const stored = items.find((entry) => entry.productId === productId);
+    if (!stored) return;
+    const item = freshData[productId] ? mergeWithFresh(stored, freshData[productId]) : stored;
     addItem({
-      productId: product.id,
-      slug: product.slug,
-      name: product.name,
-      category: product.category,
-      price: product.price,
-      priceDisplay: product.priceDisplay,
-      size: product.sizes[1] ?? '',
-      gradient: product.gradient,
+      productId: item.productId,
+      slug: item.slug,
+      name: item.name,
+      category: item.category,
+      price: item.price ?? 0,
+      priceDisplay: item.priceDisplay,
+      size: '',
+      gradient: item.gradient,
+      imageUrl: item.imageUrl,
       quantity: 1,
     });
     remove(productId);
-    toast({ type: 'success', title: 'Moved to bag', message: product.name });
+    toast({ type: 'success', title: 'Moved to bag', message: item.name });
     openCart();
-  };
+  }, [items, freshData, addItem, remove, toast, openCart]);
 
   return (
     <>
@@ -41,7 +84,7 @@ export default function WishlistPage(): JSX.Element {
           className="px-8 md:px-16 py-16 md:py-24 relative overflow-hidden"
           style={{ borderBottom: '1px solid var(--border)' }}
         >
-          {/* Decorative background text */}
+          {/* Decorative background number */}
           <div
             className="absolute inset-0 flex items-center justify-end pr-16 pointer-events-none select-none"
             aria-hidden="true"
@@ -69,9 +112,16 @@ export default function WishlistPage(): JSX.Element {
               Your Wishlist
             </h1>
             {total > 0 && (
-              <p className="type-label mt-2" style={{ color: 'var(--muted)' }}>
-                {total} {total === 1 ? 'piece' : 'pieces'} saved
-              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <p className="type-label" style={{ color: 'var(--muted)' }}>
+                  {total} {total === 1 ? 'piece' : 'pieces'} saved
+                </p>
+                {isRefreshing && (
+                  <span className="type-label" style={{ color: 'var(--accent)' }}>
+                    refreshing prices…
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -107,13 +157,16 @@ export default function WishlistPage(): JSX.Element {
           </div>
         ) : (
           <div className="px-8 md:px-16 py-12 max-w-screen-2xl mx-auto">
-            {/* Move all to bag */}
-            <div className="flex justify-end mb-8">
+            {/* Actions bar */}
+            <div className="flex items-center justify-between mb-8">
+              <p className="type-label" style={{ color: 'var(--muted)' }}>
+                {Object.keys(freshData).length > 0
+                  ? 'Prices reflect current catalog'
+                  : 'Saved items'}
+              </p>
               <button
                 className="btn-ghost"
-                onClick={() => {
-                  items.forEach((item) => handleMoveToCart(item.productId));
-                }}
+                onClick={() => items.forEach((item) => handleMoveToCart(item.productId))}
               >
                 Move all to bag
               </button>
@@ -121,52 +174,82 @@ export default function WishlistPage(): JSX.Element {
 
             {/* Items grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-              {items.map((item) => (
-                <div key={item.productId} className="group">
-                  {/* Image */}
-                  <a href={`/products/${item.slug}`} className="block relative overflow-hidden mb-4" style={{ aspectRatio: '3/4' }}>
-                    <div
-                      className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
-                      style={{ background: item.gradient }}
-                    />
-                    {/* Remove button */}
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        remove(item.productId);
-                        toast({ type: 'info', title: 'Removed from wishlist', message: item.name });
-                      }}
-                      aria-label={`Remove ${item.name} from wishlist`}
-                      className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--muted)' }}>
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                    {/* Move to bag on hover */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                      <button
-                        className="btn-primary w-full justify-center text-center"
-                        style={{ background: 'rgba(255,255,255,0.95)', color: 'var(--fg)' }}
-                        onClick={(e) => { e.preventDefault(); handleMoveToCart(item.productId); }}
-                      >
-                        Move to bag
-                      </button>
-                    </div>
-                  </a>
+              {items.map((storedItem) => {
+                const item = getItem(storedItem);
+                const hasFresh = Boolean(freshData[item.productId]);
 
-                  {/* Info */}
-                  <div className="type-label mb-1" style={{ color: 'var(--muted)' }}>{item.category}</div>
-                  <a
-                    href={`/products/${item.slug}`}
-                    style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 300, color: 'var(--fg)', display: 'block', marginBottom: '0.25rem' }}
-                  >
-                    {item.name}
-                  </a>
-                  <div className="type-price" style={{ color: 'var(--muted)' }}>{item.priceDisplay}</div>
-                </div>
-              ))}
+                return (
+                  <div key={item.productId} className="group">
+                    {/* Image */}
+                    <a
+                      href={`/products/${item.slug}`}
+                      className="block relative overflow-hidden mb-4"
+                      style={{ aspectRatio: '3/4' }}
+                    >
+                      <ProductImage
+                        imageUrl={item.imageUrl}
+                        gradient={item.gradient}
+                        alt={item.name}
+                        className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                      />
+                      {/* Grain */}
+                      <div
+                        className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
+                        style={{
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`,
+                          backgroundSize: '150px',
+                        }}
+                      />
+                      {/* Remove */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          remove(item.productId);
+                          toast({ type: 'info', title: 'Removed from wishlist', message: item.name });
+                        }}
+                        aria-label={`Remove ${item.name} from wishlist`}
+                        className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--muted)' }}>
+                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                      {/* Move to bag on hover */}
+                      <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                        <button
+                          className="btn-primary w-full justify-center text-center"
+                          style={{ background: 'rgba(255,255,255,0.95)', color: 'var(--fg)' }}
+                          onClick={(e) => { e.preventDefault(); handleMoveToCart(item.productId); }}
+                        >
+                          Move to bag
+                        </button>
+                      </div>
+                    </a>
+
+                    {/* Info */}
+                    <div className="type-label mb-1" style={{ color: 'var(--muted)' }}>{item.category}</div>
+                    <a
+                      href={`/products/${item.slug}`}
+                      style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 300, color: 'var(--fg)', display: 'block', marginBottom: '0.25rem' }}
+                    >
+                      {item.name}
+                    </a>
+                    <div className="flex items-center gap-2">
+                      <span className="type-price" style={{ color: 'var(--muted)' }}>{item.priceDisplay}</span>
+                      {hasFresh && (
+                        <span
+                          className="type-label px-1.5 py-0.5"
+                          style={{ fontSize: '0.6rem', background: 'color-mix(in srgb, var(--accent) 12%, transparent)', color: 'var(--accent)' }}
+                        >
+                          live
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

@@ -7,11 +7,12 @@ import { Button } from '@/shared/ui/primitives.public';
 import { useDatabaseBackupsStateContext, useDatabaseBackupsActionsContext } from '../../context/DatabaseBackupsContext';
 import { useDatabaseColumns } from '../DatabaseColumns';
 import type { FileUploadHelpers } from '@/shared/contracts/ui/base';
+import type { DatabaseInfo } from '@/shared/contracts/database';
 
 export function BackupDataTable(): JSX.Element {
   const { data, isLoading, isProd, backupRunNowAllowed, backupMaintenanceAllowed } =
     useDatabaseBackupsStateContext();
-  const { handleBackup, handleUpload, handlePreviewCurrent } = useDatabaseBackupsActionsContext();
+  const { handleBackup, handleUpload } = useDatabaseBackupsActionsContext();
   const columns = useDatabaseColumns();
   const isRunBackupDisabled = isProd || !backupRunNowAllowed;
   const isUploadDisabled = isProd || !backupMaintenanceAllowed;
@@ -28,11 +29,10 @@ export function BackupDataTable(): JSX.Element {
     : undefined;
 
   return (
-    <StandardDataTablePanel
+    <StandardDataTablePanel<DatabaseInfo>
       data={data}
       columns={columns}
       isLoading={isLoading}
-      onRefresh={handlePreviewCurrent}
       actions={
         <div className='flex flex-wrap items-center gap-2'>
           <Button

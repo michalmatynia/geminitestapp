@@ -29,12 +29,13 @@ export const getWorkspaceNav = (): NavItem => ({
     {
       id: 'workspace/databases',
       label: 'Workflow Database',
-      href: '/admin/databases/engine',
-        keywords: ['database', 'backups', 'operations', 'engine', 'crud', 'preview', 'redis'],
+      href: '/admin/databases',
+      keywords: ['database', 'backups', 'operations', 'engine', 'crud', 'preview', 'redis'],
       children: [
-        { id: 'workspace/databases/backups', label: 'Backups', href: '/admin/databases/engine?view=backups', exact: true },
-        { id: 'workspace/databases/operations', label: 'Operations', href: '/admin/databases/engine?view=operations' },
-        { id: 'workspace/databases/crud', label: 'CRUD Console', href: '/admin/databases/engine?view=crud' },
+        { id: 'workspace/databases/backups', label: 'Backups', href: '/admin/databases/backups', exact: true },
+        { id: 'workspace/databases/operations', label: 'Operations', href: '/admin/databases/operations' },
+        { id: 'workspace/databases/crud', label: 'CRUD Console', href: '/admin/databases/crud' },
+        { id: 'workspace/databases/control-panel', label: 'Control Panel', href: '/admin/databases/control-panel' },
         { id: 'workspace/databases/preview', label: 'Database Preview', href: '/admin/databases/preview' },
         { id: 'workspace/databases/redis', label: 'Redis', href: '/admin/databases/engine?view=redis' },
         { id: 'workspace/databases/engine', label: 'Database Engine', href: '/admin/databases/engine' },

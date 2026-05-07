@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { TableIcon, SettingsIcon, PlayIcon, KeyIcon } from 'lucide-react';
-import { Badge, Button, Tabs, TabsContent, TabsList, TabsTrigger, CollapsibleSection } from '@/shared/ui/primitives.public';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, CollapsibleSection } from '@/shared/ui/primitives.public';
 import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
@@ -77,10 +77,10 @@ const ColumnsTab = ({ detail }: { detail: DatabaseTableDetail }) => {
     { accessorKey: 'name', header: 'Column', cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span> },
     { accessorKey: 'type', header: 'Type', cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.type}</span> },
     { accessorKey: 'nullable', header: 'Nullable', cell: ({ row }) => <span className={row.original.nullable ? 'text-amber-400' : 'text-gray-500'}>{row.original.nullable ? 'YES' : 'NO'}</span> },
-    { accessorKey: 'defaultValue', header: 'Default', cell: ({ row }) => <span className='font-mono text-gray-400'>{row.original.defaultValue ?? '—'}</span> },
+    { accessorKey: 'defaultValue', header: 'Default', cell: ({ row }) => <span className='font-mono text-gray-400'>{formatDatabaseCellValue(row.original.defaultValue)}</span> },
     { id: 'key', header: 'Key', cell: ({ row }) => row.original.isPrimaryKey && <StatusBadge status='PK' variant='pending' icon={<KeyIcon />} size='sm' /> },
   ];
-  return <div className='p-2'><StandardDataTablePanel columns={cols} data={detail.columns} variant='flat' /></div>;
+  return <div className='p-2'><StandardDataTablePanel<DatabaseColumnInfo> columns={cols} data={detail.columns} variant='flat' /></div>;
 };
 
 const IndexesTab = ({ detail }: { detail: DatabaseTableDetail }) => {
@@ -89,7 +89,7 @@ const IndexesTab = ({ detail }: { detail: DatabaseTableDetail }) => {
     { accessorKey: 'columns', header: 'Columns', cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.columns.join(', ')}</span> },
     { accessorKey: 'isUnique', header: 'Unique', cell: ({ row }) => row.original.isUnique ? <StatusBadge status='UNIQUE' variant='success' className='text-[9px]' /> : <span className='text-gray-500'>—</span> },
   ];
-  return <div className='p-2'><StandardDataTablePanel columns={cols} data={detail.indexes} variant='flat' /></div>;
+  return <div className='p-2'><StandardDataTablePanel<DatabaseIndexInfo> columns={cols} data={detail.indexes} variant='flat' /></div>;
 };
 
 const ForeignKeysTab = ({ detail }: { detail: DatabaseTableDetail }) => {
@@ -97,11 +97,11 @@ const ForeignKeysTab = ({ detail }: { detail: DatabaseTableDetail }) => {
     { accessorKey: 'name', header: 'Constraint', cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span> },
     { accessorKey: 'referencedTable', header: 'References', cell: ({ row }) => <span className='font-mono'><span className='text-emerald-300'>{row.original.referencedTable}</span>.<span className='text-blue-300'>{row.original.referencedColumn}</span></span> },
   ];
-  return <div className='p-2'><StandardDataTablePanel columns={cols} data={detail.foreignKeys} variant='flat' /></div>;
+  return <div className='p-2'><StandardDataTablePanel<DatabaseForeignKeyInfo> columns={cols} data={detail.foreignKeys} variant='flat' /></div>;
 };
 
 const DataTab = ({ tableRow }: { tableRow?: DatabaseTablePreviewData }) => {
-  const columns = useMemo(() => {
+  const columns = useMemo<ColumnDef<Record<string, unknown>, unknown>[]>(() => {
     if (!tableRow?.rows[0]) return [];
     return Object.keys(tableRow.rows[0]).map((col) => ({
       accessorKey: col,
@@ -111,5 +111,5 @@ const DataTab = ({ tableRow }: { tableRow?: DatabaseTablePreviewData }) => {
   }, [tableRow]);
 
   if (!tableRow?.rows.length) return <div className='p-8 text-center text-gray-500 text-sm'>No data available</div>;
-  return <div className='p-2'><StandardDataTablePanel columns={columns} data={tableRow.rows} variant='flat' maxHeight='40vh' enableVirtualization /></div>;
+  return <div className='p-2'><StandardDataTablePanel<Record<string, unknown>> columns={columns} data={tableRow.rows} variant='flat' maxHeight='40vh' enableVirtualization /></div>;
 };

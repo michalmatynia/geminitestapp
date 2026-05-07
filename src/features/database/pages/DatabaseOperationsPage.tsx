@@ -13,12 +13,17 @@ import { EmptyState, LoadingState } from '@/shared/ui/navigation-and-layout.publ
 import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
 import { DatabaseProvider, useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
+import type { DatabaseOperationsTab } from '../components/DatabaseOperationsTabs';
 
 const DB_TYPE_OPTIONS = [
   { value: 'mongodb', label: 'MongoDB' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<DatabaseType>>;
 
-function DatabaseOperationsContent(): React.JSX.Element {
+function DatabaseOperationsContent({
+  defaultTab,
+}: {
+  defaultTab: DatabaseOperationsTab;
+}): React.JSX.Element {
   const { dbType, setDbType } = useDatabaseConfig();
   const { tableDetails, isLoading: previewLoading } = useDatabaseData();
   const isProduction = process.env['NODE_ENV'] === 'production';
@@ -38,7 +43,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
             triggerClassName='h-8 text-xs w-[120px]'
            ariaLabel='Select option' title='Select option'/>
           <Button asChild variant='outline' size='sm'>
-            <Link href='/admin/databases/engine'>Back to Databases</Link>
+            <Link href='/admin/databases'>Back to Databases</Link>
           </Button>
         </div>
       }
@@ -50,7 +55,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
         </Card>
       )}
 
-      <Tabs defaultValue='sql' className='w-full'>
+      <Tabs defaultValue={defaultTab} className='w-full'>
         <TabsList className='mb-4' aria-label='Database workspace tabs'>
           <TabsTrigger value='sql' className='text-xs'>
             Command Console
@@ -85,10 +90,14 @@ function DatabaseOperationsContent(): React.JSX.Element {
   );
 }
 
-export default function DatabaseOperationsPage(): React.JSX.Element {
+export default function DatabaseOperationsPage({
+  defaultTab = 'sql',
+}: {
+  defaultTab?: DatabaseOperationsTab;
+}): React.JSX.Element {
   return (
     <DatabaseProvider>
-      <DatabaseOperationsContent />
+      <DatabaseOperationsContent defaultTab={defaultTab} />
     </DatabaseProvider>
   );
 }

@@ -64,6 +64,11 @@ describe('shared db mongo utils', () => {
     process.env = { ...originalEnv };
     delete process.env['MONGODB_URI'];
     delete process.env['MONGODB_DB'];
+    delete process.env['MONGODB_LOCAL_URI'];
+    delete process.env['MONGODB_LOCAL_DB'];
+    delete process.env['MONGODB_CLOUD_URI'];
+    delete process.env['MONGODB_CLOUD_DB'];
+    delete process.env['MONGODB_ACTIVE_SOURCE_DEFAULT'];
     delete process.env['MONGODUMP_PATH'];
     delete process.env['MONGORESTORE_PATH'];
     delete process.env['STUDIQ_MONGODB_URI'];
@@ -112,9 +117,24 @@ describe('shared db mongo utils', () => {
     expect(getMongoRestoreCommand()).toBe('/opt/bin/mongorestore');
   });
 
+  it('uses split local and cloud mongo env values for the main application', () => {
+    process.env['MONGODB_LOCAL_URI'] = 'mongodb://localhost:27017/app_local';
+    process.env['MONGODB_LOCAL_DB'] = 'app_local';
+    process.env['MONGODB_CLOUD_URI'] = 'mongodb+srv://cluster.example/app_cloud';
+    process.env['MONGODB_CLOUD_DB'] = 'app_cloud';
+
+    expect(getMongoConnectionUrl()).toBe('mongodb://localhost:27017/app_local');
+    expect(getMongoDatabaseName()).toBe('app_local');
+
+    process.env['MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+
+    expect(getMongoConnectionUrl()).toBe('mongodb+srv://cluster.example/app_cloud');
+    expect(getMongoDatabaseName()).toBe('app_cloud');
+  });
+
   it('throws configuration errors when required mongo env vars are missing', () => {
-    expect(() => getMongoConnectionUrl()).toThrow('MONGODB_URI is not set.');
-    expect(() => getMongoDatabaseName()).toThrow('MONGODB_DB is not set.');
+    expect(() => getMongoConnectionUrl()).toThrow('MONGODB_URI or MONGODB_LOCAL_URI is not set.');
+    expect(() => getMongoDatabaseName()).toThrow('MONGODB_DB or MONGODB_LOCAL_DB is not set.');
   });
 
   it('resolves dedicated StudiQ local and cloud source config', () => {

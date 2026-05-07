@@ -44,7 +44,7 @@ export const ADMIN_CMS_SECTION: AdminBreadcrumbNode = {
 
 export const ADMIN_DATABASE_SECTION: AdminBreadcrumbNode = {
   label: 'Databases',
-  href: '/admin/databases/engine',
+  href: '/admin/databases',
 };
 
 export const ADMIN_FILEMAKER_SECTION: AdminBreadcrumbNode = {

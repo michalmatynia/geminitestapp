@@ -60,10 +60,17 @@ const findWorkspaceRoot = (startDir: string): string => {
 export const workspaceRoot = findWorkspaceRoot(process.cwd());
 export const legacyBackupsDir = path.join(workspaceRoot, 'mongo', 'backups');
 
+const firstTrimmedEnvValue = (...keys: string[]): string => {
+  for (const key of keys) {
+    const value = process.env[key]?.trim();
+    if (value !== undefined && value.length > 0) return value;
+  }
+  return '';
+};
+
 const resolveBackupsDir = (): string => {
-  const configured =
-    process.env['MONGO_BACKUPS_DIR']?.trim() || process.env['DATABASE_BACKUPS_DIR']?.trim();
-  if (configured) {
+  const configured = firstTrimmedEnvValue('MONGO_BACKUPS_DIR', 'DATABASE_BACKUPS_DIR');
+  if (configured.length > 0) {
     return path.resolve(workspaceRoot, configured);
   }
 
@@ -81,18 +88,35 @@ export const ensureBackupsDir = async (): Promise<void> => {
   );
 };
 
+const getMongoActiveSourcePrefix = (): 'LOCAL' | 'CLOUD' => {
+  const activeSource = process.env['MONGODB_ACTIVE_SOURCE_DEFAULT']?.trim();
+  return activeSource === 'cloud' ? 'CLOUD' : 'LOCAL';
+};
+
 export const getMongoConnectionUrl = (): string => {
-  const mongoUri = process.env['MONGODB_URI']?.trim();
-  if (typeof mongoUri !== 'string' || mongoUri.length === 0) {
-    throw configurationError('MONGODB_URI is not set.');
+  const activeSourcePrefix = getMongoActiveSourcePrefix();
+  const mongoUri = firstTrimmedEnvValue(
+    'MONGODB_URI',
+    `MONGODB_${activeSourcePrefix}_URI`,
+    'MONGODB_LOCAL_URI',
+    'MONGODB_CLOUD_URI'
+  );
+  if (mongoUri.length === 0) {
+    throw configurationError('MONGODB_URI or MONGODB_LOCAL_URI is not set.');
   }
   return mongoUri;
 };
 
 export const getMongoDatabaseName = (): string => {
-  const dbName = process.env['MONGODB_DB']?.trim();
-  if (typeof dbName !== 'string' || dbName.length === 0) {
-    throw configurationError('MONGODB_DB is not set.');
+  const activeSourcePrefix = getMongoActiveSourcePrefix();
+  const dbName = firstTrimmedEnvValue(
+    'MONGODB_DB',
+    `MONGODB_${activeSourcePrefix}_DB`,
+    'MONGODB_LOCAL_DB',
+    'MONGODB_CLOUD_DB'
+  );
+  if (dbName.length === 0) {
+    throw configurationError('MONGODB_DB or MONGODB_LOCAL_DB is not set.');
   }
   return dbName;
 };
@@ -101,14 +125,6 @@ export const getMongoDumpCommand = (): string => process.env['MONGODUMP_PATH'] ?
 
 export const getMongoRestoreCommand = (): string =>
   process.env['MONGORESTORE_PATH'] ?? 'mongorestore';
-
-const firstTrimmedEnvValue = (...keys: string[]): string => {
-  for (const key of keys) {
-    const value = process.env[key]?.trim();
-    if (value !== undefined && value.length > 0) return value;
-  }
-  return '';
-};
 
 const isLikelyLocalMongoUri = (uri: string): boolean => {
   const trimmed = uri.trim();

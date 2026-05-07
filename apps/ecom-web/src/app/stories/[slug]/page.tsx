@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
-import type { Metadata, JSX } from 'next';
+import type { Metadata } from 'next';
+import type { JSX } from 'react';
 import { STORIES, getStory } from '@/data/stories';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';

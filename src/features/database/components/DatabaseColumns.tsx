@@ -64,7 +64,9 @@ const DatabaseActionsCell = ({
   </div>
 );
 
-export const buildDatabaseColumns = (config: DatabaseColumnsConfig): ColumnDef<DatabaseInfo>[] => [
+export const buildDatabaseColumns = (
+  config: DatabaseColumnsConfig
+): ColumnDef<DatabaseInfo, unknown>[] => [
   {
     accessorKey: 'name',
     header: ({ column }) => <DataTableSortableHeader label='Name' column={column} />,
@@ -99,7 +101,7 @@ export const buildDatabaseColumns = (config: DatabaseColumnsConfig): ColumnDef<D
 
 
 
-export const useDatabaseColumns = (): ColumnDef<DatabaseInfo>[] => {
+export const useDatabaseColumns = (): ColumnDef<DatabaseInfo, unknown>[] => {
   const { backupMaintenanceAllowed } = useDatabaseBackupsStateContext();
   const { handlePreview, handleRestoreRequest, handleDeleteRequest } =
     useDatabaseBackupsActionsContext();

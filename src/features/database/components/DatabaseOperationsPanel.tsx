@@ -8,7 +8,10 @@ import { AdminDatabaseBreadcrumbs } from '@/shared/ui/admin.public';
 import { Alert, Badge } from '@/shared/ui/primitives.public';
 import { ListPanel } from '@/shared/ui/navigation-and-layout.public';
 import { SimpleSettingsList } from '@/shared/ui/templates.public';
-import { DatabaseOperationsTabs } from './DatabaseOperationsTabs';
+import {
+  DatabaseOperationsTabs,
+  type DatabaseOperationsTab,
+} from './DatabaseOperationsTabs';
 import { DatabaseProvider, useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
 
 const DATABASE_OPTIONS: Array<LabeledOptionWithDescriptionDto<DatabaseType>> = [
@@ -19,7 +22,11 @@ const DATABASE_OPTIONS: Array<LabeledOptionWithDescriptionDto<DatabaseType>> = [
   },
 ];
 
-function DatabaseOperationsPanelContent(): JSX.Element {
+function DatabaseOperationsPanelContent({
+  defaultTab,
+}: {
+  defaultTab: DatabaseOperationsTab;
+}): JSX.Element {
   const { dbType, setDbType } = useDatabaseConfig();
   const { tableDetails } = useDatabaseData();
   const isProduction = process.env['NODE_ENV'] === 'production';
@@ -76,15 +83,19 @@ function DatabaseOperationsPanelContent(): JSX.Element {
         />
       }
     >
-      <DatabaseOperationsTabs />
+      <DatabaseOperationsTabs defaultTab={defaultTab} />
     </ListPanel>
   );
 }
 
-export function DatabaseOperationsPanel(): JSX.Element {
+export function DatabaseOperationsPanel({
+  defaultTab = 'sql',
+}: {
+  defaultTab?: DatabaseOperationsTab;
+}): JSX.Element {
   return (
     <DatabaseProvider>
-      <DatabaseOperationsPanelContent />
+      <DatabaseOperationsPanelContent defaultTab={defaultTab} />
     </DatabaseProvider>
   );
 }

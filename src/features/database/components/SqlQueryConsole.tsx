@@ -12,14 +12,22 @@
  * - Query history and saved queries support
  */
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import { Button, Textarea } from '@/shared/ui/primitives.public';
 import { parseMongoCommandInput } from './sql/SqlInputParser';
 
-export function SqlQueryConsole(): JSX.Element {
-  const [query, setQuery] = useState('');
+export function SqlQueryConsole({
+  initialSql = '',
+}: {
+  initialSql?: string;
+} = {}): JSX.Element {
+  const [query, setQuery] = useState(initialSql);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setQuery(initialSql);
+  }, [initialSql]);
 
   const handleExecute = (): void => {
     try {

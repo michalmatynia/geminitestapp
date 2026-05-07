@@ -14,7 +14,7 @@ describe('AdminDatabaseBreadcrumbs', () => {
     expect(screen.getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin');
     expect(screen.getByRole('link', { name: 'Databases' })).toHaveAttribute(
       'href',
-      '/admin/databases/engine'
+      '/admin/databases'
     );
     expect(screen.getByText('Preview')).toBeInTheDocument();
   });

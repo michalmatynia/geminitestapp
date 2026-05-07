@@ -4,148 +4,239 @@ export function HeroSection(): JSX.Element {
   return (
     <section
       className="relative min-h-screen flex items-stretch overflow-hidden"
-      style={{ paddingTop: 'var(--nav-h)' }}
+      style={{ paddingTop: 'var(--nav-h)', background: 'var(--space-black)' }}
     >
-      {/* ── Left column: editorial copy ─────────────────────────────── */}
-      <div className="relative z-10 flex flex-col justify-center px-8 md:px-16 lg:px-24 w-full lg:w-[58%] py-20 lg:py-32">
-        {/* Season label */}
-        <div className="flex items-center gap-4 mb-12 animate-slide-up delay-0">
-          <div className="h-px w-8 line-grow" style={{ background: 'var(--accent)' }} />
-          <span className="type-label" style={{ color: 'var(--accent)' }}>
-            New Collection — SS 2026
+      {/* Dot grid background */}
+      <div className="absolute inset-0 dot-grid opacity-30 pointer-events-none" />
+
+      {/* Ambient glow — top left */}
+      <div
+        className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(171,217,208,0.06) 0%, transparent 70%)' }}
+      />
+
+      {/* ── Left column ──────────────────────────────────────────────── */}
+      <div className="relative z-10 flex flex-col justify-center px-8 md:px-14 lg:px-20 w-full lg:w-[55%] py-20 lg:py-28">
+
+        {/* Status beacon */}
+        <div className="flex items-center gap-3 mb-10 animate-slide-up delay-0">
+          <span
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ background: 'var(--cyan-teal)', boxShadow: '0 0 8px var(--cyan-teal)', animation: 'neonPulse 2s ease-in-out infinite' }}
+          />
+          <span className="type-label tracking-[0.22em]" style={{ color: 'var(--cyan-teal)' }}>
+            NEXUS ONLINE — NEW DROPS ACTIVE
           </span>
         </div>
 
-        {/* Headline — 3 staggered lines */}
-        <h1 className="type-display-xl mb-2 overflow-hidden">
-          <span className="block animate-slide-up delay-1" style={{ color: 'var(--fg)' }}>
-            The
-          </span>
-        </h1>
-        <h1 className="type-display-xl mb-2 overflow-hidden">
-          <span
-            className="block animate-slide-up delay-2"
+        {/* Headline */}
+        <div className="overflow-hidden mb-1 animate-slide-up delay-1">
+          <h1 className="type-display-xl" style={{ color: 'var(--cream-highlight)' }}>
+            COLLECTOR&apos;S
+          </h1>
+        </div>
+        <div className="overflow-hidden mb-8 animate-slide-up delay-2">
+          <h1
+            className="type-display-xl"
             style={{
               color: 'transparent',
-              WebkitTextStroke: '1.5px var(--fg)',
+              WebkitTextStroke: '1.5px var(--cyan-teal)',
+              textShadow: '0 0 60px rgba(171,217,208,0.25)',
             }}
           >
-            Architecture
-          </span>
-        </h1>
-        <h1 className="type-display-xl mb-12 overflow-hidden">
-          <span className="block animate-slide-up delay-3" style={{ color: 'var(--fg)' }}>
-            of Desire
-          </span>
-        </h1>
+            CACHE
+          </h1>
+        </div>
+
+        {/* Universe tags */}
+        <div className="flex flex-wrap gap-2 mb-8 animate-slide-up delay-3">
+          {['Anime', 'Gaming', 'Film', 'Manga', 'Keychains', 'Pins', 'Jewellery'].map((tag) => (
+            <span key={tag} className="neon-tag-cyan">{tag}</span>
+          ))}
+        </div>
 
         {/* Description */}
         <p
-          className="animate-slide-up delay-4 max-w-sm leading-relaxed mb-10"
-          style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '0.95rem', fontWeight: 300 }}
+          className="animate-slide-up delay-4 max-w-md mb-10 leading-relaxed"
+          style={{ color: 'var(--muted-teal)', fontFamily: 'var(--font-body)', fontSize: '1.05rem', fontWeight: 400 }}
         >
-          Handcrafted objects for the considered life. Each piece is a conversation
-          between material and maker — built to accumulate meaning over time.
+          Your favourite universes, forged into wearable art. Anime, gaming and film collectibles — officially licensed, obsessively curated.
         </p>
 
         {/* CTAs */}
         <div className="flex flex-wrap gap-4 animate-slide-up delay-5">
-          <button className="btn-primary">
-            Discover The Edit
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+          <a href="/products?new=1" className="btn-primary">
+            Shop New Drops
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
-          </button>
-          <button className="btn-ghost">
-            View Lookbook
-          </button>
+          </a>
+          <a href="/products" className="btn-ghost">
+            Browse All
+          </a>
         </div>
 
-        {/* Stats row */}
-        <div className="flex gap-12 mt-16 pt-10 animate-slide-up delay-6" style={{ borderTop: '1px solid var(--border)' }}>
+        {/* Stats */}
+        <div
+          className="flex gap-10 mt-14 pt-8 animate-slide-up delay-6"
+          style={{ borderTop: '1px solid rgba(171,217,208,0.15)' }}
+        >
           {[
-            { value: '840+', label: 'Objects' },
-            { value: '38', label: 'Artisans' },
-            { value: '12', label: 'Countries' },
-          ].map(({ value, label }) => (
+            { value: '1,800+', label: 'Items', color: 'var(--soft-gold)' },
+            { value: '118', label: 'Categories', color: 'var(--cyan-teal)' },
+            { value: '100+', label: 'Universes', color: 'var(--peach-orange)' },
+          ].map(({ value, label, color }) => (
             <div key={label}>
-              <div className="type-display-md mb-0.5" style={{ color: 'var(--fg)' }}>{value}</div>
-              <div className="type-label" style={{ color: 'var(--muted)' }}>{label}</div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 'clamp(1.5rem, 2.8vw, 2.5rem)',
+                  fontWeight: 800,
+                  color,
+                  lineHeight: 1,
+                  textShadow: `0 0 20px ${color}66`,
+                }}
+              >
+                {value}
+              </div>
+              <div className="type-label mt-1.5" style={{ color: 'var(--muted-teal)' }}>{label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Right column: hero visual ────────────────────────────────── */}
-      <div className="hidden lg:block absolute right-0 top-0 bottom-0 w-[48%] animate-clip-reveal delay-2">
-        {/* Main image swatch — editorial gradient composition */}
+      {/* ── Right column — holographic display ──────────────────────── */}
+      <div
+        className="hidden lg:block absolute right-0 top-0 bottom-0 w-[47%] animate-clip-reveal delay-2"
+        style={{ background: 'var(--deep-navy)' }}
+      >
+        {/* Dot grid */}
+        <div className="absolute inset-0 dot-grid opacity-40" />
+
+        {/* Scanlines */}
         <div
-          className="relative w-full h-full grain"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'linear-gradient(160deg, #C4B4A0 0%, #9E8A78 30%, #7A6556 60%, #3D2E25 100%)',
+            background: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px)',
+            zIndex: 1,
           }}
-        >
-          {/* Decorative rotated label */}
-          <div
-            className="absolute left-8 bottom-32 rotate-[-90deg] origin-bottom-left"
-            style={{ color: 'rgba(255,255,255,0.35)' }}
-          >
-            <span className="type-label tracking-[0.3em]">ARCANA / SS2026 / NO.001</span>
-          </div>
+        />
 
-          {/* Price badge */}
-          <div
-            className="absolute top-12 right-10 px-5 py-3 animate-scale-reveal delay-7"
-            style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
-          >
-            <div className="type-label mb-0.5" style={{ color: 'var(--muted)' }}>From</div>
-            <div className="type-price text-lg font-bold" style={{ color: 'var(--fg)' }}>€ 320</div>
-          </div>
+        {/* Corner brackets */}
+        <div className="absolute top-8 left-8 w-10 h-10 z-10" style={{ borderTop: '2px solid var(--cyan-teal)', borderLeft: '2px solid var(--cyan-teal)', opacity: 0.7 }} />
+        <div className="absolute top-8 right-8 w-10 h-10 z-10" style={{ borderTop: '2px solid var(--cyan-teal)', borderRight: '2px solid var(--cyan-teal)', opacity: 0.7 }} />
+        <div className="absolute bottom-8 left-8 w-10 h-10 z-10" style={{ borderBottom: '2px solid var(--cyan-teal)', borderLeft: '2px solid var(--cyan-teal)', opacity: 0.7 }} />
+        <div className="absolute bottom-8 right-8 w-10 h-10 z-10" style={{ borderBottom: '2px solid var(--cyan-teal)', borderRight: '2px solid var(--cyan-teal)', opacity: 0.7 }} />
 
-          {/* Product silhouette — geometric CSS art */}
-          <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 0 }}>
-            {/* Vessel form */}
-            <svg
-              viewBox="0 0 280 420"
-              className="w-48 md:w-64 opacity-20"
-              style={{ filter: 'blur(0.5px)' }}
-            >
-              <ellipse cx="140" cy="380" rx="80" ry="12" fill="rgba(255,255,255,0.4)" />
-              <path
-                d="M100 370 Q80 280 90 180 Q95 100 140 40 Q185 100 190 180 Q200 280 180 370 Z"
-                fill="none"
-                stroke="rgba(255,255,255,0.6)"
-                strokeWidth="1.5"
-              />
-              <ellipse cx="140" cy="40" rx="28" ry="10" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
-              {/* Handle lines */}
-              <path d="M90 200 Q60 200 60 240 Q60 280 90 280" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
-            </svg>
-          </div>
-
-          {/* Bottom product name strip */}
+        {/* Central display panel */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-16">
           <div
-            className="absolute bottom-0 left-0 right-0 px-10 py-6 flex justify-between items-end"
-            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 100%)' }}
+            className="w-full p-10 relative"
+            style={{
+              border: '1px solid rgba(171,217,208,0.2)',
+              background: 'rgba(1,0,13,0.55)',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 0 60px rgba(171,217,208,0.06), inset 0 0 40px rgba(171,217,208,0.03)',
+              animation: 'neonBorderPulse 4s ease-in-out infinite',
+            }}
           >
-            <div>
-              <div className="type-label text-white/60 mb-1">Object No. 001</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', color: '#fff', fontWeight: 300 }}>
-                Amphora Vessel
+            {/* Header bar */}
+            <div className="flex items-center gap-2 mb-8">
+              <div className="w-2 h-2 rounded-full" style={{ background: 'var(--coral-red)', boxShadow: '0 0 6px var(--coral-red)' }} />
+              <div className="w-2 h-2 rounded-full" style={{ background: 'var(--soft-gold)', boxShadow: '0 0 6px var(--soft-gold)' }} />
+              <div className="w-2 h-2 rounded-full" style={{ background: 'var(--cyan-teal)', boxShadow: '0 0 6px var(--cyan-teal)' }} />
+              <div className="flex-1 h-px mx-3" style={{ background: 'rgba(171,217,208,0.15)' }} />
+              <span className="type-label" style={{ color: 'rgba(171,217,208,0.4)' }}>UNIT-001 / FEATURED</span>
+            </div>
+
+            {/* Collectible SVG art */}
+            <div className="flex justify-center mb-8">
+              <svg viewBox="0 0 200 200" className="w-44 h-44">
+                {/* Outer hexagon */}
+                <polygon
+                  points="100,12 176,56 176,144 100,188 24,144 24,56"
+                  fill="none"
+                  stroke="rgba(171,217,208,0.35)"
+                  strokeWidth="1"
+                />
+                {/* Inner hexagon */}
+                <polygon
+                  points="100,36 156,68 156,132 100,164 44,132 44,68"
+                  fill="none"
+                  stroke="rgba(171,217,208,0.2)"
+                  strokeWidth="1"
+                />
+                {/* Center gem */}
+                <polygon
+                  points="100,60 130,88 130,118 100,140 70,118 70,88"
+                  fill="rgba(171,217,208,0.06)"
+                  stroke="rgba(171,217,208,0.6)"
+                  strokeWidth="1.5"
+                />
+                {/* Inner facets */}
+                <line x1="100" y1="60" x2="100" y2="100" stroke="rgba(171,217,208,0.3)" strokeWidth="0.8"/>
+                <line x1="130" y1="88" x2="100" y2="100" stroke="rgba(171,217,208,0.3)" strokeWidth="0.8"/>
+                <line x1="130" y1="118" x2="100" y2="100" stroke="rgba(171,217,208,0.3)" strokeWidth="0.8"/>
+                <line x1="100" y1="140" x2="100" y2="100" stroke="rgba(171,217,208,0.3)" strokeWidth="0.8"/>
+                <line x1="70" y1="118" x2="100" y2="100" stroke="rgba(171,217,208,0.3)" strokeWidth="0.8"/>
+                <line x1="70" y1="88" x2="100" y2="100" stroke="rgba(171,217,208,0.3)" strokeWidth="0.8"/>
+                {/* Corner nodes */}
+                <circle cx="100" cy="12" r="3" fill="rgba(171,217,208,0.5)" />
+                <circle cx="176" cy="56" r="3" fill="rgba(171,217,208,0.5)" />
+                <circle cx="176" cy="144" r="3" fill="rgba(171,217,208,0.5)" />
+                <circle cx="100" cy="188" r="3" fill="rgba(171,217,208,0.5)" />
+                <circle cx="24" cy="144" r="3" fill="rgba(171,217,208,0.5)" />
+                <circle cx="24" cy="56" r="3" fill="rgba(171,217,208,0.5)" />
+                {/* Glow dot center */}
+                <circle cx="100" cy="100" r="5" fill="rgba(171,217,208,0.8)" style={{ filter: 'drop-shadow(0 0 6px rgba(171,217,208,0.9))' }} />
+              </svg>
+            </div>
+
+            {/* Product info */}
+            <div className="text-center">
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '1.4rem',
+                  fontWeight: 700,
+                  color: 'var(--cream-highlight)',
+                  letterSpacing: '0.05em',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                Collector&apos;s Edition
+              </div>
+              <div className="type-label mb-3" style={{ color: 'var(--muted-teal)' }}>
+                Anime · Gaming · Film
+              </div>
+              <div
+                className="type-price"
+                style={{ color: 'var(--soft-gold)', fontSize: '1.1rem', textShadow: '0 0 12px rgba(250,229,163,0.4)' }}
+              >
+                From € 15
               </div>
             </div>
-            <span className="type-price text-white/80">€ 680</span>
+          </div>
+        </div>
+
+        {/* Bottom scrolling text */}
+        <div
+          className="absolute bottom-5 left-0 right-0 overflow-hidden z-10"
+          style={{ borderTop: '1px solid rgba(171,217,208,0.08)', paddingTop: '0.75rem' }}
+        >
+          <div
+            className="animate-marquee whitespace-nowrap type-label"
+            style={{ color: 'rgba(171,217,208,0.2)', letterSpacing: '0.3em' }}
+          >
+            ANIME &nbsp;·&nbsp; GAMING &nbsp;·&nbsp; FILM &nbsp;·&nbsp; MANGA &nbsp;·&nbsp; COSPLAY &nbsp;·&nbsp; COLLECTOR &nbsp;·&nbsp; LIMITED EDITION &nbsp;·&nbsp; RARE DROPS &nbsp;·&nbsp; ANIME &nbsp;·&nbsp; GAMING &nbsp;·&nbsp; FILM &nbsp;·&nbsp; MANGA &nbsp;·&nbsp; COSPLAY &nbsp;·&nbsp; COLLECTOR &nbsp;·&nbsp; LIMITED EDITION &nbsp;·&nbsp; RARE DROPS
           </div>
         </div>
       </div>
 
-      {/* Mobile hero image strip */}
+      {/* Mobile bottom strip */}
       <div
-        className="lg:hidden absolute bottom-0 left-0 right-0 h-48"
-        style={{
-          background: 'linear-gradient(160deg, #C4B4A0 0%, #7A6556 100%)',
-          opacity: 0.35,
-        }}
+        className="lg:hidden absolute bottom-0 left-0 right-0 h-2"
+        style={{ background: 'linear-gradient(90deg, rgba(171,217,208,0), rgba(171,217,208,0.4), rgba(171,217,208,0))' }}
       />
     </section>
   );

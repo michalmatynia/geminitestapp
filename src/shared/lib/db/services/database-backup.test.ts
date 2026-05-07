@@ -162,7 +162,7 @@ describe('database-backup', () => {
       '--db',
       'cms_builder_local',
       expect.stringMatching(
-        /^--archive=\/tmp\/backups\/cms-builder\/cms-builder-local-backup-\d+\.archive$/
+        /^--archive=\/tmp\/backups\/cms-builder\/cms_builder_local-backup-\d+\.archive$/
       ),
       '--gzip',
     ]);

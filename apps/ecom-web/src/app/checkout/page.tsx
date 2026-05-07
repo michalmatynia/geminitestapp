@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, type JSX } from 'react';
+import { useState, useEffect, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
 import { SiteNav } from '@/components/SiteNav';
 
 type Step = 'information' | 'shipping' | 'payment' | 'confirmation';
@@ -118,9 +119,35 @@ function FormInput({ field, value, onChange }: {
   );
 }
 
+const VALID_CODES: Record<string, number> = {
+  ARCANA10: 0.10,
+  ARCANA15: 0.15,
+  WELCOME20: 0.20,
+};
+
 function OrderSummary(): JSX.Element {
   const { items, totalPrice } = useCart();
   const shipping = 0;
+  const [promoInput, setPromoInput] = useState('');
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState(false);
+  const [promoOpen, setPromoOpen] = useState(false);
+
+  const discountPct = promoCode ? (VALID_CODES[promoCode] ?? 0) : 0;
+  const discountAmt = Math.round(totalPrice * discountPct);
+  const finalTotal = totalPrice - discountAmt + shipping;
+
+  const applyPromo = () => {
+    const upper = promoInput.trim().toUpperCase();
+    if (VALID_CODES[upper] !== undefined) {
+      setPromoCode(upper);
+      setPromoError(false);
+      setPromoOpen(false);
+    } else {
+      setPromoError(true);
+    }
+  };
+
   return (
     <div
       className="sticky top-24 p-8"
@@ -175,6 +202,86 @@ function OrderSummary(): JSX.Element {
         )}
       </div>
 
+      {/* Promo code */}
+      <div className="mb-6" style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+        {promoCode ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: '#4A7C5A' }}>
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              <span className="type-label" style={{ color: '#4A7C5A' }}>
+                {promoCode} applied
+              </span>
+            </div>
+            <button
+              onClick={() => { setPromoCode(null); setPromoInput(''); }}
+              className="type-label hover:text-[var(--fg)] transition-colors"
+              style={{ color: 'var(--muted)' }}
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={() => setPromoOpen(!promoOpen)}
+              className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors"
+              style={{ color: 'var(--muted)' }}
+            >
+              Have a promo code?
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                style={{ transform: promoOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease' }}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {promoOpen && (
+              <div className="flex gap-2 mt-3">
+                <input
+                  type="text"
+                  value={promoInput}
+                  onChange={(e) => { setPromoInput(e.target.value); setPromoError(false); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') applyPromo(); }}
+                  placeholder="Enter code"
+                  style={{
+                    flex: 1,
+                    padding: '0.6rem 0.875rem',
+                    background: 'transparent',
+                    border: `1px solid ${promoError ? 'var(--accent)' : 'var(--border)'}`,
+                    outline: 'none',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.78rem',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: 'var(--fg)',
+                  }}
+                />
+                <button
+                  onClick={applyPromo}
+                  className="type-label px-4 py-2 transition-colors hover:opacity-80"
+                  style={{ background: 'var(--fg)', color: 'var(--bg)', flexShrink: 0 }}
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+            {promoError && (
+              <p className="type-label mt-1.5" style={{ color: 'var(--accent)' }}>
+                Invalid promo code
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
       <div className="divider mb-4" />
 
       {/* Totals */}
@@ -183,6 +290,16 @@ function OrderSummary(): JSX.Element {
           <span className="type-label" style={{ color: 'var(--muted)' }}>Subtotal</span>
           <span className="type-price" style={{ color: 'var(--fg)' }}>€ {totalPrice.toLocaleString('de-DE')}</span>
         </div>
+        {discountAmt > 0 && (
+          <div className="flex justify-between">
+            <span className="type-label" style={{ color: '#4A7C5A' }}>
+              Discount ({Math.round(discountPct * 100)}%)
+            </span>
+            <span className="type-price" style={{ color: '#4A7C5A' }}>
+              − € {discountAmt.toLocaleString('de-DE')}
+            </span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span className="type-label" style={{ color: 'var(--muted)' }}>Shipping</span>
           <span className="type-price" style={{ color: shipping === 0 ? '#4A7C5A' : 'var(--fg)' }}>
@@ -202,7 +319,7 @@ function OrderSummary(): JSX.Element {
         <span
           style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', color: 'var(--fg)' }}
         >
-          € {(totalPrice + shipping).toLocaleString('de-DE')}
+          € {finalTotal.toLocaleString('de-DE')}
         </span>
       </div>
     </div>
@@ -212,9 +329,24 @@ function OrderSummary(): JSX.Element {
 export default function CheckoutPage(): JSX.Element {
   const { items, clearCart } = useCart();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>('information');
   const [shipping, setShipping] = useState('standard');
   const [form, setForm] = useState<Record<string, string>>({});
+
+  // Pre-fill contact info from the logged-in user's session
+  useEffect(() => {
+    if (!user) return;
+    const nameParts = user.name.trim().split(/\s+/);
+    const firstName = nameParts[0] ?? '';
+    const lastName = nameParts.slice(1).join(' ');
+    setForm((f) => ({
+      ...f,
+      email: f.email || user.email,
+      firstName: f.firstName || firstName,
+      lastName: f.lastName || lastName,
+    }));
+  }, [user]);
 
   const setField = (id: string, v: string) => setForm((f) => ({ ...f, [id]: v }));
 

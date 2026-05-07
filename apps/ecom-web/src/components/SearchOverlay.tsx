@@ -1,22 +1,82 @@
 'use client';
 
-import { useState, useEffect, useRef, type JSX } from 'react';
+import { useState, useEffect, useRef, useCallback, type JSX } from 'react';
 import { PRODUCTS } from '@/data/products';
+import type { Product } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { ProductImage } from '@/components/ProductImage';
 
-const TRENDING = ['Linen', 'Marble', 'Cognac', 'Wool', 'Vessel'];
+const TRENDING = ['Anime', 'Attack on Titan', 'Keychain', 'Elden Ring', 'Ghibli'];
 
 type SearchOverlayProps = {
   open: boolean;
   onClose: () => void;
 };
 
+function useProductSearch(query: string) {
+  const [results, setResults] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setResults([]);
+      setIsLoading(false);
+      return;
+    }
+
+    // Show instant static baseline while the API call is in-flight.
+    const ql = q.toLowerCase();
+    setResults(
+      PRODUCTS.filter(
+        (p) =>
+          p.name.toLowerCase().includes(ql) ||
+          p.category.toLowerCase().includes(ql) ||
+          p.description.toLowerCase().includes(ql),
+      ),
+    );
+
+    setIsLoading(true);
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/products?q=${encodeURIComponent(q)}&limit=8`,
+          { signal: controller.signal },
+        );
+        if (!res.ok) throw new Error('fetch failed');
+        const data = await res.json() as { products: Product[] };
+        setResults(data.products ?? []);
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          // keep static baseline on error
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }, 320);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
+
+  return { results, isLoading };
+}
+
 export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Element {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const { addItem } = useCart();
   const { toast } = useToast();
+
+  const { results, isLoading } = useProductSearch(query);
 
   useEffect(() => {
     if (open) {
@@ -26,9 +86,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
   }, [open]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
@@ -38,33 +96,25 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
-  const q = query.trim().toLowerCase();
-  const results = q.length >= 2
-    ? PRODUCTS.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q),
-      )
-    : [];
-
-  const handleQuickAdd = (productId: string, e: React.MouseEvent) => {
+  const handleQuickAdd = useCallback((product: Product, e: React.MouseEvent) => {
     e.preventDefault();
-    const p = PRODUCTS.find((x) => x.id === productId);
-    if (!p) return;
     addItem({
-      productId: p.id,
-      slug: p.slug,
-      name: p.name,
-      category: p.category,
-      price: p.price,
-      priceDisplay: p.priceDisplay,
-      size: p.sizes[1] ?? '',
-      gradient: p.gradient,
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      priceDisplay: product.priceDisplay,
+      size: product.sizes[1] ?? '',
+      gradient: product.gradient,
+      imageUrl: product.imageUrl,
       quantity: 1,
     });
-    toast({ type: 'success', title: 'Added to bag', message: p.name });
-  };
+    toast({ type: 'success', title: 'Added to bag', message: product.name });
+  }, [addItem, toast]);
+
+  const trimmed = query.trim();
+  const showResults = trimmed.length >= 2;
 
   return (
     <>
@@ -77,7 +127,6 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
           opacity: open ? 1 : 0,
           pointerEvents: open ? 'auto' : 'none',
           transition: 'opacity 0.3s ease',
-          animation: open ? 'overlayFade 0.3s ease both' : undefined,
         }}
         onClick={onClose}
         aria-hidden="true"
@@ -105,19 +154,24 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
           className="flex items-center gap-4 px-8 md:px-16"
           style={{ borderBottom: '1px solid var(--border)', paddingTop: 'calc(var(--nav-h) + 1.5rem)', paddingBottom: '1.5rem' }}
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            style={{ color: 'var(--muted)', flexShrink: 0 }}
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
+          {isLoading ? (
+            <svg
+              width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+              style={{ color: 'var(--accent)', flexShrink: 0, animation: 'spin 0.9s linear infinite' }}
+            >
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+            </svg>
+          ) : (
+            <svg
+              width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+              style={{ color: 'var(--muted)', flexShrink: 0 }}
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          )}
           <input
             ref={inputRef}
             type="search"
@@ -133,7 +187,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
               outline: 'none',
               fontFamily: 'var(--font-display)',
               fontSize: 'clamp(1.25rem, 3vw, 2rem)',
-              fontWeight: 300,
+              fontWeight: 500,
               color: 'var(--fg)',
             }}
           />
@@ -155,7 +209,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
 
         {/* Results / suggestions */}
         <div className="overflow-y-auto flex-1 px-8 md:px-16 py-8">
-          {q.length < 2 ? (
+          {!showResults ? (
             /* Trending suggestions */
             <div>
               <p className="type-label mb-5" style={{ color: 'var(--muted)' }}>
@@ -167,31 +221,27 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                     key={term}
                     onClick={() => setQuery(term)}
                     className="type-label px-4 py-2 hover:border-[var(--fg)] hover:text-[var(--fg)] transition-colors"
-                    style={{
-                      border: '1px solid var(--border)',
-                      color: 'var(--muted)',
-                    }}
+                    style={{ border: '1px solid var(--border)', color: 'var(--muted)' }}
                   >
                     {term}
                   </button>
                 ))}
               </div>
 
-              {/* Quick category links */}
               <div className="mt-10">
                 <p className="type-label mb-5" style={{ color: 'var(--muted)' }}>
                   Browse collections
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
-                    { slug: 'womenswear', label: 'Womenswear', gradient: 'linear-gradient(135deg, #E8DFCF 0%, #C4B09A 100%)' },
-                    { slug: 'menswear', label: 'Menswear', gradient: 'linear-gradient(135deg, #1C1812 0%, #2E261E 100%)' },
-                    { slug: 'objects', label: 'Objects', gradient: 'linear-gradient(135deg, #C4BDB4 0%, #A09890 100%)' },
-                    { slug: 'accessories', label: 'Accessories', gradient: 'linear-gradient(135deg, #8B5E3C 0%, #4A2D18 100%)' },
+                    { slug: 'womenswear', label: 'Anime', href: '/collections/womenswear', gradient: 'linear-gradient(135deg, #21141D 0%, #3d0a40 100%)' },
+                    { slug: 'menswear', label: 'Gaming', href: '/collections/menswear', gradient: 'linear-gradient(135deg, #0a1500 0%, #1e3300 100%)' },
+                    { slug: 'accessories', label: 'Film & TV', href: '/collections/accessories', gradient: 'linear-gradient(135deg, #0f0520 0%, #28105a 100%)' },
+                    { slug: 'all', label: 'All Items', href: '/products', gradient: 'linear-gradient(135deg, #0B0D21 0%, #1a1040 100%)' },
                   ].map((cat) => (
                     <a
                       key={cat.slug}
-                      href={`/collections/${cat.slug}`}
+                      href={cat.href}
                       onClick={onClose}
                       className="relative overflow-hidden block"
                       style={{ aspectRatio: '3/2' }}
@@ -205,8 +255,8 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                           style={{
                             fontFamily: 'var(--font-display)',
                             fontSize: '1rem',
-                            fontWeight: 300,
-                            color: '#fff',
+                            fontWeight: 600,
+                            color: 'var(--cream-highlight)',
                           }}
                         >
                           {cat.label}
@@ -217,7 +267,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                 </div>
               </div>
             </div>
-          ) : results.length === 0 ? (
+          ) : results.length === 0 && !isLoading ? (
             /* No results */
             <div className="py-16 text-center">
               <p
@@ -236,11 +286,23 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
               </p>
             </div>
           ) : (
-            /* Results */
+            /* Results grid */
             <div>
-              <p className="type-label mb-6" style={{ color: 'var(--muted)' }}>
-                {results.length} result{results.length !== 1 ? 's' : ''} for &ldquo;{query}&rdquo;
-              </p>
+              <div className="flex items-center gap-3 mb-6">
+                <p className="type-label" style={{ color: 'var(--muted)' }}>
+                  {isLoading
+                    ? `Searching…`
+                    : `${results.length} result${results.length !== 1 ? 's' : ''} for “${query}”`}
+                </p>
+                {isLoading && (
+                  <span
+                    className="type-label px-2 py-0.5"
+                    style={{ background: 'color-mix(in srgb, var(--accent) 12%, transparent)', color: 'var(--accent)' }}
+                  >
+                    live
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
                 {results.slice(0, 8).map((p) => (
                   <a
@@ -252,8 +314,15 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                   >
                     <div
                       className="relative overflow-hidden mb-3"
-                      style={{ aspectRatio: '3/4', background: p.gradient }}
+                      style={{ aspectRatio: '3/4' }}
                     >
+                      <ProductImage
+                        imageUrl={p.imageUrl}
+                        gradient={p.gradient}
+                        alt={p.name}
+                        className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                      />
                       <div className="absolute inset-0 bg-black opacity-0 transition-opacity duration-300 group-hover:opacity-10" />
                       {p.tag && (
                         <div className="absolute top-2 left-2">
@@ -266,7 +335,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                         <button
                           className="btn-primary w-full justify-center text-[10px]"
                           style={{ background: 'rgba(255,255,255,0.95)', color: 'var(--fg)', padding: '0.5rem 1rem' }}
-                          onClick={(e) => handleQuickAdd(p.id, e)}
+                          onClick={(e) => handleQuickAdd(p, e)}
                         >
                           Quick Add
                         </button>
@@ -280,6 +349,18 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                   </a>
                 ))}
               </div>
+
+              {results.length > 8 && (
+                <div className="mt-8 text-center">
+                  <a
+                    href={`/products?q=${encodeURIComponent(query.trim())}`}
+                    onClick={onClose}
+                    className="btn-ghost"
+                  >
+                    View all {results.length} results
+                  </a>
+                </div>
+              )}
             </div>
           )}
         </div>

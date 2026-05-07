@@ -41,7 +41,7 @@ function parseInputBody(input: RawMongoCommand): Omit<MongoCommandInput, 'collec
   return {
     filter: asRecord(input.filter) ?? {},
     pipeline: Array.isArray(input.pipeline) ? (input.pipeline as unknown[]) : undefined,
-    data: asRecord(input.data),
+    data: asRecord(input.data) ?? undefined,
   };
 }
 

@@ -99,8 +99,9 @@ function DatabaseEngineActiveView({
     case 'backups':
       return <DatabaseBackupsPanel />;
     case 'operations':
+      return <DatabaseOperationsPanel defaultTab='sql' />;
     case 'crud':
-      return <DatabaseOperationsPanel />;
+      return <DatabaseOperationsPanel defaultTab='crud' />;
     case 'preview':
       return (
         <div className='space-y-3'>
@@ -176,7 +177,7 @@ function DatabaseEngineRedisPanel(): JSX.Element {
       <p>Connected: {redisOverview.connected ? 'Yes' : 'No'}</p>
       <p>URL configured: {redisOverview.urlConfigured ? 'Yes' : 'No'}</p>
       <p>Enabled: {redisOverview.enabled ? 'Yes' : 'No'}</p>
-      <p>Keys count: {redisOverview.keysCount ?? redisOverview.keyCount}</p>
+      <p>Keys count: {redisOverview.keysCount ?? redisOverview.dbSize}</p>
       <p>Database size: {redisOverview.dbSize}</p>
       <p>Used memory: {redisOverview.memoryUsed ?? redisOverview.usedMemory ?? 'n/a'}</p>
       <p>Uptime: {redisOverview.uptime ?? 'n/a'}</p>

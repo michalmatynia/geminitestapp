@@ -167,12 +167,15 @@ const createPreSyncBackups = async (
 const resolveApplicationMongoSourceConfig = async (
   application: MongoBackupApplication,
   source: MongoSource
-): Promise<ResolvedMongoSourceConfig> =>
-  application === 'studiq'
-    ? resolveStudiqMongoSourceConfig(source)
-    : application === 'cms-builder'
-      ? resolveCmsBuilderMongoSourceConfig(source)
-    : resolveMongoSourceConfig(source);
+): Promise<ResolvedMongoSourceConfig> => {
+  if (application === 'studiq') {
+    return resolveStudiqMongoSourceConfig(source);
+  }
+  if (application === 'cms-builder') {
+    return resolveCmsBuilderMongoSourceConfig(source);
+  }
+  return resolveMongoSourceConfig(source);
+};
 
 const assertApplicationSourceConfigured = (
   application: MongoBackupApplication,

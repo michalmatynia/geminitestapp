@@ -9,6 +9,7 @@ export type Product = {
   tag?: string;
   gradient: string;
   gradientAlt?: string;
+  imageUrl?: string;     // primary image served from public uploads
   description: string;
   details: string[];
   care: string[];
@@ -29,6 +30,7 @@ export const PRODUCTS: Product[] = [
     tag: 'New',
     gradient: 'linear-gradient(155deg, #D4C5B5 0%, #A89282 50%, #8C7868 100%)',
     gradientAlt: 'linear-gradient(135deg, #C4B4A2 0%, #9E8A78 100%)',
+    imageUrl: '/uploads/products/SWOSTO016/1775854993653-1-47c8cd31d3a8f17432ef1197b4d3b552.png',
     description:
       'Hand-thrown in Limoges by ceramicist Hélène Morin, the Amphora Vessel references the proportions of ancient storage pottery while holding a distinctly contemporary silence. Each piece carries its maker\'s fingerprints in the clay.',
     details: [
@@ -56,6 +58,7 @@ export const PRODUCTS: Product[] = [
     priceDisplay: '€ 320',
     gradient: 'linear-gradient(155deg, #E8DFCF 0%, #CEC0AD 100%)',
     gradientAlt: 'linear-gradient(135deg, #DDD2C0 0%, #C8BAA8 100%)',
+    imageUrl: '/uploads/products/KEYCHA823/1776868315397-1-37c0703e0ff3c0b8caa98dafdf0f6842.png',
     description:
       'Cut from stone-washed Belgian linen, this overshirt softens with every wash. The boxy silhouette works equally as a layer or worn alone. Mother-of-pearl buttons from a Normandy workshop.',
     details: [
@@ -84,6 +87,7 @@ export const PRODUCTS: Product[] = [
     tag: 'Last pieces',
     gradient: 'linear-gradient(155deg, #7A4B28 0%, #5A3318 100%)',
     gradientAlt: 'linear-gradient(135deg, #8B5E3C 0%, #6B4328 100%)',
+    imageUrl: '/uploads/products/KEYCHA1434/6bf12b67-9d85-435c-8ebe-3cba78301ea9.png',
     description:
       'Full-grain vegetable-tanned leather from the Périgord. The tote develops a rich patina over years of use — we consider it finished when you do. Hand-stitched in Toulouse by a three-generation atelier.',
     details: [
@@ -113,6 +117,7 @@ export const PRODUCTS: Product[] = [
     tag: 'Limited',
     gradient: 'linear-gradient(155deg, #2A2522 0%, #1A1612 100%)',
     gradientAlt: 'linear-gradient(135deg, #222020 0%, #181512 100%)',
+    imageUrl: '/uploads/products/KEYCHA1050/ec622b1e-5ab7-411b-bda8-c0e690854721.png',
     description:
       'Double-faced wool from a Biella mill that has been weaving since 1742. The coat is constructed without lining — a single layer of cloth with edges rolled and hand-finished. Wear it indefinitely.',
     details: [
@@ -141,6 +146,7 @@ export const PRODUCTS: Product[] = [
     priceDisplay: '€ 180',
     gradient: 'linear-gradient(155deg, #D0CAC4 0%, #B0A89E 100%)',
     gradientAlt: 'linear-gradient(135deg, #C8C2BC 0%, #A8A09A 100%)',
+    imageUrl: '/uploads/products/KEYCHA649/1775926504575-1-b9bcdc00188ed8276a183ea7dd312589.png',
     description:
       'Carved from a single block of Carrara marble, each dish set contains two serving pieces and a catch-all tray. The veining in each set is entirely unique — quarried by the same family for four generations.',
     details: [
@@ -168,6 +174,7 @@ export const PRODUCTS: Product[] = [
     tag: 'New',
     gradient: 'linear-gradient(155deg, #D9C9A8 0%, #BFA880 100%)',
     gradientAlt: 'linear-gradient(135deg, #D4C4A4 0%, #BAAA80 100%)',
+    imageUrl: '/uploads/products/KEYCHA1262/90d91407-941b-4d54-8616-0e05810c4e7b.png',
     description:
       'Woven from undyed Shetland wool on a century-old jacquard loom in the Outer Hebrides. The natural lanolin gives warmth without weight. A piece that improves with age and cold weather.',
     details: [
@@ -195,6 +202,7 @@ export const PRODUCTS: Product[] = [
     priceDisplay: '€ 540',
     gradient: 'linear-gradient(155deg, #C4A882 0%, #A08060 100%)',
     gradientAlt: 'linear-gradient(135deg, #C0A280 0%, #9C7C5A 100%)',
+    imageUrl: '/uploads/products/KEYCHA682/1776864978623-1-68e47a3939c0197b860bfbc4f737aff8.png',
     description:
       'Wheel-thrown terracotta, bisque-fired to hold its pale, porous surface. The form diffuses light in a warm amber ring. Designed by Ryo Sato for Arcana\'s Objects collection, wired with braided cotton cord.',
     details: [
@@ -220,6 +228,7 @@ export const PRODUCTS: Product[] = [
     priceDisplay: '€ 220',
     gradient: 'linear-gradient(155deg, #5C3D2A 0%, #3E2618 100%)',
     gradientAlt: 'linear-gradient(135deg, #5C3D2A 0%, #3E2618 100%)',
+    imageUrl: '/uploads/products/WALACC113/1776865063561-1-690e066b5bf4fed272118bb1248be008.png',
     description:
       'Carved from a single plank of American black walnut, each tray is finished with three coats of food-safe hard oil. The grain pattern is unrepeatable — one tree, many trays, each different.',
     details: [

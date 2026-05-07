@@ -2,7 +2,7 @@
 
 import { EditIcon, Trash2Icon } from 'lucide-react';
 import React, { useMemo } from 'react';
-import type { DatabaseType } from '@/shared/contracts/database';
+import type { DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
 import { Button, Card } from '@/shared/ui/primitives.public';
 import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { CompactEmptyState, Pagination } from '@/shared/ui/navigation-and-layout.public';
@@ -16,7 +16,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 
 export interface CrudPanelProps {
-  tableDetails?: { columns: any[] };
+  tableDetails?: DatabaseTableDetail[];
   defaultTable?: string;
   dbType?: DatabaseType;
 }
@@ -160,7 +160,7 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
   return (
     <CrudPanelProvider 
         stateValue={{ selectedTable, tableDetails, isFetching: rowsQuery.isFetching }} 
-        actionsValue={{ setSelectedTable, onRefresh: fetchRows, onAddRow: () => setShowAddModal(true), setPage, setMutationError, setSuccessMessage }}
+        actionsValue={{ setSelectedTable, onRefresh: fetchRows, onAddRow: () => setShowAddModal(true), setPage, setPageSize, setMutationError, setSuccessMessage }}
     >
       <div className='space-y-4'>
         <DataTable
@@ -180,5 +180,4 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
     </CrudPanelProvider>
   );
 }
-
 

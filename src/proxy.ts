@@ -11,6 +11,7 @@
  * - Locale detection and cookie synchronization
  * - StudiQ/Kangur routing to separate origin
  * - CMS routing to separate origin
+ * - Database Engine routing to separate origin
  * 
  * This middleware runs before every request and determines:
  * 1. Whether to allow the request
@@ -46,11 +47,6 @@ const intlMiddleware = createIntlMiddleware(siteRouting);
  */
 const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
   ['/admin/ai-paths/jobs', '/admin/ai-paths/queue'],
-  ['/admin/databases', '/admin/databases/engine'],
-  ['/admin/databases/backups', '/admin/databases/engine?view=backups'],
-  ['/admin/databases/crud', '/admin/databases/engine?view=crud'],
-  ['/admin/databases/operations', '/admin/databases/engine?view=operations'],
-  ['/admin/databases/redis', '/admin/databases/engine?view=redis'],
   ['/admin/image-studio/settings', '/admin/image-studio?tab=settings'],
   ['/admin/image-studio/validation-patterns', '/admin/image-studio?tab=validation'],
   ['/admin/integrations/aggregators', '/admin/integrations/aggregators/base-com'],
@@ -68,7 +64,6 @@ const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
   ['/admin/prompt-engine', '/admin/prompt-engine/validation'],
   ['/admin/settings/ai', '/admin/brain?tab=routing'],
   ['/admin/settings/brain', '/admin/brain?tab=routing'],
-  ['/admin/settings/database', '/admin/databases/engine'],
   ['/admin/system/upload-events', '/admin/ai-paths/queue?tab=file-uploads'],
 ]);
 
@@ -98,6 +93,7 @@ type AuthenticatedProxyRequest = NextRequest & { auth?: Session | null };
 const getStudiqWebOrigin = (): string => process.env['STUDIQ_WEB_ORIGIN'] || '';
 const getCmsWebOrigin = (): string =>
   process.env['CMS_WEB_ORIGIN'] || process.env['CMS_BUILDER_WEB_ORIGIN'] || '';
+const getDatabaseEngineWebOrigin = (): string => process.env['DATABASE_ENGINE_WEB_ORIGIN'] || '';
 
 const parseCsvEnv = (value: string | undefined): string[] =>
   (value ?? '')
@@ -143,6 +139,16 @@ const isCmsBuilderPageRequest = (pathname: string): boolean => {
     stripped === '/cms' ||
     stripped.startsWith('/cms/')
   );
+};
+
+const isDatabaseEnginePageRequest = (pathname: string): boolean => {
+  const stripped = stripSiteLocalePrefix(pathname);
+  return stripped === '/admin/databases' || stripped.startsWith('/admin/databases/');
+};
+
+const resolveDatabaseEnginePathname = (pathname: string): string => {
+  const stripped = stripSiteLocalePrefix(pathname);
+  return stripped;
 };
 
 const resolveCmsBuilderPathname = (pathname: string): string => {
@@ -383,8 +389,9 @@ const handler =
  * 1. Traffic guard (security)
  * 2. API routes (pass through)
  * 3. Kangur routes (redirect to StudiQ origin if configured)
- * 4. Public routes (i18n handling)
- * 5. Admin routes (authentication + canonical redirects)
+ * 4. Database Engine routes (redirect to Database Engine origin if configured)
+ * 5. Public routes (i18n handling)
+ * 6. Admin routes (authentication + canonical redirects)
  */
 export function proxy(
   request: NextRequest,
@@ -423,6 +430,16 @@ export function proxy(
   if (cmsWebOrigin && isCmsPublicPageHandoffRequest(request)) {
     const target = new URL(pathname, cmsWebOrigin);
     target.search = request.nextUrl.search;
+    return NextResponse.redirect(target.toString(), 307);
+  }
+
+  // Database Engine routes: redirect to separate origin if configured
+  const databaseEngineWebOrigin = getDatabaseEngineWebOrigin();
+  if (databaseEngineWebOrigin && isDatabaseEnginePageRequest(pathname)) {
+    const target = new URL(resolveDatabaseEnginePathname(pathname), databaseEngineWebOrigin);
+    if (!target.search) {
+      target.search = request.nextUrl.search;
+    }
     return NextResponse.redirect(target.toString(), 307);
   }
 

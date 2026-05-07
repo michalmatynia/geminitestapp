@@ -1,4 +1,5 @@
-import type { Metadata, JSX } from 'next';
+import type { Metadata } from 'next';
+import type { JSX } from 'react';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 

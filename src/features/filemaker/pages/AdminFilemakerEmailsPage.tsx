@@ -2,26 +2,31 @@
 
 import { Mail } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
-import React, { useDeferredValue, useMemo, useState, startTransition } from 'react';
+import React, {
+  startTransition,
+  useDeferredValue,
+  useMemo,
+  useState,
+} from 'react';
 
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Badge, DropdownMenuItem } from '@/shared/ui/primitives.public';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { Pagination } from '@/shared/ui/navigation-and-layout.public';
 
-import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../settings';
 import { formatTimestamp, includeQuery } from './filemaker-page-utils';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
 import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
+import {
+  DEFAULT_EMAIL_PAGE_SIZE,
+  DEFAULT_EMAIL_SORT,
+  EMAIL_PAGE_SIZE_OPTIONS,
+  useDebouncedValue,
+  useMongoFilemakerEmails,
+  type EmailLinkCounts,
+} from './AdminFilemakerEmailsPage.hooks';
 
 import type { FilemakerEmail } from '../types';
-import type { FilemakerDatabase } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
-
-type EmailLinkCounts = {
-  total: number;
-  persons: number;
-  organizations: number;
-};
 
 const EMPTY_EMAIL_LINK_COUNTS: EmailLinkCounts = {
   total: 0,
@@ -29,34 +34,18 @@ const EMPTY_EMAIL_LINK_COUNTS: EmailLinkCounts = {
   organizations: 0,
 };
 
-const useEmailLinkCounts = (
-  database: FilemakerDatabase
-): Map<string, EmailLinkCounts> =>
-  useMemo(() => {
-    const map = new Map<string, EmailLinkCounts>();
-    database.emailLinks.forEach((link) => {
-      const current = map.get(link.emailId) ?? EMPTY_EMAIL_LINK_COUNTS;
-      map.set(link.emailId, {
-        total: current.total + 1,
-        persons: current.persons + (link.partyKind === 'person' ? 1 : 0),
-        organizations: current.organizations + (link.partyKind === 'organization' ? 1 : 0),
-      });
-    });
-    return map;
-  }, [database.emailLinks]);
-
 const useFilteredEmails = (
-  database: FilemakerDatabase,
+  emails: FilemakerEmail[],
   deferredQuery: string
 ): FilemakerEmail[] =>
   useMemo(
     (): FilemakerEmail[] =>
-      [...database.emails]
+      [...emails]
         .filter((email: FilemakerEmail) => includeQuery([email.email, email.status], deferredQuery))
         .sort((left: FilemakerEmail, right: FilemakerEmail) =>
           left.email.localeCompare(right.email)
         ),
-    [database.emails, deferredQuery]
+    [emails, deferredQuery]
   );
 
 function EmailIdentityCell({ email }: { email: FilemakerEmail }): React.JSX.Element {
@@ -143,35 +132,89 @@ const useEmailColumns = (
   );
 
 function EmailPageBadges({
-  emailCount,
+  collectionCount,
+  shownCount,
+  totalCount,
   linkCount,
 }: {
-  emailCount: number;
+  collectionCount: number;
+  shownCount: number;
+  totalCount: number;
   linkCount: number;
 }): React.JSX.Element {
   return (
     <>
       <Badge variant='outline' className='text-[10px]'>
-        Emails: {emailCount}
+        Emails: {totalCount.toLocaleString()} / {collectionCount.toLocaleString()}
       </Badge>
       <Badge variant='outline' className='text-[10px]'>
-        Total Links: {linkCount}
+        Showing: {shownCount.toLocaleString()}
+      </Badge>
+      <Badge variant='outline' className='text-[10px]'>
+        Total Links: {linkCount.toLocaleString()}
       </Badge>
     </>
   );
 }
 
+function EmailTableControls({
+  error,
+  page,
+  pageSize,
+  totalPages,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  error: string | null;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  onPageChange: (value: number) => void;
+  onPageSizeChange: (value: number) => void;
+}): React.JSX.Element {
+  return (
+    <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+      {error !== null ? (
+        <div className='rounded border border-red-500/30 bg-red-950/30 px-3 py-2 text-xs text-red-200'>
+          {error}
+        </div>
+      ) : (
+        <div aria-hidden='true' />
+      )}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        pageSizeOptions={EMAIL_PAGE_SIZE_OPTIONS}
+        showPageSize
+        showLabels={false}
+        showPageJump
+        variant='compact'
+      />
+    </div>
+  );
+}
+
 export function AdminFilemakerEmailsPage(): React.JSX.Element {
   const router = useRouter();
-  const settingsStore = useSettingsStore();
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_EMAIL_PAGE_SIZE);
   const deferredQuery = useDeferredValue(query.trim());
-  const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
-  const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
-  const linkCountsByEmailId = useEmailLinkCounts(database);
-  const emails = useFilteredEmails(database, deferredQuery);
+  const debouncedQuery = useDebouncedValue(deferredQuery, 250);
+  const mongoEmails = useMongoFilemakerEmails({ page, pageSize, query: debouncedQuery, sort: DEFAULT_EMAIL_SORT });
+  const linkCountsByEmailId = useMemo(
+    () => new Map<string, EmailLinkCounts>(Object.entries(mongoEmails.linkCountsByEmailId)),
+    [mongoEmails.linkCountsByEmailId]
+  );
+  const emails = useFilteredEmails(mongoEmails.emails, deferredQuery);
   const columns = useEmailColumns(linkCountsByEmailId, router);
   const hasQuery = query !== '';
+  const emptyDescription = hasQuery
+    ? 'Try adjusting your search terms.'
+    : 'Import emails into Filemaker Mongo first.';
 
   return (
     <FilemakerEntityTablePage
@@ -179,16 +222,34 @@ export function AdminFilemakerEmailsPage(): React.JSX.Element {
       description='Search and browse emails with linked persons and organizations.'
       icon={<Mail className='size-4' />}
       actions={buildFilemakerNavActions(router, 'emails')}
-      badges={<EmailPageBadges emailCount={emails.length} linkCount={database.emailLinks.length} />}
+      badges={
+        <EmailPageBadges
+          collectionCount={mongoEmails.collectionCount}
+          shownCount={emails.length}
+          totalCount={mongoEmails.totalCount}
+          linkCount={mongoEmails.linkCount}
+        />
+      }
       query={query}
-      onQueryChange={setQuery}
+      onQueryChange={(value: string): void => {
+        setQuery(value);
+        setPage(1);
+      }}
       queryPlaceholder='Search email or status...'
       columns={columns}
       data={emails}
-      isLoading={settingsStore.isLoading}
+      isLoading={mongoEmails.isLoading}
       emptyTitle={hasQuery ? 'No emails found' : 'No emails found in database.'}
-      emptyDescription={
-        hasQuery ? 'Try adjusting your search terms.' : 'Add your first email in Filemaker Database.'
+      emptyDescription={emptyDescription}
+      headerSlot={
+        <EmailTableControls
+          error={mongoEmails.error}
+          page={mongoEmails.page}
+          pageSize={mongoEmails.pageSize}
+          totalPages={mongoEmails.totalPages}
+          onPageChange={setPage}
+          onPageSizeChange={(value: number): void => { setPageSize(value); setPage(1); }}
+        />
       }
     />
   );

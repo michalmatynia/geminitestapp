@@ -4,6 +4,7 @@ import type { Filter } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
+import { normalizeFilemakerEmailStatus } from '../filemaker-email-status';
 import { createFilemakerEmail } from '../filemaker-settings.entities';
 import type {
   FilemakerEmail,
@@ -78,7 +79,7 @@ const mongoEmailToFilemakerEmail = (document: MongoFilemakerEmailDocument): File
   createFilemakerEmail({
     id: document.id,
     email: document.email,
-    status: document.status,
+    status: normalizeFilemakerEmailStatus(document.status),
     createdAt: document.createdAt,
     updatedAt: document.updatedAt,
   });

@@ -19,7 +19,14 @@ export const LogModal = ({
   if (!isOpen || item === undefined) return null;
 
   return (
-    <AppModal open={isOpen} onOpenChange={(open) => !open && onClose()} title={title} size={size}>
+    <AppModal
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={title}
+      size={size}
+    >
       <div className='max-h-[60vh] overflow-y-auto'>
         <SyntaxHighlighter
           language='bash'

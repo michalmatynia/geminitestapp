@@ -38,7 +38,7 @@ const MANAGED_APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplication, 
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
-  products: 'Products',
+  products: 'Ecommerce',
 };
 
 const SOURCE_LABELS: Record<MongoSource, string> = {

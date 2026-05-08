@@ -13,6 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: locale === 'pl'
       ? 'Zobacz konto ARCANA, zapisane produkty, zamówienia i ustawienia.'
       : 'View your ARCANA account, saved items, orders, and settings.',
+    robots: { index: false, follow: false },
   };
 }
 

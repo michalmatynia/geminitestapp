@@ -85,12 +85,13 @@ helpers stay in the database feature and shared database libraries.
 
 ## Managed MongoDB Operations
 
-The Database Engine manages three application databases as first-class local
+The Database Engine manages four application databases as first-class local
 and cloud MongoDB targets:
 
 - `geminitestapp`
 - `studiq`
 - `cms-builder`
+- `products` (Ecommerce storefront database; local default `mongodb://127.0.0.1:27021/ecom_local`)
 
 Use `/admin/databases/engine` to inspect local/cloud reachability, database
 size, collection sizes, and per-collection document counts. Each application

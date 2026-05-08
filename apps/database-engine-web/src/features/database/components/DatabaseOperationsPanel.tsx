@@ -38,7 +38,7 @@ const MANAGED_DATABASE_OPTIONS: Array<{
   { application: 'geminitestapp', label: 'GeminiTest App' },
   { application: 'studiq', label: 'StudiQ' },
   { application: 'cms-builder', label: 'CMS Builder' },
-  { application: 'products', label: 'Products' },
+  { application: 'products', label: 'Ecommerce' },
 ];
 
 const MANAGED_SOURCE_OPTIONS: Array<{

@@ -260,7 +260,7 @@ export const resolveProductImportSource = (
   product: ProductWithImages
 ): ProductImportSource | null => {
   const source = product.importSource;
-  return source === 'base' || source === 'scrape' ? source : null;
+  return source === 'base' || source === 'scrape' || source === 'ecommerce' ? source : null;
 };
 
 export const hasImportedProductOrigin = (product: ProductWithImages): boolean =>

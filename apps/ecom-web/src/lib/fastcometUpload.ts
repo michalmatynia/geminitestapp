@@ -3,6 +3,7 @@ import 'server-only';
 import { getDb } from '@/lib/mongodb';
 
 const FASTCOMET_STORAGE_CONFIG_SETTING_KEY = 'fastcomet_storage_config_v1';
+const ECOM_SETTINGS_COLLECTION = 'ecom_settings';
 const DEFAULT_TIMEOUT_MS = 20_000;
 const MIN_TIMEOUT_MS = 1_000;
 const MAX_TIMEOUT_MS = 120_000;
@@ -84,7 +85,7 @@ function parseStoredConfig(value: unknown): StoredFastCometConfig | null {
 async function readStoredFastCometConfig(): Promise<StoredFastCometConfig | null> {
   try {
     const db = await getDb();
-    const record = await db.collection<SettingRecord>('settings').findOne({
+    const record = await db.collection<SettingRecord>(ECOM_SETTINGS_COLLECTION).findOne({
       $or: [{ key: FASTCOMET_STORAGE_CONFIG_SETTING_KEY }, { _id: FASTCOMET_STORAGE_CONFIG_SETTING_KEY }],
     });
     return parseStoredConfig(record?.value);

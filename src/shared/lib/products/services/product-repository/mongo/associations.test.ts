@@ -39,7 +39,9 @@ describe('mongoProductAssociationsImpl.replaceProductImages', () => {
     findImageFilesByIdsMock.mockResolvedValue([
       createImageFile('image-2', '/uploads/products/image-2.jpg'),
       createImageFile('image-1', '/uploads/products/image-1.jpg', {
+        metadata: { storageSource: 'local-fallback' },
         publicUrl: ' https://files.example.test/image-1.jpg ',
+        storageProvider: 'local',
         thumbnailUrl: 'https://files.example.test/image-1-thumb.jpg',
         url: 'https://files.example.test/image-1-original.jpg',
       }),
@@ -68,7 +70,9 @@ describe('mongoProductAssociationsImpl.replaceProductImages', () => {
               filename: string;
               filepath: string;
               id: string;
+              metadata?: Record<string, unknown> | null;
               publicUrl?: string;
+              storageProvider?: string;
               thumbnailUrl?: string;
               url?: string;
             };
@@ -84,7 +88,9 @@ describe('mongoProductAssociationsImpl.replaceProductImages', () => {
       expect.objectContaining({
         filename: 'image-1.jpg',
         filepath: '/uploads/products/image-1.jpg',
+        metadata: { storageSource: 'local-fallback' },
         publicUrl: 'https://files.example.test/image-1.jpg',
+        storageProvider: 'local',
         thumbnailUrl: 'https://files.example.test/image-1-thumb.jpg',
         url: 'https://files.example.test/image-1-original.jpg',
       })

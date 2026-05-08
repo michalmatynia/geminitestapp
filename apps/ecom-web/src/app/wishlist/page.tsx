@@ -12,6 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: locale === 'pl'
       ? 'Przejrzyj zapisane produkty ARCANA i przenieś je do koszyka.'
       : 'Review your saved ARCANA collectibles and move them to your bag.',
+    robots: { index: false, follow: false },
   };
 }
 

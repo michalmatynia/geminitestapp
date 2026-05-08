@@ -59,6 +59,7 @@ export const ProductSelectionDropdownActions = ({
         <Store className='h-4 w-4' />
         Add to Marketplace
       </DropdownMenuItem>
+      <BulkEcommerceExportDropdownAction controller={controller} />
       <ArchiveDropdownAction controller={controller} archived />
       {includeArchived ? <ArchiveDropdownAction controller={controller} archived={false} /> : null}
       <AsyncDropdownAction
@@ -190,6 +191,24 @@ const BulkBaseSyncDropdownAction = ({
       <RefreshCw className='h-4 w-4' />
       {bulk.isRunningBulkBaseSync ? 'Syncing with Base.com...' : 'Sync with Base.com'}
     </DropdownMenuItem>
+  );
+};
+
+const BulkEcommerceExportDropdownAction = ({
+  controller,
+}: ProductSelectionMenuProps): React.JSX.Element => {
+  const { bulk, selection } = controller;
+  return (
+    <AsyncDropdownAction
+      disabled={bulk.isExportingSelectedToEcommerce || selection.selectedCount === 0}
+      icon={<Store className='h-4 w-4' />}
+      label={
+        bulk.isExportingSelectedToEcommerce
+          ? 'Exporting to ecommerce...'
+          : 'Export to Ecommerce'
+      }
+      onClick={bulk.handleExportSelectedToEcommerce}
+    />
   );
 };
 

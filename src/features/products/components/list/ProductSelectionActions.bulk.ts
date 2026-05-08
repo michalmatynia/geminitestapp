@@ -13,6 +13,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import {
   useBatchEditActions,
   useBulkBaseSyncAction,
+  useBulkEcommerceExportAction,
   type BulkControllerInput,
   useMarketplaceDebrandAction,
   useParsedMatchActions,
@@ -145,6 +146,7 @@ export const useProductSelectionBulkController = (
     ...useArchiveAction(input),
     ...useBatchEditActions(selection, dialogs),
     ...useBulkBaseSyncAction(input),
+    ...useBulkEcommerceExportAction(input),
     ...useImageConversionAction(input),
     ...useMarketplaceDebrandAction(input),
     ...useParsedMatchActions(input),

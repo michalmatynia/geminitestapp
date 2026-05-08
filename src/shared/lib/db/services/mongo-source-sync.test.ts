@@ -73,20 +73,20 @@ const mocks = vi.hoisted(() => ({
           usesLegacyEnv: false,
         }
   ),
-  resolveProductsMongoSourceConfig: vi.fn((source: 'local' | 'cloud') =>
+  resolveEcommerceMongoSourceConfig: vi.fn((source: 'local' | 'cloud') =>
     source === 'local'
       ? {
           source,
           configured: true,
-          uri: 'mongodb://localhost:27020/products_local',
-          dbName: 'products_local',
+          uri: 'mongodb://localhost:27021/ecom_local',
+          dbName: 'ecom_local',
           usesLegacyEnv: false,
         }
       : {
           source,
           configured: true,
-          uri: 'mongodb+srv://cluster.example/products_cloud',
-          dbName: 'products_cloud',
+          uri: 'mongodb+srv://cluster.example/ecom_cloud',
+          dbName: 'ecom_cloud',
           usesLegacyEnv: false,
         }
   ),
@@ -131,7 +131,7 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   getMongoDumpCommand: mocks.getMongoDumpCommand,
   getMongoRestoreCommand: mocks.getMongoRestoreCommand,
   resolveCmsBuilderMongoSourceConfig: mocks.resolveCmsBuilderMongoSourceConfig,
-  resolveProductsMongoSourceConfig: mocks.resolveProductsMongoSourceConfig,
+  resolveEcommerceMongoSourceConfig: mocks.resolveEcommerceMongoSourceConfig,
   resolveStudiqMongoSourceConfig: mocks.resolveStudiqMongoSourceConfig,
 }));
 
@@ -251,20 +251,20 @@ describe('mongo-source-sync', () => {
             usesLegacyEnv: false,
           }
     );
-    mocks.resolveProductsMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+    mocks.resolveEcommerceMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
       source === 'local'
         ? {
             source,
             configured: true,
-            uri: 'mongodb://localhost:27020/products_local',
-            dbName: 'products_local',
+            uri: 'mongodb://localhost:27021/ecom_local',
+            dbName: 'ecom_local',
             usesLegacyEnv: false,
           }
         : {
             source,
             configured: true,
-            uri: 'mongodb+srv://cluster.example/products_cloud',
-            dbName: 'products_cloud',
+            uri: 'mongodb+srv://cluster.example/ecom_cloud',
+            dbName: 'ecom_cloud',
             usesLegacyEnv: false,
           }
     );
@@ -330,13 +330,13 @@ describe('mongo-source-sync', () => {
   });
 
   it('reports a single per-app pre-flight configuration failure', async () => {
-    mocks.resolveProductsMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+    mocks.resolveEcommerceMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
       source === 'local'
         ? {
             source,
             configured: true,
-            uri: 'mongodb://localhost:27020/products_local',
-            dbName: 'products_local',
+            uri: 'mongodb://localhost:27021/ecom_local',
+            dbName: 'ecom_local',
             usesLegacyEnv: false,
           }
         : {
@@ -350,7 +350,25 @@ describe('mongo-source-sync', () => {
 
     await expect(
       testOnly.assertAllApplicationsSyncReady('products', 'local_to_cloud')
-    ).rejects.toThrow(/Products MongoDB source "cloud" is not configured/i);
+    ).rejects.toThrow(/Ecommerce MongoDB source "cloud" is not configured/i);
+  });
+
+  it('builds database-neutral restore URIs for namespace-remapped restores', () => {
+    expect(testOnly.buildMongoNamespaceRestoreUri('mongodb://localhost:27021/ecom_local')).toBe(
+      'mongodb://localhost:27021'
+    );
+    expect(
+      testOnly.buildMongoNamespaceRestoreUri(
+        'mongodb://user:secret@localhost:27021/ecom_local?replicaSet=rs0'
+      )
+    ).toBe('mongodb://user:secret@localhost:27021?replicaSet=rs0&authSource=ecom_local');
+    expect(
+      testOnly.buildMongoNamespaceRestoreUri(
+        'mongodb+srv://user:secret@cluster.example/products_db?retryWrites=true'
+      )
+    ).toBe(
+      'mongodb+srv://user:secret@cluster.example?retryWrites=true&authSource=products_db'
+    );
   });
 
   it('collects multiple pre-flight failures before throwing', async () => {
@@ -499,6 +517,18 @@ describe('mongo-source-sync', () => {
     expect(result.verification?.status).toBe('passed');
     expect(result.syncedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(mocks.execFileAsync).toHaveBeenCalledTimes(8);
+    expect(mocks.execFileAsync).toHaveBeenNthCalledWith(
+      8,
+      'mongorestore',
+      expect.arrayContaining([
+        '--uri',
+        'mongodb://localhost:27021',
+        '--nsFrom',
+        'ecom_cloud.*',
+        '--nsTo',
+        'ecom_local.*',
+      ])
+    );
     expect(mocks.dropDatabase).toHaveBeenCalledTimes(4);
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(1, {
       source: 'cloud',
@@ -527,10 +557,10 @@ describe('mongo-source-sync', () => {
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(4, {
       source: 'cloud',
       target: 'local',
-      sourceDbName: 'products_cloud',
-      targetDbName: 'products_local',
-      sourceUri: 'mongodb+srv://cluster.example/products_cloud',
-      targetUri: 'mongodb://localhost:27020/products_local',
+      sourceDbName: 'ecom_cloud',
+      targetDbName: 'ecom_local',
+      sourceUri: 'mongodb+srv://cluster.example/ecom_cloud',
+      targetUri: 'mongodb://localhost:27021/ecom_local',
     });
     expect(mocks.recordMongoSourceSync).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -618,7 +648,7 @@ describe('mongo-source-sync', () => {
     expect(recoveryRestoreCall?.[1]).toEqual(
       expect.arrayContaining([
         '--uri',
-        'mongodb+srv://cluster.example/products_cloud',
+        'mongodb+srv://cluster.example/ecom_cloud',
         '--archive=/tmp/backups/products-cloud-target-pre-sync-local_to_cloud.archive',
         '--gzip',
         '--drop',
@@ -669,7 +699,9 @@ describe('mongo-source-sync', () => {
     const log = await fs.readFile(result.logPath!, 'utf8');
 
     expect(log).toContain('mongodb://local-user:***@localhost:27017/app_local');
-    expect(log).toContain('mongodb+srv://cloud-user:***@cluster.example/app_cloud');
+    expect(log).toContain(
+      'mongodb+srv://cloud-user:***@cluster.example?authSource=app_cloud'
+    );
     expect(log).not.toContain('local-secret');
     expect(log).not.toContain('cloud-secret');
   });

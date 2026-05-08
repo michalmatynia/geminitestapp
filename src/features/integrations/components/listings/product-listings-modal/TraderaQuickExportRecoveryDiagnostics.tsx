@@ -50,14 +50,15 @@ function TraderaRecoveryExecutionSteps({
     return null;
   }
 
-  const isLive = execution.status === 'queued' || execution.status === 'running';
+  const liveStatus =
+    execution.status === 'queued' || execution.status === 'running' ? execution.status : null;
 
   return (
     <TraderaExecutionSteps
       title='Failed run steps'
       steps={execution.executionSteps}
-      live={isLive}
-      liveStatus={isLive ? execution.status : null}
+      live={liveStatus !== null}
+      liveStatus={liveStatus}
     />
   );
 }

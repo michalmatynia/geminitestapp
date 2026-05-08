@@ -14,7 +14,9 @@ export {
   normalizeProductImageExternalBaseUrl,
   productImageServingRouteByMode,
   resolveProductImageLocalFallbackUrl,
+  resolveProductImageFileUrl,
   resolveProductImageServingMode,
   resolveProductImageUrl,
+  type ProductImageFileLike,
   type ProductImageServingMode,
 } from '@/shared/lib/products/utils/image-routing';

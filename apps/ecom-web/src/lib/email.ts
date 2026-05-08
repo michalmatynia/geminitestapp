@@ -68,6 +68,12 @@ function buildConfirmationHtml(order: Order): string {
             ${escapeHtml(order.shippingAddress['address'] ?? '')}<br>
             ${[order.shippingAddress['city'], order.shippingAddress['postcode']].filter(Boolean).map(escapeHtml).join(', ')}<br>
             ${escapeHtml(order.shippingAddress['country'] ?? '')}
+            ${
+              order.inpostPoint
+                ? `<br><br><strong style="color:#f5f1e8;">InPost:</strong> ${escapeHtml(order.inpostPoint.name)}${order.inpostPoint.addressLine1 ? `<br>${escapeHtml(order.inpostPoint.addressLine1)}` : ''}`
+                : ''
+            }
+            ${order.inpostShipment?.trackingNumber ? `<br><br>Tracking: ${escapeHtml(order.inpostShipment.trackingNumber)}` : ''}
           </p>
         </div>
 

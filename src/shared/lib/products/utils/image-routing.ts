@@ -188,6 +188,54 @@ export const resolveProductImageUrl = (
   return resolveRelativeProductImageUrl(value, normalizedBase, baseIsLoopback);
 };
 
+export type ProductImageFileLike = {
+  filepath?: unknown;
+  metadata?: unknown;
+  publicUrl?: unknown;
+  storageProvider?: unknown;
+  thumbnailUrl?: unknown;
+  url?: unknown;
+};
+
+const readOptionalImageText = (value: unknown): string | null => {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const isLocalProductImageFile = (imageFile: ProductImageFileLike): boolean => {
+  if (imageFile.storageProvider === 'local') return true;
+  const metadata = imageFile.metadata;
+  if (!isRecord(metadata)) return false;
+  return metadata['storageSource'] === 'local-fallback' || metadata['storageProvider'] === 'local';
+};
+
+const resolveProductImageFileRawSource = (
+  imageFile: ProductImageFileLike
+): string | null => {
+  const candidates = [imageFile.filepath, imageFile.publicUrl, imageFile.url, imageFile.thumbnailUrl];
+  for (const candidate of candidates) {
+    const value = readOptionalImageText(candidate);
+    if (value !== null) return value;
+  }
+  return null;
+};
+
+export const resolveProductImageFileUrl = (
+  imageFile: ProductImageFileLike | null | undefined,
+  externalBaseUrl?: string | null
+): string | null => {
+  if (imageFile === null || imageFile === undefined) return null;
+  const source = resolveProductImageFileRawSource(imageFile);
+  if (source === null) return null;
+  const baseUrl = isLocalProductImageFile(imageFile)
+    ? LOCAL_PRODUCT_IMAGES_EXTERNAL_BASE_URL
+    : externalBaseUrl;
+  return resolveProductImageUrl(source, baseUrl);
+};
+
 export const resolveProductImageLocalFallbackUrl = (
   rawValue: string | null | undefined
 ): string | null => {

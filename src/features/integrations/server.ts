@@ -9,6 +9,7 @@ export async function getCategoryMappingRepository(): Promise<CategoryMappingRep
 }
 export type { Template, TemplateMapping } from './services/export-template-repository';
 export * from './services/export-template-repository';
+export * from './services/ecommerce-product-export';
 export * from './services/exports/base-exporter';
 export * from './services/exports/log-capture';
 export * from './services/external-category-repository';

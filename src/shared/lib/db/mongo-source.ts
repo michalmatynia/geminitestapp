@@ -18,7 +18,7 @@ import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import {
   MONGO_BACKUP_APPLICATIONS,
   resolveCmsBuilderMongoSourceConfig,
-  resolveProductsMongoSourceConfig,
+  resolveEcommerceMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
   type MongoApplicationSourceConfig,
   type MongoBackupApplication,
@@ -49,7 +49,7 @@ const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
-  products: 'Products',
+  products: 'Ecommerce',
 };
 
 const normalizeMongoSource = (value: unknown): MongoSource | null =>
@@ -209,7 +209,7 @@ const resolveApplicationMongoSourceConfig = (
     return resolveCmsBuilderMongoSourceConfig(source);
   }
   if (application === 'products') {
-    return resolveProductsMongoSourceConfig(source);
+    return resolveEcommerceMongoSourceConfig(source);
   }
   return getMongoSourceConfig(source);
 };
@@ -236,7 +236,13 @@ const getApplicationSourceConfigIssue = (
     return `${label} ${source} MongoDB source is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
   }
 
-  const prefix = `${application === 'cms-builder' ? 'CMS_BUILDER' : application.toUpperCase()}_MONGODB_${source.toUpperCase()}`;
+  const prefix = `${
+    application === 'cms-builder'
+      ? 'CMS_BUILDER'
+      : application === 'products'
+        ? 'ECOM'
+        : application.toUpperCase()
+  }_MONGODB_${source.toUpperCase()}`;
   return `${label} ${source} MongoDB source is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
 };
 

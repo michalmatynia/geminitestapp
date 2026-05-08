@@ -1,8 +1,17 @@
 import { MongoClient, type Db } from 'mongodb';
 
+const DEFAULT_ECOM_MONGODB_URI = 'mongodb://127.0.0.1:27021/ecom_local';
+const DEFAULT_ECOM_MONGODB_DB = 'ecom_local';
+
+function envValue(key: string): string | undefined {
+  const value = process.env[key]?.trim();
+  return value && value.length > 0 ? value : undefined;
+}
+
 /**
- * Resolve the MongoDB URI using the same source-selection logic as the
- * main geminitestapp, so both apps always point at the same database.
+ * Resolve the MongoDB URI using source-selection variables local to the
+ * ecommerce app. In local development this should point at the thin
+ * ecommerce MongoDB file, not the main geminitestapp product database.
  *
  * Priority:
  *  1. MONGODB_URI (explicit override — works in all environments)
@@ -12,36 +21,36 @@ import { MongoClient, type Db } from 'mongodb';
  *  3. Fallback to localhost for development convenience
  */
 function resolveMongoUri(): string {
-  if (process.env.MONGODB_URI?.trim()) return process.env.MONGODB_URI.trim();
+  const directUri = envValue('MONGODB_URI');
+  if (directUri !== undefined) return directUri;
 
   const source =
-    (process.env.MONGODB_ACTIVE_SOURCE ?? process.env.MONGODB_ACTIVE_SOURCE_DEFAULT ?? 'local')
-      .trim()
+    (envValue('MONGODB_ACTIVE_SOURCE') ?? envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ?? 'local')
       .toLowerCase();
 
   if (source === 'cloud') {
-    const uri = process.env.MONGODB_CLOUD_URI?.trim();
-    if (uri) return uri;
+    const uri = envValue('MONGODB_CLOUD_URI');
+    if (uri !== undefined) return uri;
   }
 
   // Default to local
-  return process.env.MONGODB_LOCAL_URI?.trim() ?? 'mongodb://127.0.0.1:27017/app';
+  return envValue('MONGODB_LOCAL_URI') ?? DEFAULT_ECOM_MONGODB_URI;
 }
 
 function resolveMongoDb(): string {
-  if (process.env.MONGODB_DB?.trim()) return process.env.MONGODB_DB.trim();
+  const directDb = envValue('MONGODB_DB');
+  if (directDb !== undefined) return directDb;
 
   const source =
-    (process.env.MONGODB_ACTIVE_SOURCE ?? process.env.MONGODB_ACTIVE_SOURCE_DEFAULT ?? 'local')
-      .trim()
+    (envValue('MONGODB_ACTIVE_SOURCE') ?? envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ?? 'local')
       .toLowerCase();
 
   if (source === 'cloud') {
-    const db = process.env.MONGODB_CLOUD_DB?.trim();
-    if (db) return db;
+    const db = envValue('MONGODB_CLOUD_DB');
+    if (db !== undefined) return db;
   }
 
-  return process.env.MONGODB_LOCAL_DB?.trim() ?? 'app';
+  return envValue('MONGODB_LOCAL_DB') ?? DEFAULT_ECOM_MONGODB_DB;
 }
 
 export function hasMongoConfig(): boolean {
@@ -49,58 +58,110 @@ export function hasMongoConfig(): boolean {
 }
 
 function resolveProductsMongoUri(): string {
-  if (process.env.PRODUCTS_MONGODB_URI?.trim()) return process.env.PRODUCTS_MONGODB_URI.trim();
-  if (process.env.MONGODB_PRODUCTS_URI?.trim()) return process.env.MONGODB_PRODUCTS_URI.trim();
+  const directUri = envValue('PRODUCTS_MONGODB_URI') ?? envValue('MONGODB_PRODUCTS_URI');
+  if (directUri !== undefined) return directUri;
 
   const source =
     (
-      process.env.PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT ??
-      process.env.MONGODB_ACTIVE_SOURCE ??
-      process.env.MONGODB_ACTIVE_SOURCE_DEFAULT ??
+      envValue('PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT') ??
+      envValue('MONGODB_ACTIVE_SOURCE') ??
+      envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ??
       'local'
     )
-      .trim()
       .toLowerCase();
 
   if (source === 'cloud') {
     const uri =
-      process.env.PRODUCTS_MONGODB_CLOUD_URI?.trim() ??
-      process.env.MONGODB_PRODUCTS_CLOUD_URI?.trim();
-    if (uri) return uri;
+      envValue('PRODUCTS_MONGODB_CLOUD_URI') ??
+      envValue('MONGODB_PRODUCTS_CLOUD_URI');
+    if (uri !== undefined) return uri;
   }
 
   return (
-    process.env.PRODUCTS_MONGODB_LOCAL_URI?.trim() ??
-    process.env.MONGODB_PRODUCTS_LOCAL_URI?.trim() ??
-    'mongodb://127.0.0.1:27020/products_local'
+    envValue('PRODUCTS_MONGODB_LOCAL_URI') ??
+    envValue('MONGODB_PRODUCTS_LOCAL_URI') ??
+    DEFAULT_ECOM_MONGODB_URI
   );
 }
 
 function resolveProductsMongoDb(): string {
-  if (process.env.PRODUCTS_MONGODB_DB?.trim()) return process.env.PRODUCTS_MONGODB_DB.trim();
-  if (process.env.MONGODB_PRODUCTS_DB?.trim()) return process.env.MONGODB_PRODUCTS_DB.trim();
+  const directDb = envValue('PRODUCTS_MONGODB_DB') ?? envValue('MONGODB_PRODUCTS_DB');
+  if (directDb !== undefined) return directDb;
 
   const source =
     (
-      process.env.PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT ??
-      process.env.MONGODB_ACTIVE_SOURCE ??
-      process.env.MONGODB_ACTIVE_SOURCE_DEFAULT ??
+      envValue('PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT') ??
+      envValue('MONGODB_ACTIVE_SOURCE') ??
+      envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ??
       'local'
     )
-      .trim()
       .toLowerCase();
 
   if (source === 'cloud') {
     const db =
-      process.env.PRODUCTS_MONGODB_CLOUD_DB?.trim() ??
-      process.env.MONGODB_PRODUCTS_CLOUD_DB?.trim();
-    if (db) return db;
+      envValue('PRODUCTS_MONGODB_CLOUD_DB') ??
+      envValue('MONGODB_PRODUCTS_CLOUD_DB');
+    if (db !== undefined) return db;
   }
 
   return (
-    process.env.PRODUCTS_MONGODB_LOCAL_DB?.trim() ??
-    process.env.MONGODB_PRODUCTS_LOCAL_DB?.trim() ??
-    'products_local'
+    envValue('PRODUCTS_MONGODB_LOCAL_DB') ??
+    envValue('MONGODB_PRODUCTS_LOCAL_DB') ??
+    DEFAULT_ECOM_MONGODB_DB
+  );
+}
+
+function resolveEcommerceProductsMongoUri(): string {
+  const directUri = envValue('ECOM_MONGODB_URI') ?? envValue('MONGODB_ECOM_URI');
+  if (directUri !== undefined) return directUri;
+
+  const source =
+    (
+      envValue('ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT') ??
+      envValue('MONGODB_ACTIVE_SOURCE') ??
+      envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ??
+      'local'
+    )
+      .toLowerCase();
+
+  if (source === 'cloud') {
+    const uri =
+      envValue('ECOM_MONGODB_CLOUD_URI') ??
+      envValue('MONGODB_ECOM_CLOUD_URI');
+    if (uri !== undefined) return uri;
+  }
+
+  return (
+    envValue('ECOM_MONGODB_LOCAL_URI') ??
+    envValue('MONGODB_ECOM_LOCAL_URI') ??
+    DEFAULT_ECOM_MONGODB_URI
+  );
+}
+
+function resolveEcommerceProductsMongoDb(): string {
+  const directDb = envValue('ECOM_MONGODB_DB') ?? envValue('MONGODB_ECOM_DB');
+  if (directDb !== undefined) return directDb;
+
+  const source =
+    (
+      envValue('ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT') ??
+      envValue('MONGODB_ACTIVE_SOURCE') ??
+      envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ??
+      'local'
+    )
+      .toLowerCase();
+
+  if (source === 'cloud') {
+    const db =
+      envValue('ECOM_MONGODB_CLOUD_DB') ??
+      envValue('MONGODB_ECOM_CLOUD_DB');
+    if (db !== undefined) return db;
+  }
+
+  return (
+    envValue('ECOM_MONGODB_LOCAL_DB') ??
+    envValue('MONGODB_ECOM_LOCAL_DB') ??
+    DEFAULT_ECOM_MONGODB_DB
   );
 }
 
@@ -109,7 +170,7 @@ const clientCache = new Map<string, MongoClient>();
 function getClient(uri: string, label: string): MongoClient {
   if (!uri) {
     throw new Error(
-      `No ${label} MongoDB URI configured. Set MONGODB_URI or PRODUCTS_MONGODB_LOCAL_URI in apps/ecom-web/.env.local`
+      `No ${label} MongoDB URI configured. Set MONGODB_URI, MONGODB_LOCAL_URI, or ECOM_MONGODB_LOCAL_URI in apps/ecom-web/.env.local`
     );
   }
   const existing = clientCache.get(uri);
@@ -140,8 +201,18 @@ export async function getProductsDb(): Promise<Db> {
   return c.db(resolveProductsMongoDb());
 }
 
+export function hasEcommerceProductsMongoConfig(): boolean {
+  return Boolean(resolveEcommerceProductsMongoUri());
+}
+
+export async function getEcommerceProductsDb(): Promise<Db> {
+  const c = getClient(resolveEcommerceProductsMongoUri(), 'ecommerce products');
+  await c.connect();
+  return c.db(resolveEcommerceProductsMongoDb());
+}
+
 export async function getEcomAuthDb(): Promise<Db> {
-  return getProductsDb();
+  return getDb();
 }
 
 export async function closeMongoClients(): Promise<void> {

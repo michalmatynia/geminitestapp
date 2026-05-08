@@ -23,7 +23,7 @@ const APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplication, string> 
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
-  products: 'Products',
+  products: 'Ecommerce',
 };
 
 const APPLICATION_TARGET_LABELS: Record<DatabaseEngineManagedMongoApplicationTarget, string> = {

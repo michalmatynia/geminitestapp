@@ -496,6 +496,7 @@ export type MarketplaceBadgeEntry = {
   vinted?: string;
   playwrightProgrammable?: string;
   scrapedSource?: string;
+  ecommerce?: string;
 };
 
 export type ListingBadgesPayload = Record<string, MarketplaceBadgeEntry>;

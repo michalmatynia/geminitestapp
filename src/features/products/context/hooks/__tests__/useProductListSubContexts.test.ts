@@ -133,6 +133,8 @@ describe('useProductListSubContexts', () => {
     vintedBadgeStatuses: new Map(),
     scrapedSourceBadgeIds: new Set(),
     scrapedSourceBadgeStatuses: new Map(),
+    ecommerceBadgeIds: new Set(),
+    ecommerceBadgeStatuses: new Map(),
     queuedProductIds: new Set(),
     productAiRunStatusByProductId: new Map(),
     rowRuntimeReady: false,

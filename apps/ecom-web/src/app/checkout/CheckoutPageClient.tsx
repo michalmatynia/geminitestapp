@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, type JSX } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
@@ -12,6 +12,7 @@ import { COUNTRIES } from '@/data/countries';
 import type { CartItem } from '@/context/CartContext';
 import type { Product } from '@/data/products';
 import type { EcomLocale } from '@/lib/locales';
+import type { InpostPoint } from '@/lib/orders';
 import type {
   CheckoutContent,
   CheckoutFieldContent,
@@ -219,6 +220,245 @@ function FieldRows({
         return <div key={field.id}>{renderField(field)}</div>;
       })}
     </>
+  );
+}
+
+const INPOST_GEO_WIDGET_SCRIPT_ID = 'inpost-geowidget-script';
+const INPOST_GEO_WIDGET_STYLE_ID = 'inpost-geowidget-style';
+
+let inpostGeowidgetPromise: Promise<void> | null = null;
+
+function ensureInpostGeowidgetAssets(): Promise<void> {
+  if (typeof document === 'undefined') return Promise.resolve();
+
+  if (!document.getElementById(INPOST_GEO_WIDGET_STYLE_ID)) {
+    const link = document.createElement('link');
+    link.id = INPOST_GEO_WIDGET_STYLE_ID;
+    link.rel = 'stylesheet';
+    link.href = 'https://geowidget.inpost.pl/inpost-geowidget.css';
+    document.head.appendChild(link);
+  }
+
+  if (customElements.get('inpost-geowidget')) return Promise.resolve();
+  if (inpostGeowidgetPromise) return inpostGeowidgetPromise;
+
+  inpostGeowidgetPromise = new Promise((resolve, reject) => {
+    const existingScript = document.getElementById(INPOST_GEO_WIDGET_SCRIPT_ID) as HTMLScriptElement | null;
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error('InPost Geowidget failed to load.')), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = INPOST_GEO_WIDGET_SCRIPT_ID;
+    script.src = 'https://geowidget.inpost.pl/inpost-geowidget.js';
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('InPost Geowidget failed to load.'));
+    document.body.appendChild(script);
+  });
+
+  return inpostGeowidgetPromise;
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readPointString(source: Record<string, unknown>, key: string): string {
+  const value = source[key];
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function readNestedRecord(source: Record<string, unknown>, key: string): Record<string, unknown> {
+  const value = source[key];
+  return isPlainRecord(value) ? value : {};
+}
+
+function normalizeGeowidgetPoint(value: unknown): InpostPoint | null {
+  if (!isPlainRecord(value)) return null;
+
+  const name = readPointString(value, 'name');
+  if (!name) return null;
+
+  const address = readNestedRecord(value, 'address');
+  const addressDetails = readNestedRecord(value, 'address_details');
+  const location = readNestedRecord(value, 'location');
+  const addressLine1 = readPointString(address, 'line1')
+    || readPointString(value, 'address')
+    || [
+      readPointString(addressDetails, 'street'),
+      readPointString(addressDetails, 'building_number'),
+    ].filter(Boolean).join(' ');
+  const addressLine2 = readPointString(address, 'line2');
+
+  return {
+    id: name,
+    name,
+    description: readPointString(value, 'description') || undefined,
+    addressLine1: addressLine1 || undefined,
+    addressLine2: addressLine2 || undefined,
+    city: readPointString(addressDetails, 'city') || undefined,
+    postCode: readPointString(addressDetails, 'post_code') || undefined,
+    latitude: typeof location['latitude'] === 'number' ? location['latitude'] : undefined,
+    longitude: typeof location['longitude'] === 'number' ? location['longitude'] : undefined,
+  };
+}
+
+function InpostPointSelector({
+  locale,
+  point,
+  error,
+  onSelect,
+}: {
+  locale: EcomLocale;
+  point: InpostPoint | null;
+  error: string;
+  onSelect: (point: InpostPoint | null) => void;
+}): JSX.Element {
+  const widgetRef = useRef<HTMLDivElement | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const token = process.env.NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN?.trim() ?? '';
+  const hasWidgetToken = Boolean(token);
+
+  useEffect(() => {
+    if (!hasWidgetToken || !widgetRef.current) return;
+
+    let active = true;
+    const container = widgetRef.current;
+    const eventName = 'onpointselect';
+    const handleSelect = (event: Event) => {
+      const customEvent = event as CustomEvent<unknown>;
+      const payload = customEvent.detail ?? (event as unknown as { details?: unknown }).details;
+      const normalized = normalizeGeowidgetPoint(payload);
+      if (normalized) onSelect(normalized);
+    };
+
+    setLoadError('');
+    ensureInpostGeowidgetAssets()
+      .then(() => {
+        if (!active) return;
+        const widget = document.createElement('inpost-geowidget');
+        widget.setAttribute('token', token);
+        widget.setAttribute('language', locale);
+        widget.setAttribute('config', 'parcelCollect');
+        widget.setAttribute('onpoint', eventName);
+        widget.style.display = 'block';
+        widget.style.minHeight = '420px';
+        container.replaceChildren(widget);
+        document.addEventListener(eventName, handleSelect);
+        widget.addEventListener(eventName, handleSelect);
+      })
+      .catch(() => {
+        if (active) setLoadError(locale === 'pl' ? 'Mapa InPost jest chwilowo niedostępna.' : 'InPost map is temporarily unavailable.');
+      });
+
+    return () => {
+      active = false;
+      document.removeEventListener(eventName, handleSelect);
+      container.replaceChildren();
+    };
+  }, [hasWidgetToken, locale, onSelect, token]);
+
+  const selectedAddress = [
+    point?.addressLine1,
+    point?.addressLine2,
+    [point?.postCode, point?.city].filter(Boolean).join(' '),
+  ].filter(Boolean).join(', ');
+
+  return (
+    <div
+      className="mt-4 p-4"
+      style={{
+        border: `1px solid ${error ? 'var(--accent)' : 'var(--border)'}`,
+        background: 'var(--surface)',
+      }}
+    >
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div className="type-label mb-1" style={{ color: 'var(--accent)' }}>
+            {locale === 'pl' ? 'Paczkomat InPost' : 'InPost pickup point'}
+          </div>
+          <p className="type-label" style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+            {locale === 'pl'
+              ? 'Wybierz paczkomat dla tej przesyłki.'
+              : 'Choose the parcel locker for this shipment.'}
+          </p>
+        </div>
+        {point && (
+          <button
+            type="button"
+            className="type-label hover:text-[var(--fg)] transition-colors"
+            style={{ color: 'var(--muted)', flexShrink: 0 }}
+            onClick={() => onSelect(null)}
+          >
+            {locale === 'pl' ? 'Zmień' : 'Change'}
+          </button>
+        )}
+      </div>
+
+      {point && (
+        <div className="mb-4 p-3" style={{ border: '1px solid var(--border)', background: 'var(--bg)' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--fg)', letterSpacing: '0.08em' }}>
+            {point.name}
+          </div>
+          {selectedAddress && (
+            <div className="type-label mt-1" style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+              {selectedAddress}
+            </div>
+          )}
+        </div>
+      )}
+
+      {hasWidgetToken ? (
+        <>
+          <div ref={widgetRef} style={{ minHeight: 420 }} />
+          {loadError && (
+            <p className="type-label mt-3" style={{ color: 'var(--accent)' }}>
+              {loadError}
+            </p>
+          )}
+        </>
+      ) : (
+        <div>
+          <label className="type-label block mb-1.5" style={{ color: 'var(--fg)' }}>
+            {locale === 'pl' ? 'Kod paczkomatu' : 'Parcel locker code'}
+          </label>
+          <input
+            type="text"
+            value={point?.name ?? ''}
+            onChange={(event) => {
+              const value = event.target.value.trim().toUpperCase();
+              onSelect(value ? { id: value, name: value } : null);
+            }}
+            placeholder={locale === 'pl' ? 'np. WAW01A' : 'e.g. WAW01A'}
+            style={{
+              width: '100%',
+              padding: '0.75rem 1rem',
+              background: 'var(--bg)',
+              border: `1px solid ${error ? 'var(--accent)' : 'var(--border)'}`,
+              outline: 'none',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.875rem',
+              color: 'var(--fg)',
+              letterSpacing: '0.08em',
+            }}
+          />
+          <p className="type-label mt-2" style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+            {locale === 'pl'
+              ? 'Dodaj NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN, aby włączyć mapę wyboru.'
+              : 'Set NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN to enable the map selector.'}
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <p className="type-label mt-3" style={{ color: 'var(--accent)' }}>
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -516,7 +756,6 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const [step, setStep] = useState<Step>('information');
   const [shipping, setShipping] = useState(content.shippingMethods[0]?.id ?? 'standard');
   const [form, setForm] = useState<Record<string, string>>({});
-  const [paymentForm, setPaymentForm] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [promoDiscountPct, setPromoDiscountPct] = useState(0);
@@ -526,6 +765,13 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   }, []);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [confirmedOrderId, setConfirmedOrderId] = useState('');
+  const [blikCode, setBlikCode] = useState('');
+  const [blikError, setBlikError] = useState('');
+  const [blikPending, setBlikPending] = useState(false);
+  const [blikPendingOrderId, setBlikPendingOrderId] = useState('');
+  const [blikSecondsLeft, setBlikSecondsLeft] = useState(0);
+  const [inpostPoint, setInpostPoint] = useState<InpostPoint | null>(null);
+  const [inpostPointError, setInpostPointError] = useState('');
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const zoneMethods = useMemo(() => {
@@ -548,20 +794,33 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const selectedShipping: CheckoutShippingMethodContent = zoneMethods.find((method) => method.id === shipping)
     ?? zoneMethods[0]
     ?? { id: 'standard', label: 'Standard', detail: '', price: 0, priceLabel: 'Free', businessDaysMin: 3, businessDaysMax: 5 };
+  const requiresInpostPoint = selectedShipping.carrier === 'inpost' && Boolean(selectedShipping.requiresPickupPoint);
   const discount = Math.round(subtotal * promoDiscountPct);
   const total = subtotal - discount + selectedShipping.price;
   const requiredMessage = locale === 'pl' ? 'To pole jest wymagane.' : 'This field is required.';
   const invalidEmailMessage = locale === 'pl' ? 'Wpisz poprawny adres email.' : 'Enter a valid email address.';
-  const invalidCardMessage = locale === 'pl' ? 'Wpisz 16 cyfr numeru karty.' : 'Enter a 16-digit card number.';
-  const invalidExpiryMessage = locale === 'pl' ? 'Wpisz poprawna date MM/YY.' : 'Enter a valid MM/YY expiry.';
-  const expiredCardMessage = locale === 'pl' ? 'Data waznosci musi byc aktualna lub przyszla.' : 'Card expiry must be current or future.';
-  const invalidCvvMessage = locale === 'pl' ? 'Wpisz 3-4 cyfry kodu CVV.' : 'Enter a 3-4 digit security code.';
   const estimatedDeliveryLabel = locale === 'pl' ? 'Szacowana dostawa:' : 'Estimated:';
+  const blikLabel = locale === 'pl' ? 'Kod BLIK' : 'BLIK code';
+  const blikPlaceholder = '000000';
+  const blikHint = locale === 'pl'
+    ? 'Wygeneruj 6-cyfrowy kod w swojej aplikacji bankowej.'
+    : 'Generate a 6-digit code in your banking app.';
+  const blikPendingTitle = locale === 'pl' ? 'Potwierdź płatność' : 'Confirm payment';
+  const blikPendingBody = locale === 'pl'
+    ? 'Otwórz aplikację bankową i zatwierdź płatność BLIK. Czekamy na potwierdzenie…'
+    : 'Open your banking app and approve the BLIK payment. Waiting for confirmation…';
+  const blikInvalidMessage = locale === 'pl' ? 'Wpisz poprawny 6-cyfrowy kod BLIK.' : 'Enter a valid 6-digit BLIK code.';
+  const inpostPointRequiredMessage = locale === 'pl' ? 'Wybierz paczkomat InPost.' : 'Choose an InPost pickup point.';
 
   useEffect(() => {
     if (zoneMethods.some((method) => method.id === shipping)) return;
     setShipping(zoneMethods[0]?.id ?? 'standard');
   }, [shipping, zoneMethods]);
+
+  useEffect(() => {
+    if (requiresInpostPoint) return;
+    setInpostPointError('');
+  }, [requiresInpostPoint]);
 
   // Pre-fill contact info from the logged-in user's session
   useEffect(() => {
@@ -586,15 +845,11 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
       return next;
     });
   };
-  const setPaymentField = (id: string, v: string) => {
-    setPaymentForm((f) => ({ ...f, [id]: v }));
-    setErrors((current) => {
-      if (!current[id]) return current;
-      const next = { ...current };
-      delete next[id];
-      return next;
-    });
-  };
+
+  const handleInpostPointSelect = useCallback((point: InpostPoint | null) => {
+    setInpostPoint(point);
+    if (point) setInpostPointError('');
+  }, []);
 
   const validateInformationForm = (): boolean => {
     const nextErrors: Record<string, string> = {};
@@ -611,33 +866,13 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     return Object.keys(nextErrors).length === 0;
   };
 
-  const validatePaymentForm = (): boolean => {
-    const nextErrors: Record<string, string> = {};
-    const cardNumber = (paymentForm.cardNumber ?? '').replace(/\s+/g, '');
-    const expiry = (paymentForm.expiry ?? '').replace(/\s+/g, '');
-    const securityCode = (paymentForm.securityCode ?? '').trim();
-
-    if (!/^\d{16}$/.test(cardNumber)) nextErrors.cardNumber = invalidCardMessage;
-    if (!(paymentForm.cardName ?? '').trim()) nextErrors.cardName = requiredMessage;
-
-    const expiryMatch = /^(0[1-9]|1[0-2])\/(\d{2})$/.exec(expiry);
-    if (!expiryMatch) {
-      nextErrors.expiry = invalidExpiryMessage;
-    } else {
-      const expiryMonth = Number(expiryMatch[1]);
-      const expiryYear = 2000 + Number(expiryMatch[2]);
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth() + 1;
-      if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
-        nextErrors.expiry = expiredCardMessage;
-      }
+  const validateShippingStep = (): boolean => {
+    if (requiresInpostPoint && !inpostPoint) {
+      setInpostPointError(inpostPointRequiredMessage);
+      return false;
     }
-
-    if (!/^\d{3,4}$/.test(securityCode)) nextErrors.securityCode = invalidCvvMessage;
-
-    setErrors((current) => ({ ...current, ...nextErrors }));
-    return Object.keys(nextErrors).length === 0;
+    setInpostPointError('');
+    return true;
   };
 
   const handlePlaceOrder = async () => {
@@ -646,11 +881,20 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
       setStep('information');
       return;
     }
-    if (!validatePaymentForm()) return;
+    if (!validateShippingStep()) {
+      setStep('shipping');
+      return;
+    }
 
+    if (!/^\d{6}$/.test(blikCode)) {
+      setBlikError(blikInvalidMessage);
+      return;
+    }
+
+    setBlikError('');
     setPlacingOrder(true);
     try {
-      const res = await fetch('/api/orders', {
+      const res = await fetch('/api/checkout/blik', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -658,26 +902,89 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
           items,
           shippingMethod: selectedShipping.label,
           shippingPrice: selectedShipping.price,
+          shippingCarrier: selectedShipping.carrier ?? 'manual',
+          shippingService: selectedShipping.service ?? selectedShipping.id,
+          inpostPoint: requiresInpostPoint ? inpostPoint ?? undefined : undefined,
           shippingAddress: { ...form },
           subtotal,
           discount,
           promoCode: promoCode ?? undefined,
           total,
+          blikCode,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { orderId?: string };
-      if (!res.ok || typeof data.orderId !== 'string') throw new Error('Order failed');
+      const data = (await res.json().catch(() => ({}))) as { orderId?: string; error?: string };
+
+      if (!res.ok || typeof data.orderId !== 'string') {
+        setBlikError(data.error ?? (locale === 'pl' ? 'Błąd płatności. Spróbuj ponownie.' : 'Payment failed. Please try again.'));
+        return;
+      }
 
       setConfirmedOrderId(data.orderId);
-      setStep('confirmation');
-      clearCart();
-      toast({ type: 'success', title: content.orderPlacedToastTitle, message: data.orderId });
+      setBlikPendingOrderId(data.orderId);
+      setBlikSecondsLeft(120);
+      setBlikPending(true);
     } catch {
       toast({ type: 'error', title: 'Order failed', message: 'Please try again.' });
     } finally {
       setPlacingOrder(false);
     }
   };
+
+  // Poll for BLIK payment confirmation after the push notification is sent.
+  useEffect(() => {
+    if (!blikPending || !blikPendingOrderId) return;
+
+    let active = true;
+
+    // Countdown ticker (visual only — real timeout drives state)
+    const tickId = setInterval(() => {
+      setBlikSecondsLeft((s) => Math.max(0, s - 1));
+    }, 1000);
+
+    const timeoutId = setTimeout(() => {
+      if (!active) return;
+      clearInterval(tickId);
+      setBlikPending(false);
+      setBlikSecondsLeft(0);
+      setBlikError(locale === 'pl' ? 'Czas oczekiwania na potwierdzenie minął. Spróbuj ponownie.' : 'BLIK confirmation timed out. Please try again.');
+    }, 2 * 60 * 1000);
+
+    const intervalId = setInterval(async () => {
+      if (!active) return;
+      try {
+        const res = await fetch(`/api/orders/${encodeURIComponent(blikPendingOrderId)}/status`);
+        const data = (await res.json()) as { status?: string };
+        if (!active) return;
+
+        if (data.status === 'processing') {
+          clearInterval(intervalId);
+          clearInterval(tickId);
+          clearTimeout(timeoutId);
+          setBlikPending(false);
+          setStep('confirmation');
+          clearCart();
+          toast({ type: 'success', title: content.orderPlacedToastTitle, message: blikPendingOrderId });
+        } else if (data.status === 'cancelled') {
+          clearInterval(intervalId);
+          clearInterval(tickId);
+          clearTimeout(timeoutId);
+          setBlikPending(false);
+          setBlikSecondsLeft(0);
+          setBlikError(locale === 'pl' ? 'Płatność BLIK odrzucona.' : 'BLIK payment was declined.');
+        }
+      } catch {
+        // Transient error — keep polling
+      }
+    }, 2000);
+
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+      clearInterval(tickId);
+      clearTimeout(timeoutId);
+    };
+  }, [blikPending, blikPendingOrderId, clearCart, content.orderPlacedToastTitle, locale, toast]);
 
   if (step === 'confirmation') {
     return (
@@ -723,7 +1030,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
           )}
           <div className="flex gap-3">
             <a href={localizedHref(content.continueShoppingHref)} className="btn-primary">{content.continueShoppingLabel}</a>
-            <button className="btn-ghost">{content.trackOrderLabel}</button>
+            <a href={localizedHref('/account')} className="btn-ghost">{content.trackOrderLabel}</a>
           </div>
 
           {/* Manifesto quote */}
@@ -842,7 +1149,10 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                         name="shipping"
                         value={method.id}
                         checked={shipping === method.id}
-                        onChange={() => setShipping(method.id)}
+                        onChange={() => {
+                          setShipping(method.id);
+                          if (method.carrier !== 'inpost') setInpostPointError('');
+                        }}
                         className="sr-only"
                       />
                       <div
@@ -867,6 +1177,14 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                       </span>
                     </label>
                   ))}
+                  {requiresInpostPoint && (
+                    <InpostPointSelector
+                      locale={locale}
+                      point={inpostPoint}
+                      error={inpostPointError}
+                      onSelect={handleInpostPointSelect}
+                    />
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -880,7 +1198,12 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                     </svg>
                     {content.backLabel}
                   </button>
-                  <button className="btn-primary" onClick={() => setStep('payment')}>
+                  <button
+                    className="btn-primary"
+                    onClick={() => {
+                      if (validateShippingStep()) setStep('payment');
+                    }}
+                  >
                     {content.continueToPaymentLabel}
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                       <path d="M5 12h14M12 5l7 7-7 7" />
@@ -911,56 +1234,169 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   </span>
                 </div>
 
-                {/* Card form */}
-                <div className="space-y-4">
-                  <FieldRows fields={content.paymentFields} values={paymentForm} errors={errors} locale={locale} onChange={setPaymentField} />
-                </div>
-
-                {/* Billing address toggle */}
-                <label className="flex items-center gap-3 mt-6 cursor-pointer">
-                  <input type="checkbox" defaultChecked className="sr-only" />
-                  <div
-                    className="w-4 h-4 flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--fg)', border: '1px solid var(--fg)' }}
-                  >
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
-                      <path d="M20 6L9 17l-5-5" />
+                {blikPending ? (
+                  /* ── BLIK pending: customer is confirming in banking app ── */
+                  <div className="flex flex-col items-center text-center py-8 gap-6">
+                    <svg
+                      className="animate-spin"
+                      width="36"
+                      height="36"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      style={{ color: 'var(--fg)' }}
+                    >
+                      <path d="M12 3a9 9 0 1 1-9 9" />
                     </svg>
+                    <div>
+                      <p
+                        style={{
+                          fontFamily: 'var(--font-display)',
+                          fontSize: '1.1rem',
+                          fontWeight: 300,
+                          color: 'var(--fg)',
+                          marginBottom: '0.5rem',
+                        }}
+                      >
+                        {blikPendingTitle}
+                      </p>
+                      <p className="type-label" style={{ color: 'var(--muted)', maxWidth: '320px' }}>
+                        {blikPendingBody}
+                      </p>
+                      {blikSecondsLeft > 0 && (
+                        <p
+                          className="type-label mt-3"
+                          style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}
+                        >
+                          {String(Math.floor(blikSecondsLeft / 60)).padStart(2, '0')}
+                          :{String(blikSecondsLeft % 60).padStart(2, '0')}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      className="type-label hover:text-[var(--fg)] transition-colors"
+                      style={{ color: 'var(--muted)' }}
+                      onClick={() => {
+                        setBlikPending(false);
+                        setBlikSecondsLeft(0);
+                        setBlikCode('');
+                        setBlikError('');
+                      }}
+                    >
+                      {locale === 'pl' ? 'Anuluj i spróbuj ponownie' : 'Cancel and try again'}
+                    </button>
                   </div>
-                  <span className="type-label" style={{ color: 'var(--muted)' }}>
-                    {content.billingSameLabel}
-                  </span>
-                </label>
+                ) : (
+                  /* ── BLIK code input ── */
+                  <div>
+                    {/* BLIK logo badge */}
+                    <div className="flex items-center gap-3 mb-6">
+                      <div
+                        className="flex items-center justify-center px-3 py-1"
+                        style={{
+                          background: 'var(--fg)',
+                          color: 'var(--bg)',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.7rem',
+                          letterSpacing: '0.15em',
+                          fontWeight: 600,
+                        }}
+                      >
+                        BLIK
+                      </div>
+                      <span className="type-label" style={{ color: 'var(--muted)' }}>
+                        {locale === 'pl' ? 'Płatność mobilna' : 'Mobile payment'}
+                      </span>
+                    </div>
+
+                    <div className="mb-2">
+                      <label
+                        htmlFor="blik-code"
+                        className="type-label block mb-1.5"
+                        style={{ color: 'var(--fg)' }}
+                      >
+                        {blikLabel}
+                      </label>
+                      <input
+                        id="blik-code"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="\d{6}"
+                        maxLength={6}
+                        value={blikCode}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
+                          setBlikCode(digits);
+                          if (blikError) setBlikError('');
+                        }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') void handlePlaceOrder(); }}
+                        placeholder={blikPlaceholder}
+                        autoComplete="one-time-code"
+                        aria-invalid={Boolean(blikError)}
+                        aria-describedby={blikError ? 'blik-error' : 'blik-hint'}
+                        style={{
+                          width: '100%',
+                          padding: '1rem 1.25rem',
+                          background: 'transparent',
+                          border: `1px solid ${blikError ? 'var(--accent)' : 'var(--border)'}`,
+                          outline: 'none',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '1.75rem',
+                          letterSpacing: '0.4em',
+                          color: 'var(--fg)',
+                          textAlign: 'center',
+                          transition: 'border-color 0.2s ease',
+                        }}
+                        onFocus={(e) => { e.target.style.borderColor = 'var(--fg)'; }}
+                        onBlur={(e) => { e.target.style.borderColor = blikError ? 'var(--accent)' : 'var(--border)'; }}
+                      />
+                      {blikError ? (
+                        <p id="blik-error" className="type-label mt-1.5" style={{ color: 'var(--accent)' }}>
+                          {blikError}
+                        </p>
+                      ) : (
+                        <p id="blik-hint" className="type-label mt-1.5" style={{ color: 'var(--muted)' }}>
+                          {blikHint}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between mt-10">
                   <button
                     className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors"
                     style={{ color: 'var(--muted)' }}
-                    onClick={() => setStep('shipping')}
+                    onClick={() => { if (!blikPending) setStep('shipping'); }}
+                    disabled={blikPending}
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                       <path d="M19 12H5M12 5l-7 7 7 7" />
                     </svg>
                     {content.backLabel}
                   </button>
-                  <button
-                    className="btn-primary"
-                    onClick={handlePlaceOrder}
-                    disabled={items.length === 0 || placingOrder}
-                    style={{ opacity: items.length === 0 || placingOrder ? 0.5 : 1 }}
-                  >
-                    {placingOrder && (
-                      <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                        <path d="M12 3a9 9 0 1 1-9 9" />
-                      </svg>
-                    )}
-                    {items.length === 0 ? content.addItemsFirstLabel : content.placeOrderLabel}
-                    {items.length > 0 && !placingOrder && (
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                    )}
-                  </button>
+                  {!blikPending && (
+                    <button
+                      className="btn-primary"
+                      onClick={handlePlaceOrder}
+                      disabled={items.length === 0 || placingOrder}
+                      style={{ opacity: items.length === 0 || placingOrder ? 0.5 : 1 }}
+                    >
+                      {placingOrder && (
+                        <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                          <path d="M12 3a9 9 0 1 1-9 9" />
+                        </svg>
+                      )}
+                      {items.length === 0 ? content.addItemsFirstLabel : content.placeOrderLabel}
+                      {items.length > 0 && !placingOrder && (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                          <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             )}

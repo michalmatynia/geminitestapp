@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { getProductsCmsSnapshot, parseProductsContentUpdate, saveProductsContent } from '@/lib/cms';
+import { deleteProductsContent, getProductsCmsSnapshot, parseProductsContentUpdate, saveProductsContent } from '@/lib/cms';
+import { deleteLocalizedCmsRouteContent } from '@/lib/cmsRouteHandlers';
 import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 function forbidden(): NextResponse {
@@ -46,4 +47,17 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   } catch {
     return NextResponse.json({ error: 'Failed to save products CMS content' }, { status: 500 });
   }
+}
+
+export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  return deleteLocalizedCmsRouteContent({
+    req,
+    label: 'products',
+    deleteContent: deleteProductsContent,
+    revalidate: [
+      { path: '/products' },
+      { path: '/products/[slug]', type: 'page' },
+      { path: '/collections/[slug]', type: 'page' },
+    ],
+  });
 }

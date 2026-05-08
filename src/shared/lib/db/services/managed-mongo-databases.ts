@@ -19,7 +19,7 @@ import {
   backupsDir,
   MONGO_BACKUP_APPLICATIONS,
   resolveCmsBuilderMongoSourceConfig,
-  resolveProductsMongoSourceConfig,
+  resolveEcommerceMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
   type MongoApplicationSourceConfig,
   type MongoBackupApplication,
@@ -29,7 +29,7 @@ const MANAGED_MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> =
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
-  products: 'Products',
+  products: 'Ecommerce',
 };
 
 const DEFAULT_SERVER_SELECTION_TIMEOUT_MS = 5_000;
@@ -135,7 +135,7 @@ export const resolveManagedMongoSourceConfig = async (
     return resolveCmsBuilderMongoSourceConfig(source);
   }
   if (application === 'products') {
-    return resolveProductsMongoSourceConfig(source);
+    return resolveEcommerceMongoSourceConfig(source);
   }
   return resolveMongoSourceConfig(source);
 };

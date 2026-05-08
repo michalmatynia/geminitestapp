@@ -8,7 +8,7 @@ import type {
   ProductsPagedResult,
 } from '@/shared/contracts/products/product';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
-import { api } from '@/shared/lib/api-client';
+import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
   createPaginatedListQueryV2,
@@ -40,6 +40,23 @@ const flattenCategoryTree = (
 const getProductsPagedQueryKey = (filters: ProductFilter) =>
   [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
 
+type IntegrationProductFilterParams = NonNullable<ApiClientOptions['params']>;
+
+const buildIntegrationProductFilterParams = (
+  filters: ProductFilter
+): IntegrationProductFilterParams => {
+  const { ids, ...restFilters } = filters;
+  return {
+    ...restFilters,
+    ...(ids !== undefined && ids.length > 0 ? { ids: ids.join(',') } : {}),
+  };
+};
+
+const normalizeCatalogId = (catalogId: string | undefined): string | null => {
+  const normalized = catalogId?.trim();
+  return normalized !== undefined && normalized.length > 0 ? normalized : null;
+};
+
 export function useIntegrationCatalogs(): ListQuery<CatalogRecord> {
   const queryKey = productMetadataKeys.catalogs();
   return createListQueryV2({
@@ -58,17 +75,18 @@ export function useIntegrationCatalogs(): ListQuery<CatalogRecord> {
 }
 
 export function useIntegrationProductCategories(catalogId?: string): ListQuery<ProductCategory> {
-  const queryKey = productMetadataKeys.categories(catalogId ?? null);
+  const normalizedCatalogId = normalizeCatalogId(catalogId);
+  const queryKey = productMetadataKeys.categories(normalizedCatalogId);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductCategory[]> => {
-      if (!catalogId) return [];
+      if (normalizedCatalogId === null) return [];
       const tree = await api.get<ProductCategoryWithChildren[]>(
-        `/api/v2/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}`
+        `/api/v2/products/categories/tree?catalogId=${encodeURIComponent(normalizedCatalogId)}`
       );
       return flattenCategoryTree(tree);
     },
-    enabled: Boolean(catalogId),
+    enabled: normalizedCatalogId !== null,
     meta: {
       source: 'integrations.hooks.useIntegrationProductCategories',
       operation: 'list',
@@ -81,16 +99,17 @@ export function useIntegrationProductCategories(catalogId?: string): ListQuery<P
 }
 
 export function useIntegrationProductTags(catalogId?: string): ListQuery<ProductTag> {
-  const queryKey = productMetadataKeys.tags(catalogId ?? null);
+  const normalizedCatalogId = normalizeCatalogId(catalogId);
+  const queryKey = productMetadataKeys.tags(normalizedCatalogId);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductTag[]> => {
-      if (!catalogId) return [];
+      if (normalizedCatalogId === null) return [];
       return await api.get<ProductTag[]>(
-        `/api/v2/products/tags?catalogId=${encodeURIComponent(catalogId)}`
+        `/api/v2/products/tags?catalogId=${encodeURIComponent(normalizedCatalogId)}`
       );
     },
-    enabled: Boolean(catalogId),
+    enabled: normalizedCatalogId !== null,
     meta: {
       source: 'integrations.hooks.useIntegrationProductTags',
       operation: 'list',
@@ -136,7 +155,7 @@ export function useIntegrationProductsWithCount(
     queryKey,
     queryFn: async () => {
       const result = await api.get<ProductsPagedResult>('/api/v2/products/paged', {
-        params: filters,
+        params: buildIntegrationProductFilterParams(filters),
         cache: 'no-store',
       });
       return {

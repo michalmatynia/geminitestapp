@@ -158,7 +158,7 @@ describe('DatabaseBackupsPanel', () => {
     expect(screen.getByText('GeminiTest App')).toBeInTheDocument();
     expect(screen.getByText('StudiQ')).toBeInTheDocument();
     expect(screen.getByText('CMS Builder')).toBeInTheDocument();
-    expect(screen.getByText('Products')).toBeInTheDocument();
+    expect(screen.getByText('Ecommerce')).toBeInTheDocument();
     expect(screen.getByText('geminitestapp/app-backup-1.archive')).toBeInTheDocument();
     expect(screen.getByText('studiq/studiq-backup-1.archive')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Local Tables' })[1]).toHaveAttribute(

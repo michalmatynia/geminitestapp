@@ -45,10 +45,12 @@ export interface AccountOverviewContent {
   viewAllOrdersLabel: string;
 }
 
+export type AccountOrderStatus = 'pending_payment' | 'processing' | 'in-transit' | 'delivered' | 'cancelled';
+
 export interface AccountOrdersContent {
   title: string;
   qtyLabel: string;
-  statuses: Record<'delivered' | 'in-transit' | 'processing', string>;
+  statuses: Record<AccountOrderStatus, string>;
 }
 
 export interface AccountSettingsContent {
@@ -138,9 +140,11 @@ export const ACCOUNT_CONTENT_DEFAULTS: AccountContent = {
     title: 'Order History',
     qtyLabel: 'Qty',
     statuses: {
+      pending_payment: 'Pending payment',
       delivered: 'Delivered',
       'in-transit': 'In transit',
       processing: 'Processing',
+      cancelled: 'Cancelled',
     },
   },
   settings: {
@@ -398,9 +402,11 @@ export function validateAccountContent(input: unknown): AccountContentValidation
       title: readString(orders, 'title', ACCOUNT_CONTENT_DEFAULTS.orders.title, TEXT_LIMITS.short, errors, 'orders.title'),
       qtyLabel: readString(orders, 'qtyLabel', ACCOUNT_CONTENT_DEFAULTS.orders.qtyLabel, TEXT_LIMITS.short, errors, 'orders.qtyLabel'),
       statuses: {
+        pending_payment: readString(statuses, 'pending_payment', ACCOUNT_CONTENT_DEFAULTS.orders.statuses.pending_payment, TEXT_LIMITS.short, errors, 'orders.statuses.pending_payment'),
         delivered: readString(statuses, 'delivered', ACCOUNT_CONTENT_DEFAULTS.orders.statuses.delivered, TEXT_LIMITS.short, errors, 'orders.statuses.delivered'),
         'in-transit': readString(statuses, 'in-transit', ACCOUNT_CONTENT_DEFAULTS.orders.statuses['in-transit'], TEXT_LIMITS.short, errors, 'orders.statuses.in-transit'),
         processing: readString(statuses, 'processing', ACCOUNT_CONTENT_DEFAULTS.orders.statuses.processing, TEXT_LIMITS.short, errors, 'orders.statuses.processing'),
+        cancelled: readString(statuses, 'cancelled', ACCOUNT_CONTENT_DEFAULTS.orders.statuses.cancelled, TEXT_LIMITS.short, errors, 'orders.statuses.cancelled'),
       },
     },
     settings: {

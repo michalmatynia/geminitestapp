@@ -18,6 +18,7 @@ export const PRACUJ_PL_INTEGRATION_SLUG = 'pracuj-pl';
 export const VINTED_INTEGRATION_SLUG = 'vinted';
 export const SCANNER_1688_INTEGRATION_SLUG = '1688';
 export const SCRAPED_SOURCE_INTEGRATION_SLUG = 'scraped-source';
+export const ECOMMERCE_EXPORT_INTEGRATION_SLUG = 'ecommerce-export';
 
 export const BASE_INTEGRATION_SLUGS = new Set<string>(BASE_INTEGRATION_SLUG_VALUES);
 export const TRADERA_BROWSER_INTEGRATION_SLUG = 'tradera';

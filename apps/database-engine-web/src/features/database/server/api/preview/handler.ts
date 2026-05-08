@@ -20,8 +20,8 @@ import {
   getMongoRestoreCommand,
   getCmsBuilderMongoConnectionUrl,
   getCmsBuilderMongoDatabaseName,
-  getProductsMongoConnectionUrl,
-  getProductsMongoDatabaseName,
+  getEcommerceMongoConnectionUrl,
+  getEcommerceMongoDatabaseName,
   getStudiqMongoConnectionUrl,
   getStudiqMongoDatabaseName,
   mongoExecFileAsync,
@@ -54,8 +54,8 @@ const resolvePreviewTarget = (
     }
     if (application === 'products') {
       return {
-        mongoUri: getProductsMongoConnectionUrl(),
-        sourceDbName: getProductsMongoDatabaseName(),
+        mongoUri: getEcommerceMongoConnectionUrl(),
+        sourceDbName: getEcommerceMongoDatabaseName(),
       };
     }
   }

@@ -29,9 +29,21 @@ if (is_file($target)) {
     $deleted = unlink($target);
 }
 
+$emptyDirectoryRemoved = false;
+if ($deleted) {
+    $parent = dirname($target);
+    if (
+        $parent !== $uploadsRoot &&
+        string_starts_with($parent, $uploadsRoot . DIRECTORY_SEPARATOR) &&
+        is_dir($parent)
+    ) {
+        $emptyDirectoryRemoved = @rmdir($parent);
+    }
+}
+
 send_json(200, [
     'ok' => true,
     'deleted' => $deleted,
+    'emptyDirectoryRemoved' => $emptyDirectoryRemoved,
     'publicPath' => $publicPath,
 ]);
-

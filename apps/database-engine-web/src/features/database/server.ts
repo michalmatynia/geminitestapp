@@ -18,6 +18,8 @@ export {
   getMongoDumpCommand,
   getCmsBuilderMongoConnectionUrl,
   getCmsBuilderMongoDatabaseName,
+  getEcommerceMongoConnectionUrl,
+  getEcommerceMongoDatabaseName,
   getProductsMongoConnectionUrl,
   getProductsMongoDatabaseName,
   getStudiqMongoConnectionUrl,

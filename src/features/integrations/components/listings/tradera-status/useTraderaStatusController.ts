@@ -1,8 +1,24 @@
-import { useState, useMemo } from 'react';
-import type { TraderaListing } from '@/features/integrations/contracts/tradera';
+import { useState, useMemo, type Dispatch, type SetStateAction } from 'react';
 
-export function useTraderaStatusController(listings: TraderaListing[]) {
-  const [filter, setFilter] = useState<'all' | 'error' | 'success'>('all');
+type TraderaListing = {
+  status: string;
+  title: string;
+};
+
+type TraderaStatusFilter = 'all' | 'error' | 'success';
+
+type TraderaStatusController = {
+  filter: TraderaStatusFilter;
+  setFilter: Dispatch<SetStateAction<TraderaStatusFilter>>;
+  searchQuery: string;
+  setSearchQuery: Dispatch<SetStateAction<string>>;
+  filteredListings: TraderaListing[];
+};
+
+export function useTraderaStatusController(
+  listings: TraderaListing[]
+): TraderaStatusController {
+  const [filter, setFilter] = useState<TraderaStatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredListings = useMemo(() => {

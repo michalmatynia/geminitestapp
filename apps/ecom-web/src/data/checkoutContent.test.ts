@@ -72,6 +72,45 @@ describe('checkout content validation', () => {
     expect(invertedErrors).toContain('shippingMethods.0.businessDaysMax must be greater than or equal to businessDaysMin.');
   });
 
+  it('accepts InPost carrier metadata on shipping methods', () => {
+    const { content, errors } = validateCheckoutContent({
+      shippingMethods: [
+        {
+          id: 'inpost-locker',
+          label: 'InPost Parcel Locker',
+          detail: 'Pickup point delivery',
+          price: 4,
+          priceLabel: '€ 4',
+          businessDaysMin: 1,
+          businessDaysMax: 2,
+          carrier: 'inpost',
+          service: 'inpost_locker_standard',
+          requiresPickupPoint: true,
+        },
+      ],
+    });
+
+    expect(errors).toEqual([]);
+    expect(content.shippingMethods[0]).toMatchObject({
+      carrier: 'inpost',
+      service: 'inpost_locker_standard',
+      requiresPickupPoint: true,
+    });
+  });
+
+  it('rejects unsupported carrier metadata', () => {
+    const { errors } = validateCheckoutContent({
+      shippingMethods: [
+        {
+          ...CHECKOUT_CONTENT_DEFAULTS.shippingMethods[0],
+          carrier: 'other',
+        },
+      ],
+    });
+
+    expect(errors).toContain('shippingMethods.0.carrier must be manual or inpost.');
+  });
+
   it('rejects invalid free-shipping CMS settings', () => {
     const { errors } = validateCheckoutContent({
       freeShippingThreshold: -1,
@@ -135,5 +174,16 @@ describe('default checkout shipping configuration', () => {
 
     expect(euZone?.countries).toContain('France');
     expect(euZone?.countries).not.toContain('United Kingdom');
+  });
+
+  it('includes InPost parcel locker delivery in the Poland default zone', () => {
+    const domesticZone = CHECKOUT_CONTENT_DEFAULTS.shippingZones.find((zone) => zone.id === 'domestic');
+    const inpostMethod = domesticZone?.methods.find((method) => method.id === 'inpost-locker');
+
+    expect(inpostMethod).toMatchObject({
+      carrier: 'inpost',
+      service: 'inpost_locker_standard',
+      requiresPickupPoint: true,
+    });
   });
 });

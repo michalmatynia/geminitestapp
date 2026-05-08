@@ -7,7 +7,7 @@ import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { Button, DropdownMenuItem, DropdownMenuSeparator, Input, Tooltip } from '@/shared/ui/primitives.public';
 import { ActionMenu, FileUploadTrigger } from '@/shared/ui/forms-and-actions.public';
-import { resolveProductImageUrl } from '@/shared/utils/image-routing';
+import { resolveProductImageFileUrl, resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 import {
   useProductImageManagerUIActions,
@@ -60,7 +60,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
 
   const uploadUrl = slot
     ? slot.type === 'existing'
-      ? (resolveProductImageUrl(slot.data.filepath, externalBaseUrl) ?? slot.data.filepath)
+      ? (resolveProductImageFileUrl(slot.data, externalBaseUrl) ?? slot.data.filepath ?? '')
       : (resolveProductImageUrl(slot.previewUrl, externalBaseUrl) ?? slot.previewUrl)
     : '';
 

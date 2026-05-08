@@ -26,7 +26,7 @@ const MANAGED_APPLICATIONS: Array<{
   { application: 'geminitestapp', label: 'GeminiTest App' },
   { application: 'studiq', label: 'StudiQ' },
   { application: 'cms-builder', label: 'CMS Builder' },
-  { application: 'products', label: 'Products' },
+  { application: 'products', label: 'Ecommerce' },
 ];
 
 const resolveEnvSwitchTarget = (source: MongoSource | null): MongoSource =>

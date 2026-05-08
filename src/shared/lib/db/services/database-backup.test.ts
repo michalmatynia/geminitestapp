@@ -11,6 +11,8 @@ const {
   getMongoDumpCommandMock,
   getCmsBuilderMongoConnectionUrlMock,
   getCmsBuilderMongoDatabaseNameMock,
+  getEcommerceMongoConnectionUrlMock,
+  getEcommerceMongoDatabaseNameMock,
   getProductsMongoConnectionUrlMock,
   getProductsMongoDatabaseNameMock,
   getStudiqMongoConnectionUrlMock,
@@ -18,6 +20,7 @@ const {
   mongoExecFileAsyncMock,
   resolveMongoSourceConfigMock,
   resolveCmsBuilderMongoSourceConfigMock,
+  resolveEcommerceMongoSourceConfigMock,
   resolveProductsMongoSourceConfigMock,
   resolveStudiqMongoSourceConfigMock,
   writeFileMock,
@@ -33,6 +36,8 @@ const {
   getMongoDumpCommandMock: vi.fn(),
   getCmsBuilderMongoConnectionUrlMock: vi.fn(),
   getCmsBuilderMongoDatabaseNameMock: vi.fn(),
+  getEcommerceMongoConnectionUrlMock: vi.fn(),
+  getEcommerceMongoDatabaseNameMock: vi.fn(),
   getProductsMongoConnectionUrlMock: vi.fn(),
   getProductsMongoDatabaseNameMock: vi.fn(),
   getStudiqMongoConnectionUrlMock: vi.fn(),
@@ -40,6 +45,7 @@ const {
   mongoExecFileAsyncMock: vi.fn(),
   resolveMongoSourceConfigMock: vi.fn(),
   resolveCmsBuilderMongoSourceConfigMock: vi.fn(),
+  resolveEcommerceMongoSourceConfigMock: vi.fn(),
   resolveProductsMongoSourceConfigMock: vi.fn(),
   resolveStudiqMongoSourceConfigMock: vi.fn(),
   writeFileMock: vi.fn(),
@@ -71,11 +77,14 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   getMongoDumpCommand: getMongoDumpCommandMock,
   getCmsBuilderMongoConnectionUrl: getCmsBuilderMongoConnectionUrlMock,
   getCmsBuilderMongoDatabaseName: getCmsBuilderMongoDatabaseNameMock,
+  getEcommerceMongoConnectionUrl: getEcommerceMongoConnectionUrlMock,
+  getEcommerceMongoDatabaseName: getEcommerceMongoDatabaseNameMock,
   getProductsMongoConnectionUrl: getProductsMongoConnectionUrlMock,
   getProductsMongoDatabaseName: getProductsMongoDatabaseNameMock,
   getStudiqMongoConnectionUrl: getStudiqMongoConnectionUrlMock,
   getStudiqMongoDatabaseName: getStudiqMongoDatabaseNameMock,
   resolveCmsBuilderMongoSourceConfig: resolveCmsBuilderMongoSourceConfigMock,
+  resolveEcommerceMongoSourceConfig: resolveEcommerceMongoSourceConfigMock,
   resolveProductsMongoSourceConfig: resolveProductsMongoSourceConfigMock,
   resolveStudiqMongoSourceConfig: resolveStudiqMongoSourceConfigMock,
   execFileAsync: mongoExecFileAsyncMock,
@@ -108,8 +117,10 @@ describe('database-backup', () => {
       'mongodb://localhost:27019/cms_builder_local'
     );
     getCmsBuilderMongoDatabaseNameMock.mockReturnValue('cms_builder_local');
-    getProductsMongoConnectionUrlMock.mockReturnValue('mongodb://localhost:27020/products_local');
-    getProductsMongoDatabaseNameMock.mockReturnValue('products_local');
+    getEcommerceMongoConnectionUrlMock.mockReturnValue('mongodb://localhost:27021/ecom_local');
+    getEcommerceMongoDatabaseNameMock.mockReturnValue('ecom_local');
+    getProductsMongoConnectionUrlMock.mockReturnValue('mongodb://localhost:27017/app');
+    getProductsMongoDatabaseNameMock.mockReturnValue('app');
     getMongoDumpCommandMock.mockReturnValue('mongodump');
     ensureMongoBackupsDirMock.mockResolvedValue(undefined);
     resolveMongoSourceConfigMock.mockResolvedValue({
@@ -133,11 +144,18 @@ describe('database-backup', () => {
       dbName: 'cms_builder_cloud',
       usesLegacyEnv: false,
     });
+    resolveEcommerceMongoSourceConfigMock.mockReturnValue({
+      source: 'cloud',
+      configured: true,
+      uri: 'mongodb+srv://cluster.example/ecom_cloud',
+      dbName: 'ecom_cloud',
+      usesLegacyEnv: false,
+    });
     resolveProductsMongoSourceConfigMock.mockReturnValue({
       source: 'cloud',
       configured: true,
-      uri: 'mongodb+srv://cluster.example/products_cloud',
-      dbName: 'products_cloud',
+      uri: 'mongodb+srv://cluster.example/app_products_cloud',
+      dbName: 'app_products_cloud',
       usesLegacyEnv: false,
     });
     writeFileMock.mockResolvedValue(undefined);
@@ -194,11 +212,11 @@ describe('database-backup', () => {
     ]);
     expect(mongoExecFileAsyncMock).toHaveBeenNthCalledWith(4, 'mongodump', [
       '--uri',
-      'mongodb://localhost:27020/products_local',
+      'mongodb://localhost:27021/ecom_local',
       '--db',
-      'products_local',
+      'ecom_local',
       expect.stringMatching(
-        /^--archive=\/tmp\/backups\/products\/products_local-backup-\d+\.archive$/
+        /^--archive=\/tmp\/backups\/products\/ecom_local-backup-\d+\.archive$/
       ),
       '--gzip',
     ]);
@@ -389,7 +407,7 @@ describe('database-backup', () => {
     });
   });
 
-  it('creates a Products source backup in the Products backup folder for sync workflows', async () => {
+  it('creates an Ecommerce source backup in the products backup folder for sync workflows', async () => {
     mongoExecFileAsyncMock.mockResolvedValue({
       stdout: 'backup stdout',
       stderr: '',
@@ -404,13 +422,13 @@ describe('database-backup', () => {
       timestamp,
     });
 
-    expect(resolveProductsMongoSourceConfigMock).toHaveBeenCalledWith('cloud');
+    expect(resolveEcommerceMongoSourceConfigMock).toHaveBeenCalledWith('cloud');
     expect(mongoExecFileAsyncMock).toHaveBeenCalledWith('mongodump', [
       '--uri',
-      'mongodb+srv://cluster.example/products_cloud',
+      'mongodb+srv://cluster.example/ecom_cloud',
       '--db',
-      'products_cloud',
-      '--archive=/tmp/backups/products/products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+      'ecom_cloud',
+      '--archive=/tmp/backups/products/ecom-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
       '--gzip',
     ]);
     expect(result).toEqual({
@@ -418,11 +436,11 @@ describe('database-backup', () => {
       role: 'source',
       source: 'cloud',
       backupName:
-        'products/products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+        'products/ecom-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
       backupPath:
-        '/tmp/backups/products/products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+        '/tmp/backups/products/ecom-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
       logPath:
-        '/tmp/backups/products/products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive.log',
+        '/tmp/backups/products/ecom-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive.log',
       createdAt: new Date(timestamp).toISOString(),
       warning: null,
     });

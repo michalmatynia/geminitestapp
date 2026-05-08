@@ -80,9 +80,12 @@ export interface ImageFileRecord {
 export const imageFileSelectionSchema = z.object({
   id: z.string(),
   url: z.string().optional(),
+  publicUrl: z.string().optional(),
   filepath: z.string().optional(),
   thumbnailUrl: z.string().optional(),
   filename: z.string().optional(),
+  storageProvider: z.enum(['local', 's3', 'imagekit']).optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   width: z.number().nullable().optional(),
   height: z.number().nullable().optional(),
 });

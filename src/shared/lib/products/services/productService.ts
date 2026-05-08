@@ -3,6 +3,7 @@ import 'server-only';
 import { cache } from 'react';
 import { ActivityTypes } from '@/shared/constants/observability';
 import type {
+  ImageFileRecord,
   ImageFileRepository,
 } from '@/shared/contracts/files';
 import type { ProductParameterValue, ProductWithImages, ProductImageRecord, ProductRecord } from '@/shared/contracts/products/product';
@@ -15,9 +16,9 @@ import type { ProductCreateInput } from '@/shared/contracts/products/io';
 import { badRequestError, duplicateEntryError, notFoundError } from '@/shared/errors/app-error';
 import {
   deleteFileFromStorage,
-  uploadFile,
   getImageFileRepository,
 } from '@/shared/lib/files/services/image-file-service';
+import { uploadProductImageFileWithLocalFallback } from '@/shared/lib/products/services/product-image-upload-fallback';
 import {
   getProductDataProvider,
   type ProductDbProvider,
@@ -443,11 +444,13 @@ const uploadFilesForProduct = async (
 ): Promise<Map<File, string>> => {
   const results = await Promise.all(
     files.map(async (file) => {
-      const imageFile = await uploadFile(file, {
-        category: 'products',
+      const imageFile = await uploadProductImageFileWithLocalFallback({
+        action: 'uploadFilesForProduct',
+        file,
+        filename: file.name,
         provider,
-        ...(sku ? { sku } : {}),
-        filenameOverride: file.name,
+        service: 'productService',
+        sku,
       });
       return { file, id: imageFile.id };
     })
@@ -938,17 +941,97 @@ async function deleteProduct(
   const product = await productRepository.deleteProduct(id);
   if (!product) return null;
 
+  await deleteOrphanedProductImageFiles(product, productRepository);
+
   void logActivity({
     type: ActivityTypes.PRODUCT.DELETED,
     entityId: id,
     entityType: 'product',
     userId: options?.userId,
-    description: `Deleted product: ${product.name_en || product.name_pl || id}`,
+    description: `Deleted product: ${resolveDeletedProductDisplayName(product, id)}`,
     metadata: { productId: id },
   });
 
   return product;
 }
+
+const resolveDeletedProductDisplayName = (product: ProductRecord, fallback: string): string => {
+  for (const candidate of [product.name_en, product.name_pl]) {
+    const normalized = candidate?.trim() ?? '';
+    if (normalized.length > 0) return normalized;
+  }
+  return fallback;
+};
+
+const resolveProductImageFiles = async (
+  product: ProductRecord,
+  imageRepository: ImageFileRepository
+): Promise<ImageFileRecord[]> => {
+  const images = Array.isArray(product.images) ? product.images : [];
+  if (images.length === 0) return [];
+
+  const filesById = new Map<string, ImageFileRecord>();
+  const missingImageFileIds: string[] = [];
+
+  for (const image of images) {
+    const imageFileId = image.imageFileId.trim();
+    if (imageFileId.length === 0) continue;
+
+    const embeddedImageFile = resolveEmbeddedProductImageFile(imageFileId, image);
+    if (embeddedImageFile !== null) {
+      filesById.set(imageFileId, embeddedImageFile);
+      continue;
+    }
+
+    missingImageFileIds.push(imageFileId);
+  }
+
+  if (missingImageFileIds.length > 0) {
+    const missingImageFiles = await imageRepository.findImageFilesByIds(
+      Array.from(new Set(missingImageFileIds))
+    );
+    for (const imageFile of missingImageFiles) {
+      filesById.set(imageFile.id, imageFile);
+    }
+  }
+
+  return Array.from(filesById.values());
+};
+
+const resolveEmbeddedProductImageFile = (
+  imageFileId: string,
+  image: NonNullable<ProductRecord['images']>[number]
+): ImageFileRecord | null => {
+  const embeddedImageFile = image.imageFile;
+  if (embeddedImageFile === undefined) return null;
+  if (embeddedImageFile.filepath.trim().length === 0) return null;
+
+  return {
+    ...embeddedImageFile,
+    id: embeddedImageFile.id.trim().length > 0 ? embeddedImageFile.id : imageFileId,
+  };
+};
+
+const deleteOrphanedProductImageFiles = async (
+  product: ProductRecord,
+  productRepository: ProductRepository
+): Promise<void> => {
+  if (!Array.isArray(product.images) || product.images.length === 0) return;
+
+  const imageRepository = await resolveImageFileRepository();
+  const imageFiles = await resolveProductImageFiles(product, imageRepository);
+  if (imageFiles.length === 0) return;
+
+  await Promise.all(
+    imageFiles.map(async (imageFile) => {
+      const remainingLinksCount = await productRepository.countProductsByImageFileId(imageFile.id);
+      if (remainingLinksCount > 0) return;
+
+      await deleteFileFromStorage(imageFile.filepath);
+      await imageRepository.deleteImageFile(imageFile.id);
+    })
+  );
+};
 
 async function uploadProductImage(
   productId: string,
@@ -963,11 +1046,13 @@ async function uploadProductImage(
     throw badRequestError(`Product not found: ${productId}`);
   }
 
-  const imageFile = await uploadFile(file, {
-    category: 'products',
+  const imageFile = await uploadProductImageFileWithLocalFallback({
+    action: 'uploadProductImage',
+    file,
+    filename: file.name,
     provider,
-    ...(product.sku ? { sku: product.sku } : {}),
-    filenameOverride: file.name,
+    service: 'productService',
+    sku: product.sku,
   });
 
   await productRepository.addProductImages(productId, [imageFile.id]);

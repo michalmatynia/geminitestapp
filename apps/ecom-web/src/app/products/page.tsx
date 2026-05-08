@@ -69,7 +69,25 @@ export async function generateMetadata({
         ? `${content.collection.searchLabelPrefix}: "${search}"`
         : content.collection.allProductsLabel;
 
-  return { title: `${title} — ARCANA` };
+  const fullTitle = `${title} — ARCANA`;
+  const description = locale === 'pl'
+    ? 'Odkryj kolekcjonalia, pinsy i grafiki z anime, gier i filmów.'
+    : 'Discover collectibles, pins, and art prints from anime, gaming, and film.';
+  return {
+    title: fullTitle,
+    description,
+    openGraph: {
+      type: 'website',
+      title: fullTitle,
+      description,
+      siteName: 'ARCANA',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: fullTitle,
+      description,
+    },
+  };
 }
 
 export default async function AllProductsPage({

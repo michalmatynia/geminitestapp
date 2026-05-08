@@ -14,15 +14,60 @@ export type OrderItem = {
   imageUrl?: string;
 };
 
+export type ShippingCarrier = 'manual' | 'inpost';
+
+export type InpostPoint = {
+  id: string;
+  name: string;
+  description?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  postCode?: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+export type InpostShipment = {
+  shipmentId?: string;
+  trackingNumber?: string;
+  status?: string;
+  eventCode?: string;
+  eventId?: string;
+  eventTimestamp?: string;
+  shipmentUrl?: string;
+  service?: string;
+  error?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type InpostTrackingEventRecord = {
+  customerReference?: string;
+  trackingNumber: string;
+  eventId: string;
+  eventCode: string;
+  timestamp: string;
+  receivedAt: string;
+  stale?: boolean;
+};
+
 export type Order = {
   _id?: string;
   orderId: string;
   userId?: string;
   email: string;
-  status: 'processing' | 'in-transit' | 'delivered';
+  status: 'pending_payment' | 'processing' | 'in-transit' | 'delivered' | 'cancelled';
+  payuOrderId?: string;
   items: OrderItem[];
   shippingMethod: string;
   shippingPrice: number;
+  shippingCarrier?: ShippingCarrier;
+  shippingService?: string;
+  inpostPoint?: InpostPoint;
+  inpostShipment?: InpostShipment;
+  inpostEventIds?: string[];
+  inpostTrackingEvents?: InpostTrackingEventRecord[];
   shippingAddress: Record<string, string>;
   subtotal: number;
   discount: number;
@@ -33,13 +78,53 @@ export type Order = {
 
 export const ORDERS_COLLECTION = 'ecom_orders';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readString(value: unknown, maxLength = 160): string {
+  if (typeof value !== 'string') return '';
+  return value.trim().slice(0, maxLength);
+}
+
+function readOptionalNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+export function sanitizeShippingCarrier(value: unknown): ShippingCarrier {
+  return value === 'inpost' ? 'inpost' : 'manual';
+}
+
+export function sanitizeInpostPoint(value: unknown): InpostPoint | null {
+  if (!isRecord(value)) return null;
+
+  const id = readString(value['id'] ?? value['name'], 80);
+  const name = readString(value['name'] ?? id, 120);
+  if (!id || !name) return null;
+
+  const latitude = readOptionalNumber(value['latitude']);
+  const longitude = readOptionalNumber(value['longitude']);
+
+  return {
+    id,
+    name,
+    description: readString(value['description'], 180) || undefined,
+    addressLine1: readString(value['addressLine1'], 180) || undefined,
+    addressLine2: readString(value['addressLine2'], 180) || undefined,
+    city: readString(value['city'], 100) || undefined,
+    postCode: readString(value['postCode'], 20) || undefined,
+    latitude,
+    longitude,
+  };
+}
+
 export function generateOrderId(): string {
   const year = new Date().getFullYear();
   const suffix = randomBytes(4).toString('hex').toUpperCase();
   return `ARC-${year}-${suffix}`;
 }
 
-function serializeOrder(doc: WithId<Document>): Order {
+export function serializeOrder(doc: WithId<Document>): Order {
   const { _id, ...order } = doc;
   return {
     ...(order as Omit<Order, '_id'>),

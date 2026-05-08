@@ -11,16 +11,16 @@
  */
 
 import { cache } from 'react';
-import type { Product } from '@/data/products';
-import { getProductsDb, hasProductsMongoConfig } from '@/lib/mongodb';
-import { normalizeLocale, normalizeLocaleList, type EcomLocale } from '@/lib/locales';
-import { ensureProductIndexes } from '@/lib/db-indexes';
+import type { Product } from '../data/products';
+import { ensureProductIndexes } from './db-indexes';
+import { normalizeLocale, normalizeLocaleList, type EcomLocale } from './locales';
+import { getEcommerceProductsDb, hasEcommerceProductsMongoConfig } from './mongodb';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const CATALOG_ID = process.env.MENTIOS_CATALOG_ID ?? 'catalog-mentios';
+const CATALOG_ID = process.env['MENTIOS_CATALOG_ID'] ?? 'catalog-mentios';
 const PRODUCTS_COLLECTION = 'products';
 const CATEGORIES_COLLECTION = 'product_categories';
 const CATALOGS_COLLECTION = 'catalogs';
@@ -72,6 +72,8 @@ interface LocalizedField {
 
 interface ProductDoc {
   _id: unknown;
+  sourceProductId?: string | null;
+  slug?: string | null;
   // Flat localized fields (actual local DB format)
   name_en?: string | null;
   name_pl?: string | null;
@@ -89,8 +91,16 @@ interface ProductDoc {
   archived?: boolean;
   catalogId?: string;
   categoryId?: unknown;
+  categoryName?: string | null;
+  categoryName_en?: string | null;
+  categoryName_pl?: string | null;
+  categoryName_de?: string | null;
+  collectionSlug?: string | null;
   isNew?: boolean;
   createdAt?: string | Date;
+  exportedAt?: string | Date;
+  imageUrl?: string | null;
+  imageUrls?: Array<string | null>;
   images?: Array<{
     imageFileId?: string;
     productId?: string;
@@ -140,14 +150,14 @@ function chooseLocalized(
   locale: EcomLocale,
   values: Partial<Record<EcomLocale | 'de', string | null | undefined>>,
 ): string {
-  if (locale === 'pl') return values.pl ?? values.en ?? values.de ?? '';
-  return values.en ?? values.pl ?? values.de ?? '';
+  if (locale === 'pl') return values['pl'] ?? values['en'] ?? values['de'] ?? '';
+  return values['en'] ?? values['pl'] ?? values['de'] ?? '';
 }
 
 function pickLocalized(field: string | LocalizedField | null | undefined, locale: EcomLocale): string {
   if (!field) return '';
   if (typeof field === 'string') return field;
-  return chooseLocalized(locale, field);
+  return chooseLocalized(locale, { en: field.en, pl: field.pl, de: field.de });
 }
 
 function stringifyDocumentId(value: unknown): string {
@@ -189,6 +199,18 @@ function pickCategoryName(doc: CategoryDoc, locale: EcomLocale): string {
   return chooseLocalized(locale, { en: doc.name_en, pl: doc.name_pl }) || pickLocalized(doc.name, locale) || stringifyDocumentId(doc._id);
 }
 
+function pickProductCategoryName(doc: ProductDoc, locale: EcomLocale): string {
+  return (
+    chooseLocalized(locale, {
+      en: doc.categoryName_en,
+      pl: doc.categoryName_pl,
+      de: doc.categoryName_de,
+    }) ||
+    doc.categoryName ||
+    ''
+  );
+}
+
 function slugify(str: string): string {
   return str
     .toLowerCase()
@@ -200,6 +222,8 @@ function slugify(str: string): string {
 }
 
 function productSlug(doc: ProductDoc): string {
+  const explicitSlug = slugify(doc.slug ?? '');
+  if (explicitSlug.length > 2) return explicitSlug;
   if (doc.sku) {
     const s = slugify(doc.sku);
     if (s.length > 2) return s;
@@ -209,11 +233,11 @@ function productSlug(doc: ProductDoc): string {
 }
 
 function gradient(index: number): string {
-  return GRADIENT_POOL[index % GRADIENT_POOL.length];
+  return GRADIENT_POOL[index % GRADIENT_POOL.length] ?? GRADIENT_POOL[0] ?? '';
 }
 
 function gradientAlt(index: number): string {
-  return GRADIENT_POOL_ALT[index % GRADIENT_POOL_ALT.length];
+  return GRADIENT_POOL_ALT[index % GRADIENT_POOL_ALT.length] ?? GRADIENT_POOL_ALT[0] ?? '';
 }
 
 /**
@@ -242,7 +266,11 @@ function parsePipedName(raw: string): {
 
 function formatPrice(price: number | null | undefined): string {
   if (price == null) return '—';
-  return `€ ${price.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const minimumFractionDigits = Number.isInteger(price) ? 0 : 2;
+  return `${price.toLocaleString('pl-PL', {
+    minimumFractionDigits,
+    maximumFractionDigits: 2,
+  })} zł`;
 }
 
 function categoryToCollection(name: string): string {
@@ -314,7 +342,7 @@ async function resolveCatalogLocaleCodes(catalog: CatalogDoc): Promise<string[]>
 
   if (idsToResolve.length === 0) return [];
 
-  const db = await getProductsDb();
+  const db = await getEcommerceProductsDb();
   const languageRows = await db
     .collection<LanguageDoc>(LANGUAGES_COLLECTION)
     .find(
@@ -341,7 +369,7 @@ const normalizeBaseUrl = (value: string | undefined): string => {
   }
 };
 
-const MAIN_APP_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_MAIN_APP_URL);
+const MAIN_APP_URL = normalizeBaseUrl(process.env['NEXT_PUBLIC_MAIN_APP_URL']);
 const DEFAULT_FILE_BASE_URL = 'https://sparksofsindri.com';
 const PRODUCT_UPLOAD_PREFIX = '/uploads/products/';
 const LEGACY_FILE_HOSTS = new Set(['qubrick.io', 'www.qubrick.io']);
@@ -365,7 +393,8 @@ const normalizeFileBaseUrl = (value: string | undefined): string => {
   return normalized;
 };
 
-const FILE_BASE_URL = normalizeFileBaseUrl(process.env.NEXT_PUBLIC_FILE_BASE_URL) || DEFAULT_FILE_BASE_URL;
+const FILE_BASE_URL =
+  normalizeFileBaseUrl(process.env['NEXT_PUBLIC_FILE_BASE_URL']) || DEFAULT_FILE_BASE_URL;
 
 function isLocalHostname(hostname: string): boolean {
   return ['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(hostname.toLowerCase());
@@ -470,6 +499,8 @@ function normalizeImageFileUrls(
 
 function buildImageUrls(doc: ProductDoc): string[] {
   const imageUrls = uniqueProductImageUrls([
+    ...(doc.imageUrls?.map((link) => normalizeProductImageUrl(link)) ?? []),
+    normalizeProductImageUrl(doc.imageUrl),
     ...(doc.imageLinks?.map((link) => normalizeProductImageUrl(link)) ?? []),
     ...(doc.images?.flatMap((image) => normalizeImageFileUrls(image.imageFile)) ?? []),
   ]);
@@ -496,11 +527,13 @@ function mapDoc(
   const id = stringifyDocumentId(doc._id);
   const categoryId = stringifyDocumentId(doc.categoryId);
   const category = categoryId ? categoryMap.get(categoryId) : undefined;
+  const productCategoryName = pickProductCategoryName(doc, locale);
   const name = pickProductName(doc, locale);
   const { shortName, sizeInfo, material, lore } = parsePipedName(name);
   const description = pickProductDescription(doc, locale);
   const price = doc.price ?? 0;
   const imageUrls = buildImageUrls(doc);
+  const exportedCollectionSlug = doc.collectionSlug?.trim() ?? '';
 
   return {
     id,
@@ -510,8 +543,9 @@ function mapDoc(
     sizeInfo,
     material,
     lore,
-    category: category?.name ?? (locale === 'pl' ? 'Wszystkie produkty' : 'Objects'),
-    collectionSlug: category?.collection ?? 'objects',
+    category: category?.name ?? (productCategoryName || (locale === 'pl' ? 'Wszystkie produkty' : 'Objects')),
+    collectionSlug:
+      exportedCollectionSlug || (category?.collection ?? categoryToCollection(productCategoryName)),
     price,
     priceDisplay: formatPrice(doc.price),
     description,
@@ -543,7 +577,7 @@ function mentiosFilter(extra: Record<string, unknown> = {}): Record<string, unkn
     ],
     published: { $ne: false },
     archived: { $ne: true },
-    stock: { $gt: 0 },
+    stock: { $ne: 0 },
     ...extra,
   };
 }
@@ -551,6 +585,8 @@ function mentiosFilter(extra: Record<string, unknown> = {}): Record<string, unkn
 /** Shared projection — all text/image fields needed for Product mapping. */
 const PRODUCT_PROJECTION = {
   _id: 1,
+  sourceProductId: 1,
+  slug: 1,
   sku: 1,
   // Flat localized fields (local DB)
   name_en: 1, name_pl: 1, name_de: 1,
@@ -563,9 +599,17 @@ const PRODUCT_PROJECTION = {
   archived: 1,
   catalogId: 1,
   categoryId: 1,
+  categoryName: 1,
+  categoryName_en: 1,
+  categoryName_pl: 1,
+  categoryName_de: 1,
+  collectionSlug: 1,
   isNew: 1,
   createdAt: 1,
+  exportedAt: 1,
   images: 1,
+  imageUrl: 1,
+  imageUrls: 1,
   imageLinks: 1,
 };
 
@@ -597,10 +641,10 @@ export interface MentiosResult {
 
 /** Return the storefront locales enabled on the configured Mentios catalog. */
 export const getMentiosCatalogLocales = cache(async function getMentiosCatalogLocales(): Promise<EcomLocale[]> {
-  if (!hasProductsMongoConfig()) return normalizeLocaleList([]);
+  if (!hasEcommerceProductsMongoConfig()) return normalizeLocaleList([]);
 
   try {
-    const db = await getProductsDb();
+    const db = await getEcommerceProductsDb();
     const catalogs = db.collection<CatalogDoc>(CATALOGS_COLLECTION);
     const projection = { _id: 1, id: 1, isDefault: 1, languageIds: 1, defaultLanguageId: 1 } as const;
     const catalog =
@@ -622,7 +666,7 @@ export const getMentiosCatalogLocales = cache(async function getMentiosCatalogLo
 /** Fetch all categories from the Mentios catalog. */
 async function fetchCategories(locale: EcomLocale): Promise<Map<string, CategoryMapEntry>> {
   try {
-    const db = await getProductsDb();
+    const db = await getEcommerceProductsDb();
     const docs = await db
       .collection<CategoryDoc>(CATEGORIES_COLLECTION)
       .find({ catalogId: CATALOG_ID })
@@ -640,7 +684,7 @@ export const getMentiosCategoryIdByName = cache(async function getMentiosCategor
   localeInput?: EcomLocale | string | null,
 ): Promise<string | null> {
   const locale = normalizeLocale(localeInput);
-  if (!hasProductsMongoConfig()) return null;
+  if (!hasEcommerceProductsMongoConfig()) return null;
   try {
     const categoryMap = await fetchCategories(locale);
     for (const [id, cat] of categoryMap) {
@@ -686,15 +730,29 @@ function productTextSearchClause(value: string): Record<string, unknown> {
   };
 }
 
+function productCategoryNameClause(values: string[]): Record<string, unknown> {
+  return {
+    $or: values.flatMap((value) => {
+      const pattern = `^${escapeRegex(value)}$`;
+      return [
+        { categoryName: { $regex: pattern, $options: 'i' } },
+        { categoryName_en: { $regex: pattern, $options: 'i' } },
+        { categoryName_pl: { $regex: pattern, $options: 'i' } },
+        { categoryName_de: { $regex: pattern, $options: 'i' } },
+      ];
+    }),
+  };
+}
+
 /** Fetch products from the Mentios catalog. Returns empty array on DB error. */
 export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promise<MentiosResult> {
   const { limit = 100, skip = 0 } = opts;
   const locale = normalizeLocale(opts.locale);
-  if (!hasProductsMongoConfig()) return { products: [], total: 0 };
+  if (!hasEcommerceProductsMongoConfig()) return { products: [], total: 0 };
 
   try {
     void ensureProductIndexes();
-    const db = await getProductsDb();
+    const db = await getEcommerceProductsDb();
     const col = db.collection<ProductDoc>(PRODUCTS_COLLECTION);
 
     // Fetch category map once — used for both categoryName→id resolution and product mapping.
@@ -711,15 +769,15 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
             category.name === categoryName || category.aliases.includes(categoryName)
           ))?.[0])
           .filter((id): id is string => Boolean(id));
-    if (requestedCategoryNames.length > 0 && resolvedCategoryIds.length === 0) {
-      return { products: [], total: 0 };
-    }
-
-    const categoryFilter = resolvedCategoryIds.length > 1
-      ? { categoryId: { $in: resolvedCategoryIds } }
-      : resolvedCategoryIds.length === 1
-        ? { categoryId: resolvedCategoryIds[0] }
-        : {};
+    const categoryFilter = opts.categoryId
+      ? { categoryId: opts.categoryId }
+      : resolvedCategoryIds.length > 1
+        ? { categoryId: { $in: resolvedCategoryIds } }
+        : resolvedCategoryIds.length === 1
+          ? { categoryId: resolvedCategoryIds[0] }
+          : requestedCategoryNames.length > 0
+            ? productCategoryNameClause(requestedCategoryNames)
+            : {};
     const baseFilter = mentiosFilter(categoryFilter);
 
     // ID-based fetch stays inside the configured catalog.
@@ -748,14 +806,14 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
       andClauses.push({ $or: themeNames.map((themeName) => productTextSearchClause(themeName)) });
     }
     const filter: Record<string, unknown> = { ...baseFilter, ...newOnlyClause };
-    if (andClauses.length > 0) filter.$and = andClauses;
+    if (andClauses.length > 0) filter['$and'] = andClauses;
 
     // Price range filter (inclusive min, exclusive max).
     if (opts.priceMin != null || opts.priceMax != null) {
       const priceClause: Record<string, number> = {};
-      if (opts.priceMin != null) priceClause.$gte = opts.priceMin;
-      if (opts.priceMax != null) priceClause.$lt = opts.priceMax;
-      filter.price = priceClause;
+      if (opts.priceMin != null) priceClause['$gte'] = opts.priceMin;
+      if (opts.priceMax != null) priceClause['$lt'] = opts.priceMax;
+      filter['price'] = priceClause;
     }
 
     // Sort order — default is newest-first (editorial feel for "featured").
@@ -794,10 +852,10 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
 /** Fetch a single product by its slug (sku-based) or raw _id. */
 export const getMentiosProduct = cache(async function getMentiosProduct(slugOrId: string, localeInput?: EcomLocale | string | null): Promise<Product | null> {
   const locale = normalizeLocale(localeInput);
-  if (!hasProductsMongoConfig()) return null;
+  if (!hasEcommerceProductsMongoConfig()) return null;
 
   try {
-    const db = await getProductsDb();
+    const db = await getEcommerceProductsDb();
     const col = db.collection<ProductDoc>(PRODUCTS_COLLECTION);
     const normalizedSlug = slugify(slugOrId);
 
@@ -809,6 +867,7 @@ export const getMentiosProduct = cache(async function getMentiosProduct(slugOrId
           $or: [
             { sku: slugOrId },
             { sku: slugOrId.toUpperCase() },
+            { slug: normalizedSlug },
             { _id: slugOrId },
           ],
         },
@@ -835,13 +894,13 @@ export const getMentiosProduct = cache(async function getMentiosProduct(slugOrId
 
 /** Return all slugs currently in the Mentios catalog (for generateStaticParams). */
 export const getMentiosSlugs = cache(async function getMentiosSlugs(): Promise<string[]> {
-  if (!hasProductsMongoConfig()) return [];
+  if (!hasEcommerceProductsMongoConfig()) return [];
 
   try {
-    const db = await getProductsDb();
+    const db = await getEcommerceProductsDb();
     const docs = await db
       .collection<ProductDoc>(PRODUCTS_COLLECTION)
-      .find(mentiosFilter(), { projection: { _id: 1, sku: 1 } })
+      .find(mentiosFilter(), { projection: { _id: 1, sku: 1, slug: 1 } })
       .toArray();
     return (docs as unknown as ProductDoc[]).map(productSlug);
   } catch {
@@ -854,9 +913,9 @@ export const getMentiosCategories = cache(async function getMentiosCategories(
   localeInput?: EcomLocale | string | null,
 ): Promise<Array<{ id: string; name: string; count: number }>> {
   const locale = normalizeLocale(localeInput);
-  if (!hasProductsMongoConfig()) return [];
+  if (!hasEcommerceProductsMongoConfig()) return [];
   try {
-    const db = await getProductsDb();
+    const db = await getEcommerceProductsDb();
     const [categoryMap, countRows] = await Promise.all([
       fetchCategories(locale),
       db.collection<ProductDoc>(PRODUCTS_COLLECTION)
@@ -869,13 +928,35 @@ export const getMentiosCategories = cache(async function getMentiosCategories(
 
     const countMap = new Map<string, number>();
     for (const row of countRows) {
-      const id = row._id != null ? String(row._id) : null;
-      if (id) countMap.set(id, (row.count as number) ?? 0);
+      const id = row['_id'] != null ? String(row['_id']) : null;
+      if (id) countMap.set(id, (row['count'] as number) ?? 0);
     }
 
-    return Array.from(categoryMap.entries())
+    const categories = Array.from(categoryMap.entries())
       .map(([id, { name }]) => ({ id, name, count: countMap.get(id) ?? 0 }))
       .filter(({ count }) => count > 0)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (categories.length > 0) return categories;
+
+    const fallbackRows = await db.collection<ProductDoc>(PRODUCTS_COLLECTION)
+      .find(mentiosFilter())
+      .project({
+        _id: 1,
+        categoryName: 1,
+        categoryName_en: 1,
+        categoryName_pl: 1,
+        categoryName_de: 1,
+      })
+      .toArray();
+    const fallbackCounts = new Map<string, number>();
+    for (const row of fallbackRows as unknown as ProductDoc[]) {
+      const name = pickProductCategoryName(row, locale);
+      if (!name) continue;
+      fallbackCounts.set(name, (fallbackCounts.get(name) ?? 0) + 1);
+    }
+
+    return Array.from(fallbackCounts.entries())
+      .map(([name, count]) => ({ id: name, name, count }))
       .sort((a, b) => a.name.localeCompare(b.name));
   } catch {
     return [];
@@ -887,9 +968,9 @@ export const getMentiosThemeNames = cache(async function getMentiosThemeNames(
   localeInput?: EcomLocale | string | null,
 ): Promise<Array<{ name: string; count: number }>> {
   const locale = normalizeLocale(localeInput);
-  if (!hasProductsMongoConfig()) return [];
+  if (!hasEcommerceProductsMongoConfig()) return [];
   try {
-    const db = await getProductsDb();
+    const db = await getEcommerceProductsDb();
     const docs = await db
       .collection<ProductDoc>(PRODUCTS_COLLECTION)
       .find(mentiosFilter())
@@ -913,9 +994,9 @@ export const getMentiosThemeNames = cache(async function getMentiosThemeNames(
 
 /** Fetch product count per collection slug in a single DB query. */
 export const getMentiosCollectionCounts = cache(async function getMentiosCollectionCounts(): Promise<Record<string, number>> {
-  if (!hasProductsMongoConfig()) return {};
+  if (!hasEcommerceProductsMongoConfig()) return {};
   try {
-    const db = await getProductsDb();
+    const db = await getEcommerceProductsDb();
     const categoryMap = await fetchCategories('en');
     const docs = await db
       .collection<ProductDoc>(PRODUCTS_COLLECTION)

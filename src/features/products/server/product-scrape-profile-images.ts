@@ -1,7 +1,9 @@
 import 'server-only';
 
-import type { ProductScrapeProfileImageImportMode } from '@/shared/contracts/products/scrape-profiles';
-import { uploadFile } from '@/shared/lib/files/services/image-file-service';
+import type {
+  ProductScrapeProfileImageImportMode,
+  ProductScrapeProfileRuntimeProgressUpdate,
+} from '@/shared/contracts/products/scrape-profiles';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -15,6 +17,7 @@ import {
   downloadRemoteProductImageFile,
   type DownloadedRemoteProductImage,
 } from './product-remote-image-download';
+import { uploadProductImageFileWithLocalFallback } from './product-local-image-file-fallback';
 import { throwIfProductScrapeAborted } from './product-scrape-profile-abort';
 
 export type ProductScrapeImagePayload = {
@@ -33,17 +36,44 @@ type ScrapeImageUploadResult = {
   uploadedImages: Array<UploadedScrapeImage | null>;
 };
 
+type ScrapeImageUploadBatch = ScrapeImageUploadResult & {
+  uploadCount: number;
+};
+
 type ScrapeImageImportContext = {
   candidate: ProductScrapeCandidate;
   dryRun: boolean;
   imageImportMode: ProductScrapeProfileImageImportMode;
   imageStepControls?: Partial<ProductScrapeImageStepControls>;
+  reportProgress?: ProductScrapeProfileProgressReporter;
   signal?: AbortSignal;
 };
 
 type DownloadPreferredScrapeImagesOptions = {
   allowProductGalleryFallback: boolean;
+  reportProgress?: ProductScrapeProfileProgressReporter;
   signal?: AbortSignal;
+};
+
+type ProductScrapeProfileProgressReporter = (
+  progress: ProductScrapeProfileRuntimeProgressUpdate
+) => Promise<void>;
+
+const reportImageProgress = async (
+  reporter: ProductScrapeProfileProgressReporter | undefined,
+  progress: {
+    current?: number | null;
+    message: string;
+    stage: string;
+    total?: number | null;
+  }
+): Promise<void> => {
+  await reporter?.({
+    current: progress.current ?? null,
+    message: progress.message,
+    stage: progress.stage,
+    total: progress.total ?? null,
+  });
 };
 
 const downloadScrapeImage = async (
@@ -81,10 +111,13 @@ const uploadScrapeImage = async (
 ): Promise<UploadedScrapeImage | null> => {
   try {
     throwIfProductScrapeAborted(signal);
-    const uploaded = await uploadFile(image.file, {
-      category: 'products',
+    const uploaded = await uploadProductImageFileWithLocalFallback({
+      action: 'uploadScrapeImage',
+      file: image.file,
+      filename: image.filename,
+      service: 'product-scrape-profiles',
       sku: candidate.sku,
-      filenameOverride: image.filename,
+      sourceUrl: image.sourceUrl,
     });
     throwIfProductScrapeAborted(signal);
     return {
@@ -123,6 +156,10 @@ const resolveFallbackImageLinks = async (
   options: DownloadPreferredScrapeImagesOptions
 ): Promise<string[]> => {
   if (!options.allowProductGalleryFallback) return [];
+  await reportImageProgress(options.reportProgress, {
+    message: `Collecting product gallery fallback images for ${candidate.sku}.`,
+    stage: 'product_gallery_images_collecting',
+  });
   return await fetchSourcePageImageLinks(candidate, options.signal);
 };
 
@@ -136,55 +173,87 @@ const resolveInitialFileModeImageLinks = async (
     DEFAULT_IMAGE_SLOT_COUNT
   );
 
-const downloadPreferredScrapeImages = async (
+const downloadInitialScrapeImages = async (
   candidate: ProductScrapeCandidate,
   imageLinks: string[],
   options: DownloadPreferredScrapeImagesOptions
-): Promise<ScrapeImageUploadResult> => {
+): Promise<ScrapeImageUploadBatch> => {
   const initialImageLinks = await resolveInitialFileModeImageLinks(candidate, imageLinks, options);
   throwIfProductScrapeAborted(options.signal);
+  await reportImageProgress(options.reportProgress, {
+    current: 0,
+    message: `Downloading and uploading ${initialImageLinks.length} scraped image(s) for ${candidate.sku}.`,
+    stage: 'scrape_images_downloading',
+    total: initialImageLinks.length,
+  });
   const initialUploadedImages = await downloadAndUploadScrapeImages(
     candidate,
     initialImageLinks,
     options.signal
   );
   throwIfProductScrapeAborted(options.signal);
-  const initialUploadCount = countUploadedImages(initialUploadedImages);
-  const allInitialImagesUploaded = initialUploadCount === initialImageLinks.length;
-  if (allInitialImagesUploaded || !options.allowProductGalleryFallback || imageLinks.length === 0) {
-    return {
-      imageLinks: initialImageLinks,
-      uploadedImages: initialUploadedImages,
-    };
-  }
+  const uploadCount = countUploadedImages(initialUploadedImages);
+  await reportImageProgress(options.reportProgress, {
+    current: uploadCount,
+    message: `Uploaded ${uploadCount} of ${initialImageLinks.length} scraped image(s) for ${candidate.sku}.`,
+    stage: 'scrape_images_uploaded',
+    total: initialImageLinks.length,
+  });
+  return { imageLinks: initialImageLinks, uploadCount, uploadedImages: initialUploadedImages };
+};
 
+const downloadFallbackScrapeImages = async (
+  candidate: ProductScrapeCandidate,
+  options: DownloadPreferredScrapeImagesOptions
+): Promise<ScrapeImageUploadBatch | null> => {
+  await reportImageProgress(options.reportProgress, {
+    message: `Collecting product gallery fallback images for ${candidate.sku}.`,
+    stage: 'product_gallery_images_collecting',
+  });
   const fallbackImageLinks = (await fetchSourcePageImageLinks(candidate, options.signal)).slice(
     0,
     DEFAULT_IMAGE_SLOT_COUNT
   );
   if (fallbackImageLinks.length === 0) {
-    return {
-      imageLinks: initialImageLinks,
-      uploadedImages: initialUploadedImages,
-    };
+    return null;
   }
 
+  await reportImageProgress(options.reportProgress, {
+    current: 0,
+    message: `Downloading and uploading ${fallbackImageLinks.length} gallery image(s) for ${candidate.sku}.`,
+    stage: 'product_gallery_images_downloading',
+    total: fallbackImageLinks.length,
+  });
   const fallbackUploadedImages = await downloadAndUploadScrapeImages(
     candidate,
     fallbackImageLinks,
     options.signal
   );
-  if (countUploadedImages(fallbackUploadedImages) <= initialUploadCount) {
-    return {
-      imageLinks: initialImageLinks,
-      uploadedImages: initialUploadedImages,
-    };
-  }
+  const uploadCount = countUploadedImages(fallbackUploadedImages);
+  return { imageLinks: fallbackImageLinks, uploadCount, uploadedImages: fallbackUploadedImages };
+};
 
-  return {
-    imageLinks: fallbackImageLinks,
-    uploadedImages: fallbackUploadedImages,
-  };
+const shouldTryFallbackImages = (
+  initialBatch: ScrapeImageUploadBatch,
+  scrapedImageLinkCount: number,
+  options: DownloadPreferredScrapeImagesOptions
+): boolean => {
+  const allInitialImagesUploaded = initialBatch.uploadCount === initialBatch.imageLinks.length;
+  return !allInitialImagesUploaded && options.allowProductGalleryFallback && scrapedImageLinkCount > 0;
+};
+
+const downloadPreferredScrapeImages = async (
+  candidate: ProductScrapeCandidate,
+  imageLinks: string[],
+  options: DownloadPreferredScrapeImagesOptions
+): Promise<ScrapeImageUploadResult> => {
+  const initialBatch = await downloadInitialScrapeImages(candidate, imageLinks, options);
+  if (!shouldTryFallbackImages(initialBatch, imageLinks.length, options)) return initialBatch;
+  const fallbackBatch = await downloadFallbackScrapeImages(candidate, options);
+  if (fallbackBatch === null || fallbackBatch.uploadCount <= initialBatch.uploadCount) {
+    return initialBatch;
+  }
+  return fallbackBatch;
 };
 
 const toImageFileIds = (uploadedImages: Array<UploadedScrapeImage | null>): string[] =>
@@ -203,7 +272,7 @@ const buildFileModeImagePayload = (result: ScrapeImageUploadResult): ProductScra
   }
   return {
     imageFileIds,
-    imageLinks: [],
+    imageLinks: sourceImageLinks,
   };
 };
 
@@ -212,6 +281,7 @@ export const resolveScrapeImagePayload = async ({
   dryRun,
   imageImportMode,
   imageStepControls,
+  reportProgress,
   signal,
 }: ScrapeImageImportContext): Promise<ProductScrapeImagePayload> => {
   throwIfProductScrapeAborted(signal);
@@ -230,6 +300,7 @@ export const resolveScrapeImagePayload = async ({
       {
         allowProductGalleryFallback:
           controls.collectProductGalleryImages && controls.downloadProductGalleryImages,
+        reportProgress,
         signal,
       }
     )

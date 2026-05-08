@@ -45,6 +45,7 @@ import {
   buildMongoBackupName,
   ensureBackupsDir,
   execFileAsync,
+  resolveEcommerceMongoSourceConfig,
   getMongoBackupApplication,
   getMongoBackupPath,
   getMongoConnectionUrl,
@@ -90,6 +91,18 @@ describe('shared db mongo utils', () => {
     delete process.env['PRODUCTS_MONGODB_LOCAL_DB'];
     delete process.env['PRODUCTS_MONGODB_CLOUD_URI'];
     delete process.env['PRODUCTS_MONGODB_CLOUD_DB'];
+    delete process.env['ECOM_MONGODB_URI'];
+    delete process.env['ECOM_MONGODB_DB'];
+    delete process.env['ECOM_MONGODB_LOCAL_URI'];
+    delete process.env['ECOM_MONGODB_LOCAL_DB'];
+    delete process.env['ECOM_MONGODB_CLOUD_URI'];
+    delete process.env['ECOM_MONGODB_CLOUD_DB'];
+    delete process.env['MONGODB_ECOM_URI'];
+    delete process.env['MONGODB_ECOM_DB'];
+    delete process.env['MONGODB_ECOM_LOCAL_URI'];
+    delete process.env['MONGODB_ECOM_LOCAL_DB'];
+    delete process.env['MONGODB_ECOM_CLOUD_URI'];
+    delete process.env['MONGODB_ECOM_CLOUD_DB'];
   });
 
   it('creates the neutral backup directory and application subfolders', async () => {
@@ -213,6 +226,50 @@ describe('shared db mongo utils', () => {
       uri: 'mongodb+srv://cluster.example/?authSource=admin',
       dbName: 'products_db',
       usesLegacyEnv: false,
+    });
+  });
+
+  it('resolves Ecommerce local and cloud source config for Database Engine sync', () => {
+    process.env['ECOM_MONGODB_LOCAL_URI'] = 'mongodb://localhost:27021/ecom_local';
+    process.env['ECOM_MONGODB_LOCAL_DB'] = 'ecom_local';
+    process.env['ECOM_MONGODB_CLOUD_URI'] =
+      'mongodb+srv://cluster.example/?authSource=admin';
+    process.env['ECOM_MONGODB_CLOUD_DB'] = 'ecom_db';
+
+    expect(resolveEcommerceMongoSourceConfig('local')).toMatchObject({
+      source: 'local',
+      configured: true,
+      uri: 'mongodb://localhost:27021/ecom_local',
+      dbName: 'ecom_local',
+      usesLegacyEnv: false,
+    });
+    expect(resolveEcommerceMongoSourceConfig('cloud')).toMatchObject({
+      source: 'cloud',
+      configured: true,
+      uri: 'mongodb+srv://cluster.example/?authSource=admin',
+      dbName: 'ecom_db',
+      usesLegacyEnv: false,
+    });
+  });
+
+  it('falls back to the legacy Products cloud config for Ecommerce cloud sync', () => {
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] =
+      'mongodb+srv://cluster.example/?authSource=admin';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
+
+    expect(resolveEcommerceMongoSourceConfig('local')).toMatchObject({
+      source: 'local',
+      configured: true,
+      uri: 'mongodb://127.0.0.1:27021/ecom_local',
+      dbName: 'ecom_local',
+      usesLegacyEnv: false,
+    });
+    expect(resolveEcommerceMongoSourceConfig('cloud')).toMatchObject({
+      source: 'cloud',
+      configured: true,
+      uri: 'mongodb+srv://cluster.example/?authSource=admin',
+      dbName: 'products_db',
+      usesLegacyEnv: true,
     });
   });
 

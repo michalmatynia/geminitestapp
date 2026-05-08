@@ -114,6 +114,6 @@ describe('ProductImageManagerUIContext', () => {
       }
     );
     expect(handleSlotFileSelect).toHaveBeenCalledWith(imageFile, 0);
-    expect(setImageLinkAt).toHaveBeenCalledWith(0, '');
+    expect(setImageLinkAt).not.toHaveBeenCalled();
   });
 });

@@ -7,7 +7,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { imageOptimizer } from '@/features/products/performance';
 import { withFileUploadSecurity } from '@/features/products/security';
-import { uploadFile } from '@/shared/lib/files/services/image-file-service';
+import { uploadProductImageFileWithLocalFallback } from '@/shared/lib/products/services/product-image-upload-fallback';
 
 interface UploadedFile {
   file: File;
@@ -39,10 +39,12 @@ export async function uploadProductImages(
           original: { width: 2400, quality: 95 },
         },
       });
-      const imageFile = await uploadFile(file, {
-        category: 'products',
+      const imageFile = await uploadProductImageFileWithLocalFallback({
+        action: 'uploadProductImages',
+        file,
+        filename: sanitizedName,
+        service: 'products.images-upload',
         sku,
-        filenameOverride: sanitizedName,
       });
 
       return {

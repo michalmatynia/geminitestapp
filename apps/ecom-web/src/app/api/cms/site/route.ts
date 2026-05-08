@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { getSiteCmsSnapshot, parseSiteContentUpdate, saveSiteContent } from '@/lib/cms';
+import { deleteSiteContent, getSiteCmsSnapshot, parseSiteContentUpdate, saveSiteContent } from '@/lib/cms';
+import { deleteLocalizedCmsRouteContent } from '@/lib/cmsRouteHandlers';
 import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 function forbidden(): NextResponse {
@@ -44,4 +45,13 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   } catch {
     return NextResponse.json({ error: 'Failed to save site CMS content' }, { status: 500 });
   }
+}
+
+export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  return deleteLocalizedCmsRouteContent({
+    req,
+    label: 'site',
+    deleteContent: deleteSiteContent,
+    revalidate: [{ path: '/', type: 'layout' }],
+  });
 }

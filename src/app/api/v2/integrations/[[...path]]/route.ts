@@ -59,6 +59,8 @@ import * as integrationProductListingSyncImages from '../products/[id]/listings/
 import * as integrationProductLinkExisting from '../products/[id]/base/link-existing/route-handler';
 import * as integrationProductSkuCheck from '../products/[id]/base/sku-check/route-handler';
 import * as integrationProductExportToBase from '../products/[id]/export-to-base/route-handler';
+import * as integrationProductExportToEcommerce from '../products/[id]/export-to-ecommerce/route-handler';
+import * as integrationProductsBulkExportToEcommerce from '../products/export-to-ecommerce/bulk/route-handler';
 import * as queuesTradera from '../queues/tradera/route-handler';
 
 const ROUTES = [
@@ -85,6 +87,8 @@ const ROUTES = [
   { pattern: ['products', { param: 'id' }, 'base', 'link-existing'], module: integrationProductLinkExisting },
   { pattern: ['products', { param: 'id' }, 'base', 'sku-check'], module: integrationProductSkuCheck },
   { pattern: ['products', { param: 'id' }, 'export-to-base'], module: integrationProductExportToBase },
+  { pattern: ['products', { param: 'id' }, 'export-to-ecommerce'], module: integrationProductExportToEcommerce },
+  { pattern: ['products', 'export-to-ecommerce', 'bulk'], module: integrationProductsBulkExportToEcommerce },
   { pattern: ['products', { param: 'id' }, 'listings'], module: integrationProductsListings },
   { pattern: ['products', { param: 'id' }, 'listings', { param: 'listingId' }], module: integrationProductListing },
   { pattern: ['products', { param: 'id' }, 'listings', { param: 'listingId' }, 'delete-from-base'], module: integrationProductListingDelete },

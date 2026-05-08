@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { getContactCmsSnapshot, parseContactContentUpdate, saveContactContent } from '@/lib/cms';
+import { deleteContactContent, getContactCmsSnapshot, parseContactContentUpdate, saveContactContent } from '@/lib/cms';
+import { deleteLocalizedCmsRouteContent } from '@/lib/cmsRouteHandlers';
 import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 function forbidden(): NextResponse {
@@ -44,4 +45,13 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   } catch {
     return NextResponse.json({ error: 'Failed to save contact CMS content' }, { status: 500 });
   }
+}
+
+export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  return deleteLocalizedCmsRouteContent({
+    req,
+    label: 'contact',
+    deleteContent: deleteContactContent,
+    revalidate: [{ path: '/contact' }],
+  });
 }

@@ -15,6 +15,8 @@ export interface ProductListRowRuntimeContextType {
   scrapedSourceStatus: string;
   showPlaywrightProgrammableBadge: boolean;
   playwrightProgrammableStatus: string;
+  showEcommerceBadge: boolean;
+  ecommerceStatus: string;
   productAiRunFeedback: ProductAiRunFeedback | null;
   productScanRunFeedback: ProductScanRunFeedback | null;
 }

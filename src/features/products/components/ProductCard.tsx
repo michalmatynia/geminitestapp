@@ -11,7 +11,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { normalizeSiteLocale, resolveLocalizedText } from '@/shared/lib/i18n/site-locale';
 import MissingImagePlaceholder from '@/shared/ui/missing-image-placeholder';
 import { ResourceCard } from '@/shared/ui/ResourceCard';
-import { resolveProductImageUrl as resolveRoutedProductImageUrl } from '@/shared/utils/image-routing';
+import { resolveProductImageFileUrl } from '@/shared/utils/image-routing';
 
 interface ProductCardProps {
   product: ProductWithImages;
@@ -22,7 +22,7 @@ function resolveProductImageUrl(product: ProductWithImages): string | null {
   const images = Array.isArray(product.images) ? product.images : [];
   const firstImage = images[0];
   if (firstImage === undefined) return null;
-  return resolveRoutedProductImageUrl(firstImage.imageFile.filepath);
+  return resolveProductImageFileUrl(firstImage.imageFile);
 }
 
 function ProductCardImage({

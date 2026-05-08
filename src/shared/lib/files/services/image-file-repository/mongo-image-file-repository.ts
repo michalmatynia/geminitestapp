@@ -15,13 +15,22 @@ import type { WithId } from 'mongodb';
 
 type ImageFileDocument = {
   _id: string;
-  id: string;
+  id?: string;
   filename: string;
   filepath: string;
   mimetype: string;
   size: number;
+  publicUrl?: string;
+  url?: string;
+  storageProvider?: string;
+  metadata?: Record<string, unknown> | null;
   width: number | null;
   height: number | null;
+  thumbnailPath?: string;
+  thumbnailUrl?: string;
+  isAnimated?: boolean;
+  hasAlpha?: boolean;
+  blurHash?: string;
   tags?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
@@ -29,14 +38,66 @@ type ImageFileDocument = {
 
 const IMAGE_FILE_COLLECTION = 'image_files';
 
+const normalizeOptionalText = (value: string | null | undefined): string | undefined => {
+  const trimmed = value?.trim() ?? '';
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const optionalTextField = <TKey extends string>(
+  key: TKey,
+  value: string | null | undefined
+): Partial<Record<TKey, string>> => {
+  const normalized = normalizeOptionalText(value);
+  const result: Partial<Record<TKey, string>> = {};
+  if (normalized !== undefined) {
+    result[key] = normalized;
+  }
+  return result;
+};
+
+const isImageFileStorageProvider = (
+  value: unknown
+): value is NonNullable<ImageFileRecord['storageProvider']> =>
+  value === 'local' || value === 's3' || value === 'imagekit';
+
+const optionalStorageProviderField = (
+  value: unknown
+): Partial<Pick<ImageFileRecord, 'storageProvider'>> =>
+  isImageFileStorageProvider(value) ? { storageProvider: value } : {};
+
+const optionalMetadataField = (
+  value: ImageFileDocument['metadata']
+): Partial<Pick<ImageFileRecord, 'metadata'>> =>
+  value !== undefined ? { metadata: value } : {};
+
+const optionalBooleanField = <TKey extends 'hasAlpha' | 'isAnimated'>(
+  key: TKey,
+  value: boolean | undefined
+): Partial<Record<TKey, boolean>> => {
+  const result: Partial<Record<TKey, boolean>> = {};
+  if (value !== undefined) {
+    result[key] = value;
+  }
+  return result;
+};
+
 const toRecord = (doc: WithId<ImageFileDocument>): ImageFileRecord => ({
   id: doc.id ?? doc._id,
   filename: doc.filename,
   filepath: doc.filepath,
   mimetype: doc.mimetype,
   size: doc.size,
+  ...optionalTextField('publicUrl', doc.publicUrl),
+  ...optionalTextField('url', doc.url),
+  ...optionalStorageProviderField(doc.storageProvider),
+  ...optionalMetadataField(doc.metadata),
   width: doc.width ?? null,
   height: doc.height ?? null,
+  ...optionalTextField('thumbnailPath', doc.thumbnailPath),
+  ...optionalTextField('thumbnailUrl', doc.thumbnailUrl),
+  ...optionalBooleanField('isAnimated', doc.isAnimated),
+  ...optionalBooleanField('hasAlpha', doc.hasAlpha),
+  ...optionalTextField('blurHash', doc.blurHash),
   tags: doc.tags ?? [],
   createdAt: doc.createdAt.toISOString(),
   updatedAt: doc.updatedAt.toISOString(),
@@ -54,8 +115,17 @@ export const mongoImageFileRepository: ImageFileRepository = {
       filepath: data.filepath,
       mimetype: data.mimetype,
       size: data.size,
+      ...optionalTextField('publicUrl', data.publicUrl),
+      ...optionalTextField('url', data.url),
+      ...optionalStorageProviderField(data.storageProvider),
+      ...optionalMetadataField(data.metadata),
       width: data.width ?? null,
       height: data.height ?? null,
+      ...optionalTextField('thumbnailPath', data.thumbnailPath),
+      ...optionalTextField('thumbnailUrl', data.thumbnailUrl),
+      ...optionalBooleanField('isAnimated', data.isAnimated),
+      ...optionalBooleanField('hasAlpha', data.hasAlpha),
+      ...optionalTextField('blurHash', data.blurHash),
       tags: data.tags ?? [],
       createdAt: now,
       updatedAt: now,
@@ -77,7 +147,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
     const filename = filters?.filename?.trim();
     const tags = (filters?.tags ?? []).filter(Boolean);
     const query: Record<string, unknown> = {};
-    if (filename) {
+    if (filename !== undefined) {
       query['filename'] = { $regex: filename, $options: 'i' };
     }
     if (tags.length > 0) {

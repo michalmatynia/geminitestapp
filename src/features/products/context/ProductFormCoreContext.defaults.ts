@@ -100,6 +100,12 @@ const resolveOptionalDefault = <T,>(
     fallback
   );
 
+const resolveProductOnlyOptionalDefault = <T,>(
+  { product }: ProductFormDefaultsInput,
+  key: keyof ProductWithImages,
+  fallback: T
+): T => firstDefined(product?.[key] as T | null | undefined, undefined, fallback);
+
 const normalizeProductFormNotes = (
   value: ProductNotes | null | undefined
 ): ProductNotes | undefined => {
@@ -187,9 +193,13 @@ const resolveOptionalIdDefaults = (input: ProductFormDefaultsInput): Pick<
     undefined
   ),
   baseProductId: resolveOptionalDefault<string | undefined>(input, 'baseProductId', undefined),
-  importSource: resolveOptionalDefault<string | undefined>(input, 'importSource', undefined),
+  importSource: resolveOptionalDefault<ProductFormData['importSource']>(
+    input,
+    'importSource',
+    undefined
+  ),
   shippingGroupId: resolveOptionalDefault(input, 'shippingGroupId', ''),
-  sourcePriceCurrencyCode: resolveOptionalDefault<string | undefined>(
+  sourcePriceCurrencyCode: resolveProductOnlyOptionalDefault<string | undefined>(
     input,
     'sourcePriceCurrencyCode',
     undefined

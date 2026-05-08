@@ -20,6 +20,8 @@ export type ProductListRowRuntimeStoreState = Pick<
   | 'vintedBadgeStatuses'
   | 'scrapedSourceBadgeIds'
   | 'scrapedSourceBadgeStatuses'
+  | 'ecommerceBadgeIds'
+  | 'ecommerceBadgeStatuses'
   | 'queuedProductIds'
   | 'productAiRunStatusByProductId'
   | 'productScanRunStatusByProductId'
@@ -45,6 +47,8 @@ export const EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT: ProductListRowRuntimeConte
   scrapedSourceStatus: 'not_started',
   showPlaywrightProgrammableBadge: false,
   playwrightProgrammableStatus: 'not_started',
+  showEcommerceBadge: false,
+  ecommerceStatus: 'not_started',
   productAiRunFeedback: null,
   productScanRunFeedback: null,
 });
@@ -100,6 +104,8 @@ const areProductListRowRuntimeSnapshotsEqual = (
     left.scrapedSourceStatus === right.scrapedSourceStatus,
     left.showPlaywrightProgrammableBadge === right.showPlaywrightProgrammableBadge,
     left.playwrightProgrammableStatus === right.playwrightProgrammableStatus,
+    left.showEcommerceBadge === right.showEcommerceBadge,
+    left.ecommerceStatus === right.ecommerceStatus,
     areProductAiRunFeedbacksEqual(left.productAiRunFeedback, right.productAiRunFeedback),
     areProductScanRunFeedbacksEqual(left.productScanRunFeedback, right.productScanRunFeedback),
   ].every((isEqual) => isEqual);
@@ -119,6 +125,8 @@ const areProductListRowRuntimeStoreStatesEqual = (
     left.scrapedSourceBadgeStatuses === right.scrapedSourceBadgeStatuses,
     left.playwrightProgrammableBadgeIds === right.playwrightProgrammableBadgeIds,
     left.playwrightProgrammableBadgeStatuses === right.playwrightProgrammableBadgeStatuses,
+    left.ecommerceBadgeIds === right.ecommerceBadgeIds,
+    left.ecommerceBadgeStatuses === right.ecommerceBadgeStatuses,
     left.queuedProductIds === right.queuedProductIds,
     left.productAiRunStatusByProductId === right.productAiRunStatusByProductId,
     left.productScanRunStatusByProductId === right.productScanRunStatusByProductId,
@@ -152,6 +160,8 @@ const createProductListRowRuntimeSnapshot = (
     state.playwrightProgrammableBadgeStatuses,
     productId
   ),
+  showEcommerceBadge: state.ecommerceBadgeIds.has(productId),
+  ecommerceStatus: resolveRowRuntimeStatus(state.ecommerceBadgeStatuses, productId),
   productAiRunFeedback: resolveProductAiRunFeedbackForList({
     productId,
     queuedProductIds: state.queuedProductIds,

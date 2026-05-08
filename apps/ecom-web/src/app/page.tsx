@@ -12,15 +12,29 @@ import { getHomeContent } from '@/lib/cms';
 import { getRequestLocale } from '@/lib/request-locale';
 
 export const revalidate = 120; // ISR — revalidate every 2 minutes
+const FEATURED_PRODUCT_COUNT = 12;
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getHomeContent(locale);
+  const title = locale === 'pl'
+    ? 'ARCANA - Anime, gaming i filmowe kolekcjonalia'
+    : 'ARCANA - Anime, Gaming, and Film Collectibles';
+  const description = content.hero.description;
   return {
-    title: locale === 'pl'
-      ? 'ARCANA - Anime, gaming i filmowe kolekcjonalia'
-      : 'ARCANA - Anime, Gaming, and Film Collectibles',
-    description: content.hero.description,
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      siteName: 'ARCANA',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   };
 }
 
@@ -28,12 +42,12 @@ export default async function HomePage() {
   const locale = await getRequestLocale();
   // Both fetches run in parallel; either can fail gracefully.
   const [{ products: dbProducts }, collectionCounts, homeContent] = await Promise.all([
-    getMentiosProducts({ limit: 6, locale }),
+    getMentiosProducts({ limit: FEATURED_PRODUCT_COUNT, locale }),
     getMentiosCollectionCounts(),
     getHomeContent(locale),
   ]);
 
-  const featuredProducts = dbProducts.length > 0 ? dbProducts.slice(0, 6) : null;
+  const featuredProducts = dbProducts.length > 0 ? dbProducts.slice(0, FEATURED_PRODUCT_COUNT) : null;
 
   return (
     <>

@@ -18,7 +18,7 @@ const readResponsePrefixBytes = async (response: Response): Promise<Uint8Array |
     }
 
     const chunk = await reader.read();
-    await reader.cancel().catch(() => undefined);
+    void reader.cancel().catch(() => undefined);
     return (chunk.value ?? new Uint8Array()).slice(0, RESPONSE_BODY_SNIFF_BYTES);
   } catch {
     return null;

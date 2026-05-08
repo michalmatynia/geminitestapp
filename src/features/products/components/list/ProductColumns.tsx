@@ -22,7 +22,7 @@ const PRODUCT_TABLE_COLUMN_SIZES = {
   price: 140,
   stock: 88,
   createdAt: 200,
-  integrations: 220,
+  integrations: 252,
   actions: 64,
 } as const;
 

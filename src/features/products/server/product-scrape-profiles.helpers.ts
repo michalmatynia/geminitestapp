@@ -188,30 +188,68 @@ const processNewScrapeCandidate = async (input: {
   );
 };
 
-const processPersistedCandidate = async (
-  draft: ScripterImportDraft,
+const findExistingScrapeProduct = async (
   candidate: ProductScrapeCandidate,
   context: ProductScrapeRunContext
-): Promise<ProductScrapeDraftOutcome> => {
+): Promise<ProductWithImages | null> => {
   throwIfProductScrapeAborted(context.signal);
+  await reportCandidateProgress(
+    context,
+    'product_lookup_sku',
+    `Checking existing product by SKU ${candidate.sku}.`
+  );
   const existingBySku = await productService.getProductBySku(candidate.sku);
   throwIfProductScrapeAborted(context.signal);
+  await reportCandidateProgress(
+    context,
+    'product_lookup_supplier_link',
+    `Checking existing product by supplier link for ${candidate.sku}.`
+  );
   const existing =
     existingBySku ?? (await productService.findProductBySupplierLink(candidate.sourceUrl));
   throwIfProductScrapeAborted(context.signal);
-  const catalogIds = mergeTemplateCatalogIds(
-    existingCatalogIds(existing, context.catalog.id),
-    context.draftTemplate
+  return existing;
+};
+
+const resolvePersistedCandidateImagePayload = async (
+  candidate: ProductScrapeCandidate,
+  context: ProductScrapeRunContext
+): Promise<Awaited<ReturnType<typeof resolveScrapeImagePayload>>> => {
+  await reportCandidateProgress(
+    context,
+    'image_payload_resolving',
+    `Resolving image payload for ${candidate.sku}.`
   );
   const imagePayload = await resolveScrapeImagePayload({
     candidate,
     dryRun: context.dryRun,
     imageImportMode: context.imageImportMode,
     imageStepControls: context.imageStepControls,
+    reportProgress: context.reportProgress,
     signal: context.signal,
   });
+  return imagePayload;
+};
+
+const processResolvedPersistedCandidate = async (input: {
+  candidate: ProductScrapeCandidate;
+  context: ProductScrapeRunContext;
+  draft: ScripterImportDraft;
+  existing: ProductWithImages | null;
+  imagePayload: Awaited<ReturnType<typeof resolveScrapeImagePayload>>;
+}): Promise<ProductScrapeDraftOutcome> => {
+  const { candidate, context, draft, existing, imagePayload } = input;
   throwIfProductScrapeAborted(context.signal);
   if (existing !== null) {
+    await reportCandidateProgress(
+      context,
+      'product_updating',
+      `Updating scraped product ${candidate.sku}.`
+    );
+    const catalogIds = mergeTemplateCatalogIds(
+      existingCatalogIds(existing, context.catalog.id),
+      context.draftTemplate
+    );
     return await processExistingScrapeCandidate({
       catalogIds,
       candidate,
@@ -221,10 +259,31 @@ const processPersistedCandidate = async (
       imagePayload,
     });
   }
+  await reportCandidateProgress(
+    context,
+    'product_creating',
+    `Creating scraped product ${candidate.sku}.`
+  );
   return await processNewScrapeCandidate({
     candidate,
     context,
     draft,
+    imagePayload,
+  });
+};
+
+const processPersistedCandidate = async (
+  draft: ScripterImportDraft,
+  candidate: ProductScrapeCandidate,
+  context: ProductScrapeRunContext
+): Promise<ProductScrapeDraftOutcome> => {
+  const existing = await findExistingScrapeProduct(candidate, context);
+  const imagePayload = await resolvePersistedCandidateImagePayload(candidate, context);
+  return await processResolvedPersistedCandidate({
+    candidate,
+    context,
+    draft,
+    existing,
     imagePayload,
   });
 };
@@ -291,6 +350,19 @@ const reportImportProgress = async (
     message: `Processed ${current} of ${total} scraped product record(s).`,
     stage: 'importing_products',
     total,
+  });
+};
+
+const reportCandidateProgress = async (
+  context: ProductScrapeRunContext,
+  stage: string,
+  message: string
+): Promise<void> => {
+  await context.reportProgress?.({
+    current: null,
+    message,
+    stage,
+    total: null,
   });
 };
 

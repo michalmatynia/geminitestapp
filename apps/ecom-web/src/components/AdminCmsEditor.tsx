@@ -84,6 +84,7 @@ import {
   CHECKOUT_CONTENT_DEFAULTS,
   type CheckoutContent,
   type CheckoutFieldContent,
+  type CheckoutShippingCarrier,
   type CheckoutShippingMethodContent,
   type CheckoutStepContent,
   type CheckoutSummaryContent,
@@ -231,9 +232,19 @@ interface AccountCmsResponse {
   errors?: string[];
 }
 
+interface DeleteCmsResponse {
+  ok?: boolean;
+  locale?: EcomLocale;
+  deleted?: boolean;
+  error?: string;
+}
+
 interface LogoUploadResponse {
   ok?: boolean;
   url?: string;
+  logoAlt?: string;
+  updatedAt?: string | null;
+  updatedBy?: string | null;
   error?: string;
 }
 
@@ -683,6 +694,9 @@ function checkoutShippingMethodsToText(methods: CheckoutShippingMethodContent[])
     method.priceLabel,
     method.businessDaysMin,
     method.businessDaysMax,
+    method.carrier ?? 'manual',
+    method.service ?? '',
+    method.requiresPickupPoint ? 'pickup' : '',
   ].join(' | ')).join('\n');
 }
 
@@ -697,12 +711,16 @@ function textToCheckoutShippingMethods(value: string): CheckoutShippingMethodCon
         priceLabel = '',
         businessDaysMin = '3',
         businessDaysMax = '5',
+        carrier = 'manual',
+        service = '',
+        requiresPickupPoint = '',
       ] = line.split('|');
       const parsedPrice = Number(price.trim());
       const parsedMin = Number(businessDaysMin.trim());
       const parsedMax = Number(businessDaysMax.trim());
       const minDays = Number.isFinite(parsedMin) && Number.isInteger(parsedMin) && parsedMin > 0 ? parsedMin : 3;
       const maxDays = Number.isFinite(parsedMax) && Number.isInteger(parsedMax) && parsedMax > 0 ? parsedMax : minDays;
+      const normalizedCarrier: CheckoutShippingCarrier = carrier.trim() === 'inpost' ? 'inpost' : 'manual';
       return {
         id: id.trim(),
         label: label.trim(),
@@ -711,6 +729,9 @@ function textToCheckoutShippingMethods(value: string): CheckoutShippingMethodCon
         priceLabel: priceLabel.trim(),
         businessDaysMin: minDays,
         businessDaysMax: Math.max(minDays, maxDays),
+        carrier: normalizedCarrier,
+        service: service.trim() || undefined,
+        requiresPickupPoint: isTruthyToken(requiresPickupPoint),
       };
     })
     .filter((method) => method.id || method.label || method.detail);
@@ -926,6 +947,20 @@ const LOCALE_LABELS: Record<EcomLocale, string> = {
   pl: 'PL',
 };
 
+const PAGE_CMS_ENDPOINTS = [
+  'home',
+  'site',
+  'about',
+  'values',
+  'stories-page',
+  'lookbook-page',
+  'contact',
+  'wishlist',
+  'checkout',
+  'products',
+  'account',
+] as const;
+
 function latestUpdatedAt(values: Array<string | null | undefined>): string | null {
   const sorted = values
     .filter((value): value is string => Boolean(value))
@@ -1032,7 +1067,7 @@ function ShippingMethodFields({
 }: {
   title: string;
   method: CheckoutShippingMethodContent;
-  onChange: (key: keyof CheckoutShippingMethodContent, value: string | number) => void;
+  onChange: (key: keyof CheckoutShippingMethodContent, value: string | number | boolean) => void;
   onRemove: () => void;
 }): JSX.Element {
   return (
@@ -1052,6 +1087,8 @@ function ShippingMethodFields({
         <Field label="Method ID" value={method.id} onChange={(value) => onChange('id', value)} />
         <Field label="Label" value={method.label} onChange={(value) => onChange('label', value)} />
         <Field label="Detail" value={method.detail} onChange={(value) => onChange('detail', value)} />
+        <Field label="Carrier (manual or inpost)" value={method.carrier ?? 'manual'} onChange={(value) => onChange('carrier', value === 'inpost' ? 'inpost' : 'manual')} />
+        <Field label="Carrier service" value={method.service ?? ''} onChange={(value) => onChange('service', value)} />
         <Field
           label="Price (€)"
           type="number"
@@ -1080,6 +1117,15 @@ function ShippingMethodFields({
           value={String(method.businessDaysMax)}
           onChange={(value) => onChange('businessDaysMax', parsePositiveInteger(value, method.businessDaysMax))}
         />
+        <label style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <input
+            type="checkbox"
+            checked={Boolean(method.requiresPickupPoint)}
+            onChange={(event) => onChange('requiresPickupPoint', event.target.checked)}
+            style={{ width: 14, height: 14, accentColor: 'var(--accent)' }}
+          />
+          Requires pickup point
+        </label>
       </div>
     </div>
   );
@@ -1102,6 +1148,7 @@ interface AdminCmsHeaderProps {
   saveMeta: CmsSaveMeta[];
   onLocaleSelect: (locale: EcomLocale) => void;
   onCopyFromDefault: () => void;
+  onDeleteLocaleOverride: () => void;
   onResetDefaults: () => void;
   onSave: () => void;
 }
@@ -1191,10 +1238,12 @@ function AdminCmsHeader({
   saveMeta,
   onLocaleSelect,
   onCopyFromDefault,
+  onDeleteLocaleOverride,
   onResetDefaults,
   onSave,
 }: AdminCmsHeaderProps): JSX.Element {
   const canCopyFromDefault = selectedLocale !== DEFAULT_LOCALE && localeStatus[selectedLocale]?.saved === false;
+  const canDeleteLocaleOverride = selectedLocale !== DEFAULT_LOCALE && localeStatus[selectedLocale]?.saved === true;
 
   return (
     <>
@@ -1226,6 +1275,17 @@ function AdminCmsHeader({
               style={{ fontSize: '0.72rem' }}
             >
               Copy from EN
+            </button>
+          )}
+          {canDeleteLocaleOverride && (
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={onDeleteLocaleOverride}
+              disabled={disabled}
+              style={{ fontSize: '0.72rem', color: 'var(--coral-red)' }}
+            >
+              Delete {LOCALE_LABELS[selectedLocale]} override
             </button>
           )}
           <button
@@ -1475,6 +1535,49 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
     setCheckoutContent(CHECKOUT_CONTENT_DEFAULTS);
     setProductsContent(PRODUCTS_CONTENT_DEFAULTS);
     setAccountContent(ACCOUNT_CONTENT_DEFAULTS);
+  }
+
+  async function deleteSelectedLocaleOverride(): Promise<void> {
+    if (selectedLocale === DEFAULT_LOCALE) return;
+    if (!confirmDiscardAllUnsavedChanges()) return;
+    if (
+      !window.confirm(
+        `Delete saved ${LOCALE_LABELS[selectedLocale]} page CMS override and fall back to EN? Stories and lookbook entries for this locale will stay untouched.`,
+      )
+    ) {
+      return;
+    }
+
+    setSaving(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const localeQuery = `?locale=${encodeURIComponent(selectedLocale)}`;
+      const results = await Promise.all(
+        PAGE_CMS_ENDPOINTS.map(async (endpoint) => {
+          const res = await fetch(`/api/cms/${endpoint}${localeQuery}`, { method: 'DELETE' });
+          const data = await res.json() as DeleteCmsResponse;
+          if (!res.ok) throw new Error(data.error ?? `Failed to delete ${endpoint} CMS override`);
+          return data;
+        }),
+      );
+      clearCleanSnapshots();
+      setLocaleStatus((current) => ({
+        ...current,
+        [selectedLocale]: {
+          updatedAt: null,
+          saved: false,
+        },
+      }));
+      setLocaleReloadKey((current) => current + 1);
+      const deletedCount = results.filter((result) => result.deleted).length;
+      setMessage(`Deleted ${LOCALE_LABELS[selectedLocale]} page CMS override (${deletedCount} records removed).`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete locale CMS override');
+    } finally {
+      setSaving(false);
+    }
   }
 
   function startNewStoryDraft(): void {
@@ -1858,7 +1961,9 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
 
     try {
       const formData = new FormData();
+      const fallbackAlt = `${siteContent.nav.brandName} ${siteContent.nav.brandSuffix}`.trim();
       formData.append('file', file);
+      formData.append('alt', siteContent.nav.logoAlt.trim() || fallbackAlt);
       const res = await fetch('/api/cms/uploads/logo', {
         method: 'POST',
         body: formData,
@@ -1868,18 +1973,48 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
         throw new Error(data.error ?? 'Failed to upload logo');
       }
 
-      setSiteContent((current) => {
-        const fallbackAlt = `${current.nav.brandName} ${current.nav.brandSuffix}`.trim();
-        return {
-          ...current,
-          nav: {
-            ...current.nav,
-            logoUrl: data.url ?? '',
-            logoAlt: current.nav.logoAlt.trim() || fallbackAlt,
-          },
+      const nextSiteContent = {
+        ...siteContent,
+        nav: {
+          ...siteContent.nav,
+          logoUrl: data.url ?? '',
+          logoAlt: data.logoAlt?.trim() || siteContent.nav.logoAlt.trim() || fallbackAlt,
+        },
+      };
+      setSiteContent(nextSiteContent);
+      setSiteUpdatedAt(data.updatedAt ?? siteUpdatedAt);
+      setSiteUpdatedBy(data.updatedBy ?? siteUpdatedBy);
+      if (data.updatedAt) {
+        setLocaleStatus((current) => {
+          const next = { ...current };
+          for (const locale of locales) {
+            next[locale] = {
+              updatedAt: data.updatedAt ?? null,
+              saved: true,
+            };
+          }
+          return next;
+        });
+      }
+      if (!hasPageUnsavedChanges) {
+        cleanSnapshotsRef.current = {
+          ...cleanSnapshotsRef.current,
+          page: buildPageEditorSnapshot({
+            content,
+            siteContent: nextSiteContent,
+            aboutContent,
+            valuesContent,
+            storiesPageContent,
+            lookbookPageContent,
+            contactContent,
+            wishlistContent,
+            checkoutContent,
+            productsContent,
+            accountContent,
+          }),
         };
-      });
-      setMessage('Logo uploaded to FastComet. Save content to publish it.');
+      }
+      setMessage('Logo uploaded to FastComet and published globally for all languages.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload logo');
     } finally {
@@ -2202,7 +2337,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
   function updateCheckoutShippingMethod(
     index: number,
     key: keyof CheckoutShippingMethodContent,
-    value: string | number,
+    value: string | number | boolean,
   ): void {
     setCheckoutContent((current) => ({
       ...current,
@@ -2271,7 +2406,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
     zoneIndex: number,
     methodIndex: number,
     key: keyof CheckoutShippingMethodContent,
-    value: string | number,
+    value: string | number | boolean,
   ): void {
     setCheckoutContent((current) => ({
       ...current,
@@ -2760,6 +2895,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
         saveMeta={saveMeta}
         onLocaleSelect={handleLocaleSelect}
         onCopyFromDefault={reloadSelectedLocale}
+        onDeleteLocaleOverride={() => void deleteSelectedLocaleOverride()}
         onResetDefaults={resetPageContentToDefaults}
         onSave={() => void save()}
       />
@@ -2782,6 +2918,9 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
                 <Field label="Mobile wishlist label" value={siteContent.nav.mobileWishlistLabel} onChange={(value) => updateSiteNav('mobileWishlistLabel', value)} />
               </div>
               <div style={{ border: '1px solid var(--border)', padding: '1rem', display: 'grid', gap: '0.9rem' }}>
+                <div className="type-label" style={{ color: 'var(--muted)' }}>
+                  Header logo is shared across all languages. Uploads publish immediately; manual URL edits publish on Save.
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                   <Field label="Header logo URL" value={siteContent.nav.logoUrl} onChange={(value) => updateSiteNav('logoUrl', value)} />
                   <Field label="Header logo alt text" value={siteContent.nav.logoAlt} onChange={(value) => updateSiteNav('logoAlt', value)} />
@@ -3231,7 +3370,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
                     Add fallback method
                   </button>
                   <TextArea
-                    label="Bulk edit fallback methods (id | label | detail | price | price label | min days | max days)"
+                    label="Bulk edit fallback methods (id | label | detail | price | price label | min days | max days | carrier | service | pickup)"
                     rows={5}
                     value={checkoutShippingMethodsToText(checkoutContent.shippingMethods)}
                     onChange={(value) => updateCheckout('shippingMethods', textToCheckoutShippingMethods(value))}
@@ -3430,9 +3569,11 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
                 <Field label="View all orders label" value={accountContent.overview.viewAllOrdersLabel} onChange={(value) => updateAccountOverview('viewAllOrdersLabel', value)} />
                 <Field label="Orders title" value={accountContent.orders.title} onChange={(value) => updateAccountOrders('title', value)} />
                 <Field label="Quantity label" value={accountContent.orders.qtyLabel} onChange={(value) => updateAccountOrders('qtyLabel', value)} />
+                <Field label="Pending payment status" value={accountContent.orders.statuses.pending_payment} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, pending_payment: value })} />
                 <Field label="Delivered status" value={accountContent.orders.statuses.delivered} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, delivered: value })} />
                 <Field label="In transit status" value={accountContent.orders.statuses['in-transit']} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, 'in-transit': value })} />
                 <Field label="Processing status" value={accountContent.orders.statuses.processing} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, processing: value })} />
+                <Field label="Cancelled status" value={accountContent.orders.statuses.cancelled} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, cancelled: value })} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                 <Field label="Settings title" value={accountContent.settings.title} onChange={(value) => updateAccountSettings('title', value)} />

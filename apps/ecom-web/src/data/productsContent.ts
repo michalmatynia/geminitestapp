@@ -137,10 +137,10 @@ export const PRODUCTS_CONTENT_DEFAULTS: ProductsContent = {
     ],
     sizes: ['XS', 'S', 'M', 'L', 'XL', '44', '46', '48', '50', '52'],
     priceRanges: [
-      { label: 'Under € 200', min: 0, max: 200 },
-      { label: '€ 200 - € 500', min: 200, max: 500 },
-      { label: '€ 500 - € 1,000', min: 500, max: 1000 },
-      { label: 'Over € 1,000', min: 1000, max: null },
+      { label: 'Under 200 zł', min: 0, max: 200 },
+      { label: '200 zł - 500 zł', min: 200, max: 500 },
+      { label: '500 zł - 1,000 zł', min: 500, max: 1000 },
+      { label: 'Over 1,000 zł', min: 1000, max: null },
     ],
   },
   detail: {

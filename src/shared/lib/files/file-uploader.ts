@@ -16,7 +16,7 @@ import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 
-import type { ImageFileRecord } from '@/shared/contracts/files';
+import type { ImageFileCreateInput, ImageFileRecord } from '@/shared/contracts/files';
 import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -91,6 +91,28 @@ export function getDiskPathFromPublicPath(publicPath: string): string {
     throw new Error('Security Error: Invalid path traversal attempt detected.');
   }
   return resolved;
+}
+
+async function removeEmptyUploadParentDirectory(diskPath: string): Promise<void> {
+  const parentDir = path.dirname(diskPath);
+  const resolvedParent = path.resolve(parentDir);
+
+  if (resolvedParent === uploadsRoot || !resolvedParent.startsWith(`${uploadsRoot}${path.sep}`)) {
+    return;
+  }
+
+  await fs.rmdir(resolvedParent).catch((error: unknown) => {
+    const hasCode =
+      typeof error === 'object' &&
+      error !== null &&
+      Object.prototype.hasOwnProperty.call(error, 'code');
+    const code =
+      hasCode
+        ? String((error as { code?: unknown }).code)
+        : '';
+    if (code === 'ENOENT' || code === 'ENOTEMPTY' || code === 'EEXIST') return;
+    void ErrorSystem.captureException(error);
+  });
 }
 
 function sanitizeSku(sku: string): string {
@@ -267,11 +289,19 @@ export async function uploadFile(
     storageSource = storageResult.source;
 
     const imageFileRepository = await getImageFileRepository(options?.provider);
-    const recordInput = {
+    const recordInput: ImageFileCreateInput = {
       filename,
       filepath: storedFilepath,
+      publicUrl: storedFilepath,
+      url: storedFilepath,
       mimetype: file.type,
+      metadata: {
+        publicPath,
+        storageSource,
+        mirroredLocally: storageResult.mirroredLocally,
+      },
       size: file.size,
+      ...(storageSource === 'local' ? { storageProvider: 'local' } : {}),
     };
     const imageFile = await imageFileRepository.createImageFile(recordInput);
     void createFileUploadEvent({
@@ -332,13 +362,14 @@ export async function deleteFileFromStorage(filepath: string): Promise<void> {
   await deleteFromConfiguredStorage({
     filepath,
     deleteLocalCopy: async (publicPath: string | null): Promise<void> => {
-      if (!publicPath) return;
+      if (publicPath === null || publicPath.trim().length === 0) return;
       try {
         const diskPath = getDiskPathFromPublicPath(publicPath);
         await fs.unlink(diskPath).catch(() => {});
+        await removeEmptyUploadParentDirectory(diskPath);
       } catch (error) {
         void ErrorSystem.captureException(error);
-      
+
         // ignore invalid or non-local paths
       }
     },

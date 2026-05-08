@@ -15,6 +15,8 @@ export interface CheckoutFieldContent {
   monospace?: boolean;
 }
 
+export type CheckoutShippingCarrier = 'manual' | 'inpost';
+
 export interface CheckoutShippingMethodContent {
   id: string;
   label: string;
@@ -23,6 +25,9 @@ export interface CheckoutShippingMethodContent {
   priceLabel: string;
   businessDaysMin: number;
   businessDaysMax: number;
+  carrier?: CheckoutShippingCarrier;
+  service?: string;
+  requiresPickupPoint?: boolean;
 }
 
 export interface ShippingZone {
@@ -160,6 +165,18 @@ export const CHECKOUT_CONTENT_DEFAULTS: CheckoutContent = {
       countries: ['Poland'],
       methods: [
         { id: 'standard', label: 'Standard', detail: '2-3 business days', price: 0, priceLabel: 'Free', businessDaysMin: 2, businessDaysMax: 3 },
+        {
+          id: 'inpost-locker',
+          label: 'InPost Parcel Locker',
+          detail: 'Pickup at selected parcel locker, 1-2 business days',
+          price: 4,
+          priceLabel: '€ 4',
+          businessDaysMin: 1,
+          businessDaysMax: 2,
+          carrier: 'inpost',
+          service: 'inpost_locker_standard',
+          requiresPickupPoint: true,
+        },
         { id: 'express', label: 'Express', detail: 'Next business day', price: 12, priceLabel: '€ 12', businessDaysMin: 1, businessDaysMax: 1 },
       ],
     },
@@ -325,6 +342,19 @@ function readStringList(input: unknown, fallback: string[], maxItems: number, er
   return values;
 }
 
+function readShippingCarrier(
+  source: Record<string, unknown>,
+  fallback: CheckoutShippingCarrier,
+  errors: string[],
+  path: string,
+): CheckoutShippingCarrier {
+  const value = source['carrier'];
+  if (value == null) return fallback;
+  if (value === 'manual' || value === 'inpost') return value;
+  errors.push(`${path} must be manual or inpost.`);
+  return fallback;
+}
+
 function isAllowedHref(value: string): boolean {
   if (value.startsWith('/') && !value.startsWith('//')) return true;
   if (value.startsWith('#')) return true;
@@ -453,7 +483,16 @@ function readShippingMethods(
       errors.push(`${path}.${index}.businessDaysMax must be greater than or equal to businessDaysMin.`);
       return fallback;
     }
-    methods.push({
+    const carrier = readShippingCarrier(item, fallbackMethod.carrier ?? 'manual', errors, `${path}.${index}.carrier`);
+    const service = readString(item, 'service', fallbackMethod.service ?? '', TEXT_LIMITS.short, errors, `${path}.${index}.service`);
+    const requiresPickupPoint = readBoolean(
+      item,
+      'requiresPickupPoint',
+      fallbackMethod.requiresPickupPoint ?? false,
+      errors,
+      `${path}.${index}.requiresPickupPoint`,
+    );
+    const method: CheckoutShippingMethodContent = {
       id: readString(item, 'id', fallbackMethod.id, TEXT_LIMITS.short, errors, `${path}.${index}.id`),
       label: readString(item, 'label', fallbackMethod.label, TEXT_LIMITS.short, errors, `${path}.${index}.label`),
       detail: readString(item, 'detail', fallbackMethod.detail, TEXT_LIMITS.medium, errors, `${path}.${index}.detail`),
@@ -461,7 +500,11 @@ function readShippingMethods(
       priceLabel: readString(item, 'priceLabel', fallbackMethod.priceLabel, TEXT_LIMITS.short, errors, `${path}.${index}.priceLabel`),
       businessDaysMin,
       businessDaysMax,
-    });
+    };
+    if (carrier !== 'manual' || fallbackMethod.carrier) method.carrier = carrier;
+    if (service) method.service = service;
+    if (requiresPickupPoint || fallbackMethod.requiresPickupPoint) method.requiresPickupPoint = requiresPickupPoint;
+    methods.push(method);
   }
 
   if (methods.length > 8) {

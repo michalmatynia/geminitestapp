@@ -12,6 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: locale === 'pl'
       ? 'Dokończ zamówienie ARCANA.'
       : 'Complete your ARCANA order.',
+    robots: { index: false, follow: false },
   };
 }
 

@@ -109,7 +109,7 @@ describe('product scrape profile payloads', () => {
     expect(payload.categoryId).toBe('category-pendants');
   });
 
-  it('uses downloaded image file ids instead of scraped image links in file mode', () => {
+  it('retains scraped image links alongside downloaded image file ids in file mode', () => {
     const payload = buildCreatePayload({
       ...defaultPayloadInput,
       candidate: {
@@ -118,12 +118,12 @@ describe('product scrape profile payloads', () => {
       },
       imagePayload: {
         imageFileIds: ['image-file-1'],
-        imageLinks: [],
+        imageLinks: ['https://www.battle-stock.pl/source-image.jpg'],
       },
     });
 
     expect(payload.imageFileIds).toEqual(['image-file-1']);
-    expect(payload.imageLinks).toEqual([]);
+    expect(payload.imageLinks).toEqual(['https://www.battle-stock.pl/source-image.jpg']);
   });
 
   it('infers catalog-agnostic linked parameters from rendered structured template names', () => {

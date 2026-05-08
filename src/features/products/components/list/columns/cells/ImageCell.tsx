@@ -5,8 +5,8 @@ import type { Row } from '@tanstack/react-table';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { useProductListRowVisualsContext } from '@/features/products/context/ProductListContext';
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
-import { resolveProductImageUrl } from '@/shared/utils/image-routing';
-import { getProductDisplayName, getImageFilepath } from '../product-column-utils';
+import { resolveProductImageFileUrl, resolveProductImageUrl } from '@/shared/utils/image-routing';
+import { getProductDisplayName } from '../product-column-utils';
 
 function resolveFirstValid(items: string[] | null | undefined): string | undefined {
   if (!Array.isArray(items)) return undefined;
@@ -17,8 +17,7 @@ type BaseCandidate = { resFile: string | undefined, resLink: string | undefined,
 
 function resolveBaseCandidate(product: ProductWithImages, imageExternalBaseUrl: string | null | undefined): BaseCandidate {
   const images = Array.isArray(product.images) ? product.images : [];
-  const firstFile = getImageFilepath(images[0]?.imageFile);
-  const resFile = resolveProductImageUrl(firstFile, imageExternalBaseUrl) ?? undefined;
+  const resFile = resolveProductImageFileUrl(images[0]?.imageFile, imageExternalBaseUrl) ?? undefined;
 
   const firstLink = resolveFirstValid(product.imageLinks);
   const resLink = resolveProductImageUrl(firstLink, imageExternalBaseUrl) ?? undefined;

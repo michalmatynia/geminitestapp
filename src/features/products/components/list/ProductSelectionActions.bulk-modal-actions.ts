@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 
 import { useBulkProductBaseSyncMutation } from '@/features/product-sync/hooks/useProductBaseSync';
+import { useBulkExportProductsToEcommerce } from '@/features/products/hooks/useProductEcommerceExportMutations';
 import {
   useBulkEditProductFields,
   useQueueMarketplaceCopyDebrandBatch,
@@ -225,6 +226,43 @@ export const useBulkBaseSyncAction = ({
     }
   }, [dialogs, runBulkBaseSync, selection, toast]);
   return { handleStartBulkBaseSync, isRunningBulkBaseSync: isPending };
+};
+
+export const useBulkEcommerceExportAction = ({
+  selection,
+  toast,
+}: DialogActionInput): Pick<
+  ProductSelectionBulkController,
+  'handleExportSelectedToEcommerce' | 'isExportingSelectedToEcommerce'
+> => {
+  const { mutateAsync: exportProductsToEcommerce, isPending } =
+    useBulkExportProductsToEcommerce();
+  const handleExportSelectedToEcommerce = useCallback(async (): Promise<void> => {
+    const selectedProductIds = getSelectedProductIds(selection.rowSelection);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to export.', { variant: 'error' });
+      return;
+    }
+    try {
+      const response = await exportProductsToEcommerce({ productIds: selectedProductIds });
+      const suffix = response.succeeded === 1 ? '' : 's';
+      toast(
+        `Exported ${response.succeeded} product${suffix} to ecommerce${response.failed > 0 ? `, ${response.failed} failed` : ''}.`,
+        { variant: response.failed > 0 ? 'warning' : 'success' }
+      );
+      if (response.failed === 0) selection.clearSelection();
+    } catch (error) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to export products to ecommerce.', {
+        variant: 'error',
+      });
+    }
+  }, [exportProductsToEcommerce, selection, toast]);
+
+  return {
+    handleExportSelectedToEcommerce,
+    isExportingSelectedToEcommerce: isPending,
+  };
 };
 
 export const useParsedMatchActions = ({

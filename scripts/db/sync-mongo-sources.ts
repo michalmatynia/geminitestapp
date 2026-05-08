@@ -1,7 +1,9 @@
 import { config as loadDotenv } from 'dotenv';
 
 import {
+  databaseEngineManagedMongoApplicationTargetSchema,
   databaseEngineMongoSyncDirectionSchema,
+  type DatabaseEngineManagedMongoApplicationTarget,
   type DatabaseEngineMongoSyncDirection,
   type DatabaseEngineMongoSyncApplication,
   type MongoSource,
@@ -17,7 +19,7 @@ type MongoDbModules = {
   getMongoSourceState: MongoSourceModule['getMongoSourceState'];
   resolveMongoSourceConfig: MongoSourceModule['resolveMongoSourceConfig'];
   resolveCmsBuilderMongoSourceConfig: MongoUtilsModule['resolveCmsBuilderMongoSourceConfig'];
-  resolveProductsMongoSourceConfig: MongoUtilsModule['resolveProductsMongoSourceConfig'];
+  resolveEcommerceMongoSourceConfig: MongoUtilsModule['resolveEcommerceMongoSourceConfig'];
   resolveStudiqMongoSourceConfig: MongoUtilsModule['resolveStudiqMongoSourceConfig'];
   verifyMongoSourceParity: MongoSourceParityModule['verifyMongoSourceParity'];
   syncMongoSources: MongoSourceSyncModule['syncMongoSources'];
@@ -26,6 +28,7 @@ type MongoDbModules = {
 
 type CliOptions = {
   direction: DatabaseEngineMongoSyncDirection;
+  application: DatabaseEngineManagedMongoApplicationTarget;
   apply: boolean;
   verifyOnly: boolean;
 };
@@ -33,6 +36,7 @@ type CliOptions = {
 const parseCliOptions = (argv: string[]): CliOptions => {
   const options: CliOptions = {
     direction: 'local_to_cloud',
+    application: 'all',
     apply: false,
     verifyOnly: false,
   };
@@ -49,6 +53,12 @@ const parseCliOptions = (argv: string[]): CliOptions => {
     if (arg.startsWith('--direction=')) {
       options.direction = databaseEngineMongoSyncDirectionSchema.parse(
         arg.slice('--direction='.length)
+      );
+      continue;
+    }
+    if (arg.startsWith('--application=')) {
+      options.application = databaseEngineManagedMongoApplicationTargetSchema.parse(
+        arg.slice('--application='.length)
       );
     }
   }
@@ -97,7 +107,7 @@ const loadDbModules = async (): Promise<MongoDbModules> => {
     getMongoSourceState: mongoSource.getMongoSourceState,
     resolveMongoSourceConfig: mongoSource.resolveMongoSourceConfig,
     resolveCmsBuilderMongoSourceConfig: mongoUtils.resolveCmsBuilderMongoSourceConfig,
-    resolveProductsMongoSourceConfig: mongoUtils.resolveProductsMongoSourceConfig,
+    resolveEcommerceMongoSourceConfig: mongoUtils.resolveEcommerceMongoSourceConfig,
     resolveStudiqMongoSourceConfig: mongoUtils.resolveStudiqMongoSourceConfig,
     verifyMongoSourceParity: mongoSourceParity.verifyMongoSourceParity,
     syncMongoSources: mongoSourceSync.syncMongoSources,
@@ -111,15 +121,14 @@ const printJson = (payload: unknown): void => {
 
 const runVerificationOnly = async (
   modules: MongoDbModules,
-  direction: DatabaseEngineMongoSyncDirection
+  direction: DatabaseEngineMongoSyncDirection,
+  applicationTarget: DatabaseEngineManagedMongoApplicationTarget
 ): Promise<void> => {
   const { source, target } = resolveEndpoints(direction);
-  const applications: DatabaseEngineMongoSyncApplication[] = [
-    'geminitestapp',
-    'studiq',
-    'cms-builder',
-    'products',
-  ];
+  const applications: DatabaseEngineMongoSyncApplication[] =
+    applicationTarget === 'all'
+      ? ['geminitestapp', 'studiq', 'cms-builder', 'products']
+      : [applicationTarget];
   const verifications = [];
 
   for (const application of applications) {
@@ -129,7 +138,7 @@ const runVerificationOnly = async (
         : application === 'cms-builder'
           ? modules.resolveCmsBuilderMongoSourceConfig(source)
           : application === 'products'
-            ? modules.resolveProductsMongoSourceConfig(source)
+            ? modules.resolveEcommerceMongoSourceConfig(source)
         : await modules.resolveMongoSourceConfig(source);
     const targetConfig =
       application === 'studiq'
@@ -137,7 +146,7 @@ const runVerificationOnly = async (
         : application === 'cms-builder'
           ? modules.resolveCmsBuilderMongoSourceConfig(target)
           : application === 'products'
-            ? modules.resolveProductsMongoSourceConfig(target)
+            ? modules.resolveEcommerceMongoSourceConfig(target)
         : await modules.resolveMongoSourceConfig(target);
     if (!sourceConfig.configured || !targetConfig.configured) {
       throw new Error(`${application} ${source} and ${target} MongoDB sources must be configured.`);
@@ -161,6 +170,7 @@ const runVerificationOnly = async (
   printJson({
     mode: 'verify-only',
     direction,
+    application: applicationTarget,
     source,
     target,
     verifications,
@@ -173,13 +183,15 @@ const runVerificationOnly = async (
 
 const runPlan = async (
   modules: MongoDbModules,
-  direction: DatabaseEngineMongoSyncDirection
+  direction: DatabaseEngineMongoSyncDirection,
+  applicationTarget: DatabaseEngineManagedMongoApplicationTarget
 ): Promise<void> => {
   const { source, target } = resolveEndpoints(direction);
   const state = await modules.getMongoSourceState();
   printJson({
     mode: 'plan',
     direction,
+    application: applicationTarget,
     source,
     target,
     canSync: state.canSync,
@@ -196,12 +208,14 @@ const runPlan = async (
 
 const runApply = async (
   modules: MongoDbModules,
-  direction: DatabaseEngineMongoSyncDirection
+  direction: DatabaseEngineMongoSyncDirection,
+  applicationTarget: DatabaseEngineManagedMongoApplicationTarget
 ): Promise<void> => {
-  const result = await modules.syncMongoSources(direction);
+  const result = await modules.syncMongoSources(direction, applicationTarget);
   printJson({
     mode: 'apply',
     direction,
+    application: applicationTarget,
     success: result.success,
     message: result.message,
     syncedAt: result.syncedAt,
@@ -222,16 +236,16 @@ const main = async (): Promise<void> => {
   try {
     modules = await loadDbModules();
     if (options.verifyOnly) {
-      await runVerificationOnly(modules, options.direction);
+      await runVerificationOnly(modules, options.direction, options.application);
       return;
     }
 
     if (options.apply) {
-      await runApply(modules, options.direction);
+      await runApply(modules, options.direction, options.application);
       return;
     }
 
-    await runPlan(modules, options.direction);
+    await runPlan(modules, options.direction, options.application);
   } finally {
     if (modules) {
       await modules.invalidateMongoClientCache();

@@ -113,6 +113,8 @@ export interface ProductListContextType {
   vintedBadgeStatuses: Map<string, string>;
   scrapedSourceBadgeIds: Set<string>;
   scrapedSourceBadgeStatuses: Map<string, string>;
+  ecommerceBadgeIds: Set<string>;
+  ecommerceBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
   productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
   productScanRunStatusByProductId?:

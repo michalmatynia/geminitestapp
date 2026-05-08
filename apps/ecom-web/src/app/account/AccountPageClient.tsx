@@ -9,14 +9,16 @@ import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AdminCmsEditor } from '@/components/AdminCmsEditor';
 import { formatPrice, type EcomLocale } from '@/lib/locales';
-import type { AccountAdminContent, AccountContent } from '@/data/accountContent';
+import type { AccountAdminContent, AccountContent, AccountOrdersContent } from '@/data/accountContent';
 import type { Order } from '@/lib/orders';
 
 interface DisplayOrder {
   id: string;
   date: string;
-  status: 'delivered' | 'in-transit' | 'processing';
+  status: 'delivered' | 'in-transit' | 'processing' | 'pending_payment' | 'cancelled';
   total: string;
+  shippingLine: string;
+  trackingNumber?: string;
   items: { name: string; qty: number; price: string; imageUrl?: string }[];
 }
 
@@ -24,6 +26,8 @@ const STATUS_COLORS: Record<DisplayOrder['status'], string> = {
   delivered: 'rgba(120,160,90,1)',
   'in-transit': 'rgba(180,130,60,1)',
   processing: 'var(--muted)',
+  pending_payment: 'rgba(180,130,60,0.8)',
+  cancelled: 'var(--accent)',
 };
 
 function toDisplayOrder(order: Order, locale: string): DisplayOrder {
@@ -36,6 +40,8 @@ function toDisplayOrder(order: Order, locale: string): DisplayOrder {
     }),
     status: order.status,
     total: formatPrice(order.total, locale === 'pl' ? 'pl' : 'en'),
+    shippingLine: [order.shippingMethod, order.inpostPoint?.name].filter(Boolean).join(' / '),
+    trackingNumber: order.inpostShipment?.trackingNumber,
     items: order.items.map((item) => ({
       name: item.name,
       qty: item.quantity,
@@ -52,13 +58,107 @@ interface AdminUser {
   createdAt: string;
 }
 
+interface AdminOrdersResponse {
+  orders?: Order[];
+  total?: number;
+  error?: string;
+}
+
+interface InpostFulfillResponse {
+  created?: boolean;
+  skippedReason?: string;
+  shipment?: Order['inpostShipment'];
+  error?: string;
+}
+
+interface InpostRefreshResponse {
+  refreshed?: boolean;
+  skippedReason?: string;
+  shipment?: Order['inpostShipment'];
+  error?: string;
+}
+
 type Tab = 'overview' | 'orders' | 'settings' | 'admin';
+
+function formatAdminOrderDate(value: string, locale: EcomLocale): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value || '-';
+  return date.toLocaleDateString(locale === 'pl' ? 'pl-PL' : 'en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function formatAdminEventDate(value: string | undefined, locale: EcomLocale): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(locale === 'pl' ? 'pl-PL' : 'en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function inpostFulfillmentStatus(order: Order, locale: EcomLocale): string {
+  if (order.inpostShipment?.trackingNumber || order.inpostShipment?.shipmentId) {
+    return locale === 'pl' ? 'Etykieta utworzona' : 'Shipment created';
+  }
+  if (order.inpostShipment?.error) {
+    return locale === 'pl' ? 'Błąd InPost' : 'InPost error';
+  }
+  if (order.status !== 'processing') {
+    return locale === 'pl' ? 'Czeka na płatność' : 'Waiting for payment';
+  }
+  return locale === 'pl' ? 'Gotowe do nadania' : 'Ready to fulfill';
+}
+
+function retryMessage(data: InpostFulfillResponse, locale: EcomLocale): string {
+  if (data.error) return data.error;
+  if (data.created) return locale === 'pl' ? 'Przesyłka InPost została utworzona.' : 'InPost shipment created.';
+
+  switch (data.skippedReason) {
+    case 'already_fulfilled':
+      return locale === 'pl' ? 'Przesyłka już istnieje.' : 'Shipment already exists.';
+    case 'not_configured':
+      return locale === 'pl' ? 'Brakuje konfiguracji InPost.' : 'InPost is not configured.';
+    case 'not_ready':
+      return locale === 'pl' ? 'Zamówienie nie jest jeszcze opłacone.' : 'Order is not ready for fulfillment.';
+    case 'missing_point':
+      return locale === 'pl' ? 'Brakuje wybranego paczkomatu.' : 'Pickup point is missing.';
+    case 'not_inpost':
+      return locale === 'pl' ? 'To nie jest zamówienie InPost.' : 'This is not an InPost order.';
+    default:
+      return locale === 'pl' ? 'Bez zmian.' : 'No changes.';
+  }
+}
+
+function refreshMessage(data: InpostRefreshResponse, locale: EcomLocale): string {
+  if (data.error) return data.error;
+  if (data.refreshed) return locale === 'pl' ? 'Status InPost został odświeżony.' : 'InPost status refreshed.';
+
+  switch (data.skippedReason) {
+    case 'not_configured':
+      return locale === 'pl' ? 'Brakuje konfiguracji InPost.' : 'InPost is not configured.';
+    case 'missing_tracking':
+      return locale === 'pl' ? 'Brakuje numeru trackingowego.' : 'Tracking number is missing.';
+    case 'not_inpost':
+      return locale === 'pl' ? 'To nie jest zamówienie InPost.' : 'This is not an InPost order.';
+    default:
+      return locale === 'pl' ? 'Bez zmian.' : 'No changes.';
+  }
+}
 
 function AdminTab({
   content,
+  orderStatuses,
   availableLocales,
 }: {
   content: AccountAdminContent;
+  orderStatuses: AccountOrdersContent['statuses'];
   availableLocales: EcomLocale[];
 }): JSX.Element {
   const locale = useLocale();
@@ -67,6 +167,13 @@ function AdminTab({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [adminOrders, setAdminOrders] = useState<Order[]>([]);
+  const [adminOrderTotal, setAdminOrderTotal] = useState(0);
+  const [adminOrdersLoading, setAdminOrdersLoading] = useState(true);
+  const [adminOrdersError, setAdminOrdersError] = useState('');
+  const [retryingOrderId, setRetryingOrderId] = useState('');
+  const [refreshingOrderId, setRefreshingOrderId] = useState('');
+  const [retryNotice, setRetryNotice] = useState('');
 
   useEffect(() => {
     fetch('/api/auth/admin/users')
@@ -79,6 +186,78 @@ function AdminTab({
       .catch(() => setError(content.loadUsersError))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAdminOrdersLoading(true);
+    fetch('/api/orders/admin?carrier=inpost&limit=12')
+      .then((res) => res.json())
+      .then((data: AdminOrdersResponse) => {
+        if (cancelled) return;
+        if (data.error) {
+          setAdminOrdersError(data.error);
+          return;
+        }
+        setAdminOrders(data.orders ?? []);
+        setAdminOrderTotal(data.total ?? 0);
+      })
+      .catch(() => {
+        if (!cancelled) setAdminOrdersError(locale === 'pl' ? 'Nie można wczytać zamówień InPost.' : 'Could not load InPost orders.');
+      })
+      .finally(() => {
+        if (!cancelled) setAdminOrdersLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
+
+  async function retryInpostFulfillment(orderId: string): Promise<void> {
+    setRetryingOrderId(orderId);
+    setRetryNotice('');
+    try {
+      const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}/inpost/fulfill`, {
+        method: 'POST',
+      });
+      const data = await response.json().catch(() => ({})) as InpostFulfillResponse;
+      setRetryNotice(retryMessage(data, locale));
+      if (data.shipment) {
+        setAdminOrders((orders) => orders.map((order) => (
+          order.orderId === orderId
+            ? { ...order, inpostShipment: data.shipment }
+            : order
+        )));
+      }
+    } catch {
+      setRetryNotice(locale === 'pl' ? 'Nie udało się połączyć z API InPost.' : 'Could not reach the InPost fulfillment API.');
+    } finally {
+      setRetryingOrderId('');
+    }
+  }
+
+  async function refreshInpostStatus(orderId: string): Promise<void> {
+    setRefreshingOrderId(orderId);
+    setRetryNotice('');
+    try {
+      const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}/inpost/refresh`, {
+        method: 'POST',
+      });
+      const data = await response.json().catch(() => ({})) as InpostRefreshResponse;
+      setRetryNotice(refreshMessage(data, locale));
+      if (data.shipment) {
+        setAdminOrders((orders) => orders.map((order) => (
+          order.orderId === orderId
+            ? { ...order, inpostShipment: data.shipment }
+            : order
+        )));
+      }
+    } catch {
+      setRetryNotice(locale === 'pl' ? 'Nie udało się odświeżyć statusu InPost.' : 'Could not refresh the InPost status.');
+    } finally {
+      setRefreshingOrderId('');
+    }
+  }
 
   return (
     <div>
@@ -157,6 +336,149 @@ function AdminTab({
           </div>
           <div className="type-label" style={{ color: 'var(--muted)' }}>{content.registeredUsersLabel}</div>
         </div>
+      </div>
+
+      <div
+        className="mb-8"
+        style={{
+          border: '1px solid rgba(210,116,102,0.2)',
+          background: 'rgba(210,116,102,0.03)',
+        }}
+      >
+        <div
+          className="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+          style={{ borderBottom: '1px solid rgba(210,116,102,0.16)' }}
+        >
+          <div>
+            <div className="type-label" style={{ color: 'var(--coral-red)', marginBottom: '0.35rem' }}>
+              {locale === 'pl' ? 'Realizacja InPost' : 'InPost fulfillment'}
+            </div>
+            <p className="type-label" style={{ color: 'var(--muted)', lineHeight: 1.6, margin: 0 }}>
+              {adminOrderTotal} {locale === 'pl' ? 'zamówień z dostawą InPost' : 'orders using InPost delivery'}
+            </p>
+          </div>
+          {retryNotice && (
+            <div className="type-label" style={{ color: 'var(--accent)', lineHeight: 1.6 }}>
+              {retryNotice}
+            </div>
+          )}
+        </div>
+
+        {adminOrdersLoading && (
+          <div className="type-label px-5 py-4" style={{ color: 'var(--muted)' }}>
+            {content.loadingLabel}
+          </div>
+        )}
+        {!adminOrdersLoading && adminOrdersError && (
+          <div className="type-label px-5 py-4" style={{ color: 'var(--coral-red)' }}>
+            {adminOrdersError}
+          </div>
+        )}
+        {!adminOrdersLoading && !adminOrdersError && adminOrders.length === 0 && (
+          <div className="type-label px-5 py-4" style={{ color: 'var(--muted)' }}>
+            {locale === 'pl' ? 'Brak zamówień InPost.' : 'No InPost orders yet.'}
+          </div>
+        )}
+        {!adminOrdersLoading && !adminOrdersError && adminOrders.length > 0 && (
+          <div>
+            {adminOrders.map((order, index) => {
+              const canRetry = order.status === 'processing'
+                && order.shippingCarrier === 'inpost'
+                && Boolean(order.inpostPoint)
+                && !order.inpostShipment?.shipmentId
+                && !order.inpostShipment?.trackingNumber;
+              const canRefresh = Boolean(order.inpostShipment?.trackingNumber);
+              const labelHref = `/api/orders/${encodeURIComponent(order.orderId)}/inpost/label?format=A6`;
+              const status = inpostFulfillmentStatus(order, locale);
+              const pointLabel = order.inpostPoint?.name ?? (locale === 'pl' ? 'Brak paczkomatu' : 'No pickup point');
+              const latestEventTime = formatAdminEventDate(order.inpostShipment?.eventTimestamp, locale);
+              return (
+                <div
+                  key={order.orderId}
+                  className="px-5 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+                  style={{ borderTop: index === 0 ? 'none' : '1px solid rgba(210,116,102,0.12)' }}
+                >
+                  <div className="min-w-0">
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.08em', color: 'var(--fg)', marginBottom: '0.35rem' }}>
+                      {order.orderId}
+                    </div>
+                    <div className="type-label" style={{ color: 'var(--muted)', lineHeight: 1.7 }}>
+                      {formatAdminOrderDate(order.createdAt, locale)} · {order.email} · {pointLabel}
+                    </div>
+                    {order.inpostShipment?.trackingNumber && (
+                      <div className="type-label mt-1" style={{ color: 'var(--accent)' }}>
+                        {locale === 'pl' ? 'Tracking' : 'Tracking'}: {order.inpostShipment.trackingNumber}
+                      </div>
+                    )}
+                    {order.inpostShipment?.eventCode && (
+                      <div className="type-label mt-1" style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+                        {locale === 'pl' ? 'Ostatni event' : 'Latest event'}: {order.inpostShipment.eventCode}
+                        {latestEventTime ? ` / ${latestEventTime}` : ''}
+                      </div>
+                    )}
+                    {order.inpostShipment?.error && (
+                      <div className="type-label mt-1" style={{ color: 'var(--coral-red)', lineHeight: 1.6 }}>
+                        {order.inpostShipment.error}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap lg:justify-end">
+                    <span
+                      className="type-label px-3 py-1.5"
+                      style={{ background: 'var(--bg)', color: STATUS_COLORS[order.status], border: '1px solid rgba(210,116,102,0.16)' }}
+                    >
+                      {orderStatuses[order.status]}
+                    </span>
+                    <span className="type-label px-3 py-1.5" style={{ color: 'var(--muted)', border: '1px solid rgba(210,116,102,0.16)' }}>
+                      {status}
+                    </span>
+                    {canRefresh && (
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        disabled={refreshingOrderId === order.orderId}
+                        onClick={() => void refreshInpostStatus(order.orderId)}
+                        style={{
+                          fontSize: '0.72rem',
+                          opacity: refreshingOrderId === order.orderId ? 0.45 : 1,
+                        }}
+                      >
+                        {refreshingOrderId === order.orderId
+                          ? (locale === 'pl' ? 'Odświeżam...' : 'Refreshing...')
+                          : (locale === 'pl' ? 'Odśwież status' : 'Refresh status')}
+                      </button>
+                    )}
+                    {canRefresh && (
+                      <a
+                        className="btn-ghost"
+                        href={labelHref}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ fontSize: '0.72rem' }}
+                      >
+                        {locale === 'pl' ? 'Etykieta PDF' : 'Label PDF'}
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      disabled={!canRetry || retryingOrderId === order.orderId}
+                      onClick={() => void retryInpostFulfillment(order.orderId)}
+                      style={{
+                        fontSize: '0.72rem',
+                        opacity: !canRetry || retryingOrderId === order.orderId ? 0.45 : 1,
+                      }}
+                    >
+                      {retryingOrderId === order.orderId
+                        ? (locale === 'pl' ? 'Nadaję...' : 'Creating...')
+                        : (locale === 'pl' ? 'Nadaj InPost' : 'Create shipment')}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <AdminCmsEditor availableLocales={availableLocales} />
@@ -621,6 +943,21 @@ export function AccountPageClient({
                             </span>
                           </div>
                         </div>
+                        {(order.shippingLine || order.trackingNumber) && (
+                          <div
+                            className="px-6 py-3 type-label"
+                            style={{ borderBottom: '1px solid var(--border)', color: 'var(--muted)', lineHeight: 1.7 }}
+                          >
+                            {order.shippingLine && (
+                              <span>{locale === 'pl' ? 'Dostawa' : 'Shipping'}: {order.shippingLine}</span>
+                            )}
+                            {order.trackingNumber && (
+                              <span style={{ marginLeft: order.shippingLine ? '1rem' : 0, color: 'var(--accent)' }}>
+                                {locale === 'pl' ? 'Tracking' : 'Tracking'}: {order.trackingNumber}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {order.items.map((item, i) => (
                           <div
                             key={i}
@@ -752,7 +1089,11 @@ export function AccountPageClient({
 
               {/* Admin tab */}
               {activeTab === 'admin' && user.isSuperAdmin && (
-                <AdminTab content={content.admin} availableLocales={availableLocales} />
+                <AdminTab
+                  content={content.admin}
+                  orderStatuses={content.orders.statuses}
+                  availableLocales={availableLocales}
+                />
               )}
 
             </div>

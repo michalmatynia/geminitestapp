@@ -108,6 +108,12 @@ type SnapshotBuilder<TContent, TSnapshot extends CmsSnapshot<TContent>> = (
   doc: CmsPageDoc | null,
 ) => TSnapshot;
 
+type SiteLogoFields = Pick<SiteContent['nav'], 'logoUrl' | 'logoAlt'>;
+
+type SharedSiteLogoFields = SiteLogoFields & {
+  hasSource: boolean;
+};
+
 type ContentLocalizer<TContent> = (content: TContent, locale?: LocaleInput) => TContent;
 
 let cmsPagesIndexPromise: Promise<string> | null = null;
@@ -508,10 +514,10 @@ function localizeProductsContent(content: ProductsContent, localeInput?: LocaleI
       priceRanges: content.collection.priceRanges.map((range, index) => ({
         ...range,
         label: [
-          'Poniżej € 200',
-          '€ 200 - € 500',
-          '€ 500 - € 1,000',
-          'Powyżej € 1,000',
+          'Poniżej 200 zł',
+          '200 zł - 500 zł',
+          '500 zł - 1 000 zł',
+          'Powyżej 1 000 zł',
         ][index] ?? range.label,
       })),
     },
@@ -876,6 +882,7 @@ export function localizeCheckoutContent(content: CheckoutContent, localeInput?: 
     standard: 'Dostawa standardowa',
     express: 'Dostawa ekspresowa',
     overnight: 'Dostawa następnego dnia',
+    'inpost-locker': 'InPost Paczkomat',
   };
   const zoneLabels: Record<string, string> = {
     domestic: 'Polska',
@@ -883,6 +890,7 @@ export function localizeCheckoutContent(content: CheckoutContent, localeInput?: 
     international: 'Międzynarodowe',
   };
   const methodDetail = (method: CheckoutContent['shippingMethods'][number]): string => {
+    if (method.id === 'inpost-locker') return 'Odbiór w wybranym paczkomacie, 1-2 dni robocze';
     if (method.businessDaysMin === 1 && method.businessDaysMax === 1) return 'Następny dzień roboczy';
     return `${method.businessDaysMin}-${method.businessDaysMax} dni roboczych`;
   };
@@ -1046,9 +1054,11 @@ function localizeAccountContent(content: AccountContent, localeInput?: LocaleInp
       title: 'Historia zamówień',
       qtyLabel: 'Ilość',
       statuses: {
+        pending_payment: 'Oczekuje na płatność',
         delivered: 'Dostarczone',
         'in-transit': 'W drodze',
         processing: 'W realizacji',
+        cancelled: 'Anulowane',
       },
     },
     settings: {
@@ -1222,8 +1232,86 @@ function ensureCatalogNavLink(content: SiteContent, locale?: LocaleInput): SiteC
   };
 }
 
+function getSiteLogoFields(content: SiteContent): SiteLogoFields {
+  return {
+    logoUrl: content.nav.logoUrl,
+    logoAlt: content.nav.logoAlt,
+  };
+}
+
+function applySiteLogoFields(content: SiteContent, logo: SiteLogoFields): SiteContent {
+  return {
+    ...content,
+    nav: {
+      ...content.nav,
+      logoUrl: logo.logoUrl,
+      logoAlt: logo.logoAlt,
+    },
+  };
+}
+
+function applySharedSiteLogo(content: SiteContent, logo: SharedSiteLogoFields): SiteContent {
+  return logo.hasSource ? applySiteLogoFields(content, logo) : content;
+}
+
+async function readSharedSiteLogo(collection: Collection<CmsPageDoc>): Promise<SharedSiteLogoFields> {
+  const docs = await collection.find({ page: SITE_PAGE_KEY }).toArray();
+  const defaultDoc = docs.find((doc) => doc.locale === DEFAULT_LOCALE);
+
+  if (defaultDoc) {
+    return {
+      ...getSiteLogoFields(toSiteSnapshot(defaultDoc).content),
+      hasSource: true,
+    };
+  }
+
+  const logoDoc = docs.find((doc) => {
+    const logo = getSiteLogoFields(toSiteSnapshot(doc).content);
+    return logo.logoUrl.trim().length > 0 || logo.logoAlt.trim().length > 0;
+  });
+
+  if (!logoDoc) return { logoUrl: '', logoAlt: '', hasSource: false };
+
+  return {
+    ...getSiteLogoFields(toSiteSnapshot(logoDoc).content),
+    hasSource: true,
+  };
+}
+
+async function syncSharedSiteLogo(
+  collection: Collection<CmsPageDoc>,
+  logo: SiteLogoFields,
+  userId: string,
+  now: Date,
+): Promise<void> {
+  await collection.updateOne(
+    { page: SITE_PAGE_KEY, locale: DEFAULT_LOCALE },
+    {
+      $setOnInsert: {
+        page: SITE_PAGE_KEY,
+        locale: DEFAULT_LOCALE,
+        content: applySiteLogoFields(SITE_CONTENT_DEFAULTS, logo),
+        createdAt: now,
+      },
+    },
+    { upsert: true },
+  );
+
+  await collection.updateMany(
+    { page: SITE_PAGE_KEY },
+    {
+      $set: {
+        'content.nav.logoUrl': logo.logoUrl,
+        'content.nav.logoAlt': logo.logoAlt,
+        updatedAt: now,
+        updatedBy: userId,
+      },
+    },
+  );
+}
+
 export const getSiteContent = cache(async function getSiteContent(locale?: LocaleInput): Promise<SiteContent> {
-  const content = await getLocalizedCmsContent({
+  let content = await getLocalizedCmsContent({
     page: SITE_PAGE_KEY,
     locale,
     defaults: SITE_CONTENT_DEFAULTS,
@@ -1231,16 +1319,27 @@ export const getSiteContent = cache(async function getSiteContent(locale?: Local
     localize: localizeSiteContent,
     label: 'site',
   });
+  try {
+    const collection = await getCmsPagesCollection();
+    content = applySharedSiteLogo(content, await readSharedSiteLogo(collection));
+  } catch (error) {
+    console.error('Failed to load shared site logo CMS content.', error);
+  }
   return ensureCatalogNavLink(content, locale);
 });
 
 export async function getSiteCmsSnapshot(locale?: LocaleInput): Promise<SiteCmsSnapshot> {
-  return getLocalizedCmsSnapshot({
+  const snapshot = await getLocalizedCmsSnapshot({
     page: SITE_PAGE_KEY,
     locale,
     toSnapshot: toSiteSnapshot,
     localize: localizeSiteContent,
   });
+  const collection = await getCmsPagesCollection();
+  return {
+    ...snapshot,
+    content: applySharedSiteLogo(snapshot.content, await readSharedSiteLogo(collection)),
+  };
 }
 
 export function parseSiteContentUpdate(input: unknown): { content: SiteContent | null; errors: string[] } {
@@ -1263,11 +1362,59 @@ export async function saveSiteContent(
   userId: string,
   locale?: LocaleInput,
 ): Promise<SiteCmsSnapshot> {
-  return saveLocalizedCmsContent<SiteContent, SiteCmsSnapshot>(SITE_PAGE_KEY, content, userId, locale);
+  const targetLocale = normalizeLocale(locale);
+  const collection = await getCmsPagesCollection();
+  const now = new Date();
+
+  await collection.updateOne(
+    { page: SITE_PAGE_KEY, locale: targetLocale },
+    {
+      $set: {
+        page: SITE_PAGE_KEY,
+        locale: targetLocale,
+        content,
+        updatedAt: now,
+        updatedBy: userId,
+      },
+      $setOnInsert: { createdAt: now },
+    },
+    { upsert: true },
+  );
+
+  await syncSharedSiteLogo(collection, getSiteLogoFields(content), userId, now);
+
+  return { content, updatedAt: now.toISOString(), updatedBy: userId };
 }
 
 export async function deleteSiteContent(locale?: LocaleInput): Promise<boolean> {
   return deleteLocalizedCmsContent(SITE_PAGE_KEY, locale);
+}
+
+export async function saveSiteLogo(logoUrl: string, logoAlt: string, userId: string): Promise<SiteCmsSnapshot> {
+  const { content, errors } = validateSiteContent({
+    ...SITE_CONTENT_DEFAULTS,
+    nav: {
+      ...SITE_CONTENT_DEFAULTS.nav,
+      logoUrl,
+      logoAlt,
+    },
+  });
+
+  if (errors.length > 0) {
+    throw new Error(`Invalid site logo content. ${errors.join(' ')}`.trim());
+  }
+
+  const collection = await getCmsPagesCollection();
+  const now = new Date();
+  const logo = getSiteLogoFields(content);
+  await syncSharedSiteLogo(collection, logo, userId, now);
+
+  const defaultDoc = await collection.findOne({ page: SITE_PAGE_KEY, locale: DEFAULT_LOCALE });
+  return {
+    ...toSiteSnapshot(defaultDoc),
+    updatedAt: now.toISOString(),
+    updatedBy: userId,
+  };
 }
 
 function toAboutSnapshot(doc: CmsPageDoc | null): AboutCmsSnapshot {

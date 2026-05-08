@@ -57,7 +57,7 @@ const MONGO_APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplicationTarg
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
-  products: 'Products',
+  products: 'Ecommerce',
 };
 
 const formatMongoSyncDirection = (direction: DatabaseEngineMongoSyncDirection): string =>

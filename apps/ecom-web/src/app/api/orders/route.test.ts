@@ -11,6 +11,7 @@ import { GET as getMyOrders } from './me/route';
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   sendOrderConfirmation: vi.fn(),
+  fulfillInpostOrder: vi.fn(),
   insertOne: vi.fn(),
   find: vi.fn(),
   sort: vi.fn(),
@@ -23,6 +24,10 @@ vi.mock('@/lib/auth', () => ({
 
 vi.mock('@/lib/email', () => ({
   sendOrderConfirmation: mocks.sendOrderConfirmation,
+}));
+
+vi.mock('@/lib/inpost', () => ({
+  fulfillInpostOrder: mocks.fulfillInpostOrder,
 }));
 
 vi.mock('@/lib/mongodb', () => ({
@@ -80,12 +85,14 @@ describe('orders API', () => {
   beforeEach(() => {
     mocks.getSession.mockReset();
     mocks.sendOrderConfirmation.mockReset();
+    mocks.fulfillInpostOrder.mockReset();
     mocks.insertOne.mockReset();
     mocks.find.mockReset();
     mocks.sort.mockReset();
     mocks.toArray.mockReset();
     mocks.getSession.mockResolvedValue(null);
     mocks.sendOrderConfirmation.mockResolvedValue(undefined);
+    mocks.fulfillInpostOrder.mockResolvedValue(null);
     mocks.insertOne.mockResolvedValue({ insertedId: { toString: () => 'mongo-order-id' } });
     mocks.sort.mockReturnValue({ toArray: mocks.toArray });
     mocks.find.mockReturnValue({ sort: mocks.sort });
@@ -112,6 +119,55 @@ describe('orders API', () => {
     expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(expect.objectContaining({
       _id: 'mongo-order-id',
       email: 'buyer@example.com',
+    }));
+    expect(mocks.fulfillInpostOrder).toHaveBeenCalledWith(expect.objectContaining({
+      shippingCarrier: 'manual',
+    }));
+  });
+
+  it('requires a pickup point for InPost orders', async () => {
+    const response = await POST(makeJsonRequest({
+      ...makeOrderPayload(),
+      shippingCarrier: 'inpost',
+      shippingService: 'inpost_locker_standard',
+    }));
+
+    expect(response.status).toBe(400);
+    expect(mocks.insertOne).not.toHaveBeenCalled();
+    expect(mocks.fulfillInpostOrder).not.toHaveBeenCalled();
+  });
+
+  it('persists sanitized InPost pickup point metadata', async () => {
+    const response = await POST(makeJsonRequest({
+      ...makeOrderPayload(),
+      shippingMethod: 'InPost Parcel Locker',
+      shippingCarrier: 'inpost',
+      shippingService: 'inpost_locker_standard',
+      inpostPoint: {
+        id: 'WAW01A',
+        name: 'WAW01A',
+        addressLine1: 'ul. Testowa 1',
+        city: 'Warsaw',
+        postCode: '00-001',
+        ignored: '<script>',
+      },
+    }));
+
+    expect(response.status).toBe(201);
+    expect(mocks.insertOne).toHaveBeenCalledWith(expect.objectContaining({
+      shippingCarrier: 'inpost',
+      shippingService: 'inpost_locker_standard',
+      inpostPoint: {
+        id: 'WAW01A',
+        name: 'WAW01A',
+        addressLine1: 'ul. Testowa 1',
+        addressLine2: undefined,
+        city: 'Warsaw',
+        description: undefined,
+        latitude: undefined,
+        longitude: undefined,
+        postCode: '00-001',
+      },
     }));
   });
 

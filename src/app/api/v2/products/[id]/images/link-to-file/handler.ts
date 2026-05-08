@@ -3,11 +3,12 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/performance/cached-service';
 import { parseJsonBody } from '@/features/products/server';
+import { uploadProductImageFileWithLocalFallback } from '@/features/products/server/product-local-image-file-fallback';
 import { downloadRemoteProductImageFile } from '@/features/products/server/product-remote-image-download';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
-import { uploadFile } from '@/shared/lib/files/services/image-file-service';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
@@ -27,7 +28,7 @@ const linkToFileSchema = z.object({
 });
 
 type ProductRepository = Awaited<ReturnType<typeof getProductRepository>>;
-type UploadedProductImage = { id: string; filepath: string };
+type UploadedProductImage = ImageFileSelection;
 
 const persistConvertedImageSlot = async (input: {
   imageSlotIndex: number;
@@ -37,7 +38,6 @@ const persistConvertedImageSlot = async (input: {
   uploaded: UploadedProductImage;
 }): Promise<ProductWithImages> => {
   await input.productRepo.updateProduct(input.productId, {
-    imageLinks: clearLinkedImageSlotValue(input.product.imageLinks, input.imageSlotIndex),
     imageBase64s: clearLinkedImageSlotValue(input.product.imageBase64s, input.imageSlotIndex),
   });
   await input.productRepo.replaceProductImages(
@@ -52,6 +52,22 @@ const persistConvertedImageSlot = async (input: {
     });
   }
   return updatedProduct;
+};
+
+const uploadLinkedProductImage = async (input: {
+  file: File;
+  filename: string;
+  product: ProductWithImages;
+  sourceUrl: string;
+}): Promise<UploadedProductImage> => {
+  return await uploadProductImageFileWithLocalFallback({
+    action: 'linkProductImageToFile',
+    file: input.file,
+    filename: input.filename,
+    service: 'products.link-to-file',
+    sku: input.product.sku,
+    sourceUrl: input.sourceUrl,
+  });
 };
 
 export async function postHandler(
@@ -78,10 +94,11 @@ export async function postHandler(
     sourcePageUrl: product.supplierLink ?? parsed.data.url,
   });
 
-  const uploaded = await uploadFile(file, {
-    category: 'products',
-    sku: product.sku ?? undefined,
-    filenameOverride: filename,
+  const uploaded = await uploadLinkedProductImage({
+    file,
+    filename,
+    product,
+    sourceUrl: parsed.data.url,
   });
 
   if (parsed.data.imageSlotIndex !== undefined) {

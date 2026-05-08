@@ -80,6 +80,7 @@ export interface ProductSelectionBulkController {
   handleCheckTraderaStatus: () => void;
   handleClearParsedMatches: () => void;
   handleConvertSelected: () => Promise<void>;
+  handleExportSelectedToEcommerce: () => Promise<void>;
   handleFindParsedMatches: (
     productIds: string[],
     meta?: { matchedRowCount?: number }
@@ -97,6 +98,7 @@ export interface ProductSelectionBulkController {
   handleSubmitMarketplaceCopyDebrand: (integrationId: string) => Promise<void>;
   isBatchEditingProductFields: boolean;
   isConvertingSelected: boolean;
+  isExportingSelectedToEcommerce: boolean;
   isQueueingMarketplaceCopyDebrandBatch: boolean;
   isRunningBulkBaseSync: boolean;
   isSettingSelectedArchivedState: boolean;

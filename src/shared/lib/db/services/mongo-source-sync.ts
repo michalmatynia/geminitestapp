@@ -35,7 +35,7 @@ import {
   getMongoRestoreCommand,
   MONGO_BACKUP_APPLICATIONS,
   resolveCmsBuilderMongoSourceConfig,
-  resolveProductsMongoSourceConfig,
+  resolveEcommerceMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
   type MongoApplicationSourceConfig,
   type MongoBackupApplication,
@@ -96,7 +96,7 @@ const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
-  products: 'Products',
+  products: 'Ecommerce',
 };
 
 const resolveSyncEndpoints = (
@@ -131,6 +131,33 @@ const redactMongoUri = (value: string): string =>
 
 const formatCommandForLog = (command: string, args: string[]): string =>
   `${command} ${args.map(redactMongoUri).join(' ')}`;
+
+const getMongoUriDefaultDatabaseName = (uri: string): string | null => {
+  try {
+    const parsed = new URL(uri);
+    const dbName = decodeURIComponent(parsed.pathname.replace(/^\/+/, '').trim());
+    return dbName.length > 0 ? dbName : null;
+  } catch {
+    return null;
+  }
+};
+
+const buildMongoNamespaceRestoreUri = (uri: string): string => {
+  const defaultDatabaseName = getMongoUriDefaultDatabaseName(uri);
+  if (defaultDatabaseName === null) return uri;
+
+  try {
+    const parsed = new URL(uri);
+    const hasCredentials = parsed.username.length > 0 || parsed.password.length > 0;
+    if (hasCredentials && !parsed.searchParams.has('authSource')) {
+      parsed.searchParams.set('authSource', defaultDatabaseName);
+    }
+    parsed.pathname = '';
+    return parsed.toString();
+  } catch {
+    return uri;
+  }
+};
 
 const formatVerificationLog = (
   verification: DatabaseEngineMongoSyncVerification
@@ -219,7 +246,7 @@ const resolveApplicationMongoSourceConfig = async (
     return resolveCmsBuilderMongoSourceConfig(source);
   }
   if (application === 'products') {
-    return resolveProductsMongoSourceConfig(source);
+    return resolveEcommerceMongoSourceConfig(source);
   }
   return resolveMongoSourceConfig(source);
 };
@@ -242,8 +269,8 @@ const getApplicationSourceConfigIssue = (
   }
 
   if (application === 'products') {
-    const prefix = `PRODUCTS_MONGODB_${source.toUpperCase()}`;
-    return `Products MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
+    const prefix = `ECOM_MONGODB_${source.toUpperCase()}`;
+    return `Ecommerce MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
   }
 
   const prefix = source === 'local' ? 'MONGODB_LOCAL' : 'MONGODB_CLOUD';
@@ -429,7 +456,7 @@ const buildMongoTransferCommands = (context: MongoSyncContext): MongoTransferCom
   ],
   restoreArgs: [
     '--uri',
-    context.targetUri,
+    buildMongoNamespaceRestoreUri(context.targetUri),
     `--archive=${context.archivePath}`,
     '--gzip',
     '--drop',
@@ -775,6 +802,7 @@ export async function syncMongoSources(
 
 export const testOnly = {
   assertAllApplicationsSyncReady,
+  buildMongoNamespaceRestoreUri,
   inspectApplicationSyncReadiness,
   restoreTargetFromPreSyncBackup,
 };

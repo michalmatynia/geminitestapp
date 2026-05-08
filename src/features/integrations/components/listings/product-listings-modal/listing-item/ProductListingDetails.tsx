@@ -16,11 +16,10 @@ import { useTraderaLiveExecution } from '@/features/integrations/hooks/useTrader
 import type {
   ProductListingExportEvent,
 } from '@/shared/contracts/integrations/listings';
-import { StatusBadge, JsonViewer } from '@/shared/ui/data-display.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import { Card, Button } from '@/shared/ui/primitives.public';
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
-import { Hint, ExternalLink } from '@/shared/ui/forms-and-actions.public';
-import { TraderaExecutionSteps } from '@/features/integrations/components/listings/TraderaExecutionSteps';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { PlaywrightSection } from './details-sections/PlaywrightSection';
 import { TraderaSection } from './details-sections/TraderaSection';
@@ -31,7 +30,6 @@ import type { ProductListingWithDetailsProps } from './types';
 import {
   formatTimestamp,
   formatListValue,
-  formatTraderaDuplicateMatchStrategy,
   normalizeIntegrationSlug,
   resolveDisplayedTraderaDuplicateSummary,
   resolveTraderaStatusBadge,

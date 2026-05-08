@@ -1,13 +1,11 @@
 import path from 'path';
 
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 
-type LinkedImageUpload = {
-  id: string;
-  filepath: string;
-};
+type LinkedImageUpload = ImageFileSelection;
 
 const normalizeOptionalText = (value?: string | null): string | null => {
   const trimmed = value?.trim() ?? '';
@@ -142,16 +140,10 @@ export const resolveConvertedLinkedImageFileIds = (
 
 export const buildLinkedProductImageResponse = (uploaded: LinkedImageUpload): {
   status: 'ok';
-  imageFile: {
-    id: string;
-    filepath: string;
-  };
+  imageFile: ImageFileSelection;
 } => ({
   status: 'ok',
-  imageFile: {
-    id: uploaded.id,
-    filepath: uploaded.filepath,
-  },
+  imageFile: { ...uploaded },
 });
 
 export const buildLinkedProductImageWithProductResponse = <TProduct>(

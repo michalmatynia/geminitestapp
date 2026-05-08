@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
+  ECOMMERCE_EXPORT_INTEGRATION_SLUG,
   PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
   SCRAPED_SOURCE_INTEGRATION_SLUG,
   TRADERA_INTEGRATION_SLUGS,
@@ -115,6 +116,7 @@ const resolveMarketplaceKey = (slug: string | null | undefined): MarketplaceBadg
   if (TRADERA_INTEGRATION_SLUGS.has(normalized)) return 'tradera';
   if (normalized === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'playwrightProgrammable';
   if (normalized === SCRAPED_SOURCE_INTEGRATION_SLUG) return 'scrapedSource';
+  if (normalized === ECOMMERCE_EXPORT_INTEGRATION_SLUG) return 'ecommerce';
   return null;
 };
 

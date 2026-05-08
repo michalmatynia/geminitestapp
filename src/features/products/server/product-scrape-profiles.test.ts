@@ -311,7 +311,9 @@ it('downloads scraped images as product files when requested', async () => {
   expect(mocks.createProduct).toHaveBeenCalledWith(
     expect.objectContaining({
       imageFileIds: ['image-file-1'],
-      imageLinks: [],
+      imageLinks: [
+        'https://www.battle-stock.pl/environment/cache/images/productGfx_34831_1500_1500/40k-spiritseer.jpg',
+      ],
     }),
     undefined
   );

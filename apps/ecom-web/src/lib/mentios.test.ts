@@ -6,12 +6,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   getProductsDb: vi.fn(),
+  getEcommerceProductsDb: vi.fn(),
   hasProductsMongoConfig: vi.fn(),
+  hasEcommerceProductsMongoConfig: vi.fn(),
 }));
 
 vi.mock('@/lib/mongodb', () => ({
   getProductsDb: mocks.getProductsDb,
+  getEcommerceProductsDb: mocks.getEcommerceProductsDb,
   hasProductsMongoConfig: mocks.hasProductsMongoConfig,
+  hasEcommerceProductsMongoConfig: mocks.hasEcommerceProductsMongoConfig,
 }));
 
 import { getMentiosProducts } from './mentios';
@@ -31,6 +35,7 @@ describe('Mentios product image mapping', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.hasProductsMongoConfig.mockReturnValue(true);
+    mocks.hasEcommerceProductsMongoConfig.mockReturnValue(true);
   });
 
   it('uses product image file public URLs when filepath is unavailable', async () => {
@@ -62,11 +67,13 @@ describe('Mentios product image mapping', () => {
     const categoriesCollection = {
       find: vi.fn(() => createCursor([])),
     };
-    mocks.getProductsDb.mockResolvedValue({
+    const db = {
       collection: vi.fn((name: string) =>
         name === 'products' ? productsCollection : categoriesCollection
       ),
-    });
+    };
+    mocks.getProductsDb.mockResolvedValue(db);
+    mocks.getEcommerceProductsDb.mockResolvedValue(db);
 
     const result = await getMentiosProducts({ limit: 1 });
 

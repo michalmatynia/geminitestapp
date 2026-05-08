@@ -6,18 +6,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   captureException: vi.fn(),
+  createImageFile: vi.fn(),
+  logWarning: vi.fn(),
   uploadFile: vi.fn(),
 }));
 
 vi.mock('server-only', () => ({}));
 
 vi.mock('@/shared/lib/files/services/image-file-service', () => ({
+  getImageFileRepository: () =>
+    Promise.resolve({
+      createImageFile: mocks.createImageFile,
+    }),
   uploadFile: mocks.uploadFile,
 }));
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: mocks.captureException,
+    logWarning: mocks.logWarning,
   },
 }));
 
@@ -93,6 +100,7 @@ describe('resolveScrapeImagePayload', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+    mocks.createImageFile.mockResolvedValue({ id: 'local-image-file' });
   });
 
   it('keeps scraped links without downloading when image import mode is links', async () => {
@@ -181,7 +189,7 @@ describe('resolveScrapeImagePayload', () => {
     );
     expect(result).toEqual({
       imageFileIds: ['image-file-1', 'image-file-2'],
-      imageLinks: [],
+      imageLinks: candidate.imageLinks,
     });
     expect(mocks.uploadFile).toHaveBeenNthCalledWith(
       1,
@@ -265,7 +273,7 @@ describe('resolveScrapeImagePayload', () => {
     );
     expect(result).toEqual({
       imageFileIds: ['image-file-1'],
-      imageLinks: [],
+      imageLinks: [candidate.imageLinks[0]!],
     });
   });
 
@@ -309,7 +317,7 @@ describe('resolveScrapeImagePayload', () => {
     );
     expect(result).toEqual({
       imageFileIds: ['image-file-1'],
-      imageLinks: [],
+      imageLinks: [candidate.imageLinks[0]!],
     });
   });
 
@@ -342,7 +350,7 @@ describe('resolveScrapeImagePayload', () => {
     );
     expect(result).toEqual({
       imageFileIds: ['image-file-1'],
-      imageLinks: [],
+      imageLinks: [candidate.imageLinks[0]!],
     });
   });
 
@@ -375,7 +383,9 @@ describe('resolveScrapeImagePayload', () => {
     );
     expect(result).toEqual({
       imageFileIds: ['image-file-1'],
-      imageLinks: [],
+      imageLinks: [
+        'https://www.battle-stock.pl/environment/cache/images/productGfx_9255_1500_1500/source-page.webp',
+      ],
     });
   });
 
@@ -419,11 +429,14 @@ describe('resolveScrapeImagePayload', () => {
     );
     expect(result).toEqual({
       imageFileIds: ['image-file-1', 'image-file-2'],
-      imageLinks: [],
+      imageLinks: [
+        'https://www.battle-stock.pl/environment/cache/images/productGfx_9255_1500_1500/source-page-1.webp',
+        'https://www.battle-stock.pl/environment/cache/images/productGfx_9256_1500_1500/source-page-2.webp',
+      ],
     });
   });
 
-  it('fails file mode when an individual file upload fails', async () => {
+  it('stores a local file fallback when an individual remote upload fails', async () => {
     const storedUrl =
       'https://sparksofsindri.com/uploads/products/BATTLESTOCK-13033/first.jpg';
     vi.stubGlobal(
@@ -437,14 +450,18 @@ describe('resolveScrapeImagePayload', () => {
     mocks.uploadFile
       .mockResolvedValueOnce({ id: 'image-file-1', filepath: storedUrl })
       .mockRejectedValueOnce(new Error('upload failed'));
+    mocks.createImageFile.mockResolvedValueOnce({ id: 'local-image-file-2' });
 
-    await expect(
-      resolveScrapeImagePayload({
-        candidate,
-        dryRun: false,
-        imageImportMode: 'files',
-      })
-    ).rejects.toThrow('Failed to download 1 scraped image(s).');
+    const result = await resolveScrapeImagePayload({
+      candidate,
+      dryRun: false,
+      imageImportMode: 'files',
+    });
+
+    expect(result).toEqual({
+      imageFileIds: ['image-file-1', 'local-image-file-2'],
+      imageLinks: candidate.imageLinks,
+    });
     expect(mocks.captureException).toHaveBeenCalledWith(
       expect.any(Error),
       expect.objectContaining({
@@ -452,6 +469,19 @@ describe('resolveScrapeImagePayload', () => {
         service: 'product-scrape-profiles',
         sku: 'BATTLESTOCK-13033',
         sourceUrl: candidate.imageLinks[1],
+      })
+    );
+    expect(mocks.createImageFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filepath: expect.stringContaining('/uploads/products/BATTLESTOCK-13033/'),
+        mimetype: 'image/jpeg',
+      })
+    );
+    expect(mocks.logWarning).toHaveBeenCalledWith(
+      'Remote product image upload failed; saved local file fallback.',
+      expect.objectContaining({
+        action: 'uploadScrapeImage',
+        sku: 'BATTLESTOCK-13033',
       })
     );
   });

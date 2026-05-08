@@ -16,6 +16,7 @@ export * from './base-com';
 export * from './connections';
 export * from './context';
 export * from './domain';
+export * from './ecommerce-export';
 export {
   importExportTemplateSchema,
   createImportExportTemplateSchema,

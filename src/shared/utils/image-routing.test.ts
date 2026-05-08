@@ -14,6 +14,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
 
 import {
   normalizeProductImageExternalBaseUrl,
+  resolveProductImageFileUrl,
   resolveProductImageLocalFallbackUrl,
   resolveProductImageServingMode,
   resolveProductImageUrl,
@@ -87,6 +88,27 @@ function registerFastCometUploadRouteTests(): void {
     ).toBe('/uploads/products/SKU_123/stored.png');
     expect(resolveProductImageServingMode('http://localhost:3000')).toBe('local');
     expect(resolveProductImageServingMode('https://sparksofsindri.com')).toBe('fastcomet');
+  });
+
+  it('keeps local fallback image files on the local upload route even when FastComet serving is selected', () => {
+    expect(
+      resolveProductImageFileUrl(
+        {
+          filepath: '/uploads/products/SKU_123/local-fallback.jpg',
+          storageProvider: 'local',
+        },
+        'https://sparksofsindri.com'
+      )
+    ).toBe('/uploads/products/SKU_123/local-fallback.jpg');
+    expect(
+      resolveProductImageFileUrl(
+        {
+          filepath: '/uploads/products/SKU_123/local-fallback.jpg',
+          metadata: { storageSource: 'local-fallback' },
+        },
+        'https://sparksofsindri.com'
+      )
+    ).toBe('/uploads/products/SKU_123/local-fallback.jpg');
   });
 
   it('derives local fallbacks for upload urls without rewriting unrelated remotes', () => {

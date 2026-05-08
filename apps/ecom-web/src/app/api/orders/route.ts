@@ -5,12 +5,15 @@ import { getDb } from '@/lib/mongodb';
 import {
   generateOrderId,
   ORDERS_COLLECTION,
+  sanitizeInpostPoint,
+  sanitizeShippingCarrier,
   type Order,
   type OrderItem,
 } from '@/lib/orders';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { ensureAppIndexes } from '@/lib/db-indexes';
 import { computeDiscount } from '@/lib/promo';
+import { fulfillInpostOrder } from '@/lib/inpost';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REQUIRED_ADDRESS_FIELDS = [
@@ -132,9 +135,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const shippingMethod = readString(body['shippingMethod']) || 'Standard';
+  const shippingCarrier = sanitizeShippingCarrier(body['shippingCarrier']);
+  const shippingService = readOptionalString(body['shippingService']);
+  const inpostPoint = sanitizeInpostPoint(body['inpostPoint']);
   const shippingPrice = readNonNegativeNumber(body['shippingPrice']);
   const subtotal = readNonNegativeNumber(body['subtotal']);
   const total = readNonNegativeNumber(body['total']);
+
+  if (shippingCarrier === 'inpost' && !inpostPoint) {
+    return NextResponse.json({ error: 'An InPost pickup point is required' }, { status: 400 });
+  }
+  if (shippingCarrier === 'inpost' && shippingAddress.country !== 'Poland') {
+    return NextResponse.json({ error: 'InPost parcel locker delivery is available only in Poland' }, { status: 400 });
+  }
 
   if (shippingPrice == null || subtotal == null || total == null || total < 1) {
     return NextResponse.json({ error: 'Valid order totals are required' }, { status: 400 });
@@ -154,6 +167,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     items,
     shippingMethod,
     shippingPrice,
+    shippingCarrier,
+    shippingService,
+    ...(inpostPoint ? { inpostPoint } : {}),
     shippingAddress,
     subtotal,
     discount,
@@ -164,7 +180,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const db = await getDb();
   const result = await db.collection(ORDERS_COLLECTION).insertOne(order);
-  const savedOrder: Order = { ...order, _id: result.insertedId.toString() };
+  let savedOrder: Order = { ...order, _id: result.insertedId.toString() };
+
+  try {
+    const shipment = await fulfillInpostOrder(savedOrder);
+    if (shipment) savedOrder = { ...savedOrder, inpostShipment: shipment };
+  } catch (error: unknown) {
+    console.error('Failed to create InPost shipment', error);
+  }
 
   void sendOrderConfirmation(savedOrder).catch((error: unknown) => {
     console.error('Failed to send order confirmation email', error);

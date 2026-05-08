@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import {
+  deleteStoriesPageContent,
   getStoriesPageCmsSnapshot,
   parseStoriesPageContentUpdate,
   saveStoriesPageContent,
 } from '@/lib/cms';
+import { deleteLocalizedCmsRouteContent } from '@/lib/cmsRouteHandlers';
 import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 function forbidden(): NextResponse {
@@ -49,4 +51,16 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   } catch {
     return NextResponse.json({ error: 'Failed to save stories page CMS content' }, { status: 500 });
   }
+}
+
+export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  return deleteLocalizedCmsRouteContent({
+    req,
+    label: 'stories page',
+    deleteContent: deleteStoriesPageContent,
+    revalidate: [
+      { path: '/stories' },
+      { path: '/stories/[slug]', type: 'page' },
+    ],
+  });
 }

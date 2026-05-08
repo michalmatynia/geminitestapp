@@ -1,7 +1,5 @@
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { resolveProductImageUrl } from '@/shared/utils/image-routing';
-
-import { getImageFilepath } from './columns/product-column-utils';
+import { resolveProductImageFileUrl, resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 export const EMPTY_PRODUCT_LIST_VALUE = '—';
 
@@ -18,9 +16,12 @@ const resolveFirstNonEmptyText = (
   return values.find(isNonEmptyText);
 };
 
-const resolveFirstFileImage = (product: ProductWithImages): string | undefined =>
+const resolveFirstFileImage = (
+  product: ProductWithImages,
+  imageExternalBaseUrl: string | null
+): string | undefined =>
   product.images
-    .map((image) => getImageFilepath(image.imageFile))
+    .map((image) => resolveProductImageFileUrl(image.imageFile, imageExternalBaseUrl))
     .find((filepath): filepath is string => isNonEmptyText(filepath));
 
 type ThumbnailCandidateKey = 'file' | 'link' | 'base64';
@@ -61,10 +62,10 @@ export const resolveThumbnailUrl = (
   thumbnailSource: 'file' | 'link' | 'base64',
   imageExternalBaseUrl: string | null
 ): string | null => {
-  const firstFileImage = resolveFirstFileImage(product);
+  const firstFileImage = resolveFirstFileImage(product, imageExternalBaseUrl);
   const firstLinkImage = resolveFirstNonEmptyText(product.imageLinks);
   const firstBase64Image = resolveFirstNonEmptyText(product.imageBase64s);
-  const resolvedFileImage = resolveProductImageUrl(firstFileImage, imageExternalBaseUrl);
+  const resolvedFileImage = firstFileImage ?? null;
   const resolvedLinkImage = resolveProductImageUrl(firstLinkImage, imageExternalBaseUrl);
 
   return (

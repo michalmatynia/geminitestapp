@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
+import { saveSiteLogo } from '@/lib/cms';
+import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 import { uploadToFastComet } from '@/lib/fastcometUpload';
 
 export const runtime = 'nodejs';
@@ -54,6 +56,10 @@ function makeStoredFilename(file: File, mimetype: string): string {
   return `${Date.now()}-${randomUUID().slice(0, 8)}-${sanitizeName(file.name)}.${extension}`;
 }
 
+function readOptionalString(value: FormDataEntryValue | null): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const session = await getSession();
   if (!session?.isSuperAdmin) return forbidden();
@@ -96,7 +102,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       folder: 'logos',
     });
 
-    return NextResponse.json({ ok: true, url });
+    const logoAlt = readOptionalString(form.get('alt'));
+    const snapshot = await saveSiteLogo(url, logoAlt, session.id);
+    revalidateLocalizedPath('/', 'layout');
+
+    return NextResponse.json({
+      ok: true,
+      url,
+      logoAlt: snapshot.content.nav.logoAlt,
+      updatedAt: snapshot.updatedAt,
+      updatedBy: snapshot.updatedBy,
+    });
   } catch (error) {
     console.error('Failed to upload CMS logo to FastComet.', error);
     const message = error instanceof Error ? error.message : 'Failed to upload logo.';

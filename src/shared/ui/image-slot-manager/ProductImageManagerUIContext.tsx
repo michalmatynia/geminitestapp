@@ -280,7 +280,6 @@ export function ProductImageManagerUIProvider({
           const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' });
           handleSlotImageChange(file, index);
         }
-        setImageLinkAt(index, '');
         setSlotViewMode(index, 'upload');
       } catch (error: unknown) {
         logClientError(error);
@@ -299,7 +298,6 @@ export function ProductImageManagerUIProvider({
       productId,
       handleSlotFileSelect,
       handleSlotImageChange,
-      setImageLinkAt,
       setSlotViewMode,
       pushDebug,
     ]

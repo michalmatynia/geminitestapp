@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { z } from 'zod';
 
 const mocks = vi.hoisted(() => ({
+  createImageFile: vi.fn(),
   getProductById: vi.fn(),
   getProductRepository: vi.fn(),
   invalidateProduct: vi.fn(),
@@ -28,7 +29,18 @@ vi.mock('@/features/products/performance/cached-service', () => ({
 }));
 
 vi.mock('@/shared/lib/files/services/image-file-service', () => ({
+  getImageFileRepository: () =>
+    Promise.resolve({
+      createImageFile: mocks.createImageFile,
+    }),
   uploadFile: mocks.uploadFile,
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: vi.fn(),
+    logWarning: vi.fn(),
+  },
 }));
 
 vi.mock('@/shared/lib/products/services/product-repository', () => ({
@@ -130,7 +142,6 @@ describe('product image link-to-file handler', () => {
     };
     const updatedProduct = {
       ...product,
-      imageLinks: [''],
       images: [{ imageFileId: 'image-file-1' }],
     };
     mocks.getProductById.mockResolvedValueOnce(product).mockResolvedValueOnce(updatedProduct);
@@ -201,7 +212,6 @@ describe('product image link-to-file handler', () => {
     );
     expect(mocks.updateProduct).toHaveBeenCalledWith('product-1', {
       imageBase64s: [''],
-      imageLinks: [''],
     });
     expect(mocks.replaceProductImages).toHaveBeenCalledWith('product-1', ['image-file-1']);
     expect(mocks.invalidateProduct).toHaveBeenCalledWith('product-1');
@@ -333,5 +343,55 @@ describe('product image link-to-file handler', () => {
       status: 'ok',
     });
     expect(mocks.invalidateProduct).not.toHaveBeenCalled();
+  });
+
+  it('uses a local file fallback when remote product storage rejects the upload', async () => {
+    const product = {
+      id: 'product-1',
+      imageBase64s: [''],
+      imageLinks: ['https://cdn.fastcomet.example/images/photo.jpg'],
+      images: [],
+      sku: 'BATTLESTOCK-13033',
+      supplierLink: null,
+    };
+    const updatedProduct = {
+      ...product,
+      images: [{ imageFileId: 'local-image-file-1' }],
+    };
+    mocks.getProductById.mockResolvedValueOnce(product).mockResolvedValueOnce(updatedProduct);
+    mocks.uploadFile.mockRejectedValueOnce(new Error('remote upload rejected'));
+    mocks.createImageFile.mockResolvedValueOnce({
+      id: 'local-image-file-1',
+      filepath: '/uploads/products/BATTLESTOCK-13033/local.jpg',
+      publicUrl: '/uploads/products/BATTLESTOCK-13033/local.jpg',
+      metadata: { storageSource: 'local-fallback' },
+      storageProvider: 'local',
+    });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(createImageResponse('image/jpeg')));
+
+    const response = await postHandler(
+      createRequest({
+        imageSlotIndex: 0,
+        url: 'https://cdn.fastcomet.example/images/photo.jpg',
+      }) as never,
+      {} as never,
+      { id: 'product-1' }
+    );
+    const json = await response.json();
+
+    expect(mocks.replaceProductImages).toHaveBeenCalledWith('product-1', [
+      'local-image-file-1',
+    ]);
+    expect(json).toEqual({
+      imageFile: {
+        id: 'local-image-file-1',
+        filepath: '/uploads/products/BATTLESTOCK-13033/local.jpg',
+        metadata: { storageSource: 'local-fallback' },
+        publicUrl: '/uploads/products/BATTLESTOCK-13033/local.jpg',
+        storageProvider: 'local',
+      },
+      product: updatedProduct,
+      status: 'ok',
+    });
   });
 });

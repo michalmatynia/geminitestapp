@@ -316,11 +316,14 @@ export const resolveProductsMongoSourceConfig = (
   }
 
   if (source === 'local') {
+    const mainLocalUri = firstTrimmedEnvValue('MONGODB_LOCAL_URI', 'MONGODB_URI');
+    const mainLocalDbName = firstTrimmedEnvValue('MONGODB_LOCAL_DB', 'MONGODB_DB');
+
     return {
       source,
       configured: true,
-      uri: 'mongodb://127.0.0.1:27020/products_local',
-      dbName: 'products_local',
+      uri: mainLocalUri || 'mongodb://127.0.0.1:27017/app',
+      dbName: mainLocalDbName || getDatabaseNameFromMongoUri(mainLocalUri) || 'app',
       usesLegacyEnv: false,
     };
   }
@@ -336,10 +339,93 @@ export const resolveProductsMongoSourceConfig = (
 
 export const getProductsMongoConnectionUrl = (): string =>
   resolveProductsMongoSourceConfig('local').uri ??
-  'mongodb://127.0.0.1:27020/products_local';
+  'mongodb://127.0.0.1:27017/app';
 
 export const getProductsMongoDatabaseName = (): string =>
-  resolveProductsMongoSourceConfig('local').dbName ?? 'products_local';
+  resolveProductsMongoSourceConfig('local').dbName ?? 'app';
+
+export const resolveEcommerceMongoSourceConfig = (
+  source: MongoSource
+): MongoApplicationSourceConfig => {
+  const explicitUri =
+    source === 'local'
+      ? firstTrimmedEnvValue('ECOM_MONGODB_LOCAL_URI', 'MONGODB_ECOM_LOCAL_URI')
+      : firstTrimmedEnvValue('ECOM_MONGODB_CLOUD_URI', 'MONGODB_ECOM_CLOUD_URI');
+  const explicitDbName =
+    source === 'local'
+      ? firstTrimmedEnvValue('ECOM_MONGODB_LOCAL_DB', 'MONGODB_ECOM_LOCAL_DB')
+      : firstTrimmedEnvValue('ECOM_MONGODB_CLOUD_DB', 'MONGODB_ECOM_CLOUD_DB');
+
+  if (explicitUri.length > 0) {
+    return {
+      source,
+      configured: true,
+      uri: explicitUri,
+      dbName: explicitDbName || getDatabaseNameFromMongoUri(explicitUri),
+      usesLegacyEnv: false,
+    };
+  }
+
+  const legacyUri = firstTrimmedEnvValue('ECOM_MONGODB_URI', 'MONGODB_ECOM_URI');
+  const legacyDbName = firstTrimmedEnvValue('ECOM_MONGODB_DB', 'MONGODB_ECOM_DB');
+  if (legacyUri.length > 0) {
+    const legacyIsLocal = isLikelyLocalMongoUri(legacyUri);
+    if ((source === 'local' && legacyIsLocal) || (source === 'cloud' && !legacyIsLocal)) {
+      return {
+        source,
+        configured: true,
+        uri: legacyUri,
+        dbName: legacyDbName || getDatabaseNameFromMongoUri(legacyUri),
+        usesLegacyEnv: true,
+      };
+    }
+  }
+
+  if (source === 'cloud') {
+    const legacyProductsCloudUri = firstTrimmedEnvValue(
+      'PRODUCTS_MONGODB_CLOUD_URI',
+      'MONGODB_PRODUCTS_CLOUD_URI'
+    );
+    if (legacyProductsCloudUri.length > 0) {
+      const legacyProductsCloudDbName = firstTrimmedEnvValue(
+        'PRODUCTS_MONGODB_CLOUD_DB',
+        'MONGODB_PRODUCTS_CLOUD_DB'
+      );
+      return {
+        source,
+        configured: true,
+        uri: legacyProductsCloudUri,
+        dbName: legacyProductsCloudDbName || getDatabaseNameFromMongoUri(legacyProductsCloudUri),
+        usesLegacyEnv: true,
+      };
+    }
+  }
+
+  if (source === 'local') {
+    return {
+      source,
+      configured: true,
+      uri: 'mongodb://127.0.0.1:27021/ecom_local',
+      dbName: 'ecom_local',
+      usesLegacyEnv: false,
+    };
+  }
+
+  return {
+    source,
+    configured: false,
+    uri: null,
+    dbName: null,
+    usesLegacyEnv: false,
+  };
+};
+
+export const getEcommerceMongoConnectionUrl = (): string =>
+  resolveEcommerceMongoSourceConfig('local').uri ??
+  'mongodb://127.0.0.1:27021/ecom_local';
+
+export const getEcommerceMongoDatabaseName = (): string =>
+  resolveEcommerceMongoSourceConfig('local').dbName ?? 'ecom_local';
 
 const DEFAULT_MONGO_TOOL_MAX_BUFFER_BYTES = 128 * 1024 * 1024;
 

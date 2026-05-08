@@ -16,6 +16,12 @@ import {
   TutorGameAnchor,
 } from './KangurAiTutorWidget.test-utils';
 
+type KangurClientErrorMocks = {
+  trackKangurClientEventMock: ReturnType<typeof vi.fn>;
+  withKangurClientError: unknown;
+  withKangurClientErrorSync: unknown;
+};
+
 const mocks = vi.hoisted(() => {
   const settingsStoreMock = {
     get: vi.fn<(key: string) => string | undefined>(),
@@ -72,10 +78,6 @@ const mocks = vi.hoisted(() => {
     audioPauseMock,
   };
 });
-
-const { withKangurClientError, withKangurClientErrorSync } = vi.hoisted(() =>
-  globalThis.__kangurClientErrorMocks()
-);
 
 vi.mock('framer-motion', () => ({
   useReducedMotion: mocks.useReducedMotionMock,
@@ -249,14 +251,18 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('@/features/kangur/observability/client', () => {
-  const mocks = globalThis.__kangurClientErrorMocks();
+  const mocks = (
+    globalThis as typeof globalThis & {
+      __kangurClientErrorMocks: () => KangurClientErrorMocks;
+    }
+  ).__kangurClientErrorMocks();
   return {
     trackKangurClientEvent: mocks.trackKangurClientEventMock,
     withKangurClientError: mocks.withKangurClientError,
     withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+    isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),
   };
-,
-  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),});
+});
 
 let KangurAiTutorWidget: any;
 

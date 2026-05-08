@@ -1,9 +1,17 @@
+/* eslint-disable max-lines */
 import 'server-only';
 
 import path from 'path';
 
 import { badRequestError } from '@/shared/errors/app-error';
 
+import {
+  cancelRemoteProductResponseBody,
+  fetchWithRemoteProductTimeout,
+  readResponseBlobWithTimeout,
+  readResponseTextWithTimeout,
+  runWithRemoteProductTimeout,
+} from './product-remote-fetch-timeout';
 import { isRemoteProductImageLikeResponse } from './product-remote-image-sniff';
 
 const BROWSER_USER_AGENT =
@@ -130,15 +138,23 @@ export const fetchRemoteProductSourcePage = async (
   const normalizedSourceUrl = normalizeUrl(sourcePageUrl);
   if (normalizedSourceUrl === null) return { cookieHeader: null, html: null };
 
-  const response = await fetch(normalizedSourceUrl, {
-    cache: 'no-store',
-    headers: buildSourcePageHeaders(),
-    redirect: 'follow',
-    signal: options.signal,
-  });
+  const response = await fetchWithRemoteProductTimeout(
+    'Remote product source page fetch',
+    options.signal,
+    async (signal) =>
+      await fetch(normalizedSourceUrl, {
+        cache: 'no-store',
+        headers: buildSourcePageHeaders(),
+        redirect: 'follow',
+        signal,
+      })
+  );
   return {
     cookieHeader: toCookieHeader(readSetCookieHeaders(response.headers)),
-    html: response.ok && isHtmlResponse(response.headers) ? await response.text() : null,
+    html:
+      response.ok && isHtmlResponse(response.headers)
+        ? await readResponseTextWithTimeout(response, options.signal)
+        : null,
   };
 };
 
@@ -148,20 +164,34 @@ const fetchImageResponse = (
   cookieHeader: string | null,
   signal?: AbortSignal
 ): Promise<Response> =>
-  fetch(imageUrl, {
-    cache: 'no-store',
-    headers: buildImageDownloadHeaders(refererUrl, cookieHeader),
-    redirect: 'follow',
+  fetchWithRemoteProductTimeout(
+    'Remote product image fetch',
     signal,
-  });
+    async (timeoutSignal) =>
+      await fetch(imageUrl, {
+        cache: 'no-store',
+        headers: buildImageDownloadHeaders(refererUrl, cookieHeader),
+        redirect: 'follow',
+        signal: timeoutSignal,
+      })
+  );
 
-const isImageLikeResponse = async (response: Response, imageUrl: string): Promise<boolean> => {
-  return await isRemoteProductImageLikeResponse({
-    extension: resolveImageExtensionFromUrl(imageUrl),
-    response,
-    supportedExtensions: IMAGE_EXTENSIONS,
-  });
-};
+const isImageLikeResponse = async (
+  response: Response,
+  imageUrl: string,
+  signal: AbortSignal | undefined
+): Promise<boolean> =>
+  await runWithRemoteProductTimeout(
+    'Remote product image response sniff',
+    signal,
+    async () =>
+      await isRemoteProductImageLikeResponse({
+        extension: resolveImageExtensionFromUrl(imageUrl),
+        response,
+        supportedExtensions: IMAGE_EXTENSIONS,
+      }),
+    () => cancelRemoteProductResponseBody(response)
+  );
 
 export const fetchRemoteProductImageResponse = async ({
   imageUrl,
@@ -176,7 +206,9 @@ export const fetchRemoteProductImageResponse = async ({
 
   const normalizedRefererUrl = normalizeUrl(refererUrl) ?? normalizedImageUrl;
   const response = await fetchImageResponse(normalizedImageUrl, normalizedRefererUrl, null, signal);
-  if (response.ok && (await isImageLikeResponse(response, normalizedImageUrl))) return response;
+  if (response.ok && (await isImageLikeResponse(response, normalizedImageUrl, signal))) {
+    return response;
+  }
 
   const { cookieHeader } = await fetchRemoteProductSourcePage(sourcePageUrl ?? refererUrl, {
     signal,
@@ -285,7 +317,7 @@ export const downloadRemoteProductImageFile = async (
     });
   }
 
-  const blob = await response.blob();
+  const blob = await readResponseBlobWithTimeout(response, input.signal);
   if (blob.size <= 0) {
     throw badRequestError('Downloaded image is empty.', { url: input.imageUrl });
   }

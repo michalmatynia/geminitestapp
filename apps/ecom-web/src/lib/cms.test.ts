@@ -5,11 +5,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CHECKOUT_CONTENT_DEFAULTS } from '@/data/checkoutContent';
-import { getCheckoutCmsSnapshot, getCheckoutContent, localizeCheckoutContent, saveCheckoutContent } from './cms';
+import { SITE_CONTENT_DEFAULTS } from '@/data/siteContent';
+import {
+  deleteCheckoutContent,
+  getCheckoutCmsSnapshot,
+  getCheckoutContent,
+  getSiteCmsSnapshot,
+  localizeCheckoutContent,
+  saveCheckoutContent,
+  saveSiteContent,
+  saveSiteLogo,
+} from './cms';
 
 const cmsDbMocks = vi.hoisted(() => ({
+  find: vi.fn(),
   findOne: vi.fn(),
   updateOne: vi.fn(),
+  updateMany: vi.fn(),
+  deleteOne: vi.fn(),
   createIndex: vi.fn(),
 }));
 
@@ -20,11 +33,17 @@ vi.mock('@/lib/mongodb', () => ({
 }));
 
 beforeEach(() => {
+  cmsDbMocks.find.mockReset();
   cmsDbMocks.findOne.mockReset();
   cmsDbMocks.updateOne.mockReset();
+  cmsDbMocks.updateMany.mockReset();
+  cmsDbMocks.deleteOne.mockReset();
   cmsDbMocks.createIndex.mockReset();
+  cmsDbMocks.find.mockReturnValue({ toArray: vi.fn(async () => []) });
   cmsDbMocks.createIndex.mockResolvedValue('page_1_locale_1');
   cmsDbMocks.updateOne.mockResolvedValue({});
+  cmsDbMocks.updateMany.mockResolvedValue({});
+  cmsDbMocks.deleteOne.mockResolvedValue({ deletedCount: 1 });
 });
 
 describe('checkout CMS localization', () => {
@@ -115,5 +134,129 @@ describe('checkout CMS localization', () => {
     );
     expect(snapshot.content).toBe(CHECKOUT_CONTENT_DEFAULTS);
     expect(snapshot.updatedBy).toBe('admin');
+  });
+
+  it('deletes only non-default locale snapshots', async () => {
+    const deleted = await deleteCheckoutContent('pl');
+    const defaultDeleted = await deleteCheckoutContent('en');
+
+    expect(deleted).toBe(true);
+    expect(defaultDeleted).toBe(false);
+    expect(cmsDbMocks.deleteOne).toHaveBeenCalledTimes(1);
+    expect(cmsDbMocks.deleteOne).toHaveBeenCalledWith({ page: 'checkout', locale: 'pl' });
+  });
+});
+
+describe('site CMS shared logo', () => {
+  it('merges the default locale logo into an existing Polish site snapshot', async () => {
+    const englishSite = {
+      ...SITE_CONTENT_DEFAULTS,
+      nav: {
+        ...SITE_CONTENT_DEFAULTS.nav,
+        logoUrl: 'https://sparksofsindri.com/uploads/ecom/logos/arcana.png',
+        logoAlt: 'ARCANA NEXUS',
+      },
+    };
+    const polishSite = {
+      ...SITE_CONTENT_DEFAULTS,
+      nav: {
+        ...SITE_CONTENT_DEFAULTS.nav,
+        brandSuffix: 'PL',
+        logoUrl: '',
+        logoAlt: '',
+      },
+    };
+    const englishDoc = {
+      page: 'site',
+      locale: 'en',
+      content: englishSite,
+      updatedAt: new Date('2026-05-08T12:00:00.000Z'),
+      updatedBy: 'admin',
+    };
+    cmsDbMocks.findOne.mockResolvedValueOnce({
+      page: 'site',
+      locale: 'pl',
+      content: polishSite,
+      updatedAt: new Date('2026-05-08T12:05:00.000Z'),
+      updatedBy: 'admin',
+    });
+    cmsDbMocks.find.mockReturnValueOnce({ toArray: vi.fn(async () => [englishDoc]) });
+
+    const snapshot = await getSiteCmsSnapshot('pl');
+
+    expect(snapshot.content.nav.brandSuffix).toBe('PL');
+    expect(snapshot.content.nav.logoUrl).toBe('https://sparksofsindri.com/uploads/ecom/logos/arcana.png');
+    expect(snapshot.content.nav.logoAlt).toBe('ARCANA NEXUS');
+  });
+
+  it('propagates a saved site logo to all locale documents', async () => {
+    const content = {
+      ...SITE_CONTENT_DEFAULTS,
+      nav: {
+        ...SITE_CONTENT_DEFAULTS.nav,
+        logoUrl: 'https://sparksofsindri.com/uploads/ecom/logos/new-logo.webp',
+        logoAlt: 'Arcana mark',
+      },
+    };
+
+    const snapshot = await saveSiteContent(content, 'admin', 'pl');
+
+    expect(cmsDbMocks.updateOne).toHaveBeenCalledWith(
+      { page: 'site', locale: 'pl' },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          page: 'site',
+          locale: 'pl',
+          content,
+          updatedBy: 'admin',
+        }),
+      }),
+      { upsert: true },
+    );
+    expect(cmsDbMocks.updateMany).toHaveBeenCalledWith(
+      { page: 'site' },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          'content.nav.logoUrl': 'https://sparksofsindri.com/uploads/ecom/logos/new-logo.webp',
+          'content.nav.logoAlt': 'Arcana mark',
+          updatedBy: 'admin',
+        }),
+      }),
+    );
+    expect(snapshot.content.nav.logoUrl).toBe('https://sparksofsindri.com/uploads/ecom/logos/new-logo.webp');
+  });
+
+  it('saves an uploaded logo without overwriting localized site copy', async () => {
+    cmsDbMocks.findOne.mockResolvedValueOnce({
+      page: 'site',
+      locale: 'en',
+      content: {
+        ...SITE_CONTENT_DEFAULTS,
+        nav: {
+          ...SITE_CONTENT_DEFAULTS.nav,
+          logoUrl: 'https://sparksofsindri.com/uploads/ecom/logos/uploaded.png',
+          logoAlt: 'Uploaded logo',
+        },
+      },
+      updatedAt: new Date('2026-05-08T12:00:00.000Z'),
+      updatedBy: 'admin',
+    });
+
+    const snapshot = await saveSiteLogo(
+      'https://sparksofsindri.com/uploads/ecom/logos/uploaded.png',
+      'Uploaded logo',
+      'admin',
+    );
+
+    expect(cmsDbMocks.updateMany).toHaveBeenCalledWith(
+      { page: 'site' },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          'content.nav.logoUrl': 'https://sparksofsindri.com/uploads/ecom/logos/uploaded.png',
+          'content.nav.logoAlt': 'Uploaded logo',
+        }),
+      }),
+    );
+    expect(snapshot.content.nav.logoUrl).toBe('https://sparksofsindri.com/uploads/ecom/logos/uploaded.png');
   });
 });

@@ -15,7 +15,7 @@
 import { useEffect, useMemo, type Dispatch, type SetStateAction } from 'react';
 
 import type { ProductImageSlot } from '@/shared/contracts/products/drafts';
-import { resolveProductImageUrl } from '@/shared/utils/image-routing';
+import { resolveProductImageFileUrl, resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 import type { ProductImageSlotPreview } from './ProductStudioContext.types';
 
@@ -46,7 +46,7 @@ const resolveSlotPreviewSource = ({
 
   return {
     sourceType: 'file',
-    src: resolveProductImageUrl(slot.data.filepath, productImagesExternalBaseUrl) ?? slot.previewUrl,
+    src: resolveProductImageFileUrl(slot.data, productImagesExternalBaseUrl) ?? slot.previewUrl,
   };
 };
 

@@ -1,7 +1,22 @@
-import { Badge } from '@/shared/ui/primitives.public';
+import React from 'react';
+
 import { cn } from '@/shared/utils/ui-utils';
 
-export function TraderaRowItem({ listing, onRetry }: any) {
+type TraderaRowListing = {
+  status: string;
+  title: string;
+  listingId: string;
+};
+
+type TraderaRowItemProps = {
+  listing: TraderaRowListing;
+  onRetry: () => void;
+};
+
+export function TraderaRowItem({
+  listing,
+  onRetry,
+}: TraderaRowItemProps): React.JSX.Element {
   return (
     <div className='flex items-center justify-between rounded-lg border border-border/60 bg-card/30 p-3'>
       <div className='flex items-center gap-3'>

@@ -29,17 +29,30 @@ type ProductImageFileSnapshot = Pick<
   ImageFile,
   'filename' | 'filepath' | 'id' | 'mimetype' | 'size'
 > &
-  Partial<Pick<ImageFile, 'height' | 'publicUrl' | 'thumbnailUrl' | 'url' | 'width'>>;
+  Partial<
+    Pick<
+      ImageFile,
+      'height' | 'metadata' | 'publicUrl' | 'storageProvider' | 'thumbnailUrl' | 'url' | 'width'
+    >
+  >;
 
 const toOptionalImageFileText = (value: string | null | undefined): string | undefined => {
   const trimmed = value?.trim() ?? '';
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
+const isProductImageStorageProvider = (
+  value: unknown
+): value is NonNullable<ImageFile['storageProvider']> =>
+  value === 'local' || value === 's3' || value === 'imagekit';
+
 const buildProductImageFileSnapshot = (file: ImageFile): ProductImageFileSnapshot => {
   const publicUrl = toOptionalImageFileText(file.publicUrl);
   const url = toOptionalImageFileText(file.url);
   const thumbnailUrl = toOptionalImageFileText(file.thumbnailUrl);
+  const storageProvider = isProductImageStorageProvider(file.storageProvider)
+    ? file.storageProvider
+    : undefined;
 
   return {
     id: file.id,
@@ -52,6 +65,8 @@ const buildProductImageFileSnapshot = (file: ImageFile): ProductImageFileSnapsho
     ...(publicUrl !== undefined ? { publicUrl } : {}),
     ...(url !== undefined ? { url } : {}),
     ...(thumbnailUrl !== undefined ? { thumbnailUrl } : {}),
+    ...(storageProvider !== undefined ? { storageProvider } : {}),
+    ...(file.metadata !== undefined ? { metadata: file.metadata } : {}),
   };
 };
 

@@ -70,6 +70,7 @@ const {
   },
   imageRepositoryMock: {
     getImageFileById: vi.fn(),
+    findImageFilesByIds: vi.fn(),
     deleteImageFile: vi.fn(),
   },
   getProductRepositoryMock: vi.fn(),
@@ -260,6 +261,12 @@ describe('productService parameter normalization', () => {
       id: 'image-file-1',
       filepath: '/uploads/product-1.png',
     });
+    imageRepositoryMock.findImageFilesByIds.mockResolvedValue([
+      {
+        id: 'image-file-1',
+        filepath: '/uploads/product-1.png',
+      },
+    ]);
     imageRepositoryMock.deleteImageFile.mockResolvedValue(undefined);
     uploadFileMock.mockResolvedValue({
       id: 'image-file-1',
@@ -1181,6 +1188,56 @@ describe('productService parameter normalization', () => {
         userId: 'user-1',
       })
     );
+  });
+
+  it('removes orphaned product image files when deleting a product', async () => {
+    repositoryMock.deleteProduct.mockResolvedValueOnce(
+      createProductRecord({
+        images: [
+          {
+            productId: 'product-1',
+            imageFileId: 'image-file-1',
+            assignedAt: '2026-01-01T00:00:00.000Z',
+            imageFile: {
+              id: 'image-file-1',
+              filename: 'image.webp',
+              filepath: 'https://sparksofsindri.com/uploads/products/SKU-1/image.webp',
+              mimetype: 'image/webp',
+              size: 123,
+            },
+          },
+        ],
+      })
+    );
+
+    await productService.deleteProduct('product-1');
+
+    expect(repositoryMock.countProductsByImageFileId).toHaveBeenCalledWith('image-file-1');
+    expect(deleteFileFromStorageMock).toHaveBeenCalledWith(
+      'https://sparksofsindri.com/uploads/products/SKU-1/image.webp'
+    );
+    expect(imageRepositoryMock.deleteImageFile).toHaveBeenCalledWith('image-file-1');
+  });
+
+  it('keeps product image files when another product still references them', async () => {
+    repositoryMock.deleteProduct.mockResolvedValueOnce(
+      createProductRecord({
+        images: [
+          {
+            productId: 'product-1',
+            imageFileId: 'image-file-1',
+            assignedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      })
+    );
+    repositoryMock.countProductsByImageFileId.mockResolvedValueOnce(1);
+
+    await productService.deleteProduct('product-1');
+
+    expect(imageRepositoryMock.findImageFilesByIds).toHaveBeenCalledWith(['image-file-1']);
+    expect(deleteFileFromStorageMock).not.toHaveBeenCalled();
+    expect(imageRepositoryMock.deleteImageFile).not.toHaveBeenCalled();
   });
 
   it('uploads a product image and verifies the created relation', async () => {

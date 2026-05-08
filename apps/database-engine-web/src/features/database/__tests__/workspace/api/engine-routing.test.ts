@@ -115,12 +115,12 @@ describe('Database Engine routing in database operations APIs', () => {
     vi.mocked(createManagedMongoClient).mockResolvedValue({
       client: { close },
       db: { collection },
-      dbName: 'products_local',
+      dbName: 'ecom_local',
       config: {
         source: 'local',
         configured: true,
-        uri: 'mongodb://localhost:27020/products_local',
-        dbName: 'products_local',
+        uri: 'mongodb://localhost:27021/ecom_local',
+        dbName: 'ecom_local',
         usesLegacyEnv: false,
       },
     } as unknown as Awaited<ReturnType<typeof createManagedMongoClient>>);

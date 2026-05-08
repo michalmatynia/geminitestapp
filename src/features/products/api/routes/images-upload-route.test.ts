@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 import { imageOptimizer } from '@/features/products/performance';
-import { uploadFile } from '@/shared/lib/files/services/image-file-service';
+import { uploadProductImageFileWithLocalFallback } from '@/shared/lib/products/services/product-image-upload-fallback';
 
 import { uploadProductImages } from './images-upload-route';
 
@@ -14,6 +14,10 @@ vi.mock('@/features/products/performance', () => ({
 
 vi.mock('@/shared/lib/files/services/image-file-service', () => ({
   uploadFile: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/products/services/product-image-upload-fallback', () => ({
+  uploadProductImageFileWithLocalFallback: vi.fn(),
 }));
 
 describe('uploadProductImages', () => {
@@ -28,7 +32,7 @@ describe('uploadProductImages', () => {
         fileSize: 9,
       },
     ]);
-    vi.mocked(uploadFile).mockResolvedValue({
+    vi.mocked(uploadProductImageFileWithLocalFallback).mockResolvedValue({
       id: 'image-file-1',
       filename: 'stored.png',
       filepath: 'https://sparksofsindri.com/uploads/products/SKU_123/stored.png',
@@ -54,10 +58,12 @@ describe('uploadProductImages', () => {
       files: Array<{ imageFileId: string; url: string; optimizedVersions: number }>;
     };
 
-    expect(uploadFile).toHaveBeenCalledWith(file, {
-      category: 'products',
+    expect(uploadProductImageFileWithLocalFallback).toHaveBeenCalledWith({
+      action: 'uploadProductImages',
+      file,
+      filename: 'clean.png',
+      service: 'products.images-upload',
       sku: 'SKU 123',
-      filenameOverride: 'clean.png',
     });
     expect(body).toEqual({
       success: true,

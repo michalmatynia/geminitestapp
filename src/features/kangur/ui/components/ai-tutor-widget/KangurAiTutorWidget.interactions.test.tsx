@@ -3,21 +3,34 @@
  */
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const {
-  trackKangurClientEventMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-} = vi.hoisted(() => globalThis.__kangurClientErrorMocks());
+
+type KangurClientErrorMocks = {
+  trackKangurClientEventMock: ReturnType<typeof vi.fn>;
+  withKangurClientError: unknown;
+  withKangurClientErrorSync: unknown;
+};
+
+const { trackKangurClientEventMock } = vi.hoisted(() =>
+  (
+    globalThis as typeof globalThis & {
+      __kangurClientErrorMocks: () => KangurClientErrorMocks;
+    }
+  ).__kangurClientErrorMocks()
+);
 
 vi.mock('@/features/kangur/observability/client', () => {
-  const mocks = globalThis.__kangurClientErrorMocks();
+  const mocks = (
+    globalThis as typeof globalThis & {
+      __kangurClientErrorMocks: () => KangurClientErrorMocks;
+    }
+  ).__kangurClientErrorMocks();
   return {
     trackKangurClientEvent: mocks.trackKangurClientEventMock,
     withKangurClientError: mocks.withKangurClientError,
     withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+    isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),
   };
-,
-  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),});
+});
 
 vi.mock('./KangurAiTutorWidget.storage', () => ({
   clearPersistedTutorAvatarPosition: vi.fn(),
@@ -62,6 +75,7 @@ describe('useKangurAiTutorPanelInteractions', () => {
       panelPosition: null,
       panelSnapPreference: 'free' as const,
       setPanelAnchorMode: vi.fn(),
+      setPanelMotionState: vi.fn(),
       setPanelPosition: vi.fn(),
       setPanelPositionMode: vi.fn(),
       setPanelSnapPreference: vi.fn(),
@@ -173,6 +187,7 @@ describe('useKangurAiTutorPanelInteractions', () => {
       panelPosition: null,
       panelSnapPreference: 'free' as const,
       setPanelAnchorMode: vi.fn(),
+      setPanelMotionState: vi.fn(),
       setPanelPosition: vi.fn(),
       setPanelPositionMode: vi.fn(),
       setPanelSnapPreference: vi.fn(),

@@ -135,16 +135,15 @@ export function savedProductStateWord(count: number, locale: EcomLocale, savedLa
   return 'zapisanych';
 }
 
-const EUR_TO_PLN = 4.27;
-
-export function formatPrice(priceEur: number, locale: EcomLocale): string {
-  if (locale === 'pl') {
-    const pln = Math.round(priceEur * EUR_TO_PLN);
-    return `${pln.toLocaleString('pl-PL')} zł`;
-  }
-  return `€ ${priceEur.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+export function formatPrice(price: number, locale: EcomLocale): string {
+  const localeTag = locale === 'pl' ? 'pl-PL' : 'en-US';
+  const minimumFractionDigits = Number.isInteger(price) ? 0 : 2;
+  return `${price.toLocaleString(localeTag, {
+    minimumFractionDigits,
+    maximumFractionDigits: 2,
+  })} zł`;
 }
 
-export function formatPriceTotal(totalEur: number, locale: EcomLocale): string {
-  return formatPrice(totalEur, locale);
+export function formatPriceTotal(total: number, locale: EcomLocale): string {
+  return formatPrice(total, locale);
 }

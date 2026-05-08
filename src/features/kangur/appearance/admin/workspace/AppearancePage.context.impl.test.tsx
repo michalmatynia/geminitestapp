@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -75,9 +75,9 @@ vi.mock('@/features/kangur/observability/client', async (importOriginal) => {
           : options.fallback;
       }
     },
+    isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),
   };
-,
-  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),});
+});
 
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,

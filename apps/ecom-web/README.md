@@ -23,7 +23,7 @@ and Next config, and the `@/*` alias for imports inside the ecommerce app.
 - Owns the ARCANA ecommerce storefront runtime.
 - Runs independently from the root platform app, StudiQ app, and CMS Builder
   app.
-- Reads live Mentios catalog products from MongoDB when configured.
+- Reads exported storefront product copies from the ecommerce MongoDB when configured.
 - Falls back to checked-in static demo products when MongoDB is unavailable or
   the Mentios catalog has no matching products.
 - Provides a Super Admin CMS layer for storefront copy, global navigation,
@@ -61,8 +61,13 @@ The app works without these variables by using static fallback products.
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `MONGODB_URI` | For live catalog | none | MongoDB connection string. |
-| `MONGODB_DB` | No | `app` | Database name used by the ecommerce Mongo client. |
+| `MONGODB_URI` | For live catalog | `mongodb://127.0.0.1:27021/ecom_local` | Ecommerce runtime MongoDB connection string. |
+| `MONGODB_DB` | No | `ecom_local` | Database name used by the ecommerce Mongo client. |
+| `ECOM_MONGODB_LOCAL_URI` | For live catalog | `mongodb://127.0.0.1:27021/ecom_local` | Local ecommerce product catalog MongoDB connection. |
+| `ECOM_MONGODB_LOCAL_DB` | For live catalog | `ecom_local` | Local ecommerce product catalog database name. |
+| `ECOM_MONGODB_CLOUD_URI` | No | none | Cloud ecommerce product catalog MongoDB connection. |
+| `ECOM_MONGODB_CLOUD_DB` | No | none | Cloud ecommerce product catalog database name. |
+| `ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT` | No | `local` | Selects local or cloud ecommerce product catalog source. |
 | `MENTIOS_CATALOG_ID` | No | `catalog-mentios` | Catalog id used to filter products and categories. |
 | `NEXT_PUBLIC_FILE_BASE_URL` | No | none | Public FastComet file origin used to render `/uploads/products/...` records from Vercel. |
 | `NEXT_PUBLIC_MAIN_APP_URL` | No | none | Main Products app origin used only for legacy `/api/files/preview` image fallback and local upload URL rewrites. |
@@ -70,9 +75,11 @@ The app works without these variables by using static fallback products.
 | `FASTCOMET_STORAGE_AUTH_TOKEN` | For CMS image uploads | none | Bearer token expected by the FastComet upload endpoint. |
 | `FASTCOMET_STORAGE_BASE_URL` | For CMS image uploads | `NEXT_PUBLIC_FILE_BASE_URL` | Public FastComet origin used when upload responses return relative paths. |
 
-The Mongo client is implemented in `src/lib/mongodb.ts`. In development, it is
-cached on `globalThis._ecomMongoClient` to avoid reconnecting on every Next.js
-reload.
+The Mongo client is implemented in `src/lib/mongodb.ts`. Storefront product
+catalog reads use `ECOM_MONGODB_*`; auth, wishlist, order, and CMS paths use
+the ecommerce `MONGODB_*` routing. In local development both should resolve to
+the thin `ecom_local` MongoDB file. In development, clients are cached to avoid
+reconnecting on every Next.js reload.
 
 ## Route Map
 
@@ -445,7 +452,7 @@ Quality notes:
 If the storefront shows only demo products:
 
 - Confirm `MONGODB_URI` is set in `apps/ecom-web/.env.local`.
-- Confirm `MONGODB_DB` points at the database containing `products` and
+- Confirm `MONGODB_DB` points at the ecommerce database containing `products` and
   `product_categories`.
 - Confirm products are in `MENTIOS_CATALOG_ID` through `catalogId` or
   `catalogs[].catalogId`.

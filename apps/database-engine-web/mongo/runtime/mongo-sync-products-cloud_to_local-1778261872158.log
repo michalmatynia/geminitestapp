@@ -1,0 +1,167 @@
+application: products
+
+pre-sync backups:
+
+application: products
+role: source
+source: cloud
+backup: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-source-pre-sync-cloud-to-local-1778261872158.archive
+log: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-source-pre-sync-cloud-to-local-1778261872158.archive.log
+
+application: products
+role: target
+source: local
+backup: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-local-products-local-target-pre-sync-cloud-to-local-1778261872158.archive
+log: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-local-products-local-target-pre-sync-cloud-to-local-1778261872158.archive.log
+
+target database dropped before restore: true
+
+dump command: mongodump --uri mongodb+srv://mmatynia_db_user:***@cluster0.caatdvo.mongodb.net/?retryWrites=true&w=majority&authSource=admin --db products_db --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive --gzip
+
+
+
+2026-05-08T19:38:15.207+0200	writing `products_db.settings` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:15.211+0200	writing `products_db.product_ai_jobs` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:15.216+0200	writing `products_db.product_listings` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:15.216+0200	writing `products_db.external_categories` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:15.783+0200	[........................]      products_db.product_ai_jobs    0/3327  (0.0%)
+2026-05-08T19:38:15.783+0200	[........................]             products_db.settings  0/109128  (0.0%)
+2026-05-08T19:38:15.783+0200	[........................]  products_db.external_categories  101/3034  (3.3%)
+2026-05-08T19:38:15.783+0200	[........................]     products_db.product_listings    0/3146  (0.0%)
+2026-05-08T19:38:15.784+0200	
+2026-05-08T19:38:16.071+0200	[########################]  products_db.external_categories  3034/3034  (100.0%)
+2026-05-08T19:38:16.101+0200	done dumping `products_db.external_categories` (3034 documents)
+2026-05-08T19:38:16.101+0200	writing `products_db.products` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:18.809+0200	[###################.....]   products_db.product_ai_jobs     2643/3327  (79.4%)
+2026-05-08T19:38:18.809+0200	[######..................]          products_db.settings  28115/109128  (25.8%)
+2026-05-08T19:38:18.809+0200	[........................]  products_db.product_listings      101/3146   (3.2%)
+2026-05-08T19:38:18.809+0200	[........................]          products_db.products        0/1838   (0.0%)
+2026-05-08T19:38:18.809+0200	
+2026-05-08T19:38:18.840+0200	[########################]  products_db.product_ai_jobs  3327/3327  (100.0%)
+2026-05-08T19:38:18.950+0200	done dumping `products_db.product_ai_jobs` (3327 documents)
+2026-05-08T19:38:18.950+0200	writing `products_db.product_title_terms` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:19.313+0200	done dumping `products_db.product_title_terms` (330 documents)
+2026-05-08T19:38:19.313+0200	writing `products_db.product_categories` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:19.336+0200	[########################]  products_db.product_listings  3146/3146  (100.0%)
+2026-05-08T19:38:19.791+0200	done dumping `products_db.product_listings` (3146 documents)
+2026-05-08T19:38:19.791+0200	writing `products_db.category_mappings` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:19.791+0200	done dumping `products_db.product_categories` (119 documents)
+2026-05-08T19:38:19.794+0200	writing `products_db.integration_tradera_selector_registry` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:19.918+0200	done dumping `products_db.category_mappings` (95 documents)
+2026-05-08T19:38:19.918+0200	writing `products_db.product_scans` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:19.920+0200	done dumping `products_db.integration_tradera_selector_registry` (84 documents)
+2026-05-08T19:38:19.920+0200	writing `products_db.external_producers` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:20.189+0200	done dumping `products_db.external_producers` (24 documents)
+2026-05-08T19:38:20.190+0200	writing `products_db.product_parameters` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:20.388+0200	done dumping `products_db.product_parameters` (23 documents)
+2026-05-08T19:38:20.389+0200	writing `products_db.product_studio_run_audit` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:20.428+0200	done dumping `products_db.product_scans` (83 documents)
+2026-05-08T19:38:20.428+0200	writing `products_db.product_validation_patterns` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:20.530+0200	done dumping `products_db.product_studio_run_audit` (20 documents)
+2026-05-08T19:38:20.531+0200	writing `products_db.integration_connections` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:20.603+0200	done dumping `products_db.product_validation_patterns` (12 documents)
+2026-05-08T19:38:20.603+0200	writing `products_db.ecom_users` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:20.925+0200	done dumping `products_db.integration_connections` (8 documents)
+2026-05-08T19:38:20.925+0200	writing `products_db.integrations` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:21.201+0200	done dumping `products_db.ecom_users` (8 documents)
+2026-05-08T19:38:21.201+0200	writing `products_db.price_groups` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:21.224+0200	done dumping `products_db.integrations` (7 documents)
+2026-05-08T19:38:21.224+0200	writing `products_db.languages` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:21.336+0200	done dumping `products_db.price_groups` (5 documents)
+2026-05-08T19:38:21.336+0200	writing `products_db.currencies` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:21.337+0200	done dumping `products_db.languages` (5 documents)
+2026-05-08T19:38:21.337+0200	writing `products_db.product_shipping_groups` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:21.472+0200	done dumping `products_db.product_shipping_groups` (4 documents)
+2026-05-08T19:38:21.474+0200	writing `products_db.product_custom_fields` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:21.487+0200	done dumping `products_db.currencies` (5 documents)
+2026-05-08T19:38:21.487+0200	writing `products_db.catalogs` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:21.750+0200	done dumping `products_db.catalogs` (3 documents)
+2026-05-08T19:38:21.750+0200	writing `products_db.product_drafts` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:21.781+0200	[##################......]               products_db.settings  84291/109128  (77.2%)
+2026-05-08T19:38:21.781+0200	[#.......................]               products_db.products      101/1838   (5.5%)
+2026-05-08T19:38:21.781+0200	[........................]  products_db.product_custom_fields           0/3   (0.0%)
+2026-05-08T19:38:21.781+0200	
+2026-05-08T19:38:21.812+0200	[########################]  products_db.product_custom_fields  3/3  (100.0%)
+2026-05-08T19:38:21.812+0200	done dumping `products_db.product_custom_fields` (3 documents)
+2026-05-08T19:38:21.812+0200	writing `products_db.producer_mappings` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:21.928+0200	done dumping `products_db.product_drafts` (2 documents)
+2026-05-08T19:38:21.928+0200	writing `products_db.product_producers` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:22.003+0200	done dumping `products_db.producer_mappings` (1 document)
+2026-05-08T19:38:22.003+0200	writing `products_db.ecom_wishlists` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:22.150+0200	done dumping `products_db.product_producers` (1 document)
+2026-05-08T19:38:22.150+0200	writing `products_db.integration_custom_selector_registry_profiles` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:22.584+0200	done dumping `products_db.integration_custom_selector_registry_profiles` (0 documents)
+2026-05-08T19:38:22.584+0200	writing `products_db.external_tags` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:22.587+0200	done dumping `products_db.ecom_wishlists` (1 document)
+2026-05-08T19:38:22.588+0200	writing `products_db.tag_mappings` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:22.815+0200	done dumping `products_db.tag_mappings` (0 documents)
+2026-05-08T19:38:22.815+0200	writing `products_db.integration_custom_selector_registry` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:22.816+0200	done dumping `products_db.external_tags` (0 documents)
+2026-05-08T19:38:22.816+0200	writing `products_db.integration_supplier_1688_selector_registry` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:23.020+0200	done dumping `products_db.integration_custom_selector_registry` (0 documents)
+2026-05-08T19:38:23.021+0200	writing `products_db.integration_selector_registry_probe_sessions` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:23.021+0200	done dumping `products_db.integration_supplier_1688_selector_registry` (0 documents)
+2026-05-08T19:38:23.021+0200	writing `products_db.integration_amazon_selector_registry` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive`"
+2026-05-08T19:38:23.364+0200	done dumping `products_db.integration_amazon_selector_registry` (0 documents)
+2026-05-08T19:38:23.364+0200	done dumping `products_db.integration_selector_registry_probe_sessions` (0 documents)
+2026-05-08T19:38:23.372+0200	[########################]  products_db.settings  109128/109128  (100.0%)
+2026-05-08T19:38:23.475+0200	done dumping `products_db.settings` (109128 documents)
+2026-05-08T19:38:24.781+0200	[#.......................]  products_db.products  101/1838  (5.5%)
+2026-05-08T19:38:27.305+0200	[########################]  products_db.products  1838/1838  (100.0%)
+2026-05-08T19:38:28.682+0200	done dumping `products_db.products` (1838 documents)
+
+
+restore command: mongorestore --uri mongodb://127.0.0.1:27020/products_local --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-cloud_to_local-1778261872158.archive --gzip --drop --stopOnError --nsFrom products_db.* --nsTo products_local.*
+
+
+
+2026-05-08T19:38:30.037+0200	The --db and --collection flags are deprecated for this use-case; please use --nsInclude instead, i.e. with --nsInclude=${DATABASE}.${COLLECTION}
+2026-05-08T19:38:30.210+0200	WARNING: This archive came from MongoDB `8.0.23`, but you are restoring to `7.0.31`. Cross-version dump & restore is unsupported. The restored data may be corrupted.
+2026-05-08T19:38:30.210+0200	preparing collections to restore from
+2026-05-08T19:38:32.096+0200	0 document(s) restored successfully. 0 document(s) failed to restore.
+
+
+post-sync verification:
+
+status: failed
+verifiedAt: 2026-05-08T17:39:19.049Z
+source: cloud:products_db
+target: local:products_local
+collectionsCompared: 34
+sourceCollections: 34
+targetCollections: 1
+mismatches:
+Target is missing collection "catalogs".
+Target is missing collection "category_mappings".
+Target is missing collection "currencies".
+Target is missing collection "ecom_users".
+Collection "ecom_wishlists" document mismatch: count 1 != 1.
+Target is missing collection "external_categories".
+Target is missing collection "external_producers".
+Target is missing collection "external_tags".
+Target is missing collection "integration_amazon_selector_registry".
+Target is missing collection "integration_connections".
+Target is missing collection "integration_custom_selector_registry".
+Target is missing collection "integration_custom_selector_registry_profiles".
+Target is missing collection "integration_selector_registry_probe_sessions".
+Target is missing collection "integration_supplier_1688_selector_registry".
+Target is missing collection "integration_tradera_selector_registry".
+Target is missing collection "integrations".
+Target is missing collection "languages".
+Target is missing collection "price_groups".
+Target is missing collection "producer_mappings".
+Target is missing collection "product_ai_jobs".
+Target is missing collection "product_categories".
+Target is missing collection "product_custom_fields".
+Target is missing collection "product_drafts".
+Target is missing collection "product_listings".
+Target is missing collection "product_parameters".
+Target is missing collection "product_producers".
+Target is missing collection "product_scans".
+Target is missing collection "product_shipping_groups".
+Target is missing collection "product_studio_run_audit".
+Target is missing collection "product_title_terms".
+Target is missing collection "product_validation_patterns".
+Target is missing collection "products".
+Target is missing collection "settings".
+Target is missing collection "tag_mappings".

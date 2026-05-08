@@ -12,7 +12,7 @@ import {
   formatListValue,
   resolveHistoryBrowserMode,
   resolveDisplayHistoryFields,
-} from './ProductListingDetails.utils';
+} from '../ProductListingDetails.utils';
 
 export function ProductListingHistory({
   listingId,

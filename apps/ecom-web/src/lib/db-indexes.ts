@@ -1,7 +1,16 @@
-import { getDb, getProductsDb } from '@/lib/mongodb';
+import { getDb, getEcommerceProductsDb } from './mongodb';
 
 let productIndexesEnsured = false;
 let appIndexesEnsured = false;
+
+type MongoIndexDescription = {
+  key?: Record<string, unknown>;
+};
+
+const isSingleKeyIndex = (index: MongoIndexDescription): boolean => {
+  const key = index.key;
+  return key != null && Object.keys(key).length === 1 && key['key'] === 1;
+};
 
 /**
  * Ensure indexes exist on the products collection.
@@ -14,7 +23,7 @@ export async function ensureProductIndexes(): Promise<void> {
   productIndexesEnsured = true;
 
   try {
-    const db = await getProductsDb();
+    const db = await getEcommerceProductsDb();
     const col = db.collection('products');
 
     await Promise.all([
@@ -64,6 +73,15 @@ export async function ensureAppIndexes(): Promise<void> {
 
   try {
     const db = await getDb();
+    const ecomSettingsCollection = db.collection('ecom_settings');
+    const ensureEcomSettingsKeyIndex = async (): Promise<void> => {
+      const indexes = await ecomSettingsCollection.indexes();
+      if (indexes.some(isSingleKeyIndex)) return;
+      await ecomSettingsCollection.createIndex(
+        { key: 1 },
+        { background: true, name: 'ecom_settings_key' },
+      );
+    };
 
     await Promise.all([
       // Orders lookup by userId (account order history)
@@ -71,10 +89,30 @@ export async function ensureAppIndexes(): Promise<void> {
         { userId: 1, createdAt: -1 },
         { background: true, name: 'orders_user_date' },
       ),
-      // Orders lookup by orderId (confirmation, admin)
+      // Orders lookup by orderId (confirmation, status polling, admin)
       db.collection('ecom_orders').createIndex(
         { orderId: 1 },
         { background: true, name: 'orders_order_id', unique: true, sparse: true },
+      ),
+      // Orders lookup by payuOrderId (PayU IPN webhook handler)
+      db.collection('ecom_orders').createIndex(
+        { payuOrderId: 1 },
+        { background: true, name: 'orders_payu_id', sparse: true },
+      ),
+      // Fulfillment dashboard: filter carrier-specific orders and sort newest first
+      db.collection('ecom_orders').createIndex(
+        { shippingCarrier: 1, createdAt: -1 },
+        { background: true, name: 'orders_shipping_carrier_date', sparse: true },
+      ),
+      // InPost webhook lookup by tracking number
+      db.collection('ecom_orders').createIndex(
+        { 'inpostShipment.trackingNumber': 1 },
+        { background: true, name: 'orders_inpost_tracking', sparse: true },
+      ),
+      // InPost webhook event audit/idempotency history
+      db.collection('ecom_orders').createIndex(
+        { inpostEventIds: 1 },
+        { background: true, name: 'orders_inpost_event_ids', sparse: true },
       ),
       // Wishlist lookup by userId (one doc per user, upserted)
       db.collection('ecom_wishlists').createIndex(
@@ -86,6 +124,7 @@ export async function ensureAppIndexes(): Promise<void> {
         { email: 1 },
         { background: true, name: 'users_email', unique: true },
       ),
+      ensureEcomSettingsKeyIndex(),
     ]);
   } catch {
     // Non-fatal.

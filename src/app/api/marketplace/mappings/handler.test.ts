@@ -8,8 +8,10 @@ const {
   getExternalCategoryRepositoryMock,
   getIntegrationRepositoryMock,
   listByConnectionMock,
+  listByMarketplaceMock,
   getByExternalCategoryMock,
   getByExternalIdMock,
+  listExternalCategoriesByMarketplaceMock,
   getConnectionByIdMock,
   getIntegrationByIdMock,
   updateMock,
@@ -19,8 +21,10 @@ const {
   getExternalCategoryRepositoryMock: vi.fn(),
   getIntegrationRepositoryMock: vi.fn(),
   listByConnectionMock: vi.fn(),
+  listByMarketplaceMock: vi.fn(),
   getByExternalCategoryMock: vi.fn(),
   getByExternalIdMock: vi.fn(),
+  listExternalCategoriesByMarketplaceMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
   updateMock: vi.fn(),
@@ -52,16 +56,18 @@ describe('marketplace mappings handler', () => {
     vi.clearAllMocks();
     getCategoryMappingRepositoryMock.mockReturnValue({
       listByConnection: listByConnectionMock,
+      listByMarketplace: listByMarketplaceMock,
       getByExternalCategory: getByExternalCategoryMock,
       update: updateMock,
       create: createMock,
     });
-    getIntegrationRepositoryMock.mockResolvedValue({
+    getIntegrationRepositoryMock.mockReturnValue({
       getConnectionById: getConnectionByIdMock,
       getIntegrationById: getIntegrationByIdMock,
     });
     getExternalCategoryRepositoryMock.mockReturnValue({
       getByExternalId: getByExternalIdMock,
+      listByMarketplace: listExternalCategoriesByMarketplaceMock,
     });
     getConnectionByIdMock.mockResolvedValue({
       id: 'conn-1',
@@ -72,6 +78,7 @@ describe('marketplace mappings handler', () => {
       slug: 'base',
     });
     getByExternalIdMock.mockResolvedValue(null);
+    listExternalCategoriesByMarketplaceMock.mockResolvedValue([]);
   });
 
   it('lists mappings for a connection and optional catalog', async () => {
@@ -92,10 +99,41 @@ describe('marketplace mappings handler', () => {
     const response = await getHandler(request, createContext());
 
     expect(listByConnectionMock).toHaveBeenCalledWith('conn-1', 'catalog-1');
+    expect(listByMarketplaceMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual([
       {
         id: 'mapping-1',
         connectionId: 'conn-1',
+        externalCategoryId: 'external-1',
+        internalCategoryId: 'internal-1',
+        catalogId: 'catalog-1',
+      },
+    ]);
+  });
+
+  it('lists Tradera mappings by marketplace scope', async () => {
+    listByMarketplaceMock.mockResolvedValue([
+      {
+        id: 'mapping-1',
+        connectionId: 'conn-older',
+        externalCategoryId: 'external-1',
+        internalCategoryId: 'internal-1',
+        catalogId: 'catalog-1',
+      },
+    ]);
+
+    const request = new NextRequest(
+      'http://localhost/api/marketplace/mappings?connectionId=conn-newer&marketplace=tradera&catalogId=catalog-1'
+    );
+
+    const response = await getHandler(request, createContext());
+
+    expect(listByMarketplaceMock).toHaveBeenCalledWith('tradera', 'catalog-1');
+    expect(listByConnectionMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual([
+      {
+        id: 'mapping-1',
+        connectionId: 'conn-older',
         externalCategoryId: 'external-1',
         internalCategoryId: 'internal-1',
         catalogId: 'catalog-1',
@@ -182,20 +220,22 @@ describe('marketplace mappings handler', () => {
       id: 'integration-1',
       slug: 'tradera',
     });
-    getByExternalIdMock.mockResolvedValue({
-      id: 'ext-2929',
-      connectionId: 'conn-1',
-      externalId: '2929',
-      name: 'Pins & needles',
-      parentExternalId: '49',
-      path: 'Collectibles > Pins & needles',
-      depth: 1,
-      isLeaf: false,
-      metadata: null,
-      fetchedAt: '2026-04-08T00:00:00.000Z',
-      createdAt: '2026-04-08T00:00:00.000Z',
-      updatedAt: '2026-04-08T00:00:00.000Z',
-    });
+    listExternalCategoriesByMarketplaceMock.mockResolvedValue([
+      {
+        id: 'ext-2929',
+        connectionId: 'conn-older',
+        externalId: '2929',
+        name: 'Pins & needles',
+        parentExternalId: '49',
+        path: 'Collectibles > Pins & needles',
+        depth: 1,
+        isLeaf: false,
+        metadata: null,
+        fetchedAt: '2026-04-08T00:00:00.000Z',
+        createdAt: '2026-04-08T00:00:00.000Z',
+        updatedAt: '2026-04-08T00:00:00.000Z',
+      },
+    ]);
 
     const request = new NextRequest('http://localhost/api/marketplace/mappings', {
       method: 'POST',

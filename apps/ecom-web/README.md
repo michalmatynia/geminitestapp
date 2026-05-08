@@ -61,14 +61,16 @@ The app works without these variables by using static fallback products.
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `MONGODB_URI` | For live catalog | `mongodb://127.0.0.1:27021/ecom_local` | Ecommerce runtime MongoDB connection string. |
+| `MONGODB_URI` | For live catalog | `mongodb://127.0.0.1:27021/ecom_local` | Ecommerce runtime MongoDB connection string. Also used as a product catalog fallback when dedicated product env vars are not set. |
 | `MONGODB_DB` | No | `ecom_local` | Database name used by the ecommerce Mongo client. |
+| `PRODUCTS_MONGODB_CLOUD_URI` | For deployed live catalog fallback | none | Cloud Product List MongoDB connection. Used by the storefront when `ECOM_MONGODB_CLOUD_URI` is not set. |
+| `PRODUCTS_MONGODB_CLOUD_DB` | For deployed live catalog fallback | none | Database name for `PRODUCTS_MONGODB_CLOUD_URI`. |
 | `ECOM_MONGODB_LOCAL_URI` | For live catalog | `mongodb://127.0.0.1:27021/ecom_local` | Local ecommerce product catalog MongoDB connection. |
 | `ECOM_MONGODB_LOCAL_DB` | For live catalog | `ecom_local` | Local ecommerce product catalog database name. |
 | `ECOM_MONGODB_CLOUD_URI` | No | none | Cloud ecommerce product catalog MongoDB connection. |
 | `ECOM_MONGODB_CLOUD_DB` | No | none | Cloud ecommerce product catalog database name. |
 | `ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT` | No | `local` | Selects local or cloud ecommerce product catalog source. |
-| `MENTIOS_CATALOG_ID` | No | `catalog-mentios` | Catalog id used to filter products and categories. |
+| `MENTIOS_CATALOG_ID` | No | none | Catalog id used to filter products and categories. When omitted, the storefront uses active products from the selected product database. |
 | `NEXT_PUBLIC_FILE_BASE_URL` | No | none | Public FastComet file origin used to render `/uploads/products/...` records from Vercel. |
 | `NEXT_PUBLIC_MAIN_APP_URL` | No | none | Main Products app origin used only for legacy `/api/files/preview` image fallback and local upload URL rewrites. |
 | `FASTCOMET_STORAGE_UPLOAD_URL` | For CMS image uploads | none | FastComet PHP upload endpoint used by admin CMS image uploaders. |
@@ -451,11 +453,16 @@ Quality notes:
 
 If the storefront shows only demo products:
 
-- Confirm `MONGODB_URI` is set in `apps/ecom-web/.env.local`.
-- Confirm `MONGODB_DB` points at the ecommerce database containing `products` and
+- Confirm `ECOM_MONGODB_CLOUD_URI`/`ECOM_MONGODB_CLOUD_DB`,
+  `PRODUCTS_MONGODB_CLOUD_URI`/`PRODUCTS_MONGODB_CLOUD_DB`, or
+  `MONGODB_URI`/`MONGODB_DB` points at a cloud database containing `products` and
   `product_categories`.
+- On Vercel, localhost product DB settings are ignored when a cloud product DB is
+  configured, so a copied local `*_ACTIVE_SOURCE_DEFAULT=local` value should not
+  force the storefront into static fallback.
 - Confirm products are in `MENTIOS_CATALOG_ID` through `catalogId` or
-  `catalogs[].catalogId`.
+  `catalogs[].catalogId`, or leave `MENTIOS_CATALOG_ID` unset to show all active
+  products in the selected product database.
 - Confirm products are not explicitly unpublished or archived.
 
 If a live product card opens a 404 page:

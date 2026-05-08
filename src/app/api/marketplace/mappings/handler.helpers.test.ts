@@ -32,11 +32,25 @@ describe('marketplace mappings helpers', () => {
       })
     ).toEqual({
       connectionId: 'conn-1',
+      marketplace: null,
       catalogId: 'catalog-1',
     });
     expect(() => parseMarketplaceMappingsQuery({ connectionId: '' })).toThrow(
       'connectionId is required'
     );
+  });
+
+  it('parses Tradera mapping list queries without requiring a connectionId', () => {
+    expect(
+      parseMarketplaceMappingsQuery({
+        marketplace: 'Tradera',
+        catalogId: 'catalog-1',
+      })
+    ).toEqual({
+      connectionId: null,
+      marketplace: 'tradera',
+      catalogId: 'catalog-1',
+    });
   });
 
   it('requires all create fields before saving', () => {

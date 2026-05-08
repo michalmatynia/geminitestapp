@@ -9,6 +9,7 @@ const {
   getIntegrationRepositoryMock,
   bulkUpsertMock,
   getByExternalIdMock,
+  listExternalCategoriesByMarketplaceMock,
   getConnectionByIdMock,
   getIntegrationByIdMock,
 } = vi.hoisted(() => ({
@@ -17,6 +18,7 @@ const {
   getIntegrationRepositoryMock: vi.fn(),
   bulkUpsertMock: vi.fn(),
   getByExternalIdMock: vi.fn(),
+  listExternalCategoriesByMarketplaceMock: vi.fn(),
   getConnectionByIdMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
 }));
@@ -47,12 +49,13 @@ describe('marketplace mappings bulk handler', () => {
     getCategoryMappingRepositoryMock.mockReturnValue({
       bulkUpsert: bulkUpsertMock,
     });
-    getIntegrationRepositoryMock.mockResolvedValue({
+    getIntegrationRepositoryMock.mockReturnValue({
       getConnectionById: getConnectionByIdMock,
       getIntegrationById: getIntegrationByIdMock,
     });
     getExternalCategoryRepositoryMock.mockReturnValue({
       getByExternalId: getByExternalIdMock,
+      listByMarketplace: listExternalCategoriesByMarketplaceMock,
     });
     getConnectionByIdMock.mockResolvedValue({
       id: 'conn-1',
@@ -64,6 +67,7 @@ describe('marketplace mappings bulk handler', () => {
     });
     bulkUpsertMock.mockResolvedValue(2);
     getByExternalIdMock.mockResolvedValue(null);
+    listExternalCategoriesByMarketplaceMock.mockResolvedValue([]);
   });
 
   it('bulk saves mappings for non-Tradera connections', async () => {
@@ -113,20 +117,22 @@ describe('marketplace mappings bulk handler', () => {
       id: 'integration-1',
       slug: 'tradera',
     });
-    getByExternalIdMock.mockResolvedValue({
-      id: 'ext-2929',
-      connectionId: 'conn-1',
-      externalId: '2929',
-      name: 'Pins & needles',
-      parentExternalId: '49',
-      path: 'Collectibles > Pins & needles',
-      depth: 1,
-      isLeaf: false,
-      metadata: null,
-      fetchedAt: '2026-04-08T00:00:00.000Z',
-      createdAt: '2026-04-08T00:00:00.000Z',
-      updatedAt: '2026-04-08T00:00:00.000Z',
-    });
+    listExternalCategoriesByMarketplaceMock.mockResolvedValue([
+      {
+        id: 'ext-2929',
+        connectionId: 'conn-older',
+        externalId: '2929',
+        name: 'Pins & needles',
+        parentExternalId: '49',
+        path: 'Collectibles > Pins & needles',
+        depth: 1,
+        isLeaf: false,
+        metadata: null,
+        fetchedAt: '2026-04-08T00:00:00.000Z',
+        createdAt: '2026-04-08T00:00:00.000Z',
+        updatedAt: '2026-04-08T00:00:00.000Z',
+      },
+    ]);
 
     const request = new NextRequest('http://localhost/api/marketplace/mappings/bulk', {
       method: 'POST',

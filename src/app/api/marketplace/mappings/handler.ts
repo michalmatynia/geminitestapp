@@ -51,7 +51,13 @@ export async function postHandler(
   }
   const { connectionId, externalCategoryId, internalCategoryId, catalogId } = parsed.data;
 
-  if (!connectionId || !externalCategoryId || !internalCategoryId || !catalogId) {
+  if (
+    connectionId.length === 0 ||
+    externalCategoryId.length === 0 ||
+    internalCategoryId === null ||
+    internalCategoryId.length === 0 ||
+    catalogId.length === 0
+  ) {
     throw badRequestError(
       'connectionId, externalCategoryId, internalCategoryId, and catalogId are required'
     );

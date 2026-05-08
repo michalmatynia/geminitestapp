@@ -132,12 +132,12 @@ const compareCategoryFreshness = (
   left: MongoExternalCategoryDoc,
   right: MongoExternalCategoryDoc
 ): number => {
-  const leftFetchedAt = left.fetchedAt?.getTime?.() ?? 0;
-  const rightFetchedAt = right.fetchedAt?.getTime?.() ?? 0;
+  const leftFetchedAt = left.fetchedAt.getTime();
+  const rightFetchedAt = right.fetchedAt.getTime();
   if (leftFetchedAt !== rightFetchedAt) return leftFetchedAt - rightFetchedAt;
 
-  const leftUpdatedAt = left.updatedAt?.getTime?.() ?? 0;
-  const rightUpdatedAt = right.updatedAt?.getTime?.() ?? 0;
+  const leftUpdatedAt = left.updatedAt.getTime();
+  const rightUpdatedAt = right.updatedAt.getTime();
   return leftUpdatedAt - rightUpdatedAt;
 };
 
@@ -148,10 +148,10 @@ const dedupeCategoriesByExternalId = (
 
   for (const record of records) {
     const key = record.externalId.trim();
-    if (!key) continue;
+    if (key.length === 0) continue;
 
     const current = byExternalId.get(key);
-    if (!current || compareCategoryFreshness(record, current) > 0) {
+    if (current === undefined || compareCategoryFreshness(record, current) > 0) {
       byExternalId.set(key, record);
     }
   }
@@ -195,7 +195,9 @@ export const loadMarketplaceCategoryConnectionIds = async (
       integrations.flatMap((integration) => {
         const ids = [integration._id.toString()];
         const explicitId = integration.id?.trim();
-        if (explicitId) ids.push(explicitId);
+        if (explicitId !== null && explicitId !== undefined && explicitId.length > 0) {
+          ids.push(explicitId);
+        }
         return ids;
       })
     ),
@@ -219,7 +221,9 @@ export const loadMarketplaceCategoryConnectionIds = async (
       connections.flatMap((connection) => {
         const ids = [connection._id.toString()];
         const explicitId = connection.id?.trim();
-        if (explicitId) ids.push(explicitId);
+        if (explicitId !== null && explicitId !== undefined && explicitId.length > 0) {
+          ids.push(explicitId);
+        }
         return ids;
       })
     ),

@@ -85,4 +85,38 @@ describe('Mentios product image mapping', () => {
       'https://files.example.test/uploads/products/SKU_123/url.webp',
     ]);
   });
+
+  it('pushes collection filters into the Mongo query before pagination', async () => {
+    const productDoc = {
+      _id: 'product-1',
+      catalogId: 'catalog-mentios',
+      collectionSlug: 'accessories',
+      name_en: 'Arcane Charm',
+      price: 10,
+      published: true,
+      sku: 'SKU_123',
+      stock: 1,
+    };
+    const productsCollection = {
+      countDocuments: vi.fn().mockResolvedValue(1),
+      find: vi.fn(() => createCursor([productDoc])),
+    };
+    const categoriesCollection = {
+      find: vi.fn(() => createCursor([])),
+    };
+    const db = {
+      collection: vi.fn((name: string) =>
+        name === 'products' ? productsCollection : categoriesCollection
+      ),
+    };
+    mocks.getEcommerceProductsDb.mockResolvedValue(db);
+
+    const result = await getMentiosProducts({ collectionSlug: 'accessories', limit: 1 });
+
+    expect(result.total).toBe(1);
+    expect(productsCollection.find).toHaveBeenCalledTimes(1);
+    const filter = productsCollection.find.mock.calls[0]?.[0];
+    expect(JSON.stringify(filter)).toContain('"collectionSlug":"accessories"');
+    expect(productsCollection.countDocuments).toHaveBeenCalledWith(filter);
+  });
 });

@@ -51,6 +51,7 @@ const clearMongoEnv = (): void => {
     'PRODUCTS_MONGODB_LOCAL_DB',
     'PRODUCTS_MONGODB_CLOUD_URI',
     'PRODUCTS_MONGODB_CLOUD_DB',
+    'PRODUCTS_MONGODB_ACTIVE_SOURCE',
     'PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT',
     'ECOM_MONGODB_URI',
     'ECOM_MONGODB_DB',
@@ -58,7 +59,22 @@ const clearMongoEnv = (): void => {
     'ECOM_MONGODB_LOCAL_DB',
     'ECOM_MONGODB_CLOUD_URI',
     'ECOM_MONGODB_CLOUD_DB',
+    'ECOM_MONGODB_ACTIVE_SOURCE',
     'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
+    'MONGODB_PRODUCTS_URI',
+    'MONGODB_PRODUCTS_DB',
+    'MONGODB_PRODUCTS_LOCAL_URI',
+    'MONGODB_PRODUCTS_LOCAL_DB',
+    'MONGODB_PRODUCTS_CLOUD_URI',
+    'MONGODB_PRODUCTS_CLOUD_DB',
+    'MONGODB_ECOM_URI',
+    'MONGODB_ECOM_DB',
+    'MONGODB_ECOM_LOCAL_URI',
+    'MONGODB_ECOM_LOCAL_DB',
+    'MONGODB_ECOM_CLOUD_URI',
+    'MONGODB_ECOM_CLOUD_DB',
+    'VERCEL',
+    'VERCEL_ENV',
   ]) {
     delete process.env[key];
   }
@@ -89,5 +105,33 @@ describe('ecommerce MongoDB resolver', () => {
 
     expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27021/ecom_local']);
     expect(mongoMocks.dbNames).toEqual(['ecom_local']);
+  });
+
+  it('uses the products cloud database for ecommerce product reads on Vercel when local points at loopback', async () => {
+    process.env['VERCEL'] = '1';
+    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'local';
+    process.env['ECOM_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27021/ecom_local';
+    process.env['ECOM_MONGODB_LOCAL_DB'] = 'ecom_local';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
+
+    const { getEcommerceProductsDb } = await import('./mongodb');
+
+    await getEcommerceProductsDb();
+
+    expect(mongoMocks.createdUris).toEqual(['mongodb+srv://products.example.test/']);
+    expect(mongoMocks.dbNames).toEqual(['products_db']);
+  });
+
+  it('allows generic MongoDB URI variables to feed ecommerce product reads', async () => {
+    process.env['MONGODB_URI'] = 'mongodb+srv://generic.example.test/';
+    process.env['MONGODB_DB'] = 'catalog_db';
+
+    const { getEcommerceProductsDb } = await import('./mongodb');
+
+    await getEcommerceProductsDb();
+
+    expect(mongoMocks.createdUris).toEqual(['mongodb+srv://generic.example.test/']);
+    expect(mongoMocks.dbNames).toEqual(['catalog_db']);
   });
 });

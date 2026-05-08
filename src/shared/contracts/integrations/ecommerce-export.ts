@@ -54,3 +54,10 @@ export const ecommerceProductBulkExportResponseSchema = z.object({
 export type EcommerceProductBulkExportResponse = z.infer<
   typeof ecommerceProductBulkExportResponseSchema
 >;
+
+export type EcommerceProductDeleteResponse = {
+  success: true;
+  productId: string;
+  ecommerceDeletedCount: number;
+  listingDeletedCount: number;
+};

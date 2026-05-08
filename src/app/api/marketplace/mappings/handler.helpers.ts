@@ -57,15 +57,17 @@ export const parseMarketplaceMappingsQuery = (
   const normalizedMarketplace = normalizeIntegrationSlug(marketplace);
   const marketplaceScope =
     normalizedMarketplace === TRADERA_BROWSER_INTEGRATION_SLUG ? normalizedMarketplace : null;
+  const hasConnectionId = typeof connectionId === 'string' && connectionId.length > 0;
+  const hasCatalogId = typeof catalogId === 'string' && catalogId.length > 0;
 
-  if (!connectionId && !marketplaceScope) {
+  if (!hasConnectionId && marketplaceScope === null) {
     throw badRequestError('connectionId is required');
   }
 
   return {
-    connectionId: connectionId ?? null,
+    connectionId: hasConnectionId ? connectionId : null,
     marketplace: marketplaceScope,
-    ...(catalogId ? { catalogId } : {}),
+    ...(hasCatalogId ? { catalogId } : {}),
   };
 };
 
@@ -74,7 +76,13 @@ export const requireCategoryMappingCreateFields = (
 ): CategoryMappingCreateFields => {
   const { connectionId, externalCategoryId, internalCategoryId, catalogId } = input;
 
-  if (!connectionId || !externalCategoryId || !internalCategoryId || !catalogId) {
+  if (
+    connectionId.length === 0 ||
+    externalCategoryId.length === 0 ||
+    internalCategoryId === null ||
+    internalCategoryId.length === 0 ||
+    catalogId.length === 0
+  ) {
     throw badRequestError(
       'connectionId, externalCategoryId, internalCategoryId, and catalogId are required'
     );

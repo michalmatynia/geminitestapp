@@ -165,7 +165,11 @@ export function CategoryMapperProvider({
     [externalCategories]
   );
 
-  const mappingsQuery = useCategoryMappings(connectionId, selectedCatalogId);
+  const mappingsQuery = useCategoryMappings(
+    connectionId,
+    selectedCatalogId,
+    isTraderaConnection ? 'tradera' : null
+  );
   const mappings = useMemo(() => mappingsQuery.data ?? [], [mappingsQuery.data]);
   const mappingsLoading = mappingsQuery.isLoading;
 

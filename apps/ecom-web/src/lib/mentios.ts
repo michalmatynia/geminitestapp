@@ -20,7 +20,7 @@ import { getEcommerceProductsDb, hasEcommerceProductsMongoConfig } from './mongo
 // Constants
 // ---------------------------------------------------------------------------
 
-const CATALOG_ID = process.env['MENTIOS_CATALOG_ID'] ?? 'catalog-mentios';
+const CATALOG_ID = process.env['MENTIOS_CATALOG_ID']?.trim() ?? '';
 const PRODUCTS_COLLECTION = 'products';
 const CATEGORIES_COLLECTION = 'product_categories';
 const CATALOGS_COLLECTION = 'catalogs';
@@ -570,16 +570,56 @@ function mapDoc(
 // ---------------------------------------------------------------------------
 
 function mentiosFilter(extra: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    $or: [
-      { catalogId: CATALOG_ID },
-      { 'catalogs.catalogId': CATALOG_ID },
-    ],
+  const clauses: Record<string, unknown>[] = [];
+  if (CATALOG_ID) {
+    clauses.push({
+      $or: [
+        { catalogId: CATALOG_ID },
+        { 'catalogs.catalogId': CATALOG_ID },
+      ],
+    });
+  }
+  clauses.push({
     published: { $ne: false },
     archived: { $ne: true },
     stock: { $ne: 0 },
-    ...extra,
-  };
+  });
+  if (Object.keys(extra).length > 0) clauses.push(extra);
+  return { $and: clauses };
+}
+
+function categoryCatalogFilter(): Record<string, unknown> {
+  return CATALOG_ID ? { catalogId: CATALOG_ID } : {};
+}
+
+function mentiosFilterWithClauses(extraClauses: Record<string, unknown>[] = []): Record<string, unknown> {
+  const clauses = extraClauses.filter((clause) => Object.keys(clause).length > 0);
+  return mentiosFilter(clauses.length > 0 ? { $and: clauses } : {});
+}
+
+function productCollectionClause(
+  collectionSlug: string | undefined,
+  categoryMap: Map<string, CategoryMapEntry>,
+): Record<string, unknown> {
+  const slug = collectionSlug?.trim();
+  if (!slug) return {};
+
+  const matchingCategories = Array.from(categoryMap.entries())
+    .filter(([, category]) => category.collection === slug);
+  const categoryIds = matchingCategories.map(([id]) => id);
+  const categoryNames = uniqueStrings(
+    matchingCategories.flatMap(([, category]) => [category.name, ...category.aliases]),
+  );
+
+  const clauses: Record<string, unknown>[] = [{ collectionSlug: slug }];
+  if (categoryIds.length > 1) {
+    clauses.push({ categoryId: { $in: categoryIds } });
+  } else if (categoryIds.length === 1) {
+    clauses.push({ categoryId: categoryIds[0] });
+  }
+  if (categoryNames.length > 0) clauses.push(productCategoryNameClause(categoryNames));
+
+  return { $or: clauses };
 }
 
 /** Shared projection — all text/image fields needed for Product mapping. */
@@ -648,10 +688,12 @@ export const getMentiosCatalogLocales = cache(async function getMentiosCatalogLo
     const catalogs = db.collection<CatalogDoc>(CATALOGS_COLLECTION);
     const projection = { _id: 1, id: 1, isDefault: 1, languageIds: 1, defaultLanguageId: 1 } as const;
     const catalog =
-      await catalogs.findOne(
-        { $or: [{ id: CATALOG_ID }, { _id: CATALOG_ID }] },
-        { projection },
-      ) ??
+      (CATALOG_ID
+        ? await catalogs.findOne(
+          { $or: [{ id: CATALOG_ID }, { _id: CATALOG_ID }] },
+          { projection },
+        )
+        : null) ??
       await catalogs.findOne({ isDefault: true }, { projection });
 
     if (!catalog) return normalizeLocaleList([]);
@@ -669,7 +711,7 @@ async function fetchCategories(locale: EcomLocale): Promise<Map<string, Category
     const db = await getEcommerceProductsDb();
     const docs = await db
       .collection<CategoryDoc>(CATEGORIES_COLLECTION)
-      .find({ catalogId: CATALOG_ID })
+      .find(categoryCatalogFilter())
       .project({ _id: 1, name: 1, name_en: 1, name_pl: 1, name_de: 1, parentId: 1 })
       .toArray();
     return buildCategoryMap(docs as unknown as CategoryDoc[], locale);
@@ -778,14 +820,19 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
           : requestedCategoryNames.length > 0
             ? productCategoryNameClause(requestedCategoryNames)
             : {};
-    const baseFilter = mentiosFilter(categoryFilter);
+    const queryClauses: Record<string, unknown>[] = [
+      categoryFilter,
+      productCollectionClause(opts.collectionSlug, categoryMap),
+    ];
 
     // ID-based fetch stays inside the configured catalog.
     if (opts.ids && opts.ids.length > 0) {
+      const idFilter = mentiosFilterWithClauses([
+        ...queryClauses,
+        { _id: { $in: opts.ids } },
+      ]);
       const docs = await col
-        .find({
-          $and: [baseFilter, { _id: { $in: opts.ids } }],
-        } as Record<string, unknown>)
+        .find(idFilter)
         .project(PRODUCT_PROJECTION)
         .toArray();
       const products = (docs as unknown as ProductDoc[]).map((doc, i) => mapDoc(doc, i, categoryMap, locale));
@@ -797,24 +844,24 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
     const newOnlyClause: Record<string, unknown> = opts.newOnly
       ? { createdAt: { $gte: new Date(Date.now() - NEW_ARRIVALS_DAYS * 24 * 60 * 60 * 1000) } }
       : {};
+    queryClauses.push(newOnlyClause);
 
     // Text search via $regex across all name/description fields.
     const themeNames = uniqueStrings(opts.themeNames ?? []);
-    const andClauses: Record<string, unknown>[] = [];
-    if (opts.search) andClauses.push(productTextSearchClause(opts.search));
+    if (opts.search) queryClauses.push(productTextSearchClause(opts.search));
     if (themeNames.length > 0) {
-      andClauses.push({ $or: themeNames.map((themeName) => productTextSearchClause(themeName)) });
+      queryClauses.push({ $or: themeNames.map((themeName) => productTextSearchClause(themeName)) });
     }
-    const filter: Record<string, unknown> = { ...baseFilter, ...newOnlyClause };
-    if (andClauses.length > 0) filter['$and'] = andClauses;
 
     // Price range filter (inclusive min, exclusive max).
     if (opts.priceMin != null || opts.priceMax != null) {
       const priceClause: Record<string, number> = {};
       if (opts.priceMin != null) priceClause['$gte'] = opts.priceMin;
       if (opts.priceMax != null) priceClause['$lt'] = opts.priceMax;
-      filter['price'] = priceClause;
+      queryClauses.push({ price: priceClause });
     }
+
+    const filter = mentiosFilterWithClauses(queryClauses);
 
     // Sort order — default is newest-first (editorial feel for "featured").
     const mongoSort: Record<string, 1 | -1> =
@@ -835,12 +882,6 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
     const products = (docs as unknown as ProductDoc[]).map((doc, i) =>
       mapDoc(doc, skip + i, categoryMap, locale),
     );
-
-    // Collection filter applied post-mapping (category resolution happens in mapDoc)
-    if (opts.collectionSlug) {
-      const filtered = products.filter((p) => p.collectionSlug === opts.collectionSlug);
-      return { products: filtered, total: filtered.length };
-    }
 
     return { products, total };
   } catch (err) {
@@ -1001,11 +1042,16 @@ export const getMentiosCollectionCounts = cache(async function getMentiosCollect
     const docs = await db
       .collection<ProductDoc>(PRODUCTS_COLLECTION)
       .find(mentiosFilter())
-      .project({ _id: 1, categoryId: 1 })
+      .project({ _id: 1, categoryId: 1, collectionSlug: 1 })
       .toArray();
 
     const counts: Record<string, number> = {};
     for (const doc of docs as unknown as ProductDoc[]) {
+      const exportedCollectionSlug = doc.collectionSlug?.trim();
+      if (exportedCollectionSlug) {
+        counts[exportedCollectionSlug] = (counts[exportedCollectionSlug] ?? 0) + 1;
+        continue;
+      }
       const categoryId = stringifyDocumentId(doc.categoryId);
       const cat = categoryId ? categoryMap.get(categoryId) : undefined;
       const collection = cat?.collection ?? 'objects';

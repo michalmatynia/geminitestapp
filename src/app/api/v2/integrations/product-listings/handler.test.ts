@@ -29,6 +29,10 @@ vi.mock('@/features/integrations/services/base-listing-canonicalization', () => 
     ['baselinker', 'base', 'base-com'].includes((value ?? '').trim().toLowerCase()),
 }));
 
+vi.mock('@/features/integrations/services/ecommerce-product-export', () => ({
+  checkEcommerceProductsExistence: async () => new Set<string>(),
+}));
+
 vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: vi.fn(),
 }));

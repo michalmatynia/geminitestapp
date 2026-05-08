@@ -42,6 +42,11 @@ export async function ensureProductIndexes(): Promise<void> {
         { categoryId: 1, catalogId: 1 },
         { background: true, name: 'category_catalog' },
       ),
+      // Exported ecommerce documents carry a precomputed collection slug.
+      col.createIndex(
+        { collectionSlug: 1, catalogId: 1, createdAt: -1 },
+        { background: true, name: 'collection_catalog_date' },
+      ),
       // Price sort queries
       col.createIndex(
         { catalogId: 1, price: 1 },

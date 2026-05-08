@@ -3,9 +3,68 @@ import { MongoClient, type Db } from 'mongodb';
 const DEFAULT_ECOM_MONGODB_URI = 'mongodb://127.0.0.1:27021/ecom_local';
 const DEFAULT_ECOM_MONGODB_DB = 'ecom_local';
 
+type MongoSource = 'local' | 'cloud';
+type MongoConfig = { uri: string; dbName: string };
+
 function envValue(key: string): string | undefined {
   const value = process.env[key]?.trim();
   return value && value.length > 0 ? value : undefined;
+}
+
+function firstEnvValue(...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = envValue(key);
+    if (value !== undefined) return value;
+  }
+  return undefined;
+}
+
+function readMongoConfig(uriKeys: string[], dbKeys: string[]): Partial<MongoConfig> {
+  return {
+    uri: firstEnvValue(...uriKeys),
+    dbName: firstEnvValue(...dbKeys),
+  };
+}
+
+function databaseNameFromUri(uri: string | undefined): string | undefined {
+  if (!uri) return undefined;
+  try {
+    const parsed = new URL(uri);
+    const dbName = parsed.pathname.replace(/^\/+/, '').trim();
+    return dbName.length > 0 ? dbName : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function completeMongoConfig(config: Partial<MongoConfig>, fallbackDbName = DEFAULT_ECOM_MONGODB_DB): MongoConfig | null {
+  if (!config.uri) return null;
+  return {
+    uri: config.uri,
+    dbName: config.dbName ?? databaseNameFromUri(config.uri) ?? fallbackDbName,
+  };
+}
+
+function isVercelRuntime(): boolean {
+  return envValue('VERCEL') !== undefined || envValue('VERCEL_ENV') !== undefined;
+}
+
+function isLoopbackMongoUri(uri: string | undefined): boolean {
+  if (!uri) return false;
+  try {
+    const hostname = new URL(uri).hostname.toLowerCase();
+    return hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '0.0.0.0' ||
+      hostname === '[::1]' ||
+      hostname === '::1';
+  } catch {
+    return false;
+  }
+}
+
+function normalizeSource(value: string | undefined): MongoSource {
+  return value?.toLowerCase() === 'cloud' ? 'cloud' : 'local';
 }
 
 /**
@@ -112,57 +171,84 @@ function resolveProductsMongoDb(): string {
 }
 
 function resolveEcommerceProductsMongoUri(): string {
-  const directUri = envValue('ECOM_MONGODB_URI') ?? envValue('MONGODB_ECOM_URI');
-  if (directUri !== undefined) return directUri;
-
-  const source =
-    (
-      envValue('ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT') ??
-      envValue('MONGODB_ACTIVE_SOURCE') ??
-      envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ??
-      'local'
-    )
-      .toLowerCase();
-
-  if (source === 'cloud') {
-    const uri =
-      envValue('ECOM_MONGODB_CLOUD_URI') ??
-      envValue('MONGODB_ECOM_CLOUD_URI');
-    if (uri !== undefined) return uri;
-  }
-
-  return (
-    envValue('ECOM_MONGODB_LOCAL_URI') ??
-    envValue('MONGODB_ECOM_LOCAL_URI') ??
-    DEFAULT_ECOM_MONGODB_URI
-  );
+  return resolveEcommerceProductsMongoConfig().uri;
 }
 
 function resolveEcommerceProductsMongoDb(): string {
-  const directDb = envValue('ECOM_MONGODB_DB') ?? envValue('MONGODB_ECOM_DB');
-  if (directDb !== undefined) return directDb;
+  return resolveEcommerceProductsMongoConfig().dbName;
+}
 
-  const source =
-    (
-      envValue('ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT') ??
-      envValue('MONGODB_ACTIVE_SOURCE') ??
-      envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ??
-      'local'
-    )
-      .toLowerCase();
+function resolveEcommerceProductsMongoConfig(): MongoConfig {
+  const directConfig = completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_URI',
+      'MONGODB_ECOM_URI',
+      'PRODUCTS_MONGODB_URI',
+      'MONGODB_PRODUCTS_URI',
+      'MONGODB_URI',
+    ],
+    [
+      'ECOM_MONGODB_DB',
+      'MONGODB_ECOM_DB',
+      'PRODUCTS_MONGODB_DB',
+      'MONGODB_PRODUCTS_DB',
+      'MONGODB_DB',
+    ],
+  ));
+  if (directConfig) return directConfig;
 
-  if (source === 'cloud') {
-    const db =
-      envValue('ECOM_MONGODB_CLOUD_DB') ??
-      envValue('MONGODB_ECOM_CLOUD_DB');
-    if (db !== undefined) return db;
+  const source = normalizeSource(
+    firstEnvValue(
+      'ECOM_MONGODB_ACTIVE_SOURCE',
+      'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
+      'PRODUCTS_MONGODB_ACTIVE_SOURCE',
+      'PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT',
+      'MONGODB_ACTIVE_SOURCE',
+      'MONGODB_ACTIVE_SOURCE_DEFAULT',
+    ),
+  );
+  const localConfig = completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_LOCAL_URI',
+      'MONGODB_ECOM_LOCAL_URI',
+      'PRODUCTS_MONGODB_LOCAL_URI',
+      'MONGODB_PRODUCTS_LOCAL_URI',
+      'MONGODB_LOCAL_URI',
+    ],
+    [
+      'ECOM_MONGODB_LOCAL_DB',
+      'MONGODB_ECOM_LOCAL_DB',
+      'PRODUCTS_MONGODB_LOCAL_DB',
+      'MONGODB_PRODUCTS_LOCAL_DB',
+      'MONGODB_LOCAL_DB',
+    ],
+  ));
+  const cloudConfig = completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_CLOUD_URI',
+      'MONGODB_ECOM_CLOUD_URI',
+      'PRODUCTS_MONGODB_CLOUD_URI',
+      'MONGODB_PRODUCTS_CLOUD_URI',
+      'MONGODB_CLOUD_URI',
+    ],
+    [
+      'ECOM_MONGODB_CLOUD_DB',
+      'MONGODB_ECOM_CLOUD_DB',
+      'PRODUCTS_MONGODB_CLOUD_DB',
+      'MONGODB_PRODUCTS_CLOUD_DB',
+      'MONGODB_CLOUD_DB',
+    ],
+  ));
+
+  if (source === 'cloud' && cloudConfig) return cloudConfig;
+  if (source === 'local' && isVercelRuntime() && isLoopbackMongoUri(localConfig?.uri) && cloudConfig) {
+    return cloudConfig;
   }
 
-  return (
-    envValue('ECOM_MONGODB_LOCAL_DB') ??
-    envValue('MONGODB_ECOM_LOCAL_DB') ??
-    DEFAULT_ECOM_MONGODB_DB
-  );
+  return localConfig ?? cloudConfig ?? {
+    uri: DEFAULT_ECOM_MONGODB_URI,
+    dbName: DEFAULT_ECOM_MONGODB_DB,
+  };
 }
 
 const clientCache = new Map<string, MongoClient>();

@@ -4,6 +4,7 @@ import type { Db } from 'mongodb';
 
 import type {
   EcommerceProductBulkExportResponse,
+  EcommerceProductDeleteResponse,
   EcommerceProductExportItem,
   EcommerceProductExportResponse,
   EcommerceProductExportStatus,
@@ -132,12 +133,7 @@ const toExportResponse = (
   exportedAt: document.exportedAt,
 });
 
-export type EcommerceProductDeleteResponse = {
-  success: true;
-  productId: string;
-  ecommerceDeletedCount: number;
-  listingDeletedCount: number;
-};
+export type { EcommerceProductDeleteResponse } from '@/shared/contracts/integrations/ecommerce-export';
 
 export const deleteProductFromEcommerceExport = async (
   productId: string

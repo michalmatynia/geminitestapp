@@ -1,6 +1,7 @@
 import type {
   EcommerceProductBulkExportRequest,
   EcommerceProductBulkExportResponse,
+  EcommerceProductDeleteResponse,
   EcommerceProductExportResponse,
 } from '@/shared/contracts/integrations/ecommerce-export';
 import type { UpdateMutation } from '@/shared/contracts/ui/queries';
@@ -27,6 +28,28 @@ export function useExportProductToEcommerce(): UpdateMutation<
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'integrations', 'ecommerce', 'export'],
       description: 'Exports one Product List product to the ecommerce product database.',
+    },
+  });
+}
+
+export function useDeleteProductFromEcommerce(): UpdateMutation<
+  EcommerceProductDeleteResponse,
+  string
+> {
+  return createUpdateMutationV2({
+    mutationFn: async (productId: string): Promise<EcommerceProductDeleteResponse> =>
+      api.delete<EcommerceProductDeleteResponse>(
+        `/api/v2/integrations/products/${productId}/delete-from-ecommerce`
+      ),
+    mutationKey: QUERY_KEYS.products.all,
+    meta: {
+      source: 'products.hooks.useDeleteProductFromEcommerce',
+      operation: 'delete',
+      resource: 'integrations.ecommerce.products.delete',
+      domain: 'integrations',
+      mutationKey: QUERY_KEYS.products.all,
+      tags: ['products', 'integrations', 'ecommerce', 'delete'],
+      description: 'Removes a product from the ecommerce store and clears its badge record.',
     },
   });
 }

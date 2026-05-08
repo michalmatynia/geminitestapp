@@ -20,11 +20,14 @@ export function useExternalCategories(
     queryKey,
     queryFn: () => {
       const params = new URLSearchParams();
-      if (connectionId) params.set('connectionId', connectionId);
-      if (marketplace) params.set('marketplace', marketplace);
+      if (connectionId.length > 0) params.set('connectionId', connectionId);
+      if (marketplace !== null && marketplace !== undefined) {
+        params.set('marketplace', marketplace);
+      }
       return api.get<ExternalCategory[]>(`/api/marketplace/categories?${params.toString()}`);
     },
-    enabled: Boolean(connectionId) || Boolean(marketplace),
+    enabled:
+      connectionId.length > 0 || (marketplace !== null && marketplace !== undefined),
     meta: {
       source: 'integrations.hooks.useExternalCategories',
       operation: 'list',
@@ -38,18 +41,30 @@ export function useExternalCategories(
 
 export function useCategoryMappings(
   connectionId: string,
-  catalogId?: string | null
+  catalogId?: string | null,
+  marketplace?: ExternalCategoryMarketplaceScope
 ): ListQuery<CategoryMappingWithDetails> {
-  const queryKey = marketplaceKeys.mappings(connectionId, catalogId);
+  const queryScope = marketplace ?? connectionId;
+  const queryKey = marketplaceKeys.mappings(queryScope, catalogId);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<CategoryMappingWithDetails[]> => {
-      if (!catalogId) return [];
+      if (catalogId === null || catalogId === undefined || catalogId.length === 0) return [];
+      const params = new URLSearchParams();
+      if (connectionId.length > 0) params.set('connectionId', connectionId);
+      if (marketplace !== null && marketplace !== undefined) {
+        params.set('marketplace', marketplace);
+      }
+      params.set('catalogId', catalogId);
       return api.get<CategoryMappingWithDetails[]>(
-        `/api/marketplace/mappings?connectionId=${connectionId}&catalogId=${catalogId}`
+        `/api/marketplace/mappings?${params.toString()}`
       );
     },
-    enabled: Boolean(connectionId) && Boolean(catalogId),
+    enabled:
+      (connectionId.length > 0 || (marketplace !== null && marketplace !== undefined)) &&
+      catalogId !== null &&
+      catalogId !== undefined &&
+      catalogId.length > 0,
     meta: {
       source: 'integrations.hooks.useCategoryMappings',
       operation: 'list',

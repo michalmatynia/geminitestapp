@@ -341,7 +341,7 @@ const listMongoMappingsWithDetails = async ({
         : null) ??
       null;
     const externalCategory =
-      resolvedExternal?.category ||
+      resolvedExternal?.category ??
       ({
         id: mapping.externalCategoryId,
         connectionId: mapping.connectionId,
@@ -363,9 +363,9 @@ const listMongoMappingsWithDetails = async ({
         resolvedExternal?.canonicalExternalCategoryId ?? mapping.externalCategoryId,
       externalCategory,
       internalCategory:
-        internalMap.get(mapping.internalCategoryId || '') ||
+        internalMap.get(mapping.internalCategoryId ?? '') ??
         ({
-          id: mapping.internalCategoryId || '',
+          id: mapping.internalCategoryId ?? '',
           name: `[Missing internal category: ${mapping.internalCategoryId}]`,
           description: null,
           color: null,
@@ -386,7 +386,10 @@ const dedupeMarketplaceMappings = (
   for (const mapping of mappings) {
     const key = `${mapping.catalogId}:${mapping.externalCategoryId}`;
     const current = byScope.get(key);
-    if (!current || Date.parse(mapping.updatedAt ?? '') > Date.parse(current.updatedAt ?? '')) {
+    if (
+      current === undefined ||
+      Date.parse(mapping.updatedAt ?? '') > Date.parse(current.updatedAt ?? '')
+    ) {
       byScope.set(key, mapping);
     }
   }
@@ -514,7 +517,7 @@ export const mongoCategoryMappingImpl = {
     catalogId?: string
   ): Promise<CategoryMappingWithDetails[]> {
     const normalizedInternalCategoryId = normalizeInternalCategoryId(internalCategoryId);
-    if (!normalizedInternalCategoryId) {
+    if (normalizedInternalCategoryId === null) {
       return [];
     }
 
@@ -522,7 +525,7 @@ export const mongoCategoryMappingImpl = {
     const filter: Filter<MongoCategoryMappingDoc> = {
       internalCategoryId: normalizedInternalCategoryId,
     };
-    if (catalogId) {
+    if (catalogId !== undefined && catalogId.length > 0) {
       filter.catalogId = catalogId;
     }
 
@@ -538,7 +541,7 @@ export const mongoCategoryMappingImpl = {
       return [];
     }
     const filter: Filter<MongoCategoryMappingDoc> = { connectionId };
-    if (catalogId) {
+    if (catalogId !== undefined && catalogId.length > 0) {
       filter.catalogId = catalogId;
     }
 
@@ -561,8 +564,8 @@ export const mongoCategoryMappingImpl = {
 
     const filter: Filter<MongoCategoryMappingDoc> = {
       connectionId: { $in: connectionIds },
-    } as Filter<MongoCategoryMappingDoc>;
-    if (catalogId) {
+    };
+    if (catalogId !== undefined && catalogId.length > 0) {
       filter.catalogId = catalogId;
     }
 

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import type { ExternalCategory, ExternalCategoryWithChildren } from '@/shared/contracts/integrations/listings';
 import type { ExternalCategoryRepository } from '@/shared/contracts/integrations/repositories';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
@@ -39,13 +40,14 @@ export const parseMarketplaceCategoriesQuery = (
   const normalizedMarketplace = normalizeIntegrationSlug(marketplace);
   const marketplaceScope =
     normalizedMarketplace === TRADERA_BROWSER_INTEGRATION_SLUG ? normalizedMarketplace : null;
+  const hasConnectionId = typeof connectionId === 'string' && connectionId.length > 0;
 
-  if (!connectionId && !marketplaceScope) {
+  if (!hasConnectionId && marketplaceScope === null) {
     throw badRequestError('connectionId is required');
   }
 
   return {
-    connectionId: connectionId ?? null,
+    connectionId: hasConnectionId ? connectionId : null,
     marketplace: marketplaceScope,
     tree,
   };
@@ -54,14 +56,14 @@ export const parseMarketplaceCategoriesQuery = (
 export const listMarketplaceCategories = (
   repo: CategoryListRepository,
   query: MarketplaceCategoriesQuery
-) => {
+): Promise<ExternalCategory[] | ExternalCategoryWithChildren[]> => {
   if (query.marketplace === TRADERA_BROWSER_INTEGRATION_SLUG) {
     return query.tree
       ? repo.getTreeByMarketplace(query.marketplace)
       : repo.listByMarketplace(query.marketplace);
   }
 
-  if (!query.connectionId) {
+  if (query.connectionId === null) {
     throw badRequestError('connectionId is required');
   }
 

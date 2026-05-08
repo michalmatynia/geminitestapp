@@ -637,9 +637,14 @@ export const invalidateMarketplaceMappings = (
   connectionId: string,
   catalogId: string
 ) => {
-  return queryClient.invalidateQueries({
-    queryKey: QUERY_KEYS.integrations.marketplace.mappings(connectionId, catalogId),
-  });
+  return Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.integrations.marketplace.mappings(connectionId, catalogId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.integrations.marketplace.lists(), 'mappings'],
+    }),
+  ]);
 };
 
 export const invalidateMarketplaceProducers = (queryClient: QueryClient, connectionId: string) => {

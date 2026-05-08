@@ -27,7 +27,7 @@ export const assertCategoryMappingsCanBeSaved = async ({
     return;
   }
 
-  const integrationRepo = await getIntegrationRepository();
+  const integrationRepo = getIntegrationRepository();
   const connection = await integrationRepo.getConnectionById(connectionId);
   if (!connection) {
     throw notFoundError('Connection not found');
@@ -45,13 +45,12 @@ export const assertCategoryMappingsCanBeSaved = async ({
 
   const externalCategoryRepo = getExternalCategoryRepository();
   const uniqueExternalIds = [...new Set(activeMappings.map((mapping) => mapping.externalCategoryId.trim()))];
-  const categories = await Promise.all(
-    uniqueExternalIds.map(async (externalId) => [
-      externalId,
-      await externalCategoryRepo.getByExternalId(connectionId, externalId),
-    ] as const)
+  const marketplaceCategories = await externalCategoryRepo.listByMarketplace(integrationSlug);
+  const categoriesByExternalId = new Map(
+    marketplaceCategories
+      .filter((category) => uniqueExternalIds.includes(category.externalId.trim()))
+      .map((category) => [category.externalId.trim(), category])
   );
-  const categoriesByExternalId = new Map(categories);
 
   for (const mapping of activeMappings) {
     const externalCategoryId = mapping.externalCategoryId.trim();
@@ -68,7 +67,9 @@ export const assertCategoryMappingsCanBeSaved = async ({
     }
 
     if (category.isLeaf === false) {
-      const categoryLabel = toTrimmedString(category.path) || toTrimmedString(category.name);
+      const categoryPath = toTrimmedString(category.path);
+      const categoryName = toTrimmedString(category.name);
+      const categoryLabel = categoryPath.length > 0 ? categoryPath : categoryName;
       throw badRequestError(
         `Tradera mappings must target the deepest category. "${categoryLabel}" still has child categories. Choose a leaf Tradera category and save again.`,
         {

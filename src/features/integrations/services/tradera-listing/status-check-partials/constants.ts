@@ -42,7 +42,7 @@ ${selectorRegistryRuntime}
     },
   ];
 
-  const wait = (ms: number) => new Promise((resolve) => safeSetTimeout(resolve, ms));
+  const wait = (ms) => new Promise((resolve) => safeSetTimeout(resolve, ms));
 
   const normalizeWhitespace = (value) =>
     String(value || '')

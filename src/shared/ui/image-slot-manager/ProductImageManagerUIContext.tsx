@@ -102,6 +102,7 @@ export function ProductImageManagerUIProvider({
   );
   const [base64LoadingSlots, setBase64LoadingSlots] = useState<Record<number, boolean>>({});
   const [linkToFileLoadingSlots, setLinkToFileLoadingSlots] = useState<Record<number, boolean>>({});
+  const [fastCometLoadingSlots, setFastCometLoadingSlots] = useState<Record<number, boolean>>({});
 
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -303,6 +304,37 @@ export function ProductImageManagerUIProvider({
     ]
   );
 
+  const uploadSlotToFastComet = useCallback(
+    async (index: number) => {
+      const slot = imageSlots[index];
+      if (!productId || slot?.type !== 'existing' || !handleSlotFileSelect) return;
+
+      try {
+        setFastCometLoadingSlots((prev) => ({ ...prev, [index]: true }));
+        const result = await api.post<{ status: 'ok'; imageFile: ImageFileSelection }>(
+          `/api/v2/products/${encodeURIComponent(productId)}/images/upload-to-fastcomet`,
+          {
+            imageFileId: slot.data.id,
+            imageSlotIndex: index,
+          }
+        );
+        handleSlotFileSelect(result.imageFile, index);
+        setSlotViewMode(index, 'upload');
+      } catch (error: unknown) {
+        logClientError(error);
+        const message = error instanceof Error ? error.message : String(error);
+        pushDebug({ action: 'fastcomet-upload', message, slotIndex: index });
+      } finally {
+        setFastCometLoadingSlots((prev) => {
+          const next = { ...prev };
+          delete next[index];
+          return next;
+        });
+      }
+    },
+    [imageSlots, productId, handleSlotFileSelect, setSlotViewMode, pushDebug]
+  );
+
   const clearVisibleImage = useCallback(
     async (index: number) => {
       if (isSlotImageLocked?.(index)) {
@@ -393,12 +425,14 @@ export function ProductImageManagerUIProvider({
       slotViewModes,
       base64LoadingSlots,
       linkToFileLoadingSlots,
+      fastCometLoadingSlots,
       draggedIndex,
       dragOverIndex,
       isReordering,
       debugInfo: PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED ? debugInfo : null,
       showDebug: PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED ? showDebug : false,
       externalBaseUrl,
+      productId: productId ?? null,
       minimalUi,
       showDragHandle,
       minimalSingleSlotAlign,
@@ -408,12 +442,14 @@ export function ProductImageManagerUIProvider({
       slotViewModes,
       base64LoadingSlots,
       linkToFileLoadingSlots,
+      fastCometLoadingSlots,
       draggedIndex,
       dragOverIndex,
       isReordering,
       debugInfo,
       showDebug,
       externalBaseUrl,
+      productId,
       minimalUi,
       showDragHandle,
       minimalSingleSlotAlign,
@@ -428,6 +464,7 @@ export function ProductImageManagerUIProvider({
       convertSlotToBase64,
       convertAllSlotsToBase64,
       convertLinkToFile,
+      uploadSlotToFastComet,
       triggerFileManager,
       handleSlotFileUpload,
       clearVisibleImage,
@@ -444,6 +481,7 @@ export function ProductImageManagerUIProvider({
       convertSlotToBase64,
       convertAllSlotsToBase64,
       convertLinkToFile,
+      uploadSlotToFastComet,
       triggerFileManager,
       handleSlotFileUpload,
       clearVisibleImage,

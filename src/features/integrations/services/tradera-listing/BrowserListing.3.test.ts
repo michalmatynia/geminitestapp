@@ -85,6 +85,7 @@ vi.mock('../integration-repository', () => ({
 vi.mock('../category-mapping-repository', () => ({
   getCategoryMappingRepository: () => ({
     listByConnection: listCategoryMappingsMock,
+    listByMarketplace: listCategoryMappingsMock,
   }),
 }));
 

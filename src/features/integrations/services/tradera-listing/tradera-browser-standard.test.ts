@@ -149,6 +149,7 @@ describe('runTraderaBrowserListingStandard', () => {
         externalCategoryPath: 'Collectibles > Pins & needles > Other pins & needles',
         internalCategoryId: 'internal-category-1',
         catalogId: 'catalog-1',
+        sourceConnectionId: 'connection-1',
         pathSegments: ['Collectibles', 'Pins & needles', 'Other pins & needles'],
       },
       reason: 'mapped',
@@ -267,6 +268,8 @@ describe('runTraderaBrowserListingStandard', () => {
         categoryMappingReason: 'mapped',
         categoryMatchScope: 'catalog_match',
         categoryInternalCategoryId: 'internal-category-1',
+        categoryMappingSourceConnectionId: 'connection-1',
+        categoryMappingRecoveredFromAnotherConnection: false,
         completedAt: expect.any(String),
         playwright: expect.objectContaining({
           instance: expect.objectContaining({

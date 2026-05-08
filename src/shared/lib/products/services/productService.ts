@@ -1114,6 +1114,14 @@ async function getProductsWithCount(
   };
 }
 
+async function cleanupOrphanedProductImages(productId: string): Promise<void> {
+  const provider = await getProductDataProvider();
+  const productRepository = await resolveProductRepository(provider);
+  const product = await productRepository.getProductById(productId);
+  if (!product) return;
+  await deleteOrphanedProductImageFiles(product, productRepository);
+}
+
 export const productService = {
   getProducts,
   countProducts,
@@ -1128,6 +1136,7 @@ export const productService = {
   updateProduct,
   duplicateProduct,
   deleteProduct,
+  cleanupOrphanedProductImages,
   uploadProductImage,
   unlinkImageFromProduct: deleteProductImage,
   deleteProductImage,

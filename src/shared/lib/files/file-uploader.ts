@@ -301,7 +301,7 @@ export async function uploadFile(
         mirroredLocally: storageResult.mirroredLocally,
       },
       size: file.size,
-      ...(storageSource === 'local' ? { storageProvider: 'local' } : {}),
+      storageProvider: storageSource === 'local' ? 'local' : 'fastcomet',
     };
     const imageFile = await imageFileRepository.createImageFile(recordInput);
     void createFileUploadEvent({

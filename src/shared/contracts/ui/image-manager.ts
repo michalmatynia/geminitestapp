@@ -20,12 +20,14 @@ export interface ProductImageManagerUIContextValue {
   slotViewModes: SlotViewMode[];
   base64LoadingSlots: Record<number, boolean>;
   linkToFileLoadingSlots: Record<number, boolean>;
+  fastCometLoadingSlots: Record<number, boolean>;
   draggedIndex: number | null;
   dragOverIndex: number | null;
   isReordering: boolean;
   debugInfo: DebugInfo | null;
   showDebug: boolean;
   externalBaseUrl: string;
+  productId: string | null;
   minimalUi: boolean;
   showDragHandle: boolean;
   minimalSingleSlotAlign: 'left' | 'center';
@@ -36,6 +38,7 @@ export interface ProductImageManagerUIContextValue {
   convertSlotToBase64: (index: number) => Promise<void>;
   convertAllSlotsToBase64: () => Promise<void>;
   convertLinkToFile: (index: number) => Promise<void>;
+  uploadSlotToFastComet: (index: number) => Promise<void>;
   triggerFileManager: (index: number) => void;
   handleSlotFileUpload: (index: number, files: File[]) => void;
   clearVisibleImage: (index: number) => Promise<void>;
@@ -54,6 +57,7 @@ export type ProductImageManagerUIStateContextValue = Omit<
   | 'convertSlotToBase64'
   | 'convertAllSlotsToBase64'
   | 'convertLinkToFile'
+  | 'uploadSlotToFastComet'
   | 'triggerFileManager'
   | 'handleSlotFileUpload'
   | 'clearVisibleImage'
@@ -72,6 +76,7 @@ export type ProductImageManagerUIActionsContextValue = Pick<
   | 'convertSlotToBase64'
   | 'convertAllSlotsToBase64'
   | 'convertLinkToFile'
+  | 'uploadSlotToFastComet'
   | 'triggerFileManager'
   | 'handleSlotFileUpload'
   | 'clearVisibleImage'

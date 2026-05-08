@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getCategoryByIdMock, listCategoriesMock, listByConnectionMock, listByInternalCategoryMock } = vi.hoisted(() => ({
+const { getCategoryByIdMock, listCategoriesMock, listByMarketplaceMock, listByInternalCategoryMock } = vi.hoisted(() => ({
   getCategoryByIdMock: vi.fn(),
   listCategoriesMock: vi.fn(),
-  listByConnectionMock: vi.fn(),
+  listByMarketplaceMock: vi.fn(),
   listByInternalCategoryMock: vi.fn(),
 }));
 
@@ -20,7 +20,7 @@ vi.mock('@/shared/lib/products/services/category-repository', () => ({
 
 vi.mock('../category-mapping-repository', () => ({
   getCategoryMappingRepository: () => ({
-    listByConnection: listByConnectionMock,
+    listByMarketplace: listByMarketplaceMock,
     listByInternalCategory: listByInternalCategoryMock,
   }),
 }));
@@ -115,7 +115,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   getCategoryByIdMock.mockResolvedValue(null);
   listCategoriesMock.mockResolvedValue([]);
-  listByConnectionMock.mockResolvedValue([]);
+  listByMarketplaceMock.mockResolvedValue([]);
   listByInternalCategoryMock.mockResolvedValue([]);
   captureExceptionMock.mockResolvedValue(undefined);
 });
@@ -161,6 +161,7 @@ describe('selectPreferredTraderaCategoryMapping', () => {
         externalCategoryPath: 'Collectibles > Pins',
         internalCategoryId: 'internal-category-1',
         catalogId: 'catalog-primary',
+        sourceConnectionId: 'connection-1',
         pathSegments: ['Collectibles', 'Pins'],
       },
       reason: 'mapped',
@@ -284,6 +285,7 @@ describe('selectPreferredTraderaCategoryMapping', () => {
       externalCategoryPath: 'Collectibles > Pins',
       internalCategoryId: 'jewellery-pins',
       catalogId: 'catalog-primary',
+      sourceConnectionId: 'connection-1',
       pathSegments: ['Collectibles', 'Pins'],
     });
   });
@@ -314,12 +316,13 @@ describe('selectPreferredTraderaCategoryMapping', () => {
       externalCategoryPath: 'Collectibles > Pins',
       internalCategoryId: 'internal-category-1',
       catalogId: 'catalog-primary',
+      sourceConnectionId: 'connection-1',
       pathSegments: ['Collectibles', 'Pins'],
     });
   });
 
   it('loads parent categories from the assigned category catalog during async resolution', async () => {
-    listByConnectionMock.mockResolvedValue([
+    listByMarketplaceMock.mockResolvedValue([
       createMapping({
         internalCategoryId: 'jewellery-pins',
         catalogId: 'catalog-jewellery',
@@ -407,6 +410,7 @@ describe('selectPreferredTraderaCategoryMapping', () => {
         externalCategoryPath: 'Collectibles > Pins',
         internalCategoryId: 'jewellery-pins',
         catalogId: 'catalog-jewellery',
+        sourceConnectionId: 'connection-1',
         pathSegments: ['Collectibles', 'Pins'],
       },
       reason: 'mapped_via_parent',
@@ -420,7 +424,7 @@ describe('selectPreferredTraderaCategoryMapping', () => {
   });
 
   it('resolves parent mapping when the category carries the catalog but product.catalogId is empty', async () => {
-    listByConnectionMock.mockResolvedValue([
+    listByMarketplaceMock.mockResolvedValue([
       createMapping({
         internalCategoryId: 'jewellery-pins',
         catalogId: 'catalog-jewellery',
@@ -502,12 +506,13 @@ describe('selectPreferredTraderaCategoryMapping', () => {
       externalCategoryPath: 'Collectibles > Pins',
       internalCategoryId: 'jewellery-pins',
       catalogId: 'catalog-jewellery',
+      sourceConnectionId: 'connection-1',
       pathSegments: ['Collectibles', 'Pins'],
     });
   });
 
   it('logs category-tree load failures before falling back to the direct result', async () => {
-    listByConnectionMock.mockResolvedValue([]);
+    listByMarketplaceMock.mockResolvedValue([]);
     getCategoryByIdMock.mockResolvedValue({
       id: 'anime-pins',
       name: 'Anime Pins',
@@ -566,8 +571,16 @@ describe('selectPreferredTraderaCategoryMapping', () => {
     );
   });
 
-  it('does not recover Tradera category mappings from other connections', async () => {
-    listByConnectionMock.mockResolvedValue([]);
+  it('recovers Tradera category mappings from other Tradera connections', async () => {
+    listByMarketplaceMock.mockResolvedValue([
+      createMapping({
+        connectionId: 'legacy-connection-1',
+        externalCategory: {
+          ...createMapping().externalCategory,
+          connectionId: 'legacy-connection-1',
+        },
+      }),
+    ]);
     getCategoryByIdMock.mockResolvedValue({
       id: 'internal-category-1',
       name: 'Wallets',
@@ -594,16 +607,25 @@ describe('selectPreferredTraderaCategoryMapping', () => {
       product: createProduct(),
     });
 
+    expect(listByMarketplaceMock).toHaveBeenCalledWith('tradera');
     expect(listByInternalCategoryMock).not.toHaveBeenCalled();
     expect(result).toEqual({
-      mapping: null,
-      reason: 'no_active_mapping',
-      matchScope: 'none',
+      mapping: {
+        externalCategoryId: '1001',
+        externalCategoryName: 'Pins',
+        externalCategoryPath: 'Collectibles > Pins',
+        internalCategoryId: 'internal-category-1',
+        catalogId: 'catalog-primary',
+        sourceConnectionId: 'legacy-connection-1',
+        pathSegments: ['Collectibles', 'Pins'],
+      },
+      reason: 'mapped',
+      matchScope: 'catalog_match',
       internalCategoryId: 'internal-category-1',
       productCatalogIds: ['catalog-primary'],
-      matchingMappingCount: 0,
-      validMappingCount: 0,
-      catalogMatchedMappingCount: 0,
+      matchingMappingCount: 1,
+      validMappingCount: 1,
+      catalogMatchedMappingCount: 1,
     });
   });
 });

@@ -148,6 +148,8 @@ export const runTraderaBrowserListingStandard = async ({
   let categoryMappingReason: string | null = null;
   let categoryMatchScope: string | null = null;
   let categoryInternalCategoryId: string | null = null;
+  let categoryMappingSourceConnectionId: string | null = null;
+  let categoryMappingRecoveredFromAnotherConnection: boolean | null = null;
   return runPlaywrightConnectionNativeTask({
     connection,
     runtimeActionKey: 'tradera_standard_list',
@@ -254,6 +256,11 @@ export const runTraderaBrowserListingStandard = async ({
         categoryMappingReason = categoryMapping.reason;
         categoryMatchScope = categoryMapping.matchScope;
         categoryInternalCategoryId = categoryMapping.internalCategoryId;
+        categoryMappingSourceConnectionId =
+          categoryMapping.mapping?.sourceConnectionId ?? null;
+        categoryMappingRecoveredFromAnotherConnection =
+          categoryMappingSourceConnectionId !== null &&
+          categoryMappingSourceConnectionId !== connection.id;
         assertTraderaCategoryMappingReady({
           categoryMapping,
           product: loadedProduct,
@@ -470,6 +477,8 @@ export const runTraderaBrowserListingStandard = async ({
           categoryMappingReason,
           categoryMatchScope,
           categoryInternalCategoryId,
+          categoryMappingSourceConnectionId,
+          categoryMappingRecoveredFromAnotherConnection,
           completedAt: resolvedCompletedAt,
           executionSteps: tracker.getSteps(),
           ...pricingMetadata,
@@ -507,6 +516,8 @@ export const runTraderaBrowserListingStandard = async ({
         categoryMappingReason,
         categoryMatchScope,
         categoryInternalCategoryId,
+        categoryMappingSourceConnectionId,
+        categoryMappingRecoveredFromAnotherConnection,
         executionSteps: activeTracker.getSteps(),
         ...(pricingMetadata ?? {}),
         debugArtifacts,

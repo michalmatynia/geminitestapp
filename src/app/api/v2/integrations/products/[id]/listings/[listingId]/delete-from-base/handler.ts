@@ -5,7 +5,8 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { deleteBaseProduct } from '@/features/integrations/server';
 import { listProductListingsByProductIdAcrossProviders } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import { parseJsonBody } from '@/features/products/server';
+import { deleteProductFromEcommerceExport } from '@/features/integrations/services/ecommerce-product-export';
+import { parseJsonBody, productService } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import { productListingDeleteFromBasePayloadSchema } from '@/shared/contracts/integrations/listings';
 import { type ProductListingDeleteFromBaseResponse } from '@/shared/contracts/integrations';
@@ -163,6 +164,17 @@ export async function postHandler(
       inventoryId,
       externalListingId: normalizedExternalListingId,
     });
+
+    // Clean up ecommerce export records from both local and cloud DBs, and clear the badge record.
+    void deleteProductFromEcommerceExport(productId).catch((error: unknown) => {
+      void ErrorSystem.captureException(error);
+    });
+
+    // Delete orphaned image files (storage + DB) that are no longer referenced by any product.
+    void productService.cleanupOrphanedProductImages(productId).catch((error: unknown) => {
+      void ErrorSystem.captureException(error);
+    });
+
     try {
       const productRepository = await getProductRepository();
       const product = await productRepository.getProductById(productId);

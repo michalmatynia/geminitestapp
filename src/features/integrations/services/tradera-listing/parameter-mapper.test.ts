@@ -211,6 +211,7 @@ describe('tradera parameter mapper helpers', () => {
       externalCategoryPath: 'Accessories > Jewellery',
       internalCategoryId: 'internal-1',
       catalogId: 'catalog-a',
+      sourceConnectionId: 'connection-1',
       pathSegments: ['Accessories', 'Jewellery'],
     };
 

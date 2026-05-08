@@ -2,6 +2,7 @@ import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations
 import type { ExternalCategoryRepository } from '@/shared/contracts/integrations/repositories';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { TRADERA_BROWSER_INTEGRATION_SLUG } from '@/shared/lib/integration-slugs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getCategoryMappingRepository } from '../category-mapping-repository';
@@ -12,6 +13,7 @@ export type ResolvedTraderaCategoryMapping = {
   externalCategoryPath: string | null;
   internalCategoryId: string;
   catalogId: string;
+  sourceConnectionId: string;
   pathSegments: string[];
 };
 
@@ -128,6 +130,7 @@ const tryResolveMappingForCategoryId = (
       externalCategoryPath,
       internalCategoryId: candidateId,
       catalogId: selectedMapping.catalogId,
+      sourceConnectionId: selectedMapping.connectionId,
       pathSegments,
     },
     matchScope,
@@ -288,7 +291,9 @@ export const resolveTraderaCategoryMappingResolutionForProduct = async ({
   product: ProductWithImages;
 }): Promise<TraderaCategoryMappingResolution> => {
   const categoryMappingRepository = getCategoryMappingRepository();
-  const mappings = await categoryMappingRepository.listByConnection(connectionId);
+  const mappings = await categoryMappingRepository.listByMarketplace(
+    TRADERA_BROWSER_INTEGRATION_SLUG
+  );
 
   // No direct mapping — load product categories for parent-chain inheritance
   const catalogId = toTrimmedString(product.catalogId);

@@ -58,7 +58,7 @@ const optionalTextField = <TKey extends string>(
 const isImageFileStorageProvider = (
   value: unknown
 ): value is NonNullable<ImageFileRecord['storageProvider']> =>
-  value === 'local' || value === 's3' || value === 'imagekit';
+  value === 'local' || value === 's3' || value === 'imagekit' || value === 'fastcomet';
 
 const optionalStorageProviderField = (
   value: unknown

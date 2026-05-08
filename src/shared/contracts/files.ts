@@ -14,7 +14,7 @@ export const fileSchema = dtoBaseSchema.extend({
   extension: z.string().optional(),
   publicUrl: z.string().optional(),
   url: z.string().optional(),
-  storageProvider: z.enum(['local', 's3', 'imagekit']).optional(),
+  storageProvider: z.enum(['local', 's3', 'imagekit', 'fastcomet']).optional(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
@@ -63,7 +63,7 @@ export interface ImageFileRecord {
   extension?: string;
   publicUrl?: string;
   url?: string;
-  storageProvider?: 'local' | 's3' | 'imagekit';
+  storageProvider?: 'local' | 's3' | 'imagekit' | 'fastcomet';
   metadata?: Record<string, unknown> | null;
   width?: number | null;
   height?: number | null;
@@ -84,7 +84,7 @@ export const imageFileSelectionSchema = z.object({
   filepath: z.string().optional(),
   thumbnailUrl: z.string().optional(),
   filename: z.string().optional(),
-  storageProvider: z.enum(['local', 's3', 'imagekit']).optional(),
+  storageProvider: z.enum(['local', 's3', 'imagekit', 'fastcomet']).optional(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   width: z.number().nullable().optional(),
   height: z.number().nullable().optional(),

@@ -90,7 +90,7 @@ ${selectorRegistryRuntime}
 
   ${executionStepsInit}
 
-  const wait = (ms: number) => new Promise((resolve) => safeSetTimeout(resolve, ms));
+  const wait = (ms) => new Promise((resolve) => safeSetTimeout(resolve, ms));
 
   const updateStep = (id, status, message = null) => {
     const step = executionSteps.find((entry) => entry.id === id);

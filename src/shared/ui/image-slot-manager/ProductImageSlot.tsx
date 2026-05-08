@@ -14,6 +14,20 @@ import {
   useProductImageManagerUIState,
 } from './ProductImageManagerUIContext';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+type ProductImageSlotValue = ReturnType<
+  typeof useProductImageManagerUIState
+>['controller']['imageSlots'][number];
+
+const isFastCometImageSlot = (slot: ProductImageSlotValue | undefined): boolean => {
+  if (slot?.type !== 'existing') return false;
+  if (slot.data.storageProvider === 'fastcomet') return true;
+  const metadata = slot.data.metadata;
+  return isRecord(metadata) && metadata['storageSource'] === 'fastcomet';
+};
+
 interface ProductImageSlotProps {
   index: number;
 }
@@ -25,10 +39,12 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
     slotViewModes,
     base64LoadingSlots,
     linkToFileLoadingSlots,
+    fastCometLoadingSlots,
     draggedIndex,
     dragOverIndex,
     isReordering,
     externalBaseUrl,
+    productId,
     minimalUi,
     showDragHandle,
     minimalSingleSlotAlign,
@@ -38,6 +54,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
     setSlotViewMode,
     convertSlotToBase64,
     convertLinkToFile,
+    uploadSlotToFastComet,
     triggerFileManager,
     handleSlotFileUpload,
     clearVisibleImage,
@@ -57,6 +74,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
   const imageLocked = Boolean(controller.isSlotImageLocked?.(index));
   const linkValue = imageLinks[index] ?? '';
   const base64Value = imageBase64s[index] ?? '';
+  const isFastCometUpload = isFastCometImageSlot(slot);
 
   const uploadUrl = slot
     ? slot.type === 'existing'
@@ -113,6 +131,18 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
           onClick={() => void convertLinkToFile(index)}
         >
           {linkToFileLoadingSlots[index] ? 'Converting link...' : 'Convert link to file'}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={
+            !productId ||
+            slot?.type !== 'existing' ||
+            imageLocked ||
+            isFastCometUpload ||
+            Boolean(fastCometLoadingSlots[index])
+          }
+          onClick={() => void uploadSlotToFastComet(index)}
+        >
+          {fastCometLoadingSlots[index] ? 'Uploading to FastComet...' : 'Upload to FastComet'}
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={!base64Value.trim() || imageLocked}

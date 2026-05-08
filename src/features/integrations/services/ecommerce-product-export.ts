@@ -19,6 +19,7 @@ import {
   ECOM_CATEGORIES_COLLECTION,
   ECOM_PRODUCTS_COLLECTION,
   getEcommerceExportDb,
+  getAllEcommerceExportDbsForCleanup,
 } from './ecommerce-product-export.config';
 import {
   buildEcommerceCategoryDocument,
@@ -82,19 +83,20 @@ const tryCreateIndex = async (
   }
 };
 
-let ecommerceIndexesEnsured: Promise<void> | null = null;
+const ecommerceIndexesEnsuredByNamespace = new Map<string, Promise<void>>();
 
 const ensureEcommerceExportIndexes = async (db: Db): Promise<void> => {
-  if (ecommerceIndexesEnsured !== null) {
-    return ecommerceIndexesEnsured;
-  }
-  ecommerceIndexesEnsured = Promise.all([
+  const key = db.namespace;
+  const existing = ecommerceIndexesEnsuredByNamespace.get(key);
+  if (existing !== undefined) return existing;
+  const promise = Promise.all([
     tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { sourceProductId: 1 }, { unique: true, name: 'source_product_id_unique' }),
     tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { slug: 1 }, { name: 'slug' }),
     tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { catalogId: 1, published: 1, archived: 1, stock: 1, updatedAt: -1 }, { name: 'catalog_active_updated' }),
     tryCreateIndex(db, ECOM_CATEGORIES_COLLECTION, { catalogId: 1, collectionSlug: 1, name: 1 }, { name: 'catalog_collection_name' }),
   ]).then(() => undefined);
-  return ecommerceIndexesEnsured;
+  ecommerceIndexesEnsuredByNamespace.set(key, promise);
+  return promise;
 };
 
 const persistEcommerceCategory = async (
@@ -148,24 +150,42 @@ export const deleteProductFromEcommerceExport = async (
     };
   }
 
-  const [ecommerceDb, productsDb] = await Promise.all([
-    getEcommerceExportDb(),
+  const [ecommerceDbs, productsDb] = await Promise.all([
+    getAllEcommerceExportDbsForCleanup(),
     getMongoDb(),
   ]);
-  const [ecommerceResult, listingResult] = await Promise.all([
-    ecommerceDb.collection(ECOM_PRODUCTS_COLLECTION).deleteMany({
-      $or: [{ _id: normalizedProductId }, { sourceProductId: normalizedProductId }],
-    }),
+
+  const deleteQuery = {
+    $or: [{ _id: normalizedProductId }, { sourceProductId: normalizedProductId }],
+  };
+
+  const [ecommerceResults, listingResult] = await Promise.all([
+    Promise.allSettled(
+      ecommerceDbs.map((db) => db.collection(ECOM_PRODUCTS_COLLECTION).deleteMany(deleteQuery))
+    ),
     productsDb.collection(PRODUCT_LISTINGS_COLLECTION).deleteMany({
       productId: normalizedProductId,
       integrationId: ECOMMERCE_EXPORT_INTEGRATION_SLUG,
     }),
   ]);
 
+  let ecommerceDeletedCount = 0;
+  for (const result of ecommerceResults) {
+    if (result.status === 'fulfilled') {
+      ecommerceDeletedCount += result.value.deletedCount;
+    } else {
+      void logSystemEvent({
+        level: 'warn',
+        message: 'ecommerce-product-export: deleteProductFromEcommerceExport — one source failed',
+        context: { productId: normalizedProductId, error: result.reason instanceof Error ? result.reason.message : String(result.reason) },
+      });
+    }
+  }
+
   return {
     success: true,
     productId: normalizedProductId,
-    ecommerceDeletedCount: ecommerceResult.deletedCount,
+    ecommerceDeletedCount,
     listingDeletedCount: listingResult.deletedCount,
   };
 };
@@ -210,13 +230,25 @@ export const checkEcommerceProductsExistence = async (
 ): Promise<Set<string>> => {
   if (productIds.length === 0) return new Set<string>();
   try {
-    const db = await getEcommerceExportDb();
-    // _id === product.id (always indexed), so this is faster than querying sourceProductId
-    const docs = await db
-      .collection<EcommerceProductDocument>(ECOM_PRODUCTS_COLLECTION)
-      .find({ _id: { $in: productIds as unknown[] } }, { projection: { _id: 1 } })
-      .toArray();
-    return new Set(docs.map((d) => String(d._id)).filter((id) => id.length > 0));
+    const dbs = await getAllEcommerceExportDbsForCleanup();
+    const query = { _id: { $in: productIds as unknown[] } };
+    const projection = { projection: { _id: 1 } };
+    // Query all configured sources in parallel and union the results.
+    const results = await Promise.allSettled(
+      dbs.map((db) =>
+        db.collection<EcommerceProductDocument>(ECOM_PRODUCTS_COLLECTION).find(query, projection).toArray()
+      )
+    );
+    const found = new Set<string>();
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        for (const doc of result.value) {
+          const id = String(doc._id);
+          if (id.length > 0) found.add(id);
+        }
+      }
+    }
+    return found;
   } catch (error) {
     void logSystemEvent({
       level: 'warn',

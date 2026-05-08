@@ -87,6 +87,7 @@ vi.mock('../integration-repository', () => ({
 vi.mock('../category-mapping-repository', () => ({
   getCategoryMappingRepository: () => ({
     listByConnection: listCategoryMappingsMock,
+    listByMarketplace: listCategoryMappingsMock,
     listByInternalCategory: listCategoryMappingsByInternalCategoryMock,
   }),
 }));
@@ -388,14 +389,15 @@ describe('runTraderaBrowserListing scripted mode', () => {
           traderaConfig: {
             listingFormUrl: 'https://www.tradera.com/en/selling/new',
           },
-          traderaCategory: {
+          traderaCategory: expect.objectContaining({
             externalId: '101',
             name: 'Pins',
             path: 'Collectibles > Pins',
             segments: ['Collectibles', 'Pins'],
             internalCategoryId: 'internal-category-1',
             catalogId: 'catalog-1',
-          },
+            sourceConnectionId: 'connection-1',
+          }),
           traderaCategoryMapping: expect.objectContaining({
             reason: 'mapped',
             matchScope: 'catalog_match',
@@ -404,6 +406,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
             matchingMappingCount: 1,
             validMappingCount: 1,
             catalogMatchedMappingCount: 1,
+            sourceConnectionId: 'connection-1',
+            recoveredFromAnotherConnection: false,
           }),
           traderaPricing: {
             listingPrice: 55,
@@ -491,6 +495,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categoryMappingReason: 'mapped',
         categoryMatchScope: 'catalog_match',
         categoryInternalCategoryId: 'internal-category-1',
+        categoryMappingSourceConnectionId: 'connection-1',
+        categoryMappingRecoveredFromAnotherConnection: false,
         categoryId: '101',
         categoryPath: 'Collectibles > Pins',
         categorySource: null,
@@ -1246,19 +1252,22 @@ describe('runTraderaBrowserListing scripted mode', () => {
     expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
       expect.objectContaining({
         input: expect.objectContaining({
-          traderaCategory: {
+          traderaCategory: expect.objectContaining({
             externalId: '101',
             name: 'Pins & Needles',
             path: 'Collectibles > Pins & Needles',
             segments: ['Collectibles', 'Pins & Needles'],
             internalCategoryId: 'jewellery-pins',
             catalogId: 'catalog-jewellery',
-          },
+            sourceConnectionId: 'connection-1',
+          }),
           traderaCategoryMapping: expect.objectContaining({
             reason: 'mapped_via_parent',
             matchScope: 'catalog_match',
             internalCategoryId: 'anime-pins',
             productCatalogIds: ['catalog-primary', 'catalog-jewellery'],
+            sourceConnectionId: 'connection-1',
+            recoveredFromAnotherConnection: false,
           }),
         }),
       })
@@ -1270,6 +1279,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categoryMappingReason: 'mapped_via_parent',
         categoryMatchScope: 'catalog_match',
         categoryInternalCategoryId: 'anime-pins',
+        categoryMappingSourceConnectionId: 'connection-1',
+        categoryMappingRecoveredFromAnotherConnection: false,
         categoryId: '101',
         categoryPath: 'Collectibles > Pins & Needles',
         categorySource: 'categoryMapper',

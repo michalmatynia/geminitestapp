@@ -4,6 +4,8 @@ import { createRequire } from 'module';
 
 import type { Db, MongoClient, MongoClientOptions } from 'mongodb';
 
+import { resolveEcommerceMongoSourceConfig } from '@/shared/lib/db/utils/mongo';
+
 const DEFAULT_ECOM_MONGODB_URI = 'mongodb://127.0.0.1:27021/ecom_local';
 const DEFAULT_ECOM_MONGODB_DB = 'ecom_local';
 
@@ -101,4 +103,51 @@ export async function getEcommerceExportDb(): Promise<Db> {
   }).connect();
   store.set(uri, client);
   return client.db(dbName);
+}
+
+const connectEcommerceDb = async (uri: string, dbName: string): Promise<Db> => {
+  const store = getClientStore();
+  const cached = store.get(uri);
+  if (cached !== undefined) return cached.db(dbName);
+  const { MongoClient } = getMongoClientCtor();
+  const client = await new MongoClient(uri, {
+    maxPoolSize: 5,
+    serverSelectionTimeoutMS: 3_000,
+    connectTimeoutMS: 3_000,
+  }).connect();
+  store.set(uri, client);
+  return client.db(dbName);
+};
+
+export async function getAllEcommerceExportDbsForCleanup(): Promise<Db[]> {
+  // Use resolveEcommerceMongoSourceConfig (shared util) which has all env-var fallbacks,
+  // including PRODUCTS_MONGODB_CLOUD_URI as a last-resort for the cloud source.
+  const localConfig = resolveEcommerceMongoSourceConfig('local');
+  const cloudConfig = resolveEcommerceMongoSourceConfig('cloud');
+
+  // Deduplicate by URI — active source is always included.
+  const activeConfig = resolveEcommerceMongoConfig();
+  const pairsByUri = new Map<string, string>();
+  pairsByUri.set(activeConfig.uri, activeConfig.dbName);
+
+  if (localConfig.configured && localConfig.uri !== null) {
+    const dbName = localConfig.dbName ?? getDatabaseNameFromMongoUri(localConfig.uri) ?? DEFAULT_ECOM_MONGODB_DB;
+    if (!pairsByUri.has(localConfig.uri)) pairsByUri.set(localConfig.uri, dbName);
+  }
+  if (cloudConfig.configured && cloudConfig.uri !== null) {
+    const dbName = cloudConfig.dbName ?? getDatabaseNameFromMongoUri(cloudConfig.uri) ?? DEFAULT_ECOM_MONGODB_DB;
+    if (!pairsByUri.has(cloudConfig.uri)) pairsByUri.set(cloudConfig.uri, dbName);
+  }
+
+  if (pairsByUri.size === 1) {
+    // Only one distinct URI — reuse the already-cached active connection.
+    return [await getEcommerceExportDb()];
+  }
+
+  const results = await Promise.allSettled(
+    Array.from(pairsByUri.entries()).map(([uri, dbName]) => connectEcommerceDb(uri, dbName))
+  );
+  return results
+    .filter((r): r is PromiseFulfilledResult<Db> => r.status === 'fulfilled')
+    .map((r) => r.value);
 }

@@ -367,6 +367,7 @@ const buildTraderaScriptInput = async ({
       connection,
     });
   const mappedCategory = categoryMapping.mapping;
+  const mappedCategorySourceConnectionId = mappedCategory?.sourceConnectionId ?? null;
   const shippingGroup = shippingGroupResolution.shippingGroup;
   const duplicateSearchTerms = buildDuplicateSearchTerms([title]);
   const username = toTrimmedString(connection.username);
@@ -428,6 +429,7 @@ const buildTraderaScriptInput = async ({
             segments: mappedCategory.pathSegments,
             internalCategoryId: mappedCategory.internalCategoryId,
             catalogId: mappedCategory.catalogId,
+            sourceConnectionId: mappedCategory.sourceConnectionId,
           },
         }
       : {}),
@@ -439,6 +441,10 @@ const buildTraderaScriptInput = async ({
       matchingMappingCount: categoryMapping.matchingMappingCount,
       validMappingCount: categoryMapping.validMappingCount,
       catalogMatchedMappingCount: categoryMapping.catalogMatchedMappingCount,
+      sourceConnectionId: mappedCategorySourceConnectionId,
+      recoveredFromAnotherConnection:
+        mappedCategorySourceConnectionId !== null &&
+        mappedCategorySourceConnectionId !== connection.id,
     },
     traderaShipping: {
       shippingGroupId: shippingGroupResolution.shippingGroupId,
@@ -504,6 +510,12 @@ const buildSuccessMetadata = ({
   const categoryMatchScope = toTrimmedString(traderaCategoryMapping['matchScope']) || null;
   const categoryInternalCategoryId =
     toTrimmedString(traderaCategoryMapping['internalCategoryId']) || null;
+  const categoryMappingSourceConnectionId =
+    toTrimmedString(traderaCategoryMapping['sourceConnectionId']) || null;
+  const categoryMappingRecoveredFromAnotherConnection =
+    typeof traderaCategoryMapping['recoveredFromAnotherConnection'] === 'boolean'
+      ? traderaCategoryMapping['recoveredFromAnotherConnection']
+      : null;
   const shippingCondition = toTrimmedString(traderaShipping['shippingCondition']) || null;
   const shippingGroupId = toTrimmedString(traderaShipping['shippingGroupId']) || null;
   const shippingGroupName = toTrimmedString(traderaShipping['shippingGroupName']) || null;
@@ -574,6 +586,8 @@ const buildSuccessMetadata = ({
       categoryMappingReason,
       categoryMatchScope,
       categoryInternalCategoryId,
+      categoryMappingSourceConnectionId,
+      categoryMappingRecoveredFromAnotherConnection,
       shippingGroupId,
       shippingGroupName,
       shippingGroupSource,

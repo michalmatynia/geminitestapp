@@ -98,6 +98,7 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: [param('id'), 'duplicate'], loader: () => import('../[id]/duplicate/route-handler') },
   { pattern: [param('id'), 'images', 'base64'], loader: () => import('../[id]/images/base64/route-handler') },
   { pattern: [param('id'), 'images', 'link-to-file'], loader: () => import('../[id]/images/link-to-file/route-handler') },
+  { pattern: [param('id'), 'images', 'upload-to-fastcomet'], loader: () => import('../[id]/images/upload-to-fastcomet/route-handler') },
   { pattern: [param('id'), 'images', param('imageFileId')], loader: () => import('../[id]/images/[imageFileId]/route-handler') },
   { pattern: [param('id'), 'scans'], loader: () => import('../[id]/scans/route-handler') },
   { pattern: [param('id'), 'studio'], loader: () => import('../[id]/studio/route-handler') },

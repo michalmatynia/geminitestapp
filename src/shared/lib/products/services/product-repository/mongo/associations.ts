@@ -44,7 +44,7 @@ const toOptionalImageFileText = (value: string | null | undefined): string | und
 const isProductImageStorageProvider = (
   value: unknown
 ): value is NonNullable<ImageFile['storageProvider']> =>
-  value === 'local' || value === 's3' || value === 'imagekit';
+  value === 'local' || value === 's3' || value === 'imagekit' || value === 'fastcomet';
 
 const buildProductImageFileSnapshot = (file: ImageFile): ProductImageFileSnapshot => {
   const publicUrl = toOptionalImageFileText(file.publicUrl);

@@ -116,4 +116,56 @@ describe('ProductImageManagerUIContext', () => {
     expect(handleSlotFileSelect).toHaveBeenCalledWith(imageFile, 0);
     expect(setImageLinkAt).not.toHaveBeenCalled();
   });
+
+  it('uploads existing image slots to FastComet through the product route', async () => {
+    const imageFile = {
+      id: 'image-file-1',
+      filepath: 'https://sparksofsindri.com/uploads/products/SKU/photo.webp',
+      filename: 'photo.webp',
+      metadata: { storageSource: 'fastcomet' },
+      storageProvider: 'fastcomet' as const,
+    };
+    const handleSlotFileSelect = vi.fn();
+    mocks.apiPost.mockResolvedValueOnce({ imageFile, status: 'ok' });
+    const controller = buildController({
+      handleSlotFileSelect,
+      imageSlots: [
+        {
+          type: 'existing',
+          data: {
+            id: 'image-file-1',
+            filepath: '/uploads/products/SKU/photo.webp',
+            filename: 'photo.webp',
+            storageProvider: 'local',
+          },
+          previewUrl: '/uploads/products/SKU/photo.webp',
+          slotId: 'slot-1',
+        },
+      ],
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <ProductImageManagerUIProvider
+        externalBaseUrl='http://localhost'
+        explicitController={controller}
+        productId='product-1'
+      >
+        {children}
+      </ProductImageManagerUIProvider>
+    );
+
+    const { result } = renderHook(() => useProductImageManagerUIActions(), { wrapper });
+
+    await act(async () => {
+      await result.current.uploadSlotToFastComet(0);
+    });
+
+    expect(mocks.apiPost).toHaveBeenCalledWith(
+      '/api/v2/products/product-1/images/upload-to-fastcomet',
+      {
+        imageFileId: 'image-file-1',
+        imageSlotIndex: 0,
+      }
+    );
+    expect(handleSlotFileSelect).toHaveBeenCalledWith(imageFile, 0);
+  });
 });

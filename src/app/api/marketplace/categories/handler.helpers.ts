@@ -6,18 +6,24 @@ import {
   optionalBooleanQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { normalizeIntegrationSlug, TRADERA_BROWSER_INTEGRATION_SLUG } from '@/shared/lib/integration-slugs';
 
 const marketplaceCategoriesQuerySchema = z.object({
   connectionId: optionalTrimmedQueryString(),
+  marketplace: optionalTrimmedQueryString(),
   tree: optionalBooleanQuerySchema().default(false),
 });
 
 export type MarketplaceCategoriesQuery = {
-  connectionId: string;
+  connectionId: string | null;
+  marketplace: string | null;
   tree: boolean;
 };
 
-type CategoryListRepository = Pick<ExternalCategoryRepository, 'listByConnection' | 'getTreeByConnection'>;
+type CategoryListRepository = Pick<
+  ExternalCategoryRepository,
+  'listByConnection' | 'getTreeByConnection' | 'listByMarketplace' | 'getTreeByMarketplace'
+>;
 
 export const parseMarketplaceCategoriesQuery = (
   rawQuery: unknown
@@ -29,13 +35,18 @@ export const parseMarketplaceCategoriesQuery = (
     });
   }
 
-  const { connectionId, tree } = query.data;
-  if (!connectionId) {
+  const { connectionId, marketplace, tree } = query.data;
+  const normalizedMarketplace = normalizeIntegrationSlug(marketplace);
+  const marketplaceScope =
+    normalizedMarketplace === TRADERA_BROWSER_INTEGRATION_SLUG ? normalizedMarketplace : null;
+
+  if (!connectionId && !marketplaceScope) {
     throw badRequestError('connectionId is required');
   }
 
   return {
-    connectionId,
+    connectionId: connectionId ?? null,
+    marketplace: marketplaceScope,
     tree,
   };
 };
@@ -44,5 +55,17 @@ export const listMarketplaceCategories = (
   repo: CategoryListRepository,
   query: MarketplaceCategoriesQuery
 ) => {
-  return query.tree ? repo.getTreeByConnection(query.connectionId) : repo.listByConnection(query.connectionId);
+  if (query.marketplace === TRADERA_BROWSER_INTEGRATION_SLUG) {
+    return query.tree
+      ? repo.getTreeByMarketplace(query.marketplace)
+      : repo.listByMarketplace(query.marketplace);
+  }
+
+  if (!query.connectionId) {
+    throw badRequestError('connectionId is required');
+  }
+
+  return query.tree
+    ? repo.getTreeByConnection(query.connectionId)
+    : repo.listByConnection(query.connectionId);
 };

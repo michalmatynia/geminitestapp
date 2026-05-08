@@ -5,6 +5,8 @@ import { ObjectId, type Filter } from 'mongodb';
 import type { ExternalCategory, ExternalCategoryWithChildren, ExternalCategorySyncInput, BaseCategory } from '@/shared/contracts/integrations/listings';
 import type { ExternalCategoryRepository } from '@/shared/contracts/integrations/repositories';
 import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
+import { INTEGRATION_COLLECTION, INTEGRATION_CONNECTION_COLLECTION } from '@/shared/lib/integration-repository/common';
+import { normalizeIntegrationSlug, TRADERA_BROWSER_INTEGRATION_SLUG } from '@/shared/lib/integration-slugs';
 
 function buildCategoryPath(categoryId: string, categoriesById: Map<string, BaseCategory>): string {
   const parts: string[] = [];
@@ -72,6 +74,18 @@ type MongoExternalCategoryDoc = {
   updatedAt: Date;
 };
 
+type MongoIntegrationDoc = {
+  _id: ObjectId | string;
+  id?: string | null;
+  slug?: string | null;
+};
+
+type MongoIntegrationConnectionDoc = {
+  _id: ObjectId | string;
+  id?: string | null;
+  integrationId: string;
+};
+
 const EXTERNAL_CATEGORY_COLLECTION = 'external_categories';
 let mongoExternalCategoryIndexesReady: Promise<void> | null = null;
 
@@ -114,11 +128,102 @@ const toMongoRecord = (doc: MongoExternalCategoryDoc): ExternalCategory => ({
   updatedAt: doc.updatedAt.toISOString(),
 });
 
+const compareCategoryFreshness = (
+  left: MongoExternalCategoryDoc,
+  right: MongoExternalCategoryDoc
+): number => {
+  const leftFetchedAt = left.fetchedAt?.getTime?.() ?? 0;
+  const rightFetchedAt = right.fetchedAt?.getTime?.() ?? 0;
+  if (leftFetchedAt !== rightFetchedAt) return leftFetchedAt - rightFetchedAt;
+
+  const leftUpdatedAt = left.updatedAt?.getTime?.() ?? 0;
+  const rightUpdatedAt = right.updatedAt?.getTime?.() ?? 0;
+  return leftUpdatedAt - rightUpdatedAt;
+};
+
+const dedupeCategoriesByExternalId = (
+  records: MongoExternalCategoryDoc[]
+): MongoExternalCategoryDoc[] => {
+  const byExternalId = new Map<string, MongoExternalCategoryDoc>();
+
+  for (const record of records) {
+    const key = record.externalId.trim();
+    if (!key) continue;
+
+    const current = byExternalId.get(key);
+    if (!current || compareCategoryFreshness(record, current) > 0) {
+      byExternalId.set(key, record);
+    }
+  }
+
+  return Array.from(byExternalId.values()).sort((left, right) => {
+    if (left.depth !== right.depth) return left.depth - right.depth;
+    return left.name.localeCompare(right.name);
+  });
+};
+
 const buildMongoIdFilter = (id: string): Filter<MongoExternalCategoryDoc> => {
   if (ObjectId.isValid(id)) {
     return { $or: [{ _id: id }, { _id: new ObjectId(id) }] } as Filter<MongoExternalCategoryDoc>;
   }
   return { _id: id } as Filter<MongoExternalCategoryDoc>;
+};
+
+const toDocumentIdCandidates = (id: string): Array<string | ObjectId> => {
+  if (ObjectId.isValid(id) && id.length === 24) {
+    return [id, new ObjectId(id)];
+  }
+  return [id];
+};
+
+export const loadMarketplaceCategoryConnectionIds = async (
+  marketplaceSlug: string
+): Promise<string[]> => {
+  const normalizedSlug = normalizeIntegrationSlug(marketplaceSlug);
+  if (normalizedSlug !== TRADERA_BROWSER_INTEGRATION_SLUG) {
+    return [];
+  }
+
+  const db = await getMongoDb();
+  const integrations = await db
+    .collection<MongoIntegrationDoc>(INTEGRATION_COLLECTION)
+    .find({ slug: normalizedSlug }, { projection: { _id: 1, id: 1 } })
+    .toArray();
+
+  const integrationIds = [
+    ...new Set(
+      integrations.flatMap((integration) => {
+        const ids = [integration._id.toString()];
+        const explicitId = integration.id?.trim();
+        if (explicitId) ids.push(explicitId);
+        return ids;
+      })
+    ),
+  ];
+
+  if (integrationIds.length === 0) {
+    return [];
+  }
+
+  const integrationIdCandidates = integrationIds.flatMap(toDocumentIdCandidates);
+  const connections = await db
+    .collection<MongoIntegrationConnectionDoc>(INTEGRATION_CONNECTION_COLLECTION)
+    .find(
+      { integrationId: { $in: integrationIdCandidates } } as Filter<MongoIntegrationConnectionDoc>,
+      { projection: { _id: 1, id: 1 } }
+    )
+    .toArray();
+
+  return [
+    ...new Set(
+      connections.flatMap((connection) => {
+        const ids = [connection._id.toString()];
+        const explicitId = connection.id?.trim();
+        if (explicitId) ids.push(explicitId);
+        return ids;
+      })
+    ),
+  ];
 };
 
 export function getExternalCategoryRepository(): ExternalCategoryRepository {
@@ -132,6 +237,25 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
       .toArray();
 
     return records.map((record: MongoExternalCategoryDoc) => toMongoRecord(record));
+  };
+
+  const listByMarketplace = async (marketplaceSlug: string): Promise<ExternalCategory[]> => {
+    await ensureMongoExternalCategoryIndexes();
+    const connectionIds = await loadMarketplaceCategoryConnectionIds(marketplaceSlug);
+    if (connectionIds.length === 0) {
+      return [];
+    }
+
+    const db = await getMongoDb();
+    const records = await db
+      .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
+      .find({ connectionId: { $in: connectionIds } } as Filter<MongoExternalCategoryDoc>)
+      .sort({ depth: 1, name: 1 })
+      .toArray();
+
+    return dedupeCategoriesByExternalId(records).map((record: MongoExternalCategoryDoc) =>
+      toMongoRecord(record)
+    );
   };
 
   return {
@@ -204,6 +328,13 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
 
     async getTreeByConnection(connectionId: string): Promise<ExternalCategoryWithChildren[]> {
       const categories = await listByConnection(connectionId);
+      return buildTree(categories, null);
+    },
+
+    listByMarketplace,
+
+    async getTreeByMarketplace(marketplaceSlug: string): Promise<ExternalCategoryWithChildren[]> {
+      const categories = await listByMarketplace(marketplaceSlug);
       return buildTree(categories, null);
     },
 

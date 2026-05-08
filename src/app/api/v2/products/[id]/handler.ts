@@ -6,6 +6,7 @@ import {
   CachedProductService,
   productService,
 } from '@/features/products/server';
+import { deleteProductFromEcommerceExport } from '@/features/integrations/server';
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
 import { productPatchInputSchema, productUpdateInputSchema } from '@/shared/contracts/products/io';
 import { type ProductPatchInput, type ProductRecord, type ProductWithImages } from '@/shared/contracts/products';
@@ -21,21 +22,23 @@ export const getQuerySchema = z.object({
   fresh: optionalBooleanQuerySchema().default(false),
 });
 
-const shouldLogTiming = () => env.DEBUG_API_TIMING;
+const shouldLogTiming = (): boolean => env.DEBUG_API_TIMING;
 
-const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
-  const parts = Object.entries(entries)
+type TimingEntries = Map<string, number>;
+
+const buildServerTiming = (entries: TimingEntries): string => {
+  const parts = Array.from(entries.entries())
     .filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)
-    .map(([name, value]) => `${name};dur=${Math.round(value as number)}`);
+    .map(([name, value]) => `${name};dur=${Math.round(value)}`);
   return parts.join(', ');
 };
 
 const attachTimingHeaders = (
   response: Response,
-  entries: Record<string, number | null | undefined>
+  entries: TimingEntries
 ): void => {
   const value = buildServerTiming(entries);
-  if (value) {
+  if (value.length > 0) {
     response.headers.set('Server-Timing', value);
   }
 };
@@ -54,6 +57,144 @@ const isLikelyPayloadTooLarge = (error: unknown): boolean => {
 const isJsonRequest = (req: NextRequest): boolean => {
   const contentType = req.headers.get('content-type')?.toLowerCase() ?? '';
   return contentType.includes('application/json') || contentType.includes('+json');
+};
+
+type ProductMutationOptions = { userId?: string };
+type ProductUpdatePayload = z.infer<typeof productUpdateInputSchema>;
+type PutPayloadResult =
+  | {
+      type: 'payload';
+      updatePayload: FormData | ProductUpdatePayload;
+      validatedPayload: ProductUpdatePayload;
+    }
+  | { type: 'response'; response: Response };
+
+const buildMutationOptions = (_ctx: ApiHandlerContext): ProductMutationOptions =>
+  typeof _ctx.userId === 'string' && _ctx.userId.trim().length > 0
+    ? { userId: _ctx.userId }
+    : {};
+
+const logProductTiming = async (
+  message: string,
+  productId: string,
+  timings: TimingEntries
+): Promise<void> => {
+  if (!shouldLogTiming()) return;
+  await logSystemEvent({
+    level: 'info',
+    message,
+    context: { productId, ...Object.fromEntries(timings) },
+  });
+};
+
+const finishValidationFailure = async (
+  response: Response,
+  productId: string,
+  timings: TimingEntries,
+  totalStart: number
+): Promise<Response> => {
+  timings.set('total', performance.now() - totalStart);
+  attachTimingHeaders(response, timings);
+  await logProductTiming('[timing] products.[id].PUT validation-failed', productId, timings);
+  return response;
+};
+
+const resolveJsonPutPayload = async (
+  req: NextRequest,
+  productId: string,
+  timings: TimingEntries,
+  totalStart: number
+): Promise<PutPayloadResult> => {
+  const jsonStart = performance.now();
+  const parsed = await parseJsonBody(req, productUpdateInputSchema, {
+    logPrefix: 'products.PUT',
+  });
+  const jsonDuration = performance.now() - jsonStart;
+  timings.set('jsonBody', jsonDuration);
+  timings.set('validation', jsonDuration);
+
+  if (!parsed.ok) {
+    return {
+      type: 'response',
+      response: await finishValidationFailure(parsed.response, productId, timings, totalStart),
+    };
+  }
+
+  return { type: 'payload', validatedPayload: parsed.data, updatePayload: parsed.data };
+};
+
+const readPutFormData = async (
+  req: NextRequest,
+  productId: string,
+  timings: TimingEntries,
+  totalStart: number
+): Promise<FormData> => {
+  const formDataStart = performance.now();
+  try {
+    const formData = await req.formData();
+    timings.set('formData', performance.now() - formDataStart);
+    return formData;
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    timings.set('formData', performance.now() - formDataStart);
+    timings.set('total', performance.now() - totalStart);
+    if (isLikelyPayloadTooLarge(error)) {
+      throw payloadTooLargeError(
+        'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.',
+        { productId }
+      );
+    }
+    throw badRequestError('Invalid form data payload', {
+      productId,
+      error,
+    });
+  }
+};
+
+const resolveFormPutPayload = async (
+  req: NextRequest,
+  productId: string,
+  timings: TimingEntries,
+  totalStart: number
+): Promise<PutPayloadResult> => {
+  const formData = await readPutFormData(req, productId, timings, totalStart);
+  const validationStart = performance.now();
+  const validation = await validateProductUpdateMiddleware(formData);
+  timings.set('validation', performance.now() - validationStart);
+
+  if (!validation.success) {
+    return {
+      type: 'response',
+      response: await finishValidationFailure(validation.response, productId, timings, totalStart),
+    };
+  }
+
+  return {
+    type: 'payload',
+    validatedPayload: (validation.data ?? {}) as ProductUpdatePayload,
+    updatePayload: formData,
+  };
+};
+
+const updateProductForRoute = async (
+  id: string,
+  payload: FormData | ProductUpdatePayload | ProductPatchInput,
+  options: ProductMutationOptions
+): Promise<ProductWithImages | null> => productService.updateProduct(id, payload, options);
+
+const cleanupDeletedProductEcommerceExport = async (productId: string): Promise<void> => {
+  try {
+    await deleteProductFromEcommerceExport(productId);
+  } catch (error) {
+    void logSystemEvent({
+      level: 'warn',
+      message: 'products.DELETE: failed to remove ecommerce export record',
+      context: {
+        productId,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    });
+  }
 };
 
 /**
@@ -88,95 +229,27 @@ export async function putHandler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const timings: Record<string, number | null | undefined> = {};
+  const timings: TimingEntries = new Map();
   const totalStart = performance.now();
   const id = params.id;
   const updateStart = performance.now();
-  const options = _ctx.userId ? { userId: _ctx.userId } : {};
-  let validatedPayload: z.infer<typeof productUpdateInputSchema>;
-  let updatePayload: FormData | z.infer<typeof productUpdateInputSchema>;
+  const options = buildMutationOptions(_ctx);
+  const payloadResult = isJsonRequest(req)
+    ? await resolveJsonPutPayload(req, id, timings, totalStart)
+    : await resolveFormPutPayload(req, id, timings, totalStart);
 
-  if (isJsonRequest(req)) {
-    const jsonStart = performance.now();
-    const parsed = await parseJsonBody(req, productUpdateInputSchema, {
-      logPrefix: 'products.PUT',
-    });
-    timings['jsonBody'] = performance.now() - jsonStart;
-    timings['validation'] = timings['jsonBody'];
+  if (payloadResult.type === 'response') return payloadResult.response;
 
-    if (!parsed.ok) {
-      timings['total'] = performance.now() - totalStart;
-      attachTimingHeaders(parsed.response, timings);
-      if (shouldLogTiming()) {
-        await logSystemEvent({
-          level: 'info',
-          message: '[timing] products.[id].PUT validation-failed',
-          context: { productId: id, ...timings },
-        });
-      }
-      return parsed.response;
-    }
+  const product = await updateProductForRoute(id, payloadResult.updatePayload, options);
+  timings.set('serviceUpdate', performance.now() - updateStart);
+  timings.set('validatedFields', Object.keys(payloadResult.validatedPayload).length);
 
-    validatedPayload = parsed.data;
-    updatePayload = parsed.data;
-  } else {
-    let formData: FormData;
-    const formDataStart = performance.now();
-    try {
-      formData = await req.formData();
-      timings['formData'] = performance.now() - formDataStart;
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      timings['formData'] = performance.now() - formDataStart;
-      timings['total'] = performance.now() - totalStart;
-      if (isLikelyPayloadTooLarge(error)) {
-        throw payloadTooLargeError(
-          'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.',
-          { productId: id }
-        );
-      }
-      throw badRequestError('Invalid form data payload', {
-        productId: id,
-        error,
-      });
-    }
-
-    const validationStart = performance.now();
-    const validation = await validateProductUpdateMiddleware(formData);
-    timings['validation'] = performance.now() - validationStart;
-    if (!validation.success) {
-      timings['total'] = performance.now() - totalStart;
-      attachTimingHeaders(validation.response, timings);
-      if (shouldLogTiming()) {
-        await logSystemEvent({
-          level: 'info',
-          message: '[timing] products.[id].PUT validation-failed',
-          context: { productId: id, ...timings },
-        });
-      }
-      return validation.response;
-    }
-
-    validatedPayload = (validation.data ?? {}) as z.infer<typeof productUpdateInputSchema>;
-    updatePayload = formData;
-  }
-
-  const product: ProductWithImages | null = await productService.updateProduct(id, updatePayload, options);
-  timings['serviceUpdate'] = performance.now() - updateStart;
-  timings['validatedFields'] = Object.keys(validatedPayload).length;
-
-  if (!product) {
+  if (product === null) {
     throw notFoundError('Product not found', { productId: id });
   }
   CachedProductService.invalidateProduct(id);
-  timings['total'] = performance.now() - totalStart;
-  if (shouldLogTiming()) {
-    await logSystemEvent({
-      level: 'info',
-      message: '[timing] products.[id].PUT',
-      context: { productId: id, ...timings },
-    });
-  }
+  timings.set('total', performance.now() - totalStart);
+  await logProductTiming('[timing] products.[id].PUT', id, timings);
   const response = NextResponse.json(product);
   attachTimingHeaders(response, timings);
   return response;
@@ -205,14 +278,9 @@ export async function patchHandler(
   if (data.price !== undefined) updateData.price = data.price;
   if (data.stock !== undefined) updateData.stock = data.stock;
 
-  const options = _ctx.userId ? { userId: _ctx.userId } : {};
-  const product: ProductWithImages | null = await productService.updateProduct(
-    id,
-    updateData,
-    options
-  );
+  const product = await updateProductForRoute(id, updateData, buildMutationOptions(_ctx));
 
-  if (!product) {
+  if (product === null) {
     throw notFoundError('Product not found', { productId: id });
   }
   CachedProductService.invalidateProduct(id);
@@ -230,12 +298,15 @@ export async function deleteHandler(
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  const options = _ctx.userId ? { userId: _ctx.userId } : {};
-  const product: ProductRecord | null = await productService.deleteProduct(id, options);
+  const product: ProductRecord | null = await productService.deleteProduct(
+    id,
+    buildMutationOptions(_ctx)
+  );
 
-  if (!product) {
+  if (product === null) {
     throw notFoundError('Product not found', { productId: id });
   }
+  await cleanupDeletedProductEcommerceExport(id);
   CachedProductService.invalidateProduct(id);
   return new Response(null, { status: 204 });
 }

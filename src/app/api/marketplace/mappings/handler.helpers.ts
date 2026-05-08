@@ -2,6 +2,7 @@ import type { CategoryMapping, CategoryMappingCreateInput } from '@/shared/contr
 import type { CategoryMappingRepository } from '@/shared/contracts/integrations/repositories';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { normalizeIntegrationSlug, TRADERA_BROWSER_INTEGRATION_SLUG } from '@/shared/lib/integration-slugs';
 
 import {
   marketplaceConnectionQuerySchema,
@@ -12,10 +13,12 @@ import {
 
 const marketplaceMappingsQuerySchema = marketplaceConnectionQuerySchema.extend({
   catalogId: optionalTrimmedQueryString(),
+  marketplace: optionalTrimmedQueryString(),
 });
 
 export type MarketplaceMappingsListQuery = {
-  connectionId: string;
+  connectionId: string | null;
+  marketplace: string | null;
   catalogId?: string | undefined;
 };
 
@@ -50,13 +53,18 @@ export const parseMarketplaceMappingsQuery = (
     });
   }
 
-  const { connectionId, catalogId } = query.data;
-  if (!connectionId) {
+  const { connectionId, catalogId, marketplace } = query.data;
+  const normalizedMarketplace = normalizeIntegrationSlug(marketplace);
+  const marketplaceScope =
+    normalizedMarketplace === TRADERA_BROWSER_INTEGRATION_SLUG ? normalizedMarketplace : null;
+
+  if (!connectionId && !marketplaceScope) {
     throw badRequestError('connectionId is required');
   }
 
   return {
-    connectionId,
+    connectionId: connectionId ?? null,
+    marketplace: marketplaceScope,
     ...(catalogId ? { catalogId } : {}),
   };
 };

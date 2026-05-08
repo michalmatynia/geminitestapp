@@ -136,7 +136,10 @@ export function CategoryMapperProvider({
     [internalCategories]
   );
 
-  const externalCategoriesQuery = useExternalCategories(connectionId);
+  const externalCategoriesQuery = useExternalCategories(
+    connectionId,
+    isTraderaConnection ? 'tradera' : null
+  );
   const externalCategories = useMemo(
     () => externalCategoriesQuery.data ?? [],
     [externalCategoriesQuery.data]

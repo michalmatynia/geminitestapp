@@ -25,6 +25,8 @@ export type ExternalCategoryRepository = {
   syncFromBase: (connectionId: string, categories: BaseCategory[]) => Promise<number>;
   listByConnection: (connectionId: string) => Promise<ExternalCategory[]>;
   getTreeByConnection: (connectionId: string) => Promise<ExternalCategoryWithChildren[]>;
+  listByMarketplace: (marketplaceSlug: string) => Promise<ExternalCategory[]>;
+  getTreeByMarketplace: (marketplaceSlug: string) => Promise<ExternalCategoryWithChildren[]>;
   getById: (id: string) => Promise<ExternalCategory | null>;
   getByExternalId: (
     connectionId: string,
@@ -50,6 +52,10 @@ export type CategoryMappingRepository = {
   ) => Promise<CategoryMappingWithDetails[]>;
   listByConnection: (
     connectionId: string,
+    catalogId?: string
+  ) => Promise<CategoryMappingWithDetails[]>;
+  listByMarketplace: (
+    marketplaceSlug: string,
     catalogId?: string
   ) => Promise<CategoryMappingWithDetails[]>;
   getByExternalCategory: (

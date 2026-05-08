@@ -36,8 +36,9 @@ const upsertEcommerceProductListing = async (productId: string): Promise<void> =
   try {
     const db = await getMongoDb();
     const now = new Date();
+    // Query by _id (primary key) to avoid duplicate key conflicts on concurrent upserts
     await db.collection(PRODUCT_LISTINGS_COLLECTION).updateOne(
-      { productId, integrationId: ECOMMERCE_EXPORT_INTEGRATION_SLUG },
+      { _id: `ecom:${productId}` as unknown },
       {
         $set: {
           status: 'active',
@@ -46,7 +47,6 @@ const upsertEcommerceProductListing = async (productId: string): Promise<void> =
           updatedAt: now,
         },
         $setOnInsert: {
-          _id: `ecom:${productId}`,
           productId,
           externalListingId: null,
           inventoryId: null,
@@ -64,25 +64,36 @@ const upsertEcommerceProductListing = async (productId: string): Promise<void> =
   }
 };
 
+const tryCreateIndex = async (
+  db: Db,
+  collection: string,
+  keys: Record<string, unknown>,
+  options: Record<string, unknown>
+): Promise<void> => {
+  try {
+    await db.collection(collection).createIndex(keys as never, options as never);
+  } catch (error) {
+    void logSystemEvent({
+      level: 'warn',
+      message: 'ecommerce-product-export: createIndex skipped (already exists or conflict)',
+      context: { collection, options, error: error instanceof Error ? error.message : String(error) },
+    });
+  }
+};
+
+let ecommerceIndexesEnsured: Promise<void> | null = null;
+
 const ensureEcommerceExportIndexes = async (db: Db): Promise<void> => {
-  await Promise.all([
-    db.collection(ECOM_PRODUCTS_COLLECTION).createIndex(
-      { sourceProductId: 1 },
-      { background: true, unique: true, name: 'source_product_id_unique' }
-    ),
-    db.collection(ECOM_PRODUCTS_COLLECTION).createIndex(
-      { slug: 1 },
-      { background: true, name: 'slug' }
-    ),
-    db.collection(ECOM_PRODUCTS_COLLECTION).createIndex(
-      { catalogId: 1, published: 1, archived: 1, stock: 1, updatedAt: -1 },
-      { background: true, name: 'catalog_active_updated' }
-    ),
-    db.collection(ECOM_CATEGORIES_COLLECTION).createIndex(
-      { catalogId: 1, collectionSlug: 1, name: 1 },
-      { background: true, name: 'catalog_collection_name' }
-    ),
-  ]);
+  if (ecommerceIndexesEnsured !== null) {
+    return ecommerceIndexesEnsured;
+  }
+  ecommerceIndexesEnsured = Promise.all([
+    tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { sourceProductId: 1 }, { unique: true, name: 'source_product_id_unique' }),
+    tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { slug: 1 }, { name: 'slug' }),
+    tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { catalogId: 1, published: 1, archived: 1, stock: 1, updatedAt: -1 }, { name: 'catalog_active_updated' }),
+    tryCreateIndex(db, ECOM_CATEGORIES_COLLECTION, { catalogId: 1, collectionSlug: 1, name: 1 }, { name: 'catalog_collection_name' }),
+  ]).then(() => undefined);
+  return ecommerceIndexesEnsured;
 };
 
 const persistEcommerceCategory = async (
@@ -120,6 +131,48 @@ const toExportResponse = (
   slug: document.slug,
   exportedAt: document.exportedAt,
 });
+
+export type EcommerceProductDeleteResponse = {
+  success: true;
+  productId: string;
+  ecommerceDeletedCount: number;
+  listingDeletedCount: number;
+};
+
+export const deleteProductFromEcommerceExport = async (
+  productId: string
+): Promise<EcommerceProductDeleteResponse> => {
+  const normalizedProductId = trimProductId(productId);
+  if (normalizedProductId.length === 0) {
+    return {
+      success: true,
+      productId: normalizedProductId,
+      ecommerceDeletedCount: 0,
+      listingDeletedCount: 0,
+    };
+  }
+
+  const [ecommerceDb, productsDb] = await Promise.all([
+    getEcommerceExportDb(),
+    getMongoDb(),
+  ]);
+  const [ecommerceResult, listingResult] = await Promise.all([
+    ecommerceDb.collection(ECOM_PRODUCTS_COLLECTION).deleteMany({
+      $or: [{ _id: normalizedProductId }, { sourceProductId: normalizedProductId }],
+    }),
+    productsDb.collection(PRODUCT_LISTINGS_COLLECTION).deleteMany({
+      productId: normalizedProductId,
+      integrationId: ECOMMERCE_EXPORT_INTEGRATION_SLUG,
+    }),
+  ]);
+
+  return {
+    success: true,
+    productId: normalizedProductId,
+    ecommerceDeletedCount: ecommerceResult.deletedCount,
+    listingDeletedCount: listingResult.deletedCount,
+  };
+};
 
 export const exportProductToEcommerce = async (
   productId: string

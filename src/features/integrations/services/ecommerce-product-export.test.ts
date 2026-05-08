@@ -1,8 +1,43 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
+const {
+  ecommerceCollectionMock,
+  ecommerceDeleteManyMock,
+  ecommerceDbMock,
+  getEcommerceExportDbMock,
+  getProductsMongoDbMock,
+  listingCollectionMock,
+  listingDeleteManyMock,
+  productsDbMock,
+} = vi.hoisted(() => ({
+  ecommerceDeleteManyMock: vi.fn(),
+  ecommerceCollectionMock: vi.fn(),
+  ecommerceDbMock: {},
+  getEcommerceExportDbMock: vi.fn(),
+  getProductsMongoDbMock: vi.fn(),
+  listingCollectionMock: vi.fn(),
+  listingDeleteManyMock: vi.fn(),
+  productsDbMock: {},
+}));
+
+vi.mock('@/shared/lib/db/product-mongo-client', () => ({
+  getMongoDb: getProductsMongoDbMock,
+}));
+
+vi.mock('@/shared/lib/observability/system-logger', () => ({
+  logSystemEvent: vi.fn(),
+}));
+
+vi.mock('./ecommerce-product-export.config', () => ({
+  ECOM_CATEGORIES_COLLECTION: 'product_categories',
+  ECOM_PRODUCTS_COLLECTION: 'products',
+  getEcommerceExportDb: getEcommerceExportDbMock,
+}));
+
 import { buildEcommerceProductExportDocument } from './ecommerce-product-export.mapper';
+import { deleteProductFromEcommerceExport } from './ecommerce-product-export';
 
 const buildProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
@@ -120,5 +155,41 @@ describe('buildEcommerceProductExportDocument', () => {
     );
 
     expect(document.slug).toBe('fallback-product-product1');
+  });
+});
+
+describe('deleteProductFromEcommerceExport', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    ecommerceCollectionMock.mockReturnValue({ deleteMany: ecommerceDeleteManyMock });
+    listingCollectionMock.mockReturnValue({ deleteMany: listingDeleteManyMock });
+    (ecommerceDbMock as { collection?: typeof ecommerceCollectionMock }).collection =
+      ecommerceCollectionMock;
+    (productsDbMock as { collection?: typeof listingCollectionMock }).collection =
+      listingCollectionMock;
+    getEcommerceExportDbMock.mockResolvedValue(ecommerceDbMock);
+    getProductsMongoDbMock.mockResolvedValue(productsDbMock);
+    ecommerceDeleteManyMock.mockResolvedValue({ deletedCount: 1 });
+    listingDeleteManyMock.mockResolvedValue({ deletedCount: 1 });
+  });
+
+  it('removes exported ecommerce products and their listing badge', async () => {
+    const result = await deleteProductFromEcommerceExport(' product-12345678 ');
+
+    expect(ecommerceCollectionMock).toHaveBeenCalledWith('products');
+    expect(ecommerceDeleteManyMock).toHaveBeenCalledWith({
+      $or: [{ _id: 'product-12345678' }, { sourceProductId: 'product-12345678' }],
+    });
+    expect(listingCollectionMock).toHaveBeenCalledWith('product_listings');
+    expect(listingDeleteManyMock).toHaveBeenCalledWith({
+      productId: 'product-12345678',
+      integrationId: 'ecommerce-export',
+    });
+    expect(result).toEqual({
+      success: true,
+      productId: 'product-12345678',
+      ecommerceDeletedCount: 1,
+      listingDeletedCount: 1,
+    });
   });
 });

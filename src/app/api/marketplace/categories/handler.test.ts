@@ -7,10 +7,14 @@ const {
   getExternalCategoryRepositoryMock,
   listByConnectionMock,
   getTreeByConnectionMock,
+  listByMarketplaceMock,
+  getTreeByMarketplaceMock,
 } = vi.hoisted(() => ({
   getExternalCategoryRepositoryMock: vi.fn(),
   listByConnectionMock: vi.fn(),
   getTreeByConnectionMock: vi.fn(),
+  listByMarketplaceMock: vi.fn(),
+  getTreeByMarketplaceMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -34,6 +38,8 @@ describe('marketplace categories handler', () => {
     getExternalCategoryRepositoryMock.mockReturnValue({
       listByConnection: listByConnectionMock,
       getTreeByConnection: getTreeByConnectionMock,
+      listByMarketplace: listByMarketplaceMock,
+      getTreeByMarketplace: getTreeByMarketplaceMock,
     });
   });
 
@@ -55,6 +61,7 @@ describe('marketplace categories handler', () => {
 
     expect(listByConnectionMock).toHaveBeenCalledWith('conn-1');
     expect(getTreeByConnectionMock).not.toHaveBeenCalled();
+    expect(listByMarketplaceMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual([
       {
         id: 'cat-1',
@@ -84,6 +91,7 @@ describe('marketplace categories handler', () => {
 
     expect(getTreeByConnectionMock).toHaveBeenCalledWith('conn-1');
     expect(listByConnectionMock).not.toHaveBeenCalled();
+    expect(getTreeByMarketplaceMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual([
       {
         id: 'cat-1',
@@ -95,6 +103,34 @@ describe('marketplace categories handler', () => {
     ]);
   });
 
+  it('lists flat Tradera categories by marketplace scope', async () => {
+    listByMarketplaceMock.mockResolvedValue([
+      {
+        id: 'cat-1',
+        connectionId: 'conn-older',
+        externalId: 'external-1',
+        name: 'Category 1',
+      },
+    ]);
+
+    const request = new NextRequest(
+      'http://localhost/api/marketplace/categories?connectionId=conn-newer&marketplace=tradera'
+    );
+
+    const response = await getHandler(request, createContext());
+
+    expect(listByMarketplaceMock).toHaveBeenCalledWith('tradera');
+    expect(listByConnectionMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual([
+      {
+        id: 'cat-1',
+        connectionId: 'conn-older',
+        externalId: 'external-1',
+        name: 'Category 1',
+      },
+    ]);
+  });
+
   it('rejects requests without connectionId', async () => {
     const request = new NextRequest('http://localhost/api/marketplace/categories');
 
@@ -102,5 +138,6 @@ describe('marketplace categories handler', () => {
 
     expect(listByConnectionMock).not.toHaveBeenCalled();
     expect(getTreeByConnectionMock).not.toHaveBeenCalled();
+    expect(listByMarketplaceMock).not.toHaveBeenCalled();
   });
 });

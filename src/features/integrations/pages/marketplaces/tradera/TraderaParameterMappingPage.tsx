@@ -153,7 +153,7 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
     setShowStaleRulesOnly(false);
   }, [selectedConnectionId]);
 
-  const externalCategoriesQuery = useExternalCategories(selectedConnectionId);
+  const externalCategoriesQuery = useExternalCategories(selectedConnectionId, 'tradera');
   const externalCategories = useMemo(
     (): ExternalCategory[] => externalCategoriesQuery.data ?? [],
     [externalCategoriesQuery.data]

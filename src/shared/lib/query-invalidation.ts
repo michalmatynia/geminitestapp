@@ -622,9 +622,14 @@ export const invalidateListingsBadgesAndQueues = async (
 // --- Marketplace ---
 
 export const invalidateMarketplaceCategories = (queryClient: QueryClient, connectionId: string) => {
-  return queryClient.invalidateQueries({
-    queryKey: QUERY_KEYS.integrations.marketplace.categories(connectionId),
-  });
+  return Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.integrations.marketplace.categories(connectionId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.integrations.marketplace.lists(), 'categories'],
+    }),
+  ]);
 };
 
 export const invalidateMarketplaceMappings = (

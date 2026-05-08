@@ -1,50 +1,25 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getExternalCategoryRepository } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { badRequestError } from '@/shared/errors/app-error';
-import {
-  optionalBooleanQuerySchema,
-  optionalTrimmedQueryString,
-} from '@/shared/lib/api/query-schema';
-
-const querySchema = z.object({
-  connectionId: optionalTrimmedQueryString(),
-  tree: optionalBooleanQuerySchema().default(false),
-});
+import { listMarketplaceCategories, parseMarketplaceCategoriesQuery } from './handler.helpers';
 
 /**
  * GET /api/marketplace/categories
- * Lists external categories for a given connection.
+ * Lists external categories for a given connection or supported marketplace.
  * Query params:
- *   - connectionId (required): The integration connection ID
+ *   - connectionId: The integration connection ID
+ *   - marketplace: Supported marketplace scope. Tradera is connection agnostic.
  *   - tree (optional): If "true", returns categories as a hierarchical tree
  */
 export async function getHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const query = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams.entries()));
-  if (!query.success) {
-    throw badRequestError('Invalid marketplace categories query.', {
-      errors: query.error.flatten(),
-    });
-  }
-
-  const { connectionId, tree } = query.data;
-
-  if (!connectionId) {
-    throw badRequestError('connectionId is required');
-  }
-
+  const query = parseMarketplaceCategoriesQuery(
+    Object.fromEntries(request.nextUrl.searchParams.entries())
+  );
   const repo = getExternalCategoryRepository();
-
-  if (tree) {
-    const categories = await repo.getTreeByConnection(connectionId);
-    return NextResponse.json(categories);
-  }
-
-  const categories = await repo.listByConnection(connectionId);
+  const categories = await listMarketplaceCategories(repo, query);
   return NextResponse.json(categories);
 }

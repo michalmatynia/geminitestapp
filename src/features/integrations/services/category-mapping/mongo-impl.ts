@@ -14,7 +14,9 @@ import { type ProductCategory as InternalCategory } from '@/shared/contracts/pro
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { INTEGRATION_CONNECTION_COLLECTION } from '@/shared/lib/integration-repository/common';
+import { TRADERA_BROWSER_INTEGRATION_SLUG, normalizeIntegrationSlug } from '@/shared/lib/integration-slugs';
 
+import { loadMarketplaceCategoryConnectionIds } from '../external-category-repository';
 import {
   type MongoCategoryMappingDoc,
   CATEGORY_MAPPING_COLLECTION,
@@ -246,9 +248,13 @@ const loadCanonicalExternalCategoryRefs = async (
 const listMongoMappingsWithDetails = async ({
   db,
   filter,
+  externalCategoryConnectionIds,
+  useMarketplaceExternalCategories = false,
 }: {
   db: Awaited<ReturnType<typeof getMongoDb>>;
   filter: Filter<MongoCategoryMappingDoc>;
+  externalCategoryConnectionIds?: string[];
+  useMarketplaceExternalCategories?: boolean;
 }): Promise<CategoryMappingWithDetails[]> => {
   const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
   const rawMappings = await collection.find(filter).sort({ createdAt: -1 }).toArray();
@@ -272,13 +278,21 @@ const listMongoMappingsWithDetails = async ({
   const externalCategoryCollection = db.collection<MongoExternalCategoryDoc>(
     EXTERNAL_CATEGORY_COLLECTION
   );
+  const scopedExternalCategoryConnectionIds = [
+    ...new Set(
+      (externalCategoryConnectionIds ?? mappings.map((mapping) => mapping.connectionId)).filter(
+        Boolean
+      )
+    ),
+  ];
   const [externalCategories, internalCategories] = await Promise.all([
     externalCategoryCollection
       .find({
         connectionId: {
-          $in: [...new Set(mappings.map((mapping) => mapping.connectionId).filter(Boolean))],
+          $in: scopedExternalCategoryConnectionIds,
         },
       } as Filter<MongoExternalCategoryDoc>)
+      .sort({ fetchedAt: 1, updatedAt: 1 })
       .toArray(),
     db
       .collection<MongoProductCategoryDoc>(PRODUCT_CATEGORY_COLLECTION)
@@ -306,6 +320,9 @@ const listMongoMappingsWithDetails = async ({
 
     for (const alias of aliases) {
       externalRefs.set(`${category.connectionId}:${alias}`, ref);
+      if (useMarketplaceExternalCategories) {
+        externalRefs.set(`marketplace:${alias}`, ref);
+      }
     }
   }
 
@@ -318,7 +335,11 @@ const listMongoMappingsWithDetails = async ({
 
   return mappings.map((mapping) => {
     const resolvedExternal =
-      externalRefs.get(`${mapping.connectionId}:${mapping.externalCategoryId}`) ?? null;
+      externalRefs.get(`${mapping.connectionId}:${mapping.externalCategoryId}`) ??
+      (useMarketplaceExternalCategories
+        ? externalRefs.get(`marketplace:${mapping.externalCategoryId}`)
+        : null) ??
+      null;
     const externalCategory =
       resolvedExternal?.category ||
       ({
@@ -354,6 +375,26 @@ const listMongoMappingsWithDetails = async ({
           updatedAt: mapping.updatedAt.toISOString(),
         } as InternalCategory),
     };
+  });
+};
+
+const dedupeMarketplaceMappings = (
+  mappings: CategoryMappingWithDetails[]
+): CategoryMappingWithDetails[] => {
+  const byScope = new Map<string, CategoryMappingWithDetails>();
+
+  for (const mapping of mappings) {
+    const key = `${mapping.catalogId}:${mapping.externalCategoryId}`;
+    const current = byScope.get(key);
+    if (!current || Date.parse(mapping.updatedAt ?? '') > Date.parse(current.updatedAt ?? '')) {
+      byScope.set(key, mapping);
+    }
+  }
+
+  return Array.from(byScope.values()).sort((left, right) => {
+    const leftLabel = left.externalCategory.path ?? left.externalCategory.name;
+    const rightLabel = right.externalCategory.path ?? right.externalCategory.name;
+    return leftLabel.localeCompare(rightLabel);
   });
 };
 
@@ -502,6 +543,37 @@ export const mongoCategoryMappingImpl = {
     }
 
     return listMongoMappingsWithDetails({ db, filter });
+  },
+
+  async listByMarketplace(
+    marketplaceSlug: string,
+    catalogId?: string
+  ): Promise<CategoryMappingWithDetails[]> {
+    if (normalizeIntegrationSlug(marketplaceSlug) !== TRADERA_BROWSER_INTEGRATION_SLUG) {
+      return [];
+    }
+
+    const db = await getMongoDb();
+    const connectionIds = await loadMarketplaceCategoryConnectionIds(marketplaceSlug);
+    if (connectionIds.length === 0) {
+      return [];
+    }
+
+    const filter: Filter<MongoCategoryMappingDoc> = {
+      connectionId: { $in: connectionIds },
+    } as Filter<MongoCategoryMappingDoc>;
+    if (catalogId) {
+      filter.catalogId = catalogId;
+    }
+
+    const mappings = await listMongoMappingsWithDetails({
+      db,
+      filter,
+      externalCategoryConnectionIds: connectionIds,
+      useMarketplaceExternalCategories: true,
+    });
+
+    return dedupeMarketplaceMappings(mappings);
   },
 
   async getByExternalCategory(

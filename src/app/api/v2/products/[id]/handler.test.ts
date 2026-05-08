@@ -9,6 +9,7 @@ const {
   validateProductUpdateMiddlewareMock,
   parseJsonBodyMock,
   invalidateProductMock,
+  deleteProductFromEcommerceExportMock,
   logSystemEventMock,
 } = vi.hoisted(() => ({
   updateProductMock: vi.fn(),
@@ -16,6 +17,7 @@ const {
   validateProductUpdateMiddlewareMock: vi.fn(),
   parseJsonBodyMock: vi.fn(),
   invalidateProductMock: vi.fn(),
+  deleteProductFromEcommerceExportMock: vi.fn(),
   logSystemEventMock: vi.fn(),
 }));
 
@@ -28,6 +30,10 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
 
 vi.mock('@/features/products/validations/middleware', () => ({
   validateProductUpdateMiddleware: validateProductUpdateMiddlewareMock,
+}));
+
+vi.mock('@/features/integrations/server', () => ({
+  deleteProductFromEcommerceExport: deleteProductFromEcommerceExportMock,
 }));
 
 vi.mock('@/features/products/server', () => ({
@@ -64,6 +70,13 @@ describe('products/[id] handler cache invalidation', () => {
     parseJsonBodyMock.mockResolvedValue({ ok: true, data: { price: 11.5 } });
     updateProductMock.mockResolvedValue({ id: 'product-1', name_en: 'Updated' });
     deleteProductMock.mockResolvedValue({ id: 'product-1', name_en: 'Deleted' });
+    deleteProductFromEcommerceExportMock.mockResolvedValue({
+      success: true,
+      productId: 'product-1',
+      ecommerceDeletedCount: 1,
+      listingDeletedCount: 1,
+    });
+    logSystemEventMock.mockResolvedValue(undefined);
   });
 
   it('invalidates product cache after successful PUT', async () => {
@@ -148,8 +161,29 @@ describe('products/[id] handler cache invalidation', () => {
     const response = await deleteHandler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(204);
+    expect(deleteProductFromEcommerceExportMock).toHaveBeenCalledWith('product-1');
     expect(invalidateProductMock).toHaveBeenCalledTimes(1);
     expect(invalidateProductMock).toHaveBeenCalledWith('product-1');
+  });
+
+  it('still deletes the product when ecommerce export cleanup fails', async () => {
+    const request = {} as NextRequest;
+    deleteProductFromEcommerceExportMock.mockRejectedValueOnce(new Error('ecom unavailable'));
+
+    const response = await deleteHandler(request, buildContext(), { id: 'product-1' });
+
+    expect(response.status).toBe(204);
+    expect(invalidateProductMock).toHaveBeenCalledWith('product-1');
+    expect(logSystemEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'warn',
+        message: 'products.DELETE: failed to remove ecommerce export record',
+        context: expect.objectContaining({
+          productId: 'product-1',
+          error: 'ecom unavailable',
+        }),
+      })
+    );
   });
 
   it('does not invalidate product cache when PUT fails with not found', async () => {

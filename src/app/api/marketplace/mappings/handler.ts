@@ -1,46 +1,36 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import { categoryMappingCreateInputSchema } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { TRADERA_BROWSER_INTEGRATION_SLUG } from '@/shared/lib/integration-slugs';
 
+import { parseMarketplaceMappingsQuery } from './handler.helpers';
 import { assertCategoryMappingsCanBeSaved } from './validation';
-
-const querySchema = z.object({
-  connectionId: optionalTrimmedQueryString(),
-  catalogId: optionalTrimmedQueryString(),
-});
 
 /**
  * GET /api/marketplace/mappings
- * Lists category mappings for a connection.
+ * Lists category mappings for a connection or supported marketplace.
  * Query params:
- *   - connectionId (required): The integration connection ID
+ *   - connectionId: The integration connection ID
+ *   - marketplace: Supported marketplace scope. Tradera is connection agnostic.
  *   - catalogId (optional): Filter by catalog ID
  */
 export async function getHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const query = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams.entries()));
-  if (!query.success) {
-    throw badRequestError('Invalid marketplace mappings query.', {
-      errors: query.error.flatten(),
-    });
-  }
-
-  const { connectionId, catalogId } = query.data;
-
-  if (!connectionId) {
-    throw badRequestError('connectionId is required');
-  }
+  const query = parseMarketplaceMappingsQuery(
+    Object.fromEntries(request.nextUrl.searchParams.entries())
+  );
 
   const repo = getCategoryMappingRepository();
-  const mappings = await repo.listByConnection(connectionId, catalogId);
+  const mappings =
+    query.marketplace === TRADERA_BROWSER_INTEGRATION_SLUG
+      ? await repo.listByMarketplace(query.marketplace, query.catalogId)
+      : await repo.listByConnection(query.connectionId ?? '', query.catalogId);
 
   return NextResponse.json(mappings);
 }

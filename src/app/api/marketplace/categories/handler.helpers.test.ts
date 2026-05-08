@@ -7,7 +7,10 @@ import {
   parseMarketplaceCategoriesQuery,
 } from './handler.helpers';
 
-type CategoryListRepository = Pick<ExternalCategoryRepository, 'listByConnection' | 'getTreeByConnection'>;
+type CategoryListRepository = Pick<
+  ExternalCategoryRepository,
+  'listByConnection' | 'getTreeByConnection' | 'listByMarketplace' | 'getTreeByMarketplace'
+>;
 
 describe('marketplace categories helpers', () => {
   let repo: CategoryListRepository;
@@ -16,6 +19,8 @@ describe('marketplace categories helpers', () => {
     repo = {
       listByConnection: vi.fn(),
       getTreeByConnection: vi.fn(),
+      listByMarketplace: vi.fn(),
+      getTreeByMarketplace: vi.fn(),
     };
   });
 
@@ -27,6 +32,7 @@ describe('marketplace categories helpers', () => {
       })
     ).toEqual({
       connectionId: 'conn-1',
+      marketplace: null,
       tree: true,
     });
 
@@ -36,12 +42,26 @@ describe('marketplace categories helpers', () => {
       })
     ).toEqual({
       connectionId: 'conn-1',
+      marketplace: null,
       tree: false,
     });
 
     expect(() => parseMarketplaceCategoriesQuery({ connectionId: '' })).toThrow(
       'connectionId is required'
     );
+  });
+
+  it('parses Tradera marketplace categories without requiring a connectionId', () => {
+    expect(
+      parseMarketplaceCategoriesQuery({
+        marketplace: 'Tradera',
+        tree: 'true',
+      })
+    ).toEqual({
+      connectionId: null,
+      marketplace: 'tradera',
+      tree: true,
+    });
   });
 
   it('lists flat categories when tree mode is disabled', async () => {
@@ -63,10 +83,11 @@ describe('marketplace categories helpers', () => {
     ]);
 
     await expect(
-      listMarketplaceCategories(repo, { connectionId: 'conn-1', tree: false })
+      listMarketplaceCategories(repo, { connectionId: 'conn-1', marketplace: null, tree: false })
     ).resolves.toHaveLength(1);
     expect(repo.listByConnection).toHaveBeenCalledWith('conn-1');
     expect(repo.getTreeByConnection).not.toHaveBeenCalled();
+    expect(repo.listByMarketplace).not.toHaveBeenCalled();
   });
 
   it('lists tree categories when tree mode is enabled', async () => {
@@ -89,9 +110,35 @@ describe('marketplace categories helpers', () => {
     ]);
 
     await expect(
-      listMarketplaceCategories(repo, { connectionId: 'conn-1', tree: true })
+      listMarketplaceCategories(repo, { connectionId: 'conn-1', marketplace: null, tree: true })
     ).resolves.toHaveLength(1);
     expect(repo.getTreeByConnection).toHaveBeenCalledWith('conn-1');
+    expect(repo.listByConnection).not.toHaveBeenCalled();
+    expect(repo.getTreeByMarketplace).not.toHaveBeenCalled();
+  });
+
+  it('lists Tradera categories by marketplace scope', async () => {
+    vi.mocked(repo.listByMarketplace).mockResolvedValueOnce([
+      {
+        id: 'cat-1',
+        connectionId: 'conn-1',
+        externalId: 'external-1',
+        name: 'Category 1',
+        parentExternalId: null,
+        path: 'Category 1',
+        depth: 0,
+        isLeaf: true,
+        metadata: null,
+        fetchedAt: new Date(0).toISOString(),
+        createdAt: new Date(0).toISOString(),
+        updatedAt: new Date(0).toISOString(),
+      },
+    ]);
+
+    await expect(
+      listMarketplaceCategories(repo, { connectionId: null, marketplace: 'tradera', tree: false })
+    ).resolves.toHaveLength(1);
+    expect(repo.listByMarketplace).toHaveBeenCalledWith('tradera');
     expect(repo.listByConnection).not.toHaveBeenCalled();
   });
 });

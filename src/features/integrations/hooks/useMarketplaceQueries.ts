@@ -8,13 +8,23 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { marketplaceKeys } from '@/shared/lib/query-key-exports';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-export function useExternalCategories(connectionId: string): ListQuery<ExternalCategory> {
-  const queryKey = marketplaceKeys.categories(connectionId);
+type ExternalCategoryMarketplaceScope = 'tradera' | null | undefined;
+
+export function useExternalCategories(
+  connectionId: string,
+  marketplace?: ExternalCategoryMarketplaceScope
+): ListQuery<ExternalCategory> {
+  const queryScope = marketplace ?? connectionId;
+  const queryKey = marketplaceKeys.categories(queryScope);
   return createListQueryV2({
     queryKey,
-    queryFn: () =>
-      api.get<ExternalCategory[]>(`/api/marketplace/categories?connectionId=${connectionId}`),
-    enabled: Boolean(connectionId),
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (connectionId) params.set('connectionId', connectionId);
+      if (marketplace) params.set('marketplace', marketplace);
+      return api.get<ExternalCategory[]>(`/api/marketplace/categories?${params.toString()}`);
+    },
+    enabled: Boolean(connectionId) || Boolean(marketplace),
     meta: {
       source: 'integrations.hooks.useExternalCategories',
       operation: 'list',

@@ -14,6 +14,7 @@ import {
   listAllProductListingsAcrossProviders,
   listProductListingsByProductIdsAcrossProviders,
 } from '@/features/integrations/services/product-listing-repository';
+import { checkEcommerceProductsExistence } from '@/features/integrations/services/ecommerce-product-export';
 import {
   applyCanonicalBaseBadgeFallback,
   isCanonicalBaseIntegrationSlug,
@@ -153,6 +154,16 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
   return null;
 };
 
+const ECOMMERCE_CHECK_TIMEOUT_MS = 2_000;
+
+const checkEcommerceWithTimeout = (productIds: string[]): Promise<Set<string>> => {
+  if (productIds.length === 0) return Promise.resolve(new Set<string>());
+  return Promise.race([
+    checkEcommerceProductsExistence(productIds),
+    new Promise<Set<string>>((resolve) => setTimeout(() => resolve(new Set<string>()), ECOMMERCE_CHECK_TIMEOUT_MS)),
+  ]);
+};
+
 const PRODUCT_IDS_PARAM_LIMIT = 250;
 const productIdsBodySchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1).max(PRODUCT_IDS_PARAM_LIMIT),
@@ -201,9 +212,10 @@ const buildPayload = async (
     normalizedRequestedProductIds.length > 0
       ? listProductListingsByProductIdsAcrossProviders(normalizedRequestedProductIds)
       : listAllProductListingsAcrossProviders();
-  const [listings, integrations] = await Promise.all([
+  const [listings, integrations, ecommerceExistingIds] = await Promise.all([
     listingsPromise,
     integrationRepository.listIntegrations(),
+    checkEcommerceWithTimeout(normalizedRequestedProductIds),
   ]);
   if (timings) {
     timings['lookup'] = performance.now() - lookupStart;
@@ -310,6 +322,15 @@ const buildPayload = async (
   }
   if (timings) {
     timings['assemble'] = performance.now() - assembleStart;
+  }
+
+  // Inject ecommerce badges for products found in the cloud ecommerce DB that
+  // don't yet have a product_listings record (e.g. exported before this feature).
+  for (const productId of ecommerceExistingIds) {
+    const current = byProduct.get(productId);
+    if (current?.ecommerce === undefined) {
+      byProduct.set(productId, { ...(current ?? {}), ecommerce: 'active' });
+    }
   }
 
   const payload = Object.fromEntries(byProduct.entries()) as ListingBadgesPayload;

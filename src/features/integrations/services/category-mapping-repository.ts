@@ -35,6 +35,13 @@ export const categoryMappingRepository: CategoryMappingRepository = {
     return mongoCategoryMappingImpl.listByConnection(connectionId, catalogId);
   },
 
+  async listByMarketplace(
+    marketplaceSlug: string,
+    catalogId?: string
+  ): Promise<CategoryMappingWithDetails[]> {
+    return mongoCategoryMappingImpl.listByMarketplace(marketplaceSlug, catalogId);
+  },
+
   async getByExternalCategory(
     connectionId: string,
     externalCategoryId: string,

@@ -129,3 +129,73 @@ export const productScrapeProfileRunResponseSchema = z.object({
 export type ProductScrapeProfileRunResponse = z.infer<
   typeof productScrapeProfileRunResponseSchema
 >;
+
+export const productScrapeProfileRuntimeStatusSchema = z.enum([
+  'queued',
+  'running',
+  'paused',
+  'completed',
+  'failed',
+  'canceled',
+]);
+
+export type ProductScrapeProfileRuntimeStatus = z.infer<
+  typeof productScrapeProfileRuntimeStatusSchema
+>;
+
+export const productScrapeProfileRuntimeRunSchema = z.object({
+  completedAt: z.string().trim().min(1).nullable(),
+  createdAt: z.string().trim().min(1),
+  dryRun: z.boolean(),
+  error: z.string().nullable(),
+  id: z.string().trim().min(1),
+  profileId: z.string().trim().min(1),
+  queueName: z.string().trim().min(1),
+  result: productScrapeProfileRunResponseSchema.nullable(),
+  startedAt: z.string().trim().min(1).nullable(),
+  status: productScrapeProfileRuntimeStatusSchema,
+  updatedAt: z.string().trim().min(1),
+});
+
+export type ProductScrapeProfileRuntimeRun = z.infer<
+  typeof productScrapeProfileRuntimeRunSchema
+>;
+
+export const productScrapeProfileRuntimeSnapshotSchema = z.object({
+  run: productScrapeProfileRuntimeRunSchema.nullable(),
+});
+
+export type ProductScrapeProfileRuntimeSnapshot = z.infer<
+  typeof productScrapeProfileRuntimeSnapshotSchema
+>;
+
+export const productScrapeProfileRuntimeRunResponseSchema = z.object({
+  run: productScrapeProfileRuntimeRunSchema,
+});
+
+export type ProductScrapeProfileRuntimeRunResponse = z.infer<
+  typeof productScrapeProfileRuntimeRunResponseSchema
+>;
+
+export const productScrapeProfileRunQueuedResponseSchema = z.object({
+  status: z.literal('queued'),
+  profileId: z.string().trim().min(1),
+  dryRun: z.boolean(),
+  jobId: z.string().trim().min(1),
+  queueName: z.string().trim().min(1),
+  enqueuedAt: z.string().trim().min(1),
+  run: productScrapeProfileRuntimeRunSchema.optional(),
+});
+
+export type ProductScrapeProfileRunQueuedResponse = z.infer<
+  typeof productScrapeProfileRunQueuedResponseSchema
+>;
+
+export const productScrapeProfileRunLaunchResponseSchema = z.union([
+  productScrapeProfileRunResponseSchema,
+  productScrapeProfileRunQueuedResponseSchema,
+]);
+
+export type ProductScrapeProfileRunLaunchResponse = z.infer<
+  typeof productScrapeProfileRunLaunchResponseSchema
+>;

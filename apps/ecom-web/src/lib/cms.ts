@@ -941,6 +941,8 @@ function localizeAccountContent(content: AccountContent, localeInput?: LocaleInp
       ...content.admin,
       title: 'Panel administratora',
       badgeLabel: 'Super Admin',
+      cmsLinkLabel: 'Otwórz CMS',
+      cmsLinkDescription: 'Edytuj teksty sklepu, strony, stories, lookbook i wspólne treści witryny.',
       registeredUsersLabel: 'Zarejestrowani użytkownicy',
       recentRegistrationsLabel: 'Ostatnie rejestracje',
       loadingLabel: 'Ładowanie...',

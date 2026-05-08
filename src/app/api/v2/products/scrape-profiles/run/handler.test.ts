@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ProductScrapeProfileRunResponse } from '@/shared/contracts/products/scrape-profiles';
+import type { ProductScrapeProfileRunQueuedResponse } from '@/shared/contracts/products/scrape-profiles';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const mocks = vi.hoisted(() => ({
@@ -19,45 +19,23 @@ vi.mock('@/server/queues/products', () => ({
 
 import { postHandler } from './handler';
 
-const runResponse: ProductScrapeProfileRunResponse = {
+const queuedResponse: ProductScrapeProfileRunQueuedResponse = {
+  status: 'queued',
   profileId: 'battlestock-warhammer-40k-30k',
-  profileLabel: 'BattleStock Warhammer 40k / 30k',
   dryRun: false,
-  catalog: { id: 'catalog-battle', name: 'BattleStock' },
-  scrapedCount: 1,
-  createdCount: 1,
-  updatedCount: 0,
-  skippedCount: 0,
-  failedCount: 0,
-  issueCount: 0,
-  products: [
-    {
-      index: 0,
-      status: 'created',
-      productId: 'product-1',
-      sku: 'BATTLESTOCK-1',
-      title: 'Rendered product',
-      sourceUrl: 'https://www.battle-stock.pl/product-1',
-      error: null,
-    },
-  ],
-  summary: {
-    rawCount: 1,
-    mappedCount: 1,
-    recordsWithErrors: 0,
-    recordsWithWarnings: 0,
-    totalIssues: 0,
-  },
+  jobId: 'job-1',
+  queueName: 'product-scrape-profile',
+  enqueuedAt: '2026-05-08T00:00:00.000Z',
 };
 
 describe('product scrape profile run handler', () => {
-  it('runs scrape profiles through the Redis runtime queue', async () => {
+  it('queues scrape profiles through the Redis runtime without waiting for completion', async () => {
     const body = {
       profileId: 'battlestock-warhammer-40k-30k',
       dryRun: false,
       limit: 1,
     };
-    mocks.runProductScrapeProfileViaRedisRuntimeMock.mockResolvedValue(runResponse);
+    mocks.runProductScrapeProfileViaRedisRuntimeMock.mockResolvedValue(queuedResponse);
     const context: ApiHandlerContext = {
       requestId: 'request-1',
       traceId: 'trace-1',
@@ -70,7 +48,8 @@ describe('product scrape profile run handler', () => {
 
     const response = await postHandler(new Request('http://test.local') as never, context);
 
-    await expect(response.json()).resolves.toEqual(runResponse);
+    expect(response.status).toBe(202);
+    await expect(response.json()).resolves.toEqual(queuedResponse);
     expect(mocks.initializeQueuesMock).toHaveBeenCalledTimes(1);
     expect(mocks.runProductScrapeProfileViaRedisRuntimeMock).toHaveBeenCalledWith(body, {
       userId: 'user-1',

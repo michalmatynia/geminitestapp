@@ -105,6 +105,6 @@ describe('runScripterDryRun', () => {
     ]);
     const result = await runScripterDryRun(definition, driver, { limit: 2 });
     expect(result.records).toHaveLength(2);
-    expect(result.run.records).toHaveLength(3);
+    expect(result.run.records).toHaveLength(2);
   });
 });

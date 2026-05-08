@@ -2304,12 +2304,14 @@ export function AdminCmsEditor(): JSX.Element {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                 <Field label="Admin title" value={accountContent.admin.title} onChange={(value) => updateAccountAdmin('title', value)} />
                 <Field label="Admin badge label" value={accountContent.admin.badgeLabel} onChange={(value) => updateAccountAdmin('badgeLabel', value)} />
+                <Field label="CMS link label" value={accountContent.admin.cmsLinkLabel} onChange={(value) => updateAccountAdmin('cmsLinkLabel', value)} />
                 <Field label="Registered users label" value={accountContent.admin.registeredUsersLabel} onChange={(value) => updateAccountAdmin('registeredUsersLabel', value)} />
                 <Field label="Recent registrations label" value={accountContent.admin.recentRegistrationsLabel} onChange={(value) => updateAccountAdmin('recentRegistrationsLabel', value)} />
                 <Field label="Admin loading label" value={accountContent.admin.loadingLabel} onChange={(value) => updateAccountAdmin('loadingLabel', value)} />
                 <Field label="Load users error" value={accountContent.admin.loadUsersError} onChange={(value) => updateAccountAdmin('loadUsersError', value)} />
                 <Field label="No users label" value={accountContent.admin.noUsersLabel} onChange={(value) => updateAccountAdmin('noUsersLabel', value)} />
               </div>
+              <TextArea label="CMS link description" value={accountContent.admin.cmsLinkDescription} onChange={(value) => updateAccountAdmin('cmsLinkDescription', value)} />
               <TextArea label="Admin table headers" rows={3} value={accountContent.admin.tableHeaders.join('\n')} onChange={(value) => updateAccountAdmin('tableHeaders', splitLines(value))} />
             </div>
           </div>

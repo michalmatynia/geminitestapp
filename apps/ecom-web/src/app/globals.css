@@ -237,9 +237,7 @@ body {
 .product-card {
   position: relative;
   overflow: hidden;
-  /* force new compositing layer so overflow:hidden clips transformed children */
-  transform: translateZ(0);
-  isolation: isolate;
+  clip-path: inset(0); /* clips transformed children in all browsers */
   cursor: pointer;
   border: 1px solid rgba(var(--accent-rgb),0.08);
   transition: border-color 0.35s ease, box-shadow 0.35s ease;
@@ -250,13 +248,6 @@ body {
   box-shadow: 0 0 24px rgba(var(--accent-rgb),0.1), inset 0 0 24px rgba(var(--accent-rgb),0.04);
 }
 
-.product-card .card-image > * {
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.product-card:hover .card-image > * {
-  transform: scale(1.05);
-}
 
 .product-card .card-overlay {
   position: absolute;
@@ -267,7 +258,7 @@ body {
 }
 
 .product-card:hover .card-overlay {
-  opacity: 1;
+  opacity: 0;
 }
 
 .product-card .card-info-hover {

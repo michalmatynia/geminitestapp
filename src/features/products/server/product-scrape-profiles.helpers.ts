@@ -41,6 +41,7 @@ type ProductScrapeRunContext = {
   duplicateState?: ProductScrapeDuplicateState;
   draftTemplate?: ProductDraft | null;
   draftTemplateCategoryAliases?: readonly string[];
+  waitWhilePaused?: () => Promise<void>;
 };
 
 const hasBlockingIssue = (draft: ScripterImportDraft): boolean =>
@@ -285,6 +286,7 @@ export const processScrapeDrafts = async (
   };
   return await drafts.reduce<Promise<ProductScrapeDraftOutcome[]>>(async (previous, draft) => {
     const outcomes = await previous;
+    await runContext.waitWhilePaused?.();
     outcomes.push(await processScrapeDraft(draft, runContext));
     return outcomes;
 	  }, Promise.resolve([]));

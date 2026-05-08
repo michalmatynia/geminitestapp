@@ -11,6 +11,7 @@ import type {
   ProductAdvancedFilterPreset,
 } from '@/shared/contracts/products/filters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductScrapeProfileRuntimeRunController } from './useProductScrapeProfileRuntimeRun';
 
 export type ProductSelectionPresetDialogMode = 'create' | 'edit';
 export type ProductSelectionToast = (
@@ -142,5 +143,6 @@ export interface ProductSelectionActionsController {
   includeArchived: boolean;
   parsedMatchProductIds: string[];
   presets: ProductSelectionPresetController;
+  scrapeProfilesRuntime: ProductScrapeProfileRuntimeRunController;
   selection: ProductSelectionBaseController;
 }

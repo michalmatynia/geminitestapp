@@ -7,6 +7,11 @@ export {
   stopProductMarketplaceCopyDebrandBatchQueue,
 } from '@/features/products/workers/productMarketplaceCopyDebrandBatchQueue';
 export {
+  pauseProductScrapeProfileRun,
+  readActiveProductScrapeProfileRun,
+  readLatestProductScrapeProfileRun,
+  readProductScrapeProfileRun,
+  resumeProductScrapeProfileRun,
   runProductScrapeProfileViaRedisRuntime,
   startProductScrapeProfileQueue,
   stopProductScrapeProfileQueue,

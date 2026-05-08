@@ -1,8 +1,13 @@
 'use client';
 
+import Link from 'next/link';
+
+import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
 import type {
   ProductScrapeProfileImageImportMode,
   ProductScrapeProfile,
+  ProductScrapeProfileRuntimeRun,
+  ProductScrapeProfileRunQueuedResponse,
   ProductScrapeProfileRunResponse,
   ProductScrapeSourcePriceCurrencyCode,
 } from '@/shared/contracts/products/scrape-profiles';
@@ -11,7 +16,11 @@ import { Alert } from '@/shared/ui/alert';
 import { Badge } from '@/shared/ui/badge';
 import { ToggleRow } from '@/shared/ui/forms-and-actions.public';
 
-import { ProductScrapeProfilesResult } from './ProductScrapeProfilesModal.result';
+import {
+  ProductScrapeProfilesRuntimeRun,
+  ProductScrapeProfilesQueuedRun,
+  ProductScrapeProfilesResult,
+} from './ProductScrapeProfilesModal.result';
 import { ProductScrapeProfilesSourceCurrencyField } from './ProductScrapeProfilesModal.source-currency';
 import { ProductScrapeProfileButton } from './ProductScrapeProfilesModal.profile-button';
 import {
@@ -34,6 +43,8 @@ type ProductScrapeProfilesBodyProps = {
   limitInput: string;
   draftTemplates: ProductDraft[];
   profiles: ProductScrapeProfile[];
+  activeRun: ProductScrapeProfileRuntimeRun | null;
+  queuedRun: ProductScrapeProfileRunQueuedResponse | null;
   result: ProductScrapeProfileRunResponse | null;
   runtimeAction: ProductScrapeProfileRuntimeActionSetting;
   selectedDraftTemplateId: string;
@@ -108,7 +119,12 @@ function ProductScrapeProfilesRuntimeActionCard({
             Connected scraping action
           </p>
           <div className='flex flex-wrap items-center gap-2'>
-            <span className='text-sm font-medium'>{action.name}</span>
+            <Link
+              href={resolveStepSequencerActionHref(action.id)}
+              className='text-sm font-medium underline-offset-4 hover:underline'
+            >
+              {action.name}
+            </Link>
             <Badge variant='secondary'>{action.runtimeKey}</Badge>
             {action.isSeedFallback ? (
               <Badge variant='outline'>Seed default</Badge>
@@ -238,7 +254,7 @@ function ProductScrapeProfilesForm(props: ProductScrapeProfilesFormProps): React
 }
 
 export function ProductScrapeProfilesBody(props: ProductScrapeProfilesBodyProps): React.JSX.Element {
-  const { error, isLoading, profiles, result, ...formProps } = props;
+  const { activeRun, error, isLoading, profiles, queuedRun, result, ...formProps } = props;
   let mainContent: React.JSX.Element;
   if (isLoading) {
     mainContent = <div className='text-sm text-muted-foreground'>Loading scrape profiles...</div>;
@@ -258,9 +274,17 @@ export function ProductScrapeProfilesBody(props: ProductScrapeProfilesBodyProps)
     mainContent = <ProductScrapeProfilesForm profiles={profiles} {...formProps} />;
   }
 
+  let runtimeContent: React.JSX.Element | null = null;
+  if (activeRun !== null) {
+    runtimeContent = <ProductScrapeProfilesRuntimeRun run={activeRun} />;
+  } else if (queuedRun !== null) {
+    runtimeContent = <ProductScrapeProfilesQueuedRun queuedRun={queuedRun} />;
+  }
+
   return (
     <div className='space-y-5'>
       {mainContent}
+      {runtimeContent}
       {result !== null ? <ProductScrapeProfilesResult result={result} /> : null}
     </div>
   );

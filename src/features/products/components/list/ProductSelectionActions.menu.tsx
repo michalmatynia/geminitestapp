@@ -6,6 +6,8 @@ import {
   FileSearch,
   Globe2,
   Image as ImageIcon,
+  Loader2,
+  Pause,
   Pencil,
   RefreshCw,
   Search,
@@ -18,12 +20,30 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Chip } from '@/shared/ui/chip';
 import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { ProductFilterPresetMenu } from './ProductSelectionActions.preset-menu';
 import type { ProductSelectionActionsController } from './ProductSelectionActions.types';
 
 type ProductSelectionMenuProps = {
   controller: ProductSelectionActionsController;
+};
+
+const getScrapeProfilesToolbarLabel = (
+  activeRun: ProductSelectionActionsController['scrapeProfilesRuntime']['activeRun'],
+  isActive: boolean
+): string => {
+  if (!isActive) return 'Scrape Profiles';
+  return activeRun?.status === 'paused' ? 'Paused' : 'Running';
+};
+
+const renderScrapeProfilesToolbarIcon = (
+  activeRun: ProductSelectionActionsController['scrapeProfilesRuntime']['activeRun'],
+  isActive: boolean
+): React.JSX.Element => {
+  if (!isActive) return <Globe2 className='h-3.5 w-3.5' />;
+  if (activeRun?.status === 'paused') return <Pause className='h-3.5 w-3.5' />;
+  return <Loader2 className='h-3.5 w-3.5 animate-spin' />;
 };
 
 export const ProductSelectionDropdownActions = ({
@@ -172,30 +192,40 @@ const BulkBaseSyncDropdownAction = ({
 
 export const ProductSelectionToolbarActions = ({
   controller,
-}: ProductSelectionMenuProps): React.JSX.Element => (
-  <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto'>
-    <Button
-      type='button'
-      variant='outline'
-      size='sm'
-      onClick={controller.dialogs.openParseActions}
-      className='h-8 w-full gap-2 border-border/60 bg-card/30 text-gray-300 hover:bg-card/50 hover:text-white sm:w-auto'
-    >
-      <FileSearch className='h-3.5 w-3.5' />
-      Parse Actions
-    </Button>
-    <Button
-      type='button'
-      variant='outline'
-      size='sm'
-      onClick={controller.dialogs.openScrapeProfiles}
-      className='h-8 w-full gap-2 border-border/60 bg-card/30 text-gray-300 hover:bg-card/50 hover:text-white sm:w-auto'
-    >
-      <Globe2 className='h-3.5 w-3.5' />
-      Scrape Profiles
-    </Button>
-  </div>
-);
+}: ProductSelectionMenuProps): React.JSX.Element => {
+  const { activeRun, isActive } = controller.scrapeProfilesRuntime;
+  const scrapeProfilesLabel = getScrapeProfilesToolbarLabel(activeRun, isActive);
+
+  return (
+    <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto'>
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        onClick={controller.dialogs.openParseActions}
+        className='h-8 w-full gap-2 border-border/60 bg-card/30 text-gray-300 hover:bg-card/50 hover:text-white sm:w-auto'
+      >
+        <FileSearch className='h-3.5 w-3.5' />
+        Parse Actions
+      </Button>
+      <Button
+        type='button'
+        variant={isActive ? 'warning' : 'outline'}
+        size='sm'
+        onClick={controller.dialogs.openScrapeProfiles}
+        className={cn(
+          'h-8 w-full gap-2 sm:w-auto',
+          isActive
+            ? 'border-amber-400/40 bg-amber-500/15 text-amber-100 hover:bg-amber-500/25 hover:text-amber-50'
+            : 'border-border/60 bg-card/30 text-gray-300 hover:bg-card/50 hover:text-white'
+        )}
+      >
+        {renderScrapeProfilesToolbarIcon(activeRun, isActive)}
+        {scrapeProfilesLabel}
+      </Button>
+    </div>
+  );
+};
 
 export const ProductSelectionRightActions = ({
   controller,

@@ -5,6 +5,7 @@ import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } 
 import type {
   ProductScrapeProfileImageImportMode,
   ProductScrapeProfileRunResponse,
+  ProductScrapeProfileRunQueuedResponse,
   ProductScrapeSourcePriceCurrencyCode,
 } from '@/shared/contracts/products/scrape-profiles';
 
@@ -35,6 +36,7 @@ type SelectionEffectsInput = Pick<
   setSourcePriceCurrencyCode: (value: ProductScrapeSourcePriceCurrencyCode) => void;
   setLimitInput: (value: string) => void;
   setProfileId: Dispatch<SetStateAction<string>>;
+  setQueuedRun: (queuedRun: ProductScrapeProfileRunQueuedResponse | null) => void;
   setResult: (result: ProductScrapeProfileRunResponse | null) => void;
   setSettingsProfileId: (value: string) => void;
   storedSettingsRef: MutableRefObject<ProductScrapeProfileStoredSettings>;
@@ -86,6 +88,7 @@ const useSelectedProfileSettingsEffect = ({
   setImageImportMode,
   setSourcePriceCurrencyCode,
   setLimitInput,
+  setQueuedRun,
   setResult,
   setSettingsProfileId,
   storedSettingsRef,
@@ -97,6 +100,7 @@ const useSelectedProfileSettingsEffect = ({
   | 'setImageImportMode'
   | 'setSourcePriceCurrencyCode'
   | 'setLimitInput'
+  | 'setQueuedRun'
   | 'setResult'
   | 'setSettingsProfileId'
   | 'storedSettingsRef'
@@ -115,6 +119,7 @@ const useSelectedProfileSettingsEffect = ({
     );
     setLimitInput(resolveProfileLimitInput(selectedProfile, storedSettingsRef.current));
     setSettingsProfileId(selectedProfile.id);
+    setQueuedRun(null);
     setResult(null);
   }, [
     selectedProfile,
@@ -123,6 +128,7 @@ const useSelectedProfileSettingsEffect = ({
     setImageImportMode,
     setSourcePriceCurrencyCode,
     setLimitInput,
+    setQueuedRun,
     setResult,
     setSettingsProfileId,
     storedSettingsRef,
@@ -199,6 +205,7 @@ export const useProductScrapeProfileControllerEffects = ({
   formState,
   isOpen,
   queries,
+  setQueuedRun,
   setResult,
   stored,
 }: {
@@ -206,6 +213,7 @@ export const useProductScrapeProfileControllerEffects = ({
   isOpen: boolean;
   queries: ProductScrapeProfileQueries;
   setResult: (result: ProductScrapeProfileRunResponse | null) => void;
+  setQueuedRun: (queuedRun: ProductScrapeProfileRunQueuedResponse | null) => void;
   stored: StoredSettingsState;
 }): void => {
   useProductScrapeProfileSelectionEffects({
@@ -221,6 +229,7 @@ export const useProductScrapeProfileControllerEffects = ({
     setSourcePriceCurrencyCode: formState.setSourcePriceCurrencyCode,
     setLimitInput: formState.setLimitInput,
     setProfileId: formState.setProfileId,
+    setQueuedRun,
     setResult,
     setSettingsProfileId: formState.setSettingsProfileId,
     storedSettingsRef: stored.storedSettingsRef,

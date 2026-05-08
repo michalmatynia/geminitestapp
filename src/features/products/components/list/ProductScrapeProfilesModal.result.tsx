@@ -1,6 +1,14 @@
 'use client';
 
-import type { ProductScrapeProfileRunResponse } from '@/shared/contracts/products/scrape-profiles';
+import Link from 'next/link';
+import type { ComponentProps } from 'react';
+
+import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
+import type {
+  ProductScrapeProfileRuntimeRun,
+  ProductScrapeProfileRunQueuedResponse,
+  ProductScrapeProfileRunResponse,
+} from '@/shared/contracts/products/scrape-profiles';
 import { Badge } from '@/shared/ui/badge';
 
 const RESULT_ROW_LIMIT = 8;
@@ -11,6 +19,89 @@ const formatBrowserMode = (
   if (browserMode === 'runtime_default') return 'Runtime default';
   return browserMode === 'headless' ? 'Headless' : 'Headed';
 };
+
+const formatRunMode = (dryRun: boolean): string => (dryRun ? 'Dry run' : 'Import');
+
+const formatRuntimeStatus = (status: ProductScrapeProfileRuntimeRun['status']): string =>
+  status.replace('_', ' ').replace(/^\w/, (value) => value.toUpperCase());
+
+const runtimeStatusBadgeVariant = (
+  status: ProductScrapeProfileRuntimeRun['status']
+): ComponentProps<typeof Badge>['variant'] => {
+  if (status === 'paused' || status === 'running' || status === 'queued') return 'warning';
+  if (status === 'completed') return 'success';
+  return 'destructive';
+};
+
+export function ProductScrapeProfilesRuntimeRun({
+  run,
+}: {
+  run: ProductScrapeProfileRuntimeRun;
+}): React.JSX.Element {
+  return (
+    <div className='space-y-2 rounded-md border border-amber-400/30 bg-amber-500/10 p-4 text-xs'>
+      <div className='flex flex-wrap items-center gap-2'>
+        <span className='text-sm font-medium text-foreground'>Redis runtime scrape</span>
+        <Badge variant={runtimeStatusBadgeVariant(run.status)}>
+          {formatRuntimeStatus(run.status)}
+        </Badge>
+        <Badge variant='secondary'>{formatRunMode(run.dryRun)}</Badge>
+      </div>
+      <div className='flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground'>
+        <span>Redis queue: {run.queueName}</span>
+        <span>Job ID: {run.id}</span>
+      </div>
+    </div>
+  );
+}
+
+export function ProductScrapeProfilesQueuedRun({
+  queuedRun,
+}: {
+  queuedRun: ProductScrapeProfileRunQueuedResponse;
+}): React.JSX.Element {
+  return (
+    <div className='space-y-2 rounded-md border border-border/60 bg-card/35 p-4 text-xs'>
+      <div className='flex flex-wrap items-center gap-2'>
+        <span className='text-sm font-medium text-foreground'>Queued in Redis runtime</span>
+        <Badge variant='success'>Queued</Badge>
+        <Badge variant='secondary'>{formatRunMode(queuedRun.dryRun)}</Badge>
+      </div>
+      <div className='flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground'>
+        <span>Redis queue: {queuedRun.queueName}</span>
+        <span>Job ID: {queuedRun.jobId}</span>
+      </div>
+    </div>
+  );
+}
+
+function ProductScrapeProfilesRuntimeResult({
+  runtime,
+}: {
+  runtime: NonNullable<ProductScrapeProfileRunResponse['runtime']>;
+}): React.JSX.Element {
+  return (
+    <div className='rounded-md border border-border/50 bg-muted/10 p-3 text-xs'>
+      <div className='flex flex-wrap items-center gap-2'>
+        <Link
+          href={resolveStepSequencerActionHref(runtime.runtimeActionId)}
+          className='font-medium text-foreground underline-offset-4 hover:underline'
+        >
+          {runtime.runtimeActionName}
+        </Link>
+        <Badge variant='secondary'>{runtime.runtimeActionKey}</Badge>
+        <Badge variant='secondary'>{formatBrowserMode(runtime.browserMode)}</Badge>
+      </div>
+      <div className='mt-2 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground'>
+        {runtime.queueName !== null ? <span>Redis queue: {runtime.queueName}</span> : null}
+        <span>Action ID: {runtime.runtimeActionId}</span>
+        <span>
+          Steps: {runtime.enabledStepCount}/{runtime.totalStepCount}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export function ProductScrapeProfilesResult({
   result,
@@ -34,22 +125,7 @@ export function ProductScrapeProfilesResult({
         ))}
       </div>
       {result.runtime !== undefined ? (
-        <div className='rounded-md border border-border/50 bg-muted/10 p-3 text-xs'>
-          <div className='flex flex-wrap items-center gap-2'>
-            <span className='font-medium text-foreground'>{result.runtime.runtimeActionName}</span>
-            <Badge variant='secondary'>{result.runtime.runtimeActionKey}</Badge>
-            <Badge variant='secondary'>{formatBrowserMode(result.runtime.browserMode)}</Badge>
-          </div>
-          <div className='mt-2 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground'>
-            {result.runtime.queueName !== null ? (
-              <span>Redis queue: {result.runtime.queueName}</span>
-            ) : null}
-            <span>Action ID: {result.runtime.runtimeActionId}</span>
-            <span>
-              Steps: {result.runtime.enabledStepCount}/{result.runtime.totalStepCount}
-            </span>
-          </div>
-        </div>
+        <ProductScrapeProfilesRuntimeResult runtime={result.runtime} />
       ) : null}
       <div className='max-h-64 overflow-auto rounded-md border border-white/5'>
         <table className='w-full text-left text-xs'>

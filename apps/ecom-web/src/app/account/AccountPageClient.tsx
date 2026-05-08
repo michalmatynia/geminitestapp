@@ -98,6 +98,7 @@ type Tab = 'overview' | 'orders' | 'settings' | 'admin';
 
 function AdminTab({ content }: { content: AccountAdminContent }): JSX.Element {
   const locale = useLocale();
+  const localizedHref = useLocalizedHref();
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -137,6 +138,40 @@ function AdminTab({ content }: { content: AccountAdminContent }): JSX.Element {
         }}>
           {content.badgeLabel}
         </span>
+      </div>
+
+      <div
+        className="mb-8 px-6 py-5"
+        style={{
+          border: '1px solid rgba(210,116,102,0.28)',
+          background: 'rgba(210,116,102,0.04)',
+        }}
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '0.9rem',
+              fontWeight: 300,
+              color: 'var(--muted)',
+              lineHeight: 1.7,
+              margin: 0,
+            }}
+          >
+            {content.cmsLinkDescription}
+          </p>
+          <a
+            href={localizedHref('/cms')}
+            className="btn-primary flex-shrink-0 justify-center"
+            style={{
+              background: 'rgba(210,116,102,0.16)',
+              color: 'var(--coral-red)',
+              border: '1px solid rgba(210,116,102,0.45)',
+            }}
+          >
+            {content.cmsLinkLabel}
+          </a>
+        </div>
       </div>
 
       {/* Stat cards */}
@@ -392,6 +427,21 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
                     {tab.label}
                   </button>
                 ))}
+
+                {user.isSuperAdmin && (
+                  <a
+                    href={localizedHref('/cms')}
+                    className="w-full text-left py-3 px-4 type-label transition-all duration-200"
+                    style={{
+                      color: 'var(--coral-red)',
+                      background: 'rgba(210,116,102,0.06)',
+                      borderLeft: '2px solid rgba(210,116,102,0.5)',
+                      display: 'block',
+                    }}
+                  >
+                    {content.admin.cmsLinkLabel}
+                  </a>
+                )}
 
                 <div className="mt-6 pt-6" style={{ borderTop: '1px solid var(--border)' }}>
                   <a

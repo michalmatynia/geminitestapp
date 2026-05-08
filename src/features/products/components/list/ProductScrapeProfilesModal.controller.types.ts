@@ -7,6 +7,7 @@ import type {
   ProductScrapeProfileImageImportMode,
   ProductScrapeProfile,
   ProductScrapeProfileRunResponse,
+  ProductScrapeProfileRunQueuedResponse,
   ProductScrapeProfilesListResponse,
   ProductScrapeSourcePriceCurrencyCode,
 } from '@/shared/contracts/products/scrape-profiles';
@@ -27,6 +28,7 @@ export type ProductScrapeProfilesController = {
   limitInput: string;
   draftTemplates: ProductDraft[];
   profiles: ProductScrapeProfilesListResponse['profiles'];
+  queuedRun: ProductScrapeProfileRunQueuedResponse | null;
   result: ProductScrapeProfileRunResponse | null;
   runtimeAction: ProductScrapeProfileRuntimeActionSetting;
   selectedDraftTemplateId: string;

@@ -36,15 +36,28 @@ export default async function ProductPage({ params }: Props): Promise<JSX.Elemen
   const product = dbProduct ?? getProduct(slug);
   if (!product) notFound();
 
-  // Fetch related products from the same collection.
-  let related = PRODUCTS.filter(
-    (p) => p.collectionSlug === product.collectionSlug && p.id !== product.id,
-  ).slice(0, 4);
+  const getTheme = (name: string) => name.split(' | ')[4]?.trim() ?? '';
+  const productTheme = getTheme(product.name);
+
+  const pickRelated = (pool: typeof PRODUCTS): typeof PRODUCTS => {
+    const others = pool.filter((p) => p.id !== product.id);
+    // Try: same category + same theme
+    if (productTheme) {
+      const exact = others.filter(
+        (p) => p.category === product.category && getTheme(p.name) === productTheme,
+      );
+      if (exact.length > 0) return exact.slice(0, 4);
+    }
+    // Fallback: same category only
+    return others.filter((p) => p.category === product.category).slice(0, 4);
+  };
+
+  let related = pickRelated(PRODUCTS);
 
   if (dbProduct) {
-    const { products: dbRelated } = await getMentiosProducts({ limit: 5, collectionSlug: product.collectionSlug, locale });
-    const filtered = dbRelated.filter((p) => p.id !== product.id).slice(0, 4);
-    if (filtered.length > 0) related = filtered;
+    const { products: dbPool } = await getMentiosProducts({ limit: 50, collectionSlug: product.collectionSlug, locale });
+    const picked = pickRelated(dbPool);
+    if (picked.length > 0) related = picked;
   }
 
   const content = await getProductsContent(locale);

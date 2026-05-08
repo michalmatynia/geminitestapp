@@ -272,7 +272,7 @@ describe('ProductScrapeProfilesModal persistence', () => {
           limit: 25,
           draftTemplateId: 'template-other',
         },
-        { timeout: 300_000 }
+        { timeout: 30_000 }
       );
     });
   });

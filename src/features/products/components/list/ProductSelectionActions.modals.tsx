@@ -188,6 +188,7 @@ const ProductSelectionUtilityModals = ({
       <ProductScrapeProfilesModal
         isOpen={dialogs.isScrapeProfilesOpen}
         onClose={dialogs.closeScrapeProfiles}
+        scrapeRuntime={controller.scrapeProfilesRuntime}
       />
       <ProductBulkSyncSetupModal
         isOpen={dialogs.isBulkSyncSetupOpen}

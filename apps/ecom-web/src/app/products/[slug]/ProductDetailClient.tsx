@@ -11,6 +11,7 @@ import { formatPrice } from '@/lib/locales';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ProductReviews } from '@/components/ProductReviews';
+import { ProductImage } from '@/components/ProductImage';
 import type { Product } from '@/data/products';
 import type { ProductsContent, ProductsDetailContent } from '@/data/productsContent';
 import {
@@ -235,7 +236,7 @@ function ProductDetailGalleryImage({
           inset: 0,
           width: '100%',
           height: '100%',
-          objectFit: 'contain',
+          objectFit: 'cover',
           objectPosition: 'center',
         }}
         onError={handleNativeImageError}
@@ -250,7 +251,7 @@ function ProductDetailGalleryImage({
       fill
       priority={priority}
       sizes={sizes}
-      style={{ objectFit: 'contain', objectPosition: 'center' }}
+      style={{ objectFit: 'cover', objectPosition: 'center' }}
       onError={(e) => {
         (e.currentTarget as HTMLImageElement).style.display = 'none';
       }}
@@ -383,13 +384,6 @@ export function ProductDetailClient({
                   </span>
                 </div>
               )}
-              {/* Decorative rotated label */}
-              <div
-                className="absolute right-8 bottom-12 rotate-[-90deg] origin-bottom-right z-10"
-                style={{ color: 'rgba(255,255,255,0.2)' }}
-              >
-                <span className="type-label tracking-[0.14em]">{detailContent.rotatedBrandLabel} / {product.id}</span>
-              </div>
             </div>
 
             {/* Thumbnail row */}
@@ -598,9 +592,19 @@ export function ProductDetailClient({
                   className="group block"
                 >
                   <div
-                    className="w-full mb-4 transition-transform duration-500 group-hover:scale-[1.02]"
-                    style={{ background: p.gradient, aspectRatio: '3/4' }}
-                  />
+                    className="relative w-full overflow-hidden mb-3"
+                    style={{ aspectRatio: '1/1' }}
+                  >
+                    <ProductImage
+                      imageUrl={p.imageUrl}
+                      gradient={p.gradient}
+                      alt={p.name}
+                      className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.03]"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      fit="cover"
+                      position="center"
+                    />
+                  </div>
                   <div className="type-label mb-1" style={{ color: 'var(--muted)' }}>{p.category}</div>
                   <div
                     style={{

@@ -1,8 +1,12 @@
 import type {
   ProductScrapeProfileImageImportMode,
   ProductScrapeProfile,
+  ProductScrapeProfileRunLaunchResponse,
   ProductScrapeProfileRunRequest,
   ProductScrapeProfileRunResponse,
+  ProductScrapeProfileRunQueuedResponse,
+  ProductScrapeProfileRuntimeRunResponse,
+  ProductScrapeProfileRuntimeSnapshot,
   ProductScrapeProfilesListResponse,
   ProductScrapeSourcePriceCurrencyCode,
 } from '@/shared/contracts/products/scrape-profiles';
@@ -18,7 +22,7 @@ import {
   type ProductScrapeProfileStoredSettings,
 } from './ProductScrapeProfilesModal.storage';
 
-export const SCRAPE_RUN_TIMEOUT_MS = 300_000;
+export const SCRAPE_RUN_ENQUEUE_TIMEOUT_MS = 30_000;
 export const SCRAPE_PROFILES_QUERY_KEY = ['products', 'scrape-profiles'] as const;
 
 export const fetchScrapeProfiles = async (): Promise<ProductScrapeProfilesListResponse> =>
@@ -26,11 +30,38 @@ export const fetchScrapeProfiles = async (): Promise<ProductScrapeProfilesListRe
 
 export const runScrapeProfile = async (
   request: ProductScrapeProfileRunRequest
-): Promise<ProductScrapeProfileRunResponse> =>
-  await api.post<ProductScrapeProfileRunResponse>(
+): Promise<ProductScrapeProfileRunLaunchResponse> =>
+  await api.post<ProductScrapeProfileRunLaunchResponse>(
     '/api/v2/products/scrape-profiles/run',
     request,
-    { timeout: SCRAPE_RUN_TIMEOUT_MS }
+    { timeout: SCRAPE_RUN_ENQUEUE_TIMEOUT_MS }
+  );
+
+export const fetchScrapeProfileRuntimeSnapshot = async (
+  jobId: string | null
+): Promise<ProductScrapeProfileRuntimeSnapshot> =>
+  await api.get<ProductScrapeProfileRuntimeSnapshot>('/api/v2/products/scrape-profiles/run/status', {
+    logError: false,
+    params: jobId === null ? undefined : { jobId },
+    timeout: 10_000,
+  });
+
+export const pauseScrapeProfileRuntimeRun = async (
+  jobId: string
+): Promise<ProductScrapeProfileRuntimeRunResponse> =>
+  await api.post<ProductScrapeProfileRuntimeRunResponse>(
+    `/api/v2/products/scrape-profiles/run/${encodeURIComponent(jobId)}/pause`,
+    undefined,
+    { timeout: 10_000 }
+  );
+
+export const resumeScrapeProfileRuntimeRun = async (
+  jobId: string
+): Promise<ProductScrapeProfileRuntimeRunResponse> =>
+  await api.post<ProductScrapeProfileRuntimeRunResponse>(
+    `/api/v2/products/scrape-profiles/run/${encodeURIComponent(jobId)}/resume`,
+    undefined,
+    { timeout: 10_000 }
   );
 
 export const parseLimit = (value: string): number | null | undefined => {
@@ -48,8 +79,25 @@ export const buildToastMessage = (result: ProductScrapeProfileRunResponse): stri
     ? `Dry run mapped ${formatCount(result.scrapedCount, 'product')}.`
     : `Imported ${formatCount(result.createdCount, 'new product')} and updated ${result.updatedCount}.`;
 
+export const isQueuedScrapeProfileRun = (
+  result: ProductScrapeProfileRunLaunchResponse
+): result is ProductScrapeProfileRunQueuedResponse =>
+  'status' in result;
+
+export const buildLaunchToastMessage = (
+  result: ProductScrapeProfileRunLaunchResponse
+): string =>
+  isQueuedScrapeProfileRun(result)
+    ? `Queued scrape profile in Redis runtime: ${result.jobId}.`
+    : buildToastMessage(result);
+
 export const resultVariant = (result: ProductScrapeProfileRunResponse): 'success' | 'warning' =>
   result.failedCount > 0 || result.skippedCount > 0 ? 'warning' : 'success';
+
+export const launchResultVariant = (
+  result: ProductScrapeProfileRunLaunchResponse
+): 'success' | 'warning' =>
+  isQueuedScrapeProfileRun(result) ? 'success' : resultVariant(result);
 
 export const resolveLimitError = (parsedLimit: number | null | undefined): string | null =>
   parsedLimit === undefined ? 'Limit must be a positive whole number.' : null;

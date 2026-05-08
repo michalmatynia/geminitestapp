@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type {
   ProductScrapeProfile,
+  ProductScrapeProfileRunQueuedResponse,
   ProductScrapeProfileRunResponse,
 } from '@/shared/contracts/products/scrape-profiles';
 import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
@@ -243,6 +244,12 @@ const renderModal = (): QueryClient => {
   return queryClient;
 };
 
+const getEnabledRunButton = async (): Promise<HTMLElement> => {
+  const runButton = screen.getByRole('button', { name: /Run Profile/ });
+  await waitFor(() => expect(runButton).not.toBeDisabled());
+  return runButton;
+};
+
 const runResponse: ProductScrapeProfileRunResponse = {
   profileId: battleProfile.id,
   profileLabel: battleProfile.label,
@@ -254,6 +261,15 @@ const runResponse: ProductScrapeProfileRunResponse = {
   skippedCount: 0,
   failedCount: 0,
   issueCount: 0,
+  runtime: {
+    queueName: 'product-scrape-profile',
+    runtimeActionId: 'runtime-action-battlestock',
+    runtimeActionName: 'BattleStock Product Scrape',
+    runtimeActionKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+    browserMode: 'headed',
+    enabledStepCount: 3,
+    totalStepCount: 4,
+  },
   products: [
     {
       index: 0,
@@ -272,6 +288,15 @@ const runResponse: ProductScrapeProfileRunResponse = {
     recordsWithWarnings: 0,
     totalIssues: 0,
   },
+};
+
+const queuedResponse: ProductScrapeProfileRunQueuedResponse = {
+  status: 'queued',
+  profileId: battleProfile.id,
+  dryRun: false,
+  jobId: 'job-1',
+  queueName: 'product-scrape-profile',
+  enqueuedAt: '2026-05-08T00:00:00.000Z',
 };
 
 const createRuntimeAction = (
@@ -394,7 +419,7 @@ describe('ProductScrapeProfilesModal', () => {
     playwrightActionsStore.pending = false;
     savePlaywrightActionsMock.mockResolvedValue(undefined);
     apiGetMock.mockImplementation((url: string) => Promise.resolve(handleApiGet(url)));
-    apiPostMock.mockResolvedValue(runResponse);
+    apiPostMock.mockResolvedValue(queuedResponse);
   });
 
   it('renders Run Profile in the header before the single Close button', async () => {
@@ -442,12 +467,28 @@ describe('ProductScrapeProfilesModal', () => {
           skipRecordsWithErrors: true,
           draftTemplateId: 'template-battle',
         },
-        { timeout: 300_000 }
+        { timeout: 30_000 }
       );
     });
     await waitFor(() => {
-      expect(invalidateProductsAndCountsMock).toHaveBeenCalledWith(expect.any(QueryClient));
-      expect(invalidateListingBadgesMock).toHaveBeenCalledWith(expect.any(QueryClient));
+      expect(invalidateProductsAndCountsMock).not.toHaveBeenCalled();
+      expect(invalidateListingBadgesMock).not.toHaveBeenCalled();
+      expect(screen.getByText('Queued in Redis runtime')).toBeInTheDocument();
+      expect(screen.getByText('Redis queue: product-scrape-profile')).toBeInTheDocument();
+      expect(screen.getByText('Job ID: job-1')).toBeInTheDocument();
+    });
+  });
+
+  it('keeps the modal close button enabled while the Redis launch request is pending', async () => {
+    apiPostMock.mockImplementation(() => new Promise(() => undefined));
+    renderModal();
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+    fireEvent.click(await getEnabledRunButton());
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: 'Close' })).not.toBeDisabled();
     });
   });
 
@@ -476,6 +517,10 @@ describe('ProductScrapeProfilesModal', () => {
     expect(screen.getByText('Saved action')).toBeInTheDocument();
     expect(screen.getByText('Headed')).toBeInTheDocument();
     expect(screen.getByText('Action ID: runtime-action-custom-battlestock')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Custom BattleStock scrape flow' })).toHaveAttribute(
+      'href',
+      '/admin/playwright/step-sequencer?actionId=runtime-action-custom-battlestock'
+    );
     await waitFor(() => {
       expect(screen.getByText('Current: Headed')).toBeInTheDocument();
     });
@@ -493,7 +538,7 @@ describe('ProductScrapeProfilesModal', () => {
       expect(apiPostMock).toHaveBeenCalledWith(
         '/api/v2/products/scrape-profiles/run',
         expect.objectContaining({ profileId: battleProfile.id }),
-        { timeout: 300_000 }
+        { timeout: 30_000 }
       );
     });
 
@@ -506,7 +551,7 @@ describe('ProductScrapeProfilesModal', () => {
     expect(savedRuntimeAction?.executionSettings.headless).toBe(false);
   });
 
-  it('forces a fresh Product List refetch after Redis scrape results update products', async () => {
+  it('does not block on product refresh while the Redis scrape job runs', async () => {
     const queryClient = renderModal();
     const filters = { page: 1, pageSize: 20 };
     const queryKey = [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
@@ -522,25 +567,23 @@ describe('ProductScrapeProfilesModal', () => {
     });
 
     await screen.findByText('BattleStock Warhammer 40k / 30k');
-    fireEvent.click(screen.getByRole('button', { name: /Run Profile/ }));
+    fireEvent.click(await getEnabledRunButton());
 
     await waitFor(() => {
-      expect(apiGetMock).toHaveBeenCalledWith(
-        '/api/v2/products/paged',
-        expect.objectContaining({
-          params: expect.objectContaining({
-            fresh: 1,
-            page: 1,
-            pageSize: 20,
-          }),
-        })
-      );
+      expect(screen.getByText('Queued in Redis runtime')).toBeInTheDocument();
     });
 
     expect(queryClient.getQueryData(queryKey)).toEqual({
-      items: freshPagedProductsResponse.products,
+      items: [
+        {
+          id: 'product-1',
+          sku: 'BATTLESTOCK-1',
+          parameters: [],
+        },
+      ],
       total: 1,
     });
+    expect(apiGetMock).not.toHaveBeenCalledWith('/api/v2/products/paged', expect.anything());
   });
 
   it('clears a selected profile-specific template when switching profiles', async () => {
@@ -568,7 +611,7 @@ describe('ProductScrapeProfilesModal', () => {
           sourcePriceCurrencyCode: 'PLN',
           skipRecordsWithErrors: true,
         },
-        { timeout: 300_000 }
+        { timeout: 30_000 }
       );
     });
   });
@@ -595,7 +638,7 @@ describe('ProductScrapeProfilesModal', () => {
           sourcePriceCurrencyCode: 'PLN',
           skipRecordsWithErrors: true,
         },
-        { timeout: 300_000 }
+        { timeout: 30_000 }
       );
     });
   });
@@ -622,7 +665,7 @@ describe('ProductScrapeProfilesModal', () => {
           sourcePriceCurrencyCode: 'EUR',
           skipRecordsWithErrors: true,
         },
-        { timeout: 300_000 }
+        { timeout: 30_000 }
       );
     });
   });

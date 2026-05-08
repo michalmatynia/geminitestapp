@@ -23,6 +23,7 @@ const {
   useBulkProductBaseSyncMutationMock,
   useProductListFiltersContextMock,
   useProductListSelectionContextMock,
+  useProductScrapeProfileRuntimeRunMock,
   useTraderaMassQuickExportMock,
   useVintedMassQuickExportMock,
 } = vi.hoisted(() => ({
@@ -44,6 +45,7 @@ const {
   useBulkProductBaseSyncMutationMock: vi.fn(),
   useProductListFiltersContextMock: vi.fn(),
   useProductListSelectionContextMock: vi.fn(),
+  useProductScrapeProfileRuntimeRunMock: vi.fn(),
   useTraderaMassQuickExportMock: vi.fn(),
   useVintedMassQuickExportMock: vi.fn(),
 }));
@@ -152,6 +154,10 @@ vi.mock('@/features/products/components/list/ProductScrapeProfilesModal', () => 
       </div>
     ) : null;
   },
+}));
+
+vi.mock('@/features/products/components/list/useProductScrapeProfileRuntimeRun', () => ({
+  useProductScrapeProfileRuntimeRun: () => useProductScrapeProfileRuntimeRunMock(),
 }));
 
 vi.mock('@/features/products/components/list/ProductBulkSyncResultsModal', () => ({
@@ -334,6 +340,14 @@ describe('ProductSelectionActions', () => {
       clearParsedMatchProductIds: clearParsedMatchProductIdsMock,
       setAdvancedFilterPresets: vi.fn(),
       setAdvancedFilterState: vi.fn(),
+    });
+    useProductScrapeProfileRuntimeRunMock.mockReturnValue({
+      activeRun: null,
+      isActive: false,
+      isUpdating: false,
+      pauseActiveRun: vi.fn(),
+      registerQueuedRun: vi.fn(),
+      resumeActiveRun: vi.fn(),
     });
     useBulkConvertImagesToBase64Mock.mockReturnValue({
       mutateAsync: vi.fn(),
@@ -568,6 +582,39 @@ describe('ProductSelectionActions', () => {
       })
     );
     expect(screen.getByText('Scrape Profiles Modal')).toBeInTheDocument();
+  });
+
+  it('keeps the scrape profiles toolbar button in a running state while the runtime run is active', () => {
+    useProductScrapeProfileRuntimeRunMock.mockReturnValue({
+      activeRun: {
+        completedAt: null,
+        createdAt: '2026-05-08T00:00:00.000Z',
+        dryRun: false,
+        error: null,
+        id: 'job-1',
+        profileId: 'battlestock-warhammer-40k-30k',
+        queueName: 'product-scrape-profile',
+        result: null,
+        startedAt: '2026-05-08T00:00:01.000Z',
+        status: 'running',
+        updatedAt: '2026-05-08T00:00:01.000Z',
+      },
+      isActive: true,
+      isUpdating: false,
+      pauseActiveRun: vi.fn(),
+      registerQueuedRun: vi.fn(),
+      resumeActiveRun: vi.fn(),
+    });
+
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Running' }));
+
+    expect(scrapeProfilesModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        isOpen: true,
+      })
+    );
   });
 
   it('filters the product list to parsed matches from the parse actions modal', async () => {

@@ -2,7 +2,6 @@
 
 import { useRef, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
-import { useQuickView } from '@/context/QuickViewContext';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { PRODUCTS } from '@/data/products';
 import type { Product } from '@/data/products';
@@ -26,12 +25,10 @@ const STATIC_FEATURED = FEATURED_SLUGS
 
 function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLabel: string }): JSX.Element {
   const { addItem } = useCart();
-  const { open } = useQuickView();
   const locale = useLocale();
   const localizedHref = useLocalizedHref();
   const aspect = '4/5';
   const isNewTag = product.tag === 'New' || product.tag === 'Nowość';
-  const quickViewLabel = locale === 'pl' ? 'Szybki podgląd' : 'Quick view';
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -49,18 +46,13 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
     });
   };
 
-  const handleQuickView = (e: React.MouseEvent) => {
-    e.preventDefault();
-    open(product);
-  };
-
   return (
     <a
       href={localizedHref(`/products/${product.slug}`)}
-      className="product-card block relative"
+      className="product-card group block relative"
       style={{ aspectRatio: aspect }}
     >
-      {/* Image */}
+      {/* Primary image */}
       <ProductImage
         imageUrl={product.imageUrl}
         gradient={product.gradient}
@@ -69,11 +61,16 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
         className="card-image absolute inset-0"
         position="top"
       />
+      {/* Secondary image — crossfades in on hover */}
+      <ProductImage
+        imageUrl={product.imageUrls?.[1] ?? product.imageUrl}
+        gradient={product.gradientAlt ?? product.gradient}
+        alt={product.name}
+        sizes="(max-width: 768px) 50vw, 25vw"
+        className="absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0 group-hover:opacity-100"
+        position="top"
+      />
 
-      {/* Hover overlay */}
-      <div className="card-overlay" />
-
-      {/* Tag badge */}
       {product.tag && (
         <div className="absolute top-3 left-3 z-10">
           <span
@@ -89,56 +86,43 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
         </div>
       )}
 
-      {/* Static info bar */}
+      {/* Info bar — always visible, anchored to bottom */}
       <div
-        className="absolute bottom-0 left-0 right-0 px-4 py-3 flex justify-between items-end z-10"
-        style={{ background: 'var(--media-overlay)' }}
+        className="absolute bottom-0 left-0 right-0 px-4 pb-3 z-10"
+        style={{
+          background: 'linear-gradient(to top, rgba(1,0,13,0.98) 0%, rgba(1,0,13,0.9) 25%, rgba(1,0,13,0.72) 50%, rgba(1,0,13,0.42) 72%, rgba(1,0,13,0.15) 88%, transparent 100%)',
+          paddingTop: '4rem',
+        }}
       >
-        <div className="flex-1 min-w-0 pr-2">
-          <div className="type-label mb-0.5 truncate" style={{ color: 'var(--on-media-muted)' }}>
-            {product.category}
-          </div>
-          <div
-            className="truncate"
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              color: 'var(--on-media)',
-              lineHeight: 1.1,
-            }}
-          >
-            {product.name}
-          </div>
+        <div className="type-label" style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '0.1rem' }}>
+          {product.category}
         </div>
-        <span
-          className="type-price flex-shrink-0"
-          style={{ color: 'var(--soft-gold)', textShadow: '0 0 10px rgba(var(--gold-rgb),0.35)' }}
+        <div
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '0.9rem',
+            fontWeight: 500,
+            color: '#f5f0eb',
+            lineHeight: 1.2,
+            marginBottom: '0.35rem',
+          }}
         >
-          {formatPrice(product.price, locale)}
-        </span>
-      </div>
-
-      {/* Hover: Quick Add + Quick View */}
-      <div className="card-info-hover z-20">
-        <div className="flex gap-2">
+          {product.name}
+        </div>
+        {/* Price + Add to Cart on same row */}
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="type-price"
+            style={{ color: 'var(--soft-gold)', textShadow: '0 0 10px rgba(var(--gold-rgb),0.4)' }}
+          >
+            {formatPrice(product.price, locale)}
+          </span>
           <button
-            className="flex-1 btn-primary text-center justify-center"
-            style={{ padding: '0.6rem 1rem', fontSize: '0.6rem' }}
+            className="btn-primary w-1/2 text-center justify-center opacity-0 translate-y-1 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0"
+            style={{ padding: '0.4rem 0.75rem', fontSize: '0.6rem' }}
             onClick={handleQuickAdd}
           >
             {quickAddLabel}
-          </button>
-          <button
-            className="btn-ghost flex-shrink-0 px-3 py-0"
-            style={{ padding: '0.6rem 0.8rem', borderColor: 'rgba(var(--accent-rgb),0.3)', color: 'var(--accent)', fontSize: '0.6rem' }}
-            onClick={handleQuickView}
-            aria-label={quickViewLabel}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
           </button>
         </div>
       </div>

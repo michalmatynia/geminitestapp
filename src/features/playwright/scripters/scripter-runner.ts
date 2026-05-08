@@ -25,6 +25,7 @@ export type RunScripterOptions = {
   now?: () => number;
   rateLimiter?: RateLimiter;
   limit?: number;
+  waitWhilePaused?: () => Promise<void>;
 };
 
 const filterJsonLd = (items: unknown[], filterType: string | undefined): unknown[] => {
@@ -98,6 +99,7 @@ export const runScripter = async (
     let recordsAdded = 0;
     let error: string | null = null;
     try {
+      await options.waitWhilePaused?.();
       if (step.kind === 'extractJsonLd') {
         const items = await driver.extractJsonLd();
         const filtered = filterJsonLd(items, step.filterType);
@@ -149,6 +151,7 @@ export const runScripter = async (
     let error: string | null = null;
 
     try {
+      await options.waitWhilePaused?.();
       checkAborted(options.signal);
       switch (step.kind) {
         case 'goto': {
@@ -182,6 +185,7 @@ export const runScripter = async (
         case 'paginate': {
           const maxPages = step.maxPages ?? 5;
           for (let i = 1; i <= maxPages; i += 1) {
+            await options.waitWhilePaused?.();
             checkAborted(options.signal);
             if (hasReachedLimit(records, options.limit)) break;
             let advanced = false;
@@ -208,6 +212,7 @@ export const runScripter = async (
             if (!advanced) break;
             visited.push(await driver.currentUrl());
             for (const prior of rerunHistory) {
+              await options.waitWhilePaused?.();
               if (!isRerunnable(prior)) continue;
               const entry = await runExtraction(prior, i);
               recordsAdded += entry.recordsAdded;

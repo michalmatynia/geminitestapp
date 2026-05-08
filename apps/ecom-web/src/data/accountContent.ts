@@ -67,6 +67,8 @@ export interface AccountSettingsContent {
 export interface AccountAdminContent {
   title: string;
   badgeLabel: string;
+  cmsLinkLabel: string;
+  cmsLinkDescription: string;
   registeredUsersLabel: string;
   recentRegistrationsLabel: string;
   loadingLabel: string;
@@ -161,6 +163,8 @@ export const ACCOUNT_CONTENT_DEFAULTS: AccountContent = {
   admin: {
     title: 'Admin Console',
     badgeLabel: 'Super Admin',
+    cmsLinkLabel: 'Open CMS',
+    cmsLinkDescription: 'Edit storefront copy, pages, stories, lookbook entries, and shared site content.',
     registeredUsersLabel: 'Registered users',
     recentRegistrationsLabel: 'Recent registrations',
     loadingLabel: 'Loading...',
@@ -414,6 +418,8 @@ export function validateAccountContent(input: unknown): AccountContentValidation
     admin: {
       title: readString(admin, 'title', ACCOUNT_CONTENT_DEFAULTS.admin.title, TEXT_LIMITS.short, errors, 'admin.title'),
       badgeLabel: readString(admin, 'badgeLabel', ACCOUNT_CONTENT_DEFAULTS.admin.badgeLabel, TEXT_LIMITS.short, errors, 'admin.badgeLabel'),
+      cmsLinkLabel: readString(admin, 'cmsLinkLabel', ACCOUNT_CONTENT_DEFAULTS.admin.cmsLinkLabel, TEXT_LIMITS.short, errors, 'admin.cmsLinkLabel'),
+      cmsLinkDescription: readString(admin, 'cmsLinkDescription', ACCOUNT_CONTENT_DEFAULTS.admin.cmsLinkDescription, TEXT_LIMITS.medium, errors, 'admin.cmsLinkDescription'),
       registeredUsersLabel: readString(admin, 'registeredUsersLabel', ACCOUNT_CONTENT_DEFAULTS.admin.registeredUsersLabel, TEXT_LIMITS.short, errors, 'admin.registeredUsersLabel'),
       recentRegistrationsLabel: readString(admin, 'recentRegistrationsLabel', ACCOUNT_CONTENT_DEFAULTS.admin.recentRegistrationsLabel, TEXT_LIMITS.short, errors, 'admin.recentRegistrationsLabel'),
       loadingLabel: readString(admin, 'loadingLabel', ACCOUNT_CONTENT_DEFAULTS.admin.loadingLabel, TEXT_LIMITS.short, errors, 'admin.loadingLabel'),

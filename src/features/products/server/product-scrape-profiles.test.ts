@@ -76,6 +76,15 @@ it('creates scraped BattleStock products in the BattleStock catalog', async () =
   );
   expect(response.createdCount).toBe(1);
   expect(response.catalog.name).toBe('BattleStock');
+  expect(response.runtime).toMatchObject({
+    queueName: null,
+    runtimeActionId: 'runtime-action-battlestock',
+    runtimeActionName: 'BattleStock Product Scrape',
+    runtimeActionKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+    browserMode: 'headed',
+    enabledStepCount: 0,
+    totalStepCount: 0,
+  });
   expect(mocks.ensureScrapedSourceListing).toHaveBeenCalledWith('product-created', 'linked');
   expect(mocks.invalidateAll).toHaveBeenCalledTimes(1);
 });

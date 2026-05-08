@@ -1,10 +1,7 @@
 'use client';
 
 import {
-  useMutation,
   useQuery,
-  useQueryClient,
-  type UseMutationResult,
   type UseQueryResult,
 } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -12,27 +9,17 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useDraftQueries } from '@/features/drafter/hooks/useDraftQueries';
 import type {
   ProductScrapeProfileImageImportMode,
-  ProductScrapeProfileRunRequest,
   ProductScrapeProfileRunResponse,
+  ProductScrapeProfileRunQueuedResponse,
   ProductScrapeProfilesListResponse,
   ProductScrapeSourcePriceCurrencyCode,
 } from '@/shared/contracts/products/scrape-profiles';
-import {
-  invalidateListingBadges,
-  invalidateProductsAndCounts,
-} from '@/shared/lib/query-invalidation';
-import { useToast } from '@/shared/ui/toast';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  buildToastMessage,
   fetchScrapeProfiles,
   parseLimit,
-  refreshProductListQueriesFresh,
   resolveLimitError,
-  resultVariant,
   SCRAPE_PROFILES_QUERY_KEY,
-  runScrapeProfile,
 } from './ProductScrapeProfilesModal.controller.helpers';
 import {
   useProductScrapeProfileControllerEffects,
@@ -49,6 +36,7 @@ import {
   writeStoredScrapeProfileSettings,
   type ProductScrapeProfileStoredSettings,
 } from './ProductScrapeProfilesModal.storage';
+import { useRunScrapeProfileMutation } from './ProductScrapeProfilesModal.mutation';
 import { useProductScrapeProfileRunHandler } from './ProductScrapeProfilesModal.run-handler';
 import {
   useProductScrapeProfileRuntimeActionSetting,
@@ -64,6 +52,7 @@ type ControllerResultInput = {
   limitInput: string;
   parsedLimit: number | null | undefined;
   profileId: string;
+  queuedRun: ProductScrapeProfileRunQueuedResponse | null;
   queries: ProductScrapeProfileQueries;
   result: ProductScrapeProfileRunResponse | null;
   runtimeAction: ProductScrapeProfileRuntimeActionSetting;
@@ -74,6 +63,11 @@ type ControllerResultInput = {
   setSourcePriceCurrencyCode: (value: ProductScrapeSourcePriceCurrencyCode) => void;
   setLimitInput: (value: string) => void;
   setProfileId: (value: string) => void;
+  settingsProfileId: string;
+};
+
+type ProductScrapeProfilesControllerOptions = {
+  onRunQueued?: (queuedRun: ProductScrapeProfileRunQueuedResponse) => void;
 };
 
 const DEFAULT_STORED_PROFILE_SETTINGS = {
@@ -140,33 +134,6 @@ const useScrapeProfileFormState = (
   };
 };
 
-const useRunScrapeProfileMutation = (
-  setResult: (result: ProductScrapeProfileRunResponse) => void
-): UseMutationResult<ProductScrapeProfileRunResponse, Error, ProductScrapeProfileRunRequest> => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  return useMutation({
-    mutationFn: runScrapeProfile,
-    onSuccess: async (response) => {
-      setResult(response);
-      if (!response.dryRun) {
-        await invalidateProductsAndCounts(queryClient);
-        await Promise.all([
-          refreshProductListQueriesFresh(queryClient),
-          invalidateListingBadges(queryClient),
-        ]);
-      }
-      toast(buildToastMessage(response), { variant: resultVariant(response) });
-    },
-    onError: (error) => {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to run scrape profile.', {
-        variant: 'error',
-      });
-    },
-  });
-};
-
 const useScrapeProfilesQuery = (
   isOpen: boolean
 ): UseQueryResult<ProductScrapeProfilesListResponse, Error> =>
@@ -212,6 +179,7 @@ const buildControllerResult = ({
   limitInput,
   parsedLimit,
   profileId,
+  queuedRun,
   queries,
   result,
   runIsPending,
@@ -222,6 +190,7 @@ const buildControllerResult = ({
   setSourcePriceCurrencyCode,
   setLimitInput,
   setProfileId,
+  settingsProfileId,
 }: ControllerResultInput): ProductScrapeProfilesController => ({
   dryRun,
   error: queries.profilesQuery.error,
@@ -230,6 +199,7 @@ const buildControllerResult = ({
   isDraftTemplatesLoading: queries.draftsQuery.isLoading,
   canRun:
     profileId.length > 0 &&
+    profileId === settingsProfileId &&
     parsedLimit !== undefined &&
     !runIsPending &&
     !runtimeAction.isSaving,
@@ -239,6 +209,7 @@ const buildControllerResult = ({
   limitInput,
   draftTemplates: queries.draftTemplates,
   profiles: queries.profiles,
+  queuedRun,
   result,
   runtimeAction,
   selectedDraftTemplateId: draftTemplateId,
@@ -253,14 +224,20 @@ const buildControllerResult = ({
 });
 
 export const useProductScrapeProfilesController = (
-  isOpen: boolean
+  isOpen: boolean,
+  options: ProductScrapeProfilesControllerOptions = {}
 ): ProductScrapeProfilesController => {
   const stored = useStoredSettingsState();
   const formState = useScrapeProfileFormState(stored);
   const [result, setResult] = useState<ProductScrapeProfileRunResponse | null>(null);
+  const [queuedRun, setQueuedRun] = useState<ProductScrapeProfileRunQueuedResponse | null>(null);
   const queries = useProductScrapeProfileQueries(isOpen, formState.profileId);
   const parsedLimit = useMemo(() => parseLimit(formState.limitInput), [formState.limitInput]);
-  const runMutation = useRunScrapeProfileMutation(setResult);
+  const runMutation = useRunScrapeProfileMutation(
+    setQueuedRun,
+    setResult,
+    options.onRunQueued
+  );
   const runtimeAction = useProductScrapeProfileRuntimeActionSetting(
     isOpen,
     queries.selectedProfile?.runtimeActionKey ?? null
@@ -276,6 +253,7 @@ export const useProductScrapeProfilesController = (
     formState,
     isOpen,
     queries,
+    setQueuedRun,
     setResult,
     stored,
   });
@@ -289,6 +267,7 @@ export const useProductScrapeProfilesController = (
     limitInput: formState.limitInput,
     parsedLimit,
     profileId: formState.profileId,
+    queuedRun,
     queries,
     result,
     runtimeAction,
@@ -299,5 +278,6 @@ export const useProductScrapeProfilesController = (
     setSourcePriceCurrencyCode: formState.setSourcePriceCurrencyCode,
     setLimitInput: formState.setLimitInput,
     setProfileId: formState.setProfileId,
+    settingsProfileId: formState.settingsProfileId,
   });
 };

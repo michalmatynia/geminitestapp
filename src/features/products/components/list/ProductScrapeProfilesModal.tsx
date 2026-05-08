@@ -1,35 +1,123 @@
 'use client';
 
-import { Play } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 
 import { useProductScrapeProfilesController } from './ProductScrapeProfilesModal.controller';
 import { ProductScrapeProfilesBody } from './ProductScrapeProfilesModal.parts';
+import type { ProductScrapeProfileRuntimeRunController } from './useProductScrapeProfileRuntimeRun';
 
 type ProductScrapeProfilesModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  scrapeRuntime?: ProductScrapeProfileRuntimeRunController;
 };
 
-export function ProductScrapeProfilesModal(
-  props: ProductScrapeProfilesModalProps
-): React.JSX.Element {
-  const { isOpen, onClose } = props;
-  const controller = useProductScrapeProfilesController(isOpen);
-  const runProfileAction = (
+function ProductScrapeProfilesPausedAction({
+  isUpdating,
+  onResume,
+}: {
+  isUpdating: boolean;
+  onResume: () => void;
+}): React.JSX.Element {
+  return (
     <Button
       type='button'
       size='sm'
-      onClick={controller.onRun}
-      disabled={!controller.canRun}
-      loading={controller.isBusy}
-      loadingText='Running...'
+      variant='warning'
+      onClick={onResume}
+      loading={isUpdating}
+      loadingText='Updating...'
+    >
+      <Play className='size-4' aria-hidden='true' />
+      Paused
+    </Button>
+  );
+}
+
+function ProductScrapeProfilesRunningAction({
+  isUpdating,
+  onPause,
+}: {
+  isUpdating: boolean;
+  onPause: () => void;
+}): React.JSX.Element {
+  return (
+    <Button
+      type='button'
+      size='sm'
+      variant='warning'
+      onClick={onPause}
+      loading={isUpdating}
+      loadingText='Updating...'
+    >
+      <Pause className='size-4' aria-hidden='true' />
+      Running
+    </Button>
+  );
+}
+
+function ProductScrapeProfilesRunAction({
+  canRun,
+  isBusy,
+  onRun,
+  scrapeRuntime,
+}: {
+  canRun: boolean;
+  isBusy: boolean;
+  onRun: () => void;
+  scrapeRuntime?: ProductScrapeProfileRuntimeRunController;
+}): React.JSX.Element {
+  const activeRun = scrapeRuntime?.activeRun ?? null;
+  if (activeRun?.status === 'paused' && scrapeRuntime !== undefined) {
+    return (
+      <ProductScrapeProfilesPausedAction
+        isUpdating={scrapeRuntime.isUpdating}
+        onResume={scrapeRuntime.resumeActiveRun}
+      />
+    );
+  }
+  if (activeRun !== null && scrapeRuntime !== undefined) {
+    return (
+      <ProductScrapeProfilesRunningAction
+        isUpdating={scrapeRuntime.isUpdating}
+        onPause={scrapeRuntime.pauseActiveRun}
+      />
+    );
+  }
+
+  return (
+    <Button
+      type='button'
+      size='sm'
+      onClick={onRun}
+      disabled={!canRun}
+      loading={isBusy}
+      loadingText='Queueing...'
     >
       <Play className='size-4' aria-hidden='true' />
       Run Profile
     </Button>
+  );
+}
+
+export function ProductScrapeProfilesModal(
+  props: ProductScrapeProfilesModalProps
+): React.JSX.Element {
+  const { isOpen, onClose, scrapeRuntime } = props;
+  const controller = useProductScrapeProfilesController(isOpen, {
+    onRunQueued: scrapeRuntime?.registerQueuedRun,
+  });
+  const activeRun = scrapeRuntime?.activeRun ?? null;
+  const runProfileAction = (
+    <ProductScrapeProfilesRunAction
+      canRun={controller.canRun}
+      isBusy={controller.isBusy}
+      onRun={controller.onRun}
+      scrapeRuntime={scrapeRuntime}
+    />
   );
 
   return (
@@ -39,7 +127,6 @@ export function ProductScrapeProfilesModal(
       title='Scrape Profiles'
       subtitle='BattleStock product import'
       size='lg'
-      lockClose={controller.isBusy}
       headerActions={runProfileAction}
     >
       <ProductScrapeProfilesBody
@@ -53,6 +140,8 @@ export function ProductScrapeProfilesModal(
         limitInput={controller.limitInput}
         draftTemplates={controller.draftTemplates}
         profiles={controller.profiles}
+        activeRun={activeRun}
+        queuedRun={controller.queuedRun}
         result={controller.result}
         runtimeAction={controller.runtimeAction}
         selectedDraftTemplateId={controller.selectedDraftTemplateId}

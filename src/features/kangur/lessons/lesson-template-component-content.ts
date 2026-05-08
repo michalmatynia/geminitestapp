@@ -1,5 +1,9 @@
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import {
+  cloneKangurLessonTemplateComponentContent,
+  normalizeKangurLessonTemplateComponentContent,
+} from '@/features/kangur/lessons/lesson-template-component-content-resolver';
+import {
   SUBTRACTING_LESSON_COMPONENT_CONTENT as SUBTRACTING_LESSON_COMPONENT_CONTENT_SEED,
 } from '@/features/kangur/ui/components/subtracting-lesson-content';
 import {
@@ -34,9 +38,6 @@ import {
   type KangurLogicalThinkingLessonTemplateContent,
   type KangurMultiplicationLessonTemplateContent,
   type KangurSubtractingLessonTemplateContent,
-  type LegacyCompatibleLessonShellTitle,
-  normalizeLegacyCompatibleLessonSectionGameCopy,
-  normalizeLegacyCompatibleLessonShellTitle,
 } from '@/shared/contracts/kangur-lesson-templates';
 
 import {
@@ -55,89 +56,6 @@ import {
   GEOMETRY_SYMMETRY_LESSON_COMPONENT_CONTENT,
 } from './lesson-template-component-content.geometry';
 import { LOGICAL_CLASSIFICATION_LESSON_COMPONENT_CONTENT } from './lesson-template-component-content.logical-classification';
-
-const cloneComponentContent = <T extends KangurLessonTemplateComponentContent | null>(
-  value: T,
-): T => (value ? structuredClone(value) : value);
-
-const normalizeGameShellLessonTemplateContent = <
-  T extends KangurLessonTemplateComponentContent & {
-    game: LegacyCompatibleLessonShellTitle;
-  },
->(
-  content: T,
-): T =>
-  ({
-    ...content,
-    game: normalizeLegacyCompatibleLessonShellTitle(content.game),
-  }) as T;
-
-const normalizeDrawShellLessonTemplateContent = <
-  T extends KangurLessonTemplateComponentContent & {
-    draw: LegacyCompatibleLessonShellTitle;
-  },
->(
-  content: T,
-): T =>
-  ({
-    ...content,
-    draw: normalizeLegacyCompatibleLessonShellTitle(content.draw),
-  }) as T;
-
-const normalizeAddingLessonTemplateContent = <
-  T extends KangurLessonTemplateComponentContent & {
-    game: LegacyCompatibleLessonShellTitle;
-    synthesis: LegacyCompatibleLessonShellTitle;
-  },
->(
-  content: T,
-): T =>
-  ({
-    ...content,
-    game: normalizeLegacyCompatibleLessonShellTitle(content.game),
-    synthesis: normalizeLegacyCompatibleLessonShellTitle(content.synthesis),
-  }) as T;
-
-const normalizeKangurLessonTemplateComponentContent = <
-  T extends KangurLessonTemplateComponentContent,
->(
-  content: T,
-): T => {
-  switch (content.kind) {
-    case 'alphabet_unified':
-      return {
-        ...content,
-        sections: content.sections.map(normalizeLegacyCompatibleLessonSectionGameCopy),
-      } as T;
-    case 'music_diatonic_scale':
-      return {
-        ...content,
-        gameFreeplaySection: normalizeLegacyCompatibleLessonSectionGameCopy(
-          content.gameFreeplaySection
-        ),
-        gameRepeatSection: normalizeLegacyCompatibleLessonSectionGameCopy(
-          content.gameRepeatSection
-        ),
-      } as T;
-    case 'geometry_shape_recognition':
-      return normalizeDrawShellLessonTemplateContent(content) as T;
-    case 'adding':
-      return normalizeAddingLessonTemplateContent(content) as T;
-    case 'art_shapes_basic':
-    case 'geometry_basics':
-    case 'geometry_shapes':
-    case 'geometry_symmetry':
-    case 'logical_classification':
-    case 'logical_patterns':
-    case 'logical_analogies':
-    case 'multiplication':
-    case 'subtracting':
-    case 'division':
-      return normalizeGameShellLessonTemplateContent(content) as T;
-    default:
-      return content;
-  }
-};
 
 export {
   ALPHABET_MATCHING_LESSON_COMPONENT_CONTENT,
@@ -210,7 +128,7 @@ export const getDefaultKangurLessonTemplateComponentContent = (
     return null;
   }
 
-  return cloneComponentContent(
+  return cloneKangurLessonTemplateComponentContent(
     DEFAULT_COMPONENT_CONTENT_BY_ID[componentId as KangurLessonComponentId] ?? null,
   );
 };
@@ -221,7 +139,9 @@ export const resolveKangurLessonTemplateComponentContent = (
 ): KangurLessonTemplateComponentContent | null => {
   const parsed = kangurLessonTemplateComponentContentSchema.safeParse(componentContent);
   if (parsed.success) {
-    return cloneComponentContent(normalizeKangurLessonTemplateComponentContent(parsed.data));
+    return cloneKangurLessonTemplateComponentContent(
+      normalizeKangurLessonTemplateComponentContent(parsed.data),
+    );
   }
 
   return getDefaultKangurLessonTemplateComponentContent(componentId);

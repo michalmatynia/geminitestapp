@@ -3,13 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProductScrapeProfileRunResponse } from '@/shared/contracts/products/scrape-profiles';
 import type { QueueConfig } from '@/shared/contracts/jobs';
 
-type QueueJob = {
-  waitUntilFinished: (events: unknown, timeoutMs: number) => Promise<unknown>;
-};
-
 const mocks = vi.hoisted(() => ({
   captureException: vi.fn(),
-  closeEvents: vi.fn(),
   enqueue: vi.fn(),
   getJob: vi.fn(),
   getQueue: vi.fn(),
@@ -22,14 +17,6 @@ const mocks = vi.hoisted(() => ({
   startWorker: vi.fn(),
   stopWorker: vi.fn(),
   waitUntilFinished: vi.fn(),
-  waitUntilReady: vi.fn(),
-}));
-
-vi.mock('bullmq', () => ({
-  QueueEvents: class QueueEventsMock {
-    close = mocks.closeEvents;
-    waitUntilReady = mocks.waitUntilReady;
-  },
 }));
 
 vi.mock('@/features/products/server/product-scrape-profiles', () => ({
@@ -86,43 +73,59 @@ const runResponse: ProductScrapeProfileRunResponse = {
 describe('productScrapeProfileQueue', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.closeEvents.mockResolvedValue(undefined);
     mocks.isRedisAvailable.mockReturnValue(true);
     mocks.isRedisReachable.mockResolvedValue(true);
     mocks.redisConnection.mockReturnValue({ status: 'ready' });
-    mocks.enqueue.mockResolvedValue('job-1');
-    mocks.waitUntilFinished.mockResolvedValue(runResponse);
-    mocks.getJob.mockResolvedValue({
-      waitUntilFinished: mocks.waitUntilFinished,
-    } satisfies QueueJob);
+    mocks.enqueue.mockImplementation(
+      async (_data: unknown, options?: { jobId?: string }) => options?.jobId ?? 'job-1'
+    );
+    mocks.getJob.mockResolvedValue(null);
     mocks.getQueue.mockReturnValue({ getJob: mocks.getJob });
   });
 
-  it('enqueues scrape profile runs and waits for the Redis job result', async () => {
+  it('enqueues scrape profile runs without waiting for the Redis job result', async () => {
     const request = { profileId: 'battlestock-warhammer-40k-30k', limit: 1 };
 
     await expect(
       runProductScrapeProfileViaRedisRuntime(request, { userId: 'user-1' })
-    ).resolves.toEqual(runResponse);
+    ).resolves.toMatchObject({
+      status: 'queued',
+      profileId: 'battlestock-warhammer-40k-30k',
+      dryRun: false,
+      jobId: expect.stringContaining('product-scrape-profile__'),
+      queueName: 'product-scrape-profile',
+      run: expect.objectContaining({
+        profileId: 'battlestock-warhammer-40k-30k',
+        status: 'queued',
+      }),
+    });
 
     expect(mocks.enqueue).toHaveBeenCalledWith(
       expect.objectContaining({ request, userId: 'user-1' }),
       expect.objectContaining({ jobId: expect.stringContaining('product-scrape-profile__') })
     );
     expect(mocks.startWorker).toHaveBeenCalledTimes(1);
-    expect(mocks.getJob).toHaveBeenCalledWith('job-1');
-    expect(mocks.waitUntilFinished).toHaveBeenCalledWith(expect.any(Object), 300_000);
+    expect(mocks.getJob).not.toHaveBeenCalled();
+    expect(mocks.waitUntilFinished).not.toHaveBeenCalled();
   });
 
   it('processes queued jobs with the scrape profile runner', async () => {
     await mocks.queueConfig?.processor(
-      { request: { profileId: 'battlestock-warhammer-40k-30k' }, userId: 'user-1' },
+      {
+        request: { profileId: 'battlestock-warhammer-40k-30k' },
+        requestedAt: '2026-05-08T00:00:00.000Z',
+        userId: 'user-1',
+      },
       'job-1'
     );
 
     expect(mocks.runProductScrapeProfile).toHaveBeenCalledWith(
       { profileId: 'battlestock-warhammer-40k-30k' },
-      { userId: 'user-1' }
+      {
+        runtimeQueueName: 'product-scrape-profile',
+        userId: 'user-1',
+        waitWhilePaused: expect.any(Function),
+      }
     );
   });
 

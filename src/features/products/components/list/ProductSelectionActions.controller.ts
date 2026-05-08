@@ -11,6 +11,7 @@ import { useProductSelectionDialogController } from './ProductSelectionActions.d
 import { useProductSelectionPresetController } from './ProductSelectionActions.presets';
 import { useProductSelectionBaseController } from './ProductSelectionActions.selection';
 import type { ProductSelectionActionsController } from './ProductSelectionActions.types';
+import { useProductScrapeProfileRuntimeRun } from './useProductScrapeProfileRuntimeRun';
 
 export const useProductSelectionActionsController = (): ProductSelectionActionsController => {
   const selectionContext = useProductListSelectionContext();
@@ -18,6 +19,7 @@ export const useProductSelectionActionsController = (): ProductSelectionActionsC
   const { toast } = useToast();
   const selection = useProductSelectionBaseController(selectionContext);
   const dialogs = useProductSelectionDialogController();
+  const scrapeProfilesRuntime = useProductScrapeProfileRuntimeRun();
   const presets = useProductSelectionPresetController({
     activeAdvancedFilterPresetId: filtersContext.activeAdvancedFilterPresetId,
     advancedFilter: filtersContext.advancedFilter,
@@ -40,6 +42,7 @@ export const useProductSelectionActionsController = (): ProductSelectionActionsC
     includeArchived: filtersContext.includeArchived,
     parsedMatchProductIds: filtersContext.parsedMatchProductIds,
     presets,
+    scrapeProfilesRuntime,
     selection,
   };
 };

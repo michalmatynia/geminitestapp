@@ -22,7 +22,8 @@ function getSecret(): Uint8Array {
 }
 
 export function isSuperAdmin(email: string): boolean {
-  return email === process.env.SUPER_ADMIN_EMAIL;
+  const configuredEmail = process.env.SUPER_ADMIN_EMAIL?.trim().toLowerCase();
+  return Boolean(configuredEmail) && email.trim().toLowerCase() === configuredEmail;
 }
 
 export async function hashPassword(pw: string): Promise<string> {
@@ -44,11 +45,17 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
 export async function verifySessionToken(token: string): Promise<SessionUser | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret());
+    const id = payload['id'];
+    const email = payload['email'];
+    const name = payload['name'];
+    if (typeof id !== 'string' || typeof email !== 'string' || typeof name !== 'string') {
+      return null;
+    }
     return {
-      id: payload['id'] as string,
-      email: payload['email'] as string,
-      name: payload['name'] as string,
-      isSuperAdmin: payload['isSuperAdmin'] as boolean,
+      id,
+      email,
+      name,
+      isSuperAdmin: isSuperAdmin(email),
     };
   } catch {
     return null;

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import 'server-only';
 
 import {
@@ -17,10 +18,7 @@ import type {
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
-import type {
-  PlaywrightAction,
-  PlaywrightActionExecutionSettings,
-} from '@/shared/contracts/playwright-steps';
+import type { PlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
 import { badRequestError, configurationError, notFoundError } from '@/shared/errors/app-error';
 import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY } from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
 import { resolveRuntimeActionDefinition } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
@@ -34,6 +32,7 @@ import {
 } from './product-scrape-profiles.helpers';
 import { summarizeOutcomes } from './product-scrape-profiles.outcomes';
 import { listScrapePriceGroupsForCalculation } from './product-scrape-pricing';
+import { buildRuntimeMetadata } from './product-scrape-profiles.runtime';
 
 const BATTLESTOCK_CATALOG_NAME = 'BattleStock';
 
@@ -226,36 +225,18 @@ const shouldInvalidateProductCache = (
   return counts.createdCount > 0 || counts.updatedCount > 0;
 };
 
-const resolveBrowserMode = (
-  headless: boolean | null
-): NonNullable<ProductScrapeProfileRunResponse['runtime']>['browserMode'] => {
-  if (headless === null) return 'runtime_default';
-  return headless ? 'headless' : 'headed';
-};
-
-const buildRuntimeMetadata = (
-  action: PlaywrightAction,
-  queueName: string | null | undefined
-): NonNullable<ProductScrapeProfileRunResponse['runtime']> => ({
-  queueName: queueName ?? null,
-  runtimeActionId: action.id,
-  runtimeActionName: action.name,
-  runtimeActionKey: action.runtimeKey ?? '',
-  browserMode: resolveBrowserMode(action.executionSettings.headless),
-  enabledStepCount: action.blocks.filter((block) => block.enabled !== false).length,
-  totalStepCount: action.blocks.length,
-});
-
 const runProfileScripterDryRun = async ({
   catalogId,
   executionSettings,
   input,
   profile,
+  waitWhilePaused,
 }: {
   catalogId: string;
   executionSettings: PlaywrightActionExecutionSettings;
   input: ProductScrapeProfileRunRequest;
   profile: ProductScrapeProfileConfig;
+  waitWhilePaused?: () => Promise<void>;
 }): Promise<ScripterImportSourceResult> =>
   await getDefaultScripterServer().dryRun({
     scripterId: profile.scripterId,
@@ -266,6 +247,7 @@ const runProfileScripterDryRun = async ({
       limit: input.limit,
       skipRecordsWithErrors: false,
       catalogDefaults: { catalogIds: [catalogId] },
+      waitWhilePaused,
     },
   });
 
@@ -273,12 +255,18 @@ export const listProductScrapeProfiles = (): ProductScrapeProfilesListResponse =
   profiles: PRODUCT_SCRAPE_PROFILES.map(toPublicProfile),
 });
 
+/* eslint-disable complexity, max-lines-per-function */
 export const runProductScrapeProfile = async (
   input: ProductScrapeProfileRunRequest,
-  options: { userId?: string | null; runtimeQueueName?: string | null } = {}
+  options: {
+    userId?: string | null;
+    runtimeQueueName?: string | null;
+    waitWhilePaused?: () => Promise<void>;
+  } = {}
 ): Promise<ProductScrapeProfileRunResponse> => {
   const profile = findProfile(input.profileId);
   const dryRun = input.dryRun ?? false;
+  await options.waitWhilePaused?.();
   await ensureScripterProfileFile(profile);
   const runtimeAction = await resolveRuntimeActionDefinition(profile.runtimeActionKey);
 
@@ -287,12 +275,15 @@ export const runProductScrapeProfile = async (
   const draftTemplateCategoryAliases = await resolveDraftTemplateCategoryAliases(draftTemplate);
   const priceGroups = await loadScrapePriceGroups(catalog, draftTemplate);
   const sourcePriceCurrencyCode = resolveSourcePriceCurrencyCode(profile, input.sourcePriceCurrencyCode);
+  await options.waitWhilePaused?.();
   const source = await runProfileScripterDryRun({
     catalogId: catalog.id,
     executionSettings: runtimeAction.executionSettings,
     input,
     profile,
+    waitWhilePaused: options.waitWhilePaused,
   });
+  await options.waitWhilePaused?.();
   const outcomes = await processScrapeDrafts(source.drafts, {
     profile,
     catalog,
@@ -304,6 +295,7 @@ export const runProductScrapeProfile = async (
     sourcePriceCurrencyCode,
     draftTemplate,
     draftTemplateCategoryAliases,
+    waitWhilePaused: options.waitWhilePaused,
   });
   const outcomeSummary = summarizeOutcomes(outcomes);
 
@@ -323,7 +315,10 @@ export const runProductScrapeProfile = async (
     failedCount: outcomeSummary.failedCount,
     issueCount: source.summary.totalIssues,
     products: outcomeSummary.products,
-    runtime: buildRuntimeMetadata(runtimeAction, options.runtimeQueueName),
+    runtime: buildRuntimeMetadata(runtimeAction, {
+      queueName: options.runtimeQueueName,
+      runtimeActionKey: profile.runtimeActionKey,
+    }),
     summary: {
       rawCount: source.summary.rawCount,
       mappedCount: source.summary.mappedCount,
@@ -333,3 +328,4 @@ export const runProductScrapeProfile = async (
     },
   };
 };
+/* eslint-enable complexity, max-lines-per-function */

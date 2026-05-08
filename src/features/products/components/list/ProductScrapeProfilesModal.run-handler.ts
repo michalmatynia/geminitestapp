@@ -4,8 +4,8 @@ import type { UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import type {
+  ProductScrapeProfileRunLaunchResponse,
   ProductScrapeProfileRunRequest,
-  ProductScrapeProfileRunResponse,
 } from '@/shared/contracts/products/scrape-profiles';
 import { useToast } from '@/shared/ui/toast';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -23,7 +23,7 @@ export const useProductScrapeProfileRunHandler = ({
   formState: ProductScrapeProfileFormState;
   parsedLimit: number | null | undefined;
   runMutation: UseMutationResult<
-    ProductScrapeProfileRunResponse,
+    ProductScrapeProfileRunLaunchResponse,
     Error,
     ProductScrapeProfileRunRequest
   >;

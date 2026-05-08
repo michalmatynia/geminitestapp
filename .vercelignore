@@ -43,7 +43,7 @@ bazel-*
 
 # Local databases and transient runtime data
 public/uploads/
-csv/
+/csv/
 data/amazon-scan-diagnostics/
 mongo/backups/
 mongo/local-data/

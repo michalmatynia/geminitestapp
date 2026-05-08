@@ -5,24 +5,36 @@ import { getLookbookPageContent } from '@/lib/cms';
 import { getAllLookbookEntries } from '@/lib/lookbookCms';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
+import { getRequestLocale } from '@/lib/request-locale';
+import { localizeHref, type EcomLocale } from '@/lib/locales';
 
-export const metadata: Metadata = {
-  title: 'Lookbook — ARCANA',
-  description: 'Seasonal editorials and visual studies from the ARCANA atelier.',
-};
+function issueLabel(issue: string, locale: EcomLocale): string {
+  return `${locale === 'pl' ? 'Wydanie' : 'Issue'} ${issue}`;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const content = await getLookbookPageContent(locale);
+  return {
+    title: `${content.masthead.title} - ARCANA`,
+    description: content.masthead.description,
+  };
+}
 
 function EditorialCard({
   editorial,
   minHeight = '420px',
   viewLabel,
+  locale,
 }: {
   editorial: Editorial;
   minHeight?: string;
   viewLabel: string;
+  locale: EcomLocale;
 }): JSX.Element {
   return (
     <a
-      href={`/products/${editorial.productSlug}`}
+      href={localizeHref(`/products/${editorial.productSlug}`, locale)}
       className="group relative block overflow-hidden"
       style={{ minHeight, background: editorial.gradient }}
     >
@@ -53,7 +65,7 @@ function EditorialCard({
             opacity: 0.5,
           }}
         >
-          Issue {editorial.issue}
+          {issueLabel(editorial.issue, locale)}
         </span>
       </div>
 
@@ -133,9 +145,10 @@ function EditorialCard({
 }
 
 export default async function LookbookPage(): Promise<JSX.Element> {
+  const locale = await getRequestLocale();
   const [entries, content] = await Promise.all([
-    getAllLookbookEntries(),
-    getLookbookPageContent(),
+    getAllLookbookEntries(locale),
+    getLookbookPageContent(locale),
   ]);
   const [hero] = entries;
   if (!hero) {
@@ -255,7 +268,7 @@ export default async function LookbookPage(): Promise<JSX.Element> {
           {/* Hero large — cols 1-8, rows 1-2 */}
           <div style={{ gridColumn: '1 / 9', gridRow: '1 / 3' }}>
             <a
-              href={`/products/${hero.productSlug}`}
+              href={localizeHref(`/products/${hero.productSlug}`, locale)}
               className="group relative block overflow-hidden h-full"
               style={{ minHeight: '640px', background: hero.gradient }}
             >
@@ -272,7 +285,7 @@ export default async function LookbookPage(): Promise<JSX.Element> {
               />
               <div className="absolute top-8 left-8 z-10">
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: hero.textColor, opacity: 0.45 }}>
-                  Issue {hero.issue} · {content.featuredLabel}
+                  {issueLabel(hero.issue, locale)} · {content.featuredLabel}
                 </span>
               </div>
               <div className="absolute inset-0 flex flex-col justify-end p-10 md:p-14 z-10">
@@ -331,19 +344,19 @@ export default async function LookbookPage(): Promise<JSX.Element> {
 
           {/* Top-right small */}
           <div style={{ gridColumn: '9 / 13', gridRow: '1 / 2' }}>
-            <EditorialCard editorial={second} minHeight="320px" viewLabel={content.viewLabel} />
+            <EditorialCard editorial={second} minHeight="320px" viewLabel={content.viewLabel} locale={locale} />
           </div>
 
           {/* Bottom-right small */}
           <div style={{ gridColumn: '9 / 13', gridRow: '2 / 3' }}>
-            <EditorialCard editorial={third} minHeight="320px" viewLabel={content.viewLabel} />
+            <EditorialCard editorial={third} minHeight="320px" viewLabel={content.viewLabel} locale={locale} />
           </div>
         </div>
 
         {/* ── Full-width editorial strip ──────────────────────────── */}
         <div style={{ gap: '3px', marginTop: '3px' }}>
           <a
-            href={`/products/${fourth.productSlug}`}
+            href={localizeHref(`/products/${fourth.productSlug}`, locale)}
             className="group relative block overflow-hidden"
             style={{ minHeight: '380px', background: fourth.gradient }}
           >
@@ -357,7 +370,7 @@ export default async function LookbookPage(): Promise<JSX.Element> {
             <div className="absolute inset-0 flex items-center justify-between px-10 md:px-20 z-10">
               <div>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: fourth.textColor, opacity: 0.4 }}>
-                  Issue {fourth.issue}
+                  {issueLabel(fourth.issue, locale)}
                 </span>
                 <h2
                   className="mt-3"
@@ -393,7 +406,7 @@ export default async function LookbookPage(): Promise<JSX.Element> {
           style={{ gap: '3px', marginTop: '3px' }}
         >
           {[fifth, sixth, seventh].map((ed) => (
-            <EditorialCard key={ed.id} editorial={ed} minHeight="500px" viewLabel={content.viewLabel} />
+            <EditorialCard key={ed.id} editorial={ed} minHeight="500px" viewLabel={content.viewLabel} locale={locale} />
           ))}
         </div>
 
@@ -402,7 +415,7 @@ export default async function LookbookPage(): Promise<JSX.Element> {
           className="grid grid-cols-1 md:grid-cols-2"
           style={{ gap: '3px', marginTop: '3px' }}
         >
-          <EditorialCard editorial={eighth} minHeight="380px" viewLabel={content.viewLabel} />
+          <EditorialCard editorial={eighth} minHeight="380px" viewLabel={content.viewLabel} locale={locale} />
 
           {/* CTA panel */}
           <div
@@ -461,7 +474,7 @@ export default async function LookbookPage(): Promise<JSX.Element> {
                 {content.cta.body}
               </p>
               <a
-                href={content.cta.href}
+                href={localizeHref(content.cta.href, locale)}
                 className="inline-flex items-center gap-3 type-label px-8 py-4 transition-all duration-300 hover:gap-5"
                 style={{ background: '#f5f0eb', color: '#0a0908' }}
               >
@@ -491,7 +504,7 @@ export default async function LookbookPage(): Promise<JSX.Element> {
             {content.archive.label}
           </span>
           <a
-            href={content.archive.ctaHref}
+            href={localizeHref(content.archive.ctaHref, locale)}
             className="type-label flex items-center gap-2 transition-colors hover:text-white"
             style={{ color: 'rgba(255,255,255,0.3)' }}
           >

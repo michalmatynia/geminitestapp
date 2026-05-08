@@ -2,9 +2,11 @@
 
 import { useState, useEffect, type JSX } from 'react';
 import { useRecentlyViewed, type RecentlyViewedItem } from '@/context/RecentlyViewedContext';
+import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import type { Product } from '@/data/products';
 import { ProductImage } from '@/components/ProductImage';
 import { HOME_CONTENT_DEFAULTS, type HomeRecentlyViewedContent } from '@/data/homeContent';
+import { formatPrice } from '@/lib/locales';
 
 export function RecentlyViewed({
   content = HOME_CONTENT_DEFAULTS.recentlyViewed,
@@ -12,13 +14,15 @@ export function RecentlyViewed({
   content?: HomeRecentlyViewedContent;
 }): JSX.Element | null {
   const { items } = useRecentlyViewed();
+  const locale = useLocale();
+  const localizedHref = useLocalizedHref();
   const [freshData, setFreshData] = useState<Record<string, Product>>({});
 
   const idKey = items.map((i) => i.productId).join(',');
 
   useEffect(() => {
     if (!idKey) return;
-    fetch(`/api/products?ids=${encodeURIComponent(idKey)}`)
+    fetch(`/api/products?ids=${encodeURIComponent(idKey)}&locale=${locale}`)
       .then((r) => r.json())
       .then((data: { products?: Product[] }) => {
         const map: Record<string, Product> = {};
@@ -26,7 +30,7 @@ export function RecentlyViewed({
         setFreshData(map);
       })
       .catch(() => {});
-  }, [idKey]);
+  }, [idKey, locale]);
 
   if (items.length === 0) return null;
 
@@ -37,6 +41,7 @@ export function RecentlyViewed({
       ...item,
       name: fresh.name || item.name,
       category: fresh.category || item.category,
+      price: fresh.price ?? item.price,
       priceDisplay: fresh.priceDisplay || item.priceDisplay,
       gradient: fresh.gradient || item.gradient,
       imageUrl: fresh.imageUrl ?? item.imageUrl,
@@ -67,7 +72,7 @@ export function RecentlyViewed({
             </h2>
           </div>
           <a
-            href={content.ctaHref}
+            href={localizedHref(content.ctaHref)}
             className="hidden md:flex items-center gap-2 type-label transition-colors hover:text-[var(--fg)]"
             style={{ color: 'var(--muted)' }}
           >
@@ -87,7 +92,7 @@ export function RecentlyViewed({
             return (
               <a
                 key={item.productId}
-                href={`/products/${item.slug}`}
+                href={localizedHref(`/products/${item.slug}`)}
                 className="group flex-shrink-0"
                 style={{ width: '190px' }}
               >
@@ -125,7 +130,7 @@ export function RecentlyViewed({
                   className="type-price"
                   style={{ color: 'var(--muted)', fontSize: '0.78rem' }}
                 >
-                  {item.priceDisplay}
+                  {formatPrice(item.price ?? 0, locale)}
                 </div>
               </a>
             );

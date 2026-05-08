@@ -1,10 +1,6 @@
 import Image from 'next/image';
-import type { JSX, SyntheticEvent } from 'react';
-import {
-  getProductImageFallbackSrc,
-  getProductImageSrc,
-  shouldBypassImageOptimization,
-} from '@/lib/productImages';
+import type { JSX } from 'react';
+import { getProductImageSrc } from '@/lib/productImages';
 
 export function ProductImage({
   imageUrl,
@@ -26,40 +22,12 @@ export function ProductImage({
   position?: string;
 }): JSX.Element {
   const resolvedImageUrl = getProductImageSrc(imageUrl);
-  const fallbackImageUrl = getProductImageFallbackSrc(imageUrl);
-  const usesNativeUploadImage = shouldBypassImageOptimization(resolvedImageUrl);
-  const handleNativeImageError = (e: SyntheticEvent<HTMLImageElement>): void => {
-    const image = e.currentTarget;
-    if (fallbackImageUrl && image.getAttribute('src') !== fallbackImageUrl) {
-      image.src = fallbackImageUrl;
-      return;
-    }
-    image.style.display = 'none';
-  };
 
   return (
     <div className={`${className} overflow-hidden`}>
       {/* Gradient always renders as placeholder/backdrop */}
       <div className="absolute inset-0" style={{ background: gradient }} />
-      {resolvedImageUrl && usesNativeUploadImage && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={resolvedImageUrl}
-          alt={alt}
-          loading={priority ? 'eager' : 'lazy'}
-          decoding="async"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: fit,
-            objectPosition: position,
-          }}
-          onError={handleNativeImageError}
-        />
-      )}
-      {resolvedImageUrl && !usesNativeUploadImage && (
+      {resolvedImageUrl && (
         <Image
           src={resolvedImageUrl}
           alt={alt}

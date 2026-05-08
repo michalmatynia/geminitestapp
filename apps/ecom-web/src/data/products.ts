@@ -10,6 +10,7 @@ export type Product = {
   gradient: string;
   gradientAlt?: string;
   imageUrl?: string;     // primary image served from public uploads
+  imageUrls?: string[];  // all product images for detail gallery
   description: string;
   details: string[];
   care: string[];

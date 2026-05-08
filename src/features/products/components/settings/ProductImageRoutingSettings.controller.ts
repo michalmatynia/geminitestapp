@@ -28,64 +28,89 @@ import {
 
 export { SEQUENCE_GENERATION_MODE_OPTIONS } from './ProductImageRoutingSettings.sequence-settings';
 
-export type ProductImageRoutingSettingsController = ProductImageRoutesState &
-  ProductImageRouteActions &
-  ProductImageStudioProjectState &
+export type ProductImageServingSettingsController = ProductImageRoutesState &
+  ProductImageRouteActions & {
+    updateSettingsBulkPending: boolean;
+  };
+
+export type ProductStudioSettingsController = ProductImageStudioProjectState &
   ProductImageStudioProjectActions &
   ProductStudioSequenceGenerationState &
   ProductStudioSequenceGenerationActions & {
     updateSequenceGenerationModePending: boolean;
-    updateSettingsBulkPending: boolean;
     updateStudioProjectPending: boolean;
   };
 
-export const useProductImageRoutingSettingsController =
-  (): ProductImageRoutingSettingsController => {
-    const router = useRouter();
+export type ProductImageRoutingSettingsController = ProductImageServingSettingsController &
+  ProductStudioSettingsController;
+
+export const useProductImageServingSettingsController =
+  (): ProductImageServingSettingsController => {
     const { toast } = useToast();
     const {
       imageExternalBaseUrl: persistedBaseUrlRaw,
       imageExternalRoutesRaw: persistedRoutesRaw,
-      defaultProjectId: persistedStudioProject,
-      sequenceGenerationMode: persistedSequenceGenerationMode,
-      refetch: refetchSettings,
     } = useProductSettings();
-    const updateStudioProjectSetting = useUpdateSetting();
-    const updateSequenceGenerationModeSetting = useUpdateSetting();
     const updateSettingsBulk = useUpdateSettingsBulk();
     const routeState = useProductImageRoutesState({ persistedBaseUrlRaw, persistedRoutesRaw });
-    const studioProjectState = useProductImageStudioProjectState(persistedStudioProject);
-    const sequenceGenerationState = useProductStudioSequenceGenerationState(
-      persistedSequenceGenerationMode
-    );
     const routeActions = useProductImageRouteActions({
       ...routeState,
       toast,
       updateSettingsBulk,
     });
-    const studioProjectActions = useProductImageStudioProjectActions({
-      ...studioProjectState,
-      refetchSettings,
-      router,
-      toast,
-      updateStudioProjectSetting,
-    });
-    const sequenceGenerationActions = useProductStudioSequenceGenerationActions({
-      ...sequenceGenerationState,
-      refetchSettings,
-      toast,
-      updateSequenceGenerationModeSetting,
-    });
 
     return {
       ...routeState,
       ...routeActions,
-      ...studioProjectState,
-      ...studioProjectActions,
-      ...sequenceGenerationState,
-      ...sequenceGenerationActions,
-      updateSequenceGenerationModePending: updateSequenceGenerationModeSetting.isPending,
       updateSettingsBulkPending: updateSettingsBulk.isPending,
-      updateStudioProjectPending: updateStudioProjectSetting.isPending,
+    };
+  };
+
+export const useProductStudioSettingsController = (): ProductStudioSettingsController => {
+  const router = useRouter();
+  const { toast } = useToast();
+  const {
+    defaultProjectId: persistedStudioProject,
+    sequenceGenerationMode: persistedSequenceGenerationMode,
+    refetch: refetchSettings,
+  } = useProductSettings();
+  const updateStudioProjectSetting = useUpdateSetting();
+  const updateSequenceGenerationModeSetting = useUpdateSetting();
+  const studioProjectState = useProductImageStudioProjectState(persistedStudioProject);
+  const sequenceGenerationState = useProductStudioSequenceGenerationState(
+    persistedSequenceGenerationMode
+  );
+  const studioProjectActions = useProductImageStudioProjectActions({
+    ...studioProjectState,
+    refetchSettings,
+    router,
+    toast,
+    updateStudioProjectSetting,
+  });
+  const sequenceGenerationActions = useProductStudioSequenceGenerationActions({
+    ...sequenceGenerationState,
+    refetchSettings,
+    toast,
+    updateSequenceGenerationModeSetting,
+  });
+
+  return {
+    ...studioProjectState,
+    ...studioProjectActions,
+    ...sequenceGenerationState,
+    ...sequenceGenerationActions,
+    updateSequenceGenerationModePending: updateSequenceGenerationModeSetting.isPending,
+    updateStudioProjectPending: updateStudioProjectSetting.isPending,
+  };
+};
+
+export const useProductImageRoutingSettingsController =
+  (): ProductImageRoutingSettingsController => {
+    const imageServingController = useProductImageServingSettingsController();
+    const studioController = useProductStudioSettingsController();
+
+    return {
+      ...imageServingController,
+      ...studioController,
     };
   };

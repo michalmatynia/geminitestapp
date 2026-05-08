@@ -11,6 +11,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { normalizeSiteLocale, resolveLocalizedText } from '@/shared/lib/i18n/site-locale';
 import MissingImagePlaceholder from '@/shared/ui/missing-image-placeholder';
 import { ResourceCard } from '@/shared/ui/ResourceCard';
+import { resolveProductImageUrl as resolveRoutedProductImageUrl } from '@/shared/utils/image-routing';
 
 interface ProductCardProps {
   product: ProductWithImages;
@@ -20,7 +21,32 @@ interface ProductCardProps {
 function resolveProductImageUrl(product: ProductWithImages): string | null {
   const images = Array.isArray(product.images) ? product.images : [];
   const firstImage = images[0];
-  return firstImage === undefined ? null : firstImage.imageFile.filepath;
+  if (firstImage === undefined) return null;
+  return resolveRoutedProductImageUrl(firstImage.imageFile.filepath);
+}
+
+function ProductCardImage({
+  imageUrl,
+  name,
+}: {
+  imageUrl: string | null;
+  name: string;
+}): React.JSX.Element {
+  if (imageUrl === null) {
+    return <MissingImagePlaceholder className='h-full w-full rounded-md' />;
+  }
+
+  return (
+    <Image
+      src={imageUrl}
+      alt={name}
+      fill
+      loading='lazy'
+      unoptimized={imageUrl.startsWith('http')}
+      className='rounded-md object-cover transition-transform duration-300 ease-out group-hover:scale-105'
+      sizes='(min-width: 1280px) 240px, (min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw'
+    />
+  );
 }
 
 function resolveProductDisplayName(product: ProductWithImages, locale: string, fallback: string): string {
@@ -70,11 +96,7 @@ export default function ProductCard(props: ProductCardProps): React.JSX.Element 
         className={typeof className === 'string' && className !== '' ? `h-full ${className}` : 'h-full'}
         media={
           <div className='relative h-48 w-full'>
-            {imageUrl !== null ? (
-              <Image src={imageUrl} alt={name} fill loading='lazy' className='rounded-md object-cover transition-transform duration-300 ease-out group-hover:scale-105' sizes='(min-width: 1280px) 240px, (min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw' />
-            ) : (
-              <MissingImagePlaceholder className='h-full w-full rounded-md' />
-            )}
+            <ProductCardImage imageUrl={imageUrl} name={name} />
           </div>
         }
         footer={<p className='text-lg font-semibold'>{price}</p>}

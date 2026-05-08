@@ -6,7 +6,12 @@ import type {
   ProductScrapeProfilesListResponse,
   ProductScrapeSourcePriceCurrencyCode,
 } from '@/shared/contracts/products/scrape-profiles';
+import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import { getProducts, getProductsWithCount } from '@/features/products/api/products';
+import type { ProductFilter } from '@/shared/contracts/products/filters';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   getStoredProfileSettings,
@@ -96,3 +101,61 @@ export const buildRunRequest = ({
   ...(parsedLimit !== null && parsedLimit !== undefined ? { limit: parsedLimit } : {}),
   ...(draftTemplateId.length > 0 ? { draftTemplateId } : {}),
 });
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && Array.isArray(value) === false;
+
+const readFiltersFromQueryKeyPart = (value: unknown): ProductFilter | null => {
+  if (!isRecord(value)) return null;
+  const filters = value['filters'];
+  return isRecord(filters) ? (filters as ProductFilter) : null;
+};
+
+const resolveProductListQuery = (
+  queryKey: QueryKey
+): { kind: 'list' | 'paged'; filters: ProductFilter } | null => {
+  const keyParts = Array.from(queryKey);
+  if (keyParts[0] !== 'products' || keyParts[1] !== 'list') return null;
+
+  if (keyParts[2] === 'paged') {
+    const filters = readFiltersFromQueryKeyPart(keyParts[3]);
+    return filters === null ? null : { kind: 'paged', filters };
+  }
+
+  const filters = readFiltersFromQueryKeyPart(keyParts[2]);
+  return filters === null ? null : { kind: 'list', filters };
+};
+
+const refreshProductListQueryFresh = async (
+  queryClient: QueryClient,
+  queryKey: QueryKey
+): Promise<void> => {
+  const resolved = resolveProductListQuery(queryKey);
+  if (resolved === null) return;
+
+  if (resolved.kind === 'paged') {
+    const result = await getProductsWithCount(resolved.filters, undefined, { fresh: true });
+    queryClient.setQueryData(queryKey, { items: result.products, total: result.total });
+    return;
+  }
+
+  const products = await getProducts(resolved.filters, undefined, { fresh: true });
+  queryClient.setQueryData(queryKey, products);
+};
+
+export const refreshProductListQueriesFresh = async (
+  queryClient: QueryClient
+): Promise<void> => {
+  const listQueries = queryClient.getQueriesData({
+    queryKey: QUERY_KEYS.products.lists(),
+  });
+  await Promise.all(
+    listQueries.map(async ([queryKey]) => {
+      try {
+        await refreshProductListQueryFresh(queryClient, queryKey);
+      } catch (error) {
+        logClientError(error);
+      }
+    })
+  );
+};

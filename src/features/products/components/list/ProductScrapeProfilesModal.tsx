@@ -54,6 +54,7 @@ export function ProductScrapeProfilesModal(
         draftTemplates={controller.draftTemplates}
         profiles={controller.profiles}
         result={controller.result}
+        runtimeAction={controller.runtimeAction}
         selectedDraftTemplateId={controller.selectedDraftTemplateId}
         selectedProfileId={controller.selectedProfileId}
         onDryRunChange={controller.onDryRunChange}

@@ -26,9 +26,9 @@ export const ProductSettingsQuickLinks = ({
           size='xs'
           type='button'
           variant='outline'
-          onClick={(): void => onSectionChange('Images & Studio')}
+          onClick={(): void => onSectionChange('Studio')}
         >
-          Open Integration Settings
+          Open Studio Settings
         </Button>
       </div>
     </Card>

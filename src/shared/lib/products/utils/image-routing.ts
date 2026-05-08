@@ -4,7 +4,7 @@ import {
   LOCAL_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
 } from '@/shared/lib/products/constants';
 
-const PRODUCT_UPLOAD_PREFIX = '/uploads/';
+const PRODUCT_UPLOAD_SEGMENT = '/uploads/';
 const LEGACY_PRODUCT_IMAGE_HOSTS = new Set(['qubrick.io', 'www.qubrick.io']);
 const CURRENT_PRODUCT_IMAGE_HOSTS = new Set([new URL(DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL).hostname]);
 
@@ -81,8 +81,19 @@ const isLegacyProductImageHostname = (hostname: string): boolean =>
 const isCurrentProductImageHostname = (hostname: string): boolean =>
   CURRENT_PRODUCT_IMAGE_HOSTS.has(hostname.toLowerCase());
 
-const toProductImagePath = (value: string): string =>
-  value.startsWith('/') ? value : `/${value.replace(/^\/+/, '')}`;
+const normalizeProductUploadPath = (value: string): string | null => {
+  const normalized = value
+    .replace(/^\/?public\/uploads\//i, PRODUCT_UPLOAD_SEGMENT)
+    .replace(/^\/?uploads\//i, PRODUCT_UPLOAD_SEGMENT);
+  const uploadIndex = normalized.indexOf(PRODUCT_UPLOAD_SEGMENT);
+  return uploadIndex >= 0 ? normalized.slice(uploadIndex) : null;
+};
+
+const toProductImagePath = (value: string): string => {
+  const normalizedUploadPath = normalizeProductUploadPath(value);
+  if (normalizedUploadPath !== null) return normalizedUploadPath;
+  return value.startsWith('/') ? value : `/${value.replace(/^\/+/, '')}`;
+};
 
 const resolveRelativeProductImageUrl = (
   value: string,
@@ -100,7 +111,7 @@ const productImagePathWithSuffix = (url: URL): string =>
   `${url.pathname}${url.search}${url.hash}`;
 
 const isRoutableProductUploadUrl = (url: URL): boolean =>
-  url.pathname.startsWith(PRODUCT_UPLOAD_PREFIX) &&
+  normalizeProductUploadPath(productImagePathWithSuffix(url)) !== null &&
   (isLegacyProductImageHostname(url.hostname) || isCurrentProductImageHostname(url.hostname));
 
 const resolveLoopbackProductImageUrl = (
@@ -128,7 +139,12 @@ const resolveAbsoluteProductImageUrl = (
 
     const path = productImagePathWithSuffix(parsed);
     if (isRoutableProductUploadUrl(parsed)) {
-      return resolveLoopbackProductImageUrl(path, normalizedBase, baseIsLoopback, value);
+      return resolveLoopbackProductImageUrl(
+        toProductImagePath(path),
+        normalizedBase,
+        baseIsLoopback,
+        value
+      );
     }
 
     const isLoopbackSource = isLoopbackHostname(parsed.hostname);
@@ -136,7 +152,7 @@ const resolveAbsoluteProductImageUrl = (
       return value;
     }
 
-    return resolveLoopbackProductImageUrl(path, normalizedBase, baseIsLoopback, value);
+    return resolveLoopbackProductImageUrl(toProductImagePath(path), normalizedBase, baseIsLoopback, value);
   } catch (error) {
     logClientCatch(error, {
       source: 'products.image-routing',
@@ -170,6 +186,31 @@ export const resolveProductImageUrl = (
   }
 
   return resolveRelativeProductImageUrl(value, normalizedBase, baseIsLoopback);
+};
+
+export const resolveProductImageLocalFallbackUrl = (
+  rawValue: string | null | undefined
+): string | null => {
+  const value = rawValue?.trim() ?? '';
+  if (value.length === 0 || isInlinePreviewUrl(value)) return null;
+
+  if (isAbsoluteUrlLike(value)) {
+    try {
+      const parsed = new URL(value);
+      if (!isHttpProtocol(parsed.protocol)) return null;
+      const uploadPath = normalizeProductUploadPath(productImagePathWithSuffix(parsed));
+      return uploadPath;
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'products.image-routing',
+        action: 'resolveProductImageLocalFallbackUrl.parseAbsoluteUrl',
+        rawValue: value,
+      });
+      return null;
+    }
+  }
+
+  return normalizeProductUploadPath(value);
 };
 
 export type ProductImageServingMode = 'fastcomet' | 'local';

@@ -11,6 +11,7 @@ import {
   type ProductScrapeProfilesModule,
   resetProductScrapeProfileMocks,
 } from './__tests__/product-scrape-profiles.support';
+import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY } from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
 
 let scrapeProfiles: ProductScrapeProfilesModule;
 
@@ -46,11 +47,16 @@ it('creates scraped BattleStock products in the BattleStock catalog', async () =
   expect(mocks.dryRun).toHaveBeenCalledWith(
     expect.objectContaining({
       scripterId: BATTLESTOCK_PROFILE_ID,
+      runtimeActionKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+      executionSettings: expect.objectContaining({ headless: false }),
       options: expect.objectContaining({
         limit: 1,
         catalogDefaults: { catalogIds: ['catalog-battlestock'] },
       }),
     })
+  );
+  expect(mocks.resolveRuntimeActionDefinition).toHaveBeenCalledWith(
+    PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY
   );
   expect(mocks.createProduct).toHaveBeenCalledWith(
     expect.objectContaining({

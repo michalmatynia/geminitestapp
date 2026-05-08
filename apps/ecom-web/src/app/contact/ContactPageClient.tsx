@@ -5,9 +5,11 @@ import type { ContactContent } from '@/data/contactContent';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { useToast } from '@/context/ToastContext';
+import { useLocalizedHref } from '@/context/LocaleContext';
 
 export function ContactPageClient({ content }: { content: ContactContent }): JSX.Element {
   const { toast } = useToast();
+  const localizedHref = useLocalizedHref();
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -57,7 +59,7 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
           <div className="relative z-10 max-w-screen-2xl mx-auto">
             <div
               className="type-label mb-4"
-              style={{ color: 'rgba(180,140,80,0.8)', letterSpacing: '0.18em' }}
+              style={{ color: 'rgba(180,140,80,0.8)', letterSpacing: '0.14em' }}
             >
               {content.hero.eyebrow}
             </div>
@@ -132,7 +134,7 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                   }}
                 >
                   {content.info.directLinks.map((link) => (
-                    <a key={`${link.label}-${link.href}`} href={link.href} className="hover:text-[var(--fg)] transition-colors">
+                    <a key={`${link.label}-${link.href}`} href={localizedHref(link.href)} className="hover:text-[var(--fg)] transition-colors">
                       {link.label}
                     </a>
                   ))}
@@ -172,7 +174,7 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                   {content.info.socialLinks.map((link) => (
                     <a
                       key={`${link.label}-${link.href}`}
-                      href={link.href}
+                      href={localizedHref(link.href)}
                       className="type-label px-4 py-2.5 hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-all duration-200"
                       style={{ border: '1px solid var(--border)', color: 'var(--muted)' }}
                     >

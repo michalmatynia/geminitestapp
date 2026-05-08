@@ -13,6 +13,7 @@ export {
 } from './ai-paths/context';
 export { useStudioProjects } from './image-studio/hooks/useImageStudioQueries';
 export { getImageStudioSlotImageSrc } from './image-studio/image-src';
+export { EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
 export { SplitVariantPreview } from './image-studio/components/center-preview/SplitVariantPreview';
 export {
   CenterPreviewProvider,

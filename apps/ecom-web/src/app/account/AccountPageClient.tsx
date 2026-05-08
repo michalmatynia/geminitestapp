@@ -3,6 +3,7 @@
 import { useState, useEffect, type JSX } from 'react';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAuth } from '@/context/AuthContext';
+import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { AuthModal } from '@/components/AuthModal';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -49,11 +50,42 @@ const MOCK_ORDERS: Order[] = [
   },
 ];
 
-const STATUS_LABELS: Record<Order['status'], { label: string; color: string }> = {
-  delivered: { label: 'Delivered', color: 'rgba(120,160,90,1)' },
-  'in-transit': { label: 'In transit', color: 'rgba(180,130,60,1)' },
-  processing: { label: 'Processing', color: 'var(--muted)' },
+const STATUS_COLORS: Record<Order['status'], string> = {
+  delivered: 'rgba(120,160,90,1)',
+  'in-transit': 'rgba(180,130,60,1)',
+  processing: 'var(--muted)',
 };
+
+const MOCK_ORDER_PL: Record<string, { date: string; itemNames: string[] }> = {
+  'ARC-2026-0047': {
+    date: '28 kwietnia 2026',
+    itemNames: ['Naczynie amforowe', 'Taca z orzecha'],
+  },
+  'ARC-2026-0031': {
+    date: '12 marca 2026',
+    itemNames: ['Koniakowa torba skórzana'],
+  },
+  'ARC-2025-0198': {
+    date: '9 listopada 2025',
+    itemNames: ['Obsydianowy płaszcz wełniany', 'Piaskowy szalik wełniany'],
+  },
+};
+
+function getDisplayOrders(locale: string): Order[] {
+  if (locale !== 'pl') return MOCK_ORDERS;
+  return MOCK_ORDERS.map((order) => {
+    const translation = MOCK_ORDER_PL[order.id];
+    if (!translation) return order;
+    return {
+      ...order,
+      date: translation.date,
+      items: order.items.map((item, index) => ({
+        ...item,
+        name: translation.itemNames[index] ?? item.name,
+      })),
+    };
+  });
+}
 
 interface AdminUser {
   id: string;
@@ -65,6 +97,7 @@ interface AdminUser {
 type Tab = 'overview' | 'orders' | 'settings' | 'admin';
 
 function AdminTab({ content }: { content: AccountAdminContent }): JSX.Element {
+  const locale = useLocale();
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -177,7 +210,7 @@ function AdminTab({ content }: { content: AccountAdminContent }): JSX.Element {
                   {u.email}
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-                  {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                  {u.createdAt ? new Date(u.createdAt).toLocaleDateString(locale === 'pl' ? 'pl-PL' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                 </div>
               </div>
             ))}
@@ -191,8 +224,11 @@ function AdminTab({ content }: { content: AccountAdminContent }): JSX.Element {
 export function AccountPageClient({ content }: { content: AccountContent }): JSX.Element {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const locale = useLocale();
+  const localizedHref = useLocalizedHref();
   const { total: wishlistCount } = useWishlist();
   const { user, loading, logout } = useAuth();
+  const orders = getDisplayOrders(locale);
 
   const tabs: { id: Tab; label: string }[] = [
     ...content.tabs
@@ -200,7 +236,7 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
       .map((tab) => ({ id: tab.id, label: tab.label })),
   ];
 
-  const displayName = user?.name ?? 'Guest';
+  const displayName = user?.name ?? (locale === 'pl' ? 'Gość' : 'Guest');
   const initials = displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const firstLastInitial = displayName.split(' ').length > 1
     ? `${displayName.split(' ')[0]} ${displayName.split(' ').slice(-1)[0][0]}.`
@@ -211,7 +247,7 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
       <>
         <SiteNav />
         <main style={{ paddingTop: 'var(--nav-h)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="type-label" style={{ color: 'var(--muted)', letterSpacing: '0.2em' }}>{content.loadingLabel}</div>
+          <div className="type-label" style={{ color: 'var(--muted)', letterSpacing: '0.14em' }}>{content.loadingLabel}</div>
         </main>
         <SiteFooter />
       </>
@@ -262,7 +298,7 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </button>
-              <a href={content.signedOut.backToShopHref} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+              <a href={localizedHref(content.signedOut.backToShopHref)} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                 {content.signedOut.backToShopLabel}
               </a>
             </div>
@@ -308,7 +344,7 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
               {content.header.welcomePrefix} {user.name.split(' ')[0]}
             </h1>
             <p className="type-label mt-2" style={{ color: 'var(--muted)' }}>
-              {user.isSuperAdmin ? `${content.header.superAdminPrefix} · ` : ''}{MOCK_ORDERS.length} {content.header.ordersLabel}
+              {user.isSuperAdmin ? `${content.header.superAdminPrefix} · ` : ''}{orders.length} {content.header.ordersLabel}
             </p>
           </div>
         </div>
@@ -359,7 +395,7 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
 
                 <div className="mt-6 pt-6" style={{ borderTop: '1px solid var(--border)' }}>
                   <a
-                    href="/wishlist"
+                    href={localizedHref('/wishlist')}
                     className="flex items-center justify-between w-full py-3 px-4 type-label transition-colors hover:text-[var(--fg)]"
                     style={{ color: 'var(--muted)' }}
                   >
@@ -408,7 +444,7 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
                           }}
                         >
                           {stat.key === 'orders'
-                            ? MOCK_ORDERS.length.toString()
+                            ? orders.length.toString()
                             : stat.key === 'wishlist'
                               ? wishlistCount.toString()
                               : stat.fallbackValue ?? ''}
@@ -427,27 +463,27 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
                       >
                         <div>
                           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.1em', color: 'var(--fg)', marginBottom: '0.25rem' }}>
-                            {MOCK_ORDERS[0].id}
+                            {orders[0].id}
                           </div>
-                          <div className="type-label" style={{ color: 'var(--muted)' }}>{MOCK_ORDERS[0].date}</div>
+                          <div className="type-label" style={{ color: 'var(--muted)' }}>{orders[0].date}</div>
                         </div>
                         <div className="text-right">
                           <div
                             className="type-label px-3 py-1.5 inline-block mb-1"
-                            style={{ background: 'var(--surface)', color: STATUS_LABELS[MOCK_ORDERS[0].status].color }}
+                            style={{ background: 'var(--surface)', color: STATUS_COLORS[orders[0].status] }}
                           >
-                            {content.orders.statuses[MOCK_ORDERS[0].status]}
+                            {content.orders.statuses[orders[0].status]}
                           </div>
                           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--fg)' }}>
-                            {MOCK_ORDERS[0].total}
+                            {orders[0].total}
                           </div>
                         </div>
                       </div>
-                      {MOCK_ORDERS[0].items.map((item, i) => (
+                      {orders[0].items.map((item, i) => (
                         <div
                           key={i}
                           className="flex items-center justify-between px-6 py-4"
-                          style={{ borderBottom: i < MOCK_ORDERS[0].items.length - 1 ? '1px solid var(--border)' : 'none' }}
+                          style={{ borderBottom: i < orders[0].items.length - 1 ? '1px solid var(--border)' : 'none' }}
                         >
                           <div className="flex items-center gap-3">
                             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--muted)' }}>
@@ -487,7 +523,7 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
                     {content.orders.title}
                   </h2>
                   <div className="flex flex-col gap-4">
-                    {MOCK_ORDERS.map((order) => (
+                    {orders.map((order) => (
                       <div key={order.id} style={{ border: '1px solid var(--border)' }}>
                         <div
                           className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 py-5"
@@ -504,7 +540,7 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
                           <div className="flex items-center gap-5">
                             <span
                               className="type-label px-3 py-1.5"
-                              style={{ background: 'var(--bg)', color: STATUS_LABELS[order.status].color, border: '1px solid var(--border)' }}
+                              style={{ background: 'var(--bg)', color: STATUS_COLORS[order.status], border: '1px solid var(--border)' }}
                             >
                               {content.orders.statuses[order.status]}
                             </span>

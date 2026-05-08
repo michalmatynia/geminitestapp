@@ -25,10 +25,10 @@ import { useToast } from '@/shared/ui/toast';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  buildRunRequest,
   buildToastMessage,
   fetchScrapeProfiles,
   parseLimit,
+  refreshProductListQueriesFresh,
   resolveLimitError,
   resultVariant,
   SCRAPE_PROFILES_QUERY_KEY,
@@ -49,6 +49,11 @@ import {
   writeStoredScrapeProfileSettings,
   type ProductScrapeProfileStoredSettings,
 } from './ProductScrapeProfilesModal.storage';
+import { useProductScrapeProfileRunHandler } from './ProductScrapeProfilesModal.run-handler';
+import {
+  useProductScrapeProfileRuntimeActionSetting,
+  type ProductScrapeProfileRuntimeActionSetting,
+} from './useProductScrapeProfileRuntimeActionSetting';
 
 type ControllerResultInput = {
   draftTemplateId: string;
@@ -61,6 +66,7 @@ type ControllerResultInput = {
   profileId: string;
   queries: ProductScrapeProfileQueries;
   result: ProductScrapeProfileRunResponse | null;
+  runtimeAction: ProductScrapeProfileRuntimeActionSetting;
   runIsPending: boolean;
   setDraftTemplateId: (value: string) => void;
   setDryRun: (value: boolean) => void;
@@ -144,8 +150,9 @@ const useRunScrapeProfileMutation = (
     onSuccess: async (response) => {
       setResult(response);
       if (!response.dryRun) {
+        await invalidateProductsAndCounts(queryClient);
         await Promise.all([
-          invalidateProductsAndCounts(queryClient),
+          refreshProductListQueriesFresh(queryClient),
           invalidateListingBadges(queryClient),
         ]);
       }
@@ -208,6 +215,7 @@ const buildControllerResult = ({
   queries,
   result,
   runIsPending,
+  runtimeAction,
   setDraftTemplateId,
   setDryRun,
   setImageImportMode,
@@ -217,10 +225,14 @@ const buildControllerResult = ({
 }: ControllerResultInput): ProductScrapeProfilesController => ({
   dryRun,
   error: queries.profilesQuery.error,
-  isBusy: runIsPending,
+  isBusy: runIsPending || runtimeAction.isSaving,
   isLoading: queries.profilesQuery.isLoading,
   isDraftTemplatesLoading: queries.draftsQuery.isLoading,
-  canRun: profileId.length > 0 && parsedLimit !== undefined && !runIsPending,
+  canRun:
+    profileId.length > 0 &&
+    parsedLimit !== undefined &&
+    !runIsPending &&
+    !runtimeAction.isSaving,
   imageImportMode,
   sourcePriceCurrencyCode,
   limitError: resolveLimitError(parsedLimit),
@@ -228,6 +240,7 @@ const buildControllerResult = ({
   draftTemplates: queries.draftTemplates,
   profiles: queries.profiles,
   result,
+  runtimeAction,
   selectedDraftTemplateId: draftTemplateId,
   selectedProfileId: profileId,
   onDryRunChange: setDryRun,
@@ -248,6 +261,16 @@ export const useProductScrapeProfilesController = (
   const queries = useProductScrapeProfileQueries(isOpen, formState.profileId);
   const parsedLimit = useMemo(() => parseLimit(formState.limitInput), [formState.limitInput]);
   const runMutation = useRunScrapeProfileMutation(setResult);
+  const runtimeAction = useProductScrapeProfileRuntimeActionSetting(
+    isOpen,
+    queries.selectedProfile?.runtimeActionKey ?? null
+  );
+  const handleRun = useProductScrapeProfileRunHandler({
+    formState,
+    parsedLimit,
+    runMutation,
+    runtimeAction,
+  });
 
   useProductScrapeProfileControllerEffects({
     formState,
@@ -256,20 +279,6 @@ export const useProductScrapeProfilesController = (
     setResult,
     stored,
   });
-
-  const handleRun = (): void => {
-    if (formState.profileId.length === 0 || parsedLimit === undefined) return;
-    runMutation.mutate(
-      buildRunRequest({
-        draftTemplateId: formState.draftTemplateId,
-        dryRun: formState.dryRun,
-        imageImportMode: formState.imageImportMode,
-        parsedLimit,
-        profileId: formState.profileId,
-        sourcePriceCurrencyCode: formState.sourcePriceCurrencyCode,
-      })
-    );
-  };
 
   return buildControllerResult({
     draftTemplateId: formState.draftTemplateId,
@@ -282,6 +291,7 @@ export const useProductScrapeProfilesController = (
     profileId: formState.profileId,
     queries,
     result,
+    runtimeAction,
     runIsPending: runMutation.isPending,
     setDraftTemplateId: formState.setDraftTemplateId,
     setDryRun: formState.setDryRun,

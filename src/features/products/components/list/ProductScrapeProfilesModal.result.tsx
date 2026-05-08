@@ -1,8 +1,16 @@
 'use client';
 
 import type { ProductScrapeProfileRunResponse } from '@/shared/contracts/products/scrape-profiles';
+import { Badge } from '@/shared/ui/badge';
 
 const RESULT_ROW_LIMIT = 8;
+
+const formatBrowserMode = (
+  browserMode: NonNullable<ProductScrapeProfileRunResponse['runtime']>['browserMode']
+): string => {
+  if (browserMode === 'runtime_default') return 'Runtime default';
+  return browserMode === 'headless' ? 'Headless' : 'Headed';
+};
 
 export function ProductScrapeProfilesResult({
   result,
@@ -25,6 +33,24 @@ export function ProductScrapeProfilesResult({
           </div>
         ))}
       </div>
+      {result.runtime !== undefined ? (
+        <div className='rounded-md border border-border/50 bg-muted/10 p-3 text-xs'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <span className='font-medium text-foreground'>{result.runtime.runtimeActionName}</span>
+            <Badge variant='secondary'>{result.runtime.runtimeActionKey}</Badge>
+            <Badge variant='secondary'>{formatBrowserMode(result.runtime.browserMode)}</Badge>
+          </div>
+          <div className='mt-2 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground'>
+            {result.runtime.queueName !== null ? (
+              <span>Redis queue: {result.runtime.queueName}</span>
+            ) : null}
+            <span>Action ID: {result.runtime.runtimeActionId}</span>
+            <span>
+              Steps: {result.runtime.enabledStepCount}/{result.runtime.totalStepCount}
+            </span>
+          </div>
+        </div>
+      ) : null}
       <div className='max-h-64 overflow-auto rounded-md border border-white/5'>
         <table className='w-full text-left text-xs'>
           <thead className='sticky top-0 bg-card text-muted-foreground'>

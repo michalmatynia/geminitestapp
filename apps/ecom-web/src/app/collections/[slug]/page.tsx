@@ -5,6 +5,7 @@ import { COLLECTIONS, getProductsByCollection } from '@/data/products';
 import { getMentiosProducts } from '@/lib/mentios';
 import { CollectionPageClient } from './CollectionPageClient';
 import { getProductsContent } from '@/lib/cms';
+import { getRequestLocale } from '@/lib/request-locale';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -12,19 +13,31 @@ export const revalidate = 120;
 
 const PAGE_SIZE = 24;
 
+function collectionLabel(slug: string, fallback: string, locale: string): string {
+  if (locale !== 'pl') return fallback;
+  return ({
+    womenswear: 'Anime',
+    menswear: 'Gaming',
+    accessories: 'Film i TV',
+    objects: 'Wszystkie produkty',
+  } as Record<string, string>)[slug] ?? fallback;
+}
+
 export async function generateStaticParams() {
   return COLLECTIONS.map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const locale = await getRequestLocale();
   const collection = COLLECTIONS.find((c) => c.slug === slug);
   if (!collection) return {};
-  return { title: `${collection.label} — ARCANA` };
+  return { title: `${collectionLabel(slug, collection.label, locale)} - ARCANA` };
 }
 
 export default async function CollectionPage({ params }: Props): Promise<JSX.Element> {
   const { slug } = await params;
+  const locale = await getRequestLocale();
   const collection = COLLECTIONS.find((c) => c.slug === slug);
   if (!collection) notFound();
 
@@ -32,17 +45,18 @@ export default async function CollectionPage({ params }: Props): Promise<JSX.Ele
   const { products: dbProducts, total: dbTotal } = await getMentiosProducts({
     limit: PAGE_SIZE,
     collectionSlug: slug,
+    locale,
   });
 
   const isLive = dbProducts.length > 0;
   const products = isLive ? dbProducts : getProductsByCollection(slug);
   const total = isLive ? dbTotal : collection.count;
   const source: 'mentios' | 'static' = isLive ? 'mentios' : 'static';
-  const content = await getProductsContent();
+  const content = await getProductsContent(locale);
 
   return (
     <CollectionPageClient
-      collection={{ ...collection, count: total }}
+      collection={{ ...collection, label: collectionLabel(slug, collection.label, locale), count: total }}
       products={products}
       total={total}
       source={source}

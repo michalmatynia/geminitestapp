@@ -5,6 +5,7 @@ import { getProduct, PRODUCTS } from '@/data/products';
 import { getMentiosProduct, getMentiosProducts } from '@/lib/mentios';
 import { ProductDetailClient } from './ProductDetailClient';
 import { getProductsContent } from '@/lib/cms';
+import { getRequestLocale } from '@/lib/request-locale';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -16,7 +17,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const dbProduct = await getMentiosProduct(slug);
+  const locale = await getRequestLocale();
+  const dbProduct = await getMentiosProduct(slug, locale);
   const product = dbProduct ?? getProduct(slug);
   if (!product) return {};
   return {
@@ -27,9 +29,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props): Promise<JSX.Element> {
   const { slug } = await params;
+  const locale = await getRequestLocale();
 
   // Try DB first, fall back to static demo data.
-  const dbProduct = await getMentiosProduct(slug);
+  const dbProduct = await getMentiosProduct(slug, locale);
   const product = dbProduct ?? getProduct(slug);
   if (!product) notFound();
 
@@ -39,12 +42,12 @@ export default async function ProductPage({ params }: Props): Promise<JSX.Elemen
   ).slice(0, 4);
 
   if (dbProduct) {
-    const { products: dbRelated } = await getMentiosProducts({ limit: 5, collectionSlug: product.collectionSlug });
+    const { products: dbRelated } = await getMentiosProducts({ limit: 5, collectionSlug: product.collectionSlug, locale });
     const filtered = dbRelated.filter((p) => p.id !== product.id).slice(0, 4);
     if (filtered.length > 0) related = filtered;
   }
 
-  const content = await getProductsContent();
+  const content = await getProductsContent(locale);
 
   return <ProductDetailClient product={product} related={related} content={content} />;
 }

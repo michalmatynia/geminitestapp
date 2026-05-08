@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, type JSX } from 'react';
-import { useCart } from '@/context/CartContext';
+import { useEffect, useState, type JSX } from 'react';
+import { useCart, type CartItem } from '@/context/CartContext';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { ProductImage } from '@/components/ProductImage';
+import type { Product } from '@/data/products';
+import { productCountWord, formatPrice } from '@/lib/locales';
 
 function QtyControl({
   productId,
@@ -51,8 +54,42 @@ function QtyControl({
 }
 
 export function CartDrawer(): JSX.Element {
-  const { items, isOpen, totalItems, totalPrice, closeCart, removeItem } = useCart();
+  const { items, isOpen, totalItems, closeCart, removeItem } = useCart();
   const { cart } = useSiteContent();
+  const locale = useLocale();
+  const localizedHref = useLocalizedHref();
+  const [freshData, setFreshData] = useState<Record<string, Product>>({});
+  const idKey = items.map((item) => item.productId).join(',');
+
+  useEffect(() => {
+    if (!idKey) {
+      setFreshData({});
+      return;
+    }
+    fetch(`/api/products?ids=${encodeURIComponent(idKey)}&locale=${locale}`)
+      .then((r) => r.json())
+      .then((data: { products?: Product[] }) => {
+        const next: Record<string, Product> = {};
+        for (const product of data.products ?? []) next[product.id] = product;
+        setFreshData(next);
+      })
+      .catch(() => {});
+  }, [idKey, locale]);
+
+  const displayItems: CartItem[] = items.map((item) => {
+    const fresh = freshData[item.productId];
+    if (!fresh) return item;
+    return {
+      ...item,
+      name: fresh.name || item.name,
+      category: fresh.category || item.category,
+      price: fresh.price || item.price,
+      priceDisplay: fresh.priceDisplay || item.priceDisplay,
+      gradient: fresh.gradient || item.gradient,
+      imageUrl: fresh.imageUrl ?? item.imageUrl,
+    };
+  });
+  const displayTotalPrice = displayItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -114,7 +151,7 @@ export function CartDrawer(): JSX.Element {
               {cart.title}
             </h2>
             <p className="type-label mt-0.5" style={{ color: 'var(--muted)' }}>
-              {totalItems} {totalItems === 1 ? cart.itemSingular : cart.itemPlural}
+              {totalItems} {productCountWord(totalItems, locale, cart.itemSingular, cart.itemPlural)}
             </p>
           </div>
           <button
@@ -134,7 +171,7 @@ export function CartDrawer(): JSX.Element {
         <div className="flex-1 overflow-y-auto">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-4 px-8">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" style={{ color: 'var(--border)' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" style={{ color: 'rgba(var(--accent-rgb),0.25)' }}>
                 <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <path d="M16 10a4 4 0 0 1-8 0" />
@@ -155,7 +192,7 @@ export function CartDrawer(): JSX.Element {
             </div>
           ) : (
             <ul className="divide-y" style={{ borderColor: 'var(--border)' }}>
-              {items.map((item) => (
+              {displayItems.map((item) => (
                 <li
                   key={`${item.productId}::${item.size}`}
                   className="flex gap-5 px-8 py-6"
@@ -182,7 +219,7 @@ export function CartDrawer(): JSX.Element {
                             style={{
                               fontFamily: 'var(--font-display)',
                               fontSize: '1.05rem',
-                              fontWeight: 300,
+                              fontWeight: 400,
                               color: 'var(--fg)',
                               lineHeight: 1.2,
                             }}
@@ -216,7 +253,7 @@ export function CartDrawer(): JSX.Element {
                         increaseLabel={cart.increaseQuantityLabel}
                       />
                       <span className="type-price" style={{ color: 'var(--fg)' }}>
-                        € {(item.price * item.quantity).toLocaleString('de-DE')}
+                        {formatPrice(item.price * item.quantity, locale)}
                       </span>
                     </div>
                   </div>
@@ -236,7 +273,7 @@ export function CartDrawer(): JSX.Element {
             <div className="flex justify-between items-center mb-2">
               <span className="type-label" style={{ color: 'var(--muted)' }}>{cart.subtotalLabel}</span>
               <span className="type-price" style={{ color: 'var(--fg)' }}>
-                € {totalPrice.toLocaleString('de-DE')}
+                {formatPrice(displayTotalPrice, locale)}
               </span>
             </div>
             <div className="flex justify-between items-center mb-6">
@@ -264,11 +301,11 @@ export function CartDrawer(): JSX.Element {
                   color: 'var(--fg)',
                 }}
               >
-                € {totalPrice.toLocaleString('de-DE')}
+                {formatPrice(displayTotalPrice, locale)}
               </span>
             </div>
 
-            <a href="/checkout" onClick={closeCart} className="btn-primary w-full justify-center text-center">
+            <a href={localizedHref('/checkout')} onClick={closeCart} className="btn-primary w-full justify-center text-center">
               {cart.checkoutLabel}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />

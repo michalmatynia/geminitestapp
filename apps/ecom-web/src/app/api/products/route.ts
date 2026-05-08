@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getMentiosProducts } from '@/lib/mentios';
 import { PRODUCTS } from '@/data/products';
+import { normalizeLocale } from '@/lib/locales';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +13,9 @@ export async function GET(req: NextRequest) {
   const skip = parseInt(searchParams.get('skip') ?? '0', 10);
   const ids = searchParams.get('ids')?.split(',').map((s) => s.trim()).filter(Boolean);
   const newOnly = searchParams.get('new') === '1';
+  const locale = normalizeLocale(searchParams.get('locale') ?? req.headers.get('x-ecom-locale'));
 
-  const { products, total } = await getMentiosProducts({ limit, skip, collectionSlug, search, ids, newOnly });
+  const { products, total } = await getMentiosProducts({ limit, skip, collectionSlug, search, ids, newOnly, locale });
 
   // Fall back to static demo products when DB is not configured or empty.
   if (products.length === 0) {

@@ -12,6 +12,7 @@
 
 import type { Product } from '@/data/products';
 import { getProductsDb, hasProductsMongoConfig } from '@/lib/mongodb';
+import { normalizeLocale, normalizeLocaleList, type EcomLocale } from '@/lib/locales';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -20,6 +21,8 @@ import { getProductsDb, hasProductsMongoConfig } from '@/lib/mongodb';
 const CATALOG_ID = process.env.MENTIOS_CATALOG_ID ?? 'catalog-mentios';
 const PRODUCTS_COLLECTION = 'products';
 const CATEGORIES_COLLECTION = 'product_categories';
+const CATALOGS_COLLECTION = 'catalogs';
+const LANGUAGES_COLLECTION = 'languages';
 
 /** Products created within this window are treated as "new arrivals". */
 const NEW_ARRIVALS_DAYS = 60;
@@ -104,41 +107,58 @@ interface CategoryDoc {
   catalogId?: string;
 }
 
+interface CatalogDoc {
+  _id?: string;
+  id?: string;
+  isDefault?: boolean;
+  languageIds?: string[];
+  defaultLanguageId?: string | null;
+}
+
+interface LanguageDoc {
+  id?: string | null;
+  code?: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function pickLocalized(field: string | LocalizedField | null | undefined): string {
+function chooseLocalized(
+  locale: EcomLocale,
+  values: Partial<Record<EcomLocale | 'de', string | null | undefined>>,
+): string {
+  if (locale === 'pl') return values.pl ?? values.en ?? values.de ?? '';
+  return values.en ?? values.pl ?? values.de ?? '';
+}
+
+function pickLocalized(field: string | LocalizedField | null | undefined, locale: EcomLocale): string {
   if (!field) return '';
   if (typeof field === 'string') return field;
-  return field.en ?? field.pl ?? field.de ?? '';
+  return chooseLocalized(locale, field);
 }
 
 /** Picks the best available name from a ProductDoc, supporting both schemas. */
-function pickProductName(doc: ProductDoc): string {
+function pickProductName(doc: ProductDoc, locale: EcomLocale): string {
   return (
-    doc.name_en ||
-    doc.name_pl ||
-    doc.name_de ||
-    pickLocalized(doc.name) ||
+    chooseLocalized(locale, { en: doc.name_en, pl: doc.name_pl, de: doc.name_de }) ||
+    pickLocalized(doc.name, locale) ||
     'Untitled'
   );
 }
 
 /** Picks the best available description from a ProductDoc. */
-function pickProductDescription(doc: ProductDoc): string {
+function pickProductDescription(doc: ProductDoc, locale: EcomLocale): string {
   return (
-    doc.description_en ||
-    doc.description_pl ||
-    doc.description_de ||
-    pickLocalized(doc.description) ||
+    chooseLocalized(locale, { en: doc.description_en, pl: doc.description_pl, de: doc.description_de }) ||
+    pickLocalized(doc.description, locale) ||
     ''
   );
 }
 
 /** Picks the best available name from a CategoryDoc. */
-function pickCategoryName(doc: CategoryDoc): string {
-  return doc.name_en || doc.name_pl || pickLocalized(doc.name) || doc._id;
+function pickCategoryName(doc: CategoryDoc, locale: EcomLocale): string {
+  return chooseLocalized(locale, { en: doc.name_en, pl: doc.name_pl }) || pickLocalized(doc.name, locale) || doc._id;
 }
 
 function slugify(str: string): string {
@@ -180,20 +200,73 @@ function categoryToCollection(name: string): string {
   return 'objects';
 }
 
-function buildCategoryMap(docs: CategoryDoc[]): Map<string, { name: string; collection: string }> {
+function buildCategoryMap(docs: CategoryDoc[], locale: EcomLocale): Map<string, { name: string; collection: string }> {
   const map = new Map<string, { name: string; collection: string }>();
   for (const doc of docs) {
-    const name = pickCategoryName(doc);
+    const name = pickCategoryName(doc, locale);
     map.set(doc._id, { name, collection: categoryToCollection(name) });
   }
   return map;
 }
 
-function productTag(doc: ProductDoc): string | undefined {
-  if (doc.isNew) return 'New';
-  if (doc.stock != null && doc.stock > 0 && doc.stock <= 3) return 'Last pieces';
-  if (doc.stock != null && doc.stock === 0) return 'Sold out';
+function productTag(doc: ProductDoc, locale: EcomLocale): string | undefined {
+  if (doc.isNew) return locale === 'pl' ? 'Nowość' : 'New';
+  if (doc.stock != null && doc.stock > 0 && doc.stock <= 3) return locale === 'pl' ? 'Ostatnie sztuki' : 'Last pieces';
+  if (doc.stock != null && doc.stock === 0) return locale === 'pl' ? 'Wyprzedane' : 'Sold out';
   return undefined;
+}
+
+function cleanLanguageId(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const cleaned = value.trim();
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+function buildLanguageCodeLookup(rows: LanguageDoc[]): Map<string, string> {
+  const lookup = new Map<string, string>();
+
+  for (const row of rows) {
+    const id = cleanLanguageId(row.id);
+    const code = cleanLanguageId(row.code)?.toLowerCase();
+    if (!code) continue;
+    if (id) {
+      lookup.set(id, code);
+      lookup.set(id.toLowerCase(), code);
+    }
+    lookup.set(code, code);
+  }
+
+  return lookup;
+}
+
+function resolveLanguageCode(id: string, lookup: Map<string, string>): string {
+  return lookup.get(id) ?? lookup.get(id.toLowerCase()) ?? id;
+}
+
+async function resolveCatalogLocaleCodes(catalog: CatalogDoc): Promise<string[]> {
+  const languageIds = Array.isArray(catalog.languageIds)
+    ? catalog.languageIds.map(cleanLanguageId).filter((id): id is string => Boolean(id))
+    : [];
+  const defaultLanguageId = cleanLanguageId(catalog.defaultLanguageId);
+  const idsToResolve = Array.from(new Set([...languageIds, defaultLanguageId].filter((id): id is string => Boolean(id))));
+
+  if (idsToResolve.length === 0) return [];
+
+  const db = await getProductsDb();
+  const languageRows = await db
+    .collection<LanguageDoc>(LANGUAGES_COLLECTION)
+    .find(
+      { $or: [{ id: { $in: idsToResolve } }, { code: { $in: idsToResolve } }] },
+      { projection: { id: 1, code: 1 } },
+    )
+    .toArray();
+  const lookup = buildLanguageCodeLookup(languageRows);
+  const defaultCode = defaultLanguageId ? resolveLanguageCode(defaultLanguageId, lookup) : null;
+
+  return [
+    defaultCode,
+    ...languageIds.map((id) => resolveLanguageCode(id, lookup)),
+  ].filter((code): code is string => Boolean(code));
 }
 
 const normalizeBaseUrl = (value: string | undefined): string => {
@@ -307,47 +380,62 @@ function buildLocalSkuImageUrl(sku: string | null | undefined): string | undefin
   return toConfiguredFileUrl(`${PRODUCT_UPLOAD_PREFIX}${encodeURIComponent(key)}/__primary.png`);
 }
 
-function buildImageUrl(doc: ProductDoc): string | undefined {
-  const linkedImage = doc.imageLinks
-    ?.map((link) => normalizeProductImageUrl(link))
-    .find((url): url is string => Boolean(url));
-  if (linkedImage) return linkedImage;
+function uniqueProductImageUrls(urls: Array<string | undefined>): string[] {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const url of urls) {
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    unique.push(url);
+  }
+  return unique;
+}
 
-  const filePathImage = doc.images
-    ?.map((image) => normalizeProductImageUrl(image.imageFile?.filepath))
-    .find((url): url is string => Boolean(url));
-  if (filePathImage) return filePathImage;
+function buildImageUrls(doc: ProductDoc): string[] {
+  const imageUrls = uniqueProductImageUrls([
+    ...(doc.imageLinks?.map((link) => normalizeProductImageUrl(link)) ?? []),
+    ...(doc.images?.map((image) => normalizeProductImageUrl(image.imageFile?.filepath)) ?? []),
+  ]);
+
+  if (imageUrls.length > 0) return imageUrls;
 
   const skuImage = buildLocalSkuImageUrl(doc.sku);
-  if (skuImage) return skuImage;
+  if (skuImage) return [skuImage];
 
   // Fall back to the file-preview endpoint on the main app using fileId
   const fileId = doc.images?.[0]?.imageFileId ?? doc.images?.[0]?.imageFile?.id;
   if (MAIN_APP_URL && fileId) {
-    return `${MAIN_APP_URL}/api/files/preview?fileId=${fileId}`;
+    return [`${MAIN_APP_URL}/api/files/preview?fileId=${fileId}`];
   }
-  return undefined;
+  return [];
 }
 
-function mapDoc(doc: ProductDoc, index: number, categoryMap: Map<string, { name: string; collection: string }>): Product {
+function mapDoc(
+  doc: ProductDoc,
+  index: number,
+  categoryMap: Map<string, { name: string; collection: string }>,
+  locale: EcomLocale,
+): Product {
   const category = doc.categoryId ? categoryMap.get(doc.categoryId) : undefined;
-  const name = pickProductName(doc);
-  const description = pickProductDescription(doc);
+  const name = pickProductName(doc, locale);
+  const description = pickProductDescription(doc, locale);
   const price = doc.price ?? 0;
+  const imageUrls = buildImageUrls(doc);
 
   return {
     id: doc._id,
     slug: productSlug(doc),
     name,
-    category: category?.name ?? 'Objects',
+    category: category?.name ?? (locale === 'pl' ? 'Wszystkie produkty' : 'Objects'),
     collectionSlug: category?.collection ?? 'objects',
     price,
     priceDisplay: formatPrice(doc.price),
     description,
     gradient: gradient(index),
     gradientAlt: gradientAlt(index),
-    imageUrl: buildImageUrl(doc),
-    tag: productTag(doc),
+    imageUrl: imageUrls[0],
+    imageUrls,
+    tag: productTag(doc, locale),
     details: [],
     care: [],
     sizes: [],
@@ -407,6 +495,7 @@ export interface FetchProductsOptions {
   search?: string;          // regex search across name / sku / description
   ids?: string[];           // fetch specific products by _id
   newOnly?: boolean;        // only products created within NEW_ARRIVALS_DAYS
+  locale?: EcomLocale | string | null;
 }
 
 export interface MentiosResult {
@@ -414,8 +503,32 @@ export interface MentiosResult {
   total: number;
 }
 
+/** Return the storefront locales enabled on the configured Mentios catalog. */
+export async function getMentiosCatalogLocales(): Promise<EcomLocale[]> {
+  if (!hasProductsMongoConfig()) return normalizeLocaleList([]);
+
+  try {
+    const db = await getProductsDb();
+    const catalogs = db.collection<CatalogDoc>(CATALOGS_COLLECTION);
+    const projection = { _id: 1, id: 1, isDefault: 1, languageIds: 1, defaultLanguageId: 1 } as const;
+    const catalog =
+      await catalogs.findOne(
+        { $or: [{ id: CATALOG_ID }, { _id: CATALOG_ID }] },
+        { projection },
+      ) ??
+      await catalogs.findOne({ isDefault: true }, { projection });
+
+    if (!catalog) return normalizeLocaleList([]);
+
+    const codes = await resolveCatalogLocaleCodes(catalog);
+    return normalizeLocaleList(codes);
+  } catch {
+    return normalizeLocaleList([]);
+  }
+}
+
 /** Fetch all categories from the Mentios catalog. */
-async function fetchCategories(): Promise<Map<string, { name: string; collection: string }>> {
+async function fetchCategories(locale: EcomLocale): Promise<Map<string, { name: string; collection: string }>> {
   try {
     const db = await getProductsDb();
     const docs = await db
@@ -423,7 +536,7 @@ async function fetchCategories(): Promise<Map<string, { name: string; collection
       .find({ catalogId: CATALOG_ID })
       .project({ _id: 1, name: 1, name_en: 1, name_pl: 1, name_de: 1, parentId: 1 })
       .toArray();
-    return buildCategoryMap(docs as unknown as CategoryDoc[]);
+    return buildCategoryMap(docs as unknown as CategoryDoc[], locale);
   } catch {
     return new Map();
   }
@@ -432,6 +545,7 @@ async function fetchCategories(): Promise<Map<string, { name: string; collection
 /** Fetch products from the Mentios catalog. Returns empty array on DB error. */
 export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promise<MentiosResult> {
   const { limit = 100, skip = 0 } = opts;
+  const locale = normalizeLocale(opts.locale);
   if (!hasProductsMongoConfig()) return { products: [], total: 0 };
 
   try {
@@ -448,8 +562,8 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
         } as Record<string, unknown>)
         .project(PRODUCT_PROJECTION)
         .toArray();
-      const categoryMap = await fetchCategories();
-      const products = (docs as unknown as ProductDoc[]).map((doc, i) => mapDoc(doc, i, categoryMap));
+      const categoryMap = await fetchCategories(locale);
+      const products = (docs as unknown as ProductDoc[]).map((doc, i) => mapDoc(doc, i, categoryMap, locale));
       return { products, total: products.length };
     }
 
@@ -495,9 +609,9 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
       col.countDocuments(filter),
     ]);
 
-    const categoryMap = await fetchCategories();
+    const categoryMap = await fetchCategories(locale);
     const products = (docs as unknown as ProductDoc[]).map((doc, i) =>
-      mapDoc(doc, skip + i, categoryMap),
+      mapDoc(doc, skip + i, categoryMap, locale),
     );
 
     // Collection filter applied post-mapping (category resolution happens in mapDoc)
@@ -514,7 +628,8 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
 }
 
 /** Fetch a single product by its slug (sku-based) or raw _id. */
-export async function getMentiosProduct(slugOrId: string): Promise<Product | null> {
+export async function getMentiosProduct(slugOrId: string, localeInput?: EcomLocale | string | null): Promise<Product | null> {
+  const locale = normalizeLocale(localeInput);
   if (!hasProductsMongoConfig()) return null;
 
   try {
@@ -546,8 +661,8 @@ export async function getMentiosProduct(slugOrId: string): Promise<Product | nul
     }
 
     if (!doc) return null;
-    const categoryMap = await fetchCategories();
-    return mapDoc(doc, 0, categoryMap);
+    const categoryMap = await fetchCategories(locale);
+    return mapDoc(doc, 0, categoryMap, locale);
   } catch (err) {
     console.error('[mentios] Failed to fetch product:', err);
     return null;
@@ -575,7 +690,7 @@ export async function getMentiosCollectionCounts(): Promise<Record<string, numbe
   if (!hasProductsMongoConfig()) return {};
   try {
     const db = await getProductsDb();
-    const categoryMap = await fetchCategories();
+    const categoryMap = await fetchCategories('en');
     const docs = await db
       .collection<ProductDoc>(PRODUCTS_COLLECTION)
       .find(mentiosFilter())

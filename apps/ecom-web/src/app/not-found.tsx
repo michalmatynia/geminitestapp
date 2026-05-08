@@ -3,9 +3,11 @@
 import type { JSX } from 'react';
 import { SiteNav } from '@/components/SiteNav';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useLocalizedHref } from '@/context/LocaleContext';
 
 export default function NotFound(): JSX.Element {
   const { notFound } = useSiteContent();
+  const localizedHref = useLocalizedHref();
 
   return (
     <>
@@ -64,10 +66,10 @@ export default function NotFound(): JSX.Element {
           </p>
 
           <div className="flex flex-wrap gap-3 justify-center">
-            <a href={notFound.primaryHref} className="btn-primary">
+            <a href={localizedHref(notFound.primaryHref)} className="btn-primary">
               {notFound.primaryLabel}
             </a>
-            <a href={notFound.secondaryHref} className="btn-ghost">
+            <a href={localizedHref(notFound.secondaryHref)} className="btn-ghost">
               {notFound.secondaryLabel}
             </a>
           </div>
@@ -77,7 +79,7 @@ export default function NotFound(): JSX.Element {
             {notFound.collectionLinks.map((link) => (
               <a
                 key={link.label}
-                href={link.href}
+                href={localizedHref(link.href)}
                 className="type-label hover:text-[var(--fg)] transition-colors"
                 style={{ color: 'var(--muted)' }}
               >

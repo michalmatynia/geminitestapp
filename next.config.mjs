@@ -367,10 +367,22 @@ const nextConfig = {
     localPatterns: [
       // Allow signed/download-style local image URLs that use query params.
       { pathname: '/api/files/download' },
+      // Product upload fallbacks may preserve cache-busting query strings.
+      { pathname: '/uploads/**' },
       // Keep the secure default for all other local paths: no query string.
       { pathname: '/**', search: '' },
     ],
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'sparksofsindri.com',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'qubrick.io',
+        pathname: '/uploads/**',
+      },
       {
         protocol: 'https',
         hostname: 'ik.imagekit.io',

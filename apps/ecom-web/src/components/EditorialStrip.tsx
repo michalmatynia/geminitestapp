@@ -1,7 +1,9 @@
 'use client';
 
-import type { JSX } from 'react';
+import { useRef, type JSX } from 'react';
 import { HOME_CONTENT_DEFAULTS, type HomeEditorialContent } from '@/data/homeContent';
+import { useLocalizedHref } from '@/context/LocaleContext';
+import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 
 const REPORT_VISUALS = [
   {
@@ -28,9 +30,30 @@ export function EditorialStrip({
 }: {
   content?: HomeEditorialContent;
 }): JSX.Element {
+  const localizedHref = useLocalizedHref();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useGSAP(() => {
+    gsap.fromTo('.ed-header',
+      { opacity: 0, y: 40 },
+      {
+        opacity: 1, y: 0, duration: 0.9, ease: 'expo.out',
+        scrollTrigger: { trigger: '.ed-header', start: 'top 88%', toggleActions: 'play none none none' },
+      });
+
+    ScrollTrigger.batch('.ed-card', {
+      start: 'top 92%',
+      onEnter: (batch) => {
+        gsap.fromTo(batch,
+          { opacity: 0, y: 50, clipPath: 'inset(0 0 20% 0)' },
+          { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)', duration: 1.0, ease: 'expo.out', stagger: 0.12 });
+      },
+    });
+  }, { scope: sectionRef, dependencies: [] });
+
   return (
-    <section className="px-6 md:px-10 py-24 max-w-screen-2xl mx-auto">
-      <div className="flex items-end justify-between mb-12">
+    <section ref={sectionRef} className="px-6 md:px-10 pt-16 pb-24 max-w-screen-2xl mx-auto">
+      <div className="ed-header flex items-end justify-between mb-12" style={{ opacity: 0 }}>
         <div>
           <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
             {content.eyebrow}
@@ -40,7 +63,7 @@ export function EditorialStrip({
           </h2>
         </div>
         <a
-          href={content.ctaHref}
+          href={localizedHref(content.ctaHref)}
           className="hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all duration-200"
           style={{ color: 'var(--muted-teal)' }}
         >
@@ -57,12 +80,13 @@ export function EditorialStrip({
           return (
           <a
             key={`${story.title}-${index}`}
-            href={story.href}
-            className="group block relative overflow-hidden"
+            href={localizedHref(story.href)}
+            className="ed-card group block relative overflow-hidden"
             style={{
               aspectRatio: '3/4',
               border: '1px solid rgba(var(--accent-rgb),0.1)',
               transition: 'border-color 0.35s ease, box-shadow 0.35s ease',
+              opacity: 0,
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = visual.accent;

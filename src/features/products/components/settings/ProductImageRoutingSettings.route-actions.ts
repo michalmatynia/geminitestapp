@@ -42,6 +42,8 @@ type ProductImageRouteActionsArgs = ProductImageRoutesState & {
   updateSettingsBulk: UpdateSettingsBulkMutation;
 };
 
+type ServingRouteActionArgs = Pick<ProductImageRoutesState, 'setDefaultRoute' | 'setRoutes'>;
+
 const getDefaultRouteAfterRemoval = (
   currentDefaultRoute: string,
   removedRoute: string,
@@ -51,6 +53,33 @@ const getDefaultRouteAfterRemoval = (
   return currentDefaultRoute === removedRoute
     ? nextRoutes[0] ?? DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL
     : currentDefaultRoute;
+};
+
+const createServingRouteActions = ({
+  setDefaultRoute,
+  setRoutes,
+}: ServingRouteActionArgs): Pick<
+  ProductImageRouteActions,
+  'handleSelectServingMode' | 'handleUseFastComet' | 'handleUseLocalhost'
+> => {
+  const setServingRoute = (route: string): void => {
+    setRoutes((previous: string[]) =>
+      previous.includes(route) ? previous : dedupeRoutes([route, ...previous])
+    );
+    setDefaultRoute(route);
+  };
+
+  return {
+    handleSelectServingMode: (mode: ProductImageServingMode): void => {
+      setServingRoute(productImageServingRouteByMode[mode]);
+    },
+    handleUseFastComet: (): void => {
+      setServingRoute(DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL);
+    },
+    handleUseLocalhost: (): void => {
+      setServingRoute(LOCAL_PRODUCT_IMAGES_EXTERNAL_BASE_URL);
+    },
+  };
 };
 
 export function useProductImageRouteActions({
@@ -63,12 +92,7 @@ export function useProductImageRouteActions({
   toast,
   updateSettingsBulk,
 }: ProductImageRouteActionsArgs): ProductImageRouteActions {
-  const setServingRoute = (route: string): void => {
-    setRoutes((previous: string[]) =>
-      previous.includes(route) ? previous : dedupeRoutes([route, ...previous])
-    );
-    setDefaultRoute(route);
-  };
+  const servingRouteActions = createServingRouteActions({ setDefaultRoute, setRoutes });
 
   const handleAddRoute = (): void => {
     const normalized = normalizeProductImageExternalBaseUrl(newRoute);
@@ -110,25 +134,11 @@ export function useProductImageRouteActions({
     );
   };
 
-  const handleUseLocalhost = (): void => {
-    setServingRoute(LOCAL_PRODUCT_IMAGES_EXTERNAL_BASE_URL);
-  };
-
-  const handleUseFastComet = (): void => {
-    setServingRoute(DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL);
-  };
-
-  const handleSelectServingMode = (mode: ProductImageServingMode): void => {
-    setServingRoute(productImageServingRouteByMode[mode]);
-  };
-
   return {
     handleAddRoute,
     handleRemoveRoute,
     handleSave,
-    handleSelectServingMode,
-    handleUseFastComet,
-    handleUseLocalhost,
+    ...servingRouteActions,
     servingMode: resolveProductImageServingMode(defaultRoute),
   };
 }

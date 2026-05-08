@@ -1,5 +1,9 @@
-import type { JSX } from 'react';
+'use client';
+
+import { useRef, type JSX } from 'react';
 import { HOME_CONTENT_DEFAULTS, type HomeCategoriesContent } from '@/data/homeContent';
+import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
+import { useLocalizedHref } from '@/context/LocaleContext';
 
 const CATEGORY_VISUALS = [
   {
@@ -41,12 +45,41 @@ export function CategoriesGrid({
   counts?: Record<string, number>;
   content?: HomeCategoriesContent;
 }): JSX.Element {
+  const sectionRef = useRef<HTMLElement>(null);
   const hasLiveCounts = Object.keys(counts).length > 0;
+  const localizedHref = useLocalizedHref();
+
+  useGSAP(() => {
+    /* Section header reveal */
+    gsap.fromTo('.cat-header',
+      { opacity: 0, y: 40 },
+      {
+        opacity: 1, y: 0, duration: 0.9, ease: 'expo.out',
+        scrollTrigger: {
+          trigger: '.cat-header',
+          start: 'top 88%',
+          toggleActions: 'play none none none',
+        },
+      });
+
+    /* Cards stagger in on scroll */
+    ScrollTrigger.batch('.cat-card', {
+      start: 'top 90%',
+      onEnter: (batch) => {
+        gsap.fromTo(batch,
+          { opacity: 0, y: 60, clipPath: 'inset(0 0 30% 0)' },
+          {
+            opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)',
+            duration: 1.0, ease: 'expo.out', stagger: 0.1,
+          });
+      },
+    });
+  }, { scope: sectionRef, dependencies: [] });
 
   return (
-    <section className="px-6 md:px-10 py-24 max-w-screen-2xl mx-auto">
+    <section ref={sectionRef} className="px-6 md:px-10 pt-20 pb-16 max-w-screen-2xl mx-auto">
       {/* Section header */}
-      <div className="flex items-end justify-between mb-12">
+      <div className="cat-header flex items-end justify-between mb-12" style={{ opacity: 0 }}>
         <div>
           <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
             {content.eyebrow}
@@ -56,7 +89,7 @@ export function CategoriesGrid({
           </h2>
         </div>
         <a
-          href={content.ctaHref}
+          href={localizedHref(content.ctaHref)}
           className="hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all duration-200"
           style={{ color: 'var(--muted-teal)' }}
         >
@@ -79,9 +112,9 @@ export function CategoriesGrid({
           return (
             <a
               key={cat.id}
-              href={cat.href}
-              className="category-card block"
-              style={{ aspectRatio: visual.aspectRatio }}
+              href={localizedHref(cat.href)}
+              className="cat-card category-card block"
+              style={{ aspectRatio: visual.aspectRatio, opacity: 0 }}
             >
               {/* Background */}
               <div className="cat-bg absolute inset-0" style={{ background: visual.gradient }} />

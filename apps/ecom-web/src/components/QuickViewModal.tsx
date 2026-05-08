@@ -6,6 +6,8 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from '@/context/ToastContext';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
+import { formatPrice } from '@/lib/locales';
 import { ProductImage } from '@/components/ProductImage';
 
 export function QuickViewModal(): JSX.Element | null {
@@ -14,6 +16,8 @@ export function QuickViewModal(): JSX.Element | null {
   const { isWishlisted, toggle: toggleWishlist } = useWishlist();
   const { toast } = useToast();
   const { quickView } = useSiteContent();
+  const localizedHref = useLocalizedHref();
+  const locale = useLocale();
   const [selectedSize, setSelectedSize] = useState('');
   const [adding, setAdding] = useState(false);
 
@@ -96,7 +100,7 @@ export function QuickViewModal(): JSX.Element | null {
           )}
           <div
             className="absolute bottom-6 left-6 z-10"
-            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)' }}
+            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)' }}
           >
             {quickView.brandLabel} / {product.id}
           </div>
@@ -121,7 +125,7 @@ export function QuickViewModal(): JSX.Element | null {
                 {product.name}
               </h2>
               <div className="type-price text-xl" style={{ color: 'var(--fg)' }}>
-                {product.priceDisplay}
+                {formatPrice(product.price, locale)}
               </div>
             </div>
             <button
@@ -140,7 +144,7 @@ export function QuickViewModal(): JSX.Element | null {
             style={{
               fontFamily: 'var(--font-body)',
               fontSize: '0.875rem',
-              fontWeight: 300,
+              fontWeight: 400,
               color: 'var(--muted)',
               lineHeight: 1.85,
               marginBottom: '1.75rem',
@@ -233,7 +237,7 @@ export function QuickViewModal(): JSX.Element | null {
                 {wishlisted ? quickView.savedWishlistButtonLabel : quickView.saveWishlistButtonLabel}
               </button>
               <a
-                href={`/products/${product.slug}`}
+                href={localizedHref(`/products/${product.slug}`)}
                 className="btn-ghost flex-1 justify-center"
                 onClick={close}
               >

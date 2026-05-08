@@ -13,6 +13,7 @@
 export {
   normalizeProductImageExternalBaseUrl,
   productImageServingRouteByMode,
+  resolveProductImageLocalFallbackUrl,
   resolveProductImageServingMode,
   resolveProductImageUrl,
   type ProductImageServingMode,

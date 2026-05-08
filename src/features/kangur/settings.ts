@@ -62,6 +62,7 @@ export {
 };
 export { KANGUR_LESSON_COMPONENT_ORDER, KANGUR_LESSON_LIBRARY };
 export * from './docs/help-settings';
+export { parseKangurLessonTemplateComponentContentJson } from './lessons/lesson-template-component-content';
 export {
   DEFAULT_KANGUR_LAUNCH_ROUTE,
   KANGUR_LAUNCH_ROUTE_VALUES,

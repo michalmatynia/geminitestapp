@@ -9,18 +9,29 @@ import type {
   ProductScrapeProfile,
   ProductScrapeProfileRunResponse,
 } from '@/shared/contracts/products/scrape-profiles';
+import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
+import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY } from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
+import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const {
   apiGetMock,
   apiPostMock,
   invalidateListingBadgesMock,
   invalidateProductsAndCountsMock,
+  playwrightActionsStore,
+  savePlaywrightActionsMock,
   toastMock,
 } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
   apiPostMock: vi.fn(),
   invalidateListingBadgesMock: vi.fn(),
   invalidateProductsAndCountsMock: vi.fn(),
+  playwrightActionsStore: {
+    data: [] as unknown,
+    pending: false,
+  },
+  savePlaywrightActionsMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
@@ -128,6 +139,39 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
       ))}
     </select>
   ),
+  ToggleRow: ({
+    checked,
+    children,
+    label,
+    loading,
+    onCheckedChange,
+  }: {
+    checked?: boolean;
+    children?: React.ReactNode;
+    label: string;
+    loading?: boolean;
+    onCheckedChange?: (checked: boolean) => void;
+  }) => (
+    <label>
+      <input
+        aria-label={label}
+        type='checkbox'
+        checked={checked === true}
+        disabled={loading === true}
+        onChange={(event) => onCheckedChange?.(event.target.checked)}
+      />
+      <span>{label}</span>
+      {children}
+    </label>
+  ),
+}));
+
+vi.mock('@/shared/hooks/usePlaywrightStepSequencer', () => ({
+  usePlaywrightActions: () => ({ data: playwrightActionsStore.data }),
+  useSavePlaywrightActionsMutation: () => ({
+    isPending: playwrightActionsStore.pending,
+    mutateAsync: savePlaywrightActionsMock,
+  }),
 }));
 
 vi.mock('@/shared/ui/checkbox', () => ({
@@ -154,6 +198,7 @@ const battleProfile: ProductScrapeProfile = {
   siteHost: 'www.battle-stock.pl',
   sourceUrl: 'https://www.battle-stock.pl/pl/c/Warhammer-40k-30k/45',
   scripterId: 'battlestock-warhammer-40k-30k',
+  runtimeActionKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
   targetCatalogName: 'BattleStock',
   defaultLimit: null,
   maxPages: 75,
@@ -168,6 +213,7 @@ const otherProfile: ProductScrapeProfile = {
   siteHost: 'example.com',
   sourceUrl: 'https://example.com/products',
   scripterId: 'other-profile',
+  runtimeActionKey: null,
   targetCatalogName: 'Other',
 };
 
@@ -228,6 +274,23 @@ const runResponse: ProductScrapeProfileRunResponse = {
   },
 };
 
+const createRuntimeAction = (
+  input: Partial<PlaywrightAction> = {}
+): PlaywrightAction => {
+  const seed = getPlaywrightRuntimeActionSeed(PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY);
+  if (seed === null) {
+    throw new Error('Missing BattleStock runtime action seed.');
+  }
+  return {
+    ...seed,
+    ...input,
+    executionSettings: {
+      ...seed.executionSettings,
+      ...(input.executionSettings ?? {}),
+    },
+  };
+};
+
 import { ProductScrapeProfilesModal } from './ProductScrapeProfilesModal';
 
 const buildDraftsResponse = (): ProductDraft[] => [
@@ -257,13 +320,69 @@ const buildDraftsResponse = (): ProductDraft[] => [
   }),
 ];
 
-const handleApiGet = (url: string): ProductScrapeProfileRunResponse | ProductDraft[] | {
+const freshPagedProductsResponse = {
+  products: [
+    {
+      id: 'product-1',
+      sku: 'BATTLESTOCK-1',
+      name: { en: 'Rendered product', pl: null, de: null },
+      description: { en: '', pl: null, de: null },
+      name_en: 'Rendered product',
+      name_pl: null,
+      name_de: null,
+      description_en: null,
+      description_pl: null,
+      description_de: null,
+      baseProductId: null,
+      importSource: 'scrape',
+      defaultPriceGroupId: null,
+      ean: null,
+      gtin: null,
+      asin: null,
+      supplierName: 'BattleStock',
+      supplierLink: battleProfile.sourceUrl,
+      priceComment: null,
+      stock: 1,
+      sourcePrice: null,
+      sourcePriceCurrencyCode: null,
+      price: 10,
+      sizeLength: null,
+      sizeWidth: null,
+      weight: null,
+      length: null,
+      published: true,
+      archived: false,
+      categoryId: null,
+      shippingGroupId: null,
+      studioProjectId: null,
+      catalogId: 'catalog-battle',
+      parameters: [{ parameterId: 'pin-condition', value: 'Used' }],
+      customFields: [],
+      marketplaceContentOverrides: [],
+      imageLinks: [],
+      imageBase64s: [],
+      noteIds: [],
+      images: [],
+      catalogs: [{ productId: 'product-1', catalogId: 'catalog-battle', assignedAt: '' }],
+      tags: [],
+      producers: [],
+      createdAt: '2026-04-30T00:00:00.000Z',
+      updatedAt: '2026-04-30T00:00:00.000Z',
+    },
+  ],
+  total: 1,
+};
+
+const handleApiGet = (
+  url: string
+): ProductScrapeProfileRunResponse | ProductDraft[] | {
   profiles: ProductScrapeProfile[];
-} => {
+} | typeof freshPagedProductsResponse => {
   if (url === '/api/v2/products/scrape-profiles') {
     return { profiles: [battleProfile, otherProfile] };
   }
   if (url === '/api/drafts') return buildDraftsResponse();
+  if (url === '/api/v2/products/paged') return freshPagedProductsResponse;
   throw new Error(`Unexpected GET ${url}`);
 };
 
@@ -271,6 +390,9 @@ describe('ProductScrapeProfilesModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    playwrightActionsStore.data = [];
+    playwrightActionsStore.pending = false;
+    savePlaywrightActionsMock.mockResolvedValue(undefined);
     apiGetMock.mockImplementation((url: string) => Promise.resolve(handleApiGet(url)));
     apiPostMock.mockResolvedValue(runResponse);
   });
@@ -326,6 +448,98 @@ describe('ProductScrapeProfilesModal', () => {
     await waitFor(() => {
       expect(invalidateProductsAndCountsMock).toHaveBeenCalledWith(expect.any(QueryClient));
       expect(invalidateListingBadgesMock).toHaveBeenCalledWith(expect.any(QueryClient));
+    });
+  });
+
+  it('shows the connected Playwright runtime action that governs the scrape profile', async () => {
+    playwrightActionsStore.data = [
+      createRuntimeAction({
+        id: 'runtime-action-custom-battlestock',
+        name: 'Custom BattleStock scrape flow',
+        description: 'Custom scrape flow from the Step Sequencer.',
+        executionSettings: {
+          ...getPlaywrightRuntimeActionSeed(PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY)!
+            .executionSettings,
+          headless: false,
+        },
+        updatedAt: '2026-05-08T08:00:00.000Z',
+      }),
+    ];
+
+    renderModal();
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+    expect(screen.getByText('Connected scraping action')).toBeInTheDocument();
+    expect(screen.getByText('Custom BattleStock scrape flow')).toBeInTheDocument();
+    expect(screen.getByText('Custom scrape flow from the Step Sequencer.')).toBeInTheDocument();
+    expect(screen.getByText(PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY)).toBeInTheDocument();
+    expect(screen.getByText('Saved action')).toBeInTheDocument();
+    expect(screen.getByText('Headed')).toBeInTheDocument();
+    expect(screen.getByText('Action ID: runtime-action-custom-battlestock')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Current: Headed')).toBeInTheDocument();
+    });
+  });
+
+  it('saves runtime browser mode changes before launching the Redis scrape run', async () => {
+    renderModal();
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+    fireEvent.click(screen.getByLabelText('Action browser mode'));
+    fireEvent.click(screen.getByRole('button', { name: /Run Profile/ }));
+
+    await waitFor(() => {
+      expect(savePlaywrightActionsMock).toHaveBeenCalledTimes(1);
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/products/scrape-profiles/run',
+        expect.objectContaining({ profileId: battleProfile.id }),
+        { timeout: 300_000 }
+      );
+    });
+
+    const savedPayload = savePlaywrightActionsMock.mock.calls[0]?.[0] as
+      | { actions?: PlaywrightAction[] }
+      | undefined;
+    const savedRuntimeAction = savedPayload?.actions?.find(
+      (action) => action.runtimeKey === PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY
+    );
+    expect(savedRuntimeAction?.executionSettings.headless).toBe(false);
+  });
+
+  it('forces a fresh Product List refetch after Redis scrape results update products', async () => {
+    const queryClient = renderModal();
+    const filters = { page: 1, pageSize: 20 };
+    const queryKey = [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
+    queryClient.setQueryData(queryKey, {
+      items: [
+        {
+          id: 'product-1',
+          sku: 'BATTLESTOCK-1',
+          parameters: [],
+        },
+      ],
+      total: 1,
+    });
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+    fireEvent.click(screen.getByRole('button', { name: /Run Profile/ }));
+
+    await waitFor(() => {
+      expect(apiGetMock).toHaveBeenCalledWith(
+        '/api/v2/products/paged',
+        expect.objectContaining({
+          params: expect.objectContaining({
+            fresh: 1,
+            page: 1,
+            pageSize: 20,
+          }),
+        })
+      );
+    });
+
+    expect(queryClient.getQueryData(queryKey)).toEqual({
+      items: freshPagedProductsResponse.products,
+      total: 1,
     });
   });
 

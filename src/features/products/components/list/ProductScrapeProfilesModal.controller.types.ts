@@ -12,6 +12,7 @@ import type {
 } from '@/shared/contracts/products/scrape-profiles';
 
 import type { ProductScrapeProfileStoredSettings } from './ProductScrapeProfilesModal.storage';
+import type { ProductScrapeProfileRuntimeActionSetting } from './useProductScrapeProfileRuntimeActionSetting';
 
 export type ProductScrapeProfilesController = {
   dryRun: boolean;
@@ -27,6 +28,7 @@ export type ProductScrapeProfilesController = {
   draftTemplates: ProductDraft[];
   profiles: ProductScrapeProfilesListResponse['profiles'];
   result: ProductScrapeProfileRunResponse | null;
+  runtimeAction: ProductScrapeProfileRuntimeActionSetting;
   selectedDraftTemplateId: string;
   selectedProfileId: string;
   onDryRunChange: (value: boolean) => void;

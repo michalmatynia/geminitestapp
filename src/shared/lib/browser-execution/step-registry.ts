@@ -3,6 +3,7 @@ import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS } from './supplier-1688-runtime-
 import { FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS } from './filemaker-organization-presence-runtime-constants';
 import { JOB_BOARD_SCRAPE_RUNTIME_STEPS } from './job-board-runtime-constants';
 import { JOB_APPLICATION_APPLY_RUNTIME_STEPS } from './job-application-apply-runtime-constants';
+import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS } from './product-scrape-runtime-constants';
 
 export const STEP_REGISTRY = {
   // Browser lifecycle
@@ -186,6 +187,36 @@ export const STEP_REGISTRY = {
   [JOB_APPLICATION_APPLY_RUNTIME_STEPS.reviewOrSubmit]: {
     id: JOB_APPLICATION_APPLY_RUNTIME_STEPS.reviewOrSubmit,
     label: 'Review or submit application',
+  },
+
+  // Product scrape profiles
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.inputValidate]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.inputValidate,
+    label: 'Validate product scrape profile input',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.openSource]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.openSource,
+    label: 'Open product scrape source',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectProductLinks]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectProductLinks,
+    label: 'Collect product links',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.probeProductPages]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.probeProductPages,
+    label: 'Probe product pages',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.extractProducts]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.extractProducts,
+    label: 'Extract product records',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.mapDrafts]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.mapDrafts,
+    label: 'Map scrape drafts',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.finalize]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.finalize,
+    label: 'Finalize product scrape',
   },
 
   // Product scan shared / Amazon runtime flow

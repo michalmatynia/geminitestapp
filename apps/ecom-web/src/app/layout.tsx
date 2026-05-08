@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { JSX, ReactNode } from 'react';
-import { Exo_2, Rajdhani, Share_Tech_Mono } from 'next/font/google';
+import { Exo_2, Barlow, IBM_Plex_Mono } from 'next/font/google';
 import { CartProvider } from '@/context/CartContext';
 import { ToastProvider, ToastContainer } from '@/context/ToastContext';
 import { WishlistProvider } from '@/context/WishlistContext';
@@ -12,27 +12,30 @@ import { BackToTop } from '@/components/BackToTop';
 import { QuickViewModal } from '@/components/QuickViewModal';
 import { CookieConsent } from '@/components/CookieConsent';
 import { SiteContentProvider } from '@/context/SiteContentContext';
+import { LocaleProvider } from '@/context/LocaleContext';
 import { getSiteContent } from '@/lib/cms';
+import { getMentiosCatalogLocales } from '@/lib/mentios';
+import { getRequestLocale, getRequestLocaleState } from '@/lib/request-locale';
 
 import './globals.css';
 
 const exo2 = Exo_2({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   weight: ['300', '400', '500', '600', '700', '800'],
   variable: '--font-display',
   display: 'swap',
 });
 
-const rajdhani = Rajdhani({
-  subsets: ['latin'],
+const barlow = Barlow({
+  subsets: ['latin', 'latin-ext'],
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-body',
   display: 'swap',
 });
 
-const shareTechMono = Share_Tech_Mono({
-  subsets: ['latin'],
-  weight: ['400'],
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['400', '500'],
   variable: '--font-mono',
   display: 'swap',
 });
@@ -53,45 +56,60 @@ const themeInitScript = `
 })();
 `;
 
-export const metadata: Metadata = {
-  title: 'ARCANA — Anime · Gaming · Film Collectibles',
-  description: 'Keychains, pins and jewellery from the universes you love. Anime, gaming and film collectibles — officially licensed, obsessively curated.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  if (locale === 'pl') {
+    return {
+      title: 'ARCANA - Anime, gaming i filmowe kolekcjonalia',
+      description: 'Breloki, piny i biżuteria z ulubionych uniwersów. Kolekcjonalia anime, gamingowe i filmowe - licencjonowane i starannie wybrane.',
+    };
+  }
+  return {
+    title: 'ARCANA - Anime, Gaming, and Film Collectibles',
+    description: 'Keychains, pins and jewellery from the universes you love. Anime, gaming and film collectibles - officially licensed, obsessively curated.',
+  };
+}
 
 export default async function RootLayout({ children }: { children: ReactNode }): Promise<JSX.Element> {
-  const siteContent = await getSiteContent();
+  const { locale, pathname, search } = await getRequestLocaleState();
+  const [siteContent, availableLocales] = await Promise.all([
+    getSiteContent(locale),
+    getMentiosCatalogLocales(),
+  ]);
 
   return (
     <html
-      lang="en"
+      lang={locale}
       suppressHydrationWarning
       data-theme="nightly"
-      className={`nightly dark ${exo2.variable} ${rajdhani.variable} ${shareTechMono.variable}`}
+      className={`nightly dark ${exo2.variable} ${barlow.variable} ${ibmPlexMono.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        <SiteContentProvider content={siteContent}>
-          <ToastProvider>
-            <AuthProvider>
-            <WishlistProvider>
-              <RecentlyViewedProvider>
-              <QuickViewProvider>
-              <CartProvider>
-                {children}
-                <CartDrawer />
-                <ToastContainer />
-                <BackToTop />
-                <QuickViewModal />
-                <CookieConsent />
-              </CartProvider>
-              </QuickViewProvider>
-              </RecentlyViewedProvider>
-            </WishlistProvider>
-            </AuthProvider>
-          </ToastProvider>
-        </SiteContentProvider>
+        <LocaleProvider locale={locale} pathname={pathname} search={search} availableLocales={availableLocales}>
+          <SiteContentProvider content={siteContent}>
+            <ToastProvider>
+              <AuthProvider>
+              <WishlistProvider>
+                <RecentlyViewedProvider>
+                <QuickViewProvider>
+                <CartProvider>
+                  {children}
+                  <CartDrawer />
+                  <ToastContainer />
+                  <BackToTop />
+                  <QuickViewModal />
+                  <CookieConsent />
+                </CartProvider>
+                </QuickViewProvider>
+                </RecentlyViewedProvider>
+              </WishlistProvider>
+              </AuthProvider>
+            </ToastProvider>
+          </SiteContentProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

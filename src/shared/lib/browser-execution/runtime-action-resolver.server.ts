@@ -119,6 +119,7 @@ export async function resolveRuntimeActionDefinition(
     stepSetIds: [],
     personaId: null,
     executionSettings: defaultPlaywrightActionExecutionSettings,
+    concurrencyMode: null,
     createdAt: new Date(0).toISOString(),
     updatedAt: new Date(0).toISOString(),
   });

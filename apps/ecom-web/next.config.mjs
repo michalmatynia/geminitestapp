@@ -1,3 +1,11 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const outputFileTracingRoot = process.env.VERCEL
+  ? __dirname
+  : path.join(__dirname, '../../');
+
 const buildUploadsRemotePattern = (baseUrl) => {
   const raw = baseUrl?.trim();
   if (!raw) return null;
@@ -37,6 +45,7 @@ const fileUploadsRemotePatterns = fileUploadBaseUrls.reduce((patterns, baseUrl) 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  outputFileTracingRoot,
   images: {
     remotePatterns: [
       ...fileUploadsRemotePatterns,

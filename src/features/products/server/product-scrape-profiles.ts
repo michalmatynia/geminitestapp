@@ -3,6 +3,7 @@ import 'server-only';
 import {
   getDefaultScripterRegistry,
   getDefaultScripterServer,
+  type ScripterImportSourceResult,
 } from '@/features/playwright/scripters/public';
 import { getDraft } from '@/features/drafter/services/draft-service';
 import { CachedProductService } from '@/features/products/performance/cached-service';
@@ -16,7 +17,13 @@ import type {
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type {
+  PlaywrightAction,
+  PlaywrightActionExecutionSettings,
+} from '@/shared/contracts/playwright-steps';
 import { badRequestError, configurationError, notFoundError } from '@/shared/errors/app-error';
+import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY } from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
+import { resolveRuntimeActionDefinition } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 import { resolveLocalizedCategoryName } from '@/shared/lib/products/title-terms';
@@ -38,6 +45,7 @@ const PRODUCT_SCRAPE_PROFILES: ProductScrapeProfileConfig[] = [
     siteHost: 'www.battle-stock.pl',
     sourceUrl: 'https://www.battle-stock.pl/pl/c/Warhammer-40k-30k/45',
     scripterId: 'battlestock-warhammer-40k-30k',
+    runtimeActionKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
     targetCatalogName: BATTLESTOCK_CATALOG_NAME,
     defaultLimit: null,
     maxPages: 75,
@@ -56,6 +64,7 @@ const toPublicProfile = (profile: ProductScrapeProfileConfig): ProductScrapeProf
   siteHost: profile.siteHost,
   sourceUrl: profile.sourceUrl,
   scripterId: profile.scripterId,
+  runtimeActionKey: profile.runtimeActionKey,
   targetCatalogName: profile.targetCatalogName,
   defaultLimit: profile.defaultLimit,
   maxPages: profile.maxPages,
@@ -217,31 +226,72 @@ const shouldInvalidateProductCache = (
   return counts.createdCount > 0 || counts.updatedCount > 0;
 };
 
+const resolveBrowserMode = (
+  headless: boolean | null
+): NonNullable<ProductScrapeProfileRunResponse['runtime']>['browserMode'] => {
+  if (headless === null) return 'runtime_default';
+  return headless ? 'headless' : 'headed';
+};
+
+const buildRuntimeMetadata = (
+  action: PlaywrightAction,
+  queueName: string | null | undefined
+): NonNullable<ProductScrapeProfileRunResponse['runtime']> => ({
+  queueName: queueName ?? null,
+  runtimeActionId: action.id,
+  runtimeActionName: action.name,
+  runtimeActionKey: action.runtimeKey ?? '',
+  browserMode: resolveBrowserMode(action.executionSettings.headless),
+  enabledStepCount: action.blocks.filter((block) => block.enabled !== false).length,
+  totalStepCount: action.blocks.length,
+});
+
+const runProfileScripterDryRun = async ({
+  catalogId,
+  executionSettings,
+  input,
+  profile,
+}: {
+  catalogId: string;
+  executionSettings: PlaywrightActionExecutionSettings;
+  input: ProductScrapeProfileRunRequest;
+  profile: ProductScrapeProfileConfig;
+}): Promise<ScripterImportSourceResult> =>
+  await getDefaultScripterServer().dryRun({
+    scripterId: profile.scripterId,
+    enforceRobots: false,
+    runtimeActionKey: profile.runtimeActionKey,
+    executionSettings,
+    options: {
+      limit: input.limit,
+      skipRecordsWithErrors: false,
+      catalogDefaults: { catalogIds: [catalogId] },
+    },
+  });
+
 export const listProductScrapeProfiles = (): ProductScrapeProfilesListResponse => ({
   profiles: PRODUCT_SCRAPE_PROFILES.map(toPublicProfile),
 });
 
 export const runProductScrapeProfile = async (
   input: ProductScrapeProfileRunRequest,
-  options: { userId?: string | null } = {}
+  options: { userId?: string | null; runtimeQueueName?: string | null } = {}
 ): Promise<ProductScrapeProfileRunResponse> => {
   const profile = findProfile(input.profileId);
   const dryRun = input.dryRun ?? false;
   await ensureScripterProfileFile(profile);
+  const runtimeAction = await resolveRuntimeActionDefinition(profile.runtimeActionKey);
 
   const catalog = await ensureCatalog(profile.targetCatalogName);
   const draftTemplate = await resolveScrapeDraftTemplate(profile, input.draftTemplateId);
   const draftTemplateCategoryAliases = await resolveDraftTemplateCategoryAliases(draftTemplate);
   const priceGroups = await loadScrapePriceGroups(catalog, draftTemplate);
   const sourcePriceCurrencyCode = resolveSourcePriceCurrencyCode(profile, input.sourcePriceCurrencyCode);
-  const source = await getDefaultScripterServer().dryRun({
-    scripterId: profile.scripterId,
-    enforceRobots: false,
-    options: {
-      limit: input.limit,
-      skipRecordsWithErrors: false,
-      catalogDefaults: { catalogIds: [catalog.id] },
-    },
+  const source = await runProfileScripterDryRun({
+    catalogId: catalog.id,
+    executionSettings: runtimeAction.executionSettings,
+    input,
+    profile,
   });
   const outcomes = await processScrapeDrafts(source.drafts, {
     profile,
@@ -273,6 +323,7 @@ export const runProductScrapeProfile = async (
     failedCount: outcomeSummary.failedCount,
     issueCount: source.summary.totalIssues,
     products: outcomeSummary.products,
+    runtime: buildRuntimeMetadata(runtimeAction, options.runtimeQueueName),
     summary: {
       rawCount: source.summary.rawCount,
       mappedCount: source.summary.mappedCount,

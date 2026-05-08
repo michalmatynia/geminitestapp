@@ -30,6 +30,10 @@ import {
   JOB_APPLICATION_APPLY_RUNTIME_KEY,
   JOB_APPLICATION_APPLY_RUNTIME_NAME,
 } from './job-application-apply-runtime-constants';
+import {
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_NAME,
+} from './product-scrape-runtime-constants';
 
 type RuntimeActionSeedDefinition = {
   description: string;
@@ -123,6 +127,14 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
       headless: true,
     },
   },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY]: {
+    name: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_NAME,
+    description:
+      'Runs the BattleStock product scrape through the shared Playwright runtime action settings, then maps scraped records into product drafts.',
+    executionSettings: {
+      headless: true,
+    },
+  },
   vinted_list: {
     name: 'Vinted List',
     description: 'Default Vinted listing publish flow.',
@@ -168,6 +180,7 @@ const createSeedAction = (runtimeKey: ActionSequenceKey): PlaywrightAction => {
       ...defaultPlaywrightActionExecutionSettings,
       ...(definition.executionSettings ?? {}),
     },
+    concurrencyMode: null,
     createdAt: SEEDED_ACTION_TIMESTAMP,
     updatedAt: SEEDED_ACTION_TIMESTAMP,
   });

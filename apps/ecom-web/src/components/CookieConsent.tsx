@@ -3,9 +3,11 @@
 import { useState, useEffect, type JSX } from 'react';
 import { SITE_CONTENT_DEFAULTS } from '@/data/siteContent';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useLocalizedHref } from '@/context/LocaleContext';
 
 export function CookieConsent(): JSX.Element | null {
   const { cookieConsent } = useSiteContent();
+  const localizedHref = useLocalizedHref();
   const storageKey = cookieConsent.storageKey || SITE_CONTENT_DEFAULTS.cookieConsent.storageKey;
   const [visible, setVisible] = useState(false);
 
@@ -62,7 +64,7 @@ export function CookieConsent(): JSX.Element | null {
           >
             {cookieConsent.message}{' '}
             <a
-              href={cookieConsent.policyHref}
+              href={localizedHref(cookieConsent.policyHref)}
               className="underline underline-offset-2 hover:text-[var(--fg)] transition-colors"
             >
               {cookieConsent.policyLabel}

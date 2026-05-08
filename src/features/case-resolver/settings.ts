@@ -6,14 +6,12 @@
  * `parseCaseResolverSettings` and `parseCaseResolverWorkspace` functions
  * which are the primary entry points for deserialising persisted JSON.
  */
-import { type CaseResolverWorkspace, type CaseResolverDefaultDocumentFormat, type CaseResolverSettings } from '@/shared/contracts/case-resolver';
+import { type CaseResolverWorkspace, type CaseResolverSettings } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { DEFAULT_CASE_RESOLVER_SETTINGS } from './settings.constants';
 import {
-  normalizeCaseResolverDefaultDocumentFormatValue,
-  normalizeCaseResolverPartySearchKindValue,
   toIsoDocumentDate,
 } from './settings.helpers';
 import {
@@ -28,6 +26,7 @@ export * from './settings.helpers';
 export * from './settings.files';
 export * from './settings.workspace';
 export * from './settings.snapshots';
+export * from './settings/document-format';
 
 export { sanitizeCaseResolverGraphNodeFileRelations } from '@/features/case-resolver/nodefile-relations';
 export {
@@ -60,8 +59,6 @@ export {
   renameFolderPath,
   resolveCaseResolverUploadFolder,
 } from './settings-workspace-helpers';
-
-import { parseCaseResolverDefaultDocumentFormat } from './settings/document-format';
 
 import { normalizeCaseResolverSettings } from './settings/normalize-settings';
 

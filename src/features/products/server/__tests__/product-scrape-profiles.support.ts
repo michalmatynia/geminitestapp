@@ -6,6 +6,8 @@ import type {
 } from '@/features/playwright/scripters';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
+import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY } from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
 import type * as ProductScrapeProfilesApi from '../product-scrape-profiles';
 
 export const BATTLESTOCK_PROFILE_ID = 'battlestock-warhammer-40k-30k';
@@ -26,6 +28,7 @@ const mocks = vi.hoisted(() => ({
   invalidateAll: vi.fn(),
   listCatalogs: vi.fn(),
   registryGet: vi.fn(),
+  resolveRuntimeActionDefinition: vi.fn(),
   updateProduct: vi.fn(),
   uploadFile: vi.fn(),
 }));
@@ -87,6 +90,10 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
 
 vi.mock('@/shared/lib/files/services/image-file-service', () => ({
   uploadFile: productScrapeProfileMocks.uploadFile,
+}));
+
+vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
+  resolveRuntimeActionDefinition: productScrapeProfileMocks.resolveRuntimeActionDefinition,
 }));
 
 vi.mock('../product-scraped-source-common', () => ({
@@ -187,6 +194,21 @@ export const makeDraft = (): ScripterImportDraft => ({
 export const resetProductScrapeProfileMocks = (): void => {
   vi.clearAllMocks();
   productScrapeProfileMocks.registryGet.mockResolvedValue(scripterDefinition);
+  productScrapeProfileMocks.resolveRuntimeActionDefinition.mockResolvedValue({
+    id: 'runtime-action-battlestock',
+    name: 'BattleStock Product Scrape',
+    description: null,
+    runtimeKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+    blocks: [],
+    stepSetIds: [],
+    personaId: null,
+    executionSettings: {
+      ...defaultPlaywrightActionExecutionSettings,
+      headless: false,
+    },
+    createdAt: '2026-05-08T00:00:00.000Z',
+    updatedAt: '2026-05-08T00:00:00.000Z',
+  });
   productScrapeProfileMocks.listCatalogs.mockResolvedValue([battleStockCatalog]);
   productScrapeProfileMocks.getCategoryById.mockResolvedValue(gamingPendantCategory);
   productScrapeProfileMocks.dryRun.mockResolvedValue(makeSource([makeDraft()]));

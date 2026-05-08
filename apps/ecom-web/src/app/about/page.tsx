@@ -3,11 +3,17 @@ import type { JSX } from 'react';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { getAboutContent } from '@/lib/cms';
+import { getRequestLocale } from '@/lib/request-locale';
+import { localizeHref } from '@/lib/locales';
 
-export const metadata: Metadata = {
-  title: 'About — ARCANA',
-  description: 'The story behind ARCANA — why we make what we make, and how.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const content = await getAboutContent(locale);
+  return {
+    title: `${content.hero.title} - ARCANA`,
+    description: content.hero.body,
+  };
+}
 
 const ARTISAN_GRADIENTS = [
   'linear-gradient(145deg, #C4A882 0%, #8C7260 100%)',
@@ -17,7 +23,8 @@ const ARTISAN_GRADIENTS = [
 ];
 
 export default async function AboutPage(): Promise<JSX.Element> {
-  const content = await getAboutContent();
+  const locale = await getRequestLocale();
+  const content = await getAboutContent(locale);
 
   return (
     <>
@@ -186,7 +193,7 @@ export default async function AboutPage(): Promise<JSX.Element> {
                 <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>{content.artisansEyebrow}</div>
                 <h2 className="type-display-md" style={{ color: 'var(--fg)' }}>{content.artisansTitle}</h2>
               </div>
-              <a href={content.artisansCtaHref} className="hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all" style={{ color: 'var(--muted)' }}>
+              <a href={localizeHref(content.artisansCtaHref, locale)} className="hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all" style={{ color: 'var(--muted)' }}>
                 {content.artisansCtaLabel}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
@@ -267,7 +274,7 @@ export default async function AboutPage(): Promise<JSX.Element> {
                 <div className="flex items-start gap-6">
                   <span
                     className="type-label flex-shrink-0 mt-1"
-                    style={{ color: 'var(--border)' }}
+                    style={{ color: 'rgba(var(--accent-rgb),0.4)' }}
                   >
                     {number}
                   </span>
@@ -325,14 +332,14 @@ export default async function AboutPage(): Promise<JSX.Element> {
           </div>
           <div className="flex gap-4 justify-center flex-wrap">
             <a
-              href={content.closing.primaryCtaHref}
+              href={localizeHref(content.closing.primaryCtaHref, locale)}
               className="btn-primary"
               style={{ background: 'var(--bg)', color: 'var(--fg)' }}
             >
               {content.closing.primaryCtaLabel}
             </a>
             <a
-              href={content.closing.secondaryCtaHref}
+              href={localizeHref(content.closing.secondaryCtaHref, locale)}
               className="btn-ghost"
               style={{ color: 'var(--bg)', borderColor: 'rgba(255,255,255,0.2)' }}
             >

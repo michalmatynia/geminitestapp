@@ -3,78 +3,174 @@
 import * as React from 'react';
 
 import type { SegmentedControlOption, SegmentedControlProps } from '@/shared/contracts/ui/controls';
-
-import { cn } from '@/shared/utils/ui-utils';
 import { getTextContent, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
+import { cn } from '@/shared/utils/ui-utils';
 
 export type { SegmentedControlOption, SegmentedControlProps };
 
-export function SegmentedControl<T extends string>({
-  options,
-  value,
-  onChange,
-  className,
-  itemClassName,
-  activeClassName,
-  size = 'sm',
-  disabled = false,
-  ariaLabel,
-  ariaLabelledBy,
-}: SegmentedControlProps<T>): React.JSX.Element {
-  const sizeStyles = {
-    xs: 'px-2 py-0.5 text-[10px]',
-    sm: 'px-3 py-1 text-xs',
-    md: 'px-4 py-1.5 text-sm',
-  };
-  const optionRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+const SIZE_STYLES = {
+  xs: 'px-2 py-0.5 text-[10px]',
+  sm: 'px-3 py-1 text-xs',
+  md: 'px-4 py-1.5 text-sm',
+} as const;
 
-  const selectedIndex = React.useMemo(() => {
-    const index = options.findIndex((option) => option.value === value);
-    return index >= 0 ? index : 0;
-  }, [options, value]);
+const selectedOptionIndex = <T extends string>(
+  options: ReadonlyArray<SegmentedControlOption<T>>,
+  value: T
+): number => {
+  const index = options.findIndex((option) => option.value === value);
+  return index >= 0 ? index : 0;
+};
 
-  const focusOption = (index: number) => {
-    optionRefs.current[index]?.focus();
-  };
+const nextOptionIndexForKey = (
+  key: string,
+  selectedIndex: number,
+  optionCount: number
+): number | null => {
+  if (key === 'ArrowRight' || key === 'ArrowDown') return (selectedIndex + 1) % optionCount;
+  if (key === 'ArrowLeft' || key === 'ArrowUp') {
+    return (selectedIndex - 1 + optionCount) % optionCount;
+  }
+  if (key === 'Home') return 0;
+  if (key === 'End') return optionCount - 1;
+  return null;
+};
 
-  const allowFallbackLabel = !ariaLabel && !ariaLabelledBy;
-  const { ariaLabel: resolvedGroupLabel, hasAccessibleLabel: hasGroupLabel } =
-    resolveAccessibleLabel({
+const useSegmentedControlLabel = (input: {
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
+}): string | undefined => {
+  const hasConfiguredLabel =
+    (input.ariaLabel?.trim().length ?? 0) > 0 || (input.ariaLabelledBy?.trim().length ?? 0) > 0;
+  const { ariaLabel: resolvedGroupLabel, hasAccessibleLabel } = resolveAccessibleLabel({
     children: null,
-    ariaLabel,
-    ariaLabelledBy,
-    fallbackLabel: allowFallbackLabel ? 'Selection options' : undefined,
+    ariaLabel: input.ariaLabel,
+    ariaLabelledBy: input.ariaLabelledBy,
+    fallbackLabel: hasConfiguredLabel ? undefined : 'Selection options',
   });
-  if (!hasGroupLabel) {
+
+  if (!hasAccessibleLabel) {
     warnMissingAccessibleLabel({
       componentName: 'SegmentedControl',
-      hasAccessibleLabel: hasGroupLabel,
+      hasAccessibleLabel,
     });
   }
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+  return resolvedGroupLabel;
+};
+
+type SegmentedControlButtonProps<T extends string> = {
+  activeClassName?: string;
+  disabled: boolean;
+  index: number;
+  isActive: boolean;
+  itemClassName?: string;
+  onChange: (value: T) => void;
+  option: SegmentedControlOption<T>;
+  selectedIndex: number;
+  setOptionRef: (index: number, node: HTMLButtonElement | null) => void;
+  size: NonNullable<SegmentedControlProps<T>['size']>;
+};
+
+const resolveOptionLabel = <T extends string>(option: SegmentedControlOption<T>): string => {
+  if (option.ariaLabel !== undefined) return option.ariaLabel;
+  const derivedLabel = getTextContent(option.label).trim();
+  return derivedLabel.length > 0 ? derivedLabel : option.value;
+};
+
+const segmentedButtonClassName = <T extends string>({
+  activeClassName,
+  disabled,
+  isActive,
+  itemClassName,
+  size,
+}: Pick<
+  SegmentedControlButtonProps<T>,
+  'activeClassName' | 'disabled' | 'isActive' | 'itemClassName' | 'size'
+>): string =>
+  cn(
+    'flex items-center gap-1.5 rounded font-medium transition-all duration-200',
+    SIZE_STYLES[size],
+    isActive
+      ? cn('bg-cyan-500/20 text-cyan-200 shadow-sm', activeClassName)
+      : cn('text-gray-400 hover:text-gray-200 hover:bg-white/5', itemClassName),
+    disabled ? 'cursor-not-allowed opacity-60' : undefined
+  );
+
+function SegmentedControlButton<T extends string>({
+  activeClassName,
+  disabled,
+  index,
+  isActive,
+  itemClassName,
+  onChange,
+  option,
+  selectedIndex,
+  setOptionRef,
+  size,
+}: SegmentedControlButtonProps<T>): React.JSX.Element {
+  const Icon = option.icon;
+  const resolvedOptionLabel = resolveOptionLabel(option);
+
+  return (
+    <button
+      type='button'
+      onClick={() => {
+        if (!disabled) onChange(option.value);
+      }}
+      role='radio'
+      aria-checked={isActive}
+      aria-label={resolvedOptionLabel}
+      disabled={disabled}
+      tabIndex={!disabled && index === selectedIndex ? 0 : -1}
+      ref={(node) => {
+        setOptionRef(index, node);
+      }}
+      className={segmentedButtonClassName({
+        activeClassName,
+        disabled,
+        isActive,
+        itemClassName,
+        size,
+      })}
+    >
+      {Icon ? <Icon className='size-3' aria-hidden='true' /> : null}
+      {option.label}
+    </button>
+  );
+}
+
+export function SegmentedControl<T extends string>({
+  activeClassName,
+  ariaLabel,
+  ariaLabelledBy,
+  className,
+  disabled = false,
+  itemClassName,
+  onChange,
+  options,
+  size = 'sm',
+  value,
+}: SegmentedControlProps<T>): React.JSX.Element {
+  const optionRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+  const selectedIndex = React.useMemo(() => selectedOptionIndex(options, value), [options, value]);
+  const resolvedGroupLabel = useSegmentedControlLabel({ ariaLabel, ariaLabelledBy });
+  const setOptionRef = React.useCallback((index: number, node: HTMLButtonElement | null): void => {
+    optionRefs.current[index] = node;
+  }, []);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
     if (disabled || options.length === 0) return;
-
-    const key = event.key;
-    let nextIndex = selectedIndex;
-
-    if (key === 'ArrowRight' || key === 'ArrowDown') {
-      nextIndex = (selectedIndex + 1) % options.length;
-    } else if (key === 'ArrowLeft' || key === 'ArrowUp') {
-      nextIndex = (selectedIndex - 1 + options.length) % options.length;
-    } else if (key === 'Home') {
-      nextIndex = 0;
-    } else if (key === 'End') {
-      nextIndex = options.length - 1;
-    } else {
-      return;
-    }
+    const nextIndex = nextOptionIndexForKey(event.key, selectedIndex, options.length);
+    if (nextIndex === null) return;
 
     event.preventDefault();
     const nextValue = options[nextIndex]?.value;
     if (nextValue === undefined) return;
     onChange(nextValue);
-    requestAnimationFrame(() => focusOption(nextIndex));
+    requestAnimationFrame(() => {
+      optionRefs.current[nextIndex]?.focus();
+    });
   };
 
   return (
@@ -83,47 +179,24 @@ export function SegmentedControl<T extends string>({
       aria-label={resolvedGroupLabel}
       aria-labelledby={ariaLabelledBy}
       onKeyDown={handleKeyDown}
-      className={cn(
-        'flex items-center rounded-md border border-border/60 bg-card/40 p-0.5',
-        className
-      )}
+      tabIndex={disabled ? -1 : 0}
+      className={cn('flex items-center rounded-md border border-border/60 bg-card/40 p-0.5', className)}
     >
-      {options.map((option, index) => {
-        const isActive = value === option.value;
-        const Icon = option.icon;
-        const derivedLabel = getTextContent(option.label).trim();
-        const resolvedOptionLabel =
-          option.ariaLabel ?? (derivedLabel || undefined) ?? option.value;
-
-        return (
-          <button
-            key={option.value}
-            type='button'
-            onClick={() => {
-              if (!disabled) onChange(option.value);
-            }}
-            role='radio'
-            aria-checked={isActive}
-            aria-label={resolvedOptionLabel}
-            disabled={disabled}
-            tabIndex={index === selectedIndex ? 0 : -1}
-            ref={(node) => {
-              optionRefs.current[index] = node;
-            }}
-            className={cn(
-              'flex items-center gap-1.5 rounded font-medium transition-all duration-200',
-              sizeStyles[size],
-              isActive
-                ? cn('bg-cyan-500/20 text-cyan-200 shadow-sm', activeClassName)
-                : cn('text-gray-400 hover:text-gray-200 hover:bg-white/5', itemClassName),
-              disabled && 'cursor-not-allowed opacity-60'
-            )}
-          >
-            {Icon && <Icon className='size-3' aria-hidden='true' />}
-            {option.label}
-          </button>
-        );
-      })}
+      {options.map((option, index) => (
+        <SegmentedControlButton
+          key={option.value}
+          activeClassName={activeClassName}
+          disabled={disabled}
+          index={index}
+          isActive={value === option.value}
+          itemClassName={itemClassName}
+          onChange={onChange}
+          option={option}
+          selectedIndex={selectedIndex}
+          setOptionRef={setOptionRef}
+          size={size}
+        />
+      ))}
     </div>
   );
 }

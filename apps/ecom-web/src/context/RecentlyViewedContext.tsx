@@ -15,6 +15,7 @@ export interface RecentlyViewedItem {
   slug: string;
   name: string;
   category: string;
+  price: number;
   priceDisplay: string;
   gradient: string;
   imageUrl?: string;

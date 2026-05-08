@@ -34,8 +34,8 @@
   --accent-warm:  var(--peach-orange);
   --accent-hot:   var(--coral-red);
   --muted:        var(--muted-teal);
-  --border:       rgba(171, 217, 208, 0.12);
-  --border-bright: rgba(171, 217, 208, 0.45);
+  --border:       rgba(171, 217, 208, 0.15);
+  --border-bright: rgba(171, 217, 208, 0.5);
   --accent-contrast: var(--space-black);
   --gold-contrast: var(--space-black);
   --on-media: var(--cream-highlight);
@@ -43,7 +43,7 @@
   --nav-bg: rgba(1, 0, 13, 0.88);
   --modal-scrim: rgba(1, 0, 13, 0.88);
   --mobile-menu-bg: rgba(1, 0, 13, 0.97);
-  --panel-bg: rgba(1, 0, 13, 0.55);
+  --panel-bg: rgba(1, 0, 13, 0.68);
   --hero-visual-bg: var(--deep-navy);
   --media-chip-bg: rgba(1, 0, 13, 0.5);
   --media-overlay: linear-gradient(to top, rgba(1,0,13,0.85) 0%, transparent 100%);
@@ -138,6 +138,8 @@ body {
   background-color: var(--bg);
   color: var(--fg);
   font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
   overflow-x: hidden;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
@@ -213,7 +215,7 @@ body {
 .type-label {
   font-family: var(--font-mono), monospace;
   font-size: 0.65rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -248,11 +250,11 @@ body {
   box-shadow: 0 0 24px rgba(var(--accent-rgb),0.1), inset 0 0 24px rgba(var(--accent-rgb),0.04);
 }
 
-.product-card .card-image {
+.product-card .card-image > * {
   transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.product-card:hover .card-image {
+.product-card:hover .card-image > * {
   transform: scale(1.05);
 }
 
@@ -316,7 +318,7 @@ body {
   color: var(--accent);
   font-family: var(--font-mono), monospace;
   font-size: 0.65rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   border: 1px solid var(--accent);
   cursor: pointer;
@@ -340,7 +342,7 @@ body {
   color: var(--fg);
   font-family: var(--font-mono), monospace;
   font-size: 0.65rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   border: 1px solid rgba(var(--fg-rgb),0.2);
   cursor: pointer;
@@ -362,7 +364,7 @@ body {
   color: var(--soft-gold);
   font-family: var(--font-mono), monospace;
   font-size: 0.65rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   border: 1px solid var(--soft-gold);
   cursor: pointer;
@@ -402,7 +404,7 @@ body {
 .neon-tag-cyan {
   font-family: var(--font-mono), monospace;
   font-size: 0.6rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent);
   background: rgba(var(--accent-rgb),0.1);
@@ -413,7 +415,7 @@ body {
 .neon-tag-gold {
   font-family: var(--font-mono), monospace;
   font-size: 0.6rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--soft-gold);
   background: rgba(var(--gold-rgb),0.1);
@@ -424,7 +426,7 @@ body {
 .neon-tag-coral {
   font-family: var(--font-mono), monospace;
   font-size: 0.6rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--coral-red);
   background: rgba(var(--coral-rgb),0.1);
@@ -526,3 +528,39 @@ body {
 .line-grow {
   animation: lineGrow 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
 }
+
+/* ─── GSAP compositing hints ───────────────────────────────────── */
+.will-change-transform { will-change: transform; }
+.will-change-opacity   { will-change: opacity; }
+
+/* Promoted layers for parallax targets */
+.hero-right,
+[data-parallax] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Prevent layout shift during GSAP entrance */
+[data-gsap-hide] { visibility: hidden; }
+
+/* ─── Page transition fade ─────────────────────────────────────── */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: pageFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ─── Scroll-reveal base (pre-GSAP state via CSS) ──────────────── */
+.gsap-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+/* Smooth overflow for parallax sections */
+.parallax-section {
+  overflow: hidden;
+  position: relative;
+}
+

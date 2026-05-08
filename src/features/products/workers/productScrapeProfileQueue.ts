@@ -47,21 +47,27 @@ const queue: ManagedQueue<ProductScrapeProfileQueueJobData> =
       removeOnFail: false,
     },
     processor: async (data) =>
-      runProductScrapeProfile(data.request, { userId: data.userId }),
+      runProductScrapeProfile(data.request, {
+        userId: data.userId,
+        runtimeQueueName: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
+      }),
     onCompleted: async (jobId, result, data) => {
       await ErrorSystem.logInfo('Product scrape profile job completed', {
         service: LOG_SERVICE,
         jobId,
-        profileId: data.request.profileId,
-        result,
+      profileId: data.request.profileId,
+      queue: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
+      runtime: result.runtime,
+      result,
       });
     },
     onFailed: async (jobId, error, data) => {
       await ErrorSystem.captureException(error, {
         service: LOG_SERVICE,
-        jobId,
-        profileId: data.request.profileId,
-      });
+      jobId,
+      profileId: data.request.profileId,
+      queue: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
+    });
     },
   });
 
@@ -154,6 +160,7 @@ export const runProductScrapeProfileViaRedisRuntime = async (
     service: LOG_SERVICE,
     jobId,
     profileId: request.profileId,
+    queue: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
     userId: options.userId ?? null,
   });
   return await waitForQueuedResult(jobId);

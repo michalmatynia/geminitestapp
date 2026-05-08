@@ -4,16 +4,27 @@ import { getStoriesPageContent } from '@/lib/cms';
 import { getAllStories } from '@/lib/storiesCms';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
+import { getRequestLocale } from '@/lib/request-locale';
+import { localizeHref } from '@/lib/locales';
 
-export const metadata: Metadata = {
-  title: 'Stories — ARCANA',
-  description: 'Field reports, maker profiles, and essays on the objects we make and why they matter.',
-};
+function readTimeLabel(value: string, locale: string): string {
+  return locale === 'pl' ? `${value} czytania` : `${value} read`;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const content = await getStoriesPageContent(locale);
+  return {
+    title: `${content.index.title} - ARCANA`,
+    description: content.index.description,
+  };
+}
 
 export default async function StoriesPage(): Promise<JSX.Element> {
+  const locale = await getRequestLocale();
   const [stories, content] = await Promise.all([
-    getAllStories(),
-    getStoriesPageContent(),
+    getAllStories(locale),
+    getStoriesPageContent(locale),
   ]);
   const [featured, ...rest] = stories;
   if (!featured) {
@@ -64,7 +75,7 @@ export default async function StoriesPage(): Promise<JSX.Element> {
 
         {/* Featured story */}
         <a
-          href={`/stories/${featured.slug}`}
+          href={localizeHref(`/stories/${featured.slug}`, locale)}
           className="group block relative overflow-hidden"
           style={{ minHeight: '70vh' }}
         >
@@ -90,7 +101,7 @@ export default async function StoriesPage(): Promise<JSX.Element> {
                   {content.index.featuredBadge}
                 </span>
                 <span className="type-label" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  {featured.category} · {featured.readTime} read
+                  {featured.category} · {readTimeLabel(featured.readTime, locale)}
                 </span>
               </div>
               <h2
@@ -136,26 +147,29 @@ export default async function StoriesPage(): Promise<JSX.Element> {
         <div className="px-8 md:px-16 py-16 max-w-screen-2xl mx-auto">
           {/* Category filter pills */}
           <div className="flex flex-wrap gap-3 mb-12">
-            {content.index.categoryFilters.map((cat) => (
+            {content.index.categoryFilters.map((cat, index) => {
+              const isActive = index === 0;
+              return (
               <span
                 key={cat}
                 className="type-label px-4 py-2 cursor-default"
                 style={{
                   border: '1px solid var(--border)',
-                  color: cat === 'All' ? 'var(--bg)' : 'var(--muted)',
-                  background: cat === 'All' ? 'var(--fg)' : 'transparent',
+                  color: isActive ? 'var(--bg)' : 'var(--muted)',
+                  background: isActive ? 'var(--fg)' : 'transparent',
                 }}
               >
                 {cat}
               </span>
-            ))}
+              );
+            })}
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {rest.map((story, i) => (
               <a
                 key={story.id}
-                href={`/stories/${story.slug}`}
+                href={localizeHref(`/stories/${story.slug}`, locale)}
                 className="group block"
                 style={{ animationDelay: `${i * 0.08}s` }}
               >
@@ -189,8 +203,8 @@ export default async function StoriesPage(): Promise<JSX.Element> {
                 {/* Meta */}
                 <div className="flex items-center gap-3 mb-3">
                   <span className="type-label" style={{ color: 'var(--muted)' }}>{story.date}</span>
-                  <span style={{ color: 'var(--border)' }}>·</span>
-                  <span className="type-label" style={{ color: 'var(--muted)' }}>{story.readTime} read</span>
+                  <span style={{ color: 'var(--muted)' }}>·</span>
+                  <span className="type-label" style={{ color: 'var(--muted)' }}>{readTimeLabel(story.readTime, locale)}</span>
                 </div>
 
                 {/* Title */}

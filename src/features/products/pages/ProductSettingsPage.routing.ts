@@ -13,11 +13,20 @@ const toSettingSectionSlug = (section: ProductSettingsSection): string =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+const SETTING_SECTION_ALIASES: Record<string, ProductSettingsSection> = {
+  images: 'Image Serving',
+  'image-routes': 'Image Serving',
+  'images-studio': 'Studio',
+  'image-studio': 'Studio',
+};
+
 export const resolveSettingSectionFromParam = (
   value: string | null | undefined
 ): ProductSettingsSection | null => {
   const normalized = (value ?? '').trim().toLowerCase();
   if (normalized.length === 0) return null;
+  const aliasedSection = SETTING_SECTION_ALIASES[normalized];
+  if (aliasedSection !== undefined) return aliasedSection;
   return settingSections.find((section) => toSettingSectionSlug(section) === normalized) ?? null;
 };
 

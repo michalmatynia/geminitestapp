@@ -1,7 +1,9 @@
 import type { ScripterImportDraft } from '@/features/playwright/scripters';
+import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
 import type { ProductScrapeProfile } from '@/shared/contracts/products/scrape-profiles';
 
-export type ProductScrapeProfileConfig = ProductScrapeProfile & {
+export type ProductScrapeProfileConfig = Omit<ProductScrapeProfile, 'runtimeActionKey'> & {
+  runtimeActionKey: ActionSequenceKey;
   skuPrefix: string;
   supplierName: string;
   priceComment: string;

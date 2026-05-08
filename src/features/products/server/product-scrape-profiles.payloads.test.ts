@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ScripterImportDraft } from '@/features/playwright/scripters';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
+import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY } from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
 
 import type { ProductScrapeCandidate, ProductScrapeProfileConfig } from './product-scrape-profiles.candidates';
 import { buildCreatePayload } from './product-scrape-profiles.payloads';
@@ -14,6 +15,7 @@ const profile: ProductScrapeProfileConfig = {
   siteHost: 'www.battle-stock.pl',
   sourceUrl: 'https://www.battle-stock.pl/pl/c/Warhammer-40k-30k/45',
   scripterId: 'battlestock-warhammer-40k-30k',
+  runtimeActionKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
   targetCatalogName: 'BattleStock',
   defaultLimit: null,
   maxPages: 75,

@@ -32,6 +32,7 @@ as the app's upload endpoint.
 
 ```text
 public_html/
+  .htaccess
   api/
     uploads/
       index.php
@@ -46,7 +47,9 @@ public_html/
 
 The `.htaccess` files include `PassengerEnabled off` so an existing cPanel
 Node.js/Passenger app cannot catch `/api/uploads/index.php` and return the old
-Express storefront HTML.
+Express storefront HTML. If the endpoint still returns `x-powered-by: Express`,
+upload the root `public_html/.htaccess` too or disable the Node.js app for the
+domain in cPanel Application Manager.
 
 Create `public_html/api/uploads/config.php` from
 `config.example.php`, then set:

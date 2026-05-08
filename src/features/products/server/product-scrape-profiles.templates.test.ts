@@ -144,6 +144,31 @@ it('renders selected scrape template placeholders into created products', async 
   );
 });
 
+it('renders selected scrape template parameters into updated products', async () => {
+  mocks.getDraft.mockResolvedValue(templateDraft);
+  mocks.dryRun.mockResolvedValue(makeSource([mappedTemplateDraft]));
+  mocks.getProductBySku.mockResolvedValue({
+    id: 'product-existing',
+    sku: 'BATTLESTOCK-13033',
+    catalogs: [{ productId: 'product-existing', catalogId: 'catalog-other', assignedAt: '' }],
+  });
+
+  await scrapeProfiles.runProductScrapeProfile({
+    profileId: BATTLESTOCK_PROFILE_ID,
+    draftTemplateId: 'draft-template-1',
+  });
+
+  expect(mocks.updateProduct).toHaveBeenCalledWith(
+    'product-existing',
+    expect.objectContaining({
+      catalogIds: ['catalog-other', 'catalog-battlestock', 'catalog-template'],
+      parameters: expectedTemplateCreatePayload.parameters,
+    }),
+    undefined
+  );
+  expect(mocks.createProduct).not.toHaveBeenCalled();
+});
+
 it('renders selected scrape template placeholders in dry run results', async () => {
   mocks.getDraft.mockResolvedValue({
     id: 'draft-template-1',

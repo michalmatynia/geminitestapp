@@ -6,14 +6,16 @@ import type { Product } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { ProductImage } from '@/components/ProductImage';
+import { resultCountWord, formatPrice } from '@/lib/locales';
 
 type SearchOverlayProps = {
   open: boolean;
   onClose: () => void;
 };
 
-function useProductSearch(query: string) {
+function useProductSearch(query: string, locale: string) {
   const [results, setResults] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -26,16 +28,21 @@ function useProductSearch(query: string) {
       return;
     }
 
-    // Show instant static baseline while the API call is in-flight.
-    const ql = q.toLowerCase();
-    setResults(
-      PRODUCTS.filter(
-        (p) =>
-          p.name.toLowerCase().includes(ql) ||
-          p.category.toLowerCase().includes(ql) ||
-          p.description.toLowerCase().includes(ql),
-      ),
-    );
+    // Show instant static baseline only for English; localized catalog data
+    // arrives from the API and avoids a Polish UI briefly flashing English copy.
+    if (locale === 'en') {
+      const ql = q.toLowerCase();
+      setResults(
+        PRODUCTS.filter(
+          (p) =>
+            p.name.toLowerCase().includes(ql) ||
+            p.category.toLowerCase().includes(ql) ||
+            p.description.toLowerCase().includes(ql),
+        ),
+      );
+    } else {
+      setResults([]);
+    }
 
     setIsLoading(true);
     abortRef.current?.abort();
@@ -45,7 +52,7 @@ function useProductSearch(query: string) {
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(
-          `/api/products?q=${encodeURIComponent(q)}&limit=8`,
+          `/api/products?q=${encodeURIComponent(q)}&limit=8&locale=${locale}`,
           { signal: controller.signal },
         );
         if (!res.ok) throw new Error('fetch failed');
@@ -64,7 +71,7 @@ function useProductSearch(query: string) {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query]);
+  }, [query, locale]);
 
   return { results, isLoading };
 }
@@ -75,8 +82,10 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
   const { addItem } = useCart();
   const { toast } = useToast();
   const { search } = useSiteContent();
+  const locale = useLocale();
+  const localizedHref = useLocalizedHref();
 
-  const { results, isLoading } = useProductSearch(query);
+  const { results, isLoading } = useProductSearch(query, locale);
 
   useEffect(() => {
     if (open) {
@@ -236,7 +245,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                   {search.collectionCards.map((cat) => (
                     <a
                       key={cat.slug}
-                      href={cat.href}
+                      href={localizedHref(cat.href)}
                       onClick={onClose}
                       className="relative overflow-hidden block"
                       style={{ aspectRatio: '3/2' }}
@@ -287,7 +296,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                 <p className="type-label" style={{ color: 'var(--muted)' }}>
                   {isLoading
                     ? search.loadingResultsLabel
-                    : `${results.length} ${results.length === 1 ? search.resultSingular : search.resultPlural} ${search.resultsForLabel} “${query}”`}
+                    : `${results.length} ${resultCountWord(results.length, locale, search.resultSingular, search.resultPlural)} ${search.resultsForLabel} “${query}”`}
                 </p>
                 {isLoading && (
                   <span
@@ -302,7 +311,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                 {results.slice(0, 8).map((p) => (
                   <a
                     key={p.id}
-                    href={`/products/${p.slug}`}
+                    href={localizedHref(`/products/${p.slug}`)}
                     onClick={onClose}
                     className="group block"
                     style={{ animation: 'searchSlideUp 0.4s cubic-bezier(0.16,1,0.3,1) both' }}
@@ -340,7 +349,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 300, color: 'var(--fg)' }}>
                       {p.name}
                     </div>
-                    <div className="type-price mt-0.5" style={{ color: 'var(--muted)' }}>{p.priceDisplay}</div>
+                    <div className="type-price mt-0.5" style={{ color: 'var(--muted)' }}>{formatPrice(p.price, locale)}</div>
                   </a>
                 ))}
               </div>
@@ -348,11 +357,11 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
               {results.length > 8 && (
                 <div className="mt-8 text-center">
                   <a
-                    href={`/products?q=${encodeURIComponent(query.trim())}`}
+                    href={localizedHref(`/products?q=${encodeURIComponent(query.trim())}`)}
                     onClick={onClose}
                     className="btn-ghost"
                   >
-                    {search.viewAllPrefix} {results.length} {results.length === 1 ? search.resultSingular : search.resultPlural}
+                    {search.viewAllPrefix} {results.length} {resultCountWord(results.length, locale, search.resultSingular, search.resultPlural)}
                   </a>
                 </div>
               )}

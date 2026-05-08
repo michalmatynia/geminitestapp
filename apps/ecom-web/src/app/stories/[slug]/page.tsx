@@ -5,6 +5,8 @@ import { getStoriesPageContent } from '@/lib/cms';
 import { getAllStories, getStoryBySlug } from '@/lib/storiesCms';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
+import { getRequestLocale } from '@/lib/request-locale';
+import { localizeHref } from '@/lib/locales';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -15,23 +17,30 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const story = await getStoryBySlug(slug);
+  const locale = await getRequestLocale();
+  const story = await getStoryBySlug(slug, locale);
   if (!story) return {};
+  const content = await getStoriesPageContent(locale);
   return {
-    title: `${story.title} — ARCANA Stories`,
+    title: `${story.title} - ${content.detail.issueLabelPrefix}`,
     description: story.excerpt.slice(0, 155),
   };
 }
 
+function readTimeLabel(value: string, locale: string): string {
+  return locale === 'pl' ? `${value} czytania` : `${value} read`;
+}
+
 export default async function StoryPage({ params }: Props): Promise<JSX.Element> {
   const { slug } = await params;
+  const locale = await getRequestLocale();
   const [story, content] = await Promise.all([
-    getStoryBySlug(slug),
-    getStoriesPageContent(),
+    getStoryBySlug(slug, locale),
+    getStoriesPageContent(locale),
   ]);
   if (!story) notFound();
 
-  const stories = await getAllStories();
+  const stories = await getAllStories(locale);
   const related = stories.filter(
     (s) => story.relatedSlugs.includes(s.slug),
   );
@@ -48,7 +57,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
           <div className="absolute inset-0 p-8 md:p-20 flex flex-col justify-end" style={{ zIndex: 2 }}>
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 mb-8">
-              <a href="/stories" className="type-label hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <a href={localizeHref('/stories', locale)} className="type-label hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 {content.detail.breadcrumbLabel}
               </a>
               <span className="type-label" style={{ color: 'rgba(255,255,255,0.25)' }}>/</span>
@@ -95,7 +104,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
               <div className="flex items-center gap-6">
                 <span className="type-label" style={{ color: 'rgba(255,255,255,0.5)' }}>{story.date}</span>
                 <span style={{ color: 'rgba(255,255,255,0.25)' }}>·</span>
-                <span className="type-label" style={{ color: 'rgba(255,255,255,0.5)' }}>{story.readTime} read</span>
+                <span className="type-label" style={{ color: 'rgba(255,255,255,0.5)' }}>{readTimeLabel(story.readTime, locale)}</span>
               </div>
             </div>
           </div>
@@ -216,7 +225,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
               </div>
               <div className="grid md:grid-cols-2 gap-8">
                 {related.map((s) => (
-                  <a key={s.id} href={`/stories/${s.slug}`} className="group flex gap-6 items-start">
+                  <a key={s.id} href={localizeHref(`/stories/${s.slug}`, locale)} className="group flex gap-6 items-start">
                     <div
                       className="flex-shrink-0 transition-transform duration-500 group-hover:scale-105"
                       style={{ width: '120px', aspectRatio: '4/3', background: s.gradient }}
@@ -241,7 +250,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
                         {s.title}
                       </h3>
                       <span className="type-label" style={{ color: 'var(--muted)' }}>
-                        {s.readTime} read
+                        {readTimeLabel(s.readTime, locale)}
                       </span>
                     </div>
                   </a>

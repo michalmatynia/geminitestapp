@@ -5,8 +5,10 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAuth } from '@/context/AuthContext';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useAvailableLocales, useLocale, useLocaleLocation, useLocalizedHref } from '@/context/LocaleContext';
 import { SearchOverlay } from '@/components/SearchOverlay';
 import { AuthModal } from '@/components/AuthModal';
+import { switchLocalePath } from '@/lib/locales';
 
 const BANNER_H = 38;
 const THEME_STORAGE_KEY = 'arcana-theme';
@@ -21,18 +23,28 @@ function applyStorefrontTheme(theme: StorefrontTheme): void {
 }
 
 export function SiteNav() {
-  const { nav } = useSiteContent();
+  const { nav, search, cart } = useSiteContent();
+  const locale = useLocale();
+  const availableLocales = useAvailableLocales();
+  const initialLocation = useLocaleLocation();
+  const localizedHref = useLocalizedHref();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [theme, setTheme] = useState<StorefrontTheme>('nightly');
+  const [currentLocation, setCurrentLocation] = useState(initialLocation);
   const { totalItems, openCart } = useCart();
   const { total: wishlistTotal } = useWishlist();
   const { user } = useAuth();
 
   useEffect(() => {
+    setCurrentLocation({
+      pathname: window.location.pathname,
+      search: window.location.search,
+    });
+
     const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
     const rootTheme = document.documentElement.dataset.theme;
     const nextTheme = storedTheme === 'daily' || rootTheme === 'daily' ? 'daily' : 'nightly';
@@ -72,7 +84,17 @@ export function SiteNav() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const nextThemeLabel = theme === 'nightly' ? 'daily' : 'nightly';
+  const isPolish = locale === 'pl';
+  const nextThemeLabel = theme === 'nightly'
+    ? (isPolish ? 'dzienny' : 'daily')
+    : (isPolish ? 'nocny' : 'nightly');
+  const themeSwitchLabel = isPolish
+    ? `Przełącz na motyw ${nextThemeLabel}`
+    : `Switch to ${nextThemeLabel} theme`;
+  const dismissAnnouncementLabel = isPolish ? 'Zamknij ogłoszenie' : 'Dismiss announcement';
+  const languageLabel = isPolish ? 'Język' : 'Language';
+  const accountLabel = nav.mobileAccountLabel || (isPolish ? 'Konto' : 'My account');
+  const menuLabel = isPolish ? 'Menu' : 'Menu';
 
   return (
     <>
@@ -97,15 +119,15 @@ export function SiteNav() {
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
               style={{ background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)', animation: 'neonPulse 2s ease-in-out infinite' }}
             />
-            <span className="type-label tracking-[0.18em]" style={{ color: 'var(--accent)' }}>
+            <span className="type-label tracking-[0.14em]" style={{ color: 'var(--accent)' }}>
               {nav.announcement.message}
             </span>
-            <a href={nav.announcement.ctaHref} className="type-label underline underline-offset-2 hidden md:inline hover:opacity-80 transition-opacity" style={{ color: 'var(--soft-gold)' }}>
+            <a href={localizedHref(nav.announcement.ctaHref)} className="type-label underline underline-offset-2 hidden md:inline hover:opacity-80 transition-opacity" style={{ color: 'var(--soft-gold)' }}>
               {nav.announcement.ctaLabel}
             </a>
             <button
               onClick={dismissBanner}
-              aria-label="Dismiss announcement"
+              aria-label={dismissAnnouncementLabel}
               className="absolute right-4 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity"
               style={{ color: 'var(--accent)' }}
             >
@@ -123,7 +145,7 @@ export function SiteNav() {
         >
           <div className="flex items-center justify-between w-full max-w-screen-2xl mx-auto">
             {/* Logo */}
-            <a href="/" className="flex-shrink-0 flex items-center gap-2">
+            <a href={localizedHref('/')} className="flex-shrink-0 flex items-center gap-2">
               <span
                 style={{
                   fontFamily: 'var(--font-display)',
@@ -146,9 +168,9 @@ export function SiteNav() {
               {nav.links.map((link) => (
                 <a
                   key={link.label}
-                  href={link.href}
+                  href={localizedHref(link.href)}
                   className="type-label transition-colors duration-200 hover:text-[var(--accent)] relative group"
-                  style={{ color: 'var(--muted-teal)', letterSpacing: '0.16em' }}
+                  style={{ color: 'var(--muted-teal)', letterSpacing: '0.14em' }}
                 >
                   {link.label}
                   <span
@@ -164,9 +186,9 @@ export function SiteNav() {
               {/* Theme */}
               <button
                 type="button"
-                aria-label={`Switch to ${nextThemeLabel} theme`}
+                aria-label={themeSwitchLabel}
                 aria-pressed={theme === 'daily'}
-                title={`Switch to ${nextThemeLabel} theme`}
+                title={themeSwitchLabel}
                 onClick={toggleTheme}
                 className="theme-toggle"
               >
@@ -182,9 +204,26 @@ export function SiteNav() {
                 )}
               </button>
 
+              <div className="hidden sm:flex items-center gap-1" aria-label={languageLabel}>
+                {availableLocales.map((option) => (
+                  <a
+                    key={option}
+                    href={switchLocalePath(currentLocation.pathname, option, currentLocation.search)}
+                    aria-current={locale === option ? 'page' : undefined}
+                    className="type-label px-1.5 py-1 transition-colors hover:text-[var(--accent)]"
+                    style={{
+                      color: locale === option ? 'var(--accent)' : 'var(--muted-teal)',
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    {option.toUpperCase()}
+                  </a>
+                ))}
+              </div>
+
               {/* Search */}
               <button
-                aria-label="Search"
+                aria-label={search.inputAriaLabel}
                 onClick={() => setSearchOpen(true)}
                 className="transition-colors duration-200 hover:text-[var(--accent)]"
                 style={{ color: 'var(--muted-teal)' }}
@@ -197,7 +236,7 @@ export function SiteNav() {
 
               {/* Cart */}
               <button
-                aria-label="Shopping bag"
+                aria-label={cart.ariaLabel}
                 onClick={openCart}
                 className="relative transition-colors duration-200 hover:text-[var(--accent)]"
                 style={{ color: 'var(--muted-teal)' }}
@@ -224,8 +263,8 @@ export function SiteNav() {
 
               {/* Wishlist */}
               <a
-                href="/wishlist"
-                aria-label={`Wishlist (${wishlistTotal})`}
+                href={localizedHref('/wishlist')}
+                aria-label={`${nav.mobileWishlistLabel} (${wishlistTotal})`}
                 className="relative hidden md:flex transition-colors duration-200 hover:text-[var(--accent)]"
                 style={{ color: 'var(--muted-teal)' }}
               >
@@ -250,8 +289,8 @@ export function SiteNav() {
               {/* Account */}
               {user ? (
                 <a
-                  href="/account"
-                  aria-label="My account"
+                  href={localizedHref('/account')}
+                  aria-label={accountLabel}
                   className="hidden md:flex items-center gap-2 transition-colors duration-200 hover:text-[var(--accent)]"
                   style={{ color: 'var(--muted-teal)' }}
                 >
@@ -280,7 +319,7 @@ export function SiteNav() {
               ) : (
                 <button
                   onClick={() => setAuthModalOpen(true)}
-                  aria-label="My account"
+                  aria-label={accountLabel}
                   className="hidden md:flex transition-colors duration-200 hover:text-[var(--accent)]"
                   style={{ color: 'var(--muted-teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
@@ -293,7 +332,7 @@ export function SiteNav() {
 
               {/* Mobile menu */}
               <button
-                aria-label="Menu"
+                aria-label={menuLabel}
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="md:hidden transition-colors duration-200 hover:text-[var(--accent)]"
                 style={{ color: 'var(--muted-teal)' }}
@@ -326,7 +365,7 @@ export function SiteNav() {
           {nav.links.map((link, i) => (
             <a
               key={link.label}
-              href={link.href}
+              href={localizedHref(link.href)}
               onClick={() => setMenuOpen(false)}
               className="type-display-md hover:text-[var(--accent)] transition-colors"
               style={{ color: 'var(--fg)', animationDelay: `${i * 0.07}s`, textShadow: 'none' }}
@@ -334,6 +373,23 @@ export function SiteNav() {
               {link.label}
             </a>
           ))}
+          <div className="flex items-center gap-4">
+            {availableLocales.map((option) => (
+              <a
+                key={option}
+                href={switchLocalePath(currentLocation.pathname, option, currentLocation.search)}
+                onClick={() => setMenuOpen(false)}
+                aria-current={locale === option ? 'page' : undefined}
+                className="type-label px-2 py-1 hover:text-[var(--accent)] transition-colors"
+                style={{
+                  color: locale === option ? 'var(--accent)' : 'var(--muted-teal)',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                {option.toUpperCase()}
+              </a>
+            ))}
+          </div>
           <div className="flex items-center gap-8 mt-4">
             {[
               { label: nav.mobileAccountLabel, href: '/account' },
@@ -341,7 +397,7 @@ export function SiteNav() {
             ].map((link) => (
               <a
                 key={link.label}
-                href={link.href}
+                href={localizedHref(link.href)}
                 onClick={() => setMenuOpen(false)}
                 className="type-label hover:text-[var(--accent)] transition-colors"
                 style={{ color: 'var(--muted-teal)' }}

@@ -8,7 +8,6 @@ import { FormActions } from '@/shared/ui/FormActions';
 import { FormField, FormSection } from '@/shared/ui/form-section';
 import { Input } from '@/shared/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group';
-import { SegmentedControl } from '@/shared/ui/segmented-control';
 import { SelectSimple } from '@/shared/ui/select-simple';
 import { Separator } from '@/shared/ui/separator';
 import { SimpleSettingsList } from '@/shared/ui/templates/SimpleSettingsList';
@@ -16,13 +15,15 @@ import { SimpleSettingsList } from '@/shared/ui/templates/SimpleSettingsList';
 import {
   SEQUENCE_GENERATION_MODE_OPTIONS,
   type ProductImageRoutingSettingsController,
+  type ProductImageServingSettingsController,
+  type ProductStudioSettingsController,
 } from './ProductImageRoutingSettings.controller';
 import { ProductFileStorageSourceSettings } from './ProductFileStorageSourceSettings';
 
 function ImageStudioProjectSection({
   controller,
 }: {
-  controller: ProductImageRoutingSettingsController;
+  controller: ProductStudioSettingsController;
 }): React.JSX.Element {
   const placeholder = controller.studioProjectsLoading
     ? 'Loading Image Studio projects...'
@@ -82,7 +83,7 @@ function ImageStudioProjectSection({
 function SequenceGenerationModeSection({
   controller,
 }: {
-  controller: ProductImageRoutingSettingsController;
+  controller: ProductStudioSettingsController;
 }): React.JSX.Element {
   return (
     <FormSection
@@ -124,7 +125,7 @@ function SequenceGenerationModeSection({
 function AddProductImageRouteField({
   controller,
 }: {
-  controller: ProductImageRoutingSettingsController;
+  controller: ProductImageServingSettingsController;
 }): React.JSX.Element {
   return (
     <FormField
@@ -162,26 +163,33 @@ function AddProductImageRouteField({
   );
 }
 
+const IMAGE_SERVING_SOURCE_OPTIONS = [
+  { value: 'fastcomet', label: 'FastComet (sparksofsindri.com)' },
+  { value: 'local', label: 'Local drive' },
+] as const;
+
 function ProductImageServingModeField({
   controller,
 }: {
-  controller: ProductImageRoutingSettingsController;
+  controller: ProductImageServingSettingsController;
 }): React.JSX.Element {
   return (
     <FormField
       label='Serve Product Images From'
       description='Switch the image base used for product previews, lists, and modals.'
     >
-      <SegmentedControl
+      <SelectSimple
+        size='sm'
         value={controller.servingMode}
-        onChange={controller.handleSelectServingMode}
-        options={[
-          { value: 'fastcomet', label: 'FastComet' },
-          { value: 'local', label: 'Local drive' },
-        ]}
+        onValueChange={(value: string): void => {
+          controller.handleSelectServingMode(value as 'fastcomet' | 'local');
+        }}
+        options={IMAGE_SERVING_SOURCE_OPTIONS}
+        placeholder='Select image source'
         disabled={controller.updateSettingsBulkPending}
+        triggerClassName='h-9 w-64'
         ariaLabel='Product image serving source'
-        className='w-fit'
+        title='Product image serving source'
       />
     </FormField>
   );
@@ -190,7 +198,7 @@ function ProductImageServingModeField({
 function ProductImageRouteList({
   controller,
 }: {
-  controller: ProductImageRoutingSettingsController;
+  controller: ProductImageServingSettingsController;
 }): React.JSX.Element {
   return (
     <div className='space-y-2'>
@@ -232,7 +240,7 @@ function ProductImageRouteList({
 function ProductImageRouteActions({
   controller,
 }: {
-  controller: ProductImageRoutingSettingsController;
+  controller: ProductImageServingSettingsController;
 }): React.JSX.Element {
   return (
     <FormActions
@@ -245,6 +253,36 @@ function ProductImageRouteActions({
   );
 }
 
+export function ProductStudioSections({
+  controller,
+}: {
+  controller: ProductStudioSettingsController;
+}): React.JSX.Element {
+  return (
+    <div className='space-y-5'>
+      <ImageStudioProjectSection controller={controller} />
+      <SequenceGenerationModeSection controller={controller} />
+    </div>
+  );
+}
+
+export function ProductImageServingSections({
+  controller,
+}: {
+  controller: ProductImageServingSettingsController;
+}): React.JSX.Element {
+  return (
+    <div className='space-y-5'>
+      <ProductFileStorageSourceSettings />
+      <Separator className='bg-border/60' />
+      <ProductImageServingModeField controller={controller} />
+      <AddProductImageRouteField controller={controller} />
+      <ProductImageRouteList controller={controller} />
+      <ProductImageRouteActions controller={controller} />
+    </div>
+  );
+}
+
 export function ProductImageRouteSections({
   controller,
 }: {
@@ -252,15 +290,9 @@ export function ProductImageRouteSections({
 }): React.JSX.Element {
   return (
     <div className='space-y-5'>
-      <ProductFileStorageSourceSettings />
+      <ProductImageServingSections controller={controller} />
       <Separator className='bg-border/60' />
-      <ImageStudioProjectSection controller={controller} />
-      <SequenceGenerationModeSection controller={controller} />
-      <Separator className='bg-border/60' />
-      <ProductImageServingModeField controller={controller} />
-      <AddProductImageRouteField controller={controller} />
-      <ProductImageRouteList controller={controller} />
-      <ProductImageRouteActions controller={controller} />
+      <ProductStudioSections controller={controller} />
     </div>
   );
 }

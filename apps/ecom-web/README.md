@@ -353,7 +353,9 @@ Product imagery can render from FastComet by setting
 `NEXT_PUBLIC_FILE_BASE_URL`. Static fallback products and live catalog records
 that still contain `/uploads/products/...` paths are served from that file host;
 legacy `https://qubrick.io/uploads/...` records are rewritten to the configured
-file host.
+file host. While FastComet routing is unavailable in local development,
+`NEXT_PUBLIC_FILE_FALLBACK_BASE_URL=http://localhost:3000` lets failed upload
+images retry through the Product List app's local `/uploads/...` route.
 
 ## Implementation Status
 

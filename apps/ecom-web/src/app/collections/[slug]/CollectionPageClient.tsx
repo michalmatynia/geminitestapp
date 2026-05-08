@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useMemo, useCallback, type JSX } from 'react';
+import { useState, useMemo, useCallback, useRef, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ProductImage } from '@/components/ProductImage';
 import type { Product } from '@/data/products';
 import type { ProductsCollectionContent, ProductsContent } from '@/data/productsContent';
+import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
+import { pieceCountWord, productCountWord, resultCountWord, formatPrice, type EcomLocale } from '@/lib/locales';
 
 const LOAD_MORE_SIZE = 24;
 
@@ -121,13 +124,16 @@ function CollectionProductCard({
   product,
   compact,
   content,
+  locale,
 }: {
   product: Product;
   compact: boolean;
   content: ProductsCollectionContent;
+  locale: EcomLocale;
 }): JSX.Element {
   const { addItem } = useCart();
   const { toast } = useToast();
+  const localizedHref = useLocalizedHref();
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -147,10 +153,10 @@ function CollectionProductCard({
   };
 
   return (
-    <a href={`/products/${product.slug}`} className="group block">
+    <a href={localizedHref(`/products/${product.slug}`)} className="group block">
       {/* Image */}
       <div
-        className="relative overflow-hidden mb-4"
+        className="relative overflow-hidden mb-3"
         style={{ aspectRatio: compact ? '1/1' : '3/4' }}
       >
         <ProductImage
@@ -188,11 +194,19 @@ function CollectionProductCard({
           </div>
         )}
 
-        {/* Quick Add */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+        {/* Hover overlay — darkens image so button is readable */}
+        <div
+          className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none"
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' }}
+        />
+
+        {/* Quick Add — sits inside the image, slides up from bottom */}
+        <div
+          className="absolute inset-x-3 bottom-3 translate-y-2 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100"
+        >
           <button
             className="btn-primary w-full justify-center text-center"
-            style={{ background: 'rgba(var(--accent-rgb),0.15)', color: 'var(--accent)', border: '1px solid rgba(var(--accent-rgb),0.4)' }}
+            style={{ background: 'rgba(var(--accent-rgb),0.18)', color: 'var(--accent)', border: '1px solid rgba(var(--accent-rgb),0.5)', backdropFilter: 'blur(6px)' }}
             onClick={handleQuickAdd}
           >
             {content.quickAddLabel}
@@ -219,7 +233,7 @@ function CollectionProductCard({
           </div>
         </div>
         <span className="type-price flex-shrink-0 mt-1" style={{ color: 'var(--soft-gold)', textShadow: '0 0 8px rgba(var(--gold-rgb),0.3)' }}>
-          {product.priceDisplay}
+          {formatPrice(product.price, locale)}
         </span>
       </div>
     </a>
@@ -240,6 +254,8 @@ export function CollectionPageClient({
   content: ProductsContent;
 }): JSX.Element {
   const collectionContent = content.collection;
+  const locale = useLocale();
+  const localizedHref = useLocalizedHref();
   const [sort, setSort] = useState('featured');
   const [viewSize, setViewSize] = useState<ViewSize>('comfortable');
   const [filterSizes, setFilterSizes] = useState<string[]>([]);
@@ -261,7 +277,7 @@ export function CollectionPageClient({
       const collectionParam = collection.slug !== 'all'
         ? `&collection=${encodeURIComponent(collection.slug)}`
         : '';
-      const url = `/api/products?skip=${loadedCount}&limit=${LOAD_MORE_SIZE}${collectionParam}`;
+      const url = `/api/products?skip=${loadedCount}&limit=${LOAD_MORE_SIZE}&locale=${locale}${collectionParam}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('fetch failed');
       const data = await res.json() as { products: Product[] };
@@ -276,7 +292,7 @@ export function CollectionPageClient({
     } finally {
       setIsLoadingMore(false);
     }
-  }, [collection.slug, isLoadingMore, loadedCount]);
+  }, [collection.slug, isLoadingMore, loadedCount, locale]);
 
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
@@ -298,17 +314,63 @@ export function CollectionPageClient({
     if (sort === 'newest') return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
     return 0;
   });
+  const collectionCountWord = source === 'mentios'
+    ? productCountWord(displayTotal, locale, collectionContent.productsCountLabel, collectionContent.productsCountLabel)
+    : pieceCountWord(displayTotal, locale, collectionContent.piecesCountLabel, collectionContent.piecesCountLabel);
+  const resultWord = resultCountWord(sortedProducts.length, locale, collectionContent.resultSingular, collectionContent.resultPlural);
 
   const gridCols = viewSize === 'compact'
     ? 'grid-cols-2 md:grid-cols-4'
     : 'grid-cols-1 md:grid-cols-3';
 
+  const mainRef = useRef<HTMLElement>(null);
+  const heroBannerRef = useRef<HTMLDivElement>(null);
+  const heroContentRef = useRef<HTMLDivElement>(null);
+  const heroDecorRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    /* Entrance: content slides up */
+    const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
+    tl.fromTo('.coll-breadcrumb', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7 }, 0.1);
+    tl.fromTo('.coll-h1', { opacity: 0, yPercent: 80 }, { opacity: 1, yPercent: 0, duration: 1.1 }, 0.25);
+    tl.fromTo('.coll-count', { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.7 }, 0.5);
+    tl.fromTo('.coll-decor', { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 1.0 }, 0.3);
+
+    /* Scroll parallax on the hero banner */
+    ScrollTrigger.create({
+      trigger: heroBannerRef.current,
+      start: 'top top',
+      end: 'bottom top',
+      scrub: 0.8,
+      onUpdate: (self) => {
+        const p = self.progress;
+        /* Background layer moves up slower */
+        gsap.set(heroBannerRef.current, { backgroundPositionY: `${p * 40}%` });
+        /* Text content drifts up */
+        gsap.set(heroContentRef.current, { y: p * 80 });
+        /* Decorative number drifts opposite (down) */
+        gsap.set(heroDecorRef.current, { y: -(p * 50) });
+      },
+    });
+
+    /* Product cards stagger in */
+    ScrollTrigger.batch('.coll-product-card', {
+      start: 'top 92%',
+      onEnter: (batch) => {
+        gsap.fromTo(batch,
+          { opacity: 0, y: 50, scale: 0.97 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.85, ease: 'expo.out', stagger: 0.07 });
+      },
+    });
+  }, { scope: mainRef, dependencies: [] });
+
   return (
     <>
       <SiteNav />
-      <main style={{ paddingTop: 'var(--nav-h)' }}>
+      <main ref={mainRef} style={{ paddingTop: 'var(--nav-h)' }}>
         {/* Collection hero banner */}
         <div
+          ref={heroBannerRef}
           className="relative px-8 md:px-16 py-20 md:py-28 overflow-hidden grain"
           style={{
             background:
@@ -323,26 +385,31 @@ export function CollectionPageClient({
                 : 'linear-gradient(145deg, #0f0520 0%, #1a0a35 50%, #28105a 100%)',
           }}
         >
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 mb-8">
-            <a href="/" className="type-label hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.5)' }}>{collectionContent.homeBreadcrumbLabel}</a>
-            <span className="type-label" style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
-            <span className="type-label" style={{ color: 'rgba(255,255,255,0.8)' }}>{collectionContent.collectionsBreadcrumbLabel}</span>
-            <span className="type-label" style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
-            <span className="type-label" style={{ color: '#fff' }}>{collection.label}</span>
+          <div ref={heroContentRef} className="will-change-transform">
+            {/* Breadcrumb */}
+            <div className="coll-breadcrumb flex items-center gap-2 mb-8" style={{ opacity: 0 }}>
+              <a href={localizedHref('/')} className="type-label hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.5)' }}>{collectionContent.homeBreadcrumbLabel}</a>
+              <span className="type-label" style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
+              <span className="type-label" style={{ color: 'rgba(255,255,255,0.8)' }}>{collectionContent.collectionsBreadcrumbLabel}</span>
+              <span className="type-label" style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
+              <span className="type-label" style={{ color: '#fff' }}>{collection.label}</span>
+            </div>
+
+            <div className="overflow-hidden">
+              <h1 className="coll-h1 type-display-xl" style={{ color: '#fff', maxWidth: '10ch', opacity: 0 }}>
+                {collection.label}
+              </h1>
+            </div>
+            <p className="coll-count type-label mt-4" style={{ color: 'rgba(255,255,255,0.5)', opacity: 0 }}>
+              {displayTotal} {collectionCountWord}
+            </p>
           </div>
 
-          <h1 className="type-display-xl" style={{ color: '#fff', maxWidth: '10ch' }}>
-            {collection.label}
-          </h1>
-          <p className="type-label mt-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {displayTotal} {source === 'mentios' ? collectionContent.productsCountLabel : collectionContent.piecesCountLabel}
-          </p>
-
-          {/* Decorative count */}
+          {/* Decorative count — parallaxes opposite direction */}
           <div
-            className="absolute right-16 top-1/2 -translate-y-1/2 text-right hidden md:block"
-            style={{ color: 'rgba(255,255,255,0.08)' }}
+            ref={heroDecorRef}
+            className="coll-decor absolute right-16 top-1/2 -translate-y-1/2 text-right hidden md:block will-change-transform"
+            style={{ color: 'rgba(255,255,255,0.08)', opacity: 0 }}
           >
             <div
               style={{
@@ -392,7 +459,7 @@ export function CollectionPageClient({
             </button>
             <span className="type-label" style={{ color: 'var(--muted)' }}>
               {sortedProducts.length}
-              {allProducts.length < displayTotal ? ` ${collectionContent.ofLabel} ${displayTotal}` : ''} {sortedProducts.length === 1 ? collectionContent.resultSingular : collectionContent.resultPlural}
+              {allProducts.length < displayTotal ? ` ${collectionContent.ofLabel} ${displayTotal}` : ''} {resultWord}
             </span>
           </div>
 
@@ -506,12 +573,14 @@ export function CollectionPageClient({
             ) : (
               <div className={`grid ${gridCols} gap-6 md:gap-8`}>
                 {sortedProducts.map((product) => (
-                  <CollectionProductCard
-                    key={product.id}
-                    product={product}
-                    compact={viewSize === 'compact'}
-                    content={collectionContent}
-                  />
+                  <div key={product.id} className="coll-product-card" style={{ opacity: 0 }}>
+                    <CollectionProductCard
+                      product={product}
+                      compact={viewSize === 'compact'}
+                      content={collectionContent}
+                      locale={locale}
+                    />
+                  </div>
                 ))}
               </div>
             )}

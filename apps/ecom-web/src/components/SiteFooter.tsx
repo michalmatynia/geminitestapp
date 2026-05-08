@@ -2,9 +2,11 @@
 
 import type { JSX } from 'react';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useLocalizedHref } from '@/context/LocaleContext';
 
 export function SiteFooter(): JSX.Element {
   const { footer } = useSiteContent();
+  const localizedHref = useLocalizedHref();
 
   return (
     <footer
@@ -93,7 +95,7 @@ export function SiteFooter(): JSX.Element {
               {footer.socials.map(({ name, icon, href }) => (
                 <a
                   key={name}
-                  href={href}
+                  href={localizedHref(href)}
                   aria-label={name}
                   className="type-label w-8 h-8 flex items-center justify-center transition-all duration-200"
                   style={{
@@ -120,14 +122,14 @@ export function SiteFooter(): JSX.Element {
           {/* Link columns */}
           {footer.columns.map(({ heading, links }) => (
             <div key={heading}>
-              <div className="type-label mb-5" style={{ color: 'var(--accent)', letterSpacing: '0.18em' }}>
+              <div className="type-label mb-5" style={{ color: 'var(--accent)', letterSpacing: '0.14em' }}>
                 {heading}
               </div>
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.label}>
                     <a
-                      href={link.href}
+                      href={localizedHref(link.href)}
                       className="type-label hover:text-[var(--accent)] transition-colors duration-200"
                       style={{ color: 'var(--muted-teal)', letterSpacing: '0.1em' }}
                     >
@@ -153,7 +155,7 @@ export function SiteFooter(): JSX.Element {
           {footer.legalLinks.map((item) => (
             <a
               key={item.label}
-              href={item.href}
+              href={localizedHref(item.href)}
               className="type-label hover:text-[var(--accent)] transition-colors"
               style={{ color: 'rgba(var(--accent-rgb),0.45)' }}
             >

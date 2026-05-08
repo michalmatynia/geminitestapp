@@ -8,7 +8,8 @@ export const settingSections = [
   'Catalogs',
   'Defaults',
   'Sync Settings',
-  'Images & Studio',
+  'Image Serving',
+  'Studio',
   'Validator',
   'Internationalization',
 ] as const;

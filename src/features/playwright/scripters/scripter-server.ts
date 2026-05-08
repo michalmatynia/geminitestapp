@@ -1,5 +1,7 @@
 import 'server-only';
 
+import type { PlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
+
 import { commitScripterDrafts, type CreateDraftFn, type ScripterCommitResult } from './commit';
 import {
   buildScripterCommitDiff,
@@ -21,7 +23,15 @@ export type ScripterServerSession = {
   close: () => Promise<void>;
 };
 
-export type ScripterDriverFactory = (definition: ScripterDefinition) => Promise<ScripterServerSession>;
+export type ScripterDriverFactoryOptions = {
+  executionSettings?: PlaywrightActionExecutionSettings | null;
+  runtimeActionKey?: string | null;
+};
+
+export type ScripterDriverFactory = (
+  definition: ScripterDefinition,
+  options?: ScripterDriverFactoryOptions
+) => Promise<ScripterServerSession>;
 
 export type ScripterServerDeps = {
   registry: ScripterRegistry;
@@ -35,10 +45,22 @@ export type ScripterDryRunInvocation = {
   scripterId: string;
   options?: ScripterImportSourceOptions;
   enforceRobots?: boolean;
+  executionSettings?: PlaywrightActionExecutionSettings | null;
+  runtimeActionKey?: string | null;
 };
 
 export type ScripterCommitInvocation = ScripterDryRunInvocation & {
   skipRecordsWithErrors?: boolean;
+};
+
+export type ScripterServer = {
+  dryRun: (invocation: ScripterDryRunInvocation) => Promise<ScripterImportSourceResult>;
+  commit: (
+    invocation: ScripterCommitInvocation
+  ) => Promise<{ source: ScripterImportSourceResult; commit: ScripterCommitResult }>;
+  diff: (
+    invocation: ScripterDryRunInvocation
+  ) => Promise<{ source: ScripterImportSourceResult; diff: ScripterCommitDiff }>;
 };
 
 const requireDefinition = async (
@@ -50,22 +72,35 @@ const requireDefinition = async (
   return def;
 };
 
-export const createScripterServer = (deps: ScripterServerDeps) => {
+const enforceRobotsIfNeeded = async ({
+  definition,
+  invocation,
+  robotsCheck,
+}: {
+  definition: ScripterDefinition;
+  invocation: ScripterDryRunInvocation;
+  robotsCheck?: (url: string) => Promise<RobotsCheckResult>;
+}): Promise<void> => {
+  if (invocation.enforceRobots !== true || robotsCheck === undefined) return;
+  const targetUrl = invocation.options?.entryUrl ?? definition.entryUrl;
+  const verdict = await robotsCheck(targetUrl);
+  if (!verdict.allowed) {
+    throw new Error(verdict.reason ?? `Disallowed by robots.txt for ${targetUrl}`);
+  }
+};
+
+export const createScripterServer = (deps: ScripterServerDeps): ScripterServer => {
   const { registry, driverFactory, createDraft, robotsCheck, lookupExisting } = deps;
 
   const dryRun = async (
     invocation: ScripterDryRunInvocation
   ): Promise<ScripterImportSourceResult> => {
     const definition = await requireDefinition(registry, invocation.scripterId);
-    const enforceRobots = invocation.enforceRobots ?? false;
-    if (enforceRobots && robotsCheck) {
-      const targetUrl = invocation.options?.entryUrl ?? definition.entryUrl;
-      const verdict = await robotsCheck(targetUrl);
-      if (!verdict.allowed) {
-        throw new Error(verdict.reason ?? `Disallowed by robots.txt for ${targetUrl}`);
-      }
-    }
-    const session = await driverFactory(definition);
+    await enforceRobotsIfNeeded({ definition, invocation, robotsCheck });
+    const session = await driverFactory(definition, {
+      executionSettings: invocation.executionSettings ?? null,
+      runtimeActionKey: invocation.runtimeActionKey ?? null,
+    });
     try {
       return await resolveScripterImportSource(definition, session.driver, invocation.options);
     } finally {
@@ -97,5 +132,3 @@ export const createScripterServer = (deps: ScripterServerDeps) => {
 
   return { dryRun, commit, diff };
 };
-
-export type ScripterServer = ReturnType<typeof createScripterServer>;

@@ -5,7 +5,10 @@ import path from 'path';
 
 import type { Document, WithId } from 'mongodb';
 
-import { FILE_STORAGE_SOURCE_SETTING_KEY } from '@/shared/lib/files/constants';
+import {
+  FILE_STORAGE_SOURCE_SETTING_KEY,
+  type FastCometStorageConfig,
+} from '@/shared/lib/files/constants';
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
   getFileStorageSettings,
@@ -47,6 +50,7 @@ const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_LIMIT = 100;
 const DEFAULT_CONCURRENCY = 1;
 const MAX_CONCURRENCY = 5;
+const PREFLIGHT_TIMEOUT_MS = 10_000;
 
 const normalizeString = (value: string | undefined): string => (value ?? '').trim();
 
@@ -255,6 +259,37 @@ const maybeSetSource = async (enabled: boolean): Promise<void> => {
   );
 };
 
+const assertFastCometUploadEndpointReady = async (
+  fastComet: FastCometStorageConfig
+): Promise<void> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, PREFLIGHT_TIMEOUT_MS);
+
+  try {
+    const headers = new Headers();
+    if (fastComet.authToken) {
+      headers.set('Authorization', `Bearer ${fastComet.authToken}`);
+    }
+    const response = await fetch(fastComet.uploadEndpoint, {
+      method: 'GET',
+      headers,
+      signal: controller.signal,
+      cache: 'no-store',
+    });
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.toLowerCase().includes('application/json')) {
+      const body = await response.text().catch(() => '');
+      throw new Error(
+        `FastComet upload endpoint is not serving PHP JSON. Received ${response.status} ${contentType}. ${body.slice(0, 160)}`.trim()
+      );
+    }
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 const migrateImageFiles = async (
   docs: Array<WithId<ImageFileDocument>>,
   options: CliOptions
@@ -293,6 +328,7 @@ async function main(): Promise<void> {
   if (!settings.fastComet.uploadEndpoint) {
     throw new Error('FastComet upload endpoint is not configured.');
   }
+  await assertFastCometUploadEndpointReady(settings.fastComet);
 
   const db = await getMongoDb();
   const docs = await db

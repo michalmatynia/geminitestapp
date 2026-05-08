@@ -4,7 +4,11 @@ import { useState, useEffect, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
+import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
+import { formatPrice } from '@/lib/locales';
 import { SiteNav } from '@/components/SiteNav';
+import type { CartItem } from '@/context/CartContext';
+import type { Product } from '@/data/products';
 import type {
   CheckoutContent,
   CheckoutFieldContent,
@@ -142,16 +146,49 @@ const VALID_CODES: Record<string, number> = {
 };
 
 function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Element {
-  const { items, totalPrice } = useCart();
+  const { items } = useCart();
+  const locale = useLocale();
   const shipping = 0;
   const [promoInput, setPromoInput] = useState('');
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [promoError, setPromoError] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
+  const [freshData, setFreshData] = useState<Record<string, Product>>({});
+  const idKey = items.map((item) => item.productId).join(',');
+
+  useEffect(() => {
+    if (!idKey) {
+      setFreshData({});
+      return;
+    }
+    fetch(`/api/products?ids=${encodeURIComponent(idKey)}&locale=${locale}`)
+      .then((r) => r.json())
+      .then((data: { products?: Product[] }) => {
+        const next: Record<string, Product> = {};
+        for (const product of data.products ?? []) next[product.id] = product;
+        setFreshData(next);
+      })
+      .catch(() => {});
+  }, [idKey, locale]);
+
+  const displayItems: CartItem[] = items.map((item) => {
+    const fresh = freshData[item.productId];
+    if (!fresh) return item;
+    return {
+      ...item,
+      name: fresh.name || item.name,
+      category: fresh.category || item.category,
+      price: fresh.price || item.price,
+      priceDisplay: fresh.priceDisplay || item.priceDisplay,
+      gradient: fresh.gradient || item.gradient,
+      imageUrl: fresh.imageUrl ?? item.imageUrl,
+    };
+  });
+  const displayTotalPrice = displayItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const discountPct = promoCode ? (VALID_CODES[promoCode] ?? 0) : 0;
-  const discountAmt = Math.round(totalPrice * discountPct);
-  const finalTotal = totalPrice - discountAmt + shipping;
+  const discountAmt = Math.round(displayTotalPrice * discountPct);
+  const finalTotal = displayTotalPrice - discountAmt + shipping;
 
   const applyPromo = () => {
     const upper = promoInput.trim().toUpperCase();
@@ -186,7 +223,7 @@ function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Ele
         {items.length === 0 ? (
           <p className="type-label" style={{ color: 'var(--muted)' }}>{content.emptyBagLabel}</p>
         ) : (
-          items.map((item) => (
+          displayItems.map((item) => (
             <div key={`${item.productId}::${item.size}`} className="flex gap-3">
               <div className="relative flex-shrink-0">
                 <div
@@ -210,7 +247,7 @@ function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Ele
                   )}
                 </div>
                 <span className="type-price flex-shrink-0" style={{ color: 'var(--fg)' }}>
-                  € {(item.price * item.quantity).toLocaleString('de-DE')}
+                  {formatPrice(item.price * item.quantity, locale)}
                 </span>
               </div>
             </div>
@@ -304,7 +341,7 @@ function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Ele
       <div className="space-y-2 mb-4">
         <div className="flex justify-between">
           <span className="type-label" style={{ color: 'var(--muted)' }}>{content.subtotalLabel}</span>
-          <span className="type-price" style={{ color: 'var(--fg)' }}>€ {totalPrice.toLocaleString('de-DE')}</span>
+          <span className="type-price" style={{ color: 'var(--fg)' }}>{formatPrice(displayTotalPrice, locale)}</span>
         </div>
         {discountAmt > 0 && (
           <div className="flex justify-between">
@@ -312,14 +349,14 @@ function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Ele
               {content.discountLabel} ({Math.round(discountPct * 100)}%)
             </span>
             <span className="type-price" style={{ color: '#4A7C5A' }}>
-              − € {discountAmt.toLocaleString('de-DE')}
+              − {formatPrice(discountAmt, locale)}
             </span>
           </div>
         )}
         <div className="flex justify-between">
           <span className="type-label" style={{ color: 'var(--muted)' }}>{content.shippingLabel}</span>
           <span className="type-price" style={{ color: shipping === 0 ? '#4A7C5A' : 'var(--fg)' }}>
-            {shipping === 0 ? content.freeLabel : `€ ${shipping}`}
+            {shipping === 0 ? content.freeLabel : formatPrice(shipping, locale)}
           </span>
         </div>
       </div>
@@ -335,7 +372,7 @@ function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Ele
         <span
           style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', color: 'var(--fg)' }}
         >
-          € {finalTotal.toLocaleString('de-DE')}
+          {formatPrice(finalTotal, locale)}
         </span>
       </div>
     </div>
@@ -346,6 +383,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const { items, clearCart } = useCart();
   const { toast } = useToast();
   const { user } = useAuth();
+  const localizedHref = useLocalizedHref();
   const [step, setStep] = useState<Step>('information');
   const [shipping, setShipping] = useState(content.shippingMethods[0]?.id ?? 'standard');
   const [form, setForm] = useState<Record<string, string>>({});
@@ -412,7 +450,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
             {content.confirmationBodySuffix}
           </p>
           <div className="flex gap-3">
-            <a href={content.continueShoppingHref} className="btn-primary">{content.continueShoppingLabel}</a>
+            <a href={localizedHref(content.continueShoppingHref)} className="btn-primary">{content.continueShoppingLabel}</a>
             <button className="btn-ghost">{content.trackOrderLabel}</button>
           </div>
 
@@ -444,7 +482,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
           style={{ borderBottom: '1px solid var(--border)' }}
         >
           <a
-            href="/"
+            href={localizedHref('/')}
             style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 300, letterSpacing: '0.25em', color: 'var(--fg)' }}
           >
             {content.brandText}
@@ -468,7 +506,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                 </div>
 
                 <div className="flex items-center justify-between mt-10">
-                  <a href={content.returnToBagHref} className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>
+                  <a href={localizedHref(content.returnToBagHref)} className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                       <path d="M19 12H5M12 5l-7 7 7 7" />
                     </svg>

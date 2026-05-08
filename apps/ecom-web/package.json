@@ -13,6 +13,11 @@
     "mongo:products:status": "MONGODB_PORT=27020 MONGODB_DATA_DIR=../../../database/products-mongo-data MONGODB_RUNTIME_DIR=../../../database/products-mongo-runtime node ../../scripts/db/local-mongo.mjs status"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "bcryptjs": "^3.0.3",
+    "gsap": "^3.15.0",
+    "jose": "^6.2.3",
+    "mongodb": "^6.21.0",
     "next": "^16.1.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"

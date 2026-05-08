@@ -4,11 +4,13 @@ import { useState, useEffect, useCallback, type JSX } from 'react';
 import { useWishlist, type WishlistItem } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ProductImage } from '@/components/ProductImage';
 import type { WishlistContent } from '@/data/wishlistContent';
 import type { Product } from '@/data/products';
+import { productCountWord, savedProductStateWord, formatPrice } from '@/lib/locales';
 
 // Merge fresh DB data into a wishlist item, keeping stored data as fallback.
 function mergeWithFresh(item: WishlistItem, fresh: Product): WishlistItem {
@@ -27,6 +29,8 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
   const { items, remove, total } = useWishlist();
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
+  const locale = useLocale();
+  const localizedHref = useLocalizedHref();
 
   // Fresh product data fetched from API; keyed by productId.
   const [freshData, setFreshData] = useState<Record<string, Product>>({});
@@ -36,7 +40,7 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
     if (items.length === 0) return;
     const ids = items.map((i) => i.productId).join(',');
     setIsRefreshing(true);
-    fetch(`/api/products?ids=${encodeURIComponent(ids)}`)
+    fetch(`/api/products?ids=${encodeURIComponent(ids)}&locale=${locale}`)
       .then((r) => r.json())
       .then((data: { products?: Product[] }) => {
         const map: Record<string, Product> = {};
@@ -47,7 +51,7 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
       .finally(() => setIsRefreshing(false));
   // Only re-fetch when the set of IDs changes, not on every render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.map((i) => i.productId).join(',')]);
+  }, [items.map((i) => i.productId).join(','), locale]);
 
   const getItem = useCallback(
     (item: WishlistItem): WishlistItem =>
@@ -115,7 +119,7 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
             {total > 0 && (
               <div className="flex items-center gap-3 mt-2">
                 <p className="type-label" style={{ color: 'var(--muted)' }}>
-                  {total} {total === 1 ? content.pieceSingular : content.piecePlural} {content.savedLabel}
+                  {total} {productCountWord(total, locale, content.pieceSingular, content.piecePlural)} {savedProductStateWord(total, locale, content.savedLabel)}
                 </p>
                 {isRefreshing && (
                   <span className="type-label" style={{ color: 'var(--accent)' }}>
@@ -134,7 +138,7 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
               className="w-20 h-20 rounded-full flex items-center justify-center"
               style={{ border: '1px solid var(--border)' }}
             >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" style={{ color: 'var(--border)' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" style={{ color: 'rgba(var(--accent-rgb),0.3)' }}>
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             </div>
@@ -154,7 +158,7 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
                 {content.emptyBody}
               </p>
             </div>
-            <a href={content.emptyCtaHref} className="btn-primary mt-2">{content.emptyCtaLabel}</a>
+            <a href={localizedHref(content.emptyCtaHref)} className="btn-primary mt-2">{content.emptyCtaLabel}</a>
           </div>
         ) : (
           <div className="px-8 md:px-16 py-12 max-w-screen-2xl mx-auto">
@@ -183,7 +187,7 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
                   <div key={item.productId} className="group">
                     {/* Image */}
                     <a
-                      href={`/products/${item.slug}`}
+                      href={localizedHref(`/products/${item.slug}`)}
                       className="block relative overflow-hidden mb-4"
                       style={{ aspectRatio: '3/4' }}
                     >
@@ -232,13 +236,13 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
                     {/* Info */}
                     <div className="type-label mb-1" style={{ color: 'var(--muted)' }}>{item.category}</div>
                     <a
-                      href={`/products/${item.slug}`}
+                      href={localizedHref(`/products/${item.slug}`)}
                       style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 300, color: 'var(--fg)', display: 'block', marginBottom: '0.25rem' }}
                     >
                       {item.name}
                     </a>
                     <div className="flex items-center gap-2">
-                      <span className="type-price" style={{ color: 'var(--muted)' }}>{item.priceDisplay}</span>
+                      <span className="type-price" style={{ color: 'var(--muted)' }}>{formatPrice(item.price ?? 0, locale)}</span>
                       {hasFresh && (
                         <span
                           className="type-label px-1.5 py-0.5"

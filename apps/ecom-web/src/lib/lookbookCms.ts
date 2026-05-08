@@ -1,7 +1,51 @@
 import { getDb } from '@/lib/mongodb';
 import { EDITORIALS, type Editorial } from '@/data/lookbook';
+import { normalizeLocale } from '@/lib/locales';
 
 const COLLECTION = 'ecom_lookbook';
+
+const EDITORIAL_PL: Record<string, Partial<Editorial>> = {
+  'spring-26-earth': {
+    title: 'Ziemia i ręka',
+    subtitle: 'Ceramika wybrzeża Bretanii - studium cierpliwości i gliny',
+    season: 'Wiosna 2026',
+  },
+  'spring-26-linen': {
+    title: 'Ciężar światła',
+    subtitle: 'Belgijski len, prany i noszony aż do miękkiej elegancji',
+    season: 'Wiosna 2026',
+  },
+  'spring-26-cognac': {
+    title: 'Garbarnie Millau',
+    subtitle: 'Portret francuskiej dynastii skórzanej w piątym pokoleniu',
+    season: 'Wiosna 2026',
+  },
+  'aw-25-obsidian': {
+    title: 'Ciemne studium',
+    subtitle: 'Obsydianowa paleta na długie miesiące światła wewnątrz',
+    season: 'Jesień / Zima 2025',
+  },
+  'aw-25-marble': {
+    title: 'Biel i żyła',
+    subtitle: 'Marmur Carrara jako fundament rytuału stołu',
+    season: 'Jesień / Zima 2025',
+  },
+  'aw-25-wool': {
+    title: 'Hebrydy Zewnętrzne',
+    subtitle: 'Podróż na wyspy, z których pochodzi wełna naszych szalików',
+    season: 'Jesień / Zima 2025',
+  },
+  'ss-25-clay': {
+    title: 'Przy świetle świec',
+    subtitle: 'Ręcznie robione gliniane zawieszki do pomieszczeń, które lubią cień',
+    season: 'Wiosna / Lato 2025',
+  },
+  'ss-25-walnut': {
+    title: 'Poranny rytuał',
+    subtitle: 'Taca jako rama dnia, wykonana z amerykańskiego czarnego orzecha',
+    season: 'Wiosna / Lato 2025',
+  },
+};
 
 function docToEditorial(doc: Record<string, unknown>): Editorial {
   const { _id, ...rest } = doc;
@@ -9,25 +53,39 @@ function docToEditorial(doc: Record<string, unknown>): Editorial {
   return rest as unknown as Editorial;
 }
 
-export async function getAllLookbookEntries(): Promise<Editorial[]> {
+function localizeEditorial(entry: Editorial, localeInput?: string | null): Editorial {
+  if (normalizeLocale(localeInput) !== 'pl') return entry;
+  return {
+    ...entry,
+    ...(EDITORIAL_PL[entry.id] ?? {}),
+  };
+}
+
+export async function getAllLookbookEntries(locale?: string | null): Promise<Editorial[]> {
   try {
     const db = await getDb();
     const docs = await db.collection(COLLECTION).find({}).sort({ issue: 1 }).toArray();
-    if (docs.length === 0) return EDITORIALS;
-    return docs.map((d) => docToEditorial(d as Record<string, unknown>));
+    const entries = docs.length === 0
+      ? EDITORIALS
+      : docs.map((d) => docToEditorial(d as Record<string, unknown>));
+    return entries.map((entry) => localizeEditorial(entry, locale));
   } catch {
-    return EDITORIALS;
+    return EDITORIALS.map((entry) => localizeEditorial(entry, locale));
   }
 }
 
-export async function getLookbookEntry(id: string): Promise<Editorial | null> {
+export async function getLookbookEntry(id: string, locale?: string | null): Promise<Editorial | null> {
   try {
     const db = await getDb();
     const doc = await db.collection(COLLECTION).findOne({ id });
-    if (!doc) return EDITORIALS.find((e) => e.id === id) ?? null;
-    return docToEditorial(doc as Record<string, unknown>);
+    if (!doc) {
+      const fallback = EDITORIALS.find((e) => e.id === id) ?? null;
+      return fallback ? localizeEditorial(fallback, locale) : null;
+    }
+    return localizeEditorial(docToEditorial(doc as Record<string, unknown>), locale);
   } catch {
-    return EDITORIALS.find((e) => e.id === id) ?? null;
+    const fallback = EDITORIALS.find((e) => e.id === id) ?? null;
+    return fallback ? localizeEditorial(fallback, locale) : null;
   }
 }
 

@@ -5,7 +5,10 @@ import { CategoriesSettings } from '@/features/products/components/settings/Cate
 import { CustomFieldsSettings } from '@/features/products/components/settings/CustomFieldsSettings';
 import { ParametersSettings } from '@/features/products/components/settings/parameters/ParametersSettings';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
-import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
+import {
+  ProductImageServingSettings,
+  ProductStudioSettings,
+} from '@/features/products/components/settings/ProductImageRoutingSettings';
 import { ShippingGroupsSettings } from '@/features/products/components/settings/ShippingGroupsSettings';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { ValidatorDefaultPanel } from '@/features/products/components/settings/validator-settings/ValidatorDefaultPanel';
@@ -101,7 +104,8 @@ const SECTION_PANELS = {
   Catalogs: (): JSX.Element => <CatalogsSettings />,
   Defaults: ProductDefaultsSettingsSection,
   'Sync Settings': SyncSettingsPanel,
-  'Images & Studio': (): JSX.Element => <ProductImageRoutingSettings />,
+  'Image Serving': (): JSX.Element => <ProductImageServingSettings />,
+  Studio: (): JSX.Element => <ProductStudioSettings />,
   Validator: ValidatorPanel,
   Internationalization: InternationalizationPanel,
 } satisfies Record<ProductSettingsSection, ProductSettingsSectionPanel>;

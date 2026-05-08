@@ -6,6 +6,8 @@ import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useRecentlyViewed } from '@/context/RecentlyViewedContext';
+import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
+import { formatPrice } from '@/lib/locales';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ProductReviews } from '@/components/ProductReviews';
@@ -16,8 +18,6 @@ import {
   getProductImageSrc,
   shouldBypassImageOptimization,
 } from '@/lib/productImages';
-
-const SWATCHES = [0, 1, 2] as const;
 
 function AccordionItem({
   label,
@@ -64,7 +64,7 @@ function AccordionItem({
                 style={{
                   fontFamily: 'var(--font-body)',
                   fontSize: '0.875rem',
-                  fontWeight: 300,
+                  fontWeight: 400,
                   color: 'var(--muted)',
                   lineHeight: 1.65,
                 }}
@@ -179,6 +179,85 @@ function SizeGuideModal({
   );
 }
 
+function uniqueGalleryImages(product: Product): string[] {
+  const seen = new Set<string>();
+  const images: string[] = [];
+  const candidates = [
+    ...(Array.isArray(product.imageUrls) ? product.imageUrls : []),
+    product.imageUrl,
+  ];
+
+  for (const candidate of candidates) {
+    const imageUrl = typeof candidate === 'string' ? candidate.trim() : '';
+    if (!imageUrl || seen.has(imageUrl)) continue;
+    seen.add(imageUrl);
+    images.push(imageUrl);
+  }
+
+  return images;
+}
+
+function ProductDetailGalleryImage({
+  alt,
+  imageUrl,
+  priority = false,
+  sizes,
+}: {
+  alt: string;
+  imageUrl: string;
+  priority?: boolean;
+  sizes: string;
+}): JSX.Element | null {
+  const resolvedImageUrl = getProductImageSrc(imageUrl);
+  if (!resolvedImageUrl) return null;
+
+  const fallbackImageUrl = getProductImageFallbackSrc(imageUrl);
+  const usesNativeImage = shouldBypassImageOptimization(resolvedImageUrl);
+  const handleNativeImageError = (e: SyntheticEvent<HTMLImageElement>): void => {
+    const image = e.currentTarget;
+    if (fallbackImageUrl && image.getAttribute('src') !== fallbackImageUrl) {
+      image.src = fallbackImageUrl;
+      return;
+    }
+    image.style.display = 'none';
+  };
+
+  if (usesNativeImage) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={resolvedImageUrl}
+        alt={alt}
+        loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          objectPosition: 'center',
+        }}
+        onError={handleNativeImageError}
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={resolvedImageUrl}
+      alt={alt}
+      fill
+      priority={priority}
+      sizes={sizes}
+      style={{ objectFit: 'contain', objectPosition: 'center' }}
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).style.display = 'none';
+      }}
+    />
+  );
+}
+
 export function ProductDetailClient({
   product,
   related,
@@ -189,6 +268,8 @@ export function ProductDetailClient({
   content: ProductsContent;
 }): JSX.Element {
   const detailContent = content.detail;
+  const localizedHref = useLocalizedHref();
+  const locale = useLocale();
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
   const { isWishlisted, toggle: toggleWishlist } = useWishlist();
@@ -198,17 +279,7 @@ export function ProductDetailClient({
   const [adding, setAdding] = useState(false);
   const [sizeError, setSizeError] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
-  const resolvedProductImageUrl = getProductImageSrc(product.imageUrl);
-  const fallbackProductImageUrl = getProductImageFallbackSrc(product.imageUrl);
-  const usesNativeProductImage = shouldBypassImageOptimization(resolvedProductImageUrl);
-  const handleNativeProductImageError = (e: SyntheticEvent<HTMLImageElement>): void => {
-    const image = e.currentTarget;
-    if (fallbackProductImageUrl && image.getAttribute('src') !== fallbackProductImageUrl) {
-      image.src = fallbackProductImageUrl;
-      return;
-    }
-    image.style.display = 'none';
-  };
+  const galleryImages = uniqueGalleryImages(product);
 
   useEffect(() => {
     track({
@@ -216,6 +287,7 @@ export function ProductDetailClient({
       slug: product.slug,
       name: product.name,
       category: product.category,
+      price: product.price,
       priceDisplay: product.priceDisplay,
       gradient: product.gradient,
       imageUrl: product.imageUrl,
@@ -223,11 +295,16 @@ export function ProductDetailClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
+  useEffect(() => {
+    setActiveImage(0);
+  }, [product.id]);
+
   const gradients = [
     product.gradient,
     product.gradientAlt ?? product.gradient,
     `linear-gradient(200deg, ${product.gradient.match(/#[A-Fa-f0-9]{6}/g)?.[0] ?? '#ccc'} 0%, ${product.gradient.match(/#[A-Fa-f0-9]{6}/g)?.[1] ?? '#aaa'} 100%)`,
   ];
+  const activeGradient = gradients[activeImage % gradients.length] ?? product.gradient;
 
   const handleAddToBag = () => {
     if (product.sizes.length > 0 && !selectedSize) {
@@ -269,12 +346,12 @@ export function ProductDetailClient({
           className="px-8 md:px-16 py-5 flex items-center gap-2"
           style={{ borderBottom: '1px solid var(--border)' }}
         >
-          <a href="/" className="type-label hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>{detailContent.homeBreadcrumbLabel}</a>
-          <span className="type-label" style={{ color: 'var(--border)' }}>/</span>
-          <a href={`/collections/${product.collectionSlug}`} className="type-label hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>
+          <a href={localizedHref('/')} className="type-label hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>{detailContent.homeBreadcrumbLabel}</a>
+          <span className="type-label" style={{ color: 'rgba(var(--accent-rgb),0.35)' }}>/</span>
+          <a href={localizedHref(`/collections/${product.collectionSlug}`)} className="type-label hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>
             {product.category}
           </a>
-          <span className="type-label" style={{ color: 'var(--border)' }}>/</span>
+          <span className="type-label" style={{ color: 'rgba(var(--accent-rgb),0.35)' }}>/</span>
           <span className="type-label" style={{ color: 'var(--fg)' }}>{product.name}</span>
         </div>
 
@@ -286,38 +363,17 @@ export function ProductDetailClient({
             <div
               className="relative grain flex-1 overflow-hidden"
               style={{
-                background: gradients[activeImage],
+                background: activeGradient,
                 minHeight: '60vh',
                 transition: 'background 0.6s ease',
               }}
             >
-              {resolvedProductImageUrl && activeImage === 0 && usesNativeProductImage && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={resolvedProductImageUrl}
-                  alt={product.name}
-                  loading="eager"
-                  decoding="async"
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    objectPosition: 'center',
-                  }}
-                  onError={handleNativeProductImageError}
-                />
-              )}
-              {resolvedProductImageUrl && activeImage === 0 && !usesNativeProductImage && (
-                <Image
-                  src={resolvedProductImageUrl}
-                  alt={product.name}
-                  fill
+              {galleryImages[activeImage] && (
+                <ProductDetailGalleryImage
+                  imageUrl={galleryImages[activeImage]}
+                  alt={`${product.name} image ${activeImage + 1}`}
                   priority
                   sizes="(max-width: 768px) 100vw, 55vw"
-                  style={{ objectFit: 'contain', objectPosition: 'center' }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                 />
               )}
               {product.tag && (
@@ -332,7 +388,7 @@ export function ProductDetailClient({
                 className="absolute right-8 bottom-12 rotate-[-90deg] origin-bottom-right z-10"
                 style={{ color: 'rgba(255,255,255,0.2)' }}
               >
-                <span className="type-label tracking-[0.2em]">{detailContent.rotatedBrandLabel} / {product.id}</span>
+                <span className="type-label tracking-[0.14em]">{detailContent.rotatedBrandLabel} / {product.id}</span>
               </div>
             </div>
 
@@ -341,44 +397,23 @@ export function ProductDetailClient({
               className="flex gap-2 p-4"
               style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)' }}
             >
-              {SWATCHES.map((i) => (
+              {(galleryImages.length > 0 ? galleryImages : gradients).map((imageUrl, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveImage(i)}
                   aria-label={`${detailContent.imageAriaPrefix} ${i + 1}`}
                   className="flex-1 h-20 transition-all duration-200 relative overflow-hidden"
                   style={{
-                    background: gradients[i],
+                    background: gradients[i % gradients.length],
                     outline: activeImage === i ? `2px solid var(--fg)` : '2px solid transparent',
                     outlineOffset: '2px',
                   }}
                 >
-                  {resolvedProductImageUrl && i === 0 && usesNativeProductImage && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={resolvedProductImageUrl}
-                      alt={product.name}
-                      loading="lazy"
-                      decoding="async"
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        objectPosition: 'center',
-                      }}
-                      onError={handleNativeProductImageError}
-                    />
-                  )}
-                  {resolvedProductImageUrl && i === 0 && !usesNativeProductImage && (
-                    <Image
-                      src={resolvedProductImageUrl}
-                      alt={product.name}
-                      fill
+                  {galleryImages.length > 0 && (
+                    <ProductDetailGalleryImage
+                      imageUrl={imageUrl}
+                      alt={`${product.name} thumbnail ${i + 1}`}
                       sizes="80px"
-                      style={{ objectFit: 'contain', objectPosition: 'center' }}
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
                 </button>
@@ -416,7 +451,7 @@ export function ProductDetailClient({
                 className="type-price text-2xl mb-8"
                 style={{ color: 'var(--fg)' }}
               >
-                {product.priceDisplay}
+                {formatPrice(product.price, locale)}
               </div>
 
               {/* Description */}
@@ -424,7 +459,7 @@ export function ProductDetailClient({
                 style={{
                   fontFamily: 'var(--font-body)',
                   fontSize: '0.9rem',
-                  fontWeight: 300,
+                  fontWeight: 400,
                   color: 'var(--muted)',
                   lineHeight: 1.85,
                   marginBottom: '2rem',
@@ -542,7 +577,7 @@ export function ProductDetailClient({
           </div>
         </div>
 
-        <ProductReviews slug={product.slug} content={detailContent} />
+        <ProductReviews slug={product.slug} content={detailContent} writeReviewHref={localizedHref(detailContent.writeReviewHref)} />
 
         {/* Related products */}
         {related.length > 0 && (
@@ -559,7 +594,7 @@ export function ProductDetailClient({
               {related.map((p) => (
                 <a
                   key={p.id}
-                  href={`/products/${p.slug}`}
+                  href={localizedHref(`/products/${p.slug}`)}
                   className="group block"
                 >
                   <div
@@ -578,7 +613,7 @@ export function ProductDetailClient({
                   >
                     {p.name}
                   </div>
-                  <div className="type-price" style={{ color: 'var(--muted)' }}>{p.priceDisplay}</div>
+                  <div className="type-price" style={{ color: 'var(--muted)' }}>{formatPrice(p.price, locale)}</div>
                 </a>
               ))}
             </div>

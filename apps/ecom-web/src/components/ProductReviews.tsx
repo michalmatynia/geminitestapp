@@ -28,9 +28,11 @@ function Stars({ rating, size = 14 }: { rating: number; size?: number }): JSX.El
 export function ProductReviews({
   slug,
   content,
+  writeReviewHref = content.writeReviewHref,
 }: {
   slug: string;
   content: ProductsDetailContent;
+  writeReviewHref?: string;
 }): JSX.Element | null {
   const reviews = getReviews(slug);
   if (reviews.length === 0) return null;
@@ -183,7 +185,7 @@ export function ProductReviews({
             {/* Write review CTA */}
             <div>
               <a
-                href={content.writeReviewHref}
+                href={writeReviewHref}
                 className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors"
                 style={{ color: 'var(--muted)' }}
               >

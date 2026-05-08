@@ -22,6 +22,10 @@ import {
   JOB_APPLICATION_APPLY_RUNTIME_KEY,
   JOB_APPLICATION_APPLY_RUNTIME_STEP_IDS,
 } from './job-application-apply-runtime-constants';
+import {
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEP_IDS,
+} from './product-scrape-runtime-constants';
 
 export type ActionSequenceKey =
   | 'playwright_programmable_listing'
@@ -42,6 +46,7 @@ export type ActionSequenceKey =
   | typeof FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY
   | typeof JOB_BOARD_SCRAPE_RUNTIME_KEY
   | typeof JOB_APPLICATION_APPLY_RUNTIME_KEY
+  | typeof PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY
   | 'vinted_list'
   | 'vinted_relist'
   | 'vinted_sync';
@@ -178,6 +183,8 @@ export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
   [JOB_BOARD_SCRAPE_RUNTIME_KEY]: JOB_BOARD_SCRAPE_RUNTIME_STEP_IDS,
 
   [JOB_APPLICATION_APPLY_RUNTIME_KEY]: JOB_APPLICATION_APPLY_RUNTIME_STEP_IDS,
+
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY]: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEP_IDS,
 
   vinted_list: [
     ...BROWSER_AND_AUTH,

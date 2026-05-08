@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { KANGUR_CMS_PROJECT_SETTING_KEY } from '@/features/kangur/cms-builder/project-contracts';
+import { FILE_STORAGE_SOURCE_SETTING_KEY } from '@/shared/lib/files/constants';
 import { LITE_SETTINGS_KEYS, isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
 
 describe('settings-lite-keys', () => {
@@ -20,5 +21,6 @@ describe('settings-lite-keys', () => {
     expect(isLiteSettingsKey('product_images_external_base_url')).toBe(true);
     expect(isLiteSettingsKey('product_images_external_routes')).toBe(true);
     expect(isLiteSettingsKey('product_studio_sequence_generation_mode')).toBe(true);
+    expect(isLiteSettingsKey(FILE_STORAGE_SOURCE_SETTING_KEY)).toBe(true);
   });
 });

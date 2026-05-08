@@ -1,12 +1,15 @@
 'use client';
 
-import type { JSX } from 'react';
+import { useRef, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useQuickView } from '@/context/QuickViewContext';
+import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { PRODUCTS } from '@/data/products';
 import type { Product } from '@/data/products';
 import { ProductImage } from '@/components/ProductImage';
 import { HOME_CONTENT_DEFAULTS, type HomeFeaturedContent } from '@/data/homeContent';
+import { formatPrice } from '@/lib/locales';
+import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 
 const FEATURED_SLUGS = [
   'amphora-vessel',
@@ -24,7 +27,11 @@ const STATIC_FEATURED = FEATURED_SLUGS
 function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLabel: string }): JSX.Element {
   const { addItem } = useCart();
   const { open } = useQuickView();
-  const aspect = '3/4';
+  const locale = useLocale();
+  const localizedHref = useLocalizedHref();
+  const aspect = '4/5';
+  const isNewTag = product.tag === 'New' || product.tag === 'Nowość';
+  const quickViewLabel = locale === 'pl' ? 'Szybki podgląd' : 'Quick view';
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -49,7 +56,7 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
 
   return (
     <a
-      href={`/products/${product.slug}`}
+      href={localizedHref(`/products/${product.slug}`)}
       className="product-card block relative"
       style={{ aspectRatio: aspect }}
     >
@@ -60,6 +67,7 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
         alt={product.name}
         sizes="(max-width: 768px) 50vw, 25vw"
         className="card-image absolute inset-0"
+        position="top"
       />
 
       {/* Hover overlay */}
@@ -71,9 +79,9 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
           <span
             className="type-label px-2 py-1 inline-block"
             style={{
-              background: product.tag === 'New' ? 'rgba(var(--accent-rgb),0.15)' : 'rgba(var(--coral-rgb),0.15)',
-              color: product.tag === 'New' ? 'var(--accent)' : 'var(--coral-red)',
-              border: `1px solid ${product.tag === 'New' ? 'rgba(var(--accent-rgb),0.4)' : 'rgba(var(--coral-rgb),0.4)'}`,
+              background: isNewTag ? 'rgba(var(--accent-rgb),0.15)' : 'rgba(var(--coral-rgb),0.15)',
+              color: isNewTag ? 'var(--accent)' : 'var(--coral-red)',
+              border: `1px solid ${isNewTag ? 'rgba(var(--accent-rgb),0.4)' : 'rgba(var(--coral-rgb),0.4)'}`,
             }}
           >
             {product.tag}
@@ -107,7 +115,7 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
           className="type-price flex-shrink-0"
           style={{ color: 'var(--soft-gold)', textShadow: '0 0 10px rgba(var(--gold-rgb),0.35)' }}
         >
-          {product.priceDisplay}
+          {formatPrice(product.price, locale)}
         </span>
       </div>
 
@@ -125,7 +133,7 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
             className="btn-ghost flex-shrink-0 px-3 py-0"
             style={{ padding: '0.6rem 0.8rem', borderColor: 'rgba(var(--accent-rgb),0.3)', color: 'var(--accent)', fontSize: '0.6rem' }}
             onClick={handleQuickView}
-            aria-label="Quick view"
+            aria-label={quickViewLabel}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -147,11 +155,41 @@ export function FeaturedProducts({
 }): JSX.Element {
   const featured = dbProducts && dbProducts.length > 0 ? dbProducts : STATIC_FEATURED;
   const isLive = dbProducts && dbProducts.length > 0;
+  const localizedHref = useLocalizedHref();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useGSAP(() => {
+    /* Section header */
+    gsap.fromTo('.feat-header',
+      { opacity: 0, y: 40 },
+      {
+        opacity: 1, y: 0, duration: 0.9, ease: 'expo.out',
+        scrollTrigger: { trigger: '.feat-header', start: 'top 88%', toggleActions: 'play none none none' },
+      });
+
+    /* Product cards stagger */
+    ScrollTrigger.batch('.feat-card', {
+      start: 'top 92%',
+      onEnter: (batch) => {
+        gsap.fromTo(batch,
+          { opacity: 0, y: 70, scale: 0.96 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: 'expo.out', stagger: 0.09 });
+      },
+    });
+
+    /* CTA button */
+    gsap.fromTo('.feat-cta',
+      { opacity: 0, y: 24 },
+      {
+        opacity: 1, y: 0, duration: 0.8, ease: 'expo.out',
+        scrollTrigger: { trigger: '.feat-cta', start: 'top 92%', toggleActions: 'play none none none' },
+      });
+  }, { scope: sectionRef, dependencies: [] });
 
   return (
-    <section className="px-6 md:px-10 pb-24 max-w-screen-2xl mx-auto">
+    <section ref={sectionRef} className="px-6 md:px-10 pb-16 md:pb-20 max-w-screen-2xl mx-auto">
       {/* Section header */}
-      <div className="flex items-end justify-between mb-12">
+      <div className="feat-header flex items-end justify-between mb-12" style={{ opacity: 0 }}>
         <div>
           <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
             {isLive ? content.liveEyebrow : content.fallbackEyebrow}
@@ -181,13 +219,15 @@ export function FeaturedProducts({
       {/* Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {featured.map((product) => (
-          <ProductCard key={product.id} product={product} quickAddLabel={content.quickAddLabel} />
+          <div key={product.id} className="feat-card" style={{ opacity: 0 }}>
+            <ProductCard product={product} quickAddLabel={content.quickAddLabel} />
+          </div>
         ))}
       </div>
 
       {/* View all CTA */}
-      <div className="flex justify-center mt-14">
-        <a href={content.ctaHref} className="btn-primary px-16">
+      <div className="feat-cta flex justify-center mt-10" style={{ opacity: 0 }}>
+        <a href={localizedHref(content.ctaHref)} className="btn-primary px-16">
           {isLive ? content.ctaLiveLabel : content.ctaFallbackLabel}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />

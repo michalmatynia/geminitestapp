@@ -23,6 +23,7 @@ export const productScrapeProfileSchema = z.object({
   siteHost: z.string().trim().min(1),
   sourceUrl: z.string().trim().url(),
   scripterId: z.string().trim().min(1),
+  runtimeActionKey: z.string().trim().min(1).nullable().optional(),
   targetCatalogName: z.string().trim().min(1),
   defaultLimit: z.number().int().positive().nullable(),
   maxPages: z.number().int().positive().nullable(),
@@ -96,6 +97,16 @@ export const productScrapeProfileRunSummarySchema = z.object({
   totalIssues: z.number().int().min(0),
 });
 
+export const productScrapeProfileRunRuntimeSchema = z.object({
+  queueName: z.string().trim().min(1).nullable(),
+  runtimeActionId: z.string().trim().min(1),
+  runtimeActionName: z.string().trim().min(1),
+  runtimeActionKey: z.string().trim().min(1),
+  browserMode: z.enum(['headed', 'headless', 'runtime_default']),
+  enabledStepCount: z.number().int().min(0),
+  totalStepCount: z.number().int().min(0),
+});
+
 export const productScrapeProfileRunResponseSchema = z.object({
   profileId: z.string(),
   profileLabel: z.string(),
@@ -112,6 +123,7 @@ export const productScrapeProfileRunResponseSchema = z.object({
   issueCount: z.number().int().min(0),
   products: z.array(productScrapeProfileRunProductSchema),
   summary: productScrapeProfileRunSummarySchema,
+  runtime: productScrapeProfileRunRuntimeSchema.optional(),
 });
 
 export type ProductScrapeProfileRunResponse = z.infer<

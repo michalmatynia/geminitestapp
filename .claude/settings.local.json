@@ -94,7 +94,14 @@
       "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/features/ai/ai-paths/context/ src/features/ai/ai-paths/services/__tests__/path-run-executor.callbacks.test.ts src/shared/lib/ai-paths/core/__tests__/node-handler-registry.test.ts)",
       "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionLoop.runtime-kernel.test.ts src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.logic.test.ts)",
       "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/features/ai/ai-paths/context/ src/shared/lib/ai-paths/core/__tests__/node-handler-registry.test.ts src/features/ai/ai-paths/services/__tests__/path-run-executor.callbacks.test.ts)",
-      "Bash(vitest run *)"
+      "Bash(vitest run *)",
+      "Bash(sed -n '273,282p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/app/about/page.tsx\")",
+      "Bash(sed -n '202,208p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/app/stories/page.tsx\")",
+      "Bash(sed -n '136,145p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/app/wishlist/WishlistPageClient.tsx\")",
+      "Bash(sed -n '198,207p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/components/AuthModal.tsx\")",
+      "Bash(sed -n '246,254p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/app/account/AccountPageClient.tsx\")",
+      "Bash(sed -n '118,128p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/app/values/page.tsx\")",
+      "Bash(sed -n '58,68p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/app/contact/ContactPageClient.tsx\")"
     ]
   }
 }

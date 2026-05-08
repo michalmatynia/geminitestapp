@@ -3,11 +3,17 @@ import type { JSX } from 'react';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { getValuesContent } from '@/lib/cms';
+import { getRequestLocale } from '@/lib/request-locale';
+import { localizeHref } from '@/lib/locales';
 
-export const metadata: Metadata = {
-  title: 'Values & Craft — ARCANA',
-  description: "ARCANA's commitment to materials, makers, and the objects that endure.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const content = await getValuesContent(locale);
+  return {
+    title: `${content.hero.watermark} - ARCANA`,
+    description: content.hero.body,
+  };
+}
 
 const MATERIAL_VISUALS = [
   {
@@ -77,7 +83,8 @@ const COMMITMENT_ICONS = [
 ];
 
 export default async function ValuesPage(): Promise<JSX.Element> {
-  const content = await getValuesContent();
+  const locale = await getRequestLocale();
+  const content = await getValuesContent(locale);
 
   return (
     <>
@@ -112,7 +119,7 @@ export default async function ValuesPage(): Promise<JSX.Element> {
           <div className="relative z-10 px-8 md:px-16 py-24 md:py-32 max-w-screen-2xl mx-auto flex flex-col justify-end" style={{ minHeight: '70vh' }}>
             <div
               className="type-label mb-4"
-              style={{ color: 'rgba(180,140,80,0.8)', letterSpacing: '0.18em' }}
+              style={{ color: 'rgba(180,140,80,0.8)', letterSpacing: '0.14em' }}
             >
               {content.hero.eyebrow}
             </div>
@@ -311,14 +318,14 @@ export default async function ValuesPage(): Promise<JSX.Element> {
             &ldquo;{content.closing.quote}&rdquo;
           </p>
           <div className="flex items-center justify-center gap-4">
-            <a href={content.closing.primaryCtaHref} className="type-label flex items-center gap-2 transition-all duration-200 hover:gap-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <a href={localizeHref(content.closing.primaryCtaHref, locale)} className="type-label flex items-center gap-2 transition-all duration-200 hover:gap-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
               {content.closing.primaryCtaLabel}
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </a>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
-            <a href={content.closing.secondaryCtaHref} className="type-label flex items-center gap-2 transition-all duration-200 hover:gap-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <a href={localizeHref(content.closing.secondaryCtaHref, locale)} className="type-label flex items-center gap-2 transition-all duration-200 hover:gap-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
               {content.closing.secondaryCtaLabel}
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />

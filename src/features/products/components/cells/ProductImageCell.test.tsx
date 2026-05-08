@@ -113,6 +113,22 @@ describe('ProductImageCell', () => {
     });
   });
 
+  it('renders FastComet thumbnail URLs without rewriting them to localhost', () => {
+    render(
+      <ProductImageCell
+        imageUrl='https://sparksofsindri.com/uploads/products/KEYCHA1451/be904844-68f3-4fa8-9ed0-70d8b549ce20.png'
+        productId='product-1'
+        productName='Gaming Bottle Opener'
+        note={null}
+      />
+    );
+
+    expect(screen.getByRole('img', { name: 'Gaming Bottle Opener' })).toHaveAttribute(
+      'src',
+      'https://sparksofsindri.com/uploads/products/KEYCHA1451/be904844-68f3-4fa8-9ed0-70d8b549ce20.png'
+    );
+  });
+
   it('requests the miniature note preview when hovering the note tab', () => {
     render(
       <ProductImageCell

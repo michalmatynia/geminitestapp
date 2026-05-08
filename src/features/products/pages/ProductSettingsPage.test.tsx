@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 
 const {
   toastMock,
@@ -86,7 +86,9 @@ vi.mock('@/features/products/components/settings/catalogs/CatalogsSettings', () 
 }));
 
 vi.mock('@/features/products/components/settings/ProductImageRoutingSettings', () => ({
+  ProductImageServingSettings: () => <div data-testid='product-image-serving-settings' />,
   ProductImageRoutingSettings: () => <div data-testid='product-image-routing-settings' />,
+  ProductStudioSettings: () => <div data-testid='product-studio-settings' />,
 }));
 
 vi.mock('@/features/products/components/settings/validator-settings/ValidatorDefaultPanel', () => ({
@@ -135,7 +137,7 @@ vi.mock('@/shared/ui/button', () => ({
     children?: React.ReactNode;
     asChild?: boolean;
   }) =>
-    asChild ? (
+    asChild === true ? (
       <span {...props}>{children}</span>
     ) : (
       <button type='button' onClick={onClick} {...props}>
@@ -158,15 +160,14 @@ vi.mock('@/shared/ui/toast', () => ({
 
 import { ProductSettingsPage } from './ProductSettingsPage';
 
-const buildQueryResult = (overrides: Record<string, unknown> = {}) => ({
+const buildQueryResult = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
   data: [],
   isLoading: false,
   refetch: vi.fn(),
   ...overrides,
 });
 
-describe('ProductSettingsPage metadata gating', () => {
-  beforeEach(() => {
+const setupProductSettingsPageMocks = (): void => {
     vi.clearAllMocks();
     useSearchParamsMock.mockReturnValue({
       get: () => null,
@@ -201,7 +202,9 @@ describe('ProductSettingsPage metadata gating', () => {
       mutateAsync: vi.fn(),
       isPending: false,
     });
-  });
+};
+
+beforeEach(setupProductSettingsPageMocks);
 
   it('loads only the active categories metadata on first render', async () => {
     render(<ProductSettingsPage />);
@@ -322,4 +325,34 @@ describe('ProductSettingsPage metadata gating', () => {
     expect(useCategoriesMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('parameters-settings')).toBeInTheDocument();
   });
-});
+
+  it('separates image serving and studio settings into their own sections', () => {
+    render(<ProductSettingsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Image Serving' }));
+    expect(screen.getByTestId('product-image-serving-settings')).toBeInTheDocument();
+    expect(screen.queryByTestId('product-studio-settings')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Studio' }));
+    expect(screen.getByTestId('product-studio-settings')).toBeInTheDocument();
+    expect(screen.queryByTestId('product-image-serving-settings')).not.toBeInTheDocument();
+  });
+
+  it('opens studio settings from the quick link', () => {
+    render(<ProductSettingsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Studio Settings' }));
+    expect(screen.getByTestId('product-studio-settings')).toBeInTheDocument();
+  });
+
+  it('keeps the legacy images-studio section param pointed at studio settings', async () => {
+    useSearchParamsMock.mockReturnValue({
+      get: (key: string) => (key === 'section' ? 'images-studio' : null),
+    });
+
+    render(<ProductSettingsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('product-studio-settings')).toBeInTheDocument();
+    });
+  });

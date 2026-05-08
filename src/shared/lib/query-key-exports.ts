@@ -11,6 +11,8 @@
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
+export { QUERY_KEYS };
+
 /**
  * Database query keys (from system.databases)
  * Used in: useDatabaseQueries.ts

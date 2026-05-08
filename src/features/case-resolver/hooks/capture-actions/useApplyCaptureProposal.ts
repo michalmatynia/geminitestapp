@@ -16,14 +16,11 @@ import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver/captur
 import { deriveDocumentContentSync, toStorageDocumentValue } from '@/shared/lib/document-editor/public';
 import { FILEMAKER_DATABASE_KEY, normalizeFilemakerDatabase } from '@/features/filemaker/public';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
-import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui/primitives.public';
 
 
 import { resolveCaptureMappingApplyGuardReason } from '../../capture-mapping-apply-guard';
-import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../../types';
 import {
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
@@ -42,6 +39,7 @@ import {
 } from './utils';
 import type { UseApplyCaptureProposalArgs, CaptureApplyDiagnostics } from './types';
 
+export function useApplyCaptureProposal(args: UseApplyCaptureProposalArgs) {
   const { toast } = useToast();
   const updateSetting = useUpdateSetting();
   const captureApplyInFlightRef = useRef(false);

@@ -163,6 +163,35 @@ describe('useDatabaseEngineState', () => {
     expect(mocks.routerPush).toHaveBeenCalledWith('/admin/databases/engine?view=crud&foo=bar');
   });
 
+  it('reads the active workspace view from valid query params', () => {
+    mocks.searchParams = 'view=crud&application=studiq&source=cloud';
+
+    const { result } = renderHook(() => useDatabaseEngineState());
+
+    expect(result.current.activeView).toBe('crud');
+  });
+
+  it('defaults to the engine view when the query view is invalid', () => {
+    mocks.searchParams = 'view=invalid&application=studiq&source=cloud';
+
+    const { result } = renderHook(() => useDatabaseEngineState());
+
+    expect(result.current.activeView).toBe('engine');
+  });
+
+  it('preserves managed Mongo scope params when switching workspace views', () => {
+    mocks.searchParams = 'view=crud&application=studiq&source=cloud';
+    const { result } = renderHook(() => useDatabaseEngineState());
+
+    act(() => {
+      result.current.setActiveView('backups');
+    });
+
+    expect(mocks.routerPush).toHaveBeenCalledWith(
+      '/admin/databases/engine?view=backups&application=studiq&source=cloud'
+    );
+  });
+
   it('runs manual Mongo source sync through the dedicated mutation', async () => {
     mocks.syncMongoSourcesMutateAsync.mockResolvedValue({
       success: true,

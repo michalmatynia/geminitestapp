@@ -5,14 +5,16 @@ import type { JSX } from 'react';
 import { Badge } from '@/shared/ui/primitives.public';
 import { AdminDatabaseBreadcrumbs } from '@/shared/ui/admin.public';
 import { ConfirmModal } from '@/shared/ui/templates.public';
-import { 
-  DatabaseBackupsProvider, 
+import {
+  DatabaseBackupsProvider,
   useDatabaseBackupsActionsContext,
-  useDatabaseBackupsStateContext 
+  useDatabaseBackupsStateContext
 } from '../context/DatabaseBackupsContext';
 import { LogModal } from './LogModal';
 import { RestoreModal } from './RestoreModal';
+import { BackupApplicationSummary } from './backups/BackupApplicationSummary';
 import { BackupDataTable } from './backups/BackupDataTable';
+import { BackupOperationJobsSummary } from './backups/BackupOperationJobsSummary';
 import { BackupSchedulerSettings } from './backups/BackupSchedulerSettings';
 
 function DatabaseBackupDialogs(): JSX.Element {
@@ -65,7 +67,7 @@ function DatabaseBackupDialogs(): JSX.Element {
 
 function DatabaseBackupsPanelInner(): JSX.Element {
   const { activeTab } = useDatabaseBackupsStateContext();
-  
+
   return (
     <div className='space-y-6'>
       <div className='flex items-start justify-between gap-3'>
@@ -78,6 +80,10 @@ function DatabaseBackupsPanelInner(): JSX.Element {
           {activeTab}
         </Badge>
       </div>
+
+      <BackupApplicationSummary />
+
+      <BackupOperationJobsSummary />
 
       <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
         <div className='lg:col-span-3'>

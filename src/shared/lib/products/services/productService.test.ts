@@ -343,6 +343,31 @@ describe('productService parameter normalization', () => {
     expect(logWarningMock).not.toHaveBeenCalled();
   });
 
+  it('writes non-empty scrape parameters onto products that previously had none', async () => {
+    repositoryMock.getProductById.mockResolvedValue(createProductRecord({ parameters: [] }));
+    validateProductUpdateMock.mockResolvedValue({
+      success: true,
+      data: { parameters: [{ parameterId: 'param-material', value: 'Resin' }] },
+    });
+
+    await productService.updateProduct('product-1', {
+      parameters: [{ parameterId: 'param-material', value: 'Resin' }],
+    });
+
+    expect(repositoryMock.updateProduct).toHaveBeenCalledTimes(1);
+    const [, updatePayload] = repositoryMock.updateProduct.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
+
+    expect(updatePayload).toEqual(
+      expect.objectContaining({
+        parameters: [{ parameterId: 'param-material', value: 'Resin' }],
+      })
+    );
+    expect(logWarningMock).not.toHaveBeenCalled();
+  });
+
   it('preserves implicit empty parameter clearing through the FormData update path', async () => {
     validateProductUpdateMock.mockImplementation(async (data: unknown) => {
       expect(data).toEqual(expect.objectContaining({ parameters: '[]' }));

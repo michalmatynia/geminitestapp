@@ -398,7 +398,9 @@ const createProduct = ({
 function renderParameters({
   parameters,
   parameterDefinitions = [textParameter],
+  referencedParameterDefinitions,
   simpleParameterDefinitions = [],
+  referencedSimpleParameterDefinitions,
   nameEn = 'Product 1',
   namePl = null,
   descriptionEn = '',
@@ -408,7 +410,9 @@ function renderParameters({
 }: {
   parameters: NonNullable<ProductWithImages['parameters']>;
   parameterDefinitions?: ProductParameter[];
+  referencedParameterDefinitions?: ProductParameter[];
   simpleParameterDefinitions?: ProductSimpleParameter[];
+  referencedSimpleParameterDefinitions?: ProductSimpleParameter[];
   nameEn?: string;
   namePl?: string | null;
   descriptionEn?: string;
@@ -416,14 +420,20 @@ function renderParameters({
   imageLinks?: string[];
   languages?: Language[];
 }) {
-  useParametersMock.mockReturnValue({
-    data: parameterDefinitions,
+  useParametersMock.mockImplementation((catalogId?: string) => ({
+    data:
+      catalogId === undefined
+        ? referencedParameterDefinitions ?? parameterDefinitions
+        : parameterDefinitions,
     isLoading: false,
-  });
-  useSimpleParametersMock.mockReturnValue({
-    data: simpleParameterDefinitions,
+  }));
+  useSimpleParametersMock.mockImplementation((catalogId?: string) => ({
+    data:
+      catalogId === undefined
+        ? referencedSimpleParameterDefinitions ?? simpleParameterDefinitions
+        : simpleParameterDefinitions,
     isLoading: false,
-  });
+  }));
 
   function Wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
     const methods = useForm<ProductFormData>({
@@ -1305,6 +1315,33 @@ describe('ProductFormParameters', () => {
     expect(screen.queryByText('No parameters')).not.toBeInTheDocument();
     expect(screen.getByText('Condition')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Used');
+  });
+
+  it('renders saved cross-catalog parameter ids with their catalog-agnostic names', () => {
+    renderParameters({
+      parameters: [
+        {
+          parameterId: '3b4d4f7f-f692-448f-a0d9-596a01356878',
+          value: '4 cm',
+        },
+      ],
+      parameterDefinitions: [],
+      referencedParameterDefinitions: [
+        {
+          id: '3b4d4f7f-f692-448f-a0d9-596a01356878',
+          catalogId: 'mentios-catalog',
+          name_en: 'Size',
+          name_pl: 'Rozmiar',
+          selectorType: 'text',
+        } as Partial<ProductParameter> as ProductParameter,
+      ],
+    });
+
+    expect(screen.getByLabelText('Select parameter')).toHaveDisplayValue('Size');
+    expect(
+      screen.queryByText('3b4d4f7f F692 448f A0d9 596a01356878')
+    ).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('4 cm');
   });
 
   it('offers legacy simple parameters when adding a new parameter value', async () => {

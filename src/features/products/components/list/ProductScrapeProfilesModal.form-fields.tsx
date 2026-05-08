@@ -109,7 +109,8 @@ export function ProductScrapeProfilesImageModeField({
         title='Select scrape image import mode'
       />
       <p className='text-xs text-muted-foreground'>
-        File mode downloads scraped images and attaches them to the product record.
+        File mode downloads scraped images through product upload storage and saves the stored file
+        URLs on the product record.
       </p>
     </div>
   );

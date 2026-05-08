@@ -1,7 +1,16 @@
 export type Product = {
   id: string;
   slug: string;
+  /** Full raw name — may contain pipe-separated segments. */
   name: string;
+  /** First pipe-segment — human-readable display name. Falls back to `name`. */
+  shortName?: string;
+  /** Second pipe-segment — size description, e.g. "Adjustable Size". Detail page only. */
+  sizeInfo?: string;
+  /** Third pipe-segment — material, e.g. "Metal". Detail page only. */
+  material?: string;
+  /** Fifth pipe-segment — lore/setting shown as a badge, e.g. "Warhammer 40k". */
+  lore?: string;
   category: string;
   collectionSlug: string;
   price: number;
@@ -9,8 +18,8 @@ export type Product = {
   tag?: string;
   gradient: string;
   gradientAlt?: string;
-  imageUrl?: string;     // primary image served from public uploads
-  imageUrls?: string[];  // all product images for detail gallery
+  imageUrl?: string;
+  imageUrls?: string[];
   description: string;
   details: string[];
   care: string[];

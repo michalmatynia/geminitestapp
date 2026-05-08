@@ -23,6 +23,11 @@ import {
   JOB_APPLICATION_APPLY_RUNTIME_KEY,
   JOB_APPLICATION_APPLY_RUNTIME_STEP_IDS,
 } from '../job-application-apply-runtime-constants';
+import {
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEP_IDS,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS,
+} from '../product-scrape-runtime-constants';
 
 // ── Registry completeness ─────────────────────────────────────────────────────
 
@@ -193,6 +198,27 @@ describe('ACTION_SEQUENCES', () => {
     expect(seed?.executionSettings.headless).toBe(true);
     expect(seed?.blocks.map((block) => block.refId)).toEqual(
       JOB_APPLICATION_APPLY_RUNTIME_STEP_IDS
+    );
+  });
+
+  it('registers modular BattleStock product scrape image import steps', () => {
+    const seed = getPlaywrightRuntimeActionSeed(PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY);
+
+    expect(ACTION_SEQUENCES[PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY]).toEqual(
+      PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEP_IDS
+    );
+    expect(seed?.blocks.map((block) => block.refId)).toEqual(
+      PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEP_IDS
+    );
+    expect(ACTION_SEQUENCES[PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY]).toEqual(
+      expect.arrayContaining([
+        PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectScrapedImageLinks,
+        PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadScrapedImages,
+        PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectProductGalleryImages,
+        PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadProductGalleryImages,
+        PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages,
+        PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.applyImagePayload,
+      ])
     );
   });
 });

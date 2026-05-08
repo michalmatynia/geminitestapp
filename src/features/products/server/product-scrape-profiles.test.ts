@@ -11,7 +11,10 @@ import {
   type ProductScrapeProfilesModule,
   resetProductScrapeProfileMocks,
 } from './__tests__/product-scrape-profiles.support';
-import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY } from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
+import {
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS,
+} from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
 
 let scrapeProfiles: ProductScrapeProfilesModule;
 
@@ -152,12 +155,20 @@ it('calculates imported BattleStock product prices from catalog price group sett
 });
 
 it('downloads scraped images as product files when requested', async () => {
-  const fetchMock = vi.fn(() => Promise.resolve({
-    ok: true,
-    status: 200,
-    blob: () => Promise.resolve(new Blob(['image-bytes'], { type: 'image/jpeg' })),
-    headers: { get: () => 'image/jpeg' },
-  }));
+  const uploadedFastCometUrl =
+    'https://sparksofsindri.com/uploads/products/BATTLESTOCK-13033/40k-spiritseer.jpg';
+  mocks.uploadFile.mockResolvedValueOnce({
+    id: 'image-file-1',
+    filepath: uploadedFastCometUrl,
+  });
+  const fetchMock = vi.fn(() =>
+    Promise.resolve({
+      ok: true,
+      status: 200,
+      blob: () => Promise.resolve(new Blob(['image-bytes'], { type: 'image/jpeg' })),
+      headers: { get: () => 'image/jpeg' },
+    })
+  );
   vi.stubGlobal('fetch', fetchMock);
 
   await scrapeProfiles.runProductScrapeProfile({
@@ -168,7 +179,14 @@ it('downloads scraped images as product files when requested', async () => {
 
   expect(fetchMock).toHaveBeenCalledWith(
     'https://www.battle-stock.pl/environment/cache/images/productGfx_34831_1500_1500/40k-spiritseer.jpg',
-    { cache: 'no-store' }
+    expect.objectContaining({
+      cache: 'no-store',
+      headers: expect.objectContaining({
+        referer: BATTLESTOCK_SOURCE_URL,
+        'user-agent': expect.stringContaining('Mozilla/5.0'),
+      }),
+      redirect: 'follow',
+    })
   );
   expect(mocks.uploadFile).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -184,12 +202,56 @@ it('downloads scraped images as product files when requested', async () => {
   expect(mocks.createProduct).toHaveBeenCalledWith(
     expect.objectContaining({
       imageFileIds: ['image-file-1'],
-      imageLinks: [
-        'https://www.battle-stock.pl/environment/cache/images/productGfx_34831_1500_1500/40k-spiritseer.jpg',
-      ],
+      imageLinks: [uploadedFastCometUrl],
     }),
     undefined
   );
+});
+
+it('honors disabled image upload runtime steps when importing scrape profile files', async () => {
+  const fetchMock = vi.fn();
+  vi.stubGlobal('fetch', fetchMock);
+  mocks.resolveRuntimeActionDefinition.mockResolvedValueOnce({
+    id: 'runtime-action-battlestock',
+    name: 'BattleStock Product Scrape',
+    description: null,
+    runtimeKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+    blocks: [
+      {
+        id: 'block-upload-images',
+        kind: 'runtime_step',
+        refId: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages,
+        enabled: false,
+        label: null,
+      },
+    ],
+    stepSetIds: [],
+    personaId: null,
+    executionSettings: { headless: false },
+    createdAt: '2026-05-08T00:00:00.000Z',
+    updatedAt: '2026-05-08T00:00:00.000Z',
+  });
+
+  await scrapeProfiles.runProductScrapeProfile({
+    profileId: BATTLESTOCK_PROFILE_ID,
+    limit: 1,
+    imageImportMode: 'files',
+  });
+
+  const payload = mocks.createProduct.mock.calls[0]?.[0] as
+    | { imageFileIds?: string[]; imageLinks?: string[] }
+    | undefined;
+
+  expect(fetchMock).not.toHaveBeenCalled();
+  expect(mocks.uploadFile).not.toHaveBeenCalled();
+  expect(payload).toEqual(
+    expect.objectContaining({
+      imageLinks: [
+        'https://www.battle-stock.pl/environment/cache/images/productGfx_34831_1500_1500/40k-spiritseer.jpg',
+      ],
+    })
+  );
+  expect(payload?.imageFileIds).toBeUndefined();
 });
 
 it('keeps the product import successful when scraped source linking fails', async () => {

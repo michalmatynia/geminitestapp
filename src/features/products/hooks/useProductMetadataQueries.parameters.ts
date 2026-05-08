@@ -19,20 +19,21 @@ export function useParameters(
   catalogId?: string,
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductParameter> {
+  const allowWithoutCatalog = options?.allowWithoutCatalog ?? false;
   const resolvedCatalogId = normalizeOptionalIdentifier(catalogId);
   const queryKey = productMetadataKeys.parameters(resolvedCatalogId);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductParameter[]> => {
-      if (resolvedCatalogId === null) return [];
+      if (resolvedCatalogId === null && !allowWithoutCatalog) return [];
       return await api.get<ProductParameter[]>('/api/v2/products/parameters', {
-        params: {
-          catalogId: resolvedCatalogId,
-        },
+        params: resolvedCatalogId !== null ? { catalogId: resolvedCatalogId } : {},
         cache: 'no-store',
       });
     },
-    enabled: resolvedCatalogId !== null && resolveMetadataQueryEnabled(options),
+    enabled:
+      (resolvedCatalogId !== null || allowWithoutCatalog) &&
+      resolveMetadataQueryEnabled(options),
     ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useParameters',
@@ -74,21 +75,22 @@ export function useSimpleParameters(
   catalogId?: string,
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductSimpleParameter> {
+  const allowWithoutCatalog = options?.allowWithoutCatalog ?? false;
   const normalizedCatalogId = catalogId?.trim() ?? '';
   const queryCatalogId = normalizedCatalogId.length > 0 ? normalizedCatalogId : null;
   const queryKey = productMetadataKeys.simpleParameters(queryCatalogId);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductSimpleParameter[]> => {
-      if (normalizedCatalogId.length === 0) return [];
+      if (queryCatalogId === null && !allowWithoutCatalog) return [];
       return await api.get<ProductSimpleParameter[]>('/api/v2/products/simple-parameters', {
-        params: {
-          catalogId: normalizedCatalogId,
-        },
+        params: queryCatalogId !== null ? { catalogId: normalizedCatalogId } : {},
         cache: 'no-store',
       });
     },
-    enabled: normalizedCatalogId.length > 0 && resolveMetadataQueryEnabled(options),
+    enabled:
+      (queryCatalogId !== null || allowWithoutCatalog) &&
+      resolveMetadataQueryEnabled(options),
     ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useSimpleParameters',

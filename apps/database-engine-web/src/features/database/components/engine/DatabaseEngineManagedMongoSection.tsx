@@ -5,7 +5,6 @@ import { CloudUploadIcon, DatabaseIcon, DownloadIcon, PencilIcon, RefreshCwIcon 
 import type { JSX } from 'react';
 
 import type {
-  DatabaseEngineManagedMongoApplication,
   DatabaseEngineManagedMongoCollectionStats,
   DatabaseEngineManagedMongoDatabase,
   DatabaseEngineManagedMongoEndpoint,
@@ -19,6 +18,7 @@ import {
   useDatabaseEngineActionsContext,
   useDatabaseEngineStateContext,
 } from '../../context/DatabaseEngineContext';
+import { buildManagedMongoCrudHref } from '../crud/ManagedMongoScopePanel';
 
 const SOURCE_LABELS: Record<MongoSource, string> = {
   local: 'Local',
@@ -120,9 +120,6 @@ function EndpointPanel({
   );
 }
 
-const buildEditHref = (application: DatabaseEngineManagedMongoApplication): string =>
-  `/admin/databases/engine?view=crud&application=${encodeURIComponent(application)}&source=local`;
-
 function ManagedDatabaseCard({
   database,
   backupDisabled,
@@ -151,9 +148,15 @@ function ManagedDatabaseCard({
         </div>
         <div className='flex flex-wrap gap-2'>
           <Button asChild type='button' variant='outline' size='sm'>
-            <Link href={buildEditHref(database.application)}>
+            <Link href={buildManagedMongoCrudHref(database.application, 'local')}>
               <PencilIcon className='size-3.5' />
-              Edit Local
+              Local Tables
+            </Link>
+          </Button>
+          <Button asChild type='button' variant='outline' size='sm'>
+            <Link href={buildManagedMongoCrudHref(database.application, 'cloud')}>
+              <PencilIcon className='size-3.5' />
+              Cloud Tables
             </Link>
           </Button>
           <Button

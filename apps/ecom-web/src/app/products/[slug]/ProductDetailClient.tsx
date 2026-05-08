@@ -317,7 +317,7 @@ export function ProductDetailClient({
     addItem({
       productId: product.id,
       slug: product.slug,
-      name: product.name,
+      name: product.shortName ?? product.name,
       category: product.category,
       price: product.price,
       priceDisplay: product.priceDisplay,
@@ -329,7 +329,7 @@ export function ProductDetailClient({
     toast({
       type: 'success',
       title: detailContent.addedToastTitle,
-      message: `${product.name}${selectedSize ? ` — ${selectedSize}` : ''}`,
+      message: `${product.shortName ?? product.name}${selectedSize ? ` — ${selectedSize}` : ''}`,
     });
     setTimeout(() => {
       setAdding(false);
@@ -353,7 +353,7 @@ export function ProductDetailClient({
             {product.category}
           </a>
           <span className="type-label" style={{ color: 'rgba(var(--accent-rgb),0.35)' }}>/</span>
-          <span className="type-label" style={{ color: 'var(--fg)' }}>{product.name}</span>
+          <span className="type-label" style={{ color: 'var(--fg)' }}>{product.shortName ?? product.name}</span>
         </div>
 
         {/* Main layout */}
@@ -377,13 +377,7 @@ export function ProductDetailClient({
                   sizes="(max-width: 768px) 100vw, 55vw"
                 />
               )}
-              {product.tag && (
-                <div className="absolute top-8 left-8 z-10">
-                  <span className="type-label px-3 py-1.5" style={{ background: 'var(--accent)', color: '#fff' }}>
-                    {product.tag}
-                  </span>
-                </div>
-              )}
+              {/* Image is intentionally clean — badges live in the info column */}
             </div>
 
             {/* Thumbnail row */}
@@ -421,9 +415,27 @@ export function ProductDetailClient({
             style={{ borderLeft: '1px solid var(--border)' }}
           >
             <div>
-              {/* Category */}
-              <div className="type-label mb-4" style={{ color: 'var(--accent)' }}>
-                {product.category}
+              {/* Category + badges */}
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <span className="type-label" style={{ color: 'var(--accent)' }}>
+                  {product.category}
+                </span>
+                {product.lore && (
+                  <span
+                    className="type-label px-2 py-1"
+                    style={{
+                      color: 'rgba(180,160,255,0.9)',
+                      border: '1px solid rgba(140,100,255,0.35)',
+                    }}
+                  >
+                    {product.lore}
+                  </span>
+                )}
+                {product.tag && (
+                  <span className="type-label px-2 py-1" style={{ background: 'var(--accent)', color: '#fff' }}>
+                    {product.tag}
+                  </span>
+                )}
               </div>
 
               {/* Name */}
@@ -437,7 +449,7 @@ export function ProductDetailClient({
                   marginBottom: '1rem',
                 }}
               >
-                {product.name}
+                {product.shortName ?? product.name}
               </h1>
 
               {/* Price */}
@@ -447,6 +459,31 @@ export function ProductDetailClient({
               >
                 {formatPrice(product.price, locale)}
               </div>
+
+              {/* Parsed name specs: size + material */}
+              {(product.sizeInfo || product.material) && (
+                <div
+                  className="flex flex-wrap gap-x-6 gap-y-1 mb-6"
+                  style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.06em' }}
+                >
+                  {product.sizeInfo && (
+                    <span style={{ color: 'var(--muted)' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontSize: '0.58rem', letterSpacing: '0.12em' }}>
+                        Size&ensp;
+                      </span>
+                      {product.sizeInfo}
+                    </span>
+                  )}
+                  {product.material && (
+                    <span style={{ color: 'var(--muted)' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontSize: '0.58rem', letterSpacing: '0.12em' }}>
+                        Material&ensp;
+                      </span>
+                      {product.material}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Description */}
               <p
@@ -598,7 +635,7 @@ export function ProductDetailClient({
                     <ProductImage
                       imageUrl={p.imageUrl}
                       gradient={p.gradient}
-                      alt={p.name}
+                      alt={p.shortName ?? p.name}
                       className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.03]"
                       sizes="(max-width: 768px) 50vw, 25vw"
                       fit="cover"
@@ -606,6 +643,23 @@ export function ProductDetailClient({
                     />
                   </div>
                   <div className="type-label mb-1" style={{ color: 'var(--muted)' }}>{p.category}</div>
+                  {p.lore && (
+                    <div style={{ marginBottom: '0.25rem' }}>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.52rem',
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: 'rgba(180,160,255,0.8)',
+                          border: '1px solid rgba(140,100,255,0.28)',
+                          padding: '0.1rem 0.4rem',
+                        }}
+                      >
+                        {p.lore}
+                      </span>
+                    </div>
+                  )}
                   <div
                     style={{
                       fontFamily: 'var(--font-display)',
@@ -615,7 +669,7 @@ export function ProductDetailClient({
                       marginBottom: '0.25rem',
                     }}
                   >
-                    {p.name}
+                    {p.shortName ?? p.name}
                   </div>
                   <div className="type-price" style={{ color: 'var(--muted)' }}>{formatPrice(p.price, locale)}</div>
                 </a>

@@ -15,6 +15,10 @@ import {
   resolveRuntimeActionStepIds,
 } from './runtime-action-resolver.server';
 import { JOB_APPLICATION_APPLY_RUNTIME_KEY } from './job-application-apply-runtime-constants';
+import {
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS,
+} from './product-scrape-runtime-constants';
 
 describe('runtime-action-resolver.server', () => {
   beforeEach(() => {
@@ -124,6 +128,48 @@ describe('runtime-action-resolver.server', () => {
       'publish_verify',
       'browser_close',
     ]);
+  });
+
+  it('falls back to the seeded BattleStock action when stored actions predate image steps', async () => {
+    getSettingValueMock.mockResolvedValue(JSON.stringify([
+      {
+        id: 'old_battlestock_scrape',
+        name: 'Old BattleStock Scrape',
+        description: null,
+        runtimeKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+        blocks: [
+          { id: 'block_1', kind: 'runtime_step', refId: 'browser_preparation', enabled: true, label: null },
+          { id: 'block_2', kind: 'runtime_step', refId: 'browser_open', enabled: true, label: null },
+          {
+            id: 'block_3',
+            kind: 'runtime_step',
+            refId: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.mapDrafts,
+            enabled: true,
+            label: null,
+          },
+          {
+            id: 'block_4',
+            kind: 'runtime_step',
+            refId: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.finalize,
+            enabled: true,
+            label: null,
+          },
+          { id: 'block_5', kind: 'runtime_step', refId: 'browser_close', enabled: true, label: null },
+        ],
+        stepSetIds: [],
+        personaId: null,
+        createdAt: '2026-04-17T00:00:00.000Z',
+        updatedAt: '2026-04-17T00:00:00.000Z',
+      },
+    ]));
+
+    await expect(resolveRuntimeActionStepIds(PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY)).resolves.toEqual(
+      expect.arrayContaining([
+        PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadScrapedImages,
+        PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectProductGalleryImages,
+        PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages,
+      ])
+    );
   });
 
   it('builds pending browser execution steps from the resolved runtime sequence', async () => {

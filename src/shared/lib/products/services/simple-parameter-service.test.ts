@@ -87,9 +87,14 @@ describe('simple-parameter-service', () => {
       {
         id: 'p-1',
         catalogId: 'catalog-1',
+        label: 'Alpha label',
         name_en: ' Alpha ',
         name_pl: ' Alfa ',
         name_de: null,
+        type: 'text',
+        options: [' small ', '', 'large'],
+        defaultValue: ' Medium ',
+        linkedTitleTermType: 'material',
       },
       {
         id: 'p-3',
@@ -115,9 +120,14 @@ describe('simple-parameter-service', () => {
       expect.objectContaining({
         id: 'p-1',
         name: 'Alpha',
+        label: 'Alpha label',
         name_en: 'Alpha',
         name_pl: 'Alfa',
         name_de: null,
+        type: 'text',
+        options: ['small', 'large'],
+        defaultValue: 'Medium',
+        linkedTitleTermType: 'material',
       })
     );
     expect(searched.map((item) => item.id)).toEqual(['p-1']);

@@ -11,7 +11,10 @@ import type {
   ProductScrapeProfileRunResponse,
 } from '@/shared/contracts/products/scrape-profiles';
 import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
-import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY } from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
+import {
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS,
+} from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
 import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -517,6 +520,9 @@ describe('ProductScrapeProfilesModal', () => {
     expect(screen.getByText('Saved action')).toBeInTheDocument();
     expect(screen.getByText('Headed')).toBeInTheDocument();
     expect(screen.getByText('Action ID: runtime-action-custom-battlestock')).toBeInTheDocument();
+    expect(screen.getByText('Playwright sequencer steps')).toBeInTheDocument();
+    expect(screen.getByText('Download scraped image files')).toBeInTheDocument();
+    expect(screen.getByText('Upload product images to storage')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Custom BattleStock scrape flow' })).toHaveAttribute(
       'href',
       '/admin/playwright/step-sequencer?actionId=runtime-action-custom-battlestock'
@@ -524,6 +530,27 @@ describe('ProductScrapeProfilesModal', () => {
     await waitFor(() => {
       expect(screen.getByText('Current: Headed')).toBeInTheDocument();
     });
+  });
+
+  it('shows the seeded modular action when a saved scrape action is missing image steps', async () => {
+    const seed = getPlaywrightRuntimeActionSeed(PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY);
+    if (seed === null) throw new Error('Missing BattleStock runtime action seed.');
+    playwrightActionsStore.data = [
+      createRuntimeAction({
+        id: 'old-battlestock-action',
+        blocks: seed.blocks.filter(
+          (block) => block.refId !== PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages
+        ),
+      }),
+    ];
+
+    renderModal();
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+    expect(screen.getByText('Seed default')).toBeInTheDocument();
+    expect(screen.getByText('Seed fallback active')).toBeInTheDocument();
+    expect(screen.getByText(/product_scrape_upload_product_images/)).toBeInTheDocument();
+    expect(screen.getByText('Upload product images to storage')).toBeInTheDocument();
   });
 
   it('saves runtime browser mode changes before launching the Redis scrape run', async () => {

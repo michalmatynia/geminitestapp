@@ -47,7 +47,13 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { runProductScrapeProfileViaRedisRuntime } from './productScrapeProfileQueue';
+import {
+  pauseProductScrapeProfileRun,
+  readActiveProductScrapeProfileRun,
+  readProductScrapeProfileRun,
+  resumeProductScrapeProfileRun,
+  runProductScrapeProfileViaRedisRuntime,
+} from './productScrapeProfileQueue';
 
 const runResponse: ProductScrapeProfileRunResponse = {
   profileId: 'battlestock-warhammer-40k-30k',
@@ -81,6 +87,7 @@ describe('productScrapeProfileQueue', () => {
     );
     mocks.getJob.mockResolvedValue(null);
     mocks.getQueue.mockReturnValue({ getJob: mocks.getJob });
+    mocks.runProductScrapeProfile.mockResolvedValue(runResponse);
   });
 
   it('enqueues scrape profile runs without waiting for the Redis job result', async () => {
@@ -110,23 +117,68 @@ describe('productScrapeProfileQueue', () => {
   });
 
   it('processes queued jobs with the scrape profile runner', async () => {
+    const request = {
+      profileId: 'battlestock-warhammer-40k-30k',
+      draftTemplateId: 'draft-template-1',
+      imageImportMode: 'files' as const,
+    };
+    const queued = await runProductScrapeProfileViaRedisRuntime(request, { userId: 'user-1' });
+
     await mocks.queueConfig?.processor(
-      {
-        request: { profileId: 'battlestock-warhammer-40k-30k' },
-        requestedAt: '2026-05-08T00:00:00.000Z',
-        userId: 'user-1',
-      },
-      'job-1'
+      { request, requestedAt: queued.enqueuedAt, userId: 'user-1' },
+      queued.jobId
     );
 
     expect(mocks.runProductScrapeProfile).toHaveBeenCalledWith(
-      { profileId: 'battlestock-warhammer-40k-30k' },
+      {
+        profileId: 'battlestock-warhammer-40k-30k',
+        draftTemplateId: 'draft-template-1',
+        imageImportMode: 'files',
+      },
       {
         runtimeQueueName: 'product-scrape-profile',
         userId: 'user-1',
         waitWhilePaused: expect.any(Function),
       }
     );
+  });
+
+  it('tracks active runtime state and supports pause, resume, and completion', async () => {
+    const request = { profileId: 'battlestock-warhammer-40k-30k', limit: 1 };
+    const queued = await runProductScrapeProfileViaRedisRuntime(request, { userId: 'user-1' });
+
+    await expect(readActiveProductScrapeProfileRun()).resolves.toMatchObject({
+      id: queued.jobId,
+      status: 'queued',
+    });
+    await expect(pauseProductScrapeProfileRun(queued.jobId)).resolves.toMatchObject({
+      id: queued.jobId,
+      status: 'paused',
+    });
+    await expect(resumeProductScrapeProfileRun(queued.jobId)).resolves.toMatchObject({
+      id: queued.jobId,
+      status: 'queued',
+    });
+
+    const jobData = {
+      request,
+      requestedAt: queued.enqueuedAt,
+      userId: 'user-1',
+    };
+    await mocks.queueConfig?.processor(jobData, queued.jobId);
+    await expect(readProductScrapeProfileRun(queued.jobId)).resolves.toMatchObject({
+      id: queued.jobId,
+      status: 'running',
+    });
+
+    await mocks.queueConfig?.onCompleted?.(queued.jobId, runResponse, jobData);
+
+    await expect(readActiveProductScrapeProfileRun()).resolves.toBeNull();
+    await expect(readProductScrapeProfileRun(queued.jobId)).resolves.toMatchObject({
+      id: queued.jobId,
+      status: 'completed',
+      result: expect.objectContaining({ createdCount: 1 }),
+    });
   });
 
   it('fails fast when Redis runtime is not configured', async () => {

@@ -2,7 +2,7 @@
 
 /**
  * CRUD Panel State Management Hook
- * 
+ *
  * Manages the complete state for database CRUD operations interface.
  * Provides functionality for:
  * - Table selection and navigation
@@ -10,13 +10,13 @@
  * - Modal state management (add/edit/delete)
  * - SQL query execution and result handling
  * - Real-time data synchronization
- * 
+ *
  * This hook centralizes all database interaction logic for the
  * admin database management interface, ensuring consistent
  * state management across CRUD operations.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { ApiError } from '@/shared/lib/api-client';
@@ -81,6 +81,24 @@ export function useCrudPanelState(props: {
 
   const mutationTarget = useMemo(() => ({ application, source }), [application, source]);
   const mutations = useCrudMutations(mutationTarget);
+  const { setMutationError, setSuccessMessage } = mutations;
+
+  useEffect(() => {
+    setSelectedTable(props.defaultTable ?? '');
+    setPage(1);
+    setShowAddModal(false);
+    setEditingRow(null);
+    setDeletingRow(null);
+    setMutationError(null);
+    setSuccessMessage(null);
+  }, [application, source, props.defaultTable, setMutationError, setSuccessMessage]);
+
+  useEffect(() => {
+    if (selectedTable === '') return;
+    if (tableDetails.some((table) => table.name === selectedTable)) return;
+    setSelectedTable('');
+    setPage(1);
+  }, [selectedTable, tableDetails]);
 
   const tableDetail = useMemo(
     () => tableDetails.find((t) => t.name === selectedTable),

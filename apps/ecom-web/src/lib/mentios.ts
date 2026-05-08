@@ -69,7 +69,7 @@ interface LocalizedField {
 }
 
 interface ProductDoc {
-  _id: string;
+  _id: unknown;
   // Flat localized fields (actual local DB format)
   name_en?: string | null;
   name_pl?: string | null;
@@ -86,7 +86,7 @@ interface ProductDoc {
   published?: boolean;
   archived?: boolean;
   catalogId?: string;
-  categoryId?: string | null;
+  categoryId?: unknown;
   isNew?: boolean;
   createdAt?: string | Date;
   images?: Array<{
@@ -99,11 +99,11 @@ interface ProductDoc {
 }
 
 interface CategoryDoc {
-  _id: string;
+  _id: unknown;
   name?: string | LocalizedField | null;
   name_en?: string | null;
   name_pl?: string | null;
-  parentId?: string | null;
+  parentId?: unknown;
   catalogId?: string;
 }
 
@@ -138,6 +138,22 @@ function pickLocalized(field: string | LocalizedField | null | undefined, locale
   return chooseLocalized(locale, field);
 }
 
+function stringifyDocumentId(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  if (value && typeof value === 'object') {
+    const maybeHex = value as { toHexString?: () => string; toString?: () => string };
+    if (typeof maybeHex.toHexString === 'function') return maybeHex.toHexString();
+    if (
+      typeof maybeHex.toString === 'function' &&
+      maybeHex.toString !== Object.prototype.toString
+    ) {
+      return maybeHex.toString();
+    }
+  }
+  return '';
+}
+
 /** Picks the best available name from a ProductDoc, supporting both schemas. */
 function pickProductName(doc: ProductDoc, locale: EcomLocale): string {
   return (
@@ -158,7 +174,7 @@ function pickProductDescription(doc: ProductDoc, locale: EcomLocale): string {
 
 /** Picks the best available name from a CategoryDoc. */
 function pickCategoryName(doc: CategoryDoc, locale: EcomLocale): string {
-  return chooseLocalized(locale, { en: doc.name_en, pl: doc.name_pl }) || pickLocalized(doc.name, locale) || doc._id;
+  return chooseLocalized(locale, { en: doc.name_en, pl: doc.name_pl }) || pickLocalized(doc.name, locale) || stringifyDocumentId(doc._id);
 }
 
 function slugify(str: string): string {
@@ -176,7 +192,8 @@ function productSlug(doc: ProductDoc): string {
     const s = slugify(doc.sku);
     if (s.length > 2) return s;
   }
-  return doc._id.replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 24) || doc._id;
+  const id = stringifyDocumentId(doc._id);
+  return id.replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 24) || id;
 }
 
 function gradient(index: number): string {
@@ -185,6 +202,30 @@ function gradient(index: number): string {
 
 function gradientAlt(index: number): string {
   return GRADIENT_POOL_ALT[index % GRADIENT_POOL_ALT.length];
+}
+
+/**
+ * Splits names stored as "Name | Size | Material | Category | Lore" into parts.
+ * Segments beyond the expected count, or segments that are empty, are returned as undefined.
+ */
+function parsePipedName(raw: string): {
+  shortName: string;
+  sizeInfo?: string;
+  material?: string;
+  lore?: string;
+} {
+  const parts = raw.split('|').map((s) => s.trim());
+  const seg = (i: number): string | undefined => {
+    const v = parts[i];
+    return v && v.length > 0 ? v : undefined;
+  };
+  return {
+    shortName: seg(0) ?? raw,
+    sizeInfo:  seg(1),
+    material:  seg(2),
+    // seg(3) is category — already in product.category, skip
+    lore:      seg(4),
+  };
 }
 
 function formatPrice(price: number | null | undefined): string {
@@ -203,8 +244,10 @@ function categoryToCollection(name: string): string {
 function buildCategoryMap(docs: CategoryDoc[], locale: EcomLocale): Map<string, { name: string; collection: string }> {
   const map = new Map<string, { name: string; collection: string }>();
   for (const doc of docs) {
+    const id = stringifyDocumentId(doc._id);
+    if (!id) continue;
     const name = pickCategoryName(doc, locale);
-    map.set(doc._id, { name, collection: categoryToCollection(name) });
+    map.set(id, { name, collection: categoryToCollection(name) });
   }
   return map;
 }
@@ -283,6 +326,7 @@ const MAIN_APP_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_MAIN_APP_URL);
 const DEFAULT_FILE_BASE_URL = 'https://sparksofsindri.com';
 const PRODUCT_UPLOAD_PREFIX = '/uploads/products/';
 const LEGACY_FILE_HOSTS = new Set(['qubrick.io', 'www.qubrick.io']);
+const BLOCKED_IMAGE_HOSTS = new Set(['upload.cdn.baselinker.com']);
 
 const normalizeFileBaseUrl = (value: string | undefined): string => {
   const normalized = normalizeBaseUrl(value);
@@ -352,6 +396,7 @@ function normalizeProductImageUrl(value: string | null | undefined): string | un
     try {
       const url = new URL(raw);
       const productUploadPath = normalizeProductUploadPath(`${url.pathname}${url.search}${url.hash}`);
+      if (BLOCKED_IMAGE_HOSTS.has(url.hostname.toLowerCase())) return undefined;
       if (
         productUploadPath &&
         FILE_BASE_URL &&
@@ -416,16 +461,23 @@ function mapDoc(
   categoryMap: Map<string, { name: string; collection: string }>,
   locale: EcomLocale,
 ): Product {
-  const category = doc.categoryId ? categoryMap.get(doc.categoryId) : undefined;
+  const id = stringifyDocumentId(doc._id);
+  const categoryId = stringifyDocumentId(doc.categoryId);
+  const category = categoryId ? categoryMap.get(categoryId) : undefined;
   const name = pickProductName(doc, locale);
+  const { shortName, sizeInfo, material, lore } = parsePipedName(name);
   const description = pickProductDescription(doc, locale);
   const price = doc.price ?? 0;
   const imageUrls = buildImageUrls(doc);
 
   return {
-    id: doc._id,
+    id,
     slug: productSlug(doc),
     name,
+    shortName,
+    sizeInfo,
+    material,
+    lore,
     category: category?.name ?? (locale === 'pl' ? 'Wszystkie produkty' : 'Objects'),
     collectionSlug: category?.collection ?? 'objects',
     price,
@@ -459,6 +511,7 @@ function mentiosFilter(extra: Record<string, unknown> = {}): Record<string, unkn
     ],
     published: { $ne: false },
     archived: { $ne: true },
+    stock: { $gt: 0 },
     ...extra,
   };
 }
@@ -492,9 +545,14 @@ export interface FetchProductsOptions {
   limit?: number;
   skip?: number;
   collectionSlug?: string; // filter by resolved collection
+  categoryId?: string;      // filter by raw DB categoryId (DB-level, before mapping)
+  categoryName?: string;    // filter by localized display name — resolved to categoryId internally
   search?: string;          // regex search across name / sku / description
   ids?: string[];           // fetch specific products by _id
   newOnly?: boolean;        // only products created within NEW_ARRIVALS_DAYS
+  sort?: string;            // 'featured' | 'price-asc' | 'price-desc' | 'newest'
+  priceMin?: number;        // inclusive lower bound on price
+  priceMax?: number;        // exclusive upper bound on price (omit for no max)
   locale?: EcomLocale | string | null;
 }
 
@@ -542,6 +600,24 @@ async function fetchCategories(locale: EcomLocale): Promise<Map<string, { name: 
   }
 }
 
+/** Reverse-lookup: resolve a category display name to its raw DB _id. */
+export async function getMentiosCategoryIdByName(
+  categoryName: string,
+  localeInput?: EcomLocale | string | null,
+): Promise<string | null> {
+  const locale = normalizeLocale(localeInput);
+  if (!hasProductsMongoConfig()) return null;
+  try {
+    const categoryMap = await fetchCategories(locale);
+    for (const [id, cat] of categoryMap) {
+      if (cat.name === categoryName) return id;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch products from the Mentios catalog. Returns empty array on DB error. */
 export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promise<MentiosResult> {
   const { limit = 100, skip = 0 } = opts;
@@ -552,7 +628,17 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
     const db = await getProductsDb();
     const col = db.collection<ProductDoc>(PRODUCTS_COLLECTION);
 
-    const baseFilter = mentiosFilter();
+    // Fetch category map once — used for both categoryName→id resolution and product mapping.
+    const categoryMap = await fetchCategories(locale);
+
+    // Resolve categoryName → categoryId when only the display name is provided.
+    const resolvedCategoryId =
+      opts.categoryId ??
+      (opts.categoryName
+        ? Array.from(categoryMap.entries()).find(([, { name }]) => name === opts.categoryName)?.[0]
+        : undefined);
+
+    const baseFilter = mentiosFilter(resolvedCategoryId ? { categoryId: resolvedCategoryId } : {});
 
     // ID-based fetch stays inside the configured catalog.
     if (opts.ids && opts.ids.length > 0) {
@@ -562,7 +648,6 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
         } as Record<string, unknown>)
         .project(PRODUCT_PROJECTION)
         .toArray();
-      const categoryMap = await fetchCategories(locale);
       const products = (docs as unknown as ProductDoc[]).map((doc, i) => mapDoc(doc, i, categoryMap, locale));
       return { products, total: products.length };
     }
@@ -599,17 +684,30 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
         }
       : { ...baseFilter, ...newOnlyClause };
 
+    // Price range filter (inclusive min, exclusive max).
+    if (opts.priceMin != null || opts.priceMax != null) {
+      const priceClause: Record<string, number> = {};
+      if (opts.priceMin != null) priceClause.$gte = opts.priceMin;
+      if (opts.priceMax != null) priceClause.$lt = opts.priceMax;
+      filter.price = priceClause;
+    }
+
+    // Sort order — default is newest-first (editorial feel for "featured").
+    const mongoSort: Record<string, 1 | -1> =
+      opts.sort === 'price-asc'  ? { price: 1 } :
+      opts.sort === 'price-desc' ? { price: -1 } :
+      { createdAt: -1 };
+
     const [docs, total] = await Promise.all([
       col.find(filter)
         .project(PRODUCT_PROJECTION)
-        .sort({ createdAt: -1 })
+        .sort(mongoSort)
         .skip(skip)
         .limit(limit)
         .toArray(),
       col.countDocuments(filter),
     ]);
 
-    const categoryMap = await fetchCategories(locale);
     const products = (docs as unknown as ProductDoc[]).map((doc, i) =>
       mapDoc(doc, skip + i, categoryMap, locale),
     );
@@ -685,6 +783,39 @@ export async function getMentiosSlugs(): Promise<string[]> {
   }
 }
 
+/** Return categories that have at least one in-stock product, with per-category counts, sorted alphabetically. */
+export async function getMentiosCategories(
+  localeInput?: EcomLocale | string | null,
+): Promise<Array<{ id: string; name: string; count: number }>> {
+  const locale = normalizeLocale(localeInput);
+  if (!hasProductsMongoConfig()) return [];
+  try {
+    const db = await getProductsDb();
+    const [categoryMap, countRows] = await Promise.all([
+      fetchCategories(locale),
+      db.collection<ProductDoc>(PRODUCTS_COLLECTION)
+        .aggregate([
+          { $match: mentiosFilter() },
+          { $group: { _id: '$categoryId', count: { $sum: 1 } } },
+        ])
+        .toArray(),
+    ]);
+
+    const countMap = new Map<string, number>();
+    for (const row of countRows) {
+      const id = row._id != null ? String(row._id) : null;
+      if (id) countMap.set(id, (row.count as number) ?? 0);
+    }
+
+    return Array.from(categoryMap.entries())
+      .map(([id, { name }]) => ({ id, name, count: countMap.get(id) ?? 0 }))
+      .filter(({ count }) => count > 0)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  } catch {
+    return [];
+  }
+}
+
 /** Fetch product count per collection slug in a single DB query. */
 export async function getMentiosCollectionCounts(): Promise<Record<string, number>> {
   if (!hasProductsMongoConfig()) return {};
@@ -699,7 +830,8 @@ export async function getMentiosCollectionCounts(): Promise<Record<string, numbe
 
     const counts: Record<string, number> = {};
     for (const doc of docs as unknown as ProductDoc[]) {
-      const cat = doc.categoryId ? categoryMap.get(doc.categoryId) : undefined;
+      const categoryId = stringifyDocumentId(doc.categoryId);
+      const cat = categoryId ? categoryMap.get(categoryId) : undefined;
       const collection = cat?.collection ?? 'objects';
       counts[collection] = (counts[collection] ?? 0) + 1;
     }

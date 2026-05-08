@@ -18,9 +18,15 @@ import type {
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
-import type { PlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
+import type {
+  PlaywrightAction,
+  PlaywrightActionExecutionSettings,
+} from '@/shared/contracts/playwright-steps';
 import { badRequestError, configurationError, notFoundError } from '@/shared/errors/app-error';
-import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY } from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
+import {
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS,
+} from '@/shared/lib/browser-execution/product-scrape-runtime-constants';
 import { resolveRuntimeActionDefinition } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
@@ -33,6 +39,8 @@ import {
 import { summarizeOutcomes } from './product-scrape-profiles.outcomes';
 import { listScrapePriceGroupsForCalculation } from './product-scrape-pricing';
 import { buildRuntimeMetadata } from './product-scrape-profiles.runtime';
+import { loadScrapeTemplateLinkedParameterMetadata } from './product-scrape-template-linked-parameters';
+import type { ProductScrapeImageStepControls } from './product-scrape-profile-image-step-controls';
 
 const BATTLESTOCK_CATALOG_NAME = 'BattleStock';
 
@@ -225,6 +233,43 @@ const shouldInvalidateProductCache = (
   return counts.createdCount > 0 || counts.updatedCount > 0;
 };
 
+const isRuntimeActionStepEnabled = (action: PlaywrightAction, stepId: string): boolean => {
+  const matchingBlocks = action.blocks.filter(
+    (block) => block.kind === 'runtime_step' && block.refId === stepId
+  );
+  if (matchingBlocks.length === 0) return true;
+  return matchingBlocks.some((block) => block.enabled !== false);
+};
+
+const resolveProductScrapeImageStepControls = (
+  action: PlaywrightAction
+): ProductScrapeImageStepControls => ({
+  applyImagePayload: isRuntimeActionStepEnabled(
+    action,
+    PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.applyImagePayload
+  ),
+  collectProductGalleryImages: isRuntimeActionStepEnabled(
+    action,
+    PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectProductGalleryImages
+  ),
+  collectScrapedImageLinks: isRuntimeActionStepEnabled(
+    action,
+    PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectScrapedImageLinks
+  ),
+  downloadProductGalleryImages: isRuntimeActionStepEnabled(
+    action,
+    PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadProductGalleryImages
+  ),
+  downloadScrapedImages: isRuntimeActionStepEnabled(
+    action,
+    PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadScrapedImages
+  ),
+  uploadProductImages: isRuntimeActionStepEnabled(
+    action,
+    PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages
+  ),
+});
+
 const runProfileScripterDryRun = async ({
   catalogId,
   executionSettings,
@@ -273,6 +318,8 @@ export const runProductScrapeProfile = async (
   const catalog = await ensureCatalog(profile.targetCatalogName);
   const draftTemplate = await resolveScrapeDraftTemplate(profile, input.draftTemplateId);
   const draftTemplateCategoryAliases = await resolveDraftTemplateCategoryAliases(draftTemplate);
+  const draftTemplateLinkedParameterMetadata =
+    draftTemplate === null ? null : await loadScrapeTemplateLinkedParameterMetadata();
   const priceGroups = await loadScrapePriceGroups(catalog, draftTemplate);
   const sourcePriceCurrencyCode = resolveSourcePriceCurrencyCode(profile, input.sourcePriceCurrencyCode);
   await options.waitWhilePaused?.();
@@ -289,12 +336,14 @@ export const runProductScrapeProfile = async (
     catalog,
     dryRun,
     imageImportMode: input.imageImportMode ?? 'links',
+    imageStepControls: resolveProductScrapeImageStepControls(runtimeAction),
     skipRecordsWithErrors: input.skipRecordsWithErrors ?? true,
     productServiceOptions: resolveProductServiceOptions(options.userId),
     priceGroups,
     sourcePriceCurrencyCode,
     draftTemplate,
     draftTemplateCategoryAliases,
+    draftTemplateLinkedParameterMetadata,
     waitWhilePaused: options.waitWhilePaused,
   });
   const outcomeSummary = summarizeOutcomes(outcomes);

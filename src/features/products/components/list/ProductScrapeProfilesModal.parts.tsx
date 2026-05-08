@@ -102,6 +102,39 @@ const formatRuntimeActionUpdatedAt = (value: string): string | null => {
   }).format(date);
 };
 
+function ProductScrapeProfilesRuntimeStepList({
+  action,
+}: {
+  action: NonNullable<ProductScrapeProfileRuntimeActionSetting['action']>;
+}): React.JSX.Element {
+  return (
+    <div className='mt-3 border-t border-border/50 pt-3'>
+      <p className='text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
+        Playwright sequencer steps
+      </p>
+      <ol
+        aria-label='Playwright sequencer steps'
+        className='mt-2 grid max-h-44 gap-1 overflow-y-auto pr-1 md:grid-cols-2'
+      >
+        {action.steps.map((step, index) => (
+          <li
+            key={`${step.id}-${index}`}
+            className='flex min-w-0 items-center gap-2 rounded-md border border-border/40 bg-background/35 px-2 py-1.5 text-xs'
+          >
+            <span className='w-5 shrink-0 text-right tabular-nums text-muted-foreground'>
+              {index + 1}
+            </span>
+            <span className='min-w-0 flex-1 truncate'>{step.label}</span>
+            <Badge variant={step.enabled ? 'secondary' : 'outline'}>
+              {step.enabled ? 'Enabled' : 'Disabled'}
+            </Badge>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 function ProductScrapeProfilesRuntimeActionCard({
   runtimeAction,
 }: {
@@ -145,6 +178,15 @@ function ProductScrapeProfilesRuntimeActionCard({
         </span>
         {actionUpdatedAt !== null ? <span>Updated: {actionUpdatedAt}</span> : null}
       </div>
+      {action.fallbackReason !== null ? (
+        <Alert
+          className='mt-3'
+          variant='warning'
+          title='Seed fallback active'
+          description={action.fallbackReason}
+        />
+      ) : null}
+      <ProductScrapeProfilesRuntimeStepList action={action} />
     </div>
   );
 }

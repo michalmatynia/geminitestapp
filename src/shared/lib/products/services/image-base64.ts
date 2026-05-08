@@ -161,7 +161,8 @@ const normalizeImageBase64s = (base64s?: string[] | null, links?: string[] | nul
   if (Array.isArray(links)) {
     links.slice(0, TOTAL_IMAGE_SLOTS).forEach((value: string, index: number) => {
       const trimmed = typeof value === 'string' ? value.trim() : '';
-      if (trimmed.length > 0 && isDataUrl(trimmed) && next[index].length === 0) {
+      const current = next[index] ?? '';
+      if (trimmed.length > 0 && isDataUrl(trimmed) && current.length === 0) {
         next[index] = trimmed;
       }
     });
@@ -259,7 +260,7 @@ const resolveImageBase64Slot = async (input: {
   index: number;
   slots: NonNullable<ProductImageBase64Source['images']>;
 }): Promise<ProductImageBase64SlotResult | null> => {
-  if (input.imageBase64s[input.index].length > 0) return null;
+  if ((input.imageBase64s[input.index] ?? '').length > 0) return null;
 
   const { slotFilepath, slotMimetype } = resolveSlotImageFile(input.slots[input.index]);
   const linkValue = input.imageLinks[input.index] ?? '';

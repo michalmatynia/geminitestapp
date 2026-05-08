@@ -18,7 +18,11 @@ import {
   buildUpdatePayload,
   resolveResultPayloadTitle,
 } from './product-scrape-profiles.payloads';
-import { resolveScrapeImagePayload } from './product-scrape-profile-images';
+import type { ScrapeTemplateLinkedParameterMetadata } from './product-scrape-template-linked-parameters';
+import {
+  resolveScrapeImagePayload,
+} from './product-scrape-profile-images';
+import type { ProductScrapeImageStepControls } from './product-scrape-profile-image-step-controls';
 import {
   createOutcome,
   toResultProduct,
@@ -34,6 +38,7 @@ type ProductScrapeRunContext = {
   catalog: CatalogRecord;
   dryRun: boolean;
   imageImportMode: ProductScrapeProfileImageImportMode;
+  imageStepControls: ProductScrapeImageStepControls;
   skipRecordsWithErrors: boolean;
   productServiceOptions: { userId?: string } | undefined;
   priceGroups: PriceGroupForCalculation[];
@@ -41,6 +46,7 @@ type ProductScrapeRunContext = {
   duplicateState?: ProductScrapeDuplicateState;
   draftTemplate?: ProductDraft | null;
   draftTemplateCategoryAliases?: readonly string[];
+  draftTemplateLinkedParameterMetadata?: ScrapeTemplateLinkedParameterMetadata | null;
   waitWhilePaused?: () => Promise<void>;
 };
 
@@ -123,6 +129,7 @@ const processExistingScrapeCandidate = async (input: {
     sourcePriceCurrencyCode: input.context.sourcePriceCurrencyCode,
     template: input.context.draftTemplate,
     templateCategoryAliases: input.context.draftTemplateCategoryAliases,
+    templateLinkedParameterMetadata: input.context.draftTemplateLinkedParameterMetadata,
   });
   const updated = await productService.updateProduct(
     input.existing.id,
@@ -156,6 +163,7 @@ const processNewScrapeCandidate = async (input: {
     sourcePriceCurrencyCode: input.context.sourcePriceCurrencyCode,
     template: input.context.draftTemplate,
     templateCategoryAliases: input.context.draftTemplateCategoryAliases,
+    templateLinkedParameterMetadata: input.context.draftTemplateLinkedParameterMetadata,
   });
   const created = await productService.createProduct(payload, input.context.productServiceOptions);
   await linkPersistedScrapedProduct(created.id, input.candidate);
@@ -184,6 +192,7 @@ const processPersistedCandidate = async (
     candidate,
     dryRun: context.dryRun,
     imageImportMode: context.imageImportMode,
+    imageStepControls: context.imageStepControls,
   });
   if (existing !== null) {
     return await processExistingScrapeCandidate({
@@ -224,6 +233,7 @@ const processValidScrapeCandidate = async (
         candidate,
         dryRun: context.dryRun,
         imageImportMode: context.imageImportMode,
+        imageStepControls: context.imageStepControls,
       }),
       profile: context.profile,
       catalogIds: mergeTemplateCatalogIds([context.catalog.id], context.draftTemplate),
@@ -232,6 +242,7 @@ const processValidScrapeCandidate = async (
       sourcePriceCurrencyCode: context.sourcePriceCurrencyCode,
       template: context.draftTemplate,
       templateCategoryAliases: context.draftTemplateCategoryAliases,
+      templateLinkedParameterMetadata: context.draftTemplateLinkedParameterMetadata,
     });
     return createOutcome(
       toResultProduct(draft, candidate, 'dry_run', {

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { useSearchParams } from 'next/navigation';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DatabaseEnginePage } from './DatabaseEnginePage';
@@ -512,7 +513,19 @@ vi.mock('../components/DatabaseBackupsPanel', () => ({
 }));
 
 vi.mock('../components/DatabaseOperationsPanel', () => ({
-  DatabaseOperationsPanel: () => <div data-testid='database-operations-panel' />,
+  DatabaseOperationsPanel: ({
+    application,
+    defaultTab,
+    source,
+  }: {
+    application?: string;
+    defaultTab?: string;
+    source?: string;
+  }) => (
+    <div data-testid='database-operations-panel'>
+      {defaultTab}:{application ?? 'none'}:{source ?? 'none'}
+    </div>
+  ),
 }));
 
 vi.mock('@/shared/ui/admin.public', () => ({
@@ -667,6 +680,7 @@ vi.mock('@/shared/ui/templates.public', () => ({
 describe('DatabaseEnginePage', () => {
   beforeEach(() => {
     mocks.state = createState();
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams());
     mocks.actions.updatePolicy.mockReset();
     mocks.actions.updateBackupSchedule.mockReset();
     mocks.actions.updateCollectionRoute.mockReset();
@@ -716,7 +730,7 @@ describe('DatabaseEnginePage', () => {
     expect(screen.getByText('Transfer log: /tmp/mongo-sync.log')).toBeInTheDocument();
     expect(screen.getByText('Verified exact mirror (12 collections)')).toBeInTheDocument();
     expect(screen.getByText(/Verification: passed at 2026-04-09T04:31:00.000Z/)).toBeInTheDocument();
-    expect(screen.getByText('Pre-sync backups: 2')).toBeInTheDocument();
+    expect(screen.getAllByText('Pre-sync backups: 2')).toHaveLength(2);
     expect(
       screen.getByText('Source backup (geminitestapp cloud): cloud-source-pre-sync.archive')
     ).toBeInTheDocument();
@@ -746,19 +760,59 @@ describe('DatabaseEnginePage', () => {
     expect(screen.getByText('Healthy')).toBeInTheDocument();
   });
 
+  it('passes valid managed application and source query params to the operations panel', () => {
+    mocks.state = {
+      ...mocks.state,
+      activeView: 'crud',
+    };
+    vi.mocked(useSearchParams).mockReturnValue(
+      new URLSearchParams('application=studiq&source=cloud')
+    );
+
+    render(<DatabaseEnginePage />);
+
+    expect(screen.getByTestId('database-operations-panel')).toHaveTextContent(
+      'crud:studiq:cloud'
+    );
+  });
+
+  it('ignores invalid managed application and source query params', () => {
+    mocks.state = {
+      ...mocks.state,
+      activeView: 'operations',
+    };
+    vi.mocked(useSearchParams).mockReturnValue(
+      new URLSearchParams('application=unknown&source=external')
+    );
+
+    render(<DatabaseEnginePage />);
+
+    expect(screen.getByTestId('database-operations-panel')).toHaveTextContent(
+      'sql:none:none'
+    );
+  });
+
   it('renders managed app database sizes and runs per-app and group actions', () => {
     render(<DatabaseEnginePage />);
 
     expect(screen.getByRole('heading', { name: 'Managed Application Databases' })).toBeInTheDocument();
     expect(screen.getByText('Backup root: /tmp/database/mongo-backups')).toBeInTheDocument();
     expect(screen.getByText(/Backup free: 10.0 GB \/ required 2.00 GB/)).toBeInTheDocument();
-    expect(screen.getByText('GeminiTest App')).toBeInTheDocument();
-    expect(screen.getByText('StudiQ')).toBeInTheDocument();
-    expect(screen.getByText('CMS Builder')).toBeInTheDocument();
+    expect(screen.getAllByText('GeminiTest App').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('StudiQ').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('CMS Builder').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Database size: 4.00 KB')).toBeInTheDocument();
     expect(screen.getByText('Database size: 8.00 KB')).toBeInTheDocument();
     expect(screen.getAllByText('studiq_coll')).toHaveLength(2);
     expect(screen.getAllByText('pages')).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: 'Local Tables' })[1]).toHaveAttribute(
+      'href',
+      '/admin/databases/engine?view=crud&application=studiq&source=local'
+    );
+    expect(screen.getAllByRole('link', { name: 'Cloud Tables' })[1]).toHaveAttribute(
+      'href',
+      '/admin/databases/engine?view=crud&application=studiq&source=cloud'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Backup All' }));
     fireEvent.click(screen.getByRole('button', { name: 'Push All' }));

@@ -14,9 +14,12 @@ export interface ProductsCollectionContent {
   newArrivalsLabel: string;
   searchLabelPrefix: string;
   filtersLabel: string;
+  searchPlaceholder: string;
   clearAllLabel: string;
   clearFiltersLabel: string;
   priceLabel: string;
+  categoryLabel: string;
+  categoryAllLabel: string;
   sizeLabel: string;
   homeBreadcrumbLabel: string;
   collectionsBreadcrumbLabel: string;
@@ -101,9 +104,12 @@ export const PRODUCTS_CONTENT_DEFAULTS: ProductsContent = {
     newArrivalsLabel: 'New Arrivals',
     searchLabelPrefix: 'Search',
     filtersLabel: 'Filters',
+    searchPlaceholder: 'Search products…',
     clearAllLabel: 'Clear all',
     clearFiltersLabel: 'Clear filters',
     priceLabel: 'Price',
+    categoryLabel: 'Category',
+    categoryAllLabel: 'All',
     sizeLabel: 'Size',
     homeBreadcrumbLabel: 'Home',
     collectionsBreadcrumbLabel: 'Collections',
@@ -418,9 +424,12 @@ export function validateProductsContent(input: unknown): ProductsContentValidati
       newArrivalsLabel: readString(collection, 'newArrivalsLabel', collectionDefaults.newArrivalsLabel, TEXT_LIMITS.short, errors, 'collection.newArrivalsLabel'),
       searchLabelPrefix: readString(collection, 'searchLabelPrefix', collectionDefaults.searchLabelPrefix, TEXT_LIMITS.short, errors, 'collection.searchLabelPrefix'),
       filtersLabel: readString(collection, 'filtersLabel', collectionDefaults.filtersLabel, TEXT_LIMITS.short, errors, 'collection.filtersLabel'),
+      searchPlaceholder: readString(collection, 'searchPlaceholder', collectionDefaults.searchPlaceholder, TEXT_LIMITS.short, errors, 'collection.searchPlaceholder'),
       clearAllLabel: readString(collection, 'clearAllLabel', collectionDefaults.clearAllLabel, TEXT_LIMITS.short, errors, 'collection.clearAllLabel'),
       clearFiltersLabel: readString(collection, 'clearFiltersLabel', collectionDefaults.clearFiltersLabel, TEXT_LIMITS.short, errors, 'collection.clearFiltersLabel'),
       priceLabel: readString(collection, 'priceLabel', collectionDefaults.priceLabel, TEXT_LIMITS.short, errors, 'collection.priceLabel'),
+      categoryLabel: readString(collection, 'categoryLabel', collectionDefaults.categoryLabel, TEXT_LIMITS.short, errors, 'collection.categoryLabel'),
+      categoryAllLabel: readString(collection, 'categoryAllLabel', collectionDefaults.categoryAllLabel, TEXT_LIMITS.short, errors, 'collection.categoryAllLabel'),
       sizeLabel: readString(collection, 'sizeLabel', collectionDefaults.sizeLabel, TEXT_LIMITS.short, errors, 'collection.sizeLabel'),
       homeBreadcrumbLabel: readString(collection, 'homeBreadcrumbLabel', collectionDefaults.homeBreadcrumbLabel, TEXT_LIMITS.short, errors, 'collection.homeBreadcrumbLabel'),
       collectionsBreadcrumbLabel: readString(collection, 'collectionsBreadcrumbLabel', collectionDefaults.collectionsBreadcrumbLabel, TEXT_LIMITS.short, errors, 'collection.collectionsBreadcrumbLabel'),

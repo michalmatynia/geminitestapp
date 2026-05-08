@@ -12,7 +12,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 export const useDebounce = <T>(value: T, delay: number): T => {

@@ -119,6 +119,9 @@ describe('resolvePrimaryParameterValue', () => {
 
 describe('ProductFormParameterProvider', () => {
   beforeEach(() => {
+    useParametersMock.mockReset();
+    useSimpleParametersMock.mockReset();
+    useTitleTermsMock.mockReset();
     useSimpleParametersMock.mockReturnValue({
       data: [],
       isLoading: false,
@@ -221,6 +224,81 @@ describe('ProductFormParameterProvider', () => {
     ]);
     expect(result.current.parameterValues).toEqual([
       { parameterId: 'legacy_condition', value: 'Used' },
+    ]);
+  });
+
+  it('resolves saved cross-catalog parameter ids from catalog-agnostic metadata', () => {
+    useParametersMock.mockImplementation((catalogId?: string) => ({
+      data:
+        catalogId === undefined
+          ? [
+              {
+                id: 'mentios-size-param',
+                catalogId: 'mentios-catalog',
+                name_en: 'Size',
+              },
+              {
+                id: 'unreferenced-param',
+                catalogId: 'mentios-catalog',
+                name_en: 'Unreferenced',
+              },
+            ]
+          : [],
+      isLoading: false,
+    }));
+    useSimpleParametersMock.mockImplementation((catalogId?: string) => ({
+      data:
+        catalogId === undefined
+          ? [
+              {
+                id: 'mentios-theme-param',
+                catalogId: 'mentios-catalog',
+                name_en: 'Theme',
+              },
+              {
+                id: 'unreferenced-simple-param',
+                catalogId: 'mentios-catalog',
+                name_en: 'Unreferenced simple',
+              },
+            ]
+          : [],
+      isLoading: false,
+    }));
+
+    const product = {
+      parameters: [
+        { parameterId: 'mentios-size-param', value: '4 cm' },
+        { parameterId: 'mentios-theme-param', value: 'Warhammer' },
+      ],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = createWrapper({
+      product,
+      selectedCatalogIds: ['bstocl-catalog'],
+    });
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    expect(result.current.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'mentios-size-param',
+          name_en: 'Size',
+        }),
+        expect.objectContaining({
+          id: 'mentios-theme-param',
+          name_en: 'Theme',
+        }),
+      ])
+    );
+    expect(result.current.parameters.map((parameter) => parameter.id)).not.toContain(
+      'unreferenced-param'
+    );
+    expect(result.current.parameters.map((parameter) => parameter.id)).not.toContain(
+      'unreferenced-simple-param'
+    );
+    expect(result.current.parameterValues).toEqual([
+      { parameterId: 'mentios-size-param', value: '4 cm' },
+      { parameterId: 'mentios-theme-param', value: 'Warhammer' },
     ]);
   });
 

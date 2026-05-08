@@ -188,7 +188,7 @@ function localizeSiteContent(content: SiteContent, localeInput?: LocaleInput): S
       links: content.nav.links.map((link) => {
         const labels: Record<string, string> = {
           '/products?new=1': 'Nowości',
-          '/products': 'Wszystkie produkty',
+          '/products': 'Katalog',
         };
         return { ...link, label: labels[link.href] ?? link.label };
       }),
@@ -354,9 +354,12 @@ function localizeProductsContent(content: ProductsContent, localeInput?: LocaleI
       newArrivalsLabel: 'Nowości',
       searchLabelPrefix: 'Szukaj',
       filtersLabel: 'Filtry',
+      searchPlaceholder: 'Szukaj produktów…',
       clearAllLabel: 'Wyczyść wszystko',
       clearFiltersLabel: 'Wyczyść filtry',
       priceLabel: 'Cena',
+      categoryLabel: 'Kategoria',
+      categoryAllLabel: 'Wszystkie',
       sizeLabel: 'Rozmiar',
       homeBreadcrumbLabel: 'Strona główna',
       collectionsBreadcrumbLabel: 'Kolekcje',
@@ -1087,13 +1090,24 @@ function toSiteSnapshot(doc: CmsPageDoc | null): SiteCmsSnapshot {
   };
 }
 
+function ensureCatalogNavLink(content: SiteContent): SiteContent {
+  if (content.nav.links.some((l) => l.href === '/products')) return content;
+  return {
+    ...content,
+    nav: {
+      ...content.nav,
+      links: [...content.nav.links, { label: 'Catalog', href: '/products' }],
+    },
+  };
+}
+
 export async function getSiteContent(locale?: LocaleInput): Promise<SiteContent> {
   try {
     const doc = await findCmsPage(SITE_PAGE_KEY, locale);
-    return localizeSiteContent(toSiteSnapshot(doc).content, locale);
+    return ensureCatalogNavLink(localizeSiteContent(toSiteSnapshot(doc).content, locale));
   } catch (error) {
     console.error('Failed to load site CMS content, using defaults.', error);
-    return localizeSiteContent(SITE_CONTENT_DEFAULTS, locale);
+    return ensureCatalogNavLink(localizeSiteContent(SITE_CONTENT_DEFAULTS, locale));
   }
 }
 

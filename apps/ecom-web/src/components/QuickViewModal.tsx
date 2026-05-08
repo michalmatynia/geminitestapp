@@ -41,7 +41,7 @@ export function QuickViewModal(): JSX.Element | null {
     addItem({
       productId: product.id,
       slug: product.slug,
-      name: product.name,
+      name: product.shortName ?? product.name,
       category: product.category,
       price: product.price,
       priceDisplay: product.priceDisplay,
@@ -53,7 +53,7 @@ export function QuickViewModal(): JSX.Element | null {
     toast({
       type: 'success',
       title: quickView.addedToastTitle,
-      message: `${product.name}${selectedSize ? ` — ${selectedSize}` : ''}`,
+      message: `${product.shortName ?? product.name}${selectedSize ? ` — ${selectedSize}` : ''}`,
     });
     setTimeout(() => {
       setAdding(false);
@@ -87,7 +87,7 @@ export function QuickViewModal(): JSX.Element | null {
           <ProductImage
             imageUrl={product.imageUrl}
             gradient={product.gradient}
-            alt={product.name}
+            alt={product.shortName ?? product.name}
             className="absolute inset-0"
             sizes="40vw"
           />
@@ -122,7 +122,7 @@ export function QuickViewModal(): JSX.Element | null {
                   marginBottom: '0.5rem',
                 }}
               >
-                {product.name}
+                {product.shortName ?? product.name}
               </h2>
               <div className="type-price text-xl" style={{ color: 'var(--fg)' }}>
                 {formatPrice(product.price, locale)}
@@ -208,7 +208,7 @@ export function QuickViewModal(): JSX.Element | null {
                   toggleWishlist({
                     productId: product.id,
                     slug: product.slug,
-                    name: product.name,
+                    name: product.shortName ?? product.name,
                     category: product.category,
                     price: product.price,
                     priceDisplay: product.priceDisplay,
@@ -218,7 +218,7 @@ export function QuickViewModal(): JSX.Element | null {
                   toast({
                     type: wishlisted ? 'info' : 'success',
                     title: wishlisted ? quickView.removedWishlistToastTitle : quickView.savedWishlistToastTitle,
-                    message: product.name,
+                    message: product.shortName ?? product.name,
                   });
                 }}
               >

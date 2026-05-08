@@ -290,6 +290,15 @@ workspace scoped to the local database:
 /admin/databases/engine?view=crud&application=products&source=local
 ```
 
+The CRUD console also shows a `Managed MongoDB Files` scope panel above the
+Table Manager. That panel lists all four managed databases, shows local/cloud
+reachability plus local and cloud collection counts, and exposes local/cloud
+Table Manager links for each database. It also exposes per-database `Backup`,
+`Push`, and `Pull` controls plus group `Backup All`, `Push All`, and `Pull All`
+actions. Opening a database from that panel changes the Table Manager scope so
+collection metadata, row browsing, inserts, updates, and deletes are executed
+against the selected application database and selected source.
+
 The CRUD table manager loads collection metadata from the selected application
 database, then inserts, updates, or deletes documents against that selected
 local target.
@@ -324,6 +333,18 @@ cms-builder/cms-builder-local-backup-*.archive
 products/products-local-backup-*.archive
 ```
 
+The Backup Center summary groups backup history by managed application. Each
+application tile shows the folder, archive count, latest archive, total backup
+size, a per-application backup action, and `Local Tables` / `Cloud Tables`
+links back to that application's Table Manager scopes. The Backup Center also
+shows recent backup jobs with the target application (`all`, `geminitestapp`,
+`studiq`, `cms-builder`, or `products`) so queued and completed backup work can
+be matched to the managed database file it affected.
+
+The Engine page's managed database cards also provide `Local Tables` and
+`Cloud Tables` shortcuts for every managed application, so local and cloud
+collection contents can be inspected from the same source-aware Table Manager.
+
 Use `/admin/databases/preview` to inspect an archive before restoring it. The
 preview path restores into a temporary preview database and drops that temporary
 database after inspection.
@@ -338,6 +359,12 @@ The Database Engine supports two directions:
 Sync can target one application or all applications. Before each restore, the
 engine creates pre-sync backups for both source and target. This protects the
 previous target state before it is dropped and restored.
+
+The Engine page's Latest Transfer card summarizes the last sync for all four
+managed applications. Each application tile shows whether that database was
+verified, source and target database names, compared collection count, archive
+and log references, and source/target pre-sync backup names. Older sync records
+that predate per-application metadata are shown under `geminitestapp`.
 
 The sync flow is:
 

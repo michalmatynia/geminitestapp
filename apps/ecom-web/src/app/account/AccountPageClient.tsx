@@ -8,83 +8,41 @@ import { AuthModal } from '@/components/AuthModal';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AdminCmsEditor } from '@/components/AdminCmsEditor';
+import { formatPrice } from '@/lib/locales';
 import type { AccountAdminContent, AccountContent } from '@/data/accountContent';
+import type { Order } from '@/lib/orders';
 
-interface Order {
+interface DisplayOrder {
   id: string;
   date: string;
   status: 'delivered' | 'in-transit' | 'processing';
   total: string;
-  items: { name: string; qty: number; price: string }[];
+  items: { name: string; qty: number; price: string; imageUrl?: string }[];
 }
 
-const MOCK_ORDERS: Order[] = [
-  {
-    id: 'ARC-2026-0047',
-    date: '28 April 2026',
-    status: 'delivered',
-    total: '€ 1,240',
-    items: [
-      { name: 'Amphora Vessel', qty: 1, price: '€ 640' },
-      { name: 'Walnut Serving Tray', qty: 2, price: '€ 600' },
-    ],
-  },
-  {
-    id: 'ARC-2026-0031',
-    date: '12 March 2026',
-    status: 'delivered',
-    total: '€ 890',
-    items: [
-      { name: 'Cognac Leather Tote', qty: 1, price: '€ 890' },
-    ],
-  },
-  {
-    id: 'ARC-2025-0198',
-    date: '9 November 2025',
-    status: 'delivered',
-    total: '€ 2,180',
-    items: [
-      { name: 'Obsidian Wool Overcoat', qty: 1, price: '€ 1,850' },
-      { name: 'Sand Wool Scarf', qty: 1, price: '€ 330' },
-    ],
-  },
-];
-
-const STATUS_COLORS: Record<Order['status'], string> = {
+const STATUS_COLORS: Record<DisplayOrder['status'], string> = {
   delivered: 'rgba(120,160,90,1)',
   'in-transit': 'rgba(180,130,60,1)',
   processing: 'var(--muted)',
 };
 
-const MOCK_ORDER_PL: Record<string, { date: string; itemNames: string[] }> = {
-  'ARC-2026-0047': {
-    date: '28 kwietnia 2026',
-    itemNames: ['Naczynie amforowe', 'Taca z orzecha'],
-  },
-  'ARC-2026-0031': {
-    date: '12 marca 2026',
-    itemNames: ['Koniakowa torba skórzana'],
-  },
-  'ARC-2025-0198': {
-    date: '9 listopada 2025',
-    itemNames: ['Obsydianowy płaszcz wełniany', 'Piaskowy szalik wełniany'],
-  },
-};
-
-function getDisplayOrders(locale: string): Order[] {
-  if (locale !== 'pl') return MOCK_ORDERS;
-  return MOCK_ORDERS.map((order) => {
-    const translation = MOCK_ORDER_PL[order.id];
-    if (!translation) return order;
-    return {
-      ...order,
-      date: translation.date,
-      items: order.items.map((item, index) => ({
-        ...item,
-        name: translation.itemNames[index] ?? item.name,
-      })),
-    };
-  });
+function toDisplayOrder(order: Order, locale: string): DisplayOrder {
+  return {
+    id: order.orderId,
+    date: new Date(order.createdAt).toLocaleDateString(locale === 'pl' ? 'pl-PL' : 'en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }),
+    status: order.status,
+    total: formatPrice(order.total, locale === 'pl' ? 'pl' : 'en'),
+    items: order.items.map((item) => ({
+      name: item.name,
+      qty: item.quantity,
+      price: formatPrice(item.price * item.quantity, locale === 'pl' ? 'pl' : 'en'),
+      imageUrl: item.imageUrl,
+    })),
+  };
 }
 
 interface AdminUser {
@@ -263,7 +221,43 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
   const localizedHref = useLocalizedHref();
   const { total: wishlistCount } = useWishlist();
   const { user, loading, logout } = useAuth();
-  const orders = getDisplayOrders(locale);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      setOrders([]);
+      setOrdersLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setOrdersLoading(true);
+    fetch('/api/orders/me')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: unknown) => {
+        if (!cancelled) setOrders(Array.isArray(data) ? (data as Order[]) : []);
+      })
+      .catch(() => {
+        if (!cancelled) setOrders([]);
+      })
+      .finally(() => {
+        if (!cancelled) setOrdersLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const displayOrders = orders.map((order) => toDisplayOrder(order, locale));
+  const purchasedItemCount = orders.reduce(
+    (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
+    0,
+  );
+  const noOrdersLabel = locale === 'pl' ? 'Brak zamowien.' : 'No orders yet.';
 
   const tabs: { id: Tab; label: string }[] = [
     ...content.tabs
@@ -495,6 +489,8 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
                         >
                           {stat.key === 'orders'
                             ? orders.length.toString()
+                            : stat.key === 'items'
+                              ? purchasedItemCount.toString()
                             : stat.key === 'wishlist'
                               ? wishlistCount.toString()
                               : stat.fallbackValue ?? ''}
@@ -506,49 +502,57 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
 
                   <div className="mb-6">
                     <div className="type-label mb-6" style={{ color: 'var(--accent)' }}>{content.overview.recentOrderLabel}</div>
-                    <div style={{ border: '1px solid var(--border)' }}>
-                      <div
-                        className="flex items-center justify-between px-6 py-5"
-                        style={{ borderBottom: '1px solid var(--border)' }}
-                      >
-                        <div>
-                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.1em', color: 'var(--fg)', marginBottom: '0.25rem' }}>
-                            {orders[0].id}
-                          </div>
-                          <div className="type-label" style={{ color: 'var(--muted)' }}>{orders[0].date}</div>
-                        </div>
-                        <div className="text-right">
-                          <div
-                            className="type-label px-3 py-1.5 inline-block mb-1"
-                            style={{ background: 'var(--surface)', color: STATUS_COLORS[orders[0].status] }}
-                          >
-                            {content.orders.statuses[orders[0].status]}
-                          </div>
-                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--fg)' }}>
-                            {orders[0].total}
-                          </div>
-                        </div>
-                      </div>
-                      {orders[0].items.map((item, i) => (
+                    {ordersLoading && (
+                      <div className="type-label" style={{ color: 'var(--muted)', padding: '1rem 0' }}>{content.loadingLabel}</div>
+                    )}
+                    {!ordersLoading && !displayOrders[0] && (
+                      <div className="type-label" style={{ color: 'var(--muted)', padding: '1rem 0' }}>{noOrdersLabel}</div>
+                    )}
+                    {!ordersLoading && displayOrders[0] && (
+                      <div style={{ border: '1px solid var(--border)' }}>
                         <div
-                          key={i}
-                          className="flex items-center justify-between px-6 py-4"
-                          style={{ borderBottom: i < orders[0].items.length - 1 ? '1px solid var(--border)' : 'none' }}
+                          className="flex items-center justify-between px-6 py-5"
+                          style={{ borderBottom: '1px solid var(--border)' }}
                         >
-                          <div className="flex items-center gap-3">
-                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--muted)' }}>
-                              ×{item.qty}
+                          <div>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.1em', color: 'var(--fg)', marginBottom: '0.25rem' }}>
+                              {displayOrders[0].id}
                             </div>
-                            <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 300, color: 'var(--fg)' }}>
-                              {item.name}
-                            </div>
+                            <div className="type-label" style={{ color: 'var(--muted)' }}>{displayOrders[0].date}</div>
                           </div>
-                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--muted)' }}>
-                            {item.price}
+                          <div className="text-right">
+                            <div
+                              className="type-label px-3 py-1.5 inline-block mb-1"
+                              style={{ background: 'var(--surface)', color: STATUS_COLORS[displayOrders[0].status] }}
+                            >
+                              {content.orders.statuses[displayOrders[0].status]}
+                            </div>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--fg)' }}>
+                              {displayOrders[0].total}
+                            </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        {displayOrders[0].items.map((item, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between px-6 py-4"
+                            style={{ borderBottom: i < displayOrders[0].items.length - 1 ? '1px solid var(--border)' : 'none' }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--muted)' }}>
+                                ×{item.qty}
+                              </div>
+                              <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 300, color: 'var(--fg)' }}>
+                                {item.name}
+                              </div>
+                            </div>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                              {item.price}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => setActiveTab('orders')}
@@ -573,7 +577,13 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
                     {content.orders.title}
                   </h2>
                   <div className="flex flex-col gap-4">
-                    {orders.map((order) => (
+                    {ordersLoading && (
+                      <div className="type-label" style={{ color: 'var(--muted)', padding: '1rem 0' }}>{content.loadingLabel}</div>
+                    )}
+                    {!ordersLoading && displayOrders.length === 0 && (
+                      <div className="type-label" style={{ color: 'var(--muted)', padding: '1rem 0' }}>{noOrdersLabel}</div>
+                    )}
+                    {!ordersLoading && displayOrders.map((order) => (
                       <div key={order.id} style={{ border: '1px solid var(--border)' }}>
                         <div
                           className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 py-5"
@@ -608,7 +618,11 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
                             <div className="flex items-center gap-4">
                               <div
                                 className="w-10 h-12 flex-shrink-0"
-                                style={{ background: 'linear-gradient(135deg, var(--border), var(--surface))' }}
+                                style={{
+                                  background: item.imageUrl
+                                    ? `url(${item.imageUrl}) center / cover`
+                                    : 'linear-gradient(135deg, var(--border), var(--surface))',
+                                }}
                               />
                               <div>
                                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 300, color: 'var(--fg)' }}>

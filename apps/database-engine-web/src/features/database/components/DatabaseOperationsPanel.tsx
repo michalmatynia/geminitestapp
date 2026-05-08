@@ -18,6 +18,10 @@ import {
   type DatabaseOperationsTab,
 } from './DatabaseOperationsTabs';
 import { DatabaseProvider, useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
+import {
+  buildManagedMongoCrudHref,
+  ManagedMongoScopePanel,
+} from './crud/ManagedMongoScopePanel';
 
 const DATABASE_OPTIONS: Array<LabeledOptionWithDescriptionDto<DatabaseType>> = [
   {
@@ -27,7 +31,7 @@ const DATABASE_OPTIONS: Array<LabeledOptionWithDescriptionDto<DatabaseType>> = [
   },
 ];
 
-const MANAGED_LOCAL_DATABASE_OPTIONS: Array<{
+const MANAGED_DATABASE_OPTIONS: Array<{
   application: DatabaseEngineManagedMongoApplication;
   label: string;
 }> = [
@@ -37,17 +41,22 @@ const MANAGED_LOCAL_DATABASE_OPTIONS: Array<{
   { application: 'products', label: 'Products' },
 ];
 
-const buildCrudHref = (application: DatabaseEngineManagedMongoApplication): string =>
-  `/admin/databases/engine?view=crud&application=${encodeURIComponent(application)}&source=local`;
+const MANAGED_SOURCE_OPTIONS: Array<{
+  source: MongoSource;
+  label: string;
+}> = [
+  { source: 'local', label: 'Local' },
+  { source: 'cloud', label: 'Cloud' },
+];
 
 function DatabaseOperationsPanelContent({
+  activeApplication,
+  activeSource,
   defaultTab,
-  application,
-  source,
 }: {
+  activeApplication: DatabaseEngineManagedMongoApplication;
+  activeSource: MongoSource;
   defaultTab: DatabaseOperationsTab;
-  application?: DatabaseEngineManagedMongoApplication | undefined;
-  source?: MongoSource | undefined;
 }): JSX.Element {
   const { dbType, setDbType } = useDatabaseConfig();
   const { tableDetails } = useDatabaseData();
@@ -72,11 +81,9 @@ function DatabaseOperationsPanelContent({
                 <Badge variant='outline' className='border-white/10 text-gray-300'>
                   {tableDetails.length.toLocaleString()} table{tableDetails.length === 1 ? '' : 's'}
                 </Badge>
-                {application ? (
-                  <Badge variant='outline' className='border-white/10 text-gray-300'>
-                    {application} / {source ?? 'local'}
-                  </Badge>
-                ) : null}
+                <Badge variant='outline' className='border-white/10 text-gray-300'>
+                  {activeApplication} / {activeSource}
+                </Badge>
               </div>
             )}
           </div>
@@ -109,15 +116,36 @@ function DatabaseOperationsPanelContent({
             columns={2}
             padding='md'
           />
+          <ManagedMongoScopePanel
+            activeApplication={activeApplication}
+            activeSource={activeSource}
+          />
+          <div className='flex flex-wrap items-center gap-2'>
+            <span className='text-xs text-gray-400'>Source</span>
+            {MANAGED_SOURCE_OPTIONS.map((option) => (
+              <Button
+                key={option.source}
+                asChild
+                variant={activeSource === option.source ? 'secondary' : 'outline'}
+                size='xs'
+              >
+                <Link href={buildManagedMongoCrudHref(activeApplication, option.source)}>
+                  {option.label}
+                </Link>
+              </Button>
+            ))}
+          </div>
           <div className='flex flex-wrap gap-2'>
-            {MANAGED_LOCAL_DATABASE_OPTIONS.map((option) => (
+            {MANAGED_DATABASE_OPTIONS.map((option) => (
               <Button
                 key={option.application}
                 asChild
-                variant={application === option.application ? 'secondary' : 'outline'}
+                variant={activeApplication === option.application ? 'secondary' : 'outline'}
                 size='xs'
               >
-                <Link href={buildCrudHref(option.application)}>{option.label}</Link>
+                <Link href={buildManagedMongoCrudHref(option.application, activeSource)}>
+                  {option.label}
+                </Link>
               </Button>
             ))}
           </div>
@@ -138,12 +166,15 @@ export function DatabaseOperationsPanel({
   application?: DatabaseEngineManagedMongoApplication | undefined;
   source?: MongoSource | undefined;
 }): JSX.Element {
+  const activeApplication = application ?? 'geminitestapp';
+  const activeSource = source ?? 'local';
+
   return (
-    <DatabaseProvider application={application} source={source}>
+    <DatabaseProvider application={activeApplication} source={activeSource}>
       <DatabaseOperationsPanelContent
+        activeApplication={activeApplication}
+        activeSource={activeSource}
         defaultTab={defaultTab}
-        application={application}
-        source={source}
       />
     </DatabaseProvider>
   );

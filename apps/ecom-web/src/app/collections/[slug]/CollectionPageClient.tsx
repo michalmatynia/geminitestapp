@@ -140,7 +140,7 @@ function CollectionProductCard({
     addItem({
       productId: product.id,
       slug: product.slug,
-      name: product.name,
+      name: product.shortName ?? product.name,
       category: product.category,
       price: product.price,
       priceDisplay: product.priceDisplay,
@@ -149,7 +149,7 @@ function CollectionProductCard({
       imageUrl: product.imageUrl,
       quantity: 1,
     });
-    toast({ type: 'success', title: content.addedToastTitle, message: product.name });
+    toast({ type: 'success', title: content.addedToastTitle, message: product.shortName ?? product.name });
   };
 
   return (
@@ -162,7 +162,7 @@ function CollectionProductCard({
         <ProductImage
           imageUrl={product.imageUrl}
           gradient={product.gradient}
-          alt={product.name}
+          alt={product.shortName ?? product.name}
           className="absolute inset-0"
           sizes="(max-width: 768px) 50vw, 33vw"
           fit="contain"
@@ -229,7 +229,7 @@ function CollectionProductCard({
               lineHeight: 1.3,
             }}
           >
-            {product.name}
+            {product.shortName ?? product.name}
           </div>
         </div>
         <span className="type-price flex-shrink-0 mt-1" style={{ color: 'var(--soft-gold)', textShadow: '0 0 8px rgba(var(--gold-rgb),0.3)' }}>

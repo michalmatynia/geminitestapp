@@ -44,7 +44,6 @@ type MergedDraftParameterValuesInput = {
   baseParameterValues: ProductParameterValue[];
   nameEn: string;
   parameterDefinitions: ProductParameter[];
-  primaryCatalogId: string;
 };
 
 type DraftParameterValueActionsInput = {
@@ -54,20 +53,18 @@ type DraftParameterValueActionsInput = {
 
 const CATALOG_AGNOSTIC_TITLE_TERM_OPTIONS = { allowWithoutCatalog: true } as const;
 
-const useDraftLinkedTitleTermQueries = (
-  primaryCatalogId: string
-): {
+const useDraftLinkedTitleTermQueries = (): {
   materialTermsQuery: ReturnType<typeof useTitleTerms>;
   sizeTermsQuery: ReturnType<typeof useTitleTerms>;
   themeTermsQuery: ReturnType<typeof useTitleTerms>;
 } => ({
-  sizeTermsQuery: useTitleTerms(primaryCatalogId, 'size', CATALOG_AGNOSTIC_TITLE_TERM_OPTIONS),
+  sizeTermsQuery: useTitleTerms(undefined, 'size', CATALOG_AGNOSTIC_TITLE_TERM_OPTIONS),
   materialTermsQuery: useTitleTerms(
-    primaryCatalogId,
+    undefined,
     'material',
     CATALOG_AGNOSTIC_TITLE_TERM_OPTIONS
   ),
-  themeTermsQuery: useTitleTerms(primaryCatalogId, 'theme', CATALOG_AGNOSTIC_TITLE_TERM_OPTIONS),
+  themeTermsQuery: useTitleTerms(undefined, 'theme', CATALOG_AGNOSTIC_TITLE_TERM_OPTIONS),
 });
 
 const resolveBaseParameterIndex = (index: number, parameterValueIndexMap: number[]): number =>
@@ -111,13 +108,12 @@ const useMergedDraftParameterValues = ({
   baseParameterValues,
   nameEn,
   parameterDefinitions,
-  primaryCatalogId,
 }: MergedDraftParameterValuesInput): {
   parameterValueIndexMap: number[];
   parameterValues: ProductParameterValue[];
 } => {
   const { materialTermsQuery, sizeTermsQuery, themeTermsQuery } =
-    useDraftLinkedTitleTermQueries(primaryCatalogId);
+    useDraftLinkedTitleTermQueries();
   const linkedParameters = useMemo(
     () =>
       parameterDefinitions.filter((parameter) =>
@@ -229,7 +225,6 @@ export function useDraftCreatorParameters({
     baseParameterValues,
     nameEn,
     parameterDefinitions,
-    primaryCatalogId,
   });
   const actions = useDraftParameterValueActions({
     parameterValueIndexMap,

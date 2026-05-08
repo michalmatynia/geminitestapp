@@ -23,6 +23,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 
 import {
   useCategoriesForCatalogs,
+  useParameters,
   useSaveTitleTermMutation,
   useSimpleParameters,
 } from './useProductMetadataQueries';
@@ -123,6 +124,48 @@ describe('useSimpleParameters', () => {
       params: {
         catalogId: 'catalog-1',
       },
+      cache: 'no-store',
+    });
+  });
+
+  it('requests all parameters when explicitly allowed without a catalog id', async () => {
+    const queryClient = createQueryClient();
+    apiGetMock.mockResolvedValue([]);
+
+    const { result } = renderHook(
+      () => useParameters(undefined, { allowWithoutCatalog: true }),
+      {
+        wrapper: createWrapper(queryClient),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(apiGetMock).toHaveBeenCalledWith('/api/v2/products/parameters', {
+      params: {},
+      cache: 'no-store',
+    });
+  });
+
+  it('requests all simple parameters when explicitly allowed without a catalog id', async () => {
+    const queryClient = createQueryClient();
+    apiGetMock.mockResolvedValue([]);
+
+    const { result } = renderHook(
+      () => useSimpleParameters(undefined, { allowWithoutCatalog: true }),
+      {
+        wrapper: createWrapper(queryClient),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(apiGetMock).toHaveBeenCalledWith('/api/v2/products/simple-parameters', {
+      params: {},
       cache: 'no-store',
     });
   });

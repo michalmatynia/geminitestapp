@@ -12,6 +12,7 @@ import type { Product } from '@/data/products';
 import type {
   CheckoutContent,
   CheckoutFieldContent,
+  CheckoutShippingMethodContent,
   CheckoutStepContent,
   CheckoutStepKey,
   CheckoutSummaryContent,
@@ -71,15 +72,20 @@ function StepProgress({
   );
 }
 
-function FormInput({ field, value, onChange }: {
+function FormInput({ field, value, error, onChange }: {
   field: CheckoutFieldContent;
   value: string;
+  error?: string;
   onChange: (id: string, v: string) => void;
 }): JSX.Element {
+  const describedBy = error ? `${field.id}-error` : undefined;
+  const label = field.id === 'phone'
+    ? field.label.replace(/\s*\((optional|opcjonalnie)\)\s*$/i, '')
+    : field.label;
   return (
     <div className={field.half ? 'flex-1 min-w-0' : 'w-full'}>
       <label className="type-label block mb-1.5" style={{ color: 'var(--fg)' }}>
-        {field.label}
+        {label}
       </label>
       <input
         type={field.type ?? 'text'}
@@ -88,11 +94,13 @@ function FormInput({ field, value, onChange }: {
         onChange={(e) => onChange(field.id, e.target.value)}
         placeholder={field.placeholder}
         maxLength={field.maxLength}
+        aria-invalid={Boolean(error)}
+        aria-describedby={describedBy}
         style={{
           width: '100%',
           padding: '0.75rem 1rem',
           background: 'transparent',
-          border: '1px solid var(--border)',
+          border: `1px solid ${error ? 'var(--accent)' : 'var(--border)'}`,
           outline: 'none',
           fontFamily: field.monospace ? 'var(--font-mono)' : 'var(--font-body)',
           fontSize: '0.875rem',
@@ -102,8 +110,13 @@ function FormInput({ field, value, onChange }: {
           transition: 'border-color 0.2s ease',
         }}
         onFocus={(e) => { e.target.style.borderColor = 'var(--fg)'; }}
-        onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; }}
+        onBlur={(e) => { e.target.style.borderColor = error ? 'var(--accent)' : 'var(--border)'; }}
       />
+      {error && (
+        <p id={describedBy} className="type-label mt-1.5" style={{ color: 'var(--accent)' }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -111,10 +124,12 @@ function FormInput({ field, value, onChange }: {
 function FieldRows({
   fields,
   values,
+  errors,
   onChange,
 }: {
   fields: CheckoutFieldContent[];
   values: Record<string, string>;
+  errors: Record<string, string>;
   onChange: (id: string, v: string) => void;
 }): JSX.Element {
   return (
@@ -127,13 +142,13 @@ function FieldRows({
           const next = fields[i + 1];
           return (
             <div key={field.id} className="flex gap-4">
-              <FormInput field={field} value={values[field.id] ?? ''} onChange={onChange} />
-              {next && <FormInput field={next} value={values[next.id] ?? ''} onChange={onChange} />}
+              <FormInput field={field} value={values[field.id] ?? ''} error={errors[field.id]} onChange={onChange} />
+              {next && <FormInput field={next} value={values[next.id] ?? ''} error={errors[next.id]} onChange={onChange} />}
             </div>
           );
         }
         if (isSecondOfPair) return null;
-        return <FormInput key={field.id} field={field} value={values[field.id] ?? ''} onChange={onChange} />;
+        return <FormInput key={field.id} field={field} value={values[field.id] ?? ''} error={errors[field.id]} onChange={onChange} />;
       })}
     </>
   );
@@ -145,12 +160,26 @@ const VALID_CODES: Record<string, number> = {
   WELCOME20: 0.20,
 };
 
-function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Element {
+function OrderSummary({
+  content,
+  shippingPrice,
+  subtotal,
+  discount,
+  total,
+  promoCode,
+  onPromoCodeChange,
+}: {
+  content: CheckoutSummaryContent;
+  shippingPrice: number;
+  subtotal: number;
+  discount: number;
+  total: number;
+  promoCode: string | null;
+  onPromoCodeChange: (code: string | null) => void;
+}): JSX.Element {
   const { items } = useCart();
   const locale = useLocale();
-  const shipping = 0;
   const [promoInput, setPromoInput] = useState('');
-  const [promoCode, setPromoCode] = useState<string | null>(null);
   const [promoError, setPromoError] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
   const [freshData, setFreshData] = useState<Record<string, Product>>({});
@@ -184,16 +213,12 @@ function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Ele
       imageUrl: fresh.imageUrl ?? item.imageUrl,
     };
   });
-  const displayTotalPrice = displayItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
   const discountPct = promoCode ? (VALID_CODES[promoCode] ?? 0) : 0;
-  const discountAmt = Math.round(displayTotalPrice * discountPct);
-  const finalTotal = displayTotalPrice - discountAmt + shipping;
 
   const applyPromo = () => {
     const upper = promoInput.trim().toUpperCase();
     if (VALID_CODES[upper] !== undefined) {
-      setPromoCode(upper);
+      onPromoCodeChange(upper);
       setPromoError(false);
       setPromoOpen(false);
     } else {
@@ -268,7 +293,7 @@ function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Ele
               </span>
             </div>
             <button
-              onClick={() => { setPromoCode(null); setPromoInput(''); }}
+              onClick={() => { onPromoCodeChange(null); setPromoInput(''); }}
               className="type-label hover:text-[var(--fg)] transition-colors"
               style={{ color: 'var(--muted)' }}
             >
@@ -341,22 +366,22 @@ function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Ele
       <div className="space-y-2 mb-4">
         <div className="flex justify-between">
           <span className="type-label" style={{ color: 'var(--muted)' }}>{content.subtotalLabel}</span>
-          <span className="type-price" style={{ color: 'var(--fg)' }}>{formatPrice(displayTotalPrice, locale)}</span>
+          <span className="type-price" style={{ color: 'var(--fg)' }}>{formatPrice(subtotal, locale)}</span>
         </div>
-        {discountAmt > 0 && (
+        {discount > 0 && (
           <div className="flex justify-between">
             <span className="type-label" style={{ color: '#4A7C5A' }}>
               {content.discountLabel} ({Math.round(discountPct * 100)}%)
             </span>
             <span className="type-price" style={{ color: '#4A7C5A' }}>
-              − {formatPrice(discountAmt, locale)}
+              − {formatPrice(discount, locale)}
             </span>
           </div>
         )}
         <div className="flex justify-between">
           <span className="type-label" style={{ color: 'var(--muted)' }}>{content.shippingLabel}</span>
-          <span className="type-price" style={{ color: shipping === 0 ? '#4A7C5A' : 'var(--fg)' }}>
-            {shipping === 0 ? content.freeLabel : formatPrice(shipping, locale)}
+          <span className="type-price" style={{ color: shippingPrice === 0 ? '#4A7C5A' : 'var(--fg)' }}>
+            {shippingPrice === 0 ? content.freeLabel : formatPrice(shippingPrice, locale)}
           </span>
         </div>
       </div>
@@ -372,7 +397,7 @@ function OrderSummary({ content }: { content: CheckoutSummaryContent }): JSX.Ele
         <span
           style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', color: 'var(--fg)' }}
         >
-          {formatPrice(finalTotal, locale)}
+          {formatPrice(total, locale)}
         </span>
       </div>
     </div>
@@ -383,11 +408,30 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const { items, clearCart } = useCart();
   const { toast } = useToast();
   const { user } = useAuth();
+  const locale = useLocale();
   const localizedHref = useLocalizedHref();
   const [step, setStep] = useState<Step>('information');
   const [shipping, setShipping] = useState(content.shippingMethods[0]?.id ?? 'standard');
   const [form, setForm] = useState<Record<string, string>>({});
   const [paymentForm, setPaymentForm] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [confirmedOrderId, setConfirmedOrderId] = useState('');
+
+  const selectedShipping: CheckoutShippingMethodContent = content.shippingMethods.find((method) => method.id === shipping)
+    ?? content.shippingMethods[0]
+    ?? { id: 'standard', label: 'Standard', detail: '', price: 0, priceLabel: 'Free' };
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const discountPct = promoCode ? (VALID_CODES[promoCode] ?? 0) : 0;
+  const discount = Math.round(subtotal * discountPct);
+  const total = subtotal - discount + selectedShipping.price;
+  const requiredMessage = locale === 'pl' ? 'To pole jest wymagane.' : 'This field is required.';
+  const invalidEmailMessage = locale === 'pl' ? 'Wpisz poprawny adres email.' : 'Enter a valid email address.';
+  const invalidCardMessage = locale === 'pl' ? 'Wpisz 16 cyfr numeru karty.' : 'Enter a 16-digit card number.';
+  const invalidExpiryMessage = locale === 'pl' ? 'Wpisz poprawna date MM/YY.' : 'Enter a valid MM/YY expiry.';
+  const expiredCardMessage = locale === 'pl' ? 'Data waznosci musi byc aktualna lub przyszla.' : 'Card expiry must be current or future.';
+  const invalidCvvMessage = locale === 'pl' ? 'Wpisz 3-4 cyfry kodu CVV.' : 'Enter a 3-4 digit security code.';
 
   // Pre-fill contact info from the logged-in user's session
   useEffect(() => {
@@ -403,13 +447,106 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     }));
   }, [user]);
 
-  const setField = (id: string, v: string) => setForm((f) => ({ ...f, [id]: v }));
-  const setPaymentField = (id: string, v: string) => setPaymentForm((f) => ({ ...f, [id]: v }));
+  const setField = (id: string, v: string) => {
+    setForm((f) => ({ ...f, [id]: v }));
+    setErrors((current) => {
+      if (!current[id]) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+  };
+  const setPaymentField = (id: string, v: string) => {
+    setPaymentForm((f) => ({ ...f, [id]: v }));
+    setErrors((current) => {
+      if (!current[id]) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+  };
 
-  const handlePlaceOrder = () => {
-    setStep('confirmation');
-    clearCart();
-    toast({ type: 'success', title: content.orderPlacedToastTitle, message: content.orderPlacedToastMessage });
+  const validateInformationForm = (): boolean => {
+    const nextErrors: Record<string, string> = {};
+    const requiredFields = ['email', 'firstName', 'lastName', 'address', 'city', 'postcode', 'country', 'phone'];
+
+    for (const field of requiredFields) {
+      if (!(form[field] ?? '').trim()) nextErrors[field] = requiredMessage;
+    }
+    if ((form.email ?? '').trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      nextErrors.email = invalidEmailMessage;
+    }
+
+    setErrors((current) => ({ ...current, ...nextErrors }));
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const validatePaymentForm = (): boolean => {
+    const nextErrors: Record<string, string> = {};
+    const cardNumber = (paymentForm.cardNumber ?? '').replace(/\s+/g, '');
+    const expiry = (paymentForm.expiry ?? '').replace(/\s+/g, '');
+    const securityCode = (paymentForm.securityCode ?? '').trim();
+
+    if (!/^\d{16}$/.test(cardNumber)) nextErrors.cardNumber = invalidCardMessage;
+    if (!(paymentForm.cardName ?? '').trim()) nextErrors.cardName = requiredMessage;
+
+    const expiryMatch = /^(0[1-9]|1[0-2])\/(\d{2})$/.exec(expiry);
+    if (!expiryMatch) {
+      nextErrors.expiry = invalidExpiryMessage;
+    } else {
+      const expiryMonth = Number(expiryMatch[1]);
+      const expiryYear = 2000 + Number(expiryMatch[2]);
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
+        nextErrors.expiry = expiredCardMessage;
+      }
+    }
+
+    if (!/^\d{3,4}$/.test(securityCode)) nextErrors.securityCode = invalidCvvMessage;
+
+    setErrors((current) => ({ ...current, ...nextErrors }));
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handlePlaceOrder = async () => {
+    if (items.length === 0 || placingOrder) return;
+    if (!validateInformationForm()) {
+      setStep('information');
+      return;
+    }
+    if (!validatePaymentForm()) return;
+
+    setPlacingOrder(true);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email,
+          items,
+          shippingMethod: selectedShipping.label,
+          shippingPrice: selectedShipping.price,
+          shippingAddress: { ...form },
+          subtotal,
+          discount,
+          promoCode: promoCode ?? undefined,
+          total,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { orderId?: string };
+      if (!res.ok || typeof data.orderId !== 'string') throw new Error('Order failed');
+
+      setConfirmedOrderId(data.orderId);
+      setStep('confirmation');
+      clearCart();
+      toast({ type: 'success', title: content.orderPlacedToastTitle, message: data.orderId });
+    } catch {
+      toast({ type: 'error', title: 'Order failed', message: 'Please try again.' });
+    } finally {
+      setPlacingOrder(false);
+    }
   };
 
   if (step === 'confirmation') {
@@ -449,6 +586,11 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
             <strong style={{ color: 'var(--fg)' }}>{form.email || content.confirmationEmailFallback}</strong>
             {content.confirmationBodySuffix}
           </p>
+          {confirmedOrderId && (
+            <p className="type-label mb-8" style={{ color: 'var(--accent)' }}>
+              {confirmedOrderId}
+            </p>
+          )}
           <div className="flex gap-3">
             <a href={localizedHref(content.continueShoppingHref)} className="btn-primary">{content.continueShoppingLabel}</a>
             <button className="btn-ghost">{content.trackOrderLabel}</button>
@@ -502,7 +644,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   {content.informationTitle}
                 </h2>
                 <div className="space-y-4">
-                  <FieldRows fields={content.informationFields} values={form} onChange={setField} />
+                  <FieldRows fields={content.informationFields} values={form} errors={errors} onChange={setField} />
                 </div>
 
                 <div className="flex items-center justify-between mt-10">
@@ -514,7 +656,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   </a>
                   <button
                     className="btn-primary"
-                    onClick={() => setStep('shipping')}
+                    onClick={() => {
+                      if (validateInformationForm()) setStep('shipping');
+                    }}
                   >
                     {content.continueToShippingLabel}
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -636,7 +780,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
 
                 {/* Card form */}
                 <div className="space-y-4">
-                  <FieldRows fields={content.paymentFields} values={paymentForm} onChange={setPaymentField} />
+                  <FieldRows fields={content.paymentFields} values={paymentForm} errors={errors} onChange={setPaymentField} />
                 </div>
 
                 {/* Billing address toggle */}
@@ -669,11 +813,16 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   <button
                     className="btn-primary"
                     onClick={handlePlaceOrder}
-                    disabled={items.length === 0}
-                    style={{ opacity: items.length === 0 ? 0.5 : 1 }}
+                    disabled={items.length === 0 || placingOrder}
+                    style={{ opacity: items.length === 0 || placingOrder ? 0.5 : 1 }}
                   >
+                    {placingOrder && (
+                      <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                        <path d="M12 3a9 9 0 1 1-9 9" />
+                      </svg>
+                    )}
                     {items.length === 0 ? content.addItemsFirstLabel : content.placeOrderLabel}
-                    {items.length > 0 && (
+                    {items.length > 0 && !placingOrder && (
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                         <path d="M5 12h14M12 5l7 7-7 7" />
                       </svg>
@@ -686,7 +835,15 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
 
           {/* Order summary column */}
           <div className="px-8 md:px-10 py-12" style={{ background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}>
-            <OrderSummary content={content.orderSummary} />
+            <OrderSummary
+              content={content.orderSummary}
+              shippingPrice={selectedShipping.price}
+              subtotal={subtotal}
+              discount={discount}
+              total={total}
+              promoCode={promoCode}
+              onPromoCodeChange={setPromoCode}
+            />
           </div>
         </div>
       </main>

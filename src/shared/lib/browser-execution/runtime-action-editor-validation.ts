@@ -1,6 +1,10 @@
 import type { PlaywrightActionBlock } from '@/shared/contracts/playwright-steps';
 
 import { ACTION_SEQUENCES, type ActionSequenceKey } from './action-sequences';
+import {
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS,
+} from './product-scrape-runtime-constants';
 import { STEP_GROUPS } from './step-groups';
 import { STEP_REGISTRY, type StepId } from './step-registry';
 
@@ -16,6 +20,17 @@ const TRADERA_CHECK_STATUS_AUTH_STEP_IDS = [
   'auth_login',
   'auth_manual',
 ] satisfies StepId[];
+const PRODUCT_SCRAPE_IMAGE_RUNTIME_STEP_IDS = [
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectScrapedImageLinks,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadScrapedImages,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectProductGalleryImages,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadProductGalleryImages,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.applyImagePayload,
+] satisfies StepId[];
+const REQUIRED_CONFIGURABLE_RUNTIME_BLOCKS: Partial<Record<ActionSequenceKey, readonly StepId[]>> = {
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY]: PRODUCT_SCRAPE_IMAGE_RUNTIME_STEP_IDS,
+};
 
 const unique = (values: string[]): string[] => [...new Set(values)];
 
@@ -72,6 +87,28 @@ const getEnabledRuntimeStepIds = (blocks: PlaywrightActionBlock[]): StepId[] =>
     .filter((block) => block.kind === 'runtime_step' && block.enabled !== false)
     .map((block) => toKnownStepId(block.refId))
     .filter((stepId): stepId is StepId => stepId !== null);
+
+const getRuntimeStepIds = (blocks: PlaywrightActionBlock[]): StepId[] =>
+  blocks
+    .filter((block) => block.kind === 'runtime_step')
+    .map((block) => toKnownStepId(block.refId))
+    .filter((stepId): stepId is StepId => stepId !== null);
+
+const collectRuntimeActionConfigurableBlockErrors = (
+  blocks: PlaywrightActionBlock[],
+  runtimeKey: ActionSequenceKey
+): string[] => {
+  const requiredStepIds = REQUIRED_CONFIGURABLE_RUNTIME_BLOCKS[runtimeKey] ?? [];
+  if (requiredStepIds.length === 0) return [];
+
+  const runtimeStepIds = new Set(getRuntimeStepIds(blocks));
+  const missingStepIds = requiredStepIds.filter((stepId) => !runtimeStepIds.has(stepId));
+  if (missingStepIds.length === 0) return [];
+
+  return [
+    `Runtime action "${runtimeKey}" must include configurable runtime steps: ${missingStepIds.join(', ')}.`,
+  ];
+};
 
 const collectRuntimeActionSequenceErrors = (
   stepIds: StepId[],
@@ -217,6 +254,7 @@ export function validateRuntimeActionEditorBlocks(input: {
 
   return [
     ...collectRuntimeActionShapeErrors(blocks, runtimeKey),
+    ...collectRuntimeActionConfigurableBlockErrors(blocks, runtimeKey),
     ...collectRuntimeActionSequenceErrors(enabledRuntimeStepIds, runtimeKey),
     ...collectTraderaQuicklistErrors(enabledRuntimeStepIds, runtimeKey),
     ...collectTraderaCheckStatusErrors(enabledRuntimeStepIds, runtimeKey),

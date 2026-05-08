@@ -108,6 +108,77 @@ describe('product scrape profile payloads', () => {
     expect(payload.name_en).toBe('40k spiritseer');
     expect(payload.categoryId).toBe('category-pendants');
   });
+
+  it('infers catalog-agnostic linked parameters from rendered structured template names', () => {
+    const payload = buildCreatePayload({
+      ...defaultPayloadInput,
+      template: template({
+        categoryId: 'category-pendants',
+        name_en: '[name] | 4 cm | Resin | Gaming Figurine | Warhammer',
+      }),
+      templateCategoryAliases: ['Gaming Figurine'],
+      templateLinkedParameterMetadata: {
+        parameters: [
+          { id: 'param-size', linkedTitleTermType: 'size' },
+          { id: 'param-material', linkedTitleTermType: 'material' },
+          { id: 'param-theme', linkedTitleTermType: 'theme' },
+        ],
+        titleTermsByType: {
+          size: [
+            {
+              id: 'term-size',
+              catalogId: 'catalog-pin',
+              type: 'size',
+              name_en: '4 cm',
+              name_pl: null,
+              createdAt: '2026-04-30T00:00:00.000Z',
+              updatedAt: '2026-04-30T00:00:00.000Z',
+            },
+          ],
+          material: [
+            {
+              id: 'term-material',
+              catalogId: 'catalog-pin',
+              type: 'material',
+              name_en: 'Resin',
+              name_pl: 'Zywica',
+              createdAt: '2026-04-30T00:00:00.000Z',
+              updatedAt: '2026-04-30T00:00:00.000Z',
+            },
+          ],
+          theme: [
+            {
+              id: 'term-theme',
+              catalogId: 'catalog-pin',
+              type: 'theme',
+              name_en: 'Warhammer',
+              name_pl: null,
+              createdAt: '2026-04-30T00:00:00.000Z',
+              updatedAt: '2026-04-30T00:00:00.000Z',
+            },
+          ],
+        },
+      },
+    });
+
+    expect(payload.parameters).toEqual([
+      {
+        parameterId: 'param-size',
+        value: '4 cm',
+        valuesByLanguage: { en: '4 cm', pl: '4 cm' },
+      },
+      {
+        parameterId: 'param-material',
+        value: 'Resin',
+        valuesByLanguage: { en: 'Resin', pl: 'Zywica' },
+      },
+      {
+        parameterId: 'param-theme',
+        value: 'Warhammer',
+        valuesByLanguage: { en: 'Warhammer', pl: 'Warhammer' },
+      },
+    ]);
+  });
 });
 
 describe('product scrape profile payload pricing', () => {

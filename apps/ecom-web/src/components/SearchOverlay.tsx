@@ -110,7 +110,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
     addItem({
       productId: product.id,
       slug: product.slug,
-      name: product.name,
+      name: product.shortName ?? product.name,
       category: product.category,
       price: product.price,
       priceDisplay: product.priceDisplay,
@@ -119,7 +119,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
       imageUrl: product.imageUrl,
       quantity: 1,
     });
-    toast({ type: 'success', title: search.addedToastTitle, message: product.name });
+    toast({ type: 'success', title: search.addedToastTitle, message: product.shortName ?? product.name });
   }, [addItem, search.addedToastTitle, toast]);
 
   const trimmed = query.trim();
@@ -323,7 +323,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                       <ProductImage
                         imageUrl={p.imageUrl}
                         gradient={p.gradient}
-                        alt={p.name}
+                        alt={p.shortName ?? p.name}
                         className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
                         sizes="(max-width: 768px) 50vw, 25vw"
                       />
@@ -347,7 +347,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                     </div>
                     <div className="type-label mb-0.5" style={{ color: 'var(--muted)' }}>{p.category}</div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 300, color: 'var(--fg)' }}>
-                      {p.name}
+                      {p.shortName ?? p.name}
                     </div>
                     <div className="type-price mt-0.5" style={{ color: 'var(--muted)' }}>{formatPrice(p.price, locale)}</div>
                   </a>

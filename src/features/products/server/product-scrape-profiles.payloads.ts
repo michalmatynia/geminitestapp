@@ -19,11 +19,12 @@ import {
   renderScrapeTemplateCustomFields,
   renderScrapeTemplateMarketplaceOverrides,
   renderScrapeTemplateNotes,
-  renderScrapeTemplateParameterValues,
   renderScrapeTemplateText,
   type ScrapeTemplateValues,
 } from './product-scrape-template-renderer';
 import { buildCalculatedImportedPrice } from './product-scrape-profiles.payload-pricing';
+import type { ScrapeTemplateLinkedParameterMetadata } from './product-scrape-template-linked-parameters';
+import { buildScrapeTemplateParameterField } from './product-scrape-template-parameters';
 
 type ProductScrapePayloadInput = {
   candidate: ProductScrapeCandidate;
@@ -36,6 +37,7 @@ type ProductScrapePayloadInput = {
   sourcePriceCurrencyCode: string;
   template?: ProductDraft | null;
   templateCategoryAliases?: readonly string[];
+  templateLinkedParameterMetadata?: ScrapeTemplateLinkedParameterMetadata | null;
 };
 
 const hasTemplateNumber = (value: number | null | undefined): value is number =>
@@ -130,14 +132,16 @@ const buildTemplatePayloadDefaults = (
 
 const buildRenderedNameFields = ({
   candidate,
+  renderedTemplateNameEn,
   templateCategoryAliases,
   values,
   template,
 }: Pick<ProductScrapePayloadInput, 'candidate' | 'template' | 'templateCategoryAliases'> & {
+  renderedTemplateNameEn: string | null;
   values: ScrapeTemplateValues;
 }): Pick<ProductCreateInput, 'sku' | 'importSource' | 'name_pl'> &
   Partial<Pick<ProductCreateInput, 'name_en' | 'name_de'>> => {
-  const nameEn = resolveRenderedNameEn(template, values, templateCategoryAliases);
+  const nameEn = resolveRenderedNameEn(template, renderedTemplateNameEn, templateCategoryAliases);
   const nameDe = renderScrapeTemplateText(template?.name_de, values);
 
   return {
@@ -151,15 +155,14 @@ const buildRenderedNameFields = ({
 
 const resolveRenderedNameEn = (
   template: ProductDraft | null | undefined,
-  values: ScrapeTemplateValues,
+  renderedTemplateNameEn: string | null,
   templateCategoryAliases: readonly string[] | undefined
 ): string | null => {
-  const nameEn = renderScrapeTemplateText(template?.name_en, values);
-  if (nameEn === null) return null;
+  if (renderedTemplateNameEn === null) return null;
   if (!hasTemplateString(template?.categoryId)) return null;
   if (!hasTemplateCategoryAliases(templateCategoryAliases)) return null;
 
-  const normalizedNameEn = normalizeStructuredProductName(nameEn);
+  const normalizedNameEn = normalizeStructuredProductName(renderedTemplateNameEn);
   const categorySegment = resolveStructuredNameCategorySegment(normalizedNameEn);
   if (categorySegment === null) return null;
   return templateCategoryAliases.includes(categorySegment) ? normalizedNameEn : null;
@@ -234,24 +237,38 @@ const buildTemplateRelationFields = (
   };
 };
 
-const buildTemplateParameterField = (
-  parameters: ProductDraft['parameters'],
-  values: ScrapeTemplateValues
-): Partial<ProductCreateInput & ProductUpdateInput> =>
-  hasItems(parameters)
-    ? { parameters: renderScrapeTemplateParameterValues(parameters, values) }
-    : {};
-
 const buildTemplateCollectionFields = (
   template: ProductDraft | null | undefined,
-  values: ScrapeTemplateValues
+  values: ScrapeTemplateValues,
+  renderedNameEn: string | null | undefined,
+  linkedParameterMetadata: ScrapeTemplateLinkedParameterMetadata | null | undefined
 ): Partial<ProductCreateInput & ProductUpdateInput> => {
   return {
     ...buildTemplateCategoryField(template?.categoryId),
     ...buildTemplateRelationFields(template),
-    ...buildTemplateParameterField(template?.parameters, values),
+    ...buildScrapeTemplateParameterField({
+      linkedParameterMetadata,
+      parameters: template?.parameters,
+      renderedNameEn,
+      values,
+    }),
   };
 };
+
+const buildImageFields = (
+  candidate: ProductScrapeCandidate,
+  imagePayload: ProductScrapeImagePayload | undefined
+): Pick<ProductCreateInput, 'imageLinks'> &
+  Partial<Pick<ProductCreateInput, 'imageFileIds'>> => ({
+  imageLinks: imagePayload?.imageLinks ?? candidate.imageLinks,
+  ...(imagePayload?.imageFileIds !== undefined ? { imageFileIds: imagePayload.imageFileIds } : {}),
+});
+
+const buildSourcePriceFields = (
+  candidate: ProductScrapeCandidate,
+  sourcePriceCurrencyCode: string
+): Partial<Pick<ProductCreateInput, 'sourcePrice' | 'sourcePriceCurrencyCode'>> =>
+  candidate.price !== null ? { sourcePrice: candidate.price, sourcePriceCurrencyCode } : {};
 
 const buildCommonPayloadFields = ({
   candidate,
@@ -264,11 +281,20 @@ const buildCommonPayloadFields = ({
   sourcePriceCurrencyCode,
   template,
   templateCategoryAliases,
+  templateLinkedParameterMetadata,
 }: ProductScrapePayloadInput): ProductCreateInput => {
   const values = buildScrapeTemplateValues(draft, candidate);
+  const renderedTemplateNameEn = renderScrapeTemplateText(template?.name_en, values);
+  const renderedNameFields = buildRenderedNameFields({
+    candidate,
+    renderedTemplateNameEn,
+    values,
+    template,
+    templateCategoryAliases,
+  });
 
   return {
-    ...buildRenderedNameFields({ candidate, values, template, templateCategoryAliases }),
+    ...renderedNameFields,
     ...buildRenderedDescriptionFields(template, values),
     ...buildRenderedSupplierFields({ candidate, profile, template, values }),
     ...buildTemplateIdDefaults(template, catalogDefaultPriceGroupId),
@@ -282,23 +308,23 @@ const buildCommonPayloadFields = ({
     }),
     ...buildTemplatePayloadDefaults(template, values, catalogDefaultPriceGroupId),
     catalogIds,
-    ...buildTemplateCollectionFields(template, values),
-    imageLinks: imagePayload?.imageLinks ?? candidate.imageLinks,
-    ...(imagePayload?.imageFileIds !== undefined ? { imageFileIds: imagePayload.imageFileIds } : {}),
-    ...(candidate.price !== null
-      ? { sourcePrice: candidate.price, sourcePriceCurrencyCode }
-      : {}),
+    ...buildTemplateCollectionFields(
+      template,
+      values,
+      renderedTemplateNameEn,
+      templateLinkedParameterMetadata
+    ),
+    ...buildImageFields(candidate, imagePayload),
+    ...buildSourcePriceFields(candidate, sourcePriceCurrencyCode),
   };
 };
 
 export const buildCreatePayload = (input: ProductScrapePayloadInput): ProductCreateInput => {
   const commonPayload = buildCommonPayloadFields(input);
-
-  const payload: ProductCreateInput = {
+  return {
     ...commonPayload,
     stock: commonPayload.stock ?? 0,
   };
-  return payload;
 };
 
 export const buildUpdatePayload = (input: ProductScrapePayloadInput): ProductUpdateInput =>
@@ -307,8 +333,4 @@ export const buildUpdatePayload = (input: ProductScrapePayloadInput): ProductUpd
 export const resolveResultPayloadTitle = (
   payload: ProductCreateInput | ProductUpdateInput,
   candidate: ProductScrapeCandidate
-): string =>
-  payload.name_pl ??
-  payload.name_en ??
-  payload.name_de ??
-  candidate.title;
+): string => payload.name_pl ?? payload.name_en ?? payload.name_de ?? candidate.title;

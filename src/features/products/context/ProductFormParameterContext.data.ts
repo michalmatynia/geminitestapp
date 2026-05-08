@@ -10,11 +10,18 @@ import {
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import type { ProductFormData, ProductDraft } from '@/shared/contracts/products/drafts';
-import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type {
+  ProductParameter,
+  ProductSimpleParameter,
+} from '@/shared/contracts/products/parameters';
 import type { ProductParameterValue, ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductTitleTerm, ProductTitleTermType } from '@/shared/contracts/products/title-terms';
 
-import { useParameters, useSimpleParameters, useTitleTerms } from '../hooks/useProductMetadataQueries';
+import {
+  useParameters,
+  useSimpleParameters,
+  useTitleTerms,
+} from '../hooks/useProductMetadataQueries';
 import { mergeParameterDefinitions } from './ProductFormParameterDefinitions';
 import {
   buildTitleTermLookup,
@@ -47,6 +54,11 @@ type MergedParameterData = {
   parameterValueIndexMap: number[];
 };
 
+type ParameterDefinitionQueryResult = Pick<
+  ParameterProviderData,
+  'parameterDefinitions' | 'parametersLoading'
+>;
+
 const resolveCurrentStructuredName = (
   watchedNameEn: unknown,
   product: ProductWithImages | undefined,
@@ -54,6 +66,77 @@ const resolveCurrentStructuredName = (
 ): string => {
   if (typeof watchedNameEn === 'string') return watchedNameEn;
   return product?.name_en ?? draft?.name_en ?? '';
+};
+
+const collectReferencedParameterIds = (values: ProductParameterValue[]): Set<string> =>
+  new Set(
+    values
+      .map((value: ProductParameterValue): string => value.parameterId.trim())
+      .filter((parameterId: string): boolean => parameterId.length > 0)
+  );
+
+const filterReferencedDefinitions = <Definition extends { id: string }>(
+  definitions: Definition[],
+  referencedIds: ReadonlySet<string>
+): Definition[] =>
+  definitions.filter((definition: Definition): boolean => referencedIds.has(definition.id));
+
+const useProductParameterDefinitionQueries = ({
+  primaryCatalogId,
+  sourceParameterValues,
+}: {
+  primaryCatalogId: string;
+  sourceParameterValues: ProductParameterValue[];
+}): ParameterDefinitionQueryResult => {
+  const referencedParameterIds = useMemo(
+    () => collectReferencedParameterIds(sourceParameterValues),
+    [sourceParameterValues]
+  );
+  const shouldLoadReferencedParameterDefinitions = referencedParameterIds.size > 0;
+  const parametersQuery = useParameters(primaryCatalogId);
+  const simpleParametersQuery = useSimpleParameters(primaryCatalogId);
+  const referencedParametersQuery = useParameters(undefined, {
+    allowWithoutCatalog: true,
+    enabled: shouldLoadReferencedParameterDefinitions,
+  });
+  const referencedSimpleParametersQuery = useSimpleParameters(undefined, {
+    allowWithoutCatalog: true,
+    enabled: shouldLoadReferencedParameterDefinitions,
+  });
+  const parameterDefinitions = useMemo(() => {
+    const referencedParameters = filterReferencedDefinitions<ProductParameter>(
+      referencedParametersQuery.data ?? [],
+      referencedParameterIds
+    );
+    const referencedSimpleParameters = filterReferencedDefinitions<ProductSimpleParameter>(
+      referencedSimpleParametersQuery.data ?? [],
+      referencedParameterIds
+    );
+
+    return mergeParameterDefinitions({
+      parameters: [...referencedParameters, ...(parametersQuery.data ?? [])],
+      simpleParameters: [...referencedSimpleParameters, ...(simpleParametersQuery.data ?? [])],
+      parameterValues: sourceParameterValues,
+      fallbackCatalogId: primaryCatalogId,
+    });
+  }, [
+    parametersQuery.data,
+    primaryCatalogId,
+    referencedParameterIds,
+    referencedParametersQuery.data,
+    referencedSimpleParametersQuery.data,
+    simpleParametersQuery.data,
+    sourceParameterValues,
+  ]);
+
+  return {
+    parameterDefinitions,
+    parametersLoading:
+      parametersQuery.isLoading ||
+      simpleParametersQuery.isLoading ||
+      referencedParametersQuery.isLoading ||
+      referencedSimpleParametersQuery.isLoading,
+  };
 };
 
 const useAdoptSourceParameterValues = ({
@@ -88,22 +171,14 @@ export function useProductFormParameterProviderData({
 }: ParameterProviderDataArgs): ParameterProviderData {
   const primaryCatalogId = selectedCatalogIds[0] ?? '';
   const formContext = useFormContext<ProductFormData>();
-  const parametersQuery = useParameters(primaryCatalogId);
-  const simpleParametersQuery = useSimpleParameters(primaryCatalogId);
   const sourceParameterValues = useMemo(
     () => normalizeSourceParameterValues(product?.parameters ?? draft?.parameters),
     [draft?.parameters, product?.parameters]
   );
-  const parameterDefinitions = useMemo(
-    () =>
-      mergeParameterDefinitions({
-        parameters: parametersQuery.data ?? [],
-        simpleParameters: simpleParametersQuery.data ?? [],
-        parameterValues: sourceParameterValues,
-        fallbackCatalogId: primaryCatalogId,
-      }),
-    [parametersQuery.data, primaryCatalogId, simpleParametersQuery.data, sourceParameterValues]
-  );
+  const { parameterDefinitions, parametersLoading } = useProductParameterDefinitionQueries({
+    primaryCatalogId,
+    sourceParameterValues,
+  });
   const sourceParameterValuesKey = useMemo(
     () => serializeParameterValues(sourceParameterValues),
     [sourceParameterValues]
@@ -121,7 +196,7 @@ export function useProductFormParameterProviderData({
   return {
     primaryCatalogId,
     parameterDefinitions,
-    parametersLoading: parametersQuery.isLoading || simpleParametersQuery.isLoading,
+    parametersLoading,
     baseParameterValues,
     setBaseParameterValues,
     currentStructuredName: resolveCurrentStructuredName(watchedNameEn, product, draft),

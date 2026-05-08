@@ -42,7 +42,7 @@ export function BackupDataTable(): JSX.Element {
               void handleBackup().catch(() => {});
             }}
           >
-            Run Backup
+            Backup All MongoDB Files
           </Button>
           <FileUploadButton
             accept='.archive'

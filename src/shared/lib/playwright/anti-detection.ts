@@ -266,7 +266,7 @@ export const resolveChromiumAntiDetectionRuntimeBehavior = ({
   } catch {
     return {
       prewarmUrl: null,
-      ...applyOverrides(baseBehavior),
+      ...applyOverrides(CHROMIUM_RUNTIME_BEHAVIORS[profile]),
     };
   }
 };

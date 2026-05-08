@@ -24,8 +24,13 @@ const mocks = vi.hoisted(() => ({
   getMongoDb: vi.fn(),
   getCategoryById: vi.fn(),
   getDraft: vi.fn(),
+  getParameterRepository: vi.fn(),
   getProductBySku: vi.fn(),
+  getTitleTermRepository: vi.fn(),
   invalidateAll: vi.fn(),
+  listParameters: vi.fn(),
+  listSimpleParameters: vi.fn(),
+  listTitleTerms: vi.fn(),
   listCatalogs: vi.fn(),
   registryGet: vi.fn(),
   resolveRuntimeActionDefinition: vi.fn(),
@@ -77,6 +82,18 @@ vi.mock('@/shared/lib/products/services/category-repository', () => ({
     Promise.resolve({
       getCategoryById: productScrapeProfileMocks.getCategoryById,
     }),
+}));
+
+vi.mock('@/shared/lib/products/services/parameter-repository', () => ({
+  getParameterRepository: productScrapeProfileMocks.getParameterRepository,
+}));
+
+vi.mock('@/shared/lib/products/services/simple-parameter-service', () => ({
+  listSimpleParameters: productScrapeProfileMocks.listSimpleParameters,
+}));
+
+vi.mock('@/shared/lib/products/services/title-term-repository', () => ({
+  getTitleTermRepository: productScrapeProfileMocks.getTitleTermRepository,
 }));
 
 vi.mock('@/shared/lib/products/services/productService', () => ({
@@ -211,6 +228,15 @@ export const resetProductScrapeProfileMocks = (): void => {
   });
   productScrapeProfileMocks.listCatalogs.mockResolvedValue([battleStockCatalog]);
   productScrapeProfileMocks.getCategoryById.mockResolvedValue(gamingPendantCategory);
+  productScrapeProfileMocks.getParameterRepository.mockResolvedValue({
+    listParameters: productScrapeProfileMocks.listParameters,
+  });
+  productScrapeProfileMocks.getTitleTermRepository.mockResolvedValue({
+    listTitleTerms: productScrapeProfileMocks.listTitleTerms,
+  });
+  productScrapeProfileMocks.listParameters.mockResolvedValue([]);
+  productScrapeProfileMocks.listSimpleParameters.mockResolvedValue([]);
+  productScrapeProfileMocks.listTitleTerms.mockResolvedValue([]);
   productScrapeProfileMocks.dryRun.mockResolvedValue(makeSource([makeDraft()]));
   productScrapeProfileMocks.getDraft.mockResolvedValue(null);
   productScrapeProfileMocks.getProductBySku.mockResolvedValue(null);

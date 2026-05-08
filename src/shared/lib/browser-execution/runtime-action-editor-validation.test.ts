@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 import type { PlaywrightActionBlock } from '@/shared/contracts/playwright-steps';
 
 import { PLAYWRIGHT_RUNTIME_ACTION_SEEDS } from './playwright-runtime-action-seeds';
+import {
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+  PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS,
+} from './product-scrape-runtime-constants';
 import { validateRuntimeActionEditorBlocks } from './runtime-action-editor-validation';
 
 const getSeedBlocks = (runtimeKey: string): PlaywrightActionBlock[] => {
@@ -113,6 +117,41 @@ describe('runtime-action-editor-validation', () => {
     expect(errors).toContain(
       'Runtime action "tradera_check_status" must include auth_check, auth_login, and auth_manual.'
     );
+  });
+
+  it('requires BattleStock image runtime steps to stay configurable', () => {
+    const errors = validateRuntimeActionEditorBlocks({
+      runtimeKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+      blocks: getSeedBlocks(PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY).filter(
+        (block) => block.refId !== PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages
+      ),
+    });
+
+    expect(errors).toContain(
+      `Runtime action "${PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY}" must include configurable runtime steps: ${PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages}.`
+    );
+  });
+
+  it('allows BattleStock image runtime steps to be disabled instead of deleted', () => {
+    const imageStepIds = new Set<string>([
+      PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectScrapedImageLinks,
+      PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadScrapedImages,
+      PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectProductGalleryImages,
+      PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadProductGalleryImages,
+      PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages,
+      PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.applyImagePayload,
+    ]);
+    const blocks = getSeedBlocks(PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY).map((block) => ({
+      ...block,
+      enabled: imageStepIds.has(block.refId) ? false : block.enabled,
+    }));
+
+    expect(
+      validateRuntimeActionEditorBlocks({
+        runtimeKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
+        blocks,
+      })
+    ).toEqual([]);
   });
 
   it('requires check-status auth steps to stay in login-recovery order', () => {

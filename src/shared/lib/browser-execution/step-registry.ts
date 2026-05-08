@@ -214,6 +214,30 @@ export const STEP_REGISTRY = {
     id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.mapDrafts,
     label: 'Map scrape drafts',
   },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectScrapedImageLinks]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectScrapedImageLinks,
+    label: 'Collect scraped image links',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadScrapedImages]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadScrapedImages,
+    label: 'Download scraped image files',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectProductGalleryImages]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.collectProductGalleryImages,
+    label: 'Collect product gallery fallback images',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadProductGalleryImages]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.downloadProductGalleryImages,
+    label: 'Download product gallery fallback images',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages,
+    label: 'Upload product images to storage',
+  },
+  [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.applyImagePayload]: {
+    id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.applyImagePayload,
+    label: 'Apply product image payload',
+  },
   [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.finalize]: {
     id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.finalize,
     label: 'Finalize product scrape',

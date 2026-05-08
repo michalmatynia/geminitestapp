@@ -8,6 +8,22 @@ const mocks = vi.hoisted(() => ({
   state: {
     activeTab: 'mongodb',
     backupToDelete: 'old-local.archive',
+    data: [
+      {
+        name: 'geminitestapp/app-backup-1.archive',
+        size: 1024,
+        createdAt: '2026-05-07T10:00:00.000Z',
+        lastModifiedAt: '2026-05-07T10:00:00.000Z',
+      },
+      {
+        name: 'studiq/studiq-backup-1.archive',
+        size: 2048,
+        createdAt: '2026-05-08T10:00:00.000Z',
+        lastModifiedAt: '2026-05-08T10:00:00.000Z',
+      },
+    ],
+    backupRunNowAllowed: true,
+    isProd: false,
     isLogModalOpen: false,
     isRestoreModalOpen: false,
     logModalContent: '',
@@ -29,6 +45,13 @@ vi.mock('@/shared/ui/admin.public', () => ({
 
 vi.mock('@/shared/ui/primitives.public', () => ({
   Badge: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  Button: ({
+    asChild,
+    children,
+  }: {
+    asChild?: boolean;
+    children?: React.ReactNode;
+  }) => (asChild ? <>{children}</> : <button type='button'>{children}</button>),
 }));
 
 vi.mock('@/shared/ui/templates.public', () => ({
@@ -71,6 +94,37 @@ vi.mock('../context/DatabaseBackupsContext', () => ({
   useDatabaseBackupsStateContext: () => mocks.state,
 }));
 
+vi.mock('../context/DatabaseEngineContext', () => ({
+  useDatabaseEngineActionsContext: () => ({
+    backupManagedMongo: vi.fn(),
+  }),
+  useDatabaseEngineStateContext: () => ({
+    isBackingUpManagedMongo: false,
+    operationsJobs: {
+      timestamp: '2026-05-08T10:30:00.000Z',
+      queueStatus: {},
+      jobs: [
+        {
+          id: 'job-backup-studiq',
+          type: 'db_backup',
+          status: 'completed',
+          dbType: 'mongodb',
+          direction: null,
+          source: 'database_engine_managed_backup',
+          payload: { application: 'studiq' },
+          resultSummary: 'Backup created',
+          createdAt: '2026-05-08T10:00:00.000Z',
+          updatedAt: null,
+          startedAt: null,
+          finishedAt: null,
+          errorMessage: null,
+          progress: 100,
+        },
+      ],
+    },
+  }),
+}));
+
 vi.mock('./LogModal', () => ({
   LogModal: () => <div data-testid='log-modal' />,
 }));
@@ -101,6 +155,23 @@ describe('DatabaseBackupsPanel', () => {
   it('renders the delete confirmation and confirms local backup deletion', () => {
     render(<DatabaseBackupsPanel />);
 
+    expect(screen.getByText('GeminiTest App')).toBeInTheDocument();
+    expect(screen.getByText('StudiQ')).toBeInTheDocument();
+    expect(screen.getByText('CMS Builder')).toBeInTheDocument();
+    expect(screen.getByText('Products')).toBeInTheDocument();
+    expect(screen.getByText('geminitestapp/app-backup-1.archive')).toBeInTheDocument();
+    expect(screen.getByText('studiq/studiq-backup-1.archive')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Local Tables' })[1]).toHaveAttribute(
+      'href',
+      '/admin/databases/engine?view=crud&application=studiq&source=local'
+    );
+    expect(screen.getAllByRole('link', { name: 'Cloud Tables' })[1]).toHaveAttribute(
+      'href',
+      '/admin/databases/engine?view=crud&application=studiq&source=cloud'
+    );
+    expect(screen.getByText('Recent Backup Jobs')).toBeInTheDocument();
+    expect(screen.getByText('job-backup-studiq')).toBeInTheDocument();
+    expect(screen.getByText('Target: studiq')).toBeInTheDocument();
     expect(screen.getByRole('dialog', { name: 'Delete Backup' })).toBeInTheDocument();
     expect(
       screen.getByText(

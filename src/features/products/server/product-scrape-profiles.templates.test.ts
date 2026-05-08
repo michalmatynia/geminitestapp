@@ -169,6 +169,132 @@ it('renders selected scrape template parameters into updated products', async ()
   expect(mocks.createProduct).not.toHaveBeenCalled();
 });
 
+it('hydrates linked title-term parameters for catalog-agnostic scrape templates', async () => {
+  mocks.getDraft.mockResolvedValue({
+    ...templateDraft,
+    parameters: [],
+    name_en: '[name] | 4 cm | Resin | Gaming Figurine | Warhammer',
+  });
+  mocks.listParameters.mockResolvedValue([
+    {
+      id: 'param-size',
+      name_en: 'Size',
+      name_pl: null,
+      name_de: null,
+      catalogId: 'catalog-pin',
+      selectorType: 'text',
+      optionLabels: [],
+      linkedTitleTermType: 'size',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+  ]);
+  mocks.listSimpleParameters.mockResolvedValue([
+    {
+      id: 'param-material',
+      label: 'Material',
+      type: 'text',
+      options: [],
+      catalogId: 'catalog-pin',
+      name: 'Material',
+      name_en: 'Material',
+      name_pl: null,
+      name_de: null,
+      linkedTitleTermType: 'material',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+    {
+      id: 'param-theme',
+      label: 'Theme',
+      type: 'text',
+      options: [],
+      catalogId: 'catalog-pin',
+      name: 'Theme',
+      name_en: 'Theme',
+      name_pl: null,
+      name_de: null,
+      linkedTitleTermType: 'theme',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+  ]);
+  mocks.listTitleTerms.mockImplementation(async ({ type }: { type?: string }) => {
+    if (type === 'size') {
+      return [
+        {
+          id: 'term-size',
+          catalogId: 'catalog-pin',
+          type: 'size',
+          name_en: '4 cm',
+          name_pl: null,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+    }
+    if (type === 'material') {
+      return [
+        {
+          id: 'term-material',
+          catalogId: 'catalog-pin',
+          type: 'material',
+          name_en: 'Resin',
+          name_pl: 'Zywica',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+    }
+    if (type === 'theme') {
+      return [
+        {
+          id: 'term-theme',
+          catalogId: 'catalog-pin',
+          type: 'theme',
+          name_en: 'Warhammer',
+          name_pl: null,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+    }
+    return [];
+  });
+  mocks.dryRun.mockResolvedValue(makeSource([mappedTemplateDraft]));
+
+  await scrapeProfiles.runProductScrapeProfile({
+    profileId: BATTLESTOCK_PROFILE_ID,
+    draftTemplateId: 'draft-template-1',
+  });
+
+  expect(mocks.listParameters).toHaveBeenCalledWith({});
+  expect(mocks.listSimpleParameters).toHaveBeenCalledWith({ catalogId: null });
+  expect(mocks.listTitleTerms).toHaveBeenCalledWith({ type: 'size' });
+  expect(mocks.createProduct).toHaveBeenCalledWith(
+    expect.objectContaining({
+      parameters: expect.arrayContaining([
+        {
+          parameterId: 'param-size',
+          value: '4 cm',
+          valuesByLanguage: { en: '4 cm', pl: '4 cm' },
+        },
+        {
+          parameterId: 'param-material',
+          value: 'Resin',
+          valuesByLanguage: { en: 'Resin', pl: 'Zywica' },
+        },
+        {
+          parameterId: 'param-theme',
+          value: 'Warhammer',
+          valuesByLanguage: { en: 'Warhammer', pl: 'Warhammer' },
+        },
+      ]),
+    }),
+    undefined
+  );
+});
+
 it('renders selected scrape template placeholders in dry run results', async () => {
   mocks.getDraft.mockResolvedValue({
     id: 'draft-template-1',

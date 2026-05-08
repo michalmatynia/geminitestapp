@@ -227,6 +227,15 @@ const assertLinkedParameterInferredWithCatalog = async (): Promise<void> => {
   await waitFor(() => {
     expect(result.current.state.parameterValues).toEqual([expectedMaterialParameter]);
   });
+  expect(useTitleTermsMock).toHaveBeenCalledWith(undefined, 'size', {
+    allowWithoutCatalog: true,
+  });
+  expect(useTitleTermsMock).toHaveBeenCalledWith(undefined, 'material', {
+    allowWithoutCatalog: true,
+  });
+  expect(useTitleTermsMock).toHaveBeenCalledWith(undefined, 'theme', {
+    allowWithoutCatalog: true,
+  });
 };
 
 const assertLinkedParameterInferredWithoutCatalog = async (): Promise<void> => {

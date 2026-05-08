@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { JSX } from 'react';
 import { getProduct, PRODUCTS } from '@/data/products';
-import { getMentiosProduct, getMentiosProducts } from '@/lib/mentios';
+import { getMentiosProduct, getMentiosProducts, getMentiosCategoryIdByName } from '@/lib/mentios';
 import { ProductDetailClient } from './ProductDetailClient';
 import { getProductsContent } from '@/lib/cms';
 import { getRequestLocale } from '@/lib/request-locale';
@@ -55,7 +55,12 @@ export default async function ProductPage({ params }: Props): Promise<JSX.Elemen
   let related = pickRelated(PRODUCTS);
 
   if (dbProduct) {
-    const { products: dbPool } = await getMentiosProducts({ limit: 50, collectionSlug: product.collectionSlug, locale });
+    const categoryId = await getMentiosCategoryIdByName(product.category, locale);
+    const { products: dbPool } = await getMentiosProducts({
+      limit: 20,
+      locale,
+      ...(categoryId ? { categoryId } : {}),
+    });
     const picked = pickRelated(dbPool);
     if (picked.length > 0) related = picked;
   }

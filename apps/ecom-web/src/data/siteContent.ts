@@ -183,7 +183,7 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
       { label: 'Gaming', href: '/collections/menswear' },
       { label: 'Film', href: '/collections/accessories' },
       { label: 'New Drops', href: '/products?new=1' },
-      { label: 'All Items', href: '/products' },
+      { label: 'Catalog', href: '/products' },
     ],
     announcement: {
       enabled: true,

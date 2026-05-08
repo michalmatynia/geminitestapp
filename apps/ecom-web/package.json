@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --webpack --port 3300",
-    "build": "next build --webpack",
+    "build": "next build --webpack && node scripts/prepare-vercel-output.mjs",
     "start": "next start --port 3300",
     "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
     "mongo:products:up": "MONGODB_PORT=27020 MONGODB_DATA_DIR=../../../database/products-mongo-data MONGODB_RUNTIME_DIR=../../../database/products-mongo-runtime node ../../scripts/db/local-mongo.mjs up",

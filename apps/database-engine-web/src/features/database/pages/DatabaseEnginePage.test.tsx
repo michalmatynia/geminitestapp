@@ -182,6 +182,7 @@ const mocks = vi.hoisted(() => ({
         },
       ],
     },
+    pendingMongoSourceSync: null,
     redisOverview: null,
     isSyncingMongoSources: false,
     isBackingUpManagedMongo: false,
@@ -375,6 +376,7 @@ const createState = () => ({
       },
     ],
   },
+  pendingMongoSourceSync: null,
   redisOverview: null,
   isSyncingMongoSources: false,
   isBackingUpManagedMongo: false,
@@ -409,11 +411,11 @@ const createState = () => ({
           usesLegacyEnv: false,
           reachable: true,
           healthError: null,
-          databaseSizeBytes: 4096,
-          storageSizeBytes: 2048,
-          dataSizeBytes: 1024,
-          indexSizeBytes: 256,
-          collectionsSizeBytes: 1280,
+          databaseSizeBytes: 16384,
+          storageSizeBytes: 8192,
+          dataSizeBytes: 4096,
+          indexSizeBytes: 1024,
+          collectionsSizeBytes: 5120,
           collectionCount: 1,
           collections: [
             {
@@ -574,6 +576,46 @@ const createState = () => ({
           ],
         },
       },
+      {
+        application: 'products' as const,
+        label: 'Products',
+        canBackupLocal: true,
+        canPushToCloud: true,
+        canPullFromCloud: true,
+        syncIssue: null,
+        local: {
+          source: 'local' as const,
+          configured: true,
+          dbName: 'products_local',
+          maskedUri: 'mongodb://localhost:27020/products_local',
+          usesLegacyEnv: false,
+          reachable: true,
+          healthError: null,
+          databaseSizeBytes: 32768,
+          storageSizeBytes: 16384,
+          dataSizeBytes: 8192,
+          indexSizeBytes: 2048,
+          collectionsSizeBytes: 10240,
+          collectionCount: 0,
+          collections: [],
+        },
+        cloud: {
+          source: 'cloud' as const,
+          configured: true,
+          dbName: 'products_db',
+          maskedUri: 'mongodb+srv://cluster.example/products_db',
+          usesLegacyEnv: false,
+          reachable: true,
+          healthError: null,
+          databaseSizeBytes: 4096,
+          storageSizeBytes: 2048,
+          dataSizeBytes: 1024,
+          indexSizeBytes: 256,
+          collectionsSizeBytes: 1280,
+          collectionCount: 0,
+          collections: [],
+        },
+      },
     ],
   },
 });
@@ -627,14 +669,18 @@ vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     asChild: _asChild,
     children,
+    loading,
+    loadingText,
     onClick,
     ...props
   }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
     asChild?: boolean;
+    loading?: boolean;
+    loadingText?: string;
     children?: React.ReactNode;
   }) => (
-    <button type='button' onClick={onClick} {...props}>
-      {children}
+    <button type='button' onClick={onClick} {...props} disabled={loading || props.disabled}>
+      {loading ? loadingText ?? children : children}
     </button>
   ),
   Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
@@ -975,6 +1021,32 @@ describe('DatabaseEnginePage', () => {
     expect(mocks.actions.syncMongoSources).toHaveBeenCalledWith('local_to_cloud', 'products');
   });
 
+  it('shows an immediate running state for a pending single-application push', () => {
+    mocks.state = {
+      ...mocks.state,
+      isSyncingMongoSources: true,
+      pendingMongoSourceSync: {
+        direction: 'local_to_cloud',
+        application: 'products',
+        startedAt: '2026-04-16T00:38:12.443Z',
+      },
+    };
+
+    render(<DatabaseEnginePage />);
+
+    expect(
+      screen.getByText(
+        'Pushing Products: local -> cloud. Started at 2026-04-16T00:38:12.443Z.'
+      )
+    ).toBeInTheDocument();
+    const pushingButtons = screen.getAllByText('Pushing...').map((node) => node.closest('button'));
+    expect(pushingButtons.length).toBeGreaterThanOrEqual(2);
+    pushingButtons.forEach((button) => {
+      expect(button).toBeDisabled();
+    });
+    expect(screen.getByText('Push local to cloud - Products')).toBeInTheDocument();
+  });
+
   it('shows server-side sync progress and disables sync controls while the lock is active', () => {
     mocks.state = {
       ...mocks.state,
@@ -982,6 +1054,7 @@ describe('DatabaseEnginePage', () => {
         ...mocks.state.mongoSourceState,
         syncInProgress: {
           direction: 'local_to_cloud',
+          application: 'products',
           source: 'local',
           target: 'cloud',
           acquiredAt: '2026-04-16T00:38:12.443Z',
@@ -994,9 +1067,10 @@ describe('DatabaseEnginePage', () => {
 
     expect(
       screen.getByText(
-        'Sync in progress: local -> cloud since 2026-04-16T00:38:12.443Z'
+        'Sync in progress for Products: local -> cloud since 2026-04-16T00:38:12.443Z'
       )
     ).toBeInTheDocument();
+    expect(screen.getByText('Push local to cloud - Products')).toBeInTheDocument();
 
     const syncButtons = screen.getAllByRole('button', { name: 'Syncing...' });
     expect(syncButtons).toHaveLength(2);

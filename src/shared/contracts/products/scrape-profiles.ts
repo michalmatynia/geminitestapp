@@ -97,6 +97,15 @@ export const productScrapeProfileRunSummarySchema = z.object({
   totalIssues: z.number().int().min(0),
 });
 
+export const productScrapeProfileRunRuntimeImageStepControlsSchema = z.object({
+  applyImagePayload: z.boolean(),
+  collectProductGalleryImages: z.boolean(),
+  collectScrapedImageLinks: z.boolean(),
+  downloadProductGalleryImages: z.boolean(),
+  downloadScrapedImages: z.boolean(),
+  uploadProductImages: z.boolean(),
+});
+
 export const productScrapeProfileRunRuntimeSchema = z.object({
   queueName: z.string().trim().min(1).nullable(),
   runtimeActionId: z.string().trim().min(1),
@@ -104,6 +113,8 @@ export const productScrapeProfileRunRuntimeSchema = z.object({
   runtimeActionKey: z.string().trim().min(1),
   browserMode: z.enum(['headed', 'headless', 'runtime_default']),
   enabledStepCount: z.number().int().min(0),
+  imageImportMode: productScrapeProfileImageImportModeSchema.optional(),
+  imageStepControls: productScrapeProfileRunRuntimeImageStepControlsSchema.optional(),
   totalStepCount: z.number().int().min(0),
 });
 
@@ -143,13 +154,32 @@ export type ProductScrapeProfileRuntimeStatus = z.infer<
   typeof productScrapeProfileRuntimeStatusSchema
 >;
 
+export const productScrapeProfileRuntimeProgressSchema = z.object({
+  current: z.number().int().min(0).nullable(),
+  message: z.string().trim().min(1).nullable(),
+  stage: z.string().trim().min(1),
+  total: z.number().int().min(0).nullable(),
+  updatedAt: z.string().trim().min(1),
+});
+
+export type ProductScrapeProfileRuntimeProgress = z.infer<
+  typeof productScrapeProfileRuntimeProgressSchema
+>;
+
+export type ProductScrapeProfileRuntimeProgressUpdate = Omit<
+  ProductScrapeProfileRuntimeProgress,
+  'updatedAt'
+>;
+
 export const productScrapeProfileRuntimeRunSchema = z.object({
   completedAt: z.string().trim().min(1).nullable(),
   createdAt: z.string().trim().min(1),
   dryRun: z.boolean(),
   error: z.string().nullable(),
   id: z.string().trim().min(1),
+  imageImportMode: productScrapeProfileImageImportModeSchema.optional(),
   profileId: z.string().trim().min(1),
+  progress: productScrapeProfileRuntimeProgressSchema.nullable().optional(),
   queueName: z.string().trim().min(1),
   result: productScrapeProfileRunResponseSchema.nullable(),
   startedAt: z.string().trim().min(1).nullable(),
@@ -182,6 +212,7 @@ export const productScrapeProfileRunQueuedResponseSchema = z.object({
   profileId: z.string().trim().min(1),
   dryRun: z.boolean(),
   jobId: z.string().trim().min(1),
+  imageImportMode: productScrapeProfileImageImportModeSchema.optional(),
   queueName: z.string().trim().min(1),
   enqueuedAt: z.string().trim().min(1),
   run: productScrapeProfileRuntimeRunSchema.optional(),

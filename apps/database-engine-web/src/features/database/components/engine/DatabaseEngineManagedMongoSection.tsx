@@ -5,9 +5,11 @@ import { CloudUploadIcon, DatabaseIcon, DownloadIcon, PencilIcon, RefreshCwIcon 
 import type { JSX } from 'react';
 
 import type {
+  DatabaseEngineManagedMongoApplicationTarget,
   DatabaseEngineManagedMongoCollectionStats,
   DatabaseEngineManagedMongoDatabase,
   DatabaseEngineManagedMongoEndpoint,
+  DatabaseEngineMongoPendingSyncRequest,
   MongoSource,
 } from '@/shared/contracts/database';
 import { StatusBadge } from '@/shared/ui/data-display.public';
@@ -24,6 +26,15 @@ const SOURCE_LABELS: Record<MongoSource, string> = {
   local: 'Local',
   cloud: 'Cloud',
 };
+
+const isPendingSyncTarget = (
+  pendingSync: DatabaseEngineMongoPendingSyncRequest | null,
+  direction: 'cloud_to_local' | 'local_to_cloud',
+  application: DatabaseEngineManagedMongoApplicationTarget
+): boolean =>
+  pendingSync !== null &&
+  pendingSync.direction === direction &&
+  pendingSync.application === application;
 
 const formatBytes = (bytes: number | null): string => {
   if (bytes === null) return 'n/a';
@@ -124,15 +135,19 @@ function ManagedDatabaseCard({
   database,
   backupDisabled,
   syncDisabled,
+  pendingSync,
 }: {
   database: DatabaseEngineManagedMongoDatabase;
   backupDisabled: boolean;
   syncDisabled: boolean;
+  pendingSync: DatabaseEngineMongoPendingSyncRequest | null;
 }): JSX.Element {
   const { backupManagedMongo, syncManagedMongo } = useDatabaseEngineActionsContext();
   const isBackupDisabled = backupDisabled || !database.canBackupLocal;
   const isPushDisabled = syncDisabled || !database.canPushToCloud;
   const isPullDisabled = syncDisabled || !database.canPullFromCloud;
+  const isPushing = isPendingSyncTarget(pendingSync, 'local_to_cloud', database.application);
+  const isPulling = isPendingSyncTarget(pendingSync, 'cloud_to_local', database.application);
 
   return (
     <Card variant='subtle' padding='md' className='space-y-4 border-white/10'>
@@ -175,6 +190,8 @@ function ManagedDatabaseCard({
             type='button'
             size='sm'
             disabled={isPushDisabled}
+            loading={isPushing}
+            loadingText='Pushing...'
             onClick={() => {
               void syncManagedMongo('local_to_cloud', database.application);
             }}
@@ -187,6 +204,8 @@ function ManagedDatabaseCard({
             variant='outline'
             size='sm'
             disabled={isPullDisabled}
+            loading={isPulling}
+            loadingText='Pulling...'
             onClick={() => {
               void syncManagedMongo('cloud_to_local', database.application);
             }}
@@ -211,6 +230,9 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
     operationControls,
     isBackingUpManagedMongo,
     isSyncingManagedMongo,
+    isSyncingMongoSources,
+    mongoSourceState,
+    pendingMongoSourceSync,
   } = useDatabaseEngineStateContext();
   const { backupManagedMongo, syncManagedMongo, refetchAll } = useDatabaseEngineActionsContext();
 
@@ -227,14 +249,21 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
     !operationControls.allowManualBackupRunNow ||
     !managedMongoDatabases.canBackupAllLocal;
   const backupStorageDisabled = !managedMongoDatabases.backupStorage.canWriteBackups;
-  const syncDisabled =
+  const isMongoSyncBusy =
     isSyncingManagedMongo ||
+    isSyncingMongoSources ||
+    pendingMongoSourceSync !== null ||
+    mongoSourceState?.syncInProgress != null;
+  const syncDisabled =
+    isMongoSyncBusy ||
     !operationControls.allowManualFullSync ||
     !managedMongoDatabases.canPushAllToCloud;
   const pullDisabled =
-    isSyncingManagedMongo ||
+    isMongoSyncBusy ||
     !operationControls.allowManualFullSync ||
     !managedMongoDatabases.canPullAllFromCloud;
+  const isPushingAll = isPendingSyncTarget(pendingMongoSourceSync, 'local_to_cloud', 'all');
+  const isPullingAll = isPendingSyncTarget(pendingMongoSourceSync, 'cloud_to_local', 'all');
 
   return (
     <FormSection title='Managed Application Databases' className='space-y-0'>
@@ -270,6 +299,8 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
                 type='button'
                 size='sm'
                 disabled={syncDisabled}
+                loading={isPushingAll}
+                loadingText='Pushing all...'
                 onClick={() => {
                   void syncManagedMongo('local_to_cloud', 'all');
                 }}
@@ -282,6 +313,8 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
                 variant='outline'
                 size='sm'
                 disabled={pullDisabled}
+                loading={isPullingAll}
+                loadingText='Pulling all...'
                 onClick={() => {
                   void syncManagedMongo('cloud_to_local', 'all');
                 }}
@@ -309,7 +342,8 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
               !operationControls.allowManualBackupRunNow ||
               backupStorageDisabled
             }
-            syncDisabled={isSyncingManagedMongo || !operationControls.allowManualFullSync}
+            syncDisabled={isMongoSyncBusy || !operationControls.allowManualFullSync}
+            pendingSync={pendingMongoSourceSync}
           />
         ))}
       </div>

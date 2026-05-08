@@ -10,9 +10,11 @@
  * Both formats are handled so the code works against any environment.
  */
 
+import { cache } from 'react';
 import type { Product } from '@/data/products';
 import { getProductsDb, hasProductsMongoConfig } from '@/lib/mongodb';
 import { normalizeLocale, normalizeLocaleList, type EcomLocale } from '@/lib/locales';
+import { ensureProductIndexes } from '@/lib/db-indexes';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -127,6 +129,8 @@ interface LanguageDoc {
   id?: string | null;
   code?: string | null;
 }
+
+type CategoryMapEntry = { name: string; collection: string; aliases: string[] };
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -249,13 +253,20 @@ function categoryToCollection(name: string): string {
   return 'objects';
 }
 
-function buildCategoryMap(docs: CategoryDoc[], locale: EcomLocale): Map<string, { name: string; collection: string }> {
-  const map = new Map<string, { name: string; collection: string }>();
+function buildCategoryMap(docs: CategoryDoc[], locale: EcomLocale): Map<string, CategoryMapEntry> {
+  const map = new Map<string, CategoryMapEntry>();
   for (const doc of docs) {
     const id = stringifyDocumentId(doc._id);
     if (!id) continue;
     const name = pickCategoryName(doc, locale);
-    map.set(id, { name, collection: categoryToCollection(name) });
+    const aliases = uniqueStrings([
+      name,
+      doc.name_en,
+      doc.name_pl,
+      typeof doc.name === 'string' ? doc.name : doc.name?.en,
+      typeof doc.name === 'string' ? undefined : doc.name?.pl,
+    ]);
+    map.set(id, { name, collection: categoryToCollection(name), aliases });
   }
   return map;
 }
@@ -479,7 +490,7 @@ function buildImageUrls(doc: ProductDoc): string[] {
 function mapDoc(
   doc: ProductDoc,
   index: number,
-  categoryMap: Map<string, { name: string; collection: string }>,
+  categoryMap: Map<string, CategoryMapEntry>,
   locale: EcomLocale,
 ): Product {
   const id = stringifyDocumentId(doc._id);
@@ -568,6 +579,8 @@ export interface FetchProductsOptions {
   collectionSlug?: string; // filter by resolved collection
   categoryId?: string;      // filter by raw DB categoryId (DB-level, before mapping)
   categoryName?: string;    // filter by localized display name — resolved to categoryId internally
+  categoryNames?: string[];  // filter by multiple localized display names
+  themeNames?: string[];     // filter by lore/theme text in product names
   search?: string;          // regex search across name / sku / description
   ids?: string[];           // fetch specific products by _id
   newOnly?: boolean;        // only products created within NEW_ARRIVALS_DAYS
@@ -583,7 +596,7 @@ export interface MentiosResult {
 }
 
 /** Return the storefront locales enabled on the configured Mentios catalog. */
-export async function getMentiosCatalogLocales(): Promise<EcomLocale[]> {
+export const getMentiosCatalogLocales = cache(async function getMentiosCatalogLocales(): Promise<EcomLocale[]> {
   if (!hasProductsMongoConfig()) return normalizeLocaleList([]);
 
   try {
@@ -604,10 +617,10 @@ export async function getMentiosCatalogLocales(): Promise<EcomLocale[]> {
   } catch {
     return normalizeLocaleList([]);
   }
-}
+});
 
 /** Fetch all categories from the Mentios catalog. */
-async function fetchCategories(locale: EcomLocale): Promise<Map<string, { name: string; collection: string }>> {
+async function fetchCategories(locale: EcomLocale): Promise<Map<string, CategoryMapEntry>> {
   try {
     const db = await getProductsDb();
     const docs = await db
@@ -622,7 +635,7 @@ async function fetchCategories(locale: EcomLocale): Promise<Map<string, { name: 
 }
 
 /** Reverse-lookup: resolve a category display name to its raw DB _id. */
-export async function getMentiosCategoryIdByName(
+export const getMentiosCategoryIdByName = cache(async function getMentiosCategoryIdByName(
   categoryName: string,
   localeInput?: EcomLocale | string | null,
 ): Promise<string | null> {
@@ -631,12 +644,46 @@ export async function getMentiosCategoryIdByName(
   try {
     const categoryMap = await fetchCategories(locale);
     for (const [id, cat] of categoryMap) {
-      if (cat.name === categoryName) return id;
+      if (cat.name === categoryName || cat.aliases.includes(categoryName)) return id;
     }
     return null;
   } catch {
     return null;
   }
+});
+
+function uniqueStrings(values: Array<string | undefined | null>): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    const normalized = value?.trim();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+  }
+  return result;
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function productTextSearchClause(value: string): Record<string, unknown> {
+  const pattern = escapeRegex(value);
+  return {
+    $or: [
+      { name_en: { $regex: pattern, $options: 'i' } },
+      { name_pl: { $regex: pattern, $options: 'i' } },
+      { description_en: { $regex: pattern, $options: 'i' } },
+      { description_pl: { $regex: pattern, $options: 'i' } },
+      { name: { $regex: pattern, $options: 'i' } },
+      { 'name.en': { $regex: pattern, $options: 'i' } },
+      { 'name.pl': { $regex: pattern, $options: 'i' } },
+      { sku: { $regex: pattern, $options: 'i' } },
+      { 'description.en': { $regex: pattern, $options: 'i' } },
+      { description: { $regex: pattern, $options: 'i' } },
+    ],
+  };
 }
 
 /** Fetch products from the Mentios catalog. Returns empty array on DB error. */
@@ -646,20 +693,34 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
   if (!hasProductsMongoConfig()) return { products: [], total: 0 };
 
   try {
+    void ensureProductIndexes();
     const db = await getProductsDb();
     const col = db.collection<ProductDoc>(PRODUCTS_COLLECTION);
 
     // Fetch category map once — used for both categoryName→id resolution and product mapping.
     const categoryMap = await fetchCategories(locale);
 
-    // Resolve categoryName → categoryId when only the display name is provided.
-    const resolvedCategoryId =
-      opts.categoryId ??
-      (opts.categoryName
-        ? Array.from(categoryMap.entries()).find(([, { name }]) => name === opts.categoryName)?.[0]
-        : undefined);
+    const requestedCategoryNames = uniqueStrings([
+      ...(opts.categoryNames ?? []),
+      opts.categoryName,
+    ]);
+    const resolvedCategoryIds = opts.categoryId
+      ? [opts.categoryId]
+      : requestedCategoryNames
+          .map((categoryName) => Array.from(categoryMap.entries()).find(([, category]) => (
+            category.name === categoryName || category.aliases.includes(categoryName)
+          ))?.[0])
+          .filter((id): id is string => Boolean(id));
+    if (requestedCategoryNames.length > 0 && resolvedCategoryIds.length === 0) {
+      return { products: [], total: 0 };
+    }
 
-    const baseFilter = mentiosFilter(resolvedCategoryId ? { categoryId: resolvedCategoryId } : {});
+    const categoryFilter = resolvedCategoryIds.length > 1
+      ? { categoryId: { $in: resolvedCategoryIds } }
+      : resolvedCategoryIds.length === 1
+        ? { categoryId: resolvedCategoryIds[0] }
+        : {};
+    const baseFilter = mentiosFilter(categoryFilter);
 
     // ID-based fetch stays inside the configured catalog.
     if (opts.ids && opts.ids.length > 0) {
@@ -680,30 +741,14 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
       : {};
 
     // Text search via $regex across all name/description fields.
-    const filter: Record<string, unknown> = opts.search
-      ? {
-          ...baseFilter,
-          ...newOnlyClause,
-          $and: [
-            {
-              $or: [
-                // Flat fields (local DB)
-                { name_en: { $regex: opts.search, $options: 'i' } },
-                { name_pl: { $regex: opts.search, $options: 'i' } },
-                { description_en: { $regex: opts.search, $options: 'i' } },
-                { description_pl: { $regex: opts.search, $options: 'i' } },
-                // Nested fields (cloud / legacy)
-                { name: { $regex: opts.search, $options: 'i' } },
-                { 'name.en': { $regex: opts.search, $options: 'i' } },
-                { 'name.pl': { $regex: opts.search, $options: 'i' } },
-                { sku: { $regex: opts.search, $options: 'i' } },
-                { 'description.en': { $regex: opts.search, $options: 'i' } },
-                { description: { $regex: opts.search, $options: 'i' } },
-              ],
-            },
-          ],
-        }
-      : { ...baseFilter, ...newOnlyClause };
+    const themeNames = uniqueStrings(opts.themeNames ?? []);
+    const andClauses: Record<string, unknown>[] = [];
+    if (opts.search) andClauses.push(productTextSearchClause(opts.search));
+    if (themeNames.length > 0) {
+      andClauses.push({ $or: themeNames.map((themeName) => productTextSearchClause(themeName)) });
+    }
+    const filter: Record<string, unknown> = { ...baseFilter, ...newOnlyClause };
+    if (andClauses.length > 0) filter.$and = andClauses;
 
     // Price range filter (inclusive min, exclusive max).
     if (opts.priceMin != null || opts.priceMax != null) {
@@ -747,7 +792,7 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
 }
 
 /** Fetch a single product by its slug (sku-based) or raw _id. */
-export async function getMentiosProduct(slugOrId: string, localeInput?: EcomLocale | string | null): Promise<Product | null> {
+export const getMentiosProduct = cache(async function getMentiosProduct(slugOrId: string, localeInput?: EcomLocale | string | null): Promise<Product | null> {
   const locale = normalizeLocale(localeInput);
   if (!hasProductsMongoConfig()) return null;
 
@@ -786,10 +831,10 @@ export async function getMentiosProduct(slugOrId: string, localeInput?: EcomLoca
     console.error('[mentios] Failed to fetch product:', err);
     return null;
   }
-}
+});
 
 /** Return all slugs currently in the Mentios catalog (for generateStaticParams). */
-export async function getMentiosSlugs(): Promise<string[]> {
+export const getMentiosSlugs = cache(async function getMentiosSlugs(): Promise<string[]> {
   if (!hasProductsMongoConfig()) return [];
 
   try {
@@ -802,10 +847,10 @@ export async function getMentiosSlugs(): Promise<string[]> {
   } catch {
     return [];
   }
-}
+});
 
 /** Return categories that have at least one in-stock product, with per-category counts, sorted alphabetically. */
-export async function getMentiosCategories(
+export const getMentiosCategories = cache(async function getMentiosCategories(
   localeInput?: EcomLocale | string | null,
 ): Promise<Array<{ id: string; name: string; count: number }>> {
   const locale = normalizeLocale(localeInput);
@@ -835,10 +880,39 @@ export async function getMentiosCategories(
   } catch {
     return [];
   }
-}
+});
+
+/** Return lore/theme names parsed from product names, with counts. */
+export const getMentiosThemeNames = cache(async function getMentiosThemeNames(
+  localeInput?: EcomLocale | string | null,
+): Promise<Array<{ name: string; count: number }>> {
+  const locale = normalizeLocale(localeInput);
+  if (!hasProductsMongoConfig()) return [];
+  try {
+    const db = await getProductsDb();
+    const docs = await db
+      .collection<ProductDoc>(PRODUCTS_COLLECTION)
+      .find(mentiosFilter())
+      .project({ _id: 1, name: 1, name_en: 1, name_pl: 1, name_de: 1 })
+      .toArray();
+
+    const counts = new Map<string, number>();
+    for (const doc of docs as unknown as ProductDoc[]) {
+      const theme = parsePipedName(pickProductName(doc, locale)).lore?.trim();
+      if (!theme) continue;
+      counts.set(theme, (counts.get(theme) ?? 0) + 1);
+    }
+
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  } catch {
+    return [];
+  }
+});
 
 /** Fetch product count per collection slug in a single DB query. */
-export async function getMentiosCollectionCounts(): Promise<Record<string, number>> {
+export const getMentiosCollectionCounts = cache(async function getMentiosCollectionCounts(): Promise<Record<string, number>> {
   if (!hasProductsMongoConfig()) return {};
   try {
     const db = await getProductsDb();
@@ -860,4 +934,4 @@ export async function getMentiosCollectionCounts(): Promise<Record<string, numbe
   } catch {
     return {};
   }
-}
+});

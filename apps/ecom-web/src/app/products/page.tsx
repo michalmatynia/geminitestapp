@@ -10,8 +10,38 @@ export const revalidate = 120;
 
 const PAGE_SIZE = 48;
 
-type RawParams = { q?: string; new?: string; category?: string; sort?: string; price?: string };
+type RawParams = { q?: string; new?: string; category?: string; categories?: string; themes?: string; sort?: string; price?: string };
 type SearchParams = Promise<RawParams>;
+
+function parseFilterList(value: string | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function uniqueFilters(values: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    const normalized = value.trim();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+  }
+  return result;
+}
+
+function productMatchesThemes(product: { lore?: string; name: string }, themes: string[]): boolean {
+  if (themes.length === 0) return true;
+  const lore = product.lore?.toLowerCase() ?? '';
+  const name = product.name.toLowerCase();
+  return themes.some((theme) => {
+    const query = theme.toLowerCase();
+    return lore.includes(query) || name.includes(query);
+  });
+}
 
 export async function generateMetadata({
   searchParams,
@@ -24,8 +54,15 @@ export async function generateMetadata({
   const search = params.q ?? undefined;
   const newOnly = params.new === '1';
   const category = params.category ?? '';
-  const title = category
-    ? category
+  const categories = uniqueFilters([...parseFilterList(params.categories), ...(category ? [category] : [])]);
+  const themes = parseFilterList(params.themes);
+  const selectorTitle = categories.length > 0
+    ? categories.join(', ')
+    : themes.length > 0
+      ? themes.join(', ')
+      : '';
+  const title = selectorTitle
+    ? selectorTitle
     : newOnly
       ? content.collection.newArrivalsLabel
       : search
@@ -46,6 +83,11 @@ export default async function AllProductsPage({
   const search = params.q ?? undefined;
   const newOnly = params.new === '1';
   const initialCategory = params.category ?? '';
+  const initialCategories = uniqueFilters([
+    ...parseFilterList(params.categories),
+    ...(initialCategory ? [initialCategory] : []),
+  ]);
+  const initialThemes = parseFilterList(params.themes);
   const initialSort = params.sort ?? 'featured';
   const initialPriceLabel = params.price ? decodeURIComponent(params.price) : '';
 
@@ -62,6 +104,8 @@ export default async function AllProductsPage({
       newOnly,
       locale,
       categoryName: initialCategory || undefined,
+      categoryNames: initialCategories,
+      themeNames: initialThemes,
       sort: initialSort !== 'featured' ? initialSort : undefined,
       priceMin: priceRange?.min,
       priceMax: priceRange?.max ?? undefined,
@@ -86,7 +130,13 @@ export default async function AllProductsPage({
       );
     }
     if (newOnly) filtered = filtered.filter((p) => p.isNew);
-    if (initialCategory) filtered = filtered.filter((p) => p.category === initialCategory);
+    if (initialCategories.length > 0) {
+      const selected = new Set(initialCategories);
+      filtered = filtered.filter((p) => selected.has(p.category));
+    }
+    if (initialThemes.length > 0) {
+      filtered = filtered.filter((p) => productMatchesThemes(p, initialThemes));
+    }
     if (priceRange) {
       filtered = filtered.filter(
         (p) => p.price >= priceRange.min && (priceRange.max == null || p.price < priceRange.max),
@@ -117,6 +167,8 @@ export default async function AllProductsPage({
       categories={categories}
       initialFilters={{
         category: initialCategory,
+        categories: initialCategories,
+        themes: initialThemes,
         sort: initialSort,
         priceLabel: initialPriceLabel,
         search: search ?? '',

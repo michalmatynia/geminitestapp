@@ -7,10 +7,21 @@ import {
   isSuperAdmin,
   type SessionUser,
 } from '@/lib/auth';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { ensureAppIndexes } from '@/lib/db-indexes';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  void ensureAppIndexes();
+  const ip = getClientIp(req);
+  const { allowed, retryAfterSec } = checkRateLimit(`register:${ip}`, 10, 60 * 60 * 1000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Too many registration attempts. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(retryAfterSec) } },
+    );
+  }
   let body: unknown;
   try {
     body = await req.json();

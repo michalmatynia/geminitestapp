@@ -40,6 +40,7 @@ export function DatabaseEngineSettingsTab(): JSX.Element {
     engineStatus,
     mongoSourceState,
     isSyncingMongoSources,
+    pendingMongoSourceSync,
   } = useDatabaseEngineStateContext();
   const {
     updateBackupSchedule,
@@ -60,6 +61,7 @@ export function DatabaseEngineSettingsTab(): JSX.Element {
       <MongoSourceSection
         mongoSourceState={mongoSourceState}
         isSyncingMongoSources={isSyncingMongoSources}
+        pendingMongoSourceSync={pendingMongoSourceSync}
         allowManualFullSync={operationControls.allowManualFullSync}
         onSync={(direction, application) => {
           syncMongoSources(direction, application).catch(() => {});

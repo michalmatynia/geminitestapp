@@ -3,6 +3,7 @@
 import {
   Activity,
   Archive,
+  Clock,
   FileSearch,
   Globe2,
   Image as ImageIcon,
@@ -34,6 +35,7 @@ const getScrapeProfilesToolbarLabel = (
   isActive: boolean
 ): string => {
   if (!isActive) return 'Scrape Profiles';
+  if (activeRun?.status === 'queued') return 'Queued';
   return activeRun?.status === 'paused' ? 'Paused' : 'Running';
 };
 
@@ -42,6 +44,7 @@ const renderScrapeProfilesToolbarIcon = (
   isActive: boolean
 ): React.JSX.Element => {
   if (!isActive) return <Globe2 className='h-3.5 w-3.5' />;
+  if (activeRun?.status === 'queued') return <Clock className='h-3.5 w-3.5' />;
   if (activeRun?.status === 'paused') return <Pause className='h-3.5 w-3.5' />;
   return <Loader2 className='h-3.5 w-3.5 animate-spin' />;
 };

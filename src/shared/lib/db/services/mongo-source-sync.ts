@@ -721,7 +721,7 @@ export async function syncMongoSources(
 
   await assertAllApplicationsSyncReady(applicationTarget, direction);
 
-  const releaseSyncLock = await acquireMongoSyncLock(direction);
+  const releaseSyncLock = await acquireMongoSyncLock(direction, applicationTarget);
   try {
     const contexts = await prepareMongoSyncContexts(direction, applicationTarget);
     const primaryContext =

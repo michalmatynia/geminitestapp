@@ -59,6 +59,7 @@ export type ProductScrapeProfileRuntimeRunController = {
   activeRun: ProductScrapeProfileRuntimeRun | null;
   isActive: boolean;
   isUpdating: boolean;
+  latestRun: ProductScrapeProfileRuntimeRun | null;
   pauseActiveRun: () => void;
   registerQueuedRun: (queuedRun: ProductScrapeProfileRunQueuedResponse) => void;
   resumeActiveRun: () => void;
@@ -73,7 +74,9 @@ const buildQueuedRuntimeRun = (
     dryRun: queuedRun.dryRun,
     error: null,
     id: queuedRun.jobId,
+    imageImportMode: queuedRun.imageImportMode ?? 'links',
     profileId: queuedRun.profileId,
+    progress: null,
     queueName: queuedRun.queueName,
     result: null,
     startedAt: null,
@@ -261,10 +264,11 @@ export const useProductScrapeProfileRuntimeRun = (): ProductScrapeProfileRuntime
       activeRun,
       isActive,
       isUpdating,
+      latestRun: run,
       pauseActiveRun,
       registerQueuedRun,
       resumeActiveRun,
     }),
-    [activeRun, isActive, isUpdating, pauseActiveRun, registerQueuedRun, resumeActiveRun]
+    [activeRun, isActive, isUpdating, pauseActiveRun, registerQueuedRun, resumeActiveRun, run]
   );
 };

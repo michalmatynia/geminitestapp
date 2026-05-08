@@ -39,9 +39,11 @@ function ProductScrapeProfilesPausedAction({
 
 function ProductScrapeProfilesRunningAction({
   isUpdating,
+  label = 'Running',
   onPause,
 }: {
   isUpdating: boolean;
+  label?: string;
   onPause: () => void;
 }): React.JSX.Element {
   return (
@@ -54,8 +56,36 @@ function ProductScrapeProfilesRunningAction({
       loadingText='Updating...'
     >
       <Pause className='size-4' aria-hidden='true' />
-      Running
+      {label}
     </Button>
+  );
+}
+
+const getActiveRunActionLabel = (
+  status: NonNullable<ProductScrapeProfileRuntimeRunController['activeRun']>['status']
+): string => (status === 'queued' ? 'Queued' : 'Running');
+
+function ProductScrapeProfilesActiveAction({
+  activeRun,
+  scrapeRuntime,
+}: {
+  activeRun: NonNullable<ProductScrapeProfileRuntimeRunController['activeRun']>;
+  scrapeRuntime: ProductScrapeProfileRuntimeRunController;
+}): React.JSX.Element {
+  if (activeRun.status === 'paused') {
+    return (
+      <ProductScrapeProfilesPausedAction
+        isUpdating={scrapeRuntime.isUpdating}
+        onResume={scrapeRuntime.resumeActiveRun}
+      />
+    );
+  }
+  return (
+    <ProductScrapeProfilesRunningAction
+      isUpdating={scrapeRuntime.isUpdating}
+      label={getActiveRunActionLabel(activeRun.status)}
+      onPause={scrapeRuntime.pauseActiveRun}
+    />
   );
 }
 
@@ -71,21 +101,8 @@ function ProductScrapeProfilesRunAction({
   scrapeRuntime?: ProductScrapeProfileRuntimeRunController;
 }): React.JSX.Element {
   const activeRun = scrapeRuntime?.activeRun ?? null;
-  if (activeRun?.status === 'paused' && scrapeRuntime !== undefined) {
-    return (
-      <ProductScrapeProfilesPausedAction
-        isUpdating={scrapeRuntime.isUpdating}
-        onResume={scrapeRuntime.resumeActiveRun}
-      />
-    );
-  }
   if (activeRun !== null && scrapeRuntime !== undefined) {
-    return (
-      <ProductScrapeProfilesRunningAction
-        isUpdating={scrapeRuntime.isUpdating}
-        onPause={scrapeRuntime.pauseActiveRun}
-      />
-    );
+    return <ProductScrapeProfilesActiveAction activeRun={activeRun} scrapeRuntime={scrapeRuntime} />;
   }
 
   return (
@@ -111,6 +128,7 @@ export function ProductScrapeProfilesModal(
     onRunQueued: scrapeRuntime?.registerQueuedRun,
   });
   const activeRun = scrapeRuntime?.activeRun ?? null;
+  const latestRun = scrapeRuntime?.latestRun ?? null;
   const runProfileAction = (
     <ProductScrapeProfilesRunAction
       canRun={controller.canRun}
@@ -141,6 +159,7 @@ export function ProductScrapeProfilesModal(
         draftTemplates={controller.draftTemplates}
         profiles={controller.profiles}
         activeRun={activeRun}
+        latestRun={latestRun}
         queuedRun={controller.queuedRun}
         result={controller.result}
         runtimeAction={controller.runtimeAction}

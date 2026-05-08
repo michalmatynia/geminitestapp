@@ -232,7 +232,9 @@ const createDraft = (
   return draft as ProductDraft;
 };
 
-const renderModal = (): QueryClient => {
+const renderModal = (
+  scrapeRuntime?: React.ComponentProps<typeof ProductScrapeProfilesModal>['scrapeRuntime']
+): QueryClient => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -241,7 +243,7 @@ const renderModal = (): QueryClient => {
   });
   render(
     <QueryClientProvider client={queryClient}>
-      <ProductScrapeProfilesModal isOpen onClose={vi.fn()} />
+      <ProductScrapeProfilesModal isOpen onClose={vi.fn()} scrapeRuntime={scrapeRuntime} />
     </QueryClientProvider>
   );
   return queryClient;
@@ -271,6 +273,15 @@ const runResponse: ProductScrapeProfileRunResponse = {
     runtimeActionKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
     browserMode: 'headed',
     enabledStepCount: 3,
+    imageImportMode: 'files',
+    imageStepControls: {
+      applyImagePayload: true,
+      collectProductGalleryImages: true,
+      collectScrapedImageLinks: true,
+      downloadProductGalleryImages: true,
+      downloadScrapedImages: true,
+      uploadProductImages: true,
+    },
     totalStepCount: 4,
   },
   products: [
@@ -298,6 +309,7 @@ const queuedResponse: ProductScrapeProfileRunQueuedResponse = {
   profileId: battleProfile.id,
   dryRun: false,
   jobId: 'job-1',
+  imageImportMode: 'links',
   queueName: 'product-scrape-profile',
   enqueuedAt: '2026-05-08T00:00:00.000Z',
 };
@@ -482,6 +494,40 @@ describe('ProductScrapeProfilesModal', () => {
     });
   });
 
+  it('shows terminal Redis runtime failures from polling instead of the stale queued card', async () => {
+    renderModal({
+      activeRun: null,
+      isActive: false,
+      isUpdating: false,
+      latestRun: {
+        completedAt: '2026-05-08T00:03:00.000Z',
+        createdAt: queuedResponse.enqueuedAt,
+        dryRun: false,
+        error: 'Scrape profile run was marked failed after being queued for over 2 minutes without Redis worker pickup.',
+        id: queuedResponse.jobId,
+        imageImportMode: 'links',
+        profileId: queuedResponse.profileId,
+        queueName: queuedResponse.queueName,
+        result: null,
+        startedAt: null,
+        status: 'failed',
+        updatedAt: '2026-05-08T00:03:00.000Z',
+      },
+      pauseActiveRun: vi.fn(),
+      registerQueuedRun: vi.fn(),
+      resumeActiveRun: vi.fn(),
+    });
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+    fireEvent.click(await getEnabledRunButton());
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed')).toBeInTheDocument();
+      expect(screen.getByText(/without Redis worker pickup/)).toBeInTheDocument();
+      expect(screen.queryByText('Queued in Redis runtime')).not.toBeInTheDocument();
+    });
+  });
+
   it('keeps the modal close button enabled while the Redis launch request is pending', async () => {
     apiPostMock.mockImplementation(() => new Promise(() => undefined));
     renderModal();
@@ -492,6 +538,21 @@ describe('ProductScrapeProfilesModal', () => {
     await waitFor(() => {
       expect(apiPostMock).toHaveBeenCalledTimes(1);
       expect(screen.getByRole('button', { name: 'Close' })).not.toBeDisabled();
+    });
+  });
+
+  it('shows completed runtime image import mode and image sequencer step controls', async () => {
+    apiPostMock.mockResolvedValueOnce(runResponse);
+    renderModal();
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+    fireEvent.click(await getEnabledRunButton());
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Download as files').length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText('Download scraped files: Enabled')).toBeInTheDocument();
+      expect(screen.getByText('Upload product files: Enabled')).toBeInTheDocument();
+      expect(screen.getByText('Apply image payload: Enabled')).toBeInTheDocument();
     });
   });
 
@@ -683,6 +744,24 @@ describe('ProductScrapeProfilesModal', () => {
   });
 
   it('sends file image import mode when selected', async () => {
+    apiPostMock.mockResolvedValueOnce({
+      ...queuedResponse,
+      imageImportMode: 'files',
+      run: {
+        completedAt: null,
+        createdAt: queuedResponse.enqueuedAt,
+        dryRun: false,
+        error: null,
+        id: queuedResponse.jobId,
+        imageImportMode: 'files',
+        profileId: queuedResponse.profileId,
+        queueName: queuedResponse.queueName,
+        result: null,
+        startedAt: null,
+        status: 'queued',
+        updatedAt: queuedResponse.enqueuedAt,
+      },
+    });
     renderModal();
 
     await screen.findByText('BattleStock Warhammer 40k / 30k');
@@ -707,6 +786,7 @@ describe('ProductScrapeProfilesModal', () => {
         { timeout: 30_000 }
       );
     });
+    expect(screen.getAllByText('Download as files').length).toBeGreaterThanOrEqual(2);
   });
 
   it('sends the selected source price currency', async () => {

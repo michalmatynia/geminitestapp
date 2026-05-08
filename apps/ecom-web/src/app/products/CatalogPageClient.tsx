@@ -36,10 +36,12 @@ function CatalogCard({
   product,
   locale,
   addToBagLabel,
+  priority = false,
 }: {
   product: Product;
   locale: EcomLocale;
   addToBagLabel: string;
+  priority?: boolean;
 }): JSX.Element {
   const localizedHref = useLocalizedHref();
   const { addItem, openCart } = useCart();
@@ -73,6 +75,7 @@ function CatalogCard({
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
           fit="cover"
           position="center"
+          priority={priority}
         />
         {/* Hover panel — slides up from bottom of image */}
         <div
@@ -224,7 +227,7 @@ function FilterButton({
 function SidebarFilters({
   sort,
   setSort,
-  selectedCategory,
+  selectedCategories,
   setSelectedCategory,
   filterPrice,
   setFilterPrice,
@@ -241,7 +244,7 @@ function SidebarFilters({
 }: {
   sort: string;
   setSort: (v: string) => void;
-  selectedCategory: string;
+  selectedCategories: string[];
   setSelectedCategory: (v: string) => void;
   filterPrice: string;
   setFilterPrice: (v: string) => void;
@@ -350,7 +353,7 @@ function SidebarFilters({
 
       <FilterSection title={col.categoryLabel}>
         <div className="space-y-0.5">
-          <FilterButton active={selectedCategory === ''} onClick={() => wrap(setSelectedCategory)('')}>
+          <FilterButton active={selectedCategories.length === 0} onClick={() => wrap(setSelectedCategory)('')}>
             <span className="flex-1 min-w-0 truncate">{col.categoryAllLabel}</span>
             {totalCount > 0 && (
               <span
@@ -369,8 +372,8 @@ function SidebarFilters({
           {categories.map((cat) => (
             <FilterButton
               key={cat.id}
-              active={selectedCategory === cat.name}
-              onClick={() => wrap(setSelectedCategory)(selectedCategory === cat.name ? '' : cat.name)}
+              active={selectedCategories.includes(cat.name)}
+              onClick={() => wrap(setSelectedCategory)(cat.name)}
             >
               <span className="flex-1 min-w-0 truncate">{cat.name}</span>
               <span
@@ -406,7 +409,42 @@ function SidebarFilters({
   );
 }
 
-type FilterState = { category: string; sort: string; priceLabel: string; search: string; newOnly: boolean };
+type FilterState = {
+  category: string;
+  categories: string[];
+  themes: string[];
+  sort: string;
+  priceLabel: string;
+  search: string;
+  newOnly: boolean;
+};
+
+function uniqueFilterValues(values: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    const normalized = value.trim();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+  }
+  return result;
+}
+
+function parseFilterList(value: string | null): string[] {
+  if (!value) return [];
+  return uniqueFilterValues(value.split(','));
+}
+
+function productMatchesThemes(product: Product, themes: string[]): boolean {
+  if (themes.length === 0) return true;
+  const lore = product.lore?.toLowerCase() ?? '';
+  const name = product.name.toLowerCase();
+  return themes.some((theme) => {
+    const query = theme.toLowerCase();
+    return lore.includes(query) || name.includes(query);
+  });
+}
 
 export function CatalogPageClient({
   products: initialProducts,
@@ -434,7 +472,14 @@ export function CatalogPageClient({
   const [isRefetching, setIsRefetching] = useState(false);
 
   const [sort, setSort] = useState(initialFilters?.sort ?? 'featured');
-  const [selectedCategory, setSelectedCategory] = useState(initialFilters?.category ?? '');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    initialFilters?.categories?.length
+      ? initialFilters.categories
+      : initialFilters?.category
+        ? [initialFilters.category]
+        : [],
+  );
+  const [selectedThemes, setSelectedThemes] = useState<string[]>(initialFilters?.themes ?? []);
   const [filterPrice, setFilterPrice] = useState(initialFilters?.priceLabel ?? '');
   const [search, setSearch] = useState(initialFilters?.search ?? '');
   const [newOnly, setNewOnly] = useState(initialFilters?.newOnly ?? false);
@@ -443,19 +488,41 @@ export function CatalogPageClient({
   // Keeps latest filter values accessible inside stable callbacks without stale closure issues.
   const filtersRef = useRef<FilterState>({
     category: initialFilters?.category ?? '',
+    categories: initialFilters?.categories?.length
+      ? initialFilters.categories
+      : initialFilters?.category
+        ? [initialFilters.category]
+        : [],
+    themes: initialFilters?.themes ?? [],
     sort: initialFilters?.sort ?? 'featured',
     priceLabel: initialFilters?.priceLabel ?? '',
     search: initialFilters?.search ?? '',
     newOnly: initialFilters?.newOnly ?? false,
   });
-  filtersRef.current = { category: selectedCategory, sort, priceLabel: filterPrice, search, newOnly };
+  const selectedCategory = selectedCategories.length === 1 ? selectedCategories[0] : '';
+  const selectorTitle = selectedCategories.length > 0
+    ? selectedCategories.join(', ')
+    : selectedThemes.length > 0
+      ? selectedThemes.join(', ')
+      : '';
+  filtersRef.current = {
+    category: selectedCategory,
+    categories: selectedCategories,
+    themes: selectedThemes,
+    sort,
+    priceLabel: filterPrice,
+    search,
+    newOnly,
+  };
 
   // Reflects active filters in the URL so the view is shareable and survives refresh.
   const syncUrl = useCallback((f: FilterState) => {
     const p = new URLSearchParams();
     if (f.search) p.set('q', f.search);
     if (f.newOnly) p.set('new', '1');
-    if (f.category) p.set('category', f.category);
+    if (f.categories.length === 1) p.set('category', f.categories[0]);
+    if (f.categories.length > 1) p.set('categories', f.categories.join(','));
+    if (f.themes.length > 0) p.set('themes', f.themes.join(','));
     if (f.sort && f.sort !== 'featured') p.set('sort', f.sort);
     if (f.priceLabel) p.set('price', encodeURIComponent(f.priceLabel));
     const qs = p.toString();
@@ -473,12 +540,14 @@ export function CatalogPageClient({
 
   // Builds URLSearchParams from an explicit filter snapshot — shared by refetch and loadMore.
   const buildParams = useCallback((
-    f: { category: string; sort: string; priceLabel: string; search: string; newOnly: boolean },
+    f: FilterState,
     skip: number,
     limit: number,
   ): URLSearchParams => {
     const params = new URLSearchParams({ skip: String(skip), limit: String(limit), locale });
-    if (f.category) params.set('category', f.category);
+    if (f.categories.length === 1) params.set('category', f.categories[0]);
+    if (f.categories.length > 1) params.set('categories', f.categories.join(','));
+    if (f.themes.length > 0) params.set('themes', f.themes.join(','));
     if (f.sort && f.sort !== 'featured') params.set('sort', f.sort);
     const range = col.priceRanges.find((r) => r.label === f.priceLabel);
     if (range) {
@@ -514,9 +583,31 @@ export function CatalogPageClient({
     }
   }, [source, buildParams, syncUrl]);
 
+  const handleThemeRemove = useCallback((theme: string) => {
+    const nextThemes = filtersRef.current.themes.filter((value) => value !== theme);
+    setSelectedThemes(nextThemes);
+    refetch({ ...filtersRef.current, themes: nextThemes });
+  }, [refetch]);
+
   const handleCategoryChange = useCallback((category: string) => {
-    setSelectedCategory(category);
-    refetch({ ...filtersRef.current, category });
+    const current = filtersRef.current.categories;
+    const nextCategories = category
+      ? current.includes(category)
+        ? current.filter((value) => value !== category)
+        : [...current, category]
+      : [];
+    setSelectedCategories(nextCategories);
+    refetch({
+      ...filtersRef.current,
+      category: nextCategories.length === 1 ? nextCategories[0] : '',
+      categories: nextCategories,
+    });
+  }, [refetch]);
+
+  const clearProductSelectors = useCallback(() => {
+    setSelectedCategories([]);
+    setSelectedThemes([]);
+    refetch({ ...filtersRef.current, category: '', categories: [], themes: [] });
   }, [refetch]);
 
   const handleSortChange = useCallback((newSort: string) => {
@@ -578,6 +669,13 @@ export function CatalogPageClient({
       );
     }
     if (newOnly) result = result.filter((p) => p.isNew);
+    if (selectedCategories.length > 0) {
+      const selected = new Set(selectedCategories);
+      result = result.filter((p) => selected.has(p.category));
+    }
+    if (selectedThemes.length > 0) {
+      result = result.filter((p) => productMatchesThemes(p, selectedThemes));
+    }
     if (filterPrice) {
       const range = col.priceRanges.find((r) => r.label === filterPrice);
       if (range) result = result.filter((p) => p.price >= range.min && (range.max == null || p.price < range.max));
@@ -587,11 +685,12 @@ export function CatalogPageClient({
     else if (sort === 'price-desc') copy.sort((a, b) => b.price - a.price);
     else if (sort === 'newest') copy.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
     return copy;
-  }, [source, allProducts, search, newOnly, filterPrice, sort, col.priceRanges]);
+  }, [source, allProducts, search, newOnly, selectedCategories, selectedThemes, filterPrice, sort, col.priceRanges]);
 
-  const hasFilters = selectedCategory !== '' || filterPrice !== '' || search !== '' || newOnly;
+  const hasFilters = selectedCategories.length > 0 || selectedThemes.length > 0 || filterPrice !== '' || search !== '' || newOnly;
   const activeFilterCount =
-    (selectedCategory !== '' ? 1 : 0) +
+    selectedCategories.length +
+    selectedThemes.length +
     (filterPrice ? 1 : 0) +
     (search ? 1 : 0) +
     (newOnly ? 1 : 0);
@@ -603,11 +702,12 @@ export function CatalogPageClient({
   );
 
   const clearFilters = useCallback(() => {
-    setSelectedCategory('');
+    setSelectedCategories([]);
+    setSelectedThemes([]);
     setFilterPrice('');
     setSearch('');
     setNewOnly(false);
-    refetch({ category: '', sort: filtersRef.current.sort, priceLabel: '', search: '', newOnly: false });
+    refetch({ category: '', categories: [], themes: [], sort: filtersRef.current.sort, priceLabel: '', search: '', newOnly: false });
   }, [refetch]);
 
   // Restore filter state when the user presses the browser back/forward button.
@@ -615,16 +715,19 @@ export function CatalogPageClient({
     const onPopState = () => {
       const p = new URLSearchParams(window.location.search);
       const category = p.get('category') ?? '';
+      const categories = uniqueFilterValues([...parseFilterList(p.get('categories')), ...(category ? [category] : [])]);
+      const themes = parseFilterList(p.get('themes'));
       const sort = p.get('sort') ?? 'featured';
       const priceLabel = p.has('price') ? decodeURIComponent(p.get('price')!) : '';
       const search = p.get('q') ?? '';
       const newOnly = p.get('new') === '1';
-      setSelectedCategory(category);
+      setSelectedCategories(categories);
+      setSelectedThemes(themes);
       setSort(sort);
       setFilterPrice(priceLabel);
       setSearch(search);
       setNewOnly(newOnly);
-      refetch({ category, sort, priceLabel, search, newOnly });
+      refetch({ category: categories.length === 1 ? categories[0] : '', categories, themes, sort, priceLabel, search, newOnly });
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
@@ -634,6 +737,7 @@ export function CatalogPageClient({
     sort,
     setSort: handleSortChange,
     selectedCategory,
+    selectedCategories,
     setSelectedCategory: handleCategoryChange,
     filterPrice,
     setFilterPrice: handlePriceChange,
@@ -676,10 +780,10 @@ export function CatalogPageClient({
               {col.homeBreadcrumbLabel}
             </a>
             <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.65rem' }}>/</span>
-            {selectedCategory ? (
+            {selectorTitle ? (
               <>
                 <button
-                  onClick={() => handleCategoryChange('')}
+                  onClick={clearProductSelectors}
                   className="transition-opacity hover:opacity-70"
                   style={{
                     fontFamily: 'var(--font-mono)',
@@ -705,7 +809,7 @@ export function CatalogPageClient({
                     color: 'rgba(255,255,255,0.65)',
                   }}
                 >
-                  {selectedCategory}
+                  {selectorTitle}
                 </span>
               </>
             ) : (
@@ -725,7 +829,7 @@ export function CatalogPageClient({
 
           {/* Title */}
           <h1 className="type-display-xl" style={{ color: '#fff', maxWidth: '14ch' }}>
-            {selectedCategory || col.allProductsLabel}
+            {selectorTitle || col.allProductsLabel}
           </h1>
           <p
             className="mt-3"
@@ -858,9 +962,10 @@ export function CatalogPageClient({
                     </svg>
                   </button>
                 )}
-                {selectedCategory && (
+                {selectedCategories.map((category) => (
                   <button
-                    onClick={() => handleCategoryChange('')}
+                    key={`category-${category}`}
+                    onClick={() => handleCategoryChange(category)}
                     className="flex items-center gap-1.5 transition-colors hover:border-[var(--accent)]"
                     style={{
                       fontFamily: 'var(--font-mono)',
@@ -873,12 +978,34 @@ export function CatalogPageClient({
                       padding: '0.25rem 0.6rem',
                     }}
                   >
-                    {col.categoryLabel}: {selectedCategory}
+                    {col.categoryLabel}: {category}
                     <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                       <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
-                )}
+                ))}
+                {selectedThemes.map((theme) => (
+                  <button
+                    key={`theme-${theme}`}
+                    onClick={() => handleThemeRemove(theme)}
+                    className="flex items-center gap-1.5 transition-colors hover:border-[var(--accent)]"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.6rem',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'var(--accent)',
+                      border: '1px solid rgba(var(--accent-rgb),0.4)',
+                      background: 'rgba(var(--accent-rgb),0.07)',
+                      padding: '0.25rem 0.6rem',
+                    }}
+                  >
+                    Theme: {theme}
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                ))}
                 {filterPrice && (
                   <button
                     onClick={() => handlePriceChange('')}
@@ -925,8 +1052,8 @@ export function CatalogPageClient({
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-7 md:gap-x-5 md:gap-y-9">
-                {displayProducts.map((product) => (
-                  <CatalogCard key={product.id} product={product} locale={locale} addToBagLabel={col.quickAddLabel} />
+                {displayProducts.map((product, index) => (
+                  <CatalogCard key={product.id} product={product} locale={locale} addToBagLabel={col.quickAddLabel} priority={index < 4} />
                 ))}
               </div>
             )}

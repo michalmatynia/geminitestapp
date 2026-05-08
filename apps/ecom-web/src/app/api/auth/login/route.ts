@@ -7,8 +7,18 @@ import {
   isSuperAdmin,
   type SessionUser,
 } from '@/lib/auth';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const ip = getClientIp(req);
+  const { allowed, retryAfterSec } = checkRateLimit(`login:${ip}`, 5, 15 * 60 * 1000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Too many login attempts. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(retryAfterSec) } },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();

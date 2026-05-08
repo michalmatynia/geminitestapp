@@ -89,6 +89,24 @@ const enforceRobotsIfNeeded = async ({
   }
 };
 
+const bindSessionCloseToAbort = (
+  session: ScripterServerSession,
+  signal: AbortSignal | undefined
+): (() => void) => {
+  if (signal === undefined) return () => {};
+  const closeSession = (): void => {
+    void session.close().catch(() => undefined);
+  };
+  if (signal.aborted) {
+    closeSession();
+    return () => {};
+  }
+  signal.addEventListener('abort', closeSession, { once: true });
+  return () => {
+    signal.removeEventListener('abort', closeSession);
+  };
+};
+
 export const createScripterServer = (deps: ScripterServerDeps): ScripterServer => {
   const { registry, driverFactory, createDraft, robotsCheck, lookupExisting } = deps;
 
@@ -101,9 +119,11 @@ export const createScripterServer = (deps: ScripterServerDeps): ScripterServer =
       executionSettings: invocation.executionSettings ?? null,
       runtimeActionKey: invocation.runtimeActionKey ?? null,
     });
+    const unbindAbort = bindSessionCloseToAbort(session, invocation.options?.signal);
     try {
       return await resolveScripterImportSource(definition, session.driver, invocation.options);
     } finally {
+      unbindAbort();
       await session.close().catch(() => undefined);
     }
   };

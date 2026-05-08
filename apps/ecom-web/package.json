@@ -10,6 +10,8 @@
     "test": "vitest run --config vitest.config.mjs",
     "typecheck:test": "tsc -p tsconfig.test.json --noEmit --pretty false",
     "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
+    "cms:locales:backfill": "tsx scripts/backfill-cms-locales.ts",
+    "cms:locales:backfill:apply": "tsx scripts/backfill-cms-locales.ts --apply",
     "mongo:products:up": "MONGODB_PORT=27020 MONGODB_DATA_DIR=../../../database/products-mongo-data MONGODB_RUNTIME_DIR=../../../database/products-mongo-runtime node ../../scripts/db/local-mongo.mjs up",
     "mongo:products:down": "MONGODB_PORT=27020 MONGODB_DATA_DIR=../../../database/products-mongo-data MONGODB_RUNTIME_DIR=../../../database/products-mongo-runtime node ../../scripts/db/local-mongo.mjs down",
     "mongo:products:status": "MONGODB_PORT=27020 MONGODB_DATA_DIR=../../../database/products-mongo-data MONGODB_RUNTIME_DIR=../../../database/products-mongo-runtime node ../../scripts/db/local-mongo.mjs status"

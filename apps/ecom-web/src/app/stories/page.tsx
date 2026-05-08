@@ -7,6 +7,8 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { getRequestLocale } from '@/lib/request-locale';
 import { localizeHref } from '@/lib/locales';
 
+export const revalidate = 3600;
+
 function readTimeLabel(value: string, locale: string): string {
   return locale === 'pl' ? `${value} czytania` : `${value} read`;
 }
@@ -14,9 +16,13 @@ function readTimeLabel(value: string, locale: string): string {
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getStoriesPageContent(locale);
+  const title = `${content.index.title} - ARCANA`;
+  const description = content.index.description;
   return {
-    title: `${content.index.title} - ARCANA`,
-    description: content.index.description,
+    title,
+    description,
+    openGraph: { type: 'website', title, description },
+    twitter: { card: 'summary', title, description },
   };
 }
 

@@ -14,6 +14,8 @@ export interface SiteAnnouncementContent {
 export interface SiteNavContent {
   brandName: string;
   brandSuffix: string;
+  logoUrl: string;
+  logoAlt: string;
   links: SiteLinkContent[];
   announcement: SiteAnnouncementContent;
   mobileAccountLabel: string;
@@ -178,6 +180,8 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
   nav: {
     brandName: 'ARCANA',
     brandSuffix: 'NEXUS',
+    logoUrl: '',
+    logoAlt: '',
     links: [
       { label: 'Anime', href: '/collections/womenswear' },
       { label: 'Gaming', href: '/collections/menswear' },
@@ -601,18 +605,22 @@ export function validateSiteContent(input: unknown): SiteContentValidationResult
   const quickView = isRecord(root['quickView']) ? root['quickView'] : {};
   const backToTop = isRecord(root['backToTop']) ? root['backToTop'] : {};
   const notFound = isRecord(root['notFound']) ? root['notFound'] : {};
+  const brandName = readString(nav, 'brandName', SITE_CONTENT_DEFAULTS.nav.brandName, TEXT_LIMITS.short, errors, 'nav.brandName');
+  const brandSuffix = readString(
+    nav,
+    'brandSuffix',
+    SITE_CONTENT_DEFAULTS.nav.brandSuffix,
+    TEXT_LIMITS.short,
+    errors,
+    'nav.brandSuffix',
+  );
 
   const content: SiteContent = {
     nav: {
-      brandName: readString(nav, 'brandName', SITE_CONTENT_DEFAULTS.nav.brandName, TEXT_LIMITS.short, errors, 'nav.brandName'),
-      brandSuffix: readString(
-        nav,
-        'brandSuffix',
-        SITE_CONTENT_DEFAULTS.nav.brandSuffix,
-        TEXT_LIMITS.short,
-        errors,
-        'nav.brandSuffix',
-      ),
+      brandName,
+      brandSuffix,
+      logoUrl: readHref(nav, 'logoUrl', SITE_CONTENT_DEFAULTS.nav.logoUrl, errors, 'nav.logoUrl'),
+      logoAlt: readString(nav, 'logoAlt', SITE_CONTENT_DEFAULTS.nav.logoAlt, TEXT_LIMITS.short, errors, 'nav.logoAlt'),
       links: readLinks(nav['links'], SITE_CONTENT_DEFAULTS.nav.links, 10, errors, 'nav.links'),
       announcement: {
         enabled: readBoolean(

@@ -32,7 +32,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = await getRequestLocale();
   const collection = COLLECTIONS.find((c) => c.slug === slug);
   if (!collection) return {};
-  return { title: `${collectionLabel(slug, collection.label, locale)} - ARCANA` };
+  const title = `${collectionLabel(slug, collection.label, locale)} - ARCANA`;
+  const description = `Shop the ${collection.label} collection — ARCANA`;
+  return {
+    title,
+    description,
+    openGraph: { type: 'website', title, description },
+    twitter: { card: 'summary', title, description },
+  };
 }
 
 export default async function CollectionPage({ params }: Props): Promise<JSX.Element> {
@@ -41,18 +48,16 @@ export default async function CollectionPage({ params }: Props): Promise<JSX.Ele
   const collection = COLLECTIONS.find((c) => c.slug === slug);
   if (!collection) notFound();
 
-  // Fetch first page from DB, fall back to static demo data.
-  const { products: dbProducts, total: dbTotal } = await getMentiosProducts({
-    limit: PAGE_SIZE,
-    collectionSlug: slug,
-    locale,
-  });
+  // Fetch first page from DB and CMS content in parallel.
+  const [{ products: dbProducts, total: dbTotal }, content] = await Promise.all([
+    getMentiosProducts({ limit: PAGE_SIZE, collectionSlug: slug, locale }),
+    getProductsContent(locale),
+  ]);
 
   const isLive = dbProducts.length > 0;
   const products = isLive ? dbProducts : getProductsByCollection(slug);
   const total = isLive ? dbTotal : collection.count;
   const source: 'mentios' | 'static' = isLive ? 'mentios' : 'static';
-  const content = await getProductsContent(locale);
 
   return (
     <CollectionPageClient

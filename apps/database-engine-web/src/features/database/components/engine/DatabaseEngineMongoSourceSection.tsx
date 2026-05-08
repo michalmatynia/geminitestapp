@@ -2,6 +2,7 @@
 
 import type {
   DatabaseEngineManagedMongoApplicationTarget,
+  DatabaseEngineMongoPendingSyncRequest,
   DatabaseEngineMongoSourceState,
 } from '@/shared/contracts/database';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
@@ -13,11 +14,13 @@ import type { JSX } from 'react';
 export function MongoSourceSection({
   mongoSourceState,
   isSyncingMongoSources,
+  pendingMongoSourceSync,
   allowManualFullSync,
   onSync,
 }: {
   mongoSourceState: DatabaseEngineMongoSourceState | undefined;
   isSyncingMongoSources: boolean;
+  pendingMongoSourceSync: DatabaseEngineMongoPendingSyncRequest | null;
   allowManualFullSync: boolean;
   onSync: (
     direction: 'cloud_to_local' | 'local_to_cloud',
@@ -52,6 +55,7 @@ export function MongoSourceSection({
           appStatuses={mongoSourceState.appStatuses}
           syncInProgress={syncInProgress}
           isSyncingMongoSources={isSyncingMongoSources}
+          pendingMongoSourceSync={pendingMongoSourceSync}
           onSync={onSync}
         />
         <MongoLastTransferCard lastSync={mongoSourceState.lastSync} />

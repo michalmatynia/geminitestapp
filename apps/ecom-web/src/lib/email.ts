@@ -61,6 +61,16 @@ function buildConfirmationHtml(order: Order): string {
           </div>
         </div>
 
+        <div style="border:1px solid #2b2b2b;background:#111;padding:24px;margin-bottom:24px;">
+          <p style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#9f9a90;margin:0 0 12px;">Shipping to</p>
+          <p style="font-size:14px;color:#c8c1b5;line-height:1.8;margin:0;">
+            ${escapeHtml(`${order.shippingAddress['firstName'] ?? ''} ${order.shippingAddress['lastName'] ?? ''}`.trim())}<br>
+            ${escapeHtml(order.shippingAddress['address'] ?? '')}<br>
+            ${[order.shippingAddress['city'], order.shippingAddress['postcode']].filter(Boolean).map(escapeHtml).join(', ')}<br>
+            ${escapeHtml(order.shippingAddress['country'] ?? '')}
+          </p>
+        </div>
+
         <p style="color:#9f9a90;font-size:13px;line-height:1.7;margin:0;">
           We will send another update when your order is on its way.
         </p>

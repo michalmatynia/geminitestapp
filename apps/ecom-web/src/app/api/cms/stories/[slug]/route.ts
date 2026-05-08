@@ -1,7 +1,8 @@
-import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { deleteStory, getStoryBySlug, saveStory, validateStory } from '@/lib/storiesCms';
+import { normalizeLocale } from '@/lib/locales';
+import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 type RouteContext = {
   params: Promise<{ slug: string }>;
@@ -17,13 +18,14 @@ function readStoryPayload(input: unknown): unknown {
   return root['story'] ?? root['content'] ?? input;
 }
 
-export async function GET(_req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
+export async function GET(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   const { slug } = await params;
+  const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
   try {
-    const story = await getStoryBySlug(slug);
+    const story = await getStoryBySlug(slug, locale);
     if (!story) return NextResponse.json({ error: 'Story not found' }, { status: 404 });
-    return NextResponse.json({ story });
+    return NextResponse.json({ story, locale });
   } catch {
     return NextResponse.json({ error: 'Failed to load story' }, { status: 500 });
   }
@@ -33,6 +35,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext): Promise<N
   const session = await getSession();
   if (!session?.isSuperAdmin) return forbidden();
   const { slug } = await params;
+  const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
   let body: unknown;
   try {
@@ -50,25 +53,26 @@ export async function PUT(req: NextRequest, { params }: RouteContext): Promise<N
   }
 
   try {
-    await saveStory(story);
-    revalidatePath('/stories');
-    revalidatePath(`/stories/${story.slug}`);
-    return NextResponse.json({ ok: true, story });
+    await saveStory(story, locale);
+    revalidateLocalizedPath('/stories');
+    revalidateLocalizedPath(`/stories/${story.slug}`);
+    return NextResponse.json({ ok: true, story, locale });
   } catch {
     return NextResponse.json({ error: 'Failed to save story' }, { status: 500 });
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
+export async function DELETE(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   const session = await getSession();
   if (!session?.isSuperAdmin) return forbidden();
   const { slug } = await params;
+  const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
   try {
-    await deleteStory(slug);
-    revalidatePath('/stories');
-    revalidatePath(`/stories/${slug}`);
-    return NextResponse.json({ ok: true });
+    await deleteStory(slug, locale);
+    revalidateLocalizedPath('/stories');
+    revalidateLocalizedPath(`/stories/${slug}`);
+    return NextResponse.json({ ok: true, locale });
   } catch {
     return NextResponse.json({ error: 'Failed to delete story' }, { status: 500 });
   }

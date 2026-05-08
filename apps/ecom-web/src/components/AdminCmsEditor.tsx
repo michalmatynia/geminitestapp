@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState, type CSSProperties, type JSX } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type JSX } from 'react';
 import {
   HOME_CONTENT_DEFAULTS,
   type HomeContent,
   type HomeCategoriesContent,
   type HomeCategoryCardContent,
+  type HomeCategorySelectorType,
   type HomeEditorialContent,
   type HomeEditorialReportContent,
   type HomeFeaturedContent,
@@ -230,6 +231,30 @@ interface AccountCmsResponse {
   errors?: string[];
 }
 
+interface LogoUploadResponse {
+  ok?: boolean;
+  url?: string;
+  error?: string;
+}
+
+type CatalogOption = {
+  name: string;
+  count: number;
+};
+
+interface CatalogOptionsResponse {
+  categories?: CatalogOption[];
+  themes?: CatalogOption[];
+  error?: string;
+}
+
+const CATEGORY_SELECTOR_TYPES: Array<{ value: HomeCategorySelectorType; label: string }> = [
+  { value: 'all', label: 'All products' },
+  { value: 'category', label: 'Product categories' },
+  { value: 'theme', label: 'Product themes' },
+  { value: 'custom', label: 'Custom URL' },
+];
+
 const fieldStyle: CSSProperties = {
   width: '100%',
   background: 'var(--surface)',
@@ -272,24 +297,101 @@ function textToStats(value: string): HomeHeroStatContent[] {
 
 function categoryCardsToText(cards: HomeCategoryCardContent[]): string {
   return cards
-    .map((card) => `${card.id} | ${card.label} | ${card.sublabel} | ${card.tag} | ${card.href} | ${card.fallbackCount}`)
+    .map((card) => `${card.id} | ${card.label} | ${card.sublabel} | ${card.tag} | ${card.href} | ${card.imageUrl} | ${card.selectorType} | ${card.selectorValues.join(', ')} | ${card.fallbackCount}`)
     .join('\n');
+}
+
+function parseCategorySelectorType(value: string): HomeCategorySelectorType {
+  const normalized = value.trim().toLowerCase();
+  return CATEGORY_SELECTOR_TYPES.some((option) => option.value === normalized)
+    ? normalized as HomeCategorySelectorType
+    : 'custom';
+}
+
+function parseCategoryFallbackCount(value: string): number {
+  const count = Number(value.trim());
+  return Number.isFinite(count) && count > 0 ? Math.trunc(count) : 0;
+}
+
+function isNumericText(value: string | undefined): boolean {
+  const normalized = value?.trim() ?? '';
+  return normalized !== '' && Number.isFinite(Number(normalized));
 }
 
 function textToCategoryCards(value: string): HomeCategoryCardContent[] {
   return splitLines(value)
     .map((line) => {
-      const [id = '', label = '', sublabel = '', tag = '', href = '', fallbackCount = '0'] = line.split('|');
+      const parts = line.split('|');
+      const [id = '', label = '', sublabel = '', tag = '', href = ''] = parts;
+      const usesLegacyExpandedOrder =
+        parts.length >= 9 &&
+        isNumericText(parts[5]) &&
+        !isNumericText(parts[8]);
+      const imageUrl = parts.length >= 9
+        ? usesLegacyExpandedOrder ? parts[6] ?? '' : parts[5] ?? ''
+        : '';
+      const selectorType = parts.length >= 9
+        ? usesLegacyExpandedOrder ? parts[7] ?? 'custom' : parts[6] ?? 'custom'
+        : 'custom';
+      const selectorValues = parts.length >= 9
+        ? usesLegacyExpandedOrder ? parts[8] ?? '' : parts[7] ?? ''
+        : '';
+      const fallbackCount = parts.length >= 9 && !usesLegacyExpandedOrder ? parts[8] ?? '0' : parts[5] ?? '0';
+
       return {
         id: id.trim(),
         label: label.trim(),
         sublabel: sublabel.trim(),
         tag: tag.trim(),
         href: href.trim(),
-        fallbackCount: Number(fallbackCount.trim()) || 0,
+        imageUrl: imageUrl.trim(),
+        selectorType: parseCategorySelectorType(selectorType),
+        selectorValues: textToSelectorValues(selectorValues),
+        fallbackCount: parseCategoryFallbackCount(fallbackCount),
       };
     })
     .filter((card) => card.id || card.label || card.sublabel || card.tag);
+}
+
+function selectorValuesToText(values: string[]): string {
+  return values.join('\n');
+}
+
+function textToSelectorValues(value: string): string[] {
+  return value
+    .split(/[\n,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function makeHomeCategoryCard(index: number): HomeCategoryCardContent {
+  return {
+    id: `selector-${index + 1}`,
+    label: 'New selector',
+    sublabel: 'Category · Theme',
+    tag: 'Selector',
+    href: '/products',
+    imageUrl: '',
+    selectorType: 'custom',
+    selectorValues: [],
+    fallbackCount: 0,
+  };
+}
+
+function getHomeCategoryCardTarget(card: HomeCategoryCardContent): string {
+  const values = card.selectorValues.map((value) => value.trim()).filter(Boolean);
+  if (card.selectorType === 'all') return '/products';
+  if (card.selectorType === 'category' && values.length > 0) {
+    const params = new URLSearchParams();
+    params.set('categories', values.join(','));
+    return `/products?${params.toString()}`;
+  }
+  if (card.selectorType === 'theme' && values.length > 0) {
+    const params = new URLSearchParams();
+    params.set('themes', values.join(','));
+    return `/products?${params.toString()}`;
+  }
+  return card.href || '/products';
 }
 
 function reportsToText(reports: HomeEditorialReportContent[]): string {
@@ -837,6 +939,34 @@ function formatLocaleStatus(status?: LocaleStatus): string {
   return `Last saved: ${formatMetaDate(status.updatedAt)}`;
 }
 
+interface PageEditorSnapshotInput {
+  content: HomeContent;
+  siteContent: SiteContent;
+  aboutContent: AboutContent;
+  valuesContent: ValuesContent;
+  storiesPageContent: StoriesPageContent;
+  lookbookPageContent: LookbookPageContent;
+  contactContent: ContactContent;
+  wishlistContent: WishlistContent;
+  checkoutContent: CheckoutContent;
+  productsContent: ProductsContent;
+  accountContent: AccountContent;
+}
+
+interface CleanEditorSnapshots {
+  page: string | null;
+  story: string | null;
+  lookbook: string | null;
+}
+
+function buildPageEditorSnapshot(snapshot: PageEditorSnapshotInput): string {
+  return JSON.stringify(snapshot);
+}
+
+function buildDraftEditorSnapshot(selectedId: string | null, draft: string): string {
+  return JSON.stringify({ selectedId, draft });
+}
+
 function Field({
   label,
   value,
@@ -955,6 +1085,173 @@ function ShippingMethodFields({
   );
 }
 
+interface CmsSaveMeta {
+  label: string;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+interface AdminCmsHeaderProps {
+  locales: readonly EcomLocale[];
+  selectedLocale: EcomLocale;
+  localeStatus: Partial<Record<EcomLocale, LocaleStatus>>;
+  disabled: boolean;
+  saving: boolean;
+  hasUnsavedChanges: boolean;
+  unsavedChangeLabels: string[];
+  saveMeta: CmsSaveMeta[];
+  onLocaleSelect: (locale: EcomLocale) => void;
+  onCopyFromDefault: () => void;
+  onResetDefaults: () => void;
+  onSave: () => void;
+}
+
+function LocaleSwitcher({
+  locales,
+  selectedLocale,
+  localeStatus,
+  disabled,
+  onLocaleSelect,
+}: {
+  locales: readonly EcomLocale[];
+  selectedLocale: EcomLocale;
+  localeStatus: Partial<Record<EcomLocale, LocaleStatus>>;
+  disabled: boolean;
+  onLocaleSelect: (locale: EcomLocale) => void;
+}): JSX.Element {
+  return (
+    <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+      {locales.map((locale) => {
+        const selected = locale === selectedLocale;
+        return (
+          <button
+            key={locale}
+            type="button"
+            className={selected ? 'btn-primary' : 'btn-ghost'}
+            onClick={() => onLocaleSelect(locale)}
+            disabled={disabled}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.55rem',
+              fontSize: '0.72rem',
+              padding: '0.65rem 0.85rem',
+            }}
+          >
+            <span>{LOCALE_LABELS[locale]}</span>
+            {locale !== DEFAULT_LOCALE && (
+              <span style={{
+                color: selected ? 'var(--bg)' : 'var(--muted)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.58rem',
+              }}>
+                {formatLocaleStatus(localeStatus[locale])}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function CmsSaveStatus({
+  saveMeta,
+  hasUnsavedChanges,
+  unsavedChangeLabels,
+}: {
+  saveMeta: CmsSaveMeta[];
+  hasUnsavedChanges: boolean;
+  unsavedChangeLabels: string[];
+}): JSX.Element {
+  return (
+    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--muted)', lineHeight: 1.7 }}>
+      {saveMeta.map((meta) => (
+        <div key={meta.label}>
+          {meta.label} save: {formatMetaDate(meta.updatedAt)}{meta.updatedBy ? ` · ${meta.updatedBy}` : ''}
+        </div>
+      ))}
+      {hasUnsavedChanges && (
+        <div style={{ color: 'var(--coral-red)', marginTop: '0.45rem' }}>
+          Unsaved changes: {unsavedChangeLabels.join(', ')}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminCmsHeader({
+  locales,
+  selectedLocale,
+  localeStatus,
+  disabled,
+  saving,
+  hasUnsavedChanges,
+  unsavedChangeLabels,
+  saveMeta,
+  onLocaleSelect,
+  onCopyFromDefault,
+  onResetDefaults,
+  onSave,
+}: AdminCmsHeaderProps): JSX.Element {
+  const canCopyFromDefault = selectedLocale !== DEFAULT_LOCALE && localeStatus[selectedLocale]?.saved === false;
+
+  return (
+    <>
+      <div className="type-label" style={{ color: 'var(--coral-red)', marginBottom: '1rem' }}>
+        Homepage CMS
+      </div>
+
+      <LocaleSwitcher
+        locales={locales}
+        selectedLocale={selectedLocale}
+        localeStatus={localeStatus}
+        disabled={disabled}
+        onLocaleSelect={onLocaleSelect}
+      />
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+        <CmsSaveStatus
+          saveMeta={saveMeta}
+          hasUnsavedChanges={hasUnsavedChanges}
+          unsavedChangeLabels={unsavedChangeLabels}
+        />
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {canCopyFromDefault && (
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={onCopyFromDefault}
+              disabled={disabled}
+              style={{ fontSize: '0.72rem' }}
+            >
+              Copy from EN
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={onResetDefaults}
+            disabled={disabled}
+            style={{ fontSize: '0.72rem' }}
+          >
+            Reset defaults
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={onSave}
+            disabled={disabled}
+            style={{ fontSize: '0.72rem' }}
+          >
+            {saving ? 'Saving...' : 'Save content'}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 interface AdminCmsEditorProps {
   availableLocales?: readonly EcomLocale[];
 }
@@ -989,6 +1286,8 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
   const [lookbookEntries, setLookbookEntries] = useState<Editorial[]>([]);
   const [lookbookDraft, setLookbookDraft] = useState('');
   const [selectedLookbookId, setSelectedLookbookId] = useState<string | null>(null);
+  const [catalogCategoryOptions, setCatalogCategoryOptions] = useState<CatalogOption[]>([]);
+  const [catalogThemeOptions, setCatalogThemeOptions] = useState<CatalogOption[]>([]);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [updatedBy, setUpdatedBy] = useState<string | null>(null);
   const [siteUpdatedAt, setSiteUpdatedAt] = useState<string | null>(null);
@@ -1015,14 +1314,207 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
   const [saving, setSaving] = useState(false);
   const [storySaving, setStorySaving] = useState(false);
   const [lookbookSaving, setLookbookSaving] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [categoryImageUploadingIndex, setCategoryImageUploadingIndex] = useState<number | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const cleanSnapshotsRef = useRef<CleanEditorSnapshots>({ page: null, story: null, lookbook: null });
+
+  const pageSnapshot = useMemo(() => buildPageEditorSnapshot({
+    content,
+    siteContent,
+    aboutContent,
+    valuesContent,
+    storiesPageContent,
+    lookbookPageContent,
+    contactContent,
+    wishlistContent,
+    checkoutContent,
+    productsContent,
+    accountContent,
+  }), [
+    content,
+    siteContent,
+    aboutContent,
+    valuesContent,
+    storiesPageContent,
+    lookbookPageContent,
+    contactContent,
+    wishlistContent,
+    checkoutContent,
+    productsContent,
+    accountContent,
+  ]);
+  const storySnapshot = useMemo(
+    () => buildDraftEditorSnapshot(selectedStorySlug, storyDraft),
+    [selectedStorySlug, storyDraft],
+  );
+  const lookbookSnapshot = useMemo(
+    () => buildDraftEditorSnapshot(selectedLookbookId, lookbookDraft),
+    [selectedLookbookId, lookbookDraft],
+  );
+  const hasPageUnsavedChanges =
+    !loading && cleanSnapshotsRef.current.page !== null && cleanSnapshotsRef.current.page !== pageSnapshot;
+  const hasStoryUnsavedChanges =
+    !loading && cleanSnapshotsRef.current.story !== null && cleanSnapshotsRef.current.story !== storySnapshot;
+  const hasLookbookUnsavedChanges =
+    !loading && cleanSnapshotsRef.current.lookbook !== null && cleanSnapshotsRef.current.lookbook !== lookbookSnapshot;
+  const hasUnsavedChanges =
+    hasPageUnsavedChanges || hasStoryUnsavedChanges || hasLookbookUnsavedChanges;
+  const unsavedChangeLabels = [
+    hasPageUnsavedChanges ? 'page copy' : null,
+    hasStoryUnsavedChanges ? 'story draft' : null,
+    hasLookbookUnsavedChanges ? 'lookbook draft' : null,
+  ].filter((label): label is string => Boolean(label));
+  const headerDisabled = loading || saving || logoUploading || categoryImageUploadingIndex !== null;
+  const saveMeta = useMemo<CmsSaveMeta[]>(() => [
+    { label: 'Homepage', updatedAt, updatedBy },
+    { label: 'Global', updatedAt: siteUpdatedAt, updatedBy: siteUpdatedBy },
+    { label: 'About', updatedAt: aboutUpdatedAt, updatedBy: aboutUpdatedBy },
+    { label: 'Values', updatedAt: valuesUpdatedAt, updatedBy: valuesUpdatedBy },
+    { label: 'Stories page', updatedAt: storiesPageUpdatedAt, updatedBy: storiesPageUpdatedBy },
+    { label: 'Lookbook page', updatedAt: lookbookPageUpdatedAt, updatedBy: lookbookPageUpdatedBy },
+    { label: 'Contact', updatedAt: contactUpdatedAt, updatedBy: contactUpdatedBy },
+    { label: 'Wishlist', updatedAt: wishlistUpdatedAt, updatedBy: wishlistUpdatedBy },
+    { label: 'Checkout', updatedAt: checkoutUpdatedAt, updatedBy: checkoutUpdatedBy },
+    { label: 'Products', updatedAt: productsUpdatedAt, updatedBy: productsUpdatedBy },
+    { label: 'Account', updatedAt: accountUpdatedAt, updatedBy: accountUpdatedBy },
+  ], [
+    updatedAt,
+    updatedBy,
+    siteUpdatedAt,
+    siteUpdatedBy,
+    aboutUpdatedAt,
+    aboutUpdatedBy,
+    valuesUpdatedAt,
+    valuesUpdatedBy,
+    storiesPageUpdatedAt,
+    storiesPageUpdatedBy,
+    lookbookPageUpdatedAt,
+    lookbookPageUpdatedBy,
+    contactUpdatedAt,
+    contactUpdatedBy,
+    wishlistUpdatedAt,
+    wishlistUpdatedBy,
+    checkoutUpdatedAt,
+    checkoutUpdatedBy,
+    productsUpdatedAt,
+    productsUpdatedBy,
+    accountUpdatedAt,
+    accountUpdatedBy,
+  ]);
+
+  function setCleanStoryDraft(selectedSlug: string | null, draft: string): void {
+    setSelectedStorySlug(selectedSlug);
+    setStoryDraft(draft);
+    cleanSnapshotsRef.current = {
+      ...cleanSnapshotsRef.current,
+      story: buildDraftEditorSnapshot(selectedSlug, draft),
+    };
+  }
+
+  function setCleanLookbookDraft(selectedId: string | null, draft: string): void {
+    setSelectedLookbookId(selectedId);
+    setLookbookDraft(draft);
+    cleanSnapshotsRef.current = {
+      ...cleanSnapshotsRef.current,
+      lookbook: buildDraftEditorSnapshot(selectedId, draft),
+    };
+  }
+
+  function confirmDiscardAllUnsavedChanges(): boolean {
+    if (!hasUnsavedChanges) return true;
+    return window.confirm(
+      `Discard unsaved ${LOCALE_LABELS[selectedLocale]} CMS changes (${unsavedChangeLabels.join(', ')})?`,
+    );
+  }
+
+  function confirmDiscardStoryDraft(): boolean {
+    if (!hasStoryUnsavedChanges) return true;
+    return window.confirm('Discard unsaved story draft changes?');
+  }
+
+  function confirmDiscardLookbookDraft(): boolean {
+    if (!hasLookbookUnsavedChanges) return true;
+    return window.confirm('Discard unsaved lookbook draft changes?');
+  }
+
+  function clearCleanSnapshots(): void {
+    cleanSnapshotsRef.current = { page: null, story: null, lookbook: null };
+  }
+
+  function handleLocaleSelect(locale: EcomLocale): void {
+    if (locale === selectedLocale) return;
+    if (!confirmDiscardAllUnsavedChanges()) return;
+    clearCleanSnapshots();
+    setSelectedLocale(locale);
+  }
+
+  function reloadSelectedLocale(): void {
+    if (!confirmDiscardAllUnsavedChanges()) return;
+    clearCleanSnapshots();
+    setLocaleReloadKey((current) => current + 1);
+  }
+
+  function resetPageContentToDefaults(): void {
+    if (
+      hasPageUnsavedChanges &&
+      !window.confirm(`Replace unsaved ${LOCALE_LABELS[selectedLocale]} page copy with checked-in defaults?`)
+    ) {
+      return;
+    }
+
+    setContent(HOME_CONTENT_DEFAULTS);
+    setSiteContent(SITE_CONTENT_DEFAULTS);
+    setAboutContent(ABOUT_CONTENT_DEFAULTS);
+    setValuesContent(VALUES_CONTENT_DEFAULTS);
+    setStoriesPageContent(STORIES_PAGE_CONTENT_DEFAULTS);
+    setLookbookPageContent(LOOKBOOK_PAGE_CONTENT_DEFAULTS);
+    setContactContent(CONTACT_CONTENT_DEFAULTS);
+    setWishlistContent(WISHLIST_CONTENT_DEFAULTS);
+    setCheckoutContent(CHECKOUT_CONTENT_DEFAULTS);
+    setProductsContent(PRODUCTS_CONTENT_DEFAULTS);
+    setAccountContent(ACCOUNT_CONTENT_DEFAULTS);
+  }
+
+  function startNewStoryDraft(): void {
+    if (!confirmDiscardStoryDraft()) return;
+    setCleanStoryDraft(null, toJson(makeStoryDraft(stories.length)));
+  }
+
+  function editStoryDraft(story: Story): void {
+    if (!confirmDiscardStoryDraft()) return;
+    setCleanStoryDraft(story.slug, toJson(story));
+  }
+
+  function startNewLookbookDraft(): void {
+    if (!confirmDiscardLookbookDraft()) return;
+    setCleanLookbookDraft(null, toJson(makeLookbookDraft(lookbookEntries.length)));
+  }
+
+  function editLookbookDraft(entry: Editorial): void {
+    if (!confirmDiscardLookbookDraft()) return;
+    setCleanLookbookDraft(entry.id, toJson(entry));
+  }
 
   useEffect(() => {
     if (!locales.includes(selectedLocale)) {
+      clearCleanSnapshots();
       setSelectedLocale(locales[0] ?? DEFAULT_LOCALE);
     }
   }, [locales, selectedLocale]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   useEffect(() => {
     if (!locales.includes(selectedLocale)) return;
@@ -1048,6 +1540,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
           accountRes,
           storiesRes,
           lookbookRes,
+          catalogOptionsRes,
         ] = await Promise.all([
           fetch(`/api/cms/home${localeQuery}`),
           fetch(`/api/cms/site${localeQuery}`),
@@ -1060,8 +1553,9 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
           fetch(`/api/cms/checkout${localeQuery}`),
           fetch(`/api/cms/products${localeQuery}`),
           fetch(`/api/cms/account${localeQuery}`),
-          fetch('/api/cms/stories'),
-          fetch('/api/cms/lookbook'),
+          fetch(`/api/cms/stories${localeQuery}`),
+          fetch(`/api/cms/lookbook${localeQuery}`),
+          fetch(`/api/cms/catalog-options${localeQuery}`),
         ]);
         const homeData = await homeRes.json() as CmsResponse;
         const siteData = await siteRes.json() as SiteCmsResponse;
@@ -1076,6 +1570,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
         const accountData = await accountRes.json() as AccountCmsResponse;
         const storiesData = await storiesRes.json() as StoriesCmsResponse;
         const lookbookData = await lookbookRes.json() as LookbookCmsResponse;
+        const catalogOptionsData = await catalogOptionsRes.json() as CatalogOptionsResponse;
         if (!homeRes.ok) throw new Error(homeData.error ?? 'Failed to load homepage CMS content');
         if (!siteRes.ok) throw new Error(siteData.error ?? 'Failed to load site CMS content');
         if (!aboutRes.ok) throw new Error(aboutData.error ?? 'Failed to load about CMS content');
@@ -1089,38 +1584,73 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
         if (!accountRes.ok) throw new Error(accountData.error ?? 'Failed to load account CMS content');
         if (!storiesRes.ok) throw new Error(storiesData.error ?? 'Failed to load stories CMS content');
         if (!lookbookRes.ok) throw new Error(lookbookData.error ?? 'Failed to load lookbook CMS content');
+        if (!catalogOptionsRes.ok) throw new Error(catalogOptionsData.error ?? 'Failed to load catalog selector options');
         if (!mounted) return;
-        setContent(homeData.content ?? HOME_CONTENT_DEFAULTS);
+        const nextContent = homeData.content ?? HOME_CONTENT_DEFAULTS;
+        const nextSiteContent = siteData.content ?? SITE_CONTENT_DEFAULTS;
+        const nextAboutContent = aboutData.content ?? ABOUT_CONTENT_DEFAULTS;
+        const nextValuesContent = valuesData.content ?? VALUES_CONTENT_DEFAULTS;
+        const nextStoriesPageContent = storiesPageData.content ?? STORIES_PAGE_CONTENT_DEFAULTS;
+        const nextLookbookPageContent = lookbookPageData.content ?? LOOKBOOK_PAGE_CONTENT_DEFAULTS;
+        const nextContactContent = contactData.content ?? CONTACT_CONTENT_DEFAULTS;
+        const nextWishlistContent = wishlistData.content ?? WISHLIST_CONTENT_DEFAULTS;
+        const nextCheckoutContent = checkoutData.content ?? CHECKOUT_CONTENT_DEFAULTS;
+        const nextProductsContent = productsData.content ?? PRODUCTS_CONTENT_DEFAULTS;
+        const nextAccountContent = accountData.content ?? ACCOUNT_CONTENT_DEFAULTS;
+        const nextStories = storiesData.stories ?? [];
+        const nextStoryDraft = toJson(makeStoryDraft(nextStories.length));
+        const nextLookbookEntries = lookbookData.entries ?? [];
+        const nextLookbookDraft = toJson(makeLookbookDraft(nextLookbookEntries.length));
+
+        cleanSnapshotsRef.current = {
+          page: buildPageEditorSnapshot({
+            content: nextContent,
+            siteContent: nextSiteContent,
+            aboutContent: nextAboutContent,
+            valuesContent: nextValuesContent,
+            storiesPageContent: nextStoriesPageContent,
+            lookbookPageContent: nextLookbookPageContent,
+            contactContent: nextContactContent,
+            wishlistContent: nextWishlistContent,
+            checkoutContent: nextCheckoutContent,
+            productsContent: nextProductsContent,
+            accountContent: nextAccountContent,
+          }),
+          story: buildDraftEditorSnapshot(null, nextStoryDraft),
+          lookbook: buildDraftEditorSnapshot(null, nextLookbookDraft),
+        };
+
+        setContent(nextContent);
         setUpdatedAt(homeData.updatedAt ?? null);
         setUpdatedBy(homeData.updatedBy ?? null);
-        setSiteContent(siteData.content ?? SITE_CONTENT_DEFAULTS);
+        setSiteContent(nextSiteContent);
         setSiteUpdatedAt(siteData.updatedAt ?? null);
         setSiteUpdatedBy(siteData.updatedBy ?? null);
-        setAboutContent(aboutData.content ?? ABOUT_CONTENT_DEFAULTS);
+        setAboutContent(nextAboutContent);
         setAboutUpdatedAt(aboutData.updatedAt ?? null);
         setAboutUpdatedBy(aboutData.updatedBy ?? null);
-        setValuesContent(valuesData.content ?? VALUES_CONTENT_DEFAULTS);
+        setValuesContent(nextValuesContent);
         setValuesUpdatedAt(valuesData.updatedAt ?? null);
         setValuesUpdatedBy(valuesData.updatedBy ?? null);
-        setStoriesPageContent(storiesPageData.content ?? STORIES_PAGE_CONTENT_DEFAULTS);
+        setStoriesPageContent(nextStoriesPageContent);
         setStoriesPageUpdatedAt(storiesPageData.updatedAt ?? null);
         setStoriesPageUpdatedBy(storiesPageData.updatedBy ?? null);
-        setLookbookPageContent(lookbookPageData.content ?? LOOKBOOK_PAGE_CONTENT_DEFAULTS);
+        setLookbookPageContent(nextLookbookPageContent);
         setLookbookPageUpdatedAt(lookbookPageData.updatedAt ?? null);
         setLookbookPageUpdatedBy(lookbookPageData.updatedBy ?? null);
-        setContactContent(contactData.content ?? CONTACT_CONTENT_DEFAULTS);
+        setContactContent(nextContactContent);
         setContactUpdatedAt(contactData.updatedAt ?? null);
         setContactUpdatedBy(contactData.updatedBy ?? null);
-        setWishlistContent(wishlistData.content ?? WISHLIST_CONTENT_DEFAULTS);
+        setWishlistContent(nextWishlistContent);
         setWishlistUpdatedAt(wishlistData.updatedAt ?? null);
         setWishlistUpdatedBy(wishlistData.updatedBy ?? null);
-        setCheckoutContent(checkoutData.content ?? CHECKOUT_CONTENT_DEFAULTS);
+        setCheckoutContent(nextCheckoutContent);
         setCheckoutUpdatedAt(checkoutData.updatedAt ?? null);
         setCheckoutUpdatedBy(checkoutData.updatedBy ?? null);
-        setProductsContent(productsData.content ?? PRODUCTS_CONTENT_DEFAULTS);
+        setProductsContent(nextProductsContent);
         setProductsUpdatedAt(productsData.updatedAt ?? null);
         setProductsUpdatedBy(productsData.updatedBy ?? null);
-        setAccountContent(accountData.content ?? ACCOUNT_CONTENT_DEFAULTS);
+        setAccountContent(nextAccountContent);
         setAccountUpdatedAt(accountData.updatedAt ?? null);
         setAccountUpdatedBy(accountData.updatedBy ?? null);
         const contentUpdatedAts = [
@@ -1143,12 +1673,14 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
             saved: contentUpdatedAts.some(Boolean),
           },
         }));
-        setStories(storiesData.stories ?? []);
-        setStoryDraft(toJson(makeStoryDraft(storiesData.stories?.length ?? 0)));
+        setStories(nextStories);
+        setStoryDraft(nextStoryDraft);
         setSelectedStorySlug(null);
-        setLookbookEntries(lookbookData.entries ?? []);
-        setLookbookDraft(toJson(makeLookbookDraft(lookbookData.entries?.length ?? 0)));
+        setLookbookEntries(nextLookbookEntries);
+        setLookbookDraft(nextLookbookDraft);
         setSelectedLookbookId(null);
+        setCatalogCategoryOptions(catalogOptionsData.categories ?? []);
+        setCatalogThemeOptions(catalogOptionsData.themes ?? []);
       } catch (err) {
         if (!mounted) return;
         setError(err instanceof Error ? err.message : 'Failed to load CMS content');
@@ -1194,6 +1726,87 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
     }));
   }
 
+  function updateCategoryCard<K extends keyof HomeCategoryCardContent>(
+    index: number,
+    key: K,
+    value: HomeCategoryCardContent[K],
+  ): void {
+    setContent((current) => ({
+      ...current,
+      categories: {
+        ...current.categories,
+        cards: current.categories.cards.map((card, cardIndex) => (
+          cardIndex === index ? { ...card, [key]: value } : card
+        )),
+      },
+    }));
+  }
+
+  function toggleCategoryCardSelectorValue(index: number, value: string): void {
+    setContent((current) => ({
+      ...current,
+      categories: {
+        ...current.categories,
+        cards: current.categories.cards.map((card, cardIndex) => {
+          if (cardIndex !== index) return card;
+          const exists = card.selectorValues.includes(value);
+          return {
+            ...card,
+            selectorValues: exists
+              ? card.selectorValues.filter((item) => item !== value)
+              : [...card.selectorValues, value],
+          };
+        }),
+      },
+    }));
+  }
+
+  function addCategoryCard(): void {
+    setContent((current) => ({
+      ...current,
+      categories: {
+        ...current.categories,
+        cards: [...current.categories.cards, makeHomeCategoryCard(current.categories.cards.length)],
+      },
+    }));
+  }
+
+  function removeCategoryCard(index: number): void {
+    setContent((current) => ({
+      ...current,
+      categories: {
+        ...current.categories,
+        cards: current.categories.cards.filter((_, cardIndex) => cardIndex !== index),
+      },
+    }));
+  }
+
+  async function uploadCategoryCardImage(index: number, file: File | null): Promise<void> {
+    if (file === null) return;
+    setCategoryImageUploadingIndex(index);
+    setMessage('');
+    setError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/cms/uploads/category-card', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json() as LogoUploadResponse;
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? 'Failed to upload category selector image');
+      }
+      updateCategoryCard(index, 'imageUrl', data.url);
+      setMessage('Category selector image uploaded to FastComet. Save content to publish it.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload category selector image');
+    } finally {
+      setCategoryImageUploadingIndex(null);
+    }
+  }
+
   function updateFeatured<K extends keyof HomeFeaturedContent>(key: K, value: HomeFeaturedContent[K]): void {
     setContent((current) => ({
       ...current,
@@ -1235,6 +1848,43 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
         [key]: value,
       },
     }));
+  }
+
+  async function uploadNavLogo(file: File | null): Promise<void> {
+    if (file === null) return;
+    setLogoUploading(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/cms/uploads/logo', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json() as LogoUploadResponse;
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? 'Failed to upload logo');
+      }
+
+      setSiteContent((current) => {
+        const fallbackAlt = `${current.nav.brandName} ${current.nav.brandSuffix}`.trim();
+        return {
+          ...current,
+          nav: {
+            ...current.nav,
+            logoUrl: data.url ?? '',
+            logoAlt: current.nav.logoAlt.trim() || fallbackAlt,
+          },
+        };
+      });
+      setMessage('Logo uploaded to FastComet. Save content to publish it.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload logo');
+    } finally {
+      setLogoUploading(false);
+    }
   }
 
   function updateAnnouncement<K extends keyof SiteAnnouncementContent>(
@@ -1776,7 +2426,8 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
   }
 
   async function refreshStories(): Promise<Story[]> {
-    const res = await fetch('/api/cms/stories');
+    const localeQuery = `?locale=${encodeURIComponent(selectedLocale)}`;
+    const res = await fetch(`/api/cms/stories${localeQuery}`);
     const data = await res.json() as StoriesCmsResponse;
     if (!res.ok) throw new Error(data.error ?? 'Failed to reload stories');
     const nextStories = data.stories ?? [];
@@ -1785,7 +2436,8 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
   }
 
   async function refreshLookbook(): Promise<Editorial[]> {
-    const res = await fetch('/api/cms/lookbook');
+    const localeQuery = `?locale=${encodeURIComponent(selectedLocale)}`;
+    const res = await fetch(`/api/cms/lookbook${localeQuery}`);
     const data = await res.json() as LookbookCmsResponse;
     if (!res.ok) throw new Error(data.error ?? 'Failed to reload lookbook entries');
     const nextEntries = data.entries ?? [];
@@ -1800,7 +2452,10 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
 
     try {
       const story = JSON.parse(storyDraft) as Story;
-      const endpoint = selectedStorySlug ? `/api/cms/stories/${encodeURIComponent(selectedStorySlug)}` : '/api/cms/stories';
+      const localeQuery = `?locale=${encodeURIComponent(selectedLocale)}`;
+      const endpoint = selectedStorySlug
+        ? `/api/cms/stories/${encodeURIComponent(selectedStorySlug)}${localeQuery}`
+        : `/api/cms/stories${localeQuery}`;
       const res = await fetch(endpoint, {
         method: selectedStorySlug ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1812,8 +2467,9 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
         throw new Error(`${data.error ?? 'Failed to save story'}${details}`);
       }
       const nextStories = await refreshStories();
-      setSelectedStorySlug(data.story?.slug ?? story.slug);
-      setStoryDraft(toJson(data.story ?? story));
+      const nextSelectedStorySlug = data.story?.slug ?? story.slug;
+      const nextStoryDraft = toJson(data.story ?? story);
+      setCleanStoryDraft(nextSelectedStorySlug, nextStoryDraft);
       setMessage(`Story saved. ${nextStories.length} stories loaded.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save story');
@@ -1829,12 +2485,12 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
     setError('');
 
     try {
-      const res = await fetch(`/api/cms/stories/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+      const localeQuery = `?locale=${encodeURIComponent(selectedLocale)}`;
+      const res = await fetch(`/api/cms/stories/${encodeURIComponent(slug)}${localeQuery}`, { method: 'DELETE' });
       const data = await res.json() as StoriesCmsResponse;
       if (!res.ok) throw new Error(data.error ?? 'Failed to delete story');
       const nextStories = await refreshStories();
-      setSelectedStorySlug(null);
-      setStoryDraft(toJson(makeStoryDraft(nextStories.length)));
+      setCleanStoryDraft(null, toJson(makeStoryDraft(nextStories.length)));
       setMessage('Story deleted.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete story');
@@ -1850,7 +2506,10 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
 
     try {
       const entry = JSON.parse(lookbookDraft) as Editorial;
-      const endpoint = selectedLookbookId ? `/api/cms/lookbook/${encodeURIComponent(selectedLookbookId)}` : '/api/cms/lookbook';
+      const localeQuery = `?locale=${encodeURIComponent(selectedLocale)}`;
+      const endpoint = selectedLookbookId
+        ? `/api/cms/lookbook/${encodeURIComponent(selectedLookbookId)}${localeQuery}`
+        : `/api/cms/lookbook${localeQuery}`;
       const res = await fetch(endpoint, {
         method: selectedLookbookId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1862,8 +2521,9 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
         throw new Error(`${data.error ?? 'Failed to save lookbook entry'}${details}`);
       }
       const nextEntries = await refreshLookbook();
-      setSelectedLookbookId(data.entry?.id ?? entry.id);
-      setLookbookDraft(toJson(data.entry ?? entry));
+      const nextSelectedLookbookId = data.entry?.id ?? entry.id;
+      const nextLookbookDraft = toJson(data.entry ?? entry);
+      setCleanLookbookDraft(nextSelectedLookbookId, nextLookbookDraft);
       setMessage(`Lookbook entry saved. ${nextEntries.length} entries loaded.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save lookbook entry');
@@ -1879,12 +2539,12 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
     setError('');
 
     try {
-      const res = await fetch(`/api/cms/lookbook/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const localeQuery = `?locale=${encodeURIComponent(selectedLocale)}`;
+      const res = await fetch(`/api/cms/lookbook/${encodeURIComponent(id)}${localeQuery}`, { method: 'DELETE' });
       const data = await res.json() as LookbookCmsResponse;
       if (!res.ok) throw new Error(data.error ?? 'Failed to delete lookbook entry');
       const nextEntries = await refreshLookbook();
-      setSelectedLookbookId(null);
-      setLookbookDraft(toJson(makeLookbookDraft(nextEntries.length)));
+      setCleanLookbookDraft(null, toJson(makeLookbookDraft(nextEntries.length)));
       setMessage('Lookbook entry deleted.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete lookbook entry');
@@ -2063,6 +2723,22 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
           saved: contentUpdatedAts.some(Boolean),
         },
       }));
+      cleanSnapshotsRef.current = {
+        ...cleanSnapshotsRef.current,
+        page: buildPageEditorSnapshot({
+          content: data.content ?? content,
+          siteContent: siteData.content ?? siteContent,
+          aboutContent: aboutData.content ?? aboutContent,
+          valuesContent: valuesData.content ?? valuesContent,
+          storiesPageContent: storiesPageData.content ?? storiesPageContent,
+          lookbookPageContent: lookbookPageData.content ?? lookbookPageContent,
+          contactContent: contactData.content ?? contactContent,
+          wishlistContent: wishlistData.content ?? wishlistContent,
+          checkoutContent: checkoutData.content ?? checkoutContent,
+          productsContent: productsData.content ?? productsContent,
+          accountContent: accountData.content ?? accountContent,
+        }),
+      };
       setMessage(`CMS content saved for ${LOCALE_LABELS[selectedLocale]}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save CMS content');
@@ -2073,101 +2749,20 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
 
   return (
     <section style={{ borderTop: '1px solid rgba(210,116,102,0.2)', paddingTop: '1.5rem', marginBottom: '2.5rem' }}>
-      <div className="type-label" style={{ color: 'var(--coral-red)', marginBottom: '1rem' }}>
-        Homepage CMS
-      </div>
-
-      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        {locales.map((locale) => {
-          const selected = locale === selectedLocale;
-          return (
-            <button
-              key={locale}
-              type="button"
-              className={selected ? 'btn-primary' : 'btn-ghost'}
-              onClick={() => setSelectedLocale(locale)}
-              disabled={loading || saving}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.55rem',
-                fontSize: '0.72rem',
-                padding: '0.65rem 0.85rem',
-              }}
-            >
-              <span>{LOCALE_LABELS[locale]}</span>
-              {locale !== DEFAULT_LOCALE && (
-                <span style={{
-                  color: selected ? 'var(--bg)' : 'var(--muted)',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.58rem',
-                }}>
-                  {formatLocaleStatus(localeStatus[locale])}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--muted)', lineHeight: 1.7 }}>
-          <div>Homepage save: {formatMetaDate(updatedAt)}{updatedBy ? ` · ${updatedBy}` : ''}</div>
-          <div>Global save: {formatMetaDate(siteUpdatedAt)}{siteUpdatedBy ? ` · ${siteUpdatedBy}` : ''}</div>
-          <div>About save: {formatMetaDate(aboutUpdatedAt)}{aboutUpdatedBy ? ` · ${aboutUpdatedBy}` : ''}</div>
-          <div>Values save: {formatMetaDate(valuesUpdatedAt)}{valuesUpdatedBy ? ` · ${valuesUpdatedBy}` : ''}</div>
-          <div>Stories page save: {formatMetaDate(storiesPageUpdatedAt)}{storiesPageUpdatedBy ? ` · ${storiesPageUpdatedBy}` : ''}</div>
-          <div>Lookbook page save: {formatMetaDate(lookbookPageUpdatedAt)}{lookbookPageUpdatedBy ? ` · ${lookbookPageUpdatedBy}` : ''}</div>
-          <div>Contact save: {formatMetaDate(contactUpdatedAt)}{contactUpdatedBy ? ` · ${contactUpdatedBy}` : ''}</div>
-          <div>Wishlist save: {formatMetaDate(wishlistUpdatedAt)}{wishlistUpdatedBy ? ` · ${wishlistUpdatedBy}` : ''}</div>
-          <div>Checkout save: {formatMetaDate(checkoutUpdatedAt)}{checkoutUpdatedBy ? ` · ${checkoutUpdatedBy}` : ''}</div>
-          <div>Products save: {formatMetaDate(productsUpdatedAt)}{productsUpdatedBy ? ` · ${productsUpdatedBy}` : ''}</div>
-          <div>Account save: {formatMetaDate(accountUpdatedAt)}{accountUpdatedBy ? ` · ${accountUpdatedBy}` : ''}</div>
-        </div>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {selectedLocale !== DEFAULT_LOCALE && localeStatus[selectedLocale]?.saved === false && (
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => setLocaleReloadKey((current) => current + 1)}
-              disabled={loading || saving}
-              style={{ fontSize: '0.72rem' }}
-            >
-              Copy from EN
-            </button>
-          )}
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={() => {
-              setContent(HOME_CONTENT_DEFAULTS);
-              setSiteContent(SITE_CONTENT_DEFAULTS);
-              setAboutContent(ABOUT_CONTENT_DEFAULTS);
-              setValuesContent(VALUES_CONTENT_DEFAULTS);
-              setStoriesPageContent(STORIES_PAGE_CONTENT_DEFAULTS);
-              setLookbookPageContent(LOOKBOOK_PAGE_CONTENT_DEFAULTS);
-              setContactContent(CONTACT_CONTENT_DEFAULTS);
-              setWishlistContent(WISHLIST_CONTENT_DEFAULTS);
-              setCheckoutContent(CHECKOUT_CONTENT_DEFAULTS);
-              setProductsContent(PRODUCTS_CONTENT_DEFAULTS);
-              setAccountContent(ACCOUNT_CONTENT_DEFAULTS);
-            }}
-            disabled={loading || saving}
-            style={{ fontSize: '0.72rem' }}
-          >
-            Reset defaults
-          </button>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => void save()}
-            disabled={loading || saving}
-            style={{ fontSize: '0.72rem' }}
-          >
-            {saving ? 'Saving…' : 'Save content'}
-          </button>
-        </div>
-      </div>
+      <AdminCmsHeader
+        locales={locales}
+        selectedLocale={selectedLocale}
+        localeStatus={localeStatus}
+        disabled={headerDisabled}
+        saving={saving}
+        hasUnsavedChanges={hasUnsavedChanges}
+        unsavedChangeLabels={unsavedChangeLabels}
+        saveMeta={saveMeta}
+        onLocaleSelect={handleLocaleSelect}
+        onCopyFromDefault={reloadSelectedLocale}
+        onResetDefaults={resetPageContentToDefaults}
+        onSave={() => void save()}
+      />
 
       {loading && (
         <div className="type-label" style={{ color: 'var(--muted)', padding: '1rem 0' }}>Loading CMS content…</div>
@@ -2181,10 +2776,60 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Brand name" value={siteContent.nav.brandName} onChange={(value) => updateSiteNav('brandName', value)} />
-                <Field label="Brand suffix" value={siteContent.nav.brandSuffix} onChange={(value) => updateSiteNav('brandSuffix', value)} />
+                <Field label="Header brand name" value={siteContent.nav.brandName} onChange={(value) => updateSiteNav('brandName', value)} />
+                <Field label="Header brand suffix" value={siteContent.nav.brandSuffix} onChange={(value) => updateSiteNav('brandSuffix', value)} />
                 <Field label="Mobile account label" value={siteContent.nav.mobileAccountLabel} onChange={(value) => updateSiteNav('mobileAccountLabel', value)} />
                 <Field label="Mobile wishlist label" value={siteContent.nav.mobileWishlistLabel} onChange={(value) => updateSiteNav('mobileWishlistLabel', value)} />
+              </div>
+              <div style={{ border: '1px solid var(--border)', padding: '1rem', display: 'grid', gap: '0.9rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                  <Field label="Header logo URL" value={siteContent.nav.logoUrl} onChange={(value) => updateSiteNav('logoUrl', value)} />
+                  <Field label="Header logo alt text" value={siteContent.nav.logoAlt} onChange={(value) => updateSiteNav('logoAlt', value)} />
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                  <label>
+                    <span className="type-label" style={labelStyle}>Upload logo</span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                      disabled={loading || saving || logoUploading}
+                      onChange={(event) => {
+                        const file = event.currentTarget.files?.[0] ?? null;
+                        void uploadNavLogo(file);
+                        event.currentTarget.value = '';
+                      }}
+                      style={{ ...fieldStyle, padding: '0.72rem 0.8rem' }}
+                    />
+                  </label>
+                  {siteContent.nav.logoUrl.trim() && (
+                    <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <img
+                        src={siteContent.nav.logoUrl}
+                        alt={siteContent.nav.logoAlt || 'Header logo preview'}
+                        style={{
+                          height: '42px',
+                          maxWidth: '180px',
+                          objectFit: 'contain',
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid var(--border)',
+                          padding: '0.35rem',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => updateSiteNav('logoUrl', '')}
+                        disabled={loading || saving || logoUploading}
+                        style={{ fontSize: '0.66rem', padding: '0.5rem 0.7rem' }}
+                      >
+                        Clear logo
+                      </button>
+                    </div>
+                  )}
+                  {logoUploading && (
+                    <span className="type-label" style={{ color: 'var(--accent)' }}>Uploading…</span>
+                  )}
+                </div>
               </div>
               <TextArea label="Navigation links" rows={6} value={linksToText(siteContent.nav.links)} onChange={(value) => updateSiteNav('links', textToLinks(value))} />
               <label className="flex items-center gap-3">
@@ -2849,10 +3494,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
                 <button
                   type="button"
                   className="btn-ghost"
-                  onClick={() => {
-                    setSelectedStorySlug(null);
-                    setStoryDraft(toJson(makeStoryDraft(stories.length)));
-                  }}
+                  onClick={startNewStoryDraft}
                   disabled={storySaving}
                   style={{ fontSize: '0.72rem' }}
                 >
@@ -2889,10 +3531,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
                       <button
                         type="button"
                         className="btn-ghost"
-                        onClick={() => {
-                          setSelectedStorySlug(story.slug);
-                          setStoryDraft(toJson(story));
-                        }}
+                        onClick={() => editStoryDraft(story)}
                         disabled={storySaving}
                         style={{ fontSize: '0.68rem', padding: '0.55rem 0.7rem' }}
                       >
@@ -2964,10 +3603,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
                 <button
                   type="button"
                   className="btn-ghost"
-                  onClick={() => {
-                    setSelectedLookbookId(null);
-                    setLookbookDraft(toJson(makeLookbookDraft(lookbookEntries.length)));
-                  }}
+                  onClick={startNewLookbookDraft}
                   disabled={lookbookSaving}
                   style={{ fontSize: '0.72rem' }}
                 >
@@ -3004,10 +3640,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
                       <button
                         type="button"
                         className="btn-ghost"
-                        onClick={() => {
-                          setSelectedLookbookId(entry.id);
-                          setLookbookDraft(toJson(entry));
-                        }}
+                        onClick={() => editLookbookDraft(entry)}
                         disabled={lookbookSaving}
                         style={{ fontSize: '0.68rem', padding: '0.55rem 0.7rem' }}
                       >
@@ -3075,12 +3708,164 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
                 <Field label="CTA label" value={content.categories.ctaLabel} onChange={(value) => updateCategories('ctaLabel', value)} />
                 <Field label="CTA href" value={content.categories.ctaHref} onChange={(value) => updateCategories('ctaHref', value)} />
               </div>
-              <TextArea
-                label="Category cards"
-                rows={6}
-                value={categoryCardsToText(content.categories.cards)}
-                onChange={(value) => updateCategories('cards', textToCategoryCards(value))}
-              />
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {content.categories.cards.map((card, index) => (
+                  <div key={`${card.id}-${index}`} style={{ border: '1px solid var(--border)', padding: '1rem', display: 'grid', gap: '1rem' }}>
+                    {(() => {
+                      const selectorOptions = card.selectorType === 'category'
+                        ? catalogCategoryOptions
+                        : card.selectorType === 'theme'
+                          ? catalogThemeOptions
+                          : [];
+                      return (
+                        <>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div className="type-label" style={{ color: 'var(--accent)' }}>
+                        Selector {index + 1}: {card.label || card.id}
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => removeCategoryCard(index)}
+                        disabled={headerDisabled}
+                        style={{ fontSize: '0.66rem', padding: '0.45rem 0.65rem', color: 'var(--coral-red)' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
+                      <Field label="ID" value={card.id} onChange={(value) => updateCategoryCard(index, 'id', value)} />
+                      <Field label="Label" value={card.label} onChange={(value) => updateCategoryCard(index, 'label', value)} />
+                      <Field label="Sublabel" value={card.sublabel} onChange={(value) => updateCategoryCard(index, 'sublabel', value)} />
+                      <Field label="Tag" value={card.tag} onChange={(value) => updateCategoryCard(index, 'tag', value)} />
+                      <Field
+                        label="Fallback count"
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        value={String(card.fallbackCount)}
+                        onChange={(value) => updateCategoryCard(index, 'fallbackCount', Number(value) || 0)}
+                      />
+                      <label>
+                        <span className="type-label" style={labelStyle}>Selector type</span>
+                        <select
+                          value={card.selectorType}
+                          onChange={(event) => updateCategoryCard(index, 'selectorType', event.target.value as HomeCategorySelectorType)}
+                          style={{ ...fieldStyle, padding: '0.8rem 0.9rem' }}
+                        >
+                          {CATEGORY_SELECTOR_TYPES.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                      <Field label="Custom href fallback" value={card.href} onChange={(value) => updateCategoryCard(index, 'href', value)} />
+                      <Field label="Image URL" value={card.imageUrl} onChange={(value) => updateCategoryCard(index, 'imageUrl', value)} />
+                    </div>
+
+                    <TextArea
+                      label="Selector values (one category/theme per line)"
+                      rows={4}
+                      value={selectorValuesToText(card.selectorValues)}
+                      onChange={(value) => updateCategoryCard(index, 'selectorValues', textToSelectorValues(value))}
+                    />
+
+                    {(card.selectorType === 'category' || card.selectorType === 'theme') && (
+                      <div style={{ display: 'grid', gap: '0.65rem' }}>
+                        <div className="type-label" style={{ color: 'var(--muted)' }}>
+                          Choose {card.selectorType === 'category' ? 'categories' : 'themes'} from live catalog
+                        </div>
+                        {selectorOptions.length > 0 ? (
+                          <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', maxHeight: '11rem', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                            {selectorOptions.map((option) => {
+                              const selected = card.selectorValues.includes(option.name);
+                              return (
+                                <button
+                                  key={option.name}
+                                  type="button"
+                                  className={selected ? 'btn-primary' : 'btn-ghost'}
+                                  onClick={() => toggleCategoryCardSelectorValue(index, option.name)}
+                                  disabled={headerDisabled}
+                                  style={{ fontSize: '0.62rem', padding: '0.45rem 0.6rem' }}
+                                >
+                                  {option.name} ({option.count})
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="type-label" style={{ color: 'var(--muted)' }}>
+                            No live catalog options loaded for this locale.
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                      <label>
+                        <span className="type-label" style={labelStyle}>Upload selector image</span>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                          disabled={headerDisabled}
+                          onChange={(event) => {
+                            const file = event.currentTarget.files?.[0] ?? null;
+                            void uploadCategoryCardImage(index, file);
+                            event.currentTarget.value = '';
+                          }}
+                          style={{ ...fieldStyle, padding: '0.72rem 0.8rem' }}
+                        />
+                      </label>
+                      {card.imageUrl.trim() && (
+                        <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <img
+                            src={card.imageUrl}
+                            alt=""
+                            style={{
+                              width: '92px',
+                              height: '60px',
+                              objectFit: 'cover',
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid var(--border)',
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            onClick={() => updateCategoryCard(index, 'imageUrl', '')}
+                            disabled={headerDisabled}
+                            style={{ fontSize: '0.66rem', padding: '0.5rem 0.7rem' }}
+                          >
+                            Clear image
+                          </button>
+                        </div>
+                      )}
+                      {categoryImageUploadingIndex === index && (
+                        <span className="type-label" style={{ color: 'var(--accent)' }}>Uploading...</span>
+                      )}
+                    </div>
+
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.64rem', color: 'var(--muted)' }}>
+                      Target: {getHomeCategoryCardTarget(card)}
+                    </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={addCategoryCard}
+                  disabled={headerDisabled}
+                  style={{ justifySelf: 'start', fontSize: '0.72rem' }}
+                >
+                  Add selector
+                </button>
+              </div>
             </div>
           </div>
 

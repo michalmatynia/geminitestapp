@@ -125,11 +125,13 @@ function CollectionProductCard({
   compact,
   content,
   locale,
+  priority = false,
 }: {
   product: Product;
   compact: boolean;
   content: ProductsCollectionContent;
   locale: EcomLocale;
+  priority?: boolean;
 }): JSX.Element {
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -167,6 +169,7 @@ function CollectionProductCard({
           sizes="(max-width: 768px) 50vw, 33vw"
           fit="contain"
           position="center"
+          priority={priority}
         />
 
         {/* Grain */}
@@ -572,13 +575,14 @@ export function CollectionPageClient({
               </div>
             ) : (
               <div className={`grid ${gridCols} gap-6 md:gap-8`}>
-                {sortedProducts.map((product) => (
+                {sortedProducts.map((product, index) => (
                   <div key={product.id} className="coll-product-card" style={{ opacity: 0 }}>
                     <CollectionProductCard
                       product={product}
                       compact={viewSize === 'compact'}
                       content={collectionContent}
                       locale={locale}
+                      priority={index < 4}
                     />
                   </div>
                 ))}

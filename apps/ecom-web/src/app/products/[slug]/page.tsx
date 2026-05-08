@@ -21,9 +21,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const dbProduct = await getMentiosProduct(slug, locale);
   const product = dbProduct ?? getProduct(slug);
   if (!product) return {};
+  const title = `${product.name} — ARCANA`;
+  const description = product.description.slice(0, 155);
+  const images = product.imageUrl ? [{ url: product.imageUrl, alt: product.name }] : [];
   return {
-    title: `${product.name} — ARCANA`,
-    description: product.description.slice(0, 155),
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      images,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(images[0] ? { images: [images[0].url] } : {}),
+    },
   };
 }
 
@@ -31,8 +46,11 @@ export default async function ProductPage({ params }: Props): Promise<JSX.Elemen
   const { slug } = await params;
   const locale = await getRequestLocale();
 
-  // Try DB first, fall back to static demo data.
-  const dbProduct = await getMentiosProduct(slug, locale);
+  // Try DB first, fall back to static demo data. Fetch CMS content in parallel.
+  const [dbProduct, content] = await Promise.all([
+    getMentiosProduct(slug, locale),
+    getProductsContent(locale),
+  ]);
   const product = dbProduct ?? getProduct(slug);
   if (!product) notFound();
 
@@ -57,15 +75,13 @@ export default async function ProductPage({ params }: Props): Promise<JSX.Elemen
   if (dbProduct) {
     const categoryId = await getMentiosCategoryIdByName(product.category, locale);
     const { products: dbPool } = await getMentiosProducts({
-      limit: 20,
+      limit: 6,
       locale,
       ...(categoryId ? { categoryId } : {}),
     });
     const picked = pickRelated(dbPool);
     if (picked.length > 0) related = picked;
   }
-
-  const content = await getProductsContent(locale);
 
   return <ProductDetailClient product={product} related={related} content={content} />;
 }

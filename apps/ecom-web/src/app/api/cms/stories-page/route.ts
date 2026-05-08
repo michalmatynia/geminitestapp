@@ -1,4 +1,3 @@
-import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import {
@@ -6,12 +5,16 @@ import {
   parseStoriesPageContentUpdate,
   saveStoriesPageContent,
 } from '@/lib/cms';
+import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 function forbidden(): NextResponse {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const session = await getSession();
+  if (!session?.isSuperAdmin) return forbidden();
+
   try {
     const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
     const snapshot = await getStoriesPageCmsSnapshot(locale);
@@ -40,8 +43,8 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   try {
     const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
     const snapshot = await saveStoriesPageContent(content, session.id, locale);
-    revalidatePath('/stories');
-    revalidatePath('/stories/[slug]', 'page');
+    revalidateLocalizedPath('/stories');
+    revalidateLocalizedPath('/stories/[slug]', 'page');
     return NextResponse.json({ ok: true, ...snapshot });
   } catch {
     return NextResponse.json({ error: 'Failed to save stories page CMS content' }, { status: 500 });

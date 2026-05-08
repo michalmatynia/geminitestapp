@@ -313,6 +313,39 @@ describe('resolveScrapeImagePayload', () => {
     });
   });
 
+  it('retries an image-typed HTML challenge before uploading a scraped image', async () => {
+    const storedUrl =
+      'https://sparksofsindri.com/uploads/products/BATTLESTOCK-13033/first.jpg';
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createHtmlResponse('image/jpeg'))
+      .mockResolvedValueOnce(createSourcePageResponse(['cf_clearance=abc; Path=/']))
+      .mockResolvedValueOnce(createImageResponse('image/jpeg'));
+    vi.stubGlobal('fetch', fetchMock);
+    mocks.uploadFile.mockResolvedValueOnce({ id: 'image-file-1', filepath: storedUrl });
+
+    const result = await resolveScrapeImagePayload({
+      candidate: { ...candidate, imageLinks: [candidate.imageLinks[0]!] },
+      dryRun: false,
+      imageImportMode: 'files',
+    });
+
+    const retryImageInit = fetchMock.mock.calls[2]?.[1] as RequestInit & {
+      headers?: Record<string, string>;
+    };
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, candidate.sourceUrl, expect.any(Object));
+    expect(retryImageInit.headers).toEqual(
+      expect.objectContaining({
+        cookie: 'cf_clearance=abc',
+      })
+    );
+    expect(result).toEqual({
+      imageFileIds: ['image-file-1'],
+      imageLinks: [],
+    });
+  });
+
   it('downloads product page images when the scrape draft has no image links', async () => {
     const storedUrl =
       'https://sparksofsindri.com/uploads/products/BATTLESTOCK-13033/source-page.webp';

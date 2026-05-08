@@ -1,4 +1,3 @@
-import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import {
@@ -7,6 +6,8 @@ import {
   saveLookbookEntry,
   validateEditorial,
 } from '@/lib/lookbookCms';
+import { normalizeLocale } from '@/lib/locales';
+import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -22,13 +23,14 @@ function readEntryPayload(input: unknown): unknown {
   return root['entry'] ?? root['editorial'] ?? root['content'] ?? input;
 }
 
-export async function GET(_req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
+export async function GET(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   const { id } = await params;
+  const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
   try {
-    const entry = await getLookbookEntry(id);
+    const entry = await getLookbookEntry(id, locale);
     if (!entry) return NextResponse.json({ error: 'Lookbook entry not found' }, { status: 404 });
-    return NextResponse.json({ entry });
+    return NextResponse.json({ entry, locale });
   } catch {
     return NextResponse.json({ error: 'Failed to load lookbook entry' }, { status: 500 });
   }
@@ -38,6 +40,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext): Promise<N
   const session = await getSession();
   if (!session?.isSuperAdmin) return forbidden();
   const { id } = await params;
+  const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
   let body: unknown;
   try {
@@ -55,23 +58,24 @@ export async function PUT(req: NextRequest, { params }: RouteContext): Promise<N
   }
 
   try {
-    await saveLookbookEntry(editorial);
-    revalidatePath('/lookbook');
-    return NextResponse.json({ ok: true, entry: editorial });
+    await saveLookbookEntry(editorial, locale);
+    revalidateLocalizedPath('/lookbook');
+    return NextResponse.json({ ok: true, entry: editorial, locale });
   } catch {
     return NextResponse.json({ error: 'Failed to save lookbook entry' }, { status: 500 });
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
+export async function DELETE(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   const session = await getSession();
   if (!session?.isSuperAdmin) return forbidden();
   const { id } = await params;
+  const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
   try {
-    await deleteLookbookEntry(id);
-    revalidatePath('/lookbook');
-    return NextResponse.json({ ok: true });
+    await deleteLookbookEntry(id, locale);
+    revalidateLocalizedPath('/lookbook');
+    return NextResponse.json({ ok: true, locale });
   } catch {
     return NextResponse.json({ error: 'Failed to delete lookbook entry' }, { status: 500 });
   }

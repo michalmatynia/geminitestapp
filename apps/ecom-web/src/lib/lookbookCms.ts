@@ -1,6 +1,7 @@
+import { cache } from 'react';
 import { getDb } from '@/lib/mongodb';
 import { EDITORIALS, type Editorial } from '@/data/lookbook';
-import { normalizeLocale } from '@/lib/locales';
+import { DEFAULT_LOCALE, normalizeLocale } from '@/lib/locales';
 
 const COLLECTION = 'ecom_lookbook';
 
@@ -48,8 +49,11 @@ const EDITORIAL_PL: Record<string, Partial<Editorial>> = {
 };
 
 function docToEditorial(doc: Record<string, unknown>): Editorial {
-  const { _id, ...rest } = doc;
+  const { _id, locale, createdAt, updatedAt, ...rest } = doc;
   void _id;
+  void locale;
+  void createdAt;
+  void updatedAt;
   return rest as unknown as Editorial;
 }
 
@@ -61,46 +65,82 @@ function localizeEditorial(entry: Editorial, localeInput?: string | null): Edito
   };
 }
 
-export async function getAllLookbookEntries(locale?: string | null): Promise<Editorial[]> {
+export const getAllLookbookEntries = cache(async function getAllLookbookEntries(locale?: string | null): Promise<Editorial[]> {
+  const requestedLocale = normalizeLocale(locale);
   try {
     const db = await getDb();
-    const docs = await db.collection(COLLECTION).find({}).sort({ issue: 1 }).toArray();
-    const entries = docs.length === 0
-      ? EDITORIALS
-      : docs.map((d) => docToEditorial(d as Record<string, unknown>));
-    return entries.map((entry) => localizeEditorial(entry, locale));
-  } catch {
-    return EDITORIALS.map((entry) => localizeEditorial(entry, locale));
-  }
-}
+    const collection = db.collection(COLLECTION);
+    const defaultDocs = await collection.find({ locale: DEFAULT_LOCALE }).sort({ issue: 1 }).toArray();
+    const legacyDocs = defaultDocs.length === 0
+      ? await collection.find({ locale: { $exists: false } }).sort({ issue: 1 }).toArray()
+      : [];
+    const baseEntries = (defaultDocs.length > 0 ? defaultDocs : legacyDocs)
+      .map((d) => docToEditorial(d as Record<string, unknown>));
+    const fallbackEntries = baseEntries.length > 0 ? baseEntries : EDITORIALS;
 
-export async function getLookbookEntry(id: string, locale?: string | null): Promise<Editorial | null> {
+    if (requestedLocale === DEFAULT_LOCALE) return fallbackEntries;
+
+    const localizedDocs = await collection.find({ locale: requestedLocale }).sort({ issue: 1 }).toArray();
+    const localizedEntries = localizedDocs.map((d) => docToEditorial(d as Record<string, unknown>));
+    const localizedById = new Map(localizedEntries.map((entry) => [entry.id, entry]));
+    const fallbackIds = new Set(fallbackEntries.map((entry) => entry.id));
+    const localizedOnly = localizedEntries.filter((entry) => !fallbackIds.has(entry.id));
+
+    return [
+      ...localizedOnly,
+      ...fallbackEntries.map((entry) => localizedById.get(entry.id) ?? localizeEditorial(entry, requestedLocale)),
+    ];
+  } catch {
+    return EDITORIALS.map((entry) => localizeEditorial(entry, requestedLocale));
+  }
+});
+
+export const getLookbookEntry = cache(async function getLookbookEntry(id: string, locale?: string | null): Promise<Editorial | null> {
+  const requestedLocale = normalizeLocale(locale);
   try {
     const db = await getDb();
-    const doc = await db.collection(COLLECTION).findOne({ id });
-    if (!doc) {
-      const fallback = EDITORIALS.find((e) => e.id === id) ?? null;
-      return fallback ? localizeEditorial(fallback, locale) : null;
+    const collection = db.collection(COLLECTION);
+    const localizedDoc = await collection.findOne({ id, locale: requestedLocale });
+    if (localizedDoc) {
+      return docToEditorial(localizedDoc as Record<string, unknown>);
     }
-    return localizeEditorial(docToEditorial(doc as Record<string, unknown>), locale);
+
+    const defaultDoc = await collection.findOne({ id, locale: DEFAULT_LOCALE });
+    const legacyDoc = defaultDoc ? null : await collection.findOne({ id, locale: { $exists: false } });
+    const fallback = defaultDoc ?? legacyDoc;
+    const fallbackEntry = fallback
+      ? docToEditorial(fallback as Record<string, unknown>)
+      : EDITORIALS.find((e) => e.id === id) ?? null;
+
+    return fallbackEntry ? localizeEditorial(fallbackEntry, requestedLocale) : null;
   } catch {
     const fallback = EDITORIALS.find((e) => e.id === id) ?? null;
-    return fallback ? localizeEditorial(fallback, locale) : null;
+    return fallback ? localizeEditorial(fallback, requestedLocale) : null;
   }
-}
+});
 
-export async function saveLookbookEntry(entry: Editorial): Promise<void> {
+export async function saveLookbookEntry(entry: Editorial, locale?: string | null): Promise<void> {
+  const targetLocale = normalizeLocale(locale);
   const db = await getDb();
   await db.collection(COLLECTION).updateOne(
-    { id: entry.id },
-    { $set: { ...entry, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+    { id: entry.id, locale: targetLocale },
+    { $set: { ...entry, locale: targetLocale, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
     { upsert: true },
   );
 }
 
-export async function deleteLookbookEntry(id: string): Promise<void> {
+export async function deleteLookbookEntry(id: string, locale?: string | null): Promise<void> {
+  const targetLocale = normalizeLocale(locale);
   const db = await getDb();
-  await db.collection(COLLECTION).deleteOne({ id });
+  if (targetLocale === DEFAULT_LOCALE) {
+    await db.collection(COLLECTION).deleteMany({
+      id,
+      $or: [{ locale: DEFAULT_LOCALE }, { locale: { $exists: false } }],
+    });
+    return;
+  }
+
+  await db.collection(COLLECTION).deleteOne({ id, locale: targetLocale });
 }
 
 export function validateEditorial(input: unknown): { editorial: Editorial | null; errors: string[] } {

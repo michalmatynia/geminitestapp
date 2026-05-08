@@ -23,7 +23,7 @@ const STATIC_FEATURED = FEATURED_SLUGS
   .map((slug) => PRODUCTS.find((p) => p.slug === slug))
   .filter((p): p is Product => Boolean(p));
 
-function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLabel: string }): JSX.Element {
+function ProductCard({ product, quickAddLabel, priority = false }: { product: Product; quickAddLabel: string; priority?: boolean }): JSX.Element {
   const { addItem } = useCart();
   const locale = useLocale();
   const localizedHref = useLocalizedHref();
@@ -62,6 +62,7 @@ function ProductCard({ product, quickAddLabel }: { product: Product; quickAddLab
           className="card-image absolute inset-0"
           fit="cover"
           position="center"
+          priority={priority}
         />
         {/* Secondary image — crossfades in on hover */}
         <ProductImage
@@ -230,9 +231,9 @@ export function FeaturedProducts({
 
       {/* Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {featured.map((product) => (
+        {featured.map((product, index) => (
           <div key={product.id} className="feat-card" style={{ opacity: 0 }}>
-            <ProductCard product={product} quickAddLabel={content.quickAddLabel} />
+            <ProductCard product={product} quickAddLabel={content.quickAddLabel} priority={index < 4} />
           </div>
         ))}
       </div>

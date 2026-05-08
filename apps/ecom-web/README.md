@@ -66,6 +66,9 @@ The app works without these variables by using static fallback products.
 | `MENTIOS_CATALOG_ID` | No | `catalog-mentios` | Catalog id used to filter products and categories. |
 | `NEXT_PUBLIC_FILE_BASE_URL` | No | none | Public FastComet file origin used to render `/uploads/products/...` records from Vercel. |
 | `NEXT_PUBLIC_MAIN_APP_URL` | No | none | Main Products app origin used only for legacy `/api/files/preview` image fallback and local upload URL rewrites. |
+| `FASTCOMET_STORAGE_UPLOAD_URL` | For CMS image uploads | none | FastComet PHP upload endpoint used by admin CMS image uploaders. |
+| `FASTCOMET_STORAGE_AUTH_TOKEN` | For CMS image uploads | none | Bearer token expected by the FastComet upload endpoint. |
+| `FASTCOMET_STORAGE_BASE_URL` | For CMS image uploads | `NEXT_PUBLIC_FILE_BASE_URL` | Public FastComet origin used when upload responses return relative paths. |
 
 The Mongo client is implemented in `src/lib/mongodb.ts`. In development, it is
 cached on `globalThis._ecomMongoClient` to avoid reconnecting on every Next.js
@@ -328,6 +331,12 @@ Operational notes:
 - Save actions call `revalidatePath` for the affected public routes.
 - The site-wide CMS document calls `revalidatePath('/', 'layout')` because nav,
   footer, search, cart, and cookie content are mounted from the root layout.
+- Missing locale documents can be inspected with
+  `npm run cms:ecom:locales:backfill`. Use
+  `npm run cms:ecom:locales:backfill:apply` to create missing records after
+  reviewing the dry-run report. The backfill covers page CMS documents,
+  stories, and lookbook entries, and preserves legacy default-locale records by
+  adding `locale: "en"` instead of duplicating them.
 - Structured editor fields that represent lists use pipe-delimited rows, for
   example `label | href` or `id | label | detail | price | priceLabel`.
 - Story and lookbook entry editors use JSON drafts because the entries are

@@ -6,12 +6,18 @@ import { getAboutContent } from '@/lib/cms';
 import { getRequestLocale } from '@/lib/request-locale';
 import { localizeHref } from '@/lib/locales';
 
+export const revalidate = 3600;
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getAboutContent(locale);
+  const title = `${content.hero.title} - ARCANA`;
+  const description = content.hero.body;
   return {
-    title: `${content.hero.title} - ARCANA`,
-    description: content.hero.body,
+    title,
+    description,
+    openGraph: { type: 'website', title, description },
+    twitter: { card: 'summary', title, description },
   };
 }
 

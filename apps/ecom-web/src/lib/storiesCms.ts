@@ -1,6 +1,7 @@
+import { cache } from 'react';
 import { getDb } from '@/lib/mongodb';
 import { STORIES, type Story } from '@/data/stories';
-import { normalizeLocale } from '@/lib/locales';
+import { DEFAULT_LOCALE, normalizeLocale } from '@/lib/locales';
 
 const COLLECTION = 'ecom_stories';
 
@@ -125,8 +126,11 @@ const STORY_PL: Record<string, Partial<Story>> = {
 };
 
 function docToStory(doc: Record<string, unknown>): Story {
-  const { _id, ...rest } = doc;
+  const { _id, locale, createdAt, updatedAt, ...rest } = doc;
   void _id;
+  void locale;
+  void createdAt;
+  void updatedAt;
   return rest as Story;
 }
 
@@ -141,46 +145,82 @@ function localizeStory(story: Story, localeInput?: string | null): Story {
   };
 }
 
-export async function getAllStories(locale?: string | null): Promise<Story[]> {
+export const getAllStories = cache(async function getAllStories(locale?: string | null): Promise<Story[]> {
+  const requestedLocale = normalizeLocale(locale);
   try {
     const db = await getDb();
-    const docs = await db.collection(COLLECTION).find({}).sort({ date: -1 }).toArray();
-    const stories = docs.length === 0
-      ? STORIES
-      : docs.map((d) => docToStory(d as Record<string, unknown>));
-    return stories.map((story) => localizeStory(story, locale));
-  } catch {
-    return STORIES.map((story) => localizeStory(story, locale));
-  }
-}
+    const collection = db.collection(COLLECTION);
+    const defaultDocs = await collection.find({ locale: DEFAULT_LOCALE }).sort({ date: -1 }).toArray();
+    const legacyDocs = defaultDocs.length === 0
+      ? await collection.find({ locale: { $exists: false } }).sort({ date: -1 }).toArray()
+      : [];
+    const baseStories = (defaultDocs.length > 0 ? defaultDocs : legacyDocs)
+      .map((d) => docToStory(d as Record<string, unknown>));
+    const fallbackStories = baseStories.length > 0 ? baseStories : STORIES;
 
-export async function getStoryBySlug(slug: string, locale?: string | null): Promise<Story | null> {
+    if (requestedLocale === DEFAULT_LOCALE) return fallbackStories;
+
+    const localizedDocs = await collection.find({ locale: requestedLocale }).sort({ date: -1 }).toArray();
+    const localizedStories = localizedDocs.map((d) => docToStory(d as Record<string, unknown>));
+    const localizedBySlug = new Map(localizedStories.map((story) => [story.slug, story]));
+    const fallbackSlugs = new Set(fallbackStories.map((story) => story.slug));
+    const localizedOnly = localizedStories.filter((story) => !fallbackSlugs.has(story.slug));
+
+    return [
+      ...localizedOnly,
+      ...fallbackStories.map((story) => localizedBySlug.get(story.slug) ?? localizeStory(story, requestedLocale)),
+    ];
+  } catch {
+    return STORIES.map((story) => localizeStory(story, requestedLocale));
+  }
+});
+
+export const getStoryBySlug = cache(async function getStoryBySlug(slug: string, locale?: string | null): Promise<Story | null> {
+  const requestedLocale = normalizeLocale(locale);
   try {
     const db = await getDb();
-    const doc = await db.collection(COLLECTION).findOne({ slug });
-    if (!doc) {
-      const fallback = STORIES.find((s) => s.slug === slug) ?? null;
-      return fallback ? localizeStory(fallback, locale) : null;
+    const collection = db.collection(COLLECTION);
+    const localizedDoc = await collection.findOne({ slug, locale: requestedLocale });
+    if (localizedDoc) {
+      return docToStory(localizedDoc as Record<string, unknown>);
     }
-    return localizeStory(docToStory(doc as Record<string, unknown>), locale);
+
+    const defaultDoc = await collection.findOne({ slug, locale: DEFAULT_LOCALE });
+    const legacyDoc = defaultDoc ? null : await collection.findOne({ slug, locale: { $exists: false } });
+    const fallback = defaultDoc ?? legacyDoc;
+    const fallbackStory = fallback
+      ? docToStory(fallback as Record<string, unknown>)
+      : STORIES.find((s) => s.slug === slug) ?? null;
+
+    return fallbackStory ? localizeStory(fallbackStory, requestedLocale) : null;
   } catch {
     const fallback = STORIES.find((s) => s.slug === slug) ?? null;
-    return fallback ? localizeStory(fallback, locale) : null;
+    return fallback ? localizeStory(fallback, requestedLocale) : null;
   }
-}
+});
 
-export async function saveStory(story: Story): Promise<void> {
+export async function saveStory(story: Story, locale?: string | null): Promise<void> {
+  const targetLocale = normalizeLocale(locale);
   const db = await getDb();
   await db.collection(COLLECTION).updateOne(
-    { slug: story.slug },
-    { $set: { ...story, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+    { slug: story.slug, locale: targetLocale },
+    { $set: { ...story, locale: targetLocale, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
     { upsert: true },
   );
 }
 
-export async function deleteStory(slug: string): Promise<void> {
+export async function deleteStory(slug: string, locale?: string | null): Promise<void> {
+  const targetLocale = normalizeLocale(locale);
   const db = await getDb();
-  await db.collection(COLLECTION).deleteOne({ slug });
+  if (targetLocale === DEFAULT_LOCALE) {
+    await db.collection(COLLECTION).deleteMany({
+      slug,
+      $or: [{ locale: DEFAULT_LOCALE }, { locale: { $exists: false } }],
+    });
+    return;
+  }
+
+  await db.collection(COLLECTION).deleteOne({ slug, locale: targetLocale });
 }
 
 export function validateStory(input: unknown): { story: Story | null; errors: string[] } {

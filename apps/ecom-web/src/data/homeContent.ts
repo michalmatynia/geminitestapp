@@ -32,12 +32,17 @@ export interface HomeManifestoContent {
   ctaHref: string;
 }
 
+export type HomeCategorySelectorType = 'all' | 'category' | 'theme' | 'custom';
+
 export interface HomeCategoryCardContent {
   id: string;
   label: string;
   sublabel: string;
   tag: string;
   href: string;
+  imageUrl: string;
+  selectorType: HomeCategorySelectorType;
+  selectorValues: string[];
   fallbackCount: number;
 }
 
@@ -159,6 +164,9 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         sublabel: 'Keychains · Pins · Charms',
         tag: 'Full Catalog',
         href: '/products',
+        imageUrl: '',
+        selectorType: 'all',
+        selectorValues: [],
         fallbackCount: 1800,
       },
       {
@@ -166,7 +174,10 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         label: 'Anime',
         sublabel: 'Pins · Keychains · Jewellery',
         tag: 'New Season',
-        href: '/collections/womenswear',
+        href: '/products?categories=Anime%20Ring,Anime%20Keychain',
+        imageUrl: '',
+        selectorType: 'category',
+        selectorValues: ['Anime Ring', 'Anime Keychain'],
         fallbackCount: 640,
       },
       {
@@ -174,7 +185,10 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         label: 'Gaming',
         sublabel: 'RPG · FPS · Strategy Drops',
         tag: 'Hot Drops',
-        href: '/collections/menswear',
+        href: '/products?themes=Elden%20Ring,Warhammer%2040k',
+        imageUrl: '',
+        selectorType: 'theme',
+        selectorValues: ['Elden Ring', 'Warhammer 40k'],
         fallbackCount: 520,
       },
       {
@@ -182,7 +196,10 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         label: 'Film & TV',
         sublabel: 'Cinema · Series · Icons',
         tag: 'Collector',
-        href: '/collections/accessories',
+        href: '/products?categories=Film%20Collectibles',
+        imageUrl: '',
+        selectorType: 'category',
+        selectorValues: ['Film Collectibles'],
         fallbackCount: 380,
       },
     ],
@@ -396,6 +413,21 @@ function readNumber(
   return Math.round(value);
 }
 
+function readCategorySelectorType(
+  source: Record<string, unknown>,
+  fallback: HomeCategorySelectorType,
+  errors: string[],
+  path: string,
+): HomeCategorySelectorType {
+  const value = source['selectorType'];
+  if (value == null) return fallback;
+  if (value === 'all' || value === 'category' || value === 'theme' || value === 'custom') {
+    return value;
+  }
+  errors.push(`${path} must be all, category, theme, or custom.`);
+  return fallback;
+}
+
 function readCategoryCards(
   source: Record<string, unknown>,
   key: string,
@@ -430,6 +462,22 @@ function readCategoryCards(
       ),
       tag: readString(item, 'tag', fallbackCard.tag, TEXT_LIMITS.short, errors, `categories.cards.${index}.tag`),
       href: readHref(item, 'href', fallbackCard.href, errors, `categories.cards.${index}.href`),
+      imageUrl: readHref(item, 'imageUrl', fallbackCard.imageUrl, errors, `categories.cards.${index}.imageUrl`),
+      selectorType: readCategorySelectorType(
+        item,
+        fallbackCard.selectorType,
+        errors,
+        `categories.cards.${index}.selectorType`,
+      ),
+      selectorValues: readStringList(
+        item,
+        'selectorValues',
+        fallbackCard.selectorValues,
+        24,
+        TEXT_LIMITS.short,
+        errors,
+        `categories.cards.${index}.selectorValues`,
+      ),
       fallbackCount: readNumber(
         item,
         'fallbackCount',

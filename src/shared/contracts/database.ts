@@ -686,6 +686,7 @@ export type DatabaseEngineMongoLastSync = z.infer<
 
 export const databaseEngineMongoSyncInProgressSchema = z.object({
   direction: databaseEngineMongoSyncDirectionSchema,
+  application: databaseEngineManagedMongoApplicationTargetSchema.default('all'),
   source: mongoSourceSchema,
   target: mongoSourceSchema,
   acquiredAt: z.string(),
@@ -694,6 +695,16 @@ export const databaseEngineMongoSyncInProgressSchema = z.object({
 
 export type DatabaseEngineMongoSyncInProgress = z.infer<
   typeof databaseEngineMongoSyncInProgressSchema
+>;
+
+export const databaseEngineMongoPendingSyncRequestSchema = z.object({
+  direction: databaseEngineMongoSyncDirectionSchema,
+  application: databaseEngineManagedMongoApplicationTargetSchema,
+  startedAt: z.string(),
+});
+
+export type DatabaseEngineMongoPendingSyncRequest = z.infer<
+  typeof databaseEngineMongoPendingSyncRequestSchema
 >;
 
 export const databaseEngineMongoSourceStateSchema = z.object({

@@ -96,6 +96,7 @@ describe('system-log-repository', () => {
   it('skips MongoDB persistence while a Mongo source sync lock is active', async () => {
     vi.mocked(readMongoSyncLock).mockResolvedValue({
       direction: 'local_to_cloud',
+      application: 'all',
       source: 'local',
       target: 'cloud',
       acquiredAt: '2026-04-18T00:00:00.000Z',

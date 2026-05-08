@@ -189,4 +189,45 @@ describe('createScripterServer', () => {
     expect(result.rawResult.run.errors).toEqual([{ stepId: 'jsonld', message: 'boom' }]);
     expect(close).toHaveBeenCalledTimes(1);
   });
+
+  it('closes the browser session when the dry-run abort signal fires', async () => {
+    const registry = createInMemoryScripterRegistry([definition]);
+    const controller = new AbortController();
+    let releaseExtraction: ((error: Error) => void) | null = null;
+    const close = vi.fn(async () => {
+      releaseExtraction?.(new Error('session closed'));
+    });
+    const blockingDriver: PageDriver = {
+      ...makeDriver([]),
+      async extractJsonLd() {
+        await new Promise<never>((_, reject) => {
+          releaseExtraction = reject;
+        });
+      },
+    };
+    const server = createScripterServer({
+      registry,
+      driverFactory: vi.fn(async () => ({ driver: blockingDriver, close })),
+      createDraft: vi.fn() as never,
+    });
+
+    const dryRun = server.dryRun({
+      scripterId: 'shop-example',
+      options: { signal: controller.signal },
+    });
+
+    await vi.waitFor(() => {
+      expect(releaseExtraction).not.toBeNull();
+    });
+    controller.abort(new Error('stop scrape'));
+
+    await expect(dryRun).resolves.toMatchObject({
+      rawResult: {
+        run: {
+          errors: [{ stepId: 'jsonld', message: 'session closed' }],
+        },
+      },
+    });
+    expect(close).toHaveBeenCalled();
+  });
 });

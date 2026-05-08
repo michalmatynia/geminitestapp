@@ -1,7 +1,11 @@
+/* eslint-disable max-lines */
 import 'server-only';
 
 import type { ScripterImportDraft } from '@/features/playwright/scripters';
-import type { ProductScrapeProfileImageImportMode } from '@/shared/contracts/products/scrape-profiles';
+import type {
+  ProductScrapeProfileImageImportMode,
+  ProductScrapeProfileRuntimeProgressUpdate,
+} from '@/shared/contracts/products/scrape-profiles';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { PriceGroupForCalculation, ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
@@ -19,9 +23,8 @@ import {
   resolveResultPayloadTitle,
 } from './product-scrape-profiles.payloads';
 import type { ScrapeTemplateLinkedParameterMetadata } from './product-scrape-template-linked-parameters';
-import {
-  resolveScrapeImagePayload,
-} from './product-scrape-profile-images';
+import { throwIfProductScrapeAborted } from './product-scrape-profile-abort';
+import { resolveScrapeImagePayload } from './product-scrape-profile-images';
 import type { ProductScrapeImageStepControls } from './product-scrape-profile-image-step-controls';
 import {
   createOutcome,
@@ -33,6 +36,9 @@ import { ensureScrapedSourceListing } from './product-scraped-source-common';
 export type { ProductScrapeProfileConfig } from './product-scrape-profiles.candidates';
 
 type ProductScrapeDuplicateState = { seenKeys: Set<string> };
+type ProductScrapeProfileProgressReporter = (
+  progress: ProductScrapeProfileRuntimeProgressUpdate
+) => Promise<void>;
 type ProductScrapeRunContext = {
   profile: ProductScrapeProfileConfig;
   catalog: CatalogRecord;
@@ -47,6 +53,8 @@ type ProductScrapeRunContext = {
   draftTemplate?: ProductDraft | null;
   draftTemplateCategoryAliases?: readonly string[];
   draftTemplateLinkedParameterMetadata?: ScrapeTemplateLinkedParameterMetadata | null;
+  reportProgress?: ProductScrapeProfileProgressReporter;
+  signal?: AbortSignal;
   waitWhilePaused?: () => Promise<void>;
 };
 
@@ -118,6 +126,7 @@ const processExistingScrapeCandidate = async (input: {
   existing: ProductWithImages;
   imagePayload: Awaited<ReturnType<typeof resolveScrapeImagePayload>>;
 }): Promise<ProductScrapeDraftOutcome> => {
+  throwIfProductScrapeAborted(input.context.signal);
   const payload = buildUpdatePayload({
     candidate: input.candidate,
     draft: input.draft,
@@ -136,6 +145,7 @@ const processExistingScrapeCandidate = async (input: {
     payload,
     input.context.productServiceOptions
   );
+  throwIfProductScrapeAborted(input.context.signal);
   await linkPersistedScrapedProduct(updated.id, input.candidate);
   return createOutcome(
     toResultProduct(input.draft, input.candidate, 'updated', {
@@ -152,6 +162,7 @@ const processNewScrapeCandidate = async (input: {
   draft: ScripterImportDraft;
   imagePayload: Awaited<ReturnType<typeof resolveScrapeImagePayload>>;
 }): Promise<ProductScrapeDraftOutcome> => {
+  throwIfProductScrapeAborted(input.context.signal);
   const payload = buildCreatePayload({
     candidate: input.candidate,
     draft: input.draft,
@@ -166,6 +177,7 @@ const processNewScrapeCandidate = async (input: {
     templateLinkedParameterMetadata: input.context.draftTemplateLinkedParameterMetadata,
   });
   const created = await productService.createProduct(payload, input.context.productServiceOptions);
+  throwIfProductScrapeAborted(input.context.signal);
   await linkPersistedScrapedProduct(created.id, input.candidate);
   return createOutcome(
     toResultProduct(input.draft, input.candidate, 'created', {
@@ -181,9 +193,12 @@ const processPersistedCandidate = async (
   candidate: ProductScrapeCandidate,
   context: ProductScrapeRunContext
 ): Promise<ProductScrapeDraftOutcome> => {
+  throwIfProductScrapeAborted(context.signal);
   const existingBySku = await productService.getProductBySku(candidate.sku);
+  throwIfProductScrapeAborted(context.signal);
   const existing =
     existingBySku ?? (await productService.findProductBySupplierLink(candidate.sourceUrl));
+  throwIfProductScrapeAborted(context.signal);
   const catalogIds = mergeTemplateCatalogIds(
     existingCatalogIds(existing, context.catalog.id),
     context.draftTemplate
@@ -193,7 +208,9 @@ const processPersistedCandidate = async (
     dryRun: context.dryRun,
     imageImportMode: context.imageImportMode,
     imageStepControls: context.imageStepControls,
+    signal: context.signal,
   });
+  throwIfProductScrapeAborted(context.signal);
   if (existing !== null) {
     return await processExistingScrapeCandidate({
       catalogIds,
@@ -234,6 +251,7 @@ const processValidScrapeCandidate = async (
         dryRun: context.dryRun,
         imageImportMode: context.imageImportMode,
         imageStepControls: context.imageStepControls,
+        signal: context.signal,
       }),
       profile: context.profile,
       catalogIds: mergeTemplateCatalogIds([context.catalog.id], context.draftTemplate),
@@ -253,6 +271,7 @@ const processValidScrapeCandidate = async (
   try {
     return await processPersistedCandidate(draft, candidate, context);
   } catch (error) {
+    throwIfProductScrapeAborted(context.signal);
     return createOutcome(
       toResultProduct(draft, candidate, 'failed', {
         error: error instanceof Error ? error.message : String(error),
@@ -262,10 +281,24 @@ const processValidScrapeCandidate = async (
   }
 };
 
+const reportImportProgress = async (
+  context: ProductScrapeRunContext,
+  current: number,
+  total: number
+): Promise<void> => {
+  await context.reportProgress?.({
+    current,
+    message: `Processed ${current} of ${total} scraped product record(s).`,
+    stage: 'importing_products',
+    total,
+  });
+};
+
 export const processScrapeDraft = async (
   draft: ScripterImportDraft,
   context: ProductScrapeRunContext
 ): Promise<ProductScrapeDraftOutcome> => {
+  throwIfProductScrapeAborted(context.signal);
   const candidate = buildCandidate(draft, context.profile);
   if (hasBlockingIssue(draft) && context.skipRecordsWithErrors) {
     const issueText = formatDraftIssues(draft);
@@ -298,7 +331,10 @@ export const processScrapeDrafts = async (
   return await drafts.reduce<Promise<ProductScrapeDraftOutcome[]>>(async (previous, draft) => {
     const outcomes = await previous;
     await runContext.waitWhilePaused?.();
+    throwIfProductScrapeAborted(runContext.signal);
     outcomes.push(await processScrapeDraft(draft, runContext));
+    await reportImportProgress(runContext, outcomes.length, drafts.length);
+    throwIfProductScrapeAborted(runContext.signal);
     return outcomes;
-	  }, Promise.resolve([]));
-	};
+  }, Promise.resolve([]));
+};

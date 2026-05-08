@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, type JSX } from 'react';
+import { useState, useEffect, useMemo, useCallback, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
@@ -222,11 +222,6 @@ function FieldRows({
   );
 }
 
-const VALID_CODES: Record<string, number> = {
-  ARCANA10: 0.10,
-  ARCANA15: 0.15,
-  WELCOME20: 0.20,
-};
 
 function OrderSummary({
   content,
@@ -237,6 +232,7 @@ function OrderSummary({
   freeShippingThreshold,
   freeShippingBannerLabel,
   promoCode,
+  promoDiscountPct,
   onPromoCodeChange,
 }: {
   content: CheckoutSummaryContent;
@@ -247,12 +243,14 @@ function OrderSummary({
   freeShippingThreshold: number;
   freeShippingBannerLabel: string;
   promoCode: string | null;
-  onPromoCodeChange: (code: string | null) => void;
+  promoDiscountPct: number;
+  onPromoCodeChange: (code: string | null, discountPct: number) => void;
 }): JSX.Element {
   const { items } = useCart();
   const locale = useLocale();
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState(false);
+  const [promoApplying, setPromoApplying] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
   const [freshData, setFreshData] = useState<Record<string, Product>>({});
   const idKey = items.map((item) => item.productId).join(',');
@@ -285,7 +283,7 @@ function OrderSummary({
       imageUrl: fresh.imageUrl ?? item.imageUrl,
     };
   });
-  const discountPct = promoCode ? (VALID_CODES[promoCode] ?? 0) : 0;
+  const discountPct = promoDiscountPct;
   const freeShippingEnabled = freeShippingThreshold > 0;
   const freeShippingUnlocked = freeShippingEnabled && subtotal >= freeShippingThreshold;
   const freeShippingRemaining = Math.max(0, freeShippingThreshold - subtotal);
@@ -293,14 +291,28 @@ function OrderSummary({
     ? (locale === 'pl' ? 'Darmowa dostawa odblokowana!' : 'Free shipping unlocked!')
     : freeShippingBannerLabel.replace('{amount}', formatPrice(freeShippingRemaining, locale));
 
-  const applyPromo = () => {
+  const applyPromo = async () => {
     const upper = promoInput.trim().toUpperCase();
-    if (VALID_CODES[upper] !== undefined) {
-      onPromoCodeChange(upper);
-      setPromoError(false);
-      setPromoOpen(false);
-    } else {
+    if (!upper) return;
+    setPromoApplying(true);
+    try {
+      const res = await fetch('/api/checkout/validate-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: upper }),
+      });
+      const data = await res.json() as { valid: boolean; discountPct?: number };
+      if (data.valid) {
+        onPromoCodeChange(upper, data.discountPct ?? 0);
+        setPromoError(false);
+        setPromoOpen(false);
+      } else {
+        setPromoError(true);
+      }
+    } catch {
       setPromoError(true);
+    } finally {
+      setPromoApplying(false);
     }
   };
 
@@ -371,7 +383,7 @@ function OrderSummary({
               </span>
             </div>
             <button
-              onClick={() => { onPromoCodeChange(null); setPromoInput(''); }}
+              onClick={() => { onPromoCodeChange(null, 0); setPromoInput(''); }}
               className="type-label hover:text-[var(--fg)] transition-colors"
               style={{ color: 'var(--muted)' }}
             >
@@ -422,10 +434,11 @@ function OrderSummary({
                 />
                 <button
                   onClick={applyPromo}
-                  className="type-label px-4 py-2 transition-colors hover:opacity-80"
+                  disabled={promoApplying}
+                  className="type-label px-4 py-2 transition-colors hover:opacity-80 disabled:opacity-50"
                   style={{ background: 'var(--fg)', color: 'var(--bg)', flexShrink: 0 }}
                 >
-                  {content.promoApplyLabel}
+                  {promoApplying ? '…' : content.promoApplyLabel}
                 </button>
               </div>
             )}
@@ -506,6 +519,11 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const [paymentForm, setPaymentForm] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [promoDiscountPct, setPromoDiscountPct] = useState(0);
+  const handlePromoCodeChange = useCallback((code: string | null, pct: number) => {
+    setPromoCode(code);
+    setPromoDiscountPct(pct);
+  }, []);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [confirmedOrderId, setConfirmedOrderId] = useState('');
 
@@ -530,8 +548,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const selectedShipping: CheckoutShippingMethodContent = zoneMethods.find((method) => method.id === shipping)
     ?? zoneMethods[0]
     ?? { id: 'standard', label: 'Standard', detail: '', price: 0, priceLabel: 'Free', businessDaysMin: 3, businessDaysMax: 5 };
-  const discountPct = promoCode ? (VALID_CODES[promoCode] ?? 0) : 0;
-  const discount = Math.round(subtotal * discountPct);
+  const discount = Math.round(subtotal * promoDiscountPct);
   const total = subtotal - discount + selectedShipping.price;
   const requiredMessage = locale === 'pl' ? 'To pole jest wymagane.' : 'This field is required.';
   const invalidEmailMessage = locale === 'pl' ? 'Wpisz poprawny adres email.' : 'Enter a valid email address.';
@@ -960,7 +977,8 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
               freeShippingThreshold={content.freeShippingThreshold}
               freeShippingBannerLabel={content.freeShippingBannerLabel}
               promoCode={promoCode}
-              onPromoCodeChange={setPromoCode}
+              promoDiscountPct={promoDiscountPct}
+              onPromoCodeChange={handlePromoCodeChange}
             />
           </div>
         </div>

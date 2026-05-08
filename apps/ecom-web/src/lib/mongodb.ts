@@ -144,6 +144,12 @@ export async function getEcomAuthDb(): Promise<Db> {
   return getProductsDb();
 }
 
+export async function closeMongoClients(): Promise<void> {
+  const clients = Array.from(clientCache.values());
+  clientCache.clear();
+  await Promise.all(clients.map((client) => client.close()));
+}
+
 /** Returns true if MongoDB is reachable and configured. */
 export async function isDbAvailable(): Promise<boolean> {
   if (!resolveMongoUri()) return false;

@@ -1,4 +1,3 @@
-import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import {
@@ -6,12 +5,16 @@ import {
   parseLookbookPageContentUpdate,
   saveLookbookPageContent,
 } from '@/lib/cms';
+import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 function forbidden(): NextResponse {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const session = await getSession();
+  if (!session?.isSuperAdmin) return forbidden();
+
   try {
     const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
     const snapshot = await getLookbookPageCmsSnapshot(locale);
@@ -40,7 +43,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   try {
     const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
     const snapshot = await saveLookbookPageContent(content, session.id, locale);
-    revalidatePath('/lookbook');
+    revalidateLocalizedPath('/lookbook');
     return NextResponse.json({ ok: true, ...snapshot });
   } catch {
     return NextResponse.json({ error: 'Failed to save lookbook page CMS content' }, { status: 500 });

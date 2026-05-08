@@ -8,6 +8,8 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { getRequestLocale } from '@/lib/request-locale';
 import { localizeHref, type EcomLocale } from '@/lib/locales';
 
+export const revalidate = 3600;
+
 function issueLabel(issue: string, locale: EcomLocale): string {
   return `${locale === 'pl' ? 'Wydanie' : 'Issue'} ${issue}`;
 }
@@ -15,9 +17,13 @@ function issueLabel(issue: string, locale: EcomLocale): string {
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getLookbookPageContent(locale);
+  const title = `${content.masthead.title} - ARCANA`;
+  const description = content.masthead.description;
   return {
-    title: `${content.masthead.title} - ARCANA`,
-    description: content.masthead.description,
+    title,
+    description,
+    openGraph: { type: 'website', title, description },
+    twitter: { card: 'summary_large_image', title, description },
   };
 }
 

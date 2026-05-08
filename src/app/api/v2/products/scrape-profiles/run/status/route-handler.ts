@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { getHandler } from '@/app/api/v2/products/scrape-profiles/run/status/handler';
 import { apiHandler } from '@/shared/lib/api/api-handler';

@@ -8,6 +8,8 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { getRequestLocale } from '@/lib/request-locale';
 import { localizeHref } from '@/lib/locales';
 
+export const revalidate = 3600;
+
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
@@ -21,9 +23,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const story = await getStoryBySlug(slug, locale);
   if (!story) return {};
   const content = await getStoriesPageContent(locale);
+  const title = `${story.title} - ${content.detail.issueLabelPrefix}`;
+  const description = story.excerpt.slice(0, 155);
   return {
-    title: `${story.title} - ${content.detail.issueLabelPrefix}`,
-    description: story.excerpt.slice(0, 155),
+    title,
+    description,
+    openGraph: {
+      type: 'article',
+      title,
+      description,
+      publishedTime: story.date,
+      tags: story.tags,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   };
 }
 
@@ -34,13 +50,13 @@ function readTimeLabel(value: string, locale: string): string {
 export default async function StoryPage({ params }: Props): Promise<JSX.Element> {
   const { slug } = await params;
   const locale = await getRequestLocale();
-  const [story, content] = await Promise.all([
+  const [story, content, stories] = await Promise.all([
     getStoryBySlug(slug, locale),
     getStoriesPageContent(locale),
+    getAllStories(locale),
   ]);
   if (!story) notFound();
 
-  const stories = await getAllStories(locale);
   const related = stories.filter(
     (s) => story.relatedSlugs.includes(s.slug),
   );

@@ -8,6 +8,9 @@ import {
   type Order,
   type OrderItem,
 } from '@/lib/orders';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { ensureAppIndexes } from '@/lib/db-indexes';
+import { computeDiscount } from '@/lib/promo';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REQUIRED_ADDRESS_FIELDS = [
@@ -92,6 +95,16 @@ function sanitizeAddress(value: unknown): Record<string, string> | null {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  void ensureAppIndexes();
+  const ip = getClientIp(req);
+  const { allowed, retryAfterSec } = checkRateLimit(`orders:${ip}`, 5, 60 * 60 * 1000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Too many orders from this address. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(retryAfterSec) } },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -121,12 +134,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const shippingMethod = readString(body['shippingMethod']) || 'Standard';
   const shippingPrice = readNonNegativeNumber(body['shippingPrice']);
   const subtotal = readNonNegativeNumber(body['subtotal']);
-  const discount = readNonNegativeNumber(body['discount']) ?? 0;
   const total = readNonNegativeNumber(body['total']);
 
   if (shippingPrice == null || subtotal == null || total == null || total < 1) {
     return NextResponse.json({ error: 'Valid order totals are required' }, { status: 400 });
   }
+
+  // Recompute discount server-side from the promo code — never trust the client value.
+  const promoCode = readOptionalString(body['promoCode']);
+  const discount = computeDiscount(subtotal, promoCode);
 
   const session = await getSession();
   const now = new Date().toISOString();
@@ -141,7 +157,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     shippingAddress,
     subtotal,
     discount,
-    promoCode: readOptionalString(body['promoCode']),
+    promoCode,
     total,
     createdAt: now,
   };

@@ -1,7 +1,8 @@
-import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getAllLookbookEntries, saveLookbookEntry, validateEditorial } from '@/lib/lookbookCms';
+import { normalizeLocale } from '@/lib/locales';
+import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 function forbidden(): NextResponse {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -13,10 +14,11 @@ function readEntryPayload(input: unknown): unknown {
   return root['entry'] ?? root['editorial'] ?? root['content'] ?? input;
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
   try {
-    const entries = await getAllLookbookEntries();
-    return NextResponse.json({ entries });
+    const entries = await getAllLookbookEntries(locale);
+    return NextResponse.json({ entries, locale });
   } catch {
     return NextResponse.json({ error: 'Failed to load lookbook entries' }, { status: 500 });
   }
@@ -25,6 +27,7 @@ export async function GET(): Promise<NextResponse> {
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const session = await getSession();
   if (!session?.isSuperAdmin) return forbidden();
+  const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
   let body: unknown;
   try {
@@ -39,9 +42,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    await saveLookbookEntry(editorial);
-    revalidatePath('/lookbook');
-    return NextResponse.json({ ok: true, entry: editorial });
+    await saveLookbookEntry(editorial, locale);
+    revalidateLocalizedPath('/lookbook');
+    return NextResponse.json({ ok: true, entry: editorial, locale });
   } catch {
     return NextResponse.json({ error: 'Failed to save lookbook entry' }, { status: 500 });
   }

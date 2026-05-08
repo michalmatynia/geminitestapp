@@ -95,6 +95,9 @@ export function SiteNav() {
   const languageLabel = isPolish ? 'Język' : 'Language';
   const accountLabel = nav.mobileAccountLabel || (isPolish ? 'Konto' : 'My account');
   const menuLabel = isPolish ? 'Menu' : 'Menu';
+  const logoUrl = nav.logoUrl.trim();
+  const brandLabel = `${nav.brandName} ${nav.brandSuffix}`.trim();
+  const logoAlt = nav.logoAlt.trim() || brandLabel;
 
   return (
     <>
@@ -146,21 +149,36 @@ export function SiteNav() {
           <div className="flex items-center justify-between w-full max-w-screen-2xl mx-auto">
             {/* Logo */}
             <a href={localizedHref('/')} className="flex-shrink-0 flex items-center gap-2">
-              <span
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 800,
-                  fontSize: '1.15rem',
-                  letterSpacing: '0.3em',
-                  color: 'var(--accent)',
-                  textShadow: '0 0 16px rgba(var(--accent-rgb),0.4)',
-                }}
-              >
-                {nav.brandName}
-              </span>
-              <span className="type-label hidden sm:inline" style={{ color: 'rgba(var(--accent-rgb),0.45)', letterSpacing: '0.15em' }}>
-                {nav.brandSuffix}
-              </span>
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={logoAlt}
+                  style={{
+                    display: 'block',
+                    height: '34px',
+                    maxWidth: '180px',
+                    objectFit: 'contain',
+                  }}
+                />
+              ) : (
+                <>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 800,
+                      fontSize: '1.15rem',
+                      letterSpacing: '0.3em',
+                      color: 'var(--accent)',
+                      textShadow: '0 0 16px rgba(var(--accent-rgb),0.4)',
+                    }}
+                  >
+                    {nav.brandName}
+                  </span>
+                  <span className="type-label hidden sm:inline" style={{ color: 'rgba(var(--accent-rgb),0.45)', letterSpacing: '0.15em' }}>
+                    {nav.brandSuffix}
+                  </span>
+                </>
+              )}
             </a>
 
             {/* Desktop nav links */}

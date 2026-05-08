@@ -1,5 +1,10 @@
-import type { ProductScrapeProfileRunResponse } from '@/shared/contracts/products/scrape-profiles';
+import type {
+  ProductScrapeProfileImageImportMode,
+  ProductScrapeProfileRunResponse,
+} from '@/shared/contracts/products/scrape-profiles';
 import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
+
+import type { ProductScrapeImageStepControls } from './product-scrape-profile-image-step-controls';
 
 type RuntimeMetadata = NonNullable<ProductScrapeProfileRunResponse['runtime']>;
 type RuntimeBrowserMode = RuntimeMetadata['browserMode'];
@@ -11,7 +16,12 @@ const resolveBrowserMode = (headless: boolean | null): RuntimeBrowserMode => {
 
 export const buildRuntimeMetadata = (
   action: PlaywrightAction,
-  options: { queueName?: string | null; runtimeActionKey: string }
+  options: {
+    imageImportMode: ProductScrapeProfileImageImportMode;
+    imageStepControls: ProductScrapeImageStepControls;
+    queueName?: string | null;
+    runtimeActionKey: string;
+  }
 ): RuntimeMetadata => ({
   queueName: options.queueName ?? null,
   runtimeActionId: action.id,
@@ -19,5 +29,7 @@ export const buildRuntimeMetadata = (
   runtimeActionKey: action.runtimeKey ?? options.runtimeActionKey,
   browserMode: resolveBrowserMode(action.executionSettings.headless),
   enabledStepCount: action.blocks.filter((block) => block.enabled !== false).length,
+  imageImportMode: options.imageImportMode,
+  imageStepControls: options.imageStepControls,
   totalStepCount: action.blocks.length,
 });

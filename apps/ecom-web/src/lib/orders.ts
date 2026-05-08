@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import type { Document, WithId } from 'mongodb';
 import { getDb } from '@/lib/mongodb';
 
@@ -34,8 +35,8 @@ export const ORDERS_COLLECTION = 'ecom_orders';
 
 export function generateOrderId(): string {
   const year = new Date().getFullYear();
-  const num = String(Math.floor(1000 + Math.random() * 9000));
-  return `ARC-${year}-${num}`;
+  const suffix = randomBytes(4).toString('hex').toUpperCase();
+  return `ARC-${year}-${suffix}`;
 }
 
 function serializeOrder(doc: WithId<Document>): Order {

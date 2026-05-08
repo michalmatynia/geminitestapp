@@ -167,6 +167,7 @@ describe('mongo-source', () => {
 
     expect(state.syncInProgress).toEqual({
       direction: 'local_to_cloud',
+      application: 'all',
       source: 'local',
       target: 'cloud',
       acquiredAt: expect.any(String),

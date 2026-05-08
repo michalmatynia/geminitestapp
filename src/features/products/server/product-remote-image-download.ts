@@ -27,12 +27,14 @@ type DownloadRemoteProductImageInput = {
   index?: number;
   preferredFilename?: string | null;
   refererUrl?: string | null;
+  signal?: AbortSignal;
   sourcePageUrl?: string | null;
 };
 
 type FetchRemoteProductImageResponseInput = {
   imageUrl: string;
   refererUrl?: string | null;
+  signal?: AbortSignal;
   sourcePageUrl?: string | null;
 };
 
@@ -122,7 +124,8 @@ const resolveImageExtensionFromUrl = (url: string): string | null => {
 };
 
 export const fetchRemoteProductSourcePage = async (
-  sourcePageUrl: string | null | undefined
+  sourcePageUrl: string | null | undefined,
+  options: { signal?: AbortSignal } = {}
 ): Promise<RemoteProductSourcePageResult> => {
   const normalizedSourceUrl = normalizeUrl(sourcePageUrl);
   if (normalizedSourceUrl === null) return { cookieHeader: null, html: null };
@@ -131,6 +134,7 @@ export const fetchRemoteProductSourcePage = async (
     cache: 'no-store',
     headers: buildSourcePageHeaders(),
     redirect: 'follow',
+    signal: options.signal,
   });
   return {
     cookieHeader: toCookieHeader(readSetCookieHeaders(response.headers)),
@@ -141,12 +145,14 @@ export const fetchRemoteProductSourcePage = async (
 const fetchImageResponse = (
   imageUrl: string,
   refererUrl: string | null,
-  cookieHeader: string | null = null
+  cookieHeader: string | null,
+  signal?: AbortSignal
 ): Promise<Response> =>
   fetch(imageUrl, {
     cache: 'no-store',
     headers: buildImageDownloadHeaders(refererUrl, cookieHeader),
     redirect: 'follow',
+    signal,
   });
 
 const isImageLikeResponse = async (response: Response, imageUrl: string): Promise<boolean> => {
@@ -160,6 +166,7 @@ const isImageLikeResponse = async (response: Response, imageUrl: string): Promis
 export const fetchRemoteProductImageResponse = async ({
   imageUrl,
   refererUrl,
+  signal,
   sourcePageUrl,
 }: FetchRemoteProductImageResponseInput): Promise<Response> => {
   const normalizedImageUrl = normalizeUrl(imageUrl);
@@ -168,12 +175,14 @@ export const fetchRemoteProductImageResponse = async ({
   }
 
   const normalizedRefererUrl = normalizeUrl(refererUrl) ?? normalizedImageUrl;
-  const response = await fetchImageResponse(normalizedImageUrl, normalizedRefererUrl);
+  const response = await fetchImageResponse(normalizedImageUrl, normalizedRefererUrl, null, signal);
   if (response.ok && (await isImageLikeResponse(response, normalizedImageUrl))) return response;
 
-  const { cookieHeader } = await fetchRemoteProductSourcePage(sourcePageUrl ?? refererUrl);
+  const { cookieHeader } = await fetchRemoteProductSourcePage(sourcePageUrl ?? refererUrl, {
+    signal,
+  });
   if (cookieHeader === null) return response;
-  return await fetchImageResponse(normalizedImageUrl, normalizedRefererUrl, cookieHeader);
+  return await fetchImageResponse(normalizedImageUrl, normalizedRefererUrl, cookieHeader, signal);
 };
 
 const extensionForMimeType = (mimetype: string): string => {

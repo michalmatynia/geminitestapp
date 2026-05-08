@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { getDb } from '@/lib/mongodb';
 import type { Collection } from 'mongodb';
 import {
@@ -210,6 +211,15 @@ async function saveLocalizedCmsContent<TContent, TSnapshot extends CmsSnapshot<T
   );
 
   return { content, updatedAt: now.toISOString(), updatedBy: userId } as TSnapshot;
+}
+
+async function deleteLocalizedCmsContent(page: string, locale?: LocaleInput): Promise<boolean> {
+  const targetLocale = normalizeLocale(locale);
+  if (targetLocale === DEFAULT_LOCALE) return false;
+
+  const collection = await getCmsPagesCollection();
+  const result = await collection.deleteOne({ page, locale: targetLocale });
+  return (result.deletedCount ?? 0) > 0;
 }
 
 function localizeHomeContent(content: HomeContent, localeInput?: LocaleInput): HomeContent {
@@ -1145,7 +1155,7 @@ function toHomeSnapshot(doc: CmsPageDoc | null): HomeCmsSnapshot {
   };
 }
 
-export async function getHomeContent(locale?: LocaleInput): Promise<HomeContent> {
+export const getHomeContent = cache(async function getHomeContent(locale?: LocaleInput): Promise<HomeContent> {
   return getLocalizedCmsContent({
     page: HOME_PAGE_KEY,
     locale,
@@ -1154,7 +1164,7 @@ export async function getHomeContent(locale?: LocaleInput): Promise<HomeContent>
     localize: localizeHomeContent,
     label: 'home',
   });
-}
+});
 
 export async function getHomeCmsSnapshot(locale?: LocaleInput): Promise<HomeCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1188,6 +1198,10 @@ export async function saveHomeContent(
   return saveLocalizedCmsContent<HomeContent, HomeCmsSnapshot>(HOME_PAGE_KEY, content, userId, locale);
 }
 
+export async function deleteHomeContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(HOME_PAGE_KEY, locale);
+}
+
 function toSiteSnapshot(doc: CmsPageDoc | null): SiteCmsSnapshot {
   return {
     content: normalizeSiteContent(doc?.content ?? SITE_CONTENT_DEFAULTS),
@@ -1196,18 +1210,19 @@ function toSiteSnapshot(doc: CmsPageDoc | null): SiteCmsSnapshot {
   };
 }
 
-function ensureCatalogNavLink(content: SiteContent): SiteContent {
+function ensureCatalogNavLink(content: SiteContent, locale?: LocaleInput): SiteContent {
   if (content.nav.links.some((l) => l.href === '/products')) return content;
+  const label = normalizeLocale(locale) === 'pl' ? 'Katalog' : 'Catalog';
   return {
     ...content,
     nav: {
       ...content.nav,
-      links: [...content.nav.links, { label: 'Catalog', href: '/products' }],
+      links: [...content.nav.links, { label, href: '/products' }],
     },
   };
 }
 
-export async function getSiteContent(locale?: LocaleInput): Promise<SiteContent> {
+export const getSiteContent = cache(async function getSiteContent(locale?: LocaleInput): Promise<SiteContent> {
   const content = await getLocalizedCmsContent({
     page: SITE_PAGE_KEY,
     locale,
@@ -1216,8 +1231,8 @@ export async function getSiteContent(locale?: LocaleInput): Promise<SiteContent>
     localize: localizeSiteContent,
     label: 'site',
   });
-  return ensureCatalogNavLink(content);
-}
+  return ensureCatalogNavLink(content, locale);
+});
 
 export async function getSiteCmsSnapshot(locale?: LocaleInput): Promise<SiteCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1251,6 +1266,10 @@ export async function saveSiteContent(
   return saveLocalizedCmsContent<SiteContent, SiteCmsSnapshot>(SITE_PAGE_KEY, content, userId, locale);
 }
 
+export async function deleteSiteContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(SITE_PAGE_KEY, locale);
+}
+
 function toAboutSnapshot(doc: CmsPageDoc | null): AboutCmsSnapshot {
   return {
     content: normalizeAboutContent(doc?.content ?? ABOUT_CONTENT_DEFAULTS),
@@ -1259,7 +1278,7 @@ function toAboutSnapshot(doc: CmsPageDoc | null): AboutCmsSnapshot {
   };
 }
 
-export async function getAboutContent(locale?: LocaleInput): Promise<AboutContent> {
+export const getAboutContent = cache(async function getAboutContent(locale?: LocaleInput): Promise<AboutContent> {
   return getLocalizedCmsContent({
     page: ABOUT_PAGE_KEY,
     locale,
@@ -1268,7 +1287,7 @@ export async function getAboutContent(locale?: LocaleInput): Promise<AboutConten
     localize: localizeAboutContent,
     label: 'about',
   });
-}
+});
 
 export async function getAboutCmsSnapshot(locale?: LocaleInput): Promise<AboutCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1302,6 +1321,10 @@ export async function saveAboutContent(
   return saveLocalizedCmsContent<AboutContent, AboutCmsSnapshot>(ABOUT_PAGE_KEY, content, userId, locale);
 }
 
+export async function deleteAboutContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(ABOUT_PAGE_KEY, locale);
+}
+
 function toValuesSnapshot(doc: CmsPageDoc | null): ValuesCmsSnapshot {
   return {
     content: normalizeValuesContent(doc?.content ?? VALUES_CONTENT_DEFAULTS),
@@ -1310,7 +1333,7 @@ function toValuesSnapshot(doc: CmsPageDoc | null): ValuesCmsSnapshot {
   };
 }
 
-export async function getValuesContent(locale?: LocaleInput): Promise<ValuesContent> {
+export const getValuesContent = cache(async function getValuesContent(locale?: LocaleInput): Promise<ValuesContent> {
   return getLocalizedCmsContent({
     page: VALUES_PAGE_KEY,
     locale,
@@ -1319,7 +1342,7 @@ export async function getValuesContent(locale?: LocaleInput): Promise<ValuesCont
     localize: localizeValuesContent,
     label: 'values',
   });
-}
+});
 
 export async function getValuesCmsSnapshot(locale?: LocaleInput): Promise<ValuesCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1353,6 +1376,10 @@ export async function saveValuesContent(
   return saveLocalizedCmsContent<ValuesContent, ValuesCmsSnapshot>(VALUES_PAGE_KEY, content, userId, locale);
 }
 
+export async function deleteValuesContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(VALUES_PAGE_KEY, locale);
+}
+
 function toStoriesPageSnapshot(doc: CmsPageDoc | null): StoriesPageCmsSnapshot {
   return {
     content: normalizeStoriesPageContent(doc?.content ?? STORIES_PAGE_CONTENT_DEFAULTS),
@@ -1361,7 +1388,7 @@ function toStoriesPageSnapshot(doc: CmsPageDoc | null): StoriesPageCmsSnapshot {
   };
 }
 
-export async function getStoriesPageContent(locale?: LocaleInput): Promise<StoriesPageContent> {
+export const getStoriesPageContent = cache(async function getStoriesPageContent(locale?: LocaleInput): Promise<StoriesPageContent> {
   return getLocalizedCmsContent({
     page: STORIES_PAGE_KEY,
     locale,
@@ -1370,7 +1397,7 @@ export async function getStoriesPageContent(locale?: LocaleInput): Promise<Stori
     localize: localizeStoriesPageContent,
     label: 'stories page',
   });
-}
+});
 
 export async function getStoriesPageCmsSnapshot(locale?: LocaleInput): Promise<StoriesPageCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1409,6 +1436,10 @@ export async function saveStoriesPageContent(
   );
 }
 
+export async function deleteStoriesPageContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(STORIES_PAGE_KEY, locale);
+}
+
 function toLookbookPageSnapshot(doc: CmsPageDoc | null): LookbookPageCmsSnapshot {
   return {
     content: normalizeLookbookPageContent(doc?.content ?? LOOKBOOK_PAGE_CONTENT_DEFAULTS),
@@ -1417,7 +1448,7 @@ function toLookbookPageSnapshot(doc: CmsPageDoc | null): LookbookPageCmsSnapshot
   };
 }
 
-export async function getLookbookPageContent(locale?: LocaleInput): Promise<LookbookPageContent> {
+export const getLookbookPageContent = cache(async function getLookbookPageContent(locale?: LocaleInput): Promise<LookbookPageContent> {
   return getLocalizedCmsContent({
     page: LOOKBOOK_PAGE_KEY,
     locale,
@@ -1426,7 +1457,7 @@ export async function getLookbookPageContent(locale?: LocaleInput): Promise<Look
     localize: localizeLookbookPageContent,
     label: 'lookbook page',
   });
-}
+});
 
 export async function getLookbookPageCmsSnapshot(locale?: LocaleInput): Promise<LookbookPageCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1465,6 +1496,10 @@ export async function saveLookbookPageContent(
   );
 }
 
+export async function deleteLookbookPageContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(LOOKBOOK_PAGE_KEY, locale);
+}
+
 function toContactSnapshot(doc: CmsPageDoc | null): ContactCmsSnapshot {
   return {
     content: normalizeContactContent(doc?.content ?? CONTACT_CONTENT_DEFAULTS),
@@ -1473,7 +1508,7 @@ function toContactSnapshot(doc: CmsPageDoc | null): ContactCmsSnapshot {
   };
 }
 
-export async function getContactContent(locale?: LocaleInput): Promise<ContactContent> {
+export const getContactContent = cache(async function getContactContent(locale?: LocaleInput): Promise<ContactContent> {
   return getLocalizedCmsContent({
     page: CONTACT_PAGE_KEY,
     locale,
@@ -1482,7 +1517,7 @@ export async function getContactContent(locale?: LocaleInput): Promise<ContactCo
     localize: localizeContactContent,
     label: 'contact',
   });
-}
+});
 
 export async function getContactCmsSnapshot(locale?: LocaleInput): Promise<ContactCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1516,6 +1551,10 @@ export async function saveContactContent(
   return saveLocalizedCmsContent<ContactContent, ContactCmsSnapshot>(CONTACT_PAGE_KEY, content, userId, locale);
 }
 
+export async function deleteContactContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(CONTACT_PAGE_KEY, locale);
+}
+
 function toWishlistSnapshot(doc: CmsPageDoc | null): WishlistCmsSnapshot {
   return {
     content: normalizeWishlistContent(doc?.content ?? WISHLIST_CONTENT_DEFAULTS),
@@ -1524,7 +1563,7 @@ function toWishlistSnapshot(doc: CmsPageDoc | null): WishlistCmsSnapshot {
   };
 }
 
-export async function getWishlistContent(locale?: LocaleInput): Promise<WishlistContent> {
+export const getWishlistContent = cache(async function getWishlistContent(locale?: LocaleInput): Promise<WishlistContent> {
   return getLocalizedCmsContent({
     page: WISHLIST_PAGE_KEY,
     locale,
@@ -1533,7 +1572,7 @@ export async function getWishlistContent(locale?: LocaleInput): Promise<Wishlist
     localize: localizeWishlistContent,
     label: 'wishlist',
   });
-}
+});
 
 export async function getWishlistCmsSnapshot(locale?: LocaleInput): Promise<WishlistCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1567,6 +1606,10 @@ export async function saveWishlistContent(
   return saveLocalizedCmsContent<WishlistContent, WishlistCmsSnapshot>(WISHLIST_PAGE_KEY, content, userId, locale);
 }
 
+export async function deleteWishlistContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(WISHLIST_PAGE_KEY, locale);
+}
+
 function toCheckoutSnapshot(doc: CmsPageDoc | null): CheckoutCmsSnapshot {
   return {
     content: normalizeCheckoutContent(doc?.content ?? CHECKOUT_CONTENT_DEFAULTS),
@@ -1575,7 +1618,7 @@ function toCheckoutSnapshot(doc: CmsPageDoc | null): CheckoutCmsSnapshot {
   };
 }
 
-export async function getCheckoutContent(locale?: LocaleInput): Promise<CheckoutContent> {
+export const getCheckoutContent = cache(async function getCheckoutContent(locale?: LocaleInput): Promise<CheckoutContent> {
   return getLocalizedCmsContent({
     page: CHECKOUT_PAGE_KEY,
     locale,
@@ -1584,7 +1627,7 @@ export async function getCheckoutContent(locale?: LocaleInput): Promise<Checkout
     localize: localizeCheckoutContent,
     label: 'checkout',
   });
-}
+});
 
 export async function getCheckoutCmsSnapshot(locale?: LocaleInput): Promise<CheckoutCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1618,6 +1661,10 @@ export async function saveCheckoutContent(
   return saveLocalizedCmsContent<CheckoutContent, CheckoutCmsSnapshot>(CHECKOUT_PAGE_KEY, content, userId, locale);
 }
 
+export async function deleteCheckoutContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(CHECKOUT_PAGE_KEY, locale);
+}
+
 function toProductsSnapshot(doc: CmsPageDoc | null): ProductsCmsSnapshot {
   return {
     content: normalizeProductsContent(doc?.content ?? PRODUCTS_CONTENT_DEFAULTS),
@@ -1626,7 +1673,7 @@ function toProductsSnapshot(doc: CmsPageDoc | null): ProductsCmsSnapshot {
   };
 }
 
-export async function getProductsContent(locale?: LocaleInput): Promise<ProductsContent> {
+export const getProductsContent = cache(async function getProductsContent(locale?: LocaleInput): Promise<ProductsContent> {
   return getLocalizedCmsContent({
     page: PRODUCTS_PAGE_KEY,
     locale,
@@ -1635,7 +1682,7 @@ export async function getProductsContent(locale?: LocaleInput): Promise<Products
     localize: localizeProductsContent,
     label: 'products',
   });
-}
+});
 
 export async function getProductsCmsSnapshot(locale?: LocaleInput): Promise<ProductsCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1669,6 +1716,10 @@ export async function saveProductsContent(
   return saveLocalizedCmsContent<ProductsContent, ProductsCmsSnapshot>(PRODUCTS_PAGE_KEY, content, userId, locale);
 }
 
+export async function deleteProductsContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(PRODUCTS_PAGE_KEY, locale);
+}
+
 function toAccountSnapshot(doc: CmsPageDoc | null): AccountCmsSnapshot {
   return {
     content: normalizeAccountContent(doc?.content ?? ACCOUNT_CONTENT_DEFAULTS),
@@ -1677,7 +1728,7 @@ function toAccountSnapshot(doc: CmsPageDoc | null): AccountCmsSnapshot {
   };
 }
 
-export async function getAccountContent(locale?: LocaleInput): Promise<AccountContent> {
+export const getAccountContent = cache(async function getAccountContent(locale?: LocaleInput): Promise<AccountContent> {
   return getLocalizedCmsContent({
     page: ACCOUNT_PAGE_KEY,
     locale,
@@ -1686,7 +1737,7 @@ export async function getAccountContent(locale?: LocaleInput): Promise<AccountCo
     localize: localizeAccountContent,
     label: 'account',
   });
-}
+});
 
 export async function getAccountCmsSnapshot(locale?: LocaleInput): Promise<AccountCmsSnapshot> {
   return getLocalizedCmsSnapshot({
@@ -1718,4 +1769,8 @@ export async function saveAccountContent(
   locale?: LocaleInput,
 ): Promise<AccountCmsSnapshot> {
   return saveLocalizedCmsContent<AccountContent, AccountCmsSnapshot>(ACCOUNT_PAGE_KEY, content, userId, locale);
+}
+
+export async function deleteAccountContent(locale?: LocaleInput): Promise<boolean> {
+  return deleteLocalizedCmsContent(ACCOUNT_PAGE_KEY, locale);
 }

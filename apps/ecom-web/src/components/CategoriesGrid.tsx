@@ -38,6 +38,22 @@ const CATEGORY_VISUALS = [
 
 const DEFAULT_VISUAL = CATEGORY_VISUALS[0];
 
+function getCardHref(card: HomeCategoriesContent['cards'][number]): string {
+  const values = card.selectorValues.map((value) => value.trim()).filter(Boolean);
+  if (card.selectorType === 'all') return '/products';
+  if (card.selectorType === 'category' && values.length > 0) {
+    const params = new URLSearchParams();
+    params.set('categories', values.join(','));
+    return `/products?${params.toString()}`;
+  }
+  if (card.selectorType === 'theme' && values.length > 0) {
+    const params = new URLSearchParams();
+    params.set('themes', values.join(','));
+    return `/products?${params.toString()}`;
+  }
+  return card.href || '/products';
+}
+
 export function CategoriesGrid({
   counts = {},
   content = HOME_CONTENT_DEFAULTS.categories,
@@ -112,12 +128,27 @@ export function CategoriesGrid({
           return (
             <a
               key={cat.id}
-              href={localizedHref(cat.href)}
-              className="cat-card category-card block"
+              href={localizedHref(getCardHref(cat))}
+              className="cat-card category-card group block"
               style={{ aspectRatio: visual.aspectRatio, opacity: 0 }}
             >
               {/* Background */}
-              <div className="cat-bg absolute inset-0" style={{ background: visual.gradient }} />
+              {cat.imageUrl.trim() ? (
+                <>
+                  <img
+                    src={cat.imageUrl}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                    loading="lazy"
+                  />
+                  <div
+                    className="cat-bg absolute inset-0"
+                    style={{ background: 'linear-gradient(180deg, rgba(4,3,20,0.14) 0%, rgba(4,3,20,0.76) 100%)' }}
+                  />
+                </>
+              ) : (
+                <div className="cat-bg absolute inset-0" style={{ background: visual.gradient }} />
+              )}
 
               {/* Dot grid */}
               <div className="absolute inset-0 dot-grid opacity-30" />

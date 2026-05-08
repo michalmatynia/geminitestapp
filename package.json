@@ -29,6 +29,8 @@
     "build:ecom": "npm run build --workspace @app/ecom-web",
     "start:ecom": "npm run start --workspace @app/ecom-web",
     "typecheck:ecom": "npm run typecheck --workspace @app/ecom-web",
+    "cms:ecom:locales:backfill": "npm run cms:locales:backfill --workspace @app/ecom-web --",
+    "cms:ecom:locales:backfill:apply": "npm run cms:locales:backfill:apply --workspace @app/ecom-web --",
     "dev:mobile": "npm run dev --workspace @kangur/mobile",
     "dev:mobile:web": "npm run web --workspace @kangur/mobile",
     "dev:mobile:ios:local": "node --import tsx scripts/mobile/run-with-mobile-env.ts node --import tsx scripts/mobile/run-kangur-mobile-native-local.ts --target ios-simulator",

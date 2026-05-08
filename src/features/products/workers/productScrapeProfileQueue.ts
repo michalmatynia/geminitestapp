@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 
 import { runProductScrapeProfile } from '@/features/products/server/product-scrape-profiles';
 import type {
+  ProductScrapeProfileRuntimeProgressUpdate,
   ProductScrapeProfileRuntimeRun,
   ProductScrapeProfileRuntimeStatus,
   ProductScrapeProfileRunQueuedResponse,
@@ -17,7 +18,7 @@ import {
   isRedisAvailable,
   isRedisReachable,
 } from '@/shared/lib/queue';
-import type { ManagedQueue } from '@/shared/lib/queue';
+import type { ManagedQueue, QueueHealthStatus } from '@/shared/lib/queue';
 import { getRedisClient } from '@/shared/lib/redis';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -37,11 +38,14 @@ const LATEST_RUN_KEY = 'product:scrape-profile:latest-run';
 const RUN_TTL_SECONDS = 60 * 60 * 24 * 7;
 const MEMORY_RUN_LIMIT = 100;
 const PAUSE_POLL_INTERVAL_MS = 750;
+const STALE_QUEUED_RUN_MS = 2 * 60 * 1000;
+const STALE_RUNNING_RUN_MS = 20 * 60 * 1000;
 const TERMINAL_STATUSES = new Set<ProductScrapeProfileRuntimeStatus>([
   'canceled',
   'completed',
   'failed',
 ]);
+const STALE_QUEUE_JOB_STATES = new Set(['delayed', 'missing', 'unknown', 'waiting', 'waiting-children']);
 
 type RedisClient = NonNullable<ReturnType<typeof getRedisClient>>;
 
@@ -54,6 +58,12 @@ const nowIso = (): string => new Date().toISOString();
 
 const isTerminalStatus = (status: ProductScrapeProfileRuntimeStatus): boolean =>
   TERMINAL_STATUSES.has(status);
+
+const parseTimestampMs = (value: string | null | undefined): number | null => {
+  if (typeof value !== 'string' || value.trim().length === 0) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 const cloneRun = (run: ProductScrapeProfileRuntimeRun): ProductScrapeProfileRuntimeRun => ({
   ...run,
@@ -168,7 +178,9 @@ const buildRun = (
   dryRun: request.dryRun ?? false,
   error: null,
   id: runId,
+  imageImportMode: request.imageImportMode ?? 'links',
   profileId: request.profileId,
+  progress: null,
   queueName: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
   result: null,
   startedAt: null,
@@ -208,6 +220,7 @@ const markRunCompleted = async (
   const completedAt = nowIso();
   const run = await readRun(runId);
   if (run === null) return null;
+  if (run.status === 'completed') return run;
   return await updateRun(runId, {
     completedAt,
     error: null,
@@ -245,12 +258,256 @@ const markRunFailed = async (
   });
 };
 
+const updateRunProgress = async (
+  runId: string,
+  progress: ProductScrapeProfileRuntimeProgressUpdate
+): Promise<ProductScrapeProfileRuntimeRun | null> => {
+  const existing = await readRun(runId);
+  if (existing === null || isTerminalStatus(existing.status)) return existing;
+  const updatedAt = nowIso();
+  return await updateRun(runId, {
+    progress: {
+      current: progress.current,
+      message: progress.message,
+      stage: progress.stage,
+      total: progress.total,
+      updatedAt,
+    },
+  });
+};
+
 const waitWhilePausedFromStore = async (runId: string): Promise<void> => {
   let run = await readRun(runId);
   while (run?.status === 'paused') {
     await sleep(PAUSE_POLL_INTERVAL_MS);
     run = await readRun(runId);
   }
+};
+
+const resolveAbortSignalError = (signal: AbortSignal, jobId: string): Error => {
+  const reason = signal.reason as unknown;
+  if (reason instanceof Error) return reason;
+  return new Error(`Scrape profile job ${jobId} was aborted.`);
+};
+
+const raceScrapeWithAbortSignal = async (
+  scrape: Promise<ProductScrapeProfileRunResponse>,
+  signal: AbortSignal,
+  jobId: string
+): Promise<ProductScrapeProfileRunResponse> => {
+  let rejectAbort: ((error: Error) => void) | undefined;
+  const abortScrape = (): void => {
+    rejectAbort?.(resolveAbortSignalError(signal, jobId));
+  };
+  const aborted = new Promise<never>((_, reject) => {
+    rejectAbort = reject;
+    signal.addEventListener('abort', abortScrape, { once: true });
+  });
+  try {
+    return await Promise.race([scrape, aborted]);
+  } finally {
+    signal.removeEventListener('abort', abortScrape);
+  }
+};
+
+const runProductScrapeProfileJob = async (
+  data: ProductScrapeProfileQueueJobData,
+  jobId: string,
+  signal: AbortSignal | undefined
+): Promise<ProductScrapeProfileRunResponse> => {
+  if (signal?.aborted === true) throw resolveAbortSignalError(signal, jobId);
+  const scrape = runProductScrapeProfile(data.request, {
+    reportProgress: async (progress) => {
+      await updateRunProgress(jobId, progress);
+    },
+    signal,
+    userId: data.userId,
+    runtimeQueueName: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
+    waitWhilePaused: () => waitWhilePausedFromStore(jobId),
+  });
+  return signal === undefined ? await scrape : await raceScrapeWithAbortSignal(scrape, signal, jobId);
+};
+
+type QueueJobRuntimeState = {
+  failedReason: string | null;
+  state: string;
+};
+
+type QueueWithJobLookup = {
+  getJob: (jobId: string) => Promise<QueueJobLike | null>;
+};
+
+type QueueJobLike = {
+  failedReason?: unknown;
+  getState?: () => Promise<string>;
+};
+
+const getRunLastActivityMs = (run: ProductScrapeProfileRuntimeRun): number | null =>
+  parseTimestampMs(run.updatedAt) ??
+  parseTimestampMs(run.startedAt) ??
+  parseTimestampMs(run.createdAt);
+
+const shouldInspectQueueJob = (run: ProductScrapeProfileRuntimeRun): boolean =>
+  run.status === 'queued' || run.status === 'running';
+
+const startRuntimeWorkerForActiveRun = (): void => {
+  if (!isRedisAvailable()) return;
+  try {
+    queue.startWorker();
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      action: 'start-runtime-worker-for-active-run',
+      queue: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
+      service: LOG_SERVICE,
+    });
+  }
+};
+
+const getQueueWithJobLookup = (): QueueWithJobLookup | null => {
+  const maybeQueue = queue.getQueue();
+  if (
+    maybeQueue === null ||
+    typeof maybeQueue !== 'object' ||
+    typeof (maybeQueue as { getJob?: unknown }).getJob !== 'function'
+  ) {
+    return null;
+  }
+  return maybeQueue as QueueWithJobLookup;
+};
+
+const readQueueJobRuntimeState = async (
+  runId: string
+): Promise<QueueJobRuntimeState | null> => {
+  try {
+    await queue.getHealthStatus();
+    const jobQueue = getQueueWithJobLookup();
+    if (jobQueue === null) return null;
+    const job = await jobQueue.getJob(runId);
+    if (job === null) return { failedReason: null, state: 'missing' };
+    const state =
+      typeof job.getState === 'function' ? await job.getState() : 'unknown';
+    return {
+      failedReason: typeof job.failedReason === 'string' ? job.failedReason : null,
+      state,
+    };
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      action: 'read-queue-job-runtime-state',
+      jobId: runId,
+      queue: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
+      service: LOG_SERVICE,
+    });
+    return null;
+  }
+};
+
+const resolveTerminalQueueJobMessage = (
+  queueJobState: QueueJobRuntimeState | null
+): string | null => {
+  if (queueJobState?.state === 'failed') {
+    return queueJobState.failedReason ?? 'Scrape profile Redis job failed before the run state was updated.';
+  }
+  if (queueJobState?.state === 'completed') {
+    return 'Scrape profile Redis job completed before the run state was updated.';
+  }
+  return null;
+};
+
+const resolveImmediateRunRecoveryMessage = (
+  run: ProductScrapeProfileRuntimeRun,
+  queueJobState: QueueJobRuntimeState | null
+): string | null => {
+  const terminalMessage = resolveTerminalQueueJobMessage(queueJobState);
+  if (terminalMessage !== null) return terminalMessage;
+  if (run.status === 'running' && queueJobState?.state === 'missing') {
+    return 'Scrape profile Redis job disappeared while the run was marked running.';
+  }
+  return null;
+};
+
+const resolveQueuedStaleRunMessage = (
+  queueJobState: QueueJobRuntimeState | null
+): string | null => {
+  const state = queueJobState?.state ?? 'unknown';
+  if (!STALE_QUEUE_JOB_STATES.has(state)) return null;
+  return 'Scrape profile run was marked failed after being queued for over 2 minutes without Redis worker pickup.';
+};
+
+const resolveRunningStaleRunMessage = (
+  queueJobState: QueueJobRuntimeState | null
+): string | null =>
+  queueJobState?.state === 'active'
+    ? 'Scrape profile run was marked failed after exceeding 20 minutes while the Redis job was still active.'
+    : 'Scrape profile run was marked failed after exceeding 20 minutes without Redis worker progress.';
+
+const resolveStaleRunMessage = (
+  run: ProductScrapeProfileRuntimeRun,
+  queueJobState: QueueJobRuntimeState | null
+): string | null =>
+  resolveTerminalQueueJobMessage(queueJobState) ??
+  (run.status === 'queued'
+    ? resolveQueuedStaleRunMessage(queueJobState)
+    : resolveRunningStaleRunMessage(queueJobState));
+
+const failRecoveredRuntimeRun = async (
+  run: ProductScrapeProfileRuntimeRun,
+  error: string,
+  queueJobState: QueueJobRuntimeState | null
+): Promise<ProductScrapeProfileRuntimeRun> => {
+  const recovered = await updateRun(run.id, {
+    completedAt: nowIso(),
+    error,
+    status: 'failed',
+  });
+  await ErrorSystem.logWarning('Recovered stale scrape profile runtime run', {
+    error,
+    jobId: run.id,
+    profileId: run.profileId,
+    queue: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
+    queueJobState: queueJobState?.state ?? null,
+    service: LOG_SERVICE,
+    status: run.status,
+  });
+  return recovered;
+};
+
+const reconcileRuntimeRun = async (
+  run: ProductScrapeProfileRuntimeRun
+): Promise<ProductScrapeProfileRuntimeRun> => {
+  if (!shouldInspectQueueJob(run)) return run;
+  startRuntimeWorkerForActiveRun();
+  const queueJobState = await readQueueJobRuntimeState(run.id);
+  const immediateMessage = resolveImmediateRunRecoveryMessage(run, queueJobState);
+  if (immediateMessage !== null) {
+    return await failRecoveredRuntimeRun(run, immediateMessage, queueJobState);
+  }
+  const lastActivityMs = getRunLastActivityMs(run);
+  if (lastActivityMs === null) return run;
+
+  const ageMs = Math.max(0, Date.now() - lastActivityMs);
+  const staleAfterMs =
+    run.status === 'queued' ? STALE_QUEUED_RUN_MS : STALE_RUNNING_RUN_MS;
+  if (ageMs < staleAfterMs) return run;
+
+  const staleMessage = resolveStaleRunMessage(run, queueJobState);
+  return staleMessage === null
+    ? run
+    : await failRecoveredRuntimeRun(run, staleMessage, queueJobState);
+};
+
+const resolveRunResultBeforeProcessing = async (
+  runId: string
+): Promise<ProductScrapeProfileRunResponse | null> => {
+  const existing = await readRun(runId);
+  if (existing === null) return null;
+  const reconciled = await reconcileRuntimeRun(existing);
+  if (reconciled.status === 'completed' && reconciled.result !== null) {
+    return reconciled.result;
+  }
+  if (isTerminalStatus(reconciled.status)) {
+    throw new Error(`Scrape profile run ${runId} is already ${reconciled.status}.`);
+  }
+  return null;
 };
 
 const queue: ManagedQueue<ProductScrapeProfileQueueJobData> =
@@ -263,15 +520,15 @@ const queue: ManagedQueue<ProductScrapeProfileQueueJobData> =
       removeOnComplete: 100,
       removeOnFail: false,
     },
-    processor: async (data, jobId) => {
+    processor: async (data, jobId, signal) => {
+      const existingResult = await resolveRunResultBeforeProcessing(jobId);
+      if (existingResult !== null) return existingResult;
       await markRunRunning(data, jobId);
       await waitWhilePausedFromStore(jobId);
       try {
-        return await runProductScrapeProfile(data.request, {
-          userId: data.userId,
-          runtimeQueueName: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
-          waitWhilePaused: () => waitWhilePausedFromStore(jobId),
-        });
+        const result = await runProductScrapeProfileJob(data, jobId, signal);
+        await markRunCompleted(jobId, result);
+        return result;
       } catch (error) {
         await markRunFailed(data, jobId, error);
         throw error;
@@ -317,6 +574,41 @@ const assertRedisRuntimeAvailable = async (): Promise<void> => {
   }
 };
 
+const isProductScrapeProfileWorkerHealthReady = (health: QueueHealthStatus): boolean =>
+  health.deliveryMode === 'queue' &&
+  health.redisAvailable !== false &&
+  health.workerLocal === true &&
+  health.healthy !== false;
+
+const readProductScrapeProfileWorkerHealth = async (): Promise<QueueHealthStatus> => {
+  try {
+    startProductScrapeProfileQueue();
+    return await queue.getHealthStatus();
+  } catch (error) {
+    throw serviceUnavailableError(
+      'Scrape profiles Redis worker could not be started. Please retry.',
+      QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
+      {
+        error: error instanceof Error ? error.message : String(error),
+        queue: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
+      }
+    );
+  }
+};
+
+const assertProductScrapeProfileWorkerReady = async (): Promise<void> => {
+  const health = await readProductScrapeProfileWorkerHealth();
+  if (isProductScrapeProfileWorkerHealthReady(health)) return;
+  throw serviceUnavailableError(
+    'Scrape profiles Redis worker did not start. Please retry.',
+    QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
+    {
+      health,
+      queue: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
+    }
+  );
+};
+
 const buildJobId = (profileId: string): string =>
   ['product-scrape-profile', encodeURIComponent(profileId), randomUUID()].join('__');
 
@@ -325,14 +617,19 @@ export const readProductScrapeProfileRun = async (
 ): Promise<ProductScrapeProfileRuntimeRun | null> => {
   const trimmedRunId = runId.trim();
   if (trimmedRunId.length === 0) return null;
-  return await readRun(trimmedRunId);
+  const run = await readRun(trimmedRunId);
+  if (run === null || isTerminalStatus(run.status)) return run;
+  return await reconcileRuntimeRun(run);
 };
 
 export const readLatestProductScrapeProfileRun =
   async (): Promise<ProductScrapeProfileRuntimeRun | null> => {
     const redis = getRedisClient();
     const runId = redis === null ? memoryLatestRunId : await readRunId(redis, LATEST_RUN_KEY);
-    return runId === null ? null : await readRun(runId);
+    if (runId === null) return null;
+    const run = await readRun(runId);
+    if (run === null || isTerminalStatus(run.status)) return run;
+    return await reconcileRuntimeRun(run);
   };
 
 export const readActiveProductScrapeProfileRun =
@@ -345,7 +642,12 @@ export const readActiveProductScrapeProfileRun =
       await clearActiveRunId(runId);
       return null;
     }
-    return run;
+    const reconciled = await reconcileRuntimeRun(run);
+    if (isTerminalStatus(reconciled.status)) {
+      await clearActiveRunId(runId);
+      return null;
+    }
+    return reconciled;
   };
 
 export const pauseProductScrapeProfileRun = async (
@@ -398,14 +700,14 @@ export const runProductScrapeProfileViaRedisRuntime = async (
   const enqueuedAt = new Date().toISOString();
   const jobId = buildJobId(request.profileId);
   const run = buildRun(request, jobId, enqueuedAt);
-  await storeRun(run);
-  await setActiveRunId(jobId);
-  startProductScrapeProfileQueue();
   const jobData: ProductScrapeProfileQueueJobData = {
     request,
     userId: options.userId ?? null,
     requestedAt: enqueuedAt,
   };
+  await assertProductScrapeProfileWorkerReady();
+  await storeRun(run);
+  await setActiveRunId(jobId);
   const enqueuedJobId = await queue.enqueue(jobData, { jobId }).catch(async (error: unknown) => {
     await markRunFailed(jobData, jobId, error);
     throw error;
@@ -423,6 +725,7 @@ export const runProductScrapeProfileViaRedisRuntime = async (
     profileId: request.profileId,
     dryRun: request.dryRun ?? false,
     jobId,
+    imageImportMode: request.imageImportMode ?? 'links',
     queueName: PRODUCT_SCRAPE_PROFILE_QUEUE_NAME,
     enqueuedAt,
     run,

@@ -22,6 +22,7 @@ import type {
   DatabaseEngineBackupSchedulerStatus,
   DatabaseEngineManagedMongoApplicationTarget,
   DatabaseEngineManagedMongoDatabasesResponse,
+  DatabaseEngineMongoPendingSyncRequest,
   DatabaseEngineMongoSourceState,
   DatabaseEngineMongoSyncDirection,
   RedisOverview,
@@ -111,6 +112,7 @@ export interface UseDatabaseEngineStateReturn {
   refetchAll: () => void;
   validationErrors: string[];
   isSyncingMongoSources: boolean;
+  pendingMongoSourceSync: DatabaseEngineMongoPendingSyncRequest | null;
   isBackingUpManagedMongo: boolean;
   isSyncingManagedMongo: boolean;
 }
@@ -142,7 +144,10 @@ const getMongoSyncInProgressMessage = (
     return null;
   }
 
-  return `MongoDB sync is still running: ${syncInProgress.source} -> ${syncInProgress.target}. Started at ${syncInProgress.acquiredAt}.`;
+  const applicationLabel = syncInProgress.application === 'all'
+    ? 'all apps'
+    : syncInProgress.application;
+  return `MongoDB sync is still running for ${applicationLabel}: ${syncInProgress.source} -> ${syncInProgress.target}. Started at ${syncInProgress.acquiredAt}.`;
 };
 
 export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
@@ -199,6 +204,8 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
 
   const [isDirty, setIsDirty] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [pendingMongoSourceSync, setPendingMongoSourceSync] =
+    useState<DatabaseEngineMongoPendingSyncRequest | null>(null);
   const lastValidationErrorSignatureRef = useRef<string | null>(null);
 
   const resolveMongoSyncToast = useCallback(
@@ -353,6 +360,35 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     );
   }, [parsedPersistedSettings.errors, parsedPersistedSettings.loggedErrors]);
 
+  const hasActiveOperationJobs =
+    operationsJobsQuery.data?.jobs.some(
+      (job) => job.status === 'queued' || job.status === 'running'
+    ) ?? false;
+
+  useEffect(() => {
+    const shouldPollActiveJobs =
+      pendingMongoSourceSync !== null ||
+      mongoSourceQuery.data?.syncInProgress != null ||
+      hasActiveOperationJobs;
+
+    if (!shouldPollActiveJobs) return;
+
+    const intervalId = window.setInterval(() => {
+      void mongoSourceQuery.refetch();
+      void operationsJobsQuery.refetch();
+    }, 3_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [
+    hasActiveOperationJobs,
+    mongoSourceQuery,
+    mongoSourceQuery.data?.syncInProgress,
+    operationsJobsQuery,
+    pendingMongoSourceSync,
+  ]);
+
   const rows = useMemo<DatabaseCollectionRow[]>(() => {
     const data = schemaQuery.data;
     if (!data) return [];
@@ -455,6 +491,12 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     },
     syncMongoSources: async (direction, application = 'all') => {
       const requestStartedAtMs = Date.now();
+      setPendingMongoSourceSync({
+        direction,
+        application,
+        startedAt: new Date(requestStartedAtMs).toISOString(),
+      });
+      void mongoSourceQuery.refetch();
       try {
         const response = await syncMongoSourcesMutation.mutateAsync({ direction, application });
         toast(response.message, { variant: 'success' });
@@ -463,6 +505,8 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
         logClientError(error);
         const nextToast = await resolveMongoSyncToast(error, direction, requestStartedAtMs);
         toast(nextToast.message, { variant: nextToast.variant });
+      } finally {
+        setPendingMongoSourceSync(null);
       }
     },
     backupManagedMongo: async (application) => {
@@ -482,6 +526,12 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     },
     syncManagedMongo: async (direction, application) => {
       const requestStartedAtMs = Date.now();
+      setPendingMongoSourceSync({
+        direction,
+        application,
+        startedAt: new Date(requestStartedAtMs).toISOString(),
+      });
+      void mongoSourceQuery.refetch();
       try {
         const response = await syncManagedMongoMutation.mutateAsync({ direction, application });
         toast(response.message, { variant: 'success' });
@@ -491,6 +541,8 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
         logClientError(error);
         const nextToast = await resolveMongoSyncToast(error, direction, requestStartedAtMs);
         toast(nextToast.message, { variant: nextToast.variant });
+      } finally {
+        setPendingMongoSourceSync(null);
       }
     },
     saveSettings: handleSave,
@@ -507,6 +559,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     },
     validationErrors,
     isSyncingMongoSources: syncMongoSourcesMutation.isPending,
+    pendingMongoSourceSync,
     isBackingUpManagedMongo: backupManagedMongoMutation.isPending,
     isSyncingManagedMongo: syncManagedMongoMutation.isPending,
   };

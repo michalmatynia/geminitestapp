@@ -143,7 +143,11 @@ vi.mock('@/features/products/components/list/ProductParseActionsModal', () => ({
 }));
 
 vi.mock('@/features/products/components/list/ProductScrapeProfilesModal', () => ({
-  ProductScrapeProfilesModal: (props: { isOpen: boolean; onClose: () => void }) => {
+  ProductScrapeProfilesModal: (props: {
+    isOpen: boolean;
+    onClose: () => void;
+    scrapeRuntime?: unknown;
+  }) => {
     scrapeProfilesModalMock(props);
     return props.isOpen ? (
       <div role='dialog'>
@@ -345,6 +349,7 @@ describe('ProductSelectionActions', () => {
       activeRun: null,
       isActive: false,
       isUpdating: false,
+      latestRun: null,
       pauseActiveRun: vi.fn(),
       registerQueuedRun: vi.fn(),
       resumeActiveRun: vi.fn(),
@@ -592,6 +597,7 @@ describe('ProductSelectionActions', () => {
         dryRun: false,
         error: null,
         id: 'job-1',
+        imageImportMode: 'files',
         profileId: 'battlestock-warhammer-40k-30k',
         queueName: 'product-scrape-profile',
         result: null,
@@ -601,6 +607,7 @@ describe('ProductSelectionActions', () => {
       },
       isActive: true,
       isUpdating: false,
+      latestRun: null,
       pauseActiveRun: vi.fn(),
       registerQueuedRun: vi.fn(),
       resumeActiveRun: vi.fn(),
@@ -613,6 +620,51 @@ describe('ProductSelectionActions', () => {
     expect(scrapeProfilesModalMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         isOpen: true,
+        scrapeRuntime: expect.objectContaining({
+          activeRun: expect.objectContaining({
+            imageImportMode: 'files',
+            status: 'running',
+          }),
+          pauseActiveRun: expect.any(Function),
+        }),
+      })
+    );
+  });
+
+  it('labels scrape profile jobs as queued before the Redis worker starts them', () => {
+    useProductScrapeProfileRuntimeRunMock.mockReturnValue({
+      activeRun: {
+        completedAt: null,
+        createdAt: '2026-05-08T00:00:00.000Z',
+        dryRun: false,
+        error: null,
+        id: 'job-queued',
+        imageImportMode: 'links',
+        profileId: 'battlestock-warhammer-40k-30k',
+        queueName: 'product-scrape-profile',
+        result: null,
+        startedAt: null,
+        status: 'queued',
+        updatedAt: '2026-05-08T00:00:00.000Z',
+      },
+      isActive: true,
+      isUpdating: false,
+      latestRun: null,
+      pauseActiveRun: vi.fn(),
+      registerQueuedRun: vi.fn(),
+      resumeActiveRun: vi.fn(),
+    });
+
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Queued' }));
+
+    expect(scrapeProfilesModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        isOpen: true,
+        scrapeRuntime: expect.objectContaining({
+          activeRun: expect.objectContaining({ status: 'queued' }),
+        }),
       })
     );
   });

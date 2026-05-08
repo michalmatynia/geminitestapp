@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { logger } from '@/shared/utils/logger';
 
-import { readMongoSyncLock, testOnly } from './mongo-sync-lock';
+import { acquireMongoSyncLock, readMongoSyncLock, testOnly } from './mongo-sync-lock';
 
 describe('mongo-sync-lock', () => {
   beforeEach(async () => {
@@ -46,5 +46,21 @@ describe('mongo-sync-lock', () => {
       '[mongo-sync-lock] Pruned stale MongoDB sync lock',
       expect.objectContaining({ reason: 'expired' })
     );
+  });
+
+  it('records the application target in the acquired sync lock', async () => {
+    const release = await acquireMongoSyncLock('local_to_cloud', 'products');
+
+    try {
+      await expect(readMongoSyncLock()).resolves.toMatchObject({
+        direction: 'local_to_cloud',
+        application: 'products',
+        source: 'local',
+        target: 'cloud',
+        pid: process.pid,
+      });
+    } finally {
+      await release();
+    }
   });
 });

@@ -10,8 +10,16 @@ type ImageLikeResponseInput = {
 
 const readResponsePrefixBytes = async (response: Response): Promise<Uint8Array | null> => {
   try {
-    const buffer = await response.clone().arrayBuffer();
-    return new Uint8Array(buffer.slice(0, RESPONSE_BODY_SNIFF_BYTES));
+    const cloned = response.clone();
+    const reader = cloned.body?.getReader();
+    if (reader === undefined) {
+      const buffer = await cloned.arrayBuffer();
+      return new Uint8Array(buffer.slice(0, RESPONSE_BODY_SNIFF_BYTES));
+    }
+
+    const chunk = await reader.read();
+    await reader.cancel().catch(() => undefined);
+    return (chunk.value ?? new Uint8Array()).slice(0, RESPONSE_BODY_SNIFF_BYTES);
   } catch {
     return null;
   }
@@ -69,6 +77,12 @@ const isAmbiguousImageLikeResponse = async (
   return !looksLikeHtmlDocument(bytes);
 };
 
+const isImageContentTypeResponse = async (response: Response): Promise<boolean> => {
+  const bytes = await readResponsePrefixBytes(response);
+  if (bytes === null || bytes.length === 0) return true;
+  return !looksLikeHtmlDocument(bytes);
+};
+
 const responseContentType = (response: Response): string =>
   response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? '';
 
@@ -78,7 +92,7 @@ export const isRemoteProductImageLikeResponse = async ({
   supportedExtensions,
 }: ImageLikeResponseInput): Promise<boolean> => {
   const contentType = responseContentType(response);
-  if (contentType.startsWith('image/')) return true;
+  if (contentType.startsWith('image/')) return await isImageContentTypeResponse(response);
   if (contentType.length > 0 && contentType !== 'application/octet-stream') return false;
   if (extension === null || !supportedExtensions.has(extension)) return false;
   return await isAmbiguousImageLikeResponse(response, extension);

@@ -34,6 +34,7 @@ const mocks = vi.hoisted(() => ({
         } | null;
         syncInProgress?: {
           direction: 'cloud_to_local' | 'local_to_cloud';
+          application?: 'all' | 'geminitestapp' | 'studiq' | 'cms-builder' | 'products';
           source: 'local' | 'cloud';
           target: 'local' | 'cloud';
           acquiredAt: string;
@@ -216,7 +217,7 @@ describe('useDatabaseEngineState', () => {
   it('surfaces the server-provided sync lock message instead of a generic failure toast', async () => {
     mocks.syncMongoSourcesMutateAsync.mockRejectedValue(
       new ApiError(
-        'MongoDB sync is already in progress: local -> cloud. Started at 2026-04-16T00:38:12.443Z.',
+        'MongoDB sync is already in progress for products: local -> cloud. Started at 2026-04-16T00:38:12.443Z.',
         423
       )
     );
@@ -228,7 +229,7 @@ describe('useDatabaseEngineState', () => {
     });
 
     expect(mocks.toast).toHaveBeenCalledWith(
-      'MongoDB sync is already in progress: local -> cloud. Started at 2026-04-16T00:38:12.443Z.',
+      'MongoDB sync is already in progress for products: local -> cloud. Started at 2026-04-16T00:38:12.443Z.',
       {
         variant: 'warning',
       }
@@ -245,6 +246,7 @@ describe('useDatabaseEngineState', () => {
         lastSync: null,
         syncInProgress: {
           direction: 'local_to_cloud',
+          application: 'products',
           source: 'local',
           target: 'cloud',
           acquiredAt: '2026-04-16T00:38:12.443Z',
@@ -260,7 +262,7 @@ describe('useDatabaseEngineState', () => {
     });
 
     expect(mocks.toast).toHaveBeenCalledWith(
-      'MongoDB sync is still running: local -> cloud. Started at 2026-04-16T00:38:12.443Z. The server has not reported a final result yet.',
+      'MongoDB sync is still running for products: local -> cloud. Started at 2026-04-16T00:38:12.443Z. The server has not reported a final result yet.',
       {
         variant: 'warning',
       }

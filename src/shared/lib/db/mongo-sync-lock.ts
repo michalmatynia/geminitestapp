@@ -16,6 +16,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 import type {
+  DatabaseEngineManagedMongoApplicationTarget,
   DatabaseEngineMongoSyncDirection,
   DatabaseEngineMongoSyncInProgress,
   MongoSource,
@@ -34,14 +35,34 @@ const resolveSyncEndpoints = (
     ? { source: 'cloud', target: 'local' }
     : { source: 'local', target: 'cloud' };
 
+const formatMongoSyncApplicationTarget = (
+  application: DatabaseEngineManagedMongoApplicationTarget
+): string => (application === 'all' ? 'all apps' : application);
+
 const isMongoSyncDirection = (
   value: unknown
 ): value is DatabaseEngineMongoSyncDirection =>
   value === 'cloud_to_local' || value === 'local_to_cloud';
 
+const isMongoSyncApplicationTarget = (
+  value: unknown
+): value is DatabaseEngineManagedMongoApplicationTarget =>
+  value === 'all' ||
+  value === 'geminitestapp' ||
+  value === 'studiq' ||
+  value === 'cms-builder' ||
+  value === 'products';
+
+type MongoSyncLockPayload = Pick<
+  DatabaseEngineMongoSyncInProgress,
+  'direction' | 'acquiredAt' | 'pid'
+> & {
+  application?: unknown;
+};
+
 const isValidMongoSyncLockPayload = (
   value: unknown
-): value is Pick<DatabaseEngineMongoSyncInProgress, 'direction' | 'acquiredAt' | 'pid'> => {
+): value is MongoSyncLockPayload => {
   if (value === null || typeof value !== 'object') return false;
 
   const candidate = value as {
@@ -82,6 +103,9 @@ const parseMongoSyncLock = async (): Promise<DatabaseEngineMongoSyncInProgress |
     const { source, target } = resolveSyncEndpoints(parsed.direction);
     return {
       direction: parsed.direction,
+      application: isMongoSyncApplicationTarget(parsed.application)
+        ? parsed.application
+        : 'all',
       source,
       target,
       acquiredAt: parsed.acquiredAt,
@@ -109,6 +133,7 @@ const pruneMongoSyncLock = async (
   await fs.rm(mongoSyncLockPath, { force: true }).catch(() => undefined);
   logger.warn('[mongo-sync-lock] Pruned stale MongoDB sync lock', {
     reason,
+    application: lock.application,
     source: lock.source,
     target: lock.target,
     pid: lock.pid,
@@ -119,7 +144,7 @@ const pruneMongoSyncLock = async (
 export const formatMongoSyncLockMessage = (
   lock: DatabaseEngineMongoSyncInProgress
 ): string =>
-  `MongoDB sync is already in progress: ${lock.source} -> ${lock.target}. Started at ${lock.acquiredAt}.`;
+  `MongoDB sync is already in progress for ${formatMongoSyncApplicationTarget(lock.application)}: ${lock.source} -> ${lock.target}. Started at ${lock.acquiredAt}.`;
 
 export const readMongoSyncLock = async (
   options: { pruneStale?: boolean } = {}
@@ -147,13 +172,15 @@ export const readMongoSyncLock = async (
 };
 
 export const acquireMongoSyncLock = async (
-  direction: DatabaseEngineMongoSyncDirection
+  direction: DatabaseEngineMongoSyncDirection,
+  application: DatabaseEngineManagedMongoApplicationTarget = 'all'
 ): Promise<() => Promise<void>> => {
   await fs.mkdir(mongoRuntimeDir, { recursive: true });
 
   const payload = JSON.stringify(
     {
       direction,
+      application,
       acquiredAt: new Date().toISOString(),
       pid: process.pid,
     },

@@ -13,17 +13,40 @@ import { Badge } from '@/shared/ui/badge';
 
 const RESULT_ROW_LIMIT = 8;
 
-const formatBrowserMode = (
-  browserMode: NonNullable<ProductScrapeProfileRunResponse['runtime']>['browserMode']
-): string => {
+type ScrapeRuntime = NonNullable<ProductScrapeProfileRunResponse['runtime']>;
+type ScrapeRuntimeImageStepControls = NonNullable<ScrapeRuntime['imageStepControls']>;
+
+const IMAGE_STEP_LABELS: Array<{ key: keyof ScrapeRuntimeImageStepControls; label: string }> = [
+  { key: 'collectScrapedImageLinks', label: 'Collect scraped links' },
+  { key: 'downloadScrapedImages', label: 'Download scraped files' },
+  { key: 'collectProductGalleryImages', label: 'Collect gallery fallback' },
+  { key: 'downloadProductGalleryImages', label: 'Download gallery fallback' },
+  { key: 'uploadProductImages', label: 'Upload product files' },
+  { key: 'applyImagePayload', label: 'Apply image payload' },
+];
+
+const formatBrowserMode = (browserMode: ScrapeRuntime['browserMode']): string => {
   if (browserMode === 'runtime_default') return 'Runtime default';
   return browserMode === 'headless' ? 'Headless' : 'Headed';
+};
+
+const formatImageImportMode = (
+  mode: ProductScrapeProfileRuntimeRun['imageImportMode'] | ScrapeRuntime['imageImportMode']
+): string | null => {
+  if (mode === 'files') return 'Download as files';
+  if (mode === 'links') return 'Keep image links';
+  return null;
 };
 
 const formatRunMode = (dryRun: boolean): string => (dryRun ? 'Dry run' : 'Import');
 
 const formatRuntimeStatus = (status: ProductScrapeProfileRuntimeRun['status']): string =>
   status.replace('_', ' ').replace(/^\w/, (value) => value.toUpperCase());
+
+const formatRuntimeStage = (stage: string): string =>
+  stage
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (value) => value.toUpperCase());
 
 const runtimeStatusBadgeVariant = (
   status: ProductScrapeProfileRuntimeRun['status']
@@ -33,11 +56,53 @@ const runtimeStatusBadgeVariant = (
   return 'destructive';
 };
 
+function ProductScrapeProfilesRuntimeImageSteps({
+  controls,
+}: {
+  controls: ScrapeRuntimeImageStepControls;
+}): React.JSX.Element {
+  return (
+    <div className='mt-3 flex flex-wrap gap-1'>
+      {IMAGE_STEP_LABELS.map((step) => (
+        <Badge key={step.key} variant={controls[step.key] ? 'secondary' : 'outline'}>
+          {step.label}: {controls[step.key] ? 'Enabled' : 'Disabled'}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function ProductScrapeProfilesRuntimeRunProgress({
+  progress,
+}: {
+  progress: ProductScrapeProfileRuntimeRun['progress'];
+}): React.JSX.Element | null {
+  if (progress === null || progress === undefined) return null;
+  const progressLabel =
+    progress.current !== null && progress.total !== null
+      ? `${progress.current}/${progress.total}`
+      : null;
+
+  return (
+    <div className='rounded-md border border-amber-400/20 bg-background/35 px-3 py-2'>
+      <div className='flex flex-wrap items-center gap-2'>
+        <span className='font-medium text-foreground'>{formatRuntimeStage(progress.stage)}</span>
+        {progressLabel !== null ? <Badge variant='outline'>{progressLabel}</Badge> : null}
+      </div>
+      {progress.message !== null ? (
+        <div className='mt-1 text-muted-foreground'>{progress.message}</div>
+      ) : null}
+    </div>
+  );
+}
+
 export function ProductScrapeProfilesRuntimeRun({
   run,
 }: {
   run: ProductScrapeProfileRuntimeRun;
 }): React.JSX.Element {
+  const imageImportModeLabel = formatImageImportMode(run.imageImportMode);
+
   return (
     <div className='space-y-2 rounded-md border border-amber-400/30 bg-amber-500/10 p-4 text-xs'>
       <div className='flex flex-wrap items-center gap-2'>
@@ -46,11 +111,18 @@ export function ProductScrapeProfilesRuntimeRun({
           {formatRuntimeStatus(run.status)}
         </Badge>
         <Badge variant='secondary'>{formatRunMode(run.dryRun)}</Badge>
+        {imageImportModeLabel !== null ? (
+          <Badge variant={run.imageImportMode === 'files' ? 'success' : 'outline'}>
+            {imageImportModeLabel}
+          </Badge>
+        ) : null}
       </div>
       <div className='flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground'>
         <span>Redis queue: {run.queueName}</span>
         <span>Job ID: {run.id}</span>
       </div>
+      <ProductScrapeProfilesRuntimeRunProgress progress={run.progress} />
+      {run.error !== null ? <div className='text-red-300'>{run.error}</div> : null}
     </div>
   );
 }
@@ -60,12 +132,19 @@ export function ProductScrapeProfilesQueuedRun({
 }: {
   queuedRun: ProductScrapeProfileRunQueuedResponse;
 }): React.JSX.Element {
+  const imageImportModeLabel = formatImageImportMode(queuedRun.imageImportMode);
+
   return (
     <div className='space-y-2 rounded-md border border-border/60 bg-card/35 p-4 text-xs'>
       <div className='flex flex-wrap items-center gap-2'>
         <span className='text-sm font-medium text-foreground'>Queued in Redis runtime</span>
         <Badge variant='success'>Queued</Badge>
         <Badge variant='secondary'>{formatRunMode(queuedRun.dryRun)}</Badge>
+        {imageImportModeLabel !== null ? (
+          <Badge variant={queuedRun.imageImportMode === 'files' ? 'success' : 'outline'}>
+            {imageImportModeLabel}
+          </Badge>
+        ) : null}
       </div>
       <div className='flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground'>
         <span>Redis queue: {queuedRun.queueName}</span>
@@ -78,8 +157,10 @@ export function ProductScrapeProfilesQueuedRun({
 function ProductScrapeProfilesRuntimeResult({
   runtime,
 }: {
-  runtime: NonNullable<ProductScrapeProfileRunResponse['runtime']>;
+  runtime: ScrapeRuntime;
 }): React.JSX.Element {
+  const imageImportModeLabel = formatImageImportMode(runtime.imageImportMode);
+
   return (
     <div className='rounded-md border border-border/50 bg-muted/10 p-3 text-xs'>
       <div className='flex flex-wrap items-center gap-2'>
@@ -91,6 +172,11 @@ function ProductScrapeProfilesRuntimeResult({
         </Link>
         <Badge variant='secondary'>{runtime.runtimeActionKey}</Badge>
         <Badge variant='secondary'>{formatBrowserMode(runtime.browserMode)}</Badge>
+        {imageImportModeLabel !== null ? (
+          <Badge variant={runtime.imageImportMode === 'files' ? 'success' : 'outline'}>
+            {imageImportModeLabel}
+          </Badge>
+        ) : null}
       </div>
       <div className='mt-2 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground'>
         {runtime.queueName !== null ? <span>Redis queue: {runtime.queueName}</span> : null}
@@ -99,6 +185,9 @@ function ProductScrapeProfilesRuntimeResult({
           Steps: {runtime.enabledStepCount}/{runtime.totalStepCount}
         </span>
       </div>
+      {runtime.imageStepControls !== undefined ? (
+        <ProductScrapeProfilesRuntimeImageSteps controls={runtime.imageStepControls} />
+      ) : null}
     </div>
   );
 }

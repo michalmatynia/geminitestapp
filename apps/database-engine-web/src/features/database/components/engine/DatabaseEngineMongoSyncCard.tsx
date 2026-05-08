@@ -5,6 +5,7 @@ import type {
   DatabaseEngineManagedMongoApplicationTarget,
   DatabaseEngineMongoAppSyncStatus,
   DatabaseEngineMongoAppSyncStatuses,
+  DatabaseEngineMongoPendingSyncRequest,
   DatabaseEngineMongoSyncInProgress,
 } from '@/shared/contracts/database';
 import { Button, Card, Tooltip } from '@/shared/ui/primitives.public';
@@ -24,6 +25,30 @@ const APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplication, string> 
   'cms-builder': 'CMS Builder',
   products: 'Products',
 };
+
+const APPLICATION_TARGET_LABELS: Record<DatabaseEngineManagedMongoApplicationTarget, string> = {
+  all: 'All apps',
+  ...APPLICATION_LABELS,
+};
+
+const resolveSyncEndpoints = (
+  direction: 'cloud_to_local' | 'local_to_cloud'
+): { source: 'cloud' | 'local'; target: 'cloud' | 'local' } =>
+  direction === 'cloud_to_local'
+    ? { source: 'cloud', target: 'local' }
+    : { source: 'local', target: 'cloud' };
+
+const formatSyncAction = (direction: 'cloud_to_local' | 'local_to_cloud'): string =>
+  direction === 'cloud_to_local' ? 'Pulling' : 'Pushing';
+
+const isPendingSyncTarget = (
+  pendingSync: DatabaseEngineMongoPendingSyncRequest | null,
+  direction: 'cloud_to_local' | 'local_to_cloud',
+  application: DatabaseEngineManagedMongoApplicationTarget
+): boolean =>
+  pendingSync !== null &&
+  pendingSync.direction === direction &&
+  pendingSync.application === application;
 
 const resolveUnavailableSyncMessage = (params: {
   allowManualFullSync: boolean;
@@ -54,18 +79,25 @@ function MongoSyncButtons({
   buttonsDisabled,
   primaryLabel,
   secondaryLabel,
+  pendingSync,
   onSync,
 }: {
   buttonsDisabled: boolean;
   primaryLabel: string;
   secondaryLabel: string;
+  pendingSync: DatabaseEngineMongoPendingSyncRequest | null;
   onSync: (direction: 'cloud_to_local' | 'local_to_cloud') => void;
 }): JSX.Element {
+  const isPullingAll = isPendingSyncTarget(pendingSync, 'cloud_to_local', 'all');
+  const isPushingAll = isPendingSyncTarget(pendingSync, 'local_to_cloud', 'all');
+
   return (
     <div className='flex flex-wrap gap-3'>
       <Button
         type='button'
         disabled={buttonsDisabled}
+        loading={isPullingAll}
+        loadingText='Pulling all apps...'
         onClick={() => onSync('cloud_to_local')}
       >
         {primaryLabel}
@@ -73,6 +105,8 @@ function MongoSyncButtons({
       <Button
         type='button'
         disabled={buttonsDisabled}
+        loading={isPushingAll}
+        loadingText='Pushing all apps...'
         onClick={() => onSync('local_to_cloud')}
       >
         {secondaryLabel}
@@ -108,10 +142,12 @@ function EndpointIndicator({
 function AppSyncButtons({
   status,
   disabled,
+  pendingSync,
   onSync,
 }: {
   status: DatabaseEngineMongoAppSyncStatus;
   disabled: boolean;
+  pendingSync: DatabaseEngineMongoPendingSyncRequest | null;
   onSync: (
     direction: 'cloud_to_local' | 'local_to_cloud',
     application: DatabaseEngineManagedMongoApplication
@@ -119,6 +155,8 @@ function AppSyncButtons({
 }): JSX.Element {
   const issue = status.issue ?? 'MongoDB source sync is unavailable for this application.';
   const buttonsDisabled = disabled || !status.canSync;
+  const isPulling = isPendingSyncTarget(pendingSync, 'cloud_to_local', status.application);
+  const isPushing = isPendingSyncTarget(pendingSync, 'local_to_cloud', status.application);
 
   return (
     <Tooltip content={buttonsDisabled && !status.canSync ? issue : ''} side='left'>
@@ -127,6 +165,8 @@ function AppSyncButtons({
           type='button'
           size='xs'
           disabled={buttonsDisabled}
+          loading={isPulling}
+          loadingText='Pulling...'
           aria-label={`Pull ${APPLICATION_LABELS[status.application]} cloud to local`}
           title={status.canSync ? undefined : issue}
           onClick={() => onSync('cloud_to_local', status.application)}
@@ -137,6 +177,8 @@ function AppSyncButtons({
           type='button'
           size='xs'
           disabled={buttonsDisabled}
+          loading={isPushing}
+          loadingText='Pushing...'
           aria-label={`Push ${APPLICATION_LABELS[status.application]} local to cloud`}
           title={status.canSync ? undefined : issue}
           onClick={() => onSync('local_to_cloud', status.application)}
@@ -151,10 +193,12 @@ function AppSyncButtons({
 function AppStatusRow({
   status,
   disabled,
+  pendingSync,
   onSync,
 }: {
   status: DatabaseEngineMongoAppSyncStatus;
   disabled: boolean;
+  pendingSync: DatabaseEngineMongoPendingSyncRequest | null;
   onSync: (
     direction: 'cloud_to_local' | 'local_to_cloud',
     application: DatabaseEngineManagedMongoApplication
@@ -180,7 +224,12 @@ function AppStatusRow({
           reachable={status.cloudReachable}
         />
       </div>
-      <AppSyncButtons status={status} disabled={disabled} onSync={onSync} />
+      <AppSyncButtons
+        status={status}
+        disabled={disabled}
+        pendingSync={pendingSync}
+        onSync={onSync}
+      />
     </div>
   );
 }
@@ -193,6 +242,7 @@ export function MongoSyncCard({
   appStatuses,
   syncInProgress,
   isSyncingMongoSources,
+  pendingMongoSourceSync,
   onSync,
 }: {
   allowManualFullSync: boolean;
@@ -202,6 +252,7 @@ export function MongoSyncCard({
   appStatuses: DatabaseEngineMongoAppSyncStatuses;
   syncInProgress: DatabaseEngineMongoSyncInProgress | null;
   isSyncingMongoSources: boolean;
+  pendingMongoSourceSync: DatabaseEngineMongoPendingSyncRequest | null;
   onSync: (
     direction: 'cloud_to_local' | 'local_to_cloud',
     application: DatabaseEngineManagedMongoApplicationTarget
@@ -209,14 +260,18 @@ export function MongoSyncCard({
 }): JSX.Element {
   const appStatusList = MONGO_SYNC_APPLICATIONS.map((application) => appStatuses[application]);
   const allAppsCanSync = appStatusList.every((status) => status.canSync);
-  const unavailableMessage = resolveUnavailableSyncMessage({
+  const allAppsUnavailableMessage = resolveUnavailableSyncMessage({
     allowManualFullSync,
     hasDualSourceConfigured,
     canSync: canSync && allAppsCanSync,
     syncIssue,
   });
+  const appUnavailableMessage = allowManualFullSync
+    ? null
+    : 'Manual full sync is disabled by Database Engine controls.';
 
-  const shouldShowSyncingState = syncInProgress !== null;
+  const shouldShowSyncingState =
+    syncInProgress !== null || pendingMongoSourceSync !== null || isSyncingMongoSources;
   const primaryLabel = shouldShowSyncingState
     ? 'Syncing...'
     : 'Pull Cloud -> Local (backup all apps first)';
@@ -224,10 +279,17 @@ export function MongoSyncCard({
     ? 'Syncing...'
     : 'Push Local -> Cloud (backup all apps first)';
   const buttonsDisabled = shouldShowSyncingState || isSyncingMongoSources;
-  const syncProgressMessage = shouldShowSyncingState
-    ? `Sync in progress: ${syncInProgress.source} -> ${syncInProgress.target} since ${syncInProgress.acquiredAt}`
-    : unavailableMessage;
-  const allButtonsDisabled = buttonsDisabled || unavailableMessage !== null || !allAppsCanSync;
+  const pendingEndpoints =
+    pendingMongoSourceSync !== null ? resolveSyncEndpoints(pendingMongoSourceSync.direction) : null;
+  const syncProgressMessage =
+    syncInProgress !== null
+      ? `Sync in progress for ${APPLICATION_TARGET_LABELS[syncInProgress.application]}: ${syncInProgress.source} -> ${syncInProgress.target} since ${syncInProgress.acquiredAt}`
+      : pendingMongoSourceSync !== null && pendingEndpoints !== null
+        ? `${formatSyncAction(pendingMongoSourceSync.direction)} ${APPLICATION_TARGET_LABELS[pendingMongoSourceSync.application]}: ${pendingEndpoints.source} -> ${pendingEndpoints.target}. Started at ${pendingMongoSourceSync.startedAt}.`
+        : isSyncingMongoSources
+          ? 'MongoDB sync request is running.'
+          : allAppsUnavailableMessage;
+  const allButtonsDisabled = buttonsDisabled || allAppsUnavailableMessage !== null || !allAppsCanSync;
 
   return (
     <Card variant='subtle' padding='md' className='space-y-3 border-white/10'>
@@ -239,6 +301,7 @@ export function MongoSyncCard({
         buttonsDisabled={allButtonsDisabled}
         primaryLabel={primaryLabel}
         secondaryLabel={secondaryLabel}
+        pendingSync={pendingMongoSourceSync}
         onSync={(direction) => onSync(direction, 'all')}
       />
       <div className='pt-1'>
@@ -246,7 +309,8 @@ export function MongoSyncCard({
           <AppStatusRow
             key={status.application}
             status={status}
-            disabled={buttonsDisabled || unavailableMessage !== null}
+            disabled={buttonsDisabled || appUnavailableMessage !== null}
+            pendingSync={pendingMongoSourceSync}
             onSync={onSync}
           />
         ))}

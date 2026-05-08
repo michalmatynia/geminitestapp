@@ -109,10 +109,96 @@ it('creates scraped BattleStock products in the BattleStock catalog', async () =
     runtimeActionKey: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
     browserMode: 'headed',
     enabledStepCount: 0,
+    imageImportMode: 'links',
+    imageStepControls: expect.objectContaining({
+      downloadScrapedImages: true,
+      uploadProductImages: true,
+    }),
     totalStepCount: 0,
   });
   expect(mocks.ensureScrapedSourceListing).toHaveBeenCalledWith('product-created', 'linked');
   expect(mocks.invalidateAll).toHaveBeenCalledTimes(1);
+});
+
+it('passes the runtime abort signal into the scrape scripter dry-run', async () => {
+  const controller = new AbortController();
+
+  await scrapeProfiles.runProductScrapeProfile(
+    {
+      profileId: BATTLESTOCK_PROFILE_ID,
+      limit: 1,
+    },
+    { signal: controller.signal }
+  );
+
+  expect(mocks.dryRun).toHaveBeenCalledWith(
+    expect.objectContaining({
+      options: expect.objectContaining({
+        signal: controller.signal,
+      }),
+    })
+  );
+});
+
+it('reports Redis runtime scrape progress through setup, scrape, and import phases', async () => {
+  const reportProgress = vi.fn();
+
+  await scrapeProfiles.runProductScrapeProfile(
+    {
+      profileId: BATTLESTOCK_PROFILE_ID,
+      limit: 1,
+    },
+    { reportProgress }
+  );
+
+  expect(reportProgress).toHaveBeenCalledWith(
+    expect.objectContaining({
+      stage: 'runtime_action_resolving',
+      message: 'Resolving Playwright runtime action.',
+    })
+  );
+  expect(reportProgress).toHaveBeenCalledWith(
+    expect.objectContaining({
+      current: 0,
+      stage: 'scrape_completed',
+      total: 1,
+    })
+  );
+  expect(reportProgress).toHaveBeenCalledWith(
+    expect.objectContaining({
+      current: 1,
+      stage: 'importing_products',
+      total: 1,
+    })
+  );
+  expect(reportProgress).toHaveBeenCalledWith(
+    expect.objectContaining({
+      current: 1,
+      stage: 'import_completed',
+      total: 1,
+    })
+  );
+});
+
+it('stops before importing products when the runtime abort signal fires after scraping', async () => {
+  const controller = new AbortController();
+  mocks.dryRun.mockImplementationOnce(async () => {
+    controller.abort(new Error('scrape stopped'));
+    return makeSource([makeDraft()]);
+  });
+
+  await expect(
+    scrapeProfiles.runProductScrapeProfile(
+      {
+        profileId: BATTLESTOCK_PROFILE_ID,
+        limit: 1,
+      },
+      { signal: controller.signal }
+    )
+  ).rejects.toThrow('scrape stopped');
+
+  expect(mocks.createProduct).not.toHaveBeenCalled();
+  expect(mocks.updateProduct).not.toHaveBeenCalled();
 });
 
 it('calculates imported BattleStock product prices from catalog price group settings', async () => {
@@ -194,7 +280,7 @@ it('downloads scraped images as product files when requested', async () => {
   );
   vi.stubGlobal('fetch', fetchMock);
 
-  await scrapeProfiles.runProductScrapeProfile({
+  const response = await scrapeProfiles.runProductScrapeProfile({
     profileId: BATTLESTOCK_PROFILE_ID,
     limit: 1,
     imageImportMode: 'files',
@@ -229,6 +315,14 @@ it('downloads scraped images as product files when requested', async () => {
     }),
     undefined
   );
+  expect(response.runtime).toMatchObject({
+    imageImportMode: 'files',
+    imageStepControls: expect.objectContaining({
+      applyImagePayload: true,
+      downloadScrapedImages: true,
+      uploadProductImages: true,
+    }),
+  });
 });
 
 it('fails file-mode scrape products instead of creating remote-link products when image download fails', async () => {
@@ -281,7 +375,7 @@ it('honors disabled image upload runtime steps when importing scrape profile fil
     updatedAt: '2026-05-08T00:00:00.000Z',
   });
 
-  await scrapeProfiles.runProductScrapeProfile({
+  const response = await scrapeProfiles.runProductScrapeProfile({
     profileId: BATTLESTOCK_PROFILE_ID,
     limit: 1,
     imageImportMode: 'files',
@@ -301,6 +395,12 @@ it('honors disabled image upload runtime steps when importing scrape profile fil
     })
   );
   expect(payload?.imageFileIds).toBeUndefined();
+  expect(response.runtime).toMatchObject({
+    imageImportMode: 'files',
+    imageStepControls: expect.objectContaining({
+      uploadProductImages: false,
+    }),
+  });
 });
 
 it('keeps the product import successful when scraped source linking fails', async () => {

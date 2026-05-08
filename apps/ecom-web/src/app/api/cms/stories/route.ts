@@ -1,7 +1,8 @@
-import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getAllStories, saveStory, validateStory } from '@/lib/storiesCms';
+import { normalizeLocale } from '@/lib/locales';
+import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 function forbidden(): NextResponse {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -13,10 +14,11 @@ function readStoryPayload(input: unknown): unknown {
   return root['story'] ?? root['content'] ?? input;
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
   try {
-    const stories = await getAllStories();
-    return NextResponse.json({ stories });
+    const stories = await getAllStories(locale);
+    return NextResponse.json({ stories, locale });
   } catch {
     return NextResponse.json({ error: 'Failed to load stories' }, { status: 500 });
   }
@@ -25,6 +27,7 @@ export async function GET(): Promise<NextResponse> {
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const session = await getSession();
   if (!session?.isSuperAdmin) return forbidden();
+  const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
   let body: unknown;
   try {
@@ -39,10 +42,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    await saveStory(story);
-    revalidatePath('/stories');
-    revalidatePath(`/stories/${story.slug}`);
-    return NextResponse.json({ ok: true, story });
+    await saveStory(story, locale);
+    revalidateLocalizedPath('/stories');
+    revalidateLocalizedPath(`/stories/${story.slug}`);
+    return NextResponse.json({ ok: true, story, locale });
   } catch {
     return NextResponse.json({ error: 'Failed to save story' }, { status: 500 });
   }

@@ -10,6 +10,7 @@ import { getDraft } from '@/features/drafter/services/draft-service';
 import { CachedProductService } from '@/features/products/performance/cached-service';
 import type {
   ProductScrapeProfile,
+  ProductScrapeProfileRuntimeProgressUpdate,
   ProductScrapeSourcePriceCurrencyCode,
   ProductScrapeProfileRunRequest,
   ProductScrapeProfileRunResponse,
@@ -41,8 +42,13 @@ import { listScrapePriceGroupsForCalculation } from './product-scrape-pricing';
 import { buildRuntimeMetadata } from './product-scrape-profiles.runtime';
 import { loadScrapeTemplateLinkedParameterMetadata } from './product-scrape-template-linked-parameters';
 import type { ProductScrapeImageStepControls } from './product-scrape-profile-image-step-controls';
+import { throwIfProductScrapeAborted } from './product-scrape-profile-abort';
 
 const BATTLESTOCK_CATALOG_NAME = 'BattleStock';
+
+type ProductScrapeProfileProgressReporter = (
+  progress: ProductScrapeProfileRuntimeProgressUpdate
+) => Promise<void>;
 
 const PRODUCT_SCRAPE_PROFILES: ProductScrapeProfileConfig[] = [
   {
@@ -275,12 +281,14 @@ const runProfileScripterDryRun = async ({
   executionSettings,
   input,
   profile,
+  signal,
   waitWhilePaused,
 }: {
   catalogId: string;
   executionSettings: PlaywrightActionExecutionSettings;
   input: ProductScrapeProfileRunRequest;
   profile: ProductScrapeProfileConfig;
+  signal?: AbortSignal;
   waitWhilePaused?: () => Promise<void>;
 }): Promise<ScripterImportSourceResult> =>
   await getDefaultScripterServer().dryRun({
@@ -292,9 +300,27 @@ const runProfileScripterDryRun = async ({
       limit: input.limit,
       skipRecordsWithErrors: false,
       catalogDefaults: { catalogIds: [catalogId] },
+      signal,
       waitWhilePaused,
     },
   });
+
+const reportScrapeProgress = async (
+  reporter: ProductScrapeProfileProgressReporter | undefined,
+  progress: {
+    current?: number | null;
+    message: string;
+    stage: string;
+    total?: number | null;
+  }
+): Promise<void> => {
+  await reporter?.({
+    current: progress.current ?? null,
+    message: progress.message,
+    stage: progress.stage,
+    total: progress.total ?? null,
+  });
+};
 
 export const listProductScrapeProfiles = (): ProductScrapeProfilesListResponse => ({
   profiles: PRODUCT_SCRAPE_PROFILES.map(toPublicProfile),
@@ -304,6 +330,8 @@ export const listProductScrapeProfiles = (): ProductScrapeProfilesListResponse =
 export const runProductScrapeProfile = async (
   input: ProductScrapeProfileRunRequest,
   options: {
+    reportProgress?: ProductScrapeProfileProgressReporter;
+    signal?: AbortSignal;
     userId?: string | null;
     runtimeQueueName?: string | null;
     waitWhilePaused?: () => Promise<void>;
@@ -311,32 +339,90 @@ export const runProductScrapeProfile = async (
 ): Promise<ProductScrapeProfileRunResponse> => {
   const profile = findProfile(input.profileId);
   const dryRun = input.dryRun ?? false;
+  await reportScrapeProgress(options.reportProgress, {
+    message: `Loaded scrape profile ${profile.label}.`,
+    stage: 'profile_loaded',
+  });
+  throwIfProductScrapeAborted(options.signal);
   await options.waitWhilePaused?.();
+  throwIfProductScrapeAborted(options.signal);
+  await reportScrapeProgress(options.reportProgress, {
+    message: 'Checking Playwright scripter definition.',
+    stage: 'scripter_definition_checking',
+  });
   await ensureScripterProfileFile(profile);
+  await reportScrapeProgress(options.reportProgress, {
+    message: 'Resolving Playwright runtime action.',
+    stage: 'runtime_action_resolving',
+  });
   const runtimeAction = await resolveRuntimeActionDefinition(profile.runtimeActionKey);
 
+  throwIfProductScrapeAborted(options.signal);
+  await reportScrapeProgress(options.reportProgress, {
+    message: `Preparing ${profile.targetCatalogName} catalog.`,
+    stage: 'catalog_resolving',
+  });
   const catalog = await ensureCatalog(profile.targetCatalogName);
+  await reportScrapeProgress(options.reportProgress, {
+    message: 'Resolving selected scrape draft template.',
+    stage: 'draft_template_resolving',
+  });
   const draftTemplate = await resolveScrapeDraftTemplate(profile, input.draftTemplateId);
+  await reportScrapeProgress(options.reportProgress, {
+    message: 'Resolving draft template category aliases.',
+    stage: 'template_category_aliases_resolving',
+  });
   const draftTemplateCategoryAliases = await resolveDraftTemplateCategoryAliases(draftTemplate);
+  if (draftTemplate !== null) {
+    await reportScrapeProgress(options.reportProgress, {
+      message: 'Loading draft template parameter metadata.',
+      stage: 'template_parameter_metadata_loading',
+    });
+  }
   const draftTemplateLinkedParameterMetadata =
     draftTemplate === null ? null : await loadScrapeTemplateLinkedParameterMetadata();
+  await reportScrapeProgress(options.reportProgress, {
+    message: 'Loading scrape price groups.',
+    stage: 'price_groups_loading',
+  });
   const priceGroups = await loadScrapePriceGroups(catalog, draftTemplate);
   const sourcePriceCurrencyCode = resolveSourcePriceCurrencyCode(profile, input.sourcePriceCurrencyCode);
+  const imageImportMode = input.imageImportMode ?? 'links';
+  const imageStepControls = resolveProductScrapeImageStepControls(runtimeAction);
   await options.waitWhilePaused?.();
+  throwIfProductScrapeAborted(options.signal);
+  await reportScrapeProgress(options.reportProgress, {
+    message: `Running Playwright action ${runtimeAction.name}.`,
+    stage: 'scrape_starting',
+  });
   const source = await runProfileScripterDryRun({
     catalogId: catalog.id,
     executionSettings: runtimeAction.executionSettings,
     input,
     profile,
+    signal: options.signal,
     waitWhilePaused: options.waitWhilePaused,
   });
   await options.waitWhilePaused?.();
+  throwIfProductScrapeAborted(options.signal);
+  await reportScrapeProgress(options.reportProgress, {
+    current: 0,
+    message: `Scraped ${source.drafts.length} product record(s).`,
+    stage: 'scrape_completed',
+    total: source.drafts.length,
+  });
+  await reportScrapeProgress(options.reportProgress, {
+    current: 0,
+    message: dryRun ? 'Mapping scraped records.' : 'Importing scraped products.',
+    stage: 'import_starting',
+    total: source.drafts.length,
+  });
   const outcomes = await processScrapeDrafts(source.drafts, {
     profile,
     catalog,
     dryRun,
-    imageImportMode: input.imageImportMode ?? 'links',
-    imageStepControls: resolveProductScrapeImageStepControls(runtimeAction),
+    imageImportMode,
+    imageStepControls,
     skipRecordsWithErrors: input.skipRecordsWithErrors ?? true,
     productServiceOptions: resolveProductServiceOptions(options.userId),
     priceGroups,
@@ -344,9 +430,18 @@ export const runProductScrapeProfile = async (
     draftTemplate,
     draftTemplateCategoryAliases,
     draftTemplateLinkedParameterMetadata,
+    reportProgress: options.reportProgress,
+    signal: options.signal,
     waitWhilePaused: options.waitWhilePaused,
   });
+  throwIfProductScrapeAborted(options.signal);
   const outcomeSummary = summarizeOutcomes(outcomes);
+  await reportScrapeProgress(options.reportProgress, {
+    current: outcomes.length,
+    message: `Imported ${outcomeSummary.createdCount} and updated ${outcomeSummary.updatedCount} product(s).`,
+    stage: 'import_completed',
+    total: source.drafts.length,
+  });
 
   if (shouldInvalidateProductCache(dryRun, outcomeSummary)) {
     CachedProductService.invalidateAll();
@@ -365,6 +460,8 @@ export const runProductScrapeProfile = async (
     issueCount: source.summary.totalIssues,
     products: outcomeSummary.products,
     runtime: buildRuntimeMetadata(runtimeAction, {
+      imageImportMode,
+      imageStepControls,
       queueName: options.runtimeQueueName,
       runtimeActionKey: profile.runtimeActionKey,
     }),

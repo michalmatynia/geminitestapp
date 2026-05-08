@@ -28,7 +28,7 @@ const exo2 = Exo_2({
 
 const barlow = Barlow({
   subsets: ['latin', 'latin-ext'],
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['300', '400'],
   variable: '--font-body',
   display: 'swap',
 });
@@ -56,17 +56,44 @@ const themeInitScript = `
 })();
 `;
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_ECOM_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : 'http://localhost:3001');
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
-  if (locale === 'pl') {
-    return {
-      title: 'ARCANA - Anime, gaming i filmowe kolekcjonalia',
-      description: 'Breloki, piny i biżuteria z ulubionych uniwersów. Kolekcjonalia anime, gamingowe i filmowe - licencjonowane i starannie wybrane.',
-    };
-  }
+  const isPl = locale === 'pl';
+
+  const title = isPl
+    ? 'ARCANA - Anime, gaming i filmowe kolekcjonalia'
+    : 'ARCANA - Anime, Gaming, and Film Collectibles';
+  const description = isPl
+    ? 'Breloki, piny i biżuteria z ulubionych uniwersów. Kolekcjonalia anime, gamingowe i filmowe - licencjonowane i starannie wybrane.'
+    : 'Keychains, pins and jewellery from the universes you love. Anime, gaming and film collectibles - officially licensed, obsessively curated.';
+
   return {
-    title: 'ARCANA - Anime, Gaming, and Film Collectibles',
-    description: 'Keychains, pins and jewellery from the universes you love. Anime, gaming and film collectibles - officially licensed, obsessively curated.',
+    title,
+    description,
+    metadataBase: new URL(siteUrl),
+    openGraph: {
+      type: 'website',
+      siteName: 'ARCANA',
+      title,
+      description,
+      locale: isPl ? 'pl_PL' : 'en_GB',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true },
+    },
   };
 }
 

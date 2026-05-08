@@ -412,7 +412,7 @@ describe('mongo-source-sync', () => {
     );
 
     await expect(syncMongoSources('cloud_to_local')).rejects.toThrow(
-      `MongoDB sync is already in progress: local -> cloud. Started at ${acquiredAt}.`
+      `MongoDB sync is already in progress for all apps: local -> cloud. Started at ${acquiredAt}.`
     );
     expect(mocks.execFileAsync).not.toHaveBeenCalled();
     expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();

@@ -1,7 +1,7 @@
-import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getAboutCmsSnapshot, parseAboutContentUpdate, saveAboutContent } from '@/lib/cms';
+import { revalidateLocalizedPath } from '@/lib/cmsRevalidation';
 
 function forbidden(): NextResponse {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -39,7 +39,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   try {
     const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
     const snapshot = await saveAboutContent(content, session.id, locale);
-    revalidatePath('/about');
+    revalidateLocalizedPath('/about');
     return NextResponse.json({ ok: true, ...snapshot });
   } catch {
     return NextResponse.json({ error: 'Failed to save about CMS content' }, { status: 500 });

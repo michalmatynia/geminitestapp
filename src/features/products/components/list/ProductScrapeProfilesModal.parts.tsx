@@ -41,6 +41,7 @@ type ProductScrapeProfilesBodyProps = {
   draftTemplates: ProductDraft[];
   profiles: ProductScrapeProfile[];
   activeRun: ProductScrapeProfileRuntimeRun | null;
+  latestRun: ProductScrapeProfileRuntimeRun | null;
   queuedRun: ProductScrapeProfileRunQueuedResponse | null;
   result: ProductScrapeProfileRunResponse | null;
   runtimeAction: ProductScrapeProfileRuntimeActionSetting;
@@ -194,39 +195,75 @@ function ProductScrapeProfilesForm(props: ProductScrapeProfilesFormProps): React
   );
 }
 
-export function ProductScrapeProfilesBody(props: ProductScrapeProfilesBodyProps): React.JSX.Element {
-  const { activeRun, error, isLoading, profiles, queuedRun, result, ...formProps } = props;
-  let mainContent: React.JSX.Element;
+const resolveMatchingTerminalRun = ({
+  activeRun,
+  latestRun,
+  queuedRun,
+}: Pick<
+  ProductScrapeProfilesBodyProps,
+  'activeRun' | 'latestRun' | 'queuedRun'
+>): ProductScrapeProfileRuntimeRun | null =>
+  activeRun === null && latestRun !== null && queuedRun?.jobId === latestRun.id
+    ? latestRun
+    : null;
+
+const renderMainContent = ({
+  error,
+  formProps,
+  isLoading,
+  profiles,
+}: {
+  error: Error | null;
+  formProps: ProductScrapeProfilesFormProps;
+  isLoading: boolean;
+  profiles: ProductScrapeProfile[];
+}): React.JSX.Element => {
   if (isLoading) {
-    mainContent = <div className='text-sm text-muted-foreground'>Loading scrape profiles...</div>;
-  } else if (error !== null) {
-    mainContent = (
-      <Alert variant='error' title='Scrape profiles unavailable' description={error.message} />
-    );
-  } else if (profiles.length === 0) {
-    mainContent = (
+    return <div className='text-sm text-muted-foreground'>Loading scrape profiles...</div>;
+  }
+  if (error !== null) {
+    return <Alert variant='error' title='Scrape profiles unavailable' description={error.message} />;
+  }
+  if (profiles.length === 0) {
+    return (
       <Alert
         variant='warning'
         title='No scrape profiles'
         description='No product scrape profiles are configured.'
       />
     );
-  } else {
-    mainContent = <ProductScrapeProfilesForm profiles={profiles} {...formProps} />;
   }
+  return <ProductScrapeProfilesForm profiles={profiles} {...formProps} />;
+};
 
-  let runtimeContent: React.JSX.Element | null = null;
+const renderRuntimeContent = ({
+  activeRun,
+  matchingTerminalRun,
+  queuedRun,
+}: Pick<ProductScrapeProfilesBodyProps, 'activeRun' | 'queuedRun'> & {
+  matchingTerminalRun: ProductScrapeProfileRuntimeRun | null;
+}): React.JSX.Element | null => {
   if (activeRun !== null) {
-    runtimeContent = <ProductScrapeProfilesRuntimeRun run={activeRun} />;
-  } else if (queuedRun !== null) {
-    runtimeContent = <ProductScrapeProfilesQueuedRun queuedRun={queuedRun} />;
+    return <ProductScrapeProfilesRuntimeRun run={activeRun} />;
   }
+  if (matchingTerminalRun !== null && matchingTerminalRun.result === null) {
+    return <ProductScrapeProfilesRuntimeRun run={matchingTerminalRun} />;
+  }
+  return queuedRun === null ? null : <ProductScrapeProfilesQueuedRun queuedRun={queuedRun} />;
+};
+
+export function ProductScrapeProfilesBody(props: ProductScrapeProfilesBodyProps): React.JSX.Element {
+  const { activeRun, error, isLoading, latestRun, profiles, queuedRun, result, ...formProps } = props;
+  const matchingTerminalRun = resolveMatchingTerminalRun({ activeRun, latestRun, queuedRun });
+  const visibleResult = result ?? matchingTerminalRun?.result ?? null;
+  const mainContent = renderMainContent({ error, formProps, isLoading, profiles });
+  const runtimeContent = renderRuntimeContent({ activeRun, matchingTerminalRun, queuedRun });
 
   return (
     <div className='space-y-5'>
       {mainContent}
       {runtimeContent}
-      {result !== null ? <ProductScrapeProfilesResult result={result} /> : null}
+      {visibleResult !== null ? <ProductScrapeProfilesResult result={visibleResult} /> : null}
     </div>
   );
 }

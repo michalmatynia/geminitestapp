@@ -1,6 +1,6 @@
 import {
-  resolveKangurLessonTemplateComponentContent,
-} from '@/features/kangur/lessons/lesson-template-component-content';
+  resolveKangurLessonTemplateComponentContentValue,
+} from '@/features/kangur/lessons/lesson-template-component-content-resolver';
 import type {
   KangurLessonTemplate,
   KangurSubtractingLessonTemplateContent,
@@ -176,10 +176,9 @@ export const resolveSubtractingLessonContent = (
     return null;
   }
 
-  const resolved = resolveKangurLessonTemplateComponentContent(
-    'subtracting',
-    template?.componentContent,
-  );
+  const resolved =
+    resolveKangurLessonTemplateComponentContentValue(template.componentContent) ??
+    SUBTRACTING_LESSON_COMPONENT_CONTENT;
 
   return resolved?.kind === 'subtracting' ? resolved : null;
 };

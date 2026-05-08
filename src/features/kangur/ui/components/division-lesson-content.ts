@@ -1,6 +1,6 @@
 import {
-  resolveKangurLessonTemplateComponentContent,
-} from '@/features/kangur/lessons/lesson-template-component-content';
+  resolveKangurLessonTemplateComponentContentValue,
+} from '@/features/kangur/lessons/lesson-template-component-content-resolver';
 import type {
   KangurDivisionLessonTemplateContent,
   KangurLessonTemplate,
@@ -117,10 +117,9 @@ export const resolveDivisionLessonContent = (
     return DIVISION_LESSON_COMPONENT_CONTENT;
   }
 
-  const resolved = resolveKangurLessonTemplateComponentContent(
-    'division',
-    template.componentContent,
-  );
+  const resolved =
+    resolveKangurLessonTemplateComponentContentValue(template.componentContent) ??
+    DIVISION_LESSON_COMPONENT_CONTENT;
 
   return resolved?.kind === 'division' ? resolved : DIVISION_LESSON_COMPONENT_CONTENT;
 };

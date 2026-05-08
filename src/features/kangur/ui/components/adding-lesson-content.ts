@@ -2,8 +2,8 @@ import {
   type LessonTranslate,
 } from '@/features/kangur/ui/components/lesson-copy';
 import {
-  resolveKangurLessonTemplateComponentContent,
-} from '@/features/kangur/lessons/lesson-template-component-content';
+  resolveKangurLessonTemplateComponentContentValue,
+} from '@/features/kangur/lessons/lesson-template-component-content-resolver';
 import type {
   KangurAddingLessonTemplateContent,
   KangurLessonTemplate,
@@ -25,10 +25,9 @@ export const resolveAddingLessonContent = (
   fallbackTranslate: LessonTranslate,
 ): KangurAddingLessonTemplateContent => {
   if (template?.componentContent) {
-    const resolved = resolveKangurLessonTemplateComponentContent(
-      'adding',
-      template.componentContent,
-    );
+    const resolved =
+      resolveKangurLessonTemplateComponentContentValue(template.componentContent) ??
+      ADDING_LESSON_COMPONENT_CONTENT;
 
     if (resolved?.kind === 'adding') {
       return resolved;

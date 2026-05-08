@@ -1,6 +1,6 @@
 import {
-  resolveKangurLessonTemplateComponentContent,
-} from '@/features/kangur/lessons/lesson-template-component-content';
+  resolveKangurLessonTemplateComponentContentValue,
+} from '@/features/kangur/lessons/lesson-template-component-content-resolver';
 import type {
   KangurLessonTemplate,
   KangurMultiplicationLessonTemplateContent,
@@ -110,10 +110,9 @@ export const resolveMultiplicationLessonContent = (
     return MULTIPLICATION_LESSON_COMPONENT_CONTENT;
   }
 
-  const resolved = resolveKangurLessonTemplateComponentContent(
-    'multiplication',
-    template.componentContent,
-  );
+  const resolved =
+    resolveKangurLessonTemplateComponentContentValue(template.componentContent) ??
+    MULTIPLICATION_LESSON_COMPONENT_CONTENT;
 
   return resolved?.kind === 'multiplication'
     ? resolved

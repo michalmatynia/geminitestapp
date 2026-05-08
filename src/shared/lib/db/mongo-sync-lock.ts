@@ -21,9 +21,11 @@ import type {
   MongoSource,
 } from '@/shared/contracts/database';
 import { operationFailedError, resourceLockedError } from '@/shared/errors/app-error';
+import { logger } from '@/shared/utils/logger';
 
 const mongoRuntimeDir = path.join(process.cwd(), 'mongo', 'runtime');
 const mongoSyncLockPath = path.join(mongoRuntimeDir, 'sync.lock');
+const LOCK_MAX_AGE_MS = 30 * 60 * 1000;
 
 const resolveSyncEndpoints = (
   direction: DatabaseEngineMongoSyncDirection
@@ -94,6 +96,26 @@ const parseMongoSyncLock = async (): Promise<DatabaseEngineMongoSyncInProgress |
   }
 };
 
+const isMongoSyncLockExpired = (lock: DatabaseEngineMongoSyncInProgress): boolean => {
+  const acquiredAtMs = Date.parse(lock.acquiredAt);
+  if (!Number.isFinite(acquiredAtMs)) return true;
+  return Date.now() - acquiredAtMs > LOCK_MAX_AGE_MS;
+};
+
+const pruneMongoSyncLock = async (
+  lock: DatabaseEngineMongoSyncInProgress,
+  reason: 'pid_exited' | 'expired'
+): Promise<void> => {
+  await fs.rm(mongoSyncLockPath, { force: true }).catch(() => undefined);
+  logger.warn('[mongo-sync-lock] Pruned stale MongoDB sync lock', {
+    reason,
+    source: lock.source,
+    target: lock.target,
+    pid: lock.pid,
+    acquiredAt: lock.acquiredAt,
+  });
+};
+
 export const formatMongoSyncLockMessage = (
   lock: DatabaseEngineMongoSyncInProgress
 ): string =>
@@ -107,12 +129,18 @@ export const readMongoSyncLock = async (
     return null;
   }
 
+  const isExpired = isMongoSyncLockExpired(lock);
+  if (isExpired && options.pruneStale === true) {
+    await pruneMongoSyncLock(lock, 'expired');
+    return null;
+  }
+
   if (isPidRunning(lock.pid)) {
     return lock;
   }
 
-  if (options.pruneStale) {
-    await fs.rm(mongoSyncLockPath, { force: true }).catch(() => undefined);
+  if (options.pruneStale === true) {
+    await pruneMongoSyncLock(lock, 'pid_exited');
   }
 
   return null;
@@ -173,6 +201,8 @@ export const testOnly = {
   mongoRuntimeDir,
   mongoSyncLockPath,
   isPidRunning,
+  isMongoSyncLockExpired,
+  LOCK_MAX_AGE_MS,
   parseMongoSyncLock,
   resolveSyncEndpoints,
 };

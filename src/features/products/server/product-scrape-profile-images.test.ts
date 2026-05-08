@@ -46,6 +46,19 @@ const createImageResponse = (type: string): Response =>
     },
   }) as Response;
 
+const createHtmlResponse = (type = 'text/html'): Response =>
+  ({
+    ok: true,
+    status: 200,
+    arrayBuffer: () => Promise.resolve(new TextEncoder().encode('<html>challenge</html>').buffer),
+    clone: () => createHtmlResponse(type),
+    blob: () => Promise.resolve(new Blob(['<html>challenge</html>'], { type: 'text/html' })),
+    headers: {
+      get: (name: string): string | null =>
+        name.toLowerCase() === 'content-type' ? type : null,
+    },
+  }) as Response;
+
 const createBlockedResponse = (status = 403): Response =>
   ({
     ok: false,
@@ -131,7 +144,7 @@ describe('resolveScrapeImagePayload', () => {
     expect(mocks.uploadFile).not.toHaveBeenCalled();
   });
 
-  it('downloads scraped images, uploads them, and stores uploaded file urls in file mode', async () => {
+  it('downloads scraped images, uploads them, and stores file ids in file mode', async () => {
     const firstStoredUrl =
       'https://sparksofsindri.com/uploads/products/BATTLESTOCK-13033/first.jpg';
     const secondStoredUrl =
@@ -168,7 +181,7 @@ describe('resolveScrapeImagePayload', () => {
     );
     expect(result).toEqual({
       imageFileIds: ['image-file-1', 'image-file-2'],
-      imageLinks: [firstStoredUrl, secondStoredUrl],
+      imageLinks: [],
     });
     expect(mocks.uploadFile).toHaveBeenNthCalledWith(
       1,
@@ -185,12 +198,12 @@ describe('resolveScrapeImagePayload', () => {
     expect(mocks.uploadFile).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
-        name: 'battlestock-13033-2.webp',
+        name: 'second.webp',
         type: 'image/webp',
       }),
       {
         category: 'products',
-        filenameOverride: 'battlestock-13033-2.webp',
+        filenameOverride: 'second.webp',
         sku: 'BATTLESTOCK-13033',
       }
     );
@@ -252,7 +265,51 @@ describe('resolveScrapeImagePayload', () => {
     );
     expect(result).toEqual({
       imageFileIds: ['image-file-1'],
-      imageLinks: [storedUrl],
+      imageLinks: [],
+    });
+  });
+
+  it('retries an octet-stream HTML challenge before uploading a scraped image', async () => {
+    const storedUrl =
+      'https://sparksofsindri.com/uploads/products/BATTLESTOCK-13033/first.jpg';
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createHtmlResponse('application/octet-stream'))
+      .mockResolvedValueOnce(createSourcePageResponse(['cf_clearance=abc; Path=/']))
+      .mockResolvedValueOnce(createImageResponse('image/jpeg'));
+    vi.stubGlobal('fetch', fetchMock);
+    mocks.uploadFile.mockResolvedValueOnce({ id: 'image-file-1', filepath: storedUrl });
+
+    const result = await resolveScrapeImagePayload({
+      candidate: { ...candidate, imageLinks: [candidate.imageLinks[0]!] },
+      dryRun: false,
+      imageImportMode: 'files',
+    });
+
+    const retryImageInit = fetchMock.mock.calls[2]?.[1] as RequestInit & {
+      headers?: Record<string, string>;
+    };
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, candidate.sourceUrl, expect.any(Object));
+    expect(retryImageInit.headers).toEqual(
+      expect.objectContaining({
+        cookie: 'cf_clearance=abc',
+      })
+    );
+    expect(mocks.uploadFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'first.jpg',
+        type: 'image/jpeg',
+      }),
+      {
+        category: 'products',
+        filenameOverride: 'first.jpg',
+        sku: 'BATTLESTOCK-13033',
+      }
+    );
+    expect(result).toEqual({
+      imageFileIds: ['image-file-1'],
+      imageLinks: [],
     });
   });
 
@@ -285,7 +342,7 @@ describe('resolveScrapeImagePayload', () => {
     );
     expect(result).toEqual({
       imageFileIds: ['image-file-1'],
-      imageLinks: [storedUrl],
+      imageLinks: [],
     });
   });
 
@@ -329,11 +386,11 @@ describe('resolveScrapeImagePayload', () => {
     );
     expect(result).toEqual({
       imageFileIds: ['image-file-1', 'image-file-2'],
-      imageLinks: [firstStoredUrl, secondStoredUrl],
+      imageLinks: [],
     });
   });
 
-  it('keeps the scraped source link when an individual file upload fails', async () => {
+  it('fails file mode when an individual file upload fails', async () => {
     const storedUrl =
       'https://sparksofsindri.com/uploads/products/BATTLESTOCK-13033/first.jpg';
     vi.stubGlobal(
@@ -342,21 +399,19 @@ describe('resolveScrapeImagePayload', () => {
         .fn()
         .mockResolvedValueOnce(createImageResponse('image/jpeg'))
         .mockResolvedValueOnce(createImageResponse('image/jpeg'))
+        .mockResolvedValueOnce(createSourcePageResponse([]))
     );
     mocks.uploadFile
       .mockResolvedValueOnce({ id: 'image-file-1', filepath: storedUrl })
       .mockRejectedValueOnce(new Error('upload failed'));
 
-    const result = await resolveScrapeImagePayload({
-      candidate,
-      dryRun: false,
-      imageImportMode: 'files',
-    });
-
-    expect(result).toEqual({
-      imageFileIds: ['image-file-1'],
-      imageLinks: [storedUrl, candidate.imageLinks[1]],
-    });
+    await expect(
+      resolveScrapeImagePayload({
+        candidate,
+        dryRun: false,
+        imageImportMode: 'files',
+      })
+    ).rejects.toThrow('Failed to download 1 scraped image(s).');
     expect(mocks.captureException).toHaveBeenCalledWith(
       expect.any(Error),
       expect.objectContaining({

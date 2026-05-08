@@ -549,6 +549,31 @@ export type DatabaseEngineMongoSourceEntry = z.infer<
   typeof databaseEngineMongoSourceEntrySchema
 >;
 
+export const databaseEngineMongoAppSyncStatusSchema = z.object({
+  application: databaseEngineManagedMongoApplicationSchema,
+  localConfigured: z.boolean(),
+  cloudConfigured: z.boolean(),
+  localReachable: z.boolean().nullable(),
+  cloudReachable: z.boolean().nullable(),
+  canSync: z.boolean(),
+  issue: z.string().nullable(),
+});
+
+export type DatabaseEngineMongoAppSyncStatus = z.infer<
+  typeof databaseEngineMongoAppSyncStatusSchema
+>;
+
+export const databaseEngineMongoAppSyncStatusesSchema = z.object({
+  geminitestapp: databaseEngineMongoAppSyncStatusSchema,
+  studiq: databaseEngineMongoAppSyncStatusSchema,
+  'cms-builder': databaseEngineMongoAppSyncStatusSchema,
+  products: databaseEngineMongoAppSyncStatusSchema,
+});
+
+export type DatabaseEngineMongoAppSyncStatuses = z.infer<
+  typeof databaseEngineMongoAppSyncStatusesSchema
+>;
+
 export const databaseEngineMongoSyncDirectionSchema = z.enum([
   'cloud_to_local',
   'local_to_cloud',
@@ -679,6 +704,7 @@ export const databaseEngineMongoSourceStateSchema = z.object({
   syncInProgress: databaseEngineMongoSyncInProgressSchema.nullable().optional(),
   local: databaseEngineMongoSourceEntrySchema,
   cloud: databaseEngineMongoSourceEntrySchema,
+  appStatuses: databaseEngineMongoAppSyncStatusesSchema,
   canSwitch: z.boolean(),
   canSync: z.boolean(),
   syncIssue: z.string().nullable(),

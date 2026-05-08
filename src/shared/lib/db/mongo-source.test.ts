@@ -11,10 +11,27 @@ const mocks = vi.hoisted(() => ({
       command: vi.fn(async () => ({ ok: 1 })),
     }),
   })),
+  mongoClientClose: vi.fn(async () => undefined),
+  mongoClientCommand: vi.fn(async () => ({ ok: 1 })),
+  mongoClientConnect: vi.fn(async () => undefined),
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: mocks.getMongoDb,
+}));
+
+vi.mock('mongodb', () => ({
+  MongoClient: vi.fn(function MongoClient() {
+    return {
+      close: mocks.mongoClientClose,
+      connect: mocks.mongoClientConnect,
+      db: vi.fn(() => ({
+        admin: () => ({
+          command: mocks.mongoClientCommand,
+        }),
+      })),
+    };
+  }),
 }));
 
 const ORIGINAL_ENV = {
@@ -35,6 +52,9 @@ describe('mongo-source', () => {
         command: vi.fn(async () => ({ ok: 1 })),
       }),
     });
+    mocks.mongoClientClose.mockResolvedValue(undefined);
+    mocks.mongoClientCommand.mockResolvedValue({ ok: 1 });
+    mocks.mongoClientConnect.mockResolvedValue(undefined);
     delete process.env['MONGODB_URI'];
     delete process.env['MONGODB_DB'];
     process.env['MONGODB_LOCAL_URI'] = 'mongodb://localhost:27017/app_local';
@@ -120,6 +140,7 @@ describe('mongo-source', () => {
       preSyncBackups: [],
       archivePath: '/tmp/mongo-sync.archive',
       logPath: '/tmp/mongo-sync.log',
+      applicationTransfers: [],
     });
   });
 
@@ -132,7 +153,7 @@ describe('mongo-source', () => {
       JSON.stringify(
         {
           direction: 'local_to_cloud',
-          acquiredAt: '2026-04-16T00:38:12.443Z',
+          acquiredAt: new Date().toISOString(),
           pid: process.pid,
         },
         null,
@@ -148,7 +169,7 @@ describe('mongo-source', () => {
       direction: 'local_to_cloud',
       source: 'local',
       target: 'cloud',
-      acquiredAt: '2026-04-16T00:38:12.443Z',
+      acquiredAt: expect.any(String),
       pid: process.pid,
     });
   });
@@ -165,12 +186,8 @@ describe('mongo-source', () => {
   });
 
   it('marks a source as unreachable when ping fails', async () => {
-    mocks.getMongoDb
-      .mockResolvedValueOnce({
-        admin: () => ({
-          command: vi.fn(async () => ({ ok: 1 })),
-        }),
-      })
+    mocks.mongoClientConnect
+      .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error('cloud ping failed'));
 
     const module = await import('./mongo-source');

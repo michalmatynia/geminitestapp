@@ -25,7 +25,6 @@ import { acquireMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import { createMongoSourceBackup } from '@/shared/lib/db/services/database-backup';
 import { verifyMongoSourceParity } from '@/shared/lib/db/services/mongo-source-parity';
 import {
-  getMongoSourceState,
   getMongoSyncIssue,
   recordMongoSourceSync,
   resolveMongoSourceConfig,
@@ -34,6 +33,7 @@ import {
   execFileAsync,
   getMongoDumpCommand,
   getMongoRestoreCommand,
+  MONGO_BACKUP_APPLICATIONS,
   resolveCmsBuilderMongoSourceConfig,
   resolveProductsMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
@@ -74,6 +74,29 @@ type MongoTransferCommands = {
 type MongoToolResult = {
   stdout: string;
   stderr: string;
+};
+
+type MongoSyncRecoveryLog = {
+  backupPath: string | null;
+  command: string | null;
+  args: string[];
+  result: MongoToolResult | null;
+  error: string | null;
+  succeeded: boolean;
+};
+
+type MongoSyncPreflightEndpoint = {
+  application: MongoBackupApplication;
+  source: MongoSource;
+  config: ResolvedMongoSourceConfig | null;
+  configIssue: string | null;
+};
+
+const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
+  geminitestapp: 'GeminiTest App',
+  studiq: 'StudiQ',
+  'cms-builder': 'CMS Builder',
+  products: 'Products',
 };
 
 const resolveSyncEndpoints = (
@@ -124,17 +147,36 @@ const formatVerificationLog = (
     ...(verification.mismatches.length > 0 ? verification.mismatches : ['none']),
   ].join('\n');
 
-const assertMongoSourceSyncReady = async (): Promise<void> => {
-  const mongoSourceState = await getMongoSourceState();
-  if (mongoSourceState.syncIssue !== null && mongoSourceState.syncIssue !== '') {
-    throw configurationError(mongoSourceState.syncIssue);
-  }
-  if (!mongoSourceState.canSync) {
-    throw configurationError(
-      'MongoDB source sync requires both local and cloud MongoDB targets to be configured and reachable.'
+const isLikelySingleNodeLocalMongoUri = (uri: string): boolean => {
+  const trimmed = uri.trim();
+  if (trimmed.length === 0) return false;
+  try {
+    const parsed = new URL(trimmed);
+    const hostname = parsed.hostname.trim().toLowerCase();
+    return (
+      (hostname === 'localhost' || hostname === '127.0.0.1') &&
+      !parsed.searchParams.has('replicaSet')
     );
+  } catch {
+    return trimmed.includes('localhost') || trimmed.includes('127.0.0.1');
   }
 };
+
+const getMongoClientOptions = (uri: string): ConstructorParameters<typeof MongoClient>[1] => ({
+  connectTimeoutMS: 10_000,
+  serverSelectionTimeoutMS: 10_000,
+  ...(isLikelySingleNodeLocalMongoUri(uri) ? { directConnection: true } : {}),
+});
+
+const hasSyncConfig = (
+  config: ResolvedMongoSourceConfig | null
+): config is ResolvedMongoSourceConfig & { uri: string; dbName: string } =>
+  config !== null &&
+  config.configured &&
+  typeof config.uri === 'string' &&
+  config.uri.trim().length > 0 &&
+  typeof config.dbName === 'string' &&
+  config.dbName.trim().length > 0;
 
 const requireMongoConfigValue = (value: string | null, label: string): string => {
   if (value === null || value.trim() === '') {
@@ -182,35 +224,141 @@ const resolveApplicationMongoSourceConfig = async (
   return resolveMongoSourceConfig(source);
 };
 
+const getApplicationSourceConfigIssue = (
+  application: MongoBackupApplication,
+  source: MongoSource,
+  config: ResolvedMongoSourceConfig | null
+): string | null => {
+  if (hasSyncConfig(config)) return null;
+
+  if (application === 'studiq') {
+    const prefix = `STUDIQ_MONGODB_${source.toUpperCase()}`;
+    return `StudiQ MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
+  }
+
+  if (application === 'cms-builder') {
+    const prefix = `CMS_BUILDER_MONGODB_${source.toUpperCase()}`;
+    return `CMS Builder MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
+  }
+
+  if (application === 'products') {
+    const prefix = `PRODUCTS_MONGODB_${source.toUpperCase()}`;
+    return `Products MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
+  }
+
+  const prefix = source === 'local' ? 'MONGODB_LOCAL' : 'MONGODB_CLOUD';
+  return `MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
+};
+
 const assertApplicationSourceConfigured = (
   application: MongoBackupApplication,
   source: MongoSource,
   config: ResolvedMongoSourceConfig
 ): void => {
-  if (config.configured) return;
+  const issue = getApplicationSourceConfigIssue(application, source, config);
+  if (issue === null) return;
 
-  if (application === 'studiq') {
-    const prefix = `STUDIQ_MONGODB_${source.toUpperCase()}`;
-    throw configurationError(
-      `StudiQ MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`
-    );
+  throw configurationError(issue);
+};
+
+const resolveApplicationsForSync = (
+  applicationTarget: DatabaseEngineManagedMongoApplicationTarget
+): MongoBackupApplication[] =>
+  applicationTarget === 'all' ? [...MONGO_BACKUP_APPLICATIONS] : [applicationTarget];
+
+const resolvePreflightEndpoint = async (
+  application: MongoBackupApplication,
+  source: MongoSource
+): Promise<MongoSyncPreflightEndpoint> => {
+  try {
+    const config = await resolveApplicationMongoSourceConfig(application, source);
+    return {
+      application,
+      source,
+      config,
+      configIssue: getApplicationSourceConfigIssue(application, source, config),
+    };
+  } catch (error) {
+    return {
+      application,
+      source,
+      config: null,
+      configIssue: `${MONGO_APPLICATION_LABELS[application]} ${source} MongoDB source configuration failed: ${getErrorMessage(error)}`,
+    };
+  }
+};
+
+const probePreflightEndpoint = async (
+  endpoint: MongoSyncPreflightEndpoint
+): Promise<string | null> => {
+  if (endpoint.configIssue !== null) {
+    return endpoint.configIssue;
+  }
+  if (!hasSyncConfig(endpoint.config)) {
+    return `${MONGO_APPLICATION_LABELS[endpoint.application]} ${endpoint.source} MongoDB source is not configured.`;
   }
 
-  if (application === 'cms-builder') {
-    const prefix = `CMS_BUILDER_MONGODB_${source.toUpperCase()}`;
-    throw configurationError(
-      `CMS Builder MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`
-    );
+  const client = new MongoClient(endpoint.config.uri, getMongoClientOptions(endpoint.config.uri));
+  try {
+    await client.connect();
+    await client.db(endpoint.config.dbName).admin().command({ ping: 1 });
+    return null;
+  } catch (error) {
+    return `${MONGO_APPLICATION_LABELS[endpoint.application]} ${endpoint.source} MongoDB source is unreachable: ${getErrorMessage(error)}`;
+  } finally {
+    await client.close().catch(() => undefined);
+  }
+};
+
+const inspectApplicationSyncReadiness = async (
+  application: MongoBackupApplication,
+  direction: DatabaseEngineMongoSyncDirection
+): Promise<string[]> => {
+  const { source, target } = resolveSyncEndpoints(direction);
+  const endpoints: [MongoSyncPreflightEndpoint, MongoSyncPreflightEndpoint] = await Promise.all([
+    resolvePreflightEndpoint(application, source),
+    resolvePreflightEndpoint(application, target),
+  ]);
+  const [sourceEndpoint, targetEndpoint] = endpoints;
+  const syncIssue =
+    hasSyncConfig(sourceEndpoint.config) &&
+    hasSyncConfig(targetEndpoint.config)
+      ? getMongoSyncIssue(sourceEndpoint.config, targetEndpoint.config)
+      : null;
+  const probeResults = await Promise.allSettled(endpoints.map(probePreflightEndpoint));
+  const failures = probeResults.flatMap((result) => {
+    if (result.status === 'fulfilled') {
+      return result.value === null ? [] : [result.value];
+    }
+    return [
+      `${MONGO_APPLICATION_LABELS[application]} MongoDB source readiness probe failed: ${getErrorMessage(result.reason)}`,
+    ];
+  });
+
+  if (syncIssue !== null && syncIssue !== '') {
+    failures.push(`${MONGO_APPLICATION_LABELS[application]}: ${syncIssue}`);
   }
 
-  if (application === 'products') {
-    const prefix = `PRODUCTS_MONGODB_${source.toUpperCase()}`;
-    throw configurationError(
-      `Products MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`
-    );
-  }
+  return failures;
+};
 
-  throw configurationError(`MongoDB source "${source}" is not configured.`);
+const assertAllApplicationsSyncReady = async (
+  applicationTarget: DatabaseEngineManagedMongoApplicationTarget,
+  direction: DatabaseEngineMongoSyncDirection
+): Promise<void> => {
+  const results = await Promise.all(
+    resolveApplicationsForSync(applicationTarget).map((application) =>
+      inspectApplicationSyncReadiness(application, direction)
+    )
+  );
+  const failures = results.flat();
+  if (failures.length === 0) return;
+
+  throw configurationError(
+    ['MongoDB source sync pre-flight failed:', ...failures.map((failure) => `- ${failure}`)].join(
+      '\n'
+    )
+  );
 };
 
 const prepareMongoSyncContext = async (
@@ -258,10 +406,7 @@ const prepareMongoSyncContexts = async (
   applicationTarget: DatabaseEngineManagedMongoApplicationTarget
 ): Promise<MongoSyncContext[]> => {
   const timestamp = Date.now();
-  const applications: MongoBackupApplication[] =
-    applicationTarget === 'all'
-      ? ['geminitestapp', 'studiq', 'cms-builder', 'products']
-      : [applicationTarget];
+  const applications = resolveApplicationsForSync(applicationTarget);
   const contexts: MongoSyncContext[] = [];
 
   for (const application of applications) {
@@ -322,15 +467,62 @@ const getErrorMessage = (error: unknown): string =>
 const dropTargetDatabaseBeforeRestore = async (
   context: MongoSyncContext
 ): Promise<void> => {
-  const client = new MongoClient(context.targetUri, {
-    connectTimeoutMS: 10_000,
-    serverSelectionTimeoutMS: 10_000,
-  });
+  const client = new MongoClient(context.targetUri, getMongoClientOptions(context.targetUri));
   try {
     await client.connect();
     await client.db(context.targetDbName).dropDatabase();
   } finally {
     await client.close().catch(() => undefined);
+  }
+};
+
+const restoreTargetFromPreSyncBackup = async (
+  context: MongoSyncContext
+): Promise<MongoSyncRecoveryLog> => {
+  const targetBackup = context.preSyncBackups.find(
+    (backup) => backup.role === 'target' && backup.source === context.target
+  );
+  if (targetBackup === undefined) {
+    return {
+      backupPath: null,
+      command: null,
+      args: [],
+      result: null,
+      error: 'Target pre-sync backup was not found.',
+      succeeded: false,
+    };
+  }
+
+  const command = getMongoRestoreCommand();
+  const args = [
+    '--uri',
+    context.targetUri,
+    `--archive=${targetBackup.backupPath}`,
+    '--gzip',
+    '--drop',
+    '--stopOnError',
+  ];
+
+  try {
+    await dropTargetDatabaseBeforeRestore(context);
+    const result = await execFileAsync(command, args);
+    return {
+      backupPath: targetBackup.backupPath,
+      command,
+      args,
+      result,
+      error: null,
+      succeeded: true,
+    };
+  } catch (error) {
+    return {
+      backupPath: targetBackup.backupPath,
+      command,
+      args,
+      result: readMongoToolOutput(error),
+      error: getErrorMessage(error),
+      succeeded: false,
+    };
   }
 };
 
@@ -368,10 +560,20 @@ const writeMongoSyncFailureLog = async (params: {
   phase: 'dump' | 'restore';
   dumpResult: MongoToolResult | null;
   restoreResult: MongoToolResult | null;
+  recovery: MongoSyncRecoveryLog | null;
   targetDropped: boolean;
   error: unknown;
 }): Promise<void> => {
-  const { context, commands, phase, dumpResult, restoreResult, targetDropped, error } = params;
+  const {
+    context,
+    commands,
+    phase,
+    dumpResult,
+    restoreResult,
+    recovery,
+    targetDropped,
+    error,
+  } = params;
   await fs
     .writeFile(
       context.logPath,
@@ -387,6 +589,21 @@ const writeMongoSyncFailureLog = async (params: {
         `restore command: ${formatCommandForLog(commands.restoreCommand, commands.restoreArgs)}`,
         restoreResult?.stdout ?? '',
         restoreResult?.stderr ?? '',
+        recovery !== null
+          ? [
+              'automatic target recovery:',
+              `succeeded: ${recovery.succeeded ? 'true' : 'false'}`,
+              `backup: ${recovery.backupPath ?? 'unavailable'}`,
+              recovery.command !== null
+                ? `restore command: ${formatCommandForLog(recovery.command, recovery.args)}`
+                : 'restore command: unavailable',
+              recovery.result?.stdout ?? '',
+              recovery.result?.stderr ?? '',
+              recovery.error !== null ? `recovery error: ${recovery.error}` : null,
+            ]
+              .filter((line): line is string => line !== null)
+              .join('\n')
+          : 'automatic target recovery: not attempted',
         `error: ${getErrorMessage(error)}`,
       ].join('\n\n'),
       'utf8'
@@ -426,6 +643,7 @@ const runMongoTransfer = async (
       phase: 'dump',
       dumpResult: readMongoToolOutput(error),
       restoreResult,
+      recovery: null,
       targetDropped: false,
       error,
     });
@@ -437,16 +655,39 @@ const runMongoTransfer = async (
   try {
     restoreResult = await execFileAsync(commands.restoreCommand, commands.restoreArgs);
   } catch (error) {
+    const recovery = await restoreTargetFromPreSyncBackup(context);
     await writeMongoSyncFailureLog({
       context,
       commands,
       phase: 'restore',
       dumpResult,
       restoreResult: readMongoToolOutput(error),
+      recovery,
       targetDropped: true,
       error,
     });
-    throw error;
+    if (recovery.succeeded) {
+      throw operationFailedError(
+        `MongoDB source sync failed during restore for ${context.application}, but the target database was recovered from pre-sync backup.`,
+        error,
+        {
+          application: context.application,
+          backupPath: recovery.backupPath,
+          logPath: context.logPath,
+        }
+      );
+    }
+
+    throw operationFailedError(
+      `MongoDB source sync failed during restore for ${context.application} AND automatic recovery failed. Manual restore required from: ${recovery.backupPath ?? 'target pre-sync backup unavailable'}.`,
+      error,
+      {
+        application: context.application,
+        backupPath: recovery.backupPath,
+        logPath: context.logPath,
+        recoveryError: recovery.error,
+      }
+    );
   }
 
   const verification = await verifyMongoSourceParity({
@@ -478,9 +719,7 @@ export async function syncMongoSources(
     throw forbiddenError('MongoDB source sync is disabled in production.');
   }
 
-  if (applicationTarget === 'all' || applicationTarget === 'geminitestapp') {
-    await assertMongoSourceSyncReady();
-  }
+  await assertAllApplicationsSyncReady(applicationTarget, direction);
 
   const releaseSyncLock = await acquireMongoSyncLock(direction);
   try {
@@ -533,3 +772,9 @@ export async function syncMongoSources(
     await releaseSyncLock();
   }
 }
+
+export const testOnly = {
+  assertAllApplicationsSyncReady,
+  inspectApplicationSyncReadiness,
+  restoreTargetFromPreSyncBackup,
+};

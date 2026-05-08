@@ -1,4 +1,5 @@
 import { getDb } from '@/lib/mongodb';
+import type { Collection } from 'mongodb';
 import {
   HOME_CONTENT_DEFAULTS,
   normalizeHomeContent,
@@ -96,13 +97,119 @@ export interface HomeCmsSnapshot {
 
 type LocaleInput = EcomLocale | string | null | undefined;
 
-async function findCmsPage(page: string, localeInput?: LocaleInput): Promise<CmsPageDoc | null> {
-  const locale = normalizeLocale(localeInput);
+interface CmsSnapshot<TContent> {
+  content: TContent;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+type SnapshotBuilder<TContent, TSnapshot extends CmsSnapshot<TContent>> = (
+  doc: CmsPageDoc | null,
+) => TSnapshot;
+
+type ContentLocalizer<TContent> = (content: TContent, locale?: LocaleInput) => TContent;
+
+let cmsPagesIndexPromise: Promise<string> | null = null;
+
+async function getCmsPagesCollection(): Promise<Collection<CmsPageDoc>> {
   const db = await getDb();
   const collection = db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION);
-  const doc = await collection.findOne({ page, locale });
-  if (doc || locale === DEFAULT_LOCALE) return doc;
-  return collection.findOne({ page, locale: DEFAULT_LOCALE });
+  if (!cmsPagesIndexPromise) {
+    cmsPagesIndexPromise = collection.createIndex({ page: 1, locale: 1 }, { unique: true }).catch((error) => {
+      cmsPagesIndexPromise = null;
+      console.error('Failed to ensure CMS page locale index.', error);
+      return '';
+    });
+  }
+  await cmsPagesIndexPromise;
+  return collection;
+}
+
+async function getLocalizedCmsContent<TContent, TSnapshot extends CmsSnapshot<TContent>>({
+  page,
+  locale,
+  defaults,
+  toSnapshot,
+  localize,
+  label,
+}: {
+  page: string;
+  locale?: LocaleInput;
+  defaults: TContent;
+  toSnapshot: SnapshotBuilder<TContent, TSnapshot>;
+  localize: ContentLocalizer<TContent>;
+  label: string;
+}): Promise<TContent> {
+  const requestedLocale = normalizeLocale(locale);
+  try {
+    const collection = await getCmsPagesCollection();
+    const localeDoc = await collection.findOne({ page, locale: requestedLocale });
+    if (localeDoc) return toSnapshot(localeDoc).content;
+
+    const enDoc = requestedLocale === DEFAULT_LOCALE
+      ? null
+      : await collection.findOne({ page, locale: DEFAULT_LOCALE });
+    return localize(toSnapshot(enDoc).content, requestedLocale);
+  } catch (error) {
+    console.error(`Failed to load ${label} CMS content, using defaults.`, error);
+    return localize(defaults, requestedLocale);
+  }
+}
+
+async function getLocalizedCmsSnapshot<TContent, TSnapshot extends CmsSnapshot<TContent>>({
+  page,
+  locale,
+  toSnapshot,
+  localize,
+}: {
+  page: string;
+  locale?: LocaleInput;
+  toSnapshot: SnapshotBuilder<TContent, TSnapshot>;
+  localize: ContentLocalizer<TContent>;
+}): Promise<TSnapshot> {
+  const requestedLocale = normalizeLocale(locale);
+  const collection = await getCmsPagesCollection();
+  const localeDoc = await collection.findOne({ page, locale: requestedLocale });
+  if (localeDoc) return toSnapshot(localeDoc);
+
+  const emptySnapshot = toSnapshot(null);
+  if (requestedLocale === DEFAULT_LOCALE) return emptySnapshot;
+
+  const enDoc = await collection.findOne({ page, locale: DEFAULT_LOCALE });
+  return {
+    ...emptySnapshot,
+    content: localize(toSnapshot(enDoc).content, requestedLocale),
+    updatedAt: null,
+    updatedBy: null,
+  };
+}
+
+async function saveLocalizedCmsContent<TContent, TSnapshot extends CmsSnapshot<TContent>>(
+  page: string,
+  content: TContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<TSnapshot> {
+  const targetLocale = normalizeLocale(locale);
+  const collection = await getCmsPagesCollection();
+  const now = new Date();
+
+  await collection.updateOne(
+    { page, locale: targetLocale },
+    {
+      $set: {
+        page,
+        locale: targetLocale,
+        content,
+        updatedAt: now,
+        updatedBy: userId,
+      },
+      $setOnInsert: { createdAt: now },
+    },
+    { upsert: true },
+  );
+
+  return { content, updatedAt: now.toISOString(), updatedBy: userId } as TSnapshot;
 }
 
 function localizeHomeContent(content: HomeContent, localeInput?: LocaleInput): HomeContent {
@@ -753,8 +860,29 @@ function localizeWishlistContent(content: WishlistContent, localeInput?: LocaleI
   };
 }
 
-function localizeCheckoutContent(content: CheckoutContent, localeInput?: LocaleInput): CheckoutContent {
+export function localizeCheckoutContent(content: CheckoutContent, localeInput?: LocaleInput): CheckoutContent {
   if (normalizeLocale(localeInput) !== 'pl') return content;
+  const methodLabels: Record<string, string> = {
+    standard: 'Dostawa standardowa',
+    express: 'Dostawa ekspresowa',
+    overnight: 'Dostawa następnego dnia',
+  };
+  const zoneLabels: Record<string, string> = {
+    domestic: 'Polska',
+    eu: 'Unia Europejska',
+    international: 'Międzynarodowe',
+  };
+  const methodDetail = (method: CheckoutContent['shippingMethods'][number]): string => {
+    if (method.businessDaysMin === 1 && method.businessDaysMax === 1) return 'Następny dzień roboczy';
+    return `${method.businessDaysMin}-${method.businessDaysMax} dni roboczych`;
+  };
+  const localizeMethod = (method: CheckoutContent['shippingMethods'][number]): CheckoutContent['shippingMethods'][number] => ({
+    ...method,
+    label: methodLabels[method.id] ?? method.label,
+    detail: methodDetail(method),
+    priceLabel: method.price === 0 ? 'Darmowa' : method.priceLabel,
+  });
+
   return {
     ...content,
     stepAriaLabel: 'Etapy kasy',
@@ -797,20 +925,13 @@ function localizeCheckoutContent(content: CheckoutContent, localeInput?: LocaleI
     shippingTitle: 'Metoda dostawy',
     deliveryRecapLabel: 'Dostawa do',
     changeLabel: 'Zmień',
-    shippingMethods: content.shippingMethods.map((method) => ({
-      ...method,
-      label: ({
-        standard: 'Dostawa standardowa',
-        express: 'Dostawa ekspresowa',
-        overnight: 'Dostawa następnego dnia',
-      } as Record<string, string>)[method.id] ?? method.label,
-      detail: ({
-        standard: '5-7 dni roboczych',
-        express: '2-3 dni robocze',
-        overnight: 'Następny dzień roboczy przed 12:00',
-      } as Record<string, string>)[method.id] ?? method.detail,
-      priceLabel: method.price === 0 ? 'Darmowa' : method.priceLabel,
+    shippingMethods: content.shippingMethods.map(localizeMethod),
+    shippingZones: content.shippingZones.map((zone) => ({
+      ...zone,
+      label: zoneLabels[zone.id] ?? zone.label,
+      methods: zone.methods.map(localizeMethod),
     })),
+    freeShippingBannerLabel: 'Dodaj jeszcze {amount}, aby otrzymać darmową dostawę',
     backLabel: 'Wstecz',
     continueToPaymentLabel: 'Przejdź do płatności',
     paymentTitle: 'Płatność',
@@ -1025,18 +1146,23 @@ function toHomeSnapshot(doc: CmsPageDoc | null): HomeCmsSnapshot {
 }
 
 export async function getHomeContent(locale?: LocaleInput): Promise<HomeContent> {
-  try {
-    const doc = await findCmsPage(HOME_PAGE_KEY, locale);
-    return localizeHomeContent(toHomeSnapshot(doc).content, locale);
-  } catch (error) {
-    console.error('Failed to load home CMS content, using defaults.', error);
-    return localizeHomeContent(HOME_CONTENT_DEFAULTS, locale);
-  }
+  return getLocalizedCmsContent({
+    page: HOME_PAGE_KEY,
+    locale,
+    defaults: HOME_CONTENT_DEFAULTS,
+    toSnapshot: toHomeSnapshot,
+    localize: localizeHomeContent,
+    label: 'home',
+  });
 }
 
 export async function getHomeCmsSnapshot(locale?: LocaleInput): Promise<HomeCmsSnapshot> {
-  const doc = await findCmsPage(HOME_PAGE_KEY, locale);
-  return toHomeSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: HOME_PAGE_KEY,
+    locale,
+    toSnapshot: toHomeSnapshot,
+    localize: localizeHomeContent,
+  });
 }
 
 export function parseHomeContentUpdate(input: unknown): { content: HomeContent | null; errors: string[] } {
@@ -1054,32 +1180,12 @@ export function parseHomeContentUpdate(input: unknown): { content: HomeContent |
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveHomeContent(content: HomeContent, userId: string): Promise<HomeCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: HOME_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: HOME_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
-    content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+export async function saveHomeContent(
+  content: HomeContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<HomeCmsSnapshot> {
+  return saveLocalizedCmsContent<HomeContent, HomeCmsSnapshot>(HOME_PAGE_KEY, content, userId, locale);
 }
 
 function toSiteSnapshot(doc: CmsPageDoc | null): SiteCmsSnapshot {
@@ -1102,18 +1208,24 @@ function ensureCatalogNavLink(content: SiteContent): SiteContent {
 }
 
 export async function getSiteContent(locale?: LocaleInput): Promise<SiteContent> {
-  try {
-    const doc = await findCmsPage(SITE_PAGE_KEY, locale);
-    return ensureCatalogNavLink(localizeSiteContent(toSiteSnapshot(doc).content, locale));
-  } catch (error) {
-    console.error('Failed to load site CMS content, using defaults.', error);
-    return ensureCatalogNavLink(localizeSiteContent(SITE_CONTENT_DEFAULTS, locale));
-  }
+  const content = await getLocalizedCmsContent({
+    page: SITE_PAGE_KEY,
+    locale,
+    defaults: SITE_CONTENT_DEFAULTS,
+    toSnapshot: toSiteSnapshot,
+    localize: localizeSiteContent,
+    label: 'site',
+  });
+  return ensureCatalogNavLink(content);
 }
 
 export async function getSiteCmsSnapshot(locale?: LocaleInput): Promise<SiteCmsSnapshot> {
-  const doc = await findCmsPage(SITE_PAGE_KEY, locale);
-  return toSiteSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: SITE_PAGE_KEY,
+    locale,
+    toSnapshot: toSiteSnapshot,
+    localize: localizeSiteContent,
+  });
 }
 
 export function parseSiteContentUpdate(input: unknown): { content: SiteContent | null; errors: string[] } {
@@ -1131,32 +1243,12 @@ export function parseSiteContentUpdate(input: unknown): { content: SiteContent |
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveSiteContent(content: SiteContent, userId: string): Promise<SiteCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: SITE_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: SITE_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
-    content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+export async function saveSiteContent(
+  content: SiteContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<SiteCmsSnapshot> {
+  return saveLocalizedCmsContent<SiteContent, SiteCmsSnapshot>(SITE_PAGE_KEY, content, userId, locale);
 }
 
 function toAboutSnapshot(doc: CmsPageDoc | null): AboutCmsSnapshot {
@@ -1168,18 +1260,23 @@ function toAboutSnapshot(doc: CmsPageDoc | null): AboutCmsSnapshot {
 }
 
 export async function getAboutContent(locale?: LocaleInput): Promise<AboutContent> {
-  try {
-    const doc = await findCmsPage(ABOUT_PAGE_KEY, locale);
-    return localizeAboutContent(toAboutSnapshot(doc).content, locale);
-  } catch (error) {
-    console.error('Failed to load about CMS content, using defaults.', error);
-    return localizeAboutContent(ABOUT_CONTENT_DEFAULTS, locale);
-  }
+  return getLocalizedCmsContent({
+    page: ABOUT_PAGE_KEY,
+    locale,
+    defaults: ABOUT_CONTENT_DEFAULTS,
+    toSnapshot: toAboutSnapshot,
+    localize: localizeAboutContent,
+    label: 'about',
+  });
 }
 
 export async function getAboutCmsSnapshot(locale?: LocaleInput): Promise<AboutCmsSnapshot> {
-  const doc = await findCmsPage(ABOUT_PAGE_KEY, locale);
-  return toAboutSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: ABOUT_PAGE_KEY,
+    locale,
+    toSnapshot: toAboutSnapshot,
+    localize: localizeAboutContent,
+  });
 }
 
 export function parseAboutContentUpdate(input: unknown): { content: AboutContent | null; errors: string[] } {
@@ -1197,32 +1294,12 @@ export function parseAboutContentUpdate(input: unknown): { content: AboutContent
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveAboutContent(content: AboutContent, userId: string): Promise<AboutCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: ABOUT_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: ABOUT_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
-    content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+export async function saveAboutContent(
+  content: AboutContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<AboutCmsSnapshot> {
+  return saveLocalizedCmsContent<AboutContent, AboutCmsSnapshot>(ABOUT_PAGE_KEY, content, userId, locale);
 }
 
 function toValuesSnapshot(doc: CmsPageDoc | null): ValuesCmsSnapshot {
@@ -1234,18 +1311,23 @@ function toValuesSnapshot(doc: CmsPageDoc | null): ValuesCmsSnapshot {
 }
 
 export async function getValuesContent(locale?: LocaleInput): Promise<ValuesContent> {
-  try {
-    const doc = await findCmsPage(VALUES_PAGE_KEY, locale);
-    return localizeValuesContent(toValuesSnapshot(doc).content, locale);
-  } catch (error) {
-    console.error('Failed to load values CMS content, using defaults.', error);
-    return localizeValuesContent(VALUES_CONTENT_DEFAULTS, locale);
-  }
+  return getLocalizedCmsContent({
+    page: VALUES_PAGE_KEY,
+    locale,
+    defaults: VALUES_CONTENT_DEFAULTS,
+    toSnapshot: toValuesSnapshot,
+    localize: localizeValuesContent,
+    label: 'values',
+  });
 }
 
 export async function getValuesCmsSnapshot(locale?: LocaleInput): Promise<ValuesCmsSnapshot> {
-  const doc = await findCmsPage(VALUES_PAGE_KEY, locale);
-  return toValuesSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: VALUES_PAGE_KEY,
+    locale,
+    toSnapshot: toValuesSnapshot,
+    localize: localizeValuesContent,
+  });
 }
 
 export function parseValuesContentUpdate(input: unknown): { content: ValuesContent | null; errors: string[] } {
@@ -1263,32 +1345,12 @@ export function parseValuesContentUpdate(input: unknown): { content: ValuesConte
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveValuesContent(content: ValuesContent, userId: string): Promise<ValuesCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: VALUES_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: VALUES_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
-    content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+export async function saveValuesContent(
+  content: ValuesContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<ValuesCmsSnapshot> {
+  return saveLocalizedCmsContent<ValuesContent, ValuesCmsSnapshot>(VALUES_PAGE_KEY, content, userId, locale);
 }
 
 function toStoriesPageSnapshot(doc: CmsPageDoc | null): StoriesPageCmsSnapshot {
@@ -1300,18 +1362,23 @@ function toStoriesPageSnapshot(doc: CmsPageDoc | null): StoriesPageCmsSnapshot {
 }
 
 export async function getStoriesPageContent(locale?: LocaleInput): Promise<StoriesPageContent> {
-  try {
-    const doc = await findCmsPage(STORIES_PAGE_KEY, locale);
-    return localizeStoriesPageContent(toStoriesPageSnapshot(doc).content, locale);
-  } catch (error) {
-    console.error('Failed to load stories page CMS content, using defaults.', error);
-    return localizeStoriesPageContent(STORIES_PAGE_CONTENT_DEFAULTS, locale);
-  }
+  return getLocalizedCmsContent({
+    page: STORIES_PAGE_KEY,
+    locale,
+    defaults: STORIES_PAGE_CONTENT_DEFAULTS,
+    toSnapshot: toStoriesPageSnapshot,
+    localize: localizeStoriesPageContent,
+    label: 'stories page',
+  });
 }
 
 export async function getStoriesPageCmsSnapshot(locale?: LocaleInput): Promise<StoriesPageCmsSnapshot> {
-  const doc = await findCmsPage(STORIES_PAGE_KEY, locale);
-  return toStoriesPageSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: STORIES_PAGE_KEY,
+    locale,
+    toSnapshot: toStoriesPageSnapshot,
+    localize: localizeStoriesPageContent,
+  });
 }
 
 export function parseStoriesPageContentUpdate(input: unknown): { content: StoriesPageContent | null; errors: string[] } {
@@ -1329,32 +1396,17 @@ export function parseStoriesPageContentUpdate(input: unknown): { content: Storie
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveStoriesPageContent(content: StoriesPageContent, userId: string): Promise<StoriesPageCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: STORIES_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: STORIES_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
+export async function saveStoriesPageContent(
+  content: StoriesPageContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<StoriesPageCmsSnapshot> {
+  return saveLocalizedCmsContent<StoriesPageContent, StoriesPageCmsSnapshot>(
+    STORIES_PAGE_KEY,
     content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+    userId,
+    locale,
+  );
 }
 
 function toLookbookPageSnapshot(doc: CmsPageDoc | null): LookbookPageCmsSnapshot {
@@ -1366,18 +1418,23 @@ function toLookbookPageSnapshot(doc: CmsPageDoc | null): LookbookPageCmsSnapshot
 }
 
 export async function getLookbookPageContent(locale?: LocaleInput): Promise<LookbookPageContent> {
-  try {
-    const doc = await findCmsPage(LOOKBOOK_PAGE_KEY, locale);
-    return localizeLookbookPageContent(toLookbookPageSnapshot(doc).content, locale);
-  } catch (error) {
-    console.error('Failed to load lookbook page CMS content, using defaults.', error);
-    return localizeLookbookPageContent(LOOKBOOK_PAGE_CONTENT_DEFAULTS, locale);
-  }
+  return getLocalizedCmsContent({
+    page: LOOKBOOK_PAGE_KEY,
+    locale,
+    defaults: LOOKBOOK_PAGE_CONTENT_DEFAULTS,
+    toSnapshot: toLookbookPageSnapshot,
+    localize: localizeLookbookPageContent,
+    label: 'lookbook page',
+  });
 }
 
 export async function getLookbookPageCmsSnapshot(locale?: LocaleInput): Promise<LookbookPageCmsSnapshot> {
-  const doc = await findCmsPage(LOOKBOOK_PAGE_KEY, locale);
-  return toLookbookPageSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: LOOKBOOK_PAGE_KEY,
+    locale,
+    toSnapshot: toLookbookPageSnapshot,
+    localize: localizeLookbookPageContent,
+  });
 }
 
 export function parseLookbookPageContentUpdate(input: unknown): { content: LookbookPageContent | null; errors: string[] } {
@@ -1395,32 +1452,17 @@ export function parseLookbookPageContentUpdate(input: unknown): { content: Lookb
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveLookbookPageContent(content: LookbookPageContent, userId: string): Promise<LookbookPageCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: LOOKBOOK_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: LOOKBOOK_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
+export async function saveLookbookPageContent(
+  content: LookbookPageContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<LookbookPageCmsSnapshot> {
+  return saveLocalizedCmsContent<LookbookPageContent, LookbookPageCmsSnapshot>(
+    LOOKBOOK_PAGE_KEY,
     content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+    userId,
+    locale,
+  );
 }
 
 function toContactSnapshot(doc: CmsPageDoc | null): ContactCmsSnapshot {
@@ -1432,18 +1474,23 @@ function toContactSnapshot(doc: CmsPageDoc | null): ContactCmsSnapshot {
 }
 
 export async function getContactContent(locale?: LocaleInput): Promise<ContactContent> {
-  try {
-    const doc = await findCmsPage(CONTACT_PAGE_KEY, locale);
-    return localizeContactContent(toContactSnapshot(doc).content, locale);
-  } catch (error) {
-    console.error('Failed to load contact CMS content, using defaults.', error);
-    return localizeContactContent(CONTACT_CONTENT_DEFAULTS, locale);
-  }
+  return getLocalizedCmsContent({
+    page: CONTACT_PAGE_KEY,
+    locale,
+    defaults: CONTACT_CONTENT_DEFAULTS,
+    toSnapshot: toContactSnapshot,
+    localize: localizeContactContent,
+    label: 'contact',
+  });
 }
 
 export async function getContactCmsSnapshot(locale?: LocaleInput): Promise<ContactCmsSnapshot> {
-  const doc = await findCmsPage(CONTACT_PAGE_KEY, locale);
-  return toContactSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: CONTACT_PAGE_KEY,
+    locale,
+    toSnapshot: toContactSnapshot,
+    localize: localizeContactContent,
+  });
 }
 
 export function parseContactContentUpdate(input: unknown): { content: ContactContent | null; errors: string[] } {
@@ -1461,32 +1508,12 @@ export function parseContactContentUpdate(input: unknown): { content: ContactCon
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveContactContent(content: ContactContent, userId: string): Promise<ContactCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: CONTACT_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: CONTACT_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
-    content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+export async function saveContactContent(
+  content: ContactContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<ContactCmsSnapshot> {
+  return saveLocalizedCmsContent<ContactContent, ContactCmsSnapshot>(CONTACT_PAGE_KEY, content, userId, locale);
 }
 
 function toWishlistSnapshot(doc: CmsPageDoc | null): WishlistCmsSnapshot {
@@ -1498,18 +1525,23 @@ function toWishlistSnapshot(doc: CmsPageDoc | null): WishlistCmsSnapshot {
 }
 
 export async function getWishlistContent(locale?: LocaleInput): Promise<WishlistContent> {
-  try {
-    const doc = await findCmsPage(WISHLIST_PAGE_KEY, locale);
-    return localizeWishlistContent(toWishlistSnapshot(doc).content, locale);
-  } catch (error) {
-    console.error('Failed to load wishlist CMS content, using defaults.', error);
-    return localizeWishlistContent(WISHLIST_CONTENT_DEFAULTS, locale);
-  }
+  return getLocalizedCmsContent({
+    page: WISHLIST_PAGE_KEY,
+    locale,
+    defaults: WISHLIST_CONTENT_DEFAULTS,
+    toSnapshot: toWishlistSnapshot,
+    localize: localizeWishlistContent,
+    label: 'wishlist',
+  });
 }
 
 export async function getWishlistCmsSnapshot(locale?: LocaleInput): Promise<WishlistCmsSnapshot> {
-  const doc = await findCmsPage(WISHLIST_PAGE_KEY, locale);
-  return toWishlistSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: WISHLIST_PAGE_KEY,
+    locale,
+    toSnapshot: toWishlistSnapshot,
+    localize: localizeWishlistContent,
+  });
 }
 
 export function parseWishlistContentUpdate(input: unknown): { content: WishlistContent | null; errors: string[] } {
@@ -1527,32 +1559,12 @@ export function parseWishlistContentUpdate(input: unknown): { content: WishlistC
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveWishlistContent(content: WishlistContent, userId: string): Promise<WishlistCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: WISHLIST_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: WISHLIST_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
-    content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+export async function saveWishlistContent(
+  content: WishlistContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<WishlistCmsSnapshot> {
+  return saveLocalizedCmsContent<WishlistContent, WishlistCmsSnapshot>(WISHLIST_PAGE_KEY, content, userId, locale);
 }
 
 function toCheckoutSnapshot(doc: CmsPageDoc | null): CheckoutCmsSnapshot {
@@ -1564,18 +1576,23 @@ function toCheckoutSnapshot(doc: CmsPageDoc | null): CheckoutCmsSnapshot {
 }
 
 export async function getCheckoutContent(locale?: LocaleInput): Promise<CheckoutContent> {
-  try {
-    const doc = await findCmsPage(CHECKOUT_PAGE_KEY, locale);
-    return localizeCheckoutContent(toCheckoutSnapshot(doc).content, locale);
-  } catch (error) {
-    console.error('Failed to load checkout CMS content, using defaults.', error);
-    return localizeCheckoutContent(CHECKOUT_CONTENT_DEFAULTS, locale);
-  }
+  return getLocalizedCmsContent({
+    page: CHECKOUT_PAGE_KEY,
+    locale,
+    defaults: CHECKOUT_CONTENT_DEFAULTS,
+    toSnapshot: toCheckoutSnapshot,
+    localize: localizeCheckoutContent,
+    label: 'checkout',
+  });
 }
 
 export async function getCheckoutCmsSnapshot(locale?: LocaleInput): Promise<CheckoutCmsSnapshot> {
-  const doc = await findCmsPage(CHECKOUT_PAGE_KEY, locale);
-  return toCheckoutSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: CHECKOUT_PAGE_KEY,
+    locale,
+    toSnapshot: toCheckoutSnapshot,
+    localize: localizeCheckoutContent,
+  });
 }
 
 export function parseCheckoutContentUpdate(input: unknown): { content: CheckoutContent | null; errors: string[] } {
@@ -1593,32 +1610,12 @@ export function parseCheckoutContentUpdate(input: unknown): { content: CheckoutC
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveCheckoutContent(content: CheckoutContent, userId: string): Promise<CheckoutCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: CHECKOUT_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: CHECKOUT_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
-    content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+export async function saveCheckoutContent(
+  content: CheckoutContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<CheckoutCmsSnapshot> {
+  return saveLocalizedCmsContent<CheckoutContent, CheckoutCmsSnapshot>(CHECKOUT_PAGE_KEY, content, userId, locale);
 }
 
 function toProductsSnapshot(doc: CmsPageDoc | null): ProductsCmsSnapshot {
@@ -1630,18 +1627,23 @@ function toProductsSnapshot(doc: CmsPageDoc | null): ProductsCmsSnapshot {
 }
 
 export async function getProductsContent(locale?: LocaleInput): Promise<ProductsContent> {
-  try {
-    const doc = await findCmsPage(PRODUCTS_PAGE_KEY, locale);
-    return localizeProductsContent(toProductsSnapshot(doc).content, locale);
-  } catch (error) {
-    console.error('Failed to load products CMS content, using defaults.', error);
-    return localizeProductsContent(PRODUCTS_CONTENT_DEFAULTS, locale);
-  }
+  return getLocalizedCmsContent({
+    page: PRODUCTS_PAGE_KEY,
+    locale,
+    defaults: PRODUCTS_CONTENT_DEFAULTS,
+    toSnapshot: toProductsSnapshot,
+    localize: localizeProductsContent,
+    label: 'products',
+  });
 }
 
 export async function getProductsCmsSnapshot(locale?: LocaleInput): Promise<ProductsCmsSnapshot> {
-  const doc = await findCmsPage(PRODUCTS_PAGE_KEY, locale);
-  return toProductsSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: PRODUCTS_PAGE_KEY,
+    locale,
+    toSnapshot: toProductsSnapshot,
+    localize: localizeProductsContent,
+  });
 }
 
 export function parseProductsContentUpdate(input: unknown): { content: ProductsContent | null; errors: string[] } {
@@ -1659,32 +1661,12 @@ export function parseProductsContentUpdate(input: unknown): { content: ProductsC
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveProductsContent(content: ProductsContent, userId: string): Promise<ProductsCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: PRODUCTS_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: PRODUCTS_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
-    content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+export async function saveProductsContent(
+  content: ProductsContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<ProductsCmsSnapshot> {
+  return saveLocalizedCmsContent<ProductsContent, ProductsCmsSnapshot>(PRODUCTS_PAGE_KEY, content, userId, locale);
 }
 
 function toAccountSnapshot(doc: CmsPageDoc | null): AccountCmsSnapshot {
@@ -1696,18 +1678,23 @@ function toAccountSnapshot(doc: CmsPageDoc | null): AccountCmsSnapshot {
 }
 
 export async function getAccountContent(locale?: LocaleInput): Promise<AccountContent> {
-  try {
-    const doc = await findCmsPage(ACCOUNT_PAGE_KEY, locale);
-    return localizeAccountContent(toAccountSnapshot(doc).content, locale);
-  } catch (error) {
-    console.error('Failed to load account CMS content, using defaults.', error);
-    return localizeAccountContent(ACCOUNT_CONTENT_DEFAULTS, locale);
-  }
+  return getLocalizedCmsContent({
+    page: ACCOUNT_PAGE_KEY,
+    locale,
+    defaults: ACCOUNT_CONTENT_DEFAULTS,
+    toSnapshot: toAccountSnapshot,
+    localize: localizeAccountContent,
+    label: 'account',
+  });
 }
 
 export async function getAccountCmsSnapshot(locale?: LocaleInput): Promise<AccountCmsSnapshot> {
-  const doc = await findCmsPage(ACCOUNT_PAGE_KEY, locale);
-  return toAccountSnapshot(doc);
+  return getLocalizedCmsSnapshot({
+    page: ACCOUNT_PAGE_KEY,
+    locale,
+    toSnapshot: toAccountSnapshot,
+    localize: localizeAccountContent,
+  });
 }
 
 export function parseAccountContentUpdate(input: unknown): { content: AccountContent | null; errors: string[] } {
@@ -1725,30 +1712,10 @@ export function parseAccountContentUpdate(input: unknown): { content: AccountCon
   return { content: errors.length === 0 ? content : null, errors };
 }
 
-export async function saveAccountContent(content: AccountContent, userId: string): Promise<AccountCmsSnapshot> {
-  const db = await getDb();
-  const now = new Date();
-
-  await db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION).updateOne(
-    { page: ACCOUNT_PAGE_KEY, locale: DEFAULT_LOCALE },
-    {
-      $set: {
-        page: ACCOUNT_PAGE_KEY,
-        locale: DEFAULT_LOCALE,
-        content,
-        updatedAt: now,
-        updatedBy: userId,
-      },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
-    content,
-    updatedAt: now.toISOString(),
-    updatedBy: userId,
-  };
+export async function saveAccountContent(
+  content: AccountContent,
+  userId: string,
+  locale?: LocaleInput,
+): Promise<AccountCmsSnapshot> {
+  return saveLocalizedCmsContent<AccountContent, AccountCmsSnapshot>(ACCOUNT_PAGE_KEY, content, userId, locale);
 }

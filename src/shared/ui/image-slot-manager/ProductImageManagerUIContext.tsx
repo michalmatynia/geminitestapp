@@ -271,7 +271,7 @@ export function ProductImageManagerUIProvider({
         if (productId && handleSlotFileSelect && !linkValue.toLowerCase().startsWith('data:')) {
           const result = await api.post<{ status: 'ok'; imageFile: ImageFileSelection }>(
             `/api/v2/products/${encodeURIComponent(productId)}/images/link-to-file`,
-            { url: linkValue }
+            { url: linkValue, imageSlotIndex: index }
           );
           handleSlotFileSelect(result.imageFile, index);
         } else {

@@ -21,6 +21,15 @@ export interface CheckoutShippingMethodContent {
   detail: string;
   price: number;
   priceLabel: string;
+  businessDaysMin: number;
+  businessDaysMax: number;
+}
+
+export interface ShippingZone {
+  id: string;
+  label: string;
+  countries: string[];
+  methods: CheckoutShippingMethodContent[];
 }
 
 export interface CheckoutSummaryContent {
@@ -53,6 +62,10 @@ export interface CheckoutContent {
   deliveryAddressFallback: string;
   changeLabel: string;
   shippingMethods: CheckoutShippingMethodContent[];
+  shippingZones: ShippingZone[];
+  freeShippingThreshold: number;
+  freeShippingMethodId: string;
+  freeShippingBannerLabel: string;
   backLabel: string;
   continueToPaymentLabel: string;
   paymentTitle: string;
@@ -78,6 +91,35 @@ export interface CheckoutContentValidationResult {
   content: CheckoutContent;
   errors: string[];
 }
+
+const EU_COUNTRIES = [
+  'Austria',
+  'Belgium',
+  'Bulgaria',
+  'Croatia',
+  'Cyprus',
+  'Czechia',
+  'Denmark',
+  'Estonia',
+  'Finland',
+  'France',
+  'Germany',
+  'Greece',
+  'Hungary',
+  'Ireland',
+  'Italy',
+  'Latvia',
+  'Lithuania',
+  'Luxembourg',
+  'Malta',
+  'Netherlands',
+  'Portugal',
+  'Romania',
+  'Slovakia',
+  'Slovenia',
+  'Spain',
+  'Sweden',
+];
 
 export const CHECKOUT_CONTENT_DEFAULTS: CheckoutContent = {
   brandText: 'ARCANA',
@@ -107,10 +149,42 @@ export const CHECKOUT_CONTENT_DEFAULTS: CheckoutContent = {
   deliveryAddressFallback: '-',
   changeLabel: 'Change',
   shippingMethods: [
-    { id: 'standard', label: 'Standard Delivery', detail: '5-7 business days', price: 0, priceLabel: 'Free' },
-    { id: 'express', label: 'Express Delivery', detail: '2-3 business days', price: 18, priceLabel: '€ 18' },
-    { id: 'overnight', label: 'Overnight', detail: 'Next business day before 12:00', price: 35, priceLabel: '€ 35' },
+    { id: 'standard', label: 'Standard Delivery', detail: '5-7 business days', price: 0, priceLabel: 'Free', businessDaysMin: 5, businessDaysMax: 7 },
+    { id: 'express', label: 'Express Delivery', detail: '2-3 business days', price: 18, priceLabel: '€ 18', businessDaysMin: 2, businessDaysMax: 3 },
+    { id: 'overnight', label: 'Overnight', detail: 'Next business day before 12:00', price: 35, priceLabel: '€ 35', businessDaysMin: 1, businessDaysMax: 1 },
   ],
+  shippingZones: [
+    {
+      id: 'domestic',
+      label: 'Poland',
+      countries: ['Poland'],
+      methods: [
+        { id: 'standard', label: 'Standard', detail: '2-3 business days', price: 0, priceLabel: 'Free', businessDaysMin: 2, businessDaysMax: 3 },
+        { id: 'express', label: 'Express', detail: 'Next business day', price: 12, priceLabel: '€ 12', businessDaysMin: 1, businessDaysMax: 1 },
+      ],
+    },
+    {
+      id: 'eu',
+      label: 'European Union',
+      countries: EU_COUNTRIES,
+      methods: [
+        { id: 'standard', label: 'Standard', detail: '3-5 business days', price: 0, priceLabel: 'Free', businessDaysMin: 3, businessDaysMax: 5 },
+        { id: 'express', label: 'Express', detail: '2-3 business days', price: 18, priceLabel: '€ 18', businessDaysMin: 2, businessDaysMax: 3 },
+      ],
+    },
+    {
+      id: 'international',
+      label: 'International',
+      countries: [],
+      methods: [
+        { id: 'standard', label: 'Standard', detail: '7-14 business days', price: 15, priceLabel: '€ 15', businessDaysMin: 7, businessDaysMax: 14 },
+        { id: 'express', label: 'Express', detail: '3-5 business days', price: 35, priceLabel: '€ 35', businessDaysMin: 3, businessDaysMax: 5 },
+      ],
+    },
+  ],
+  freeShippingThreshold: 60,
+  freeShippingMethodId: 'standard',
+  freeShippingBannerLabel: 'Add {amount} more for free shipping',
   backLabel: 'Back',
   continueToPaymentLabel: 'Continue to payment',
   paymentTitle: 'Payment',
@@ -217,6 +291,40 @@ function readNumber(source: Record<string, unknown>, key: string, fallback: numb
   return readOptionalNumber(source, key, fallback, errors, path) ?? fallback;
 }
 
+function readPositiveInteger(source: Record<string, unknown>, key: string, fallback: number, errors: string[], path: string): number {
+  const value = source[key];
+  if (value == null) return fallback;
+  if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value) || value < 1) {
+    errors.push(`${path} must be a positive integer.`);
+    return fallback;
+  }
+  return value;
+}
+
+function readStringList(input: unknown, fallback: string[], maxItems: number, errors: string[], path: string): string[] {
+  if (input == null) return fallback;
+  if (!Array.isArray(input)) {
+    errors.push(`${path} must be a list.`);
+    return fallback;
+  }
+  if (input.length > maxItems) {
+    errors.push(`${path} can contain at most ${maxItems} items.`);
+    return fallback;
+  }
+
+  const values: string[] = [];
+  for (const [index, item] of input.entries()) {
+    if (typeof item !== 'string') {
+      errors.push(`${path}.${index} must be text.`);
+      return fallback;
+    }
+    const trimmed = item.trim();
+    if (trimmed) values.push(trimmed);
+  }
+
+  return values;
+}
+
 function isAllowedHref(value: string): boolean {
   if (value.startsWith('/') && !value.startsWith('//')) return true;
   if (value.startsWith('#')) return true;
@@ -300,35 +408,113 @@ function readFields(input: unknown, fallback: CheckoutFieldContent[], maxItems: 
   return fields.length > 0 ? fields : fallback;
 }
 
-function readShippingMethods(input: unknown, fallback: CheckoutShippingMethodContent[], errors: string[]): CheckoutShippingMethodContent[] {
+function readShippingMethods(
+  input: unknown,
+  fallback: CheckoutShippingMethodContent[],
+  errors: string[],
+  path = 'shippingMethods',
+): CheckoutShippingMethodContent[] {
   if (input == null) return fallback;
   if (!Array.isArray(input)) {
-    errors.push('shippingMethods must be a list.');
+    errors.push(`${path} must be a list.`);
     return fallback;
   }
 
   const methods: CheckoutShippingMethodContent[] = [];
   for (const [index, item] of input.entries()) {
-    const fallbackMethod = fallback[index] ?? { id: '', label: '', detail: '', price: 0, priceLabel: '' };
+    const fallbackMethod = fallback[index] ?? {
+      id: '',
+      label: '',
+      detail: '',
+      price: 0,
+      priceLabel: '',
+      businessDaysMin: 3,
+      businessDaysMax: 5,
+    };
     if (!isRecord(item)) {
-      errors.push('shippingMethods items must be objects.');
+      errors.push(`${path} items must be objects.`);
+      return fallback;
+    }
+    const businessDaysMin = readPositiveInteger(
+      item,
+      'businessDaysMin',
+      fallbackMethod.businessDaysMin,
+      errors,
+      `${path}.${index}.businessDaysMin`,
+    );
+    const businessDaysMax = readPositiveInteger(
+      item,
+      'businessDaysMax',
+      fallbackMethod.businessDaysMax,
+      errors,
+      `${path}.${index}.businessDaysMax`,
+    );
+    if (businessDaysMax < businessDaysMin) {
+      errors.push(`${path}.${index}.businessDaysMax must be greater than or equal to businessDaysMin.`);
       return fallback;
     }
     methods.push({
-      id: readString(item, 'id', fallbackMethod.id, TEXT_LIMITS.short, errors, `shippingMethods.${index}.id`),
-      label: readString(item, 'label', fallbackMethod.label, TEXT_LIMITS.short, errors, `shippingMethods.${index}.label`),
-      detail: readString(item, 'detail', fallbackMethod.detail, TEXT_LIMITS.medium, errors, `shippingMethods.${index}.detail`),
-      price: readNumber(item, 'price', fallbackMethod.price, errors, `shippingMethods.${index}.price`),
-      priceLabel: readString(item, 'priceLabel', fallbackMethod.priceLabel, TEXT_LIMITS.short, errors, `shippingMethods.${index}.priceLabel`),
+      id: readString(item, 'id', fallbackMethod.id, TEXT_LIMITS.short, errors, `${path}.${index}.id`),
+      label: readString(item, 'label', fallbackMethod.label, TEXT_LIMITS.short, errors, `${path}.${index}.label`),
+      detail: readString(item, 'detail', fallbackMethod.detail, TEXT_LIMITS.medium, errors, `${path}.${index}.detail`),
+      price: readNumber(item, 'price', fallbackMethod.price, errors, `${path}.${index}.price`),
+      priceLabel: readString(item, 'priceLabel', fallbackMethod.priceLabel, TEXT_LIMITS.short, errors, `${path}.${index}.priceLabel`),
+      businessDaysMin,
+      businessDaysMax,
     });
   }
 
   if (methods.length > 8) {
-    errors.push('shippingMethods can contain at most 8 items.');
+    errors.push(`${path} can contain at most 8 items.`);
     return fallback;
   }
 
   return methods.length > 0 ? methods : fallback;
+}
+
+function readShippingZones(input: unknown, fallback: ShippingZone[], errors: string[]): ShippingZone[] {
+  if (input == null) return fallback;
+  if (!Array.isArray(input)) {
+    errors.push('shippingZones must be a list.');
+    return fallback;
+  }
+  if (input.length > 10) {
+    errors.push('shippingZones can contain at most 10 zones.');
+    return fallback;
+  }
+
+  const zones: ShippingZone[] = [];
+  for (const [index, item] of input.entries()) {
+    const fallbackZone = fallback[index] ?? {
+      id: '',
+      label: '',
+      countries: [],
+      methods: CHECKOUT_CONTENT_DEFAULTS.shippingMethods,
+    };
+    if (!isRecord(item)) {
+      errors.push('shippingZones items must be objects.');
+      return fallback;
+    }
+    zones.push({
+      id: readString(item, 'id', fallbackZone.id, TEXT_LIMITS.short, errors, `shippingZones.${index}.id`),
+      label: readString(item, 'label', fallbackZone.label, TEXT_LIMITS.short, errors, `shippingZones.${index}.label`),
+      countries: readStringList(
+        item['countries'],
+        fallbackZone.countries,
+        80,
+        errors,
+        `shippingZones.${index}.countries`,
+      ),
+      methods: readShippingMethods(
+        item['methods'],
+        fallbackZone.methods,
+        errors,
+        `shippingZones.${index}.methods`,
+      ),
+    });
+  }
+
+  return zones;
 }
 
 function readSummary(input: unknown, errors: string[]): CheckoutSummaryContent {
@@ -383,6 +569,30 @@ export function validateCheckoutContent(input: unknown): CheckoutContentValidati
     ),
     changeLabel: readString(root, 'changeLabel', CHECKOUT_CONTENT_DEFAULTS.changeLabel, TEXT_LIMITS.short, errors, 'changeLabel'),
     shippingMethods: readShippingMethods(root['shippingMethods'], CHECKOUT_CONTENT_DEFAULTS.shippingMethods, errors),
+    shippingZones: readShippingZones(root['shippingZones'], CHECKOUT_CONTENT_DEFAULTS.shippingZones, errors),
+    freeShippingThreshold: readNumber(
+      root,
+      'freeShippingThreshold',
+      CHECKOUT_CONTENT_DEFAULTS.freeShippingThreshold,
+      errors,
+      'freeShippingThreshold',
+    ),
+    freeShippingMethodId: readString(
+      root,
+      'freeShippingMethodId',
+      CHECKOUT_CONTENT_DEFAULTS.freeShippingMethodId,
+      TEXT_LIMITS.short,
+      errors,
+      'freeShippingMethodId',
+    ),
+    freeShippingBannerLabel: readString(
+      root,
+      'freeShippingBannerLabel',
+      CHECKOUT_CONTENT_DEFAULTS.freeShippingBannerLabel,
+      TEXT_LIMITS.short,
+      errors,
+      'freeShippingBannerLabel',
+    ),
     backLabel: readString(root, 'backLabel', CHECKOUT_CONTENT_DEFAULTS.backLabel, TEXT_LIMITS.short, errors, 'backLabel'),
     continueToPaymentLabel: readString(
       root,
@@ -459,6 +669,10 @@ export function validateCheckoutContent(input: unknown): CheckoutContentValidati
     ),
     orderSummary: readSummary(root['orderSummary'], errors),
   };
+
+  if (!content.freeShippingMethodId.trim()) {
+    errors.push('freeShippingMethodId must not be empty.');
+  }
 
   return { content, errors };
 }

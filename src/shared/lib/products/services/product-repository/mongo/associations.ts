@@ -25,6 +25,36 @@ const orderImageFilesByRequestedIds = (
     .filter((file): file is ImageFile => file !== null);
 };
 
+type ProductImageFileSnapshot = Pick<
+  ImageFile,
+  'filename' | 'filepath' | 'id' | 'mimetype' | 'size'
+> &
+  Partial<Pick<ImageFile, 'height' | 'publicUrl' | 'thumbnailUrl' | 'url' | 'width'>>;
+
+const toOptionalImageFileText = (value: string | null | undefined): string | undefined => {
+  const trimmed = value?.trim() ?? '';
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const buildProductImageFileSnapshot = (file: ImageFile): ProductImageFileSnapshot => {
+  const publicUrl = toOptionalImageFileText(file.publicUrl);
+  const url = toOptionalImageFileText(file.url);
+  const thumbnailUrl = toOptionalImageFileText(file.thumbnailUrl);
+
+  return {
+    id: file.id,
+    filename: file.filename,
+    filepath: file.filepath,
+    mimetype: file.mimetype,
+    size: file.size,
+    ...(file.width !== undefined ? { width: file.width } : {}),
+    ...(file.height !== undefined ? { height: file.height } : {}),
+    ...(publicUrl !== undefined ? { publicUrl } : {}),
+    ...(url !== undefined ? { url } : {}),
+    ...(thumbnailUrl !== undefined ? { thumbnailUrl } : {}),
+  };
+};
+
 export const mongoProductAssociationsImpl = {
   async getProductImages(
     productId: string,
@@ -108,10 +138,7 @@ export const mongoProductAssociationsImpl = {
       productId,
       imageFileId: file.id,
       assignedAt: now,
-      imageFile: {
-        id: file.id,
-        filepath: file.filepath,
-      },
+      imageFile: buildProductImageFileSnapshot(file),
     }));
 
     await collection.updateOne(buildProductIdFilter(productId), {
@@ -137,10 +164,7 @@ export const mongoProductAssociationsImpl = {
       productId,
       imageFileId: file.id,
       assignedAt: now,
-      imageFile: {
-        id: file.id,
-        filepath: file.filepath,
-      },
+      imageFile: buildProductImageFileSnapshot(file),
     }));
     const update = {
       $set: {

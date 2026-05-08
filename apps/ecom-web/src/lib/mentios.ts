@@ -92,11 +92,19 @@ interface ProductDoc {
   images?: Array<{
     imageFileId?: string;
     productId?: string;
-    imageFile?: { filepath?: string; id?: string };
+    imageFile?: {
+      filepath?: string | null;
+      id?: string;
+      publicUrl?: string | null;
+      thumbnailUrl?: string | null;
+      url?: string | null;
+    };
   }>;
   imageLinks?: Array<string | null>;
   catalogs?: Array<{ catalogId?: string }>;
 }
+
+type ProductImageFileDoc = NonNullable<ProductDoc['images']>[number]['imageFile'];
 
 interface CategoryDoc {
   _id: unknown;
@@ -436,10 +444,23 @@ function uniqueProductImageUrls(urls: Array<string | undefined>): string[] {
   return unique;
 }
 
+function normalizeImageFileUrls(
+  imageFile: ProductImageFileDoc | undefined,
+): string[] {
+  return [
+    imageFile?.filepath,
+    imageFile?.publicUrl,
+    imageFile?.url,
+    imageFile?.thumbnailUrl,
+  ]
+    .map((value) => normalizeProductImageUrl(value))
+    .filter((url): url is string => typeof url === 'string');
+}
+
 function buildImageUrls(doc: ProductDoc): string[] {
   const imageUrls = uniqueProductImageUrls([
     ...(doc.imageLinks?.map((link) => normalizeProductImageUrl(link)) ?? []),
-    ...(doc.images?.map((image) => normalizeProductImageUrl(image.imageFile?.filepath)) ?? []),
+    ...(doc.images?.flatMap((image) => normalizeImageFileUrls(image.imageFile)) ?? []),
   ]);
 
   if (imageUrls.length > 0) return imageUrls;

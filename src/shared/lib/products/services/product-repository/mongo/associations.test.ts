@@ -12,7 +12,11 @@ vi.mock('@/shared/lib/files/services/image-file-service', () => ({
 
 import { mongoProductAssociationsImpl } from './associations';
 
-const createImageFile = (id: string, filepath: string) => ({
+const createImageFile = (
+  id: string,
+  filepath: string,
+  overrides: Record<string, unknown> = {}
+) => ({
   id,
   filename: `${id}.jpg`,
   filepath,
@@ -23,6 +27,7 @@ const createImageFile = (id: string, filepath: string) => ({
   tags: [],
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
+  ...overrides,
 });
 
 describe('mongoProductAssociationsImpl.replaceProductImages', () => {
@@ -33,7 +38,11 @@ describe('mongoProductAssociationsImpl.replaceProductImages', () => {
   it('persists images in the requested order even when lookup results are unordered', async () => {
     findImageFilesByIdsMock.mockResolvedValue([
       createImageFile('image-2', '/uploads/products/image-2.jpg'),
-      createImageFile('image-1', '/uploads/products/image-1.jpg'),
+      createImageFile('image-1', '/uploads/products/image-1.jpg', {
+        publicUrl: ' https://files.example.test/image-1.jpg ',
+        thumbnailUrl: 'https://files.example.test/image-1-thumb.jpg',
+        url: 'https://files.example.test/image-1-original.jpg',
+      }),
     ]);
 
     const updateOne = vi.fn().mockResolvedValue({ acknowledged: true });
@@ -52,7 +61,18 @@ describe('mongoProductAssociationsImpl.replaceProductImages', () => {
       unknown,
       {
         $set: {
-          images: Array<{ productId: string; imageFileId: string; imageFile: { id: string } }>;
+          images: Array<{
+            productId: string;
+            imageFileId: string;
+            imageFile: {
+              filename: string;
+              filepath: string;
+              id: string;
+              publicUrl?: string;
+              thumbnailUrl?: string;
+              url?: string;
+            };
+          }>;
           updatedAt: Date;
         };
       },
@@ -60,6 +80,15 @@ describe('mongoProductAssociationsImpl.replaceProductImages', () => {
 
     expect(update.$set.images.map((image) => image.imageFileId)).toEqual(['image-1', 'image-2']);
     expect(update.$set.images.map((image) => image.imageFile.id)).toEqual(['image-1', 'image-2']);
+    expect(update.$set.images[0]?.imageFile).toEqual(
+      expect.objectContaining({
+        filename: 'image-1.jpg',
+        filepath: '/uploads/products/image-1.jpg',
+        publicUrl: 'https://files.example.test/image-1.jpg',
+        thumbnailUrl: 'https://files.example.test/image-1-thumb.jpg',
+        url: 'https://files.example.test/image-1-original.jpg',
+      })
+    );
     expect(update.$set.images.every((image) => image.productId === 'product-1')).toBe(true);
     expect(update.$set.updatedAt).toBeInstanceOf(Date);
   });

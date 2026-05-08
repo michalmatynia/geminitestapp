@@ -7,12 +7,13 @@ function forbidden(): NextResponse {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   const session = await getSession();
   if (!session?.isSuperAdmin) return forbidden();
 
   try {
-    const snapshot = await getProductsCmsSnapshot();
+    const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
+    const snapshot = await getProductsCmsSnapshot(locale);
     return NextResponse.json(snapshot);
   } catch {
     return NextResponse.json({ error: 'Failed to load products CMS content' }, { status: 500 });
@@ -36,7 +37,8 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const snapshot = await saveProductsContent(content, session.id);
+    const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
+    const snapshot = await saveProductsContent(content, session.id, locale);
     revalidatePath('/products');
     revalidatePath('/products/[slug]', 'page');
     revalidatePath('/collections/[slug]', 'page');

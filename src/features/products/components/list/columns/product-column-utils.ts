@@ -67,8 +67,12 @@ export const getImageFilepath = (imageFile: unknown): string | undefined => {
   if (imageFile === null || imageFile === undefined || typeof imageFile !== 'object') {
     return undefined;
   }
-  const filepath = (imageFile as { filepath?: unknown }).filepath;
-  return typeof filepath === 'string' && filepath.trim().length > 0 ? filepath : undefined;
+  const record = imageFile as Record<string, unknown>;
+  for (const key of ['filepath', 'publicUrl', 'url', 'thumbnailUrl']) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim().length > 0) return value;
+  }
+  return undefined;
 };
 
 const findFirstDisplayValue = (

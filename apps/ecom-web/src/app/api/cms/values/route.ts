@@ -7,12 +7,13 @@ function forbidden(): NextResponse {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   const session = await getSession();
   if (!session?.isSuperAdmin) return forbidden();
 
   try {
-    const snapshot = await getValuesCmsSnapshot();
+    const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
+    const snapshot = await getValuesCmsSnapshot(locale);
     return NextResponse.json(snapshot);
   } catch {
     return NextResponse.json({ error: 'Failed to load values CMS content' }, { status: 500 });
@@ -36,7 +37,8 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const snapshot = await saveValuesContent(content, session.id);
+    const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
+    const snapshot = await saveValuesContent(content, session.id, locale);
     revalidatePath('/values');
     return NextResponse.json({ ok: true, ...snapshot });
   } catch {

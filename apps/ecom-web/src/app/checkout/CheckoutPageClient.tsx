@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useEffect, type JSX } from 'react';
+import { useState, useEffect, useMemo, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { formatPrice } from '@/lib/locales';
+import { applyFreeThreshold, calcDeliveryRange, getZoneForCountry } from '@/lib/shipping';
 import { SiteNav } from '@/components/SiteNav';
+import { COUNTRIES } from '@/data/countries';
 import type { CartItem } from '@/context/CartContext';
 import type { Product } from '@/data/products';
+import type { EcomLocale } from '@/lib/locales';
 import type {
   CheckoutContent,
   CheckoutFieldContent,
@@ -121,17 +124,82 @@ function FormInput({ field, value, error, onChange }: {
   );
 }
 
+function CountrySelect({
+  field,
+  value,
+  error,
+  locale,
+  onChange,
+}: {
+  field: CheckoutFieldContent;
+  value: string;
+  error?: string;
+  locale: EcomLocale;
+  onChange: (id: string, v: string) => void;
+}): JSX.Element {
+  const describedBy = error ? `${field.id}-error` : undefined;
+  return (
+    <div className={field.half ? 'flex-1 min-w-0' : 'w-full'}>
+      <label className="type-label block mb-1.5" style={{ color: 'var(--fg)' }}>
+        {field.label}
+      </label>
+      <select
+        id={field.id}
+        value={value}
+        onChange={(event) => onChange(field.id, event.target.value)}
+        aria-invalid={Boolean(error)}
+        aria-describedby={describedBy}
+        style={{
+          width: '100%',
+          padding: '0.75rem 1rem',
+          background: 'var(--bg)',
+          border: `1px solid ${error ? 'var(--accent)' : 'var(--border)'}`,
+          outline: 'none',
+          fontFamily: 'var(--font-body)',
+          fontSize: '0.875rem',
+          fontWeight: 300,
+          color: value ? 'var(--fg)' : 'var(--muted)',
+          transition: 'border-color 0.2s ease',
+          appearance: 'none',
+        }}
+        onFocus={(event) => { event.target.style.borderColor = 'var(--fg)'; }}
+        onBlur={(event) => { event.target.style.borderColor = error ? 'var(--accent)' : 'var(--border)'; }}
+      >
+        <option value="">{locale === 'pl' ? 'Wybierz kraj' : 'Select country'}</option>
+        {COUNTRIES.map((country) => (
+          <option key={country.code} value={country.name}>
+            {locale === 'pl' ? country.namePl : country.name}
+          </option>
+        ))}
+      </select>
+      {error && (
+        <p id={describedBy} className="type-label mt-1.5" style={{ color: 'var(--accent)' }}>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function FieldRows({
   fields,
   values,
   errors,
+  locale,
   onChange,
 }: {
   fields: CheckoutFieldContent[];
   values: Record<string, string>;
   errors: Record<string, string>;
+  locale: EcomLocale;
   onChange: (id: string, v: string) => void;
 }): JSX.Element {
+  const renderField = (field: CheckoutFieldContent): JSX.Element => (
+    field.id === 'country'
+      ? <CountrySelect field={field} value={values[field.id] ?? ''} error={errors[field.id]} locale={locale} onChange={onChange} />
+      : <FormInput field={field} value={values[field.id] ?? ''} error={errors[field.id]} onChange={onChange} />
+  );
+
   return (
     <>
       {fields.map((field, i) => {
@@ -142,13 +210,13 @@ function FieldRows({
           const next = fields[i + 1];
           return (
             <div key={field.id} className="flex gap-4">
-              <FormInput field={field} value={values[field.id] ?? ''} error={errors[field.id]} onChange={onChange} />
-              {next && <FormInput field={next} value={values[next.id] ?? ''} error={errors[next.id]} onChange={onChange} />}
+              {renderField(field)}
+              {next && renderField(next)}
             </div>
           );
         }
         if (isSecondOfPair) return null;
-        return <FormInput key={field.id} field={field} value={values[field.id] ?? ''} error={errors[field.id]} onChange={onChange} />;
+        return <div key={field.id}>{renderField(field)}</div>;
       })}
     </>
   );
@@ -166,6 +234,8 @@ function OrderSummary({
   subtotal,
   discount,
   total,
+  freeShippingThreshold,
+  freeShippingBannerLabel,
   promoCode,
   onPromoCodeChange,
 }: {
@@ -174,6 +244,8 @@ function OrderSummary({
   subtotal: number;
   discount: number;
   total: number;
+  freeShippingThreshold: number;
+  freeShippingBannerLabel: string;
   promoCode: string | null;
   onPromoCodeChange: (code: string | null) => void;
 }): JSX.Element {
@@ -214,6 +286,12 @@ function OrderSummary({
     };
   });
   const discountPct = promoCode ? (VALID_CODES[promoCode] ?? 0) : 0;
+  const freeShippingEnabled = freeShippingThreshold > 0;
+  const freeShippingUnlocked = freeShippingEnabled && subtotal >= freeShippingThreshold;
+  const freeShippingRemaining = Math.max(0, freeShippingThreshold - subtotal);
+  const freeShippingMessage = freeShippingUnlocked
+    ? (locale === 'pl' ? 'Darmowa dostawa odblokowana!' : 'Free shipping unlocked!')
+    : freeShippingBannerLabel.replace('{amount}', formatPrice(freeShippingRemaining, locale));
 
   const applyPromo = () => {
     const upper = promoInput.trim().toUpperCase();
@@ -378,6 +456,18 @@ function OrderSummary({
             </span>
           </div>
         )}
+        {freeShippingEnabled && (
+          <div
+            className="type-label"
+            style={{
+              color: freeShippingUnlocked ? '#4A7C5A' : 'var(--muted)',
+              paddingTop: '0.25rem',
+              lineHeight: 1.5,
+            }}
+          >
+            {freeShippingMessage}
+          </div>
+        )}
         <div className="flex justify-between">
           <span className="type-label" style={{ color: 'var(--muted)' }}>{content.shippingLabel}</span>
           <span className="type-price" style={{ color: shippingPrice === 0 ? '#4A7C5A' : 'var(--fg)' }}>
@@ -419,10 +509,27 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const [placingOrder, setPlacingOrder] = useState(false);
   const [confirmedOrderId, setConfirmedOrderId] = useState('');
 
-  const selectedShipping: CheckoutShippingMethodContent = content.shippingMethods.find((method) => method.id === shipping)
-    ?? content.shippingMethods[0]
-    ?? { id: 'standard', label: 'Standard', detail: '', price: 0, priceLabel: 'Free' };
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const zoneMethods = useMemo(() => {
+    const zone = getZoneForCountry(content.shippingZones, form.country ?? '');
+    const rawMethods = zone && zone.methods.length > 0 ? zone.methods : content.shippingMethods;
+    return applyFreeThreshold(
+      rawMethods,
+      subtotal,
+      content.freeShippingThreshold,
+      content.freeShippingMethodId,
+    );
+  }, [
+    content.freeShippingMethodId,
+    content.freeShippingThreshold,
+    content.shippingMethods,
+    content.shippingZones,
+    form.country,
+    subtotal,
+  ]);
+  const selectedShipping: CheckoutShippingMethodContent = zoneMethods.find((method) => method.id === shipping)
+    ?? zoneMethods[0]
+    ?? { id: 'standard', label: 'Standard', detail: '', price: 0, priceLabel: 'Free', businessDaysMin: 3, businessDaysMax: 5 };
   const discountPct = promoCode ? (VALID_CODES[promoCode] ?? 0) : 0;
   const discount = Math.round(subtotal * discountPct);
   const total = subtotal - discount + selectedShipping.price;
@@ -432,6 +539,12 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const invalidExpiryMessage = locale === 'pl' ? 'Wpisz poprawna date MM/YY.' : 'Enter a valid MM/YY expiry.';
   const expiredCardMessage = locale === 'pl' ? 'Data waznosci musi byc aktualna lub przyszla.' : 'Card expiry must be current or future.';
   const invalidCvvMessage = locale === 'pl' ? 'Wpisz 3-4 cyfry kodu CVV.' : 'Enter a 3-4 digit security code.';
+  const estimatedDeliveryLabel = locale === 'pl' ? 'Szacowana dostawa:' : 'Estimated:';
+
+  useEffect(() => {
+    if (zoneMethods.some((method) => method.id === shipping)) return;
+    setShipping(zoneMethods[0]?.id ?? 'standard');
+  }, [shipping, zoneMethods]);
 
   // Pre-fill contact info from the logged-in user's session
   useEffect(() => {
@@ -644,7 +757,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   {content.informationTitle}
                 </h2>
                 <div className="space-y-4">
-                  <FieldRows fields={content.informationFields} values={form} errors={errors} onChange={setField} />
+                  <FieldRows fields={content.informationFields} values={form} errors={errors} locale={locale} onChange={setField} />
                 </div>
 
                 <div className="flex items-center justify-between mt-10">
@@ -684,7 +797,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   <div>
                     <div className="type-label mb-0.5" style={{ color: 'var(--muted)' }}>{content.deliveryRecapLabel}</div>
                     <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 300, color: 'var(--fg)' }}>
-                      {form.address || content.deliveryAddressFallback}, {form.city || content.deliveryAddressFallback} {form.postcode || content.deliveryAddressFallback}
+                      {form.address || content.deliveryAddressFallback}, {form.city || content.deliveryAddressFallback} {form.postcode || content.deliveryAddressFallback}, {form.country || content.deliveryAddressFallback}
                     </div>
                   </div>
                   <button
@@ -698,7 +811,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
 
                 {/* Shipping options */}
                 <div className="space-y-3 mb-10">
-                  {content.shippingMethods.map((method) => (
+                  {zoneMethods.map((method) => (
                     <label
                       key={method.id}
                       className="flex items-center gap-4 p-4 cursor-pointer transition-colors"
@@ -728,9 +841,12 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                           {method.label}
                         </div>
                         <div className="type-label" style={{ color: 'var(--muted)' }}>{method.detail}</div>
+                        <div className="type-label" style={{ color: 'var(--accent)', marginTop: '0.3rem' }}>
+                          {estimatedDeliveryLabel} {calcDeliveryRange(method.businessDaysMin, method.businessDaysMax, locale)}
+                        </div>
                       </div>
                       <span className="type-price" style={{ color: method.price === 0 ? '#4A7C5A' : 'var(--fg)' }}>
-                        {method.priceLabel}
+                        {method.price === 0 ? content.orderSummary.freeLabel : method.priceLabel}
                       </span>
                     </label>
                   ))}
@@ -780,7 +896,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
 
                 {/* Card form */}
                 <div className="space-y-4">
-                  <FieldRows fields={content.paymentFields} values={paymentForm} errors={errors} onChange={setPaymentField} />
+                  <FieldRows fields={content.paymentFields} values={paymentForm} errors={errors} locale={locale} onChange={setPaymentField} />
                 </div>
 
                 {/* Billing address toggle */}
@@ -841,6 +957,8 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
               subtotal={subtotal}
               discount={discount}
               total={total}
+              freeShippingThreshold={content.freeShippingThreshold}
+              freeShippingBannerLabel={content.freeShippingBannerLabel}
               promoCode={promoCode}
               onPromoCodeChange={setPromoCode}
             />

@@ -61,8 +61,8 @@ export function DatabaseEngineSettingsTab(): JSX.Element {
         mongoSourceState={mongoSourceState}
         isSyncingMongoSources={isSyncingMongoSources}
         allowManualFullSync={operationControls.allowManualFullSync}
-        onSync={(direction) => {
-          syncMongoSources(direction).catch(() => {});
+        onSync={(direction, application) => {
+          syncMongoSources(direction, application).catch(() => {});
         }}
       />
 

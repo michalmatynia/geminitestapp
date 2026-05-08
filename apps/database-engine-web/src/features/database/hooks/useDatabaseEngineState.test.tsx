@@ -204,7 +204,10 @@ describe('useDatabaseEngineState', () => {
       await result.current.syncMongoSources('cloud_to_local');
     });
 
-    expect(mocks.syncMongoSourcesMutateAsync).toHaveBeenCalledWith('cloud_to_local');
+    expect(mocks.syncMongoSourcesMutateAsync).toHaveBeenCalledWith({
+      direction: 'cloud_to_local',
+      application: 'all',
+    });
     expect(mocks.toast).toHaveBeenCalledWith('MongoDB sync completed: cloud -> local.', {
       variant: 'success',
     });

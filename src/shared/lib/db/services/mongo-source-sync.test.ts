@@ -105,6 +105,7 @@ const mocks = vi.hoisted(() => ({
   })),
   execFileAsync: vi.fn(),
   dropDatabase: vi.fn(async () => undefined),
+  mongoAdminCommand: vi.fn(async () => ({ ok: 1 })),
   mongoClientClose: vi.fn(async () => undefined),
   mongoClientConnect: vi.fn(async () => undefined),
   getMongoDb: vi.fn(),
@@ -125,6 +126,7 @@ vi.mock('@/shared/lib/db/mongo-source', () => ({
 }));
 
 vi.mock('@/shared/lib/db/utils/mongo', () => ({
+  MONGO_BACKUP_APPLICATIONS: ['geminitestapp', 'studiq', 'cms-builder', 'products'],
   execFileAsync: mocks.execFileAsync,
   getMongoDumpCommand: mocks.getMongoDumpCommand,
   getMongoRestoreCommand: mocks.getMongoRestoreCommand,
@@ -143,6 +145,9 @@ vi.mock('mongodb', () => ({
       close: mocks.mongoClientClose,
       connect: mocks.mongoClientConnect,
       db: vi.fn(() => ({
+        admin: () => ({
+          command: mocks.mongoAdminCommand,
+        }),
         dropDatabase: mocks.dropDatabase,
       })),
     };
@@ -157,7 +162,7 @@ vi.mock('@/shared/lib/db/services/mongo-source-parity', () => ({
   verifyMongoSourceParity: mocks.verifyMongoSourceParity,
 }));
 
-import { syncMongoSources } from './mongo-source-sync';
+import { syncMongoSources, testOnly } from './mongo-source-sync';
 
 describe('mongo-source-sync', () => {
   const syncLockPath = path.join(process.cwd(), 'mongo', 'runtime', 'sync.lock');
@@ -195,8 +200,79 @@ describe('mongo-source-sync', () => {
       syncIssue: null,
     });
     process.env['NODE_ENV'] = 'test';
+    mocks.resolveMongoSourceConfig.mockImplementation(async (source: 'local' | 'cloud') =>
+      source === 'local'
+        ? {
+            configured: true,
+            source,
+            uri: 'mongodb://localhost:27017/app_local',
+            dbName: 'app_local',
+            usesLegacyEnv: false,
+          }
+        : {
+            configured: true,
+            source,
+            uri: 'mongodb+srv://cluster.example/app_cloud',
+            dbName: 'app_cloud',
+            usesLegacyEnv: false,
+          }
+    );
+    mocks.resolveStudiqMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+      source === 'local'
+        ? {
+            source,
+            configured: true,
+            uri: 'mongodb://localhost:27018/studiq_local',
+            dbName: 'studiq_local',
+            usesLegacyEnv: false,
+          }
+        : {
+            source,
+            configured: true,
+            uri: 'mongodb+srv://cluster.example/studiq_cloud',
+            dbName: 'studiq_cloud',
+            usesLegacyEnv: false,
+          }
+    );
+    mocks.resolveCmsBuilderMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+      source === 'local'
+        ? {
+            source,
+            configured: true,
+            uri: 'mongodb://localhost:27019/cms_builder_local',
+            dbName: 'cms_builder_local',
+            usesLegacyEnv: false,
+          }
+        : {
+            source,
+            configured: true,
+            uri: 'mongodb+srv://cluster.example/cms_builder_cloud',
+            dbName: 'cms_builder_cloud',
+            usesLegacyEnv: false,
+          }
+    );
+    mocks.resolveProductsMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+      source === 'local'
+        ? {
+            source,
+            configured: true,
+            uri: 'mongodb://localhost:27020/products_local',
+            dbName: 'products_local',
+            usesLegacyEnv: false,
+          }
+        : {
+            source,
+            configured: true,
+            uri: 'mongodb+srv://cluster.example/products_cloud',
+            dbName: 'products_cloud',
+            usesLegacyEnv: false,
+          }
+    );
     mocks.getMongoDb.mockResolvedValue({ dropDatabase: mocks.dropDatabase });
     mocks.execFileAsync.mockResolvedValue({ stdout: 'mongo tool ok', stderr: '' });
+    mocks.mongoAdminCommand.mockResolvedValue({ ok: 1 });
+    mocks.mongoClientClose.mockResolvedValue(undefined);
+    mocks.mongoClientConnect.mockResolvedValue(undefined);
     mocks.verifyMongoSourceParity.mockImplementation(
       async ({ source, target, sourceDbName, targetDbName }) => ({
         status: 'passed',
@@ -246,14 +322,87 @@ describe('mongo-source-sync', () => {
     expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();
   });
 
+  it('passes all-application pre-flight when every scoped endpoint is reachable', async () => {
+    await expect(
+      testOnly.assertAllApplicationsSyncReady('all', 'local_to_cloud')
+    ).resolves.toBeUndefined();
+    expect(mocks.mongoClientConnect).toHaveBeenCalledTimes(8);
+  });
+
+  it('reports a single per-app pre-flight configuration failure', async () => {
+    mocks.resolveProductsMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+      source === 'local'
+        ? {
+            source,
+            configured: true,
+            uri: 'mongodb://localhost:27020/products_local',
+            dbName: 'products_local',
+            usesLegacyEnv: false,
+          }
+        : {
+            source,
+            configured: false,
+            uri: null,
+            dbName: null,
+            usesLegacyEnv: false,
+          }
+    );
+
+    await expect(
+      testOnly.assertAllApplicationsSyncReady('products', 'local_to_cloud')
+    ).rejects.toThrow(/Products MongoDB source "cloud" is not configured/i);
+  });
+
+  it('collects multiple pre-flight failures before throwing', async () => {
+    mocks.resolveStudiqMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+      source === 'local'
+        ? {
+            source,
+            configured: true,
+            uri: 'mongodb://localhost:27018/studiq_local',
+            dbName: 'studiq_local',
+            usesLegacyEnv: false,
+          }
+        : {
+            source,
+            configured: false,
+            uri: null,
+            dbName: null,
+            usesLegacyEnv: false,
+          }
+    );
+    mocks.resolveCmsBuilderMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+      source === 'local'
+        ? {
+            source,
+            configured: true,
+            uri: 'mongodb://localhost:27019/cms_builder_local',
+            dbName: 'cms_builder_local',
+            usesLegacyEnv: false,
+          }
+        : {
+            source,
+            configured: false,
+            uri: null,
+            dbName: null,
+            usesLegacyEnv: false,
+          }
+    );
+
+    await expect(
+      testOnly.assertAllApplicationsSyncReady('all', 'local_to_cloud')
+    ).rejects.toThrow(/StudiQ MongoDB source "cloud" is not configured[\s\S]*CMS Builder MongoDB source "cloud" is not configured/i);
+  });
+
   it('rejects sync when another Mongo source sync is already in progress', async () => {
+    const acquiredAt = new Date().toISOString();
     await fs.mkdir(path.dirname(syncLockPath), { recursive: true });
     await fs.writeFile(
       syncLockPath,
       JSON.stringify(
         {
           direction: 'local_to_cloud',
-          acquiredAt: '2026-04-16T00:38:12.443Z',
+          acquiredAt,
           pid: process.pid,
         },
         null,
@@ -263,7 +412,7 @@ describe('mongo-source-sync', () => {
     );
 
     await expect(syncMongoSources('cloud_to_local')).rejects.toThrow(
-      'MongoDB sync is already in progress: local -> cloud. Started at 2026-04-16T00:38:12.443Z.'
+      `MongoDB sync is already in progress: local -> cloud. Started at ${acquiredAt}.`
     );
     expect(mocks.execFileAsync).not.toHaveBeenCalled();
     expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();
@@ -447,20 +596,71 @@ describe('mongo-source-sync', () => {
     expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();
   });
 
+  it('restores the target pre-sync backup when mongorestore fails', async () => {
+    const restoreFailure = new Error('restore failed');
+    (restoreFailure as { cause?: { stdout: string; stderr: string } }).cause = {
+      stdout: '',
+      stderr: 'bad restore',
+    };
+    mocks.execFileAsync
+      .mockResolvedValueOnce({ stdout: 'dump ok', stderr: '' })
+      .mockRejectedValueOnce(restoreFailure)
+      .mockResolvedValueOnce({ stdout: 'recovery ok', stderr: '' });
+
+    await expect(syncMongoSources('local_to_cloud', 'products')).rejects.toThrow(
+      /target database was recovered from pre-sync backup/i
+    );
+
+    expect(mocks.execFileAsync).toHaveBeenCalledTimes(3);
+    expect(mocks.dropDatabase).toHaveBeenCalledTimes(2);
+    const recoveryRestoreCall = mocks.execFileAsync.mock.calls[2];
+    expect(recoveryRestoreCall?.[0]).toBe('mongorestore');
+    expect(recoveryRestoreCall?.[1]).toEqual(
+      expect.arrayContaining([
+        '--uri',
+        'mongodb+srv://cluster.example/products_cloud',
+        '--archive=/tmp/backups/products-cloud-target-pre-sync-local_to_cloud.archive',
+        '--gzip',
+        '--drop',
+        '--stopOnError',
+      ])
+    );
+    expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();
+  });
+
+  it('labels restore failures that also fail automatic recovery', async () => {
+    const restoreFailure = new Error('restore failed');
+    const recoveryFailure = new Error('recovery failed');
+    mocks.execFileAsync
+      .mockResolvedValueOnce({ stdout: 'dump ok', stderr: '' })
+      .mockRejectedValueOnce(restoreFailure)
+      .mockRejectedValueOnce(recoveryFailure);
+
+    await expect(syncMongoSources('local_to_cloud', 'products')).rejects.toThrow(
+      /automatic recovery failed\. Manual restore required from: \/tmp\/backups\/products-cloud-target-pre-sync-local_to_cloud\.archive/i
+    );
+    expect(mocks.execFileAsync).toHaveBeenCalledTimes(3);
+    expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();
+  });
+
   it('redacts MongoDB credentials in sync command logs', async () => {
-    mocks.resolveMongoSourceConfig
-      .mockResolvedValueOnce({
-        configured: true,
-        source: 'local',
-        uri: 'mongodb://local-user:local-secret@localhost:27017/app_local',
-        dbName: 'app_local',
-      })
-      .mockResolvedValueOnce({
-        configured: true,
-        source: 'cloud',
-        uri: 'mongodb+srv://cloud-user:cloud-secret@cluster.example/app_cloud',
-        dbName: 'app_cloud',
-      });
+    mocks.resolveMongoSourceConfig.mockImplementation(async (source: 'local' | 'cloud') =>
+      source === 'local'
+        ? {
+            configured: true,
+            source,
+            uri: 'mongodb://local-user:local-secret@localhost:27017/app_local',
+            dbName: 'app_local',
+            usesLegacyEnv: false,
+          }
+        : {
+            configured: true,
+            source,
+            uri: 'mongodb+srv://cloud-user:cloud-secret@cluster.example/app_cloud',
+            dbName: 'app_cloud',
+            usesLegacyEnv: false,
+          }
+    );
     mocks.execFileAsync
       .mockResolvedValueOnce({ stdout: 'dump ok', stderr: '' })
       .mockResolvedValueOnce({ stdout: 'restore ok', stderr: '' });
@@ -474,42 +674,12 @@ describe('mongo-source-sync', () => {
     expect(log).not.toContain('cloud-secret');
   });
 
-  it('rejects sync when a Mongo target is already known to be unreachable', async () => {
-    mocks.getMongoSourceState.mockResolvedValue({
-      timestamp: '2026-04-09T04:00:00.000Z',
-      activeSource: 'local',
-      defaultSource: 'local',
-      lastSync: null,
-      local: {
-        source: 'local',
-        configured: true,
-        dbName: 'app_local',
-        maskedUri: 'mongodb://localhost:27017/app_local',
-        isActive: true,
-        usesLegacyEnv: false,
-        reachable: true,
-        healthError: null,
-      },
-      cloud: {
-        source: 'cloud',
-        configured: true,
-        dbName: 'app_cloud',
-        maskedUri: 'mongodb+srv://cluster.example/app_cloud',
-        isActive: false,
-        usesLegacyEnv: false,
-        reachable: false,
-        healthError: 'cloud ping failed',
-      },
-      canSwitch: true,
-      canSync: false,
-      syncIssue:
-        'MongoDB source sync is disabled because "cloud" is unreachable: cloud ping failed',
-    });
+  it('rejects sync before locking when pre-flight cannot reach a Mongo target', async () => {
+    mocks.mongoClientConnect.mockRejectedValueOnce(new Error('cloud ping failed'));
 
     await expect(syncMongoSources('cloud_to_local')).rejects.toThrow(
-      /"cloud" is unreachable: cloud ping failed/i
+      /cloud MongoDB source is unreachable: cloud ping failed/i
     );
-    expect(mocks.resolveMongoSourceConfig).not.toHaveBeenCalled();
     expect(mocks.createMongoSourceBackup).not.toHaveBeenCalled();
     expect(mocks.execFileAsync).not.toHaveBeenCalled();
   });

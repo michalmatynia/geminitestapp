@@ -8,7 +8,7 @@ import { AuthModal } from '@/components/AuthModal';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AdminCmsEditor } from '@/components/AdminCmsEditor';
-import { formatPrice } from '@/lib/locales';
+import { formatPrice, type EcomLocale } from '@/lib/locales';
 import type { AccountAdminContent, AccountContent } from '@/data/accountContent';
 import type { Order } from '@/lib/orders';
 
@@ -54,7 +54,13 @@ interface AdminUser {
 
 type Tab = 'overview' | 'orders' | 'settings' | 'admin';
 
-function AdminTab({ content }: { content: AccountAdminContent }): JSX.Element {
+function AdminTab({
+  content,
+  availableLocales,
+}: {
+  content: AccountAdminContent;
+  availableLocales: EcomLocale[];
+}): JSX.Element {
   const locale = useLocale();
   const localizedHref = useLocalizedHref();
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
@@ -153,7 +159,7 @@ function AdminTab({ content }: { content: AccountAdminContent }): JSX.Element {
         </div>
       </div>
 
-      <AdminCmsEditor />
+      <AdminCmsEditor availableLocales={availableLocales} />
 
       {/* Users table */}
       <div style={{ borderTop: '1px solid rgba(210,116,102,0.2)' }}>
@@ -214,7 +220,13 @@ function AdminTab({ content }: { content: AccountAdminContent }): JSX.Element {
   );
 }
 
-export function AccountPageClient({ content }: { content: AccountContent }): JSX.Element {
+export function AccountPageClient({
+  content,
+  availableLocales,
+}: {
+  content: AccountContent;
+  availableLocales: EcomLocale[];
+}): JSX.Element {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const locale = useLocale();
@@ -739,7 +751,9 @@ export function AccountPageClient({ content }: { content: AccountContent }): JSX
               )}
 
               {/* Admin tab */}
-              {activeTab === 'admin' && user.isSuperAdmin && <AdminTab content={content.admin} />}
+              {activeTab === 'admin' && user.isSuperAdmin && (
+                <AdminTab content={content.admin} availableLocales={availableLocales} />
+              )}
 
             </div>
           </div>

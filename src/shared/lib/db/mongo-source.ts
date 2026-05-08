@@ -3,7 +3,11 @@ import 'server-only';
 import { promises as fs } from 'fs';
 import path from 'path';
 
+import { MongoClient, type MongoClientOptions } from 'mongodb';
+
 import type {
+  DatabaseEngineMongoAppSyncStatus,
+  DatabaseEngineMongoAppSyncStatuses,
   DatabaseEngineMongoLastSync,
   DatabaseEngineMongoSourceState,
   MongoSource,
@@ -11,6 +15,14 @@ import type {
 import { databaseEngineMongoLastSyncSchema } from '@/shared/contracts/database';
 import { configurationError } from '@/shared/errors/app-error';
 import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
+import {
+  MONGO_BACKUP_APPLICATIONS,
+  resolveCmsBuilderMongoSourceConfig,
+  resolveProductsMongoSourceConfig,
+  resolveStudiqMongoSourceConfig,
+  type MongoApplicationSourceConfig,
+  type MongoBackupApplication,
+} from '@/shared/lib/db/utils/mongo';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
 const MONGODB_ACTIVE_SOURCE_DEFAULT_ENV = 'MONGODB_ACTIVE_SOURCE_DEFAULT';
@@ -29,6 +41,15 @@ type MongoSourceConfig = {
 type MongoSourceReachability = {
   reachable: boolean | null;
   healthError: string | null;
+};
+
+type ApplicationMongoSourceConfig = MongoSourceConfig | MongoApplicationSourceConfig;
+
+const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
+  geminitestapp: 'GeminiTest App',
+  studiq: 'StudiQ',
+  'cms-builder': 'CMS Builder',
+  products: 'Products',
 };
 
 const normalizeMongoSource = (value: unknown): MongoSource | null =>
@@ -57,6 +78,27 @@ const isLikelyLocalMongoUri = (uri: string): boolean => {
     return trimmed.includes('localhost') || trimmed.includes('127.0.0.1');
   }
 };
+
+const isLikelySingleNodeLocalMongoUri = (uri: string): boolean => {
+  const trimmed = uri.trim();
+  if (trimmed.length === 0) return false;
+  try {
+    const parsed = new URL(trimmed);
+    const hostname = parsed.hostname.trim().toLowerCase();
+    return (
+      (hostname === 'localhost' || hostname === '127.0.0.1') &&
+      !parsed.searchParams.has('replicaSet')
+    );
+  } catch {
+    return trimmed.includes('localhost') || trimmed.includes('127.0.0.1');
+  }
+};
+
+const getMongoClientOptions = (uri: string): MongoClientOptions => ({
+  connectTimeoutMS: 10_000,
+  serverSelectionTimeoutMS: 10_000,
+  ...(isLikelySingleNodeLocalMongoUri(uri) ? { directConnection: true } : {}),
+});
 
 const maskMongoUri = (uri: string | null): string | null => {
   if (!uri) return null;
@@ -156,6 +198,143 @@ const getMongoSourceConfig = (source: MongoSource): MongoSourceConfig => {
   };
 };
 
+const resolveApplicationMongoSourceConfig = (
+  application: MongoBackupApplication,
+  source: MongoSource
+): ApplicationMongoSourceConfig => {
+  if (application === 'studiq') {
+    return resolveStudiqMongoSourceConfig(source);
+  }
+  if (application === 'cms-builder') {
+    return resolveCmsBuilderMongoSourceConfig(source);
+  }
+  if (application === 'products') {
+    return resolveProductsMongoSourceConfig(source);
+  }
+  return getMongoSourceConfig(source);
+};
+
+const hasSyncConfig = (
+  config: ApplicationMongoSourceConfig
+): config is ApplicationMongoSourceConfig & { uri: string; dbName: string } =>
+  config.configured &&
+  typeof config.uri === 'string' &&
+  config.uri.trim().length > 0 &&
+  typeof config.dbName === 'string' &&
+  config.dbName.trim().length > 0;
+
+const getApplicationSourceConfigIssue = (
+  application: MongoBackupApplication,
+  source: MongoSource,
+  config: ApplicationMongoSourceConfig
+): string | null => {
+  if (hasSyncConfig(config)) return null;
+
+  const label = MONGO_APPLICATION_LABELS[application];
+  if (application === 'geminitestapp') {
+    const prefix = source === 'local' ? 'MONGODB_LOCAL' : 'MONGODB_CLOUD';
+    return `${label} ${source} MongoDB source is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
+  }
+
+  const prefix = `${application === 'cms-builder' ? 'CMS_BUILDER' : application.toUpperCase()}_MONGODB_${source.toUpperCase()}`;
+  return `${label} ${source} MongoDB source is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
+};
+
+const probeMongoConfigReachability = async (
+  config: ApplicationMongoSourceConfig
+): Promise<MongoSourceReachability> => {
+  if (!hasSyncConfig(config)) {
+    return {
+      reachable: null,
+      healthError: null,
+    };
+  }
+
+  const client = new MongoClient(config.uri, getMongoClientOptions(config.uri));
+  try {
+    await client.connect();
+    await client.db(config.dbName).admin().command({ ping: 1 });
+    return {
+      reachable: true,
+      healthError: null,
+    };
+  } catch (error) {
+    return {
+      reachable: false,
+      healthError: getErrorMessage(error),
+    };
+  } finally {
+    await client.close().catch(() => undefined);
+  }
+};
+
+const getApplicationSyncIssue = (params: {
+  application: MongoBackupApplication;
+  local: ApplicationMongoSourceConfig;
+  cloud: ApplicationMongoSourceConfig;
+  localReachability: MongoSourceReachability;
+  cloudReachability: MongoSourceReachability;
+}): string | null => {
+  const { application, local, cloud, localReachability, cloudReachability } = params;
+  const label = MONGO_APPLICATION_LABELS[application];
+  const issues = [
+    getApplicationSourceConfigIssue(application, 'local', local),
+    getApplicationSourceConfigIssue(application, 'cloud', cloud),
+    hasSyncConfig(local) && hasSyncConfig(cloud) ? getMongoSyncIssue(local, cloud) : null,
+    localReachability.reachable === false
+      ? `${label} local MongoDB source is unreachable: ${localReachability.healthError ?? 'Unable to reach MongoDB target.'}`
+      : null,
+    cloudReachability.reachable === false
+      ? `${label} cloud MongoDB source is unreachable: ${cloudReachability.healthError ?? 'Unable to reach MongoDB target.'}`
+      : null,
+  ].filter((issue): issue is string => issue !== null && issue.trim().length > 0);
+
+  return issues.length > 0 ? issues.join(' ') : null;
+};
+
+const getMongoApplicationSyncStatus = async (
+  application: MongoBackupApplication
+): Promise<DatabaseEngineMongoAppSyncStatus> => {
+  const local = resolveApplicationMongoSourceConfig(application, 'local');
+  const cloud = resolveApplicationMongoSourceConfig(application, 'cloud');
+  const [localReachability, cloudReachability] = await Promise.all([
+    probeMongoConfigReachability(local),
+    probeMongoConfigReachability(cloud),
+  ]);
+  const issue = getApplicationSyncIssue({
+    application,
+    local,
+    cloud,
+    localReachability,
+    cloudReachability,
+  });
+
+  return {
+    application,
+    localConfigured: hasSyncConfig(local),
+    cloudConfigured: hasSyncConfig(cloud),
+    localReachable: localReachability.reachable,
+    cloudReachable: cloudReachability.reachable,
+    canSync:
+      hasSyncConfig(local) &&
+      hasSyncConfig(cloud) &&
+      localReachability.reachable === true &&
+      cloudReachability.reachable === true &&
+      issue === null,
+    issue,
+  };
+};
+
+const getMongoApplicationSyncStatuses =
+  async (): Promise<DatabaseEngineMongoAppSyncStatuses> => {
+    const statuses = await Promise.all(
+      MONGO_BACKUP_APPLICATIONS.map((application) => getMongoApplicationSyncStatus(application))
+    );
+    return Object.fromEntries(
+      statuses.map((status) => [status.application, status])
+    ) as DatabaseEngineMongoAppSyncStatuses;
+  };
+
 const readMongoSourceLastSync = async (): Promise<DatabaseEngineMongoLastSync | null> => {
   try {
     const raw = await fs.readFile(getMongoSourceLastSyncFilePath(), 'utf8');
@@ -171,27 +350,7 @@ const probeMongoSourceReachability = async (
   source: MongoSource
 ): Promise<MongoSourceReachability> => {
   const config = getMongoSourceConfig(source);
-  if (!config.configured || !config.uri || !config.dbName) {
-    return {
-      reachable: null,
-      healthError: null,
-    };
-  }
-
-  try {
-    const { getMongoDb } = await import('@/shared/lib/db/mongo-client');
-    const mongoDb = await getMongoDb(source);
-    await mongoDb.admin().command({ ping: 1 });
-    return {
-      reachable: true,
-      healthError: null,
-    };
-  } catch (error) {
-    return {
-      reachable: false,
-      healthError: getErrorMessage(error),
-    };
-  }
+  return probeMongoConfigReachability(config);
 };
 
 const resolveAvailableMongoSource = (): MongoSource | null => {
@@ -272,8 +431,11 @@ export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceSt
   const syncInProgress = await readMongoSyncLock({ pruneStale: true });
   const local = getMongoSourceConfig('local');
   const cloud = getMongoSourceConfig('cloud');
-  const localReachability = await probeMongoSourceReachability('local');
-  const cloudReachability = await probeMongoSourceReachability('cloud');
+  const [localReachability, cloudReachability, appStatuses] = await Promise.all([
+    probeMongoSourceReachability('local'),
+    probeMongoSourceReachability('cloud'),
+    getMongoApplicationSyncStatuses(),
+  ]);
   const syncIssue =
     getMongoSyncIssue(local, cloud) ??
     getMongoSyncReachabilityIssue(local, localReachability) ??
@@ -309,6 +471,7 @@ export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceSt
       reachable: cloudReachability.reachable,
       healthError: cloudReachability.healthError,
     },
+    appStatuses,
     canSwitch: local.configured && cloud.configured,
     canSync:
       local.configured &&
@@ -351,4 +514,6 @@ export const __testOnly = {
   resolveDefaultMongoSource,
   normalizeMongoSyncComparisonUri,
   probeMongoSourceReachability,
+  getMongoApplicationSyncStatus,
+  getMongoApplicationSyncStatuses,
 };

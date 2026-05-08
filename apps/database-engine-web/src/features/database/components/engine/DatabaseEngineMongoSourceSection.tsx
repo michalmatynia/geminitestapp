@@ -1,6 +1,9 @@
 'use client';
 
-import type { DatabaseEngineMongoSourceState } from '@/shared/contracts/database';
+import type {
+  DatabaseEngineManagedMongoApplicationTarget,
+  DatabaseEngineMongoSourceState,
+} from '@/shared/contracts/database';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { MongoLastTransferCard, MongoSourceEntryCard, MongoSourceOverviewCards } from './DatabaseEngineMongoSourceCards';
 import { MongoSyncCard } from './DatabaseEngineMongoSyncCard';
@@ -16,7 +19,10 @@ export function MongoSourceSection({
   mongoSourceState: DatabaseEngineMongoSourceState | undefined;
   isSyncingMongoSources: boolean;
   allowManualFullSync: boolean;
-  onSync: (direction: 'cloud_to_local' | 'local_to_cloud') => void;
+  onSync: (
+    direction: 'cloud_to_local' | 'local_to_cloud',
+    application: DatabaseEngineManagedMongoApplicationTarget
+  ) => void;
 }): JSX.Element {
   if (mongoSourceState === undefined) {
     return (
@@ -43,6 +49,7 @@ export function MongoSourceSection({
           hasDualSourceConfigured={hasDualSourceConfigured}
           canSync={mongoSourceState.canSync}
           syncIssue={mongoSourceState.syncIssue}
+          appStatuses={mongoSourceState.appStatuses}
           syncInProgress={syncInProgress}
           isSyncingMongoSources={isSyncingMongoSources}
           onSync={onSync}

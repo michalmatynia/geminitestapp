@@ -97,7 +97,10 @@ export interface UseDatabaseEngineStateReturn {
   updateCollectionRoute: (collection: string, provider: string) => void;
   updateBackupSchedule: (updates: Partial<DatabaseEngineBackupSchedule>) => void;
   updateOperationControls: (updates: Partial<DatabaseEngineOperationControls>) => void;
-  syncMongoSources: (direction: 'cloud_to_local' | 'local_to_cloud') => Promise<void>;
+  syncMongoSources: (
+    direction: 'cloud_to_local' | 'local_to_cloud',
+    application?: DatabaseEngineManagedMongoApplicationTarget
+  ) => Promise<void>;
   backupManagedMongo: (application: DatabaseEngineManagedMongoApplicationTarget) => Promise<void>;
   syncManagedMongo: (
     direction: 'cloud_to_local' | 'local_to_cloud',
@@ -450,10 +453,10 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       setOperationControls((prev) => ({ ...prev, ...updates }));
       setIsDirty(true);
     },
-    syncMongoSources: async (direction) => {
+    syncMongoSources: async (direction, application = 'all') => {
       const requestStartedAtMs = Date.now();
       try {
-        const response = await syncMongoSourcesMutation.mutateAsync(direction);
+        const response = await syncMongoSourcesMutation.mutateAsync({ direction, application });
         toast(response.message, { variant: 'success' });
         mongoSourceQuery.refetch().catch(() => undefined);
       } catch (error) {

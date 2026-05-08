@@ -29,6 +29,18 @@ describe('buildListProjectStage', () => {
       marketplaceContentOverrides: 1,
       sourcePrice: 1,
       sourcePriceCurrencyCode: 1,
+      images: {
+        $map: {
+          in: {
+            imageFile: {
+              filepath: '$$image.imageFile.filepath',
+              publicUrl: '$$image.imageFile.publicUrl',
+              thumbnailUrl: '$$image.imageFile.thumbnailUrl',
+              url: '$$image.imageFile.url',
+            },
+          },
+        },
+      },
     });
   });
 

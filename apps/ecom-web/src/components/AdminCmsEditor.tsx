@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type CSSProperties, type JSX } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type JSX } from 'react';
 import {
   HOME_CONTENT_DEFAULTS,
   type HomeContent,
@@ -86,6 +86,7 @@ import {
   type CheckoutShippingMethodContent,
   type CheckoutStepContent,
   type CheckoutSummaryContent,
+  type ShippingZone,
 } from '@/data/checkoutContent';
 import {
   PRODUCTS_CONTENT_DEFAULTS,
@@ -112,6 +113,7 @@ import {
 } from '@/data/accountContent';
 import type { Story } from '@/data/stories';
 import type { Editorial } from '@/data/lookbook';
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type EcomLocale } from '@/lib/locales';
 
 interface CmsResponse {
   ok?: boolean;
@@ -571,23 +573,92 @@ function textToCheckoutFields(value: string): CheckoutFieldContent[] {
 }
 
 function checkoutShippingMethodsToText(methods: CheckoutShippingMethodContent[]): string {
-  return methods.map((method) => `${method.id} | ${method.label} | ${method.detail} | ${method.price} | ${method.priceLabel}`).join('\n');
+  return methods.map((method) => [
+    method.id,
+    method.label,
+    method.detail,
+    method.price,
+    method.priceLabel,
+    method.businessDaysMin,
+    method.businessDaysMax,
+  ].join(' | ')).join('\n');
 }
 
 function textToCheckoutShippingMethods(value: string): CheckoutShippingMethodContent[] {
   return splitLines(value)
     .map((line) => {
-      const [id = '', label = '', detail = '', price = '0', priceLabel = ''] = line.split('|');
+      const [
+        id = '',
+        label = '',
+        detail = '',
+        price = '0',
+        priceLabel = '',
+        businessDaysMin = '3',
+        businessDaysMax = '5',
+      ] = line.split('|');
       const parsedPrice = Number(price.trim());
+      const parsedMin = Number(businessDaysMin.trim());
+      const parsedMax = Number(businessDaysMax.trim());
+      const minDays = Number.isFinite(parsedMin) && Number.isInteger(parsedMin) && parsedMin > 0 ? parsedMin : 3;
+      const maxDays = Number.isFinite(parsedMax) && Number.isInteger(parsedMax) && parsedMax > 0 ? parsedMax : minDays;
       return {
         id: id.trim(),
         label: label.trim(),
         detail: detail.trim(),
         price: Number.isFinite(parsedPrice) && parsedPrice > 0 ? Math.round(parsedPrice) : 0,
         priceLabel: priceLabel.trim(),
+        businessDaysMin: minDays,
+        businessDaysMax: Math.max(minDays, maxDays),
       };
     })
     .filter((method) => method.id || method.label || method.detail);
+}
+
+function makeCheckoutShippingMethod(index: number): CheckoutShippingMethodContent {
+  return {
+    id: index === 0 ? 'standard' : `method-${index + 1}`,
+    label: index === 0 ? 'Standard' : `Method ${index + 1}`,
+    detail: '3-5 business days',
+    price: 0,
+    priceLabel: 'Free',
+    businessDaysMin: 3,
+    businessDaysMax: 5,
+  };
+}
+
+function makeShippingZone(index: number): ShippingZone {
+  return {
+    id: `zone-${index + 1}`,
+    label: `Zone ${index + 1}`,
+    countries: [],
+    methods: [makeCheckoutShippingMethod(0)],
+  };
+}
+
+function insertShippingZoneBeforeCatchAll(zones: ShippingZone[], zone: ShippingZone): ShippingZone[] {
+  let catchAllIndex = -1;
+  for (let index = zones.length - 1; index >= 0; index -= 1) {
+    if (zones[index].countries.length === 0) {
+      catchAllIndex = index;
+      break;
+    }
+  }
+  if (catchAllIndex < 0) return [...zones, zone];
+  return [
+    ...zones.slice(0, catchAllIndex),
+    zone,
+    ...zones.slice(catchAllIndex),
+  ];
+}
+
+function parseNonNegativeInteger(value: string, fallback = 0): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed) : fallback;
+}
+
+function parsePositiveInteger(value: string, fallback = 1): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function productsSortOptionsToText(options: ProductsSortOptionContent[]): string {
@@ -743,19 +814,54 @@ function formatMetaDate(value: string | null): string {
   });
 }
 
+type LocaleStatus = {
+  updatedAt: string | null;
+  saved: boolean;
+};
+
+const LOCALE_LABELS: Record<EcomLocale, string> = {
+  en: 'EN',
+  pl: 'PL',
+};
+
+function latestUpdatedAt(values: Array<string | null | undefined>): string | null {
+  const sorted = values
+    .filter((value): value is string => Boolean(value))
+    .sort((a, b) => Date.parse(b) - Date.parse(a));
+  return sorted[0] ?? null;
+}
+
+function formatLocaleStatus(status?: LocaleStatus): string {
+  if (!status) return 'Loading';
+  if (!status.saved) return 'Not yet saved';
+  return `Last saved: ${formatMetaDate(status.updatedAt)}`;
+}
+
 function Field({
   label,
   value,
+  type = 'text',
+  inputMode,
+  min,
+  step,
   onChange,
 }: {
   label: string;
   value: string;
+  type?: string;
+  inputMode?: 'numeric' | 'decimal';
+  min?: number;
+  step?: number;
   onChange: (value: string) => void;
 }): JSX.Element {
   return (
     <label>
       <span className="type-label" style={labelStyle}>{label}</span>
       <input
+        type={type}
+        inputMode={inputMode}
+        min={min}
+        step={step}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         style={{ ...fieldStyle, padding: '0.8rem 0.9rem' }}
@@ -788,7 +894,81 @@ function TextArea({
   );
 }
 
-export function AdminCmsEditor(): JSX.Element {
+function ShippingMethodFields({
+  title,
+  method,
+  onChange,
+  onRemove,
+}: {
+  title: string;
+  method: CheckoutShippingMethodContent;
+  onChange: (key: keyof CheckoutShippingMethodContent, value: string | number) => void;
+  onRemove: () => void;
+}): JSX.Element {
+  return (
+    <div style={{ border: '1px solid var(--border)', padding: '1rem', display: 'grid', gap: '0.9rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center' }}>
+        <div className="type-label" style={{ color: 'var(--accent)' }}>{title}</div>
+        <button
+          type="button"
+          className="btn-ghost"
+          onClick={onRemove}
+          style={{ fontSize: '0.66rem', padding: '0.45rem 0.65rem', color: 'var(--coral-red)' }}
+        >
+          Remove
+        </button>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+        <Field label="Method ID" value={method.id} onChange={(value) => onChange('id', value)} />
+        <Field label="Label" value={method.label} onChange={(value) => onChange('label', value)} />
+        <Field label="Detail" value={method.detail} onChange={(value) => onChange('detail', value)} />
+        <Field
+          label="Price (€)"
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step={1}
+          value={String(method.price)}
+          onChange={(value) => onChange('price', parseNonNegativeInteger(value, method.price))}
+        />
+        <Field label="Price label" value={method.priceLabel} onChange={(value) => onChange('priceLabel', value)} />
+        <Field
+          label="Business days min"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          value={String(method.businessDaysMin)}
+          onChange={(value) => onChange('businessDaysMin', parsePositiveInteger(value, method.businessDaysMin))}
+        />
+        <Field
+          label="Business days max"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          value={String(method.businessDaysMax)}
+          onChange={(value) => onChange('businessDaysMax', parsePositiveInteger(value, method.businessDaysMax))}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface AdminCmsEditorProps {
+  availableLocales?: readonly EcomLocale[];
+}
+
+export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCmsEditorProps): JSX.Element {
+  const locales = useMemo(() => {
+    const seen = new Set<EcomLocale>();
+    const normalized = availableLocales.filter((locale): locale is EcomLocale => {
+      if (!SUPPORTED_LOCALES.includes(locale) || seen.has(locale)) return false;
+      seen.add(locale);
+      return true;
+    });
+    return normalized.length > 0 ? normalized : [...SUPPORTED_LOCALES];
+  }, [availableLocales]);
   const [content, setContent] = useState<HomeContent>(HOME_CONTENT_DEFAULTS);
   const [siteContent, setSiteContent] = useState<SiteContent>(SITE_CONTENT_DEFAULTS);
   const [aboutContent, setAboutContent] = useState<AboutContent>(ABOUT_CONTENT_DEFAULTS);
@@ -800,6 +980,9 @@ export function AdminCmsEditor(): JSX.Element {
   const [checkoutContent, setCheckoutContent] = useState<CheckoutContent>(CHECKOUT_CONTENT_DEFAULTS);
   const [productsContent, setProductsContent] = useState<ProductsContent>(PRODUCTS_CONTENT_DEFAULTS);
   const [accountContent, setAccountContent] = useState<AccountContent>(ACCOUNT_CONTENT_DEFAULTS);
+  const [selectedLocale, setSelectedLocale] = useState<EcomLocale>(DEFAULT_LOCALE);
+  const [localeStatus, setLocaleStatus] = useState<Partial<Record<EcomLocale, LocaleStatus>>>({});
+  const [localeReloadKey, setLocaleReloadKey] = useState(0);
   const [stories, setStories] = useState<Story[]>([]);
   const [storyDraft, setStoryDraft] = useState('');
   const [selectedStorySlug, setSelectedStorySlug] = useState<string | null>(null);
@@ -836,7 +1019,18 @@ export function AdminCmsEditor(): JSX.Element {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!locales.includes(selectedLocale)) {
+      setSelectedLocale(locales[0] ?? DEFAULT_LOCALE);
+    }
+  }, [locales, selectedLocale]);
+
+  useEffect(() => {
+    if (!locales.includes(selectedLocale)) return;
     let mounted = true;
+    const localeQuery = `?locale=${encodeURIComponent(selectedLocale)}`;
+    setLoading(true);
+    setMessage('');
+    setError('');
 
     async function loadCmsContent(): Promise<void> {
       try {
@@ -855,17 +1049,17 @@ export function AdminCmsEditor(): JSX.Element {
           storiesRes,
           lookbookRes,
         ] = await Promise.all([
-          fetch('/api/cms/home'),
-          fetch('/api/cms/site'),
-          fetch('/api/cms/about'),
-          fetch('/api/cms/values'),
-          fetch('/api/cms/stories-page'),
-          fetch('/api/cms/lookbook-page'),
-          fetch('/api/cms/contact'),
-          fetch('/api/cms/wishlist'),
-          fetch('/api/cms/checkout'),
-          fetch('/api/cms/products'),
-          fetch('/api/cms/account'),
+          fetch(`/api/cms/home${localeQuery}`),
+          fetch(`/api/cms/site${localeQuery}`),
+          fetch(`/api/cms/about${localeQuery}`),
+          fetch(`/api/cms/values${localeQuery}`),
+          fetch(`/api/cms/stories-page${localeQuery}`),
+          fetch(`/api/cms/lookbook-page${localeQuery}`),
+          fetch(`/api/cms/contact${localeQuery}`),
+          fetch(`/api/cms/wishlist${localeQuery}`),
+          fetch(`/api/cms/checkout${localeQuery}`),
+          fetch(`/api/cms/products${localeQuery}`),
+          fetch(`/api/cms/account${localeQuery}`),
           fetch('/api/cms/stories'),
           fetch('/api/cms/lookbook'),
         ]);
@@ -929,6 +1123,26 @@ export function AdminCmsEditor(): JSX.Element {
         setAccountContent(accountData.content ?? ACCOUNT_CONTENT_DEFAULTS);
         setAccountUpdatedAt(accountData.updatedAt ?? null);
         setAccountUpdatedBy(accountData.updatedBy ?? null);
+        const contentUpdatedAts = [
+          homeData.updatedAt,
+          siteData.updatedAt,
+          aboutData.updatedAt,
+          valuesData.updatedAt,
+          storiesPageData.updatedAt,
+          lookbookPageData.updatedAt,
+          contactData.updatedAt,
+          wishlistData.updatedAt,
+          checkoutData.updatedAt,
+          productsData.updatedAt,
+          accountData.updatedAt,
+        ];
+        setLocaleStatus((current) => ({
+          ...current,
+          [selectedLocale]: {
+            updatedAt: latestUpdatedAt(contentUpdatedAts),
+            saved: contentUpdatedAts.some(Boolean),
+          },
+        }));
         setStories(storiesData.stories ?? []);
         setStoryDraft(toJson(makeStoryDraft(storiesData.stories?.length ?? 0)));
         setSelectedStorySlug(null);
@@ -948,7 +1162,7 @@ export function AdminCmsEditor(): JSX.Element {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [locales, localeReloadKey, selectedLocale]);
 
   function updateHero<K extends keyof HomeHeroContent>(key: K, value: HomeHeroContent[K]): void {
     setContent((current) => ({
@@ -1335,6 +1549,117 @@ export function AdminCmsEditor(): JSX.Element {
     }));
   }
 
+  function updateCheckoutShippingMethod(
+    index: number,
+    key: keyof CheckoutShippingMethodContent,
+    value: string | number,
+  ): void {
+    setCheckoutContent((current) => ({
+      ...current,
+      shippingMethods: current.shippingMethods.map((method, methodIndex) => (
+        methodIndex === index ? { ...method, [key]: value } : method
+      )),
+    }));
+  }
+
+  function addCheckoutShippingMethod(): void {
+    setCheckoutContent((current) => ({
+      ...current,
+      shippingMethods: [
+        ...current.shippingMethods,
+        makeCheckoutShippingMethod(current.shippingMethods.length),
+      ],
+    }));
+  }
+
+  function removeCheckoutShippingMethod(index: number): void {
+    setCheckoutContent((current) => ({
+      ...current,
+      shippingMethods: current.shippingMethods.filter((_, methodIndex) => methodIndex !== index),
+    }));
+  }
+
+  function updateShippingZone<K extends keyof ShippingZone>(
+    index: number,
+    key: K,
+    value: ShippingZone[K],
+  ): void {
+    setCheckoutContent((current) => ({
+      ...current,
+      shippingZones: current.shippingZones.map((zone, zoneIndex) => (
+        zoneIndex === index ? { ...zone, [key]: value } : zone
+      )),
+    }));
+  }
+
+  function updateShippingZoneCountries(index: number, value: string): void {
+    updateShippingZone(
+      index,
+      'countries',
+      value.split(',').map((country) => country.trim()).filter(Boolean),
+    );
+  }
+
+  function addShippingZone(): void {
+    setCheckoutContent((current) => ({
+      ...current,
+      shippingZones: insertShippingZoneBeforeCatchAll(
+        current.shippingZones,
+        makeShippingZone(current.shippingZones.length),
+      ),
+    }));
+  }
+
+  function removeShippingZone(index: number): void {
+    setCheckoutContent((current) => ({
+      ...current,
+      shippingZones: current.shippingZones.filter((_, zoneIndex) => zoneIndex !== index),
+    }));
+  }
+
+  function updateShippingZoneMethod(
+    zoneIndex: number,
+    methodIndex: number,
+    key: keyof CheckoutShippingMethodContent,
+    value: string | number,
+  ): void {
+    setCheckoutContent((current) => ({
+      ...current,
+      shippingZones: current.shippingZones.map((zone, currentZoneIndex) => (
+        currentZoneIndex === zoneIndex
+          ? {
+              ...zone,
+              methods: zone.methods.map((method, currentMethodIndex) => (
+                currentMethodIndex === methodIndex ? { ...method, [key]: value } : method
+              )),
+            }
+          : zone
+      )),
+    }));
+  }
+
+  function addShippingZoneMethod(zoneIndex: number): void {
+    setCheckoutContent((current) => ({
+      ...current,
+      shippingZones: current.shippingZones.map((zone, currentZoneIndex) => (
+        currentZoneIndex === zoneIndex
+          ? { ...zone, methods: [...zone.methods, makeCheckoutShippingMethod(zone.methods.length)] }
+          : zone
+      )),
+    }));
+  }
+
+  function removeShippingZoneMethod(zoneIndex: number, methodIndex: number): void {
+    setCheckoutContent((current) => ({
+      ...current,
+      shippingZones: current.shippingZones.map((zone, currentZoneIndex) => (
+        currentZoneIndex === zoneIndex
+          ? { ...zone, methods: zone.methods.filter((_, currentMethodIndex) => currentMethodIndex !== methodIndex) }
+          : zone
+      )),
+    }));
+  }
+
   function updateProductsCollection<K extends keyof ProductsCollectionContent>(
     key: K,
     value: ProductsCollectionContent[K],
@@ -1574,7 +1899,8 @@ export function AdminCmsEditor(): JSX.Element {
     setError('');
 
     try {
-      const res = await fetch('/api/cms/home', {
+      const localeQuery = `?locale=${encodeURIComponent(selectedLocale)}`;
+      const res = await fetch(`/api/cms/home${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
@@ -1584,7 +1910,7 @@ export function AdminCmsEditor(): JSX.Element {
         const details = data.errors?.length ? ` ${data.errors.join(' ')}` : '';
         throw new Error(`${data.error ?? 'Failed to save CMS content'}${details}`);
       }
-      const siteRes = await fetch('/api/cms/site', {
+      const siteRes = await fetch(`/api/cms/site${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: siteContent }),
@@ -1594,7 +1920,7 @@ export function AdminCmsEditor(): JSX.Element {
         const details = siteData.errors?.length ? ` ${siteData.errors.join(' ')}` : '';
         throw new Error(`${siteData.error ?? 'Failed to save site CMS content'}${details}`);
       }
-      const aboutRes = await fetch('/api/cms/about', {
+      const aboutRes = await fetch(`/api/cms/about${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: aboutContent }),
@@ -1604,7 +1930,7 @@ export function AdminCmsEditor(): JSX.Element {
         const details = aboutData.errors?.length ? ` ${aboutData.errors.join(' ')}` : '';
         throw new Error(`${aboutData.error ?? 'Failed to save about CMS content'}${details}`);
       }
-      const valuesRes = await fetch('/api/cms/values', {
+      const valuesRes = await fetch(`/api/cms/values${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: valuesContent }),
@@ -1614,7 +1940,7 @@ export function AdminCmsEditor(): JSX.Element {
         const details = valuesData.errors?.length ? ` ${valuesData.errors.join(' ')}` : '';
         throw new Error(`${valuesData.error ?? 'Failed to save values CMS content'}${details}`);
       }
-      const storiesPageRes = await fetch('/api/cms/stories-page', {
+      const storiesPageRes = await fetch(`/api/cms/stories-page${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: storiesPageContent }),
@@ -1624,7 +1950,7 @@ export function AdminCmsEditor(): JSX.Element {
         const details = storiesPageData.errors?.length ? ` ${storiesPageData.errors.join(' ')}` : '';
         throw new Error(`${storiesPageData.error ?? 'Failed to save stories page CMS content'}${details}`);
       }
-      const lookbookPageRes = await fetch('/api/cms/lookbook-page', {
+      const lookbookPageRes = await fetch(`/api/cms/lookbook-page${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: lookbookPageContent }),
@@ -1634,7 +1960,7 @@ export function AdminCmsEditor(): JSX.Element {
         const details = lookbookPageData.errors?.length ? ` ${lookbookPageData.errors.join(' ')}` : '';
         throw new Error(`${lookbookPageData.error ?? 'Failed to save lookbook page CMS content'}${details}`);
       }
-      const contactRes = await fetch('/api/cms/contact', {
+      const contactRes = await fetch(`/api/cms/contact${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: contactContent }),
@@ -1644,7 +1970,7 @@ export function AdminCmsEditor(): JSX.Element {
         const details = contactData.errors?.length ? ` ${contactData.errors.join(' ')}` : '';
         throw new Error(`${contactData.error ?? 'Failed to save contact CMS content'}${details}`);
       }
-      const wishlistRes = await fetch('/api/cms/wishlist', {
+      const wishlistRes = await fetch(`/api/cms/wishlist${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: wishlistContent }),
@@ -1654,7 +1980,7 @@ export function AdminCmsEditor(): JSX.Element {
         const details = wishlistData.errors?.length ? ` ${wishlistData.errors.join(' ')}` : '';
         throw new Error(`${wishlistData.error ?? 'Failed to save wishlist CMS content'}${details}`);
       }
-      const checkoutRes = await fetch('/api/cms/checkout', {
+      const checkoutRes = await fetch(`/api/cms/checkout${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: checkoutContent }),
@@ -1664,7 +1990,7 @@ export function AdminCmsEditor(): JSX.Element {
         const details = checkoutData.errors?.length ? ` ${checkoutData.errors.join(' ')}` : '';
         throw new Error(`${checkoutData.error ?? 'Failed to save checkout CMS content'}${details}`);
       }
-      const productsRes = await fetch('/api/cms/products', {
+      const productsRes = await fetch(`/api/cms/products${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: productsContent }),
@@ -1674,7 +2000,7 @@ export function AdminCmsEditor(): JSX.Element {
         const details = productsData.errors?.length ? ` ${productsData.errors.join(' ')}` : '';
         throw new Error(`${productsData.error ?? 'Failed to save products CMS content'}${details}`);
       }
-      const accountRes = await fetch('/api/cms/account', {
+      const accountRes = await fetch(`/api/cms/account${localeQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: accountContent }),
@@ -1717,7 +2043,27 @@ export function AdminCmsEditor(): JSX.Element {
       setAccountContent(accountData.content ?? accountContent);
       setAccountUpdatedAt(accountData.updatedAt ?? null);
       setAccountUpdatedBy(accountData.updatedBy ?? null);
-      setMessage('CMS content saved.');
+      const contentUpdatedAts = [
+        data.updatedAt,
+        siteData.updatedAt,
+        aboutData.updatedAt,
+        valuesData.updatedAt,
+        storiesPageData.updatedAt,
+        lookbookPageData.updatedAt,
+        contactData.updatedAt,
+        wishlistData.updatedAt,
+        checkoutData.updatedAt,
+        productsData.updatedAt,
+        accountData.updatedAt,
+      ];
+      setLocaleStatus((current) => ({
+        ...current,
+        [selectedLocale]: {
+          updatedAt: latestUpdatedAt(contentUpdatedAts),
+          saved: contentUpdatedAts.some(Boolean),
+        },
+      }));
+      setMessage(`CMS content saved for ${LOCALE_LABELS[selectedLocale]}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save CMS content');
     } finally {
@@ -1729,6 +2075,39 @@ export function AdminCmsEditor(): JSX.Element {
     <section style={{ borderTop: '1px solid rgba(210,116,102,0.2)', paddingTop: '1.5rem', marginBottom: '2.5rem' }}>
       <div className="type-label" style={{ color: 'var(--coral-red)', marginBottom: '1rem' }}>
         Homepage CMS
+      </div>
+
+      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        {locales.map((locale) => {
+          const selected = locale === selectedLocale;
+          return (
+            <button
+              key={locale}
+              type="button"
+              className={selected ? 'btn-primary' : 'btn-ghost'}
+              onClick={() => setSelectedLocale(locale)}
+              disabled={loading || saving}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.55rem',
+                fontSize: '0.72rem',
+                padding: '0.65rem 0.85rem',
+              }}
+            >
+              <span>{LOCALE_LABELS[locale]}</span>
+              {locale !== DEFAULT_LOCALE && (
+                <span style={{
+                  color: selected ? 'var(--bg)' : 'var(--muted)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.58rem',
+                }}>
+                  {formatLocaleStatus(localeStatus[locale])}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
@@ -1746,6 +2125,17 @@ export function AdminCmsEditor(): JSX.Element {
           <div>Account save: {formatMetaDate(accountUpdatedAt)}{accountUpdatedBy ? ` · ${accountUpdatedBy}` : ''}</div>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {selectedLocale !== DEFAULT_LOCALE && localeStatus[selectedLocale]?.saved === false && (
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setLocaleReloadKey((current) => current + 1)}
+              disabled={loading || saving}
+              style={{ fontSize: '0.72rem' }}
+            >
+              Copy from EN
+            </button>
+          )}
           <button
             type="button"
             className="btn-ghost"
@@ -2151,7 +2541,117 @@ export function AdminCmsEditor(): JSX.Element {
               <TextArea label="Confirmation quote" value={checkoutContent.confirmationQuote} onChange={(value) => updateCheckout('confirmationQuote', value)} />
               <TextArea label="Steps (key | label)" rows={4} value={checkoutStepsToText(checkoutContent.steps)} onChange={(value) => updateCheckout('steps', textToCheckoutSteps(value))} />
               <TextArea label="Information fields (id | label | type | placeholder | half | maxLength | mono)" rows={8} value={checkoutFieldsToText(checkoutContent.informationFields)} onChange={(value) => updateCheckout('informationFields', textToCheckoutFields(value))} />
-              <TextArea label="Shipping methods (id | label | detail | price | price label)" rows={5} value={checkoutShippingMethodsToText(checkoutContent.shippingMethods)} onChange={(value) => updateCheckout('shippingMethods', textToCheckoutShippingMethods(value))} />
+              <details open style={{ border: '1px solid var(--border)', padding: '1rem' }}>
+                <summary className="type-label" style={{ color: 'var(--accent)', cursor: 'pointer' }}>Free shipping</summary>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+                  <Field
+                    label="Free shipping threshold (€)"
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step={1}
+                    value={String(checkoutContent.freeShippingThreshold)}
+                    onChange={(value) => updateCheckout('freeShippingThreshold', parseNonNegativeInteger(value, checkoutContent.freeShippingThreshold))}
+                  />
+                  <Field
+                    label="Method ID that becomes free"
+                    value={checkoutContent.freeShippingMethodId}
+                    onChange={(value) => updateCheckout('freeShippingMethodId', value)}
+                  />
+                  <Field
+                    label="Banner label (use {amount})"
+                    value={checkoutContent.freeShippingBannerLabel}
+                    onChange={(value) => updateCheckout('freeShippingBannerLabel', value)}
+                  />
+                </div>
+              </details>
+              <details open style={{ border: '1px solid var(--border)', padding: '1rem' }}>
+                <summary className="type-label" style={{ color: 'var(--accent)', cursor: 'pointer' }}>Fallback shipping methods</summary>
+                <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+                  {checkoutContent.shippingMethods.map((method, index) => (
+                    <ShippingMethodFields
+                      key={`${method.id}-${index}`}
+                      title={`Fallback method ${index + 1}`}
+                      method={method}
+                      onChange={(key, value) => updateCheckoutShippingMethod(index, key, value)}
+                      onRemove={() => removeCheckoutShippingMethod(index)}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={addCheckoutShippingMethod}
+                    style={{ justifySelf: 'start', fontSize: '0.72rem' }}
+                  >
+                    Add fallback method
+                  </button>
+                  <TextArea
+                    label="Bulk edit fallback methods (id | label | detail | price | price label | min days | max days)"
+                    rows={5}
+                    value={checkoutShippingMethodsToText(checkoutContent.shippingMethods)}
+                    onChange={(value) => updateCheckout('shippingMethods', textToCheckoutShippingMethods(value))}
+                  />
+                </div>
+              </details>
+              <details open style={{ border: '1px solid var(--border)', padding: '1rem' }}>
+                <summary className="type-label" style={{ color: 'var(--accent)', cursor: 'pointer' }}>Shipping zones</summary>
+                <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+                  {checkoutContent.shippingZones.map((zone, zoneIndex) => (
+                    <details key={`${zone.id}-${zoneIndex}`} open style={{ border: '1px solid rgba(210,116,102,0.18)', padding: '1rem' }}>
+                      <summary className="type-label" style={{ color: 'var(--fg)', cursor: 'pointer' }}>{zone.label || zone.id || `Zone ${zoneIndex + 1}`}</summary>
+                      <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                          <Field label="Zone ID" value={zone.id} onChange={(value) => updateShippingZone(zoneIndex, 'id', value)} />
+                          <Field label="Zone label" value={zone.label} onChange={(value) => updateShippingZone(zoneIndex, 'label', value)} />
+                        </div>
+                        <TextArea
+                          label="Countries (comma-separated English names; leave empty for catch-all)"
+                          rows={3}
+                          value={zone.countries.join(', ')}
+                          onChange={(value) => updateShippingZoneCountries(zoneIndex, value)}
+                        />
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                          {zone.methods.map((method, methodIndex) => (
+                            <ShippingMethodFields
+                              key={`${zone.id}-${method.id}-${methodIndex}`}
+                              title={`${zone.label || zone.id} method ${methodIndex + 1}`}
+                              method={method}
+                              onChange={(key, value) => updateShippingZoneMethod(zoneIndex, methodIndex, key, value)}
+                              onRemove={() => removeShippingZoneMethod(zoneIndex, methodIndex)}
+                            />
+                          ))}
+                          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              className="btn-ghost"
+                              onClick={() => addShippingZoneMethod(zoneIndex)}
+                              style={{ fontSize: '0.72rem' }}
+                            >
+                              Add zone method
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-ghost"
+                              onClick={() => removeShippingZone(zoneIndex)}
+                              style={{ fontSize: '0.72rem', color: 'var(--coral-red)' }}
+                            >
+                              Remove zone
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </details>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={addShippingZone}
+                    style={{ justifySelf: 'start', fontSize: '0.72rem' }}
+                  >
+                    Add shipping zone
+                  </button>
+                </div>
+              </details>
               <TextArea label="Payment fields (id | label | type | placeholder | half | maxLength | mono)" rows={5} value={checkoutFieldsToText(checkoutContent.paymentFields)} onChange={(value) => updateCheckout('paymentFields', textToCheckoutFields(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                 <Field label="Summary title" value={checkoutContent.orderSummary.title} onChange={(value) => updateCheckoutSummary('title', value)} />

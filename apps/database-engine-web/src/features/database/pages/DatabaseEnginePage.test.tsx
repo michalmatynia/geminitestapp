@@ -130,6 +130,44 @@ const mocks = vi.hoisted(() => ({
         reachable: true,
         healthError: null,
       },
+      appStatuses: {
+        geminitestapp: {
+          application: 'geminitestapp',
+          localConfigured: true,
+          cloudConfigured: true,
+          localReachable: true,
+          cloudReachable: true,
+          canSync: true,
+          issue: null,
+        },
+        studiq: {
+          application: 'studiq',
+          localConfigured: true,
+          cloudConfigured: true,
+          localReachable: true,
+          cloudReachable: true,
+          canSync: true,
+          issue: null,
+        },
+        'cms-builder': {
+          application: 'cms-builder',
+          localConfigured: true,
+          cloudConfigured: true,
+          localReachable: true,
+          cloudReachable: true,
+          canSync: true,
+          issue: null,
+        },
+        products: {
+          application: 'products',
+          localConfigured: true,
+          cloudConfigured: true,
+          localReachable: true,
+          cloudReachable: true,
+          canSync: true,
+          issue: null,
+        },
+      },
       canSwitch: true,
       canSync: true,
       syncIssue: null,
@@ -284,6 +322,44 @@ const createState = () => ({
       usesLegacyEnv: false,
       reachable: true,
       healthError: null,
+    },
+    appStatuses: {
+      geminitestapp: {
+        application: 'geminitestapp' as const,
+        localConfigured: true,
+        cloudConfigured: true,
+        localReachable: true,
+        cloudReachable: true,
+        canSync: true,
+        issue: null,
+      },
+      studiq: {
+        application: 'studiq' as const,
+        localConfigured: true,
+        cloudConfigured: true,
+        localReachable: true,
+        cloudReachable: true,
+        canSync: true,
+        issue: null,
+      },
+      'cms-builder': {
+        application: 'cms-builder' as const,
+        localConfigured: true,
+        cloudConfigured: true,
+        localReachable: true,
+        cloudReachable: true,
+        canSync: true,
+        issue: null,
+      },
+      products: {
+        application: 'products' as const,
+        localConfigured: true,
+        cloudConfigured: true,
+        localReachable: true,
+        cloudReachable: true,
+        canSync: true,
+        issue: null,
+      },
     },
     canSwitch: true,
     canSync: true,
@@ -566,6 +642,7 @@ vi.mock('@/shared/ui/primitives.public', () => ({
   TabsContent: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   TabsList: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   TabsTrigger: ({ children }: { children?: React.ReactNode }) => <button type='button'>{children}</button>,
+  Tooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@/shared/ui/data-display.public', () => ({
@@ -886,8 +963,16 @@ describe('DatabaseEnginePage', () => {
       screen.getByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
     );
 
-    expect(mocks.actions.syncMongoSources).toHaveBeenNthCalledWith(1, 'cloud_to_local');
-    expect(mocks.actions.syncMongoSources).toHaveBeenNthCalledWith(2, 'local_to_cloud');
+    expect(mocks.actions.syncMongoSources).toHaveBeenNthCalledWith(1, 'cloud_to_local', 'all');
+    expect(mocks.actions.syncMongoSources).toHaveBeenNthCalledWith(2, 'local_to_cloud', 'all');
+  });
+
+  it('runs manual Mongo sync for a single application', () => {
+    render(<DatabaseEnginePage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Push Products local to cloud' }));
+
+    expect(mocks.actions.syncMongoSources).toHaveBeenCalledWith('local_to_cloud', 'products');
   });
 
   it('shows server-side sync progress and disables sync controls while the lock is active', () => {
@@ -953,11 +1038,11 @@ describe('DatabaseEnginePage', () => {
       )
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
+    ).toBeDisabled();
     expect(
-      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
+    ).toBeDisabled();
   });
 
   it('shows an empty last-sync state when no sync has been recorded', () => {
@@ -979,7 +1064,7 @@ describe('DatabaseEnginePage', () => {
     ).toBeInTheDocument();
   });
 
-  it('hides sync actions when manual full sync is disabled', () => {
+  it('disables sync actions when manual full sync is disabled', () => {
     mocks.state = {
       ...mocks.state,
       operationControls: {
@@ -994,14 +1079,14 @@ describe('DatabaseEnginePage', () => {
       screen.getByText('Manual full sync is disabled by Database Engine controls.')
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
+    ).toBeDisabled();
     expect(
-      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
+    ).toBeDisabled();
   });
 
-  it('hides sync actions and explains why when local and cloud point to the same target', () => {
+  it('disables sync actions and explains why when local and cloud point to the same target', () => {
     mocks.state = {
       ...mocks.state,
       mongoSourceState: {
@@ -1020,11 +1105,11 @@ describe('DatabaseEnginePage', () => {
       )
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
+    ).toBeDisabled();
     expect(
-      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
+    ).toBeDisabled();
   });
 
   it('shows connection errors for unreachable Mongo targets', () => {
@@ -1053,10 +1138,10 @@ describe('DatabaseEnginePage', () => {
       )
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: 'Pull Cloud -> Local (backup all apps first)' })
+    ).toBeDisabled();
     expect(
-      screen.queryByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: 'Push Local -> Cloud (backup all apps first)' })
+    ).toBeDisabled();
   });
 });

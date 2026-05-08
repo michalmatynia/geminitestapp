@@ -578,6 +578,45 @@ describe('ProductScrapeProfilesModal', () => {
     expect(savedRuntimeAction?.executionSettings.headless).toBe(false);
   });
 
+  it('repairs outdated scrape runtime actions when saving browser mode before launch', async () => {
+    const seed = getPlaywrightRuntimeActionSeed(PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY);
+    if (seed === null) throw new Error('Missing BattleStock runtime action seed.');
+    playwrightActionsStore.data = [
+      createRuntimeAction({
+        id: 'old-battlestock-action',
+        blocks: seed.blocks.filter(
+          (block) => block.refId !== PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages
+        ),
+      }),
+    ];
+
+    renderModal();
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+    fireEvent.click(screen.getByLabelText('Action browser mode'));
+    fireEvent.click(screen.getByRole('button', { name: /Run Profile/ }));
+
+    await waitFor(() => {
+      expect(savePlaywrightActionsMock).toHaveBeenCalledTimes(1);
+    });
+
+    const savedPayload = savePlaywrightActionsMock.mock.calls[0]?.[0] as
+      | { actions?: PlaywrightAction[] }
+      | undefined;
+    const savedRuntimeActions =
+      savedPayload?.actions?.filter(
+        (action) => action.runtimeKey === PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY
+      ) ?? [];
+    const savedRuntimeAction = savedRuntimeActions[0];
+
+    expect(savedRuntimeActions).toHaveLength(1);
+    expect(savedRuntimeAction?.id).toBe(`runtime_action__${PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY}`);
+    expect(savedRuntimeAction?.executionSettings.headless).toBe(false);
+    expect(savedRuntimeAction?.blocks.map((block) => block.refId)).toContain(
+      PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.uploadProductImages
+    );
+  });
+
   it('does not block on product refresh while the Redis scrape job runs', async () => {
     const queryClient = renderModal();
     const filters = { page: 1, pageSize: 20 };

@@ -27,6 +27,29 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const createBlockedImageResponse = (status = 403): Response =>
+  ({
+    ok: false,
+    status,
+    blob: () => Promise.resolve(new Blob([])),
+    headers: {
+      get: () => null,
+    },
+  }) as Response;
+
+const createSourcePageResponse = (): Response =>
+  ({
+    ok: true,
+    status: 200,
+    blob: () => Promise.resolve(new Blob(['<html></html>'], { type: 'text/html' })),
+    headers: {
+      get: (name: string): string | null =>
+        name.toLowerCase() === 'content-type' ? 'text/html' : null,
+      getSetCookie: (): string[] => [],
+    },
+    text: () => Promise.resolve('<html></html>'),
+  }) as unknown as Response;
+
 it('lists the BattleStock scrape profile', () => {
   const response = scrapeProfiles.listProductScrapeProfiles();
 
@@ -202,10 +225,36 @@ it('downloads scraped images as product files when requested', async () => {
   expect(mocks.createProduct).toHaveBeenCalledWith(
     expect.objectContaining({
       imageFileIds: ['image-file-1'],
-      imageLinks: [uploadedFastCometUrl],
+      imageLinks: [],
     }),
     undefined
   );
+});
+
+it('fails file-mode scrape products instead of creating remote-link products when image download fails', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(createBlockedImageResponse())
+    .mockResolvedValueOnce(createSourcePageResponse())
+    .mockResolvedValueOnce(createSourcePageResponse());
+  vi.stubGlobal('fetch', fetchMock);
+
+  const response = await scrapeProfiles.runProductScrapeProfile({
+    profileId: BATTLESTOCK_PROFILE_ID,
+    limit: 1,
+    imageImportMode: 'files',
+  });
+
+  expect(response.createdCount).toBe(0);
+  expect(response.failedCount).toBe(1);
+  expect(response.products[0]).toEqual(
+    expect.objectContaining({
+      error: 'Failed to download 1 scraped image(s).',
+      status: 'failed',
+    })
+  );
+  expect(mocks.uploadFile).not.toHaveBeenCalled();
+  expect(mocks.createProduct).not.toHaveBeenCalled();
 });
 
 it('honors disabled image upload runtime steps when importing scrape profile files', async () => {

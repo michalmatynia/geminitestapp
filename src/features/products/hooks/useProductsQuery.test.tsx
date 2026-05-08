@@ -202,6 +202,7 @@ describe('useProductsWithCount', () => {
               imageFile: {
                 id: 'file-1',
                 filepath: '/uploads/raw-1.webp',
+                publicUrl: 'https://files.example.test/raw-1.webp',
               },
             },
           ],
@@ -246,6 +247,7 @@ describe('useProductsWithCount', () => {
         filepath: '/uploads/raw-1.webp',
         filename: 'raw-1.webp',
         mimetype: 'application/octet-stream',
+        publicUrl: 'https://files.example.test/raw-1.webp',
         size: 0,
       })
     );

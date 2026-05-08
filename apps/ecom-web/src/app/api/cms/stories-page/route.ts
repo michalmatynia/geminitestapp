@@ -11,9 +11,10 @@ function forbidden(): NextResponse {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const snapshot = await getStoriesPageCmsSnapshot();
+    const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
+    const snapshot = await getStoriesPageCmsSnapshot(locale);
     return NextResponse.json(snapshot);
   } catch {
     return NextResponse.json({ error: 'Failed to load stories page CMS content' }, { status: 500 });
@@ -37,7 +38,8 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const snapshot = await saveStoriesPageContent(content, session.id);
+    const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
+    const snapshot = await saveStoriesPageContent(content, session.id, locale);
     revalidatePath('/stories');
     revalidatePath('/stories/[slug]', 'page');
     return NextResponse.json({ ok: true, ...snapshot });

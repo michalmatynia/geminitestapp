@@ -109,6 +109,23 @@ describe('product scrape profile payloads', () => {
     expect(payload.categoryId).toBe('category-pendants');
   });
 
+  it('uses downloaded image file ids instead of scraped image links in file mode', () => {
+    const payload = buildCreatePayload({
+      ...defaultPayloadInput,
+      candidate: {
+        ...candidate,
+        imageLinks: ['https://www.battle-stock.pl/source-image.jpg'],
+      },
+      imagePayload: {
+        imageFileIds: ['image-file-1'],
+        imageLinks: [],
+      },
+    });
+
+    expect(payload.imageFileIds).toEqual(['image-file-1']);
+    expect(payload.imageLinks).toEqual([]);
+  });
+
   it('infers catalog-agnostic linked parameters from rendered structured template names', () => {
     const payload = buildCreatePayload({
       ...defaultPayloadInput,

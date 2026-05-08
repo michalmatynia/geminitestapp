@@ -8,6 +8,7 @@ import {
   hasEnglishProductTitle,
   hasPolishProductDescription,
   hasPolishProductTitle,
+  getImageFilepath,
   resolveEffectiveDefaultPriceGroupId,
   resolveMarketplaceStatusWithLocalFeedback,
 } from './product-column-utils';
@@ -91,6 +92,23 @@ describe('resolveEffectiveDefaultPriceGroupId', () => {
     });
 
     expect(resolveEffectiveDefaultPriceGroupId(product, new Map())).toBeNull();
+  });
+});
+
+describe('getImageFilepath', () => {
+  it('prefers filepath and falls back to public image URL fields', () => {
+    expect(
+      getImageFilepath({
+        filepath: ' /uploads/products/SKU/photo.webp ',
+        publicUrl: 'https://files.example.test/photo.webp',
+      })
+    ).toBe(' /uploads/products/SKU/photo.webp ');
+    expect(getImageFilepath({ filepath: '', publicUrl: 'https://files.example.test/a.webp' }))
+      .toBe('https://files.example.test/a.webp');
+    expect(getImageFilepath({ url: 'https://files.example.test/b.webp' }))
+      .toBe('https://files.example.test/b.webp');
+    expect(getImageFilepath({ thumbnailUrl: 'https://files.example.test/thumb.webp' }))
+      .toBe('https://files.example.test/thumb.webp');
   });
 });
 

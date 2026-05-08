@@ -472,12 +472,17 @@ export function useDatabaseEngineProviderPreview(
 
 export function useSyncDatabaseEngineMongoSourceMutation(): MutationResult<
   DatabaseEngineMongoSyncResponsePayload,
-  DatabaseEngineMongoSyncDirection
+  {
+    direction: DatabaseEngineMongoSyncDirection;
+    application: DatabaseEngineManagedMongoApplicationTarget;
+  }
 > {
   const mutationKey = dbKeys.all;
   return createMutationV2({
-    mutationFn: (direction: DatabaseEngineMongoSyncDirection) =>
-      syncDatabaseEngineMongoSource(direction),
+    mutationFn: (input: {
+      direction: DatabaseEngineMongoSyncDirection;
+      application: DatabaseEngineManagedMongoApplicationTarget;
+    }) => syncDatabaseEngineMongoSource(input.direction, input.application),
     mutationKey,
     meta: {
       source: 'database.hooks.useSyncDatabaseEngineMongoSourceMutation',

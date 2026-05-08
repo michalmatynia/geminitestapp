@@ -43,10 +43,12 @@ export const backupDatabaseEngineManagedMongo = async (
   });
 
 export const syncDatabaseEngineMongoSource = async (
-  direction: DatabaseEngineMongoSyncDirection
+  direction: DatabaseEngineMongoSyncDirection,
+  application: DatabaseEngineManagedMongoApplicationTarget = 'all'
 ): Promise<DatabaseEngineMongoSyncResponsePayload> =>
   api.post<DatabaseEngineMongoSyncResponsePayload>('/api/databases/engine/source/sync', {
     direction,
+    application,
   }, {
     timeout: MONGO_SOURCE_SYNC_TIMEOUT_MS,
   });

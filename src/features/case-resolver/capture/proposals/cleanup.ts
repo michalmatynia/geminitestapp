@@ -56,49 +56,11 @@ const CAPTURE_ORGANIZATION_HINTS = [
 const CAPTURE_HEADER_LINE_SEARCH_LIMIT = 140;
 const CAPTURE_HEADER_BLOCK_EXTRA_SPAN = 6;
 
-const normalizeCaptureTextLine = (value: string): string =>
-  value
-    .replace(/\u00a0/g, ' ')
-    .replace(/\s+/g, ' ')
-    .replace(/[,:;.\s]+$/g, '')
-    .trim()
-    .toLowerCase();
-
-const normalizeCaptureWordToken = (token: string): string =>
-  token.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
-
-import { lineContainsComparableHint } from './cleanup/hint-utils';
-
-// ... (remaining code)
-
-const isLikelyCapturePersonNameLine = (line: string): boolean => {
-  const tokens = line
-    .split(/\s+/)
-    .map((token: string): string => normalizeCaptureWordToken(token))
-    .filter((token: string): boolean => token.length > 0);
-  if (tokens.length < 2 || tokens.length > 4) return false;
-  if (tokens.some((token: string): boolean => /\d/.test(token))) return false;
-
-  const letterTokens = tokens.filter((token: string): boolean => /[\p{L}]/u.test(token));
-  if (letterTokens.length < 2) return false;
-  return letterTokens.every((token: string): boolean => {
-    if (!/^[\p{L}][\p{L}'’`-]*$/u.test(token)) return false;
-    const first = token.charAt(0);
-    if (first !== first.toLocaleUpperCase()) return false;
-    const rest = token.slice(1);
-    if (rest.length === 0) return true;
-    if (token === token.toLocaleUpperCase()) return true;
-    return rest === rest.toLocaleLowerCase();
-  });
-};
-
-const isLikelyCaptureOrganizationLine = (line: string): boolean => {
-  const trimmed = line.trim();
-  if (trimmed.length === 0) return false;
-  const wordCount = trimmed.split(/\s+/).filter((token: string): boolean => token.length > 0).length;
-  if (wordCount === 0 || wordCount > 10) return false;
-  return lineContainsComparableHint(trimmed, CAPTURE_ORGANIZATION_HINTS);
-};
+import {
+  isLikelyCapturePersonNameLine,
+  isLikelyCaptureOrganizationLine,
+  normalizeCaptureTextLine,
+} from '@/features/case-resolver/services/capture';
 
 const isLikelyCaptureAddressContinuationLine = (line: string): boolean => {
   const trimmed = line.trim();

@@ -1,3 +1,15 @@
+/**
+ * Error System
+ * 
+ * Centralized error classification, categorization, and handling system.
+ * Provides:
+ * - Error category classification and mapping
+ * - Suggested action resolution for errors
+ * - User-facing error message generation
+ * - Error context enrichment
+ * - Error reporting and observability integration
+ */
+
 import {
   ERROR_CATEGORY,
   type ErrorCategory,
@@ -12,9 +24,15 @@ import { resolveErrorUserMessage } from '@/shared/errors/error-catalog';
 import type { ResolvedError } from '@/shared/contracts/base';
 import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
+/** Re-export error categories for convenience */
 export const ErrorCategories = ERROR_CATEGORY;
 export type { ErrorCategory, ErrorContext };
 
+/**
+ * Logs internal error system failures for debugging
+ * @param message - Description of the failure
+ * @param error - The error that occurred
+ */
 const logErrorSystemFailure = async (
   message: string,
   error: unknown,

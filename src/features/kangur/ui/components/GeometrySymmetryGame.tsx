@@ -42,6 +42,7 @@ import type {
   KangurMiniGameInformationalFeedback,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { cn } from '@/features/kangur/shared/utils';
 import {
   CANVAS_HEIGHT,
@@ -174,10 +175,6 @@ function useGeometrySymmetryRoundAdvance(input: {
       if (wasCorrect) {
         setScore(nextScore);
       }
-
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ... existing code
 
       if (nextRoundTimeoutRef.current !== null) {
         safeClearTimeout(nextRoundTimeoutRef.current);

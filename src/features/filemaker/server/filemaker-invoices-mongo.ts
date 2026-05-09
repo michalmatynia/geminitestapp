@@ -1,3 +1,15 @@
+/**
+ * Filemaker Invoices MongoDB Repository
+ * 
+ * MongoDB repository for managing Filemaker invoice data and organization links.
+ * Provides:
+ * - Invoice document storage and retrieval
+ * - Organization-invoice relationship management
+ * - Legacy UUID mapping and migration support
+ * - Invoice collection operations
+ * - Complex invoice data normalization
+ */
+
 import 'server-only';
 
 /* eslint-disable complexity, max-lines-per-function */

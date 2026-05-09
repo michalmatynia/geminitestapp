@@ -1,3 +1,15 @@
+/**
+ * Runtime Action Editor Validation
+ * 
+ * Validation utilities for runtime action editor blocks and configurations.
+ * Provides:
+ * - Action block validation
+ * - Step sequence validation
+ * - Marketplace-specific validation rules
+ * - Action sequence constraints
+ * - Editor state validation
+ */
+
 import type { PlaywrightActionBlock } from '@/shared/contracts/playwright-steps';
 
 import { ACTION_SEQUENCES, type ActionSequenceKey } from './action-sequences';
@@ -8,13 +20,16 @@ import {
 import { STEP_GROUPS } from './step-groups';
 import { STEP_REGISTRY, type StepId } from './step-registry';
 
+/** Tradera quicklist runtime action keys */
 const TRADERA_QUICKLIST_RUNTIME_KEYS = new Set<ActionSequenceKey>([
   'tradera_quicklist_list',
   'tradera_quicklist_relist',
   'tradera_quicklist_sync',
 ]);
 
+/** Tradera form step IDs for validation */
 const TRADERA_QUICKLIST_FORM_STEP_IDS = new Set<StepId>(STEP_GROUPS.TRADERA_FORM);
+/** Tradera authentication step IDs */
 const TRADERA_CHECK_STATUS_AUTH_STEP_IDS = [
   'auth_check',
   'auth_login',

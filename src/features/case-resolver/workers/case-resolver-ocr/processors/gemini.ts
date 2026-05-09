@@ -1,4 +1,5 @@
 import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
+import { externalServiceError } from '@/shared/errors/app-error';
 
 import { REMOTE_OCR_TIMEOUT_MS } from '../config';
 import { parseGeminiResponseText } from '../response-parsers';
@@ -51,10 +52,15 @@ export const runGeminiOcrRequest = async (input: {
     REMOTE_OCR_TIMEOUT_MS,
     'Gemini OCR'
   );
+
   if (!response.ok) {
     const responseBody = await response.text();
     // Gemini API returned an error response
-    throw new Error(responseBody.trim() || `Gemini OCR request failed (${response.status}).`);
+    throw externalServiceError(`Gemini OCR request failed with status ${response.status}.`, {
+      status: response.status,
+      responseBody,
+      model: input.model,
+    });
   }
   const payload = (await response.json()) as GeminiResponse;
   return parseGeminiResponseText(payload);

@@ -1,3 +1,15 @@
+/**
+ * AI Server Settings
+ * 
+ * Server-side AI configuration and settings management.
+ * Provides:
+ * - MongoDB-based settings retrieval
+ * - AI model configuration access
+ * - Server-only settings operations
+ * - Error handling and fallback strategies
+ * - Connection validation and recovery
+ */
+
 import 'server-only';
 
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
@@ -5,6 +17,11 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Reads a setting value from MongoDB
+ * @param key - Setting key to retrieve
+ * @returns Setting value or null if not found or unavailable
+ */
 const readMongoSettingValue = async (key: string): Promise<string | null> => {
   const mongoUri = process.env['MONGODB_URI'];
   if (typeof mongoUri !== 'string' || mongoUri.trim().length === 0) return null;

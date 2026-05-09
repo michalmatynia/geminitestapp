@@ -1,3 +1,15 @@
+/**
+ * Filemaker Job Application Content Normalization
+ * 
+ * Content normalization utilities for job application documents.
+ * Provides:
+ * - Cover letter content normalization
+ * - Email content formatting and validation
+ * - Tailored CV content processing
+ * - Experience highlight patch normalization
+ * - Content validation and sanitization
+ */
+
 import type {
   FilemakerJobApplicationCoverLetter,
   FilemakerJobApplicationEmail,

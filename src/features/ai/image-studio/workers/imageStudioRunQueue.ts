@@ -48,7 +48,12 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { ImageStudioRunDispatchMode };
 
-const LOG_SOURCE = 'image-studio-run-queue';
+/**
+ * Builds a standardized source string for logging: 'ai.image-studio.run.<action>'
+ */
+const buildImageStudioSource = (action: string): string => `ai.image-studio.run.${action}`;
+
+const LOG_SOURCE = buildImageStudioSource('worker');
 
 type ImageStudioRunJobData = {
   runId: string;
@@ -469,11 +474,10 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
     }
 
     if (run.status === 'completed' || run.status === 'failed') {
-      await logSystemEvent({
-        level: 'info',
-        source: LOG_SOURCE,
-        message: `Run ${run.id} already terminal (${run.status}), skipping`,
-        context: { runId: run.id, status: run.status },
+      await ErrorSystem.logInfo(`Run ${run.id} already terminal (${run.status}), skipping`, {
+        service: buildImageStudioSource('skip'),
+        runId: run.id,
+        status: run.status,
       });
       return;
     }
@@ -624,7 +628,7 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
   },
   onFailed: async (jobId, error, data) => {
     await ErrorSystem.captureException(error, {
-      service: LOG_SOURCE,
+      service: buildImageStudioSource('failed'),
       action: 'onFailed',
       jobId,
       runId: data.runId,
@@ -703,11 +707,9 @@ export const enqueueImageStudioRunJob = async (
   await assertImageStudioEnabled();
 
   if (!isRedisAvailable()) {
-    await logSystemEvent({
-      level: 'info',
-      source: LOG_SOURCE,
-      message: `Redis unavailable for run ${runId}; processing inline in background`,
-      context: { runId },
+    await ErrorSystem.logInfo(`Redis unavailable for run ${runId}; processing inline in background`, {
+      service: buildImageStudioSource('inline-queued'),
+      runId,
     });
     processInlineRunInBackground(runId, 'redis_unavailable');
     return 'inline';
@@ -718,14 +720,10 @@ export const enqueueImageStudioRunJob = async (
     return 'queued';
   } catch (enqueueError) {
     void ErrorSystem.captureException(enqueueError);
-    await logSystemEvent({
-      level: 'warn',
-      source: LOG_SOURCE,
-      message: `Queue enqueue failed for run ${runId}; falling back to inline processing`,
-      context: {
-        runId,
-        error: enqueueError instanceof Error ? enqueueError.message : String(enqueueError),
-      },
+    await ErrorSystem.logInfo(`Queue enqueue failed for run ${runId}; falling back to inline processing`, {
+      service: buildImageStudioSource('enqueue-failed'),
+      runId,
+      error: enqueueError instanceof Error ? enqueueError.message : String(enqueueError),
     });
 
     processInlineRunInBackground(runId, 'enqueue_failed');

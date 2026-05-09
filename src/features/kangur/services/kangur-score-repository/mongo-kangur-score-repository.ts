@@ -9,6 +9,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { normalizeSort } from './shared';
 
 import type { KangurScoreListInput, KangurScoreRepository } from './types';
+import { buildKangurSource } from '@/features/kangur/observability/server';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
@@ -215,17 +216,27 @@ export const mongoKangurScoreRepository: KangurScoreRepository = {
     };
 
     try {
-      const insertResult = await db
+      const result = await db
         .collection<KangurScoreDocument>(KANGUR_SCORES_COLLECTION)
         .insertOne({
           ...payload,
           _id: new ObjectId(),
         });
 
-      return toDto({
-        _id: insertResult.insertedId,
+      const score = toDto({
+        _id: result.insertedId,
         ...payload,
       });
+
+      void ErrorSystem.logInfo(`Created Kangur score: ${score.id}`, {
+        service: buildKangurSource('score-repository', 'create'),
+        scoreId: score.id,
+        operation: score.operation,
+        learnerId: score.learner_id,
+        score: score.score,
+      });
+
+      return score;
     } catch (error: unknown) {
       void ErrorSystem.captureException(error);
       if (!clientMutationId || !isMongoDuplicateKeyError(error)) {

@@ -4,6 +4,11 @@ import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-re
 import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'integrations.base-export.<action>'
+ */
+const buildBaseExportSource = (action: string): string => `integrations.base-export.${action}`;
+
 import { processBaseExportJob } from './baseExportProcessor';
 
 import type { ImageBase64Mode, ImageTransformOptions } from '@/shared/contracts/integrations/base';
@@ -86,7 +91,7 @@ const queue: ManagedQueue<BaseExportJobData> = createManagedQueue<BaseExportJobD
   },
   onCompleted: async (jobId: string, _result: unknown, data: BaseExportJobData) => {
     await ErrorSystem.logInfo('Base export job completed', {
-      service: 'base-export-queue',
+      service: buildBaseExportSource('complete'),
       productId: data.productId,
       runId: data.runId,
       jobId,
@@ -99,7 +104,7 @@ const queue: ManagedQueue<BaseExportJobData> = createManagedQueue<BaseExportJobD
     context?: Record<string, unknown>
   ) => {
     await ErrorSystem.captureException(error, {
-      service: 'base-export-queue',
+      service: buildBaseExportSource('failed'),
       productId: data.productId,
       runId: data.runId,
       jobId,
@@ -121,7 +126,7 @@ export const enqueueBaseExportJob = async (data: BaseExportJobData): Promise<str
   const jobId = `export-${data.productId}-${data.connectionId}-${data.inventoryId}-${dedupeBucket}`;
   const queuedJobId = await queue.enqueue(data, { jobId });
   await ErrorSystem.logInfo('Base export job queued', {
-    service: 'base-export-queue',
+    service: buildBaseExportSource('queued'),
     productId: data.productId,
     connectionId: data.connectionId,
     runId: data.runId,

@@ -1,5 +1,19 @@
+/**
+ * Secret Setting Keys Configuration
+ * 
+ * Centralized configuration for secret setting key names and redaction.
+ * Provides:
+ * - Authentication provider secret keys (Google, Facebook, email)
+ * - SMTP configuration keys for email services
+ * - FileMaker campaign email integration keys
+ * - Webhook URL and secret configurations
+ * - Redacted value constants for security
+ */
+
+/** Redacted value used to mask secret settings in responses */
 export const SECRET_SETTING_REDACTED_VALUE = '';
 
+/** Authentication service secret setting keys */
 export const AUTH_SECRET_SETTINGS_KEYS = {
   googleClientId: 'auth_google_client_id',
   googleClientSecret: 'auth_google_client_secret',
@@ -14,6 +28,7 @@ export const AUTH_SECRET_SETTINGS_KEYS = {
   smtpFrom: 'auth_smtp_from',
 } as const;
 
+/** FileMaker campaign email integration secret setting keys */
 export const FILEMAKER_CAMPAIGN_EMAIL_SECRET_SETTINGS_KEYS = {
   webhookUrl: 'filemaker_campaign_email_webhook_url',
   webhookSecret: 'filemaker_campaign_email_webhook_secret',

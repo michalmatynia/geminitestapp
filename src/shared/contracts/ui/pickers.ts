@@ -1,3 +1,15 @@
+/**
+ * UI Pickers Contracts
+ * 
+ * Type definitions for picker and selector UI components.
+ * Provides:
+ * - Generic picker option interfaces
+ * - Dropdown and selector types
+ * - Icon integration for options
+ * - Base picker component contracts
+ * - Reusable picker patterns
+ */
+
 import type { ReactNode } from 'react';
 import type { IdLabeledOptionDto } from './base';
 

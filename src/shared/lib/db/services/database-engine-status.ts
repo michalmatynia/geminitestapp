@@ -1,3 +1,17 @@
+/**
+ * Database Engine Status Service
+ * 
+ * Provides comprehensive status reporting for the database engine system.
+ * Monitors and reports on:
+ * - Provider connection states (MongoDB, Redis, etc.)
+ * - Service availability and health
+ * - Collection routing and accessibility
+ * - Primary provider configuration status
+ * - Overall system health aggregation
+ * 
+ * Server-only module for internal status monitoring.
+ */
+
 import 'server-only';
 
 import type {

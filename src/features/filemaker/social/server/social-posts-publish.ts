@@ -28,6 +28,11 @@ import {
 const truncatePublishError = (message: string): string =>
   message.length > 1000 ? `${message.slice(0, 997).trimEnd()}...` : message;
 
+/**
+ * Builds a standardized source string for logging: 'filemaker.social-posts.<action>'
+ */
+const buildFilemakerSource = (action: string): string => `filemaker.social-posts.${action}`;
+
 export async function publishSocialPublishingPost(
   post: SocialPublishingPost,
   options?: { mode?: SocialPublishingPublishMode; skipImages?: boolean }
@@ -68,6 +73,7 @@ export async function publishSocialPublishingPost(
     }
     void ErrorSystem.logInfo('Social publishing post published', {
       ...baseContext,
+      service: buildFilemakerSource('publish'),
       durationMs: Date.now() - startedAt,
       publishedPostId: result?.postId ?? null,
     });
@@ -133,6 +139,7 @@ export async function unpublishSocialPublishingPost(
       }
       void ErrorSystem.logInfo('Social publishing post unpublished (kept locally)', {
         ...baseContext,
+        service: buildFilemakerSource('unpublish'),
         durationMs: Date.now() - startedAt,
       });
       return updated;
@@ -144,6 +151,7 @@ export async function unpublishSocialPublishingPost(
     }
     void ErrorSystem.logInfo('Social publishing post unpublished', {
       ...baseContext,
+      service: buildFilemakerSource('unpublish'),
       durationMs: Date.now() - startedAt,
     });
     return deleted;
@@ -194,7 +202,7 @@ export async function publishDueScheduledSocialPublishingPosts(
 
   const failedCount = duePosts.length - publishedCount;
   const summaryContext = {
-    service: 'social-publishing.posts.publish-scheduled',
+    service: buildFilemakerSource('publish-scheduled'),
     durationMs: Date.now() - startedAt,
     dueCount: duePosts.length,
     publishedCount,

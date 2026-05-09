@@ -1,3 +1,15 @@
+/**
+ * Playwright Actions Settings Validation
+ * 
+ * Validation utilities for Playwright action settings and configurations.
+ * Provides:
+ * - Action schema validation and normalization
+ * - Runtime action error collection
+ * - Action sequence key validation
+ * - Settings integrity checking
+ * - Error reporting and analysis
+ */
+
 import {
   normalizePlaywrightAction,
   playwrightActionSchema,
@@ -8,14 +20,21 @@ import type { ActionSequenceKey } from './action-sequences';
 import { toActionSequenceKey } from './runtime-action-keys';
 import { validateRuntimeActionEditorBlocks } from './runtime-action-editor-validation';
 
+/** Validation result type for action loading */
 type ValidationResult =
   | { ok: true; actions: PlaywrightAction[]; value: string }
   | { ok: false; error: string };
 
+/** Analysis result for loaded Playwright actions */
 export type LoadedPlaywrightActionAnalysis = {
+  /** Errors by runtime action ID */
   runtimeActionErrorsById: Record<string, string>;
 };
 
+/**
+ * Collects actions grouped by their runtime key
+ * @param actions - Array of Playwright actions
+ */
 const collectActionsByRuntimeKey = (
   actions: PlaywrightAction[]
 ): {

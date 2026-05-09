@@ -1,3 +1,15 @@
+/**
+ * Playwright Action Run History Repository
+ * 
+ * Server-side repository for Playwright action run history and records.
+ * Provides:
+ * - Action run record storage and retrieval
+ * - Action run step tracking
+ * - MongoDB-based persistence
+ * - Query filtering and pagination
+ * - Error handling and observability integration
+ */
+
 import 'server-only';
 
 import type { Filter } from 'mongodb';
@@ -15,6 +27,7 @@ import {
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/** Action run document type without date fields */
 type ActionRunDocument = Omit<
   PlaywrightActionRunRecord,
   'createdAt' | 'updatedAt' | 'startedAt' | 'completedAt'

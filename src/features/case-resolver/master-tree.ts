@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, no-nested-ternary, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions -- Master tree assembly is legacy normalization code with broad shape handling. */
 /**
  * master-tree.ts
  *
@@ -22,20 +23,34 @@ import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { DecodedMasterTreeNode as SharedDecodedMasterTreeNode } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import {
+  fromCaseResolverAssetNodeId,
+  fromCaseResolverCaseNodeId,
+  fromCaseResolverFileNodeId,
+  fromCaseResolverFolderNodeId,
+  fromCaseResolverCaseContentFolderNodeId as decodeCaseResolverCaseContentFolderNodePayload,
+  fromCaseResolverCaseContentFileNodeId as decodeCaseResolverCaseContentFileNodePayload,
+  toCaseResolverAssetNodeId,
+  toCaseResolverCaseContentFileNodeId,
+  toCaseResolverCaseContentFolderNodeId,
+  toCaseResolverCaseNodeId,
+  toCaseResolverFileNodeId,
+  toCaseResolverFolderNodeId,
+} from './services/tree';
 
-// Node ID prefixes used to namespace different entity types so IDs never
-// collide across types.
-const FOLDER_NODE_PREFIX = 'folder:';
-const FILE_NODE_PREFIX = 'file:';
-const ASSET_NODE_PREFIX = 'asset:';
-const CASE_NODE_PREFIX = 'case:';
-const CASE_CONTENT_FOLDER_NODE_PREFIX = 'case_content_folder:';
-const CASE_CONTENT_FILE_NODE_PREFIX = 'case_content_file:';
-// Separator used in case-content node IDs to delimit the case ID from the
-// folder path or file ID.
-const CASE_CONTENT_NODE_SEPARATOR = '::';
+export {
+  fromCaseResolverAssetNodeId,
+  fromCaseResolverCaseNodeId,
+  fromCaseResolverFileNodeId,
+  fromCaseResolverFolderNodeId,
+  toCaseResolverAssetNodeId,
+  toCaseResolverCaseContentFileNodeId,
+  toCaseResolverCaseContentFolderNodeId,
+  toCaseResolverCaseNodeId,
+  toCaseResolverFileNodeId,
+  toCaseResolverFolderNodeId,
+};
 
 export type CaseResolverMasterNodeRef =
   | { entity: 'folder'; id: string; nodeId: string }
@@ -60,58 +75,10 @@ export type CaseResolverCaseContentFileMasterNodeRef = {
   nodeId: string;
 };
 
-// Produces a stable node ID for a workspace folder.
-export const toCaseResolverFolderNodeId = (folderPath: string): string =>
-  `${FOLDER_NODE_PREFIX}${folderPath}`;
-
-export const toCaseResolverFileNodeId = (fileId: string): string => `${FILE_NODE_PREFIX}${fileId}`;
-
-export const toCaseResolverAssetNodeId = (assetId: string): string =>
-  `${ASSET_NODE_PREFIX}${assetId}`;
-
-export const toCaseResolverCaseNodeId = (caseId: string): string => `${CASE_NODE_PREFIX}${caseId}`;
-
-export const toCaseResolverCaseContentFolderNodeId = (caseId: string, folderPath: string): string =>
-  `${CASE_CONTENT_FOLDER_NODE_PREFIX}${encodeURIComponent(caseId)}${CASE_CONTENT_NODE_SEPARATOR}${encodeURIComponent(folderPath)}`;
-
-export const toCaseResolverCaseContentFileNodeId = (caseId: string, fileId: string): string =>
-  `${CASE_CONTENT_FILE_NODE_PREFIX}${encodeURIComponent(caseId)}${CASE_CONTENT_NODE_SEPARATOR}${encodeURIComponent(fileId)}`;
-
-export const fromCaseResolverFolderNodeId = (value: string): string | null =>
-  value.startsWith(FOLDER_NODE_PREFIX) ? value.slice(FOLDER_NODE_PREFIX.length) : null;
-
-export const fromCaseResolverFileNodeId = (value: string): string | null =>
-  value.startsWith(FILE_NODE_PREFIX) ? value.slice(FILE_NODE_PREFIX.length) : null;
-
-export const fromCaseResolverAssetNodeId = (value: string): string | null =>
-  value.startsWith(ASSET_NODE_PREFIX) ? value.slice(ASSET_NODE_PREFIX.length) : null;
-
-export const fromCaseResolverCaseNodeId = (value: string): string | null =>
-  value.startsWith(CASE_NODE_PREFIX) ? value.slice(CASE_NODE_PREFIX.length) : null;
-
-const decodeCaseContentNodePayload = (value: string, prefix: string): [string, string] | null => {
-  if (!value.startsWith(prefix)) return null;
-  const payload = value.slice(prefix.length);
-  const separatorIndex = payload.indexOf(CASE_CONTENT_NODE_SEPARATOR);
-  if (separatorIndex <= 0) return null;
-  const left = payload.slice(0, separatorIndex);
-  const right = payload.slice(separatorIndex + CASE_CONTENT_NODE_SEPARATOR.length);
-  if (!left || !right) return null;
-  try {
-    const decodedLeft = decodeURIComponent(left).trim();
-    const decodedRight = decodeURIComponent(right).trim();
-    if (!decodedLeft || !decodedRight) return null;
-    return [decodedLeft, decodedRight];
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
-};
-
 export const fromCaseResolverCaseContentFolderNodeId = (
   value: string
 ): { caseId: string; folderPath: string } | null => {
-  const decoded = decodeCaseContentNodePayload(value, CASE_CONTENT_FOLDER_NODE_PREFIX);
+  const decoded = decodeCaseResolverCaseContentFolderNodePayload(value);
   if (!decoded) return null;
   const [caseId, folderPath] = decoded;
   return { caseId, folderPath };
@@ -120,7 +87,7 @@ export const fromCaseResolverCaseContentFolderNodeId = (
 export const fromCaseResolverCaseContentFileNodeId = (
   value: string
 ): { caseId: string; fileId: string } | null => {
-  const decoded = decodeCaseContentNodePayload(value, CASE_CONTENT_FILE_NODE_PREFIX);
+  const decoded = decodeCaseResolverCaseContentFileNodePayload(value);
   if (!decoded) return null;
   const [caseId, fileId] = decoded;
   return { caseId, fileId };

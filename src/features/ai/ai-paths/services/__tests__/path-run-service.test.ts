@@ -30,6 +30,7 @@ vi.mock('@/server/auth', () => ({
 
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   resolvePathRunRepository: resolvePathRunRepositoryMock,
+  getPathRunRepository: vi.fn(async () => (await resolvePathRunRepositoryMock()).repo),
 }));
 
 vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({

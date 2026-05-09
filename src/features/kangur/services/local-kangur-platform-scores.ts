@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines-per-function, @typescript-eslint/no-unused-vars -- Local score persistence split keeps helper imports during migration. */
 import { z } from 'zod';
 import {
   buildKangurScoreListPath,
@@ -48,39 +49,11 @@ const kangurScoreApiClient = createKangurApiClient({
   getHeaders: () => createActorAwareHeaders(),
 });
 
-const buildScoresUrl = (params: {
-  sort?: string;
-  limit?: number;
-  player_name?: string;
-  operation?: string;
-  subject?: KangurLessonSubject;
-  created_by?: string;
-  learner_id?: string;
-}): string => buildKangurScoreListPath(params);
-
-const getScoreDedupKey = (score: KangurScoreRecord): string => {
-  const mutationId = score.client_mutation_id?.trim();
-  return typeof mutationId === 'string' && mutationId.length > 0 ? mutationId : score.id;
-};
-
-const mergeScoreRows = (input: {
-  localRows: KangurScoreRecord[];
-  remoteRows: KangurScoreRecord[];
-  sort?: string;
-  limit?: number;
-}): KangurScoreRecord[] => {
-  const mergedRows = new Map<string, KangurScoreRecord>();
-
-  input.localRows.forEach((score) => {
-    mergedRows.set(getScoreDedupKey(score), score);
-  });
-  input.remoteRows.forEach((score) => {
-    mergedRows.set(getScoreDedupKey(score), score);
-  });
-
-  const limit = typeof input.limit === 'number' ? input.limit : DEFAULT_SCORE_LIMIT;
-  return sortScores(Array.from(mergedRows.values()), input.sort).slice(0, limit);
-};
+import {
+  getScoreDedupKey,
+  mergeScoreRows,
+  buildScoresUrl,
+} from '@/features/kangur/services/scores';
 
 const syncGuestScoresToApiIfAuthenticated = async (): Promise<void> => {
   if (!hasGuestKangurScores()) {

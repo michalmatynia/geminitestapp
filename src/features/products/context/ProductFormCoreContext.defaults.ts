@@ -1,3 +1,14 @@
+/**
+ * Product Form Core Context Defaults
+ * 
+ * Default value resolution for product form initialization.
+ * Handles:
+ * - Merging product and draft data
+ * - Localized product name resolution
+ * - SKU and placeholder handling
+ * - Type-safe default value selection
+ */
+
 import type { ProductFormData, ProductDraft } from '@/shared/contracts/products/drafts';
 import {
   normalizeProductMarketplaceContentOverrideDrafts,
@@ -10,12 +21,27 @@ import {
   splitStructuredProductName,
 } from '@/shared/lib/products/title-terms';
 
+/**
+ * Input for resolving product form defaults
+ */
 type ProductFormDefaultsInput = {
+  /** Existing product data */
   product?: ProductWithImages;
+  /** Draft data to merge with product */
   draft?: ProductDraft | null;
+  /** Initial SKU value */
   initialSku?: string;
 };
 
+/**
+ * Returns first defined value from product, draft, or fallback
+ * Prioritizes product value, then draft, then fallback
+ * 
+ * @param productValue - Value from product
+ * @param draftValue - Value from draft
+ * @param fallback - Default value if both are null/undefined
+ * @returns First defined value
+ */
 const firstDefined = <T,>(
   productValue: T | null | undefined,
   draftValue: T | null | undefined,
@@ -26,6 +52,14 @@ const firstDefined = <T,>(
   return fallback;
 };
 
+/**
+ * Returns first non-empty string from product or draft
+ * Prioritizes product value, then draft, then empty string
+ * 
+ * @param productValue - String from product
+ * @param draftValue - String from draft
+ * @returns First non-empty string or empty string
+ */
 const firstNonEmptyString = (
   productValue: string | null | undefined,
   draftValue: string | null | undefined
@@ -35,6 +69,14 @@ const firstNonEmptyString = (
   return '';
 };
 
+/**
+ * Resolves localized product name for a specific language
+ * Handles nested language-specific name objects
+ * 
+ * @param product - Product with localized names
+ * @param languageCode - Language code (en, pl, de)
+ * @returns Localized name or undefined if not found
+ */
 const resolveLocalizedProductName = (
   product: ProductWithImages | undefined,
   languageCode: 'en' | 'pl' | 'de'
@@ -52,14 +94,34 @@ const resolveLocalizedProductName = (
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 };
 
+/**
+ * Checks if a string has content (not null and not empty)
+ * 
+ * @param value - String to check
+ * @returns true if string has content
+ */
 const hasText = (value: string | null): boolean => value !== null && value.length > 0;
 
+/**
+ * Removes draft placeholder base names from product names
+ * Strips generic placeholder names while preserving real names
+ * 
+ * @param value - Product name to process
+ * @returns Name without placeholder prefix or empty string
+ */
 const stripDraftPlaceholderBaseName = (value: string | null | undefined): string => {
   if (value === null || value === undefined || value === '') return '';
   const [baseName = ''] = splitStructuredProductName(value);
   return isGenericProductNamePlaceholder(baseName) ? '' : value;
 };
 
+/**
+ * Resolves string default from product or draft
+ * 
+ * @param input - Product and draft data
+ * @param key - Field key to resolve
+ * @returns Resolved string value
+ */
 const resolveStringDefault = (
   { product, draft }: ProductFormDefaultsInput,
   key: keyof ProductWithImages & keyof ProductDraft
@@ -69,6 +131,13 @@ const resolveStringDefault = (
     draft?.[key] as string | null | undefined
   );
 
+/**
+ * Resolves number default from product or draft
+ * 
+ * @param input - Product and draft data
+ * @param key - Field key to resolve
+ * @returns Resolved number value or 0
+ */
 const resolveNumberDefault = (
   { product, draft }: ProductFormDefaultsInput,
   key: keyof ProductWithImages & keyof ProductDraft

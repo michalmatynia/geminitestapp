@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Download,
   ExternalLink,
-  Eye,
   FileText,
   Loader2,
   MoreVertical,
@@ -1127,8 +1126,8 @@ function JobApplicationRunStatusBadges({
 
 function JobApplicationsInline({
   applications,
-  jobListing,
   isCollapsingLegacy,
+  jobListing,
   onCollapseLegacy,
   onDelete,
   onOpenApplication,
@@ -1641,7 +1640,6 @@ const buildApplicationMatchAnalysisOutputContract = (): Record<string, unknown> 
     jobEvidence: ['specific evidence from the job posting'],
     riskFlags: ['risks, mismatches, or unclear points'],
     interviewTalkingPoints: ['points to emphasize in interview'],
-    learningPlan: ['focused preparation actions'],
   },
 });
 

@@ -35,6 +35,7 @@ import {
 } from '@/features/filemaker/social/shared/social-playwright-capture';
 import { KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
 import { resolvePlaywrightRequestStorageState } from '@/features/playwright/server/request-storage-state';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 import {
   findLatestAddonByPresetId,
@@ -212,10 +213,6 @@ const resolvePlaywrightStorageState = (params: {
 
   return resolved;
 };
-
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
 
 const sleep = async (ms: number): Promise<void> =>
   new Promise<void>((resolve) => {

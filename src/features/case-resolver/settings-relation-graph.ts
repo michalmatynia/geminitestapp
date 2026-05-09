@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, no-nested-ternary, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-shadow, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/strict-boolean-expressions -- Relation graph sanitizer preserves legacy custom graph shape handling. */
 /**
  * settings-relation-graph.ts
  *
@@ -18,7 +19,7 @@
  *  - nodeMeta / edgeMeta     – per-node/edge metadata (entity type, label,
  *    timestamps) stored alongside the graph and used to detect drift.
  */
-import { type AiNode, type CaseResolverEdge, type CaseResolverAssetFile, type CaseResolverFile, type CaseResolverRelationEdgeKind, type CaseResolverRelationEdgeMeta, type CaseResolverRelationEntityType, type CaseResolverRelationFileKind, type CaseResolverRelationGraph, type CaseResolverRelationNodeMeta } from '@/shared/contracts/case-resolver';
+import { type AiNode, type CaseResolverEdge, type CaseResolverAssetFile, type CaseResolverFile, type CaseResolverRelationEdgeKind, type CaseResolverRelationEdgeMeta, type CaseResolverRelationEntityType, type CaseResolverRelationFileKind, type CaseResolverRelationGraph, type CaseResolverRelationNodeMeta, CASE_RESOLVER_RELATION_ROOT_FOLDER_ID, DEFAULT_CASE_RESOLVER_RELATION_EDGE_META, DEFAULT_CASE_RESOLVER_RELATION_NODE_META } from '@/shared/contracts/case-resolver';
 import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';

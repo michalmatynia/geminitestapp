@@ -21,18 +21,12 @@ import type { ProductDbProvider } from '@/shared/lib/products/services/product-p
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
-  tempFolderName,
   MAX_IMAGE_BYTES,
   MAX_STUDIO_IMAGE_BYTES,
   ALLOWED_MIME_EXACT,
 } from './constants';
 import {
-  agentCreatorRoot,
-  caseResolverRoot,
-  notesRoot,
-  productsRoot,
   publicRoot,
-  studioRoot,
   uploadsRoot,
 } from './server-constants';
 import { createFileUploadEvent } from './services/file-upload-events';
@@ -118,106 +112,10 @@ async function removeEmptyUploadParentDirectory(diskPath: string): Promise<void>
   });
 }
 
-function sanitizeSku(sku: string): string {
-  return sku.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
-}
-
-function sanitizeSegment(value: string): string {
-  return value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
-}
-
-function sanitizeFolderPath(value: string): string {
-  const normalized = value.replace(/\\/g, '/').trim();
-  const parts = normalized
-    .split('/')
-    .map((part: string) => part.trim())
-    .filter((part: string) => part && part !== '.' && part !== '..')
-    .map((part: string) => part.replace(/[^a-zA-Z0-9-_]/g, '_'))
-    .filter(Boolean);
-
-  return parts.join('/');
-}
-
-function sanitizeFilename(filename: string): string {
-  const ext = path.extname(filename).toLowerCase();
-  return `${randomUUID()}${ext}`;
-}
-
-function getUploadTarget({
-  category,
-  sku,
-  noteId,
-  projectId,
-  folder,
-}: {
-  category?:
-    | 'products'
-    | 'notes'
-    | 'cms'
-    | 'studio'
-    | 'case_resolver'
-    | 'agentcreator'
-    | undefined;
-  sku?: string | null | undefined;
-  noteId?: string | null | undefined;
-  projectId?: string | null | undefined;
-  folder?: string | null | undefined;
-}): { diskDir: string; publicDir: string } {
-  if (category === 'products') {
-    const folderName = sku ? sanitizeSku(sku) : tempFolderName;
-    const diskDir = path.join(productsRoot, folderName);
-    const publicDir = `/uploads/products/${folderName}`;
-    return { diskDir, publicDir };
-  }
-
-  if (category === 'notes' && noteId) {
-    const diskDir = path.join(notesRoot, noteId);
-    const publicDir = `/uploads/notes/${noteId}`;
-    return { diskDir, publicDir };
-  }
-
-  if (category === 'cms') {
-    const diskDir = path.join(uploadsRoot, 'cms');
-    const publicDir = '/uploads/cms';
-    return { diskDir, publicDir };
-  }
-
-  if (category === 'studio') {
-    if (!projectId) {
-      // Studio uploads require a project ID to organize files by project
-      throw new Error('projectId is required for studio uploads.');
-    }
-    const safeProject = sanitizeSegment(projectId);
-    const safeFolder = folder?.trim() ? sanitizeFolderPath(folder) : '';
-    const diskDir = safeFolder
-      ? path.join(studioRoot, safeProject, safeFolder)
-      : path.join(studioRoot, safeProject);
-    const publicDir = safeFolder
-      ? `/uploads/studio/${safeProject}/${safeFolder}`
-      : `/uploads/studio/${safeProject}`;
-    return { diskDir, publicDir };
-  }
-
-  if (category === 'case_resolver') {
-    const safeFolder = folder?.trim() ? sanitizeFolderPath(folder) : '';
-    const diskDir = safeFolder ? path.join(caseResolverRoot, safeFolder) : caseResolverRoot;
-    const publicDir = safeFolder
-      ? `/uploads/case-resolver/${safeFolder}`
-      : '/uploads/case-resolver';
-    return { diskDir, publicDir };
-  }
-
-  if (category === 'agentcreator') {
-    const safeFolder = folder?.trim() ? sanitizeFolderPath(folder) : '';
-    const diskDir = safeFolder ? path.join(agentCreatorRoot, safeFolder) : agentCreatorRoot;
-    const publicDir = safeFolder
-      ? `/uploads/agentcreator/${safeFolder}`
-      : '/uploads/agentcreator';
-    return { diskDir, publicDir };
-  }
-
-  return { diskDir: uploadsRoot, publicDir: '/uploads' };
-}
+import {
+  getUploadTarget,
+  sanitizeFilename,
+} from '@/shared/lib/files/services/upload';
 
 export async function uploadFile(
   file: File,

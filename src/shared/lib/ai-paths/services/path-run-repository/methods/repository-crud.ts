@@ -5,6 +5,7 @@
  * for AI Path runs within the MongoDB repository.
  */
 
+import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { randomUUID } from 'node:crypto';
 import type { AiPathRunCreateInput, AiPathRunRecord, AiPathRunUpdate, AiPathRunListOptions, AiPathRunStatus } from '@/shared/contracts/ai-paths';
@@ -160,8 +161,7 @@ export const updateRun = async (runId: string, data: AiPathRunUpdate): Promise<A
   );
 
   if (!result) {
-    // Run with the specified ID does not exist in the database
-    throw new Error('Run not found');
+    throw internalError('Run not found for update.', { runId });
   }
   return toRunRecord(result);
 };

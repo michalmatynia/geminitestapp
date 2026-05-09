@@ -20,11 +20,13 @@ export function renderSystemLogDetailsContent({
   log,
   interpretation,
   isInterpreting,
+  onGenerateInterpretation,
   onFilterChange,
 }: {
   log: SystemLogRecord;
   interpretation?: { summary: string; warnings?: string[] | null };
   isInterpreting: boolean;
+  onGenerateInterpretation: () => void;
   onFilterChange: (key: string, value: string) => void;
 }): React.JSX.Element {
   const category = getLogCategory(log);
@@ -63,6 +65,24 @@ export function renderSystemLogDetailsContent({
             AI Interpretation
           </Hint>
           <p className='text-sm text-gray-200'>Generating interpretation...</p>
+        </Card>
+      ) : null}
+
+      {!interpretation && !isInterpreting ? (
+        <Card variant='glass' padding='md' className='space-y-3 bg-sky-950/20'>
+          <div className='flex items-center justify-between gap-3'>
+            <Hint uppercase variant='muted' className='font-semibold'>
+              AI Interpretation
+            </Hint>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={onGenerateInterpretation}
+            >
+              Generate interpretation
+            </Button>
+          </div>
         </Card>
       ) : null}
 

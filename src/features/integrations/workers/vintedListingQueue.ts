@@ -4,6 +4,11 @@ import type { VintedListingJobInput } from '@/features/integrations/services/vin
 import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'integrations.vinted-listing.<action>'
+ */
+const buildVintedSource = (action: string): string => `integrations.vinted-listing.${action}`;
+
 type VintedListingServiceModule = {
   processVintedListingJob: (input: VintedListingJobInput) => Promise<void>;
 };
@@ -27,17 +32,15 @@ const queue: ManagedQueue<VintedListingJobInput> =
     },
     onCompleted: async (jobId: string, _result: unknown, data: VintedListingJobInput) => {
       await ErrorSystem.logInfo('Vinted listing job completed', {
-        service: 'vinted-listing-queue',
+        service: buildVintedSource(data.action),
         listingId: data.listingId,
-        action: data.action,
         jobId,
       });
     },
     onFailed: async (jobId: string, error: Error, data: VintedListingJobInput) => {
       await ErrorSystem.captureException(error, {
-        service: 'vinted-listing-queue',
+        service: buildVintedSource(data.action),
         listingId: data.listingId,
-        action: data.action,
         jobId,
       });
     },
@@ -62,9 +65,8 @@ export const enqueueVintedListingJob = async (
     jobId,
   });
   await ErrorSystem.logInfo('Vinted listing job queued', {
-    service: 'vinted-listing-queue',
+    service: buildVintedSource(data.action),
     listingId: data.listingId,
-    action: data.action,
     jobId: queuedJobId,
   });
   return queuedJobId;

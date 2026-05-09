@@ -24,15 +24,25 @@ type ApiErrorLike = {
   category?: string | undefined;
 };
 
+/**
+ * Regular expression patterns for classifying errors by category.
+ * Each pattern maps to a specific error category for better error handling.
+ */
 const ERROR_PATTERNS = [
+  // Network errors - Connection failures, timeouts, DNS issues
   [
     /\b(connection|network|timeout|refused|reset)\b|failed to fetch|\bfetch\b|network request failed/i,
     ERROR_CATEGORY.NETWORK,
   ],
+  // Authentication/Authorization errors - Login, permissions, access control
   [/auth|login|permission|access|unauthorized|forbidden|jwt|session/i, ERROR_CATEGORY.AUTH],
+  // Not found errors - Missing resources (treated as validation issue)
   [/not found/i, ERROR_CATEGORY.VALIDATION],
+  // Validation errors - Invalid input, missing fields, format issues
   [/validation|invalid|missing|required|wrong format|bad request/i, ERROR_CATEGORY.VALIDATION],
+  // Database errors - MongoDB, SQL, query failures, migrations
   [/database|mongo|sql|query failed|migration|foreign key/i, ERROR_CATEGORY.DATABASE],
+  // AI/LLM errors - OpenAI, Ollama, token limits, embeddings, prompts
   [
     /\b(ai|openai|ollama|llm)\b|\btoken limit\b|\bembedding(?:s)?\b|\bvision\b|\bprompt(?:s)?\b/i,
     ERROR_CATEGORY.AI,
@@ -46,28 +56,46 @@ const isErrorCategory = (value: unknown): value is ErrorCategory =>
 
 /**
  * Classifies an error into a category based on its message or instance type.
+ * 
+ * Classification priority:
+ * 1. Zod validation errors → VALIDATION
+ * 2. AppError instances → Based on error code
+ * 3. API-like errors → Based on HTTP status code
+ * 4. Message pattern matching → Based on error message content
+ * 5. Default → SYSTEM
+ * 
+ * @param error - Unknown error to classify
+ * @returns ErrorCategory enum value
  */
 export function classifyError(error: unknown): ErrorCategory {
+  // Zod validation errors - Schema validation failures
   if (error instanceof z.ZodError) {
     return ERROR_CATEGORY.VALIDATION;
   }
 
+  // AppError instances - Use error code for classification
   if (isAppError(error)) {
+    // Authentication/authorization errors
     if (error.code === AppErrorCodes.unauthorized || error.code === AppErrorCodes.forbidden) {
       return ERROR_CATEGORY.AUTH;
     }
+    // Database operation errors
     if (error.code === AppErrorCodes.databaseError) {
       return ERROR_CATEGORY.DATABASE;
     }
+    // Validation and bad request errors
     if (error.code === AppErrorCodes.validation || error.httpStatus === 400) {
       return ERROR_CATEGORY.VALIDATION;
     }
   }
 
+  // API-like errors with status codes
   if (isApiErrorLike(error)) {
+    // Use explicit category if provided
     if (isErrorCategory(error.category)) {
       return error.category;
     }
+    // Map HTTP status codes to categories
     if (error.status === 401 || error.status === 403) return ERROR_CATEGORY.AUTH;
     if (error.status === 404 || error.status === 400) return ERROR_CATEGORY.VALIDATION;
     if (error.status >= 500) return ERROR_CATEGORY.SYSTEM;
@@ -75,24 +103,28 @@ export function classifyError(error: unknown): ErrorCategory {
 
   const message = error instanceof Error ? error.message : String(error);
 
+  // Special case: Unsupported keys in settings (validation issue)
   if (/includes unsupported keys/i.test(message)) {
     return ERROR_CATEGORY.VALIDATION;
   }
+  // Special case: Legacy trigger context modes (validation issue)
   if (/removed legacy trigger context modes/i.test(message)) {
     return ERROR_CATEGORY.VALIDATION;
   }
 
-  // Check common library error indicators
+  // Check for MongoDB-specific errors
   if (message.includes('MongoDB') || message.includes('MongoServerError')) {
     return ERROR_CATEGORY.DATABASE;
   }
 
+  // Pattern matching against common error messages
   for (const [pattern, category] of ERROR_PATTERNS) {
     if (pattern.test(message)) {
       return category;
     }
   }
 
+  // Default to system error if no pattern matches
   return ERROR_CATEGORY.SYSTEM;
 }
 
@@ -103,6 +135,18 @@ const isApiErrorLike = (error: unknown): error is ApiErrorLike =>
 
 /**
  * Provides suggested actions based on the error category and message.
+ * 
+ * Returns context-specific actions that help users resolve the error:
+ * - NETWORK: Retry the operation
+ * - AUTH: Re-authenticate or check permissions
+ * - DATABASE: Check connection or run migrations
+ * - VALIDATION: Review input or update configuration
+ * - AI: Adjust prompts, check model selection, or reduce content
+ * - SYSTEM: Refresh page or contact support
+ * 
+ * @param category - Error category from classifyError
+ * @param error - Original error object for message inspection
+ * @returns Array of suggested actions with labels and descriptions
  */
 export function getSuggestedActions(category: ErrorCategory, error?: unknown): SuggestedAction[] {
   const actions: SuggestedAction[] = [];
@@ -111,6 +155,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
 
   switch (category) {
     case ERROR_CATEGORY.NETWORK:
+      // Network connectivity issues - Suggest retry
       actions.push({
         label: 'Retry',
         description:
@@ -120,6 +165,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.AUTH:
+      // Session expiration - Suggest re-authentication
       if (normalizedMessage.includes('auth') || normalizedMessage.includes('session')) {
         actions.push({
           label: 'Login Again',
@@ -127,6 +173,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
           actionType: 'REAUTHENTICATE',
         });
       } else {
+        // Permission issues - Suggest checking permissions
         actions.push({
           label: 'Check Permissions',
           description:
@@ -137,6 +184,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.DATABASE:
+      // Schema migration issues - Suggest running migrations
       if (normalizedMessage.includes('migration') || normalizedMessage.includes('schema')) {
         actions.push({
           label: 'Run Migrations',
@@ -144,6 +192,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
           actionType: 'MIGRATE_DB',
         });
       }
+      // Database connection issues - Suggest checking connection
       actions.push({
         label: 'Check DB Connection',
         description: 'Ensure the database service is running and accessible.',
@@ -152,6 +201,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.VALIDATION:
+      // Legacy trigger context modes - Specific repair action
       if (/removed legacy trigger context modes/i.test(message)) {
         actions.push({
           label: 'Repair AI Path',
@@ -161,6 +211,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
         });
         break;
       }
+      // Agent persona settings issues - Update persona settings
       if (
         /agent persona settings payload includes unsupported keys/i.test(message) ||
         /agent persona payload includes unsupported keys/i.test(message)
@@ -173,6 +224,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
         });
         break;
       }
+      // Image studio settings issues - Update image studio settings
       if (/image studio settings payload includes unsupported keys/i.test(message)) {
         actions.push({
           label: 'Update Image Studio Settings',
@@ -182,6 +234,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
         });
         break;
       }
+      // Generic unsupported keys - Re-save settings
       if (/includes unsupported keys/i.test(message)) {
         actions.push({
           label: 'Check Settings Contract',
@@ -191,6 +244,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
         });
         break;
       }
+      // Generic validation errors - Review input
       actions.push({
         label: 'Check Input',
         description:
@@ -200,6 +254,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.AI:
+      // No model selected - Suggest selecting a model
       if (
         normalizedMessage.includes('no model assigned') ||
         (normalizedMessage.includes('model') && normalizedMessage.includes('did not select'))
@@ -212,6 +267,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
         });
         break;
       }
+      // Ollama connection issues - Check Ollama server
       if (normalizedMessage.includes('ollama') || normalizedMessage.includes('could not connect')) {
         actions.push({
           label: 'Check Ollama Connection',
@@ -221,12 +277,14 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
         });
         break;
       }
+      // Generic AI errors - Adjust prompt
       actions.push({
         label: 'Adjust Prompt',
         description:
           'The AI model might be having trouble with the current input. Try rephrasing or simplifying your request.',
         actionType: 'CHECK_CONFIG',
       });
+      // Token limit errors - Reduce content
       if (normalizedMessage.includes('token')) {
         actions.push({
           label: 'Reduce Content',
@@ -238,6 +296,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     default:
+      // System errors - Generic recovery actions
       actions.push({
         label: 'Refresh Page',
         description:

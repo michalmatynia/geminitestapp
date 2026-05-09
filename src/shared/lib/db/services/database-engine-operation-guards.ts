@@ -1,11 +1,25 @@
+/**
+ * Database Engine Operation Guards
+ * 
+ * Authorization and access control for database engine operations.
+ * Provides:
+ * - Operation gate definitions and labels
+ * - Permission checking for database operations
+ * - Access control enforcement
+ * - Operation authorization validation
+ * - Server-only operation guards
+ */
+
 import 'server-only';
 
 import { forbiddenError } from '@/shared/errors/app-error';
 import type { DatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-constants';
 import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
 
+/** Type for database engine operation gates */
 export type DatabaseEngineOperationGate = keyof DatabaseEngineOperationControls;
 
+/** Human-readable labels for each operation gate */
 const gateLabels: Record<DatabaseEngineOperationGate, string> = {
   allowManualFullSync: 'Manual full database sync',
   allowManualCollectionSync: 'Manual collection sync',
@@ -16,6 +30,11 @@ const gateLabels: Record<DatabaseEngineOperationGate, string> = {
   allowOperationJobCancellation: 'Operation job cancellation',
 };
 
+/**
+ * Asserts that a database engine operation is enabled
+ * @param gate - The operation gate to check
+ * @throws ForbiddenError if the operation is not allowed
+ */
 export async function assertDatabaseEngineOperationEnabled(
   gate: DatabaseEngineOperationGate
 ): Promise<void> {

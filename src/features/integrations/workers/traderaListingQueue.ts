@@ -4,6 +4,11 @@ import type { TraderaListingJobInput as _TraderaListingJobInput } from '@/featur
 import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'integrations.tradera-listing.<action>'
+ */
+const buildTraderaSource = (action: string): string => `integrations.tradera-listing.${action}`;
+
 type TraderaListingQueueJobData = {
   listingId: string;
   action: 'list' | 'relist' | 'sync' | 'check_status' | 'move_to_unsold';
@@ -39,9 +44,8 @@ const queue: ManagedQueue<TraderaListingQueueJobData> =
     },
     onCompleted: async (jobId: string, _result: unknown, data: TraderaListingQueueJobData) => {
       await ErrorSystem.logInfo('Tradera listing job completed', {
-        service: 'tradera-listing-queue',
+        service: buildTraderaSource(data.action),
         listingId: data.listingId,
-        action: data.action,
         jobId,
       });
     },
@@ -84,9 +88,8 @@ const concurrentQueue: ManagedQueue<TraderaListingQueueJobData> =
     },
     onCompleted: async (jobId: string, _result: unknown, data: TraderaListingQueueJobData) => {
       await ErrorSystem.logInfo('Tradera listing job completed (concurrent)', {
-        service: 'tradera-listing-queue-concurrent',
+        service: buildTraderaSource(data.action),
         listingId: data.listingId,
-        action: data.action,
         jobId,
       });
     },
@@ -176,10 +179,9 @@ export const enqueueTraderaListingJob = async (
     jobId,
   });
   await ErrorSystem.logInfo('Tradera listing job queued', {
-    service: 'tradera-listing-queue',
+    service: buildTraderaSource(data.action),
     queue: queueName,
     listingId: data.listingId,
-    action: data.action,
     jobId: queuedJobId,
     concurrencyMode: data.concurrencyMode ?? 'sequential',
   });

@@ -1,6 +1,7 @@
 import {
   recordRuntimeRunFinished,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import { configurationError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { type mutateAgentLease } from '@/shared/lib/agent-lease-service';
 import { type getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
@@ -107,20 +108,24 @@ export const recordBlockedLeaseFailure = async ({
   conflictingLease,
   ownerAgentId,
 }: RecordBlockedLeaseFailureInput): Promise<void> => {
-  await repo.createRunEvent({
-    runId: run.id,
-    level: 'error',
-    message: 'Run failed because execution ownership could not be claimed.',
-    metadata: {
+  const metadata = {
       leaseResourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
       leaseScopeId: run.id,
       requestedBy: ownerAgentId,
       blockingOwnerAgentId,
       ownerRunId: conflictingLease?.ownerRunId ?? null,
+      leaseId: conflictingLease?.leaseId ?? null,
       leaseExpiresAt: conflictingLease?.expiresAt ?? null,
       failedAt: failedAtIso,
-    },
+  };
+
+  await repo.createRunEvent({
+    runId: run.id,
+    level: 'error',
+    message: `Run failed: execution ownership could not be claimed. Blocked by owner agent: ${blockingOwnerAgentId ?? 'unknown'}.`,
+    metadata,
   });
+
   await recordRuntimeRunFinished({
     runId: run.id,
     status: 'failed',
@@ -139,5 +144,11 @@ export const recordBlockedLeaseFailure = async ({
       entityId: run.entityId,
       blockingOwnerAgentId,
     },
+  });
+
+  throw configurationError('Execution ownership could not be claimed due to lease contention.', {
+    ...metadata,
+    runId: run.id,
+    pathId: run.pathId,
   });
 };

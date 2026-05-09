@@ -12,6 +12,11 @@ import {
 } from '@/shared/lib/api/api-handler';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'ai.agentcreator.logs.<action>'
+ */
+const buildAgentCreatorLogsSource = (action: string): string => `ai.agentcreator.logs.${action}`;
+
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 type AgentBrowserLogRouteRecord = {
@@ -43,7 +48,7 @@ async function getHandler(
   });
   if (DEBUG_CHATBOT) {
     void ErrorSystem.logInfo('Logs loaded', {
-      service: 'agent-api',
+      service: buildAgentCreatorLogsSource('loaded'),
       runId,
       stepId,
       count: logs.length,

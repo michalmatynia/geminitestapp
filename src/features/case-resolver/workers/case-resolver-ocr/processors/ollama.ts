@@ -1,3 +1,5 @@
+import { externalServiceError } from '@/shared/errors/app-error';
+
 import { OLLAMA_BASE_URL, OLLAMA_OCR_TIMEOUT_MS } from '../config';
 import { parseOllamaResponseText } from '../response-parsers';
 import { type OllamaChatPayload } from '../types';
@@ -39,8 +41,11 @@ export const runOllamaOcrRequest = async (input: {
 
   if (!response.ok) {
     const responseBody = await response.text();
-    const fallback = `OCR runtime request failed (${response.status})`;
-    throw new Error(responseBody.trim() !== '' ? responseBody.trim() : fallback);
+    throw externalServiceError(`Ollama OCR request failed with status ${response.status}.`, {
+      status: response.status,
+      responseBody,
+      model: input.model,
+    });
   }
 
   const payload = (await response.json()) as OllamaChatPayload;

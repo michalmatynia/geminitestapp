@@ -1,3 +1,15 @@
+/**
+ * 3D Asset Uploader View Component
+ * 
+ * React component for uploading and managing 3D assets.
+ * Provides:
+ * - Drag-and-drop file upload interface
+ * - Asset metadata form (name, description, tags)
+ * - File validation and preview
+ * - Category and visibility management
+ * - Upload progress and error handling
+ */
+
 'use client';
 
 import type { JSX, DragEvent } from 'react';

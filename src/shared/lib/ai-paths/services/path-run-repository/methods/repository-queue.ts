@@ -93,45 +93,54 @@ export const getQueueStats = async (
  * @param {number} maxAgeMs - The maximum duration (ms) a run can remain in 'running' status.
  * @returns {Promise<{ count: number }>} The count of runs transitioned to failed.
  */
+import { databaseError } from '@/shared/errors/app-error';
+// ...
 export const markStaleRunningRuns = async (
   maxAgeMs: number
 ): Promise<{ count: number }> => {
-  await ensureIndexes();
-  const db = await getMongoDb();
-  const cutoff = new Date(Date.now() - maxAgeMs);
-  const result = await db.collection<RunDocument>(RUNS_COLLECTION).updateMany(
-    {
-      status: 'running',
-      $or: [
-        { startedAt: { $lt: cutoff } },
-        {
-          $and: [
-            {
-              $or: [{ startedAt: null }, { startedAt: { $exists: false } }],
-            },
-            {
-              $or: [
-                { updatedAt: { $lt: cutoff } },
-                {
-                  $and: [
-                    { $or: [{ updatedAt: { $exists: false } }] },
-                    { createdAt: { $lt: cutoff } },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      $set: {
-        status: 'failed',
-        finishedAt: new Date(),
-        errorMessage: 'Run marked failed due to stale running state.',
+  try {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const cutoff = new Date(Date.now() - maxAgeMs);
+    const result = await db.collection<RunDocument>(RUNS_COLLECTION).updateMany(
+      {
+        status: 'running',
+        $or: [
+          { startedAt: { $lt: cutoff } },
+          {
+            $and: [
+              {
+                $or: [{ startedAt: null }, { startedAt: { $exists: false } }],
+              },
+              {
+                $or: [
+                  { updatedAt: { $lt: cutoff } },
+                  {
+                    $and: [
+                      { $or: [{ updatedAt: { $exists: false } }] },
+                      { createdAt: { $lt: cutoff } },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
-    }
-  );
+      {
+        $set: {
+          status: 'failed',
+          finishedAt: new Date(),
+          errorMessage: 'Run marked failed due to stale running state.',
+        },
+      }
+    );
 
-  return { count: result.modifiedCount };
+    return { count: result.modifiedCount };
+  } catch (error) {
+    throw databaseError(`Failed to mark stale runs as failed for maxAgeMs: ${maxAgeMs}`, error, {
+      collection: RUNS_COLLECTION,
+      maxAgeMs,
+    });
+  }
 };

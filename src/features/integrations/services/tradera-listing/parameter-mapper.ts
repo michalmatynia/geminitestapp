@@ -1,4 +1,13 @@
 import {
+  normalizeLookupKey,
+  parseJsonPayload,
+  buildTraderaParameterMapperFieldKey,
+  buildTraderaParameterMapperCatalogEntryId,
+  compareCatalogEntries,
+  compareCategoryFetches,
+} from '@/features/integrations/services/tradera';
+import type { ResolvedTraderaCategoryMapping } from '@/features/integrations/services/tradera-listing/category-mapping';
+import {
   traderaParameterMapperCatalogPayloadSchema,
   traderaParameterMapperRulesPayloadSchema,
   type TraderaParameterMapperCatalogPayload,
@@ -7,78 +16,21 @@ import {
   type TraderaParameterMapperRule,
   type TraderaResolvedParameterMapperSelection,
 } from '@/shared/contracts/integrations/tradera-parameter-mapper';
-import type { ResolvedTraderaCategoryMapping } from '@/features/integrations/services/tradera-listing/category-mapping';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductParameterValue, ProductWithImages } from '@/shared/contracts/products/product';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+
+export {
+  buildTraderaParameterMapperCatalogEntryId,
+  buildTraderaParameterMapperFieldKey,
+};
 
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
-
-const normalizeLookupKey = (value: string): string =>
-  value
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '');
 
 const compareByUpdatedAtDesc = (
   left: { updatedAt?: string | null },
   right: { updatedAt?: string | null }
 ): number => new Date(right.updatedAt ?? 0).getTime() - new Date(left.updatedAt ?? 0).getTime();
-
-const compareCatalogEntries = (
-  left: TraderaParameterMapperCatalogEntry,
-  right: TraderaParameterMapperCatalogEntry
-): number => {
-  const byPath = (left.externalCategoryPath ?? left.externalCategoryName).localeCompare(
-    right.externalCategoryPath ?? right.externalCategoryName
-  );
-  if (byPath !== 0) return byPath;
-  return left.fieldLabel.localeCompare(right.fieldLabel);
-};
-
-const compareCategoryFetches = (
-  left: TraderaParameterMapperCategoryFetch,
-  right: TraderaParameterMapperCategoryFetch
-): number => {
-  const byPath = (left.externalCategoryPath ?? left.externalCategoryName).localeCompare(
-    right.externalCategoryPath ?? right.externalCategoryName
-  );
-  if (byPath !== 0) return byPath;
-  return left.externalCategoryId.localeCompare(right.externalCategoryId);
-};
-
-const parseJsonPayload = <T>(
-  rawValue: string | null | undefined,
-  parser: { safeParse: (value: unknown) => { success: true; data: T } | { success: false } },
-  fallback: T
-): T => {
-  if (!rawValue?.trim()) return fallback;
-
-  try {
-    const parsed = parser.safeParse(JSON.parse(rawValue));
-    return parsed.success ? parsed.data : fallback;
-  } catch (error) {
-    logClientCatch(error, {
-      source: 'tradera-parameter-mapper',
-      action: 'parseJsonPayload',
-      level: 'warn',
-    });
-    return fallback;
-  }
-};
-
-export const buildTraderaParameterMapperFieldKey = (fieldLabel: string): string => {
-  const normalized = normalizeLookupKey(fieldLabel);
-  return normalized || normalizeLookupKey(toTrimmedString(fieldLabel));
-};
-
-export const buildTraderaParameterMapperCatalogEntryId = (input: {
-  externalCategoryId: string;
-  fieldKey: string;
-}): string => `${input.externalCategoryId.trim()}:${input.fieldKey.trim()}`;
 
 export const parseTraderaParameterMapperRulesJson = (
   rawValue: string | null | undefined

@@ -5,6 +5,11 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 import {
+  badRequestError,
+  externalServiceError,
+  internalError,
+} from '@/shared/errors/app-error';
+import {
   fetchWithOutboundUrlPolicy,
   OutboundUrlPolicyError,
 } from '@/shared/lib/security/outbound-url-policy';
@@ -43,12 +48,11 @@ export const handleHttp: NodeHandler = async ({
   try {
     headers = httpConfig.headers ? (JSON.parse(httpConfig.headers) as Record<string, string>) : {};
   } catch (error: unknown) {
-    logClientError(error);
-    reportAiPathsError(
-      error,
-      { action: 'parseHeaders', nodeId: node.id },
-      'Invalid HTTP headers JSON:'
-    );
+    throw badRequestError('Invalid HTTP headers JSON provided in node configuration.', {
+      nodeId: node.id,
+      headers: httpConfig.headers,
+      cause: error,
+    });
   }
   let body: BodyInit | undefined = undefined;
   if (httpConfig.method !== 'GET' && httpConfig.method !== 'DELETE') {
@@ -120,46 +124,22 @@ export const handleHttp: NodeHandler = async ({
       },
     };
   } catch (error: unknown) {
-    logClientError(error);
     if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
       throw error;
     }
     if (error instanceof OutboundUrlPolicyError) {
-      reportAiPathsError(
-        error,
-        {
-          action: 'httpOutboundPolicy',
-          nodeId: node.id,
-          url: resolvedUrl,
-          reason: error.decision.reason,
-          hostname: error.decision.hostname,
-        },
-        'Blocked outbound URL by policy:'
-      );
-      return {
-        value: null,
-        bundle: {
-          ok: false,
-          status: 0,
-          url: resolvedUrl,
-          route: 'blocked_outbound_url',
-          error: `Blocked outbound URL (${error.decision.reason ?? 'policy_violation'})`,
-        },
-      };
-    }
-    reportAiPathsError(
-      error,
-      { action: 'httpFetch', url: resolvedUrl, nodeId: node.id },
-      'HTTP fetch failed:'
-    );
-    return {
-      value: null,
-      bundle: {
-        ok: false,
-        status: 0,
+      throw externalServiceError(`Blocked outbound URL: ${resolvedUrl}`, {
+        nodeId: node.id,
         url: resolvedUrl,
-        error: 'Fetch failed',
-      },
-    };
+        reason: error.decision.reason,
+        cause: error,
+      });
+    }
+    throw internalError(`HTTP fetch failed for URL: ${resolvedUrl}`, {
+      nodeId: node.id,
+      url: resolvedUrl,
+      method: httpConfig.method,
+      cause: error,
+    });
   }
 };

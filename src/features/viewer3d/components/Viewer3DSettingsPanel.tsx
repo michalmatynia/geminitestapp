@@ -1,3 +1,15 @@
+/**
+ * 3D Viewer Settings Panel Component
+ * 
+ * React component for configuring 3D viewer display settings and effects.
+ * Provides:
+ * - Lighting and environment controls
+ * - Visual effects configuration (dithering, pixelation)
+ * - Camera and rendering settings
+ * - Real-time preview of setting changes
+ * - Tabbed interface for organized settings groups
+ */
+
 /* eslint-disable max-lines, max-lines-per-function */
 'use client';
 

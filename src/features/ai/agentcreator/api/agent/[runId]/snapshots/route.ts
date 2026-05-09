@@ -12,6 +12,11 @@ import {
 } from '@/shared/lib/api/api-handler';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'ai.agentcreator.snapshot.<action>'
+ */
+const buildAgentCreatorSnapshotSource = (action: string): string => `ai.agentcreator.snapshot.${action}`;
+
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 type AgentBrowserSnapshotRouteRecord = {
@@ -52,7 +57,7 @@ async function getHandler(
   });
   if (DEBUG_CHATBOT) {
     void ErrorSystem.logInfo('Snapshots loaded', {
-      service: 'agent-api',
+      service: buildAgentCreatorSnapshotSource('loaded'),
       runId,
       count: snapshots.length,
       durationMs: Date.now() - requestStart,

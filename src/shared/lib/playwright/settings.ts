@@ -1,3 +1,15 @@
+/**
+ * Playwright Settings Configuration
+ * 
+ * Configuration options and defaults for Playwright automation.
+ * Provides:
+ * - Identity profile options (default, search, marketplace)
+ * - Proxy session mode options (sticky, rotate)
+ * - Proxy provider preset options
+ * - Settings UI option definitions
+ * - Configuration constants and defaults
+ */
+
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   PlaywrightIdentityProfile,
@@ -6,17 +18,20 @@ import type {
   PlaywrightSettings,
 } from '@/shared/contracts/playwright';
 
+/** Available identity profile options for Playwright */
 export const playwrightIdentityProfileOptions = [
   { value: 'default', label: 'Default' },
   { value: 'search', label: 'Search Engine' },
   { value: 'marketplace', label: 'Marketplace' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<PlaywrightIdentityProfile>>;
 
+/** Available proxy session mode options */
 export const playwrightProxySessionModeOptions = [
   { value: 'sticky', label: 'Sticky Session' },
   { value: 'rotate', label: 'Rotate Per Run' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<PlaywrightProxySessionMode>>;
 
+/** Available proxy provider preset options */
 export const playwrightProxyProviderPresetOptions = [
   { value: 'custom', label: 'Custom' },
   { value: 'brightdata', label: 'Bright Data' },

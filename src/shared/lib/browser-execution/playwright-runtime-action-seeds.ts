@@ -1,3 +1,15 @@
+/**
+ * Playwright Runtime Action Seeds
+ * 
+ * Seed data and templates for Playwright runtime actions.
+ * Provides:
+ * - Default action configurations
+ * - Execution settings templates
+ * - Marketplace-specific action seeds
+ * - Action normalization and initialization
+ * - Runtime action defaults
+ */
+
 import type {
   PlaywrightAction,
   PlaywrightActionExecutionSettings,

@@ -1,3 +1,15 @@
+/**
+ * Google OAuth Settings API Handler
+ * 
+ * API handlers for Google OAuth credential management.
+ * Provides:
+ * - GET handler for OAuth status retrieval
+ * - POST handler for OAuth credential updates
+ * - Settings management access control
+ * - JSON body validation with Zod schemas
+ * - Integration with Google OAuth services
+ */
+
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { assertSettingsManageAccess } from '@/features/auth/server';

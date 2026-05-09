@@ -1,41 +1,25 @@
-import { type CaseResolverCategory, type CaseResolverCategoryTreeNode, type CaseResolverIdentifier, type CaseResolverTag } from '@/shared/contracts/case-resolver';
+import {
+  normalizeTimestamp,
+  sanitizeOptionalId,
+  normalizeHexColor,
+  resolveSafeParentId,
+} from '@/features/case-resolver/services/taxonomy';
+import {
+  type CaseResolverCategory,
+  type CaseResolverCategoryTreeNode,
+  type CaseResolverIdentifier,
+  type CaseResolverTag,
+} from '@/shared/contracts/case-resolver';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export type { CaseResolverCategoryTreeNode };
-
-const normalizeTimestamp = (value: unknown, fallback: string): string =>
-  typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
-
-const sanitizeOptionalId = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const normalizeHexColor = (value: unknown, fallback: string): string => {
-  if (typeof value !== 'string') return fallback;
-  const normalized = value.trim();
-  if (/^#[0-9a-fA-F]{6}$/.test(normalized) || /^#[0-9a-fA-F]{3}$/.test(normalized)) {
-    return normalized;
-  }
-  return fallback;
-};
 
 function resolveSafeIdentifierParentId(
   identifierId: string,
   parentId: string | null,
   identifierMap: Map<string, CaseResolverIdentifier>
 ): string | null {
-  if (!parentId || !identifierMap.has(parentId) || parentId === identifierId) return null;
-  let current: string | null = parentId;
-  const visited = new Set<string>();
-  while (current) {
-    if (current === identifierId || visited.has(current)) return null;
-    visited.add(current);
-    const parent = identifierMap.get(current);
-    current = parent?.parentId ?? null;
-  }
-  return parentId;
+  return resolveSafeParentId(identifierId, parentId, identifierMap);
 }
 
 function resolveSafeTagParentId(
@@ -43,16 +27,7 @@ function resolveSafeTagParentId(
   parentId: string | null,
   tagMap: Map<string, CaseResolverTag>
 ): string | null {
-  if (!parentId || !tagMap.has(parentId) || parentId === tagId) return null;
-  let current: string | null = parentId;
-  const visited = new Set<string>();
-  while (current) {
-    if (current === tagId || visited.has(current)) return null;
-    visited.add(current);
-    const parent = tagMap.get(current);
-    current = parent?.parentId ?? null;
-  }
-  return parentId;
+  return resolveSafeParentId(tagId, parentId, tagMap);
 }
 
 const resolveSafeCategoryParentId = (
@@ -60,14 +35,7 @@ const resolveSafeCategoryParentId = (
   parentId: string | null,
   categoryMap: Map<string, CaseResolverCategory>
 ): string | null => {
-  if (!parentId || !categoryMap.has(parentId) || parentId === categoryId) return null;
-  let current: string | null = parentId;
-  while (current) {
-    if (current === categoryId) return null;
-    const parent = categoryMap.get(current);
-    current = parent?.parentId ?? null;
-  }
-  return parentId;
+  return resolveSafeParentId(categoryId, parentId, categoryMap);
 };
 
 export const normalizeCaseResolverIdentifiers = (input: unknown): CaseResolverIdentifier[] => {

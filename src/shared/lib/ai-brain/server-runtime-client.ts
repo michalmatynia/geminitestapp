@@ -17,7 +17,11 @@ import OpenAI from 'openai';
 
 import type { BrainModelVendor } from '@/shared/contracts/ai-brain';
 import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
-import { configurationError, operationFailedError } from '@/shared/errors/app-error';
+import {
+  configurationError,
+  externalServiceError,
+  operationFailedError,
+} from '@/shared/errors/app-error';
 
 import { buildOpenAiCompatibleMessages } from './providers/openai';
 import { buildAnthropicMessages } from './providers/anthropic';
@@ -240,16 +244,20 @@ export const runBrainChatCompletion = async (input: {
         ? { response_format: { type: 'json_object' as const } }
         : {}),
     });
+
     const choice = completion.choices[0];
     const text = choice?.message?.content?.trim() || '';
     if (!text) {
       const finishReason = choice?.finish_reason ?? 'unknown';
       const refusal = (choice?.message as { refusal?: string })?.refusal;
-      const detail = refusal
-        ? `refused: ${refusal}`
-        : `finish_reason=${finishReason}`;
       throw operationFailedError(
-        `${openAiCompatibleVendor} model "${normalizedModelId}" returned an empty response (${detail}). Check that the model is available and try again or use a different model.`
+        `${openAiCompatibleVendor} model "${normalizedModelId}" returned an empty response.`,
+        {
+          vendor: openAiCompatibleVendor,
+          model: normalizedModelId,
+          finishReason,
+          refusal,
+        }
       );
     }
     return {
@@ -280,7 +288,11 @@ export const runBrainChatCompletion = async (input: {
     });
     if (!response.ok) {
       const message = await response.text().catch(() => response.statusText);
-      throw operationFailedError(`Anthropic request failed: ${message || response.statusText}`);
+      throw externalServiceError(`Anthropic request failed with status ${response.status}.`, {
+        status: response.status,
+        responseBody: message,
+        model: normalizedModelId,
+      });
     }
     const payload = (await response.json()) as {
       content?: Array<{ type?: string; text?: string }>;
@@ -330,7 +342,11 @@ export const runBrainChatCompletion = async (input: {
   );
   if (!response.ok) {
     const message = await response.text().catch(() => response.statusText);
-    throw operationFailedError(`Gemini request failed: ${message || response.statusText}`);
+    throw externalServiceError(`Gemini request failed with status ${response.status}.`, {
+      status: response.status,
+      responseBody: message,
+      model: normalizedModelId,
+    });
   }
   const payload = (await response.json()) as {
     candidates?: Array<{

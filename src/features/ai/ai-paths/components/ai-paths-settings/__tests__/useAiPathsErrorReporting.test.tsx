@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ErrorSystem } from '@/shared/utils/observability/error-system-client';
 
 const mockState = vi.hoisted(() => ({
   graphState: {
@@ -10,7 +11,6 @@ const mockState = vi.hoisted(() => ({
   },
   setLastError: vi.fn(),
   updateAiPathsSetting: vi.fn(),
-  logClientError: vi.fn(),
   logClientCatch: vi.fn(),
   safeStringify: vi.fn((value: unknown) => JSON.stringify(value)),
 }));
@@ -33,13 +33,15 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: (...args: unknown[]) => mockState.logClientError(...args),
   logClientCatch: (...args: unknown[]) => mockState.logClientCatch(...args),
+  logClientError: vi.fn(),
 }));
 
 import { useAiPathsErrorReporting } from '../useAiPathsErrorReporting';
 
 describe('useAiPathsErrorReporting', () => {
+  let captureExceptionSpy: any;
+
   beforeEach(() => {
     mockState.graphState = {
       activePathId: 'path-1',
@@ -49,12 +51,13 @@ describe('useAiPathsErrorReporting', () => {
     };
     mockState.setLastError.mockReset();
     mockState.updateAiPathsSetting.mockReset().mockResolvedValue(undefined);
-    mockState.logClientError.mockReset();
+    captureExceptionSpy = vi.spyOn(ErrorSystem, 'captureException').mockResolvedValue(undefined);
     mockState.safeStringify.mockReset().mockImplementation((value: unknown) => JSON.stringify(value));
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    captureExceptionSpy.mockRestore();
   });
 
   it('serializes persisted last error payloads and clears them with an empty string', async () => {
@@ -75,7 +78,7 @@ describe('useAiPathsErrorReporting', () => {
       '{"message":"Save failed","time":"2026-03-19T11:00:00.000Z","pathId":"path-1"}'
     );
     expect(mockState.updateAiPathsSetting).toHaveBeenNthCalledWith(2, 'ai_paths_last_error', '');
-    expect(mockState.logClientError).not.toHaveBeenCalled();
+    expect(captureExceptionSpy).not.toHaveBeenCalled();
   });
 
   it('logs persistence failures with dedicated context', async () => {
@@ -104,7 +107,6 @@ describe('useAiPathsErrorReporting', () => {
     vi.setSystemTime(new Date('2026-03-19T12:34:56.000Z'));
 
     const sourceError = new TypeError('Original failure:');
-    sourceError.stack = 'type-stack';
 
     const { result } = renderHook(() => useAiPathsErrorReporting('docs'));
 
@@ -125,24 +127,20 @@ describe('useAiPathsErrorReporting', () => {
       JSON.stringify(expectedPayload)
     );
 
-    expect(mockState.logClientError).toHaveBeenCalledTimes(1);
-    const [loggedError, loggedMeta] = mockState.logClientError.mock.calls[0] as [Error, Record<string, unknown>];
-    expect(loggedError).toBeInstanceOf(Error);
-    expect(loggedError.message).toBe('[AI Paths] Save failed');
-    expect(loggedError.name).toBe('TypeError');
-    expect(loggedError.stack).toBe('type-stack');
+    expect(captureExceptionSpy).toHaveBeenCalledTimes(1);
+    const [loggedError, loggedMeta] = captureExceptionSpy.mock.calls[0] as [Error, Record<string, unknown>];
+    expect(loggedError).toBe(sourceError);
     expect(loggedMeta).toEqual({
-      context: {
-        feature: 'ai-paths',
-        pathId: 'path-1',
-        pathName: 'Primary Path',
-        tab: 'docs',
-        nodeCount: 2,
-        edgeCount: 1,
-        errorSummary: 'Save failed',
-        rawMessage: 'Original failure:',
-        action: 'save-path',
-      },
+      service: 'ai-paths',
+      feature: 'ai-paths',
+      pathId: 'path-1',
+      pathName: 'Primary Path',
+      tab: 'docs',
+      nodeCount: 2,
+      edgeCount: 1,
+      errorSummary: 'Save failed',
+      rawMessage: 'Original failure:',
+      action: 'save-path',
     });
   });
 
@@ -168,21 +166,20 @@ describe('useAiPathsErrorReporting', () => {
       '{"message":"serialized payload","time":"2026-03-19T13:00:00.000Z","pathId":"path-1"}'
     );
 
-    expect(mockState.logClientError).toHaveBeenCalledTimes(1);
-    const [loggedError, loggedMeta] = mockState.logClientError.mock.calls[0] as [Error, Record<string, unknown>];
-    expect(loggedError.message).toBe('[AI Paths] serialized payload');
+    expect(captureExceptionSpy).toHaveBeenCalledTimes(1);
+    const [loggedError, loggedMeta] = captureExceptionSpy.mock.calls[0] as [Record<string, unknown>, Record<string, unknown>];
+    expect(loggedError).toEqual({ boom: true });
     expect(loggedMeta).toEqual({
-      context: {
-        feature: 'ai-paths',
-        pathId: 'path-1',
-        pathName: 'Primary Path',
-        tab: 'paths',
-        nodeCount: 2,
-        edgeCount: 1,
-        errorSummary: 'serialized payload',
-        rawMessage: 'serialized payload:',
-        source: 'manual-test',
-      },
+      service: 'ai-paths',
+      feature: 'ai-paths',
+      pathId: 'path-1',
+      pathName: 'Primary Path',
+      tab: 'paths',
+      nodeCount: 2,
+      edgeCount: 1,
+      errorSummary: 'serialized payload',
+      rawMessage: 'serialized payload:',
+      source: 'manual-test',
     });
   });
 });

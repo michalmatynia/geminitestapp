@@ -1,3 +1,15 @@
+/**
+ * 3D Asset Uploader Subcomponents
+ * 
+ * Reusable UI components for 3D asset file uploading functionality.
+ * Provides:
+ * - File drop zone with drag-and-drop support
+ * - Upload progress indicators and status displays
+ * - File validation and error handling UI
+ * - Upload cancellation and retry controls
+ * - Responsive upload interface components
+ */
+
 'use client';
 
 import { Upload, X } from 'lucide-react';
@@ -7,13 +19,22 @@ import { FileUploadTrigger } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { cn } from '@/shared/utils/ui-utils';
 
+/** Props for the file drop zone component */
 interface FileDropZoneProps {
+  /** Callback when a file is selected via click or drop */
   onFileSelect: (file: File) => void;
+  /** Callback when files are dropped onto the zone */
   onDrop: (e: DragEvent<HTMLDivElement>) => void;
+  /** Whether files are currently being dragged over the zone */
   isDragOver: boolean;
+  /** Setter for drag over state */
   setIsDragOver: (is: boolean) => void;
 }
 
+/**
+ * File drop zone component for 3D asset uploads
+ * Supports both click-to-select and drag-and-drop file selection
+ */
 export function FileDropZone({
   onFileSelect,
   onDrop,
@@ -24,6 +45,7 @@ export function FileDropZone({
     <FileUploadTrigger
       accept='.glb,.gltf'
       onFilesSelected={(files: File[]) => {
+        /** Handle file selection from click or drop */
         const selectedFile = files[0];
         if (selectedFile !== undefined && selectedFile !== null) {
           onFileSelect(selectedFile);

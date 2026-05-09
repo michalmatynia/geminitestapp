@@ -5,10 +5,8 @@ import { useCallback } from 'react';
 import { AI_PATHS_LAST_ERROR_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { safeStringify } from '@/shared/lib/ai-paths/core/utils';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
-import {
-  logClientCatch,
-  logClientError,
-} from '@/shared/utils/observability/client-error-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system-client';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   useGraphDataState,
@@ -60,12 +58,6 @@ export function useAiPathsErrorReporting(
     (error: unknown, context: Record<string, unknown>, fallbackMessage?: string): void => {
       const rawMessage = error instanceof Error ? error.message : safeStringify(error);
       const summary = (fallbackMessage ?? rawMessage).replace(/:$/, '');
-      const logMessage = `[AI Paths] ${summary}`;
-      const logError = new Error(logMessage);
-      if (error instanceof Error && error.stack !== undefined && error.stack !== '') {
-        logError.stack = error.stack;
-        logError.name = error.name;
-      }
       const payload = {
         message: summary,
         time: new Date().toISOString(),
@@ -73,18 +65,18 @@ export function useAiPathsErrorReporting(
       };
       setLastError(payload);
       void persistLastError(payload);
-      logClientError(logError, {
-        context: {
-          feature: 'ai-paths',
-          pathId: activePathId,
-          pathName,
-          tab: activeTab,
-          nodeCount: nodes.length,
-          edgeCount: edges.length,
-          errorSummary: summary,
-          rawMessage,
-          ...context,
-        },
+      
+      void ErrorSystem.captureException(error, {
+        service: 'ai-paths',
+        feature: 'ai-paths',
+        pathId: activePathId,
+        pathName,
+        tab: activeTab,
+        nodeCount: nodes.length,
+        edgeCount: edges.length,
+        errorSummary: summary,
+        rawMessage,
+        ...context,
       });
     },
     [activePathId, activeTab, edges.length, nodes.length, pathName, persistLastError, setLastError]

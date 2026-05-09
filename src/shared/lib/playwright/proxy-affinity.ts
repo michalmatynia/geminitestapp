@@ -1,3 +1,15 @@
+/**
+ * Playwright Proxy Affinity Management
+ * 
+ * Proxy session management and affinity configuration for Playwright.
+ * Provides:
+ * - Session placeholder pattern matching
+ * - Proxy session ID generation and management
+ * - Sticky session configuration
+ * - Identity profile proxy integration
+ * - Session affinity tracking
+ */
+
 import { createHash, randomUUID } from 'crypto';
 
 import type { LaunchOptions } from 'playwright';
@@ -7,6 +19,7 @@ import type {
   PlaywrightProxyProviderPreset,
 } from '@/shared/contracts/playwright';
 
+/** Patterns for session placeholder detection in proxy URLs */
 const PLAYWRIGHT_PROXY_SESSION_PLACEHOLDER_PATTERNS = [
   /\{session\}/gi,
   /\{\{session\}\}/gi,
@@ -14,9 +27,12 @@ const PLAYWRIGHT_PROXY_SESSION_PLACEHOLDER_PATTERNS = [
   /__session__/gi,
 ] as const;
 
+/** Standard session placeholder for proxy URLs */
 export const PLAYWRIGHT_PROXY_SESSION_PLACEHOLDER = '{session}';
+/** Default proxy session mode for affinity */
 const DEFAULT_PROXY_SESSION_MODE = 'sticky' as const;
 
+/** Descriptor for proxy affinity configuration */
 type ProxyAffinityDescriptor = {
   scopeLabel: string;
   sessionToken: string;

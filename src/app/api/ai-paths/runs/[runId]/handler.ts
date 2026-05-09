@@ -83,7 +83,7 @@ export async function getHandler(
   const repo = repoSelection.repo;
   const run = await repo.findRunById(runId);
   if (run === null) {
-    throw notFoundError('Run not found', { runId });
+    throw notFoundError(`Run with id "${runId}" not found.`, { runId, action: 'findRunById' });
   }
   assertAiPathRunAccess(access, run);
   const [nodes, events] = await Promise.all([repo.listRunNodes(runId), repo.listRunEvents(runId)]);
@@ -138,12 +138,12 @@ export async function deleteHandler(
   const repo = (await resolvePathRunRepository()).repo;
   const run = await repo.findRunById(runId);
   if (run === null) {
-    throw notFoundError('Run not found', { runId });
+    throw notFoundError(`Run with id "${runId}" not found, cannot delete.`, { runId, action: 'delete' });
   }
   assertAiPathRunAccess(access, run);
   const deleted = await deletePathRunWithRepository(repo, runId);
   if (!deleted) {
-    throw notFoundError('Run not found', { runId });
+    throw notFoundError(`Run with id "${runId}" could not be deleted.`, { runId, action: 'delete' });
   }
   return NextResponse.json({ deleted: true, runId });
 }

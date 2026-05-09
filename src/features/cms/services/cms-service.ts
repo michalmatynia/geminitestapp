@@ -25,6 +25,11 @@ import { getCmsRepository } from './cms-repository';
  * Service that wraps the CMS repository with error handling and logging.
  * All CMS domain logic and repository access should go through this service.
  */
+import { internalError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+// ... (existing constants)
+
 const repoCall = async <K extends keyof CmsRepository>(
   key: K,
   ...args: Parameters<CmsRepository[K]>
@@ -34,13 +39,12 @@ const repoCall = async <K extends keyof CmsRepository>(
     const fn = repo[key] as (...args: Parameters<CmsRepository[K]>) => ReturnType<CmsRepository[K]>;
     return (await fn(...args)) as Promise<Awaited<ReturnType<CmsRepository[K]>>>;
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    await ErrorSystem.captureException(error, {
+    throw internalError(`CMS repository method "${key}" failed.`, {
       service: 'cms-service',
       action: 'repoCall',
       method: key,
+      cause: error,
     });
-    throw error;
   }
 };
 

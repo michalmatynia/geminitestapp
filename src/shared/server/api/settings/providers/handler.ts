@@ -1,3 +1,15 @@
+/**
+ * Settings Providers API Handler
+ * 
+ * API handler for retrieving application provider diagnostics and status.
+ * Provides:
+ * - Provider service status checks (auth, database, CMS, email)
+ * - Configuration validation and diagnostics
+ * - Provider source information and health monitoring
+ * - Access control for settings management operations
+ * - Comprehensive provider ecosystem overview
+ */
+
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';

@@ -1,3 +1,15 @@
+/**
+ * Query Telemetry API Handler
+ * 
+ * API handler for processing TanStack Query telemetry data.
+ * Provides:
+ * - POST endpoint for query telemetry batch processing
+ * - Telemetry data validation and sanitization
+ * - Sensitive data redaction for security
+ * - Batch size limits for performance
+ * - Error handling and logging integration
+ */
+
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -11,7 +23,7 @@ import {
 } from '@/shared/utils/observability/client-redaction';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
+/** Maximum number of telemetry entries per batch */
 const MAX_BATCH_SIZE = 100;
 const MAX_CONTEXT_BYTES = 12_000;
 const MAX_STRING_LENGTH = 2_000;

@@ -178,7 +178,14 @@ export type PromptExploderValidationStackResolution = {
 };
 
 export type TemplateMergeMode = 'auto' | 'new' | 'target';
-export type TemplateUpsertErrorCode = 'TARGET_TEMPLATE_NOT_FOUND' | 'TARGET_TEMPLATE_TYPE_MISMATCH';
+
+/**
+ * Error codes for template upsert operations in Prompt Exploder.
+ * Indicates why a template merge/update failed.
+ */
+export type TemplateUpsertErrorCode = 
+  | 'TARGET_TEMPLATE_NOT_FOUND'      // Specified target template doesn't exist
+  | 'TARGET_TEMPLATE_TYPE_MISMATCH'; // Target template type doesn't match source
 
 export type TemplateSimilarityMatch = {
   template: PromptExploderLearnedTemplate;

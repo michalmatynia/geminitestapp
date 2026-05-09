@@ -134,32 +134,40 @@ export const baseImportDirectTargetSchema = z.object({
 });
 export type BaseImportDirectTarget = z.infer<typeof baseImportDirectTargetSchema>;
 
+/**
+ * Error codes for Base.com import operations.
+ * Categorizes failures during product import from Base.com.
+ */
 export const baseImportErrorCodeSchema = z.enum([
-  'VALIDATION_ERROR',
-  'DUPLICATE_SKU',
-  'BASE_FETCH_ERROR',
-  'MISSING_BASE_ID',
-  'MISSING_SKU',
-  'MISSING_CONNECTION',
-  'MISSING_CATALOG',
-  'MISSING_PRICE_GROUP',
-  'UNEXPECTED_ERROR',
-  'LINKING_ERROR',
-  'CONFLICT',
-  'PRECHECK_FAILED',
-  'NOT_FOUND',
-  'CANCELED',
-  'RATE_LIMITED',
-  'TIMEOUT',
-  'NETWORK_ERROR',
+  'VALIDATION_ERROR',      // Input data validation failed
+  'DUPLICATE_SKU',         // SKU already exists in catalog
+  'BASE_FETCH_ERROR',      // Failed to fetch data from Base.com API
+  'MISSING_BASE_ID',       // Base.com product ID not provided
+  'MISSING_SKU',           // Product SKU not provided
+  'MISSING_CONNECTION',    // Base.com connection not configured
+  'MISSING_CATALOG',       // Target catalog not found
+  'MISSING_PRICE_GROUP',   // Price group not configured
+  'UNEXPECTED_ERROR',      // Unhandled error occurred
+  'LINKING_ERROR',         // Failed to link product to Base.com
+  'CONFLICT',              // Data conflict with existing records
+  'PRECHECK_FAILED',       // Pre-import validation failed
+  'NOT_FOUND',             // Resource not found
+  'CANCELED',              // Import operation was canceled
+  'RATE_LIMITED',          // Base.com API rate limit exceeded
+  'TIMEOUT',               // Operation timed out
+  'NETWORK_ERROR',         // Network connectivity issue
 ]);
 export type BaseImportErrorCode = z.infer<typeof baseImportErrorCodeSchema>;
 
+/**
+ * Error classification for Base.com import failures.
+ * Determines retry strategy and user guidance.
+ */
 export const baseImportErrorClassSchema = z.enum([
-  'transient',
-  'permanent',
-  'configuration',
-  'canceled',
+  'transient',       // Temporary error, retry may succeed
+  'permanent',       // Permanent failure, retry won't help
+  'configuration',   // Configuration issue, needs user action
+  'canceled',        // User-initiated cancellation
 ]);
 export type BaseImportErrorClass = z.infer<typeof baseImportErrorClassSchema>;
 

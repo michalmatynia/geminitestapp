@@ -1,36 +1,46 @@
-import { 
-  type CaseResolverWorkspace, 
-  type CaseResolverWorkspaceMetadata, 
-  type CaseResolverWorkspaceFetchAttemptProfile, 
-  type CaseResolverWorkspaceRecordFetchResult, 
-  type CaseResolverWorkspaceFetchIfStaleResult as FetchIfStaleResult 
-} from '@/shared/contracts/case-resolver';
-import { fetchSettingsPayloadWithTimeout } from './node-file-persistence';
-import { getCaseResolverWorkspaceRevision } from './utils/workspace-persistence-utils';
+import { type CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver';
+
 import {
-  CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
-  CASE_RESOLVER_WORKSPACE_KEY,
-  CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
-  readWorkspaceMetadata,
-  resolveSettingRecordFromSettingsPayload,
-  resolveWorkspaceRecordFromSettingsPayload,
-  buildSettingRecordFetchAttempts,
-  buildWorkspaceRecordFetchAttempts,
-  type WorkspaceMetadataLike,
-} from './utils/workspace-settings-persistence-helpers';
-import { logCaseResolverWorkspaceEvent } from './workspace-observability';
+  buildCaseResolverNodeFileSnapshotKey,
+  deleteCaseResolverNodeFileSnapshot,
+  fetchCaseResolverNodeFileSnapshot,
+  fetchCaseResolverNodeFileSnapshotText,
+  persistCaseResolverNodeFileSnapshot,
+} from './node-file-persistence';
 import {
-  applyCaseResolverWorkspaceDetachedDocumentsPayload,
-  parseCaseResolverWorkspaceDetachedDocumentsPayload,
-  type CaseResolverWorkspaceDetachedDocumentsPayload,
-} from './workspace-persistence-detached-documents';
+  primeCaseResolverNavigationWorkspace,
+  readCaseResolverNavigationWorkspace,
+} from './utils/workspace-navigation-cache';
 import {
-  applyCaseResolverWorkspaceDetachedHistoryPayload,
-  parseCaseResolverWorkspaceDetachedHistoryPayload,
-  type CaseResolverWorkspaceDetachedHistoryPayload,
-} from './workspace-persistence-detached-history';
+  computeCaseResolverConflictRetryDelayMs,
+  createCaseResolverWorkspaceMutationId,
+  getCaseResolverWorkspaceRevision,
+  stampCaseResolverWorkspaceMutation,
+} from './utils/workspace-persistence-utils';
 import {
-  CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
-  readWorkspaceFromSettingRecord,
-} from './workspace-persistence-shared';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+  getCaseResolverWorkspaceDebugEventName,
+  logCaseResolverWorkspaceEvent,
+  readCaseResolverWorkspaceDebugEvents,
+} from './workspace-observability';
+
+export * from './workspace-persistence-shared';
+export * from './workspace-persistence-fetch';
+export * from './workspace-persistence-save';
+
+export {
+  buildCaseResolverNodeFileSnapshotKey,
+  computeCaseResolverConflictRetryDelayMs,
+  createCaseResolverWorkspaceMutationId,
+  deleteCaseResolverNodeFileSnapshot,
+  fetchCaseResolverNodeFileSnapshot,
+  fetchCaseResolverNodeFileSnapshotText,
+  getCaseResolverWorkspaceDebugEventName,
+  getCaseResolverWorkspaceRevision,
+  logCaseResolverWorkspaceEvent,
+  persistCaseResolverNodeFileSnapshot,
+  primeCaseResolverNavigationWorkspace,
+  readCaseResolverNavigationWorkspace,
+  readCaseResolverWorkspaceDebugEvents,
+  stampCaseResolverWorkspaceMutation,
+};
+export type { CaseResolverWorkspaceDebugEvent };

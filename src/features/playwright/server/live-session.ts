@@ -1,7 +1,7 @@
+/* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-await-in-loop, no-nested-ternary, no-param-reassign, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-shadow, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/strict-boolean-expressions -- Legacy live-scripter orchestration is being split into smaller modules incrementally. */
 import 'server-only';
 
-import type { Browser, BrowserContext, CDPSession, Page } from 'playwright';
-import type WebSocket from 'ws';
+import type { Page } from 'playwright';
 
 import type {
   LiveScripterClientMessage,
@@ -28,8 +28,40 @@ import {
 } from '@/shared/lib/playwright/anti-detection';
 import { launchPlaywrightBrowser } from '@/shared/lib/playwright/browser-launch';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
-import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
+import {
+  LIVE_SCRIPTER_CONCURRENT_SESSION_CAP,
+  LIVE_SCRIPTER_DEV_FIXTURE_PATH,
+  LIVE_SCRIPTER_MAX_FRAME_DIMENSION,
+  LIVE_SCRIPTER_MAX_SELECTOR_DEPTH,
+  LIVE_SCRIPTER_SESSION_IDLE_MS,
+  LIVE_SCRIPTER_TITLE_SETTLE_POLL_MS,
+  LIVE_SCRIPTER_TITLE_SETTLE_STABLE_MS,
+  LIVE_SCRIPTER_TITLE_SETTLE_TIMEOUT_MS,
+  URL_SCHEME_PATTERN,
+} from './live-session/constants';
+import { broadcastToSockets, sendSocketMessage } from './live-session/socket-handler';
+import {
+  getSessions,
+  readBridgeState,
+  registerLiveScripterSocketAttacher,
+} from './live-session/state';
+import type {
+  LiveScripterBridge,
+  LiveScripterProbeCandidate,
+  LiveScripterSession,
+  LiveScripterSocket,
+} from './live-session/types';
+
+type ScreencastFrameEvent = {
+  data: string;
+  metadata?: {
+    deviceWidth?: number;
+    deviceHeight?: number;
+  };
+  sessionId: string;
+};
 
 const pickDelayBetween = (min: number, max: number): number => {
   const lo = Math.max(0, Math.trunc(Math.min(min, max)));
@@ -39,7 +71,9 @@ const pickDelayBetween = (min: number, max: number): number => {
 };
 
 const sleepMs = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, Math.max(0, Math.trunc(ms))));
+  new Promise((resolve) => {
+    setTimeout(resolve, Math.max(0, Math.trunc(ms)));
+  });
 
 const simulateAddressBarTyping = async (url: string): Promise<void> => {
   const perCharDelay = pickDelayBetween(
@@ -75,57 +109,8 @@ const clampViewport = (
   };
 };
 
-const readBridgeState = (): LiveScripterState => {
-  const globalScope = globalThis as typeof globalThis & {
-    [LIVE_SCRIPTER_STATE_KEY]?: LiveScripterState;
-  };
-  const existing = globalScope[LIVE_SCRIPTER_STATE_KEY];
-  if (existing !== undefined) {
-    return existing;
-  }
-
-  const state: LiveScripterState = {
-    sessions: new Map<string, LiveScripterSession>(),
-    bridge: {
-      attachClient: async (sessionId, socket) => {
-        const session = state.sessions.get(sessionId) ?? null;
-        if (session === null || session.disposed) {
-          return false;
-        }
-        attachSocketClient(session, socket);
-        return true;
-      },
-    },
-  };
-  globalScope[LIVE_SCRIPTER_STATE_KEY] = state;
-  (globalThis as typeof globalThis & { [LIVE_SCRIPTER_BRIDGE_KEY]?: LiveScripterBridge })[
-    LIVE_SCRIPTER_BRIDGE_KEY
-  ] = state.bridge;
-  return state;
-};
-
-const getSessions = (): Map<string, LiveScripterSession> => readBridgeState().sessions;
-
 const readOptionalTrimmedString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
-
-const isSocketOpen = (socket: LiveScripterSocket): boolean => socket.readyState === 1;
-
-const sendSocketMessage = (
-  socket: LiveScripterSocket,
-  message: LiveScripterServerMessage
-): void => {
-  if (!isSocketOpen(socket)) {
-    return;
-  }
-  socket.send(JSON.stringify(message));
-};
-
-const broadcastToSockets = (session: LiveScripterSession, message: LiveScripterServerMessage): void => {
-  for (const socket of session.sockets) {
-    sendSocketMessage(socket, message);
-  }
-};
 
 const refreshIdleTimeout = (session: LiveScripterSession): void => {
   session.lastActivityAt = Date.now();
@@ -1141,7 +1126,7 @@ const publishNavigation = async (
   }
   session.lastProbe = null;
   session.lastNavigation = message;
-  broadcastToSockets(session, message);
+  broadcastToSockets(session.sockets, message);
 };
 
 const publishPickedElement = (session: LiveScripterSession, element: LiveScripterPickedElement): void => {
@@ -1150,7 +1135,7 @@ const publishPickedElement = (session: LiveScripterSession, element: LiveScripte
     element,
   };
   session.lastPicked = message;
-  broadcastToSockets(session, message);
+  broadcastToSockets(session.sockets, message);
 };
 
 const publishProbeResult = (
@@ -1158,11 +1143,11 @@ const publishProbeResult = (
   result: LiveScripterProbeResult
 ): void => {
   session.lastProbe = result;
-  broadcastToSockets(session, result);
+  broadcastToSockets(session.sockets, result);
 };
 
 const publishError = (session: LiveScripterSession, message: string): void => {
-  broadcastToSockets(session, {
+  broadcastToSockets(session.sockets, {
     type: 'error',
     message,
   });
@@ -1287,6 +1272,8 @@ const attachSocketClient = (session: LiveScripterSession, socket: LiveScripterSo
   });
 };
 
+registerLiveScripterSocketAttacher(attachSocketClient);
+
 export const getLiveScripterSession = (sessionId: string): LiveScripterSession | null =>
   getSessions().get(sessionId) ?? null;
 
@@ -1363,19 +1350,21 @@ export const createLiveScripterSession = async (input: {
     void disposeLiveScripterSession(session.id);
   });
 
-  cdp.on('Page.screencastFrame', async (event: ScreencastFrameEvent) => {
-    const width = Math.trunc(event.metadata?.deviceWidth ?? session.viewport.width);
-    const height = Math.trunc(event.metadata?.deviceHeight ?? session.viewport.height);
-    const message: Extract<LiveScripterServerMessage, { type: 'frame' }> = {
-      type: 'frame',
-      dataUrl: `data:image/jpeg;base64,${event.data}`,
-      width,
-      height,
-    };
-    session.lastFrame = message;
-    broadcastToSockets(session, message);
-    refreshIdleTimeout(session);
-    await cdp.send('Page.screencastFrameAck', { sessionId: event.sessionId }).catch(() => undefined);
+  cdp.on('Page.screencastFrame', (event: ScreencastFrameEvent) => {
+    void (async (): Promise<void> => {
+      const width = Math.trunc(event.metadata?.deviceWidth ?? session.viewport.width);
+      const height = Math.trunc(event.metadata?.deviceHeight ?? session.viewport.height);
+      const message: Extract<LiveScripterServerMessage, { type: 'frame' }> = {
+        type: 'frame',
+        dataUrl: `data:image/jpeg;base64,${event.data}`,
+        width,
+        height,
+      };
+      session.lastFrame = message;
+      broadcastToSockets(session.sockets, message);
+      refreshIdleTimeout(session);
+      await cdp.send('Page.screencastFrameAck', { sessionId: event.sessionId }).catch(() => undefined);
+    })();
   });
 
   await cdp.send('Page.enable');

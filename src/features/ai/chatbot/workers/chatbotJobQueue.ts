@@ -4,6 +4,11 @@ import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'ai.chatbot.job.<action>'
+ */
+const buildChatbotSource = (action: string): string => `ai.chatbot.job.${action}`;
+
 type ChatbotJobData = {
   jobId: string;
 };
@@ -25,15 +30,15 @@ const queue = createManagedQueue<ChatbotJobData>({
       startedAt: new Date(),
     });
 
-    void ErrorSystem.logInfo('Processing job', { service: 'chatbot-job-queue', jobId: data.jobId });
+    void ErrorSystem.logInfo('Processing job', { service: buildChatbotSource('processing'), jobId: data.jobId });
     await processJob(data.jobId);
-    void ErrorSystem.logInfo('Job completed', { service: 'chatbot-job-queue', jobId: data.jobId });
+    void ErrorSystem.logInfo('Job completed', { service: buildChatbotSource('completed'), jobId: data.jobId });
   },
   onFailed: async (_jobId, error, data) => {
     const message = error instanceof Error ? error.message : 'Job failed.';
 
     void ErrorSystem.captureException(error, {
-      service: 'chatbot-job-queue',
+      service: buildChatbotSource('failed'),
       jobId: data.jobId,
     });
 

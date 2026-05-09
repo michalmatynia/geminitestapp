@@ -1,5 +1,6 @@
 import { detectCaseResolverOcrProvider } from '@/features/case-resolver/ocr-provider';
 import type { CaseResolverOcrProvider } from '@/shared/contracts/case-resolver/base';
+import { configurationError } from '@/shared/errors/app-error';
 
 import type { CaseResolverResolvedOcrModel } from './types';
 
@@ -39,8 +40,10 @@ export const resolveCaseResolverOcrModel = (
   const runtimeModel = model.trim();
   const selectedModel = runtimeModel || fallbackModel.trim();
   if (!selectedModel) {
-    // No OCR model is configured in settings or provided at runtime
-    throw new Error('OCR model is not configured.');
+    throw configurationError('No OCR model is configured.', {
+      model,
+      fallbackModel,
+    });
   }
   const explicitModel = parseProviderPrefixedModel(selectedModel);
   if (explicitModel) return explicitModel;
@@ -63,8 +66,10 @@ export const resolveCaseResolverOcrModelCandidates = (
     runtimeCandidates.length > 0 ? runtimeCandidates : fallbackCandidate ? [fallbackCandidate] : [];
 
   if (candidateValues.length === 0) {
-    // No OCR models are configured in settings or provided at runtime
-    throw new Error('OCR model is not configured.');
+    throw configurationError('No OCR models are configured.', {
+      model,
+      fallbackModel,
+    });
   }
 
   const uniqueCandidates = new Set<string>();

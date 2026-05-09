@@ -1,3 +1,15 @@
+/**
+ * Settings Migration Backfill Keys Handler
+ * 
+ * API handler for backfilling missing settings keys during migration.
+ * Provides:
+ * - POST endpoint for settings key backfill operations
+ * - Authentication and authorization validation
+ * - Database engine operation guards
+ * - MongoDB collection backfill processing
+ * - Migration result tracking and reporting
+ */
+
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';

@@ -1,3 +1,16 @@
+/**
+ * Product Form Parameter Context Utilities
+ * 
+ * Utility functions for product parameter form management and processing.
+ * Provides:
+ * - Parameter value merging and normalization
+ * - Title term type validation and linking
+ * - Parameter storage ID decoding
+ * - Language-specific parameter value resolution
+ * - Structured product name processing
+ * - Parameter value indexing and mapping
+ */
+
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductParameterValue } from '@/shared/contracts/products/product';
 import type { ProductTitleTerm, ProductTitleTermType } from '@/shared/contracts/products/title-terms';
@@ -11,11 +24,19 @@ import {
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
 
+/** Result type for merged parameter values with index mapping */
 export type MergedParameterValuesResult = {
+  /** Merged parameter values array */
   values: ProductParameterValue[];
+  /** Index mapping from merged values back to base values */
   baseIndexByValueIndex: number[];
 };
 
+/**
+ * Checks if a title term type is linked to parameters
+ * @param value - Title term type to validate
+ * @returns True if the type supports parameter linking
+ */
 export const isLinkedTitleTermType = (
   value: ProductParameter['linkedTitleTermType'] | undefined
 ): value is ProductTitleTermType =>

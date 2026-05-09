@@ -1,8 +1,21 @@
+/**
+ * Database Sync Types
+ * 
+ * Type definitions and constants for database synchronization operations.
+ * Provides:
+ * - Authentication collection definitions
+ * - Currency and country code sets
+ * - MongoDB document type definitions
+ * - Sync operation type contracts
+ * - Collection mapping utilities
+ */
+
 import type { MongoTimestampedSettingRecord } from '@/shared/contracts/settings';
 
 import type { ObjectId } from 'mongodb';
 import type { MongoSystemLogDoc } from '@/shared/lib/observability/system-log-types';
 
+/** Collections related to authentication and user management */
 export const AUTH_COLLECTIONS: readonly string[] = [
   'users',
   'accounts',
@@ -13,9 +26,12 @@ export const AUTH_COLLECTIONS: readonly string[] = [
   'auth_security_attempts',
 ];
 
+/** Supported currency codes for international transactions */
 export const currencyCodes = new Set(['USD', 'EUR', 'PLN', 'GBP', 'SEK']);
+/** Supported country codes for regional operations */
 export const countryCodes = new Set(['PL', 'DE', 'GB', 'US', 'SE']);
 
+/** MongoDB settings document type with timestamps */
 export type MongoSettingDoc = MongoTimestampedSettingRecord<
   ObjectId,
   unknown,

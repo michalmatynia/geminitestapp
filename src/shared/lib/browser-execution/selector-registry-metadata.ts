@@ -1,5 +1,18 @@
+/**
+ * Selector Registry Metadata
+ * 
+ * Metadata and configuration for selector registry namespaces.
+ * Provides:
+ * - Supported selector registry namespaces
+ * - Default profile mappings per namespace
+ * - Namespace validation utilities
+ * - Registry configuration constants
+ * - Marketplace-specific selector profiles
+ */
+
 import type { SelectorRegistryNamespace } from '@/shared/contracts/integrations/selector-registry';
 
+/** List of supported selector registry namespaces */
 export const SELECTOR_REGISTRY_NAMESPACES: SelectorRegistryNamespace[] = [
   'tradera',
   'amazon',
@@ -8,6 +21,7 @@ export const SELECTOR_REGISTRY_NAMESPACES: SelectorRegistryNamespace[] = [
   'vinted',
 ];
 
+/** Default selector profile for each namespace */
 export const SELECTOR_REGISTRY_DEFAULT_PROFILES: Record<SelectorRegistryNamespace, string> = {
   tradera: 'default',
   amazon: 'amazon',
@@ -16,6 +30,11 @@ export const SELECTOR_REGISTRY_DEFAULT_PROFILES: Record<SelectorRegistryNamespac
   vinted: 'vinted',
 };
 
+/**
+ * Validates if a value is a valid selector registry namespace
+ * @param value - Value to validate
+ * @returns True if value is a valid namespace
+ */
 export const isSelectorRegistryNamespace = (
   value: string | null | undefined
 ): value is SelectorRegistryNamespace =>

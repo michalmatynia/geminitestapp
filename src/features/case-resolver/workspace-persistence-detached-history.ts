@@ -4,7 +4,7 @@ import {
   getCaseResolverWorkspaceRevision,
   safeParseJson,
 } from './utils/workspace-persistence-utils';
-import { type CaseResolverWorkspaceDetachedPayload } from '@/features/case-resolver/services/persistence/case-workspace-service';
+import { type CaseResolverWorkspaceDetachedPayload } from './workspace-persistence-detached.types';
 
 export const CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V2 =
   'case_resolver_workspace_detached_history_v2';

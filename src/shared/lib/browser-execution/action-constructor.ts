@@ -1,3 +1,15 @@
+/**
+ * Action Constructor
+ * 
+ * Utilities for constructing and initializing browser execution actions.
+ * Provides:
+ * - Action step array building from sequences
+ * - Step manifest generation
+ * - Initial step state setup
+ * - Action sequence initialization
+ * - Step status and message management
+ */
+
 import type { BrowserExecutionStep } from './step-registry';
 import { STEP_REGISTRY } from './step-registry';
 import type { ActionSequenceKey } from './action-sequences';
@@ -6,6 +18,8 @@ import { ACTION_SEQUENCES } from './action-sequences';
 /**
  * Builds a fresh array of BrowserExecutionStep objects for an action sequence.
  * All steps start with status 'pending' and no message.
+ * @param key - The action sequence key
+ * @returns Array of initialized browser execution steps
  */
 export const buildActionSteps = (key: ActionSequenceKey): BrowserExecutionStep[] =>
   ACTION_SEQUENCES[key].map((id) => ({

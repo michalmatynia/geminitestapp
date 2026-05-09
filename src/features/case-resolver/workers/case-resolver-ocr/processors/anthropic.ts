@@ -1,4 +1,5 @@
 import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
+import { externalServiceError } from '@/shared/errors/app-error';
 
 import { REMOTE_OCR_TIMEOUT_MS } from '../config';
 import { parseAnthropicResponseText } from '../response-parsers';
@@ -62,10 +63,15 @@ export const runAnthropicOcrRequest = async (input: {
     REMOTE_OCR_TIMEOUT_MS,
     'Anthropic OCR'
   );
+
   if (!response.ok) {
     const responseBody = await response.text();
     // Anthropic API returned an error response
-    throw new Error(responseBody.trim() || `Anthropic OCR request failed (${response.status}).`);
+    throw externalServiceError(`Anthropic OCR request failed with status ${response.status}.`, {
+      status: response.status,
+      responseBody,
+      model: input.model,
+    });
   }
   const payload = (await response.json()) as AnthropicMessageResponse;
   return parseAnthropicResponseText(payload);

@@ -18,12 +18,16 @@ type OutboundHostRule = {
 };
 
 export type OutboundUrlPolicyDecision = {
-  allowed: boolean;
-  reason: string | null;
-  hostname: string | null;
-  normalizedUrl: string | null;
+  allowed: boolean;           // Whether the URL is allowed by policy
+  reason: string | null;      // Explanation for allow/deny decision
+  hostname: string | null;    // Extracted hostname from URL
+  normalizedUrl: string | null; // Normalized URL string
 };
 
+/**
+ * Error thrown when outbound URL request violates security policy.
+ * Contains the policy decision details for logging and debugging.
+ */
 export class OutboundUrlPolicyError extends Error {
   decision: OutboundUrlPolicyDecision;
 
@@ -34,6 +38,7 @@ export class OutboundUrlPolicyError extends Error {
   }
 }
 
+/** Local hostnames that should be blocked for security */
 const LOCAL_HOSTS = new Set<string>([
   'localhost',
   'localhost.localdomain',
@@ -42,6 +47,7 @@ const LOCAL_HOSTS = new Set<string>([
   'metadata',
 ]);
 
+/** Private metadata service IPs that should be blocked (AWS, Alibaba Cloud) */
 const PRIVATE_METADATA_IPS = new Set<string>(['169.254.169.254', '100.100.100.200']);
 
 /**

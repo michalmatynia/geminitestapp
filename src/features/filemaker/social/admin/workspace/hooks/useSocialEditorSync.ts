@@ -1,3 +1,15 @@
+/**
+ * Social Editor Synchronization Hook
+ * 
+ * React hook for synchronizing social media editor state and content.
+ * Provides:
+ * - Post content synchronization between editor and backend
+ * - Image addon management and file selection
+ * - Real-time editor state tracking
+ * - Client-side event tracking for social publishing
+ * - Optimistic updates and conflict resolution
+ */
+
 'use client';
 
 import type React from 'react';

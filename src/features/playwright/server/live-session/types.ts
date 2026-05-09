@@ -1,9 +1,9 @@
 import type { Browser, BrowserContext, CDPSession, Page } from 'playwright';
 import type WebSocket from 'ws';
 import type {
+  LiveScripterPickedElement,
   LiveScripterServerMessage,
   LiveScripterViewport,
-  LiveScripterPickedElement,
 } from '@/shared/contracts/playwright-live-scripter';
 import type { SafeTimerId } from '@/shared/lib/timers';
 
@@ -38,5 +38,10 @@ export type LiveScripterProbeCandidate = LiveScripterPickedElement & {
 };
 
 export type LiveScripterBridge = {
-  // Define bridge structure if needed
+  attachClient: (sessionId: string, socket: LiveScripterSocket) => Promise<boolean>;
+};
+
+export type LiveScripterState = {
+  sessions: Map<string, LiveScripterSession>;
+  bridge: LiveScripterBridge;
 };

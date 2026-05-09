@@ -5,7 +5,14 @@ import {
   getCaseResolverWorkspaceRevision,
   safeParseJson,
 } from './utils/workspace-persistence-utils';
-import { type CaseResolverWorkspaceDetachedPayload } from '@/features/case-resolver/services/persistence/case-workspace-service';
+import { type CaseResolverWorkspaceDetachedPayload } from './workspace-persistence-detached.types';
+
+export const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2 =
+  'case_resolver_workspace_detached_documents_v2';
+const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA =
+  CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2;
+const CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS = 6_000;
+const CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_SCAN_SLOT_OCR_MAX_CHARS = 2_000;
 
 /**
  * Zod schema for a single detached document file entry.
@@ -42,7 +49,7 @@ export type CaseResolverWorkspaceDetachedDocumentsFileEntry = z.infer<typeof Det
  * Zod schema for the entire detached documents payload.
  */
 export const DetachedDocumentsPayloadSchema = z.object({
-  schema: z.string().min(1),
+  schema: z.literal(CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA),
   workspaceRevision: z.number().int().positive(),
   lastMutationId: z.string().trim().min(1).nullable(),
   files: z.array(DetachedFileEntrySchema),

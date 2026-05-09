@@ -21,6 +21,7 @@ import type {
   KangurRouteAction,
 } from '@/features/kangur/shared/contracts/kangur';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 const kangurPlatform = getKangurPlatform();
 
@@ -292,11 +293,6 @@ export const useLearnerProfileScores = ({
     isLoadingScores: hasScoreIdentity && cachedScores === null,
     scoresError: null,
   }));
-
-import { useEffect, useState } from 'react';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing code, note: updated imports below for clarity)
 
   useEffect(() => {
     let isActive = true;

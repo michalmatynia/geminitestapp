@@ -19,6 +19,7 @@ import {
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
 import type { AgentDecision, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
+import { internalError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { runPlannerTask } from './llm/core';
@@ -291,7 +292,9 @@ export async function buildPlanWithLLM({
     const parsed = parsePlanJson(content);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       // LLM response could not be parsed as a valid JSON object
-      throw new Error('Planner LLM returned invalid JSON.');
+      throw internalError('Planner LLM returned invalid JSON.', {
+        response: content,
+      });
     }
     const plannerResponse = parsed as Record<string, unknown>;
     const rawSteps = normalizePlanStepSpecsFromUnknown(plannerResponse['steps']);

@@ -17,10 +17,17 @@ import {
   getBrainAssignmentForFeature,
   resolveBrainExecutionConfigForCapability,
 } from '@/shared/lib/ai-brain/server';
+import {
+  configurationError,
+  internalError,
+} from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 
-import { LOG_SOURCE } from './case-resolver-ocr/config';
+/**
+ * Builds a standardized source string for logging: 'case-resolver.ocr.<action>'
+ */
+const buildCaseResolverOcrSource = (action: string): string => `case-resolver.ocr.${action}`;
 import {
   classifyCaseResolverOcrError,
   isRetryableCaseResolverOcrError,
@@ -200,7 +207,7 @@ const processOcrJob = async (data: CaseResolverOcrQueueJobData): Promise<void> =
         lastError = error;
         void logSystemEvent({
           level: 'warn',
-          source: LOG_SOURCE,
+          source: buildCaseResolverOcrSource('attempt-failed'),
           message: `OCR attempt failed for model ${model.provider}:${model.model}`,
           error,
           context: { jobId: data.jobId, correlationId, model },
@@ -209,14 +216,18 @@ const processOcrJob = async (data: CaseResolverOcrQueueJobData): Promise<void> =
     }
 
     if (!resultText) {
-      throw lastError || new Error('All OCR model candidates failed to return text.');
+      throw internalError('All OCR model candidates failed to return text.', {
+        jobId: data.jobId,
+        correlationId,
+        lastError,
+      });
     }
 
     await markCaseResolverOcrJobCompleted(data.jobId, resultText);
 
     void logSystemEvent({
       level: 'info',
-      source: LOG_SOURCE,
+      source: buildCaseResolverOcrSource('completed'),
       message: 'OCR job completed successfully',
       context: {
         jobId: data.jobId,
@@ -226,7 +237,7 @@ const processOcrJob = async (data: CaseResolverOcrQueueJobData): Promise<void> =
       },
     });
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: buildCaseResolverOcrSource('failed') });
     const isRetryable = isRetryableCaseResolverOcrError(error);
     if (isRetryable) {
       await markCaseResolverOcrJobQueuedForRetry(data.jobId, {
@@ -238,7 +249,7 @@ const processOcrJob = async (data: CaseResolverOcrQueueJobData): Promise<void> =
     await markCaseResolverOcrJobFailed(data.jobId, String(error));
     void logSystemEvent({
       level: 'error',
-      source: LOG_SOURCE,
+      source: buildCaseResolverOcrSource('failed-permanently'),
       message: 'OCR job failed permanently',
       error,
       context: { jobId: data.jobId, correlationId, durationMs: Date.now() - startedAt },
@@ -260,8 +271,9 @@ export const enqueueCaseResolverOcrJob = async (
 ): Promise<'queued' | 'inline'> => {
   const brain = await getBrainAssignmentForFeature('case_resolver');
   if (!brain.enabled) {
-    // Case Resolver feature is disabled in AI Brain settings
-    throw new Error('Case Resolver is disabled in Brain settings.');
+    throw configurationError('Case Resolver is disabled in AI Brain settings.', {
+      feature: 'case_resolver',
+    });
   }
 
   await resolveBrainExecutionConfigForCapability('case_resolver.ocr');
@@ -272,12 +284,17 @@ export const enqueueCaseResolverOcrJob = async (
       try {
         await processOcrJob(data);
       } catch (error) {
-        void ErrorSystem.captureException(error);
+        const wrappedError = internalError('Inline OCR processing failed.', {
+          jobId: data.jobId,
+          filepath: data.filepath,
+          cause: error,
+        });
+        void ErrorSystem.captureException(wrappedError);
         void logSystemEvent({
-          source: LOG_SOURCE,
+          source: buildCaseResolverOcrSource('inline-failed'),
           message: 'Inline OCR processing failed',
           level: 'error',
-          error,
+          error: wrappedError,
           context: { jobId: data.jobId, filepath: data.filepath },
         });
       }

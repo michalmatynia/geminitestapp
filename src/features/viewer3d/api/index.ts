@@ -1,3 +1,15 @@
+/**
+ * 3D Assets API Client
+ * 
+ * Client-side API functions for 3D asset management operations.
+ * Provides:
+ * - Asset CRUD operations (create, read, update, delete)
+ * - Asset listing with filtering and pagination
+ * - Category and tag management
+ * - File upload and reindexing operations
+ * - Error handling and logging integration
+ */
+
 import type {
   Asset3DRecord,
   Asset3DUpdateInput,
@@ -6,12 +18,19 @@ import type {
 import { api } from '@/shared/lib/api-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+/** Base API path for 3D assets endpoints */
 const API_BASE = '/api/assets3d';
 
- 
+/**
+ * Builds URL query parameters from asset list filters
+ * @param filters - Filter criteria for asset listing
+ * @returns Record of query parameters for API requests
+ */
 function buildFilterParams(filters: Asset3DListFilters): Record<string, string> {
+  /** Initialize empty parameters object */
   const params: Record<string, string> = {};
   
+  /** Define filter entries with optional values */
   const entries: Array<[string, string | undefined]> = [
     ['filename', filters.filename],
     ['categoryId', filters.categoryId ?? undefined],

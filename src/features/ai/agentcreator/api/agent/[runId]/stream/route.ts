@@ -9,6 +9,13 @@ import {
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+/**
+ * Builds a standardized source string for logging: 'ai.agentcreator.stream.<action>'
+ */
+const buildAgentCreatorStreamSource = (action: string): string => `ai.agentcreator.stream.${action}`;
+
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 async function getHandler(
@@ -36,12 +43,12 @@ async function getHandler(
         } catch (error) {
           logClientError(error);
           try {
-            const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+            const { ErrorSystem } = await import('@/shared/utils/observability/system-logger');
             void ErrorSystem.captureException(error, {
-              service: 'agent-stream',
-              action: 'sendSnapshot',
+              service: buildAgentCreatorStreamSource('snapshot-failed'),
               runId,
             });
+
           } catch (logError) {
             logClientError(logError);
             if (DEBUG_CHATBOT) {

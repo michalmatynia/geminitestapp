@@ -129,12 +129,17 @@ const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
 const AGENT_TERMINAL_POLL_STATUSES = new Set(['completed', 'waiting_human']);
 const AGENT_FAILED_POLL_STATUSES = new Set(['failed', 'stopped']);
 
+import { externalServiceError, internalError, operationFailedError } from '@/shared/errors/app-error';
+
 const assertAgentPollResponse = (
-  response: Awaited<ReturnType<typeof agentApi.poll>>
+  response: Awaited<ReturnType<typeof agentApi.poll>>,
+  runId: string
 ): AgentRunRecord => {
   if (!response.ok) {
-    // Agent API returned an error response during polling
-    throw new Error(response.error || 'Failed to poll agent run.');
+    throw externalServiceError(response.error || 'Failed to poll agent run.', {
+      runId,
+      error: response.error,
+    });
   }
 
   return (response.data.run as AgentRunRecord | undefined) ?? {};

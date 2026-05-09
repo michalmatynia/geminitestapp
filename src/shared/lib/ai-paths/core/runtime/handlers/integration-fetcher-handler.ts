@@ -3,6 +3,11 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
+import {
+  configurationError,
+  internalError,
+  operationFailedError,
+} from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { coerceInput } from '../../utils';
@@ -259,8 +264,9 @@ const resolveSimulationSourceSelection = async (args: {
   }
 
   if (!args.simulationEntityId) {
-    throw new Error(
-      `Fetcher ${args.node.title ?? args.node.id} is set to "Simulated entity by ID" but no entity ID is configured.`
+    throw configurationError(
+      `Fetcher ${args.node.title ?? args.node.id} is set to "Simulated entity by ID" but no entity ID is configured.`,
+      { nodeId: args.node.id, sourceMode: args.sourceMode }
     );
   }
 
@@ -462,8 +468,9 @@ export const handleFetcher: NodeHandler = async ({
   });
 
   if (shouldFailMissingSimulationEntity && !hasResolvedEntity) {
-    throw new Error(
-      `Fetcher ${node.title ?? node.id} could not hydrate ${resolvedEntityType}:${resolvedEntityId}. Check fetcher simulation entity configuration.`
+    throw internalError(
+      `Fetcher ${node.title ?? node.id} could not hydrate ${resolvedEntityType}:${resolvedEntityId}. Check fetcher simulation entity configuration.`,
+      { nodeId: node.id, entityType: resolvedEntityType, entityId: resolvedEntityId }
     );
   }
 

@@ -1,3 +1,15 @@
+/**
+ * Internationalization API Client
+ * 
+ * API client for managing internationalization metadata.
+ * Provides:
+ * - Country, currency, and language management
+ * - CRUD operations for i18n metadata
+ * - Pagination support for large datasets
+ * - Type-safe API interactions
+ * - Centralized endpoint configuration
+ */
+
 import type {
   CountryOption,
   CurrencyOption,
@@ -8,10 +20,15 @@ import type {
 } from '@/shared/contracts/internationalization';
 import { api } from '@/shared/lib/api-client';
 
+/** Base path for i18n metadata API endpoints */
 const I18N_METADATA_BASE = '/api/v2/metadata';
+/** Currencies management endpoint */
 const CURRENCIES_ENDPOINT = `${I18N_METADATA_BASE}/currencies`;
+/** Countries management endpoint */
 const COUNTRIES_ENDPOINT = `${I18N_METADATA_BASE}/countries`;
+/** Languages management endpoint */
 const LANGUAGES_ENDPOINT = `${I18N_METADATA_BASE}/languages`;
+/** Page size for full country list requests */
 const FULL_COUNTRY_LIST_PAGE_SIZE = 500;
 
 export async function getCurrencies(): Promise<CurrencyOption[]> {

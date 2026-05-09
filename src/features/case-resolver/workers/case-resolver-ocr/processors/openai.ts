@@ -1,12 +1,13 @@
 import OpenAI from 'openai';
 import { type ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
+import { externalServiceError } from '@/shared/errors/app-error';
 import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { REMOTE_OCR_TIMEOUT_MS } from '../config';
 import { parseOpenAiResponseText } from '../response-parsers';
 import { buildOcrPromptContent, withPromiseTimeout } from '../utils';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 export const runOpenAiOcrRequest = async (input: {
@@ -61,8 +62,12 @@ export const runOpenAiOcrRequest = async (input: {
     void ErrorSystem.captureException(error);
     const errorMessage = error instanceof Error ? error.message : '';
     if (!/max_completion_tokens/i.test(errorMessage)) {
-      throw error;
+      throw externalServiceError('OpenAI OCR request failed.', {
+        model: input.model,
+        cause: error,
+      });
     }
+
     const completion = await withPromiseTimeout(
       client.chat.completions.create({
         model: input.model,

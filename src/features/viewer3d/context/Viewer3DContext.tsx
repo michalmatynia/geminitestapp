@@ -1,3 +1,17 @@
+/**
+ * 3D Viewer Context
+ * 
+ * React Context for managing 3D viewer state and settings.
+ * Provides:
+ * - Rendering settings (lighting, shadows, bloom, etc.)
+ * - Post-processing effects (dithering, pixelation, vignette)
+ * - Camera and environment configuration
+ * - Preset management for ordered dithering
+ * - Type-safe state management for 3D viewer
+ * 
+ * Client-side context for React components
+ */
+
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -12,7 +26,12 @@ export type OrderedDitheringPresetKey = Asset3dOrderedDitheringPresetKey;
 
 export type { Viewer3DState };
 
+/**
+ * Predefined ordered dithering effect presets
+ * Each preset combines multiple dithering parameters for specific visual styles
+ */
 export const orderedDitheringPresets = {
+  /** Balanced dithering with color and moderate grid size */
   balanced: {
     label: 'Balanced',
     gridSize: 4,
@@ -21,6 +40,7 @@ export const orderedDitheringPresets = {
     invertColor: false,
     luminanceMethod: 1,
   },
+  /** Fine monochrome dithering with small grid for detailed appearance */
   fineMono: {
     label: 'Fine Mono',
     gridSize: 3,
@@ -29,6 +49,7 @@ export const orderedDitheringPresets = {
     invertColor: false,
     luminanceMethod: 1,
   },
+  /** Chunky monochrome dithering with large grid for retro appearance */
   chunkyMono: {
     label: 'Chunky Mono',
     gridSize: 6,
@@ -37,6 +58,7 @@ export const orderedDitheringPresets = {
     invertColor: false,
     luminanceMethod: 1,
   },
+  /** Inverted color dithering for high-contrast appearance */
   inverted: {
     label: 'Inverted',
     gridSize: 4,
@@ -47,25 +69,33 @@ export const orderedDitheringPresets = {
   },
 } as const;
 
+/**
+ * Context type definition for 3D viewer state and actions
+ * Includes all rendering settings and effect controls
+ */
 interface Viewer3DContextType extends Viewer3DState {
-  // Setters
+  // Rendering and camera controls
   setAutoRotate: (value: boolean) => void;
   setAutoRotateSpeed: (value: number) => void;
   setEnvironment: (value: EnvironmentPreset) => void;
   setLighting: (value: LightingPreset) => void;
   setLightIntensity: (value: number) => void;
+  
+  // Shadow and ground rendering
   setEnableShadows: (value: boolean) => void;
   setEnableContactShadows: (value: boolean) => void;
   setShowGround: (value: boolean) => void;
+  
+  // Post-processing effects
   setEnableBloom: (value: boolean) => void;
   setBloomIntensity: (value: number) => void;
   setEnableVignette: (value: boolean) => void;
   setEnableToneMapping: (value: boolean) => void;
   setExposure: (value: number) => void;
+  
+  // Dithering effects
   setEnableDithering: (value: boolean) => void;
   setDitheringIntensity: (value: number) => void;
-  setEnablePixelation: (value: boolean) => void;
-  setPixelSize: (value: number) => void;
   setEnableOrderedDithering: (value: boolean) => void;
   setOrderedDitheringGridSize: (value: number) => void;
   setOrderedDitheringPixelSizeRatio: (value: number) => void;
@@ -73,13 +103,23 @@ interface Viewer3DContextType extends Viewer3DState {
   setOrderedDitheringInvertColor: (value: boolean) => void;
   setOrderedDitheringLuminanceMethod: (value: number) => void;
   setOrderedDitheringPreset: (value: OrderedDitheringPresetKey) => void;
+  
+  // Pixelation effects
+  setEnablePixelation: (value: boolean) => void;
+  setPixelSize: (value: number) => void;
+  
+  // Appearance
   setBackgroundColor: (value: string) => void;
 
-  // Actions
+  // Batch operations
   resetSettings: () => void;
   applyOrderedDitheringPreset: (preset: Exclude<OrderedDitheringPresetKey, 'custom'>) => void;
 }
 
+/**
+ * Union type of all action setter keys in the context
+ * Used for type-safe action dispatching
+ */
 type Viewer3DActionsKey =
   | 'setAutoRotate'
   | 'setAutoRotateSpeed'

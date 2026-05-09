@@ -1,9 +1,21 @@
+/**
+ * Case Resolver Workspace Persistence Utilities
+ * 
+ * Utilities for persisting and managing Case Resolver workspace state.
+ * Provides:
+ * - Environment variable parsing
+ * - Workspace state normalization
+ * - Persistence configuration
+ * - Error handling for workspace operations
+ * - Configuration validation
+ */
+
 import { type CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 import { normalizeCaseResolverWorkspace } from '../settings.workspace';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
+/** Reads and validates a positive integer from environment variables */
 export const readPositiveIntegerEnv = (key: string, fallback: number): number => {
   const value = process.env[key];
   if (!value) return fallback;

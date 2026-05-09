@@ -1,3 +1,15 @@
+/**
+ * API Utilities Index
+ * 
+ * Central exports for API handling utilities and types.
+ * Provides:
+ * - API handler functions and context types
+ * - Error response creation utilities
+ * - JSON parsing and validation functions
+ * - Query parameter normalization
+ * - Type definitions for API routes
+ */
+
 export {
   apiHandler,
   apiHandlerWithParams,

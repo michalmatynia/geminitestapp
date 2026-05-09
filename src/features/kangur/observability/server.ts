@@ -11,6 +11,12 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 
 type KangurRequestContext = Pick<ApiHandlerContext, 'requestId' | 'traceId' | 'correlationId'>;
 
+/**
+ * Builds a standardized source string for logging: 'kangur.<service>.<action>'
+ */
+export const buildKangurSource = (service: string, action: string): string =>
+  `kangur.${service}.${action}`;
+
 type LogKangurServerEventInput = {
   source: string;
   message: string;

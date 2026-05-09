@@ -137,10 +137,12 @@ import { EventStreamPanel } from './SystemLogs.Table';
 
 describe('EventStreamPanel', () => {
   const interpretMutate = vi.fn();
+  const handleInterpretLog = vi.fn();
   const handleFilterChange = vi.fn();
 
   beforeEach(() => {
     interpretMutate.mockReset();
+    handleInterpretLog.mockReset();
     handleFilterChange.mockReset();
     mocks.useSystemLogsStateMock.mockReset();
     mocks.useSystemLogsActionsMock.mockReset();
@@ -150,10 +152,11 @@ describe('EventStreamPanel', () => {
     mocks.useSystemLogsActionsMock.mockReturnValue({
       setPage: vi.fn(),
       handleFilterChange,
+      handleInterpretLog,
     });
   });
 
-  it('opens a log details modal and keeps detail filter actions working', () => {
+  it('opens a log details modal without generating AI until requested', () => {
     mocks.useSystemLogsStateMock.mockReturnValue({
       logsQuery: { isLoading: false },
       logs: [
@@ -185,12 +188,17 @@ describe('EventStreamPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'View details' }));
 
-    expect(interpretMutate).toHaveBeenCalledWith('log-1');
+    expect(interpretMutate).not.toHaveBeenCalled();
+    expect(handleInterpretLog).not.toHaveBeenCalled();
     const dialog = screen.getByRole('dialog', { name: 'Log details' });
     expect(dialog).toBeInTheDocument();
     expect(within(dialog).getByText('Unhandled checkout failure')).toBeInTheDocument();
     expect(within(dialog).getByText('Identification')).toBeInTheDocument();
     expect(within(dialog).getByText('Request ID:req-123')).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Generate interpretation' }));
+
+    expect(handleInterpretLog).toHaveBeenCalledWith('log-1');
 
     fireEvent.click(screen.getByRole('button', { name: 'View all in request' }));
 

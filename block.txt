@@ -1,0 +1,45 @@
+const attachSocketClient = (session: LiveScripterSession, socket: LiveScripterSocket): void => {
+  refreshIdleTimeout(session);
+  session.sockets.add(socket);
+  sendSocketMessage(socket, { type: 'ready', sessionId: session.id });
+  if (session.lastNavigation !== null) {
+    sendSocketMessage(socket, session.lastNavigation);
+  }
+  if (session.lastFrame !== null) {
+    sendSocketMessage(socket, session.lastFrame);
+  }
+  if (session.lastPicked !== null) {
+    sendSocketMessage(socket, session.lastPicked);
+  }
+  if (session.lastProbe !== null) {
+    sendSocketMessage(socket, session.lastProbe);
+  }
+
+  socket.on('message', (raw) => {
+    let parsed: unknown;
+    try {
+      const text =
+        typeof raw === 'string'
+          ? raw
+          : Buffer.isBuffer(raw)
+            ? raw.toString('utf8')
+            : Array.isArray(raw)
+              ? Buffer.concat(raw).toString('utf8')
+              : Buffer.from(raw).toString('utf8');
+      parsed = JSON.parse(text);
+    } catch {
+      publishError(session, 'Live scripter client message was not valid JSON.');
+      return;
+    }
+
+    const validation = liveScripterClientMessageSchema.safeParse(parsed);
+    if (!validation.success) {
+      publishError(session, 'Live scripter client message did not match the expected shape.');
+      return;
+    }
+
+    void queueSessionAction(session, async () => {
+      try {
+        await handleClientMessage(session, validation.data);
+      } catch (error) {
+        const message =

@@ -1,3 +1,15 @@
+/**
+ * Server Model Runtime
+ * 
+ * Server-side chatbot model runtime and execution.
+ * Provides:
+ * - Chat completion execution
+ * - Message processing and formatting
+ * - Image URL resolution and handling
+ * - Content part transformation
+ * - Server-only model operations
+ */
+
 import 'server-only';
 
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
@@ -5,17 +17,32 @@ import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-cli
 
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
+/** Prefixes for absolute image URLs */
 const ABSOLUTE_IMAGE_URL_PREFIXES = ['data:', 'http://', 'https://'] as const;
 
+/**
+ * Resolves the public application base URL from environment
+ * @returns Base URL for the application
+ */
 const resolvePublicAppBaseUrl = (): string => {
   const base =
     process.env['NEXT_PUBLIC_APP_URL'] || process.env['NEXTAUTH_URL'] || 'http://localhost:3000';
   return base.endsWith('/') ? base.slice(0, -1) : base;
 };
 
+/**
+ * Checks if a URL is absolute (data URI or HTTP/HTTPS)
+ * @param value - URL string to check
+ * @returns True if URL is absolute
+ */
 const isAbsoluteImageUrl = (value: string): boolean =>
   ABSOLUTE_IMAGE_URL_PREFIXES.some((prefix) => value.startsWith(prefix));
 
+/**
+ * Resolves an image URL to absolute form
+ * @param raw - Raw image URL
+ * @returns Resolved absolute URL
+ */
 const resolveImageUrl = (raw: string): string => {
   const value = raw.trim();
   if (!value) return value;

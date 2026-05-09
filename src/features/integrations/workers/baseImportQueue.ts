@@ -6,6 +6,11 @@ import type { BaseImportDispatchMode, BaseImportItemStatus } from '@/shared/cont
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'integrations.base-import.<action>'
+ */
+const buildBaseImportSource = (action: string): string => `integrations.base-import.${action}`;
+
 type BaseImportQueueJobData = {
   runId: string;
   reason: 'start' | 'resume';
@@ -36,7 +41,7 @@ const queue = createManagedQueue<BaseImportQueueJobData>({
   },
   onCompleted: async (jobId, _result, data) => {
     await ErrorSystem.logInfo('Base import job completed', {
-      service: 'base-import-queue',
+      service: buildBaseImportSource('complete'),
       runId: data.runId,
       reason: data.reason,
       jobId,
@@ -44,7 +49,7 @@ const queue = createManagedQueue<BaseImportQueueJobData>({
   },
   onFailed: async (jobId, error, data) => {
     await ErrorSystem.captureException(error, {
-      service: 'base-import-queue',
+      service: buildBaseImportSource('failed'),
       runId: data.runId,
       reason: data.reason,
       jobId,
@@ -68,7 +73,7 @@ export const enqueueBaseImportRunJob = async (data: BaseImportQueueJobData): Pro
   const queuedJobId = await queue.enqueue(data, { jobId });
 
   await ErrorSystem.logInfo('Base import job queued', {
-    service: 'base-import-queue',
+    service: buildBaseImportSource('queued'),
     runId: data.runId,
     reason: data.reason,
     jobId: queuedJobId,
@@ -94,7 +99,7 @@ const startInlineBaseImportRunInBackground = (
   })
     .then(async () => {
       await ErrorSystem.logInfo('Base import job completed', {
-        service: 'base-import-queue',
+        service: buildBaseImportSource('complete'),
         runId: data.runId,
         reason: data.reason,
         jobId: queueJobId,
@@ -103,7 +108,7 @@ const startInlineBaseImportRunInBackground = (
     })
     .catch(async (error: unknown) => {
       await ErrorSystem.captureException(error, {
-        service: 'base-import-queue',
+        service: buildBaseImportSource('failed'),
         runId: data.runId,
         reason: data.reason,
         jobId: queueJobId,
@@ -124,7 +129,7 @@ export const dispatchBaseImportRunJob = async (
   if (!isRedisAvailable()) {
     const queueJobId = `inline-${Date.now()}`;
     await ErrorSystem.logInfo('Base import redis unavailable, running inline in background', {
-      service: 'base-import-queue',
+      service: buildBaseImportSource('queued'),
       runId: data.runId,
       reason: data.reason,
       jobId: queueJobId,
@@ -139,14 +144,14 @@ export const dispatchBaseImportRunJob = async (
     return { dispatchMode: 'queued', queueJobId };
   } catch (error: unknown) {
     ErrorSystem.captureException(error, {
-      service: 'base-import-queue',
+      service: buildBaseImportSource('failed'),
       runId: data.runId,
       reason: data.reason,
       action: 'enqueue-failed',
     }).catch(() => {});
     const queueJobId = `inline-${Date.now()}`;
     await ErrorSystem.logInfo('Base import enqueue failed, running inline in background', {
-      service: 'base-import-queue',
+      service: buildBaseImportSource('queued'),
       runId: data.runId,
       reason: data.reason,
       jobId: queueJobId,

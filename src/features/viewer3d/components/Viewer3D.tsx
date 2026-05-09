@@ -1,3 +1,15 @@
+/**
+ * 3D Viewer Component
+ * 
+ * Main 3D model viewer using React Three Fiber and Three.js.
+ * Provides:
+ * - Interactive 3D model rendering with orbit controls
+ * - Post-processing effects (bloom, tone mapping, vignette)
+ * - Environment lighting and shadows
+ * - Customizable visual effects and shaders
+ * - Performance-optimized rendering pipeline
+ */
+
 'use client';
 
 import React, { Suspense, useMemo } from 'react';

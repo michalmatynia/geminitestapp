@@ -1,3 +1,15 @@
+/**
+ * Managed MongoDB Databases
+ * 
+ * Server-side management and monitoring of MongoDB databases.
+ * Provides:
+ * - Database discovery and enumeration
+ * - Collection statistics and metadata
+ * - Backup storage management
+ * - Database health monitoring
+ * - Multi-source database coordination
+ */
+
 import 'server-only';
 
 import { promises as fs } from 'fs';

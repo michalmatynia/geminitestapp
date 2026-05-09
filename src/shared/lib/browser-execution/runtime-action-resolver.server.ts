@@ -1,3 +1,15 @@
+/**
+ * Runtime Action Resolver (Server)
+ * 
+ * Server-side resolution and loading of Playwright runtime actions.
+ * Provides:
+ * - Action loading from settings storage
+ * - Action seed merging and initialization
+ * - Action validation and normalization
+ * - Execution settings resolution
+ * - Server-only action management
+ */
+
 import 'server-only';
 
 import {

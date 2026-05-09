@@ -20,6 +20,11 @@ import {
 } from '@/shared/lib/api/api-handler';
 import type { InputJsonValue } from '@/shared/contracts/json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+/**
+ * Builds a standardized source string for logging: 'ai.agentcreator.run.<action>'
+ */
+const buildAgentCreatorSource = (action: string): string => `ai.agentcreator.run.${action}`;
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -44,18 +49,18 @@ async function getHandler(
   const requestStart = Date.now();
   const chatbotAgentRun = getChatbotAgentRunDelegate();
   if (!chatbotAgentRun) {
-    throw internalError('Agent run storage is unavailable.');
+    throw internalError('Agent run storage is unavailable.', { service: 'agent-api', action: 'get' });
   }
   const { runId } = await params;
   const run = await chatbotAgentRun.findUnique<AgentRunRouteRecord>({
     where: { id: runId },
   });
   if (!run) {
-    throw notFoundError(`Agent run "${runId}" not found. The run may have expired or the id is incorrect.`);
+    throw notFoundError(`Agent run "${runId}" not found. The run may have expired or the id is incorrect.`, { runId });
   }
   if (DEBUG_CHATBOT) {
     void ErrorSystem.logInfo('Run loaded', {
-      service: 'agent-api',
+      service: buildAgentCreatorSource('run-loaded'),
       runId,
       status: run.status,
       durationMs: Date.now() - requestStart,
@@ -71,7 +76,7 @@ async function postHandler(
   const requestStart = Date.now();
   const chatbotAgentRun = getChatbotAgentRunDelegate();
   if (!chatbotAgentRun) {
-    throw internalError('Agent run storage is unavailable.');
+    throw internalError('Agent run storage is unavailable.', { service: 'agent-api', action: 'post' });
   }
   const { runId } = await params;
   let body: {
@@ -85,17 +90,23 @@ async function postHandler(
     body = (await req.json()) as typeof body;
   } catch (error) {
     logClientError(error);
-    throw badRequestError('Invalid JSON payload. The request body must be a valid JSON object with an "action" field.');
+    throw badRequestError('Invalid JSON payload. The request body must be a valid JSON object.', {
+      runId,
+      cause: error,
+    });
   }
   if (
     !body.action ||
     !['stop', 'resume', 'retry_step', 'override_step', 'approve_step'].includes(body.action)
   ) {
-    throw badRequestError(`Unsupported action "${body.action ?? ''}". Allowed actions are: stop, resume, retry_step, override_step, approve_step.`);
+    throw badRequestError(`Unsupported action "${body.action ?? ''}". Allowed actions are: stop, resume, retry_step, override_step, approve_step.`, {
+      runId,
+      action: body.action,
+    });
   }
   if (DEBUG_CHATBOT) {
     void ErrorSystem.logInfo('Request', {
-      service: 'agent-api',
+      service: buildAgentCreatorSource('request'),
       runId,
       action: body.action,
     });

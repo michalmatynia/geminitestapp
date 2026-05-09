@@ -14,6 +14,11 @@ import {
 } from '@/shared/lib/api/query-schema';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'ai.agentcreator.audit.<action>'
+ */
+const buildAgentCreatorAuditSource = (action: string): string => `ai.agentcreator.audit.${action}`;
+
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 export const querySchema = z.object({
   stepId: optionalTrimmedQueryString(),
@@ -68,7 +73,7 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
       : audits;
     if (DEBUG_CHATBOT) {
       void ErrorSystem.logInfo('Audits loaded', {
-        service: 'agent-api',
+        service: buildAgentCreatorAuditSource('loaded'),
         runId,
         count: filtered.length,
         durationMs: Date.now() - requestStart,

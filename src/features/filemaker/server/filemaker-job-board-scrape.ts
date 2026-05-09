@@ -6,10 +6,9 @@ import { randomUUID } from 'crypto';
 import { isFatalJobBoardError } from '@/features/job-board/server/job-board-fatal-errors';
 import type { probeJobBoardOffer } from '@/features/job-board/server/job-scans-service';
 import {
-  collectJobBoardOfferUrls,
-  collectJobBoardOfferUrlsDeterministically,
-  isJobBoardOfferUrl,
-} from '@/features/job-board/server/providers/job-board-sync';
+  collectOfferUrls,
+} from '@/features/filemaker/services/job-board';
+import { runFilemakerJobBoardScrape } from '../services/job-board-scrape/scraper';
 import { getFilemakerOrganizationsCollection } from '@/features/filemaker/server/filemaker-organizations-mongo';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import {
@@ -2128,6 +2127,7 @@ export const saveFilemakerJobBoardScrapeDrafts = async (
   await emitLiveEvent(onEvent, { result: response, type: 'done' });
   return response;
 };
+
 
 export const runFilemakerJobBoardScrape = async (
   rawInput: unknown,

@@ -1,3 +1,15 @@
+/**
+ * Server Logging Controls
+ * 
+ * Server-side logging control management with database persistence.
+ * Provides:
+ * - Server logging control state management
+ * - Database-backed logging configuration
+ * - Logging control caching with TTL
+ * - In-flight request deduplication
+ * - Server-only observability configuration
+ */
+
 import 'server-only';
 
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
@@ -16,7 +28,9 @@ import {
   type ObservabilityLoggingControlType,
 } from './logging-controls';
 
+/** Cache for logging control states */
 const loggingControlCache = new Map<ObservabilityLoggingControlType, { enabled: boolean }>();
+/** In-flight requests to prevent duplicate database queries */
 const loggingControlInflight = new Map<ObservabilityLoggingControlType, Promise<boolean>>();
 let loggingControlReadDepth = 0;
 

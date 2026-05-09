@@ -1,3 +1,15 @@
+/**
+ * Products API Server Error Handling
+ * 
+ * Server-side error handling for Products API endpoints.
+ * Provides:
+ * - Request diagnostics and context capture
+ * - Server-side error classification and reporting
+ * - Versioned error response generation
+ * - Request metadata extraction for debugging
+ * - Integration with error system and observability
+ */
+
 import 'server-only';
 
 import { NextRequest } from 'next/server';
@@ -7,6 +19,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { ApiErrorBuilder, ErrorStatusCodes, createVersionedErrorResponse } from './errors';
 
+/** Request diagnostic information for error context */
 type RequestDiagnostics = {
   requestId?: string | undefined;
   method?: string | undefined;

@@ -27,7 +27,7 @@ import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_WYSI
 import { type AiNode, type CaseResolverEdge, type CaseResolverEdgeMeta, type CaseResolverGraph, type CaseResolverJoinMode, type CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { stripHtml } from "./utils/text-sanitization";
+import { stripHtml } from './utils/text-sanitization';
 
 
 export type CaseResolverPlainTextTransformInput = {

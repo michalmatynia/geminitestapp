@@ -1,3 +1,15 @@
+/**
+ * Regex Transform Handler
+ * 
+ * Regex pattern matching and extraction handler for AI path runtime.
+ * Provides:
+ * - Pattern matching with capture groups
+ * - JSON integrity validation for extracted data
+ * - Regex flag normalization and validation
+ * - Multi-line and single-line matching modes
+ * - Diagnostic reporting for extraction failures
+ */
+
 import type { RegexConfig } from '@/shared/contracts/ai-paths';
 import type {
   NodeHandler,
@@ -14,22 +26,43 @@ import {
 } from '../json-integrity';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
+/**
+ * Record of a single regex match result
+ */
 type RegexMatchRecord = {
+  /** Input string that was matched */
   input: string;
+  /** Matched text or null if no match */
   match: string | null;
+  /** Index of match in input or null */
   index: number | null;
+  /** Captured groups from regex */
   captures: string[];
+  /** Named capture groups or null */
   groups: Record<string, string> | null;
+  /** Key for this match result */
   key: string;
+  /** Extracted data from match */
   extracted: unknown;
 };
 
+/**
+ * Diagnostic info for regex extraction with match context
+ */
 type RegexJsonIntegrityDiagnostic = JsonIntegrityDiagnostic & {
+  /** Match key identifier */
   key: string;
+  /** Match index in input */
   index: number | null;
 };
 
+/**
+ * Normalizes regex flags to valid, deduplicated set
+ * Ensures stable ordering for consistent behavior
+ * 
+ * @param flags - Raw regex flags string
+ * @returns Normalized flags string
+ */
 const normalizeRegexFlags = (flags: string | undefined): string => {
   if (!flags) return '';
   const allowed = new Set(['d', 'g', 'i', 'm', 's', 'u', 'v', 'y']);
@@ -47,6 +80,14 @@ const normalizeRegexFlags = (flags: string | undefined): string => {
   return normalized.join('');
 };
 
+/**
+ * Builds array of strings to match against
+ * Optionally splits by newlines for multi-line matching
+ * 
+ * @param value - Input value to convert to strings
+ * @param splitLines - Whether to split by newlines
+ * @returns Array of strings to match
+ */
 const buildRegexItems = (value: unknown, splitLines: boolean): string[] => {
   const rawValues = coerceInputArray(value);
   const strings = rawValues.flatMap((item: unknown): string[] => {
@@ -62,20 +103,46 @@ const buildRegexItems = (value: unknown, splitLines: boolean): string[] => {
   return strings;
 };
 
+/**
+ * Resolves the selector key for match results
+ * Defaults to 'match' if not specified
+ * 
+ * @param selector - Selector string
+ * @returns Resolved selector key
+ */
 const resolveRegexSelectorKey = (selector: string | undefined): string =>
   (selector ?? 'match').trim();
 
+/**
+ * Extracts named capture groups from regex match
+ * 
+ * @param match - RegExp match result
+ * @returns Named groups object or null
+ */
 const resolveRegexRawGroups = (match: RegExpExecArray): Record<string, unknown> | null =>
   match.groups && typeof match.groups === 'object'
     ? (match.groups as Record<string, unknown>)
     : null;
 
+/**
+ * Normalizes a capture group value to string
+ * Handles undefined, null, and non-string values
+ * 
+ * @param value - Group value to normalize
+ * @returns Normalized string value
+ */
 const normalizeRegexGroupValue = (value: unknown): string => {
   if (typeof value === 'string') return value;
   if (value === undefined || value === null) return '';
   return safeStringify(value);
 };
 
+/**
+ * Normalizes named capture groups to string values
+ * 
+ * @param rawGroups - Raw capture groups
+ * @returns Normalized groups or null
+ */
 const normalizeRegexGroups = (
   rawGroups: Record<string, unknown> | null
 ): Record<string, string> | null =>

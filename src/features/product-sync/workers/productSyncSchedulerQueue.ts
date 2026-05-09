@@ -12,6 +12,11 @@ import type {
 } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'product-sync.sync.<action>'
+ */
+const buildProductSyncSource = (action: string): string => `product-sync.sync.${action}`;
+
 const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number): number => {
   const parsed = Number(raw);
   if (!Number.isFinite(parsed)) return fallback;
@@ -31,9 +36,10 @@ const PRODUCT_SYNC_SCHEDULER_LOCK_DURATION_MS = parseMsFromEnv(
 );
 
 const normalizeSkipReason = (error: unknown): string => {
+  const trimmedMessage = error instanceof Error ? error.message.trim() : '';
   const message =
-    error instanceof Error && error.message.trim()
-      ? error.message.trim()
+    trimmedMessage.length > 0
+      ? trimmedMessage
       : 'Unknown scheduler skip reason';
   return message.length > 160 ? `${message.slice(0, 157)}...` : message;
 };
@@ -79,6 +85,8 @@ const queue = createManagedQueue<ScheduledTickJobData>({
 
     for (const profile of dueProfiles) {
       try {
+        // Keep scheduler starts sequential so queue de-duplication and logging stay deterministic.
+        // eslint-disable-next-line no-await-in-loop
         await startProductSyncRun({
           profileId: profile.id,
           trigger: 'scheduled',
@@ -91,9 +99,9 @@ const queue = createManagedQueue<ScheduledTickJobData>({
         skipReasons.set(reason, (skipReasons.get(reason) ?? 0) + 1);
 
         if (!isExpectedSkipReason(reason)) {
+          // eslint-disable-next-line no-await-in-loop
           await ErrorSystem.captureException(error, {
-            service: 'product-sync-scheduler-queue',
-            action: 'startProductSyncRun',
+            service: buildProductSyncSource('start-sync-run-failed'),
             profileId: profile.id,
           });
         }
@@ -106,7 +114,7 @@ const queue = createManagedQueue<ScheduledTickJobData>({
 
     if (staleRecovery.recoveredRuns > 0 || skippedByReason.length > 0) {
       await ErrorSystem.logInfo('Product sync scheduler tick processed', {
-        service: 'product-sync-scheduler-queue',
+        service: buildProductSyncSource('tick-processed'),
         dueProfiles: dueProfiles.length,
         started,
         skipped,
@@ -127,7 +135,7 @@ const queue = createManagedQueue<ScheduledTickJobData>({
   },
   onFailed: async (_jobId, error) => {
     await ErrorSystem.captureException(error, {
-      service: 'product-sync-scheduler-queue',
+      service: buildProductSyncSource('scheduler-failed'),
     });
   },
 });
@@ -152,8 +160,7 @@ export const startProductSyncSchedulerQueue = (): void => {
     .catch(async (error) => {
       queueState.schedulerRegistered = false;
       await ErrorSystem.captureException(error, {
-        service: 'product-sync-scheduler-queue',
-        action: 'registerScheduler',
+        service: buildProductSyncSource('register-scheduler-failed'),
       });
     });
 };

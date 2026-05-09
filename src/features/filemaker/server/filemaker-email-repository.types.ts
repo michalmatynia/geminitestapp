@@ -1,3 +1,15 @@
+/**
+ * Filemaker Email Repository Types
+ * 
+ * Type definitions for Filemaker email management system.
+ * Provides:
+ * - MongoDB document types for emails and email links
+ * - Collection name constants
+ * - Email status and party kind integration
+ * - MX lookup result types
+ * - Email validation and verification types
+ */
+
 import type { Collection, Document } from 'mongodb';
 
 import type {

@@ -1,3 +1,16 @@
+/**
+ * 3D Asset Query Hooks
+ * 
+ * TanStack Query hooks for 3D asset data management.
+ * Provides:
+ * - Asset listing with filtering and caching
+ * - Individual asset detail queries
+ * - Category and tag metadata queries
+ * - Asset deletion and reindexing mutations
+ * - Query invalidation and cache management
+ * - Optimized stale times and refetch policies
+ */
+
 'use client';
 
 import { useMemo } from 'react';
@@ -23,27 +36,39 @@ import {
 } from '@/shared/lib/query-invalidation';
 import { viewer3dKeys as asset3dKeys } from '@/shared/lib/query-key-exports';
 
+/** Re-export shared invalidation functions for convenience */
 export const invalidateAsset3d = sharedInvalidateAsset3d;
 export const invalidateAsset3dDetail = sharedInvalidateAsset3dDetail;
 export { asset3dKeys };
 
+/** Cache configuration constants */
 const ASSET_LIST_STALE_TIME_MS = 60_000;
 const ASSET_METADATA_STALE_TIME_MS = 5 * 60 * 1000;
 const ASSET_DETAIL_STALE_TIME_MS = 2 * 60 * 1000;
 
+/**
+ * Normalizes and sanitizes asset list filters for consistent querying
+ * @param filters - Raw filter input from UI components
+ * @returns Normalized filter object with trimmed strings and sorted arrays
+ */
 function normalizeAsset3DListFilters(filters: Asset3DListFilters): Asset3DListFilters {
+  /** Normalize filename filter */
   const normalizedFilename = typeof filters.filename === 'string' ? filters.filename.trim() : '';
+  /** Normalize category filter */
   const normalizedCategory =
     typeof filters.categoryId === 'string' && filters.categoryId.trim().length > 0
       ? filters.categoryId.trim()
       : '';
+  /** Normalize search filter */
   const normalizedSearch = typeof filters.search === 'string' ? filters.search.trim() : '';
+  /** Normalize and deduplicate tags */
   const normalizedTags = Array.isArray(filters.tags)
     ? Array.from(
       new Set(filters.tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0))
     ).sort((left, right) => left.localeCompare(right))
     : [];
 
+  /** Return only non-empty filters */
   return {
     ...(normalizedFilename ? { filename: normalizedFilename } : {}),
     ...(normalizedCategory ? { categoryId: normalizedCategory } : {}),
@@ -53,7 +78,13 @@ function normalizeAsset3DListFilters(filters: Asset3DListFilters): Asset3DListFi
   };
 }
 
+/**
+ * Hook for querying 3D assets with filtering and caching
+ * @param filters - Filter criteria for asset listing
+ * @returns TanStack Query result with asset list data
+ */
 export function useAssets3D(filters: Asset3DListFilters): ListQuery<Asset3DRecord> {
+  /** Memoize normalized filters to prevent unnecessary re-renders */
   const normalizedFilters = useMemo(
     () => normalizeAsset3DListFilters(filters),
     [

@@ -1,3 +1,17 @@
+/**
+ * Admin 3D Assets State Management Hook
+ * 
+ * Comprehensive state management for admin 3D asset interfaces.
+ * Provides:
+ * - Asset listing with filtering and search
+ * - Modal state management (upload, preview, edit)
+ * - View mode switching (grid/list)
+ * - Asset deletion with confirmation dialogs
+ * - Reindexing operations with progress feedback
+ * - Filter state and UI controls
+ * - Error handling and user notifications
+ */
+
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
@@ -17,21 +31,29 @@ import {
 
 import type { ViewMode } from './view-mode';
 
-
+/**
+ * Hook providing complete state management for admin 3D assets interface
+ * @returns Object containing all state, handlers, and UI components needed for admin interface
+ */
 export function useAdmin3DAssetsState() {
+  /** UI notification system */
   const { toast } = useToast();
+  /** Confirmation dialog system */
   const { confirm, ConfirmationModal } = useConfirm();
+  
+  /** Modal and UI state */
   const [showUploader, setShowUploader] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
   const [editAsset, setEditAsset] = useState<Asset3DRecord | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  // Filters
+  /** Filter state */
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
+  /** Memoized filter object for API queries */
   const filters = useMemo(
     () => ({
       ...(searchQuery && { search: searchQuery }),

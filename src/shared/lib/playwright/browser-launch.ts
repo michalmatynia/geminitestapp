@@ -1,20 +1,37 @@
+/**
+ * Playwright Browser Launch Configuration
+ * 
+ * Browser launch and initialization utilities for Playwright automation.
+ * Provides:
+ * - Browser preference selection (auto, brave, chrome, chromium)
+ * - Platform-specific executable paths
+ * - Launch option configuration
+ * - Browser initialization with fallback strategies
+ * - Environment variable integration
+ */
+
 import type { Browser, LaunchOptions } from 'playwright';
 
 import { getPlaywrightRuntime } from './runtime';
 
+/** Browser preference options for Playwright */
 export type PlaywrightBrowserPreference = 'auto' | 'brave' | 'chrome' | 'chromium';
 
-/** Brave executable paths by platform. */
+/** Brave browser executable paths by platform */
 const BRAVE_PATHS: Record<string, string> = {
   darwin: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
   win32: 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
   linux: '/usr/bin/brave-browser',
 };
 
+/** Environment variable for custom Brave executable path */
 const BRAVE_EXECUTABLE_PATH_ENV = 'PLAYWRIGHT_BRAVE_EXECUTABLE_PATH';
 
+/** Descriptor for a browser launch attempt with fallback */
 type LaunchAttempt = {
+  /** Label for the launch attempt */
   label: string;
+  /** Launch options for this attempt */
   options: LaunchOptions;
 };
 

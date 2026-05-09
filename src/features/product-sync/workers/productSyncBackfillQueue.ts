@@ -4,6 +4,11 @@ import { runBaseListingBackfill } from '@/features/product-sync/services/product
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'product-sync.backfill.<action>'
+ */
+const buildProductSyncSource = (action: string): string => `product-sync.backfill.${action}`;
+
 type ProductSyncBackfillJobData = {
   connectionId?: string;
   inventoryId?: string;
@@ -30,14 +35,14 @@ const queue = createManagedQueue<ProductSyncBackfillJobData>({
   },
   onCompleted: async (jobId, result) => {
     await ErrorSystem.logInfo('Product sync backfill completed', {
-      service: 'product-sync-backfill-queue',
+      service: buildProductSyncSource('complete'),
       jobId,
       result,
     });
   },
   onFailed: async (jobId, error, data) => {
     await ErrorSystem.captureException(error, {
-      service: 'product-sync-backfill-queue',
+      service: buildProductSyncSource('failed'),
       jobId,
       data,
     });

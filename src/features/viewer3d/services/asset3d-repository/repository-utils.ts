@@ -1,6 +1,22 @@
+/**
+ * Asset 3D Repository Utilities
+ * 
+ * Helper functions for MongoDB document handling and normalization.
+ * Provides:
+ * - Document type definitions and schema mapping
+ * - String and array normalization utilities
+ * - Date handling and conversion
+ * - MongoDB ID filtering and querying
+ * - Asset record field extraction and transformation
+ */
+
 import { ObjectId, type Document, type Filter } from 'mongodb';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
+/**
+ * MongoDB document type for 3D assets
+ * Maps database fields to Asset3DRecord contract
+ */
 export type Asset3DDocument = Document & {
   _id: ObjectId | string;
   id?: string;
@@ -27,12 +43,26 @@ export type Asset3DDocument = Document & {
   updatedAt?: Date | null;
 };
 
+/**
+ * Normalizes a string value by trimming whitespace
+ * Returns null for non-strings or empty strings
+ * 
+ * @param value - The value to normalize
+ * @returns Trimmed string or null if invalid/empty
+ */
 export const normalizeString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 };
 
+/**
+ * Normalizes an array of strings
+ * Filters out non-strings, trims whitespace, removes duplicates
+ * 
+ * @param value - The value to normalize
+ * @returns Array of unique trimmed strings
+ */
 export const normalizeStringArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
   const results: string[] = [];
@@ -42,12 +72,28 @@ export const normalizeStringArray = (value: unknown): string[] => {
       if (trimmed.length > 0) results.push(trimmed);
     }
   }
+  // Remove duplicates using Set
   return Array.from(new Set(results));
 };
 
+/**
+ * Normalizes a date value with fallback
+ * 
+ * @param value - The value to normalize
+ * @param fallback - Default date if value is invalid
+ * @returns Date object
+ */
 export const normalizeDate = (value: unknown, fallback: Date): Date =>
   value instanceof Date ? value : fallback;
 
+/**
+ * Converts MongoDB ObjectId or string to string ID
+ * Handles ObjectId conversion to hex string
+ * 
+ * @param value - ObjectId or string to convert
+ * @param fallback - Default value if conversion fails
+ * @returns String ID or fallback
+ */
 export const toStringId = (value: ObjectId | string | undefined, fallback?: string | null): string => {
   if (fallback !== undefined && fallback !== null) return fallback;
   if (typeof value === 'string') return value;
@@ -55,27 +101,61 @@ export const toStringId = (value: ObjectId | string | undefined, fallback?: stri
   return '';
 };
 
+/**
+ * Builds a MongoDB filter for querying by ID
+ * Handles both string IDs and ObjectIds with multiple query variants
+ * 
+ * Process:
+ * 1. Create filter for string ID
+ * 2. If ID is valid ObjectId format, create ObjectId variant
+ * 3. Deduplicate variants
+ * 4. Combine with $or operator
+ * 
+ * @param id - The ID to filter by
+ * @returns MongoDB filter object
+ */
 export const buildIdFilter = (id: string): Filter<Asset3DDocument> => {
   const clauses: Filter<Asset3DDocument>[] = [{ id }];
   const idVariants: Array<ObjectId | string> = [id];
+  
+  // Try to create ObjectId variant if ID is valid
   if (ObjectId.isValid(id)) {
     idVariants.push(new ObjectId(id));
   }
+  
+  // Deduplicate variants by string representation
   const dedupedVariants = Array.from(
     new Map(idVariants.map((value: ObjectId | string) => [value.toString(), value])).values()
   );
+  
+  // Add _id filter for each variant
   dedupedVariants.forEach((value: ObjectId | string): void => {
     clauses.push({ _id: value });
   });
   
+  // Return combined filter
   if (clauses.length === 0) return {};
   if (clauses.length === 1) return clauses[0];
   return { $or: clauses };
 };
 
+/**
+ * Extracts the display name from an asset document
+ * Falls back to filename if name is not available
+ * 
+ * @param doc - The asset document
+ * @returns Display name or empty string
+ */
 const getAssetRecordName = (doc: Asset3DDocument): string =>
   normalizeString(doc.name) ?? normalizeString(doc.filename) ?? '';
 
+/**
+ * Extracts tags from an asset document
+ * Normalizes both tags and tagIds fields
+ * 
+ * @param doc - The asset document
+ * @returns Array of normalized tags
+ */
 const getAssetRecordTags = (doc: Asset3DDocument): string[] =>
   normalizeStringArray(doc.tags ?? doc.tagIds);
 

@@ -1,3 +1,15 @@
+/**
+ * Supplier 1688 Runtime Step Snippets
+ * 
+ * Code snippet templates for Supplier 1688 automation runtime steps.
+ * Provides:
+ * - Browser preparation step snippets
+ * - Selector registry integration
+ * - Runtime step code generation
+ * - Step input binding templates
+ * - Marketplace automation patterns
+ */
+
 import type {
   SelectorRegistryKind,
   SelectorRegistryNamespace,
@@ -9,8 +21,10 @@ import {
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS,
 } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 
+/** Export runtime key for external use */
 export { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY };
 
+/** Code snippet templates for Supplier 1688 runtime steps */
 const supplier1688RuntimeStepSnippets: Record<string, string> = {
   [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.browserPreparation]: [
     'await runtimeSteps.prepareBrowserRuntime({',

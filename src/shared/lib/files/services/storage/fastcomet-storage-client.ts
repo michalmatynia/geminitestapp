@@ -4,7 +4,7 @@ import type { LookupFunction } from 'node:net';
 import { Agent, type Dispatcher } from 'undici';
 
 import type { FastCometStorageConfig } from '@/shared/lib/files/constants';
-import { badRequestError } from '@/shared/errors/app-error';
+import { badRequestError, configurationError, externalServiceError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { normalizeFastCometIpAddress } from './fastcomet-storage-config';
 import { readFastCometFailureBody, readFastCometJsonSuccessBody } from './fastcomet-response';
@@ -171,8 +171,9 @@ export const uploadToFastComet = async (params: {
 }): Promise<string> => {
   const { fastComet } = params;
   if (fastComet.uploadEndpoint.length === 0) {
-    throw new Error(
-      'FastComet storage is enabled but uploadEndpoint is empty. Configure fastcomet_storage_config_v1.'
+    throw configurationError(
+      'FastComet storage is enabled but uploadEndpoint is empty. Configure fastcomet_storage_config_v1.',
+      { configKey: 'fastcomet_storage_config_v1' }
     );
   }
 
@@ -196,14 +197,15 @@ export const uploadToFastComet = async (params: {
 
     if (!response.ok) {
       const body = await readFastCometFailureBody(response);
-      if (response.status === 401 || response.status === 403) {
-        throw badRequestError(
-          `FastComet upload was rejected by the server (HTTP ${response.status}). Check the bearer token and endpoint in FastComet settings.`,
-          { hint: 'FASTCOMET_STORAGE_CONFIG_SETTING_KEY', status: response.status }
-        );
-      }
-      // FastComet upload request failed with a non-2xx status code
-      throw new Error(`FastComet upload failed (${response.status}). ${body}`.trim());
+      throw externalServiceError(
+        `FastComet upload failed with status ${response.status}.`,
+        {
+          status: response.status,
+          responseBody: body,
+          uploadEndpoint: fastComet.uploadEndpoint,
+          filename: params.filename,
+        }
+      );
     }
 
     const responseBody = await readFastCometJsonSuccessBody(response, 'upload');

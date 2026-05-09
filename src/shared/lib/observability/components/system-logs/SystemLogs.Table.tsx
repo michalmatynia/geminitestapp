@@ -47,7 +47,7 @@ export function EventStreamPanel({
 } = {}): React.JSX.Element {
   const { logsQuery, logs, totalPages, page, interpretLogMutation, logInterpretations } =
     useSystemLogsState();
-  const { setPage, handleFilterChange } = useSystemLogsActions();
+  const { setPage, handleFilterChange, handleInterpretLog } = useSystemLogsActions();
   const [selectedLog, setSelectedLog] = React.useState<SystemLogRecord | null>(null);
   const aiInterpretationTooltip =
     getDocumentationTooltip(
@@ -71,11 +71,14 @@ export function EventStreamPanel({
   const handleOpenDetails = React.useCallback(
     (log: SystemLogRecord): void => {
       setSelectedLog(log);
-      if (!logInterpretations[log.id] && !interpretLogMutation.isPending) {
-        interpretLogMutation.mutate(log.id);
-      }
     },
-    [interpretLogMutation, logInterpretations]
+    []
+  );
+
+  const handleGenerateSelectedInterpretation = React.useCallback((): void => {
+    if (!selectedLog || interpretLogMutation.isPending) return;
+    void handleInterpretLog(selectedLog.id);
+  }, [handleInterpretLog, interpretLogMutation.isPending, selectedLog]
   );
 
   const columns = React.useMemo<ColumnDef<SystemLogRecord>[]>(
@@ -116,6 +119,7 @@ export function EventStreamPanel({
             log: selectedLog,
             interpretation: selectedInterpretation,
             isInterpreting: interpretLogMutation.isPending && !selectedInterpretation,
+            onGenerateInterpretation: handleGenerateSelectedInterpretation,
             onFilterChange: handleFilterChange,
           })
         ) : null}

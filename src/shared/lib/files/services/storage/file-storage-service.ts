@@ -1,70 +1,23 @@
 import 'server-only';
-
-import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
-import {
-  FILE_STORAGE_SOURCE_SETTING_KEY,
-  FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
-  fileStorageSourceValues,
-} from '@/shared/lib/files/constants';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { type FileStorageSettings, readFileStorageSettings } from './storage-settings-service';
 import {
   deleteFromFastComet,
   isHttpFilepath as isFastCometHttpFilepath,
-  resolveFastCometConfig,
   toAbsoluteUrl as toFastCometAbsoluteUrl,
   uploadToFastComet,
 } from './fastcomet-storage-client';
+import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-const SETTINGS_COLLECTION = 'settings';
 const CACHE_TTL_MS = 5_000;
-
-type FileStorageSettings = {
-  source: FileStorageSource;
-  fastComet: FastCometStorageConfig;
-};
-
-type CacheState = {
-  expiresAt: number;
-  value: FileStorageSettings;
-};
-
-let settingsCache: CacheState | null = null;
+let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
 
 export const isHttpFilepath = isFastCometHttpFilepath;
 export const toAbsoluteUrl = toFastCometAbsoluteUrl;
 
-const normalizeString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
-
-const isFileStorageSource = (value: string): value is FileStorageSource =>
-  (fileStorageSourceValues as readonly string[]).includes(value);
-
-const parseFileStorageSource = (raw: string | null): FileStorageSource | null => {
-  const normalized = normalizeString(raw);
-  if (normalized.length === 0) return null;
-  return isFileStorageSource(normalized) ? normalized : null;
-};
-
-const readMongoSettingValue = async (key: string): Promise<string | null> => {
-  try {
-    const mongo = await getMongoDb();
-    const record = await mongo.collection<MongoStringSettingRecord>(SETTINGS_COLLECTION).findOne({
-      $or: [{ key }, { _id: key }],
-    });
-    return typeof record?.value === 'string' ? record.value : null;
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return null;
-  }
-};
-
-const readSettingValue = async (key: string): Promise<string | null> => readMongoSettingValue(key);
-
 export const getPublicPathFromStoredPath = (filepath: string): string | null => {
   const trimmed = filepath.trim();
   if (trimmed.length === 0) return null;
-
   if (isHttpFilepath(trimmed)) {
     try {
       const url = new URL(trimmed);
@@ -75,9 +28,7 @@ export const getPublicPathFromStoredPath = (filepath: string): string | null => 
       return null;
     }
   }
-
-  const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  return normalized;
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
 };
 
 export const resolveAppBaseUrl = (): string =>
@@ -85,44 +36,25 @@ export const resolveAppBaseUrl = (): string =>
   process.env['NEXTAUTH_URL']?.trim() ??
   'http://localhost:3000';
 
-const readFileStorageSettings = async (): Promise<FileStorageSettings> => {
-  const sourceRaw = await readSettingValue(FILE_STORAGE_SOURCE_SETTING_KEY);
-  const source =
-    parseFileStorageSource(sourceRaw) ??
-    parseFileStorageSource(process.env['FILE_STORAGE_SOURCE'] ?? null) ??
-    'local';
-
-  const fastCometRaw = await readSettingValue(FASTCOMET_STORAGE_CONFIG_SETTING_KEY);
-  const fastComet = resolveFastCometConfig(fastCometRaw);
-
-  return {
-    source,
-    fastComet,
-  };
-};
-
 export const getFileStorageSettings = async (options?: {
   force?: boolean;
 }): Promise<FileStorageSettings> => {
   const now = Date.now();
-  const cached = settingsCache;
-  if (options?.force !== true && cached !== null && cached.expiresAt > now) {
-    return cached.value;
+  if (options?.force !== true && settingsCache && settingsCache.expiresAt > now) {
+    return settingsCache.value;
   }
 
-  return readFileStorageSettings().then((settings) => {
-    settingsCache = {
-      value: settings,
-      expiresAt: Date.now() + CACHE_TTL_MS,
-    };
-    return settings;
-  });
+  const value = await readFileStorageSettings();
+  settingsCache = { expiresAt: Date.now() + CACHE_TTL_MS, value };
+  return value;
 };
 
 export const invalidateFileStorageSettingsCache = (): void => {
   settingsCache = null;
 };
 
+import { externalServiceError, internalError } from '@/shared/errors/app-error';
+// ...
 export const uploadToConfiguredStorage = async (params: {
   buffer: Buffer;
   filename: string;
@@ -136,7 +68,14 @@ export const uploadToConfiguredStorage = async (params: {
   const settings = await getFileStorageSettings();
 
   if (settings.source === 'local') {
-    await params.writeLocalCopy();
+    try {
+      await params.writeLocalCopy();
+    } catch (error) {
+      throw internalError('Failed to write local file copy', {
+        filepath: params.publicPath,
+        cause: error,
+      });
+    }
     return {
       filepath: params.publicPath,
       source: 'local',
@@ -146,25 +85,40 @@ export const uploadToConfiguredStorage = async (params: {
 
   const shouldMirrorLocal = settings.fastComet.keepLocalCopy;
   if (shouldMirrorLocal) {
-    await params.writeLocalCopy();
+    try {
+      await params.writeLocalCopy();
+    } catch (error) {
+      throw internalError('Failed to write local file copy during remote mirror', {
+        filepath: params.publicPath,
+        cause: error,
+      });
+    }
   }
 
-  const remotePath = await uploadToFastComet({
-    buffer: params.buffer,
-    filename: params.filename,
-    mimetype: params.mimetype,
-    publicPath: params.publicPath,
-    category: params.category,
-    projectId: params.projectId,
-    folder: params.folder,
-    fastComet: settings.fastComet,
-  });
-
-  return {
-    filepath: remotePath,
-    source: 'fastcomet',
-    mirroredLocally: shouldMirrorLocal,
-  };
+  try {
+    const remotePath = await uploadToFastComet({
+      buffer: params.buffer,
+      filename: params.filename,
+      mimetype: params.mimetype,
+      publicPath: params.publicPath,
+      category: params.category,
+      projectId: params.projectId,
+      folder: params.folder,
+      fastComet: settings.fastComet,
+    });
+    return {
+      filepath: remotePath,
+      source: 'fastcomet',
+      mirroredLocally: shouldMirrorLocal,
+    };
+  } catch (error) {
+    throw externalServiceError('Failed to upload file to remote storage (FastComet)', {
+      filename: params.filename,
+      publicPath: params.publicPath,
+      projectId: params.projectId,
+      cause: error,
+    });
+  }
 };
 
 export const uploadBufferToFastComet = async (params: {
@@ -197,11 +151,9 @@ export const deleteFromConfiguredStorage = async (params: {
   const settings = await getFileStorageSettings();
   const publicPath = getPublicPathFromStoredPath(params.filepath);
 
-  // Local cleanup should always run first to keep disk usage under control.
   await params.deleteLocalCopy(publicPath);
 
   const shouldDeleteRemote = settings.source === 'fastcomet' || isHttpFilepath(params.filepath);
-
   if (!shouldDeleteRemote) return;
 
   try {

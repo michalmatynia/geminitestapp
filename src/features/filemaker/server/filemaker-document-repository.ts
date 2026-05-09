@@ -1,3 +1,15 @@
+/**
+ * Filemaker Document Repository
+ * 
+ * Database repository for managing Filemaker document storage and retrieval.
+ * Provides:
+ * - Document CRUD operations with MongoDB
+ * - Owner-based document categorization (person, organization, event)
+ * - Document metadata and content management
+ * - Document search and filtering capabilities
+ * - File attachment and reference handling
+ */
+
 import 'server-only';
 
 import type { Document, Filter } from 'mongodb';

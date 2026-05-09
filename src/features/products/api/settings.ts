@@ -1,3 +1,15 @@
+/**
+ * Products API Settings Client
+ * 
+ * API client for managing product settings and configuration.
+ * Provides:
+ * - Catalog and price group management
+ * - Product category CRUD operations
+ * - Shipping group configuration
+ * - Tax group and VAT management
+ * - Product settings synchronization
+ */
+
 import {
   type Catalog,
   type CatalogRecord,

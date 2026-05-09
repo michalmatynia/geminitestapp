@@ -1,3 +1,15 @@
+/**
+ * Database Engine Provider Preview
+ * 
+ * Provider preview and status information for database engine.
+ * Provides:
+ * - Collection provider mapping preview
+ * - Database engine status overview
+ * - Provider configuration validation
+ * - Error handling and status reporting
+ * - Server-only provider management
+ */
+
 import 'server-only';
 
 import type {
@@ -15,6 +27,11 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getDatabaseEngineStatus } from './database-engine-status';
 
+/**
+ * Converts an error to a string message
+ * @param error - Error to convert
+ * @returns Error message string
+ */
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 

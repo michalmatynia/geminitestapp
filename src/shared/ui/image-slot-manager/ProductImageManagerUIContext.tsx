@@ -11,7 +11,6 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useOptionalProductImageManagerController } from './ProductImageManagerControllerContext';
 
-
 import type {
   ProductImageManagerUIActionsContextValue,
   ProductImageManagerUIStateContextValue,

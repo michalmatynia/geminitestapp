@@ -1,3 +1,15 @@
+/**
+ * Case Resolver Relation Metadata Types
+ * 
+ * Type definitions and schemas for Case Resolver relation metadata.
+ * Provides:
+ * - Node metadata schema with entity type validation
+ * - Edge metadata schema for relationship properties
+ * - File and folder path handling
+ * - Structural relationship indicators
+ * - Timestamp tracking for relation changes
+ */
+
 import { z } from 'zod';
 import { DEFAULT_CASE_RESOLVER_RELATION_NODE_META, DEFAULT_CASE_RESOLVER_RELATION_EDGE_META } from '@/shared/contracts/case-resolver/constants';
 

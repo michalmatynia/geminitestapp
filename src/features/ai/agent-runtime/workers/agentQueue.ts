@@ -25,6 +25,11 @@ import { createManagedQueue } from '@/shared/lib/queue';
 import type { RepeatableJobEntry } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'ai.agent-runtime.<action>'
+ */
+const buildAgentRuntimeSource = (action: string): string => `ai.agent-runtime.${action}`;
+
 // Job data structure for agent processing
 type AgentJobData = {
   runId: string; // Unique identifier for the agent run
@@ -50,7 +55,7 @@ const queue = createManagedQueue<AgentJobData>({
   onFailed: async (_jobId, err, data) => {
     const { ErrorSystem: LoggerSystem } = await import('@/shared/lib/observability/system-logger');
     await LoggerSystem.captureException(err, {
-      service: 'agent-queue',
+      service: buildAgentRuntimeSource('job-failed'),
       runId: data.runId,
     });
   },
@@ -96,17 +101,16 @@ const stopAgentQueueInternal = async (): Promise<void> => {
     await removeRecoveryRepeatJobs();
   } catch (err) {
     await ErrorSystem.captureException(err, {
-      service: 'agent-queue',
-      action: 'removeRecoverySchedule',
+      service: buildAgentRuntimeSource('remove-recovery-schedule-failed'),
     });
   }
   queueState.recoveryJobRegistered = false;
   if (!queueState.workerStarted) return;
   queueState.workerStarted = false;
   await queue.stopWorker();
-};
+  };
 
-export function startAgentQueue(): void {
+  export function startAgentQueue(): void {
   if (reconcileInFlight) return;
   reconcileInFlight = (async (): Promise<void> => {
     try {
@@ -130,25 +134,24 @@ export function startAgentQueue(): void {
       }
     } catch (err) {
       await ErrorSystem.captureException(err, {
-        service: 'agent-queue',
-        action: 'reconcileQueue',
+        service: buildAgentRuntimeSource('reconcile-queue-failed'),
       });
     }
   })().finally(() => {
     reconcileInFlight = null;
   });
-}
+  }
 
-export async function stopAgentQueue(): Promise<void> {
+  export async function stopAgentQueue(): Promise<void> {
   try {
     await stopAgentQueueInternal();
   } catch (err) {
     await ErrorSystem.captureException(err, {
-      service: 'agent-queue',
-      action: 'stopWorker',
+      service: buildAgentRuntimeSource('stop-worker-failed'),
     });
   }
-}
+  }
+
 
 export async function enqueueAgentRun(runId: string): Promise<void> {
   await queue.enqueue({ runId, type: 'run' });

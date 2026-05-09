@@ -36,13 +36,18 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const filepath = normalizeCaseResolverPublicFilepath(parsed.data.filepath);
   if (!filepath) {
-    throw badRequestError('filepath is required.');
+    throw badRequestError('Invalid filepath: a valid file path is required.', {
+      receivedFilepath: parsed.data.filepath,
+    });
   }
   try {
     resolveCaseResolverOcrDiskPath(filepath);
   } catch (error) {
     void ErrorSystem.captureException(error);
-    throw badRequestError(error instanceof Error ? error.message : 'Invalid filepath.');
+    throw badRequestError(`Invalid filepath access: ${error instanceof Error ? error.message : 'Path access denied.'}`, {
+      filepath,
+      cause: error,
+    });
   }
 
   const runtimeModel = parsed.data.model?.trim() ?? '';
@@ -73,9 +78,11 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     void ErrorSystem.captureException(error);
     const message = error instanceof Error ? error.message : 'Failed to dispatch OCR runtime job.';
     await markCaseResolverOcrJobFailed(createdJob.id, message);
-    throw operationFailedError('Failed to dispatch OCR runtime job.', {
+    throw operationFailedError(`Failed to dispatch OCR runtime job for job ID: ${createdJob.id}.`, {
       jobId: createdJob.id,
+      filepath,
       reason: message,
+      cause: error,
     });
   }
 

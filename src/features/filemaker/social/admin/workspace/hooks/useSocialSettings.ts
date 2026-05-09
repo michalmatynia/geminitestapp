@@ -1,3 +1,15 @@
+/**
+ * Social Publishing Settings Hook
+ * 
+ * React hook for managing social media publishing settings and configuration.
+ * Provides:
+ * - AI model configuration for content generation
+ * - Integration connection management
+ * - Settings persistence and synchronization
+ * - Error handling and recovery for social publishing
+ * - Toast notifications for user feedback
+ */
+
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

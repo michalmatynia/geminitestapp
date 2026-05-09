@@ -1,3 +1,15 @@
+/**
+ * Image Studio Documentation Keys
+ * 
+ * Type definitions for Image Studio feature documentation keys.
+ * Provides:
+ * - Image editing tool documentation keys
+ * - Crop tool and sidebar action keys
+ * - Canvas management documentation keys
+ * - Card and folder operation keys
+ * - Layout mode documentation keys
+ */
+
 export type ImageStudioDocKey =
   | 'crop_box_tool'
   | 'crop'

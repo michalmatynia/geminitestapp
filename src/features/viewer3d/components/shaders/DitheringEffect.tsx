@@ -1,10 +1,22 @@
+/**
+ * Dithering Post-Processing Effect
+ * 
+ * Custom shader effect for applying Bayer matrix dithering to 3D scenes.
+ * Provides:
+ * - Black and white dithering with configurable intensity
+ * - 8x8 Bayer matrix for ordered dithering patterns
+ * - Retro/vintage visual styling
+ * - Real-time intensity adjustment
+ * - Performance-optimized fragment shader
+ */
+
 'use client';
 
 import { Effect, BlendFunction } from 'postprocessing';
 import { forwardRef, useMemo } from 'react';
 import { Uniform } from 'three';
 
-// Bayer 8x8 ordered dithering shader for black & white effect
+/** Bayer 8x8 ordered dithering shader for black & white effect */
 const ditheringFragmentShader = `
   uniform float intensity;
 

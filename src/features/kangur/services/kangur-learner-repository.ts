@@ -38,6 +38,7 @@ import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/a
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { parseJsonSetting, serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import { buildKangurSource } from '@/features/kangur/observability/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Filter } from 'mongodb';
@@ -721,8 +722,7 @@ export const createKangurLearner = async (input: {
   }
 
   void ErrorSystem.logInfo(`Created new Kangur learner: ${nextProfile.loginName}`, {
-    service: 'kangur.learner-repository',
-    action: 'create',
+    service: buildKangurSource('learner-repository', 'create'),
     learnerId: nextProfile.id,
     loginName: nextProfile.loginName,
     ownerUserId: input.ownerUserId,

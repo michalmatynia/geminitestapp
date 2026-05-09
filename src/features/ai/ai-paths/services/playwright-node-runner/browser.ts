@@ -1,4 +1,3 @@
-import type * as Playwright from 'playwright';
 import {
   buildChromiumAntiDetectionContextOptions,
   buildChromiumAntiDetectionLaunchOptions,

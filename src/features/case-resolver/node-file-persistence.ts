@@ -1,118 +1,15 @@
 import { type CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
-
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from './settings';
 import {
-  buildSettingRecordFetchAttempts,
-  resolveSettingRecordFromSettingsPayload,
-} from './utils/workspace-settings-persistence-helpers';
+  buildCaseResolverNodeFileSnapshotKey,
+  fetchSettingsPayloadWithTimeout,
+  fetchSettingRecordValue,
+  persistSettingValue,
+} from '@/features/case-resolver/services/node-file';
 import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-const CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX = 'case_resolver_node_file_snapshot::';
-
-export const buildCaseResolverNodeFileSnapshotKey = (assetId: string): string =>
-  `${CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX}${assetId.trim()}`;
-
-export const fetchSettingsPayloadWithTimeout = async (input: {
-  url: string;
-  timeoutMs: number;
-}): Promise<Response> => {
-  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timeoutId = controller
-    ? setTimeout((): void => {
-      controller.abort();
-    }, input.timeoutMs)
-    : null;
-  try {
-    return await fetch(input.url, {
-      method: 'GET',
-      cache: 'no-store',
-      ...(controller ? { signal: controller.signal } : {}),
-    });
-  } finally {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-  }
-};
-
-export const fetchSettingRecordValue = async ({
-  key,
-  source,
-  strategy = 'light_then_heavy',
-  fresh = true,
-  timeoutMs,
-}: {
-  key: string;
-  source: string;
-  strategy?: 'light_then_heavy' | 'light_only' | 'heavy_only';
-  fresh?: boolean;
-  timeoutMs: number;
-}): Promise<string | null> => {
-  const attempts = buildSettingRecordFetchAttempts({ key, strategy, fresh });
-  for (const attempt of attempts) {
-    try {
-      const response = await fetchSettingsPayloadWithTimeout({
-        url: attempt.url,
-        timeoutMs,
-      });
-      if (!response.ok) continue;
-      const payload = (await response.json()) as unknown;
-      const record = resolveSettingRecordFromSettingsPayload(payload, key);
-      if (!record || typeof record.value !== 'string') continue;
-      return record.value;
-    } catch (error: unknown) {
-      logClientError(error);
-      logCaseResolverWorkspaceEvent({
-        source,
-        action: 'node_file_snapshot_fetch_failed',
-        message: `key=${key} attempt=${attempt.key} ${error instanceof Error ? error.message : 'unknown_error'}`,
-      });
-    }
-  }
-  return null;
-};
-
-export const persistSettingValue = async ({
-  key,
-  value,
-  source,
-}: {
-  key: string;
-  value: string;
-  source: string;
-}): Promise<boolean> => {
-  try {
-    const response = await fetch('/api/settings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        key,
-        value,
-      }),
-    });
-    if (!response.ok) {
-      logCaseResolverWorkspaceEvent({
-        source,
-        action: 'node_file_snapshot_persist_failed',
-        message: `key=${key} status=${response.status}`,
-      });
-      return false;
-    }
-    return true;
-  } catch (error: unknown) {
-    logClientError(error);
-    logCaseResolverWorkspaceEvent({
-      source,
-      action: 'node_file_snapshot_persist_failed',
-      message: `key=${key} ${error instanceof Error ? error.message : 'unknown_error'}`,
-    });
-    return false;
-  }
-};
+export { buildCaseResolverNodeFileSnapshotKey, fetchSettingsPayloadWithTimeout };
 
 export const fetchCaseResolverNodeFileSnapshotText = async (
   assetId: string,
@@ -120,7 +17,7 @@ export const fetchCaseResolverNodeFileSnapshotText = async (
   source = 'node_file_workspace_load'
 ): Promise<string | null> => {
   const normalizedAssetId = assetId.trim();
-  if (!normalizedAssetId) return null;
+  if (normalizedAssetId.length === 0) return null;
   const key = buildCaseResolverNodeFileSnapshotKey(normalizedAssetId);
   const value = await fetchSettingRecordValue({
     key,
@@ -153,7 +50,7 @@ export const fetchCaseResolverNodeFileSnapshot = async (
   }
 };
 
-export const persistCaseResolverNodeFileSnapshotText = async ({
+export const persistCaseResolverNodeFileSnapshotText = ({
   assetId,
   textContent,
   source,
@@ -163,7 +60,7 @@ export const persistCaseResolverNodeFileSnapshotText = async ({
   source: string;
 }): Promise<boolean> => {
   const normalizedAssetId = assetId.trim();
-  if (!normalizedAssetId) return false;
+  if (normalizedAssetId.length === 0) return Promise.resolve(false);
   return persistSettingValue({
     key: buildCaseResolverNodeFileSnapshotKey(normalizedAssetId),
     value: textContent,

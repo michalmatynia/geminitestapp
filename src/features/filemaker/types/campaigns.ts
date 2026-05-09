@@ -1,3 +1,15 @@
+/**
+ * Filemaker Campaign Types
+ * 
+ * Type definitions for Filemaker email campaign system.
+ * Provides:
+ * - Email campaign configuration and management types
+ * - Campaign run status and lifecycle tracking
+ * - Delivery status and provider integration
+ * - Failure categorization and suppression handling
+ * - Campaign attempt tracking and analytics
+ */
+
 import type {
   FilemakerEmail,
   FilemakerPartyKind,

@@ -1,3 +1,15 @@
+/**
+ * Filemaker AnyText Repository
+ * 
+ * Database repository for managing Filemaker text content and search functionality.
+ * Provides:
+ * - Text content storage and retrieval
+ * - Full-text search capabilities
+ * - Owner-based text categorization (person, organization, event)
+ * - MongoDB collection management
+ * - Text indexing and query optimization
+ */
+
 import 'server-only';
 
 import type { Document, Filter } from 'mongodb';

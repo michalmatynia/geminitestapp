@@ -102,7 +102,7 @@ const hasPaymentSolutionModalText = (value: unknown): boolean => {
   );
   return (
     matchedHints.length >= 2 ||
-    (normalized.includes("tradera's payment solution") &&
+    (normalized.includes('tradera\'s payment solution') &&
       normalized.includes('continue')) ||
     (normalized.includes('payment solution') &&
       normalized.includes('terms') &&
@@ -196,9 +196,9 @@ const findPaymentSolutionTermsCheckbox = async (dialog: Locator): Promise<Locato
     const escapedText = label.replace(/"/g, '\\"');
     const labeledCheckbox = (dialogWithLocator.data as Locator)
       .locator(
-        'xpath=.//*[contains(normalize-space(.), "' +
-          escapedText +
-          '")]/following::*[self::input[@type="checkbox"] or @role="checkbox" or @role="switch"][1]'
+        `xpath=.//*[contains(normalize-space(.), "${ 
+          escapedText 
+          }")]/following::*[self::input[@type="checkbox"] or @role="checkbox" or @role="switch"][1]`
       )
       .first();
     const labeledCheckboxVisible = await labeledCheckbox
@@ -237,11 +237,11 @@ const findPaymentSolutionContinueButton = async (dialog: Locator): Promise<Locat
     const escapedText = label.replace(/"/g, '\\"');
     const textButton = (dialogWithLocator.data as Locator)
       .locator(
-        'xpath=.//*[self::button or self::a or @role="button" or @tabindex][normalize-space(.)="' +
-          escapedText +
-          '" or contains(normalize-space(.), "' +
-          escapedText +
-          '")]'
+        `xpath=.//*[self::button or self::a or @role="button" or @tabindex][normalize-space(.)="${ 
+          escapedText 
+          }" or contains(normalize-space(.), "${ 
+          escapedText 
+          }")]`
       )
       .first();
     const textButtonVisible = await textButton.isVisible({ timeout: 250 }).catch(() => false);

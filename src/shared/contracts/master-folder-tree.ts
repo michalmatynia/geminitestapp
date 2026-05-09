@@ -71,13 +71,17 @@ export const masterTreeCycleGuardResultSchema = z.object({
 
 export type MasterTreeCycleGuardResultDto = z.infer<typeof masterTreeCycleGuardResultSchema>;
 
+/**
+ * Rejection reasons for master folder tree drop operations.
+ * Explains why a node cannot be moved to a target location.
+ */
 export const masterTreeDropRejectionReasonSchema = z.enum([
-  'NODE_NOT_FOUND',
-  'TARGET_NOT_FOUND',
-  'TARGET_NOT_FOLDER',
-  'TARGET_IS_SELF',
-  'TARGET_IN_SUBTREE',
-  'PROFILE_RULE_BLOCKED',
+  'NODE_NOT_FOUND',        // Source node doesn't exist
+  'TARGET_NOT_FOUND',      // Target location doesn't exist
+  'TARGET_NOT_FOLDER',     // Target is not a folder (can't contain children)
+  'TARGET_IS_SELF',        // Cannot move node into itself
+  'TARGET_IN_SUBTREE',     // Cannot move node into its own subtree (would create cycle)
+  'PROFILE_RULE_BLOCKED',  // Profile-specific rule prevents this move
 ]);
 
 export type MasterTreeDropRejectionReasonDto = z.infer<typeof masterTreeDropRejectionReasonSchema>;
@@ -90,9 +94,13 @@ export const masterTreeCanDropResultSchema = z.object({
 
 export type MasterTreeCanDropResultDto = z.infer<typeof masterTreeCanDropResultSchema>;
 
+/**
+ * Error codes for master folder tree mutations.
+ * Combines drop rejection reasons with additional mutation errors.
+ */
 export const masterTreeMutationErrorCodeSchema = z.union([
   masterTreeDropRejectionReasonSchema,
-  z.literal('TARGET_PARENT_NOT_FOUND'),
+  z.literal('TARGET_PARENT_NOT_FOUND'),  // Parent folder not found during mutation
 ]);
 
 export type MasterTreeMutationErrorCodeDto = z.infer<typeof masterTreeMutationErrorCodeSchema>;

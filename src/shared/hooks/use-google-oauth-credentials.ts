@@ -1,3 +1,14 @@
+/**
+ * Google OAuth Credentials Hooks
+ * 
+ * TanStack Query hooks for Google OAuth credential management.
+ * Provides:
+ * - Credential status query
+ * - Credential update mutation
+ * - Configuration validation
+ * - Observability integration for OAuth operations
+ */
+
 'use client';
 
 import type {
@@ -12,8 +23,13 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
+/** API endpoint for Google OAuth credentials */
 const GOOGLE_OAUTH_CREDENTIALS_ENDPOINT = '/api/settings/google-oauth';
 
+/**
+ * Hook for querying Google OAuth credentials status
+ * @returns Query result with credentials status
+ */
 export function useGoogleOAuthCredentialsStatus(): SingleQuery<GoogleOAuthCredentialsStatus> {
   return useSingleQueryV2<GoogleOAuthCredentialsStatus>({
     id: 'global-google-oauth-credentials',

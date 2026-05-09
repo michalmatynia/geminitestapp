@@ -1,4 +1,16 @@
 
+/**
+ * UI Observability Context Contracts
+ * 
+ * Type re-exports for observability UI components and contexts.
+ * Provides:
+ * - AI insights and analytics types
+ * - System log management types
+ * - MongoDB diagnostics and indexing
+ * - Log clearing and metrics types
+ * - Centralized observability type access
+ */
+
 import type {
   AiInsightRecord,
   AiInsightResponse,

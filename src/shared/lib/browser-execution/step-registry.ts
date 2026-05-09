@@ -1,3 +1,16 @@
+/**
+ * Step Registry
+ * 
+ * Central registry of all available browser automation steps.
+ * Provides:
+ * - Step definitions and metadata
+ * - Browser lifecycle steps (open, close, prepare)
+ * - Authentication and session management steps
+ * - Data extraction and scraping steps
+ * - Cross-runtime step integration
+ * - Step categorization and labeling
+ */
+
 import type { PlaywrightActionBlockConfig } from '@/shared/contracts/playwright-steps';
 import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS } from './supplier-1688-runtime-constants';
 import { FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS } from './filemaker-organization-presence-runtime-constants';
@@ -5,6 +18,7 @@ import { JOB_BOARD_SCRAPE_RUNTIME_STEPS } from './job-board-runtime-constants';
 import { JOB_APPLICATION_APPLY_RUNTIME_STEPS } from './job-application-apply-runtime-constants';
 import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS } from './product-scrape-runtime-constants';
 
+/** Central registry of all available automation steps */
 export const STEP_REGISTRY = {
   // Browser lifecycle
   browser_preparation:    { id: 'browser_preparation',    label: 'Browser preparation' },

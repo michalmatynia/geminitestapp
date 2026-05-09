@@ -1,60 +1,14 @@
+/* eslint-disable complexity, max-lines-per-function, @typescript-eslint/strict-boolean-expressions -- Node-file relation indexing traverses nested graph/file state. */
 import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import type { CaseResolverGraph, CaseResolverNodeFileRelationIndex } from '@/shared/contracts/case-resolver/graph';
-
-const hasInlineNodeFileSnapshotText = (asset: CaseResolverAssetFile): boolean =>
-  asset.kind === 'node_file' &&
-  typeof asset.textContent === 'string' &&
-  asset.textContent.trim().length > 0;
-
-const isCanonicalNodeFileAsset = (asset: CaseResolverAssetFile): boolean =>
-  asset.kind === 'node_file' && !hasInlineNodeFileSnapshotText(asset);
-
-const addUnique = (target: Record<string, string[]>, key: string, value: string): void => {
-  const normalizedKey = key.trim();
-  const normalizedValue = value.trim();
-  if (!normalizedKey || !normalizedValue) return;
-  const current = target[normalizedKey] ?? [];
-  if (current.includes(normalizedValue)) return;
-  target[normalizedKey] = [...current, normalizedValue];
-};
-
-const sortRecordValues = (input: Record<string, string[]>): Record<string, string[]> =>
-  Object.fromEntries(
-    Object.entries(input).map(([key, values]: [string, string[]]) => [
-      key,
-      [...values].sort((left: string, right: string) => left.localeCompare(right)),
-    ])
-  );
-
-const normalizeRecord = (input: Record<string, string> | undefined): Record<string, string> => {
-  if (!input) return {};
-  const normalized: Record<string, string> = {};
-  Object.entries(input).forEach(([key, value]: [string, string]): void => {
-    const normalizedKey = key.trim();
-    const normalizedValue = typeof value === 'string' ? value.trim() : '';
-    if (!normalizedKey || !normalizedValue) return;
-    normalized[normalizedKey] = normalizedValue;
-  });
-  return normalized;
-};
-
-const recordsEqual = (left: Record<string, string>, right: Record<string, string>): boolean => {
-  const leftKeys = Object.keys(left);
-  const rightKeys = Object.keys(right);
-  if (leftKeys.length !== rightKeys.length) return false;
-  return leftKeys.every((key: string): boolean => left[key] === right[key]);
-};
-
-const mergeRelationMap = (
-  target: Record<string, string[]>,
-  source: Record<string, string[]>
-): void => {
-  Object.entries(source).forEach(([key, values]: [string, string[]]): void => {
-    values.forEach((value: string): void => {
-      addUnique(target, key, value);
-    });
-  });
-};
+import {
+  isCanonicalNodeFileAsset,
+  addUnique,
+  sortRecordValues,
+  normalizeRecord,
+  recordsEqual,
+  mergeRelationMap,
+} from '@/features/case-resolver/services/node-file-relations';
 
 export const buildCaseResolverNodeFileRelationIndex = ({
   graph,

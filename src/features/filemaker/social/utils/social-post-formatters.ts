@@ -1,5 +1,18 @@
+/**
+ * Social Post Formatters
+ * 
+ * Utility functions for formatting social media posts and content.
+ * Provides:
+ * - Date formatting for social posts
+ * - Bilingual title extraction
+ * - Content formatting and display
+ * - Social media platform integration
+ * - Post metadata processing
+ */
+
 import { SOCIAL_PUBLISHING_BILINGUAL_SEPARATOR, type SocialPublishingPost } from '@/shared/contracts/social-publishing-posts';
 
+/** Formats a date string for display in social posts */
 export const formatDate = (value: string | null | undefined): string => {
   if (!value) return '—';
   const parsed = new Date(value);
@@ -11,6 +24,7 @@ export const formatDate = (value: string | null | undefined): string => {
   });
 };
 
+/** Extracts the best available title from a bilingual social post */
 export const getPostTitle = (post: SocialPublishingPost): string =>
   post.titlePl.trim() || post.titleEn.trim() || 'New social publishing update';
 

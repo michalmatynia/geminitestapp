@@ -1,3 +1,15 @@
+/**
+ * TanStack Query Telemetry
+ * 
+ * Telemetry and observability integration for TanStack Query operations.
+ * Provides:
+ * - Query and mutation event tracking
+ * - Performance monitoring and metrics
+ * - Error classification and reporting
+ * - Sensitive data redaction
+ * - Telemetry batch collection
+ */
+
 import { z } from 'zod';
 
 import type { UnknownRecordDto } from '@/shared/contracts/base';

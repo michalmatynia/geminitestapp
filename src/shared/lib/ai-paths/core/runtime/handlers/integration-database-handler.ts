@@ -259,36 +259,36 @@ const handleWriteOperationResult = ({
   };
 };
 
+import { databaseError, internalError } from '@/shared/errors/app-error';
+
+// ... (existing constants)
+
 const handleDatabaseUnexpectedFailure = ({
   error,
   nodeId,
-  reportAiPathsError,
   writeOperationDetected,
 }: {
   error: unknown;
   nodeId: string;
-  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
   writeOperationDetected: boolean;
 }): RuntimePortValues => {
   if (error instanceof ParameterInferenceGateError) {
     throw error;
   }
-  reportAiPathsError(
-    error,
-    { action: 'handleDatabase', nodeId },
-    'Unexpected database node failure:'
-  );
+  
+  const wrappedError = internalError(`Database node failure in node: ${nodeId}`, {
+    nodeId,
+    writeOperationDetected,
+    cause: error,
+  });
+
   if (writeOperationDetected) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw createDatabaseTerminalError(
-      typeof error === 'string' ? error : 'Database write failed'
-    );
+    throw wrappedError;
   }
+  
   return {
     result: null,
-    bundle: { error: error instanceof Error ? error.message : 'Unknown database error' },
+    bundle: { error: wrappedError.message },
   };
 };
 
@@ -404,7 +404,12 @@ export const handleDatabase: NodeHandler = async ({
         });
         writeOperationDetected = mongoResult.writeOperationDetected;
         if (mongoResult.terminalError) {
-          throw mongoResult.terminalError;
+          throw internalError(`Database write operation failed in node: ${node.id}`, {
+            nodeId: node.id,
+            operation: dbConfig.operation,
+            entityType: dbConfig.entityType,
+            cause: mongoResult.terminalError,
+          });
         }
         return mongoResult.result;
       }
@@ -440,7 +445,12 @@ export const handleDatabase: NodeHandler = async ({
     });
     writeOperationDetected = standardResult.writeOperationDetected;
     if (standardResult.terminalError) {
-      throw standardResult.terminalError;
+      throw internalError(`Database write operation failed in node: ${node.id}`, {
+        nodeId: node.id,
+        operation: dbConfig.operation,
+        entityType: dbConfig.entityType,
+        cause: standardResult.terminalError,
+      });
     }
     return standardResult.result;
   } catch (error) {
@@ -448,7 +458,6 @@ export const handleDatabase: NodeHandler = async ({
     return handleDatabaseUnexpectedFailure({
       error,
       nodeId: node.id,
-      reportAiPathsError,
       writeOperationDetected,
     });
   }

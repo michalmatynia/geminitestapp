@@ -5,6 +5,11 @@ import type { ProductSyncRunTrigger } from '@/shared/contracts/product-sync';
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'product-sync.sync.<action>'
+ */
+const buildProductSyncSource = (action: string): string => `product-sync.sync.${action}`;
+
 type ProductSyncQueueJobData = {
   runId: string;
   profileId: string;
@@ -35,7 +40,7 @@ const queue = createManagedQueue<ProductSyncQueueJobData>({
   },
   onCompleted: async (jobId, _result, data) => {
     await ErrorSystem.logInfo('Product sync job completed', {
-      service: 'product-sync-queue',
+      service: buildProductSyncSource('complete'),
       runId: data.runId,
       profileId: data.profileId,
       trigger: data.trigger,

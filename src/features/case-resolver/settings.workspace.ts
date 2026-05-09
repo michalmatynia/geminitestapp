@@ -26,7 +26,7 @@ import {
   createCaseResolverAssetFile,
   normalizeCaseResolverFolderTimestamps,
 } from './settings-workspace-helpers';
-import { CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP } from './settings.constants';
+import { CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP } from '@/features/case-resolver/services/settings';
 import { createCaseResolverFile, normalizeCaseResolverRelatedFileLinks } from './settings.files';
 import {
   normalizeCaseResolverFileType,
@@ -79,18 +79,10 @@ export const getCaseResolverWorkspaceNormalizationDiagnostics = (
     ? (caseResolverWorkspaceNormalizationDiagnosticsByWorkspace.get(workspace) ??
       CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY)
     : CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY;
-
-const resolveSafeCaseParentId = (
-  caseId: string,
-  caseType: CaseResolverFileType,
-  parentCaseId: string | null,
-  caseMap: Map<string, CaseResolverFile>
-): string | null => {
-  const candidateParentId = resolveParentCaseCandidate(caseId, parentCaseId, caseMap);
-  if (!candidateParentId) return null;
-  if (caseType !== 'case') return candidateParentId;
-  return hasCircularCaseParentChain(caseId, candidateParentId, caseMap) ? null : candidateParentId;
-};
+import {
+  normalizeFileRecord,
+  resolveSafeCaseParentId,
+} from '@/features/case-resolver/services/workspace';
 
 const resolveParentCaseCandidate = (
   caseId: string,

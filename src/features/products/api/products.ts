@@ -1,6 +1,18 @@
-// Client product API helpers: wrapper around api client with sensible timeouts
-// and no-store caching to avoid stale client-side caches. Prefer
-// getProductsWithCount() for paged requests when possible.
+/**
+ * Products API Client
+ * 
+ * Client-side API wrapper for product management operations.
+ * Provides:
+ * - Product CRUD operations with pagination
+ * - Batch editing and bulk operations
+ * - Marketplace integration and synchronization
+ * - Product parsing and matching utilities
+ * - Optimized caching and timeout management
+ * 
+ * Uses no-store caching to avoid stale client-side data.
+ * Prefer getProductsWithCount() for paginated requests.
+ */
+
 import { type ProductFilter } from '@/shared/contracts/products/filters';
 import {
   type ProductBatchEditRequest,

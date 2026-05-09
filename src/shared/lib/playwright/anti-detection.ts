@@ -1,21 +1,39 @@
+/**
+ * Playwright Anti-Detection Configuration
+ * 
+ * Browser automation anti-detection settings and utilities.
+ * Provides:
+ * - User agent strings for different scenarios
+ * - Chromium launch arguments for stealth mode
+ * - Browser context options for detection avoidance
+ * - Identity profile integration
+ * - Detection evasion techniques
+ */
+
 import type { BrowserContext, BrowserContextOptions, LaunchOptions } from 'playwright';
 import type { PlaywrightIdentityProfile } from '@/shared/contracts/playwright';
 
+/** Default user agent for general browsing */
 export const DEFAULT_CHROMIUM_ANTI_DETECTION_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+/** User agent for search engine operations */
 export const SEARCH_CHROMIUM_ANTI_DETECTION_USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+/** User agent for marketplace operations */
 export const MARKETPLACE_CHROMIUM_ANTI_DETECTION_USER_AGENT =
   DEFAULT_CHROMIUM_ANTI_DETECTION_USER_AGENT;
 
+/** Chromium launch arguments for stealth mode */
 export const DEFAULT_CHROMIUM_ANTI_DETECTION_ARGS = [
   '--disable-blink-features=AutomationControlled',
 ] as const;
 
+/** Default Chromium arguments to ignore for stealth */
 export const DEFAULT_CHROMIUM_ANTI_DETECTION_IGNORED_DEFAULT_ARGS = [
   '--enable-automation',
 ] as const;
 
+/** User agent data brands for Chromium */
 const CHROMIUM_USER_AGENT_DATA_BRANDS = [
   { brand: 'Chromium', version: '131' },
   { brand: 'Google Chrome', version: '131' },

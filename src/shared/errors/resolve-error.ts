@@ -38,13 +38,34 @@ type ResolveOptions = {
 
 /**
  * Resolves any error type into a standardized ResolvedError structure.
- * Handles AppError, ZodError, and unknown errors.
+ * 
+ * Resolution flow:
+ * 1. Generate unique error ID for tracking
+ * 2. Classify error into category (NETWORK, AUTH, DATABASE, etc.)
+ * 3. Generate suggested actions based on category
+ * 4. Transform error into ResolvedError format
+ * 
+ * Handles:
+ * - AppError instances (already structured)
+ * - Mapped errors (HTTP status, MongoDB, network)
+ * - Zod validation errors (schema validation)
+ * - Database client errors (Prisma, MongoDB)
+ * - Fetch/network errors (TypeError)
+ * - Unknown errors (fallback to internal error)
+ * 
+ * @param error - Unknown error to resolve
+ * @param options - Optional fallback message
+ * @returns Standardized ResolvedError with ID, category, and actions
  */
 export const resolveError = (error: unknown, options?: ResolveOptions): ResolvedError => {
+  // Generate unique ID for error tracking and correlation
   const errorId = randomUUID();
+  // Classify error into category for better handling
   const category = classifyError(error);
+  // Get context-specific suggested actions
   const suggestedActions = getSuggestedActions(category, error);
 
+  // Helper to convert AppError-like objects to ResolvedError
   const toResolved = (appError: {
     message: string;
     code: AppErrorCode;
@@ -70,15 +91,18 @@ export const resolveError = (error: unknown, options?: ResolveOptions): Resolved
     cause: appError.cause,
   });
 
+  // Already an AppError - convert directly
   if (isAppError(error)) {
     return toResolved(error);
   }
 
+  // Try to map to AppError (HTTP status, MongoDB, network errors)
   const mapped = mapErrorToAppError(error, options?.fallbackMessage);
   if (mapped) {
     return toResolved(mapped);
   }
 
+  // Zod validation errors - Schema validation failures
   if (error instanceof z.ZodError) {
     return {
       errorId,
@@ -98,12 +122,12 @@ export const resolveError = (error: unknown, options?: ResolveOptions): Resolved
     };
   }
 
-  // Handle database client errors
+  // Database client errors (Prisma, MongoDB driver)
   if (isDatabaseClientError(error)) {
     return resolveDatabaseClientError(error, errorId, options);
   }
 
-  // Handle fetch/network errors
+  // Fetch/network errors - Failed HTTP requests
   if (error instanceof TypeError && error.message.includes('fetch')) {
     return {
       errorId,
@@ -122,6 +146,7 @@ export const resolveError = (error: unknown, options?: ResolveOptions): Resolved
     };
   }
 
+  // Unknown error - Fallback to internal error
   const fallback = options?.fallbackMessage ?? resolveUnexpectedFallbackMessage();
   const internal = internalError(fallback);
   return {
@@ -141,6 +166,12 @@ export const resolveError = (error: unknown, options?: ResolveOptions): Resolved
 
 /**
  * Check if error comes from a database client or transport layer.
+ * 
+ * Detects:
+ * - MongoDB errors (MongoServerError, MongoNetworkError, MongoBulkWriteError)
+ * - Prisma errors (codes starting with 'P' followed by 4+ digits)
+ * - Connection errors (codes containing 'ECONN')
+ * - Validation errors from database client
  */
 function isDatabaseClientError(error: unknown): error is Error & { code?: string } {
   if (!(error instanceof Error)) {
@@ -149,10 +180,13 @@ function isDatabaseClientError(error: unknown): error is Error & { code?: string
 
   const constructorName = error.constructor.name;
   return (
+    // MongoDB driver errors
     constructorName === 'MongoServerError' ||
     constructorName === 'MongoNetworkError' ||
     constructorName === 'MongoBulkWriteError' ||
+    // Database validation errors
     constructorName === 'ValidationError' ||
+    // Prisma or connection errors
     ('code' in error &&
       typeof (error as { code?: unknown }).code === 'string' &&
       (((error as { code: string }).code.startsWith('P') &&
@@ -163,6 +197,15 @@ function isDatabaseClientError(error: unknown): error is Error & { code?: string
 
 /**
  * Resolves database client errors into the canonical app error surface.
+ * 
+ * Handles Prisma error codes:
+ * - P2002: Unique constraint violation
+ * - P2001/P2025: Record not found
+ * - P2003: Foreign key constraint violation
+ * - P1001/P1002: Connection errors
+ * - P1008/P2024: Timeout errors
+ * 
+ * Also handles MongoDB ValidationError and generic database errors.
  */
 function resolveDatabaseClientError(
   error: Error & { code?: string },
@@ -171,7 +214,7 @@ function resolveDatabaseClientError(
 ): ResolvedError {
   const code = error.code;
 
-  // Unique constraint violation
+  // P2002 - Unique constraint violation (duplicate entry)
   if (code === 'P2002') {
     return {
       errorId,
@@ -198,7 +241,7 @@ function resolveDatabaseClientError(
     };
   }
 
-  // Record not found
+  // P2001/P2025 - Record not found
   if (code === 'P2001' || code === 'P2025') {
     return {
       errorId,
@@ -221,7 +264,7 @@ function resolveDatabaseClientError(
     };
   }
 
-  // Foreign key constraint
+  // P2003 - Foreign key constraint violation
   if (code === 'P2003') {
     return {
       errorId,
@@ -247,7 +290,7 @@ function resolveDatabaseClientError(
     };
   }
 
-  // Connection errors
+  // P1001/P1002/ECONN - Connection errors
   if (code === 'P1001' || code === 'P1002' || code?.includes('ECONN')) {
     return {
       errorId,
@@ -279,7 +322,7 @@ function resolveDatabaseClientError(
     };
   }
 
-  // Timeout
+  // P1008/P2024 - Timeout errors
   if (code === 'P1008' || code === 'P2024') {
     return {
       errorId,
@@ -310,7 +353,7 @@ function resolveDatabaseClientError(
     };
   }
 
-  // Validation errors from the active database client.
+  // ValidationError - Schema validation from database client
   if (error.constructor.name === 'ValidationError') {
     return {
       errorId,
@@ -336,7 +379,7 @@ function resolveDatabaseClientError(
     };
   }
 
-  // Generic database error
+  // Generic database error - Unhandled database error codes
   return {
     errorId,
     message: resolveErrorCatalogMessage(
@@ -368,6 +411,7 @@ function resolveDatabaseClientError(
 
 /**
  * Creates a user-friendly error message from a resolved error.
+ * Uses error catalog to provide appropriate user-facing messages.
  */
 export const getUserMessage = (resolved: ResolvedError): string => {
   return resolveErrorUserMessage(resolved);
@@ -375,6 +419,7 @@ export const getUserMessage = (resolved: ResolvedError): string => {
 
 /**
  * Determines if an error should be reported/alerted.
+ * Reports errors that are critical or unexpected.
  */
 export const shouldReport = (resolved: ResolvedError): boolean => {
   return resolved.critical || !resolved.expected;

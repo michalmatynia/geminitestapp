@@ -4,15 +4,34 @@ import type {
   AgentRuntimeExecutionPreferences,
 } from '@/shared/contracts/agent-runtime';
 
+/** Enable debug logging for chatbot operations */
 export const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
+
+/** Maximum number of steps an agent can execute in a single plan */
 export const MAX_PLAN_STEPS = 12;
+
+/** Maximum retry attempts for a failed step before giving up */
 export const MAX_STEP_ATTEMPTS = 2;
+
+/** Maximum number of times an agent can replan during execution */
 export const MAX_REPLAN_CALLS = 2;
+
+/** Trigger replanning after this many steps to adapt to new information */
 export const REPLAN_EVERY_STEPS = 2;
+
+/** Maximum number of self-validation checks an agent can perform */
 export const MAX_SELF_CHECKS = 4;
+
+/** Number of similar actions before triggering loop detection */
 export const LOOP_GUARD_THRESHOLD = 2;
+
+/** Base delay in milliseconds when backing off from detected loops */
 export const LOOP_BACKOFF_BASE_MS = 2000;
+
+/** Maximum delay in milliseconds for loop backoff (exponential cap) */
 export const LOOP_BACKOFF_MAX_MS = 12000;
+
+/** Default configuration for agent planning and execution */
 export const DEFAULT_AGENT_SETTINGS: AgentPlanSettings = {
   maxSteps: MAX_PLAN_STEPS,
   maxStepAttempts: MAX_STEP_ATTEMPTS,

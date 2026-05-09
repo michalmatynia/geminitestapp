@@ -11,6 +11,7 @@ import {
   playwrightProxyProviderPresetOptions,
   playwrightProxySessionModeOptions,
 } from '@/shared/lib/playwright/settings';
+import { toNumber, updateSettingsField } from '@/features/playwright/services';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { CollapsibleSection, Input } from '@/shared/ui/primitives.public';
 import { FormActions, FormField, FormSection, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
@@ -80,12 +81,6 @@ export function PlaywrightSettingsFormViewProvider({
   );
 }
 
-const toNumber = (value: string, fallback: number): number => {
-  if (value.trim() === '') return fallback;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-
 function HeadlessModeSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
@@ -94,12 +89,10 @@ function HeadlessModeSection(): ReactElement {
       description='Hide the browser window during execution.'
       checked={settings.headless}
       onCheckedChange={(checked: boolean): void =>
-        setSettings((prev: PlaywrightSettings) => ({
-          ...prev,
-          headless: checked,
-        }))
+        updateSettingsField(setSettings, 'headless', checked)
       }
       variant='switch'
+      className='border-none bg-transparent p-0 hover:bg-transparent'
     />
   );
 }

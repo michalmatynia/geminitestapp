@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, no-await-in-loop, no-param-reassign, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions -- Domain zoning service keeps legacy Mongo fallback and alias resolution paths together. */
 import 'server-only';
 
 import { randomUUID } from 'crypto';
@@ -10,6 +11,19 @@ import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getCmsDomainSettings } from './cms-domain-settings';
+import {
+  buildDefaultDomain,
+  buildUnmappedDomain,
+  deleteDomainRecord,
+  deleteDomainSlugLink,
+  deleteDomainSlugLinks,
+  getDomainRecordById,
+  isSlugLinkedToDomain,
+  normalizeHost,
+  resetDomainDefaultSlug,
+  setDomainDefaultSlugLink,
+  upsertDomainSlugLink,
+} from './domain';
 
 import type { NextRequest } from 'next/server';
 
@@ -35,59 +49,12 @@ type CmsDomainSlugLink = {
 const DOMAIN_COLLECTION = 'cms_domains';
 const DOMAIN_SLUGS_COLLECTION = 'cms_domain_slugs';
 const SLUGS_COLLECTION = 'cms_slugs';
-const DEFAULT_DOMAIN_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
 type SlugDocument = {
   id: string;
   isDefault?: boolean;
   updatedAt?: Date;
 };
-
-const getFallbackDomain = (): string => {
-  const url =
-    process.env['NEXT_PUBLIC_APP_URL'] || process.env['NEXTAUTH_URL'] || 'http://localhost';
-  try {
-    return new URL(url).hostname.toLowerCase();
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return 'default';
-  }
-};
-
-const buildDefaultDomain = (hostHeader: string | null): CmsDomain => ({
-  id: 'default-domain',
-  name: 'Default domain',
-  domain: normalizeHost(hostHeader),
-  createdAt: DEFAULT_DOMAIN_TIMESTAMP,
-  updatedAt: DEFAULT_DOMAIN_TIMESTAMP,
-});
-
-const buildUnmappedDomain = (hostHeader: string | null): CmsDomain => {
-  const domain = normalizeHost(hostHeader);
-  return {
-    id: `unmapped-domain:${domain}`,
-    name: domain,
-    domain,
-    aliasOf: null,
-    createdAt: DEFAULT_DOMAIN_TIMESTAMP,
-    updatedAt: DEFAULT_DOMAIN_TIMESTAMP,
-  };
-};
-
-const normalizeHost = (hostHeader: string | null | undefined): string => {
-  if (hostHeader === null || hostHeader === undefined || hostHeader.trim() === '') {
-    return getFallbackDomain();
-  }
-  const raw = hostHeader.split(',')[0]?.trim();
-  if (raw === undefined || raw === '') return getFallbackDomain();
-  try {
-    return new URL(`http://${raw}`).hostname.toLowerCase();
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return raw.toLowerCase();
-  }
-};
-
 
 const getHostFromRequest = (req: NextRequest): string | null =>
   req.headers.get('x-forwarded-host') ?? req.headers.get('host');
@@ -165,12 +132,6 @@ export async function resolveCmsDomainFromHeaders(
   const host = getHostFromHeaders(resolved);
   return resolveCmsDomainByHost(host);
 }
-
-const getDomainRecordById = async (domainId: string): Promise<CmsDomainRecord | null> => {
-  if (!process.env['MONGODB_URI']) return null;
-  const db = await getMongoDb();
-  return db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).findOne({ id: domainId });
-};
 
 export async function resolveCmsDomainScopeById(domainId: string): Promise<CmsDomain | null> {
   const zoningEnabled = await isDomainZoningEnabled();
@@ -291,14 +252,15 @@ export async function createCmsDomain(domain: string): Promise<CmsDomainResponse
 export async function deleteCmsDomain(domainId: string): Promise<void> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return;
-  const db = await getMongoDb();
   // updateMany must complete before deleteOne to clear aliases first
+  const db = await getMongoDb();
   await db
     .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
     .updateMany({ aliasOf: domainId }, { $set: { aliasOf: null, updatedAt: new Date() } });
+
   await Promise.all([
-    db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).deleteOne({ id: domainId }),
-    db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).deleteMany({ domainId }),
+    deleteDomainRecord(domainId),
+    deleteDomainSlugLinks(domainId),
   ]);
 }
 
@@ -334,55 +296,27 @@ export async function setCmsDomainAlias(
 export async function isSlugAssignedToDomain(domainId: string, slugId: string): Promise<boolean> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return true;
-  const db = await getMongoDb();
-  const doc = await db
-    .collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION)
-    .findOne({ domainId, slugId });
-  return Boolean(doc);
+  return await isSlugLinkedToDomain(domainId, slugId);
 }
 
 export async function ensureDomainSlug(domainId: string, slugId: string): Promise<void> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return;
-  const db = await getMongoDb();
-  await db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).updateOne(
-    { domainId, slugId },
-    {
-      $setOnInsert: {
-        domainId,
-        slugId,
-        isDefault: false,
-        assignedAt: new Date(),
-      },
-      $set: { updatedAt: new Date() },
-    },
-    { upsert: true }
-  );
+  await upsertDomainSlugLink(domainId, slugId);
 }
 
 export async function removeDomainSlug(domainId: string, slugId: string): Promise<void> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return;
-  const db = await getMongoDb();
-  await db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).deleteOne({ domainId, slugId });
+  await deleteDomainSlugLink(domainId, slugId);
 }
 
 export async function setDomainDefaultSlug(domainId: string, slugId: string | null): Promise<void> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return;
-  const db = await getMongoDb();
-  await db
-    .collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION)
-    .updateMany({ domainId }, { $set: { isDefault: false, updatedAt: new Date() } });
+  await resetDomainDefaultSlug(domainId);
   if (!slugId) return;
-  await db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).updateOne(
-    { domainId, slugId },
-    {
-      $set: { isDefault: true, updatedAt: new Date() },
-      $setOnInsert: { domainId, slugId, assignedAt: new Date() },
-    },
-    { upsert: true }
-  );
+  await setDomainDefaultSlugLink(domainId, slugId);
 }
 
 export async function isSlugLinkedToAnyDomain(slugId: string): Promise<boolean> {
@@ -395,7 +329,7 @@ export async function isSlugLinkedToAnyDomain(slugId: string): Promise<boolean> 
   return count > 0;
 }
 
-export async function getSlugsForDomain(
+export async function getCmsSlugsForDomain(
   domainId: string,
   repo: CmsRepository,
   options?: CmsSlugLookupOptions
@@ -417,7 +351,7 @@ export async function getSlugsForDomain(
   }));
 }
 
-export async function getSlugForDomainById(
+export async function getCmsSlugById(
   domainId: string,
   slugId: string,
   repo: CmsRepository,
@@ -436,7 +370,7 @@ export async function getSlugForDomainById(
   };
 }
 
-export async function getSlugForDomainByValue(
+export async function getCmsSlugByValue(
   domainId: string,
   slugValue: string,
   repo: CmsRepository,
@@ -454,3 +388,9 @@ export async function getSlugForDomainByValue(
     isDefault: link.isDefault ?? false,
   };
 }
+
+export {
+  getCmsSlugById as getSlugForDomainById,
+  getCmsSlugByValue as getSlugForDomainByValue,
+  getCmsSlugsForDomain as getSlugsForDomain,
+};

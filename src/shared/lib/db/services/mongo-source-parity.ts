@@ -1,3 +1,15 @@
+/**
+ * MongoDB Source Parity Verification
+ * 
+ * Utilities for verifying data parity between MongoDB sources.
+ * Provides:
+ * - Document hash comparison between sources
+ * - Collection structure verification
+ * - Batch processing for large datasets
+ * - Sync verification reporting
+ * - Server-only parity checking
+ */
+
 import 'server-only';
 
 import { createHash } from 'crypto';
@@ -11,11 +23,16 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { BSON, MongoClient, type Db, type Document } from 'mongodb';
 
+/** Batch size for processing documents during hash verification */
 const DOCUMENT_HASH_BATCH_SIZE = 500;
 
+/** MongoDB collection list entry structure */
 type MongoCollectionListEntry = {
+  /** Collection name */
   name: string;
+  /** Collection type (e.g., 'collection', 'view') */
   type?: string;
+  /** Collection options and configuration */
   options?: Record<string, unknown>;
 };
 

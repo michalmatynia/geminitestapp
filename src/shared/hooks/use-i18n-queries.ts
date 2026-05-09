@@ -1,3 +1,15 @@
+/**
+ * Internationalization Query Hooks
+ * 
+ * TanStack Query hooks for internationalization data (currencies, countries, languages).
+ * Provides:
+ * - Currency options query with caching
+ * - Country options query with caching
+ * - Language options query with caching
+ * - Standardized query key management
+ * - Observability integration for i18n queries
+ */
+
 import type {
   CurrencyOption,
   CountryOption,
@@ -8,8 +20,13 @@ import { getCurrencies, getCountries, getLanguages } from '@/shared/lib/api/i18n
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
+/** Query keys for internationalization data */
 const i18nKeys = QUERY_KEYS.internationalization;
 
+/**
+ * Hook for querying available currencies
+ * @returns Query result with currency options
+ */
 export function useCurrencies(): ListQuery<CurrencyOption> {
   const queryKey = i18nKeys.currencies();
   return createListQueryV2({

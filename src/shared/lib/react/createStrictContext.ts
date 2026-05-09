@@ -16,26 +16,42 @@
 
 import { createContext, useContext } from 'react';
 
-// Sentinel value to detect missing context providers
+/** Sentinel value to detect missing context providers */
 const MISSING_CONTEXT = Symbol('MISSING_CONTEXT');
 
+/** Type for the missing context sentinel */
 type MissingContext = typeof MISSING_CONTEXT;
 
+/** Function type for creating custom errors */
 type StrictContextErrorFactory = (message: string) => Error;
 
+/** Configuration options for creating a strict context */
 export type CreateStrictContextOptions = {
-  hookName: string; // Name of the hook for error messages
-  providerName: string; // Name of the provider component
-  displayName?: string; // Optional display name for React DevTools
-  errorFactory?: StrictContextErrorFactory; // Custom error factory
+  /** Name of the hook for error messages */
+  hookName: string;
+  /** Name of the provider component */
+  providerName: string;
+  /** Optional display name for React DevTools */
+  displayName?: string;
+  /** Custom error factory for creating errors */
+  errorFactory?: StrictContextErrorFactory;
 };
 
+/** Result type containing context and hooks */
 export type StrictContextResult<T> = {
-  Context: React.Context<T | MissingContext>; // The React context
-  useStrictContext: () => T; // Hook that throws if provider missing
-  useOptionalContext: () => T | null; // Hook that returns null if provider missing
+  /** The React context with missing context sentinel */
+  Context: React.Context<T | MissingContext>;
+  /** Hook that throws if provider is missing */
+  useStrictContext: () => T;
+  /** Hook that returns null if provider is missing */
+  useOptionalContext: () => T | null;
 };
 
+/**
+ * Creates a strict context that enforces provider presence
+ * @param options - Configuration for the context
+ * @returns Object containing context and hooks
+ */
 export function createStrictContext<T>({
   hookName,
   providerName,

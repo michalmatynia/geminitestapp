@@ -1,30 +1,11 @@
-import { caseResolverEdgeSchema, type CaseResolverEdge } from '@/shared/contracts/case-resolver/graph';
-import { validationError } from '@/shared/errors/app-error';
-
-const CANONICAL_CASE_RESOLVER_EDGE_KEYS = new Set([
-  'id',
-  'source',
-  'target',
-  'sourceHandle',
-  'targetHandle',
-  'label',
-  'type',
-  'data',
-  'createdAt',
-  'updatedAt',
-]);
-const FORBIDDEN_CASE_RESOLVER_EDGE_HANDLE_NAMES = new Set(['textfield', 'content']);
-
-const buildInvalidCaseResolverEdgeError = (
-  message: string,
-  context: string,
-  meta?: Record<string, unknown>
-) =>
-  validationError(message, {
-    source: 'case_resolver.edge_validation',
-    context,
-    ...(meta ?? {}),
-  });
+import type { CaseResolverEdge } from '@/shared/contracts/case-resolver/graph';
+import {
+  CANONICAL_CASE_RESOLVER_EDGE_KEYS,
+  FORBIDDEN_CASE_RESOLVER_EDGE_HANDLE_NAMES,
+  buildInvalidCaseResolverEdgeError,
+  normalizeCaseResolverEdgeHandle,
+} from '@/features/case-resolver/services/graph';
+import { caseResolverEdgeSchema } from '@/shared/contracts/case-resolver/graph';
 
 const findUnsupportedCaseResolverEdgeKeys = (record: Record<string, unknown>): string[] =>
   Object.keys(record).filter(
@@ -70,14 +51,6 @@ const parseValidatedCaseResolverEdge = (
   throw buildInvalidCaseResolverEdgeError('Invalid Case Resolver edge payload.', context, {
     issues: validation.error.flatten(),
   });
-};
-
-const normalizeCaseResolverEdgeHandle = (value: unknown): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
 };
 
 const assertCanonicalCaseResolverEdgeEndpoints = (

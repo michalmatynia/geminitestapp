@@ -21,6 +21,7 @@ import type {
   CmsSlugLookupOptions,
 } from '@/shared/contracts/cms';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
+import { databaseError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Filter } from 'mongodb';
@@ -281,23 +282,30 @@ export const mongoCmsRepository: CmsRepository = {
   },
 
   async getPageById(id: string): Promise<Page | null> {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<PageDocument>(pagesCollection)
-      .findOne(buildIdFilter<PageDocument>(id));
-    if (!doc) return null;
+    try {
+      const db = await getMongoDb();
+      const doc = await db
+        .collection<PageDocument>(pagesCollection)
+        .findOne(buildIdFilter<PageDocument>(id));
+      if (!doc) return null;
 
-    const pageId = doc.id;
-    const slugLinks = await db
-      .collection<PageSlugDocument>('cms_page_slugs')
-      .find({ pageId })
-      .toArray();
-    const slugIds = slugLinks.map((link: PageSlugDocument) => link.slugId);
-    const slugs = await db
-      .collection<SlugDocument>(slugsCollection)
-      .find({ id: { $in: slugIds } })
-      .toArray();
-    return mapPageDocumentToPage(doc, slugs);
+      const pageId = doc.id;
+      const slugLinks = await db
+        .collection<PageSlugDocument>('cms_page_slugs')
+        .find({ pageId })
+        .toArray();
+      const slugIds = slugLinks.map((link: PageSlugDocument) => link.slugId);
+      const slugs = await db
+        .collection<SlugDocument>(slugsCollection)
+        .find({ id: { $in: slugIds } })
+        .toArray();
+      return mapPageDocumentToPage(doc, slugs);
+    } catch (error) {
+      throw databaseError(`Failed to retrieve page by ID: ${id}`, error, {
+        collection: pagesCollection,
+        id,
+      });
+    }
   },
 
   async getPageBySlug(slugValue: string, options?: CmsPageLookupOptions): Promise<Page | null> {
@@ -433,51 +441,78 @@ export const mongoCmsRepository: CmsRepository = {
 
   // Slugs
   async getSlugs(options?: CmsSlugLookupOptions): Promise<Slug[]> {
-    const db = await getMongoDb();
-    const docs = await db
-      .collection<SlugDocument>(slugsCollection)
-      .find()
-      .sort({ createdAt: -1 })
-      .toArray();
-    return filterLocalizedSlugDocuments(docs, options).map((doc: SlugDocument): Slug =>
-      mapSlugDocumentToSlug(doc)
-    );
+    try {
+      const db = await getMongoDb();
+      const docs = await db
+        .collection<SlugDocument>(slugsCollection)
+        .find()
+        .sort({ createdAt: -1 })
+        .toArray();
+      return filterLocalizedSlugDocuments(docs, options).map((doc: SlugDocument): Slug =>
+        mapSlugDocumentToSlug(doc)
+      );
+    } catch (error) {
+      throw databaseError('Failed to retrieve all slugs.', error, {
+        collection: slugsCollection,
+      });
+    }
   },
 
   async getSlugsByIds(ids: string[], options?: CmsSlugLookupOptions): Promise<Slug[]> {
     if (ids.length === 0) return [];
-    const db = await getMongoDb();
-    const docs = await db
-      .collection<SlugDocument>(slugsCollection)
-      .find({
-        id: { $in: ids },
-      })
-      .sort({ createdAt: -1 })
-      .toArray();
-    return filterLocalizedSlugDocuments(docs, options).map((doc: SlugDocument): Slug =>
-      mapSlugDocumentToSlug(doc)
-    );
+    try {
+      const db = await getMongoDb();
+      const docs = await db
+        .collection<SlugDocument>(slugsCollection)
+        .find({
+          id: { $in: ids },
+        })
+        .sort({ createdAt: -1 })
+        .toArray();
+      return filterLocalizedSlugDocuments(docs, options).map((doc: SlugDocument): Slug =>
+        mapSlugDocumentToSlug(doc)
+      );
+    } catch (error) {
+      throw databaseError('Failed to retrieve slugs by IDs.', error, {
+        collection: slugsCollection,
+        ids,
+      });
+    }
   },
 
   async getSlugById(id: string, _options?: CmsSlugLookupOptions): Promise<Slug | null> {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<SlugDocument>(slugsCollection)
-      .findOne(buildIdFilter<SlugDocument>(id));
-    if (!doc) return null;
-    return mapSlugDocumentToSlug(doc);
+    try {
+      const db = await getMongoDb();
+      const doc = await db
+        .collection<SlugDocument>(slugsCollection)
+        .findOne(buildIdFilter<SlugDocument>(id));
+      if (!doc) return null;
+      return mapSlugDocumentToSlug(doc);
+    } catch (error) {
+      throw databaseError(`Failed to retrieve slug by ID: ${id}`, error, {
+        collection: slugsCollection,
+        slugId: id,
+      });
+    }
   },
 
   async getSlugByValue(slugValue: string, options?: CmsSlugLookupOptions): Promise<Slug | null> {
-    const db = await getMongoDb();
-    const docs = await db
-      .collection<SlugDocument>(slugsCollection)
-      .find({ slug: slugValue })
-      .sort({ updatedAt: -1, createdAt: -1 })
-      .toArray();
-    const doc = pickLocalizedSlugDocument(docs, options);
-    if (!doc) return null;
-    return mapSlugDocumentToSlug(doc);
+    try {
+      const db = await getMongoDb();
+      const docs = await db
+        .collection<SlugDocument>(slugsCollection)
+        .find({ slug: slugValue })
+        .sort({ updatedAt: -1, createdAt: -1 })
+        .toArray();
+      const doc = pickLocalizedSlugDocument(docs, options);
+      if (!doc) return null;
+      return mapSlugDocumentToSlug(doc);
+    } catch (error) {
+      throw databaseError(`Failed to retrieve slug by value: ${slugValue}`, error, {
+        collection: slugsCollection,
+        slugValue,
+      });
+    }
   },
 
   async createSlug(data: {
@@ -487,24 +522,31 @@ export const mongoCmsRepository: CmsRepository = {
     locale?: string | null;
     translationGroupId?: string | null;
   }): Promise<Slug> {
-    const db = await getMongoDb();
-    const id = randomUUID();
-    const doc: SlugDocument = {
-      id,
-      slug: data.slug,
-      isDefault: data.isDefault || false,
-      locale: normalizeLocale(data.locale),
-      translationGroupId: normalizeTranslationGroupId(data.translationGroupId) ?? id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    await db.collection<SlugDocument>(slugsCollection).insertOne(doc);
+    try {
+      const db = await getMongoDb();
+      const id = randomUUID();
+      const doc: SlugDocument = {
+        id,
+        slug: data.slug,
+        isDefault: data.isDefault || false,
+        locale: normalizeLocale(data.locale),
+        translationGroupId: normalizeTranslationGroupId(data.translationGroupId) ?? id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      await db.collection<SlugDocument>(slugsCollection).insertOne(doc);
 
-    if (data.pageId) {
-      await this.addSlugToPage(data.pageId, id);
+      if (data.pageId) {
+        await this.addSlugToPage(data.pageId, id);
+      }
+
+      return mapSlugDocumentToSlug(doc);
+    } catch (error) {
+      throw databaseError(`Failed to create slug: ${data.slug}`, error, {
+        collection: slugsCollection,
+        slug: data.slug,
+      });
     }
-
-    return mapSlugDocumentToSlug(doc);
   },
 
   async updateSlug(
@@ -517,49 +559,63 @@ export const mongoCmsRepository: CmsRepository = {
       translationGroupId: string | null;
     }>
   ): Promise<Slug | null> {
-    const db = await getMongoDb();
-    const update = removeUndefined({
-      slug: data.slug,
-      isDefault: data.isDefault,
-      locale: data.locale !== undefined ? normalizeLocale(data.locale) : undefined,
-      translationGroupId:
-        data.translationGroupId !== undefined
-          ? normalizeTranslationGroupId(data.translationGroupId)
-          : undefined,
-      updatedAt: new Date(),
-    }) as Partial<SlugDocument>;
+    try {
+      const db = await getMongoDb();
+      const update = removeUndefined({
+        slug: data.slug,
+        isDefault: data.isDefault,
+        locale: data.locale !== undefined ? normalizeLocale(data.locale) : undefined,
+        translationGroupId:
+          data.translationGroupId !== undefined
+            ? normalizeTranslationGroupId(data.translationGroupId)
+            : undefined,
+        updatedAt: new Date(),
+      }) as Partial<SlugDocument>;
 
-    const result = await db
-      .collection<SlugDocument>(slugsCollection)
-      .findOneAndUpdate(
-        buildIdFilter<SlugDocument>(id),
-        { $set: update },
-        { returnDocument: 'after' }
-      );
-    if (!result) return null;
+      const result = await db
+        .collection<SlugDocument>(slugsCollection)
+        .findOneAndUpdate(
+          buildIdFilter<SlugDocument>(id),
+          { $set: update },
+          { returnDocument: 'after' }
+        );
+      if (!result) return null;
 
-    if (data.pageId !== undefined) {
-      if (data.pageId === null) {
-        await db.collection('cms_page_slugs').deleteMany({ slugId: id });
-      } else {
-        await this.replacePageSlugs(data.pageId, [id]);
+      if (data.pageId !== undefined) {
+        if (data.pageId === null) {
+          await db.collection('cms_page_slugs').deleteMany({ slugId: id });
+        } else {
+          await this.replacePageSlugs(data.pageId, [id]);
+        }
       }
-    }
 
-    return mapSlugDocumentToSlug(result);
+      return mapSlugDocumentToSlug(result);
+    } catch (error) {
+      throw databaseError(`Failed to update slug: ${id}`, error, {
+        collection: slugsCollection,
+        slugId: id,
+      });
+    }
   },
 
   async deleteSlug(id: string): Promise<Slug | null> {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<SlugDocument>(slugsCollection)
-      .findOneAndDelete(buildIdFilter<SlugDocument>(id));
-    if (!doc) return null;
-    const deleted = doc;
+    try {
+      const db = await getMongoDb();
+      const doc = await db
+        .collection<SlugDocument>(slugsCollection)
+        .findOneAndDelete(buildIdFilter<SlugDocument>(id));
+      if (!doc) return null;
+      const deleted = doc;
 
-    // Cleanup relationships
-    await db.collection('cms_page_slugs').deleteMany({ slugId: id });
-    return mapSlugDocumentToSlug(deleted);
+      // Cleanup relationships
+      await db.collection('cms_page_slugs').deleteMany({ slugId: id });
+      return mapSlugDocumentToSlug(deleted);
+    } catch (error) {
+      throw databaseError(`Failed to delete slug: ${id}`, error, {
+        collection: slugsCollection,
+        slugId: id,
+      });
+    }
   },
 
   // Relationships

@@ -1,6 +1,6 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
-import { persistCheckpoint, parseCheckpoint } from '@/features/ai/agent-runtime/memory/checkpoint';
+import { persistCheckpoint, type parseCheckpoint } from '@/features/ai/agent-runtime/memory/checkpoint';
 import { buildPlanWithLLM, buildResumePlanReview } from '@/features/ai/agent-runtime/planning/llm';
 import { buildBranchStepsFromAlternatives } from '@/features/ai/agent-runtime/planning/utils';
 import type { PlanHierarchy } from '@/features/ai/agent-runtime/planning/utils';

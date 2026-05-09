@@ -1,3 +1,15 @@
+/**
+ * Filemaker Persons List Options
+ * 
+ * Configuration and filtering options for Filemaker person list queries.
+ * Provides:
+ * - Pagination configuration with size limits
+ * - Address, bank, and organization filter types
+ * - Sort option definitions for person lists
+ * - Query parameter validation and normalization
+ * - List display and filtering utilities
+ */
+
 import 'server-only';
 
 const DEFAULT_PERSON_PAGE_SIZE = 48;

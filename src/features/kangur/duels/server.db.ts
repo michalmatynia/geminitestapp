@@ -38,6 +38,7 @@ import {
 } from '@/features/kangur/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { buildKangurSource } from '@/features/kangur/observability/server';
 import {
   searchKangurLearners,
 } from '@/features/kangur/services/kangur-learner-repository';
@@ -530,8 +531,7 @@ export async function createKangurDuelSession(
   await collection.insertOne(session);
 
   void ErrorSystem.logInfo(`Created Kangur duel session: ${sessionId}`, {
-    service: 'kangur.duels.server-db',
-    action: 'create',
+    service: buildKangurSource('duels', 'create'),
     sessionId,
     mode: session.mode,
     visibility: session.visibility,
@@ -582,8 +582,7 @@ export async function joinKangurDuelSession(
   const updated = await ensureSession(sessionId);
 
   void ErrorSystem.logInfo(`Learner joined Kangur duel session: ${sessionId}`, {
-    service: 'kangur.duels.server-db',
-    action: 'join',
+    service: buildKangurSource('duels', 'join'),
     sessionId,
     learnerId: learner.id,
     playerCount: updated.playerCount,

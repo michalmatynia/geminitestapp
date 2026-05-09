@@ -162,7 +162,11 @@ export const resolveBrainProviderCredential = async (
   }
 
   throw configurationError(
-    `${BRAIN_PROVIDER_LABELS[vendor]} API key is missing in AI Brain provider settings and environment.`
+    `${BRAIN_PROVIDER_LABELS[vendor]} API key is missing in AI Brain provider settings and environment.`,
+    {
+      vendor,
+      sourceKey: resolved.sourceKey,
+    }
   );
 };
 
@@ -185,6 +189,10 @@ export const resolveBrainProviderCredentialForAssignment = async (
   }
 
   throw configurationError(
-    `${BRAIN_PROVIDER_LABELS[vendor]} API key is missing in this AI Brain route, provider settings, and environment.`
+    `${BRAIN_PROVIDER_LABELS[vendor]} API key is missing in this AI Brain route, provider settings, and environment.`,
+    {
+      vendor,
+      source: resolved.source,
+    }
   );
 };

@@ -212,7 +212,7 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
     [filteredPaletteGroups]
   );
   return (
-    <>
+    <div data-testid='canvas-sidebar'>
       <div className='space-y-4'>
         <Card className='border-border/60 bg-card/40 p-4' data-edge-panel>
           <div className='mb-3 flex items-center justify-between'>
@@ -816,6 +816,6 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
         </Card>
       </div>
       <ConfirmationModal />
-    </>
+    </div>
   );
 }

@@ -1,3 +1,15 @@
+/**
+ * Admin Title Breadcrumb Header Component
+ * 
+ * Standardized header component for admin pages with title, breadcrumbs, and actions.
+ * Provides:
+ * - Consistent admin page header layout
+ * - Breadcrumb navigation integration
+ * - Action buttons and controls area
+ * - Responsive design with flexible styling
+ * - Customizable class names for each section
+ */
+
 import type { ReactNode } from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';

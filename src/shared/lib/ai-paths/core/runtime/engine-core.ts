@@ -1,3 +1,9 @@
+/**
+ * @module EngineCore
+ * @description Defines the core interfaces and types for the AI Paths execution engine.
+ * This module is central to maintaining consistency in how AI path runs are structured
+ * and processed across server and client boundaries.
+ */
 import { type AiNode, type Edge } from '@/shared/contracts/ai-paths';
 import { type RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 

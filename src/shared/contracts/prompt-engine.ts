@@ -412,10 +412,14 @@ export const promptValidationTimingNameSchema = z.enum([
 
 export type PromptValidationTimingName = z.infer<typeof promptValidationTimingNameSchema>;
 
+/**
+ * Error names for prompt validation failures.
+ * Categorizes where in the validation pipeline the error occurred.
+ */
 export const promptValidationErrorNameSchema = z.enum([
-  'scope_resolution',
-  'rule_compile',
-  'runtime_execution',
+  'scope_resolution',    // Failed to resolve variable scope
+  'rule_compile',        // Failed to compile validation rule
+  'runtime_execution',   // Failed during rule execution
 ]);
 
 export type PromptValidationErrorName = z.infer<typeof promptValidationErrorNameSchema>;

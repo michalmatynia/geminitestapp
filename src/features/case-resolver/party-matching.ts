@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, @typescript-eslint/strict-boolean-expressions -- Party matching heuristics use many optional text signals. */
 /**
  * party-matching.ts
  *
@@ -20,35 +21,22 @@ import type { FilemakerAddressFields } from '@/shared/contracts/filemaker';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 
+import {
+  normalizeCaseResolverComparable,
+  normalizeCaseResolverStreet,
+  scoreAddressCompatibility,
+  scoreOrganizationNameCompatibility,
+  areStreetNumbersCompatible,
+} from '@/features/case-resolver/services/party-matching';
+
+export { normalizeCaseResolverComparable };
+
 
 export type MatchedCaseResolverPartyReference = {
   kind: 'person' | 'organization';
   id: string;
   displayName: string;
 };
-
-// Street prefixes that are stripped before comparison so "ul. Kwiatowa" and
-// "Kwiatowa" are treated as the same street.
-// Street prefixes that are stripped before comparison so "ul. Kwiatowa" and
-// "Kwiatowa" are treated as the same street.
-const STREET_PREFIXES = new Set(['ul', 'al', 'aleja', 'os', 'pl']);
-// Legal-form tokens stripped from organisation names before comparison so
-// "Acme Sp. z o.o." and "Acme" still match.
-const ORGANIZATION_LEGAL_TOKENS = new Set([
-  'sp',
-  'z',
-  'o',
-  'oo',
-  's',
-  'a',
-  'sa',
-  'llc',
-  'inc',
-  'corp',
-  'company',
-  'co',
-  'ltd',
-]);
 
 // Maps common country names / aliases (in several languages) to ISO 3166-1
 // alpha-2 codes for normalised comparison.
@@ -72,38 +60,6 @@ const COUNTRY_ALIAS_TO_CODE: Record<string, string> = {
   'u.s.a.': 'US',
   'united states': 'US',
   'stany zjednoczone': 'US',
-};
-
-// Removes Polish-specific diacritics (ł/Ł) then strips all remaining
-// combining marks so comparisons are accent-insensitive.
-const stripDiacritics = (value: string): string =>
-  value
-    .replace(/ł/g, 'l')
-    .replace(/Ł/g, 'L')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-
-// Canonical normalisation used for all string comparisons: strips diacritics,
-// lowercases, removes punctuation (except spaces, hyphens, slashes), and
-// collapses whitespace. Exported so callers can pre-normalise their own values.
-export const normalizeCaseResolverComparable = (value: string): string =>
-  stripDiacritics(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9\s/-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-// Normalises a street name by stripping the leading prefix token (ul., al.,
-// etc.) so bare street names compare equal to prefixed ones.
-const normalizeCaseResolverStreet = (value: string): string => {
-  const normalized = normalizeCaseResolverComparable(value);
-  if (!normalized) return '';
-  const tokens = normalized.split(' ').filter(Boolean);
-  if (tokens.length === 0) return '';
-  if (STREET_PREFIXES.has(tokens[0] ?? '')) {
-    return tokens.slice(1).join(' ').trim();
-  }
-  return tokens.join(' ').trim();
 };
 
 // Normalises a postal code to the Polish "XX-XXX" format when it contains
@@ -134,45 +90,6 @@ const tokenizeComparable = (value: string): string[] =>
     .map((token: string): string => token.trim())
     .filter((token: string): boolean => token.length > 0);
 
-// Strips legal-form tokens from an organisation name before comparison so
-// "Acme Sp. z o.o." and "Acme LLC" both reduce to "Acme".
-const normalizeOrganizationName = (value: string): string => {
-  const tokens = tokenizeComparable(value).filter(
-    (token: string): boolean => !ORGANIZATION_LEGAL_TOKENS.has(token)
-  );
-  return tokens.join(' ').trim();
-};
-
-type ParsedStreetNumber = {
-  main: string;
-  unit: string;
-};
-
-// Splits a street number like "12/3A" into { main: "12", unit: "3a" } so
-// the main number and apartment unit can be compared independently.
-const parseStreetNumber = (value: string): ParsedStreetNumber => {
-  const compact = normalizeCaseResolverComparable(value).replace(/\s+/g, '');
-  if (!compact) return { main: '', unit: '' };
-  const [mainRaw, unitRaw = ''] = compact.split('/', 2);
-  return {
-    main: mainRaw ?? '',
-    unit: unitRaw ?? '',
-  };
-};
-
-// Two street numbers are compatible when their main parts match and their
-// unit parts either match or at least one side has no unit specified.
-const areStreetNumbersCompatible = (left: string, right: string): boolean => {
-  const normalizedLeft = parseStreetNumber(left);
-  const normalizedRight = parseStreetNumber(right);
-  if (!normalizedLeft.main || !normalizedRight.main) return false;
-  if (normalizedLeft.main !== normalizedRight.main) return false;
-  if (normalizedLeft.unit && normalizedRight.unit && normalizedLeft.unit !== normalizedRight.unit) {
-    return false;
-  }
-  return true;
-};
-
 // Combines streetNumber and houseNumber from a candidate into the "main/unit"
 // format expected by areStreetNumbersCompatible.
 export const composeCandidateStreetNumber = (
@@ -195,79 +112,6 @@ const isCityCompatible = (candidateCity: string, currentCity: string): boolean =
 // Returns null (hard reject) when any provided field actively contradicts the
 // record; returns a numeric score otherwise (higher = better match).
 // Fields not present on the candidate are simply skipped (not penalised).
-const scoreAddressCompatibility = (
-  candidate: PromptExploderCaseResolverPartyCandidate,
-  current: {
-    street: string;
-    streetNumber: string;
-    city: string;
-    postalCode: string;
-    country: string;
-  }
-): number | null => {
-  let score = 0;
-  const candidateStreet = normalizeCaseResolverStreet(candidate.street ?? '');
-  if (candidateStreet) {
-    const currentStreet = normalizeCaseResolverStreet(current.street);
-    if (!currentStreet) return null;
-    if (candidateStreet === currentStreet) {
-      score += 2;
-    } else if (candidateStreet.includes(currentStreet) || currentStreet.includes(candidateStreet)) {
-      score += 1;
-    } else {
-      return null;
-    }
-  }
-
-  const candidateStreetNumber = composeCandidateStreetNumber(candidate);
-  if (candidateStreetNumber) {
-    if (!current.streetNumber.trim()) return null;
-    if (!areStreetNumbersCompatible(candidateStreetNumber, current.streetNumber)) return null;
-    score += 2;
-  }
-
-  const candidatePostalCode = normalizeCaseResolverPostalCode(candidate.postalCode ?? '');
-  if (candidatePostalCode) {
-    const currentPostalCode = normalizeCaseResolverPostalCode(current.postalCode);
-    if (!currentPostalCode || candidatePostalCode !== currentPostalCode) return null;
-    score += 2;
-  }
-
-  const candidateCity = (candidate.city ?? '').trim();
-  if (candidateCity) {
-    if (!isCityCompatible(candidateCity, current.city)) return null;
-    score += 1.5;
-  }
-
-  const candidateCountry = normalizeCaseResolverCountry(candidate.country ?? '');
-  if (candidateCountry) {
-    const currentCountry = normalizeCaseResolverCountry(current.country);
-    if (!currentCountry || candidateCountry !== currentCountry) return null;
-    score += 1;
-  }
-
-  return score;
-};
-
-// Scores organisation name similarity. Exact match = 6, substring = 4 (when
-// the shorter name is ≥ 6 chars), high token overlap = 3, no match = 0.
-const scoreOrganizationNameCompatibility = (candidateName: string, currentName: string): number => {
-  const left = normalizeOrganizationName(candidateName);
-  const right = normalizeOrganizationName(currentName);
-  if (!left || !right) return 0;
-  if (left === right) return 6;
-  if (left.includes(right) || right.includes(left)) {
-    const minLength = Math.min(left.length, right.length);
-    return minLength >= 6 ? 4 : 0;
-  }
-  const leftTokens = left.split(' ').filter(Boolean);
-  const rightTokens = new Set(right.split(' ').filter(Boolean));
-  if (leftTokens.length === 0 || rightTokens.size === 0) return 0;
-  const overlap = leftTokens.filter((token: string): boolean => rightTokens.has(token)).length;
-  const overlapRatio = overlap / Math.max(leftTokens.length, rightTokens.size);
-  if (overlap >= 2 && overlapRatio >= 0.75) return 3;
-  return 0;
-};
 
 // Derives first/last name from a candidate, falling back to splitting the
 // displayName when dedicated fields are absent.
@@ -325,7 +169,7 @@ const findBestPersonMatch = (
       city: person.city,
       postalCode: person.postalCode,
       country: person.country,
-    });
+    }, normalizeCaseResolverPostalCode, normalizeCaseResolverCountry, isCityCompatible);
     if (addressScore === null) continue;
     
     const nameScore = (personFirst ? 3 : 0) + (personLast ? 3 : 0);
@@ -359,7 +203,7 @@ const findBestOrganizationMatch = (
       city: organization.city,
       postalCode: organization.postalCode,
       country: organization.country,
-    });
+    }, normalizeCaseResolverPostalCode, normalizeCaseResolverCountry, isCityCompatible);
     if (addressScore === null) continue;
     
     const score = nameScore + addressScore;
@@ -395,7 +239,16 @@ export const findExistingFilemakerPartyReference = (
   const personLast = normalizeCaseResolverComparable(personName.lastName);
 
   if (kindHint !== 'organization' && (personFirst || personLast)) {
-    const bestPerson = findBestPersonMatch(database, candidate, personFirst, personLast);
+    const bestPerson = findBestPersonMatch(
+      database,
+      candidate,
+      personFirst,
+      personLast,
+      normalizeCaseResolverPostalCode,
+      normalizeCaseResolverCountry,
+      isCityCompatible,
+      isPersonLastNameCompatible
+    );
     if (bestPerson && bestPerson.score >= 4) {
       return {
         kind: 'person',
@@ -410,7 +263,14 @@ export const findExistingFilemakerPartyReference = (
     (candidate.kind === 'organization' ? (candidate.displayName || '').trim() : '');
 
   if (kindHint !== 'person' && organizationName) {
-    const bestOrganization = findBestOrganizationMatch(database, candidate, organizationName);
+    const bestOrganization = findBestOrganizationMatch(
+      database,
+      candidate,
+      organizationName,
+      normalizeCaseResolverPostalCode,
+      normalizeCaseResolverCountry,
+      isCityCompatible
+    );
     if (bestOrganization && bestOrganization.score >= 4) {
       return {
         kind: 'organization',

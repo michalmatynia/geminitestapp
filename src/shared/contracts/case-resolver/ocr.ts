@@ -42,13 +42,17 @@ export type CaseResolverOcrJobStatus = z.infer<typeof caseResolverOcrJobStatusSc
 export const caseResolverOcrJobDispatchModeSchema = z.enum(['queued', 'inline']);
 export type CaseResolverOcrJobDispatchMode = z.infer<typeof caseResolverOcrJobDispatchModeSchema>;
 
+/**
+ * Error categories for Case Resolver OCR operations.
+ * Used to classify OCR failures and determine retry strategy.
+ */
 export const caseResolverOcrErrorCategorySchema = z.enum([
-  'timeout',
-  'rate_limit',
-  'network',
-  'provider',
-  'validation',
-  'unknown',
+  'timeout',      // Operation exceeded time limit
+  'rate_limit',   // API rate limit exceeded
+  'network',      // Network connectivity failure
+  'provider',     // OCR service unavailable
+  'validation',   // Invalid input parameters
+  'unknown',      // Unclassified error
 ]);
 export type CaseResolverOcrErrorCategory = z.infer<typeof caseResolverOcrErrorCategorySchema>;
 

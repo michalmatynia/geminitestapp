@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 import type { Filter } from 'mongodb';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 
   CmsTheme, 
   CmsThemeColors, 
@@ -9,6 +8,8 @@ import type {
   CreateCmsThemeDto as CmsThemeCreateInput, 
   UpdateCmsThemeDto as CmsThemeUpdateInput 
 } from '@/shared/contracts/cms';
+import { databaseError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { buildIdFilter, removeUndefined } from '../utils';
 
 const themesCollection = 'cms_themes';
@@ -39,47 +40,69 @@ const mapThemeDocument = (doc: ThemeDocument): CmsTheme => ({
 
 export const themeRepository = {
   async getThemeById(id: string): Promise<CmsTheme | null> {
-    const db = await getMongoDb();
-    const doc = await db.collection<ThemeDocument>(themesCollection).findOne(buildIdFilter<ThemeDocument>(id) as Filter<ThemeDocument>);
-    return doc ? mapThemeDocument(doc) : null;
+    try {
+      const db = await getMongoDb();
+      const doc = await db.collection<ThemeDocument>(themesCollection).findOne(buildIdFilter<ThemeDocument>(id) as Filter<ThemeDocument>);
+      return doc ? mapThemeDocument(doc) : null;
+    } catch (error) {
+      throw databaseError(`Failed to retrieve theme: ${id}`, error, {
+        collection: themesCollection,
+        themeId: id,
+      });
+    }
   },
 
   async createTheme(data: CmsThemeCreateInput): Promise<CmsTheme> {
-    const db = await getMongoDb();
-    const id = randomUUID();
-    const doc: ThemeDocument = {
-      id,
-      name: data.name,
-      colors: data.colors,
-      typography: data.typography,
-      spacing: data.spacing,
-      customCss: data.customCss ?? null,
-      isDefault: data.isDefault || false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    await db.collection<ThemeDocument>(themesCollection).insertOne(doc);
-    return mapThemeDocument(doc);
+    try {
+      const db = await getMongoDb();
+      const id = randomUUID();
+      const doc: ThemeDocument = {
+        id,
+        name: data.name,
+        colors: data.colors,
+        typography: data.typography,
+        spacing: data.spacing,
+        customCss: data.customCss ?? null,
+        isDefault: data.isDefault || false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      await db.collection<ThemeDocument>(themesCollection).insertOne(doc);
+      return mapThemeDocument(doc);
+    } catch (error) {
+      throw databaseError(`Failed to create theme: ${data.name}`, error, {
+        collection: themesCollection,
+        themeName: data.name,
+      });
+    }
   },
 
   async updateTheme(id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> {
-    const db = await getMongoDb();
-    const update = removeUndefined({
-      name: data.name,
-      colors: data.colors,
-      typography: data.typography,
-      spacing: data.spacing,
-      customCss: data.customCss,
-      isDefault: data.isDefault,
-      updatedAt: new Date(),
-    });
+    try {
+      const db = await getMongoDb();
+      const update = removeUndefined({
+        name: data.name,
+        colors: data.colors,
+        typography: data.typography,
+        spacing: data.spacing,
+        customCss: data.customCss,
+        isDefault: data.isDefault,
+        updatedAt: new Date(),
+      });
 
-    const result = await db
-      .collection<ThemeDocument>(themesCollection)
-      .findOneAndUpdate(buildIdFilter<ThemeDocument>(id) as Filter<ThemeDocument>, { $set: update }, { returnDocument: 'after' });
-    
-    return result ? mapThemeDocument(result) : null;
+      const result = await db
+        .collection<ThemeDocument>(themesCollection)
+        .findOneAndUpdate(buildIdFilter<ThemeDocument>(id) as Filter<ThemeDocument>, { $set: update }, { returnDocument: 'after' });
+      
+      return result ? mapThemeDocument(result) : null;
+    } catch (error) {
+      throw databaseError(`Failed to update theme: ${id}`, error, {
+        collection: themesCollection,
+        themeId: id,
+      });
+    }
   },
+// ...
 
   async deleteTheme(id: string): Promise<CmsTheme | null> {
     const db = await getMongoDb();
@@ -99,4 +122,3 @@ export const themeRepository = {
     await db.collection<ThemeDocument>(themesCollection).updateOne(buildIdFilter<ThemeDocument>(id) as Filter<ThemeDocument>, { $set: { isDefault: true } });
   },
 };
-

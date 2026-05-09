@@ -1,6 +1,19 @@
+/**
+ * Case Resolver Documentation Keys
+ * 
+ * Documentation key constants and utilities for Case Resolver features.
+ * Provides:
+ * - Documentation key mappings for tooltips
+ * - Help system integration
+ * - Feature documentation references
+ * - User guidance constants
+ * - Context-sensitive help keys
+ */
+
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 
+/** Documentation keys for Case Resolver feature tooltips and help */
 export const CASE_RESOLVER_DOC_KEYS = {
   advancedFilters: 'case_resolver_advanced_filters',
   lockedIndicator: 'case_resolver_locked_indicator',

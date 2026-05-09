@@ -1,3 +1,15 @@
+/**
+ * Browser Steps Generation
+ * 
+ * Utilities for generating and customizing browser execution steps.
+ * Provides:
+ * - Marketplace-specific label overrides
+ * - Step label customization
+ * - Action sequence step generation
+ * - Cross-platform step consistency
+ * - In-browser and server-side step synchronization
+ */
+
 import { ACTION_SEQUENCES } from './action-sequences';
 import { STEP_REGISTRY, type StepId } from './step-registry';
 

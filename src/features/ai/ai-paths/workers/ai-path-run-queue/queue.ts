@@ -2,6 +2,7 @@ import {
   recordRuntimeRunStarted,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { processRun } from '@/features/ai/ai-paths/workers/ai-path-run-processor';
+import { internalError } from '@/shared/errors/app-error';
 import { mutateAgentLease } from '@/shared/lib/agent-lease-service';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -58,7 +59,17 @@ const handleLease = async (
   repo: AiPathRunRepository,
   ownerAgentId: string
 ): Promise<{ run: ClaimedAiPathRun; leaseResult: ExecutionLeaseResult } | null> => {
-  const run = await repo.claimRunForProcessing(runId);
+  let run: ClaimedAiPathRun | null = null;
+  try {
+    run = await repo.claimRunForProcessing(runId);
+  } catch (error) {
+    throw internalError(`Failed to claim path run ${runId} for processing.`, {
+      runId,
+      ownerAgentId,
+      cause: error,
+    });
+  }
+
   if (run === null) {
     const latest = await repo.findRunById(runId);
     if (latest === null) {
@@ -179,6 +190,9 @@ const handleQueueLeaseResult = async ({
   await processClaimedRun(run, leaseResult, ownerAgentId, signal);
 };
 
+import { configurationError, internalError } from '@/shared/errors/app-error';
+
+// ... (in runQueueJob)
 const runQueueJob = async (
   data: AiPathRunJobData,
   _jobId: string,
@@ -186,9 +200,17 @@ const runQueueJob = async (
 ): Promise<void> => {
   const repo = await getPathRunRepository();
   const ownerAgentId = resolveQueueWorkerAgentId();
-  const result = await handleLease(data.runId, repo, ownerAgentId);
-  if (result === null) return;
-  await handleQueueLeaseResult({ data, result, repo, ownerAgentId, signal });
+  try {
+    const result = await handleLease(data.runId, repo, ownerAgentId);
+    if (result === null) return;
+    await handleQueueLeaseResult({ data, result, repo, ownerAgentId, signal });
+  } catch (error: unknown) {
+    throw internalError(`Unexpected failure processing queue job for run: ${data.runId}`, {
+      runId: data.runId,
+      jobId: _jobId,
+      cause: error,
+    });
+  }
 };
 
 export const queue = createManagedQueue<AiPathRunJobData>({
@@ -207,18 +229,20 @@ export const queue = createManagedQueue<AiPathRunJobData>({
   processor: runQueueJob,
   onFailed: async (_jobId, err, data) => {
     try {
-      const { ErrorSystem: LoggerSystem } = await import('@/shared/lib/observability/system-logger');
-      void LoggerSystem.captureException(err, {
+      void ErrorSystem.captureException(err, {
         service: LOG_SOURCE,
         runId: data.runId,
+        jobId: _jobId,
+        error: err instanceof Error ? err.message : String(err),
       });
     } catch (importError) {
       void ErrorSystem.captureException(importError);
       void logSystemEvent({
         level: 'error',
         source: LOG_SOURCE,
-        message: 'Fatal queue error',
+        message: 'Fatal queue error during failure logging',
         error: importError,
+        context: { jobId: _jobId, runId: data.runId },
       });
     }
   },

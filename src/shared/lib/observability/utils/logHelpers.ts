@@ -1,3 +1,15 @@
+/**
+ * Log Display Helpers
+ * 
+ * Utilities for extracting and formatting log data for UI display.
+ * Provides:
+ * - Safe value extraction from log records
+ * - Type conversion and validation
+ * - Display value formatting
+ * - Status variant mapping
+ * - Context document parsing
+ */
+
 import { type SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { StatusVariant } from '@/shared/contracts/ui/base';
@@ -12,23 +24,54 @@ import {
 } from '../types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
+/**
+ * Safely reads a string value from log context
+ * 
+ * @param log - System log record
+ * @param key - Context key to read
+ * @returns String value or null if not found/empty
+ */
 export const readContextString = (log: SystemLogRecord, key: string): string | null => {
   const value = log.context?.[key];
   return typeof value === 'string' && value.trim().length > 0 ? value : null;
 };
 
+/**
+ * Converts unknown value to record object
+ * 
+ * @param value - Value to convert
+ * @returns Record object or null if not a plain object
+ */
 export const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
 
+/**
+ * Safely reads a string from a record
+ * 
+ * @param value - Value to read
+ * @returns Trimmed string or null if empty
+ */
 export const readRecordString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 
+/**
+ * Safely reads a number from a record
+ * 
+ * @param value - Value to read
+ * @returns Finite number or null
+ */
 export const readRecordNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 
+/**
+ * Converts any value to a display string
+ * Handles strings, numbers, booleans, arrays, and objects
+ * 
+ * @param value - Value to convert
+ * @returns Display string or null if empty/invalid
+ */
 export const toDisplayValue = (value: unknown): string | null => {
   if (typeof value === 'string') {
     const trimmed = value.trim();
@@ -53,6 +96,13 @@ export const toDisplayValue = (value: unknown): string | null => {
   return null;
 };
 
+/**
+ * Maps status strings to UI status variants
+ * Normalizes various status values to standard variants
+ * 
+ * @param status - Status string to map
+ * @returns UI status variant
+ */
 export const getStatusVariant = (status: string | null | undefined): StatusVariant => {
   const normalized = (status ?? '').toLowerCase();
   if (['completed', 'cached', 'success', 'healthy'].includes(normalized)) return 'success';
@@ -64,6 +114,13 @@ export const getStatusVariant = (status: string | null | undefined): StatusVaria
   return 'neutral';
 };
 
+/**
+ * Parses a context document from unknown value
+ * Extracts document metadata and sections
+ * 
+ * @param value - Value to parse
+ * @returns Parsed document display or null if invalid
+ */
 export const readContextDocument = (value: unknown): ContextDocumentDisplay | null => {
   const record = asRecord(value);
   const id = readRecordString(record?.['id']);

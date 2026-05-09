@@ -1,3 +1,15 @@
+/**
+ * Case Resolver Composer Types
+ * 
+ * Type definitions for Case Resolver content composition and compilation.
+ * Provides:
+ * - Compile context for node processing
+ * - Node output formatting types
+ * - Text transformation and WYSIWYG handling
+ * - Join mode and relationship processing
+ * - Content compilation result types
+ */
+
 import type { AiNode, CaseResolverEdgeMeta, CaseResolverJoinMode, CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
 import type { CaseResolverCompileResult } from '@/shared/contracts/case-resolver/capture';
 

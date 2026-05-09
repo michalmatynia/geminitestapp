@@ -1,3 +1,15 @@
+/**
+ * Product Catalog API Handlers
+ * 
+ * Server-side API handlers for product catalog management.
+ * Provides:
+ * - Catalog CRUD operations with MongoDB integration
+ * - Bulk catalog operations and batch processing
+ * - Language and price group normalization
+ * - Catalog validation and error handling
+ * - System event logging and observability
+ */
+
 import { type AnyBulkWriteOperation, type Collection } from 'mongodb';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';

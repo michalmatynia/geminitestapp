@@ -105,6 +105,10 @@ const UNSUPPORTED_CHATBOT_AGENT_MODEL_KEYS = [
   'outputNormalizationModel',
 ] as const;
 
+/**
+ * Error thrown when chatbot settings payload validation fails.
+ * Indicates the settings structure is invalid or malformed.
+ */
 export class ChatbotSettingsValidationError extends Error {
   code: 'invalid_shape';
 

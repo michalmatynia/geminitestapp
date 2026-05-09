@@ -7,6 +7,7 @@ import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtim
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { internalError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { resolveDurationMs } from '@/features/ai/ai-paths/workers/ai-path-run-queue-utils';
 
@@ -67,8 +68,14 @@ export const processRun = async (
     });
     return;
   } catch (error: unknown) {
-    void ErrorSystem.captureException(error);
-    await ErrorSystem.captureException(error, {
+    const wrappedError = internalError(`AI-Paths run execution failed: ${run.id}`, {
+      runId: run.id,
+      pathId: run.pathId,
+      action: 'executePathRun',
+      cause: error,
+      critical: true,
+    });
+    void ErrorSystem.captureException(wrappedError, {
       service: 'ai-paths-queue',
       pathRunId: run.id,
       pathId: run.pathId,
@@ -78,7 +85,7 @@ export const processRun = async (
     if (latest !== null && isTerminalAiPathRunStatus(latest.status)) return;
     if (latest !== null && latest.status !== 'running' && latest.status !== 'queued') return;
     
-    await handleFailure(run, error, latest, runStartMs, repo);
+    await handleFailure(run, wrappedError, latest, runStartMs, repo);
   }
 };
 
@@ -89,14 +96,16 @@ const handleFailure = async (
   runStartMs: number,
   repo: Awaited<ReturnType<typeof getPathRunRepository>>
 ): Promise<void> => {
-  const message = error instanceof Error ? error.message : 'Run failed.';
+  const errorMessage = error instanceof Error ? error.message : 'Run failed.';
+  const errorContext = (error as any)?.meta ?? {};
+  
   const finishedAt = new Date();
   await repo.finalizeRun(run.id, 'failed', {
-    errorMessage: message,
+    errorMessage,
     finishedAt: finishedAt.toISOString(),
     event: {
       level: 'error',
-      message: `Run failed: ${message}`,
+      message: `Run failed: ${errorMessage}`,
     },
   });
   await recordRuntimeRunFinished({
@@ -106,10 +115,11 @@ const handleFailure = async (
     timestamp: finishedAt,
   });
   publishRunUpdate(run.id, 'error', {
-    error: message,
+    error: errorMessage,
     status: 'failed',
   });
-  publishRunUpdate(run.id, 'done', { status: 'failed', error: message });
+  publishRunUpdate(run.id, 'done', { status: 'failed', error: errorMessage });
+  
   void logSystemEvent({
     level: 'error',
     source: LOG_SOURCE,
@@ -121,7 +131,8 @@ const handleFailure = async (
       pathName: run.pathName,
       entityId: run.entityId,
       durationMs: Date.now() - runStartMs,
-      error: message,
+      error: errorMessage,
+      ...errorContext,
     },
   });
 };

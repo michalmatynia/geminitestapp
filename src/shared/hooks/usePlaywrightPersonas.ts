@@ -1,3 +1,15 @@
+/**
+ * Playwright Personas Hooks
+ * 
+ * TanStack Query hooks for Playwright persona management.
+ * Provides:
+ * - Playwright personas query with caching
+ * - Persona update mutation
+ * - Settings cache invalidation
+ * - Optional query enabling/disabling
+ * - Observability integration for persona operations
+ */
+
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
@@ -8,7 +20,13 @@ import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-fa
 import { playwrightKeys } from '@/shared/lib/query-key-exports';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+/**
+ * Hook for querying Playwright personas
+ * @param options - Optional configuration (enabled flag)
+ * @returns Query result with Playwright personas
+ */
 export function usePlaywrightPersonas(options?: {
+  /** Whether the query should be enabled */
   enabled?: boolean;
 }): ListQuery<PlaywrightPersona> {
   const queryKey = playwrightKeys.personas();

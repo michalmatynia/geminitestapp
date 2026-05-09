@@ -55,10 +55,15 @@ const parseRequestedKeys = (req: NextRequest): string[] => {
   const unique = Array.from(new Set(flattened));
   unique.forEach((key) => {
     if (key.length > MAX_SETTINGS_QUERY_KEY_LENGTH) {
-      throw badRequestError(`Invalid key length for "${key.slice(0, 32)}...".`);
+      throw badRequestError(`Invalid key length for "${key.slice(0, 32)}...". Maximum allowed length is ${MAX_SETTINGS_QUERY_KEY_LENGTH}.`, {
+        key,
+        keyLength: key.length,
+      });
     }
     if (!key.startsWith('ai_paths_')) {
-      throw badRequestError(`Invalid AI Paths key "${key}".`);
+      throw badRequestError(`Invalid AI Paths key "${key}". Keys must start with 'ai_paths_'.`, {
+        key,
+      });
     }
     assertCanonicalAiPathsKey(key);
   });
@@ -122,7 +127,9 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       body = JSON.parse(rawBody);
     } catch (error) {
       void ErrorSystem.captureException(error);
-      throw badRequestError('Invalid JSON body. The request body must be a valid JSON object conforming to the AI Paths settings write schema.');
+      throw badRequestError('Invalid JSON body. The request body must be a valid JSON object conforming to the AI Paths settings write schema.', {
+        cause: error,
+      });
     }
   }
 
@@ -140,7 +147,9 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     return NextResponse.json(parsedSingle.data);
   }
 
-  throw badRequestError('Invalid AI Paths settings payload. The body must match either the bulk write schema ({ items: [...] }) or the single write schema ({ key, value }).');
+  throw badRequestError('Invalid AI Paths settings payload. The body must match either the bulk write schema ({ items: [...] }) or the single write schema ({ key, value }).', {
+    receivedBody: body,
+  });
 }
 
 /**
@@ -155,13 +164,17 @@ export async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): 
       body = JSON.parse(rawBody);
     } catch (error) {
       void ErrorSystem.captureException(error);
-      throw badRequestError('Invalid JSON body. The request body must be a valid JSON object conforming to the AI Paths settings delete schema.');
+      throw badRequestError('Invalid JSON body. The request body must be a valid JSON object conforming to the AI Paths settings delete schema.', {
+        cause: error,
+      });
     }
   }
 
   const parsed = aiPathsSettingsDeleteRequestSchema.safeParse(body);
   if (!parsed.success) {
-    throw badRequestError('Invalid AI Paths settings delete payload. The body must match the delete schema ({ keys: string[] }).');
+    throw badRequestError('Invalid AI Paths settings delete payload. The body must match the delete schema ({ keys: string[] }).', {
+      issues: parsed.error.flatten(),
+    });
   }
 
   const keys = [...(parsed.data.key ? [parsed.data.key] : []), ...(parsed.data.keys ?? [])];

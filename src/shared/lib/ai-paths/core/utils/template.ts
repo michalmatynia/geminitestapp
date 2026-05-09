@@ -1,25 +1,40 @@
 import { getValueAtMappingPath } from './json';
 import { safeStringify } from './runtime';
 
+import { configurationError } from '@/shared/errors/app-error';
+
 const resolveTemplateTokenValue = (
   key: string,
   context: Record<string, unknown>,
-  currentValue: unknown
+  currentValue: unknown,
+  strict: boolean = false
 ): unknown => {
   if (key === 'value' || key === 'current') {
     return currentValue;
   }
   if (key.startsWith('current.')) {
-    return getValueAtMappingPath(currentValue, key.slice('current.'.length));
+    const val = getValueAtMappingPath(currentValue, key.slice('current.'.length));
+    if (strict && val === undefined) {
+      throw configurationError(`Missing template variable: ${key}`, { key });
+    }
+    return val;
   }
   if (key.startsWith('value.')) {
     const resolvedFromContext = getValueAtMappingPath(context, key);
     if (resolvedFromContext !== undefined) {
       return resolvedFromContext;
     }
-    return getValueAtMappingPath(currentValue, key.slice('value.'.length));
+    const val = getValueAtMappingPath(currentValue, key.slice('value.'.length));
+    if (strict && val === undefined) {
+      throw configurationError(`Missing template variable: ${key}`, { key });
+    }
+    return val;
   }
-  return getValueAtMappingPath(context, key);
+  const resolved = getValueAtMappingPath(context, key);
+  if (strict && resolved === undefined) {
+    throw configurationError(`Missing template variable: ${key}`, { key });
+  }
+  return resolved;
 };
 
 export const renderTemplate = (

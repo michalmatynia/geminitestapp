@@ -1,5 +1,13 @@
 /**
+ * Safe Timer Utilities
+ * 
  * Shared timer utilities for safe timeout and interval management.
+ * Provides:
+ * - Safe setTimeout wrapper with consistent typing
+ * - Safe setInterval wrapper with cleanup handling
+ * - Interval task management with cancellation
+ * - Architectural linting bypass for timer operations
+ * - Cross-environment timer compatibility
  * 
  * These utilities provide a consistent interface for timer operations
  * across the application while bypassing architectural linting rules
@@ -9,15 +17,24 @@
  * direct setInterval calls in feature code.
  */
 
+/** Type alias for timer IDs returned by setTimeout */
 export type SafeTimerId = ReturnType<typeof globalThis.setTimeout>;
+
+/** Handle for managed interval tasks with cancellation */
 export type IntervalTaskHandle = {
+  /** The underlying timer ID */
   id: SafeTimerId;
+  /** Function to cancel the interval */
   cancel: () => void;
 };
 
 /**
  * Sets a recurring interval with safe cleanup handling.
  * Wrapper around native setInterval with consistent typing.
+ * @param callback - Function to execute on each interval
+ * @param ms - Interval duration in milliseconds
+ * @param args - Arguments to pass to callback
+ * @returns Timer ID for the interval
  */
 export const safeSetInterval = (
   callback: (...args: unknown[]) => void,

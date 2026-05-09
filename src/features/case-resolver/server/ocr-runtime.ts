@@ -3,9 +3,9 @@ import 'server-only';
 import path from 'path';
 
 import type { CaseResolverOcrFileKind } from '@/shared/contracts/case-resolver/ocr';
+import { badRequestError } from '@/shared/errors/app-error';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { caseResolverRoot } from '@/shared/lib/files/server-constants';
-
 
 const CASE_RESOLVER_UPLOAD_PREFIX = '/uploads/case-resolver/';
 const CASE_RESOLVER_IMAGE_EXTENSION_PATTERN = /\.(jpg|jpeg|png|gif|webp|bmp|tiff)$/i;
@@ -54,24 +54,27 @@ export const resolveCaseResolverOcrDiskPath = (
 } => {
   const filepath = normalizeCaseResolverPublicFilepath(value);
   if (!filepath) {
-    // Filepath parameter is required to locate the file for OCR processing
-    throw new Error('filepath is required.');
+    throw badRequestError('Invalid filepath: filepath is required.');
   }
   if (!filepath.startsWith(CASE_RESOLVER_UPLOAD_PREFIX)) {
-    // Only files uploaded through Case Resolver are allowed for OCR
-    throw new Error('Only Case Resolver uploaded files are supported.');
+    throw badRequestError('Invalid file: Only Case Resolver uploaded files are supported.', {
+      filepath,
+    });
   }
   const kind = inferCaseResolverOcrFileKind(filepath);
   if (!kind) {
-    // OCR only supports image and PDF file types
-    throw new Error('Only image and PDF files are supported for OCR runtime.');
+    throw badRequestError('Unsupported file type: only image and PDF files are supported for OCR.', {
+      filepath,
+    });
   }
 
   const diskPath = path.resolve(getDiskPathFromPublicPath(filepath));
   const allowedPrefix = `${CASE_RESOLVER_UPLOAD_DISK_PREFIX}${path.sep}`;
   if (diskPath !== CASE_RESOLVER_UPLOAD_DISK_PREFIX && !diskPath.startsWith(allowedPrefix)) {
-    // Resolved path escapes the Case Resolver uploads directory boundary
-    throw new Error('Resolved OCR path is outside Case Resolver uploads.');
+    throw badRequestError('Security violation: resolved OCR path is outside Case Resolver uploads directory.', {
+      filepath,
+      diskPath,
+    });
   }
 
   return {

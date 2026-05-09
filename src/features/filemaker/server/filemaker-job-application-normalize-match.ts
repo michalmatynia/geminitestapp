@@ -1,3 +1,15 @@
+/**
+ * Filemaker Job Application Match Normalization
+ * 
+ * Normalization utilities for job application matching and analysis.
+ * Provides:
+ * - Match analysis decision normalization
+ * - Job application match data processing
+ * - Match score and criteria validation
+ * - Decision outcome standardization
+ * - Match analysis data integrity
+ */
+
 import type {
   FilemakerJobApplication,
   FilemakerJobApplicationMatchAnalysis,

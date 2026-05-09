@@ -10,6 +10,11 @@ import { createManagedQueue } from '@/shared/lib/queue';
 import type { ScheduledTickJobData } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'integrations.tradera-relist.<action>'
+ */
+const buildTraderaRelistSource = (action: string): string => `integrations.tradera-relist.${action}`;
+
 import { enqueueTraderaListingJob } from './traderaListingQueue';
 
 import type { Queue, RepeatableJob } from 'bullmq';
@@ -73,7 +78,7 @@ const queue = createManagedQueue<ScheduledTickJobData>({
   },
   onFailed: async (_jobId, error) => {
     await ErrorSystem.captureException(error, {
-      service: 'tradera-relist-scheduler-queue',
+      service: buildTraderaRelistSource('failed'),
     });
   },
 });
@@ -124,8 +129,7 @@ const unregisterRepeatScheduler = async (): Promise<void> => {
   } catch (error) {
     ErrorSystem.captureException(error).catch(() => {});
     await ErrorSystem.captureException(error, {
-      service: 'tradera-relist-scheduler-queue',
-      action: 'unregisterRepeat',
+      service: buildTraderaRelistSource('unregister-repeat-failed'),
     });
   } finally {
     queueState.repeatRegistered = false;
@@ -139,8 +143,7 @@ const stopWorkerIfRunning = async (): Promise<void> => {
   } catch (error) {
     ErrorSystem.captureException(error).catch(() => {});
     await ErrorSystem.captureException(error, {
-      service: 'tradera-relist-scheduler-queue',
-      action: 'stopWorker',
+      service: buildTraderaRelistSource('stop-worker-failed'),
     });
   } finally {
     queueState.workerStarted = false;
@@ -196,15 +199,14 @@ export const startTraderaRelistSchedulerQueue = (): void => {
     } catch (error) {
       ErrorSystem.captureException(error).catch(() => {});
       Object.assign(queueState, { repeatRegistered: false, startupInFlight: false });
-      await ErrorSystem.captureException(error, { service: 'tradera-relist-scheduler-queue', action: 'registerRepeat' });
+      await ErrorSystem.captureException(error, { service: buildTraderaRelistSource('register-repeat-failed') });
     }
   };
 
   runStartup().catch((error) => {
     queueState.startupInFlight = false;
     ErrorSystem.captureException(error, {
-      service: 'tradera-relist-scheduler-queue',
-      action: 'runStartup-failed',
+      service: buildTraderaRelistSource('run-startup-failed'),
     }).catch(() => {});
   });
 };

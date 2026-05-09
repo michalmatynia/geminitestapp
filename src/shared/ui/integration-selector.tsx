@@ -1,3 +1,15 @@
+/**
+ * Integration Selector Component
+ * 
+ * Dual selector component for choosing integrations and their connections.
+ * Provides:
+ * - Integration dropdown with available options
+ * - Connection dropdown filtered by selected integration
+ * - Automatic connection filtering and validation
+ * - Labeled option formatting for dropdowns
+ * - State management for integration and connection selection
+ */
+
 'use client';
 
 import { useMemo } from 'react';

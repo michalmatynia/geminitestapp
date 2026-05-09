@@ -31,6 +31,11 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
+import {
+  configurationError,
+  externalServiceError,
+  internalError,
+} from '@/shared/errors/app-error';
 import { dbApi } from '@/shared/lib/ai-paths/api';
 import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
 import { coerceInput, renderJsonTemplate } from '../../utils';
@@ -519,53 +524,16 @@ const loadLiveContext = async ({
   const rawQuery = config.contextQuery?.trim() ? config.contextQuery.trim() : null;
   const missingQueryPorts =
     rawQuery && rawQuery.length > 0 ? extractMissingTemplatePorts(rawQuery, nodeInputs) : [];
+
   if (missingQueryPorts.length > 0) {
-    const error = `Live context query is missing connected inputs: ${missingQueryPorts.join(', ')}.`;
-    reportAiPathsError(
-      new Error(error),
-      { action: 'fetchDbLiveContext', nodeId, missingQueryPorts },
-      'Database live context query resolution failed:'
+    throw configurationError(
+      `Live context query is missing connected inputs: ${missingQueryPorts.join(', ')}.`,
+      {
+        nodeId,
+        missingQueryPorts,
+        action: 'fetchDbLiveContext',
+      }
     );
-    return {
-      fetchedAt,
-      selectedCollections: selectedCollections.map((value: string) => toFetchCollectionName(value)),
-      limitPerCollection,
-      query: rawQuery,
-      collections: selectedCollections.map(
-        (selectedKey: string): LiveContextCollection => ({
-          name: toFetchCollectionName(selectedKey),
-          provider: 'mongodb',
-          documents: [],
-          total: 0,
-          limit: limitPerCollection,
-          skip: 0,
-          query: rawQuery,
-          error,
-        })
-      ),
-      collectionMap: Object.fromEntries(
-        selectedCollections.map((selectedKey: string) => {
-          const collectionName = toFetchCollectionName(selectedKey);
-          return [
-            collectionName,
-            {
-              name: collectionName,
-              provider: 'mongodb',
-              documents: [],
-              total: 0,
-              limit: limitPerCollection,
-              skip: 0,
-              query: rawQuery,
-              error,
-            } satisfies LiveContextCollection,
-          ];
-        })
-      ),
-      errors: selectedCollections.map((selectedKey: string) => ({
-        collection: toFetchCollectionName(selectedKey),
-        error,
-      })),
-    };
   }
   const query =
     rawQuery && rawQuery.length > 0
@@ -609,21 +577,12 @@ const loadLiveContext = async ({
       });
 
       if (!result.ok) {
-        reportAiPathsError(
-          new Error(result.error),
-          { action: 'fetchDbLiveContext', nodeId, collection: collectionName },
-          'Database live context fetch failed:'
-        );
-        return {
-          name: collectionName,
-          provider: 'mongodb',
-          documents: [],
-          total: 0,
-          limit: limitPerCollection,
-          skip: 0,
-          query,
-          error: result.error,
-        };
+        throw externalServiceError('Database live context fetch failed.', {
+          action: 'fetchDbLiveContext',
+          nodeId,
+          collection: collectionName,
+          status: result.error,
+        });
       }
 
       const rawDocuments = result.data.documents ?? [];
@@ -695,15 +654,11 @@ export const handleDbSchema: NodeHandler = async ({
 
   const schemaResult = await getCachedSchema();
   if (!schemaResult.ok) {
-    reportAiPathsError(
-      new Error(schemaResult.error),
-      { action: 'fetchDbSchema', nodeId: node.id },
-      'Database schema fetch failed:'
-    );
-    return {
-      schema: null,
-      context: null,
-    };
+    throw externalServiceError('Database schema fetch failed.', {
+      nodeId: node.id,
+      action: 'fetchDbSchema',
+      cause: schemaResult.error,
+    });
   }
 
   const fullSchema = cloneSchemaResponse(schemaResult.data);

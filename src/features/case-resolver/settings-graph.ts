@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, no-nested-ternary, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions -- Legacy graph sanitation keeps coercion and validation logic together. */
 /**
  * settings-graph.ts
  *
@@ -15,8 +16,23 @@
  *    entries whose node IDs are no longer in the graph.
  *  - Validate the optional documentDropNode type.
  */
-import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS, DEFAULT_CASE_RESOLVER_EDGE_META, DEFAULT_CASE_RESOLVER_NODE_META, DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID } from '@/shared/contracts/case-resolver/constants';
-import { type AiNode, type CaseResolverEdge, type CaseResolverEdgeMeta, type CaseResolverGraph, type CaseResolverNodeMeta, type CaseResolverPdfExtractionPresetId } from '@/shared/contracts/case-resolver';
+import type {
+  AiNode,
+  CaseResolverEdge,
+  CaseResolverEdgeMeta,
+  CaseResolverGraph,
+  CaseResolverNodeMeta,
+  CaseResolverPdfExtractionPresetId,
+} from '@/shared/contracts/case-resolver';
+import {
+  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
+  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
+  DEFAULT_CASE_RESOLVER_EDGE_META,
+  DEFAULT_CASE_RESOLVER_NODE_META,
+  DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
+} from '@/shared/contracts/case-resolver/constants';
 import { validationError } from '@/shared/errors/app-error';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
@@ -29,7 +45,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
  *  - Validates textColor as a 3- or 6-digit hex string (drops invalid values).
  *  - Falls back to DEFAULT_CASE_RESOLVER_NODE_META for all boolean flags.
  */
-const sanitizeNodeMeta = (
+const sanitizeNodeMetaInternal = (
   source: Record<string, CaseResolverNodeMeta> | null | undefined
 ): Record<string, CaseResolverNodeMeta> => {
   if (!source || typeof source !== 'object') return {};
@@ -91,7 +107,7 @@ const sanitizeNodeMeta = (
 };
 
 // Sanitises the raw edgeMeta map, coercing joinMode to a known value.
-const sanitizeEdgeMeta = (
+const sanitizeEdgeMetaInternal = (
   source: Record<string, CaseResolverEdgeMeta> | null | undefined
 ): Record<string, CaseResolverEdgeMeta> => {
   if (!source || typeof source !== 'object') return {};
@@ -314,7 +330,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     graphRecord['nodeFileAssetIdByNode'],
     validNodeIds
   );
-  const sanitizedNodeMeta = sanitizeNodeMeta(
+  const sanitizedNodeMeta = sanitizeNodeMetaInternal(
     graphRecord['nodeMeta'] as Record<string, CaseResolverNodeMeta> | null | undefined
   );
   const nodes = enforceCanonicalDocumentPromptNodes(
@@ -374,7 +390,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     nodes,
     edges: strictEdges,
     nodeMeta: sanitizedNodeMeta,
-    edgeMeta: sanitizeEdgeMeta(
+    edgeMeta: sanitizeEdgeMetaInternal(
       graphRecord['edgeMeta'] as Record<string, CaseResolverEdgeMeta> | null | undefined
     ),
     pdfExtractionPresetId,

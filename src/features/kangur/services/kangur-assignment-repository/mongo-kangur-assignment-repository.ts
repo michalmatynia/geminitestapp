@@ -15,6 +15,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 
 import type { KangurAssignmentListInput, KangurAssignmentRepository } from './types';
+import { buildKangurSource } from '@/features/kangur/observability/server';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 const KANGUR_ASSIGNMENT_SETTING_PREFIX = 'kangur_assignment:';
 
@@ -92,6 +93,12 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
           upsert: true,
         }
       );
+    });
+
+    void ErrorSystem.logInfo(`Created assignment: ${persistedAssignment.id}`, {
+      service: buildKangurSource('assignment-repository', 'create'),
+      assignmentId: persistedAssignment.id,
+      learnerKey,
     });
 
     return persistedAssignment;
@@ -183,6 +190,12 @@ export const mongoKangurAssignmentRepository: KangurAssignmentRepository = {
           },
         }
       );
+    });
+
+    void ErrorSystem.logInfo(`Updated assignment: ${nextAssignment.id}`, {
+      service: buildKangurSource('assignment-repository', 'update'),
+      assignmentId: nextAssignment.id,
+      learnerKey,
     });
 
     return nextAssignment;

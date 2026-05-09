@@ -1,0 +1,1873 @@
+
+> libapp2@0.1.0 test:unit
+> vitest run --project unit
+
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp[39m
+
+ [31m❯[39m [30m[42m unit [49m[39m src/features/playwright/server/live-session.test.ts [2m([22m[2m10 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 43383[2mms[22m[39m
+     [32m✓[39m returns the picked element payload from the page evaluation bridge[32m 150[2mms[22m[39m
+[31m     [31m×[31m throws when no element is available at the requested point[39m[32m 5[2mms[22m[39m
+     [32m✓[39m classifies probed DOM candidates into selector suggestions[32m 3[2mms[22m[39m
+     [33m[2m✓[22m[39m allows the dedicated loopback fixture route outside production [33m 5142[2mms[22m[39m
+     [33m[2m✓[22m[39m allows the localized dedicated loopback fixture route outside production [33m 11615[2mms[22m[39m
+     [33m[2m✓[22m[39m normalizes a scheme-less public URL to https before navigation [33m 6057[2mms[22m[39m
+     [32m✓[39m still rejects general loopback URLs[32m 9[2mms[22m[39m
+     [33m[2m✓[22m[39m creates, exposes, and disposes a live scripter session [33m 5229[2mms[22m[39m
+     [33m[2m✓[22m[39m publishes an error when a socket client sends invalid JSON [33m 5005[2mms[22m[39m
+     [33m[2m✓[22m[39m handles pick_at and navigate socket messages through the registered client handler [33m 10164[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m scripts/architecture/scan-type-clusters.regression.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 16647[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the exported type cluster baseline stable [33m 16644[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/filemaker/__tests__/AdminFilemakerMailPages.compose.test.tsx [2m([22m[2m11 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 2992[2mms[22m[39m
+     [33m[2m✓[22m[39m loads accounts in compose, sends an email, and navigates to the thread [33m 1199[2mms[22m[39m
+     [33m[2m✓[22m[39m preserves recent-origin context in compose back and send routes [33m 340[2mms[22m[39m
+     [32m✓[39m preserves focused search context when compose sends from a fallback account[32m 283[2mms[22m[39m
+     [32m✓[39m loads a forward draft in compose and keeps recent context on send[32m 180[2mms[22m[39m
+     [32m✓[39m clears a mounted forward draft when the compose route switches back to a fresh draft[32m 53[2mms[22m[39m
+     [32m✓[39m drops stale route context when sending from a different mailbox account[32m 239[2mms[22m[39m
+     [32m✓[39m clears a mounted fresh compose draft when the origin route changes for the same account[32m 165[2mms[22m[39m
+     [32m✓[39m forwards a recent-origin thread into compose while preserving recent filters[32m 222[2mms[22m[39m
+     [32m✓[39m normalizes a fresh compose route by removing stale recent and search params[32m 15[2mms[22m[39m
+[31m     [31m×[31m highlights compose instead of the folder node on a folder-origin compose route[39m[32m 149[2mms[22m[39m
+[31m     [31m×[31m highlights compose instead of search on a search-origin compose route with mailboxPath[39m[32m 145[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/ai/ai-paths/components/RunHistoryPanel.test.tsx [2m([22m[2m7 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 2312[2mms[22m[39m
+     [32m✓[39m should render empty state[32m 34[2mms[22m[39m
+     [32m✓[39m should render a list of runs[32m 13[2mms[22m[39m
+     [32m✓[39m should filter runs when a filter button is clicked[32m 11[2mms[22m[39m
+     [32m✓[39m should call onCancelRun when Cancel is clicked for active runs[32m 8[2mms[22m[39m
+[31m     [31m×[31m filters compare rows down to resume behavior changes only[39m[33m 493[2mms[22m[39m
+[31m     [31m×[31m resets the compare resume-only filter when compare mode is reopened[39m[33m 1130[2mms[22m[39m
+[31m     [31m×[31m clears the selected compare inspector row when the resume-only filter hides it[39m[33m 620[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/duels/useKangurMobileDuelSession.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 2285[2mms[22m[39m
+     [32m✓[39m loads participant duel state and updates recent reactions after sending one[32m 105[2mms[22m[39m
+     [32m✓[39m uses spectator state when spectate mode is enabled and does not answer questions[32m 54[2mms[22m[39m
+     [32m✓[39m localizes auth-required duel errors when the locale is de[32m 55[2mms[22m[39m
+[31m     [31m×[31m localizes public-duel loading errors when spectator mode is enabled[39m[33m 1009[2mms[22m[39m
+     [32m✓[39m returns no active question when the tracked question index is past the duel length[32m 54[2mms[22m[39m
+[31m     [31m×[31m falls back to the generic duel-state message for network fetch failures[39m[33m 1004[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/integrations/hooks/useMarketplaceMutations.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 2045[2mms[22m[39m
+[31m     [31m×[31m useFetchExternalCategoriesMutation invalidates marketplace categories key[39m[33m 1023[2mms[22m[39m
+[31m     [31m×[31m useSaveMappingsMutation invalidates marketplace mappings key[39m[33m 1003[2mms[22m[39m
+     [32m✓[39m useFetchExternalProducersMutation invalidates marketplace producers key[32m 5[2mms[22m[39m
+     [32m✓[39m useSaveProducerMappingsMutation invalidates producer-mappings key[32m 3[2mms[22m[39m
+     [32m✓[39m useFetchExternalTagsMutation invalidates marketplace tags key[32m 5[2mms[22m[39m
+     [32m✓[39m useSaveTagMappingsMutation invalidates tag-mappings key[32m 3[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/api/integrations/product-listings.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 2032[2mms[22m[39m
+[31m     [31m×[31m falls back to listing marketplaceData when integration slug lookup is unavailable[39m[32m 13[2mms[22m[39m
+[31m     [31m×[31m prefers integration slug mapping when available[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m returns listing badges via POST payload productIds[39m[33m 2012[2mms[22m[39m
+     [32m✓[39m returns 400 for invalid POST payload[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/duels/useKangurMobileDuelsLobby.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 1177[2mms[22m[39m
+[31m     [31m×[31m creates a default public challenge as a single match[39m[32m 108[2mms[22m[39m
+[31m     [31m×[31m uses explicit overrides when creating a private rematch challenge[39m[32m 56[2mms[22m[39m
+[31m     [31m×[31m localizes lobby auth errors when the locale is de[39m[33m 1010[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/components/ai-paths-settings/__tests__/AiPathsCanvasView.switching-delete-guard.test.tsx [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1076[2mms[22m[39m
+[31m     [31m×[31m defers secondary sidebar and diagnostics panels until after the idle bootstrap[39m[33m 1073[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/home/useKangurMobileHomeDuelsSpotlight.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1134[2mms[22m[39m
+     [32m✓[39m returns public live and joinable duel entries ordered by urgency and recency[32m 119[2mms[22m[39m
+     [32m✓[39m stays idle until deferred home duel panels are enabled[32m 2[2mms[22m[39m
+[31m     [31m×[31m maps network failures to the shared api error copy[39m[33m 1010[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/duels/useKangurMobileDuelLobbyChat.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1121[2mms[22m[39m
+     [32m✓[39m loads recent lobby chat messages for the signed-in learner[32m 108[2mms[22m[39m
+[31m     [31m×[31m localizes German network errors when the chat fetch fails[39m[33m 1011[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/home/useKangurMobileHomeDuelsPresence.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 1076[2mms[22m[39m
+[31m     [31m×[31m returns active duel rivals by recency and creates a default private challenge[39m[32m 59[2mms[22m[39m
+[31m     [31m×[31m stays in auth-restoring state until learner auth is available[39m[33m 1011[2mms[22m[39m
+[31m     [31m×[31m does not load lobby presence until deferred home duel panels are enabled[39m[32m 3[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/kangur/lessons-focus-routing.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 1082[2mms[22m[39m
+[31m     [31m×[31m auto-opens the focused lesson when focus query maps to operation[39m[33m 1029[2mms[22m[39m
+[31m     [31m×[31m keeps lessons list view when focus query does not map to a lesson[39m[32m 49[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/api/products/studio.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 982[2mms[22m[39m
+     [32m✓[39m GET /api/products/[id]/studio returns config[32m 119[2mms[22m[39m
+     [32m✓[39m PUT /api/products/[id]/studio saves project[32m 1[2mms[22m[39m
+     [32m✓[39m PUT /api/products/[id]/studio ignores legacy sequencing payload[32m 1[2mms[22m[39m
+[31m     [31m×[31m POST /api/products/[id]/studio/send forwards request[39m[33m 845[2mms[22m[39m
+[31m     [31m×[31m POST /api/products/[id]/studio/send surfaces sequencing readiness errors[39m[32m 4[2mms[22m[39m
+     [32m✓[39m POST /api/products/[id]/studio/link forwards request[32m 2[2mms[22m[39m
+[31m     [31m×[31m GET /api/products/[id]/studio/variants forwards request[39m[32m 3[2mms[22m[39m
+     [32m✓[39m GET /api/products/[id]/studio/preflight forwards request[32m 1[2mms[22m[39m
+     [32m✓[39m POST /api/products/[id]/studio/accept forwards request[32m 3[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/home/HomeScreen.boot-shell.test.tsx [2m([22m[2m18 tests[22m[2m | [22m[31m18 failed[39m[2m)[22m[33m 930[2mms[22m[39m
+[31m     [31m×[31m shows the learner-session restoring shell while auth-backed sections are still loading[39m[33m 380[2mms[22m[39m
+[31m     [31m×[31m renders the home loading shell before the home panels settle[39m[32m 28[2mms[22m[39m
+[31m     [31m×[31m shows the combined startup placeholder until deferred top and lower home panels are ready[39m[32m 32[2mms[22m[39m
+[31m     [31m×[31m keeps the shared home progress subscription deferred until the progress stage is ready[39m[32m 28[2mms[22m[39m
+[31m     [31m×[31m keeps duel cards deferred until the secondary duel stage is ready[39m[32m 33[2mms[22m[39m
+[31m     [31m×[31m keeps private duel refresh deferred until the invites stage is ready[39m[32m 41[2mms[22m[39m
+[31m     [31m×[31m keeps advanced duel cards deferred until the advanced duel stage is ready[39m[32m 47[2mms[22m[39m
+[31m     [31m×[31m keeps secondary home insights deferred until the staged gate is ready[39m[32m 32[2mms[22m[39m
+[31m     [31m×[31m keeps live lesson insights deferred while recent lessons render from the boot snapshot[39m[32m 27[2mms[22m[39m
+[31m     [31m×[31m keeps lesson plan details deferred until the dedicated lesson-plan stage is ready[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m keeps recent lesson details deferred until the dedicated recent-lessons stage is ready[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m keeps tertiary home insights deferred until the extra stage is ready[39m[32m 32[2mms[22m[39m
+[31m     [31m×[31m keeps the live score refresh deferred until the dedicated score stage is ready[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m keeps authenticated hero score hooks deferred until the dedicated hero score stage is ready[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m keeps detailed training focus cards deferred until the dedicated training focus stage is ready[39m[32m 35[2mms[22m[39m
+[31m     [31m×[31m keeps the long hero intro deferred until the dedicated hero intro stage is ready[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m keeps hero chips and secondary quick links deferred until the dedicated hero details stage is ready[39m[32m 28[2mms[22m[39m
+[31m     [31m×[31m keeps results hub summary details deferred until the results stage is ready[39m[32m 28[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/components/__tests__/ParserNodeConfigSection.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 647[2mms[22m[39m
+     [32m✓[39m renders parser runtime context and applies sample mappings[32m 226[2mms[22m[39m
+     [32m✓[39m shows an error when image detection runs without sample JSON[32m 67[2mms[22m[39m
+[31m     [31m×[31m detects images and updates the existing image mapping[39m[32m 76[2mms[22m[39m
+[31m     [31m×[31m replaces preset mappings and switches to bundle outputs[39m[32m 72[2mms[22m[39m
+     [32m✓[39m adds duplicate mappings, commits debounced path edits, and clears mappings[32m 202[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx [2m([22m[2m15 tests[22m[2m | [22m[31m15 failed[39m[2m)[22m[33m 492[2mms[22m[39m
+[31m     [31m×[31m keeps results hub actions deferred until the dedicated results actions stage is ready[39m[32m 87[2mms[22m[39m
+[31m     [31m×[31m keeps auto-expanded result cards deferred until the later results cards stage, but opens them on demand[39m[32m 28[2mms[22m[39m
+[31m     [31m×[31m starts the shared home progress stage once the boot shell is clear[39m[32m 28[2mms[22m[39m
+[31m     [31m×[31m keeps account summary details deferred until the dedicated account summary stage is ready[39m[32m 26[2mms[22m[39m
+[31m     [31m×[31m keeps extended account details deferred until the dedicated account stage is ready[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m keeps the learner sign-in form deferred until the dedicated account sign-in stage is ready, but opens it on demand[39m[32m 38[2mms[22m[39m
+[31m     [31m×[31m keeps secondary navigation links deferred until the dedicated navigation stage is ready[39m[32m 40[2mms[22m[39m
+[31m     [31m×[31m keeps extended navigation links deferred until the dedicated navigation stage is ready[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m keeps badge and plan details deferred until the extras detail stage is ready[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m keeps the plan card deferred while badge details are already live[39m[32m 26[2mms[22m[39m
+[31m     [31m×[31m keeps the plan details deferred until the dedicated extras plan details stage is ready[39m[32m 27[2mms[22m[39m
+[31m     [31m×[31m keeps the live plan assignments deferred until the dedicated extras plan-assignments stage is ready[39m[32m 25[2mms[22m[39m
+[31m     [31m×[31m keeps badge details deferred until the dedicated extras badge stage is ready[39m[32m 26[2mms[22m[39m
+[31m     [31m×[31m keeps live badge summary deferred until the dedicated extras badge-details stage is ready[39m[32m 26[2mms[22m[39m
+[31m     [31m×[31m keeps the results hub summary deferred until the dedicated extras results stage is ready[39m[32m 26[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/services/__tests__/runtime-analytics-service.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 483[2mms[22m[39m
+     [32m✓[39m returns disabled storage without touching Redis or trace sampling when the gate is off[32m 148[2mms[22m[39m
+[31m     [31m×[31m skips trace sampling when includeTraces is false[39m[32m 43[2mms[22m[39m
+     [32m✓[39m includes trace sampling by default for the runtime analytics summary route[32m 43[2mms[22m[39m
+     [32m✓[39m reads V1 trace spans from runtimeTrace.spans when present[32m 49[2mms[22m[39m
+[31m     [31m×[31m aggregates runtime kernel parity telemetry from run trace meta[39m[32m 48[2mms[22m[39m
+     [32m✓[39m includes portable engine runtime analytics snapshot details[32m 35[2mms[22m[39m
+     [32m✓[39m falls back to unavailable portable engine analytics when snapshot lookup fails[32m 38[2mms[22m[39m
+     [32m✓[39m maps failed brain insight status to error counters[32m 37[2mms[22m[39m
+     [32m✓[39m maps completed brain insight status to success-only counters[32m 38[2mms[22m[39m
+[90mstderr[2m | __tests__/features/admin/components/AdminLayout.test.tsx[2m > [22m[2mAdminLayout[2m > [22m[2mrenders children correctly
+[22m[39m[2026-05-09T19:47:34.718Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.719Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.719Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.719Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.719Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.719Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.719Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.719Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.719Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.720Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.720Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.720Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.720Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.720Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.720Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.720Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.720Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.720Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+
+[90mstderr[2m | __tests__/features/admin/components/AdminLayout.test.tsx[2m > [22m[2mAdminLayout[2m > [22m[2mremoves outer main padding for embedded kangur routes
+[22m[39m[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.778Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.779Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.779Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.779Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.779Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.779Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+
+[90mstderr[2m | __tests__/features/admin/components/AdminLayout.test.tsx[2m > [22m[2mAdminLayout[2m > [22m[2mkeeps default main padding for kangur lessons manager
+[22m[39m[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.826Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+
+[90mstderr[2m | __tests__/features/admin/components/AdminLayout.test.tsx[2m > [22m[2mAdminLayout[2m > [22m[2mcan collapse and expand the sidebar
+[22m[39m[2026-05-09T19:47:34.950Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.950Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.951Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+
+[90mstderr[2m | __tests__/features/admin/components/AdminLayout.test.tsx[2m > [22m[2mAdminLayout[2m > [22m[2mrenders UserNav in the header
+[22m[39m[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:47:34.985Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/admin/components/AdminLayout.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 434[2mms[22m[39m
+     [32m✓[39m renders children correctly[32m 173[2mms[22m[39m
+     [32m✓[39m removes outer main padding for embedded kangur routes[32m 52[2mms[22m[39m
+     [32m✓[39m keeps default main padding for kangur lessons manager[32m 48[2mms[22m[39m
+[31m     [31m×[31m can collapse and expand the sidebar[39m[32m 125[2mms[22m[39m
+     [32m✓[39m renders UserNav in the header[32m 34[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/ArtShapesRotationGapGame.test.tsx [2m([22m[2m7 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 348[2mms[22m[39m
+     [32m✓[39m renders the responsive board and theme-driven option cards[32m 116[2mms[22m[39m
+[31m     [31m×[31m freezes tile animation after a choice is made[39m[32m 34[2mms[22m[39m
+     [32m✓[39m renders static tiles from the start when reduced motion is preferred[32m 25[2mms[22m[39m
+[31m     [31m×[31m locks the option grid after a choice is made[39m[32m 18[2mms[22m[39m
+[31m     [31m×[31m shows visual right and wrong overlays on the option cards before auto-advancing[39m[32m 20[2mms[22m[39m
+[31m     [31m×[31m calls onFinish from the finished summary only after all rounds are completed[39m[32m 91[2mms[22m[39m
+[31m     [31m×[31m restarts from the first round when play again is used on the summary screen[39m[32m 41[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/shared/ui/__tests__/select-modal.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 346[2mms[22m[39m
+[31m     [31m×[31m selects a single option immediately[39m[32m 260[2mms[22m[39m
+[31m     [31m×[31m collects multiple selections before confirming[39m[32m 82[2mms[22m[39m
+[90mstdout[2m | __tests__/shared/lib/db/mongo-client.test.ts[2m > [22m[2mmongo-client[2m > [22m[2mattaches opt-in pool and command listeners and emits structured logs
+[22m[39m[mongodb] MongoDB connection closed: stale {
+  event: [32m'connectionClosed'[39m,
+  connectionId: [33m4[39m,
+  reason: [32m'stale'[39m,
+  address: [32m'cluster-1'[39m,
+  service: [32m'mongodb'[39m
+}
+
+[90mstderr[2m | __tests__/shared/lib/db/mongo-client.test.ts[2m > [22m[2mmongo-client[2m > [22m[2mattaches opt-in pool and command listeners and emits structured logs
+[22m[39m[observability.logging-controls-server] isServerLoggingEnabled failed {
+  error: TypeError: mongo.collection is not a function
+      at readStoredLoggingControlValue [90m(/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/[39msrc/shared/lib/observability/logging-controls-server.ts:72:6[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at [90m/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/[39msrc/shared/lib/observability/logging-controls-server.ts:106:24,
+  context: {
+    source: [32m'observability.logging-controls-server'[39m,
+    action: [32m'isServerLoggingEnabled'[39m,
+    type: [32m'error'[39m
+  }
+}
+
+[90mstderr[2m | __tests__/shared/lib/db/mongo-client.test.ts[2m > [22m[2mmongo-client[2m > [22m[2mattaches opt-in pool and command listeners and emits structured logs
+[22m[39m[mongodb] MongoDB connection pool cleared for cluster-1 {
+  event: [32m'connectionPoolCleared'[39m,
+  address: [32m'cluster-1'[39m,
+  service: [32m'mongodb'[39m,
+  fingerprint: [32m'71b9e7ff5883d119'[39m
+}
+[mongodb] MongoDB connection check-out failed: timeout {
+  event: [32m'connectionCheckOutFailed'[39m,
+  reason: [32m'timeout'[39m,
+  address: [32m'cluster-1'[39m,
+  service: [32m'mongodb'[39m,
+  fingerprint: [32m'edb2abbd30b972a1'[39m
+}
+[mongodb] MongoDB command failed: find (300ms) {
+  event: [32m'commandFailed'[39m,
+  commandName: [32m'find'[39m,
+  durationMs: [33m300[39m,
+  address: [32m'cluster-1'[39m,
+  error: [32m'query failed'[39m,
+  stack: [32m'Error: query failed\n'[39m +
+    [32m'    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/db/mongo-client.test.ts:313:16\n'[39m +
+    [32m'    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n'[39m +
+    [32m'    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:915:20'[39m,
+  service: [32m'mongodb'[39m,
+  fingerprint: [32m'd085bb0e00a6895f'[39m
+}
+[mongodb] MongoDB command slow: aggregate (3000ms) {
+  event: [32m'commandSucceeded'[39m,
+  commandName: [32m'aggregate'[39m,
+  durationMs: [33m3000[39m,
+  address: [32m'cluster-1'[39m,
+  thresholdMs: [33m2500[39m,
+  isSlow: [33mtrue[39m,
+  service: [32m'mongodb'[39m,
+  fingerprint: [32m'a452d3a71b4171f7'[39m
+}
+
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/shared/lib/db/mongo-client.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 371[2mms[22m[39m
+     [32m✓[39m throws when MONGODB_URI is not configured[32m 156[2mms[22m[39m
+     [32m✓[39m caches the connected client and resolves the configured database[32m 36[2mms[22m[39m
+     [32m✓[39m creates a new client when the configured source changes[32m 35[2mms[22m[39m
+     [32m✓[39m reports failed connections and retries on the next call[32m 60[2mms[22m[39m
+[31m     [31m×[31m attaches opt-in pool and command listeners and emits structured logs[39m[32m 82[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/workspace-persistence-fetch.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/cms/components/frontend/CmsMenu.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 302[2mms[22m[39m
+     [32m✓[39m announces site navigation, current page state, and external link behavior[32m 172[2mms[22m[39m
+[31m     [31m×[31m exposes the collapsible navigation state to assistive tech[39m[32m 56[2mms[22m[39m
+     [32m✓[39m renders storefront appearance controls and updates the navbar mode[32m 71[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/home/HomeScreen.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[32m 254[2mms[22m[39m
+[31m     [31m×[31m shows the parent dashboard link for parent accounts[39m[32m 91[2mms[22m[39m
+[31m     [31m×[31m shows duel standing fallbacks when the learner is not yet visible on home[39m[32m 32[2mms[22m[39m
+[31m     [31m×[31m shows the empty results hub when an authenticated learner has no synced results yet[39m[32m 30[2mms[22m[39m
+[31m     [31m×[31m renders authenticated focus cards and recent results after the shell settles[39m[32m 30[2mms[22m[39m
+[31m     [31m×[31m renders German mobile chrome when the locale provider resolves de[39m[32m 30[2mms[22m[39m
+[31m     [31m×[31m shows the demo CTA when learner credentials are unavailable on home[39m[32m 37[2mms[22m[39m
+[90mstderr[2m | apps/mobile/src/duels/KangurDuelsScreen.test.tsx[2m > [22m[2mKangurDuelsScreen[2m > [22m[2mrenders the duels lobby shell with play actions and leaderboard data
+[22m[39mReact does not recognize the `accessibilityHint` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `accessibilityhint` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+Received `true` for a non-boolean attribute `editable`.
+
+If you want to write it to the DOM, pass a string instead: editable="true" or editable={value.toString()}.
+Received `true` for a non-boolean attribute `multiline`.
+
+If you want to write it to the DOM, pass a string instead: multiline="true" or multiline={value.toString()}.
+
+[90mstderr[2m | apps/mobile/src/duels/KangurDuelsScreen.test.tsx[2m > [22m[2mKangurDuelsScreen[2m > [22m[2mrenders German lobby chrome when the locale provider resolves de
+[22m[39mReact does not recognize the `contentContainerStyle` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `contentcontainerstyle` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+React does not recognize the `keyboardShouldPersistTaps` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `keyboardshouldpersisttaps` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/duels/KangurDuelsScreen.test.tsx [2m([22m[2m8 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 253[2mms[22m[39m
+[31m     [31m×[31m renders the duels lobby shell with play actions and leaderboard data[39m[32m 122[2mms[22m[39m
+[31m     [31m×[31m renders German lobby chrome when the locale provider resolves de[39m[32m 48[2mms[22m[39m
+     [32m✓[39m renders a search status chip in the lobby header[32m 12[2mms[22m[39m
+     [32m✓[39m shows signed-out guidance for the active learners card[32m 15[2mms[22m[39m
+     [32m✓[39m shows signed-out guidance for the lobby chat[32m 14[2mms[22m[39m
+     [32m✓[39m shows signed-out guidance for learner search[32m 12[2mms[22m[39m
+     [32m✓[39m shows signed-out guidance for the recent rivals card[32m 13[2mms[22m[39m
+     [32m✓[39m shows the empty recent rivals state before the first duel is finished[32m 13[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/adding-synthesis/__tests__/AddingSynthesisGame.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 220[2mms[22m[39m
+[31m     [31m×[31m runs through a short session, awards practice progress, and returns to the lesson[39m[32m 152[2mms[22m[39m
+[31m     [31m×[31m uses the latest active owner key when the reward is awarded[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m uses an injected finish label across launchable exit actions[39m[32m 31[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/app/frontend/home-page-front-app-redirects.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[32m 189[2mms[22m[39m
+[31m     [31m×[31m redirects HOME to chatbot when configured[39m[32m 113[2mms[22m[39m
+[31m     [31m×[31m redirects HOME to notes when configured[39m[32m 16[2mms[22m[39m
+[31m     [31m×[31m redirects HOME to the Kangur public alias when Front Manage assigns Kangur as the public owner[39m[32m 16[2mms[22m[39m
+[31m     [31m×[31m keeps the legacy products setting on the CMS home flow[39m[32m 15[2mms[22m[39m
+[31m     [31m×[31m keeps HOME on the CMS flow when Front Manage routing is explicitly disabled[39m[32m 12[2mms[22m[39m
+[31m     [31m×[31m reads request headers only when domain zoning is enabled[39m[32m 14[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/observability/__tests__/client.test.ts [2m([22m[2m12 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 229[2mms[22m[39m
+     [32m✓[39m skips system capture and client reporting when shouldReport returns false[32m 64[2mms[22m[39m
+     [32m✓[39m skips system capture and client reporting for expected API errors by default[32m 15[2mms[22m[39m
+     [32m✓[39m skips system capture and client reporting for Kangur API proxy misses[32m 14[2mms[22m[39m
+     [32m✓[39m skips sync system capture and client reporting when shouldReport returns false[32m 13[2mms[22m[39m
+     [32m✓[39m skips sync system capture and client reporting for expected API errors by default[32m 13[2mms[22m[39m
+[31m     [31m×[31m still captures and reports unexpected errors[39m[32m 14[2mms[22m[39m
+     [32m✓[39m treats fetch-style network failures as recoverable client load errors[32m 13[2mms[22m[39m
+     [32m✓[39m treats 4xx API-style errors as expected client errors[32m 11[2mms[22m[39m
+     [32m✓[39m logs client errors with Kangur default context tags[32m 14[2mms[22m[39m
+     [32m✓[39m sets page-specific Kangur context for centralized client logs[32m 11[2mms[22m[39m
+     [32m✓[39m clears Kangur-specific context on unmount/navigation[32m 12[2mms[22m[39m
+     [32m✓[39m tracks Kangur analytics events with feature and page context[32m 31[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/AddingSynthesisGame.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 218[2mms[22m[39m
+[31m     [31m×[31m runs through a short session, awards practice progress, and returns to the lesson[39m[32m 149[2mms[22m[39m
+[31m     [31m×[31m uses the latest active owner key when the reward is awarded[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m uses an injected finish label across launchable exit actions[39m[32m 32[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/ai/brain/__tests__/OperationsTab.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 209[2mms[22m[39m
+[31m     [31m×[31m renders all four domain cards with trends, links, and drill-down events[39m[32m 188[2mms[22m[39m
+     [32m✓[39m renders degraded state messaging when a domain is unknown[32m 10[2mms[22m[39m
+     [32m✓[39m does not render runtime risk badge when runtime metric is disabled[32m 8[2mms[22m[39m
+[90mstderr[2m | apps/mobile/src/duels/KangurDuelsScreen.session.test.tsx[2m > [22m[2mKangurDuelsScreen session states[2m > [22m[2mrenders the waiting-room session shell for an active duel route
+[22m[39mReact does not recognize the `accessibilityHint` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `accessibilityhint` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+
+[90mstderr[2m | apps/mobile/src/duels/KangurDuelsScreen.session.test.tsx[2m > [22m[2mKangurDuelsScreen session states[2m > [22m[2mshares a private waiting-room invite link for the missing player
+[22m[39mReact does not recognize the `contentContainerStyle` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `contentcontainerstyle` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+React does not recognize the `keyboardShouldPersistTaps` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `keyboardshouldpersisttaps` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+
+[90mstderr[2m | apps/mobile/src/duels/KangurDuelsScreen.session.test.tsx[2m > [22m[2mKangurDuelsScreen session states[2m > [22m[2mtoggles the auto refresh chip and re-enables polling when enabled
+[22m[39mReceived `true` for a non-boolean attribute `editable`.
+
+If you want to write it to the DOM, pass a string instead: editable="true" or editable={value.toString()}.
+Received `true` for a non-boolean attribute `multiline`.
+
+If you want to write it to the DOM, pass a string instead: multiline="true" or multiline={value.toString()}.
+
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/duels/KangurDuelsScreen.session.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 204[2mms[22m[39m
+[31m     [31m×[31m renders the waiting-room session shell for an active duel route[39m[32m 106[2mms[22m[39m
+     [32m✓[39m shares a private waiting-room invite link for the missing player[32m 27[2mms[22m[39m
+[31m     [31m×[31m toggles the auto refresh chip and re-enables polling when enabled[39m[32m 38[2mms[22m[39m
+     [32m✓[39m shows a share error when invite-link sharing fails[32m 30[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/filemaker/components/shared/FilemakerOrganizationMasterTreeNode.test.tsx [2m([22m[2m11 tests[22m[2m | [22m[31m8 failed[39m[2m)[22m[32m 194[2mms[22m[39m
+[31m     [31m×[31m opens the organization only from the name, while explicit expand expands relations[39m[32m 26[2mms[22m[39m
+[31m     [31m×[31m uses text cursors for supporting text and does not select the row on text click[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m toggles batch selection from the checkbox without navigating[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m shows when the organization record was created[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m keeps relation counts in fixed columns so created dates stay aligned[39m[32m 2[2mms[22m[39m
+     [32m✓[39m shows job listing dates on organization job relation nodes[32m 21[2mms[22m[39m
+     [32m✓[39m opens organization job relation nodes only from the title without selecting the row[32m 106[2mms[22m[39m
+[31m     [31m×[31m launches website/social/email scraping from the row action without navigating[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m launches website and social scraping from the row action without navigating[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m opens row action menu delete without navigating or selecting[39m[32m 1[2mms[22m[39m
+     [32m✓[39m opens linked event child nodes[32m 26[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/ecom-web/src/lib/db-indexes.test.ts [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 153[2mms[22m[39m
+[31m     [31m×[31m creates InPost webhook lookup indexes on orders[39m[32m 151[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/integrations/components/listings/product-listings-modal/TraderaQuickExportRecoveryBanner.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 164[2mms[22m[39m
+     [32m✓[39m renders empty-state recovery copy in full mode[32m 110[2mms[22m[39m
+[31m     [31m×[31m renders content-state recovery copy in compact mode[39m[32m 7[2mms[22m[39m
+     [32m✓[39m renders failure details without continue action when recovery is not login-based[32m 27[2mms[22m[39m
+     [32m✓[39m renders a shipping-groups action for Tradera shipping configuration failures[32m 18[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/integrations/components/listings/ConnectedIntegrationFieldsSection.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 21[2mms[22m[39m
+[31m     [31m×[31m renders the shared loading state inside the section[39m[32m 16[2mms[22m[39m
+[31m     [31m×[31m renders selector fields and footer when not loading[39m[32m 3[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/components/__tests__/RunHistoryFilterControls.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 189[2mms[22m[39m
+[31m     [31m×[31m renders controls and calls callbacks for refresh, compare, and filter changes[39m[32m 157[2mms[22m[39m
+     [32m✓[39m shows active compare label and disables refresh while refreshing[32m 28[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/products/components/list/ProductFilters.test.tsx [2m([22m[2m11 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 176[2mms[22m[39m
+     [32m✓[39m passes the current Products list layout props into FilterPanel[32m 98[2mms[22m[39m
+     [32m✓[39m keeps the saved collapsed preference wired into the layout defaults[32m 4[2mms[22m[39m
+     [32m✓[39m passes a deterministic id base when rendered for a specific layout instance[32m 3[2mms[22m[39m
+     [32m✓[39m enables metadata queries when the advanced filter modal opens from a collapsed panel[32m 21[2mms[22m[39m
+[31m     [31m×[31m loads catalog-scoped tags without querying all tags when a catalog is selected[39m[32m 5[2mms[22m[39m
+     [32m✓[39m stays renderable when metadata hooks return malformed cached payloads[32m 2[2mms[22m[39m
+     [32m✓[39m deduplicates title term options for advanced filters across all catalogs[32m 23[2mms[22m[39m
+     [32m✓[39m builds category options from the Mentios tree when Product List is scoped to all catalogs[32m 2[2mms[22m[39m
+     [32m✓[39m orders category options hierarchically and skips corrupted records[32m 12[2mms[22m[39m
+     [32m✓[39m keeps unassigned as a dedicated option and hides opaque unlabeled category ids[32m 3[2mms[22m[39m
+     [32m✓[39m maps category option selection back to setCategoryId[32m 1[2mms[22m[39m
+[90mstderr[2m | __tests__/features/ai/ai-paths/services/path-run-executor.runtime-trace.test.ts[2m > [22m[2mPathRunExecutor runtime trace and validation[2m > [22m[2mshould block execution when disabled node policy is violated
+[22m[39m[ai-paths-executor] [ai-paths-executor] Path blocked by node policy: disabled node types detected (constant). {
+  service: [32m'ai-paths-executor'[39m,
+  action: [32m'executePathRun'[39m,
+  runId: [32m'mock-run-id'[39m,
+  category: [90mundefined[39m,
+  jobId: [90mundefined[39m,
+  productId: [90mundefined[39m,
+  error: {
+    message: [32m'Path blocked by node policy: disabled node types detected (constant).'[39m,
+    stack: [32m'Error: Path blocked by node policy: disabled node types detected (constant).\n'[39m +
+      [32m'    at runExecutorPreflight (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/preflight.ts:158:11)\n'[39m +
+      [32m'    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n'[39m +
+      [32m'    at Module.executePathRun (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/index.ts:329:23)\n'[39m +
+      [32m'    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/services/path-run-executor.runtime-trace.test.ts:772:7\n'[39m +
+      [32m'    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:915:20'[39m,
+    name: [32m'Error'[39m
+  },
+  errorName: [32m'Error'[39m,
+  fingerprint: [32m'6788eb880ae6ec9c'[39m
+}
+
+[90mstderr[2m | __tests__/features/ai/ai-paths/services/path-run-executor.runtime-trace.test.ts[2m > [22m[2mPathRunExecutor runtime trace and validation[2m > [22m[2mshould block strict runs when dependency inspector reports errors and node validation is enabled
+[22m[39m[ai-paths-executor] [ai-paths-executor] Node "Model" is missing required input wiring for port "prompt". {
+  service: [32m'ai-paths-executor'[39m,
+  action: [32m'executePathRun'[39m,
+  runId: [32m'mock-run-id'[39m,
+  category: [90mundefined[39m,
+  jobId: [90mundefined[39m,
+  productId: [90mundefined[39m,
+  error: {
+    message: [32m'Node "Model" is missing required input wiring for port "prompt".'[39m,
+    stack: [32m'Error: Node "Model" is missing required input wiring for port "prompt".\n'[39m +
+      [32m'    at runExecutorPreflight (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/preflight.ts:108:11)\n'[39m +
+      [32m'    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n'[39m +
+      [32m'    at Module.executePathRun (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/index.ts:329:23)\n'[39m +
+      [32m'    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/services/path-run-executor.runtime-trace.test.ts:792:5\n'[39m +
+      [32m'    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:915:20'[39m,
+    name: [32m'Error'[39m
+  },
+  errorName: [32m'Error'[39m,
+  fingerprint: [32m'13bf665d4fa0a90f'[39m
+}
+
+[90mstderr[2m | __tests__/features/ai/ai-paths/services/path-run-executor.runtime-trace.test.ts[2m > [22m[2mPathRunExecutor runtime trace and validation[2m > [22m[2mshould block compile errors when node validation is enabled
+[22m[39m[ai-paths-executor] [ai-paths-executor] Node "Model" is missing required input wiring for port "prompt". {
+  service: [32m'ai-paths-executor'[39m,
+  action: [32m'executePathRun'[39m,
+  runId: [32m'mock-run-id'[39m,
+  category: [90mundefined[39m,
+  jobId: [90mundefined[39m,
+  productId: [90mundefined[39m,
+  error: {
+    message: [32m'Node "Model" is missing required input wiring for port "prompt".'[39m,
+    stack: [32m'Error: Node "Model" is missing required input wiring for port "prompt".\n'[39m +
+      [32m'    at runExecutorPreflight (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/preflight.ts:108:11)\n'[39m +
+      [32m'    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n'[39m +
+      [32m'    at Module.executePathRun (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/index.ts:329:23)\n'[39m +
+      [32m'    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/services/path-run-executor.runtime-trace.test.ts:845:5\n'[39m +
+      [32m'    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:915:20'[39m,
+    name: [32m'Error'[39m
+  },
+  errorName: [32m'Error'[39m,
+  fingerprint: [32m'41cd55d4ca004b9d'[39m
+}
+
+[90mstderr[2m | __tests__/features/ai/ai-paths/services/path-run-executor.runtime-trace.test.ts[2m > [22m[2mPathRunExecutor runtime trace and validation[2m > [22m[2mshould block run when AI Paths validation preflight policy fails
+[22m[39m[ai-paths-executor] [ai-paths-executor] Validation blocked run: Database query has collection. {
+  service: [32m'ai-paths-executor'[39m,
+  action: [32m'executePathRun'[39m,
+  runId: [32m'mock-run-id'[39m,
+  category: [90mundefined[39m,
+  jobId: [90mundefined[39m,
+  productId: [90mundefined[39m,
+  error: {
+    message: [32m'Validation blocked run: Database query has collection.'[39m,
+    stack: [32m'Error: Validation blocked run: Database query has collection.\n'[39m +
+      [32m'    at runExecutorPreflight (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/preflight.ts:108:11)\n'[39m +
+      [32m'    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n'[39m +
+      [32m'    at Module.executePathRun (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor/index.ts:329:23)\n'[39m +
+      [32m'    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/services/path-run-executor.runtime-trace.test.ts:913:5\n'[39m +
+      [32m'    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:915:20'[39m,
+    name: [32m'Error'[39m
+  },
+  errorName: [32m'Error'[39m,
+  fingerprint: [32m'd6383ab7a5b3ead7'[39m
+}
+
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/ai/ai-paths/services/path-run-executor.runtime-trace.test.ts [2m([22m[2m11 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 147[2mms[22m[39m
+     [32m✓[39m should persist runtime trace profile summary for completed runs[32m 41[2mms[22m[39m
+     [32m✓[39m should persist structured node spans in runtime trace metadata[32m 13[2mms[22m[39m
+     [32m✓[39m should persist effect metadata in runtime trace spans[32m 14[2mms[22m[39m
+[31m     [31m×[31m should materialize resume reuse and re-execution provenance in runtime trace spans[39m[32m 17[2mms[22m[39m
+     [32m✓[39m should persist skipped node finishes as skipped trace spans[32m 8[2mms[22m[39m
+     [32m✓[39m should block execution when disabled node policy is violated[32m 11[2mms[22m[39m
+     [32m✓[39m should block strict runs when dependency inspector reports errors and node validation is enabled[32m 9[2mms[22m[39m
+     [32m✓[39m should bypass strict-flow preflight when node validation is disabled[32m 7[2mms[22m[39m
+     [32m✓[39m should bypass compile blockers when node validation is disabled[32m 9[2mms[22m[39m
+     [32m✓[39m should block compile errors when node validation is enabled[32m 10[2mms[22m[39m
+     [32m✓[39m should block run when AI Paths validation preflight policy fails[32m 6[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/admin/components/UserNav.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 170[2mms[22m[39m
+     [32m✓[39m keeps the dropdown content and settings reads deferred until the menu opens[32m 81[2mms[22m[39m
+[31m     [31m×[31m reads dropdown settings and mounts the menu content only after opening the menu[39m[32m 86[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/AddingSynthesisGame.i18n.test.tsx [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 164[2mms[22m[39m
+[31m     [31m×[31m renders English intro, gameplay, and summary copy[39m[32m 161[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/adding-synthesis/__tests__/AddingSynthesisGame.i18n.test.tsx [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 166[2mms[22m[39m
+[31m     [31m×[31m renders English intro, gameplay, and summary copy[39m[32m 164[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/competition/KangurCompetitionScreen.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 141[2mms[22m[39m
+     [32m✓[39m returns to the competition catalog when the mode shortcut is stale[32m 78[2mms[22m[39m
+[31m     [31m×[31m renders the competition mode list and opens the round player[39m[32m 29[2mms[22m[39m
+     [32m✓[39m completes the competition round and shows the summary[32m 31[2mms[22m[39m
+[90mstderr[2m | apps/mobile/src/duels/KangurDuelsScreen.routes.test.tsx[2m > [22m[2mKangurDuelsScreen route flows[2m > [22m[2mrenders spectator mode for a public duel session route
+[22m[39mReact does not recognize the `accessibilityHint` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `accessibilityhint` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+
+[90mstderr[2m | apps/mobile/src/duels/KangurDuelsScreen.routes.test.tsx[2m > [22m[2mKangurDuelsScreen route flows[2m > [22m[2mrenders the public duel loading state for a spectator route
+[22m[39mReact does not recognize the `contentContainerStyle` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `contentcontainerstyle` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+React does not recognize the `keyboardShouldPersistTaps` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `keyboardshouldpersisttaps` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/duels/KangurDuelsScreen.routes.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 146[2mms[22m[39m
+[31m     [31m×[31m renders spectator mode for a public duel session route[39m[32m 82[2mms[22m[39m
+[31m     [31m×[31m renders the public duel loading state for a spectator route[39m[32m 14[2mms[22m[39m
+[31m     [31m×[31m renders the public duel error state when spectator details are missing[39m[32m 5[2mms[22m[39m
+     [32m✓[39m auto-joins an invite route and replaces the route with the active session id[32m 10[2mms[22m[39m
+     [32m✓[39m offers a rematch action after a completed private series duel[32m 32[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/AddingSynthesisGame.touch.test.tsx [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 147[2mms[22m[39m
+[31m     [31m×[31m shows a touch hint and larger lane buttons on coarse pointers[39m[32m 144[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/hooks/useKangurLearnerActivity.test.tsx [2m([22m[2m8 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 131[2mms[22m[39m
+     [32m✓[39m updates status from SSE snapshot events[32m 50[2mms[22m[39m
+     [32m✓[39m closes SSE on fallback event[32m 7[2mms[22m[39m
+[31m     [31m×[31m defers the initial refresh and SSE startup until the requested delay elapses[39m[32m 5[2mms[22m[39m
+     [32m✓[39m reuses a fresh cached learner status across remounts without another immediate refresh[32m 57[2mms[22m[39m
+     [32m✓[39m does not poll while the learner activity stream stays active[32m 3[2mms[22m[39m
+     [32m✓[39m falls back to an immediate refresh when the learner activity stream ends before a snapshot[32m 2[2mms[22m[39m
+     [32m✓[39m dedupes mount and immediate focus/visibility pings for the same activity[32m 2[2mms[22m[39m
+     [32m✓[39m still sends the normal heartbeat after the dedupe window elapses[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/filemaker/social-routing.test.ts [2m([22m[2m17 tests[22m[2m | [22m[31m17 failed[39m[2m)[22m[32m 122[2mms[22m[39m
+[31m     [31m×[31m exports 'social posts collection' handlers from the Filemaker route tree[39m[32m 72[2mms[22m[39m
+[31m     [31m×[31m exports 'social post delete fallback' handlers from the Filemaker route tree[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m exports 'social post context' handlers from the Filemaker route tree[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m exports 'social post generation' handlers from the Filemaker route tree[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m exports 'social visual analysis' handlers from the Filemaker route tree[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m exports 'social scheduled publishing' handlers from the Filemaker route tree[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m exports 'social post detail' handlers from the Filemaker route tree[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m exports 'social post publish' handlers from the Filemaker route tree[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m exports 'social post unpublish' handlers from the Filemaker route tree[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m exports 'social image add-ons' handlers from the Filemaker route tree[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m exports 'social image add-on batch' handlers from the Filemaker route tree[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m exports 'social image add-on serving' handlers from the Filemaker route tree[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m exports 'social pipeline status' handlers from the Filemaker route tree[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m exports 'social pipeline trigger' handlers from the Filemaker route tree[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m exports 'social pipeline jobs' handlers from the Filemaker route tree[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m exports 'social pipeline pause' handlers from the Filemaker route tree[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m exports 'social pipeline resume' handlers from the Filemaker route tree[39m[32m 3[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/admin/AdminKangurContentManagerPage.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 156[2mms[22m[39m
+[31m     [31m×[31m renders Kangur admin shell chrome and defaults to lessons tab[39m[32m 47[2mms[22m[39m
+[31m     [31m×[31m switches tabs and persists the selected content-manager view[39m[32m 100[2mms[22m[39m
+[31m     [31m×[31m restores the persisted tests tab on first render[39m[32m 7[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/profile/KangurProfileScreen.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 146[2mms[22m[39m
+[31m     [31m×[31m shows the learner restore shell while auth is still loading[39m[32m 87[2mms[22m[39m
+[31m     [31m×[31m renders the populated learner profile after the shell settles[39m[32m 30[2mms[22m[39m
+[31m     [31m×[31m renders German profile chrome when the locale provider is set to de[39m[32m 15[2mms[22m[39m
+     [32m✓[39m shows the demo CTA when learner credentials are unavailable[32m 10[2mms[22m[39m
+[90mstderr[2m | __tests__/features/cms/components/PageBuilderUI.test.tsx[2m > [22m[2mPageBuilder UI Integration[2m > [22m[2mshould allow adding a section and see it in the preview
+[22m[39m[2026-05-09T19:48:07.903Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.904Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.904Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.904Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.904Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.904Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+
+[90mstderr[2m | __tests__/features/cms/components/PageBuilderUI.test.tsx[2m > [22m[2mPageBuilder UI Integration[2m > [22m[2mshould handle undo/redo operations
+[22m[39m[2026-05-09T19:48:07.928Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.928Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.929Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.929Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.929Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.929Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+
+[90mstderr[2m | __tests__/features/cms/components/PageBuilderUI.test.tsx[2m > [22m[2mPageBuilder UI Integration[2m > [22m[2mshould switch between desktop and mobile previews
+[22m[39m[2026-05-09T19:48:07.954Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.954Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.954Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.954Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.954Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:07.954Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/cms/components/PageBuilderUI.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 118[2mms[22m[39m
+[31m     [31m×[31m should allow adding a section and see it in the preview[39m[32m 70[2mms[22m[39m
+[31m     [31m×[31m should handle undo/redo operations[39m[32m 21[2mms[22m[39m
+[31m     [31m×[31m should switch between desktop and mobile previews[39m[32m 25[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/adding-synthesis/__tests__/AddingSynthesisGame.touch.test.tsx [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 148[2mms[22m[39m
+[31m     [31m×[31m shows a touch hint and larger lane buttons on coarse pointers[39m[32m 145[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx [2m([22m[2m15 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 80[2mms[22m[39m
+     [32m✓[39m renders transient connecting preview path while dragging a connection[32m 37[2mms[22m[39m
+[31m     [31m×[31m forwards real pointer events from output connector start handlers[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m pins output connector tooltip on pointer tap without drag movement[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m does not pin output connector tooltip when pointer drag movement exceeds threshold[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m freezes connector hover payload updates while a connector is pinned[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m captures a fresh tooltip payload when tapping a new connector while another is pinned[39m[32m 1[2mms[22m[39m
+     [32m✓[39m renders wire flow when the target node is in running status[32m 5[2mms[22m[39m
+     [32m✓[39m renders wire flow for edges connected to nodes in processing status[32m 3[2mms[22m[39m
+     [32m✓[39m does not render wire flow when the target node is only pending[32m 2[2mms[22m[39m
+     [32m✓[39m does not render wire flow when only queued runtime status is present[32m 1[2mms[22m[39m
+     [32m✓[39m animates only the edge into a processing model node in a fetched-db-model-dbquery chain[32m 4[2mms[22m[39m
+     [32m✓[39m does not animate chain edges while the model node is waiting_callback[32m 3[2mms[22m[39m
+     [32m✓[39m does not animate chain edges while the model node is blocked[32m 2[2mms[22m[39m
+     [32m✓[39m does not render status-based wire flow for waiting_callback nodes[32m 2[2mms[22m[39m
+     [32m✓[39m does not render status-based wire flow for skipped nodes[32m 4[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/admin/AdminKangurObservabilityPage.test.tsx [2m([22m[2m9 tests[22m[2m | [22m[31m9 failed[39m[2m)[22m[32m 91[2mms[22m[39m
+[31m     [31m×[31m renders the Kangur observability summary cards and quick links[39m[32m 30[2mms[22m[39m
+[31m     [31m×[31m syncs the knowledge graph from the status section and refreshes observability data[39m[32m 9[2mms[22m[39m
+[31m     [31m×[31m runs a knowledge-graph preview query from the Neo4j section[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m applies a coverage-backed section preset to the graph preview form[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m replays a recent AI Tutor event into the graph preview form and runs it immediately[39m[32m 7[2mms[22m[39m
+[31m     [31m×[31m replays a recent AI Tutor analytics card directly into the graph preview and runs it[39m[32m 9[2mms[22m[39m
+[31m     [31m×[31m clears preview context without wiping the draft prompt[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m switches the summary range from the segmented control[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m renders a disabled Neo4j graph status state[39m[32m 10[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/kangur/kangur-ui-style-isolation.guard.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 173[2mms[22m[39m
+[31m     [31m×[31m keeps critical Kangur visual shell tokens in source[39m[32m 65[2mms[22m[39m
+     [32m✓[39m prevents Kangur UI from importing shared/admin/global UI component layers[32m 105[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/leaderboard/KangurLeaderboardScreen.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 126[2mms[22m[39m
+     [32m✓[39m shows the restoring leaderboard shell while auth is still loading[32m 96[2mms[22m[39m
+[31m     [31m×[31m shows the empty duel table when no duels are completed yet[39m[32m 8[2mms[22m[39m
+[31m     [31m×[31m shows signed-out duel guidance when standings are available[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m shows the pending duel standing when the learner rank is not visible yet[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m renders leaderboard rows after the shell settles[39m[32m 8[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/database-engine-web/src/features/database/__tests__/workspace/utils/mongo.test.ts [2m([22m[2m7 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 136[2mms[22m[39m
+       [32m✓[39m should return MONGODB_URI when set[32m 54[2mms[22m[39m
+[31m       [31m×[31m should throw error when MONGODB_URI is missing[39m[32m 17[2mms[22m[39m
+       [32m✓[39m should return MONGODB_DB when set[32m 12[2mms[22m[39m
+[31m       [31m×[31m should throw error when MONGODB_DB is missing[39m[32m 16[2mms[22m[39m
+       [32m✓[39m should pass for valid backup name[32m 12[2mms[22m[39m
+       [32m✓[39m should throw for invalid extension[32m 10[2mms[22m[39m
+       [32m✓[39m should throw for name with directory traversal[32m 12[2mms[22m[39m
+[90mstderr[2m | apps/mobile/src/ai-tutor/KangurMobileAiTutorCard.test.tsx[2m > [22m[2mKangurMobileAiTutorCard[2m > [22m[2mrenders guide content, actions, and usage state
+[22m[39mReact does not recognize the `accessibilityHint` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `accessibilityhint` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/ai-tutor/KangurMobileAiTutorCard.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 110[2mms[22m[39m
+[31m     [31m×[31m renders guide content, actions, and usage state[39m[32m 101[2mms[22m[39m
+     [32m✓[39m sends a quick action when tapped[32m 7[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/parent/useKangurMobileParentDashboard.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 115[2mms[22m[39m
+     [32m✓[39m maps learner results back to the matching lesson route[32m 48[2mms[22m[39m
+[31m     [31m×[31m builds assignment monitoring counts from the full learner task list[39m[32m 58[2mms[22m[39m
+[31m     [31m×[31m switches the active learner and refreshes the parent session[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m restores the previous learner selection after a failed refresh[39m[32m 3[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/parent/KangurParentDashboardScreen.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 109[2mms[22m[39m
+     [32m✓[39m shows the signed-out parent handoff[32m 91[2mms[22m[39m
+[31m     [31m×[31m renders the populated parent view and switches learners[39m[32m 15[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/integrations/services/imports/base-import-item-processor.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 19[2mms[22m[39m
+     [32m✓[39m keeps explicit template-mapped parameter values when parameter import is enabled[32m 7[2mms[22m[39m
+     [32m✓[39m invalidates cached product lists after a successful imported create[32m 2[2mms[22m[39m
+     [32m✓[39m invalidates cached product lists after a successful imported update[32m 2[2mms[22m[39m
+[31m     [31m×[31m merges imported custom fields into existing product custom fields on update[39m[32m 4[2mms[22m[39m
+     [32m✓[39m attaches custom-field import metadata to dry-run results[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/ecom-web/src/lib/mentios.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 102[2mms[22m[39m
+[31m     [31m×[31m uses product image file public URLs when filepath is unavailable[39m[32m 93[2mms[22m[39m
+[31m     [31m×[31m pushes collection filters into the Mongo query before pagination[39m[32m 6[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m scripts/runtime/node-toolchain-contract.test.ts [2m([22m[2m13 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 77[2mms[22m[39m
+     [32m✓[39m keeps the npm-first toolchain entrypoint composed from static runtime checks[32m 57[2mms[22m[39m
+     [32m✓[39m keeps the canonical Bazel repo lane scripts wired to the root repo targets[32m 1[2mms[22m[39m
+     [32m✓[39m keeps the Node version mirror aligned with .nvmrc[32m 1[2mms[22m[39m
+     [32m✓[39m keeps .tool-versions aligned with the repo Node and Bun pins[32m 1[2mms[22m[39m
+     [32m✓[39m uses .nvmrc for the repo workflows that follow the pinned Node toolchain[32m 1[2mms[22m[39m
+     [32m✓[39m keeps a lightweight npm-first workflow for the core toolchain contract[32m 0[2mms[22m[39m
+     [32m✓[39m keeps dedicated Bazel repo-lane workflows aligned to the canonical npm entrypoints[32m 0[2mms[22m[39m
+     [32m✓[39m keeps the canonical test matrix enforcing the npm-first toolchain contract too[32m 0[2mms[22m[39m
+[31m     [31m×[31m reruns path-filtered .nvmrc workflows when the repo Node pin changes[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m pins npm cache restoration to package-lock.json anywhere repo workflows cache npm[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m reruns path-filtered npm ci workflows when package.json or package-lock.json changes[39m[32m 2[2mms[22m[39m
+     [32m✓[39m keeps pinned-Node docs anchored to .nvmrc instead of a hardcoded major[32m 1[2mms[22m[39m
+     [32m✓[39m documents the Bazel repo lanes consistently across the build docs[32m 0[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/v2/products/routes-parity.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 106[2mms[22m[39m
+     [32m✓[39m removes legacy /api/products route.ts files[32m 59[2mms[22m[39m
+     [32m✓[39m removes legacy /api/catalogs route.ts files[32m 1[2mms[22m[39m
+[31m     [31m×[31m keeps /api/v2/products catch-all route.ts file present[39m[32m 9[2mms[22m[39m
+     [32m✓[39m keeps canonical /api/v2/products/import/csv route-handler file present[32m 6[2mms[22m[39m
+     [32m✓[39m keeps canonical /api/v2/products/entities/[type] route-handler file present[32m 6[2mms[22m[39m
+     [32m✓[39m keeps canonical /api/v2/products/entities/catalogs/assign route-handler file present[32m 4[2mms[22m[39m
+     [32m✓[39m removes legacy /api/import alias route.ts file[32m 0[2mms[22m[39m
+     [32m✓[39m does not import v2 routes from removed legacy products namespace[32m 13[2mms[22m[39m
+     [32m✓[39m provides a /api/v2/products route-handler counterpart for every historical legacy route[32m 5[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/integrations/components/listings/ExportLogsPanel.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 78[2mms[22m[39m
+     [32m✓[39m renders nothing when there are no logs[32m 64[2mms[22m[39m
+[31m     [31m×[31m wraps the export log viewer when logs are present[39m[32m 11[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.branching.shared-lib.test.tsx [2m([22m[2m11 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 89[2mms[22m[39m
+     [32m✓[39m surfaces timeout-specific settings preload failures[32m 27[2mms[22m[39m
+     [32m✓[39m reports trigger settings selection failures[32m 3[2mms[22m[39m
+     [32m✓[39m warns when no path is configured for the trigger[32m 3[2mms[22m[39m
+     [32m✓[39m warns when all paths for the trigger are disabled[32m 2[2mms[22m[39m
+     [32m✓[39m warns when multiple active paths remain without a preferred path id[32m 2[2mms[22m[39m
+     [32m✓[39m forwards page context registry data when enqueueing a trigger run[32m 9[2mms[22m[39m
+     [32m✓[39m fires onFinished after a successful enqueue[32m 5[2mms[22m[39m
+[31m     [31m×[31m forwards the selected graph when enqueuing a trigger run[39m[32m 27[2mms[22m[39m
+     [32m✓[39m warns product trigger surfaces when the saved path still relies on the AI Brain default model[32m 4[2mms[22m[39m
+     [32m✓[39m reuses cached preflight results for repeated runs on the same selected path version[32m 3[2mms[22m[39m
+     [32m✓[39m skips getEntityJson when the trigger workflow disables entity snapshot embedding[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/ecom-web/src/lib/payu.test.ts [2m([22m[2m7 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 70[2mms[22m[39m
+     [32m✓[39m returns true for a correctly signed request[32m 63[2mms[22m[39m
+     [32m✓[39m returns false when the signature does not match the body[32m 0[2mms[22m[39m
+     [32m✓[39m returns false when signed with a different key[32m 0[2mms[22m[39m
+     [32m✓[39m returns false when signatureHeader is null[32m 1[2mms[22m[39m
+     [32m✓[39m returns false when signatureHeader has no signature field[32m 0[2mms[22m[39m
+[31m     [31m×[31m is case-insensitive for the hex digest[39m[32m 3[2mms[22m[39m
+     [32m✓[39m returns false when PAYU_SECOND_KEY is not set[32m 0[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/tests/KangurTestsScreen.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 75[2mms[22m[39m
+[31m     [31m×[31m shows the loading shell while tests are still loading[39m[32m 62[2mms[22m[39m
+[31m     [31m×[31m returns to the full catalog when the focus shortcut is stale[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m renders the suite list and opens the selected suite player[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m completes the player flow and shows the test summary[39m[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/ai/image-studio/context/UiContext.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 92[2mms[22m[39m
+     [32m✓[39m throws outside the provider for all strict hooks[32m 83[2mms[22m[39m
+[31m     [31m×[31m updates layout, canvas, tools, and resolver state through provider actions[39m[32m 6[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/master-tree.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/MultiplicationArrayGame.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 87[2mms[22m[39m
+     [32m✓[39m uses Kangur option-card styling for group collection buttons[32m 52[2mms[22m[39m
+[31m     [31m×[31m advances to the next round after collecting all groups[39m[32m 32[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/shared/lib/ai-paths/hooks/useTriggerButtons.test.tsx [2m([22m[2m24 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 86[2mms[22m[39m
+     [32m✓[39m subscribes to shared tracked runs after a successful enqueue[32m 26[2mms[22m[39m
+     [32m✓[39m calls onRunQueued after a successful enqueue[32m 3[2mms[22m[39m
+     [32m✓[39m calls onRunSnapshot as tracked run snapshots arrive after enqueue[32m 5[2mms[22m[39m
+     [32m✓[39m passes caller-provided trigger extras into the AI Path event[32m 2[2mms[22m[39m
+     [32m✓[39m merges trigger-button context metadata and passes the clicked button to context builders[32m 2[2mms[22m[39m
+     [32m✓[39m fires the marketplace-copy Debrand button through its bound AI Path workflow[32m 2[2mms[22m[39m
+     [32m✓[39m shows an error and aborts when trigger extras cannot be built[32m 6[2mms[22m[39m
+     [32m✓[39m aborts when caller-provided trigger extras are not ready[32m 2[2mms[22m[39m
+     [32m✓[39m derives the queued product identity from the entity snapshot when entityId is missing[32m 3[2mms[22m[39m
+     [32m✓[39m filters out buttons that do not match the requested location[32m 1[2mms[22m[39m
+     [32m✓[39m stays stable while the trigger-buttons query is loading with no data yet[32m 1[2mms[22m[39m
+     [32m✓[39m filters out disabled buttons[32m 1[2mms[22m[39m
+     [32m✓[39m deduplicates buttons with the same id[32m 1[2mms[22m[39m
+     [32m✓[39m does not call onRunQueued when fireAiPathTriggerEvent rejects[32m 2[2mms[22m[39m
+     [32m✓[39m shows waiting immediately before enqueue resolves, then replaces it with queued[32m 3[2mms[22m[39m
+     [32m✓[39m resets runState to idle after trigger completes[32m 1[2mms[22m[39m
+     [32m✓[39m tracks the latest run status with fresh polling after enqueue[32m 2[2mms[22m[39m
+     [32m✓[39m toasts a warning and aborts the trigger when entity context resolves no id[32m 1[2mms[22m[39m
+     [32m✓[39m does not apply the null entity guard for custom entityType[32m 1[2mms[22m[39m
+     [32m✓[39m surfaces the primary terminal failure summary from run details[32m 3[2mms[22m[39m
+[31m     [31m×[31m clears the waiting run placeholder when the trigger fails before enqueue[39m[32m 2[2mms[22m[39m
+     [32m✓[39m restores the last completed run feedback after the trigger bar remounts[32m 4[2mms[22m[39m
+     [32m✓[39m re-subscribes to an active persisted run after the trigger bar remounts[32m 3[2mms[22m[39m
+     [32m✓[39m syncs active run feedback across product surfaces by shared pathId[32m 6[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/ai-paths/__tests__/playwright-node-routes.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 16[2mms[22m[39m
+[31m     [31m×[31m enqueues run via POST and enforces action rate limit for external requests[39m[32m 5[2mms[22m[39m
+[31m     [31m×[31m skips action rate limit for internal POST requests[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m returns run via GET and enforces poll rate limit for external requests[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws not found when GET run id does not exist[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m blocks GET polling for non-owner non-elevated user[39m[32m 1[2mms[22m[39m
+     [32m✓[39m returns artifact bytes via artifact GET route[32m 4[2mms[22m[39m
+     [32m✓[39m throws not found when artifact GET target does not exist[32m 1[2mms[22m[39m
+     [32m✓[39m blocks artifact GET for non-owner non-elevated user[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/plan/KangurDailyPlanScreen.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 55[2mms[22m[39m
+[31m     [31m×[31m shows the restoring shell while learner auth is still coming back[39m[32m 44[2mms[22m[39m
+[31m     [31m×[31m shows the pending duel snapshot when the learner rank is not visible yet[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m shows signed-out duel guidance without mobile-overview wording[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m shows the demo CTA when learner credentials are unavailable[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m renders focus, assignments, recent results, and duel actions for an authenticated learner[39m[32m 2[2mms[22m[39m
+[90mstderr[2m | src/features/ai/ai-paths/components/ai-paths-settings/__tests__/useAiPathsSettingsPageValue.test.tsx[2m > [22m[2museAiPathsSettingsPageValue[2m > [22m[2mderives page context values, local UI state, and rename actions
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [31m❯[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/components/ai-paths-settings/__tests__/useAiPathsSettingsPageValue.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 210[2mms[22m[39m
+[31m     [31m×[31m derives page context values, local UI state, and rename actions[39m[32m 29[2mms[22m[39m
+[31m     [31m×[31m falls back to default validation config, maps autosave states, and supports missing active path rename commit[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m reports blocked, warning, and successful validation checks[39m[32m 6[2mms[22m[39m
+     [32m✓[39m opens the node validator via router navigation[32m 2[2mms[22m[39m
+[31m     [31m×[31m inspects node traces, preferring failed runs and falling back to general history[39m[32m 163[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/QuestionCard.i18n.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 68[2mms[22m[39m
+[31m     [31m×[31m renders English timer and result copy for regular questions[39m[32m 54[2mms[22m[39m
+[31m     [31m×[31m renders English accessibility copy for clock questions[39m[32m 11[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/products/components/list/ProductSelectionActions.test.tsx [2m([22m[2m17 tests[22m[2m | [22m[31m17 failed[39m[2m)[22m[32m 61[2mms[22m[39m
+[31m     [31m×[31m passes the selected product ids into the Vinted mass quick export action[39m[32m 31[2mms[22m[39m
+[31m     [31m×[31m archives the selected products and clears the current selection[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m unarchives the selected products when archived items are visible[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m disables the Vinted mass quick export action when no products are selected[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m only shows the unarchive action when archived items are included in the list[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m opens the Tradera status check modal with the selected products[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m opens the Amazon scan modal with the selected products[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m opens the product field batch edit modal from the selection actions[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m opens the runtime Debrand modal with the selected product count[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m opens the parse actions modal from the products toolbar[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m opens the scrape profiles modal from the products toolbar[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m keeps the scrape profiles toolbar button in a running state while the runtime run is active[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m labels scrape profile jobs as queued before the Redis worker starts them[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m filters the product list to parsed matches from the parse actions modal[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m queues runtime Debrand for selected products and clears selection[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m deletes a saved advanced filter preset from the menu[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m edits a saved advanced filter preset from the pen action[39m[32m 1[2mms[22m[39m
+[90mstderr[2m | src/features/cms/components/page-builder/__tests__/PagePreviewPanel.nested.test.tsx[2m > [22m[2mPagePreviewPanel nested section rendering[2m > [22m[2mrenders nested preview sections inside a subtle wrapper
+[22m[39m[2026-05-09T19:48:29.022Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:29.023Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:29.023Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+
+[90mstderr[2m | src/features/cms/components/page-builder/__tests__/PagePreviewPanel.nested.test.tsx[2m > [22m[2mPagePreviewPanel nested section rendering[2m > [22m[2msuppresses nested preview sections when the parent is hidden
+[22m[39m[2026-05-09T19:48:29.029Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:29.030Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+[2026-05-09T19:48:29.030Z] [WARN] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {
+  componentName: [32m'Button'[39m,
+  source: [32m'a11y'[39m,
+  service: [32m'a11y'[39m,
+  statusCode: [90mundefined[39m
+}
+
+ [31m❯[39m [30m[42m unit [49m[39m src/features/cms/components/page-builder/__tests__/PagePreviewPanel.nested.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 49[2mms[22m[39m
+[31m     [31m×[31m renders nested preview sections inside a subtle wrapper[39m[32m 42[2mms[22m[39m
+     [32m✓[39m suppresses nested preview sections when the parent is hidden[32m 5[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPresets.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 44[2mms[22m[39m
+     [32m✓[39m registers persistence handlers and supports state setters[32m 23[2mms[22m[39m
+[31m     [31m×[31m creates, loads, and deletes cluster presets[39m[32m 6[2mms[22m[39m
+     [32m✓[39m applies presets to the graph and guards locked paths[32m 4[2mms[22m[39m
+[31m     [31m×[31m exports presets and imports them in merge and replace modes[39m[32m 3[2mms[22m[39m
+     [32m✓[39m handles import validation and persistence errors[32m 3[2mms[22m[39m
+     [32m✓[39m builds preset drafts from selected bundle/template pairs[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/integrations/components/listings/hooks/useMassListForm.test.tsx [2m([22m[2m7 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[32m 40[2mms[22m[39m
+[31m     [31m×[31m exports every selected product to Base.com when bulk export is chosen[39m[32m 26[2mms[22m[39m
+[31m     [31m×[31m runs Vinted quick preflight for each product and persists the preferred connection once[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m pauses a Tradera batch on auth-required, then resumes from the failed product after login[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m treats a non-ready Tradera preflight response as auth-required recovery[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m keeps Tradera bulk recovery blocked when the manual login flow cannot save a session[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m keeps Vinted bulk recovery blocked when the manual login flow cannot save a session[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m blocks Base.com bulk export when a selected product has no internal category assigned[39m[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/ai/context/bundle/handler.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 43[2mms[22m[39m
+[31m     [31m×[31m rejects invalid JSON bodies and captures the parse error[39m[32m 38[2mms[22m[39m
+[31m     [31m×[31m rejects invalid bundle request payloads[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m resolves refs, logs the bundle summary, and returns a cached response[39m[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/ai-paths/trigger-buttons/cleanup-fixtures/handler.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 27[2mms[22m[39m
+[31m     [31m×[31m removes leaked playwright fixture buttons and matching path configs[39m[32m 22[2mms[22m[39m
+     [32m✓[39m returns zero counts without mutating settings when no fixtures exist[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/v2/products/validator-patterns/handler.helpers.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 21[2mms[22m[39m
+[31m     [31m×[31m dedupes replacement fields and resolves create state[39m[32m 15[2mms[22m[39m
+     [32m✓[39m rejects invalid replacement and launch state combinations[32m 2[2mms[22m[39m
+[31m     [31m×[31m builds the create payload with normalized defaults[39m[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/marketplace/mappings/[id]/handler.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 14[2mms[22m[39m
+     [32m✓[39m exports the supported handlers[32m 4[2mms[22m[39m
+[31m     [31m×[31m rejects reactivating a Tradera mapping that points to a parent category[39m[32m 7[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/ai/context/resolve/handler.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[32m 13[2mms[22m[39m
+[31m     [31m×[31m returns resolved nodes with truncated, visitedIds, and registryVersion[39m[32m 7[2mms[22m[39m
+[31m     [31m×[31m passes depth and maxNodes through to retrievalService[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m reports truncated=true when service returns it[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws for missing ids field[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws for empty ids array[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws for invalid JSON body[39m[32m 0[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/ai/actions/execute/handler.test.ts [2m([22m[2m7 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[32m 15[2mms[22m[39m
+[31m     [31m×[31m executes a pending proposal successfully[39m[32m 8[2mms[22m[39m
+[31m     [31m×[31m calls updateProposal with status=executed and approvedBy[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws notFoundError when proposal does not exist[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws badRequestError when proposal is not pending[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws for missing required fields in request body[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws for invalid JSON body[39m[32m 0[2mms[22m[39m
+[31m     [31m×[31m throws for invalid proposalId (not UUID)[39m[32m 0[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/ai/actions/propose/handler.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[32m 12[2mms[22m[39m
+[31m     [31m×[31m returns proposalId, approvalsNeeded, and preview[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m calls getContextPackById with workflow[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m passes pack.maxNodes to resolveWithExpansion[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m sets approvalsNeeded=true when a node has medium riskTier[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws for invalid payload (missing required fields)[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws for invalid JSON body[39m[32m 0[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/ai/context/search/handler.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 11[2mms[22m[39m
+[31m     [31m×[31m returns search results with registryVersion[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m accepts empty body and calls search with default limit[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m passes kinds array filter through to backend[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m throws for invalid payload (kinds element out of enum)[39m[32m 0[2mms[22m[39m
+[31m     [31m×[31m throws for invalid JSON body[39m[32m 1[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/services/__tests__/playwright-node-runner.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 55799[2mms[22m[39m
+     [33m[2m✓[22m[39m treats missing run state files as absent runs without logging an exception [33m 596[2mms[22m[39m
+     [33m[2m✓[22m[39m executes a successful run, captures artifacts, and removes stale run fixtures [33m 567[2mms[22m[39m
+     [33m[2m✓[22m[39m sanitizes invalid prefixed cookies before creating a browser context [33m 5078[2mms[22m[39m
+     [33m[2m✓[22m[39m fails when the start URL violates outbound policy [33m 984[2mms[22m[39m
+     [33m[2m✓[22m[39m allows only the exact policyAllowedHosts override for startUrl and matching subresources [33m 4379[2mms[22m[39m
+     [33m[2m✓[22m[39m prewarms hostile search profiles on the origin root before the real start url [33m 317[2mms[22m[39m
+     [33m[2m✓[22m[39m reuses sticky hostile-profile storage state across runs for the same owner and origin [33m 4686[2mms[22m[39m
+     [33m[2m✓[22m[39m applies proxy session affinity when the proxy config opts in with a session placeholder [33m 8059[2mms[22m[39m
+     [33m[2m✓[22m[39m rotates proxy session placeholders per run when rotate mode is enabled [33m 19636[2mms[22m[39m
+     [33m[2m✓[22m[39m applies provider presets to proxy usernames when no placeholder is present [33m 9838[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/services/__tests__/path-run-service.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 1366[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects legacy node identities instead of repairing them during enqueue [33m 680[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/server/__tests__/settings-store.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 1369[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/services/__tests__/path-run-executor.runtime-kernel-settings.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1052[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/ai/ai-paths/pages/__tests__/AdminAiPathsTriggerButtonsPage.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 622[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/integrations/components/marketplaces/category-mapper/CategoryMapperTable.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 569[2mms[22m[39m
+
+<--- Last few GCs --->
+
+[12004:0x985c00000]    19257 ms: Scavenge (interleaved) 4062.2 (4127.3) -> 4057.9 (4129.3) MB, pooled: 0 MB, 20.12 / 0.00 ms  (average mu = 0.260, current mu = 0.230) allocation failure; 
+[12004:0x985c00000]    19347 ms: Scavenge (interleaved) 4065.4 (4130.6) -> 4060.9 (4148.3) MB, pooled: 0 MB, 86.71 / 0.00 ms  (average mu = 0.260, current mu = 0.230) allocation failure; 
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0x104e23040 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 2: 0x104fff79c v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 3: 0x10520ef30 v8::internal::Heap::stack() [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 4: 0x10520d2d0 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 5: 0x1052018c4 v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 6: 0x1052020fc v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 7: 0x1051e541c v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 8: 0x105600ee0 v8::internal::Runtime_AllocateInYoungGeneration(int, unsigned long*, v8::internal::Isolate*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+ 9: 0x105ac1af4 Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+10: 0x110551a20 
+11: 0x110555df4 
+12: 0x105af065c Builtins_ArrayMap [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+13: 0x105a2cef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+14: 0x105a2cef0 Builtins_InterpreterEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+15: 0x105a69290 Builtins_AsyncFunctionAwaitResolveClosure [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+16: 0x105b344d8 Builtins_PromiseFulfillReactionJob [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+17: 0x105a59594 Builtins_RunMicrotasks [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+18: 0x105a2aaf4 Builtins_JSRunMicrotasksEntry [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+19: 0x105166df8 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+20: 0x1051676a0 v8::internal::(anonymous namespace)::InvokeWithTryCatch(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+21: 0x1051677d8 v8::internal::Execution::TryRunMicrotasks(v8::internal::Isolate*, v8::internal::MicrotaskQueue*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+22: 0x1051949fc v8::internal::MicrotaskQueue::RunMicrotasks(v8::internal::Isolate*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+23: 0x105195180 v8::internal::MicrotaskQueue::PerformCheckpoint(v8::Isolate*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+24: 0x105a2ef98 Builtins_CallApiCallbackGeneric [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+25: 0x1104b4bd4 
+26: 0x105a2ac0c Builtins_JSEntryTrampoline [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+27: 0x105a2a8f4 Builtins_JSEntry [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+28: 0x105166e38 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+29: 0x105166794 v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+30: 0x105015d08 v8::Function::Call(v8::Local<v8::Context>, v8::Local<v8::Value>, int, v8::Local<v8::Value>*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+31: 0x104d21aa4 node::InternalCallbackScope::Close() [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+32: 0x104d21ce0 node::InternalMakeCallback(node::Environment*, v8::Local<v8::Object>, v8::Local<v8::Object>, v8::Local<v8::Function>, int, v8::Local<v8::Value>*, node::async_context, v8::Local<v8::Value>) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+33: 0x104d349fc node::AsyncWrap::MakeCallback(v8::Local<v8::Function>, int, v8::Local<v8::Value>*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+34: 0x104f3accc node::StreamBase::CallJSOnreadMethod(long, v8::Local<v8::ArrayBuffer>, unsigned long, node::StreamBase::StreamBaseJSChecks) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+35: 0x104f3c460 node::EmitToJSStreamListener::OnStreamRead(long, uv_buf_t const&) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+36: 0x104f40934 node::LibuvStreamWrap::OnUvRead(long, uv_buf_t const*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+37: 0x104f4107c node::LibuvStreamWrap::ReadStart()::$_1::__invoke(uv_stream_s*, long, uv_buf_t const*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+38: 0x105a163ac uv__stream_io [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+39: 0x105a1e9d4 uv__io_poll [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+40: 0x105a0ad84 uv_run [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+41: 0x104d22518 node::SpinEventLoopInternal(node::Environment*) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+42: 0x104e6d93c node::NodeMainInstance::Run() [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+43: 0x104dddd50 node::Start(int, char**) [/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/node]
+44: 0x18f8c3da4 start [/usr/lib/dyld]
+ [31m❯[39m [30m[42m unit [49m[39m scripts/testing/vitest-integration-projects.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 78[2mms[22m[39m
+     [32m✓[39m keeps each declared integration or unit-db test path unique and present on disk[32m 68[2mms[22m[39m
+[31m     [31m×[31m classifies every mongo-named test file as integration or intentional unit coverage[39m[32m 6[2mms[22m[39m
+     [32m✓[39m keeps the unit-db exception list scoped to mongo-named tests only[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/products/components/product-filters.test.tsx [2m([22m[2m7 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[32m 67[2mms[22m[39m
+[31m     [31m×[31m renders all filter inputs[39m[32m 19[2mms[22m[39m
+[31m     [31m×[31m calls setProductId when Product ID input changes[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m calls setSearch when name input changes[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m calls setSku when SKU input changes[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m does not count default ID match mode as an active filter when Product ID is empty[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m shows active preset pill and clears it on close click[39m[32m 23[2mms[22m[39m
+[31m     [31m×[31m applies preset when preset name is clicked from Filter Presets menu[39m[32m 10[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/app/frontend/home-route-caching-contract.test.ts [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 60[2mms[22m[39m
+[31m     [31m×[31m keeps the root and localized home pages revalidated instead of forced dynamic[39m[32m 57[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m scripts/quality/vercel-production-sync-workflow-contract.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 65[2mms[22m[39m
+     [32m✓[39m keeps a scheduled and manually repairable workflow for the StudiQ production alias[32m 55[2mms[22m[39m
+[31m     [31m×[31m keeps the build and toolchain contract bundles aware of the Vercel sync guardrail[39m[32m 7[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/playwright/server/request-storage-state.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 66[2mms[22m[39m
+[31m     [31m×[31m builds cookies and local storage entries into a sanitized storage state[39m[32m 61[2mms[22m[39m
+[31m     [31m×[31m drops secure-prefixed cookies on insecure origins while keeping valid plain cookies[39m[32m 1[2mms[22m[39m
+     [32m✓[39m returns null when no cookies or local storage entries can be built[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/api/ai-paths-runtime-analytics-summary-handler.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 77[2mms[22m[39m
+     [32m✓[39m returns disabled fallback summary with trace analytics when access is unauthorized[32m 72[2mms[22m[39m
+[31m     [31m×[31m returns runtime analytics summary payload with traces when authorized[39m[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/__tests__/loading/admin-loading-route-inventory.test.ts [2m([22m[2m19 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 61[2mms[22m[39m
+     [32m✓[39m ensures the 3d-assets admin section has a dedicated loading route[32m 50[2mms[22m[39m
+     [32m✓[39m ensures the agentcreator admin section has a dedicated loading route[32m 1[2mms[22m[39m
+     [32m✓[39m ensures the ai-paths admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the auth admin section has a dedicated loading route[32m 1[2mms[22m[39m
+     [32m✓[39m ensures the case-resolver admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the chatbot admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the cms admin section has a dedicated loading route[32m 0[2mms[22m[39m
+[31m     [31m×[31m ensures the databases admin section has a dedicated loading route[39m[32m 3[2mms[22m[39m
+     [32m✓[39m ensures the filemaker admin section has a dedicated loading route[32m 1[2mms[22m[39m
+     [32m✓[39m ensures the image-studio admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the integrations admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the kangur admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the notes admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the products admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the prompt-engine admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the prompt-exploder admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the settings admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the system admin section has a dedicated loading route[32m 0[2mms[22m[39m
+     [32m✓[39m ensures the validator admin section has a dedicated loading route[32m 0[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/game-runtime/__tests__/QuestionCard.i18n.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 65[2mms[22m[39m
+[31m     [31m×[31m renders English timer and result copy for regular questions[39m[32m 52[2mms[22m[39m
+[31m     [31m×[31m renders English accessibility copy for clock questions[39m[32m 10[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/admin/components/admin-menu-nav.test.ts [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 64[2mms[22m[39m
+[31m     [31m×[31m includes Brain as a primary AI entry and keeps existing AI links intact[39m[32m 61[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/cms-builder/KangurCmsRuntimeScreen.test.tsx [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 62[2mms[22m[39m
+[31m     [31m×[31m renders the runtime screen when the project arrives after the first render[39m[32m 60[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m scripts/quality/github-main-branch-protection-workflow-contract.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 63[2mms[22m[39m
+     [32m✓[39m keeps a scheduled and manually repairable workflow for main branch protection drift[32m 53[2mms[22m[39m
+[31m     [31m×[31m keeps the build and toolchain contract bundles aware of the GitHub branch protection guardrail[39m[32m 7[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/shared/lib/api/i18n-api.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 61[2mms[22m[39m
+[31m     [31m×[31m loads metadata collections from the v2 metadata endpoints[39m[32m 57[2mms[22m[39m
+     [32m✓[39m routes delete and save operations to the correct create/update endpoints[32m 1[2mms[22m[39m
+[vitest-pool]: Timeout terminating forks worker for test files /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/hooks/__tests__/useDatabaseNodeConfigState.test.tsx.
+ [31m❯[39m [30m[42m unit [49m[39m src/shared/ui/dialog.accessibility-inventory.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 67[2mms[22m[39m
+[31m     [31m×[31m requires every DialogContent and AlertDialogContent consumer to provide a title node[39m[32m 63[2mms[22m[39m
+[31m     [31m×[31m requires every DialogContent and AlertDialogContent consumer to provide a description node[39m[32m 2[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/workspace-persistence.compaction.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/shared/ui/select.native-mode.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 60[2mms[22m[39m
+     [32m✓[39m enables native mode for image studio routes[32m 54[2mms[22m[39m
+     [32m✓[39m enables native mode for AI paths queue routes[32m 0[2mms[22m[39m
+[31m     [31m×[31m keeps radix mode for other routes[39m[32m 3[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/auth/mobileCsrfToken.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 55[2mms[22m[39m
+[31m     [31m×[31m persists mirrored csrf headers for later native requests[39m[32m 52[2mms[22m[39m
+[31m     [31m×[31m prefers the browser cookie token when available and falls back to stored native csrf[39m[32m 1[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/relation-master-tree.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/database-engine-web/src/features/database/server/api/schema/handler.test.ts [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 62[2mms[22m[39m
+[31m     [31m×[31m filters internal schema responses to the AI-path allowlist[39m[32m 60[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/(admin)/admin/integrations/marketplaces/category-mapper/page.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 58[2mms[22m[39m
+     [32m✓[39m renders CategoryMapperPage instead of redirecting[32m 53[2mms[22m[39m
+[31m     [31m×[31m imports from the integrations public barrel[39m[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/filemaker/job-applications/[applicationId]/cover-letter-pdf/handler.test.ts [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 61[2mms[22m[39m
+[31m     [31m×[31m exports the requested cover letter PDF[39m[32m 58[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/observability/services/activity-repository.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 64[2mms[22m[39m
+[31m     [31m×[31m should list activity logs[39m[32m 59[2mms[22m[39m
+[31m     [31m×[31m should build array type and search filters when listing activity logs[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m should create an activity log[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m should default nullable create fields to null[39m[32m 0[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/scores/KangurResultsScreen.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 55[2mms[22m[39m
+[31m     [31m×[31m shows the restoring history state while results are loading[39m[32m 44[2mms[22m[39m
+[31m     [31m×[31m shows signed-out results guidance when the learner session is unavailable[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m shows the duel loading state after results are available[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m shows the pending duel standing when the learner rank is not visible yet[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m renders metrics, insights, and score rows after results settle[39m[32m 3[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/shared/contracts/__tests__/product-studio.contract-runtime.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 38[2mms[22m[39m
+     [32m✓[39m parses product studio config responses[32m 28[2mms[22m[39m
+[31m     [31m×[31m parses product studio variants responses[39m[32m 3[2mms[22m[39m
+     [32m✓[39m parses product studio send, link, preflight, and product envelopes[32m 3[2mms[22m[39m
+     [32m✓[39m parses product studio audit responses[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/home/useKangurMobileHomeAssignments.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 50[2mms[22m[39m
+[31m     [31m×[31m builds starter home assignments when there is no saved lesson progress yet[39m[32m 44[2mms[22m[39m
+[31m     [31m×[31m maps lesson review assignments into focused lesson links[39m[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/scores/persistedKangurMobileRecentResults.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 40[2mms[22m[39m
+     [32m✓[39m persists and resolves recent results for the current score scope[32m 34[2mms[22m[39m
+[31m     [31m×[31m ignores invalid persisted score payloads[39m[32m 3[2mms[22m[39m
+     [32m✓[39m caps persisted snapshots to the mobile startup slice[32m 1[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/asset-actions-locking.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/integrations/hooks/useProductListingMutations.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 52[2mms[22m[39m
+     [32m✓[39m useGenericCreateListingMutation posts the centralized create payload[32m 27[2mms[22m[39m
+[31m     [31m×[31m useDeleteFromBaseMutation posts the centralized delete payload[39m[32m 4[2mms[22m[39m
+     [32m✓[39m useUpdateListingInventoryIdMutation patches the centralized inventory payload[32m 5[2mms[22m[39m
+     [32m✓[39m useSyncBaseImagesMutation posts the centralized sync payload[32m 7[2mms[22m[39m
+     [32m✓[39m useCreateListingMutation returns the centralized queue response[32m 2[2mms[22m[39m
+     [32m✓[39m useRelistTraderaMutation posts the centralized relist request[32m 5[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/admin/KangurQuestionsManagerPanel.test.tsx [2m([22m[2m18 tests[22m[2m | [22m[31m18 failed[39m[2m)[22m[32m 47[2mms[22m[39m
+[31m     [31m×[31m shows question health counts and filters the list by review state[39m[32m 15[2mms[22m[39m
+[31m     [31m×[31m renders the question workspace chrome and triage controls[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m renders the question workspace chrome and filters in Ukrainian[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m searches across audit flags and other question content[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m filters questions by workflow state[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m orders the review queue by authoring priority[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m disables saving when the edited question still has blockers[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m supports an initial review-launch context from the suite library[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m publishes ready questions for the current suite directly from the question manager[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m can publish and go live in one step when the current suite is fully clean after publish[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m can mark the current suite live directly from the question manager[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m can take the current live suite offline directly from the question manager[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m offers local draft recovery for an edited question[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m asks for confirmation before closing a dirty question draft and clears the stored draft on discard[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m takes a live suite offline when a new draft question is added[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m takes a live suite offline when duplicating a published question[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m takes a live suite offline when a published question is downgraded to draft[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m moves a published question back to draft when learner-facing content changes[39m[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/admin/pages/AdminMenuSettingsPage.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 50[2mms[22m[39m
+[31m     [31m×[31m renders master folder tree layout section[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m keeps built-in selected node fields read-only[39m[32m 7[2mms[22m[39m
+[31m     [31m×[31m adds built-in node from library pane[39m[32m 7[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/QuestionCard.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 46[2mms[22m[39m
+[31m     [31m×[31m uses Kangur option-card styling for answer tiles and marks result states[39m[32m 35[2mms[22m[39m
+[31m     [31m×[31m exposes a text alternative for clock questions[39m[32m 8[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/agent-runtime/services/checkpoint.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 36[2mms[22m[39m
+       [32m✓[39m should return null for invalid payload[32m 28[2mms[22m[39m
+[31m       [31m×[31m should parse valid payload[39m[32m 2[2mms[22m[39m
+       [32m✓[39m should create a valid checkpoint object[32m 1[2mms[22m[39m
+       [32m✓[39m should update the run delegate and log audit[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/app/api/marketplace/mappings/handler.helpers.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 45[2mms[22m[39m
+     [32m✓[39m parses list queries and enforces connectionId[32m 37[2mms[22m[39m
+[31m     [31m×[31m parses Tradera mapping list queries without requiring a connectionId[39m[32m 3[2mms[22m[39m
+     [32m✓[39m requires all create fields before saving[32m 1[2mms[22m[39m
+     [32m✓[39m updates existing mappings and creates missing ones[32m 1[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/case-resolver-tree-workspace.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/kangur/ui/components/game-runtime/__tests__/QuestionCard.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 48[2mms[22m[39m
+[31m     [31m×[31m uses Kangur option-card styling for answer tiles and marks result states[39m[32m 37[2mms[22m[39m
+[31m     [31m×[31m exposes a text alternative for clock questions[39m[32m 8[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/capture-target-resolution.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/internationalization/lib/internationalizationDefaults.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 42[2mms[22m[39m
+     [32m✓[39m should have correct country codes[32m 32[2mms[22m[39m
+     [32m✓[39m should have matching default countries[32m 4[2mms[22m[39m
+[31m     [31m×[31m should have matching country mappings[39m[32m 2[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/workspace.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/integrations/context/ProductListingsContext.test.tsx [2m([22m[2m11 tests[22m[2m | [22m[31m11 failed[39m[2m)[22m[32m 44[2mms[22m[39m
+[31m     [31m×[31m shares recovery-context updates with later consumers in the same open modal[39m[32m 25[2mms[22m[39m
+[31m     [31m×[31m keeps an explicit filterIntegrationSlug over recovery-context fallback[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m updates the scoped marketplace when recovery context is added after mount[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m preserves enriched recovery details when the parent rerenders with the same weaker recovery context[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m updates the recovery banner state when Tradera quicklist feedback fails in the same tab[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m does not hydrate Tradera recovery context from duplicate-linked feedback that still carries stale failed status[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m updates the recovery banner state when Vinted quicklist feedback fails in the same tab[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m ignores stale Vinted quicklist feedback when the modal is explicitly scoped to Tradera[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m suppresses stale incoming Tradera recovery context on mount when persisted feedback already normalized it to completed[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m hydrates Base recovery details from the failed run when the run id is already known[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m hydrates Base recovery details from the latest failed Base run when the run id is missing[39m[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/kangur/learner-profile.page.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 45[2mms[22m[39m
+[31m     [31m×[31m loads user scores and renders profile metrics[39m[32m 31[2mms[22m[39m
+[31m     [31m×[31m supports keyboard navigation between learner profile tabs[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m keeps profile in local mode when user is not authenticated[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m shows scores loading error when score provider fails[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m treats score authorization errors as expected local-mode fallback[39m[32m 3[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/node-file-document-search-panel.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 165[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/integrations/services/category-mapping-repository-mongo.test.ts [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 19[2mms[22m[39m
+[31m     [31m×[31m bulkUpsert does not duplicate externalCategoryId across $set and $setOnInsert[39m[32m 16[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/api/products/validator-patterns.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[32m 28[2mms[22m[39m
+     [32m✓[39m POST rejects invalid dynamic source regex[32m 10[2mms[22m[39m
+[31m     [31m×[31m POST rejects regex launch operator without pattern value[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m POST allows runtime replacement without static replacementValue[39m[32m 3[2mms[22m[39m
+     [32m✓[39m POST rejects missing replacementValue when runtime replacement is disabled[32m 1[2mms[22m[39m
+[31m     [31m×[31m PUT rejects invalid dynamic logic regex[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m PUT rejects launch regex with invalid regex flags/pattern[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m PUT allows runtime replacement without static replacementValue[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m PUT allows enabling auto-apply on runtime pattern with null replacementValue[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m PUT allows enabling auto-apply on capture-group patterns[39m[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/storage/createMobileDevelopmentKangurStorage.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[32m 42[2mms[22m[39m
+[31m     [31m×[31m stores values and notifies subscribers in fallback memory[39m[32m 36[2mms[22m[39m
+[31m     [31m×[31m reuses the fallback memory store across adapter recreation[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m preserves progress snapshots across progress store recreation[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m persists values across native adapter recreation[39m[32m 0[2mms[22m[39m
+[31m     [31m×[31m preserves progress snapshots across native runtime recreation[39m[32m 0[2mms[22m[39m
+[31m     [31m×[31m caches the native snapshot after the first disk read[39m[32m 0[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/relation-tree-browser.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[32m 125[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/storage/createMobileDevelopmentKangurStorage.web.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 38[2mms[22m[39m
+[31m     [31m×[31m persists values across browser adapter recreation[39m[32m 35[2mms[22m[39m
+[31m     [31m×[31m preserves progress snapshots across browser runtime recreation[39m[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/auth/createDevelopmentKangurAuthAdapter.test.ts [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 39[2mms[22m[39m
+[31m     [31m×[31m restores the demo session from the provided storage adapter[39m[32m 36[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/drafter/services/draft-repository-mongo.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 41[2mms[22m[39m
+[31m     [31m×[31m should create and retrieve a draft[39m[32m 36[2mms[22m[39m
+     [32m✓[39m should list drafts[32m 1[2mms[22m[39m
+[31m     [31m×[31m should update a draft[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m should delete a draft[39m[32m 0[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/kangur/ui/pages/Lessons.test.tsx [2m([22m[2m12 tests[22m[2m | [22m[31m12 failed[39m[2m)[22m[32m 38[2mms[22m[39m
+[31m     [31m×[31m renders stored document content when the lesson is explicitly in document mode[39m[32m 17[2mms[22m[39m
+[31m     [31m×[31m renders each lesson component only once when persisted settings contain duplicates[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m keeps only the lesson navigation button at the bottom and constrains its width[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m keeps the secret lesson trigger hidden until every lesson has recorded mastery[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m redirects the unlocked secret lesson pill to the final lesson in the queue[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m keeps documentation metadata hooks on lesson navigation controls when tooltips are enabled[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m does not render a generic catalog back action on the lessons list surface[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m keeps using the legacy component renderer when the lesson stays in component mode[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m scrolls the active lesson header into view when opening a lesson from the library[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m returns from an active lesson to the lessons library via the shared header back button[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m keeps the active lesson motion preset while leaving lesson library wrappers static[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m shows the empty-document warning when a document-mode lesson has no saved content[39m[32m 1[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/prompt-exploder-return-flow.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/products/hooks/useProductMetadata.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 37[2mms[22m[39m
+[31m     [31m×[31m derives catalog selection from nested catalog relation shape[39m[32m 26[2mms[22m[39m
+[31m     [31m×[31m does not derive category selection from removed legacy category relations[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m realigns primary catalog to saved category catalog on initial edit mismatch[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m does NOT fire logClientError guard when catalog/language queries are still loading[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m fires logClientError guard when both queries succeed but filteredLanguages is empty for editing product[39m[32m 3[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/gsap/utils/presets.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 36[2mms[22m[39m
+       [32m✓[39m should return correct vars for fadeIn[32m 30[2mms[22m[39m
+       [32m✓[39m should return correct vars for fadeInUp[32m 0[2mms[22m[39m
+       [32m✓[39m should return correct vars for unknown preset[32m 0[2mms[22m[39m
+[31m       [31m×[31m should return default offset[39m[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/integrations/services/imports/base-mapper.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 28[2mms[22m[39m
+       [32m✓[39m extracts URLs from various formats[32m 16[2mms[22m[39m
+[31m       [31m×[31m maps basic fields correctly[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m maps nested fields[39m[32m 1[2mms[22m[39m
+       [32m✓[39m applies template mappings[32m 1[2mms[22m[39m
+       [32m✓[39m handles image slots in templates[32m 0[2mms[22m[39m
+       [32m✓[39m maps template values into custom product parameters[32m 1[2mms[22m[39m
+       [32m✓[39m maps text_fields feature values into parameter targets[32m 0[2mms[22m[39m
+[31m       [31m×[31m resolves language-scoped text field paths in template mappings[39m[32m 2[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/features/case-resolver/__tests__/case-list-utils.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m apps/mobile/src/auth/createLearnerSessionKangurAuthAdapter.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[32m 45[2mms[22m[39m
+[31m     [31m×[31m maps auth/me into an authenticated learner session[39m[32m 39[2mms[22m[39m
+[31m     [31m×[31m maps 401 from auth/me into an anonymous learner session[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m requires learner credentials for native sign-in[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m signs in through learner-signin and resolves the server session[39m[32m 0[2mms[22m[39m
+[31m     [31m×[31m fails sign-in when the learner session is not persisted after a successful sign-in call[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m clears the stored learner session on sign-out[39m[32m 0[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/api/ai-paths-runs-list-handler.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m9 failed[39m[2m)[22m[32m 53[2mms[22m[39m
+[31m     [31m×[31m passes nodeId filter through to repository list options[39m[32m 44[2mms[22m[39m
+[31m     [31m×[31m uses distinct cache keys for different node filters[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m treats status=all as an unfiltered run list[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m forwards source and sourceMode when source is provided[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m allows explicit global visibility for users with global run access[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m rejects explicit global visibility without global run access[39m[32m 0[2mms[22m[39m
+[31m     [31m×[31m bypasses the list response cache when fresh=1 is provided[39m[32m 0[2mms[22m[39m
+[31m     [31m×[31m uses distinct cache keys for scoped and global visibility[39m[32m 0[2mms[22m[39m
+[31m     [31m×[31m ignores sourceMode when source is missing[39m[32m 1[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m src/features/integrations/components/listings/IntegrationSelectorFields.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 20[2mms[22m[39m
+[31m     [31m×[31m renders marketplace and account selectors with shared copy[39m[32m 15[2mms[22m[39m
+[31m     [31m×[31m omits the account selector when no integration is selected yet[39m[32m 2[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/kangur/kangur-accessibility-smoke.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 37[2mms[22m[39m
+[31m     [31m×[31m exposes profile landmarks and action links by accessible role/name[39m[32m 17[2mms[22m[39m
+[31m     [31m×[31m has no obvious accessibility violations in the learner profile shell[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m supports keyboard-triggered login action in local mode[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m exposes skip navigation, landmarks, and labeled home controls on the game page[39m[32m 9[2mms[22m[39m
+[31m     [31m×[31m keeps entry-screen back navigation discoverable by accessible name on the game page[39m[32m 4[2mms[22m[39m
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/products/hooks/useProductFormValidator.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 43[2mms[22m[39m
+[31m     [31m×[31m uses the global formatter default instead of stale draft formatter flags[39m[32m 31[2mms[22m[39m
+[31m     [31m×[31m resets formatter state back to the global default when a new draft opens[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m auto-applies category replacements when formatter is enabled[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m auto-applies non-runtime SKU replacements when formatter is enabled[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m applies SKU issue replacements when formatter is turned on during an open session[39m[32m 3[2mms[22m[39m

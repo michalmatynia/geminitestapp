@@ -4,6 +4,11 @@ import type { PlaywrightListingJobInput as _PlaywrightListingJobInput } from '@/
 import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Builds a standardized source string for logging: 'integrations.playwright-listing.<action>'
+ */
+const buildPlaywrightSource = (action: string): string => `integrations.playwright-listing.${action}`;
+
 type PlaywrightListingQueueJobData = {
   listingId: string;
   action: 'list' | 'relist';
@@ -37,17 +42,15 @@ const queue: ManagedQueue<PlaywrightListingQueueJobData> =
     },
     onCompleted: async (jobId: string, _result: unknown, data: PlaywrightListingQueueJobData) => {
       await ErrorSystem.logInfo('Programmable Playwright listing job completed', {
-        service: 'playwright-programmable-listing-queue',
+        service: buildPlaywrightSource(data.action),
         listingId: data.listingId,
-        action: data.action,
         jobId,
       });
     },
     onFailed: async (jobId: string, error: Error, data: PlaywrightListingQueueJobData) => {
       await ErrorSystem.captureException(error, {
-        service: 'playwright-programmable-listing-queue',
+        service: buildPlaywrightSource(data.action),
         listingId: data.listingId,
-        action: data.action,
         jobId,
       });
       // When the worker is killed mid-job (stall), processPlaywrightListingJob never runs to
@@ -83,9 +86,8 @@ export const enqueuePlaywrightListingJob = async (
     jobId,
   });
   await ErrorSystem.logInfo('Programmable Playwright listing job queued', {
-    service: 'playwright-programmable-listing-queue',
+    service: buildPlaywrightSource(data.action),
     listingId: data.listingId,
-    action: data.action,
     jobId: queuedJobId,
   });
   return queuedJobId;

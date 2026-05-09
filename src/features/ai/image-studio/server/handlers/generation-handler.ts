@@ -14,7 +14,10 @@ import {
   configurationError,
   operationFailedError,
 } from '@/shared/errors/app-error';
-import { readBrainProviderCredentialForAssignment } from '@/shared/lib/ai-brain/provider-credentials';
+import {
+  createBrainProviderCredentialFingerprint,
+  readBrainProviderCredentialForAssignment,
+} from '@/shared/lib/ai-brain/provider-credentials';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 
 import {
@@ -439,6 +442,9 @@ export async function executeGenerationOperation(params: {
       operation: 'generate',
       modelRequested: resolvedModel,
       modelUsed,
+      credentialSource: credentialResolution.source,
+      credentialSourceKey: credentialResolution.sourceKey,
+      credentialFingerprint: createBrainProviderCredentialFingerprint(apiKey),
       outputFormat: effectiveFormat,
       requestedOutputCount: Math.max(
         1,

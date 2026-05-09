@@ -9,6 +9,7 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
 }));
 
 import {
+  createBrainProviderCredentialFingerprint,
   readBrainProviderCredential,
   readBrainProviderCredentialForAssignment,
   resolveBrainProviderCredential,
@@ -79,6 +80,11 @@ describe('Brain provider credentials', () => {
       sourceKey: 'assignment.apiKey',
     });
     expect(readStoredSettingValueMock).not.toHaveBeenCalled();
+  });
+
+  it('creates a stable non-secret fingerprint for configured credentials', () => {
+    expect(createBrainProviderCredentialFingerprint(' test-key ')).toBe('sha256:62af8704764f');
+    expect(createBrainProviderCredentialFingerprint('')).toBeNull();
   });
 
   it('throws a Brain-owned configuration error when a provider credential is missing', async () => {

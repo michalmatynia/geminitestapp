@@ -9,6 +9,9 @@ export type ImageStudioGenerationExecutionMeta = {
   operation: 'generate';
   modelRequested: string;
   modelUsed: string;
+  credentialSource: 'assignment' | 'brain' | 'env' | 'missing';
+  credentialSourceKey: string | null;
+  credentialFingerprint: string | null;
   outputFormat: 'png' | 'jpeg' | 'webp';
   requestedOutputCount: number;
   responseImageCount: number;

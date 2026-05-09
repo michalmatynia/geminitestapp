@@ -22,6 +22,8 @@ describe('openai billing error normalization', () => {
     });
 
     expect(message).toContain('Image Studio route API key override');
+    expect(message).toContain('credential fingerprint sha256:62af8704764f');
+    expect(message).not.toContain('test-key');
     expect(message).toContain('same org/project as the key');
     expect(message).toContain('https://platform.openai.com/settings/organization/limits');
     expect(message).toContain('/admin/brain?tab=routing');
@@ -43,6 +45,7 @@ describe('openai billing error normalization', () => {
       provider: 'openai',
       reason: 'billing_hard_limit',
       credentialSource: 'brain',
+      credentialFingerprint: 'sha256:62af8704764f',
     });
   });
 });

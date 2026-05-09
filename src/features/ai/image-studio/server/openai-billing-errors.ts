@@ -1,5 +1,7 @@
-import type { BrainProviderCredentialResolution } from '@/shared/lib/ai-brain/provider-credentials';
-import { createBrainProviderCredentialFingerprint } from '@/shared/lib/ai-brain/provider-credentials';
+import {
+  createBrainProviderCredentialFingerprint,
+  type BrainProviderCredentialResolution,
+} from '@/shared/lib/ai-brain/provider-credentials';
 import { quotaExceededError, type AppError } from '@/shared/errors/app-error';
 
 const OPENAI_HARD_LIMIT_REGEX = /billing hard limit has been reached/i;
@@ -40,15 +42,13 @@ export const buildOpenAiBillingHardLimitMessage = (
   const sourceLabel = resolveCredentialSourceLabel(credential);
   const fingerprint = resolveCredentialFingerprint(credential);
   const fingerprintText =
-    fingerprint === null ? '' : `Credential fingerprint: ${fingerprint}. `;
-  return (
-    `OpenAI rejected Image Studio generation because the API key source (${sourceLabel}) ` +
-    fingerprintText +
-    'has reached a billing hard limit. Check the OpenAI project and organization for that exact key, ' +
-    'including project Limits, organization Usage limits, billing/payment status, and whether you are viewing the same org/project as the key. ' +
-    `OpenAI limits: ${OPENAI_LIMITS_URL}. OpenAI billing: ${OPENAI_BILLING_URL}. ` +
-    `AI Brain route/provider keys: ${AI_BRAIN_ROUTING_URL}, ${AI_BRAIN_PROVIDERS_URL}.`
-  );
+    fingerprint === null ? '' : `with credential fingerprint ${fingerprint} `;
+  return [
+    `OpenAI rejected Image Studio generation because the API key source (${sourceLabel}) ${fingerprintText}has reached a billing hard limit.`,
+    'Check the OpenAI project and organization for that exact key, including project Limits, organization Usage limits, billing/payment status, and whether you are viewing the same org/project as the key.',
+    `OpenAI limits: ${OPENAI_LIMITS_URL}. OpenAI billing: ${OPENAI_BILLING_URL}.`,
+    `AI Brain route/provider keys: ${AI_BRAIN_ROUTING_URL}, ${AI_BRAIN_PROVIDERS_URL}.`,
+  ].join(' ');
 };
 
 export const normalizeOpenAiBillingHardLimitError = (

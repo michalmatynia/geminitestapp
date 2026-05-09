@@ -11,6 +11,12 @@ import { API_KEY_PLACEHOLDERS, type AssignmentPatchHandler } from './AssignmentE
 const hasApiKeyOverride = (assignment: AiBrainAssignment): boolean =>
   typeof assignment.apiKey === 'string' && assignment.apiKey.trim().length > 0;
 
+const summarizeApiKeyOverride = (apiKey: string | undefined): string => {
+  const normalized = typeof apiKey === 'string' ? apiKey.trim() : '';
+  if (normalized.length === 0) return 'set';
+  return normalized.length <= 4 ? 'set' : `ending in ${normalized.slice(-4)}`;
+};
+
 export function ApiKeyField(props: {
   assignment: AiBrainAssignment;
   disabled: boolean;
@@ -20,7 +26,7 @@ export function ApiKeyField(props: {
   const { assignment, disabled, selectedVendor, updateField } = props;
   const overrideActive = hasApiKeyOverride(assignment);
   const helpText = overrideActive
-    ? 'Route API key override is active. This takes precedence over AI Brain provider settings and OPENAI_API_KEY.'
+    ? `Route API key override is active (${summarizeApiKeyOverride(assignment.apiKey)}). This takes precedence over AI Brain provider settings and OPENAI_API_KEY.`
     : 'No route API key override is set. Brain will use provider settings, then OPENAI_API_KEY.';
   return (
     <div className='space-y-2 md:col-span-2'>

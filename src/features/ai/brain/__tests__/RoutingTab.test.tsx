@@ -382,6 +382,7 @@ describe('RoutingTab', () => {
     expect(
       within(modal).getByText(/Route API key override is active/)
     ).toBeInTheDocument();
+    expect(within(modal).getByText(/ending in -key/)).toBeInTheDocument();
     fireEvent.click(within(modal).getByRole('button', { name: 'Clear route API key override' }));
     fireEvent.click(within(modal).getByRole('button', { name: 'Apply' }));
 

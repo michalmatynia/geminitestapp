@@ -24,19 +24,35 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 
+/**
+ * Resolves the OpenAI API key from AI Brain settings or environment.
+ * 
+ * @returns The resolved OpenAI API key.
+ */
 const resolveOpenAiApiKey = async (): Promise<string> => {
   return resolveBrainProviderCredential('openai');
 };
 
+/**
+ * Extracts an embedding vector from various known API response shapes.
+ * Handles differences between Ollama and OpenAI response formats.
+ * 
+ * @param payload - The raw API response payload.
+ * @returns The extracted embedding as a number array, or null if not found.
+ */
 const extractEmbedding = (payload: unknown): number[] | null => {
   if (!payload || typeof payload !== 'object') return null;
   const record = payload as Record<string, unknown>;
+
+  // Case 1: Standard 'embedding' field (Ollama/OpenAI)
   if (Array.isArray(record['embedding'])) {
     const vector = (record['embedding'] as unknown[]).filter(
       (value: unknown): value is number => typeof value === 'number'
     );
     return vector.length > 0 ? vector : null;
   }
+
+  // Case 2: Nested 'embeddings' array (Batch or alternative Ollama format)
   if (Array.isArray(record['embeddings']) && Array.isArray(record['embeddings'][0])) {
     const vector = (record['embeddings'][0] as unknown[]).filter(
       (value: unknown): value is number => typeof value === 'number'
@@ -46,6 +62,14 @@ const extractEmbedding = (payload: unknown): number[] | null => {
   return null;
 };
 
+/**
+ * Generates an embedding vector for the provided text using the specified model.
+ * Automatically routes the request to either OpenAI or Ollama based on the model ID.
+ * 
+ * @param input - Object containing modelId and the text to embed.
+ * @returns The generated embedding vector.
+ * @throws {AppError} If configuration is invalid or embedding generation fails.
+ */
 export const generateBrainEmbedding = async (input: {
   modelId: string;
   text: string;
@@ -58,6 +82,7 @@ export const generateBrainEmbedding = async (input: {
   const vendor = inferBrainRuntimeVendor(modelId);
   const normalizedModelId = normalizeBrainRuntimeModelId(modelId);
 
+  // Route to OpenAI
   if (vendor === 'openai') {
     const client = new OpenAI({ apiKey: await resolveOpenAiApiKey() });
     const response = await client.embeddings.create({
@@ -71,12 +96,14 @@ export const generateBrainEmbedding = async (input: {
     return embedding;
   }
 
+  // Currently only OpenAI and Ollama are supported for embeddings in this runtime
   if (vendor !== 'ollama') {
     throw configurationError(
       `Embeddings are not supported for Brain-assigned provider "${vendor}" in this runtime.`
     );
   }
 
+  // Ollama has multiple potential endpoints and request shapes depending on version
   const candidates: Array<{ url: string; body: Record<string, unknown> }> = [
     {
       url: `${OLLAMA_BASE_URL}/api/embeddings`,
@@ -97,6 +124,7 @@ export const generateBrainEmbedding = async (input: {
   ];
 
   let lastError: string | null = null;
+  // Iterate through candidates until one succeeds
   for (const candidate of candidates) {
     try {
       const response = await fetch(candidate.url, {

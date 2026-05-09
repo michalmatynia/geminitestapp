@@ -229,7 +229,7 @@ export async function buildLoopGuardReview({
         : [];
     if (action === 'replan' && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
-        meta?.alternatives ?? undefined,
+        meta.alternatives ?? undefined,
         maxStepAttempts,
         maxSteps
       );
@@ -238,7 +238,7 @@ export async function buildLoopGuardReview({
       }
     }
     const agentAuditLog = getAgentAuditLogDelegate();
-    if (agentAuditLog && runId !== null) {
+    if (agentAuditLog && runId !== undefined) {
       await agentAuditLog.create({
         data: {
           runId,
@@ -246,7 +246,7 @@ export async function buildLoopGuardReview({
           message: 'Loop guard completed.',
           metadata: {
             action,
-            reason: parsed.reason !== null ? parsed.reason : null,
+            reason: parsed.reason ?? null,
             loop: loopSignal,
           },
         },
@@ -254,7 +254,7 @@ export async function buildLoopGuardReview({
     }
     return {
       action,
-      ...(parsed.reason && { reason: parsed.reason }),
+      ...(parsed.reason !== undefined && parsed.reason !== '' && { reason: parsed.reason }),
       questions: normalizeStringList(parsed.questions),
       evidence: normalizeStringList(parsed.evidence),
       steps,

@@ -135,10 +135,10 @@ vi.mock('./shipping-group', () => ({
 }));
 
 vi.mock('./price', () => ({
-  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'SEK',
-  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'SEK') =>
+  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'EUR',
+  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'EUR') =>
     `FAIL_PRICE_RESOLUTION: Tradera export requires a ${currencyCode} listing price. Add a ${currencyCode} price group to the product catalog and retry.`,
-  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'SEK') => {
+  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'EUR') => {
     if (currencyCode === 'SEK') {
       return String(Math.max(1, Math.round(value)));
     }
@@ -159,8 +159,8 @@ import { TRADERA_CHECK_STATUS_SCRIPT } from './check-status-script';
 
 const EXPECTED_TRADERA_PRICING_METADATA = {
   listingPrice: 55,
-  listingCurrencyCode: 'SEK',
-  targetCurrencyCode: 'SEK',
+  listingCurrencyCode: 'EUR',
+  targetCurrencyCode: 'EUR',
   resolvedToTargetCurrency: true,
   basePrice: 123,
   baseCurrencyCode: 'PLN',
@@ -270,8 +270,8 @@ beforeEach(() => {
   });
   resolveTraderaListingPriceForProductMock.mockResolvedValue({
     listingPrice: 55,
-    listingCurrencyCode: 'SEK',
-    targetCurrencyCode: 'SEK',
+    listingCurrencyCode: 'EUR',
+    targetCurrencyCode: 'EUR',
     resolvedToTargetCurrency: true,
     basePrice: 123,
     baseCurrencyCode: 'PLN',
@@ -331,7 +331,12 @@ beforeEach(() => {
         emulateDevice: false,
         deviceName: 'Desktop Chrome',
       },
-      rawResult: { listingUrl: 'https://www.tradera.com/item/456' },
+      rawResult: {
+        listingUrl: 'https://www.tradera.com/item/456',
+        paymentSolutionTermsAccepted: true,
+        retryAfterPaymentSolutionTerms: true,
+        initialPublishInteractionReason: 'timeout',
+      },
     });
 
     const result = await runTraderaBrowserListing({
@@ -374,7 +379,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v154',
+        scriptMarker: 'tradera-quicklist-default:v158',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -398,10 +403,18 @@ beforeEach(() => {
           emulateDevice: false,
           deviceName: 'Desktop Chrome',
         },
-        rawResult: { listingUrl: 'https://www.tradera.com/item/456' },
+        rawResult: {
+          listingUrl: 'https://www.tradera.com/item/456',
+          paymentSolutionTermsAccepted: true,
+          retryAfterPaymentSolutionTerms: true,
+          initialPublishInteractionReason: 'timeout',
+        },
         latestStage: null,
         latestStageUrl: null,
         publishVerified: true,
+        paymentSolutionTermsAccepted: true,
+        retryAfterPaymentSolutionTerms: true,
+        initialPublishInteractionReason: 'timeout',
         imageInputSource: 'local',
         imageUploadSource: null,
         localImagePathCount: 1,
@@ -498,7 +511,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v154',
+        scriptMarker: 'tradera-quicklist-default:v158',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -577,7 +590,7 @@ beforeEach(() => {
     });
 
     const staleMarkedManagedScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT
-      .replace('tradera-quicklist-default:v154', 'tradera-quicklist-default:v149')
+      .replace('tradera-quicklist-default:v158', 'tradera-quicklist-default:v149')
       .replace(
         'let currentImageUploadSource = null;\n\n  try {',
         'try {\n    emitStage(\'draft_cleared\');\n\n    let currentImageUploadSource = null;'
@@ -1094,7 +1107,7 @@ beforeEach(() => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v154',
+      'tradera-quicklist-default:v158',
       'tradera-quicklist-default:v89'
     );
 
@@ -1279,7 +1292,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v154',
+        scriptMarker: 'tradera-quicklist-default:v158',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',

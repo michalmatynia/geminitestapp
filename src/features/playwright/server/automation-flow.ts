@@ -156,6 +156,7 @@ const setValueAtPath = (
     .filter((segment) => segment.length > 0);
 
   if (segments.length === 0) {
+    // Path string cannot be empty or contain only whitespace
     throw new Error('Automation flow paths must not be empty.');
   }
 
@@ -228,6 +229,7 @@ const resolveDraftPayload = (
     return buildPlaywrightProductDraftInput(value.mappedProduct, value.defaults);
   }
   if (!isObjectRecord(value)) {
+    // create_draft block payload must be an object with draft properties
     throw new Error('Automation flow create_draft blocks require an object payload.');
   }
   return value as Parameters<typeof createDraft>[0];

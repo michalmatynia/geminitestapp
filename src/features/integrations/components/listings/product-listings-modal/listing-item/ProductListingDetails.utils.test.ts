@@ -79,6 +79,9 @@ describe('ProductListingDetails.utils', () => {
             selectorProfileResolved: 'profile-market-b',
             duplicateIgnoredNonExactCandidateCount: 2,
             duplicateIgnoredCandidateTitles: ['Primary One', 'Primary Two'],
+            paymentSolutionTermsAccepted: true,
+            retryAfterPaymentSolutionTerms: true,
+            initialPublishInteractionReason: 'payment-terms-accepted-retry-needed',
             rawResult: {
               stage: 'duplicate_checked',
               duplicateIgnoredNonExactCandidateCount: 5,
@@ -87,6 +90,9 @@ describe('ProductListingDetails.utils', () => {
                 'Fallback Two',
                 'Fallback Three',
               ],
+              paymentSolutionTermsAccepted: false,
+              retryAfterPaymentSolutionTerms: false,
+              initialPublishInteractionReason: 'fallback-reason',
             },
             logTail: [
               '[user] tradera.quicklist.start {"listingAction":"list"}',
@@ -102,6 +108,11 @@ describe('ProductListingDetails.utils', () => {
     expect(summary.resolvedSelectorProfile).toBe('profile-market-b');
     expect(summary.duplicateIgnoredNonExactCandidateCount).toBe(2);
     expect(summary.duplicateIgnoredCandidateTitles).toEqual(['Primary One', 'Primary Two']);
+    expect(summary.paymentSolutionTermsAccepted).toBe(true);
+    expect(summary.retryAfterPaymentSolutionTerms).toBe(true);
+    expect(summary.initialPublishInteractionReason).toBe(
+      'payment-terms-accepted-retry-needed'
+    );
   });
 
   it('treats duplicate-linked publish verification as not applicable', () => {

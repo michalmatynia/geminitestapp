@@ -51,7 +51,7 @@ const parseContextRegistryPayload = (
 
   const parsed = contextRegistryConsumerEnvelopeSchema.safeParse(input);
   if (!parsed.success) {
-    throw badRequestError('Invalid context registry payload.');
+    throw badRequestError('Invalid context registry payload. The contextRegistry field must conform to the ContextRegistryConsumerEnvelope schema.', { errors: parsed.error.format() });
   }
 
   return parsed.data;
@@ -149,7 +149,7 @@ export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Pro
           messages = JSON.parse(rawMessages) as IncomingChatMessage[];
         } catch (error) {
           void ErrorSystem.captureException(error);
-          throw badRequestError('Invalid messages payload.');
+          throw badRequestError('Invalid messages payload. The "messages" form field must be a valid JSON array of chat message objects.');
         }
       }
 
@@ -163,16 +163,16 @@ export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Pro
       const rawContextRegistry = formData.get('contextRegistry');
       if (rawContextRegistry !== null) {
         if (typeof rawContextRegistry !== 'string') {
-          throw badRequestError('Invalid context registry payload.');
+          throw badRequestError('Invalid context registry payload. The "contextRegistry" form field must be a JSON string, not a file or binary value.');
         }
         try {
           contextRegistry = parseContextRegistryPayload(JSON.parse(rawContextRegistry));
         } catch (error) {
           void ErrorSystem.captureException(error);
-          if (error instanceof Error && error.message === 'Invalid context registry payload.') {
+          if (error instanceof Error && error.message.startsWith('Invalid context registry payload')) {
             throw error;
           }
-          throw badRequestError('Invalid context registry payload.');
+          throw badRequestError('Invalid context registry payload. The "contextRegistry" form field could not be parsed as JSON. Ensure it is a valid JSON-encoded ContextRegistryConsumerEnvelope string.');
         }
       }
 
@@ -277,11 +277,11 @@ export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Pro
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      throw badRequestError('No messages provided.');
+      throw badRequestError('No messages provided. The request must include at least one message in the messages array.');
     }
 
     if (messages.length > 60) {
-      throw badRequestError('Too many messages provided.');
+      throw badRequestError(`Too many messages provided (${messages.length}). The maximum allowed conversation length is 60 messages.`);
     }
 
     const hasValidMessages = messages.every(
@@ -292,11 +292,11 @@ export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Pro
     );
 
     if (!hasValidMessages) {
-      throw badRequestError('Invalid message payload.');
+      throw badRequestError('Invalid message payload. Each message must have a non-empty "role" string and a non-empty "content" string.');
     }
 
     if (messages.some((message: IncomingChatMessage) => message.content.length > 10000)) {
-      throw badRequestError('Message content too large.');
+      throw badRequestError('Message content too large. Each message content must be 10,000 characters or fewer.');
     }
 
     const brainConfig = await resolveBrainModelExecutionConfig('chatbot', {

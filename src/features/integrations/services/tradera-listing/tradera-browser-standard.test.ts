@@ -42,6 +42,146 @@ vi.mock('@/shared/lib/playwright/runtime', () => ({
   getPlaywrightDevicesCatalog: () => ({}),
 }));
 
+vi.mock('@/features/playwright/server', () => {
+  const buildNativeMetadata = ({
+    additional,
+    session,
+  }: {
+    additional?: Record<string, unknown>;
+    session: {
+      effectiveBrowserMode: 'headed' | 'headless';
+      effectiveBrowserPreference: string;
+      requestedBrowserMode: string | null;
+      requestedBrowserPreference: string | null;
+      sessionMetadata: Record<string, unknown>;
+    };
+  }) => ({
+    browserMode: session.effectiveBrowserMode,
+    requestedBrowserMode: session.requestedBrowserMode,
+    browserPreference: session.effectiveBrowserPreference,
+    requestedBrowserPreference: session.requestedBrowserPreference,
+    browserLabel: 'Chromium',
+    fallbackMessages: [],
+    playwright: session.sessionMetadata,
+    ...(additional ?? {}),
+  });
+
+  return {
+    buildPlaywrightNativeTaskResult: (input: {
+      session: Parameters<typeof buildNativeMetadata>[0]['session'];
+      externalListingId: string | null;
+      listingUrl?: string | null;
+      completedAt?: string | null;
+      simulated?: boolean;
+      metadata?: Record<string, unknown>;
+    }) => ({
+      externalListingId: input.externalListingId,
+      ...(input.listingUrl ? { listingUrl: input.listingUrl } : {}),
+      ...(input.completedAt ? { completedAt: input.completedAt } : {}),
+      ...(typeof input.simulated === 'boolean' ? { simulated: input.simulated } : {}),
+      metadata: buildNativeMetadata({
+        session: input.session,
+        additional: input.metadata,
+      }),
+    }),
+    createPlaywrightNativeTaskInternalError: (
+      message: string,
+      input: {
+        session: Parameters<typeof buildNativeMetadata>[0]['session'];
+        additional?: Record<string, unknown>;
+      }
+    ) =>
+      Object.assign(new Error(message), {
+        meta: buildNativeMetadata({
+          session: input.session,
+          additional: input.additional,
+        }),
+      }),
+    createTraderaStandardListingPlaywrightInstance: (input: Record<string, unknown> = {}) => ({
+      kind: 'tradera_standard_listing',
+      family: 'listing',
+      ...input,
+    }),
+    persistPlaywrightConnectionStorageState: async (input: {
+      connectionId: string;
+      repo: {
+        updateConnection: (connectionId: string, patch: Record<string, unknown>) => Promise<unknown>;
+      };
+      storageState: unknown;
+      updatedAt: string;
+    }) => {
+      await input.repo.updateConnection(input.connectionId, {
+        playwrightStorageState: encryptSecretMock(JSON.stringify(input.storageState)),
+        playwrightStorageStateUpdatedAt: input.updatedAt,
+      });
+    },
+    runPlaywrightConnectionNativeTask: async (input: {
+      connection: { id: string };
+      execute: (session: Record<string, unknown>) => Promise<unknown>;
+      instance: Record<string, unknown>;
+      requestedBrowserMode?: string;
+      requestedBrowserPreference?: string;
+      buildErrorAdditional?: (input: {
+        error: unknown;
+        session: Record<string, unknown>;
+      }) => Promise<Record<string, unknown> | void> | Record<string, unknown> | void;
+      getErrorMessage?: (error: unknown) => string;
+    }) => {
+      const runtimeSettings = await resolveConnectionPlaywrightSettingsMock(input.connection);
+      const browser = await chromiumLaunchMock();
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const session = {
+        browser,
+        close: async () => {
+          await context.close?.();
+          await browser.close?.();
+        },
+        context,
+        effectiveBrowserMode: runtimeSettings.headless ? 'headless' : 'headed',
+        effectiveBrowserPreference: runtimeSettings.browser ?? 'chromium',
+        page,
+        requestedBrowserMode: input.requestedBrowserMode ?? null,
+        requestedBrowserPreference: input.requestedBrowserPreference ?? null,
+        runtime: {
+          browserPreference: runtimeSettings.browser ?? 'chromium',
+          deviceContext: null,
+          settings: runtimeSettings,
+        },
+        sessionMetadata: {
+          browserLabel: 'Chromium',
+          fallbackMessages: [],
+          instance: input.instance,
+          resolvedBrowserPreference: runtimeSettings.browser ?? 'chromium',
+          personaId: runtimeSettings.identityProfile ?? null,
+          deviceProfileName: runtimeSettings.deviceName ?? null,
+        },
+      };
+
+      try {
+        return await input.execute(session);
+      } catch (error) {
+        const additional = (await input.buildErrorAdditional?.({
+          error,
+          session,
+        })) ?? {};
+        const wrappedError =
+          error instanceof Error
+            ? error
+            : new Error(input.getErrorMessage?.(error) ?? 'Native browser task failed');
+        throw Object.assign(wrappedError, {
+          meta: buildNativeMetadata({
+            session,
+            additional,
+          }),
+        });
+      } finally {
+        await session.close();
+      }
+    },
+  };
+});
+
 vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
   parsePersistedStorageState: (...args: unknown[]) => parsePersistedStorageStateMock(...args),
   resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
@@ -58,6 +198,12 @@ vi.mock('@/features/integrations/services/integration-repository', () => ({
   }),
 }));
 
+vi.mock('@/features/integrations/server', () => ({
+  getIntegrationRepository: async () => ({
+    updateConnection: (...args: unknown[]) => updateConnectionMock(...args),
+  }),
+}));
+
 vi.mock('@/shared/lib/products/services/product-repository', () => ({
   getProductRepository: async () => ({
     getProductById: (...args: unknown[]) => getProductByIdMock(...args),
@@ -65,10 +211,10 @@ vi.mock('@/shared/lib/products/services/product-repository', () => ({
 }));
 
 vi.mock('./price', () => ({
-  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'SEK',
-  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'SEK') =>
+  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'EUR',
+  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'EUR') =>
     `FAIL_PRICE_RESOLUTION: Tradera export requires a ${currencyCode} listing price. Add a ${currencyCode} price group to the product catalog and retry.`,
-  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'SEK') => {
+  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'EUR') => {
     if (currencyCode === 'SEK') {
       return String(Math.max(1, Math.round(value)));
     }
@@ -137,8 +283,8 @@ describe('runTraderaBrowserListingStandard', () => {
     });
     resolveTraderaListingPriceForProductMock.mockResolvedValue({
       listingPrice: 55,
-      listingCurrencyCode: 'SEK',
-      targetCurrencyCode: 'SEK',
+      listingCurrencyCode: 'EUR',
+      targetCurrencyCode: 'EUR',
       resolvedToTargetCurrency: true,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -181,7 +327,7 @@ describe('runTraderaBrowserListingStandard', () => {
     });
   });
 
-  it('fills the standard Tradera form with the resolved SEK price and returns pricing metadata', async () => {
+  it('fills the standard Tradera form with the resolved EUR price and returns pricing metadata', async () => {
     let currentUrl = 'https://www.tradera.com/en/selling/new';
     const titleFillMock = vi.fn().mockResolvedValue(undefined);
     const descriptionFillMock = vi.fn().mockResolvedValue(undefined);
@@ -252,7 +398,7 @@ describe('runTraderaBrowserListingStandard', () => {
     });
     expect(resolveTraderaListingPriceForProductMock).toHaveBeenCalledWith({
       product: expect.objectContaining({ id: 'product-1' }),
-      targetCurrencyCode: 'SEK',
+      targetCurrencyCode: 'EUR',
     });
     expect(descriptionFillMock).toHaveBeenCalledWith(
       'Example description | Product ID: product-1 | SKU: KEYCHA1266'
@@ -288,8 +434,8 @@ describe('runTraderaBrowserListingStandard', () => {
           }),
         }),
         listingPrice: 55,
-        listingCurrencyCode: 'SEK',
-        targetCurrencyCode: 'SEK',
+        listingCurrencyCode: 'EUR',
+        targetCurrencyCode: 'EUR',
         resolvedToTargetCurrency: true,
         basePrice: 123,
         baseCurrencyCode: 'PLN',
@@ -323,6 +469,376 @@ describe('runTraderaBrowserListingStandard', () => {
       ]);
     expect(contextCloseMock).toHaveBeenCalled();
     expect(browserCloseMock).toHaveBeenCalled();
+  });
+
+  it('accepts Tradera payment solution terms and retries standard publish when required', async () => {
+    let currentUrl = 'https://www.tradera.com/en/selling/new';
+    let modalVisible = false;
+    let checkboxChecked = false;
+    let submitClickCount = 0;
+    const titleFillMock = vi.fn().mockResolvedValue(undefined);
+    const descriptionFillMock = vi.fn().mockResolvedValue(undefined);
+    const priceFillMock = vi.fn().mockResolvedValue(undefined);
+    const checkboxCheckMock = vi.fn().mockImplementation(async () => {
+      checkboxChecked = true;
+    });
+    const continueClickMock = vi.fn().mockImplementation(async () => {
+      modalVisible = false;
+    });
+    const submitClickMock = vi.fn().mockImplementation(async () => {
+      submitClickCount += 1;
+      if (submitClickCount === 1) {
+        modalVisible = true;
+      } else {
+        currentUrl = 'https://www.tradera.com/item/987656';
+      }
+    });
+    const storageStateMock = vi.fn().mockResolvedValue({ cookies: [], origins: [] });
+    const browserCloseMock = vi.fn().mockResolvedValue(undefined);
+    const contextCloseMock = vi.fn().mockResolvedValue(undefined);
+
+    const checkboxLocator = {
+      isVisible: vi.fn().mockResolvedValue(true),
+      isChecked: vi.fn().mockImplementation(async () => checkboxChecked),
+      check: checkboxCheckMock,
+    };
+    const continueButtonLocator = {
+      isVisible: vi.fn().mockResolvedValue(true),
+      click: continueClickMock,
+    };
+    const dialogLocator = {
+      isVisible: vi.fn().mockImplementation(async () => modalVisible),
+      innerText: vi.fn().mockResolvedValue(
+        "Tradera's payment solution Security for payment is important at Tradera, therefore you need to approve the terms of the payment solution. I accept terms and conditions for Tradera's payment solution and certify that I am shopping on my own behalf Continue"
+      ),
+      getByRole: vi.fn((role: string) =>
+        role === 'checkbox' ? { first: () => checkboxLocator } : { first: () => continueButtonLocator }
+      ),
+      waitFor: vi.fn().mockResolvedValue(undefined),
+    };
+    const pageMock = {
+      url: () => currentUrl,
+      waitForNavigation: vi.fn(
+        () => new Promise((resolve) => setTimeout(() => resolve(null), 300))
+      ),
+      locator: vi.fn(() => ({
+        innerText: vi.fn().mockImplementation(async () =>
+          modalVisible
+            ? "Tradera's payment solution approve the terms of the payment solution Continue"
+            : ''
+        ),
+      })),
+      getByRole: vi.fn((role: string) =>
+        role === 'dialog'
+          ? {
+              count: vi.fn().mockResolvedValue(modalVisible ? 1 : 0),
+              nth: vi.fn(() => dialogLocator),
+            }
+          : { count: vi.fn().mockResolvedValue(0), nth: vi.fn() }
+      ),
+    };
+
+    findVisibleLocatorMock
+      .mockResolvedValueOnce({ fill: titleFillMock })
+      .mockResolvedValueOnce({ fill: descriptionFillMock })
+      .mockResolvedValueOnce({ fill: priceFillMock })
+      .mockResolvedValueOnce({ click: submitClickMock });
+
+    chromiumLaunchMock.mockResolvedValue({
+      newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
+        setDefaultTimeout: vi.fn(),
+        setDefaultNavigationTimeout: vi.fn(),
+        newPage: vi.fn().mockResolvedValue(pageMock),
+        storageState: storageStateMock,
+        close: contextCloseMock,
+      }),
+      close: browserCloseMock,
+    });
+    extractExternalListingIdMock.mockImplementation((url: string) =>
+      url.endsWith('/987656') ? '987656' : null
+    );
+
+    const result = await runTraderaBrowserListingStandard({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+    });
+
+    expect(submitClickMock).toHaveBeenCalledTimes(2);
+    expect(checkboxCheckMock).toHaveBeenCalled();
+    expect(continueClickMock).toHaveBeenCalled();
+    expect(result).toMatchObject({
+      externalListingId: '987656',
+      listingUrl: 'https://www.tradera.com/item/987656',
+      metadata: expect.objectContaining({
+        paymentSolutionTermsAccepted: true,
+        retryAfterPaymentSolutionTerms: true,
+      }),
+    });
+  });
+
+  it('accepts Tradera payment solution terms from a non-ARIA modal container', async () => {
+    let currentUrl = 'https://www.tradera.com/en/selling/new';
+    let modalVisible = false;
+    let checkboxChecked = false;
+    let submitClickCount = 0;
+    const titleFillMock = vi.fn().mockResolvedValue(undefined);
+    const descriptionFillMock = vi.fn().mockResolvedValue(undefined);
+    const priceFillMock = vi.fn().mockResolvedValue(undefined);
+    const checkboxClickMock = vi.fn().mockImplementation(async () => {
+      checkboxChecked = true;
+    });
+    const continueClickMock = vi.fn().mockImplementation(async () => {
+      modalVisible = false;
+    });
+    const submitClickMock = vi.fn().mockImplementation(async () => {
+      submitClickCount += 1;
+      if (submitClickCount === 1) {
+        modalVisible = true;
+      } else {
+        currentUrl = 'https://www.tradera.com/item/987657';
+      }
+    });
+    const storageStateMock = vi.fn().mockResolvedValue({ cookies: [], origins: [] });
+    const browserCloseMock = vi.fn().mockResolvedValue(undefined);
+    const contextCloseMock = vi.fn().mockResolvedValue(undefined);
+    let hiddenLocator: {
+      isVisible: ReturnType<typeof vi.fn>;
+      first: ReturnType<typeof vi.fn>;
+    };
+    hiddenLocator = {
+      isVisible: vi.fn().mockResolvedValue(false),
+      first: vi.fn(() => hiddenLocator),
+    };
+    const checkboxLocator = {
+      isVisible: vi.fn().mockResolvedValue(true),
+      isChecked: vi.fn().mockImplementation(async () => checkboxChecked),
+      getAttribute: vi.fn().mockImplementation(async () => (checkboxChecked ? 'true' : 'false')),
+      check: vi.fn().mockRejectedValue(new Error('custom checkbox')),
+      click: checkboxClickMock,
+    };
+    const continueButtonLocator = {
+      isVisible: vi.fn().mockResolvedValue(true),
+      click: continueClickMock,
+    };
+    const dialogLocator = {
+      isVisible: vi.fn().mockImplementation(async () => modalVisible),
+      innerText: vi.fn().mockResolvedValue(
+        'Traderas betalningslösning Säkerhet för betalning är viktigt på Tradera. Jag godkänner villkoren för Traderas betalningslösning och intygar att jag handlar för egen räkning Fortsätt'
+      ),
+      getByRole: vi.fn((role: string) => {
+        if (role === 'button') return { first: () => continueButtonLocator };
+        return { first: () => hiddenLocator };
+      }),
+      locator: vi.fn((selector: string) =>
+        selector.includes('following::*')
+          ? { first: () => checkboxLocator }
+          : { first: () => hiddenLocator }
+      ),
+      waitFor: vi.fn().mockResolvedValue(undefined),
+    };
+    const modalCollection = {
+      count: vi.fn().mockImplementation(async () => (modalVisible ? 1 : 0)),
+      nth: vi.fn(() => dialogLocator),
+    };
+    const emptyCollection = {
+      count: vi.fn().mockResolvedValue(0),
+      nth: vi.fn(),
+    };
+    const pageMock = {
+      url: () => currentUrl,
+      waitForNavigation: vi.fn(
+        () => new Promise((resolve) => setTimeout(() => resolve(null), 300))
+      ),
+      locator: vi.fn((selector: string) => {
+        if (selector === 'body') {
+          return {
+            innerText: vi.fn().mockImplementation(async () =>
+              modalVisible
+                ? 'Traderas betalningslösning godkänner villkoren Fortsätt'
+                : ''
+            ),
+          };
+        }
+
+        if (selector.includes('[aria-modal="true"]')) {
+          return modalCollection;
+        }
+
+        return emptyCollection;
+      }),
+      getByRole: vi.fn((role: string) =>
+        role === 'dialog' ? emptyCollection : emptyCollection
+      ),
+    };
+
+    findVisibleLocatorMock
+      .mockResolvedValueOnce({ fill: titleFillMock })
+      .mockResolvedValueOnce({ fill: descriptionFillMock })
+      .mockResolvedValueOnce({ fill: priceFillMock })
+      .mockResolvedValueOnce({ click: submitClickMock });
+
+    chromiumLaunchMock.mockResolvedValue({
+      newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
+        setDefaultTimeout: vi.fn(),
+        setDefaultNavigationTimeout: vi.fn(),
+        newPage: vi.fn().mockResolvedValue(pageMock),
+        storageState: storageStateMock,
+        close: contextCloseMock,
+      }),
+      close: browserCloseMock,
+    });
+    extractExternalListingIdMock.mockImplementation((url: string) =>
+      url.endsWith('/987657') ? '987657' : null
+    );
+
+    const result = await runTraderaBrowserListingStandard({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+    });
+
+    expect(submitClickMock).toHaveBeenCalledTimes(2);
+    expect(checkboxClickMock).toHaveBeenCalled();
+    expect(continueClickMock).toHaveBeenCalled();
+    expect(result).toMatchObject({
+      externalListingId: '987657',
+      listingUrl: 'https://www.tradera.com/item/987657',
+      metadata: expect.objectContaining({
+        paymentSolutionTermsAccepted: true,
+        retryAfterPaymentSolutionTerms: true,
+      }),
+    });
+  });
+
+  it('accepts an already-visible Tradera payment solution modal before standard publish', async () => {
+    let currentUrl = 'https://www.tradera.com/en/selling/new';
+    let modalVisible = true;
+    let checkboxChecked = false;
+    const titleFillMock = vi.fn().mockResolvedValue(undefined);
+    const descriptionFillMock = vi.fn().mockResolvedValue(undefined);
+    const priceFillMock = vi.fn().mockResolvedValue(undefined);
+    const checkboxCheckMock = vi.fn().mockImplementation(async () => {
+      checkboxChecked = true;
+    });
+    const continueClickMock = vi.fn().mockImplementation(async () => {
+      modalVisible = false;
+    });
+    const submitClickMock = vi.fn().mockImplementation(async () => {
+      currentUrl = 'https://www.tradera.com/item/987658';
+    });
+    const storageStateMock = vi.fn().mockResolvedValue({ cookies: [], origins: [] });
+    const browserCloseMock = vi.fn().mockResolvedValue(undefined);
+    const contextCloseMock = vi.fn().mockResolvedValue(undefined);
+    const checkboxLocator = {
+      isVisible: vi.fn().mockResolvedValue(true),
+      isChecked: vi.fn().mockImplementation(async () => checkboxChecked),
+      check: checkboxCheckMock,
+    };
+    const continueButtonLocator = {
+      isVisible: vi.fn().mockResolvedValue(true),
+      click: continueClickMock,
+    };
+    const dialogLocator = {
+      isVisible: vi.fn().mockImplementation(async () => modalVisible),
+      innerText: vi.fn().mockResolvedValue(
+        "Tradera's payment solution Security for payment is important at Tradera, therefore you need to approve the terms of the payment solution. I accept terms and conditions for Tradera's payment solution and certify that I am shopping on my own behalf Continue"
+      ),
+      getByRole: vi.fn((role: string) =>
+        role === 'checkbox'
+          ? { first: () => checkboxLocator }
+          : { first: () => continueButtonLocator }
+      ),
+    };
+    const pageMock = {
+      url: () => currentUrl,
+      waitForNavigation: vi.fn(
+        () => new Promise((resolve) => setTimeout(() => resolve(null), 25))
+      ),
+      locator: vi.fn(() => ({
+        innerText: vi.fn().mockImplementation(async () =>
+          modalVisible
+            ? "Tradera's payment solution approve the terms of the payment solution Continue"
+            : ''
+        ),
+      })),
+      getByRole: vi.fn((role: string) =>
+        role === 'dialog'
+          ? {
+              count: vi.fn().mockImplementation(async () => (modalVisible ? 1 : 0)),
+              nth: vi.fn(() => dialogLocator),
+            }
+          : { count: vi.fn().mockResolvedValue(0), nth: vi.fn() }
+      ),
+    };
+
+    findVisibleLocatorMock
+      .mockResolvedValueOnce({ fill: titleFillMock })
+      .mockResolvedValueOnce({ fill: descriptionFillMock })
+      .mockResolvedValueOnce({ fill: priceFillMock })
+      .mockResolvedValueOnce({ click: submitClickMock });
+
+    chromiumLaunchMock.mockResolvedValue({
+      newContext: vi.fn().mockResolvedValue({
+        addInitScript: vi.fn().mockResolvedValue(undefined),
+        setDefaultTimeout: vi.fn(),
+        setDefaultNavigationTimeout: vi.fn(),
+        newPage: vi.fn().mockResolvedValue(pageMock),
+        storageState: storageStateMock,
+        close: contextCloseMock,
+      }),
+      close: browserCloseMock,
+    });
+    extractExternalListingIdMock.mockImplementation((url: string) =>
+      url.endsWith('/987658') ? '987658' : null
+    );
+
+    const result = await runTraderaBrowserListingStandard({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+    });
+
+    expect(submitClickMock).toHaveBeenCalledTimes(1);
+    expect(checkboxCheckMock).toHaveBeenCalled();
+    expect(continueClickMock).toHaveBeenCalled();
+    expect(result).toMatchObject({
+      externalListingId: '987658',
+      listingUrl: 'https://www.tradera.com/item/987658',
+      metadata: expect.objectContaining({
+        paymentSolutionTermsAccepted: true,
+        retryAfterPaymentSolutionTerms: false,
+      }),
+    });
   });
 
   it('normalizes pricing metadata identifiers before returning standard-mode results', async () => {
@@ -362,8 +878,8 @@ describe('runTraderaBrowserListingStandard', () => {
     );
     resolveTraderaListingPriceForProductMock.mockResolvedValueOnce({
       listingPrice: 55,
-      listingCurrencyCode: 'SEK',
-      targetCurrencyCode: 'SEK',
+      listingCurrencyCode: 'EUR',
+      targetCurrencyCode: 'EUR',
       resolvedToTargetCurrency: true,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -406,7 +922,7 @@ describe('runTraderaBrowserListingStandard', () => {
     expect(browserCloseMock).toHaveBeenCalled();
   });
 
-  it('fails with persisted metadata when the standard path cannot resolve SEK pricing', async () => {
+  it('fails with persisted metadata when the standard path cannot resolve EUR pricing', async () => {
     const browserCloseMock = vi.fn().mockResolvedValue(undefined);
     const contextCloseMock = vi.fn().mockResolvedValue(undefined);
 
@@ -426,7 +942,7 @@ describe('runTraderaBrowserListingStandard', () => {
     resolveTraderaListingPriceForProductMock.mockResolvedValueOnce({
       listingPrice: 123,
       listingCurrencyCode: 'PLN',
-      targetCurrencyCode: 'SEK',
+      targetCurrencyCode: 'EUR',
       resolvedToTargetCurrency: false,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -457,14 +973,14 @@ describe('runTraderaBrowserListingStandard', () => {
       })
     ).rejects.toMatchObject({
       message:
-        'FAIL_PRICE_RESOLUTION: Tradera export requires a SEK listing price. Add a SEK price group to the product catalog and retry.',
+        'FAIL_PRICE_RESOLUTION: Tradera export requires a EUR listing price. Add a EUR price group to the product catalog and retry.',
       meta: expect.objectContaining({
         mode: 'standard',
         browserMode: 'headless',
         requestedBrowserMode: 'connection_default',
         listingFormUrl: 'https://www.tradera.com/en/selling/new?categoryId=292904',
         listingCurrencyCode: 'PLN',
-        targetCurrencyCode: 'SEK',
+        targetCurrencyCode: 'EUR',
         priceResolutionReason: 'target_currency_unresolved',
       }),
     });

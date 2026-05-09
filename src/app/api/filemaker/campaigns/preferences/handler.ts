@@ -73,6 +73,7 @@ const persistPreferenceWrites = async (
 ): Promise<void> => {
   const persisted = await Promise.all(writes);
   if (persisted.some((entry) => !entry)) {
+    // One or more database write operations failed
     throw new Error(failureMessage);
   }
 };

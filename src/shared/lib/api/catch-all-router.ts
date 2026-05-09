@@ -1,13 +1,8 @@
 /**
- * Catch-All Router
- * 
- * Dynamic routing handler for catch-all API routes.
- * Provides:
- * - HTTP method routing (GET, POST, PUT, PATCH, DELETE)
- * - Path parameter extraction
- * - Method not allowed handling
- * - Not found error responses
- * - Type-safe route handler definitions
+ * @file catch-all-router.ts
+ * @description Dynamic routing handler for catch-all API routes in Next.js.
+ * This router allows defining complex path patterns with literals and parameters,
+ * and dispatches requests to the appropriate handlers based on HTTP methods.
  */
 
 import { type NextRequest } from 'next/server';
@@ -16,34 +11,67 @@ import type { StringRecord } from '@/shared/contracts/base';
 import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
+/** Supported HTTP methods for catch-all routes */
 export type CatchAllRouteMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+/** Record of dynamic path parameters extracted from the URL */
 export type CatchAllRouteParams = StringRecord;
+
+/** Shape of the params object passed to Next.js route handlers */
 export type CatchAllRoutePathParams = { path?: string[] | string };
+
+/** Type for individual route handlers within a catch-all module */
 export type CatchAllRouteHandler<P extends CatchAllRouteParams = CatchAllRouteParams> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
-// catch-all route modules define their own param shapes.
+
+/** 
+ * Module containing handlers for different HTTP methods.
+ * Usually returned by dynamic imports in route definitions.
+ */
 export type CatchAllRouteModule = Partial<Record<CatchAllRouteMethod, unknown>>;
+
+/** Token representing a required dynamic parameter in a path pattern */
 export type CatchAllRoutePatternParamToken = { param: string };
+
+/** Token representing a literal string in a path pattern */
 export type CatchAllRoutePatternLiteralToken = { literal: string; optional?: boolean };
+
+/** Token representing an optional dynamic parameter in a path pattern */
 export type CatchAllRoutePatternOptionalParamToken = { param: string; optional?: boolean };
+
+/** Tokens that can be used in a basic route pattern */
 export type CatchAllRoutePatternToken = string | CatchAllRoutePatternParamToken;
+
+/** Tokens that can be used in a route pattern with optional segments */
 export type CatchAllOptionalRoutePatternToken =
   | string
   | CatchAllRoutePatternLiteralToken
   | CatchAllRoutePatternOptionalParamToken;
+
+/** 
+ * Definition of a catch-all route, mapping a pattern to a handler module.
+ */
 export type CatchAllRouteDefinition<
   TPatternToken = CatchAllRoutePatternToken,
   TModule extends CatchAllRouteModule = CatchAllRouteModule,
 > = {
+  /** The sequence of tokens defining the path to match */
   pattern: TPatternToken[];
+  /** The module containing handlers, if already loaded */
   module?: TModule;
+  /** Async loader function to lazy-load the module */
   loader?: () => Promise<TModule>;
 };
 
 const HTTP_METHODS: CatchAllRouteMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
+/**
+ * Builds a standardized source identifier for observability.
+ * @param base The base identifier (e.g. "admin.cms")
+ * @param method The HTTP method
+ */
 export const buildCatchAllSource = (base: string, method: CatchAllRouteMethod): string =>
   `${base}.[[...path]].${method}`;
 
@@ -87,6 +115,11 @@ const dispatch = async (
   );
 };
 
+/**
+ * Extracts path segments from the request URL that follow the basePath.
+ * @param request The incoming request
+ * @param basePath The prefix to ignore (e.g. "/api/cms")
+ */
 export const getPathSegments = (request: NextRequest, basePath: string): string[] => {
   const pathname = request.nextUrl.pathname;
   if (!pathname.startsWith(basePath)) {
@@ -187,15 +220,25 @@ const matchParamToken = (args: {
   return args.segmentIndex + 1;
 };
 
+/**
+ * Attempts to match a list of path segments against a pattern.
+ * If successful, returns the extracted parameters.
+ * @param pattern Array of tokens representing the pattern
+ * @param segments Array of path segments from the URL
+ */
 export const matchCatchAllPattern = (
   pattern: CatchAllOptionalRoutePatternToken[],
   segments: string[]
 ): CatchAllRouteParams | null => {
   const params: CatchAllRouteParams = {};
   let segmentIndex = 0;
+  
+  // Iterate through each token in the pattern to match against segments
   for (const token of pattern) {
     const { isParam, key, optional } = normalizeToken(token);
     const currentSegment = resolveSegmentAt(segments, segmentIndex);
+    
+    // Attempt to match the current token (literal or parameter)
     const nextSegmentIndex = isParam
       ? matchParamToken({
           currentSegment,
@@ -212,12 +255,13 @@ export const matchCatchAllPattern = (
         });
 
     if (nextSegmentIndex === null) {
-      return null;
+      return null; // Pattern mismatch
     }
 
     segmentIndex = nextSegmentIndex;
   }
 
+  // Ensure all segments were consumed if they were not optional literals at the end
   if (segmentIndex !== segments.length) {
     return null;
   }
@@ -225,6 +269,15 @@ export const matchCatchAllPattern = (
   return params;
 };
 
+/**
+ * Main entry point for handling catch-all requests.
+ * Iterates through defined routes and dispatches to the first matching one.
+ * @param method HTTP method
+ * @param request NextRequest object
+ * @param segments Extracted path segments
+ * @param routes List of route definitions
+ * @param sourceBase Base identifier for observability
+ */
 export const handleCatchAllRequest = async (
   method: CatchAllRouteMethod,
   request: NextRequest,

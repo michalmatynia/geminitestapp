@@ -51,7 +51,7 @@ async function getHandler(
     where: { id: runId },
   });
   if (!run) {
-    throw notFoundError('Run not found.');
+    throw notFoundError(`Agent run "${runId}" not found. The run may have expired or the id is incorrect.`);
   }
   if (DEBUG_CHATBOT) {
     void ErrorSystem.logInfo('Run loaded', {
@@ -85,13 +85,13 @@ async function postHandler(
     body = (await req.json()) as typeof body;
   } catch (error) {
     logClientError(error);
-    throw badRequestError('Invalid JSON payload');
+    throw badRequestError('Invalid JSON payload. The request body must be a valid JSON object with an "action" field.');
   }
   if (
     !body.action ||
     !['stop', 'resume', 'retry_step', 'override_step', 'approve_step'].includes(body.action)
   ) {
-    throw badRequestError('Unsupported action.');
+    throw badRequestError(`Unsupported action "${body.action ?? ''}". Allowed actions are: stop, resume, retry_step, override_step, approve_step.`);
   }
   if (DEBUG_CHATBOT) {
     void ErrorSystem.logInfo('Request', {
@@ -106,7 +106,7 @@ async function postHandler(
   });
 
   if (!run) {
-    throw notFoundError('Run not found.');
+    throw notFoundError(`Agent run "${runId}" not found. The run may have expired or the id is incorrect.`);
   }
 
   if (body.action === 'resume') {
@@ -168,7 +168,7 @@ async function postHandler(
       throw conflictError('Run is running. Stop it before retrying steps.');
     }
     if (!body.stepId?.trim()) {
-      throw badRequestError('stepId is required for retry_step.');
+      throw badRequestError('stepId is required for retry_step. Provide the id of the step to retry in the request body.');
     }
     const planState =
       run.planState && typeof run.planState === 'object'
@@ -178,7 +178,7 @@ async function postHandler(
       ? (planState?.['steps'] as Array<Record<string, unknown>>)
       : null;
     if (!steps) {
-      throw badRequestError('No plan steps available to retry.');
+      throw badRequestError(`No plan steps available to retry for run "${runId}". The run may not have a plan state yet or the plan has no steps.`);
     }
     const nextSteps = steps.map((step) => {
       if (step && typeof step === 'object' && step['id'] === body.stepId) {
@@ -239,7 +239,7 @@ async function postHandler(
       throw conflictError('Run is running. Stop it before overriding steps.');
     }
     if (!body.stepId?.trim() || !body.status) {
-      throw badRequestError('stepId and status are required for override_step.');
+      throw badRequestError('stepId and status are required for override_step. Provide both the step id and the target status (completed, failed, or pending) in the request body.');
     }
     const planState =
       run.planState && typeof run.planState === 'object'
@@ -249,7 +249,7 @@ async function postHandler(
       ? (planState?.['steps'] as Array<Record<string, unknown>>)
       : null;
     if (!steps) {
-      throw badRequestError('No plan steps available to override.');
+      throw badRequestError(`No plan steps available to override for run "${runId}". The run may not have a plan state yet or the plan has no steps.`);
     }
     const nextSteps = steps.map((step) => {
       if (step && typeof step === 'object' && step['id'] === body.stepId) {
@@ -307,7 +307,7 @@ async function postHandler(
       throw conflictError('Run is running. Stop it before approving steps.');
     }
     if (!body.stepId?.trim()) {
-      throw badRequestError('stepId is required for approve_step.');
+      throw badRequestError('stepId is required for approve_step. Provide the id of the step to approve in the request body.');
     }
     const planState =
       run.planState && typeof run.planState === 'object'
@@ -399,7 +399,7 @@ async function deleteHandler(
     where: { id: runId },
   });
   if (!run) {
-    throw notFoundError('Run not found.');
+    throw notFoundError(`Agent run "${runId}" not found. The run may have been deleted or the id is incorrect.`);
   }
   const url = new URL(req.url);
   const force = url.searchParams.get('force') === 'true';

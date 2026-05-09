@@ -71,6 +71,7 @@ export async function buildAdaptivePlanReview({
     });
     const rawParsed = parsePlanJson(content);
     if (!rawParsed) {
+      // LLM response could not be parsed as valid JSON
       throw new Error('Planner review returned invalid JSON.');
     }
     const parsed = adaptivePlanReviewResultSchema.partial().parse(rawParsed);
@@ -194,6 +195,7 @@ export async function buildSelfCheckReview({
     });
     const rawParsed = parsePlanJson(content);
     if (!rawParsed) {
+      // LLM response could not be parsed as valid JSON
       throw new Error('Self-check returned invalid JSON.');
     }
     const parsed = selfCheckReviewResultSchema.partial().parse(rawParsed);

@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
   normalizeTraderaListingFormUrl,
+  normalizeTraderaListingPriceCurrencyCode,
+  resolveTraderaListingPriceCurrencyCode,
   resolveTraderaSystemSettings,
   TRADERA_DIRECT_LISTING_FORM_URL,
+  TRADERA_SETTINGS_KEYS,
 } from './tradera';
 
 describe('tradera listing form url normalization', () => {
@@ -41,5 +44,21 @@ describe('tradera listing form url normalization', () => {
       ...DEFAULT_TRADERA_SYSTEM_SETTINGS,
       listingFormUrl: TRADERA_DIRECT_LISTING_FORM_URL,
     });
+  });
+
+  it('defaults Tradera listing prices to EUR and accepts normalized overrides', () => {
+    expect(normalizeTraderaListingPriceCurrencyCode(null)).toBe('EUR');
+    expect(normalizeTraderaListingPriceCurrencyCode(' sek ')).toBe('SEK');
+
+    expect(
+      resolveTraderaSystemSettings({
+        get: (key) =>
+          key === TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode ? 'sek' : null,
+      }).listingPriceCurrencyCode
+    ).toBe('SEK');
+
+    expect(resolveTraderaListingPriceCurrencyCode({ listingPriceCurrencyCode: 'eur' })).toBe(
+      'EUR'
+    );
   });
 });

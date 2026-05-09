@@ -1,4 +1,5 @@
 import type { TraderaSystemSettings } from '@/shared/contracts/integrations/tradera';
+import { normalizeCurrencyCode } from '@/shared/lib/products/utils/priceCalculation';
 
 export type { TraderaSystemSettings };
 
@@ -11,9 +12,11 @@ export const TRADERA_SETTINGS_KEYS = {
   allowSimulatedSuccess: 'tradera_allow_simulated_success',
   listingFormUrl: 'tradera_listing_form_url',
   selectorProfile: 'tradera_selector_profile',
+  listingPriceCurrencyCode: 'tradera_listing_price_currency_code',
 } as const;
 
 export const TRADERA_DIRECT_LISTING_FORM_URL = 'https://www.tradera.com/en/selling/new';
+export const TRADERA_DEFAULT_LISTING_PRICE_CURRENCY_CODE = 'EUR';
 
 const TRADERA_ALLOWED_HOSTS = new Set(['www.tradera.com', 'tradera.com']);
 const TRADERA_NEW_LISTING_PATH_PATTERN =
@@ -42,6 +45,15 @@ export const normalizeTraderaListingFormUrl = (value: string | null | undefined)
   }
 };
 
+export const normalizeTraderaListingPriceCurrencyCode = (
+  value: string | null | undefined
+): string => {
+  const normalized = normalizeCurrencyCode(value);
+  return /^[A-Z]{3}$/.test(normalized)
+    ? normalized
+    : TRADERA_DEFAULT_LISTING_PRICE_CURRENCY_CODE;
+};
+
 export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   defaultDurationHours: 72,
   autoRelistEnabled: true,
@@ -51,6 +63,7 @@ export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   allowSimulatedSuccess: false,
   listingFormUrl: TRADERA_DIRECT_LISTING_FORM_URL,
   selectorProfile: 'default',
+  listingPriceCurrencyCode: TRADERA_DEFAULT_LISTING_PRICE_CURRENCY_CODE,
 };
 
 const toBoolean = (value: string | null | undefined, fallback: boolean): boolean => {
@@ -115,5 +128,14 @@ export const resolveTraderaSystemSettings = (lookup: SettingLookup): TraderaSyst
     ),
     selectorProfile:
       lookup.get(TRADERA_SETTINGS_KEYS.selectorProfile)?.trim() || defaults.selectorProfile,
+    listingPriceCurrencyCode: normalizeTraderaListingPriceCurrencyCode(
+      lookup.get(TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode) ??
+        defaults.listingPriceCurrencyCode
+    ),
   };
 };
+
+export const resolveTraderaListingPriceCurrencyCode = (
+  systemSettings: Pick<TraderaSystemSettings, 'listingPriceCurrencyCode'> | null | undefined
+): string =>
+  normalizeTraderaListingPriceCurrencyCode(systemSettings?.listingPriceCurrencyCode);

@@ -1,13 +1,8 @@
 /**
- * JSON Parsing Utilities
- * 
- * Safe JSON parsing utilities for API request bodies.
- * Provides:
- * - JSON body parsing with validation
- * - Zod schema integration
- * - Error response creation
- * - Type-safe parsing results
- * - Bad request and validation error handling
+ * @file parse-json.ts
+ * @description Safe JSON parsing utilities for API request bodies with Zod validation.
+ * These utilities ensure that incoming JSON payloads are well-formed and adhere 
+ * to expected schemas before being processed by handlers.
  */
 
 import { z } from 'zod';
@@ -16,9 +11,17 @@ import type { JsonParseResult, ParseJsonOptions } from '@/shared/contracts/ui/ap
 import { badRequestError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
-
+/** Default schema for arbitrary JSON objects */
 const jsonObjectSchema = z.object({}).catchall(z.unknown());
 
+/**
+ * Parses the request body as JSON and validates it against a Zod schema.
+ * 
+ * @param req The incoming Request object
+ * @param schema Zod schema to validate the body against
+ * @param options Configuration for parsing and logging
+ * @returns A result object containing either the validated data or a pre-formatted error response
+ */
 export async function parseJsonBody<T>(
   req: Request,
   schema: z.ZodSchema<T>,
@@ -30,6 +33,7 @@ export async function parseJsonBody<T>(
   try {
     body = await req.json();
   } catch (error) {
+    // Some endpoints might allow empty bodies which req.json() would reject
     if (options?.allowEmpty) {
       body = {};
     } else {
@@ -57,6 +61,13 @@ export async function parseJsonBody<T>(
   return { ok: true, data: result.data };
 }
 
+/**
+ * Parses the request body as a generic JSON object without a specific schema.
+ * 
+ * @param req The incoming Request object
+ * @param options Configuration for parsing and logging
+ * @returns A result object containing either the parsed object or a pre-formatted error response
+ */
 export async function parseObjectJsonBody<T extends Record<string, unknown> = Record<string, unknown>>(
   req: Request,
   options?: ParseJsonOptions

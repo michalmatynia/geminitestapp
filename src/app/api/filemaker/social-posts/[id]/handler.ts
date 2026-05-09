@@ -27,7 +27,7 @@ export async function getSocialPublishingPostHandler(
   }
   const post = await getSocialPublishingPostById(id);
   if (!post) {
-    throw notFoundError('Social post not found.');
+    throw notFoundError(`Social post "${id}" not found. The post may have been deleted or the id is incorrect.`);
   }
   void logSocialPublishingServerEvent({
     source: 'social-publishing.posts.get',
@@ -58,7 +58,7 @@ export async function patchSocialPublishingPostHandler(
   const { id: _id, ...updates } = parsed.updates ?? {};
   const updated = await updateSocialPublishingPost(id, updates);
   if (!updated) {
-    throw notFoundError('Social post not found.');
+    throw notFoundError(`Social post "${id}" not found. The post may have been deleted or the id is incorrect.`);
   }
 
   void logSocialPublishingServerEvent({
@@ -90,11 +90,11 @@ export async function deleteSocialPublishingPostHandler(
   }
   const post = await getSocialPublishingPostById(id);
   if (!post) {
-    throw notFoundError('Social post not found.');
+    throw notFoundError(`Social post "${id}" not found. The post may have been deleted or the id is incorrect.`);
   }
   const deleted = await deleteSocialPublishingPost(id);
   if (!deleted) {
-    throw notFoundError('Social post not found.');
+    throw notFoundError(`Social post "${id}" could not be deleted. The post may have already been deleted.`);
   }
 
   void logSocialPublishingServerEvent({

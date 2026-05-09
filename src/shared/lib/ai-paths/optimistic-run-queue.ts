@@ -1,3 +1,11 @@
+/**
+ * @file optimistic-run-queue.ts
+ * @description Manages an optimistic queue of AI Path runs in the client.
+ * This allows the UI to immediately reflect new runs before they are
+ * fully processed or acknowledged by the server, improving perceived performance.
+ * It handles persistence to localStorage and synchronization with server-provided data.
+ */
+
 'use client';
 
 import {
@@ -28,11 +36,19 @@ type StoredOptimisticRun = {
   run: AiPathRunRecord;
 };
 
+/**
+ * Filters for querying the optimistic run queue.
+ */
 export type OptimisticRunFilters = {
+  /** Filter by path ID. */
   pathId?: string;
+  /** Filter by run source. */
   source?: string;
+  /** Whether to include or exclude the specified source. */
   sourceMode?: 'include' | 'exclude';
+  /** Filter by run status. */
   status?: string;
+  /** Generic search query against run metadata. */
   query?: string;
 };
 
@@ -157,6 +173,12 @@ const matchesQueryFilter = (run: AiPathRunRecord, query: string | null): boolean
   return haystack.includes(query);
 };
 
+/**
+ * Checks if a run record matches the specified filters.
+ * @param run The run record to check.
+ * @param filters The filters to apply.
+ * @returns True if it matches, false otherwise.
+ */
 export const aiPathRunMatchesFilters = (
   run: AiPathRunRecord,
   filters?: OptimisticRunFilters
@@ -403,6 +425,11 @@ const replaceEntry = (
   return ensureSortedQueueEntries(nextEntries);
 };
 
+/**
+ * Adds or updates a run in the optimistic queue.
+ * @param run The run record to remember.
+ * @param options Optional TTL for the optimistic entry.
+ */
 export const rememberOptimisticAiPathRun = (
   run: AiPathRunRecord,
   options?: { ttlMs?: number }
@@ -419,6 +446,10 @@ export const rememberOptimisticAiPathRun = (
   writeEntries(nextEntries);
 };
 
+/**
+ * Removes a specific run from the optimistic queue.
+ * @param runId ID of the run to remove.
+ */
 export const removeOptimisticAiPathRun = (runId: string): void => {
   const normalizedRunId = normalizeRunId(runId);
   if (!normalizedRunId) return;
@@ -429,6 +460,10 @@ export const removeOptimisticAiPathRun = (runId: string): void => {
   writeEntries(nextEntries);
 };
 
+/**
+ * Removes multiple runs from the optimistic queue.
+ * @param runIds IDs of the runs to remove.
+ */
 export const removeOptimisticAiPathRuns = (runIds: Iterable<string>): void => {
   const normalizedIds = new Set<string>();
   for (const runId of runIds) {
@@ -443,12 +478,24 @@ export const removeOptimisticAiPathRuns = (runIds: Iterable<string>): void => {
   writeEntries(nextEntries);
 };
 
+/**
+ * Returns a list of all optimistic runs matching the filters.
+ * @param filters Filters to apply to the queue.
+ * @returns Array of matching run records.
+ */
 export const listOptimisticAiPathRuns = (filters?: OptimisticRunFilters): AiPathRunRecord[] => {
   return readEntries()
     .map((entry) => entry.run)
     .filter((run) => aiPathRunMatchesFilters(run, filters));
 };
 
+/**
+ * Previews what a run list payload would look like if merged with optimistic runs.
+ * Useful for immediate UI updates without affecting the persistent queue state.
+ * @param payload The base payload from the server.
+ * @param options Filters and pagination options.
+ * @returns A merged payload.
+ */
 export const previewAiPathQueuePayloadWithOptimisticRuns = (
   payload: AiPathRunListResult,
   options?: OptimisticRunFilters & {
@@ -478,6 +525,14 @@ export const previewAiPathQueuePayloadWithOptimisticRuns = (
   };
 };
 
+/**
+ * Merges server-provided run data with the optimistic queue.
+ * Server data takes precedence: if a run appears in the server payload, 
+ * it is updated in or removed from the optimistic queue.
+ * @param payload The server-provided run list.
+ * @param options Filters and pagination options.
+ * @returns A merged run list payload.
+ */
 export const mergeAiPathQueuePayloadWithOptimisticRuns = (
   payload: AiPathRunListResult,
   options?: OptimisticRunFilters & {
@@ -485,6 +540,10 @@ export const mergeAiPathQueuePayloadWithOptimisticRuns = (
     offset?: number;
   }
 ): AiPathRunListResult => {
+  // Sync Logic:
+  // 1. Identify all runs provided by the server.
+  // 2. If a server run is still active, update its entry in the optimistic queue.
+  // 3. If a server run is terminal, remove it from the optimistic queue (the server is now the source of truth).
   const serverRuns = Array.isArray(payload.runs) ? payload.runs : [];
   const serverRunIds = new Set<string>();
   serverRuns.forEach((run) => {
@@ -509,6 +568,11 @@ export const mergeAiPathQueuePayloadWithOptimisticRuns = (
   return previewAiPathQueuePayloadWithOptimisticRuns(payload, options);
 };
 
+/**
+ * Patches a queued count object with the number of optimistic runs.
+ * @param status The status object to patch.
+ * @returns The patched status object.
+ */
 export const patchQueuedCountWithOptimisticRuns = <T extends { queuedCount?: number | null }>(
   status: T
 ): T => {

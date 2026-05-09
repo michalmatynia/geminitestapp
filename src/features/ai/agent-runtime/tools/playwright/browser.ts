@@ -46,6 +46,7 @@ const isPlaywrightModule = (value: unknown): value is PlaywrightModule => {
 const getPlaywright = async (): Promise<PlaywrightModule> => {
   const playwrightModule = getPlaywrightRuntime();
   if (!isPlaywrightModule(playwrightModule)) {
+    // Playwright module is not loaded or not properly initialized
     throw new Error('Playwright runtime is unavailable.');
   }
   return playwrightModule;

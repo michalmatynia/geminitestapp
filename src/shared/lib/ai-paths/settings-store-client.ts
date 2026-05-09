@@ -1,3 +1,17 @@
+/**
+ * AI Paths Settings Client
+ * 
+ * This module provides a client-side interface for managing AI Paths settings.
+ * It implements multi-level caching (memory + local storage backup), optimistic
+ * updates, and robust retry logic for network-resilient settings management.
+ * 
+ * Key Features:
+ * - Selective and bulk fetching of settings.
+ * - Local storage backup for offline/error-recovery scenarios.
+ * - Intelligent retry logic for 5xx server errors and transient network issues.
+ * - Maintenance reporting and automated maintenance actions.
+ */
+
 import {
   AI_PATHS_MAINTENANCE_ACTION_IDS,
   aiPathsMaintenanceApplyResultSchema,
@@ -33,19 +47,35 @@ const AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS = 90_000;
 const AI_PATHS_SETTINGS_MAX_QUERY_KEYS = 500;
 const AI_PATHS_SETTINGS_MAX_KEY_LENGTH = 200;
 
+/**
+ * Primary memory cache for all AI Paths settings.
+ */
 let aiPathsSettingsCache: AiPathsSettingRecord[] | null = null;
 let aiPathsSettingsFetchedAt = 0;
 let aiPathsSettingsInflight: Promise<AiPathsSettingRecord[]> | null = null;
+
+/**
+ * Secondary memory cache for selective key-based queries.
+ */
 const aiPathsSettingsByKeysCache = new Map<
   string,
   { records: AiPathsSettingRecord[]; fetchedAt: number }
 >();
 const aiPathsSettingsByKeysInflight = new Map<string, Promise<AiPathsSettingRecord[]>>();
 
+/**
+ * Checks if the global settings cache is still within its TTL.
+ * 
+ * @returns {boolean} True if the cache is fresh.
+ */
 const isFreshCache = (): boolean =>
   Boolean(aiPathsSettingsCache) &&
   Date.now() - aiPathsSettingsFetchedAt < AI_PATHS_SETTINGS_STALE_MS;
 
+/**
+ * Clears all memory caches for AI Paths settings.
+ * Useful after a manual database change or to force a fresh fetch.
+ */
 export const invalidateAiPathsSettingsCache = (): void => {
   aiPathsSettingsCache = null;
   aiPathsSettingsFetchedAt = 0;
@@ -314,6 +344,7 @@ const fetchAiPathsSettingsFromApi = async (options?: {
 }): Promise<AiPathsSettingRecord[]> => {
   const res = await fetchAiPathsSettingsResponse(options);
   if (!res.ok) {
+    // API request to load AI Paths settings returned an error status
     throw new Error(`Failed to load AI Paths settings (${res.status})`);
   }
   const parsedSettings = aiPathsSettingRecordsSchema.safeParse(await res.json());
@@ -325,6 +356,15 @@ const fetchAiPathsSettingsFromApi = async (options?: {
   return normalized;
 };
 
+/**
+ * Fetches all AI Paths settings from the server with caching and backup support.
+ * If the fetch fails, it attempts to return the last successful memory cache
+ * or a backup from local storage.
+ * 
+ * @param {Object} [options] - Optional configuration.
+ * @param {boolean} [options.bypassCache] - Whether to ignore existing memory caches.
+ * @returns {Promise<AiPathsSettingRecord[]>} An array of settings records.
+ */
 export const fetchAiPathsSettingsCached = async (options?: {
   bypassCache?: boolean | undefined;
 }): Promise<AiPathsSettingRecord[]> => {
@@ -341,6 +381,8 @@ export const fetchAiPathsSettingsCached = async (options?: {
       aiPathsSettingsCache = records;
       aiPathsSettingsFetchedAt = Date.now();
       const durationMs = Date.now() - startedAt;
+      
+      // Log significant fetch durations to observability.
       if (durationMs >= 250) {
         const payloadBytes = records.reduce(
           (sum, item) => sum + item.key.length + item.value.length,
@@ -360,6 +402,7 @@ export const fetchAiPathsSettingsCached = async (options?: {
       return records;
     })
     .catch((error: unknown) => {
+      // Recovery Path 1: Use stale memory cache.
       if (aiPathsSettingsCache) {
         logClientError(error, {
           context: {
@@ -371,6 +414,8 @@ export const fetchAiPathsSettingsCached = async (options?: {
         });
         return aiPathsSettingsCache;
       }
+      
+      // Recovery Path 2: Use local storage backup.
       const backup = readBackupSettings();
       if (backup && backup.length > 0) {
         logClientError(error, {
@@ -395,6 +440,15 @@ export const fetchAiPathsSettingsCached = async (options?: {
   return await request;
 };
 
+/**
+ * Fetches specific AI Paths settings by their keys, utilizing selective caching.
+ * 
+ * @param {string[]} keys - The specific setting keys to retrieve.
+ * @param {Object} [options] - Optional configuration.
+ * @param {boolean} [options.bypassCache] - Whether to ignore existing caches.
+ * @param {number} [options.timeoutMs] - Custom timeout for this request.
+ * @returns {Promise<AiPathsSettingRecord[]>} The requested settings records.
+ */
 export const fetchAiPathsSettingsByKeysCached = async (
   keys: string[],
   options?: {
@@ -515,6 +569,13 @@ export const fetchAiPathsSettingsByKeysCached = async (
   return await request;
 };
 
+/**
+ * Updates multiple AI Paths settings in a single bulk operation.
+ * Invalidates the cache upon success.
+ * 
+ * @param {AiPathsSettingRecord[]} items - The settings to update.
+ * @returns {Promise<AiPathsSettingRecord[]>} The updated records.
+ */
 export const updateAiPathsSettingsBulk = async (
   items: AiPathsSettingRecord[]
 ): Promise<AiPathsSettingRecord[]> => {
@@ -553,6 +614,13 @@ export const updateAiPathsSettingsBulk = async (
   return parsedSettings.success ? parsedSettings.data : payload;
 };
 
+/**
+ * Updates a single AI Paths setting.
+ * 
+ * @param {string} key - The setting key.
+ * @param {string} value - The new value.
+ * @returns {Promise<AiPathsSettingRecord>} The updated record.
+ */
 export const updateAiPathsSetting = async (
   key: string,
   value: string
@@ -583,6 +651,12 @@ export const updateAiPathsSetting = async (
   return parsedSetting.success ? parsedSetting.data : { key, value };
 };
 
+/**
+ * Deletes multiple AI Paths settings by their keys.
+ * 
+ * @param {string[]} keys - The keys to delete.
+ * @returns {Promise<number>} The number of deleted records.
+ */
 export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => {
   const normalizedKeys = Array.from(
     new Set(
@@ -612,6 +686,11 @@ export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => 
   return typeof data?.deletedCount === 'number' ? data.deletedCount : 0;
 };
 
+/**
+ * Fetches a maintenance report highlighting potential issues with AI Paths settings.
+ * 
+ * @returns {Promise<AiPathsMaintenanceReport>} The maintenance report.
+ */
 export const fetchAiPathsMaintenanceReport = async (): Promise<AiPathsMaintenanceReport> => {
   let data: AiPathsMaintenanceReport | unknown;
   try {
@@ -631,6 +710,12 @@ export const fetchAiPathsMaintenanceReport = async (): Promise<AiPathsMaintenanc
   return aiPathsMaintenanceReportSchema.parse(data);
 };
 
+/**
+ * Applies maintenance actions to resolve settings issues.
+ * 
+ * @param {AiPathsMaintenanceActionId[]} [actionIds] - Optional specific actions to run.
+ * @returns {Promise<AiPathsMaintenanceApplyResult>} The result of the maintenance actions.
+ */
 export const applyAiPathsMaintenanceActions = async (
   actionIds?: AiPathsMaintenanceActionId[]
 ): Promise<AiPathsMaintenanceApplyResult> => {

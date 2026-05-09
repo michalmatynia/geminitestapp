@@ -58,6 +58,7 @@ const rejectUninitializedObservationLoop = (): Promise<never> =>
   Promise.reject(new Error('Product scan verification runtime observation loop is not initialized.'));
 
 const throwUninitializedPageSession = (): never => {
+  // Playwright page session must be initialized before verification can run
   throw new Error('Product scan verification runtime page session is not initialized.');
 };
 

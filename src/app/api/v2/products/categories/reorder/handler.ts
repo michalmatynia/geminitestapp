@@ -71,7 +71,7 @@ export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Pr
 
   const nextCatalogId = payload.catalogId?.trim() || current.catalogId;
   if (targetParentId === categoryId) {
-    throw badRequestError('Cannot move category into itself');
+    throw badRequestError(`Cannot move category "${categoryId}" into itself.`);
   }
 
   if (targetParentId) {
@@ -91,7 +91,7 @@ export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Pr
     const isDescendant = await repository.isDescendant(categoryId, targetParentId);
     timings['descendantCheck'] = performance.now() - descendantStart;
     if (isDescendant) {
-      throw badRequestError('Cannot move category into itself or its descendants');
+      throw badRequestError(`Cannot move category "${categoryId}" into "${targetParentId}" because it is a descendant of the category being moved.`);
     }
   }
 
@@ -119,11 +119,11 @@ export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   let sortIndex = siblingIds.length;
   if (position === 'before' || position === 'after') {
     if (!targetId) {
-      throw badRequestError('targetId is required for before/after reorder.');
+      throw badRequestError(`targetId is required for "${position}" reorder. Provide the id of the sibling category to position relative to.`);
     }
     const targetIndex = siblingIds.indexOf(targetId);
     if (targetIndex < 0) {
-      throw badRequestError('targetId is not a sibling in the requested parent.');
+      throw badRequestError(`targetId "${targetId}" is not a sibling of category "${categoryId}" in the requested parent. Ensure the target category shares the same parent.`);
     }
     sortIndex = position === 'before' ? targetIndex : targetIndex + 1;
   }

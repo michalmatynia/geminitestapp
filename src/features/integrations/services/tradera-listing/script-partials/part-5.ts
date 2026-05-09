@@ -218,6 +218,9 @@ export const PART_5 = String.raw`
       context: listingAction === 'sync' ? 'sync-editor-ready' : 'listing-editor-ready',
       required: true,
     });
+    await acceptVisiblePaymentSolutionModalIfPresent({
+      context: listingAction === 'sync' ? 'sync-editor-ready' : 'listing-editor-ready',
+    }).catch(() => false);
     await dismissVisibleShippingDialogIfPresent();
     await dismissVisibleAutofillDialogIfPresent({
       context: listingAction === 'sync' ? 'sync-editor-ready' : 'listing-editor-ready',

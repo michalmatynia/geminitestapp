@@ -13,6 +13,7 @@ export const fetchSearchResults = async (
   if (normalizedProvider === 'brave') {
     try {
       if (!settings.brave.apiKey) {
+        // Brave search requires an API key to be configured in settings
         throw new Error('Brave search API key not configured.');
       }
       const url = new URL(settings.brave.apiUrl);
@@ -26,6 +27,7 @@ export const fetchSearchResults = async (
       });
       if (!res.ok) {
         const text = await res.text();
+        // Brave search API returned an error response
         throw new Error(text || `Search failed (${res.status}).`);
       }
       const data = (await res.json()) as {
@@ -53,6 +55,7 @@ export const fetchSearchResults = async (
   if (normalizedProvider === 'google') {
     try {
       if (!settings.google.apiKey || !settings.google.engineId) {
+        // Google search requires both API key and custom search engine ID
         throw new Error('Google search API key/engine not configured.');
       }
       const url = new URL(settings.google.apiUrl);
@@ -63,6 +66,7 @@ export const fetchSearchResults = async (
       const res = await fetch(url.toString());
       if (!res.ok) {
         const text = await res.text();
+        // Google search API returned an error response
         throw new Error(text || `Search failed (${res.status}).`);
       }
       const data = (await res.json()) as {
@@ -90,6 +94,7 @@ export const fetchSearchResults = async (
   if (normalizedProvider === 'serpapi') {
     try {
       if (!settings.serpapi.apiKey) {
+        // SerpApi requires an API key to be configured in settings
         throw new Error('SerpApi key not configured.');
       }
       const url = new URL(settings.serpapi.apiUrl);
@@ -100,6 +105,7 @@ export const fetchSearchResults = async (
       const res = await fetch(url.toString());
       if (!res.ok) {
         const text = await res.text();
+        // SerpApi returned an error response
         throw new Error(text || `Search failed (${res.status}).`);
       }
       const data = (await res.json()) as {

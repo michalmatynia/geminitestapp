@@ -1,5 +1,4 @@
 import { TRADERA_SELECTOR_REGISTRY_RUNTIME } from '@/shared/lib/browser-execution/selectors/tradera';
-import { safeSetTimeout } from '@/shared/lib/timers';
 
 import { TRADERA_COOKIE_DISMISSAL_SNIPPET } from '../script-partials/cookie-dismissal';
 
@@ -42,7 +41,11 @@ ${selectorRegistryRuntime}
     },
   ];
 
-  const wait = (ms) => new Promise((resolve) => safeSetTimeout(resolve, ms));
+  const wait = (ms) =>
+    new Promise((resolve) => {
+      const schedule = typeof safeSetTimeout === 'function' ? safeSetTimeout : setTimeout;
+      schedule(resolve, ms);
+    });
 
   const normalizeWhitespace = (value) =>
     String(value || '')

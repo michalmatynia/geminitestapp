@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 
-import { buildRunFilter } from '../methods/run-query-helpers';
+import { buildRunFilter } from '../methods/repository-shared';
 
 describe('path-run repository source filters (canonical)', () => {
   it('keeps product and trigger-button sources in the canonical AI Paths node source set', () => {

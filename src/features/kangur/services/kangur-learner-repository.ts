@@ -1,11 +1,27 @@
+/**
+ * @fileoverview Kangur Learner Repository
+ *
+ * This module serves as the primary repository for managing Kangur learner profiles.
+ * It abstracts persistence between MongoDB and a legacy settings-store, facilitating
+ * seamless learner authentication, profile management, and data migration.
+ *
+ * The repository handles dual-path lookups and supports on-the-fly migration
+ * of learner profiles from the legacy store to MongoDB.
+ */
+
 import 'server-only';
 
 import { cache } from 'react';
-import { randomUUID } from 'crypto';
-
-import bcrypt from 'bcryptjs';
-
-
+import {
+  normalizeLoginName,
+  normalizeLegacyUserKey,
+  normalizeAvatarId,
+} from '@/features/kangur/services/auth/normalization';
+import {
+  hashPassword,
+  verifyPassword,
+  createLearnerPassword,
+} from '@/features/kangur/services/auth/password';
 import { kangurLearnerProfilesSchema } from '@kangur/contracts/kangur';
 import {
   type KangurLearnerCreateInput,
@@ -56,12 +72,6 @@ type MongoKangurLearnerDocument = {
   passwordHash: string;
 };
 
-// normalizeLoginName lowercases and trims the login name so lookups are
-// case-insensitive and whitespace-tolerant.
-const normalizeLoginName = (value: string): string => value.trim().toLowerCase();
-// createLearnerPassword generates a random UUID-based password for new
-// learners. Parents set a PIN separately; this is the initial credential.
-const createLearnerPassword = (): string => randomUUID().replace(/-/g, '');
 // escapeRegex escapes special regex characters in user-supplied search terms
 // to prevent regex injection in MongoDB $regex queries.
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -77,20 +87,6 @@ const resolveDuelSearchContainsCap = (): number => {
   return Math.max(0, Math.min(MAX_DUEL_SEARCH_CONTAINS_CAP, parsed));
 };
 const DUEL_SEARCH_CONTAINS_CAP = resolveDuelSearchContainsCap();
-
-const normalizeLegacyUserKey = (value: string | null | undefined): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim().toLowerCase();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const normalizeAvatarId = (value: string | null | undefined): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
 
 // isMongoDuplicateKeyError detects MongoDB E11000 duplicate key errors by
 // checking both the numeric error code and the error message string. Used to
@@ -452,13 +448,16 @@ const readAllKnownLearners = async (): Promise<StoredKangurLearnerProfile[]> => 
   return mergeStoredLearners(mongoProfiles, legacyProfiles);
 };
 
-// listKangurLearnersByOwner returns all learner profiles owned by a parent
-// user. Uses React cache() so repeated calls within the same request are
-// deduplicated. Transparently merges MongoDB and legacy settings-store
-// profiles, migrating any missing legacy profiles to MongoDB on the fly.
+/**
+ * listKangurLearnersByOwner returns all learner profiles owned by a parent
+ * user. Uses React cache() so repeated calls within the same request are
+ * deduplicated. Transparently merges MongoDB and legacy settings-store
+ * profiles, migrating any missing legacy profiles to MongoDB on the fly.
+ */
 export const listKangurLearnersByOwner = cache(async (
   ownerUserId: string
 ): Promise<KangurLearnerProfile[]> => {
+  // If MongoDB is not configured or enabled, query the legacy settings-store.
   if (!(await shouldUseMongoLearnerCollection())) {
     return sortPublicLearners(
       (await readLegacyStoredLearners())
@@ -467,6 +466,7 @@ export const listKangurLearnersByOwner = cache(async (
     );
   }
 
+  // Retrieve profiles from both sources and merge them.
   const [mongoProfiles, legacyProfiles] = await Promise.all([
     readMongoStoredLearnersByOwner(ownerUserId),
     readLegacyStoredLearners(),
@@ -474,6 +474,8 @@ export const listKangurLearnersByOwner = cache(async (
   const legacyOwnedProfiles = legacyProfiles.filter(
     (profile) => profile.ownerUserId === ownerUserId
   );
+
+  // Migrate legacy profiles missing from MongoDB to the new collection.
   const missingLegacyProfiles = legacyOwnedProfiles.filter(
     (legacyProfile) => !mongoProfiles.some((mongoProfile) => mongoProfile.id === legacyProfile.id)
   );
@@ -494,10 +496,12 @@ export const listKangurLearnersByOwner = cache(async (
   );
 });
 
-// searchKangurLearners searches learner profiles by display name or login
-// name for the duel opponent search feature. Combines exact-prefix matches
-// with contains matches, capped by DUEL_SEARCH_CONTAINS_CAP to limit
-// exposure of the learner list.
+/**
+ * searchKangurLearners searches learner profiles by display name or login
+ * name for the duel opponent search feature. Combines exact-prefix matches
+ * with contains matches, capped by DUEL_SEARCH_CONTAINS_CAP to limit
+ * exposure of the learner list.
+ */
 export const searchKangurLearners = async (
   query: string,
   options?: { limit?: number; excludeLearnerId?: string }
@@ -515,6 +519,9 @@ export const searchKangurLearners = async (
   const normalizedLogin = normalizeLoginName(trimmed);
   const normalizedDisplay = trimmed.toLowerCase();
   const maxContainsMatches = DUEL_SEARCH_CONTAINS_CAP;
+
+  // Ranks results to prioritize prefix matches over substring matches,
+  // ensuring relevant search results appear first in the learner selection list.
   const rankMatch = (profile: KangurLearnerProfile): number => {
     const loginName = normalizeLoginName(profile.loginName);
     const displayName = profile.displayName.toLowerCase();
@@ -525,6 +532,8 @@ export const searchKangurLearners = async (
     if (displayName.includes(normalizedDisplay)) return 4;
     return 5;
   };
+
+  // Enforces a hard cap on the number of "contains" matches returned.
   const applyContainsCap = (profiles: KangurLearnerProfile[]): KangurLearnerProfile[] => {
     const capped: KangurLearnerProfile[] = [];
     let containsCount = 0;
@@ -601,8 +610,10 @@ export const searchKangurLearners = async (
   return applyContainsCap(sortMatches([...byId.values()]));
 };
 
-// getKangurLearnerById returns the public (no passwordHash) profile for a
-// learner ID, or null when not found.
+/**
+ * getKangurLearnerById returns the public (no passwordHash) profile for a
+ * learner ID, or null when not found.
+ */
 export const getKangurLearnerById = async (
   learnerId: string
 ): Promise<KangurLearnerProfile | null> => {
@@ -610,9 +621,11 @@ export const getKangurLearnerById = async (
   return match ? toPublicLearnerProfile(match) : null;
 };
 
-// getKangurStoredLearnerById returns the full stored profile (including
-// passwordHash) for internal use (e.g. auth). Migrates legacy profiles to
-// MongoDB on first access.
+/**
+ * getKangurStoredLearnerById returns the full stored profile (including
+ * passwordHash) for internal use (e.g. auth). Migrates legacy profiles to
+ * MongoDB on first access.
+ */
 export const getKangurStoredLearnerById = async (
   learnerId: string
 ): Promise<StoredKangurLearnerProfile | null> => {
@@ -625,6 +638,7 @@ export const getKangurStoredLearnerById = async (
     return mongoProfile;
   }
 
+  // Fallback for legacy data access and implicit migration.
   const legacyProfiles = await readLegacyStoredLearners();
   const legacyProfile = legacyProfiles.find((profile) => profile.id === learnerId) ?? null;
   if (legacyProfile) {
@@ -633,9 +647,11 @@ export const getKangurStoredLearnerById = async (
   return legacyProfile;
 };
 
-// getKangurStoredLearnerByLoginName looks up a stored profile by normalized
-// login name. Used during learner authentication to retrieve the passwordHash
-// for bcrypt comparison.
+/**
+ * getKangurStoredLearnerByLoginName looks up a stored profile by normalized
+ * login name. Used during learner authentication to retrieve the passwordHash
+ * for bcrypt comparison.
+ */
 export const getKangurStoredLearnerByLoginName = async (
   loginName: string
 ): Promise<StoredKangurLearnerProfile | null> => {
@@ -652,6 +668,7 @@ export const getKangurStoredLearnerByLoginName = async (
     return mongoProfile;
   }
 
+  // Fallback for legacy lookup and implicit migration to MongoDB.
   const legacyProfiles = await readLegacyStoredLearners();
   const legacyProfile = legacyProfiles.find((profile) => profile.loginName === normalized) ?? null;
   if (legacyProfile) {
@@ -660,6 +677,10 @@ export const getKangurStoredLearnerByLoginName = async (
   return legacyProfile;
 };
 
+/**
+ * createKangurLearner persists a new learner profile. Performs duplicate
+ * login name detection across both MongoDB and legacy storage before insertion.
+ */
 export const createKangurLearner = async (input: {
   ownerUserId: string;
   learner: KangurLearnerCreateInput;
@@ -669,6 +690,7 @@ export const createKangurLearner = async (input: {
   const loginName = normalizeLoginName(input.learner.loginName);
   const useMongoLearnerCollection = await shouldUseMongoLearnerCollection();
 
+  // Validate duplicate login names across the applicable storage layer(s).
   if (useMongoLearnerCollection) {
     await ensureUniqueMongoLoginName(loginName);
   } else {
@@ -710,19 +732,24 @@ export const createKangurLearner = async (input: {
   return toPublicLearnerProfile(nextProfile);
 };
 
+/**
+ * updateKangurLearner updates an existing learner profile, ensuring the new
+ * login name is unique across all stores.
+ */
 export const updateKangurLearner = async (
   learnerId: string,
   input: KangurLearnerUpdateInput
 ): Promise<KangurLearnerProfile> => {
   const current = await getKangurStoredLearnerById(learnerId);
   if (!current) {
-    throw notFoundError('Learner not found.');
+    throw notFoundError(`Learner not found: no learner with id "${learnerId}" exists. Cannot update a non-existent learner.`);
   }
 
   const useMongoLearnerCollection = await shouldUseMongoLearnerCollection();
   const nextLoginName =
     typeof input.loginName === 'string' ? normalizeLoginName(input.loginName) : current.loginName;
 
+  // Duplicate name check
   if (useMongoLearnerCollection) {
     await ensureUniqueMongoLoginName(nextLoginName, learnerId);
   } else {
@@ -751,7 +778,7 @@ export const updateKangurLearner = async (
     const profiles = await readLegacyStoredLearners();
     const index = profiles.findIndex((profile) => profile.id === learnerId);
     if (index < 0) {
-      throw notFoundError('Learner not found.');
+      throw notFoundError(`Learner not found in legacy store: no learner with id "${learnerId}" exists. The learner may have been deleted or migrated to MongoDB.`);
     }
     const nextProfiles = [...profiles];
     nextProfiles[index] = nextProfile;
@@ -769,14 +796,18 @@ export const updateKangurLearner = async (
   return toPublicLearnerProfile(nextProfile);
 };
 
+/**
+ * deleteKangurLearner removes a learner profile and its associated data.
+ */
 export const deleteKangurLearner = async (
   learnerId: string
 ): Promise<KangurLearnerProfile> => {
   const current = await getKangurStoredLearnerById(learnerId);
   if (!current) {
-    throw notFoundError('Learner not found.');
+    throw notFoundError(`Learner not found: no learner with id "${learnerId}" exists. Cannot delete a non-existent learner.`);
   }
 
+  // Remove from primary MongoDB collection
   if (await shouldUseMongoLearnerCollection()) {
     const collection = await getMongoLearnerCollection();
     await collection.deleteMany({
@@ -784,6 +815,7 @@ export const deleteKangurLearner = async (
     } as Filter<MongoKangurLearnerDocument>);
   }
 
+  // Remove from legacy store
   const profiles = await readLegacyStoredLearners();
   const nextProfiles = profiles.filter((profile) => profile.id !== learnerId);
   if (nextProfiles.length !== profiles.length) {
@@ -801,13 +833,17 @@ export const deleteKangurLearner = async (
   return toPublicLearnerProfile(current);
 };
 
+/**
+ * setKangurLearnerLegacyUserKey links or updates a legacy user key for
+ * integration purposes.
+ */
 export const setKangurLearnerLegacyUserKey = async (
   learnerId: string,
   legacyUserKey: string | null
 ): Promise<KangurLearnerProfile> => {
   const current = await getKangurStoredLearnerById(learnerId);
   if (!current) {
-    throw notFoundError('Learner not found.');
+    throw notFoundError(`Learner not found: no learner with id "${learnerId}" exists. Cannot set legacy user key on a non-existent learner.`);
   }
 
   const normalizedLegacyUserKey = normalizeLegacyUserKey(legacyUserKey);
@@ -827,7 +863,7 @@ export const setKangurLearnerLegacyUserKey = async (
     const profiles = await readLegacyStoredLearners();
     const index = profiles.findIndex((profile) => profile.id === learnerId);
     if (index < 0) {
-      throw notFoundError('Learner not found.');
+      throw notFoundError(`Learner not found in legacy store: no learner with id "${learnerId}" exists. The learner may have been deleted or migrated to MongoDB.`);
     }
     const nextProfiles = [...profiles];
     nextProfiles[index] = nextProfile;
@@ -837,6 +873,9 @@ export const setKangurLearnerLegacyUserKey = async (
   return toPublicLearnerProfile(nextProfile);
 };
 
+/**
+ * setKangurLearnerAiTutorState updates the persistent learner AI tutor mood/state.
+ */
 export const setKangurLearnerAiTutorState = async (
   learnerId: string,
   aiTutor: KangurAiTutorLearnerMood
@@ -868,6 +907,11 @@ export const setKangurLearnerAiTutorState = async (
   return toPublicLearnerProfile(nextProfile);
 };
 
+/**
+ * verifyKangurLearnerPassword attempts to authenticate a learner via
+ * loginName and password using bcrypt. Returns a public profile on success,
+ * or null on failure.
+ */
 export const verifyKangurLearnerPassword = async (
   loginName: string,
   password: string
@@ -910,6 +954,10 @@ export const verifyKangurLearnerPassword = async (
   return toPublicLearnerProfile(profile);
 };
 
+/**
+ * ensureDefaultKangurLearnerForOwner creates a default learner profile for a
+ * parent user if none exist. Ensures the login name is unique.
+ */
 export const ensureDefaultKangurLearnerForOwner = async (input: {
   ownerUserId: string;
   displayName: string;
@@ -934,7 +982,7 @@ export const ensureDefaultKangurLearnerForOwner = async (input: {
   return createKangurLearner({
     ownerUserId: input.ownerUserId,
     learner: {
-  displayName: input.displayName.trim() || 'Uczeń',
+      displayName: input.displayName.trim() || 'Uczeń',
       loginName: candidate,
       password: createLearnerPassword(),
     },

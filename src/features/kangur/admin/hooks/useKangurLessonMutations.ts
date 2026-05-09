@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import {
   cloneKangurLessonPage,
   cloneKangurLessonRootBlock,
+  createKangurLessonBlockId,
   createKangurLessonDocumentFromTemplate,
   createKangurLessonPage,
   reorderKangurLessonBlocks,
@@ -115,6 +116,44 @@ export function useKangurLessonMutations(
     [activePage, updateDocument]
   );
 
+  const duplicateGridItem = useCallback(
+    (blockId: string, itemIndex: number): void => {
+      updateGridBlock(blockId, (block) => {
+        const itemToClone = block.items[itemIndex];
+        if (!itemToClone) return block;
+        return {
+          ...block,
+          items: insertAfterIndex(block.items, itemIndex, {
+            ...itemToClone,
+            id: createKangurLessonBlockId('lesson-grid-item'),
+            block: cloneKangurLessonRootBlock(itemToClone.block) as any,
+          }),
+        };
+      });
+    },
+    [updateGridBlock]
+  );
+
+  const moveGridItem = useCallback(
+    (blockId: string, fromIndex: number, toIndex: number): void => {
+      updateGridBlock(blockId, (block) => ({
+        ...block,
+        items: reorderKangurLessonBlocks(block.items as any, block.items[fromIndex]!.id, block.items[toIndex]!.id, fromIndex < toIndex ? 'after' : 'before') as any,
+      }));
+    },
+    [updateGridBlock]
+  );
+
+  const removeGridItem = useCallback(
+    (blockId: string, itemId: string): void => {
+      updateGridBlock(blockId, (block) => ({
+        ...block,
+        items: block.items.filter((item) => item.id !== itemId),
+      }));
+    },
+    [updateGridBlock]
+  );
+
   const replaceWithDocumentTemplate = useCallback(
     (templateId: KangurLessonDocumentTemplateId): void => {
       const nextDocument = createKangurLessonDocumentFromTemplate(templateId);
@@ -191,6 +230,9 @@ export function useKangurLessonMutations(
     handleBlockReorder,
     duplicateRootBlock,
     updateGridBlock,
+    duplicateGridItem,
+    moveGridItem,
+    removeGridItem,
     replaceWithDocumentTemplate,
     insertPageAfterActive,
     addBlankPage,

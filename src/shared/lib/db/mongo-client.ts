@@ -3,15 +3,15 @@
  * 
  * Centralized MongoDB connection management with observability.
  * Features:
- * - Connection pooling with configurable limits
- * - Automatic reconnection and error recovery
- * - Performance monitoring and slow query detection
- * - Connection event logging and metrics
- * - Multi-source database support (local, cloud)
- * - Environment-based configuration
+ * - Connection pooling with configurable limits.
+ * - Automatic reconnection and error recovery.
+ * - Performance monitoring and slow query detection.
+ * - Connection event logging and metrics.
+ * - Multi-source database support (local, cloud) via MongoSource.
+ * - Environment-based configuration for pool size and timeouts.
  * 
- * This module ensures reliable database connectivity with
- * comprehensive monitoring and error handling.
+ * This module ensures reliable database connectivity with comprehensive 
+ * monitoring and standardized error handling.
  */
 
 import { createRequire } from 'module';
@@ -26,27 +26,43 @@ import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 import type { MongoSource } from '@/shared/contracts/database';
 
 /**
- * Parse positive integer from environment variable with fallback
+ * Parses a positive integer from environment variable with fallback.
+ * 
+ * @param value - Raw environment variable value.
+ * @param fallback - Fallback value if missing or invalid.
+ * @returns Parsed integer or fallback.
  */
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 };
 
-// ---------------------------------------------------------------------------
-// Observability Configuration
-// Dynamic import to avoid circular dependency with observability layer
-// ---------------------------------------------------------------------------
+/**
+ * Cooldown period for logging repetitive pool events to prevent log spam.
+ */
+const POOL_LOG_COOLDOWN_MS = 30_000;
 
-const POOL_LOG_COOLDOWN_MS = 30_000; // Suppress repeated events of same type
+/** Threshold for considering a MongoDB command as "slow". */
 const SLOW_COMMAND_THRESHOLD_MS = parsePositiveInt(process.env['MONGODB_SLOW_COMMAND_MS'], 3_000);
+
+/** Whether to monitor all successful commands (very verbose). */
 const MONITOR_COMMANDS = process.env['MONGODB_MONITOR_COMMANDS'] === 'true';
+
+/** Whether to enable detailed connection pool logging. */
 const DEBUG_MONGODB_POOL = process.env['DEBUG_MONGODB_POOL'] === 'true';
+
+/** Default timeout for server selection. */
 const DEFAULT_MONGO_SERVER_SELECTION_TIMEOUT_MS = 5_000;
+
+/** Default timeout for initial connection. */
 const DEFAULT_MONGO_CONNECT_TIMEOUT_MS = 5_000;
 
-// Track last log time for each event type to prevent spam
+/** Tracks last log timestamp for specific event keys to enforce cooldowns. */
 const poolLoggedAt = new Map<string, number>();
+
+/**
+ * Determines if an event should be emitted based on the cooldown policy.
+ */
 const shouldEmit = (key: string): boolean => {
   const now = Date.now();
   if (now - (poolLoggedAt.get(key) ?? 0) < POOL_LOG_COOLDOWN_MS) return false;
@@ -55,8 +71,12 @@ const shouldEmit = (key: string): boolean => {
 };
 
 /**
- * Log MongoDB events to system logger
- * Uses dynamic import to avoid circular dependencies
+ * Log MongoDB events to the system logger.
+ * Uses dynamic import of the observability layer to avoid circular dependencies.
+ * 
+ * @param level - Log level ('info', 'warn', 'error').
+ * @param message - Descriptive message.
+ * @param context - Additional structured data for the log.
  */
 const mongoLog = (
   level: 'info' | 'warn' | 'error',
@@ -68,9 +88,10 @@ const mongoLog = (
     .catch(() => {});
 };
 
-// Track instrumented clients to prevent duplicate event listeners
+/** Set of clients that have already had observability attached. */
 const instrumented = new WeakSet<object>();
 
+/** Event payloads supported by the MongoDB driver client. */
 type MongoClientEventMap = {
   connectionPoolCreated: { address: string };
   connectionPoolCleared: { address: string; serviceId?: unknown };
@@ -80,6 +101,7 @@ type MongoClientEventMap = {
   commandSucceeded: { commandName: string; duration: number; address: string };
 };
 
+/** Extended MongoClient type with typed event listeners. */
 type ObservableMongoClient = MongoClient & {
   on<TEvent extends keyof MongoClientEventMap>(
     event: TEvent,
@@ -87,6 +109,12 @@ type ObservableMongoClient = MongoClient & {
   ): ObservableMongoClient;
 };
 
+/**
+ * Attaches observability listeners to a MongoClient instance.
+ * Handles connection pool events, command failures, and slow query detection.
+ * 
+ * @param client - The MongoClient to instrument.
+ */
 const attachMongoObservability = (client: MongoClient): void => {
   if (instrumented.has(client)) return;
   instrumented.add(client);
@@ -166,7 +194,10 @@ const attachMongoObservability = (client: MongoClient): void => {
   });
 };
 
+/** Constructor type for MongoClient. */
 type MongoClientCtor = new (uri: string, options?: MongoClientOptions) => MongoClient;
+
+/** Global state structure for caching MongoDB clients in hot-reloading environments (Next.js). */
 type MongoGlobalState = {
   __mongoClientByKey?: Map<string, MongoClient>;
   __mongoClientPromiseByKey?: Map<string, Promise<MongoClient>>;
@@ -174,12 +205,16 @@ type MongoGlobalState = {
 
 const globalForMongo = globalThis as typeof globalThis & MongoGlobalState;
 
+/**
+ * Resolves the MongoClient constructor using standard Node require.
+ * This prevents bundlers from trying to inline heavy MongoDB internals.
+ */
 const getMongoClientCtor = (): { MongoClient: MongoClientCtor } => {
-  // Keep the driver as a runtime require so server bundles don't try to inline MongoDB internals.
   const requireFn = createRequire(import.meta.url);
   return requireFn('mongodb') as { MongoClient: MongoClientCtor };
 };
 
+/** Retrieves the primary MongoDB URI from environment. */
 const getMongoUri = (): string => {
   const uri = process.env['MONGODB_URI'];
   if (!uri) {
@@ -188,6 +223,10 @@ const getMongoUri = (): string => {
   return uri;
 };
 
+/**
+ * Checks if a URI targets a local single-node instance.
+ * Useful for enabling directConnection when no replica set is present.
+ */
 const isSingleNodeLocalMongoUri = (uri: string): boolean => {
   try {
     const parsed = new URL(uri);
@@ -198,6 +237,9 @@ const isSingleNodeLocalMongoUri = (uri: string): boolean => {
   }
 };
 
+/**
+ * Builds the MongoClientOptions based on environment variables.
+ */
 const getMongoClientOptions = (): MongoClientOptions => {
   const uri = getMongoUri();
 
@@ -226,6 +268,7 @@ export const __testOnly = {
   isSingleNodeLocalMongoUri,
 };
 
+/** Accesses the global client instance cache. */
 const getMongoClientByKeyStore = (): Map<string, MongoClient> => {
   if (!globalForMongo.__mongoClientByKey) {
     globalForMongo.__mongoClientByKey = new Map<string, MongoClient>();
@@ -233,6 +276,7 @@ const getMongoClientByKeyStore = (): Map<string, MongoClient> => {
   return globalForMongo.__mongoClientByKey;
 };
 
+/** Accesses the global pending connection promise cache. */
 const getMongoClientPromiseByKeyStore = (): Map<string, Promise<MongoClient>> => {
   if (!globalForMongo.__mongoClientPromiseByKey) {
     globalForMongo.__mongoClientPromiseByKey = new Map<string, Promise<MongoClient>>();
@@ -240,6 +284,9 @@ const getMongoClientPromiseByKeyStore = (): Map<string, Promise<MongoClient>> =>
   return globalForMongo.__mongoClientPromiseByKey;
 };
 
+/**
+ * Safely closes a MongoClient and reports any errors.
+ */
 const closeMongoClientSafely = async (
   client: MongoClient,
   context: 'cached-client' | 'pending-client'
@@ -255,6 +302,10 @@ const closeMongoClientSafely = async (
   }
 };
 
+/**
+ * Invalidates and closes all cached MongoDB clients.
+ * Useful during application shutdown or configuration changes.
+ */
 export async function invalidateMongoClientCache(): Promise<void> {
   const clientByKey = getMongoClientByKeyStore();
   const clientPromiseByKey = getMongoClientPromiseByKeyStore();
@@ -264,10 +315,12 @@ export async function invalidateMongoClientCache(): Promise<void> {
   clientByKey.clear();
   clientPromiseByKey.clear();
 
+  // Close established clients.
   await Promise.allSettled(
     [...cachedClients].map((client) => closeMongoClientSafely(client, 'cached-client'))
   );
 
+  // Handle pending promises to ensure they don't leak clients.
   pendingClientPromises.forEach((clientPromise) => {
     void clientPromise
       .then(async (client) => {
@@ -278,6 +331,13 @@ export async function invalidateMongoClientCache(): Promise<void> {
   });
 }
 
+/**
+ * Retrieves an established MongoClient instance for the specified source.
+ * Clients are cached by source and URI.
+ * 
+ * @param preferredSource - Optional preferred source (local vs cloud).
+ * @returns Connected MongoClient instance.
+ */
 export async function getMongoClient(preferredSource?: MongoSource): Promise<MongoClient> {
   const sourceConfig = await applyActiveMongoSourceEnv(preferredSource);
   const uri = getMongoUri();
@@ -288,6 +348,7 @@ export async function getMongoClient(preferredSource?: MongoSource): Promise<Mon
   const cachedClient = clientByKey.get(clientCacheKey);
   if (cachedClient) return cachedClient;
 
+  // Deduplicate connection attempts.
   if (!clientPromiseByKey.has(clientCacheKey)) {
     const { MongoClient } = getMongoClientCtor();
     clientPromiseByKey.set(clientCacheKey, new MongoClient(uri, getMongoClientOptions()).connect());
@@ -309,6 +370,13 @@ export async function getMongoClient(preferredSource?: MongoSource): Promise<Mon
   }
 }
 
+/**
+ * Retrieves a MongoDB Db instance for the specified source.
+ * Automatically resolves the database name from environment or source config.
+ * 
+ * @param preferredSource - Optional preferred source (local vs cloud).
+ * @returns Established Db instance.
+ */
 export async function getMongoDb(preferredSource?: MongoSource): Promise<Db> {
   const sourceConfig = await applyActiveMongoSourceEnv(preferredSource);
   const dbName = sourceConfig.dbName || process.env['MONGODB_DB'] || 'app';

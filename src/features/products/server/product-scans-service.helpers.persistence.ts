@@ -38,6 +38,7 @@ const updateProductScanWithRetry = async (
   try {
     const result = await updateProductScan(scan.id, updates);
     if (result === null) {
+      // Database update returned null, indicating the scan was not found
       throw new Error(`Product scan ${scan.id} could not be updated.`);
     }
     return normalizeProductScanRecord(result);

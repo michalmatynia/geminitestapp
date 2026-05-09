@@ -133,6 +133,7 @@ const assertAgentPollResponse = (
   response: Awaited<ReturnType<typeof agentApi.poll>>
 ): AgentRunRecord => {
   if (!response.ok) {
+    // Agent API returned an error response during polling
     throw new Error(response.error || 'Failed to poll agent run.');
   }
 
@@ -164,6 +165,7 @@ export const pollAgentRun = async (
     }
 
     if (AGENT_FAILED_POLL_STATUSES.has(status)) {
+      // Agent run completed with a failure status
       throw new Error(run?.errorMessage || 'Agent run failed.');
     }
 
@@ -172,6 +174,7 @@ export const pollAgentRun = async (
     }
   }
 
+  // Agent run did not complete within the maximum polling attempts
   throw new Error('Agent run timed out.');
 };
 
@@ -300,10 +303,12 @@ export const handleAgent: NodeHandler = async ({
   try {
     const enqueueResult = await agentApi.enqueue(payload);
     if (!enqueueResult.ok) {
+      // Agent API returned an error response during enqueue
       throw new Error(enqueueResult.error || 'Failed to enqueue agent run.');
     }
     const runIdRaw = enqueueResult.data.runId;
     if (typeof runIdRaw !== 'string' || runIdRaw.trim().length === 0) {
+      // Agent enqueue response is missing a valid run ID
       throw new Error('Agent run enqueue response did not include a valid run id.');
     }
     runId = runIdRaw;

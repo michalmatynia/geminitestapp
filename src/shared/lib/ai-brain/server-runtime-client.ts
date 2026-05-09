@@ -19,19 +19,27 @@ import type { BrainModelVendor } from '@/shared/contracts/ai-brain';
 import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 
+import { buildOpenAiCompatibleMessages } from './providers/openai';
+import { buildAnthropicMessages } from './providers/anthropic';
+import { buildGeminiMessages } from './providers/gemini';
 import { inferBrainModelVendor, normalizeBrainModelId } from './model-vendor';
 import { resolveOllamaBaseUrl } from './ollama-config';
 import { resolveBrainProviderCredential } from './provider-credentials';
 
 import type {
   ChatCompletionContentPart,
-  ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
+/**
+ * Alias for BrainModelVendor.
+ */
 export type BrainRuntimeVendor = BrainModelVendor;
 
+/**
+ * Represents a chat message formatted for the AI Brain runtime.
+ */
 type BrainChatMessage = SimpleChatMessage<
   string | ChatCompletionContentPart[],
   'system' | 'user' | 'assistant'
@@ -41,57 +49,56 @@ export type { BrainChatMessage };
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 
-const stringifyMessageContent = (value: string | ChatCompletionContentPart[]): string => {
-  if (typeof value === 'string') return value;
-  return value
-    .map((part: ChatCompletionContentPart): string => {
-      if (part.type === 'text') return part.text ?? '';
-      if (part.type === 'image_url') {
-        return '[image]';
-      }
-      return '';
-    })
-    .join('\n')
-    .trim();
-};
-
+/**
+ * Infers the AI vendor for a given model ID.
+ * @param modelId - The model ID to inspect.
+ * @returns The inferred BrainRuntimeVendor.
+ */
 export const inferBrainRuntimeVendor = (modelId: string): BrainRuntimeVendor =>
   inferBrainModelVendor(modelId);
 
+/**
+ * Normalizes a Brain model ID by removing any vendor prefix.
+ * 
+ * @param modelId - The raw model ID.
+ * @returns The normalized model ID.
+ */
 export const normalizeBrainRuntimeModelId = (modelId: string): string =>
   normalizeBrainModelId(modelId);
 
+/**
+ * Resolves the OpenAI API key.
+ * 
+ * @returns The resolved OpenAI API key.
+ */
 const resolveOpenAiApiKey = async (): Promise<string> => {
   return resolveBrainProviderCredential('openai');
 };
 
+/**
+ * Resolves the Anthropic API key.
+ * 
+ * @returns The resolved Anthropic API key.
+ */
 const resolveAnthropicApiKey = async (): Promise<string> => {
   return resolveBrainProviderCredential('anthropic');
 };
 
+/**
+ * Resolves the Gemini API key.
+ * 
+ * @returns The resolved Gemini API key.
+ */
 const resolveGeminiApiKey = async (): Promise<string> => {
   return resolveBrainProviderCredential('gemini');
 };
 
-const buildOpenAiCompatibleMessages = (
-  messages: BrainChatMessage[]
-): ChatCompletionMessageParam[] =>
-  messages.map((message: BrainChatMessage): ChatCompletionMessageParam => {
-    if (message.role === 'user') {
-      return {
-        role: 'user',
-        content: message.content,
-      };
-    }
-    return {
-      role: message.role,
-      content:
-        typeof message.content === 'string'
-          ? message.content
-          : stringifyMessageContent(message.content),
-    };
-  });
-
+/**
+ * Checks if a model is capable of processing vision (images).
+ * 
+ * @param modelId - The model ID to check.
+ * @returns True if the model has vision capabilities.
+ */
 export const isBrainModelVisionCapable = (modelId: string): boolean => {
   const vendor = inferBrainRuntimeVendor(modelId);
   const normalized = normalizeBrainRuntimeModelId(modelId).toLowerCase();
@@ -135,18 +142,38 @@ export const isBrainModelVisionCapable = (modelId: string): boolean => {
   );
 };
 
+/**
+ * Checks if a model supports JSON mode (structured output).
+ * 
+ * @param modelId - The model ID to check.
+ * @returns True if JSON mode is supported.
+ */
 export const supportsBrainJsonMode = (modelId: string): boolean => {
   const vendor = inferBrainRuntimeVendor(modelId);
   if (vendor !== 'openai') return false;
   const normalized = normalizeBrainRuntimeModelId(modelId).toLowerCase();
+  // OpenAI o1 models do not currently support JSON mode
   return !normalized.startsWith('o1-');
 };
 
+/**
+ * Checks if a model supports streaming responses.
+ * 
+ * @param modelId - The model ID to check.
+ * @returns True if streaming is supported.
+ */
 export const supportsBrainStreaming = (modelId: string): boolean => {
   const vendor = inferBrainRuntimeVendor(modelId);
   return vendor === 'openai' || vendor === 'ollama';
 };
 
+/**
+ * Creates an OpenAI-compatible client, either for OpenAI itself or for a local Ollama instance.
+ * 
+ * @param modelId - The model ID.
+ * @param apiKeyOverride - Optional API key to use instead of the resolved one.
+ * @returns Object containing the OpenAI client and the identified vendor.
+ */
 const createOpenAiCompatibleClient = async (
   modelId: string,
   apiKeyOverride?: string
@@ -162,6 +189,7 @@ const createOpenAiCompatibleClient = async (
       vendor,
     };
   }
+  // Ollama provides an OpenAI-compatible endpoint at /v1
   return {
     client: new OpenAI({
       baseURL: `${OLLAMA_BASE_URL}/v1`,
@@ -171,79 +199,15 @@ const createOpenAiCompatibleClient = async (
   };
 };
 
-const extractBase64ImageData = (
-  dataUrl: string
-): { mediaType: string; data: string } | null => {
-  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-  if (!match) return null;
-  return { mediaType: match[1] ?? '', data: match[2] ?? '' };
-};
-
-const buildAnthropicMessages = (messages: BrainChatMessage[]) => {
-  const systemPrompt = messages
-    .filter((message: BrainChatMessage): boolean => message.role === 'system')
-    .map((message: BrainChatMessage): string => String(message.content))
-    .join('\n\n')
-    .trim();
-  const chatMessages = messages
-    .filter((message: BrainChatMessage): boolean => message.role !== 'system')
-    .map((message: BrainChatMessage) => ({
-      role: message.role === 'assistant' ? 'assistant' : 'user',
-      content:
-        typeof message.content === 'string'
-          ? [{ type: 'text' as const, text: message.content }]
-          : message.content.map((part: ChatCompletionContentPart) => {
-              if (part.type === 'text') return { type: 'text' as const, text: part.text ?? '' };
-              if (part.type === 'image_url') {
-                const parsed = extractBase64ImageData(
-                  typeof part.image_url === 'string' ? part.image_url : part.image_url.url
-                );
-                if (parsed) {
-                  return {
-                    type: 'image' as const,
-                    source: {
-                      type: 'base64' as const,
-                      media_type: parsed.mediaType as 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp',
-                      data: parsed.data,
-                    },
-                  };
-                }
-              }
-              return { type: 'text' as const, text: '' };
-            }),
-    }));
-  return { systemPrompt, chatMessages };
-};
-
-const buildGeminiMessages = (messages: BrainChatMessage[]) => {
-  const systemPrompt = messages
-    .filter((message: BrainChatMessage): boolean => message.role === 'system')
-    .map((message: BrainChatMessage): string => String(message.content))
-    .join('\n\n')
-    .trim();
-  const contents = messages
-    .filter((message: BrainChatMessage): boolean => message.role !== 'system')
-    .map((message: BrainChatMessage) => ({
-      role: message.role === 'assistant' ? 'model' : 'user',
-      parts:
-        typeof message.content === 'string'
-          ? [{ text: message.content }]
-          : message.content.map((part: ChatCompletionContentPart) => {
-              if (part.type === 'text') return { text: part.text ?? '' };
-              if (part.type === 'image_url') {
-                const parsed = extractBase64ImageData(
-                  typeof part.image_url === 'string' ? part.image_url : part.image_url.url
-                );
-                if (parsed) {
-                  return { inline_data: { mime_type: parsed.mediaType, data: parsed.data } };
-                }
-              }
-              return { text: '' };
-            }),
-    }));
-  return { systemPrompt, contents };
-};
-
+/**
+ * Executes a chat completion request.
+ * Automatically routes the request to the appropriate vendor (OpenAI, Anthropic, Gemini, or Ollama)
+ * based on the provided model ID.
+ * 
+ * @param input - Configuration for the chat completion.
+ * @returns Object containing the response text and vendor/model info.
+ * @throws {AppError} If the request fails or the response is empty.
+ */
 export const runBrainChatCompletion = async (input: {
   modelId: string;
   messages: BrainChatMessage[];
@@ -259,6 +223,7 @@ export const runBrainChatCompletion = async (input: {
   const vendor = inferBrainRuntimeVendor(input.modelId);
   const normalizedModelId = normalizeBrainRuntimeModelId(input.modelId);
 
+  // OpenAI and Ollama (OpenAI-compatible)
   if (vendor === 'openai' || vendor === 'ollama') {
     const { client, vendor: openAiCompatibleVendor } = await createOpenAiCompatibleClient(
       input.modelId,
@@ -294,6 +259,7 @@ export const runBrainChatCompletion = async (input: {
     };
   }
 
+  // Anthropic API
   if (vendor === 'anthropic') {
     const { systemPrompt, chatMessages } = buildAnthropicMessages(input.messages);
     const anthropicKey = input.apiKeyOverride?.trim() || await resolveAnthropicApiKey();
@@ -336,6 +302,7 @@ export const runBrainChatCompletion = async (input: {
     };
   }
 
+  // Gemini (Google) API
   const { systemPrompt, contents } = buildGeminiMessages(input.messages);
   const geminiKey = input.apiKeyOverride?.trim() || await resolveGeminiApiKey();
   const response = await fetch(
@@ -409,6 +376,14 @@ export const runBrainChatCompletion = async (input: {
   };
 };
 
+/**
+ * Executes a streaming chat completion request.
+ * Only OpenAI and Ollama vendors are currently supported for streaming.
+ * 
+ * @param input - Configuration for the streaming completion.
+ * @returns Object containing the identified vendor and the readable stream.
+ * @throws {AppError} If configuration is invalid or the vendor doesn't support streaming.
+ */
 export const streamBrainChatCompletion = async (input: {
   modelId: string;
   messages: BrainChatMessage[];

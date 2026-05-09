@@ -1,10 +1,20 @@
+/**
+ * @file error-reporting.ts
+ * @description Provides utilities for building, parsing, and summarizing errors
+ * occurring during AI Path execution. It standardizes error reporting across
+ * different scopes (enqueue, run, node, etc.) and provides a unified report format.
+ */
+
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
 
+/** Severity levels for AI Path errors. */
 export type AiPathErrorSeverity = 'info' | 'warning' | 'error' | 'fatal';
+
+/** Possible scopes where an error can occur within the AI Path system. */
 export type AiPathErrorScope =
   | 'enqueue'
   | 'run'
@@ -14,53 +24,103 @@ export type AiPathErrorScope =
   | 'api'
   | 'unknown';
 
+/**
+ * Detailed report of an error in an AI Path run.
+ */
 export type AiPathErrorReport = {
+  /** Schema version of the report. */
   version: 1;
+  /** Machine-readable error code (e.g., AI_PATHS_NODE_TIMEOUT). */
   code: string;
+  /** Broad category of the error (e.g., runtime, validation). */
   category: string;
+  /** Severity of the error. */
   severity: AiPathErrorSeverity;
+  /** Where the error originated. */
   scope: AiPathErrorScope;
+  /** Internal error message. */
   message: string;
+  /** Human-friendly error message. */
   userMessage: string;
+  /** ISO timestamp when the error occurred. */
   timestamp: string;
+  /** Trace ID for tracking the request through systems. */
   traceId: string | null;
+  /** Run ID associated with the error. */
   runId: string | null;
+  /** Node ID if the error occurred within a specific node. */
   nodeId: string | null;
+  /** Type of the node (if applicable). */
   nodeType: string | null;
+  /** Display title of the node (if applicable). */
   nodeTitle: string | null;
+  /** Attempt number (for retriable operations). */
   attempt: number | null;
+  /** Iteration number (for loops). */
   iteration: number | null;
+  /** Whether the error is considered retriable. */
   retryable: boolean;
+  /** Recommended delay before retrying, in milliseconds. */
   retryAfterMs: number | null;
+  /** HTTP status code (if from an API). */
   statusCode: number | null;
+  /** Primary cause of the error. */
   cause: string | null;
+  /** Chain of causes leading to this error. */
   causeChain: string[];
+  /** Suggested actions or hints to resolve the error. */
   hints: string[];
+  /** Additional structured metadata. */
   metadata: Record<string, unknown> | null;
 };
 
+/**
+ * Error frequency by code in a run summary.
+ */
 export type AiPathRunErrorSummaryCode = {
+  /** The error code. */
   code: string;
+  /** Number of occurrences. */
   count: number;
 };
 
+/**
+ * Summary of failures for a specific node.
+ */
 export type AiPathRunErrorSummaryNode = {
+  /** The node ID. */
   nodeId: string;
+  /** Type of the node. */
   nodeType: string | null;
+  /** Title of the node. */
   nodeTitle: string | null;
+  /** Last error code encountered by this node. */
   code: string | null;
+  /** Last error message encountered by this node. */
   message: string | null;
+  /** Total error count for this node. */
   count: number;
+  /** ISO timestamp of the last error. */
   lastAt: string | null;
 };
 
+/**
+ * High-level summary of errors for an entire AI Path run.
+ */
 export type AiPathRunErrorSummary = {
+  /** Total count of errors with 'error' or 'fatal' severity. */
   totalErrors: number;
+  /** Total number of reports included in this summary. */
   reportCount: number;
+  /** Whether any of the errors are retriable. */
   retryable: boolean;
+  /** ISO timestamp of the most recent error. */
   lastErrorAt: string | null;
+  /** The most significant or recent error report. */
   primary: AiPathErrorReport | null;
+  /** Frequency of error codes. */
   codes: AiPathRunErrorSummaryCode[];
+  /** Failures grouped by node. */
   nodeFailures: AiPathRunErrorSummaryNode[];
 };
 
@@ -192,6 +252,11 @@ const toHints = (value: unknown): string[] => {
     .filter((entry: string | null): entry is string => Boolean(entry));
 };
 
+/**
+ * Constructs a standardized AiPathErrorReport from various input types.
+ * @param input Raw error data and context.
+ * @returns A normalized error report.
+ */
 export const buildAiPathErrorReport = (input: BuildAiPathErrorReportInput): AiPathErrorReport => {
   const message = toErrorMessage(input.error);
   const causeChain = toCauseChain(input.error);
@@ -224,6 +289,11 @@ export const buildAiPathErrorReport = (input: BuildAiPathErrorReportInput): AiPa
   };
 };
 
+/**
+ * Parses a raw object into a standardized AiPathErrorReport.
+ * @param value The value to parse.
+ * @returns The parsed report or null if invalid.
+ */
 export const parseAiPathErrorReport = (value: unknown): AiPathErrorReport | null => {
   if (!isRecord(value)) return null;
   const code = normalizeCode(toNonEmptyString(value['code']), 'AI_PATHS_RUNTIME_UNHANDLED_ERROR');
@@ -263,6 +333,7 @@ const toEventFallbackSeverity = (level: AiPathRunEventRecord['level']): AiPathEr
 };
 
 const toEventReport = (event: AiPathRunEventRecord): AiPathErrorReport | null => {
+  // Try to extract an embedded report from metadata first.
   const metadata = isRecord(event.metadata) ? event.metadata : null;
   const existing = parseAiPathErrorReport(metadata?.['errorReport']);
   if (existing) {
@@ -388,6 +459,11 @@ const dedupeReports = (reports: AiPathErrorReport[]): AiPathErrorReport[] => {
   return deduped;
 };
 
+/**
+ * Aggregates error reports from run, node, and event records into a high-level summary.
+ * @param input The run, nodes, and events to summarize.
+ * @returns An error summary or null if no errors were found.
+ */
 export const buildAiPathRunErrorSummary = (input: {
   run: AiPathRunRecord;
   nodes: AiPathRunNodeRecord[];
@@ -398,6 +474,12 @@ export const buildAiPathRunErrorSummary = (input: {
     .filter((report: AiPathErrorReport | null): report is AiPathErrorReport => Boolean(report));
   const runReport = toRunFallbackReport(input.run);
   const nodeFallbackReports = toNodeFallbackReports(input.nodes, input.run.id);
+  
+  // Categorization Logic:
+  // 1. Collect reports from events (the most detailed source).
+  // 2. Add fallback report from the run status itself.
+  // 3. Add fallback reports for any failed nodes.
+  // 4. Sort by timestamp and deduplicate to ensure the summary is accurate and concise.
   const reports = dedupeReports(
     [...eventReports, ...(runReport ? [runReport] : []), ...nodeFallbackReports].sort(
       compareReports
@@ -466,6 +548,11 @@ export const buildAiPathRunErrorSummary = (input: {
   };
 };
 
+/**
+ * Parses a raw value into an AiPathRunErrorSummary.
+ * @param value The value to parse.
+ * @returns The parsed summary or null if invalid.
+ */
 export const parseAiPathRunErrorSummary = (value: unknown): AiPathRunErrorSummary | null => {
   if (!isRecord(value)) return null;
   const primary = parseAiPathErrorReport(value['primary']);

@@ -6,12 +6,14 @@ const DATABASE_JSON_BACKUP_REMOVED_MESSAGE =
   'JSON backup restore is unavailable because the legacy SQL backup pipeline has been removed.';
 
 export async function createDatabaseJsonBackup(): Promise<DatabaseBackupResult> {
+  // JSON backup functionality was removed when SQL support was deprecated
   throw new Error(DATABASE_JSON_BACKUP_REMOVED_MESSAGE);
 }
 
 export async function restoreDatabaseJsonBackup(
   _backupName: string
 ): Promise<DatabaseBackupResult> {
+  // JSON backup functionality was removed when SQL support was deprecated
   throw new Error(DATABASE_JSON_BACKUP_REMOVED_MESSAGE);
 }
 

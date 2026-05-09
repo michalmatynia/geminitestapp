@@ -439,6 +439,7 @@ export function useCircuitBreakerQuery<TData>(
         if (options?.fallbackData !== undefined) {
           return options.fallbackData;
         }
+        // Circuit breaker is open due to repeated failures
         throw new Error('Circuit breaker is open');
       }
 

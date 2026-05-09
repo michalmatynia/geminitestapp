@@ -1,3 +1,10 @@
+/**
+ * AI Path Run Handler
+ * 
+ * Provides API endpoints for retrieving metadata, nodes, and events for a specific 
+ * AI Path run, and for cancelling/deleting runs.
+ */
+
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
@@ -61,6 +68,10 @@ const parseRunId = (params: { runId: string }): string => {
   return parsed.data.runId;
 };
 
+/**
+ * Retrieves AI Path run data including nodes, events, and repository status.
+ * Requires AI Path run access.
+ */
 export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -112,6 +123,10 @@ export async function getHandler(
   );
 }
 
+/**
+ * Deletes an AI Path run if the authenticated user has appropriate access.
+ * Enforces rate limiting on delete actions.
+ */
 export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,

@@ -107,7 +107,7 @@ export async function patchAuthUserHandler(
   }
   const data = ctx.body as z.infer<typeof updateSchema> | undefined;
   if (!data) {
-    throw badRequestError('Invalid payload');
+    throw badRequestError('Invalid payload. The request body must be a valid JSON object with at least one of: name, email, or emailVerified.');
   }
   await logAuthEvent({
     req,
@@ -119,7 +119,7 @@ export async function patchAuthUserHandler(
 
   const { name, email, emailVerified } = data;
   if (name === undefined && email === undefined && emailVerified === undefined) {
-    throw badRequestError('No updates provided.');
+    throw badRequestError('No updates provided. Supply at least one of: name, email, or emailVerified in the request body.');
   }
 
   const { id: userId } = params;
@@ -132,7 +132,7 @@ export async function patchAuthUserHandler(
   const userIdFilter = buildMongoUserIdFilter(userId);
   const existing = await db.collection<MongoUserDoc>('users').findOne(userIdFilter);
   if (!existing) {
-    throw notFoundError('User not found.');
+    throw notFoundError(`User "${userId}" not found. The user may have been deleted or the id is incorrect.`);
   }
 
   const nextEmail = typeof email === 'string' ? normalizeAuthEmail(email) : undefined;
@@ -156,7 +156,7 @@ export async function patchAuthUserHandler(
 
   const updated = await db.collection<MongoUserDoc>('users').findOne(userIdFilter);
   if (!updated) {
-    throw notFoundError('User not found.');
+    throw notFoundError(`User "${userId}" not found after update. The user may have been deleted concurrently.`);
   }
 
   const payload: AuthUser = {
@@ -201,7 +201,7 @@ export async function deleteAuthUserHandler(
       userId: session?.user?.id ?? null,
       outcome: 'missing_user_id',
     });
-    throw badRequestError('Missing user id.');
+    throw badRequestError('Missing user id. Provide a non-empty user id in the URL path to delete a user.');
   }
   if (session?.user?.id === userId) {
     await logAuthEvent({
@@ -233,7 +233,7 @@ export async function deleteAuthUserHandler(
   const userIdFilter = buildMongoUserIdFilter(userId);
   const existing = await db.collection<MongoUserDoc>('users').findOne(userIdFilter);
   if (!existing) {
-    throw notFoundError('User not found.');
+    throw notFoundError(`User "${userId}" not found. The user may have already been deleted or the id is incorrect.`);
   }
   const userIdCandidates = buildMongoUserIdCandidates(userId);
   const objectIdCandidates = userIdCandidates.filter(

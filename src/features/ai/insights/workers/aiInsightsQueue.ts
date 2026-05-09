@@ -8,11 +8,15 @@
  * - Schedule settings integration
  * - Brain capability assignment
  * - Tick-based processing coordination
+ *
+ * Scheduled generation is disabled by default. Manual insight routes call the generators
+ * directly; set ENABLE_SCHEDULED_AI_INSIGHTS=true to opt into background ticks.
  */
 
 import 'server-only';
 
 import { getScheduleSettings } from '@/features/ai/insights/server';
+import { isScheduledAiInsightsEnabled } from '@/features/ai/insights/scheduling';
 import { tick } from '@/features/ai/insights/workers/ai-insights-processor';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { createManagedQueue } from '@/shared/lib/queue';
@@ -80,6 +84,7 @@ const queue = createManagedQueue<ScheduledTickJobData>({
     lockDuration: AI_INSIGHTS_LOCK_DURATION_MS,
   },
   processor: async () => {
+    if (!isScheduledAiInsightsEnabled()) return;
     await tick();
   },
   onFailed: async (_jobId, error) => {
@@ -147,14 +152,25 @@ const reportQueueActionError = (error: unknown, action: string): void => {
 
 const stopInsightsWorker = async (): Promise<void> => {
   if (!aiInsightsQueueState.workerStarted) return;
-  await queue.stopWorker();
   aiInsightsQueueState.workerStarted = false;
+  await queue.stopWorker();
 };
 
 export const startAiInsightsQueue = (): void => {
   if (reconcileInFlight) return;
 
   reconcileInFlight = (async (): Promise<void> => {
+    if (!isScheduledAiInsightsEnabled()) {
+      await removeInsightsTickRepeatJobs().catch((error) => {
+        reportQueueActionError(error, 'removeScheduler');
+      });
+      aiInsightsQueueState.schedulerRegistered = false;
+      await stopInsightsWorker().catch((error) => {
+        reportQueueActionError(error, 'stopWorker');
+      });
+      return;
+    }
+
     let shouldRegister: boolean;
     try {
       shouldRegister = await shouldRegisterInsightsScheduler();
@@ -177,8 +193,8 @@ export const startAiInsightsQueue = (): void => {
       return;
     }
 
-  aiInsightsQueueState.workerStarted = true;
-  queue.startWorker();
+    aiInsightsQueueState.workerStarted = true;
+    queue.startWorker();
 
     if (aiInsightsQueueState.schedulerRegistered) return;
 

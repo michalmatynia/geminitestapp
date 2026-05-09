@@ -34,7 +34,7 @@ export async function postHandler(
 ): Promise<Response> {
   const { id, connectionId } = params;
   if (!id || !connectionId) {
-    throw badRequestError('Integration id and connection id are required');
+    throw badRequestError('Integration id and connection id are required. Provide both id and connectionId in the URL path.');
   }
   const parsed = await parseJsonBody(_req, integrationBaseApiPayloadSchema, {
     logPrefix: 'integrations.base.request.POST',
@@ -74,9 +74,8 @@ export async function postHandler(
           ? String(inventoryValue)
           : '';
     if (!inventoryId || inventoryId === '0') {
-      throw badRequestError('inventory_id is required.');
+      throw badRequestError('inventory_id is required for getInventoryProductsDetailed. Provide a non-zero inventory_id in the parameters.');
     }
-    const limitRaw = parameters['limit'];
     const limit =
       typeof limitRaw === 'number' && Number.isFinite(limitRaw)
         ? limitRaw
@@ -100,7 +99,7 @@ export async function postHandler(
           ? String(inventoryValue)
           : '';
     if (!inventoryId || inventoryId === '0') {
-      throw badRequestError('inventory_id is required.');
+      throw badRequestError('inventory_id is required for getInventoryProductDetailed. Provide a non-zero inventory_id in the parameters.');
     }
     const productValue = parameters['product_id'] ?? parameters['id'];
     const productId =
@@ -110,7 +109,7 @@ export async function postHandler(
           ? String(productValue)
           : '';
     if (!productId) {
-      throw badRequestError('product_id is required.');
+      throw badRequestError('product_id is required for getInventoryProductDetailed. Provide a non-empty product_id (or id) in the parameters.');
     }
     const payload = await callBaseApi(baseToken, 'getInventoryProductsData', {
       inventory_id: inventoryId,

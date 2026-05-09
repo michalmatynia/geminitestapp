@@ -44,6 +44,7 @@ const resolveRowMarketplaceCopyDebrandInput = async (
   );
   const primaryIntegration = integrations[0];
   if (!primaryIntegration) {
+    // No valid marketplace integration found for copy debranding
     throw new Error('Marketplace integration is required.');
   }
 

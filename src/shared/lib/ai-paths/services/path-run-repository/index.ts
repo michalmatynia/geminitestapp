@@ -1,4 +1,5 @@
 import 'server-only';
+import { z } from 'zod';
 
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import {
@@ -7,15 +8,6 @@ import {
 } from '@/shared/lib/db/collection-provider-map';
 import type { DatabaseEngineProvider } from '@/shared/lib/db/database-engine-constants';
 
-import {
-  claimRunForProcessing,
-  createRun,
-  deleteRun,
-  findRunById,
-  getRunByRequestId,
-  updateRun,
-  updateRunIfStatus,
-} from './methods';
 import {
   AI_PATHS_MONGO_INDEXES,
   mongoPathRunRepository,
@@ -30,12 +22,14 @@ export type PathRunRepositorySelection = {
   routeMode: 'explicit' | 'fallback';
 };
 
-export type PersistedRunRepositorySelection = {
-  collection: string | null;
-  provider: 'mongodb' | null;
-  routeMode: 'explicit' | 'fallback' | null;
-  selectedAt: string | null;
-};
+const PersistedRunRepositorySelectionSchema = z.object({
+  collection: z.string().trim().min(1).nullable().optional(),
+  provider: z.literal('mongodb').nullable().optional(),
+  routeMode: z.enum(['explicit', 'fallback']).nullable().optional(),
+  selectedAt: z.string().trim().min(1).nullable().optional(),
+});
+
+export type PersistedRunRepositorySelection = z.infer<typeof PersistedRunRepositorySelectionSchema>;
 
 const hasExplicitCollectionRoute = (
   routeMap: Record<string, DatabaseEngineProvider>
@@ -47,40 +41,29 @@ const hasExplicitCollectionRoute = (
   });
 };
 
-const asRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-
-const asProvider = (value: unknown): 'mongodb' | null => (value === 'mongodb' ? value : null);
-
-const asRouteMode = (value: unknown): 'explicit' | 'fallback' | null =>
-  value === 'explicit' || value === 'fallback' ? value : null;
-
-const asOptionalString = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
-};
-
 export const readPersistedRunRepositorySelection = (
   meta: unknown
 ): PersistedRunRepositorySelection | null => {
-  const metaRecord = asRecord(meta);
-  const runRepository = asRecord(metaRecord?.['runRepository']);
-  if (!runRepository) return null;
+  const result = z
+    .object({
+      runRepository: PersistedRunRepositorySelectionSchema,
+    })
+    .safeParse(meta);
 
-  const selection: PersistedRunRepositorySelection = {
-    collection: asOptionalString(runRepository['collection']),
-    provider: asProvider(runRepository['provider']),
-    routeMode: asRouteMode(runRepository['routeMode']),
-    selectedAt: asOptionalString(runRepository['selectedAt']),
-  };
+  if (!result.success) return null;
 
-  if (!selection.collection && !selection.provider && !selection.routeMode && !selection.selectedAt) {
+  const { runRepository } = result.data;
+
+  // Ensure there is at least one meaningful field populated
+  if (
+    !runRepository.collection &&
+    !runRepository.provider &&
+    !runRepository.routeMode &&
+    !runRepository.selectedAt
+  ) {
     return null;
   }
-  return selection;
+  return runRepository;
 };
 
 export const hasRunRepositorySelectionMismatch = (
@@ -125,14 +108,5 @@ export const getPathRunRepository = async (): Promise<AiPathRunRepository> => {
   return (await resolvePathRunRepository()).repo;
 };
 
-export {
-  AI_PATHS_MONGO_INDEXES,
-  claimRunForProcessing,
-  createRun,
-  deleteRun,
-  findRunById,
-  mongoPathRunRepository,
-  getRunByRequestId,
-  updateRun,
-  updateRunIfStatus,
-};
+export { AI_PATHS_MONGO_INDEXES, mongoPathRunRepository };
+export * from './methods';

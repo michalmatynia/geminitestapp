@@ -17,7 +17,7 @@ export const normalizeProjectId = (value: string | null | undefined): string | n
 
 export const normalizeImageSlotIndex = (value: number): number => {
   if (!Number.isFinite(value)) {
-    throw badRequestError('Image slot index must be a number.');
+    throw badRequestError(`Image slot index must be a number, but received: ${JSON.stringify(value)}.`);
   }
   const normalized = Math.floor(value);
   if (normalized < 0 || normalized >= DEFAULT_IMAGE_SLOT_COUNT) {

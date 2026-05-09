@@ -1,3 +1,10 @@
+/**
+ * @file client-run-tracker.ts
+ * @description Provides a client-side tracking mechanism for AI Path runs.
+ * It manages run subscriptions, polling, and streaming (EventSource) to keep
+ * the UI synchronized with the backend run state.
+ */
+
 'use client';
 
 import { aiPathRunRecordSchema, type AiPathRunRecord } from '@/shared/contracts/ai-paths';
@@ -34,19 +41,35 @@ const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {
   cancelled: 'canceled',
 };
 
+/**
+ * Represents a snapshot of a tracked AI Path run.
+ */
 export type TrackedAiPathRunSnapshot = {
+  /** Unique identifier for the run. */
   runId: string;
+  /** Current status of the run. */
   status: AiPathRunRecord['status'];
+  /** ISO timestamp of the last update. */
   updatedAt: string | null;
+  /** ISO timestamp when the run finished (if terminal). */
   finishedAt: string | null;
+  /** Error message if the run failed. */
   errorMessage: string | null;
+  /** ID of the entity associated with the run. */
   entityId: string | null;
+  /** Type of the entity associated with the run. */
   entityType: string | null;
+  /** Full run record, if available. */
   run?: AiPathRunRecord | null;
+  /** Whether the tracker is actively watching this run or has stopped. */
   trackingState: 'active' | 'stopped';
 };
 
+/**
+ * Options for subscribing to a tracked AI Path run.
+ */
 export type SubscribeTrackedAiPathRunOptions = {
+  /** Optional initial data to populate the tracker before the first server response. */
   initialSnapshot?: Partial<TrackedAiPathRunSnapshot> | undefined;
 };
 
@@ -193,6 +216,11 @@ const shouldRetryMissingRunDetail = (
   return Date.now() - record.trackedAtMs < RUN_DETAIL_NOT_FOUND_GRACE_MS;
 };
 
+/**
+ * Checks if the given snapshot represents a terminal state (completed, failed, or canceled).
+ * @param snapshot The snapshot to check.
+ * @returns True if terminal, false otherwise.
+ */
 export const isTrackedAiPathRunTerminal = (snapshot: TrackedAiPathRunSnapshot): boolean =>
   isTerminalStatus(snapshot.status);
 
@@ -490,6 +518,12 @@ const pollRecord = async (runId: string): Promise<void> => {
 };
 
 const startStreaming = (record: TrackRecord): void => {
+  // Lifecycle of a run:
+  // 1. Initial subscription starts streaming via EventSource.
+  // 2. 'run' events update the snapshot and notify listeners.
+  // 3. If terminal status is reached, we may fetch full details via syncTerminalDetail.
+  // 4. 'done' event or syncTerminalDetail completes the tracking.
+  // 5. 'error' event falls back to polling if the run is still active.
   record.started = true;
   clearPollTimer(record);
 
@@ -528,6 +562,7 @@ const startStreaming = (record: TrackRecord): void => {
         finalizeRecord(record, record.snapshot);
         return;
       }
+      // If streaming fails (e.g. network disconnect), fallback to polling.
       startPolling(record, 0);
     };
 
@@ -627,6 +662,14 @@ const ensureRecord = (
   return record;
 };
 
+/**
+ * Subscribes to updates for a specific AI Path run.
+ * Automatically handles streaming/polling and environment visibility changes.
+ * @param runId The ID of the run to track.
+ * @param listener Callback function invoked with new snapshots.
+ * @param options Optional configuration and initial data.
+ * @returns An unsubscribe function.
+ */
 export const subscribeToTrackedAiPathRun = (
   runId: string,
   listener: TrackedAiPathRunListener,
@@ -662,6 +705,11 @@ export const subscribeToTrackedAiPathRun = (
   };
 };
 
+/**
+ * Synchronously reads the current snapshot for a tracked run.
+ * @param runId The ID of the run.
+ * @returns The current snapshot or null if not being tracked.
+ */
 export const readTrackedAiPathRunSnapshot = (
   runId: string
 ): TrackedAiPathRunSnapshot | null => {
@@ -671,6 +719,9 @@ export const readTrackedAiPathRunSnapshot = (
   return record ? cloneSnapshot(record.snapshot) : null;
 };
 
+/**
+ * Internal helper to reset the tracker state for testing purposes.
+ */
 export const __resetTrackedAiPathRunClientStateForTests = (): void => {
   Array.from(trackRecords.keys()).forEach((runId: string) => {
     cleanupRecord(runId);

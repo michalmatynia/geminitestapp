@@ -23,7 +23,8 @@ import type { KangurLessonPage, KangurLessonRootBlock } from '@/features/kangur/
 
 export function useQuickInsertActions(
   activePage: KangurLessonPage | null,
-  updateDocument: (nextBlocks: KangurLessonRootBlock[]) => void
+  updateDocument: (nextBlocks: KangurLessonRootBlock[]) => void,
+  addPageFromTemplate: (templateId: KangurLessonDocumentTemplateId) => void
 ) {
   return useMemo(
     () => [
@@ -94,27 +95,19 @@ export function useQuickInsertActions(
         id: 'image-gallery',
         group: 'Visuals & layouts',
         label: 'Add SVG image gallery',
-        description: 'Referenced SVG images in a neat gallery layout.',
-        keywords: ['gallery', 'images', 'svg image'],
+        description: 'New page with referenced SVG images in a neat gallery layout.',
+        keywords: ['gallery', 'images', 'svg image', 'page'],
         Icon: Image,
-        onClick: (): void =>
-          updateDocument([
-            ...(activePage?.blocks ?? []),
-            createKangurLessonGridBlockFromTemplate('image-gallery'),
-          ]),
+        onClick: (): void => addPageFromTemplate('image-gallery-page'),
       },
       {
         id: 'image-mosaic',
         group: 'Visuals & layouts',
         label: 'Add SVG image mosaic',
-        description: 'Dense image-led layout for richer explanation pages.',
-        keywords: ['mosaic', 'images', 'svg image'],
+        description: 'New page with dense image-led layout for richer explanation.',
+        keywords: ['mosaic', 'images', 'svg image', 'page'],
         Icon: Grid2x2,
-        onClick: (): void =>
-          updateDocument([
-            ...(activePage?.blocks ?? []),
-            createKangurLessonGridBlockFromTemplate('image-mosaic'),
-          ]),
+        onClick: (): void => addPageFromTemplate('image-gallery-page'),
       },
       {
         id: 'svg-gallery',
@@ -126,6 +119,7 @@ export function useQuickInsertActions(
         onClick: (): void =>
           updateDocument([
             ...(activePage?.blocks ?? []),
+            createKangurLessonTextBlock(),
             createKangurLessonGridBlockFromTemplate('svg-gallery'),
           ]),
       },
@@ -139,6 +133,7 @@ export function useQuickInsertActions(
         onClick: (): void =>
           updateDocument([
             ...(activePage?.blocks ?? []),
+            createKangurLessonTextBlock(),
             createKangurLessonGridBlockFromTemplate('svg-mosaic'),
           ]),
       },
@@ -163,6 +158,6 @@ export function useQuickInsertActions(
           updateDocument([...(activePage?.blocks ?? []), createKangurLessonQuizBlock()]),
       },
     ],
-    [activePage?.blocks, updateDocument]
+    [activePage?.blocks, addPageFromTemplate, updateDocument]
   );
 }

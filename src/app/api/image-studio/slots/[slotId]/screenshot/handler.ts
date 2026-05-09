@@ -47,7 +47,7 @@ export async function postHandler(
   params: { slotId: string }
 ): Promise<Response> {
   const slotId = params.slotId?.trim() ?? '';
-  if (!slotId) throw badRequestError('Slot id is required');
+  if (!slotId) throw badRequestError('Slot id is required. Provide a non-empty slotId in the URL path.');
 
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = payloadSchema.safeParse(body);
@@ -56,11 +56,11 @@ export async function postHandler(
   }
 
   const slot = await getImageStudioSlotById(slotId);
-  if (!slot) throw notFoundError('Slot not found');
+  if (!slot) throw notFoundError(`Slot "${slotId}" not found. The slot may have been deleted or the id is incorrect.`);
 
   const parsedData = parseDataUrl(parsed.data.dataUrl);
   if (!parsedData) {
-    throw badRequestError('Invalid data URL');
+    throw badRequestError('Invalid data URL. The dataUrl field must be a valid base64-encoded data URL (e.g. "data:image/png;base64,...").');
   }
 
   const ext = guessExtension(parsedData.mime);
@@ -85,7 +85,7 @@ export async function postHandler(
     screenshotFileId: imageFile.id,
     ...(slot.asset3dId && !slot.imageBase64 ? { imageBase64: parsed.data.dataUrl } : {}),
   });
-  if (!updated) throw notFoundError('Slot not found');
+  if (!updated) throw notFoundError(`Slot "${slotId}" not found after screenshot update. The slot may have been deleted concurrently.`);
 
   return NextResponse.json(
     imageStudioSlotScreenshotResponseSchema.parse({ slot: updated, screenshot: imageFile })

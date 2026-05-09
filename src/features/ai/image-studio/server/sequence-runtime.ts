@@ -164,12 +164,12 @@ export async function startImageStudioSequenceRun(
 ): Promise<ImageStudioSequenceRunStartResponse> {
   const projectId = asTrimmedString(input.projectId);
   if (!projectId) {
-    throw badRequestError('Project id is required.');
+    throw badRequestError('Project id is required. Provide a valid projectId in the sequence run input.');
   }
 
   const sourceSlotId = asTrimmedString(input.sourceSlotId);
   if (!sourceSlotId) {
-    throw badRequestError('Source slot id is required.');
+    throw badRequestError('Source slot id is required. Provide a valid sourceSlotId in the sequence run input.');
   }
 
   const sourceSlot = await getImageStudioSlotById(sourceSlotId);
@@ -182,7 +182,7 @@ export async function startImageStudioSequenceRun(
 
   const resolvedPrompt = asTrimmedString(input.prompt);
   if (!resolvedPrompt) {
-    throw badRequestError('Sequence prompt is required.');
+    throw badRequestError('Sequence prompt is required. Provide a non-empty prompt in the sequence run input.');
   }
 
   const settingsSnapshot = await resolveProjectScopedSettings({
@@ -198,7 +198,7 @@ export async function startImageStudioSequenceRun(
   }).filter((step) => step.enabled);
 
   if (sequenceSteps.length === 0) {
-    throw badRequestError('No enabled sequence steps to execute.');
+    throw badRequestError('No enabled sequence steps to execute. Enable at least one step in the sequence configuration before starting a run.');
   }
 
   const run = await createImageStudioSequenceRun({
@@ -286,7 +286,7 @@ export async function cancelImageStudioSequenceRun(
 ): Promise<ImageStudioSequenceRunRecord> {
   const normalizedRunId = asTrimmedString(runId);
   if (!normalizedRunId) {
-    throw badRequestError('Run id is required.');
+    throw badRequestError('Run id is required. Provide a valid runId to cancel a sequence run.');
   }
 
   const existing = await getImageStudioSequenceRunById(normalizedRunId);
@@ -324,7 +324,7 @@ export async function cancelImageStudioSequenceRun(
     });
 
     if (!cancelled) {
-      throw operationFailedError('Failed to cancel sequence run.', {
+      throw operationFailedError(`Failed to cancel sequence run "${existing.id}". The run record could not be updated to cancelled status — it may have already transitioned to another state.`, {
         runId: existing.id,
       });
     }
@@ -348,7 +348,7 @@ export async function cancelImageStudioSequenceRun(
   });
 
   if (!requested) {
-    throw operationFailedError('Failed to request sequence cancellation.', {
+    throw operationFailedError(`Failed to request cancellation for sequence run "${existing.id}". The run record could not be updated — it may have already completed or been cancelled.`, {
       runId: existing.id,
     });
   }

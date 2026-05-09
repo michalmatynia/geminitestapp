@@ -361,15 +361,15 @@ describe('product image upload-to-fastcomet handler', () => {
     expect(mocks.uploadBufferToFastComet).not.toHaveBeenCalled();
   });
 
-  it('rejects the request when the file storage source is not fastcomet', async () => {
+  it('rejects the request when fastcomet upload endpoint is not configured', async () => {
     mocks.getFileStorageSettings.mockResolvedValueOnce({
       source: 'local',
       fastComet: {
-        baseUrl: 'https://sparksofsindri.com',
-        uploadEndpoint: 'https://sparksofsindri.com/api/uploads/index.php',
+        baseUrl: '',
+        uploadEndpoint: '',
         deleteEndpoint: null,
         authToken: null,
-        keepLocalCopy: true,
+        keepLocalCopy: false,
         timeoutMs: 20_000,
         resolveIp: null,
       },
@@ -382,7 +382,7 @@ describe('product image upload-to-fastcomet handler', () => {
         {} as never,
         { id: 'product-1' }
       )
-    ).rejects.toThrow('FastComet storage is not enabled.');
+    ).rejects.toThrow('FastComet storage is not configured.');
 
     expect(mocks.uploadBufferToFastComet).not.toHaveBeenCalled();
   });

@@ -16,7 +16,7 @@ import {
 export const ensureProduct = async (productId: string): Promise<ProductWithImages> => {
   const normalizedId = trimString(productId);
   if (!normalizedId) {
-    throw badRequestError('Product id is required.');
+    throw badRequestError('Product id is required. Provide a non-empty productId to look up the product.');
   }
   const product = await productService.getProductById(normalizedId);
   if (!product) {
@@ -48,7 +48,7 @@ export const resolveProductAndStudioTarget = async (params: {
 
   const projectId = normalizeProjectId(config.projectId);
   if (!projectId) {
-    throw badRequestError('Image Studio project is not selected for this product.');
+    throw badRequestError('Image Studio project is not selected for this product. Open the product in Product Studio and select or create an Image Studio project before running generation.');
   }
 
   return {

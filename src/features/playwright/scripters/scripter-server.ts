@@ -68,7 +68,10 @@ const requireDefinition = async (
   id: string
 ): Promise<ScripterDefinition> => {
   const def = await registry.get(id);
-  if (!def) throw new Error(`Scripter "${id}" not found`);
+  if (!def) {
+    // Scripter definition with the specified ID does not exist
+    throw new Error(`Scripter "${id}" not found`);
+  }
   return def;
 };
 
@@ -85,6 +88,7 @@ const enforceRobotsIfNeeded = async ({
   const targetUrl = invocation.options?.entryUrl ?? definition.entryUrl;
   const verdict = await robotsCheck(targetUrl);
   if (!verdict.allowed) {
+    // robots.txt file disallows scraping this URL
     throw new Error(verdict.reason ?? `Disallowed by robots.txt for ${targetUrl}`);
   }
 };

@@ -20,26 +20,53 @@ import { logger } from '@/shared/utils/logger';
 import type { NextRequest } from 'next/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
+/**
+ * Configuration for a rate limiter instance.
+ */
 type RateLimitConfig = {
+  /** Time window in milliseconds. */
   windowMs: number;
+  /** Maximum number of requests allowed within the window. */
   maxRequests: number;
+  /** Optional function to generate a unique key for the request (defaults to IP). */
   keyGenerator?: (req: NextRequest) => string;
 };
 
+/**
+ * Internal entry for in-memory rate limiting fallback.
+ */
 type RateLimitEntry = {
+  /** Current count of requests in the window. */
   count: number;
+  /** Timestamp when the current window resets. */
   resetTime: number;
+  /** Array of request timestamps for precise window calculation. */
   requests: number[];
 };
 
+/**
+ * Result of a rate limit check.
+ */
 type RateLimitResult = {
+  /** Whether the request is allowed. */
   allowed: boolean;
+  /** Number of remaining requests in the window. */
   remaining: number;
+  /** Timestamp when the window resets. */
   resetTime: number;
+  /** Total number of hits in the current window. */
   totalHits: number;
 };
 
+/**
+ * Lua script for atomic rate limiting in Redis using a sorted set.
+ * 
+ * Logic:
+ * 1. Remove expired request IDs from the sorted set (older than now - window).
+ * 2. Count remaining request IDs in the set.
+ * 3. If count < max, add new request ID and set expiration on the key.
+ * 4. Return [1, remaining_count] if allowed, [0, 0] otherwise.
+ */
 const RATE_LIMIT_LUA_SCRIPT = `
   local key = KEYS[1]
   local now = tonumber(ARGV[1])
@@ -59,10 +86,16 @@ const RATE_LIMIT_LUA_SCRIPT = `
   end
 `;
 
+/**
+ * RateLimiter class that supports Redis with an in-memory fallback.
+ */
 class RateLimiter {
   private store: Map<string, RateLimitEntry> = new Map<string, RateLimitEntry>();
   private config: Required<RateLimitConfig>;
 
+  /**
+   * @param config - Rate limiter configuration.
+   */
   constructor(config: RateLimitConfig) {
     this.config = {
       keyGenerator: (req: NextRequest): string => getClientIp(req),
@@ -70,6 +103,13 @@ class RateLimiter {
     };
   }
 
+  /**
+   * Checks if a request should be rate limited.
+   * 
+   * @param req - The Next.js request object.
+   * @param prefix - A prefix for the rate limit key (e.g. 'auth').
+   * @returns A promise resolving to the rate limit result.
+   */
   async check(req: NextRequest, prefix: string): Promise<RateLimitResult> {
     const key = `${prefix}:${this.config.keyGenerator(req)}`;
     const redis = getRedisClient();
@@ -79,7 +119,7 @@ class RateLimiter {
         const now = Date.now();
         const requestId = `${now}-${Math.random()}`;
 
-        // Use Lua script for atomic execution
+        // Use Lua script for atomic execution to prevent race conditions
         const results = (await redis.eval(
           RATE_LIMIT_LUA_SCRIPT,
           1,
@@ -104,9 +144,13 @@ class RateLimiter {
       }
     }
 
+    // Fallback to in-memory store if Redis is unavailable or fails
     return this.checkInMemory(req);
   }
 
+  /**
+   * Internal in-memory rate limit check.
+   */
   private checkInMemory(req: NextRequest): RateLimitResult {
     const key = this.config.keyGenerator(req);
     const now = Date.now();
@@ -118,6 +162,7 @@ class RateLimiter {
       this.store.set(key, entry);
     }
 
+    // Slide the window by removing old timestamps
     entry.requests = entry.requests.filter((time: number) => time > windowStart);
     entry.count = entry.requests.length;
     if (now > entry.resetTime) {
@@ -138,10 +183,16 @@ class RateLimiter {
     };
   }
 
+  /**
+   * @returns The active configuration for this limiter.
+   */
   getConfig(): Required<RateLimitConfig> {
     return this.config;
   }
 
+  /**
+   * Cleans up expired entries from the in-memory store.
+   */
   cleanup(): void {
     const now = Date.now();
     for (const [key, entry] of this.store.entries()) {
@@ -152,6 +203,9 @@ class RateLimiter {
   }
 }
 
+/**
+ * Resolves the client IP from request headers or the request object.
+ */
 const getClientIp = (req: NextRequest): string => {
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) {
@@ -166,6 +220,9 @@ const getClientIp = (req: NextRequest): string => {
   return 'unknown';
 };
 
+/**
+ * Predefined rate limiters for different endpoint types.
+ */
 export const rateLimiters = {
   api: new RateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 120 }),
   auth: new RateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 8 }),
@@ -176,6 +233,13 @@ export const rateLimiters = {
 
 export type RateLimiterKey = keyof typeof rateLimiters;
 
+/**
+ * Builds standard rate limit headers for the response.
+ * 
+ * @param limiter - The limiter instance used.
+ * @param result - The result of the rate limit check.
+ * @returns A record of headers.
+ */
 export const buildRateLimitHeaders = (
   limiter: RateLimiter,
   result: { remaining: number; resetTime: number }
@@ -186,6 +250,14 @@ export const buildRateLimitHeaders = (
   'X-RateLimit-Window': limiter.getConfig().windowMs.toString(),
 });
 
+/**
+ * Enforces a rate limit for a request.
+ * Throws a rate limited error if the limit is exceeded.
+ * 
+ * @param req - The Next.js request object.
+ * @param key - The key identifying which rate limiter to use.
+ * @returns The rate limit headers if allowed.
+ */
 export const enforceRateLimit = async (
   req: NextRequest,
   key: RateLimiterKey
@@ -203,6 +275,7 @@ export const enforceRateLimit = async (
   return { headers };
 };
 
+// Periodic cleanup of the in-memory fallback store
 if (typeof setInterval !== 'undefined') {
   safeSetInterval(
     (): void => {

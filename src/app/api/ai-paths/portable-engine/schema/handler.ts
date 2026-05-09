@@ -57,6 +57,7 @@ const parseSchemaKindQuery = (value: string | undefined): SchemaKindQueryValue =
   if (SCHEMA_KIND_VALUE_SET.has(normalized)) {
     return normalized as SchemaKindQueryValue;
   }
+  // Schema kind parameter is not one of the allowed values
   throw new Error('Invalid portable schema kind.');
 };
 

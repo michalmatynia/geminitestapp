@@ -25,7 +25,6 @@ import {
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
   REPORT_FEATURE_KEYS,
   getAllowedProvidersForFeature,
-  parseBooleanSetting,
   parseNumberSetting,
   parsePlaywrightPersonaIds,
 } from './brain-runtime-shared';
@@ -98,19 +97,15 @@ interface BrainPersistenceResult {
 
 export function useBrainPersistence({
   analyticsPromptSystem,
-  analyticsScheduleEnabled,
   analyticsScheduleMinutes,
   anthropicApiKey,
   geminiApiKey,
-  logsAutoOnError,
   logsPromptSystem,
-  logsScheduleEnabled,
   logsScheduleMinutes,
   openaiApiKey,
   overridesEnabled,
   providerCatalog,
   runtimeAnalyticsPromptSystem,
-  runtimeAnalyticsScheduleEnabled,
   runtimeAnalyticsScheduleMinutes,
   setAnalyticsPromptSystem,
   setAnalyticsScheduleEnabled,
@@ -197,18 +192,11 @@ export function useBrainPersistence({
       setAnthropicApiKey(map.get('anthropic_api_key') ?? '');
       setGeminiApiKey(map.get('gemini_api_key') ?? '');
 
-      setAnalyticsScheduleEnabled((prev: boolean) =>
-        parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled), prev)
-      );
+      setAnalyticsScheduleEnabled(false);
       setAnalyticsScheduleMinutes((prev: number) =>
         parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes), prev, 5)
       );
-      setRuntimeAnalyticsScheduleEnabled((prev: boolean) =>
-        parseBooleanSetting(
-          map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled),
-          prev
-        )
-      );
+      setRuntimeAnalyticsScheduleEnabled(false);
       setRuntimeAnalyticsScheduleMinutes((prev: number) =>
         parseNumberSetting(
           map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes),
@@ -216,15 +204,11 @@ export function useBrainPersistence({
           5
         )
       );
-      setLogsScheduleEnabled((prev: boolean) =>
-        parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled), prev)
-      );
+      setLogsScheduleEnabled(false);
       setLogsScheduleMinutes((prev: number) =>
         parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes), prev, 5)
       );
-      setLogsAutoOnError((prev: boolean) =>
-        parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError), prev)
-      );
+      setLogsAutoOnError(false);
 
       setAnalyticsPromptSystem(
         map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem) ??
@@ -260,15 +244,6 @@ export function useBrainPersistence({
   );
 
   const handleSave = useCallback(async (): Promise<void> => {
-    if (
-      analyticsScheduleMinutes < 5 ||
-      runtimeAnalyticsScheduleMinutes < 5 ||
-      logsScheduleMinutes < 5
-    ) {
-      toast('Schedule interval must be at least 5 minutes.', { variant: 'error' });
-      return;
-    }
-
     const nextAssignments = ALL_BRAIN_FEATURE_KEYS.reduce<
       Record<AiBrainFeature, AiBrainAssignment | undefined>
     >(
@@ -355,7 +330,7 @@ export function useBrainPersistence({
         { key: AI_INSIGHTS_SETTINGS_KEYS.logsAgentId, value: logsAssignment.agentId },
         {
           key: AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled,
-          value: String(analyticsScheduleEnabled),
+          value: 'false',
         },
         {
           key: AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes,
@@ -363,15 +338,15 @@ export function useBrainPersistence({
         },
         {
           key: AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled,
-          value: String(runtimeAnalyticsScheduleEnabled),
+          value: 'false',
         },
         {
           key: AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes,
           value: String(runtimeAnalyticsScheduleMinutes),
         },
-        { key: AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled, value: String(logsScheduleEnabled) },
+        { key: AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled, value: 'false' },
         { key: AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes, value: String(logsScheduleMinutes) },
-        { key: AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError, value: String(logsAutoOnError) },
+        { key: AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError, value: 'false' },
         {
           key: AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem,
           value: analyticsPromptSystem.trim(),
@@ -390,19 +365,15 @@ export function useBrainPersistence({
     }
   }, [
     analyticsPromptSystem,
-    analyticsScheduleEnabled,
     analyticsScheduleMinutes,
     anthropicApiKey,
     geminiApiKey,
-    logsAutoOnError,
     logsPromptSystem,
-    logsScheduleEnabled,
     logsScheduleMinutes,
     openaiApiKey,
     overridesEnabled,
     providerCatalog,
     runtimeAnalyticsPromptSystem,
-    runtimeAnalyticsScheduleEnabled,
     runtimeAnalyticsScheduleMinutes,
     settings,
     toast,

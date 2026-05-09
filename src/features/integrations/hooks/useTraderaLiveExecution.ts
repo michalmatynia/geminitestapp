@@ -37,6 +37,11 @@ type PendingTraderaLiveTarget = {
   action: LiveTraderaAction;
 };
 
+type TraderaLiveRunQueryResult = {
+  run: PlaywrightNodeRunSnapshot | null;
+  missing: boolean;
+};
+
 export type LiveTraderaExecutionState = {
   runId: string;
   action: LiveTraderaAction;
@@ -60,6 +65,16 @@ const toRecord = (value: unknown): Record<string, unknown> =>
 
 const readString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const isPlaywrightRunNotFoundMessage = (value: string | null | undefined): boolean => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  return (
+    normalized.includes('playwright run not found') ||
+    normalized.includes('run not found') ||
+    normalized.includes('not found') ||
+    normalized.includes('status 404')
+  );
+};
 
 const normalizeLiveTraderaAction = (value: unknown): LiveTraderaAction | null => {
   const normalized = readString(value)?.toLowerCase();
@@ -249,17 +264,24 @@ export const useTraderaLiveExecution = (
   const query = useQuery({
     queryKey: ['integrations', 'tradera', 'live-execution', pendingTarget?.runId ?? 'none'],
     enabled: Boolean(pendingTarget),
-    queryFn: async (): Promise<PlaywrightNodeRunSnapshot | null> => {
-      if (!pendingTarget) return null;
+    queryFn: async (): Promise<TraderaLiveRunQueryResult> => {
+      if (!pendingTarget) return { run: null, missing: false };
       const response = await fetchPlaywrightRun(pendingTarget.runId);
-      if (!response.ok) throw new Error(response.error ?? 'Playwright run not found.');
-      return response.data.run;
+      if (!response.ok) {
+        if (isPlaywrightRunNotFoundMessage(response.error)) {
+          return { run: null, missing: true };
+        }
+        throw new Error(response.error ?? 'Failed to load Playwright run.');
+      }
+      return { run: response.data.run, missing: false };
     },
     staleTime: 0,
     refetchOnMount: 'always',
     refetchInterval: (activeQuery) => {
       if (!pendingTarget) return false;
-      const run = activeQuery.state.data;
+      const result = activeQuery.state.data;
+      if (result?.missing) return false;
+      const run = result?.run;
       return !run || run.status === 'queued' || run.status === 'running' ? 1_000 : false;
     },
     refetchIntervalInBackground: false,
@@ -267,10 +289,11 @@ export const useTraderaLiveExecution = (
   });
 
   return useMemo(() => {
-    if (!pendingTarget || !query.data) {
+    const run = query.data?.run ?? null;
+    if (!pendingTarget || !run) {
       return null;
     }
 
-    return buildLiveTraderaExecutionState(pendingTarget.action, query.data);
+    return buildLiveTraderaExecutionState(pendingTarget.action, run);
   }, [pendingTarget, query.data]);
 };

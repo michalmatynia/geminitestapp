@@ -36,10 +36,10 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const html = normalizeHtml(parsedRequest.data.html);
   if (html.length === 0) {
-    throw badRequestError('html is required.');
+    throw badRequestError('html is required. Provide a non-empty HTML string in the request body.');
   }
   if (html.length > MAX_HTML_LENGTH) {
-    throw badRequestError('html payload is too large.');
+    throw badRequestError(`html payload is too large (${html.length.toLocaleString()} characters). Maximum allowed is ${MAX_HTML_LENGTH.toLocaleString()} characters.`);
   }
 
   const filename = sanitizePdfFilename(parsedRequest.data.filename, 'case-resolver-document');

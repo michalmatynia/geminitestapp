@@ -13,610 +13,243 @@ import {
 import { shouldEvaluateReplan } from '@/features/ai/agent-runtime/planning/utils';
 import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import type {
-  AgentExecutionContext,
-  PlanStep,
-  PlannerMeta,
+  AgentExecutionContext, PlanStep, PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
-
 import { persistCheckpoint } from '../memory/checkpoint';
 
 type PostStepReviewInput = {
-  context: AgentExecutionContext;
-  step: PlanStep;
-  stepIndex: number;
-  previousUrl: string | null;
-  lastContextUrl: string | null;
-  planSteps: PlanStep[];
-  taskType: PlannerMeta['taskType'] | null;
-  memoryContext: string[];
-  summaryCheckpoint: number;
-  replanCount: number;
-  selfCheckCount: number;
-  stagnationCount: number;
-  noContextCount: number;
-  lastExtractionCheckAt: number;
-  lastError: string | null;
-  approvalRequestedStepId: string | null;
-  approvalGrantedStepId: string | null;
+  context: AgentExecutionContext; step: PlanStep; stepIndex: number; previousUrl: string | null;
+  lastContextUrl: string | null; planSteps: PlanStep[]; taskType: PlannerMeta['taskType'] | null;
+  memoryContext: string[]; summaryCheckpoint: number; replanCount: number; selfCheckCount: number;
+  stagnationCount: number; noContextCount: number; lastExtractionCheckAt: number; lastError: string | null;
+  approvalRequestedStepId: string | null; approvalGrantedStepId: string | null;
   logBranchAlternatives: (meta: PlannerMeta | null | undefined, reason: string) => Promise<void>;
 };
 
 type PostStepReviewResult = {
-  planSteps: PlanStep[];
-  taskType: PlannerMeta['taskType'] | null;
-  memoryContext: string[];
-  summaryCheckpoint: number;
-  replanCount: number;
-  selfCheckCount: number;
-  stagnationCount: number;
-  noContextCount: number;
-  lastExtractionCheckAt: number;
-  lastError: string | null;
-  requiresHuman: boolean;
-  shouldBreak: boolean;
+  planSteps: PlanStep[]; taskType: PlannerMeta['taskType'] | null; memoryContext: string[];
+  summaryCheckpoint: number; replanCount: number; selfCheckCount: number; stagnationCount: number;
+  noContextCount: number; lastExtractionCheckAt: number; lastError: string | null;
+  requiresHuman: boolean; shouldBreak: boolean;
 };
 
-export async function runPostStepAdaptiveReviews(
-  input: PostStepReviewInput
-): Promise<PostStepReviewResult> {
-  const {
-    context,
-    step,
-    stepIndex,
-    previousUrl,
-    approvalRequestedStepId,
-    approvalGrantedStepId,
-    logBranchAlternatives,
-  } = input;
-  let {
-    lastContextUrl,
-    planSteps,
-    taskType,
-    memoryContext,
-    summaryCheckpoint,
-    replanCount,
-    selfCheckCount,
-    stagnationCount,
-    noContextCount,
-    lastExtractionCheckAt,
-    lastError,
-  } = input;
-  const {
-    run,
-    settings,
-    preferences,
-    contextRegistry,
-    contextRegistryPrompt,
-    memoryKey,
-    memoryValidationModel,
-    memorySummarizationModel,
-    plannerModel,
-    selfCheckModel,
-    loopGuardModel,
-    resolvedModel,
-  } = context;
-  const summaryInterval = 5;
-  const midRunInterval = 3;
+type ReviewState = {
+  planSteps: PlanStep[]; taskType: PlannerMeta['taskType'] | null; memoryContext: string[];
+  summaryCheckpoint: number; replanCount: number; selfCheckCount: number; stagnationCount: number;
+  noContextCount: number; lastExtractionCheckAt: number; lastError: string | null;
+};
 
-  const completedCount = planSteps.filter((item: PlanStep) => item.status === 'completed').length;
-  if (stagnationCount >= 2 && replanCount < settings.maxReplanCalls && completedCount > 0) {
-    const stagnationContext = await getBrowserContextSummary(run.id);
-    const stagnationReview = await buildAdaptivePlanReview({
-      prompt: run.prompt,
-      memory: memoryContext,
-      model: plannerModel,
-      browserContext: stagnationContext,
-      currentPlan: planSteps,
-      completedIndex: stepIndex,
-      runId: run.id,
-      maxSteps: settings.maxSteps,
-      maxStepAttempts: settings.maxStepAttempts,
-      trigger: 'stagnation',
-      signals: {
-        stagnationCount,
-        lastContextUrl,
-      },
-    });
-    if (stagnationReview.shouldReplan && stagnationReview.steps.length > 0) {
-      const nextIndex = stepIndex + 1;
-      const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
-      const nextSteps = stagnationReview.steps.slice(0, remainingSlots);
-      planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
-      taskType = stagnationReview.meta?.taskType ?? taskType;
-      replanCount += 1;
-      stagnationCount = 0;
-      await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
-        type: 'plan-replan',
-        steps: planSteps,
-        reason: 'stagnation',
-        plannerMeta: stagnationReview.meta ?? null,
-        hierarchy: stagnationReview.hierarchy ?? null,
-        stepId: step.id,
-        activeStepId: step.id,
-      });
-      await logBranchAlternatives(stagnationReview.meta, 'stagnation');
-      await persistCheckpoint({
-        runId: run.id,
-        steps: planSteps,
-        activeStepId: planSteps[nextIndex]?.id ?? null,
-        lastError,
-        taskType,
-        approvalRequestedStepId,
-        approvalGrantedStepId,
-        summaryCheckpoint,
-        settings,
-        preferences,
-        contextRegistry,
-      });
-    }
-  }
-  if (
-    taskType === 'extract_info' &&
-    completedCount >= 2 &&
-    completedCount !== lastExtractionCheckAt &&
-    replanCount < settings.maxReplanCalls
-  ) {
-    const agentAuditLog = getAgentAuditLogDelegate();
-    const extractionAudit = agentAuditLog
-      ? await agentAuditLog.findFirst<{ id: string }>({
-      where: {
-        runId: run.id,
-        message: {
-          in: ['Extracted product names.', 'Extracted emails.'],
-        },
-      },
-      select: { id: true },
-      })
-      : null;
-    lastExtractionCheckAt = completedCount;
-    if (agentAuditLog && !extractionAudit) {
-      const extractionContext = await getBrowserContextSummary(run.id);
-      const extractionReview = await buildAdaptivePlanReview({
-        prompt: run.prompt,
-        memory: memoryContext,
-        model: plannerModel,
-        browserContext: extractionContext,
-        currentPlan: planSteps,
-        completedIndex: stepIndex,
-        runId: run.id,
-        maxSteps: settings.maxSteps,
-        maxStepAttempts: settings.maxStepAttempts,
-        trigger: 'missing-extraction',
-        signals: {
-          completedCount,
-          lastContextUrl,
-        },
-      });
-      if (extractionReview.shouldReplan && extractionReview.steps.length > 0) {
-        const nextIndex = stepIndex + 1;
-        const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
-        const nextSteps = extractionReview.steps.slice(0, remainingSlots);
-        planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
-        taskType = extractionReview.meta?.taskType ?? taskType;
-        replanCount += 1;
-        await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
-          type: 'plan-replan',
-          steps: planSteps,
-          reason: 'missing-extraction',
-          plannerMeta: extractionReview.meta ?? null,
-          hierarchy: extractionReview.hierarchy ?? null,
-          stepId: step.id,
-          activeStepId: step.id,
-        });
-        await logBranchAlternatives(extractionReview.meta, 'missing-extraction');
-        await persistCheckpoint({
-          runId: run.id,
-          steps: planSteps,
-          activeStepId: planSteps[nextIndex]?.id ?? null,
-          lastError,
-          taskType,
-          approvalRequestedStepId,
-          approvalGrantedStepId,
-          summaryCheckpoint,
-          settings,
-          preferences,
-          contextRegistry,
-        });
-      }
-    }
-  }
-  if (
-    completedCount >= summaryInterval &&
-    completedCount % summaryInterval === 0 &&
-    completedCount !== summaryCheckpoint
-  ) {
-    const summaryContext = await getBrowserContextSummary(run.id);
-    const summary = await summarizePlannerMemoryWithLLM({
-      prompt: run.prompt,
-      model: memorySummarizationModel,
-      memory: memoryContext,
-      steps: planSteps,
-      browserContext: summaryContext,
-      runId: run.id,
-    });
-    if (summary) {
-      await addAgentMemory({
-        runId: run.id,
-        scope: 'session',
-        content: summary,
-        metadata: { type: 'planner-summary', completedCount },
-      });
-      memoryContext = applyAgentRuntimeContextMemory(
-        [...memoryContext, summary],
-        contextRegistryPrompt
-      );
-      summaryCheckpoint = completedCount;
-      await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
-        type: 'planner-summary',
-        completedCount,
-        summary,
-      });
-      await persistCheckpoint({
-        runId: run.id,
-        steps: planSteps,
-        activeStepId: planSteps[stepIndex + 1]?.id ?? null,
-        lastError,
-        taskType,
-        approvalRequestedStepId,
-        approvalGrantedStepId,
-        summaryCheckpoint,
-        settings,
-        preferences,
-        contextRegistry,
-      });
-    }
-  }
-  if (noContextCount >= 2 && replanCount < settings.maxReplanCalls && completedCount > 0) {
-    const noContextReview = await buildAdaptivePlanReview({
-      prompt: run.prompt,
-      memory: memoryContext,
-      model: plannerModel,
-      browserContext: await getBrowserContextSummary(run.id),
-      currentPlan: planSteps,
-      completedIndex: stepIndex,
-      runId: run.id,
-      maxSteps: settings.maxSteps,
-      maxStepAttempts: settings.maxStepAttempts,
-      trigger: 'no-browser-context',
-      signals: {
-        noContextCount,
-        lastContextUrl,
-      },
-    });
-    if (noContextReview.shouldReplan && noContextReview.steps.length > 0) {
-      const nextIndex = stepIndex + 1;
-      const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
-      const nextSteps = noContextReview.steps.slice(0, remainingSlots);
-      planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
-      taskType = noContextReview.meta?.taskType ?? taskType;
-      replanCount += 1;
-      noContextCount = 0;
-      await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
-        type: 'plan-replan',
-        steps: planSteps,
-        reason: 'no-browser-context',
-        plannerMeta: noContextReview.meta ?? null,
-        hierarchy: noContextReview.hierarchy ?? null,
-        stepId: step.id,
-        activeStepId: step.id,
-      });
-      await logBranchAlternatives(noContextReview.meta, 'no-browser-context');
-      await persistCheckpoint({
-        runId: run.id,
-        steps: planSteps,
-        activeStepId: planSteps[nextIndex]?.id ?? null,
-        lastError,
-        taskType,
-        approvalRequestedStepId,
-        approvalGrantedStepId,
-        summaryCheckpoint,
-        settings,
-        preferences,
-        contextRegistry,
-      });
-    }
-  }
-  if (
-    completedCount >= midRunInterval &&
-    completedCount % midRunInterval === 0 &&
-    replanCount < settings.maxReplanCalls
-  ) {
-    const adaptContext = await getBrowserContextSummary(run.id);
-    const adaptResult = await buildMidRunAdaptationWithLLM({
-      prompt: run.prompt,
-      model: plannerModel,
-      memory: memoryContext,
-      steps: planSteps,
-      browserContext: adaptContext,
-      runId: run.id,
-      maxSteps: settings.maxSteps,
-      maxStepAttempts: settings.maxStepAttempts,
-    });
-    if (adaptResult.shouldAdapt && adaptResult.steps.length > 0) {
-      const nextIndex = stepIndex + 1;
-      const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
-      const guardedSteps = await guardRepetitionWithLLM({
-        prompt: run.prompt,
-        model: loopGuardModel,
-        memory: memoryContext,
-        currentPlan: planSteps,
-        candidateSteps: adaptResult.steps,
-        runId: run.id,
-        maxSteps: remainingSlots,
-      });
-      const nextSteps = guardedSteps.slice(0, remainingSlots);
-      planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
-      taskType = adaptResult.meta?.taskType ?? taskType;
-      replanCount += 1;
-      await logAgentAudit(run.id, 'warning', 'Plan adapted mid-run.', {
-        type: 'plan-adapt',
-        steps: planSteps,
-        reason: adaptResult.reason,
-        plannerMeta: adaptResult.meta ?? null,
-        hierarchy: adaptResult.hierarchy ?? null,
-        stepId: step.id,
-        activeStepId: step.id,
-      });
-      await logBranchAlternatives(adaptResult.meta, 'mid-run-adapt');
-      await persistCheckpoint({
-        runId: run.id,
-        steps: planSteps,
-        activeStepId: planSteps[nextIndex]?.id ?? null,
-        lastError,
-        taskType,
-        approvalRequestedStepId,
-        approvalGrantedStepId,
-        summaryCheckpoint,
-        settings,
-        preferences,
-        contextRegistry,
-      });
-    }
-  }
-  if (selfCheckCount < settings.maxSelfChecks) {
-    const selfCheckContext = await getBrowserContextSummary(run.id);
-    const selfCheck = await buildSelfCheckReview({
-      prompt: run.prompt,
-      memory: memoryContext,
-      model: selfCheckModel,
-      browserContext: selfCheckContext,
-      step,
-      stepIndex,
-      lastError,
-      taskType,
-      completedCount,
-      previousUrl,
-      lastContextUrl,
-      stagnationCount,
-      noContextCount,
-      replanCount,
-      runId: run.id,
-      maxSteps: settings.maxSteps,
-      maxStepAttempts: settings.maxStepAttempts,
-    });
-    selfCheckCount += 1;
-    await logAgentAudit(run.id, 'info', 'Self-check completed.', {
-      type: 'self-check',
-      stepId: step.id,
-      stepTitle: step.title,
-      action: selfCheck.action,
-      reason: selfCheck.reason,
-      notes: selfCheck.notes,
-      questions: selfCheck.questions,
-      evidence: selfCheck.evidence,
-      confidence: selfCheck.confidence,
-      missingInfo: selfCheck.missingInfo,
-      blockers: selfCheck.blockers,
-      hypotheses: selfCheck.hypotheses,
-      verificationSteps: selfCheck.verificationSteps,
-      toolSwitch: selfCheck.toolSwitch,
-      abortSignals: selfCheck.abortSignals,
-      finishSignals: selfCheck.finishSignals,
-    });
-    if (selfCheck.action === 'wait_human') {
-      lastError = selfCheck.reason ?? 'Self-check requested human input.';
-      return {
-        planSteps,
-        taskType,
-        memoryContext,
-        summaryCheckpoint,
-        replanCount,
-        selfCheckCount,
-        stagnationCount,
-        noContextCount,
-        lastExtractionCheckAt,
-        lastError,
-        requiresHuman: true,
-        shouldBreak: true,
-      };
-    }
-    if (selfCheck.action === 'replan' && selfCheck.steps.length > 0) {
-      const nextIndex = stepIndex + 1;
-      const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
-      const guardedSteps = await guardRepetitionWithLLM({
-        prompt: run.prompt,
-        model: loopGuardModel,
-        memory: memoryContext,
-        currentPlan: planSteps,
-        candidateSteps: selfCheck.steps,
-        runId: run.id,
-        maxSteps: remainingSlots,
-      });
-      const nextSteps = guardedSteps.slice(0, remainingSlots);
-      planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
-      taskType = selfCheck.meta?.taskType ?? taskType;
-      await logAgentAudit(run.id, 'warning', 'Plan replaced by self-check.', {
-        type: 'self-check-replan',
-        steps: planSteps,
-        reason: selfCheck.reason,
-        plannerMeta: selfCheck.meta ?? null,
-        hierarchy: selfCheck.hierarchy ?? null,
-        stepId: step.id,
-        activeStepId: step.id,
-      });
-      await logBranchAlternatives(selfCheck.meta, 'self-check');
-      await persistCheckpoint({
-        runId: run.id,
-        steps: planSteps,
-        activeStepId: planSteps[nextIndex]?.id ?? null,
-        lastError,
-        taskType,
-        approvalRequestedStepId,
-        approvalGrantedStepId,
-        summaryCheckpoint,
-        settings,
-        preferences,
-        contextRegistry,
-      });
-    }
-  }
-  if (
-    previousUrl &&
-    lastContextUrl &&
-    lastContextUrl !== previousUrl &&
-    replanCount < settings.maxReplanCalls
-  ) {
-    const shiftContext = await getBrowserContextSummary(run.id);
-    const shiftReview = await buildAdaptivePlanReview({
-      prompt: run.prompt,
-      memory: memoryContext,
-      model: plannerModel,
-      browserContext: shiftContext,
-      currentPlan: planSteps,
-      completedIndex: stepIndex,
-      runId: run.id,
-      maxSteps: settings.maxSteps,
-      maxStepAttempts: settings.maxStepAttempts,
-      trigger: 'context-shift',
-      signals: {
-        previousUrl,
-        lastContextUrl,
-      },
-    });
-    if (shiftReview.shouldReplan && shiftReview.steps.length > 0) {
-      const nextIndex = stepIndex + 1;
-      const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
-      const nextSteps = shiftReview.steps.slice(0, remainingSlots);
-      planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
-      taskType = shiftReview.meta?.taskType ?? taskType;
-      replanCount += 1;
-      await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
-        type: 'plan-replan',
-        steps: planSteps,
-        reason: 'context-shift',
-        plannerMeta: shiftReview.meta ?? null,
-        hierarchy: shiftReview.hierarchy ?? null,
-        stepId: step.id,
-        activeStepId: step.id,
-      });
-      await logBranchAlternatives(shiftReview.meta, 'context-shift');
-      if (memoryKey) {
-        await addProblemSolutionMemory({
-          memoryKey,
-          runId: run.id,
-          problem: 'Context shifted (URL changed).',
-          countermeasure: 'Replanned after context shift.',
-          context: {
-            stepId: step.id,
-            stepTitle: step.title,
-            reason: 'context-shift',
-          },
-          tags: ['context-shift'],
-          model: memoryValidationModel ?? resolvedModel,
-          summaryModel: memorySummarizationModel ?? resolvedModel,
-          prompt: run.prompt,
-        });
-      }
-      await persistCheckpoint({
-        runId: run.id,
-        steps: planSteps,
-        activeStepId: planSteps[nextIndex]?.id ?? null,
-        lastError,
-        taskType,
-        approvalRequestedStepId,
-        approvalGrantedStepId,
-        summaryCheckpoint,
-        settings,
-        preferences,
-        contextRegistry,
-      });
-    }
-  }
-  if (
-    shouldEvaluateReplan(stepIndex, planSteps, settings.replanEverySteps) &&
-    replanCount < settings.maxReplanCalls
-  ) {
-    const reviewContext = await getBrowserContextSummary(run.id);
-    const reviewResult = await buildAdaptivePlanReview({
-      prompt: run.prompt,
-      memory: memoryContext,
-      model: plannerModel,
-      browserContext: reviewContext,
-      currentPlan: planSteps,
-      completedIndex: stepIndex,
-      runId: run.id,
-      maxSteps: settings.maxSteps,
-      maxStepAttempts: settings.maxStepAttempts,
-      trigger: 'scheduled-replan',
-      signals: {
-        completedCount,
-        replanEverySteps: settings.replanEverySteps,
-      },
-    });
-    if (reviewResult.shouldReplan && reviewResult.steps.length > 0) {
-      const nextIndex = stepIndex + 1;
-      const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
-      const guardedSteps = await guardRepetitionWithLLM({
-        prompt: run.prompt,
-        model: loopGuardModel,
-        memory: memoryContext,
-        currentPlan: planSteps,
-        candidateSteps: reviewResult.steps,
-        runId: run.id,
-        maxSteps: remainingSlots,
-      });
-      const nextSteps = guardedSteps.slice(0, remainingSlots);
-      planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
-      taskType = reviewResult.meta?.taskType ?? taskType;
-      replanCount += 1;
-      await logAgentAudit(run.id, 'warning', 'Plan re-evaluated.', {
-        type: 'plan-replan',
-        steps: planSteps,
-        reason: reviewResult.reason,
-        plannerMeta: reviewResult.meta ?? null,
-        hierarchy: reviewResult.hierarchy ?? null,
-        stepId: step.id,
-        activeStepId: step.id,
-      });
-      await logBranchAlternatives(reviewResult.meta, 'scheduled-replan');
-      await persistCheckpoint({
-        runId: run.id,
-        steps: planSteps,
-        activeStepId: planSteps[nextIndex]?.id ?? null,
-        lastError,
-        taskType,
-        approvalRequestedStepId,
-        approvalGrantedStepId,
-        summaryCheckpoint,
-        settings,
-        preferences,
-        contextRegistry,
-      });
-    }
-  }
+type ReviewContext = {
+  context: AgentExecutionContext; step: PlanStep; stepIndex: number; previousUrl: string | null;
+  lastContextUrl: string | null; approvalRequestedStepId: string | null; approvalGrantedStepId: string | null;
+  logBranchAlternatives: (meta: PlannerMeta | null | undefined, reason: string) => Promise<void>;
+  completedCount: number;
+};
 
-  return {
-    planSteps,
-    taskType,
-    memoryContext,
-    summaryCheckpoint,
-    replanCount,
-    selfCheckCount,
-    stagnationCount,
-    noContextCount,
-    lastExtractionCheckAt,
-    lastError,
-    requiresHuman: false,
-    shouldBreak: false,
+type ReplanArgs = { steps: PlanStep[]; meta: PlannerMeta | null | undefined; trigger: string; hierarchy: unknown };
+
+async function applyReplan(context: ReviewContext, state: ReviewState, args: ReplanArgs): Promise<ReviewState> {
+  const { steps, meta, trigger, hierarchy } = args;
+  const { context: ac, step, stepIndex, approvalRequestedStepId, approvalGrantedStepId } = context;
+  const nextIndex = stepIndex + 1;
+  const nextSteps = steps.slice(0, Math.max(1, ac.settings.maxSteps - nextIndex));
+  const planSteps = [...state.planSteps.slice(0, nextIndex), ...nextSteps];
+  const taskType = meta?.taskType ?? state.taskType;
+  await logAgentAudit(ac.run.id, 'warning', 'Plan re-evaluated.', {
+    type: 'plan-replan', steps: planSteps, reason: trigger, plannerMeta: meta ?? null,
+    hierarchy: hierarchy ?? null, stepId: step.id, activeStepId: step.id,
+  });
+  await context.logBranchAlternatives(meta, trigger);
+  await persistCheckpoint({
+    runId: ac.run.id, steps: planSteps, activeStepId: planSteps[nextIndex]?.id ?? null,
+    lastError: state.lastError, taskType, approvalRequestedStepId, approvalGrantedStepId,
+    summaryCheckpoint: state.summaryCheckpoint, settings: ac.settings, preferences: ac.preferences, contextRegistry: ac.contextRegistry,
+  });
+  return { ...state, replanCount: state.replanCount + 1, planSteps, taskType };
+}
+
+async function handleStagnationReview(context: ReviewContext, state: ReviewState): Promise<ReviewState> {
+  const { context: ac, stepIndex, lastContextUrl } = context;
+  if (state.stagnationCount < 2 || state.replanCount >= ac.settings.maxReplanCalls || context.completedCount === 0) return state;
+  const review = await buildAdaptivePlanReview({
+    prompt: ac.run.prompt, memory: state.memoryContext, model: ac.plannerModel,
+    browserContext: await getBrowserContextSummary(ac.run.id), currentPlan: state.planSteps,
+    completedIndex: stepIndex, runId: ac.run.id, maxSteps: ac.settings.maxSteps,
+    maxStepAttempts: ac.settings.maxStepAttempts, trigger: 'stagnation',
+    signals: { stagnationCount: state.stagnationCount, lastContextUrl },
+  });
+  if (!review.shouldReplan || review.steps.length === 0) return state;
+  const newState = await applyReplan(context, state, { steps: review.steps, meta: review.meta, trigger: 'stagnation', hierarchy: review.hierarchy });
+  return { ...newState, stagnationCount: 0 };
+}
+
+async function hasExtractionAudit(runId: string): Promise<boolean> {
+  const log = getAgentAuditLogDelegate();
+  if (!log) return true;
+  const audit = await log.findFirst({
+    where: { runId, message: { in: ['Extracted product names.', 'Extracted emails.'] } },
+    select: { id: true },
+  });
+  return audit !== null;
+}
+
+async function handleMissingExtractionReview(context: ReviewContext, state: ReviewState): Promise<ReviewState> {
+  const { context: ac, stepIndex, lastContextUrl, completedCount } = context;
+  const hasProgress = completedCount >= 2 && completedCount !== state.lastExtractionCheckAt;
+  if (state.taskType !== 'extract_info' || !hasProgress || state.replanCount >= ac.settings.maxReplanCalls || await hasExtractionAudit(ac.run.id)) {
+    return { ...state, lastExtractionCheckAt: completedCount };
+  }
+  const review = await buildAdaptivePlanReview({
+    prompt: ac.run.prompt, memory: state.memoryContext, model: ac.plannerModel,
+    browserContext: await getBrowserContextSummary(ac.run.id), currentPlan: state.planSteps,
+    completedIndex: stepIndex, runId: ac.run.id, maxSteps: ac.settings.maxSteps,
+    maxStepAttempts: ac.settings.maxStepAttempts, trigger: 'missing-extraction',
+    signals: { completedCount, lastContextUrl },
+  });
+  if (!review.shouldReplan || review.steps.length === 0) return { ...state, lastExtractionCheckAt: completedCount };
+  const newState = await applyReplan(context, state, { steps: review.steps, meta: review.meta, trigger: 'missing-extraction', hierarchy: review.hierarchy });
+  return { ...newState, lastExtractionCheckAt: completedCount };
+}
+
+async function savePlannerSummary(ac: AgentExecutionContext, summary: string, completedCount: number): Promise<void> {
+  await addAgentMemory({ runId: ac.run.id, scope: 'session', content: summary, metadata: { type: 'planner-summary', completedCount } });
+  await logAgentAudit(ac.run.id, 'info', 'Planner summary saved.', { type: 'planner-summary', completedCount, summary });
+}
+
+async function handleSummaryReview(context: ReviewContext, state: ReviewState): Promise<ReviewState> {
+  const { context: ac, stepIndex, completedCount, approvalRequestedStepId, approvalGrantedStepId } = context;
+  if (completedCount < 5 || completedCount % 5 !== 0 || completedCount === state.summaryCheckpoint) return state;
+  const summary = await summarizePlannerMemoryWithLLM({
+    prompt: ac.run.prompt, model: ac.memorySummarizationModel, memory: state.memoryContext,
+    steps: state.planSteps, browserContext: await getBrowserContextSummary(ac.run.id), runId: ac.run.id,
+  });
+  if (summary === null || summary === '') return state;
+  await savePlannerSummary(ac, summary, completedCount);
+  const updatedMemory = applyAgentRuntimeContextMemory([...state.memoryContext, summary], ac.contextRegistryPrompt);
+  await persistCheckpoint({
+    runId: ac.run.id, steps: state.planSteps, activeStepId: state.planSteps[stepIndex + 1]?.id ?? null,
+    lastError: state.lastError, taskType: state.taskType, approvalRequestedStepId, approvalGrantedStepId,
+    summaryCheckpoint: completedCount, settings: ac.settings, preferences: ac.preferences, contextRegistry: ac.contextRegistry,
+  });
+  return { ...state, memoryContext: updatedMemory, summaryCheckpoint: completedCount };
+}
+
+async function handleNoContextReview(context: ReviewContext, state: ReviewState): Promise<ReviewState> {
+  const { context: ac, stepIndex, lastContextUrl, completedCount } = context;
+  if (state.noContextCount < 2 || state.replanCount >= ac.settings.maxReplanCalls || completedCount === 0) return state;
+  const review = await buildAdaptivePlanReview({
+    prompt: ac.run.prompt, memory: state.memoryContext, model: ac.plannerModel,
+    browserContext: await getBrowserContextSummary(ac.run.id), currentPlan: state.planSteps,
+    completedIndex: stepIndex, runId: ac.run.id, maxSteps: ac.settings.maxSteps,
+    maxStepAttempts: ac.settings.maxStepAttempts, trigger: 'no-browser-context',
+    signals: { noContextCount: state.noContextCount, lastContextUrl },
+  });
+  if (!review.shouldReplan || review.steps.length === 0) return state;
+  return applyReplan(context, { ...state, noContextCount: 0 }, { steps: review.steps, meta: review.meta, trigger: 'no-browser-context', hierarchy: review.hierarchy });
+}
+
+async function handleMidRunAdaptationReview(context: ReviewContext, state: ReviewState): Promise<ReviewState> {
+  const { context: ac, stepIndex, completedCount } = context;
+  if (completedCount < 3 || completedCount % 3 !== 0 || state.replanCount >= ac.settings.maxReplanCalls) return state;
+  const adapt = await buildMidRunAdaptationWithLLM({
+    prompt: ac.run.prompt, model: ac.plannerModel, memory: state.memoryContext,
+    steps: state.planSteps, browserContext: await getBrowserContextSummary(ac.run.id),
+    runId: ac.run.id, maxSteps: ac.settings.maxSteps, maxStepAttempts: ac.settings.maxStepAttempts,
+  });
+  if (!adapt.shouldAdapt || adapt.steps.length === 0) return state;
+  const guarded = await guardRepetitionWithLLM({
+    prompt: ac.run.prompt, model: ac.loopGuardModel, memory: state.memoryContext,
+    currentPlan: state.planSteps, candidateSteps: adapt.steps, runId: ac.run.id, maxSteps: Math.max(1, ac.settings.maxSteps - (stepIndex + 1)),
+  });
+  return applyReplan(context, state, { steps: guarded, meta: adapt.meta, trigger: 'mid-run-adapt', hierarchy: adapt.hierarchy });
+}
+
+async function handleSelfCheckReview(context: ReviewContext, state: ReviewState): Promise<ReviewState & { requiresHuman: boolean; shouldBreak: boolean }> {
+  const { context: ac, step, stepIndex, previousUrl, lastContextUrl, completedCount } = context;
+  if (state.selfCheckCount >= ac.settings.maxSelfChecks) return { ...state, requiresHuman: false, shouldBreak: false };
+  const check = await buildSelfCheckReview({
+    prompt: ac.run.prompt, memory: state.memoryContext, model: ac.selfCheckModel,
+    browserContext: await getBrowserContextSummary(ac.run.id), step, stepIndex,
+    lastError: state.lastError, taskType: state.taskType, completedCount,
+    previousUrl, lastContextUrl, stagnationCount: state.stagnationCount,
+    noContextCount: state.noContextCount, replanCount: state.replanCount,
+    runId: ac.run.id, maxSteps: ac.settings.maxSteps, maxStepAttempts: ac.settings.maxStepAttempts,
+  });
+  await logAgentAudit(ac.run.id, 'info', 'Self-check completed.', {
+    type: 'self-check', stepId: step.id, stepTitle: step.title, action: check.action,
+    reason: check.reason, confidence: check.confidence, toolSwitch: check.toolSwitch,
+  });
+  if (check.action === 'wait_human') return { ...state, selfCheckCount: state.selfCheckCount + 1, lastError: check.reason ?? 'Human input requested.', requiresHuman: true, shouldBreak: true };
+  if (check.action === 'replan' && check.steps.length > 0) {
+    const guarded = await guardRepetitionWithLLM({
+      prompt: ac.run.prompt, model: ac.loopGuardModel, memory: state.memoryContext,
+      currentPlan: state.planSteps, candidateSteps: check.steps, runId: ac.run.id, maxSteps: Math.max(1, ac.settings.maxSteps - (stepIndex + 1)),
+    });
+    return { ...await applyReplan(context, { ...state, selfCheckCount: state.selfCheckCount + 1 }, { steps: guarded, meta: check.meta, trigger: 'self-check', hierarchy: check.hierarchy }), requiresHuman: false, shouldBreak: false };
+  }
+  return { ...state, selfCheckCount: state.selfCheckCount + 1, requiresHuman: false, shouldBreak: false };
+}
+
+async function logContextShift(context: ReviewContext, ac: AgentExecutionContext): Promise<void> {
+  if (ac.memoryKey === null || ac.memoryKey === '') return;
+  await addProblemSolutionMemory({
+    memoryKey: ac.memoryKey, runId: ac.run.id, problem: 'Context shifted (URL changed).',
+    countermeasure: 'Replanned after context shift.',
+    context: { stepId: context.step.id, stepTitle: context.step.title, reason: 'context-shift' },
+    tags: ['context-shift'], model: ac.memoryValidationModel ?? ac.resolvedModel,
+    summaryModel: ac.memorySummarizationModel, prompt: ac.run.prompt,
+  });
+}
+
+async function handleContextShiftReview(context: ReviewContext, state: ReviewState): Promise<ReviewState> {
+  const { context: ac, stepIndex, previousUrl, lastContextUrl } = context;
+  if (previousUrl === null || lastContextUrl === null || lastContextUrl === previousUrl || state.replanCount >= ac.settings.maxReplanCalls) return state;
+  const review = await buildAdaptivePlanReview({
+    prompt: ac.run.prompt, memory: state.memoryContext, model: ac.plannerModel,
+    browserContext: await getBrowserContextSummary(ac.run.id), currentPlan: state.planSteps,
+    completedIndex: stepIndex, runId: ac.run.id, maxSteps: ac.settings.maxSteps,
+    maxStepAttempts: ac.settings.maxStepAttempts, trigger: 'context-shift',
+    signals: { previousUrl, lastContextUrl },
+  });
+  if (!review.shouldReplan || review.steps.length === 0) return state;
+  await logContextShift(context, ac);
+  return applyReplan(context, state, { steps: review.steps, meta: review.meta, trigger: 'context-shift', hierarchy: review.hierarchy });
+}
+
+async function handleScheduledReplanReview(context: ReviewContext, state: ReviewState): Promise<ReviewState> {
+  const { context: ac, stepIndex, completedCount } = context;
+  if (!shouldEvaluateReplan(stepIndex, state.planSteps, ac.settings.replanEverySteps) || state.replanCount >= ac.settings.maxReplanCalls) return state;
+  const review = await buildAdaptivePlanReview({
+    prompt: ac.run.prompt, memory: state.memoryContext, model: ac.plannerModel,
+    browserContext: await getBrowserContextSummary(ac.run.id), currentPlan: state.planSteps,
+    completedIndex: stepIndex, runId: ac.run.id, maxSteps: ac.settings.maxSteps,
+    maxStepAttempts: ac.settings.maxStepAttempts, trigger: 'scheduled-replan',
+    signals: { completedCount, replanEverySteps: ac.settings.replanEverySteps },
+  });
+  if (!review.shouldReplan || review.steps.length === 0) return state;
+  const guarded = await guardRepetitionWithLLM({
+    prompt: ac.run.prompt, model: ac.loopGuardModel, memory: state.memoryContext,
+    currentPlan: state.planSteps, candidateSteps: review.steps, runId: ac.run.id, maxSteps: Math.max(1, ac.settings.maxSteps - (stepIndex + 1)),
+  });
+  return applyReplan(context, state, { steps: guarded, meta: review.meta, trigger: 'scheduled-replan', hierarchy: review.hierarchy });
+}
+
+export async function runPostStepAdaptiveReviews(input: PostStepReviewInput): Promise<PostStepReviewResult> {
+  const { context, step, stepIndex, previousUrl, lastContextUrl, approvalRequestedStepId, approvalGrantedStepId, logBranchAlternatives } = input;
+  const completedCount = input.planSteps.filter((item: PlanStep) => item.status === 'completed').length;
+  const reviewContext: ReviewContext = { context, step, stepIndex, previousUrl, lastContextUrl, approvalRequestedStepId, approvalGrantedStepId, logBranchAlternatives, completedCount };
+  let state: ReviewState = {
+    planSteps: input.planSteps, taskType: input.taskType, memoryContext: input.memoryContext, summaryCheckpoint: input.summaryCheckpoint, replanCount: input.replanCount,
+    selfCheckCount: input.selfCheckCount, stagnationCount: input.stagnationCount, noContextCount: input.noContextCount, lastExtractionCheckAt: input.lastExtractionCheckAt, lastError: input.lastError,
   };
+  state = await handleStagnationReview(reviewContext, state);
+  state = await handleMissingExtractionReview(reviewContext, state);
+  state = await handleSummaryReview(reviewContext, state);
+  state = await handleNoContextReview(reviewContext, state);
+  state = await handleMidRunAdaptationReview(reviewContext, state);
+  const scRes = await handleSelfCheckReview(reviewContext, state);
+  if (scRes.shouldBreak) return { ...scRes, requiresHuman: scRes.requiresHuman, shouldBreak: scRes.shouldBreak };
+  state = await handleContextShiftReview(reviewContext, scRes);
+  state = await handleScheduledReplanReview(reviewContext, state);
+  return { ...state, requiresHuman: false, shouldBreak: false };
 }

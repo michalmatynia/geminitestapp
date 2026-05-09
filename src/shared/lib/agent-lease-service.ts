@@ -1,3 +1,15 @@
+/**
+ * Agent Lease Service
+ * 
+ * Shared service for managing resource leases and ownership for AI agents.
+ * Provides:
+ * - Scoped resource leasing (claiming, renewing, releasing)
+ * - Lease state discovery and monitoring
+ * - Expiration and stale lease detection
+ * - External adapter support (e.g., Playwright broker)
+ * - Conflict detection for concurrent agent operations
+ */
+
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 
@@ -21,11 +33,26 @@ const PLAYWRIGHT_BROKER_RESOURCE_ID = 'testing.playwright.runtime-broker';
 const SHARED_LEASE_LIMITATION =
   'Base import scopes use the shared in-process lease registry. Playwright runtime broker scopes are discovered from the broker lease files until broker-side mutations are fully routed through the shared lease API.';
 
+/**
+ * Record representing an active or historical lease.
+ */
 type LeaseRecord = ReturnType<typeof AgentLeaseRecordSchema.parse>;
+/**
+ * Event representing a change or attempt in lease state.
+ */
 type LeaseEvent = ReturnType<typeof AgentLeaseEventSchema.parse>;
+/**
+ * Snapshot of the current lease state for a resource.
+ */
 type LeaseState = ReturnType<typeof AgentLeaseStateSchema.parse>;
+
+/**
+ * Internal registry for storing leases and events in memory.
+ */
 type LeaseRegistry = {
+  /** Map of scoped lease keys to their active lease record. */
   leases: Map<string, LeaseRecord>;
+  /** Map of scoped lease keys to their recent events history. */
   events: Map<string, LeaseEvent[]>;
 };
 
@@ -33,6 +60,11 @@ declare global {
   var __geminitestappAgentLeaseRegistry: LeaseRegistry | undefined;
 }
 
+/**
+ * Retrieves the global lease registry, initializing it if necessary.
+ * 
+ * @returns The singleton LeaseRegistry instance.
+ */
 function getRegistry(): LeaseRegistry {
   if (!globalThis.__geminitestappAgentLeaseRegistry) {
     globalThis.__geminitestappAgentLeaseRegistry = {
@@ -44,24 +76,39 @@ function getRegistry(): LeaseRegistry {
   return globalThis.__geminitestappAgentLeaseRegistry;
 }
 
+/**
+ * Gets the current time in ISO format.
+ */
 function nowIso() {
   return new Date().toISOString();
 }
 
+/**
+ * Normalizes a scope ID by trimming and checking for empty strings.
+ */
 function normalizeScopeId(scopeId: string | null | undefined) {
   const normalized = typeof scopeId === 'string' ? scopeId.trim() : '';
   return normalized.length > 0 ? normalized : null;
 }
 
+/**
+ * Builds a unique lookup key for a resource and its scope.
+ */
 function buildScopedLeaseKey(resourceId: string, scopeId: string | null) {
   return `${resourceId}::${scopeId ?? DEFAULT_SCOPE_KEY}`;
 }
 
+/**
+ * Resolves the default lease duration for a resource.
+ */
 function defaultLeaseMs(resourceId: string) {
   const resource = getAgentResource(resourceId);
   return resource?.leaseMs ?? resource?.staleAfterMs ?? DEFAULT_LEASE_MS;
 }
 
+/**
+ * Checks if a given timestamp has passed.
+ */
 function isExpired(expiresAt: string | null) {
   if (!expiresAt) {
     return false;
@@ -70,6 +117,9 @@ function isExpired(expiresAt: string | null) {
   return new Date(expiresAt).getTime() <= Date.now();
 }
 
+/**
+ * Appends a lease event to the recent history for a scoped resource.
+ */
 function appendEvent(
   resourceId: string,
   scopeId: string | null,
@@ -82,21 +132,32 @@ function appendEvent(
   registry.events.set(scopedLeaseKey, events.slice(-MAX_RECENT_EVENTS));
 }
 
+/**
+ * Retrieves the most recent events for a scoped resource, in reverse chronological order.
+ */
 function getRecentEvents(resourceId: string, scopeId: string | null) {
   const scopedLeaseKey = buildScopedLeaseKey(resourceId, scopeId);
   return (getRegistry().events.get(scopedLeaseKey) ?? []).slice().reverse();
 }
 
+/**
+ * Checks if the active lease for a resource has expired and removes it if so.
+ * This "lazy cleanup" ensures that stale leases are detected before any new claim or read.
+ */
 function markExpiredIfNeeded(resourceId: string, scopeId: string | null) {
   const registry = getRegistry();
   const scopedLeaseKey = buildScopedLeaseKey(resourceId, scopeId);
   const activeLease = registry.leases.get(scopedLeaseKey);
 
+  // If there's no lease or it hasn't expired yet, do nothing
   if (!activeLease || !isExpired(activeLease.expiresAt)) {
     return;
   }
 
+  // Stale lease detected - remove it from registry
   registry.leases.delete(scopedLeaseKey);
+  
+  // Log the expiration event for audit purposes
   appendEvent(
     resourceId,
     scopeId,
@@ -114,6 +175,9 @@ function markExpiredIfNeeded(resourceId: string, scopeId: string | null) {
   );
 }
 
+/**
+ * Gets the current lease state for an internal resource.
+ */
 function getInternalLeaseState(resourceId: string, scopeId: string | null = null) {
   const resource = getAgentResource(resourceId);
 
@@ -134,6 +198,9 @@ function getInternalLeaseState(resourceId: string, scopeId: string | null = null
   });
 }
 
+/**
+ * Lists all lease states for a specific resource across all active scopes.
+ */
 function listInternalLeaseStatesForResource(options: {
   resourceId: string;
   scopeId?: string | null;
@@ -148,6 +215,7 @@ function listInternalLeaseStatesForResource(options: {
   const scopeId = normalizeScopeId(options.scopeId ?? null);
   const registry = getRegistry();
 
+  // Perform lazy cleanup for all relevant leases
   for (const lease of registry.leases.values()) {
     if (lease.resourceId !== options.resourceId) {
       continue;
@@ -194,6 +262,9 @@ function listInternalLeaseStatesForResource(options: {
   );
 }
 
+/**
+ * Resolves the directory where Playwright runtime broker leases are stored.
+ */
 function resolveRuntimeBrokerDir(rootDir = process.cwd()) {
   return (
     process.env['PLAYWRIGHT_RUNTIME_BROKER_DIR']?.trim() ||
@@ -201,6 +272,9 @@ function resolveRuntimeBrokerDir(rootDir = process.cwd()) {
   );
 }
 
+/**
+ * Checks if a process with the given PID is still alive.
+ */
 async function isProcessAlive(pid: number | null) {
   if (typeof pid !== 'number' || !Number.isInteger(pid) || pid <= 0) {
     return false;
@@ -215,6 +289,10 @@ async function isProcessAlive(pid: number | null) {
   }
 }
 
+/**
+ * Discovers lease states from external Playwright broker lease files.
+ * This bridge allows the shared lease service to report on external runtimes.
+ */
 async function readPlaywrightBrokerLeaseStates(options?: {
   scopeId?: string | null;
   activeOnly?: boolean;
@@ -300,6 +378,8 @@ async function readPlaywrightBrokerLeaseStates(options?: {
           : null;
     const normalizedPid =
       typeof pid === 'number' && Number.isFinite(pid) ? Math.trunc(pid) : null;
+    
+    // For external broker runtimes, "liveness" is checked by PID presence
     const running = await isProcessAlive(normalizedPid);
     const claimedAt =
       typeof parsed['startedAt'] === 'string' ? parsed['startedAt'] : nowIso();
@@ -381,6 +461,12 @@ async function readPlaywrightBrokerLeaseStates(options?: {
   return states.sort((left, right) => (left.scopeId ?? '').localeCompare(right.scopeId ?? ''));
 }
 
+/**
+ * Lists all agent lease states across all supported resources.
+ * 
+ * @param options - Filtering options for resource type, ID, scope, and active status.
+ * @returns An array of LeaseState snapshots.
+ */
 export async function listAgentLeaseStates(options?: {
   activeOnly?: boolean;
   resourceType?: string | null;
@@ -404,6 +490,7 @@ export async function listAgentLeaseStates(options?: {
       continue;
     }
 
+    // Playwright broker resources use a file-based adapter
     if (resource.resourceId === PLAYWRIGHT_BROKER_RESOURCE_ID) {
       states.push(
         ...(await readPlaywrightBrokerLeaseStates({
@@ -414,6 +501,7 @@ export async function listAgentLeaseStates(options?: {
       continue;
     }
 
+    // Other resources use the internal in-process registry
     states.push(
       ...listInternalLeaseStatesForResource({
         resourceId: resource.resourceId,
@@ -426,6 +514,13 @@ export async function listAgentLeaseStates(options?: {
   return states;
 }
 
+/**
+ * Gets the lease state for a specific scoped resource.
+ * 
+ * @param resourceId - The ID of the resource.
+ * @param scopeId - Optional scope identifier.
+ * @returns The LeaseState snapshot or null if not found.
+ */
 export async function getAgentLeaseState(resourceId: string, scopeId?: string | null) {
   const states = await listAgentLeaseStates({
     resourceId,
@@ -439,6 +534,13 @@ export async function getAgentLeaseState(resourceId: string, scopeId?: string | 
   return states[0] ?? null;
 }
 
+/**
+ * Entrypoint for mutating (claiming, renewing, releasing) agent leases.
+ * Validates the request against the capability manifest and resource policies.
+ * 
+ * @param input - The raw mutation request payload.
+ * @returns A result object indicating success or failure.
+ */
 export function mutateAgentLease(input: unknown) {
   const request = AgentLeaseMutationRequestSchema.parse(input);
   const resource = getAgentResource(request.resourceId);
@@ -452,6 +554,7 @@ export function mutateAgentLease(input: unknown) {
     });
   }
 
+  // Broker leases cannot be mutated through this API; they are managed by the broker runtime
   if (request.resourceId === PLAYWRIGHT_BROKER_RESOURCE_ID) {
     return AgentLeaseMutationResultSchema.parse({
       ok: false,
@@ -494,6 +597,10 @@ export function mutateAgentLease(input: unknown) {
   return releaseAgentLease(normalizedRequest);
 }
 
+/**
+ * Internal logic for claiming a lease on a resource.
+ * Checks for existing ownership and handles lease re-acquisition by the same owner.
+ */
 function claimAgentLease(
   request: ReturnType<typeof AgentLeaseMutationRequestSchema.parse> & {
     scopeId: string | null;
@@ -514,7 +621,9 @@ function claimAgentLease(
   const scopedLeaseKey = buildScopedLeaseKey(request.resourceId, request.scopeId);
   const currentLease = registry.leases.get(scopedLeaseKey);
 
+  // If already leased
   if (currentLease) {
+    // If the caller already owns the lease, treat the claim as a renewal
     if (
       currentLease.ownerAgentId === request.ownerAgentId &&
       currentLease.ownerRunId === (request.ownerRunId ?? null)
@@ -526,6 +635,7 @@ function claimAgentLease(
       });
     }
 
+    // Conflict: resource is owned by someone else
     const event = AgentLeaseEventSchema.parse({
       eventId: crypto.randomUUID(),
       kind: 'conflicted',
@@ -550,6 +660,7 @@ function claimAgentLease(
     });
   }
 
+  // Resource is free, create new lease record
   const claimedAt = nowIso();
   const leaseMs = request.leaseMs ?? defaultLeaseMs(request.resourceId);
   const heartbeatMs = resource.heartbeatMs ?? null;
@@ -596,6 +707,10 @@ function claimAgentLease(
   });
 }
 
+/**
+ * Internal logic for renewing an existing lease.
+ * Only the current owner can renew a lease.
+ */
 function renewAgentLease(
   request: ReturnType<typeof AgentLeaseMutationRequestSchema.parse> & {
     scopeId: string | null;
@@ -616,6 +731,7 @@ function renewAgentLease(
     });
   }
 
+  // Ensure caller is the owner
   if (
     currentLease.ownerAgentId !== request.ownerAgentId ||
     currentLease.ownerRunId !== (request.ownerRunId ?? currentLease.ownerRunId)
@@ -644,6 +760,7 @@ function renewAgentLease(
     });
   }
 
+  // If an explicit leaseId was provided, it must match the current one
   if (request.leaseId && request.leaseId !== currentLease.leaseId) {
     return AgentLeaseMutationResultSchema.parse({
       ok: false,
@@ -654,6 +771,7 @@ function renewAgentLease(
     });
   }
 
+  // Update expiration time and heartbeat
   const leaseMs = request.leaseMs ?? currentLease.leaseMs;
   const heartbeatAt = nowIso();
   const renewedLease = AgentLeaseRecordSchema.parse({
@@ -690,6 +808,10 @@ function renewAgentLease(
   });
 }
 
+/**
+ * Internal logic for releasing a lease.
+ * Only the current owner can release a lease.
+ */
 function releaseAgentLease(
   request: ReturnType<typeof AgentLeaseMutationRequestSchema.parse> & {
     scopeId: string | null;
@@ -710,6 +832,7 @@ function releaseAgentLease(
     });
   }
 
+  // Verify ownership before releasing
   if (
     currentLease.ownerAgentId !== request.ownerAgentId ||
     (request.leaseId && request.leaseId !== currentLease.leaseId)
@@ -738,6 +861,7 @@ function releaseAgentLease(
     });
   }
 
+  // Explicit release
   registry.leases.delete(scopedLeaseKey);
 
   const releasedAt = nowIso();
@@ -772,6 +896,10 @@ function releaseAgentLease(
   });
 }
 
+/**
+ * Retrieves the full discovery payload for agent leases.
+ * Includes active leases, limitations, and discovery summary.
+ */
 export async function getAgentLeaseDiscoveryPayload(options?: {
   activeOnly?: boolean;
   resourceType?: string | null;

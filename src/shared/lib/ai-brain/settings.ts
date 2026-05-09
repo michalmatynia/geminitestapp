@@ -51,6 +51,9 @@ export type {
 export const AI_BRAIN_SETTINGS_KEY = SETTINGS_KEY;
 export const AI_BRAIN_PROVIDER_CATALOG_KEY = CATALOG_KEY;
 
+/**
+ * List of all available feature keys that can have AI Brain assignments.
+ */
 export const BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
   'image_studio',
   'products',
@@ -71,13 +74,24 @@ export const BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
   'job_board',
 ];
 
+/**
+ * Policy for capability assignments, defining if they can use agents or only models.
+ */
 export type AiBrainCapabilityPolicy = 'model-only' | 'agent-or-model';
 
+/**
+ * Definition of a specific AI Brain capability.
+ */
 export type BrainCapabilityDefinition = {
+  /** Unique key for the capability. */
   key: AiBrainCapabilityKey;
+  /** The feature this capability belongs to. */
   feature: AiBrainFeature;
+  /** Human-readable label for the capability. */
   label: string;
+  /** The assignment policy for this capability. */
   policy: AiBrainCapabilityPolicy;
+  /** The expected model family for this capability. */
   modelFamily: BrainModelFamily;
 };
 
@@ -88,6 +102,9 @@ const AI_PATHS_COMPATIBLE_MODEL_FAMILIES: readonly BrainModelFamily[] = [
   'ocr',
 ];
 
+/**
+ * Registry of all known AI Brain capabilities across different features.
+ */
 export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabilityDefinition> = {
   'ai_paths.model': {
     key: 'ai_paths.model',
@@ -406,10 +423,16 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
   },
 };
 
+/**
+ * All valid capability keys for AI Brain.
+ */
 export const BRAIN_CAPABILITY_KEYS = Object.keys(
   BRAIN_CAPABILITY_REGISTRY
 ) as AiBrainCapabilityKey[];
 
+/**
+ * Mapping of features to their default capability key.
+ */
 export const DEFAULT_BRAIN_CAPABILITY_BY_FEATURE: Record<AiBrainFeature, AiBrainCapabilityKey> = {
   cms_builder: 'cms.css_stream',
   system_logs: 'insights.system_logs',
@@ -431,6 +454,9 @@ export const DEFAULT_BRAIN_CAPABILITY_BY_FEATURE: Record<AiBrainFeature, AiBrain
   job_board: 'job_board.offer_extraction',
 };
 
+/**
+ * Default AI Brain assignment settings.
+ */
 export const defaultBrainAssignment: AiBrainAssignment = {
   enabled: true,
   provider: 'model',
@@ -442,6 +468,9 @@ export const defaultBrainAssignment: AiBrainAssignment = {
   notes: null,
 };
 
+/**
+ * Default global AI Brain settings, initialized with default assignments for each feature and capability.
+ */
 export const defaultBrainSettings: AiBrainSettings = {
   defaults: { ...defaultBrainAssignment },
   assignments: Object.fromEntries(
@@ -460,6 +489,9 @@ export const defaultBrainSettings: AiBrainSettings = {
   ) as Record<AiBrainCapabilityKey, AiBrainAssignment | undefined>,
 };
 
+/**
+ * Default provider catalog entries.
+ */
 export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
   entries: [
     { pool: 'modelPresets', value: 'gpt-4o-mini' },
@@ -477,6 +509,13 @@ export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
   ],
 };
 
+/**
+ * Parses a raw AI Brain settings string into a validated AiBrainSettings object.
+ * 
+ * @param raw - The raw JSON string from settings storage.
+ * @returns The validated AiBrainSettings object.
+ * @throws {AppError} If parsing or validation fails.
+ */
 export const parseBrainSettings = (raw: string | null | undefined): AiBrainSettings => {
   if (!raw?.trim()) return defaultBrainSettings;
 
@@ -511,6 +550,13 @@ export const parseBrainSettings = (raw: string | null | undefined): AiBrainSetti
   return result.data;
 };
 
+/**
+ * Parses a raw provider catalog string into a validated AiBrainProviderCatalog object.
+ * 
+ * @param raw - The raw JSON string from storage.
+ * @returns The validated AiBrainProviderCatalog object.
+ * @throws {AppError} If parsing or validation fails.
+ */
 export const parseBrainProviderCatalog = (
   raw: string | null | undefined
 ): AiBrainProviderCatalog => {
@@ -561,6 +607,13 @@ export const parseBrainProviderCatalog = (
   };
 };
 
+/**
+ * Resolves the effective assignment for a given feature, merging global defaults with feature-specific overrides.
+ * 
+ * @param settings - The current AI Brain settings.
+ * @param feature - The feature to resolve for.
+ * @returns The resolved assignment.
+ */
 export const resolveBrainAssignment = (
   settings: AiBrainSettings,
   feature: AiBrainFeature
@@ -573,10 +626,22 @@ export const resolveBrainAssignment = (
   };
 };
 
+/**
+ * Retrieves the definition for a specific capability.
+ * 
+ * @param capability - The capability key.
+ * @returns The capability definition.
+ */
 export const getBrainCapabilityDefinition = (
   capability: AiBrainCapabilityKey
 ): BrainCapabilityDefinition => BRAIN_CAPABILITY_REGISTRY[capability];
 
+/**
+ * Gets the allowed model families for a specific capability.
+ * 
+ * @param capability - The capability key.
+ * @returns A list of allowed model families.
+ */
 export const getBrainCapabilityModelFamilies = (
   capability: AiBrainCapabilityKey
 ): readonly BrainModelFamily[] => {
@@ -586,13 +651,33 @@ export const getBrainCapabilityModelFamilies = (
   return [getBrainCapabilityDefinition(capability).modelFamily];
 };
 
+/**
+ * Gets the default capability key for a given feature.
+ * 
+ * @param feature - The feature key.
+ * @returns The default capability key.
+ */
 export const getDefaultCapabilityForFeature = (feature: AiBrainFeature): AiBrainCapabilityKey =>
   DEFAULT_BRAIN_CAPABILITY_BY_FEATURE[feature];
 
+/**
+ * Resolves which feature a specific capability belongs to.
+ * 
+ * @param capability - The capability key.
+ * @returns The parent feature key.
+ */
 export const resolveBrainFeatureForCapability = (
   capability: AiBrainCapabilityKey
 ): AiBrainFeature => getBrainCapabilityDefinition(capability).feature;
 
+/**
+ * Resolves the effective assignment for a specific capability.
+ * Merges defaults, feature overrides, and capability overrides.
+ * 
+ * @param settings - The current AI Brain settings.
+ * @param capability - The capability key.
+ * @returns The resolved assignment.
+ */
 export const resolveBrainCapabilityAssignment = (
   settings: AiBrainSettings,
   capability: AiBrainCapabilityKey
@@ -607,6 +692,7 @@ export const resolveBrainCapabilityAssignment = (
       }
     : featureAssignment;
 
+  // If the feature as a whole is disabled, the capability is also disabled
   if (featureAssignment.enabled) {
     return resolvedAssignment;
   }
@@ -617,6 +703,12 @@ export const resolveBrainCapabilityAssignment = (
   };
 };
 
+/**
+ * Sanitizes an assignment object by trimming string fields.
+ * 
+ * @param assignment - The assignment to sanitize.
+ * @returns The sanitized assignment.
+ */
 export const sanitizeBrainAssignment = (assignment: AiBrainAssignment): AiBrainAssignment => ({
   ...assignment,
   modelId: assignment.modelId?.trim() ?? '',
@@ -625,6 +717,13 @@ export const sanitizeBrainAssignment = (assignment: AiBrainAssignment): AiBrainA
   notes: assignment.notes?.trim() || null,
 });
 
+/**
+ * Sanitizes an assignment and ensures the provider is among the allowed ones.
+ * 
+ * @param assignment - The assignment to sanitize.
+ * @param allowedProviders - List of allowed provider types.
+ * @returns The sanitized and validated assignment.
+ */
 export const sanitizeBrainAssignmentForProviders = (
   assignment: AiBrainAssignment,
   allowedProviders: AiBrainProvider[]
@@ -639,6 +738,12 @@ export const sanitizeBrainAssignmentForProviders = (
   };
 };
 
+/**
+ * Sanitizes a provider catalog.
+ * 
+ * @param catalog - The catalog to sanitize.
+ * @returns The sanitized catalog.
+ */
 export const sanitizeBrainProviderCatalog = (
   catalog: AiBrainProviderCatalog
 ): AiBrainProviderCatalog => {
@@ -647,6 +752,12 @@ export const sanitizeBrainProviderCatalog = (
   };
 };
 
+/**
+ * Prepares a provider catalog for persistence by sanitizing its entries.
+ * 
+ * @param catalog - The catalog to prepare.
+ * @returns An object containing sanitized catalog entries.
+ */
 export const toPersistedBrainProviderCatalog = (
   catalog: AiBrainProviderCatalog
 ): { entries: AiBrainCatalogEntry[] } => ({

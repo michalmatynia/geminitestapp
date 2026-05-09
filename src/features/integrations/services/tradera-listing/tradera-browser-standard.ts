@@ -1,6 +1,11 @@
-import type { Locator } from 'playwright';
+import type { Locator, Page } from 'playwright';
+import { z } from 'zod';
 
-import { normalizeTraderaListingFormUrl, type TraderaSystemSettings } from '@/features/integrations/constants/tradera';
+import {
+  normalizeTraderaListingFormUrl,
+  resolveTraderaListingPriceCurrencyCode,
+  type TraderaSystemSettings,
+} from '@/features/integrations/constants/tradera';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import {
   buildPlaywrightNativeTaskResult,
@@ -23,6 +28,9 @@ import {
   DESCRIPTION_SELECTORS,
   PRICE_SELECTORS,
   SUBMIT_SELECTORS,
+  PAYMENT_SOLUTION_MODAL_TEXT_HINTS,
+  PAYMENT_SOLUTION_TERMS_LABELS,
+  PAYMENT_SOLUTION_MODAL_CONTINUE_LABELS,
 } from './config';
 import {
   findVisibleLocator,
@@ -41,15 +49,360 @@ import {
   buildTraderaListingPriceResolutionFailureMessage,
   formatTraderaListingPriceInputValue,
   resolveTraderaListingPriceForProduct,
-  TRADERA_LISTING_PRICE_CURRENCY_CODE,
 } from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
 import { buildTraderaListingDescription } from './description';
 
 const STANDARD_REQUESTED_BROWSER_MODE = 'connection_default';
 
+const trimmedStringSchema = z.string().transform((value) => value.trim());
+const errorMessageSchema = z.instanceof(Error).transform((error) => error.message);
+const errorMetaSchema = z.object({ meta: z.unknown().optional() }).passthrough();
+const paymentSolutionLocatorPageSchema = z.object({
+  getByRole: z.function(),
+  locator: z.function(),
+}).passthrough();
+const paymentSolutionTextPageSchema = z.object({
+  getByText: z.function(),
+}).passthrough();
+const nestedLocatorSchema = z.object({
+  locator: z.function(),
+}).passthrough();
+const pageTimerSchema = z.object({
+  waitForTimeout: z.function(),
+}).passthrough();
+
 const toTrimmedString = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
+  trimmedStringSchema.catch('').parse(value);
+
+const normalizeText = (value: unknown): string =>
+  String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const escapeRegExp = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const readPageText = async (page: Page): Promise<string> =>
+  page.locator('body').innerText({ timeout: 750 }).catch(() => '');
+
+const PAYMENT_SOLUTION_MODAL_CONTAINER_SELECTOR =
+  '[aria-modal="true"], [data-testid*="modal" i], [data-testid*="dialog" i], [class*="modal" i], [class*="dialog" i], [class*="sheet" i], [class*="drawer" i], [class*="popover" i]';
+
+const hasPaymentSolutionModalLocatorSupport = (page: Page): boolean => {
+  return paymentSolutionLocatorPageSchema.safeParse(page).success;
+};
+
+const hasPaymentSolutionModalText = (value: unknown): boolean => {
+  const normalized = normalizeText(value).toLowerCase();
+  if (!normalized) return false;
+
+  const matchedHints = PAYMENT_SOLUTION_MODAL_TEXT_HINTS.filter((label) =>
+    normalized.includes(normalizeText(label).toLowerCase())
+  );
+  return (
+    matchedHints.length >= 2 ||
+    (normalized.includes("tradera's payment solution") &&
+      normalized.includes('continue')) ||
+    (normalized.includes('payment solution') &&
+      normalized.includes('terms') &&
+      normalized.includes('continue')) ||
+    (normalized.includes('betalningslösning') && normalized.includes('villkor'))
+  );
+};
+
+const findVisiblePaymentSolutionDialog = async (page: Page): Promise<Locator | null> => {
+  const bodyText = await readPageText(page);
+  if (!hasPaymentSolutionModalText(bodyText)) {
+    return null;
+  }
+
+  const dialogCollections = [
+    page.getByRole('dialog'),
+    page.locator(PAYMENT_SOLUTION_MODAL_CONTAINER_SELECTOR),
+  ];
+
+  for (const dialogs of dialogCollections) {
+    const dialogCount = await dialogs.count().catch(() => 0);
+    for (let index = 0; index < dialogCount; index += 1) {
+      const candidate = dialogs.nth(index);
+      const visible = await candidate.isVisible({ timeout: 250 }).catch(() => false);
+      if (!visible) continue;
+      const dialogText = await candidate.innerText({ timeout: 500 }).catch(() => '');
+      if (hasPaymentSolutionModalText(dialogText)) {
+        return candidate;
+      }
+    }
+  }
+
+  const pageWithText = paymentSolutionTextPageSchema.safeParse(page);
+  if (!pageWithText.success) {
+    return null;
+  }
+
+  const heading = (pageWithText.data as Page)
+    .getByText(/Tradera'?s payment solution|Traderas betalningslösning|betalningslösning/i)
+    .first();
+  const headingVisible = await heading.isVisible({ timeout: 250 }).catch(() => false);
+  if (!headingVisible) {
+    return null;
+  }
+
+  const headingContainerCandidates = [
+    heading
+      .locator(
+        'xpath=ancestor-or-self::*[@role="dialog" or @aria-modal="true" or self::dialog][1]'
+      )
+      .first(),
+    heading
+      .locator(
+        'xpath=ancestor-or-self::*[(contains(normalize-space(.), "Continue") or contains(normalize-space(.), "Fortsätt"))][1]'
+      )
+      .first(),
+    heading
+      .locator(
+        'xpath=ancestor-or-self::*[contains(@class, "modal") or contains(@class, "Modal") or contains(@class, "dialog") or contains(@class, "Dialog") or contains(@class, "sheet") or contains(@class, "Sheet") or contains(@class, "drawer") or contains(@class, "Drawer") or contains(@class, "popover") or contains(@class, "Popover")][1]'
+      )
+      .first(),
+  ];
+
+  for (const candidate of headingContainerCandidates) {
+    const candidateVisible = await candidate.isVisible({ timeout: 250 }).catch(() => false);
+    if (!candidateVisible) continue;
+
+    const textContent = await candidate.innerText({ timeout: 500 }).catch(() => '');
+    if (hasPaymentSolutionModalText(textContent)) {
+      return candidate;
+    }
+  }
+
+  return heading;
+};
+
+const findPaymentSolutionTermsCheckbox = async (dialog: Locator): Promise<Locator | null> => {
+  for (const label of PAYMENT_SOLUTION_TERMS_LABELS) {
+    const labelPattern = new RegExp(escapeRegExp(label), 'i');
+    for (const role of ['checkbox', 'switch'] as const) {
+      const candidate = dialog
+        .getByRole(role, { name: labelPattern })
+        .first();
+      const visible = await candidate.isVisible({ timeout: 250 }).catch(() => false);
+      if (visible) return candidate;
+    }
+
+    const dialogWithLocator = nestedLocatorSchema.safeParse(dialog);
+    if (!dialogWithLocator.success) continue;
+
+    const escapedText = label.replace(/"/g, '\\"');
+    const labeledCheckbox = (dialogWithLocator.data as Locator)
+      .locator(
+        'xpath=.//*[contains(normalize-space(.), "' +
+          escapedText +
+          '")]/following::*[self::input[@type="checkbox"] or @role="checkbox" or @role="switch"][1]'
+      )
+      .first();
+    const labeledCheckboxVisible = await labeledCheckbox
+      .isVisible({ timeout: 250 })
+      .catch(() => false);
+    if (labeledCheckboxVisible) return labeledCheckbox;
+  }
+
+  const dialogText = await dialog.innerText({ timeout: 500 }).catch(() => '');
+  if (normalizeText(dialogText).length <= 3000) {
+    const fallback = dialog.getByRole('checkbox').first();
+    const fallbackVisible = await fallback.isVisible({ timeout: 250 }).catch(() => false);
+    if (fallbackVisible) return fallback;
+  }
+
+  return null;
+};
+
+const findPaymentSolutionContinueButton = async (dialog: Locator): Promise<Locator | null> => {
+  for (const label of PAYMENT_SOLUTION_MODAL_CONTINUE_LABELS) {
+    const exactCandidate = dialog
+      .getByRole('button', { name: new RegExp(`^${escapeRegExp(label)}$`, 'i') })
+      .first();
+    const exactVisible = await exactCandidate.isVisible({ timeout: 250 }).catch(() => false);
+    if (exactVisible) return exactCandidate;
+
+    const partialCandidate = dialog
+      .getByRole('button', { name: new RegExp(escapeRegExp(label), 'i') })
+      .first();
+    const partialVisible = await partialCandidate.isVisible({ timeout: 250 }).catch(() => false);
+    if (partialVisible) return partialCandidate;
+
+    const dialogWithLocator = nestedLocatorSchema.safeParse(dialog);
+    if (!dialogWithLocator.success) continue;
+
+    const escapedText = label.replace(/"/g, '\\"');
+    const textButton = (dialogWithLocator.data as Locator)
+      .locator(
+        'xpath=.//*[self::button or self::a or @role="button" or @tabindex][normalize-space(.)="' +
+          escapedText +
+          '" or contains(normalize-space(.), "' +
+          escapedText +
+          '")]'
+      )
+      .first();
+    const textButtonVisible = await textButton.isVisible({ timeout: 250 }).catch(() => false);
+    if (textButtonVisible) return textButton;
+  }
+
+  return null;
+};
+
+const isPaymentSolutionTermsChecked = async (checkbox: Locator): Promise<boolean> => {
+  const checked = await checkbox.isChecked({ timeout: 500 }).catch(() => null);
+  if (checked !== null) return checked;
+
+  const ariaChecked = await checkbox.getAttribute('aria-checked', { timeout: 500 }).catch(
+    () => null
+  );
+  if (ariaChecked === 'true') return true;
+  if (ariaChecked === 'false') return false;
+
+  return false;
+};
+
+const setPaymentSolutionTermsChecked = async (checkbox: Locator): Promise<boolean> => {
+  if (await isPaymentSolutionTermsChecked(checkbox)) {
+    return true;
+  }
+
+  const attempts = [
+    () => checkbox.check({ timeout: 2_000 }),
+    () => checkbox.click({ timeout: 2_000 }),
+    () =>
+      checkbox.evaluate((element) => {
+        if (element instanceof HTMLElement) {
+          element.click();
+        }
+      }),
+    async () => {
+      await checkbox.focus({ timeout: 2_000 }).catch(() => undefined);
+      await checkbox.press('Space', { timeout: 2_000 });
+    },
+  ];
+
+  for (const attempt of attempts) {
+    await attempt().catch(() => undefined);
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    if (await isPaymentSolutionTermsChecked(checkbox)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const waitForPaymentSolutionDialogToClose = async (
+  dialog: Locator,
+  timeoutMs = 1_500
+): Promise<boolean> => {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const visible = await dialog.isVisible({ timeout: 250 }).catch(() => false);
+    if (!visible) {
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 75));
+  }
+
+  return !(await dialog.isVisible({ timeout: 250 }).catch(() => false));
+};
+
+const clickPaymentSolutionContinueButton = async (
+  dialog: Locator,
+  continueButton: Locator
+): Promise<boolean> => {
+  const attempts = [
+    () => continueButton.click({ timeout: 2_000 }),
+    () =>
+      continueButton.evaluate((element) => {
+        if (element instanceof HTMLElement) {
+          element.click();
+        }
+      }),
+    async () => {
+      await continueButton.focus({ timeout: 2_000 }).catch(() => undefined);
+      await continueButton.press('Enter', { timeout: 2_000 });
+    },
+  ];
+
+  for (const attempt of attempts) {
+    await attempt().catch(() => undefined);
+    if (await waitForPaymentSolutionDialogToClose(dialog)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const waitBriefly = async (page: Page, timeoutMs: number): Promise<void> => {
+  const pageWithTimer = pageTimerSchema.safeParse(page);
+  if (pageWithTimer.success) {
+    await (pageWithTimer.data as Page & { waitForTimeout: (timeoutMs: number) => Promise<void> })
+      .waitForTimeout(timeoutMs)
+      .catch(() => undefined);
+    return;
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, timeoutMs));
+};
+
+const acceptPaymentSolutionTermsIfPresent = async (
+  page: Page,
+  timeoutMs = 5_000
+): Promise<boolean> => {
+  if (!hasPaymentSolutionModalLocatorSupport(page)) {
+    return false;
+  }
+
+  const deadline = Date.now() + timeoutMs;
+  let dialog: Locator | null = null;
+
+  while (Date.now() < deadline) {
+    dialog = await findVisiblePaymentSolutionDialog(page);
+    if (dialog) {
+      break;
+    }
+    await waitBriefly(page, 150);
+  }
+
+  dialog ??= await findVisiblePaymentSolutionDialog(page);
+  if (!dialog) return false;
+
+  const checkbox = await findPaymentSolutionTermsCheckbox(dialog);
+  if (!checkbox) {
+    throw internalError(
+      'FAIL_PUBLISH_VALIDATION: Tradera payment solution terms checkbox was not found.'
+    );
+  }
+
+  const checked = await setPaymentSolutionTermsChecked(checkbox);
+  if (!checked) {
+    throw internalError(
+      'FAIL_PUBLISH_VALIDATION: Tradera payment solution terms checkbox could not be acknowledged.'
+    );
+  }
+
+  const continueButton = await findPaymentSolutionContinueButton(dialog);
+  if (!continueButton) {
+    throw internalError(
+      'FAIL_PUBLISH_VALIDATION: Tradera payment solution continue button was not found.'
+    );
+  }
+
+  const dismissed = await clickPaymentSolutionContinueButton(dialog, continueButton);
+  if (!dismissed) {
+    throw internalError(
+      'FAIL_MODAL_DISMISS: Tradera payment solution modal could not be dismissed.'
+    );
+  }
+
+  return true;
+};
 
 const buildListingFormUrlWithCategoryId = (
   listingFormUrl: string,
@@ -144,6 +497,7 @@ export const runTraderaBrowserListingStandard = async ({
   action: 'list' | 'relist' | 'sync';
 }): Promise<BrowserListingResultDto> => {
   const listingFormUrl = normalizeTraderaListingFormUrl(systemSettings.listingFormUrl);
+  const targetListingCurrencyCode = resolveTraderaListingPriceCurrencyCode(systemSettings);
   let tracker: StepTracker | null = null;
   let pricingMetadata: Record<string, unknown> | null = null;
   let authLoginAttempted = false;
@@ -155,6 +509,17 @@ export const runTraderaBrowserListingStandard = async ({
   let categoryInternalCategoryId: string | null = null;
   let categoryMappingSourceConnectionId: string | null = null;
   let categoryMappingRecoveredFromAnotherConnection: boolean | null = null;
+  const executionState: {
+    completedAt: string | null;
+    externalListingId: string | null;
+    paymentSolutionTermsAccepted: boolean;
+    retryAfterPaymentSolutionTerms: boolean;
+  } = {
+    completedAt: null,
+    externalListingId: null,
+    paymentSolutionTermsAccepted: false,
+    retryAfterPaymentSolutionTerms: false,
+  };
   return runPlaywrightConnectionNativeTask({
     connection,
     runtimeActionKey: 'tradera_standard_list',
@@ -177,13 +542,6 @@ export const runTraderaBrowserListingStandard = async ({
         description: string;
         priceValue: string;
       } | null = null;
-      const executionState: {
-        completedAt: string | null;
-        externalListingId: string | null;
-      } = {
-        completedAt: null,
-        externalListingId: null,
-      };
       let formControlsPromise: Promise<{
         titleInput: Locator;
         descriptionInput: Locator;
@@ -331,6 +689,9 @@ export const runTraderaBrowserListingStandard = async ({
         'Cookie consent was handled during session validation.'
       );
       tracker.succeed('sell_page_open', 'The Tradera listing editor became ready.');
+      if (await acceptPaymentSolutionTermsIfPresent(page, 0)) {
+        executionState.paymentSolutionTermsAccepted = true;
+      }
 
       const sequencer = new TraderaSequencer({
         page,
@@ -358,18 +719,18 @@ export const runTraderaBrowserListingStandard = async ({
 
             const priceResolution = await resolveTraderaListingPriceForProduct({
               product,
-              targetCurrencyCode: TRADERA_LISTING_PRICE_CURRENCY_CODE,
+              targetCurrencyCode: targetListingCurrencyCode,
             });
             pricingMetadata = buildTraderaPricingMetadata(priceResolution);
             if (
               priceResolution.listingPrice === null ||
               !priceResolution.resolvedToTargetCurrency ||
               toTrimmedString(priceResolution.listingCurrencyCode).toUpperCase() !==
-                TRADERA_LISTING_PRICE_CURRENCY_CODE
+                targetListingCurrencyCode
             ) {
               throw badRequestError(
                 buildTraderaListingPriceResolutionFailureMessage(
-                  TRADERA_LISTING_PRICE_CURRENCY_CODE
+                  targetListingCurrencyCode
                 ),
                 {
                   mode: 'standard',
@@ -430,13 +791,36 @@ export const runTraderaBrowserListingStandard = async ({
           },
           publish: async () => {
             const { submitButton } = await resolveFormControls();
-            await Promise.allSettled([
-              page.waitForNavigation({
-                waitUntil: 'domcontentloaded',
-                timeout: 30_000,
-              }),
-              submitButton.click(),
+            if (await acceptPaymentSolutionTermsIfPresent(page, 0)) {
+              executionState.paymentSolutionTermsAccepted = true;
+            }
+
+            const waitForPublishNavigation = (): Promise<unknown> =>
+              page
+                .waitForNavigation({
+                  waitUntil: 'domcontentloaded',
+                  timeout: 30_000,
+                })
+                .catch(() => null);
+
+            const navigationAfterClick = waitForPublishNavigation();
+            await submitButton.click();
+
+            const paymentSolutionAccepted = await Promise.race([
+              acceptPaymentSolutionTermsIfPresent(page),
+              navigationAfterClick.then(() => false),
             ]);
+            if (paymentSolutionAccepted) {
+              executionState.paymentSolutionTermsAccepted = true;
+              executionState.retryAfterPaymentSolutionTerms = true;
+              await Promise.allSettled([
+                navigationAfterClick,
+                waitForPublishNavigation(),
+                submitButton.click(),
+              ]);
+            } else {
+              await navigationAfterClick;
+            }
           },
           verifyPublish: () => {
             executionState.externalListingId = extractExternalListingId(page.url());
@@ -488,6 +872,8 @@ export const runTraderaBrowserListingStandard = async ({
           categoryMappingSourceConnectionId,
           categoryMappingRecoveredFromAnotherConnection,
           completedAt: resolvedCompletedAt,
+          paymentSolutionTermsAccepted: executionState.paymentSolutionTermsAccepted,
+          retryAfterPaymentSolutionTerms: executionState.retryAfterPaymentSolutionTerms,
           executionSteps: tracker.getSteps(),
           ...pricingMetadata,
         },
@@ -499,9 +885,9 @@ export const runTraderaBrowserListingStandard = async ({
       const debugArtifacts = await captureTraderaListingDebugArtifacts(session.page, errorId, action);
       const authState = await readTraderaAuthState(session.page).catch(() => null);
 
-      const errorMessage =
-        error instanceof Error ? error.message : 'Browser listing failed';
+      const errorMessage = errorMessageSchema.catch('Browser listing failed').parse(error);
       const normalizedError = errorMessage.toUpperCase();
+      const errorMeta = errorMetaSchema.catch({}).parse(error);
       const failedStepId = resolveStandardFailedStepId({
         authLoginAttempted,
         normalizedError,
@@ -526,18 +912,17 @@ export const runTraderaBrowserListingStandard = async ({
         categoryInternalCategoryId,
         categoryMappingSourceConnectionId,
         categoryMappingRecoveredFromAnotherConnection,
+        paymentSolutionTermsAccepted: executionState.paymentSolutionTermsAccepted,
+        retryAfterPaymentSolutionTerms: executionState.retryAfterPaymentSolutionTerms,
         executionSteps: activeTracker.getSteps(),
         ...(pricingMetadata ?? {}),
         debugArtifacts,
         authState,
-        authFailureMeta:
-          error !== null && typeof error === 'object' && 'meta' in error
-            ? (error as { meta?: unknown }).meta ?? null
-            : null,
+        authFailureMeta: errorMeta.meta ?? null,
         errorId,
       };
     },
     getErrorMessage: (error) =>
-      error instanceof Error ? error.message : 'Browser listing failed',
+      errorMessageSchema.catch('Browser listing failed').parse(error),
   });
 };

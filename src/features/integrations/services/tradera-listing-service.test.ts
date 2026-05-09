@@ -335,6 +335,10 @@ describe('processTraderaListingJob', () => {
     };
 
     findProductListingByIdAcrossProvidersMock.mockResolvedValue(resolvedListing);
+    loadTraderaSystemSettingsMock.mockResolvedValue({
+      listingPriceCurrencyCode: 'EUR',
+      selectorProfile: 'default',
+    });
     runTraderaBrowserListingMock.mockResolvedValue({
       externalListingId: 'external-1',
       listingUrl: 'https://www.tradera.com/item/1',
@@ -359,6 +363,9 @@ describe('processTraderaListingJob', () => {
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
       expect.objectContaining({
         browserMode: 'headed',
+        systemSettings: expect.objectContaining({
+          listingPriceCurrencyCode: 'EUR',
+        }),
       }),
       expect.objectContaining({
         onRunStarted: expect.any(Function),

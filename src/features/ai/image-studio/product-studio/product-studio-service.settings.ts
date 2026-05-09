@@ -133,7 +133,7 @@ export const resolveStudioSettingsBundle = async (
 }> => {
   const projectSettingsKey = getImageStudioProjectSettingsKey(projectId);
   if (!projectSettingsKey) {
-    throw badRequestError('Invalid Image Studio project id for settings lookup.');
+    throw badRequestError(`Invalid Image Studio project id for settings lookup: "${projectId}". The project id must be a non-empty alphanumeric string.`);
   }
 
   const [projectSettingsRaw, globalSettingsRaw, sequenceGenerationModeRaw, brainModel] =

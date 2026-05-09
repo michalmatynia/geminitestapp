@@ -34,11 +34,11 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const formData = await req.formData();
   const file = formData.get('file');
   if (!(file instanceof File)) {
-    throw badRequestError('Missing PDF file.');
+    throw badRequestError('Missing PDF file. Provide a file field in the multipart form data with a PDF file.');
   }
 
   if (file.type !== 'application/pdf') {
-    throw badRequestError('Only PDF files are supported.');
+    throw badRequestError(`Only PDF files are supported, but received file type "${file.type}". Upload a file with content-type "application/pdf".`);
   }
 
   let pdfParse: PdfParseFn;
@@ -46,12 +46,12 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     const pdfModule = await import('pdf-parse');
     const pdfParseCandidate = Reflect.get(pdfModule, 'default') ?? pdfModule;
     if (!isPdfParseFn(pdfParseCandidate)) {
-      throw configurationError('PDF parser not installed. Run `npm install pdf-parse`.');
+      throw configurationError('PDF parser not installed. Run `npm install pdf-parse` to enable PDF context extraction.');
     }
     pdfParse = pdfParseCandidate;
   } catch (error) {
     void ErrorSystem.captureException(error);
-    throw configurationError('PDF parser not installed. Run `npm install pdf-parse`.');
+    throw configurationError('PDF parser not installed. Run `npm install pdf-parse` to enable PDF context extraction.');
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());

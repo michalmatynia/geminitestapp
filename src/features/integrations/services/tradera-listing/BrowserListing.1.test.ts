@@ -138,10 +138,10 @@ vi.mock('./shipping-group', () => ({
 }));
 
 vi.mock('./price', () => ({
-  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'SEK',
-  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'SEK') =>
+  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'EUR',
+  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'EUR') =>
     `FAIL_PRICE_RESOLUTION: Tradera export requires a ${currencyCode} listing price. Add a ${currencyCode} price group to the product catalog and retry.`,
-  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'SEK') => {
+  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'EUR') => {
     if (currencyCode === 'SEK') {
       return String(Math.max(1, Math.round(value)));
     }
@@ -162,8 +162,8 @@ import { TRADERA_CHECK_STATUS_SCRIPT } from './check-status-script';
 
 const EXPECTED_TRADERA_PRICING_METADATA = {
   listingPrice: 55,
-  listingCurrencyCode: 'SEK',
-  targetCurrencyCode: 'SEK',
+  listingCurrencyCode: 'EUR',
+  targetCurrencyCode: 'EUR',
   resolvedToTargetCurrency: true,
   basePrice: 123,
   baseCurrencyCode: 'PLN',
@@ -275,8 +275,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
     });
     resolveTraderaListingPriceForProductMock.mockResolvedValue({
       listingPrice: 55,
-      listingCurrencyCode: 'SEK',
-      targetCurrencyCode: 'SEK',
+      listingCurrencyCode: 'EUR',
+      targetCurrencyCode: 'EUR',
       resolvedToTargetCurrency: true,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -420,8 +420,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
           }),
           traderaPricing: {
             listingPrice: 55,
-            listingCurrencyCode: 'SEK',
-            targetCurrencyCode: 'SEK',
+            listingCurrencyCode: 'EUR',
+            targetCurrencyCode: 'EUR',
             resolvedToTargetCurrency: true,
             basePrice: 123,
             baseCurrencyCode: 'PLN',

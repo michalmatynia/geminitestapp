@@ -57,6 +57,7 @@ const parseSchemaDiffKindQuery = (value: string | undefined): SchemaDiffKindQuer
   if (SCHEMA_DIFF_KIND_VALUE_SET.has(normalized)) {
     return normalized as SchemaDiffKindQueryValue;
   }
+  // Schema diff kind parameter is not one of the allowed values
   throw new Error('Invalid portable schema diff kind.');
 };
 

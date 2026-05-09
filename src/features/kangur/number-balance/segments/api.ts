@@ -76,7 +76,7 @@ export const joinNumberBalanceMatch = async (
   let match = await resolveMatch(collection, input.matchId, nowMs);
 
   if (match.status === numberBalanceMatchStatusSchema.enum.completed) {
-    throw badRequestError('Match already completed.');
+    throw badRequestError(`Match "${input.matchId}" has already completed and cannot be joined. Start a new match to play again.`);
   }
 
   const existing = match.players.find((entry) => entry.playerId === learner.id);
@@ -92,7 +92,7 @@ export const joinNumberBalanceMatch = async (
     match.status === numberBalanceMatchStatusSchema.enum.in_progress &&
     nowMs >= match.startTimeMs
   ) {
-    throw badRequestError('Match already started.');
+    throw badRequestError(`Match "${input.matchId}" has already started and cannot accept new players. Wait for the current match to finish and start a new one.`);
   }
 
   const shouldStart = match.status === numberBalanceMatchStatusSchema.enum.waiting;
@@ -135,7 +135,7 @@ export const joinNumberBalanceMatch = async (
     if (match.playerCount >= 2) {
       throw conflictError('Match already has two players.');
     }
-    throw badRequestError('Unable to join match.');
+    throw badRequestError(`Unable to join match "${input.matchId}". The join operation failed due to a concurrent update — the match may have just filled or completed. Try again.`);
   }
 
   const joinedPlayer = resolvePlayer(updatedMatch, learner.id);
@@ -164,13 +164,13 @@ export const submitNumberBalanceSolveAttempt = async (
   let match = await resolveMatch(collection, input.matchId, nowMs);
 
   if (match.status === numberBalanceMatchStatusSchema.enum.completed) {
-    throw badRequestError('Match already completed.');
+    throw badRequestError(`Match "${input.matchId}" has already completed. No further answers can be submitted.`);
   }
   if (match.status === numberBalanceMatchStatusSchema.enum.waiting) {
-    throw badRequestError('Match has not started yet.');
+    throw badRequestError(`Match "${input.matchId}" has not started yet (status: waiting). Wait for the countdown to finish before submitting answers.`);
   }
   if (nowMs < match.startTimeMs) {
-    throw badRequestError('Match has not started yet.');
+    throw badRequestError(`Match "${input.matchId}" has not started yet. The match starts at ${new Date(match.startTimeMs).toISOString()}. Wait for the countdown to finish.`);
   }
 
   const player = resolvePlayer(match, learner.id);

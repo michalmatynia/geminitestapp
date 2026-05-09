@@ -108,6 +108,7 @@ export const runPlaywrightProgrammableConnectionTest = async ({
   }
 
   if (executionMode === 'commit') {
+    // Commit mode requires a saved automation flow, not a test run
     throw new Error('Import flow execution requires saved automation flow JSON.');
   }
 

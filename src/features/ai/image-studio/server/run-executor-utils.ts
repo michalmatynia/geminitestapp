@@ -67,7 +67,7 @@ export const normalizePublicAssetPath = (filepath: string): string => {
 export const resolveAssetPath = (filepath: string): string => {
   const normalized = normalizePublicAssetPath(filepath);
   if (!normalized) {
-    throw badRequestError('Invalid asset path.');
+    throw badRequestError('Invalid asset path: the path could not be normalized to a valid public URL. Ensure the filepath starts with a leading slash and points to a valid studio asset.');
   }
   return getDiskPathFromPublicPath(normalized);
 };
@@ -98,7 +98,9 @@ export const ensureWithinProject = (diskPath: string, projectId: string): void =
       resolvedPath === projectRoot || resolvedPath.startsWith(`${projectRoot}${path.sep}`)
   );
   if (!withinProject) {
-    throw badRequestError('Asset path is outside the project.');
+    throw badRequestError(
+      `Asset path is outside the project directory for project "${projectId}". Only files stored under the project's upload folder are permitted.`
+    );
   }
 };
 

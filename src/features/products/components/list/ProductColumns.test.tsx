@@ -13,6 +13,7 @@ const {
   traderaStatusButtonMock,
   vintedQuickListButtonMock,
   vintedStatusButtonMock,
+  ecommerceExportButtonMock,
   triggerButtonBarMock,
   useProductListActionsContextMock,
   useProductListHeaderActionsContextMock,
@@ -27,6 +28,7 @@ const {
   traderaStatusButtonMock: vi.fn(),
   vintedQuickListButtonMock: vi.fn(),
   vintedStatusButtonMock: vi.fn(),
+  ecommerceExportButtonMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
   useProductListActionsContextMock: vi.fn(),
   useProductListHeaderActionsContextMock: vi.fn(),
@@ -67,6 +69,13 @@ vi.mock('./columns/buttons/BaseQuickExportButton', () => ({
   BaseQuickExportButton: (props: Record<string, unknown>) => {
     baseQuickExportButtonMock(props);
     return <button type='button'>BL</button>;
+  },
+}));
+
+vi.mock('./columns/buttons/EcommerceExportButton', () => ({
+  EcommerceExportButton: (props: Record<string, unknown>) => {
+    ecommerceExportButtonMock(props);
+    return <button type='button'>EC</button>;
   },
 }));
 
@@ -353,6 +362,7 @@ describe('ProductColumns queued badge', () => {
     expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
       '+',
       'BL',
+      'EC',
       'T+',
       'V+',
     ]);
@@ -389,6 +399,7 @@ describe('ProductColumns queued badge', () => {
     expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
       '+',
       'BL',
+      'EC',
       'TR',
       'VR',
     ]);
@@ -429,6 +440,7 @@ describe('ProductColumns queued badge', () => {
     expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
       '+',
       'BL',
+      'EC',
       'TR',
       'V+',
     ]);
@@ -1306,9 +1318,9 @@ describe('ProductColumns queued badge', () => {
     expect(columns.find((column) => column.accessorKey === 'createdAt')?.meta).toMatchObject({
       widthPx: 200,
     });
-    expect(columns.find((column) => column.id === 'integrations')?.size).toBe(220);
+    expect(columns.find((column) => column.id === 'integrations')?.size).toBe(252);
     expect(columns.find((column) => column.id === 'integrations')?.meta).toMatchObject({
-      widthPx: 220,
+      widthPx: 252,
     });
     expect(columns.find((column) => column.id === 'actions')?.size).toBe(64);
     expect(columns.find((column) => column.id === 'actions')?.meta).toMatchObject({
@@ -1348,6 +1360,7 @@ describe('ProductColumns queued badge', () => {
     render(cell);
 
     expect(await screen.findByRole('button', { name: 'BL' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'EC' })).toBeInTheDocument();
     expect(baseQuickExportButtonMock).toHaveBeenCalledWith(
       expect.objectContaining({
         product,

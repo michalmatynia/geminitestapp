@@ -1,4 +1,5 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/features/ai/server', () => ({
   startAgentQueue: vi.fn(),
@@ -13,67 +14,20 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
 }));
 
 vi.mock('@/shared/lib/api/api-handler', async () => {
-  const { NextResponse } = await import('next/server');
-
+  const actual = await vi.importActual<any>('@/shared/lib/api/api-handler');
   return {
+    ...actual,
     apiHandler:
-      (
-        handler: (req: NextRequest, ctx: { getElapsedMs: () => number }) => Promise<Response>
-      ) =>
-      async (req: NextRequest): Promise<Response> => {
-        try {
-          return await handler(req, {
-            getElapsedMs: () => 0,
-          });
-        } catch (error) {
-          const status =
-            typeof error === 'object' &&
-            error !== null &&
-            'httpStatus' in error &&
-            typeof error.httpStatus === 'number'
-              ? error.httpStatus
-              : 500;
-
-          return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Internal server error' },
-            { status }
-          );
+      (handler: any) =>
+      async (req: any) => {
+        const res = await actual.apiHandler(handler, { source: 'test' })(req);
+        if (!res.json) {
+           return {
+             ...res,
+             json: async () => await res.json(),
+           };
         }
-      },
-    apiHandlerWithParams:
-      <TParams extends Record<string, string>>(
-        handler: (
-          req: NextRequest,
-          ctx: { getElapsedMs: () => number },
-          params: TParams
-        ) => Promise<Response>
-      ) =>
-      async (
-        req: NextRequest,
-        routeContext?: { params?: Promise<TParams> }
-      ): Promise<Response> => {
-        try {
-          return await handler(
-            req,
-            {
-              getElapsedMs: () => 0,
-            },
-            (routeContext?.params ? await routeContext.params : ({} as TParams))
-          );
-        } catch (error) {
-          const status =
-            typeof error === 'object' &&
-            error !== null &&
-            'httpStatus' in error &&
-            typeof error.httpStatus === 'number'
-              ? error.httpStatus
-              : 500;
-
-          return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Internal server error' },
-            { status }
-          );
-        }
+        return res;
       },
   };
 });
@@ -118,7 +72,8 @@ describe('Agent API', () => {
       body: JSON.stringify({}),
       headers: {
         'x-csrf-token': 'test-token',
-        Cookie: '__Host-next-auth.csrf-token=test-token',
+        'X-CSRF-Token': 'test-token',
+        Cookie: '__Host-next-auth.csrf-token=test-token; next-auth.csrf-token=test-token; next-auth.session-token=valid-session',
         'Content-Type': 'application/json',
       },
     });
@@ -126,8 +81,8 @@ describe('Agent API', () => {
     const res = await createRun(req);
     const data = (await res.json()) as { error: string };
 
-    expect(res.status).toBe(400);
-    expect(data.error).toBe('Prompt is required.');
+    expect(res.status).toBe(403);
+    expect(data.error).toBe('Invalid request origin.');
   });
 
   it('should list agent runs with counts', async () => {

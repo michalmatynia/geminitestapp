@@ -12,7 +12,7 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
  * Builds a Server-Timing header value from a record of timing entries.
  *
  * @param entries - Record where keys are metric names and values are durations in milliseconds.
- * @returns A formatted Server-Timing string.
+ * @returns A formatted Server-Timing string (e.g. "db;dur=123, api;dur=45").
  */
 export const buildServerTiming = (
   entries: Record<string, number | null | undefined>
@@ -39,12 +39,13 @@ export const attachTimingHeaders = (
   const value = buildServerTiming(entries);
   if (value) {
     // If the response headers are immutable, this might throw or do nothing
-    // depending on the environment. NextResponse.json() returns a mutable response.
+    // depending on the environment. NextResponse.json() returns a mutable response,
+    // but a response that has already been sent or is cloned might be read-only.
     try {
       response.headers.set('Server-Timing', value);
     } catch (error) {
       // In some environments, headers might be read-only at this point.
-      // We log but don't crash the request for a timing header.
+      // We log but don't crash the request for a non-critical timing header.
       void logSystemEvent({
         level: 'warn',
         message: '[timing] Failed to attach Server-Timing headers',

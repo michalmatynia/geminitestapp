@@ -41,12 +41,15 @@ export const buildGraphModelJobPayload = (input: {
   const nodeTitle = toTrimmedNonEmptyString(input.nodeTitle);
 
   if (!prompt) {
+    // Prompt is required for graph model execution
     throw new Error('Graph model payload requires a non-empty prompt.');
   }
   if (!nodeId) {
+    // Node ID is required to identify the execution context
     throw new Error('Graph model payload requires a non-empty node id.');
   }
   if (!runId) {
+    // Run ID is required to track the execution
     throw new Error('Graph model payload requires a non-empty run id.');
   }
 
@@ -77,6 +80,7 @@ export const buildGraphModelJobEnqueueRequest = (input: {
 }): ProductAiJobEnqueueRequest => {
   const productId = toTrimmedNonEmptyString(input.productId);
   if (!productId) {
+    // Product ID is required to associate the job with a product
     throw new Error('Graph model enqueue request requires a non-empty product id.');
   }
 
@@ -149,6 +153,7 @@ export const readEnqueuedGraphModelJobId = (value: {
 }): string => {
   const jobId = toTrimmedNonEmptyString(value.data?.jobId);
   if (!jobId) {
+    // AI job enqueue response is missing a valid job ID
     throw new Error('AI job enqueue response did not include a valid job id.');
   }
   return jobId;

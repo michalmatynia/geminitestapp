@@ -324,10 +324,10 @@ describe('shared db mongo utils', () => {
     expect(() => assertValidBackupName('studiq/studiq-local-backup.archive')).not.toThrow();
     expect(() => assertValidBackupName('cms-builder/cms-builder-local-backup.archive')).not.toThrow();
     expect(() => assertValidBackupName('products/products-local-backup.archive')).not.toThrow();
-    expect(() => assertValidBackupName('backup.txt')).toThrow('Invalid backup file type.');
-    expect(() => assertValidBackupName('../backup.archive')).toThrow('Invalid backup name.');
+    expect(() => assertValidBackupName('backup.txt')).toThrow('Invalid backup file type for');
+    expect(() => assertValidBackupName('../backup.archive')).toThrow('Invalid backup name');
     expect(() => assertValidBackupName('other/backup.archive')).toThrow(
-      'Invalid backup application folder.'
+      'Invalid backup application folder'
     );
     expect(buildMongoBackupName('studiq', 'studiq-local-backup.archive')).toBe(
       'studiq/studiq-local-backup.archive'

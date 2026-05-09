@@ -143,7 +143,7 @@ const assertValidReplacementRecipe = (
   }
   if (recipe.logicOperator === 'regex') {
     if (recipe.logicOperand === null) {
-      throw badRequestError('Dynamic replacement regex condition requires an operand.');
+      throw badRequestError('Dynamic replacement regex condition requires an operand. Set logicOperand when logicOperator is "regex".');
     }
     assertValidRegex(recipe.logicOperand, recipe.logicFlags ?? null);
   }
@@ -162,7 +162,7 @@ const assertValidLaunchConfig = ({
 }): void => {
   if (!launchEnabled || launchOperator !== 'regex') return;
   if (launchValue === null) {
-    throw badRequestError('launchValue is required when launchOperator is regex.');
+    throw badRequestError('launchValue is required when launchOperator is "regex". Set a non-null launchValue for the regex launch condition.');
   }
   assertValidRegex(launchValue, launchFlags);
 };
@@ -564,7 +564,7 @@ const applyOperation = async (
 ): Promise<PlannedOperation> => {
   if (operation.action === 'create') {
     if (operation.createData === undefined) {
-      throw badRequestError('Import operation is missing create data.');
+      throw badRequestError(`Import operation is missing create data for pattern code "${operation.code ?? 'unknown'}". This is an internal error — the create operation was planned without a createData payload.`);
     }
     const created = await repository.createPattern(operation.createData, {
       semanticAuditSource: 'import',

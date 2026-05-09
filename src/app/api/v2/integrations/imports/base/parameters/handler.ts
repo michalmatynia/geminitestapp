@@ -427,11 +427,11 @@ export async function postBaseImportParametersHandler(
   }
 
   if (!data.inventoryId) {
-    throw badRequestError('Inventory ID is required.');
+    throw badRequestError('Inventory ID is required. Provide a non-empty inventoryId in the request body.');
   }
   const normalizedConnectionId = data.connectionId?.trim() ?? '';
   if (!normalizedConnectionId) {
-    throw badRequestError('Base.com connection is required.');
+    throw badRequestError('Base.com connection is required. Provide a connectionId in the request body.');
   }
 
   const integrationRepo = await getIntegrationRepository();
@@ -440,7 +440,7 @@ export async function postBaseImportParametersHandler(
     BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
   );
   if (!baseIntegration) {
-    throw notFoundError('Base integration not found.');
+    throw notFoundError('Base integration not found. Ensure the Base.com integration is installed in Admin > Integrations.');
   }
 
   const connections = await integrationRepo.listConnections(baseIntegration.id);
@@ -448,7 +448,7 @@ export async function postBaseImportParametersHandler(
     (entry: (typeof connections)[number]) => entry.id === normalizedConnectionId
   );
   if (!connection) {
-    throw badRequestError('Selected Base.com connection was not found.');
+    throw badRequestError(`Selected Base.com connection "${normalizedConnectionId}" was not found. Verify the connection id or select a different connection.`);
   }
   const tokenResolution = resolveBaseConnectionToken({
     baseApiToken: connection.baseApiToken,

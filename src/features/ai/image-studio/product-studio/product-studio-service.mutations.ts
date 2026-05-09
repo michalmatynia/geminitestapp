@@ -111,7 +111,7 @@ const resolveGenerationImageFileId = (generationSlot: ImageStudioSlotRecord): st
   const generationImageFileId =
     trimString(generationSlot.imageFileId) ?? trimString(generationSlot.imageFile?.id);
   if (generationImageFileId === null) {
-    throw badRequestError('Selected generation card has no image file to accept.');
+    throw badRequestError('Selected generation card has no image file to accept. The generation slot must have a completed image before it can be accepted as a product image.');
   }
   return generationImageFileId;
 };
@@ -164,7 +164,7 @@ export async function acceptProductStudioVariant(params: {
   const resolved = await resolveProductAndStudioTarget(params);
   const generationSlotId = trimString(params.generationSlotId);
   if (generationSlotId === null) {
-    throw badRequestError('Generation slot id is required.');
+    throw badRequestError('Generation slot id is required. Provide a non-empty generationSlotId to accept a variant.');
   }
 
   const generationSlot = await requireProjectGenerationSlot(generationSlotId, resolved.projectId);
@@ -269,12 +269,12 @@ export async function rotateProductStudioImageSlot(params: {
   const sourceImage = toProductImageFileSource(product.images[imageSlotIndex]?.imageFile);
 
   if (sourceImage === null) {
-    throw badRequestError('Selected product image slot has no uploaded source image.');
+    throw badRequestError(`Selected product image slot ${imageSlotIndex} has no uploaded source image. Upload an image to this slot before rotating.`);
   }
 
   const sourcePath = trimString(sourceImage.filepath);
   if (sourcePath === null) {
-    throw badRequestError('Selected product image has no filepath.');
+    throw badRequestError(`Selected product image at slot ${imageSlotIndex} has no filepath. The image record may be corrupt or missing its file reference.`);
   }
 
   const sourceFilename =

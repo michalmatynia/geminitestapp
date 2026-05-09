@@ -217,11 +217,11 @@ export async function createSocialPublishingImageAddonFromPlaywright(
 
   try {
     if (!title) {
-      throw operationFailedError('Add-on title is required.');
+      throw operationFailedError('Add-on title is required. Provide a non-empty title for the social image add-on.');
     }
 
     if (!sourceUrl) {
-      throw operationFailedError('Add-on source URL is required.');
+      throw operationFailedError('Add-on source URL is required. Provide a non-empty sourceUrl pointing to the page to capture.');
     }
 
     stage = 'enqueue';
@@ -264,13 +264,13 @@ export async function createSocialPublishingImageAddonFromPlaywright(
     stage = 'artifact';
     const artifact = resolveArtifactByName(run.artifacts, 'addon');
     if (!artifact) {
-      throw operationFailedError('Playwright capture did not return an image.');
+      throw operationFailedError('Playwright capture did not return an image artifact named "addon". The capture script may have failed to produce output.');
     }
 
     artifactPath = artifact.path;
     const artifactFile = artifact.path.split('/').pop();
     if (!artifactFile) {
-      throw operationFailedError('Playwright capture artifact is missing.');
+      throw operationFailedError(`Playwright capture artifact path "${artifact.path}" has no filename component. The artifact path may be malformed.`);
     }
 
     stage = 'download';
@@ -279,7 +279,7 @@ export async function createSocialPublishingImageAddonFromPlaywright(
       fileName: artifactFile,
     });
     if (!artifactData) {
-      throw operationFailedError('Failed to read Playwright capture artifact.');
+      throw operationFailedError(`Failed to read Playwright capture artifact "${artifactFile}" for run "${run.runId}". The artifact may have expired or the run id is incorrect.`);
     }
 
     const buffer = artifactData.content;

@@ -1,6 +1,6 @@
 import { type JSX } from 'react';
 
-import { AdminAiPathsQueuePage } from '@/features/ai/public';
+import { AdminAiPathsQueuePage } from '@/features/ai/admin.public';
 import { FilemakerSocialPipelineQueuePanel } from '@/features/filemaker/public';
 import { FileUploadEventsPanel } from '@/features/files/public';
 

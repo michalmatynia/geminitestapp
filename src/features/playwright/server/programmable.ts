@@ -85,6 +85,7 @@ const ensureProgrammablePlaywrightListingScript = (
 ): string => {
   const script = connection.playwrightListingScript?.trim();
   if (!script) {
+    // Integration connection requires a Playwright listing script to be configured
     throw new Error('This connection does not have a Playwright listing script configured.');
   }
   return script;
@@ -95,6 +96,7 @@ const ensureProgrammablePlaywrightImportScript = (
 ): string => {
   const script = connection.playwrightImportScript?.trim();
   if (!script) {
+    // Integration connection requires a Playwright import script to be configured
     throw new Error('This connection does not have a Playwright import script configured.');
   }
   return script;

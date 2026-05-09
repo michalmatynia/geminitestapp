@@ -4,7 +4,7 @@ import type { LookupFunction } from 'node:net';
 import { Agent, type Dispatcher } from 'undici';
 
 import type { FastCometStorageConfig } from '@/shared/lib/files/constants';
-import { externalServiceError } from '@/shared/errors/app-error';
+import { badRequestError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { normalizeFastCometIpAddress } from './fastcomet-storage-config';
 import { readFastCometFailureBody, readFastCometJsonSuccessBody } from './fastcomet-response';
@@ -197,11 +197,12 @@ export const uploadToFastComet = async (params: {
     if (!response.ok) {
       const body = await readFastCometFailureBody(response);
       if (response.status === 401 || response.status === 403) {
-        throw externalServiceError(
+        throw badRequestError(
           `FastComet upload was rejected by the server (HTTP ${response.status}). Check the bearer token and endpoint in FastComet settings.`,
           { hint: 'FASTCOMET_STORAGE_CONFIG_SETTING_KEY', status: response.status }
         );
       }
+      // FastComet upload request failed with a non-2xx status code
       throw new Error(`FastComet upload failed (${response.status}). ${body}`.trim());
     }
 

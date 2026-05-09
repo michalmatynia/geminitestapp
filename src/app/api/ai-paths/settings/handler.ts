@@ -1,3 +1,10 @@
+/**
+ * AI Path Settings Handler
+ * 
+ * Provides API endpoints for managing AI Path workflow configuration settings, 
+ * including retrieval, bulk upserts, and deletion of settings keys.
+ */
+
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
@@ -64,6 +71,10 @@ const getRequestedConfigPathIds = (keys: string[]): string[] =>
     .map((key) => key.slice(AI_PATHS_CONFIG_KEY_PREFIX.length))
     .filter((pathId) => pathId.length > 0);
 
+/**
+ * Retrieves AI Path settings. Accepts optional 'keys' search parameter.
+ * Logs performance metrics for high-latency or filtered queries.
+ */
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestedKeys = parseRequestedKeys(req);
   if (requestedKeys.length > 0) {
@@ -98,6 +109,10 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   });
 }
 
+/**
+ * Handles creation or updates of settings. Supports both bulk operations 
+ * and single setting updates based on payload shape.
+ */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
@@ -107,7 +122,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       body = JSON.parse(rawBody);
     } catch (error) {
       void ErrorSystem.captureException(error);
-      throw badRequestError('Invalid JSON body.');
+      throw badRequestError('Invalid JSON body. The request body must be a valid JSON object conforming to the AI Paths settings write schema.');
     }
   }
 
@@ -125,9 +140,12 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     return NextResponse.json(parsedSingle.data);
   }
 
-  throw badRequestError('Invalid AI Paths settings payload.');
+  throw badRequestError('Invalid AI Paths settings payload. The body must match either the bulk write schema ({ items: [...] }) or the single write schema ({ key, value }).');
 }
 
+/**
+ * Deletes specified settings by keys.
+ */
 export async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
@@ -137,13 +155,13 @@ export async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): 
       body = JSON.parse(rawBody);
     } catch (error) {
       void ErrorSystem.captureException(error);
-      throw badRequestError('Invalid JSON body.');
+      throw badRequestError('Invalid JSON body. The request body must be a valid JSON object conforming to the AI Paths settings delete schema.');
     }
   }
 
   const parsed = aiPathsSettingsDeleteRequestSchema.safeParse(body);
   if (!parsed.success) {
-    throw badRequestError('Invalid AI Paths settings delete payload.');
+    throw badRequestError('Invalid AI Paths settings delete payload. The body must match the delete schema ({ keys: string[] }).');
   }
 
   const keys = [...(parsed.data.key ? [parsed.data.key] : []), ...(parsed.data.keys ?? [])];

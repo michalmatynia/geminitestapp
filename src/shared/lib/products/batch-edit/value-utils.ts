@@ -11,6 +11,7 @@ export const coerceText = (value: unknown): string | null => {
 export const coerceRequiredText = (value: unknown, label: string): string => {
   const text = coerceText(value);
   if (text === null) {
+    // Value cannot be converted to a valid text string
     throw new Error(`${label} requires a text value.`);
   }
   return text;
@@ -22,6 +23,7 @@ export const coerceNumber = (value: unknown, label: string): number => {
     const parsed = Number(value.trim().replace(',', '.'));
     if (Number.isFinite(parsed)) return parsed;
   }
+  // Value cannot be converted to a valid number
   throw new Error(`${label} requires a numeric value.`);
 };
 
@@ -32,6 +34,7 @@ export const coerceBoolean = (value: unknown, label: string): boolean => {
     if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
     if (['false', '0', 'no', 'off'].includes(normalized)) return false;
   }
+  // Value cannot be converted to a valid boolean
   throw new Error(`${label} requires a boolean value.`);
 };
 
@@ -42,6 +45,7 @@ const parseJsonValue = (value: unknown, label: string): unknown => {
   try {
     return JSON.parse(trimmed) as unknown;
   } catch {
+    // String value is not valid JSON
     throw new Error(`${label} requires valid JSON.`);
   }
 };
@@ -69,6 +73,7 @@ export const coerceStringArray = (value: unknown, label: string): string[] => {
     }
     return splitStringArrayText(trimmed);
   }
+  // Value cannot be converted to a list of text values
   throw new Error(`${label} requires a list of text values.`);
 };
 

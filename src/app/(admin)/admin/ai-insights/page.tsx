@@ -1,4 +1,4 @@
-import { AdminAiInsightsPage } from '@/features/ai/public';
+import { AdminAiInsightsPage } from '@/features/ai/admin.public';
 
 export default function Page(): React.JSX.Element {
   return <AdminAiInsightsPage />;

@@ -66,13 +66,13 @@ export function useBrainRuntime(): BrainRuntimeResult {
   const [anthropicApiKey, setAnthropicApiKey] = useState('');
   const [geminiApiKey, setGeminiApiKey] = useState('');
 
-  const [analyticsScheduleEnabled, setAnalyticsScheduleEnabled] = useState(true);
+  const [analyticsScheduleEnabled, setAnalyticsScheduleEnabled] = useState(false);
   const [analyticsScheduleMinutes, setAnalyticsScheduleMinutes] = useState(30);
-  const [runtimeAnalyticsScheduleEnabled, setRuntimeAnalyticsScheduleEnabled] = useState(true);
+  const [runtimeAnalyticsScheduleEnabled, setRuntimeAnalyticsScheduleEnabled] = useState(false);
   const [runtimeAnalyticsScheduleMinutes, setRuntimeAnalyticsScheduleMinutes] = useState(30);
-  const [logsScheduleEnabled, setLogsScheduleEnabled] = useState(true);
+  const [logsScheduleEnabled, setLogsScheduleEnabled] = useState(false);
   const [logsScheduleMinutes, setLogsScheduleMinutes] = useState(15);
-  const [logsAutoOnError, setLogsAutoOnError] = useState(true);
+  const [logsAutoOnError, setLogsAutoOnError] = useState(false);
 
   const [analyticsPromptSystem, setAnalyticsPromptSystem] = useState(
     DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT

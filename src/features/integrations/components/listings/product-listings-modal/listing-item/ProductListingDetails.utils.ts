@@ -8,6 +8,7 @@ import {
 import type {
   TraderaExecutionStep,
 } from '@/shared/contracts/integrations/listings';
+import { z } from 'zod';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -23,20 +24,31 @@ export const formatListValue = (value: string | null | undefined): string => (va
 export const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
+const unknownRecordSchema = z.record(z.string(), z.unknown());
+const trimmedStringSchema = z.string().transform((value) => value.trim());
+const nonEmptyTrimmedStringSchema = trimmedStringSchema.pipe(z.string().min(1));
+const finiteNumberSchema = z.number().finite();
+const stringArraySchema = z.array(z.unknown()).transform((entries) =>
+  entries.flatMap((entry) => {
+    const parsed = z.string().safeParse(entry);
+    return parsed.success ? [parsed.data] : [];
+  })
+);
+
 export const toRecord = (value: unknown): Record<string, unknown> =>
-  value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  unknownRecordSchema.catch({}).parse(value);
 
 export const readString = (value: unknown): string | null =>
-  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+  nonEmptyTrimmedStringSchema.catch(null).parse(value);
 
 export const readBoolean = (value: unknown): boolean | null =>
-  typeof value === 'boolean' ? value : null;
+  z.boolean().catch(null).parse(value);
 
 export const readNumber = (value: unknown): number | null =>
-  typeof value === 'number' && Number.isFinite(value) ? value : null;
+  finiteNumberSchema.catch(null).parse(value);
 
 export const readStringArray = (value: unknown): string[] =>
-  Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
+  stringArraySchema.catch([]).parse(value);
 
 export const resolveHistoryBrowserMode = (
   fields: string[] | null | undefined
@@ -445,6 +457,9 @@ export const resolveTraderaExecutionSummary = (
   errorCategory: string | null;
   requestId: string | null;
   publishVerified: boolean | null;
+  paymentSolutionTermsAccepted: boolean | null;
+  retryAfterPaymentSolutionTerms: boolean | null;
+  initialPublishInteractionReason: string | null;
   listingUrl: string | null;
   latestStage: string | null;
   latestStageUrl: string | null;
@@ -635,6 +650,15 @@ export const resolveTraderaExecutionSummary = (
     errorCategory: readString(lastExecution['errorCategory']) ?? readString(traderaData['lastErrorCategory']),
     requestId: readString(lastExecution['requestId']),
     publishVerified: duplicateLinked === true ? null : readBoolean(metadata['publishVerified']),
+    paymentSolutionTermsAccepted:
+      readBoolean(metadata['paymentSolutionTermsAccepted']) ??
+      readBoolean(rawResult['paymentSolutionTermsAccepted']),
+    retryAfterPaymentSolutionTerms:
+      readBoolean(metadata['retryAfterPaymentSolutionTerms']) ??
+      readBoolean(rawResult['retryAfterPaymentSolutionTerms']),
+    initialPublishInteractionReason:
+      readString(metadata['initialPublishInteractionReason']) ??
+      readString(rawResult['initialPublishInteractionReason']),
     listingUrl: readString(marketplaceRecord['listingUrl']),
     latestStage,
     latestStageUrl:

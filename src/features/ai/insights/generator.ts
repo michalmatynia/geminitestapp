@@ -38,6 +38,7 @@ import {
 } from './generator/settings-service';
 import { sanitizeEvents, stripCodeFence } from './generator/utils';
 import { appendAiInsight } from './repository';
+import { isScheduledAiInsightsEnabled } from './scheduling';
 import {
   AI_INSIGHTS_SETTINGS_KEYS,
   DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
@@ -374,6 +375,8 @@ ${JSON.stringify(options.log, null, 2)}`;
 }
 
 export async function runInsightsAutoGeneration(): Promise<void> {
+  if (!isScheduledAiInsightsEnabled()) return;
+
   const analyticsEnabled = parseBooleanSetting(
     await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled),
     false

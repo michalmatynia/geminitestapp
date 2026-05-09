@@ -1,7 +1,15 @@
 /**
+ * @file format-duration.ts
+ * @description Utility for formatting time durations in a human-readable way.
+ */
+
+/**
  * Formats a duration in milliseconds into a human-readable string.
  *
  * Examples: "42ms", "3s", "2m 15s", "1h 30m"
+ * 
+ * @param diffMs The duration in milliseconds to format.
+ * @returns A formatted string or null if the input is invalid.
  */
 export const formatDurationMs = (diffMs: number | null): string | null => {
   if (diffMs === null || Number.isNaN(diffMs)) return null;

@@ -160,7 +160,7 @@ describe('system logs interpret handler', () => {
     const data = await response.json();
 
     expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);
-    expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
+    expect(startAiInsightsQueueMock).not.toHaveBeenCalled();
     expect(getSystemLogByIdMock).toHaveBeenCalledWith('log-1');
     expect(hydrateSystemLogRecordRuntimeContextMock).toHaveBeenCalledWith(
       expect.objectContaining({

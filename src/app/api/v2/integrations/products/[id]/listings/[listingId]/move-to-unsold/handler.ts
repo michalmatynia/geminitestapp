@@ -59,13 +59,13 @@ export async function postHandler(
 ): Promise<Response> {
   const { id: productId, listingId } = params;
   if (!productId || !listingId) {
-    throw badRequestError('Product id and listing id are required');
+    throw badRequestError('Product id and listing id are required. Provide both id and listingId in the URL path.');
   }
 
   const rawBody: unknown = await req.json().catch(() => ({}));
   const payloadResult = productListingMoveToUnsoldPayloadSchema.safeParse(rawBody);
   if (!payloadResult.success) {
-    throw badRequestError('Invalid move-to-unsold payload');
+    throw badRequestError('Invalid move-to-unsold payload.', { errors: payloadResult.error.format() });
   }
   const payload = payloadResult.data;
 
@@ -85,14 +85,14 @@ export async function postHandler(
 
   const normalizedStatus = (resolved.listing.status ?? '').trim().toLowerCase();
   if (['unsold', 'ended', 'sold', 'removed'].includes(normalizedStatus)) {
-    throw badRequestError('Listing is already ended on Tradera');
+    throw badRequestError(`Listing "${listingId}" is already ended on Tradera (status: "${normalizedStatus}"). Only active listings can be moved to unsold.`);
   }
 
   const knownListingTarget =
     (resolved.listing.externalListingId ?? '').trim() ||
     resolveKnownListingTarget(resolved.listing.marketplaceData);
   if (!knownListingTarget) {
-    throw badRequestError('Move to unsold requires a linked Tradera listing target.');
+    throw badRequestError(`Move to unsold requires a linked Tradera listing target for listing "${listingId}". The listing must have an externalListingId or a known listing target in its marketplace data.`);
   }
 
   const isInFlightListingStatus =

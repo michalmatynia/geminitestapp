@@ -140,7 +140,9 @@ const upsertProductStudioSourceSlot = async (params: {
   const sourceSlot = created[0] ?? null;
 
   if (!sourceSlot) {
-    throw operationFailedError('Failed to create or update the Studio source card.');
+    throw operationFailedError(
+      `Failed to create or update the Studio source card for product "${params.product.id}" slot ${params.imageSlotIndex + 1} in project "${params.projectId}". The slot creation returned no record — this is an internal error, check database connectivity and slot creation logs.`
+    );
   }
 
   const config = await setProductStudioSourceSlot(
@@ -177,7 +179,9 @@ export async function linkProductImageToStudio(params: {
     resolved.product.id;
 
   if (!sourceImage) {
-    throw badRequestError('Selected product image slot has no uploaded source image.');
+    throw badRequestError(
+      `Selected product image slot ${resolved.imageSlotIndex} has no uploaded source image. Upload an image to this slot before linking it to Image Studio.`
+    );
   }
 
   const sourceSlotResult = await upsertProductStudioSourceSlot({
@@ -232,7 +236,9 @@ export async function sendProductImageToStudio(params: {
     resolved.product.id;
 
   if (!sourceImage) {
-    throw badRequestError('Selected product image slot has no uploaded source image.');
+    throw badRequestError(
+      `Selected product image slot ${resolved.imageSlotIndex} has no uploaded source image. Upload an image to this slot before sending it to Image Studio for generation.`
+    );
   }
 
   const generationPrompt = buildGenerationPrompt(resolved.product);

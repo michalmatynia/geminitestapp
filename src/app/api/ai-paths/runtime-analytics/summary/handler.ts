@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { startAiPathRunQueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
-import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import {
   getRuntimeAnalyticsSummary,
@@ -34,6 +33,7 @@ const parseRuntimeAnalyticsRange = (
 ): AiPathRuntimeAnalyticsRange => {
   const parsed = aiPathRuntimeAnalyticsRangeQuerySchema.safeParse(input);
   if (!parsed.success) {
+    // Query parameters do not match the expected schema
     throw new Error('Invalid range.');
   }
   if (parsed.data.range === undefined) {
@@ -45,6 +45,7 @@ const parseRuntimeAnalyticsRange = (
     return range.data;
   }
 
+  // Range value is not one of the allowed options
   throw new Error('Invalid range.');
 };
 
@@ -165,7 +166,6 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
     throw error;
   }
   startAiPathRunQueue();
-  startAiInsightsQueue();
   const summary = await getRuntimeAnalyticsSummary({
     from,
     to,

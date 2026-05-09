@@ -54,19 +54,23 @@ export const resolveCaseResolverOcrDiskPath = (
 } => {
   const filepath = normalizeCaseResolverPublicFilepath(value);
   if (!filepath) {
+    // Filepath parameter is required to locate the file for OCR processing
     throw new Error('filepath is required.');
   }
   if (!filepath.startsWith(CASE_RESOLVER_UPLOAD_PREFIX)) {
+    // Only files uploaded through Case Resolver are allowed for OCR
     throw new Error('Only Case Resolver uploaded files are supported.');
   }
   const kind = inferCaseResolverOcrFileKind(filepath);
   if (!kind) {
+    // OCR only supports image and PDF file types
     throw new Error('Only image and PDF files are supported for OCR runtime.');
   }
 
   const diskPath = path.resolve(getDiskPathFromPublicPath(filepath));
   const allowedPrefix = `${CASE_RESOLVER_UPLOAD_DISK_PREFIX}${path.sep}`;
   if (diskPath !== CASE_RESOLVER_UPLOAD_DISK_PREFIX && !diskPath.startsWith(allowedPrefix)) {
+    // Resolved path escapes the Case Resolver uploads directory boundary
     throw new Error('Resolved OCR path is outside Case Resolver uploads.');
   }
 

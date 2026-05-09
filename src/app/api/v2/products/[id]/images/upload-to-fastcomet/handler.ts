@@ -109,12 +109,6 @@ const loadProduct = async (
 
 const requireFastCometConfigured = async (): Promise<void> => {
   const settings = await getFileStorageSettings();
-  if (settings.source !== 'fastcomet') {
-    throw badRequestError(
-      'FastComet storage is not enabled. Set the file storage source to FastComet in Settings.',
-      { hint: 'FILE_STORAGE_SOURCE_SETTING_KEY' }
-    );
-  }
   if (settings.fastComet.uploadEndpoint.length === 0) {
     throw badRequestError(
       'FastComet storage is not configured. Set FASTCOMET_STORAGE_BASE_URL or configure fastcomet_storage_config_v1 in Settings.',

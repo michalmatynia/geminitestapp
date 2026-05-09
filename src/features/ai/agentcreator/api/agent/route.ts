@@ -163,13 +163,13 @@ async function handleAgentCreate(
     chatbotAgentRun: any, 
     logInfo: (msg: string, data: any) => void
 ): Promise<Response> {
-    const body = await req.json().catch(() => { throw badRequestError('Invalid JSON payload'); });
-    if (!body.prompt?.trim()) throw badRequestError('Prompt is required.');
+    const body = await req.json().catch(() => { throw badRequestError('Invalid JSON payload. The request body must be a valid JSON object with a "prompt" field.'); });
+    if (!body.prompt?.trim()) throw badRequestError('Prompt is required. Provide a non-empty prompt string in the request body.');
 
     let contextRegistry = null;
     if (body.contextRegistry !== undefined) {
         const parsed = contextRegistryConsumerEnvelopeSchema.safeParse(body.contextRegistry);
-        if (!parsed.success) throw badRequestError('Invalid context registry payload.');
+        if (!parsed.success) throw badRequestError('Invalid context registry payload. The contextRegistry field must conform to the ContextRegistryConsumerEnvelope schema.', { errors: parsed.error.format() });
         contextRegistry = await resolveAgentRuntimeContextRegistryEnvelope(parsed.data);
     }
 
@@ -219,7 +219,7 @@ async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   
   const agentRuntimeBrain = await getBrainAssignmentForFeature('agent_runtime');
   if (!agentRuntimeBrain.enabled) {
-    throw configurationError('Agent Runtime is disabled in AI Brain.');
+    throw configurationError('Agent Runtime is disabled in AI Brain. Enable the Agent Runtime feature in Admin > AI Brain > Features.');
   }
 
   const response = await handleAgentCreate(req, chatbotAgentRun, (msg, data) => {
@@ -249,7 +249,7 @@ async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     'waiting_human',
   ];
   if (scope !== 'terminal') {
-    throw badRequestError('Unsupported delete scope.');
+    throw badRequestError(`Unsupported delete scope "${scope}". The only supported scope is "terminal", which deletes all completed, failed, and stopped runs.`);
   }
   const runs = await chatbotAgentRun.findMany<AgentRunIdRecord>({
     where: { status: { in: terminalStatuses } },

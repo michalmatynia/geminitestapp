@@ -220,6 +220,7 @@ export const buildMasterTree = (
 
   if (options?.strict === true && issues.length > 0) {
     const first = issues[0];
+    // Tree validation failed in strict mode
     throw new Error(first?.message ?? 'Invalid tree state.');
   }
 

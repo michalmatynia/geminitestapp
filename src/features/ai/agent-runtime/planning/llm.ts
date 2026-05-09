@@ -290,6 +290,7 @@ export async function buildPlanWithLLM({
     });
     const parsed = parsePlanJson(content);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      // LLM response could not be parsed as a valid JSON object
       throw new Error('Planner LLM returned invalid JSON.');
     }
     const plannerResponse = parsed as Record<string, unknown>;

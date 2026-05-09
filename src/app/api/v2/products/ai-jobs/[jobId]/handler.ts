@@ -17,11 +17,11 @@ export async function getHandler(
 ): Promise<Response> {
   const { jobId } = params;
   if (!jobId) {
-    throw badRequestError('Job id is required');
+    throw badRequestError('Job id is required. Provide a non-empty jobId in the URL path.');
   }
   const job = await getProductAiJob(jobId);
   if (!job) {
-    throw notFoundError('Job not found', { jobId });
+    throw notFoundError(`Job "${jobId}" not found. The job may have completed and been cleaned up, or the id is incorrect.`, { jobId });
   }
   return NextResponse.json({ job });
 }
@@ -33,7 +33,7 @@ export async function postHandler(
 ): Promise<Response> {
   const { jobId } = params;
   if (!jobId) {
-    throw badRequestError('Job id is required');
+    throw badRequestError('Job id is required. Provide a non-empty jobId in the URL path.');
   }
   const parsed = await parseJsonBody(req, actionSchema, {
     logPrefix: 'products.ai-jobs.job.POST',
@@ -46,7 +46,7 @@ export async function postHandler(
     const job = await cancelProductAiJob(jobId);
     return NextResponse.json({ success: true, job });
   }
-  throw badRequestError('Invalid action');
+  throw badRequestError(`Invalid action "${action}". The only supported action for product AI jobs is "cancel".`);
 }
 
 export async function deleteHandler(
@@ -56,7 +56,7 @@ export async function deleteHandler(
 ): Promise<Response> {
   const { jobId } = params;
   if (!jobId) {
-    throw badRequestError('Job id is required');
+    throw badRequestError('Job id is required. Provide a non-empty jobId in the URL path.');
   }
   await deleteProductAiJob(jobId);
   return NextResponse.json({ success: true });

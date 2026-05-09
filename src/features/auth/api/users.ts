@@ -11,10 +11,12 @@ export type { AuthUsersResponse, AuthUserSecurityProfile, AuthUserSummary };
 
 const normalizeUserId = (userId: string): string => {
   if (typeof userId !== 'string') {
+    // User ID parameter must be a string
     throw new Error('Missing user id.');
   }
   const trimmed = userId.trim();
   if (trimmed === '') {
+    // User ID cannot be empty or whitespace only
     throw new Error('Missing user id.');
   }
   return encodeURIComponent(trimmed);

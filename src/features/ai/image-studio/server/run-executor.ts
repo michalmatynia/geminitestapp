@@ -36,7 +36,7 @@ export async function executeImageStudioRun(
   const request = parsed.data;
   const operation = request.operation === 'center_object' ? 'center_object' : 'generate';
   const projectId = sanitizeImageStudioProjectId(request.projectId);
-  if (!projectId) throw badRequestError('Project id is required.');
+  if (!projectId) throw badRequestError('Project id is required. Provide a valid projectId in the run request.');
 
   const assetPath = normalizePublicAssetPath(request.asset?.filepath ?? '');
   const hasSourceAsset = Boolean(assetPath);
@@ -44,20 +44,24 @@ export async function executeImageStudioRun(
 
   if (hasSourceAsset) {
     if (!isProjectScopedAssetPath(assetPath, projectId)) {
-      throw badRequestError('Asset must belong to the current project.');
+      throw badRequestError(
+        `Asset "${assetPath}" does not belong to project "${projectId}". Only assets uploaded to the current project can be used as the source image.`
+      );
     }
 
     const resolvedDiskPath = resolveAssetPath(assetPath);
     ensureWithinProject(resolvedDiskPath, projectId);
     await fs.stat(resolvedDiskPath).catch(() => {
-      throw badRequestError('Asset file not found.');
+      throw badRequestError(
+        `Asset file not found on disk: "${assetPath}". The file may have been deleted or the path is incorrect.`
+      );
     });
     diskPath = resolvedDiskPath;
   }
 
   if (operation === 'center_object') {
     if (!diskPath) {
-      throw badRequestError('Source asset is required for center operation.');
+      throw badRequestError('Source asset is required for the center_object operation. Select a source image before running centering.');
     }
     return executeCenterOperation({
       request,

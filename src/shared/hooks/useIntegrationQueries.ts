@@ -231,9 +231,11 @@ export function useBaseWarehouses(
     const normalizedConnectionId = connectionId.trim();
     const normalizedInventoryId = inventoryId.trim();
     if (!normalizedConnectionId) {
+      // Base.com connection ID is required to identify the integration
       throw new Error('Base.com connection is required to load warehouses.');
     }
     if (!normalizedInventoryId) {
+      // Base.com inventory ID is required to load warehouse data
       throw new Error('Base.com inventory is required to load warehouses.');
     }
     return api.post<BaseImportWarehousesResponse>('/api/v2/integrations/imports/base', {

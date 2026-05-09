@@ -129,6 +129,7 @@ export async function postKangurGameInstancesHandler(
   const parsed = bodySchema.parse(ctx.body ?? {});
   for (const instance of parsed.instances) {
     if (instance.gameId !== parsed.gameId) {
+      // Game instance gameId does not match the requested gameId parameter
       throw new Error('Each game instance must match the requested gameId.');
     }
   }

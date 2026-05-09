@@ -1,3 +1,10 @@
+/**
+ * @file local-runs.ts
+ * @description Manages local storage of AI Path run history. This allows users
+ * to see their recent run activity even if it was performed in a different
+ * session or before it was fully synchronized with the server.
+ */
+
 import type { AiPathLocalRunStatus, AiPathLocalRunRecord } from '@/shared/contracts/ai-paths';
 import {
   fetchAiPathsSettingsCached,
@@ -69,6 +76,11 @@ const normalizeRecord = (value: unknown): AiPathLocalRunRecord | null => {
   };
 };
 
+/**
+ * Parses a string of raw local run records.
+ * @param raw The raw string from settings/storage.
+ * @returns Array of normalized local run records.
+ */
 export const parseLocalRuns = (raw?: string | null): AiPathLocalRunRecord[] => {
   if (!raw) return [];
   try {
@@ -92,6 +104,11 @@ const buildLocalRunId = (): string => {
   return `local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 };
 
+/**
+ * Appends a new local run record to the history.
+ * @param record The record data to append.
+ * @returns The newly created record with an assigned ID.
+ */
 export const appendLocalRun = async (
   record: Omit<AiPathLocalRunRecord, 'id'> & { id?: string }
 ): Promise<AiPathLocalRunRecord | null> => {

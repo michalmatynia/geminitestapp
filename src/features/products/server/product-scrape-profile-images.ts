@@ -266,6 +266,7 @@ const buildFileModeImagePayload = (result: ScrapeImageUploadResult): ProductScra
   const sourceImageLinks = result.imageLinks;
   if (sourceImageLinks.length === 0) return { imageLinks: [] };
   if (imageFileIds.length !== sourceImageLinks.length) {
+    // Some scraped images failed to download or upload
     throw new Error(
       `Failed to download ${sourceImageLinks.length - imageFileIds.length} scraped image(s).`
     );

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { z } from 'zod';
 import { ExternalLink, Hint } from '@/shared/ui/forms-and-actions.public';
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { JsonViewer } from '@/shared/ui/data-display.public';
@@ -16,6 +17,12 @@ import {
   type resolveTraderaExecutionSummary,
   type resolveDisplayedTraderaDuplicateSummary,
 } from '../ProductListingDetails.utils';
+
+const paymentSolutionRunResultSchema = z.object({
+  paymentSolutionTermsAccepted: z.boolean().optional(),
+  retryAfterPaymentSolutionTerms: z.boolean().optional(),
+  initialPublishInteractionReason: z.string().trim().min(1).optional(),
+}).passthrough();
 
 export function TraderaSection({
   execution,
@@ -40,6 +47,17 @@ export function TraderaSection({
   const displayedLogTail = (liveExecution?.logTail?.length ?? 0) > 0 ? liveExecution.logTail : execution.logTail;
   const displayedLastAction = (liveExecution?.action ?? '') !== '' ? liveExecution.action : execution.lastAction;
   const liveStatus = liveExecution?.status === 'queued' || liveExecution?.status === 'running' ? liveExecution.status : null;
+  const livePaymentSolutionDiagnostics =
+    paymentSolutionRunResultSchema.catch({}).parse(displayedRawResult);
+  const paymentSolutionTermsAccepted =
+    livePaymentSolutionDiagnostics.paymentSolutionTermsAccepted ??
+    execution.paymentSolutionTermsAccepted;
+  const retryAfterPaymentSolutionTerms =
+    livePaymentSolutionDiagnostics.retryAfterPaymentSolutionTerms ??
+    execution.retryAfterPaymentSolutionTerms;
+  const initialPublishInteractionReason =
+    livePaymentSolutionDiagnostics.initialPublishInteractionReason ??
+    execution.initialPublishInteractionReason;
 
   const displayedRequestedSelectorProfile =
     liveExecution?.requestedSelectorProfile ??
@@ -164,6 +182,30 @@ export function TraderaSection({
             label='Publish verified'
             value={execution.publishVerified ? 'Yes' : 'No'}
             valueClassName={execution.publishVerified ? 'text-emerald-400' : 'text-rose-400'}
+            variant='minimal'
+          />
+        )}
+        {paymentSolutionTermsAccepted === true && (
+          <MetadataItem
+            label='Payment solution terms'
+            value='Accepted'
+            valueClassName='text-emerald-400'
+            variant='minimal'
+          />
+        )}
+        {retryAfterPaymentSolutionTerms === true && (
+          <MetadataItem
+            label='Publish retried after terms'
+            value='Yes'
+            valueClassName='text-emerald-400'
+            variant='minimal'
+          />
+        )}
+        {(initialPublishInteractionReason ?? '') !== '' && (
+          <MetadataItem
+            label='Initial publish result'
+            value={initialPublishInteractionReason}
+            mono
             variant='minimal'
           />
         )}

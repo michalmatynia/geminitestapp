@@ -1,3 +1,15 @@
+/**
+ * Agent Personas Service
+ * 
+ * Shared service for managing AI agent personas, moods, and settings.
+ * Provides:
+ * - Persona and mood preset definitions
+ * - Canonical persona and setting builders
+ * - Persona normalization and validation
+ * - Stored persona retrieval and diffing
+ * - Avatar and thumbnail management
+ */
+
 import { fetchSettingValue } from '@/shared/api/settings-client';
 import {
   AGENT_PERSONA_MOOD_IDS,
@@ -17,12 +29,21 @@ import { validationError } from '@/shared/errors/app-error';
 import { sanitizeSvg } from '@/shared/utils/sanitization';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
+/**
+ * Metadata for an agent persona mood preset.
+ */
 type AgentPersonaMoodPreset = {
+  /** Unique mood identifier. */
   id: AgentPersonaMoodId;
+  /** Human-readable label. */
   label: string;
+  /** Description of when the mood should be used. */
   description: string;
 };
 
+/**
+ * Predefined mood presets for agent personas.
+ */
 export const AGENT_PERSONA_MOOD_PRESETS: readonly AgentPersonaMoodPreset[] = [
   {
     id: 'neutral',
@@ -59,6 +80,12 @@ const AGENT_PERSONA_MOOD_ORDER = new Map<AgentPersonaMoodId, number>(
   AGENT_PERSONA_MOOD_IDS.map((moodId, index) => [moodId, index])
 );
 
+/**
+ * Generates a new unique identifier for an agent persona.
+ * Uses crypto.randomUUID if available, otherwise falls back to a custom generator.
+ * 
+ * @returns A unique persona ID string.
+ */
 export const createAgentPersonaId = (): string => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();
@@ -66,6 +93,13 @@ export const createAgentPersonaId = (): string => {
   return `agent-persona-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 };
 
+/**
+ * Builds a canonical AgentPersonaSettings object from partial input.
+ * Merges provided settings with default agent persona settings.
+ * 
+ * @param settings - Partial persona settings.
+ * @returns A complete AgentPersonaSettings object.
+ */
 export const buildAgentPersonaSettings = (
   settings?: Partial<AgentPersonaSettings> | null
 ): AgentPersonaSettings => {
@@ -89,10 +123,23 @@ const normalizeOptionalText = (value: unknown): string | undefined => {
   return trimmed ? trimmed : undefined;
 };
 
+/**
+ * Retrieves the preset metadata for a specific mood ID.
+ * 
+ * @param moodId - The mood identifier.
+ * @returns The mood preset metadata.
+ */
 export const getAgentPersonaMoodPreset = (
   moodId: AgentPersonaMoodId
 ): AgentPersonaMoodPreset => AGENT_PERSONA_MOOD_PRESET_BY_ID.get(moodId)!;
 
+/**
+ * Builds an AgentPersonaMood object for a specific mood ID with optional overrides.
+ * 
+ * @param moodId - The mood ID.
+ * @param overrides - Partial mood properties to override presets.
+ * @returns A complete AgentPersonaMood object.
+ */
 export const buildAgentPersonaMood = (
   moodId: AgentPersonaMoodId,
   overrides?: Partial<AgentPersonaMood> | null
@@ -154,6 +201,12 @@ export const buildAgentPersonaMood = (
   };
 };
 
+/**
+ * Builds a list of default agent persona moods.
+ * 
+ * @param additionalMoodIds - Optional extra mood IDs to include.
+ * @returns An array of default AgentPersonaMood objects.
+ */
 export const buildDefaultAgentPersonaMoods = (
   additionalMoodIds?: AgentPersonaMoodId[] | null
 ): AgentPersonaMood[] => {
@@ -172,6 +225,13 @@ export const buildDefaultAgentPersonaMoods = (
   return orderedMoodIds.map((resolvedMoodId) => buildAgentPersonaMood(resolvedMoodId));
 };
 
+/**
+ * Resolves the active mood for a persona, falling back to defaults if requested mood is missing.
+ * 
+ * @param persona - The persona to resolve mood from.
+ * @param requestedMoodId - Optional specific mood ID to try and resolve.
+ * @returns The resolved AgentPersonaMood.
+ */
 export const resolveAgentPersonaMood = (
   persona: Pick<AgentPersona, 'moods' | 'defaultMoodId'> | null | undefined,
   requestedMoodId?: AgentPersonaMoodId | null
@@ -385,6 +445,13 @@ const toCanonicalAgentPersonaTools = (value: unknown): string[] | undefined => {
   return tools.length > 0 ? tools : undefined;
 };
 
+/**
+ * Normalizes and validates an array of raw agent persona objects.
+ * 
+ * @param value - Raw personas data from storage or API.
+ * @returns Array of validated and normalized AgentPersona objects.
+ * @throws {AppError} If validation fails.
+ */
 export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
   if (!Array.isArray(value)) {
     throw validationError('Invalid agent personas payload.', {
@@ -483,6 +550,11 @@ const parseStoredAgentPersonas = (rawValue: string | undefined): unknown[] => {
   return parsed;
 };
 
+/**
+ * Fetches all agent personas from the global settings storage.
+ * 
+ * @returns A promise resolving to an array of validated AgentPersona objects.
+ */
 export const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
   const rawValue = await fetchSettingValue({
     key: AGENT_PERSONA_SETTINGS_KEY,
@@ -523,14 +595,34 @@ const collectAgentPersonaMoodAvatarThumbnailRefs = (
   );
 };
 
+/**
+ * Collects all unique avatar file IDs for a persona.
+ * 
+ * @param persona - The persona to inspect.
+ * @returns List of unique file IDs.
+ */
 export const collectAgentPersonaAvatarFileIds = (
   persona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined
 ): string[] => collectAgentPersonaMoodAvatarFileIds(persona?.moods);
 
+/**
+ * Collects all unique avatar thumbnail references for a persona.
+ * 
+ * @param persona - The persona to inspect.
+ * @returns List of unique thumbnail references.
+ */
 export const collectAgentPersonaAvatarThumbnailRefs = (
   persona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined
 ): string[] => collectAgentPersonaMoodAvatarThumbnailRefs(persona?.moods);
 
+/**
+ * Identifies avatar file IDs that were removed between two persona states.
+ * Useful for cleanup of orphan files.
+ * 
+ * @param previousPersona - The old persona state.
+ * @param nextPersona - The new persona state.
+ * @returns List of removed file IDs.
+ */
 export const diffRemovedAgentPersonaAvatarFileIds = (
   previousPersona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined,
   nextPersona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined
@@ -541,6 +633,13 @@ export const diffRemovedAgentPersonaAvatarFileIds = (
   return Array.from(previousIds).filter((fileId) => !nextIds.has(fileId));
 };
 
+/**
+ * Identifies avatar thumbnail references that were removed between two persona states.
+ * 
+ * @param previousPersona - The old persona state.
+ * @param nextPersona - The new persona state.
+ * @returns List of removed thumbnail references.
+ */
 export const diffRemovedAgentPersonaAvatarThumbnailRefs = (
   previousPersona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined,
   nextPersona: Pick<AgentPersona, 'moods'> | Partial<AgentPersona> | null | undefined

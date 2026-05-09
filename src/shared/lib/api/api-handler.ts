@@ -1,3 +1,24 @@
+/**
+ * @file api-handler.ts
+ * @description Core API route handler wrapper that provides standardized error handling, 
+ * security enforcement (CSRF, CORS, Rate Limiting), observability (logging, tracing), 
+ * and request context management for Next.js App Router API routes.
+ */
+
+/**
+ * API Route Handler Wrapper
+ * 
+ * This is the central middleware-like wrapper for all Next.js App Router API routes.
+ * It provides a standardized execution environment with the following features:
+ * 
+ * - Request Context Initialization: Sets up tracking IDs and Otel attributes.
+ * - Security Enforcement: Handles CSRF protection for non-GET methods.
+ * - Rate Limiting: Applies configurable rate limits based on client IP or session.
+ * - Session Resolution: Standardizes user session retrieval and validation.
+ * - Observability: Automatically logs requests, tracks latency, and reports errors.
+ * - Error Normalization: Converts internal app errors into standard JSON responses.
+ */
+
 import 'server-only';
 
 import { randomUUID } from 'crypto';
@@ -456,6 +477,9 @@ export function apiHandler(
     const service =
       options.service?.trim() || resolveServiceFromSource(options.source, 'api.unknown');
     const startTime = performance.now();
+    
+    // Resolve the session user if not explicitly disabled. 
+    // This provides the user identity to the handler and observability tools.
     const user = options.resolveSessionUser === false ? null : await getSessionUser();
 
     const context: ApiHandlerContext = {
@@ -467,6 +491,8 @@ export function apiHandler(
       getElapsedMs: (): number => Math.round(performance.now() - startTime),
     };
 
+    // runWithContext ensures that the request-specific IDs are available 
+    // to all downstream code (like the logger or DB service) via AsyncLocalStorage.
     return runWithContext(
       {
         requestId,
@@ -477,6 +503,7 @@ export function apiHandler(
       },
       async () => {
         try {
+          // 1. Security enforcement (CSRF, Rate Limiting)
           enforceCsrf(request, options);
 
           let rateLimitHeaders: Record<string, string> | undefined;
@@ -486,6 +513,8 @@ export function apiHandler(
             rateLimitHeaders = rateResult.headers;
             context.rateLimitHeaders = rateLimitHeaders;
           }
+
+          // 2. Request body and query parsing/validation
           if (options.parseJsonBody) {
             const parsed = await parseJsonBody(request, {
               maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
@@ -503,8 +532,10 @@ export function apiHandler(
             );
           }
 
+          // 3. Execute the actual handler
           const response = await handler(request, context);
 
+          // 4. Post-processing (Success logging, Header enrichment)
           const durationMs = context.getElapsedMs();
           const successPolicy = resolveSuccessLoggingPolicy(options);
           const slowSuccessThresholdMs =
@@ -561,7 +592,11 @@ export function apiHandler(
           applyCorsHeaders(mutableResponse, request, options);
           return mutableResponse;
         } catch (error) {
+          // If any part of the flow throws (auth, validation, handler logic),
+          // we catch it here and convert it into a standardized JSON error response.
+          // This includes automatic reporting to Sentry/Otel via reportError.
           const response = await createErrorResponseWithTiming(error, request, context, options);
+          
           if (context.rateLimitHeaders) {
             Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
               response.headers.set(key, value);

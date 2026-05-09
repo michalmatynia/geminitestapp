@@ -185,7 +185,7 @@ describe('ai-paths runtime analytics summary handler', () => {
       range: '7d',
     });
     expect(startAiPathRunQueueMock).toHaveBeenCalledTimes(1);
-    expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
+    expect(startAiInsightsQueueMock).not.toHaveBeenCalled();
     const payload = (await response.json()) as { summary?: { range?: string } };
     expect(payload.summary?.range).toBe('7d');
   });

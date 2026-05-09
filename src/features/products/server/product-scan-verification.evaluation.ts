@@ -247,6 +247,7 @@ export const evaluateProductScanVerificationBarrier = async (
       responseSchema: productScanVerificationReviewResponseSchema,
     });
     if (completion.parsed === null) {
+      // LLM failed to return a valid structured response for screenshot evaluation
       throw new Error(completion.error ?? 'Structured screenshot evaluation failed.');
     }
     return createAnalyzedVerificationReview({

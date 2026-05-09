@@ -1,3 +1,4 @@
+'use client';
 'use no memo';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -95,6 +96,7 @@ export function useUpdateUserPreferences(): MutationResult<UserPreferences, User
     mutationFn: (data: UserPreferencesUpdate) => {
       const validation = userPreferencesUpdateSchema.safeParse(data);
       if (!validation.success) {
+        // User preferences data does not match the expected schema
         throw new Error('Invalid user preferences payload.');
       }
       const payload = normalizeUserPreferencesUpdatePayload(validation.data);

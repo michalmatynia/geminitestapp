@@ -1,6 +1,6 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
-import { persistCheckpoint } from '@/features/ai/agent-runtime/memory/checkpoint';
+import { persistCheckpoint, parseCheckpoint } from '@/features/ai/agent-runtime/memory/checkpoint';
 import { buildPlanWithLLM, buildResumePlanReview } from '@/features/ai/agent-runtime/planning/llm';
 import { buildBranchStepsFromAlternatives } from '@/features/ai/agent-runtime/planning/utils';
 import type { PlanHierarchy } from '@/features/ai/agent-runtime/planning/utils';
@@ -11,9 +11,7 @@ import type {
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
 
-type CheckpointState = ReturnType<
-  typeof import('@/features/ai/agent-runtime/memory/checkpoint').parseCheckpoint
->;
+type CheckpointState = ReturnType<typeof parseCheckpoint>;
 
 type PlanInitializationResult = {
   planSteps: PlanStep[];
@@ -57,10 +55,10 @@ export async function initializePlanState(
     requireHumanApproval: Boolean(preferences.requireHumanApproval),
   };
 
-  if (checkpoint?.steps?.length) {
+  if (checkpoint !== null && checkpoint.steps.length > 0) {
     planSteps = checkpoint.steps;
     taskType = checkpoint.taskType ?? null;
-    const checkpointPreferences = checkpoint.preferences ?? null;
+    const checkpointPreferences = checkpoint.preferences;
     if (checkpointPreferences?.['ignoreRobotsTxt'] !== undefined) {
       nextPreferences.ignoreRobotsTxt = Boolean(checkpointPreferences['ignoreRobotsTxt']);
     }
@@ -72,7 +70,9 @@ export async function initializePlanState(
     }
     let resumedWithNewPlan = false;
     if (
-      checkpoint.resumeRequestedAt &&
+      checkpoint.resumeRequestedAt !== null &&
+      checkpoint.resumeRequestedAt !== undefined &&
+      checkpoint.resumeRequestedAt !== '' &&
       checkpoint.resumeRequestedAt !== checkpoint.resumeProcessedAt
     ) {
       const rawResumeContext = await getBrowserContextSummary(run.id);
@@ -142,7 +142,7 @@ export async function initializePlanState(
         contextRegistry,
       });
     }
-    if (!resumedWithNewPlan && checkpoint.activeStepId) {
+    if (!resumedWithNewPlan && checkpoint.activeStepId !== null && checkpoint.activeStepId !== '') {
       const activeIndex = planSteps.findIndex(
         (step: PlanStep) => step.id === checkpoint.activeStepId
       );

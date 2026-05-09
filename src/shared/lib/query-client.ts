@@ -10,18 +10,6 @@
  * - Observability integration for debugging and monitoring
  */
 
-/**
- * TanStack Query Client Configuration
- * 
- * Centralized configuration for React Query client with enhanced error handling.
- * Features:
- * - Global error classification and handling
- * - Telemetry integration for query performance monitoring
- * - Automatic retry logic with exponential backoff
- * - Cache management and invalidation strategies
- * - Observability integration for debugging and monitoring
- */
-
 import { MutationCache, QueryCache, QueryClient, type QueryKey } from '@tanstack/react-query';
 
 import { classifyError } from '@/shared/errors/error-classifier';
@@ -47,11 +35,17 @@ const MUTATION_MAX_RETRIES = 1;
 const RETRY_BASE_DELAY_MS = 250;
 const RETRY_MAX_DELAY_MS = 1500;
 
+/**
+ * Ensures a value is a finite number.
+ */
 const toFiniteNumber = (value: unknown): number | null => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null;
   return value;
 };
 
+/**
+ * Extracts a status code from an error object.
+ */
 const extractStatusCode = (error: unknown): number | null => {
   if (!error || typeof error !== 'object') return null;
 
@@ -68,6 +62,9 @@ const extractStatusCode = (error: unknown): number | null => {
   );
 };
 
+/**
+ * Determines if an error is network-related or a timeout.
+ */
 const isNetworkOrTimeoutError = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;
   const message = error.message.toLowerCase();
@@ -80,6 +77,9 @@ const isNetworkOrTimeoutError = (error: unknown): boolean => {
   );
 };
 
+/**
+ * Serializes a QueryKey into a stable string for logging.
+ */
 const toStableKey = (key: QueryKey | undefined): string => {
   if (!key) return '[]';
   try {
@@ -94,11 +94,18 @@ const toStableKey = (key: QueryKey | undefined): string => {
   }
 };
 
+/**
+ * Normalizes an attempt counter.
+ */
 const toAttempt = (value: number | undefined): number => {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 1;
   return Math.floor(value);
 };
 
+/**
+ * Safely logs a cache error and emits telemetry.
+ * Prevents recursive errors and double-logging.
+ */
 const safeLogCacheError = (
   source: 'QueryCache' | 'MutationCache',
   key: QueryKey | undefined,
@@ -107,6 +114,7 @@ const safeLogCacheError = (
   metaBag: unknown
 ): void => {
   try {
+    // Abort errors are expected and should not be logged as errors.
     if (isAbortLikeError(error)) return;
 
     const statusCode = extractStatusCode(error);
@@ -143,12 +151,11 @@ const safeLogCacheError = (
             cacheSource: source,
             level: 'warn',
           });
-
-          // ignore read-only errors
         }
       }
     }
 
+    // Telemetry emission for monitoring dashboards.
     const resolvedMeta = getTanstackFactoryMetaFromBag(metaBag);
     if (!resolvedMeta) {
       emitTanstackTelemetry({
@@ -183,18 +190,23 @@ const safeLogCacheError = (
       cacheSource: source,
       level: 'warn',
     });
-
     // Cache callbacks must never throw.
   }
 };
 
+/**
+ * Determines if a query or mutation should be retried based on the error.
+ */
 const shouldRetry = (failureCount: number, error: unknown, maxRetries: number): boolean => {
   const statusCode = extractStatusCode(error);
   if (statusCode !== null) {
+    // Never retry 4xx errors (client errors).
     if (statusCode >= 400 && statusCode < 500) return false;
+    // Retry 5xx errors (server errors) up to the limit.
     if (statusCode >= 500) return failureCount < maxRetries;
   }
 
+  // Always retry network timeouts/failures as they are often transient.
   if (isNetworkOrTimeoutError(error)) {
     return failureCount < maxRetries;
   }
@@ -202,9 +214,17 @@ const shouldRetry = (failureCount: number, error: unknown, maxRetries: number): 
   return false;
 };
 
+/**
+ * Calculates the retry delay with exponential backoff.
+ */
 const getRetryDelay = (attemptIndex: number): number =>
   Math.min(RETRY_BASE_DELAY_MS * 2 ** attemptIndex, RETRY_MAX_DELAY_MS);
 
+/**
+ * Creates and configures a new TanStack Query Client.
+ * 
+ * @returns A pre-configured QueryClient instance.
+ */
 export const createQueryClient = (): QueryClient =>
   new QueryClient({
     queryCache: new QueryCache({

@@ -1,3 +1,16 @@
+/**
+ * MongoDB Source Management
+ * 
+ * Manages multiple MongoDB sources (Local vs Cloud) and their synchronization.
+ * This module handles:
+ * - Resolving and applying source-specific environment variables.
+ * - Probing source reachability and health.
+ * - Comparing sources for synchronization potential.
+ * - Tracking last sync timestamps across different applications.
+ * - Managing active source switching and default source resolution.
+ * - Providing a comprehensive state of all configured sources.
+ */
+
 import 'server-only';
 
 import { promises as fs } from 'fs';
@@ -25,26 +38,43 @@ import {
 } from '@/shared/lib/db/utils/mongo';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
+/** Default environment variable for the default active source. */
 const MONGODB_ACTIVE_SOURCE_DEFAULT_ENV = 'MONGODB_ACTIVE_SOURCE_DEFAULT';
+
+/** Default file path for storing the last sync timestamp. */
 const DEFAULT_MONGODB_LAST_SYNC_FILE_PATH = path.join(process.cwd(), 'mongo', 'runtime', 'last-sync.json');
+
+/** Initial MONGODB_URI captured at startup. */
 const INITIAL_MONGODB_URI = process.env['MONGODB_URI']?.trim() ?? '';
+
+/** Initial MONGODB_DB captured at startup. */
 const INITIAL_MONGODB_DB = process.env['MONGODB_DB']?.trim() ?? 'app';
 
+/** Internal structure for MongoDB source configuration. */
 type MongoSourceConfig = {
+  /** The source identifier ('local' or 'cloud'). */
   source: MongoSource;
+  /** Whether this source is configured in environment. */
   configured: boolean;
+  /** The full MongoDB connection URI. */
   uri: string | null;
+  /** The target database name. */
   dbName: string | null;
+  /** Whether this source was derived from legacy environment variables. */
   usesLegacyEnv: boolean;
 };
 
+/** Internal structure for source reachability status. */
 type MongoSourceReachability = {
+  /** True if reachable, false if unreachable, null if not checked. */
   reachable: boolean | null;
+  /** The error message if unreachable. */
   healthError: string | null;
 };
 
 type ApplicationMongoSourceConfig = MongoSourceConfig | MongoApplicationSourceConfig;
 
+/** Human-readable labels for different applications managed by the sync process. */
 const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
@@ -52,21 +82,26 @@ const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
   products: 'Ecommerce',
 };
 
+/** Normalizes a raw value to a valid MongoSource. */
 const normalizeMongoSource = (value: unknown): MongoSource | null =>
   value === 'local' || value === 'cloud' ? value : null;
 
+/** Resolves the file path where sync metadata is stored. */
 const getMongoSourceLastSyncFilePath = (): string => DEFAULT_MONGODB_LAST_SYNC_FILE_PATH;
 
+/** Retrieves the explicit URI for a source from environment. */
 const getExplicitMongoUri = (source: MongoSource): string => {
   const key = source === 'local' ? 'MONGODB_LOCAL_URI' : 'MONGODB_CLOUD_URI';
   return process.env[key]?.trim() ?? '';
 };
 
+/** Retrieves the explicit database name for a source from environment. */
 const getExplicitMongoDb = (source: MongoSource): string => {
   const key = source === 'local' ? 'MONGODB_LOCAL_DB' : 'MONGODB_CLOUD_DB';
   return process.env[key]?.trim() ?? '';
 };
 
+/** Heuristic to determine if a URI points to a local instance. */
 const isLikelyLocalMongoUri = (uri: string): boolean => {
   const trimmed = uri.trim();
   if (!trimmed) return false;
@@ -79,6 +114,7 @@ const isLikelyLocalMongoUri = (uri: string): boolean => {
   }
 };
 
+/** Heuristic to determine if a URI points to a single-node local instance. */
 const isLikelySingleNodeLocalMongoUri = (uri: string): boolean => {
   const trimmed = uri.trim();
   if (trimmed.length === 0) return false;
@@ -94,12 +130,14 @@ const isLikelySingleNodeLocalMongoUri = (uri: string): boolean => {
   }
 };
 
+/** Options for probing MongoDB reachability. */
 const getMongoClientOptions = (uri: string): MongoClientOptions => ({
   connectTimeoutMS: 10_000,
   serverSelectionTimeoutMS: 10_000,
   ...(isLikelySingleNodeLocalMongoUri(uri) ? { directConnection: true } : {}),
 });
 
+/** Masks sensitive information in a MongoDB URI for logging/display. */
 const maskMongoUri = (uri: string | null): string | null => {
   if (!uri) return null;
   try {
@@ -114,11 +152,20 @@ const maskMongoUri = (uri: string | null): string | null => {
   }
 };
 
+/** Normalizes a URI for equality comparison by removing authentication details. */
 const normalizeMongoSyncComparisonUri = (uri: string | null): string | null => {
   if (!uri) return null;
   return uri.trim().replace(/\/\/([^@/]+)@/, '//');
 };
 
+/**
+ * Identifies potential synchronization issues between a source and target.
+ * Prevents sync between identical instances.
+ * 
+ * @param sourceConfig - The source configuration.
+ * @param targetConfig - The target configuration.
+ * @returns An error string if there's an issue, null otherwise.
+ */
 export const getMongoSyncIssue = (
   sourceConfig: { source: MongoSource; configured: boolean; uri: string | null; dbName: string | null },
   targetConfig: { source: MongoSource; configured: boolean; uri: string | null; dbName: string | null }
@@ -139,6 +186,7 @@ export const getMongoSyncIssue = (
   return null;
 };
 
+/** Checks for reachability issues during sync. */
 const getMongoSyncReachabilityIssue = (
   config: MongoSourceConfig,
   reachability: MongoSourceReachability
@@ -147,14 +195,22 @@ const getMongoSyncReachabilityIssue = (
   return `MongoDB source sync is disabled because "${config.source}" is unreachable: ${reachability.healthError ?? 'Unable to reach MongoDB target.'}`;
 };
 
+/** Helper to extract error message. */
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
   return String(error);
 };
 
+/** Resolves the environment key for a source's URI. */
 const getMongoSourceUriEnvKey = (source: MongoSource): 'MONGODB_LOCAL_URI' | 'MONGODB_CLOUD_URI' =>
   source === 'local' ? 'MONGODB_LOCAL_URI' : 'MONGODB_CLOUD_URI';
 
+/**
+ * Resolves configuration for a source based on explicit or legacy environment variables.
+ * 
+ * @param source - The source to resolve ('local' or 'cloud').
+ * @returns The resolved MongoSourceConfig.
+ */
 const getMongoSourceConfig = (source: MongoSource): MongoSourceConfig => {
   const explicitUri = getExplicitMongoUri(source);
   const explicitDbName = getExplicitMongoDb(source);
@@ -168,6 +224,7 @@ const getMongoSourceConfig = (source: MongoSource): MongoSourceConfig => {
     };
   }
 
+  // Fallback to legacy INITIAL_MONGODB_URI if it matches the source heuristic.
   if (!INITIAL_MONGODB_URI) {
     return {
       source,
@@ -198,6 +255,7 @@ const getMongoSourceConfig = (source: MongoSource): MongoSourceConfig => {
   };
 };
 
+/** Resolves application-specific source configuration. */
 const resolveApplicationMongoSourceConfig = (
   application: MongoBackupApplication,
   source: MongoSource
@@ -214,6 +272,7 @@ const resolveApplicationMongoSourceConfig = (
   return getMongoSourceConfig(source);
 };
 
+/** Checks if a config has all necessary sync parameters. */
 const hasSyncConfig = (
   config: ApplicationMongoSourceConfig
 ): config is ApplicationMongoSourceConfig & { uri: string; dbName: string } =>
@@ -223,6 +282,7 @@ const hasSyncConfig = (
   typeof config.dbName === 'string' &&
   config.dbName.trim().length > 0;
 
+/** Identifies configuration issues for application-specific sources. */
 const getApplicationSourceConfigIssue = (
   application: MongoBackupApplication,
   source: MongoSource,
@@ -246,6 +306,7 @@ const getApplicationSourceConfigIssue = (
   return `${label} ${source} MongoDB source is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
 };
 
+/** Probes a specific source configuration for reachability. */
 const probeMongoConfigReachability = async (
   config: ApplicationMongoSourceConfig
 ): Promise<MongoSourceReachability> => {
@@ -274,6 +335,7 @@ const probeMongoConfigReachability = async (
   }
 };
 
+/** Aggregates all sync issues for a specific application. */
 const getApplicationSyncIssue = (params: {
   application: MongoBackupApplication;
   local: ApplicationMongoSourceConfig;
@@ -298,6 +360,7 @@ const getApplicationSyncIssue = (params: {
   return issues.length > 0 ? issues.join(' ') : null;
 };
 
+/** Resolves comprehensive sync status for a specific application. */
 const getMongoApplicationSyncStatus = async (
   application: MongoBackupApplication
 ): Promise<DatabaseEngineMongoAppSyncStatus> => {
@@ -331,6 +394,7 @@ const getMongoApplicationSyncStatus = async (
   };
 };
 
+/** Resolves sync statuses for all managed applications. */
 const getMongoApplicationSyncStatuses =
   async (): Promise<DatabaseEngineMongoAppSyncStatuses> => {
     const statuses = await Promise.all(
@@ -341,6 +405,7 @@ const getMongoApplicationSyncStatuses =
     ) as DatabaseEngineMongoAppSyncStatuses;
   };
 
+/** Reads the last sync timestamp from the file system. */
 const readMongoSourceLastSync = async (): Promise<DatabaseEngineMongoLastSync | null> => {
   try {
     const raw = await fs.readFile(getMongoSourceLastSyncFilePath(), 'utf8');
@@ -352,6 +417,7 @@ const readMongoSourceLastSync = async (): Promise<DatabaseEngineMongoLastSync | 
   }
 };
 
+/** Probes reachability for a specific source identifier ('local' or 'cloud'). */
 const probeMongoSourceReachability = async (
   source: MongoSource
 ): Promise<MongoSourceReachability> => {
@@ -359,6 +425,7 @@ const probeMongoSourceReachability = async (
   return probeMongoConfigReachability(config);
 };
 
+/** Heuristically resolves the first available source. */
 const resolveAvailableMongoSource = (): MongoSource | null => {
   const localConfig = getMongoSourceConfig('local');
   const cloudConfig = getMongoSourceConfig('cloud');
@@ -369,6 +436,7 @@ const resolveAvailableMongoSource = (): MongoSource | null => {
   return null;
 };
 
+/** Ensures a requested source is properly configured. */
 const resolveRequestedMongoSource = (requested: MongoSource): MongoSource => {
   const requestedConfig = getMongoSourceConfig(requested);
   if (requestedConfig.configured) return requested;
@@ -377,6 +445,7 @@ const resolveRequestedMongoSource = (requested: MongoSource): MongoSource => {
   );
 };
 
+/** Resolves the default source based on environment override or availability. */
 const resolveDefaultMongoSource = (): MongoSource | null => {
   const requested = normalizeMongoSource(process.env[MONGODB_ACTIVE_SOURCE_DEFAULT_ENV]?.trim());
   if (requested) {
@@ -385,6 +454,10 @@ const resolveDefaultMongoSource = (): MongoSource | null => {
   return resolveAvailableMongoSource();
 };
 
+/**
+ * Applies a source configuration to the process environment variables.
+ * This is critical for parts of the app that rely directly on MONGODB_URI.
+ */
 const applyMongoSourceEnvSnapshot = (source: MongoSource | null): void => {
   if (!source) return;
   const config = getMongoSourceConfig(source);
@@ -394,13 +467,25 @@ const applyMongoSourceEnvSnapshot = (source: MongoSource | null): void => {
   process.env['MONGODB_ACTIVE_SOURCE'] = source;
 };
 
+// Initial boot logic: apply the default source to the environment.
 const bootSource = resolveDefaultMongoSource();
 applyMongoSourceEnvSnapshot(bootSource);
 
+/**
+ * Retrieves the currently active MongoDB source.
+ * @returns Active source or null.
+ */
 export const getActiveMongoSource = async (): Promise<MongoSource | null> => {
   return resolveDefaultMongoSource();
 };
 
+/**
+ * Resolves configuration for a source, preferring a specified override.
+ * 
+ * @param preferredSource - Optional preferred source.
+ * @returns Resolved MongoSourceConfig.
+ * @throws {ConfigurationError} If no valid source can be resolved.
+ */
 export const resolveMongoSourceConfig = async (
   preferredSource?: MongoSource
 ): Promise<MongoSourceConfig> => {
@@ -422,6 +507,12 @@ export const resolveMongoSourceConfig = async (
   return config;
 };
 
+/**
+ * Applies a source configuration to the environment variables and returns the config.
+ * 
+ * @param preferredSource - Optional preferred source.
+ * @returns Applied MongoSourceConfig.
+ */
 export const applyActiveMongoSourceEnv = async (preferredSource?: MongoSource): Promise<MongoSourceConfig> => {
   const config = await resolveMongoSourceConfig(preferredSource);
   process.env['MONGODB_URI'] = config.uri ?? '';
@@ -430,6 +521,12 @@ export const applyActiveMongoSourceEnv = async (preferredSource?: MongoSource): 
   return config;
 };
 
+/**
+ * Retrieves the complete state of the MongoDB source subsystem.
+ * This includes configuration, reachability, sync status, and managed application health.
+ * 
+ * @returns Full DatabaseEngineMongoSourceState.
+ */
 export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceState> => {
   const activeSource = await getActiveMongoSource();
   const defaultSource = resolveDefaultMongoSource();
@@ -489,6 +586,7 @@ export const getMongoSourceState = async (): Promise<DatabaseEngineMongoSourceSt
   };
 };
 
+/** Ensures at least one MongoDB source is available and applies it. */
 export const ensureMongoSourceAvailable = async (): Promise<void> => {
   try {
     await applyActiveMongoSourceEnv();
@@ -501,6 +599,7 @@ export const ensureMongoSourceAvailable = async (): Promise<void> => {
   }
 };
 
+/** Records a successful sync timestamp to the file system. */
 export const recordMongoSourceSync = async (
   lastSync: DatabaseEngineMongoLastSync
 ): Promise<void> => {

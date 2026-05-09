@@ -6,7 +6,6 @@ import {
 } from '@/features/ai/ai-context-registry/context/page-context-shared';
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { generateLogInterpretation } from '@/features/ai/insights/server';
-import { startAiInsightsQueue } from '@/features/jobs/server';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { AiInsightResponse } from '@/shared/contracts/ai-insights';
 import { systemLogsInterpretRequestSchema } from '@/shared/contracts/observability';
@@ -31,7 +30,6 @@ const readContextRegistryEnvelope = (
 
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
-  startAiInsightsQueue();
   const parsed = await parseJsonBody(req, systemLogsInterpretRequestSchema, {
     logPrefix: 'system.logs.interpret.POST',
   });

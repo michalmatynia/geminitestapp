@@ -64,7 +64,7 @@ export async function publishSocialPublishingPost(
       publishError: null,
     });
     if (!updated) {
-      throw notFoundError('Social post not found.');
+      throw notFoundError(`Social post "${post.id}" not found after publish update. The post may have been deleted concurrently.`);
     }
     void ErrorSystem.logInfo('Social publishing post published', {
       ...baseContext,
@@ -113,7 +113,7 @@ export async function unpublishSocialPublishingPost(
   };
 
   if (!hasSocialPublishingPublicationTarget(post)) {
-    throw configurationError('Publication details are missing.');
+    throw configurationError(`Publication details are missing for post "${post.id}". The post must have a publishingConnectionId and a publishedPostId before it can be unpublished.`);
   }
 
   try {
@@ -129,7 +129,7 @@ export async function unpublishSocialPublishingPost(
         publishError: null,
       });
       if (!updated) {
-        throw notFoundError('Social post not found.');
+        throw notFoundError(`Social post "${post.id}" not found after unpublish update. The post may have been deleted concurrently.`);
       }
       void ErrorSystem.logInfo('Social publishing post unpublished (kept locally)', {
         ...baseContext,
@@ -140,7 +140,7 @@ export async function unpublishSocialPublishingPost(
 
     const deleted = await deleteSocialPublishingPost(post.id);
     if (!deleted) {
-      throw notFoundError('Social post not found.');
+      throw notFoundError(`Social post "${post.id}" could not be deleted after unpublishing. The post may have already been deleted.`);
     }
     void ErrorSystem.logInfo('Social publishing post unpublished', {
       ...baseContext,

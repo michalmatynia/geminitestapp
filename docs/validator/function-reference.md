@@ -1,6 +1,6 @@
 ---
 owner: 'Products / Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-05-09'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:validator'
@@ -20,6 +20,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 | core.buildSequenceGroupCounts | `buildSequenceGroupCounts` | `src/features/products/validation-engine/core.ts` | Counts enabled sequence-grouped patterns by scope key. |
 | core.isPatternInSequenceGroup | `isPatternInSequenceGroup` | `src/features/products/validation-engine/core.ts` | Determines if a pattern belongs to a multi-step sequence. |
 | core.sortValidatorPatterns | `sortValidatorPatterns` | `src/features/products/validation-engine/core.ts` | Sorts patterns by sequence, target, and label for deterministic runtime order. |
+| core.collectValidationPatternRegexMatches | `collectValidationPatternRegexMatches` | `src/features/products/validation-engine/core.ts` | Collects regex matches for multiple validation patterns against a field value. |
 | core.resolveFieldTargetAndLocale | `resolveFieldTargetAndLocale` | `src/features/products/validation-engine/core.ts` | Maps form field names to validator target and locale context. |
 | core.isPatternLocaleMatch | `isPatternLocaleMatch` | `src/features/products/validation-engine/core.ts` | Checks locale compatibility between pattern and field. |
 | core.normalizeReplacementFields | `normalizeReplacementFields` | `src/features/products/validation-engine/core.ts` | Validates, deduplicates, and normalizes replacement field allowlist. |
@@ -148,6 +149,17 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - Errors: No throws.
 - Edge Cases: Stable fallback ordering uses target and label.
 - Example: `sortValidatorPatterns(patterns)`
+
+### core.collectValidationPatternRegexMatches
+
+- File: `src/features/products/validation-engine/core.ts`
+- Symbol: `collectValidationPatternRegexMatches`
+- Purpose: Collects regex matches for multiple validation patterns against a field value.
+- Parameters: value: input string to search. patterns: list of validation patterns to apply. validationScope: optional active validator scope. target: optional validation target. maxMatchesPerPattern: optional match limit per pattern.
+- Returns: Flattened list of all collected regex matches.
+- Errors: No throws.
+- Edge Cases: Empty value or patterns returns empty array.
+- Example: `collectValidationPatternRegexMatches({ value, patterns })`
 
 ### core.resolveFieldTargetAndLocale
 

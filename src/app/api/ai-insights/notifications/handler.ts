@@ -5,7 +5,6 @@ import {
   clearAiInsightNotifications,
   listAiInsightNotifications,
 } from '@/features/ai/insights/server';
-import { startAiInsightsQueue } from '@/features/jobs/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const listSchema = z.object({
@@ -13,7 +12,6 @@ const listSchema = z.object({
 });
 
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  startAiInsightsQueue();
   const url = new URL(req.url);
   const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
   const notifications = await listAiInsightNotifications(parsed.limit ?? 20);
@@ -24,7 +22,6 @@ export async function deleteHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  startAiInsightsQueue();
   await clearAiInsightNotifications();
   return NextResponse.json({ ok: true });
 }

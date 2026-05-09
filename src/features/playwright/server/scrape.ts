@@ -73,10 +73,12 @@ const waitForPlaywrightRunToFinish = async ({
   }
 
   if (!currentRun) {
+    // Scrape run could not be retrieved from the database after startup
     throw new Error(`Playwright scrape run ${runId} could not be read after startup.`);
   }
 
   if (currentRun.status === 'queued' || currentRun.status === 'running') {
+    // Scrape run did not complete within the polling timeout period
     throw new Error(`Playwright scrape run ${runId} did not finish before the timeout window.`);
   }
 

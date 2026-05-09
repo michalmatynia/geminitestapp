@@ -17,6 +17,7 @@ export const getInternationalizationProvider = async (): Promise<Internationaliz
   if (explicit !== null) {
     const mongoUri = process.env['MONGODB_URI'];
     if (mongoUri === undefined || mongoUri === '') {
+      // MongoDB provider is configured but connection URI is missing
       throw new Error(
         'INTERNATIONALIZATION_DB_PROVIDER is set to MongoDB but MONGODB_URI is missing.'
       );

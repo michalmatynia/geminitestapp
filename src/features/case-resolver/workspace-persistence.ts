@@ -1,48 +1,36 @@
-import { type CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver';
-
+import { 
+  type CaseResolverWorkspace, 
+  type CaseResolverWorkspaceMetadata, 
+  type CaseResolverWorkspaceFetchAttemptProfile, 
+  type CaseResolverWorkspaceRecordFetchResult, 
+  type CaseResolverWorkspaceFetchIfStaleResult as FetchIfStaleResult 
+} from '@/shared/contracts/case-resolver';
+import { fetchSettingsPayloadWithTimeout } from './node-file-persistence';
+import { getCaseResolverWorkspaceRevision } from './utils/workspace-persistence-utils';
 import {
-  buildCaseResolverNodeFileSnapshotKey,
-  fetchCaseResolverNodeFileSnapshotText,
-  fetchCaseResolverNodeFileSnapshot,
-  persistCaseResolverNodeFileSnapshot,
-  deleteCaseResolverNodeFileSnapshot,
-} from './node-file-persistence';
+  CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
+  CASE_RESOLVER_WORKSPACE_KEY,
+  CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+  readWorkspaceMetadata,
+  resolveSettingRecordFromSettingsPayload,
+  resolveWorkspaceRecordFromSettingsPayload,
+  buildSettingRecordFetchAttempts,
+  buildWorkspaceRecordFetchAttempts,
+  type WorkspaceMetadataLike,
+} from './utils/workspace-settings-persistence-helpers';
+import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 import {
-  primeCaseResolverNavigationWorkspace,
-  readCaseResolverNavigationWorkspace,
-} from './utils/workspace-navigation-cache';
+  applyCaseResolverWorkspaceDetachedDocumentsPayload,
+  parseCaseResolverWorkspaceDetachedDocumentsPayload,
+  type CaseResolverWorkspaceDetachedDocumentsPayload,
+} from './workspace-persistence-detached-documents';
 import {
-  computeCaseResolverConflictRetryDelayMs,
-  createCaseResolverWorkspaceMutationId,
-  getCaseResolverWorkspaceRevision,
-  stampCaseResolverWorkspaceMutation,
-} from './utils/workspace-persistence-utils';
+  applyCaseResolverWorkspaceDetachedHistoryPayload,
+  parseCaseResolverWorkspaceDetachedHistoryPayload,
+  type CaseResolverWorkspaceDetachedHistoryPayload,
+} from './workspace-persistence-detached-history';
 import {
-  logCaseResolverWorkspaceEvent,
-  getCaseResolverWorkspaceDebugEventName,
-  readCaseResolverWorkspaceDebugEvents,
-} from './workspace-observability';
-
-
-
-export * from './workspace-persistence-shared';
-export * from './workspace-persistence-fetch';
-export * from './workspace-persistence-save';
-
-export {
-  createCaseResolverWorkspaceMutationId,
-  getCaseResolverWorkspaceRevision,
-  stampCaseResolverWorkspaceMutation,
-  logCaseResolverWorkspaceEvent,
-  getCaseResolverWorkspaceDebugEventName,
-  readCaseResolverWorkspaceDebugEvents,
-  primeCaseResolverNavigationWorkspace,
-  readCaseResolverNavigationWorkspace,
-  computeCaseResolverConflictRetryDelayMs,
-  buildCaseResolverNodeFileSnapshotKey,
-  fetchCaseResolverNodeFileSnapshotText,
-  fetchCaseResolverNodeFileSnapshot,
-  persistCaseResolverNodeFileSnapshot,
-  deleteCaseResolverNodeFileSnapshot,
-};
-export type { CaseResolverWorkspaceDebugEvent };
+  CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+  readWorkspaceFromSettingRecord,
+} from './workspace-persistence-shared';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';

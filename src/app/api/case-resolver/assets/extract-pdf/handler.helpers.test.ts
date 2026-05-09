@@ -29,13 +29,13 @@ describe('case resolver extract-pdf helpers', () => {
       'Only case resolver uploaded PDFs can be extracted'
     );
     expect(() => assertCaseResolverPdfFilepath('/uploads/case-resolver/file.txt')).toThrow(
-      'Only PDF files are supported'
+      'Only PDF files are supported for text extraction'
     );
     expect(() =>
       assertCaseResolverUploadDiskPath(`${CASE_RESOLVER_UPLOAD_DISK_PREFIX}/nested/file.pdf`)
     ).not.toThrow();
     expect(() => assertCaseResolverUploadDiskPath('/tmp/file.pdf')).toThrow(
-      'Resolved path is outside case resolver uploads'
+      'Resolved disk path is outside the case resolver uploads directory'
     );
   });
 

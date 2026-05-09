@@ -191,6 +191,7 @@ describe('initializeQueues', () => {
 
     await waitForStartup();
     expect(mocks.startAllWorkers).toHaveBeenCalledTimes(1);
+    expect(mocks.startAiInsightsQueue).not.toHaveBeenCalled();
   });
 
   it('retries worker startup after Redis is initially unreachable', async () => {

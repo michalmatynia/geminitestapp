@@ -2,7 +2,6 @@ import 'server-only';
 
 import {
   startAgentQueue,
-  startAiInsightsQueue,
   startAiPathRunQueue,
   startChatbotJobQueue,
   startImageStudioRunQueue,
@@ -145,9 +144,6 @@ const runStartupBackupSchedulerCatchup = (): void => {
   })().catch(() => {});
 };
 
-const isQueueStarter = (value: unknown): value is QueueStarter =>
-  typeof value === 'function';
-
 const callSpecializedStartup = (
   shouldStartSocialPublishing: boolean
 ): void => {
@@ -207,10 +203,6 @@ export const initializeQueues = (): void => {
       logSystemEvent({ level: 'info', source: LOG_SOURCE, message: 'Starting BullMQ workers...' }).catch(() => {});
       startAllWorkers({ excludeQueueNames: excludedQueueNames });
       startFeatureAwareWorkers();
-
-      if (isQueueStarter(startAiInsightsQueue)) {
-        startAiInsightsQueue();
-      }
 
       initialized = true;
     } catch (error) {

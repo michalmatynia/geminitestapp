@@ -31,23 +31,23 @@ export async function postHandler(
   const { connectionId } = body;
 
   if (!connectionId) {
-    throw badRequestError('connectionId is required');
+    throw badRequestError('connectionId is required. Provide a non-empty connectionId in the request body to identify which Base.com connection to fetch tags from.');
   }
 
   const integrationRepo = await getIntegrationRepository();
   const connection = await integrationRepo.getConnectionById(connectionId);
   if (!connection) {
-    throw notFoundError('Connection not found');
+    throw notFoundError(`Connection "${connectionId}" not found. Verify the connection id or select a different connection in Admin > Integrations.`);
   }
 
   const integration = await integrationRepo.getIntegrationById(connection.integrationId);
   if (!integration) {
-    throw notFoundError('Integration not found');
+    throw notFoundError(`Integration for connection "${connectionId}" not found. The integration may have been removed.`);
   }
 
   const integrationSlug = integration.slug?.toLowerCase();
   if (!integrationSlug || !BASE_MARKETPLACE_SLUGS.has(integrationSlug)) {
-    throw badRequestError('Only Base.com connections are supported for tag fetch');
+    throw badRequestError(`Only Base.com connections are supported for tag fetch, but connection "${connectionId}" belongs to integration "${integration.slug ?? 'unknown'}".`);
   }
 
   const tokenResolution = resolveBaseConnectionToken({

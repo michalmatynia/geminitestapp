@@ -89,7 +89,9 @@ export async function executeGenerationOperation(params: {
   );
 
   if (settings.targetAi.openai.api !== 'images') {
-    throw badRequestError('Image Studio run currently supports the Images API only.');
+    throw badRequestError(
+      `Image Studio run currently supports the Images API only, but the studio settings specify api="${settings.targetAi.openai.api}". Update the Image Studio settings to use the Images API.`
+    );
   }
 
   const overrides =
@@ -126,12 +128,16 @@ export async function executeGenerationOperation(params: {
     if (assetPath && refPath === assetPath) continue;
     if (seenPaths.has(refPath)) continue;
     if (!isProjectScopedAssetPath(refPath, projectId)) {
-      throw badRequestError('Reference asset must belong to the current project.');
+      throw badRequestError(
+        `Reference asset "${refPath}" does not belong to project "${projectId}". Only assets uploaded to the current project can be used as reference images.`
+      );
     }
     const refDiskPath = resolveAssetPath(refPath);
     ensureWithinProject(refDiskPath, projectId);
     await fs.stat(refDiskPath).catch(() => {
-      throw badRequestError('Reference asset file not found.');
+      throw badRequestError(
+        `Reference asset file not found on disk: "${refPath}". The asset may have been deleted or the path is incorrect.`
+      );
     });
     seenPaths.add(refPath);
     referencePaths.push(refDiskPath);
@@ -139,7 +145,9 @@ export async function executeGenerationOperation(params: {
 
   const maxImages = 16;
   if (hasSourceAsset && referencePaths.length + 1 > maxImages) {
-    throw badRequestError(`Too many input images. Limit is ${maxImages} total.`);
+    throw badRequestError(
+      `Too many input images: ${referencePaths.length + 1} provided (source + ${referencePaths.length} reference(s)), but the limit is ${maxImages} total. Remove some reference assets and try again.`
+    );
   }
 
   const generationConfig = await resolveBrainExecutionConfigForCapability('image_studio.general', {
@@ -171,7 +179,9 @@ export async function executeGenerationOperation(params: {
     assertDallePromptWithinLimit(prompt, resolvedModel);
   }
   if (hasSourceAsset && modelName.includes('dall-e-2') && referencePaths.length > 0) {
-    throw badRequestError('Multiple input images are only supported for GPT image models.');
+    throw badRequestError(
+      'Multiple input images are not supported for DALL-E 2. Reference assets can only be used with GPT image models (e.g. gpt-image-1). Switch to a GPT image model or remove the reference assets.'
+    );
   }
   const requestedFormat = settings.targetAi.openai.image.format ?? 'png';
   const format = modelCapabilities.formatOptions.includes(requestedFormat)
@@ -185,7 +195,9 @@ export async function executeGenerationOperation(params: {
 
   if (requestMode === 'edit') {
     if (!diskPath) {
-      throw badRequestError('Source asset is required for image edit runs.');
+      throw badRequestError(
+        'Source asset is required for image edit runs but no source asset disk path was resolved. Ensure a source image is selected before running an edit operation.'
+      );
     }
     if (modelName.includes('dall-e-2')) {
       const dalle2Base = await toDalle2UploadableImageFile(diskPath);
@@ -330,12 +342,16 @@ export async function executeGenerationOperation(params: {
       apiAttemptCount += 1;
       if (requestMode === 'edit') {
         if (!isImageEditPayload(payload)) {
-          throw operationFailedError('Image edit payload is missing the source image.');
+          throw operationFailedError(
+            'Image edit payload is missing the source image field. This is an internal error — the payload was expected to contain an "image" property for edit mode.'
+          );
         }
         response = (await client.images.edit(payload)) as OpenAI.ImagesResponse;
       } else {
         if (!isImageGeneratePayload(payload)) {
-          throw operationFailedError('Image generation payload unexpectedly includes edit fields.');
+          throw operationFailedError(
+            'Image generation payload unexpectedly includes edit fields (e.g. "image"). This is an internal error — the payload should not contain image upload fields for a generate-only run.'
+          );
         }
         response = (await client.images.generate(payload)) as OpenAI.ImagesResponse;
       }
@@ -406,18 +422,24 @@ export async function executeGenerationOperation(params: {
     }
   }
   if (!response) {
-    throw operationFailedError('Image API request failed after unknown-parameter retries.');
+    throw operationFailedError(
+      `Image API request failed after ${MAX_UNKNOWN_PARAMETER_RETRIES} unknown-parameter retry attempts. The model may not support the requested parameters. Check the dropped parameters in the execution meta for details.`
+    );
   }
 
   const images = response.data ?? [];
   if (images.length === 0) {
-    throw operationFailedError('Image API returned no images.');
+    throw operationFailedError(
+      'Image API returned no images in the response. The request succeeded but the response data array was empty. This may be a transient OpenAI issue — try again.'
+    );
   }
 
   const outputs: ImageFileRecord[] = [];
   for (const img of images) {
     if (!img.b64_json) {
-      throw operationFailedError('Image API did not return base64 data.');
+      throw operationFailedError(
+        'Image API did not return base64-encoded image data (b64_json) for one of the generated images. Ensure the model and response_format settings are compatible with base64 output.'
+      );
     }
     const buffer = Buffer.from(img.b64_json, 'base64');
     const record = await createImageRecord({

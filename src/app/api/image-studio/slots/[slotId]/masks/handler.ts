@@ -110,12 +110,12 @@ async function loadSourceBuffer(sourceSlot: StudioSlotRecord): Promise<Buffer> {
 
   const sourcePath = sourceSlot.imageFile?.filepath ?? sourceSlot.imageUrl ?? null;
   if (!sourcePath) {
-    throw badRequestError('Source slot has no image path.');
+    throw badRequestError(`Source slot "${sourceSlot.id}" has no image path. The slot must have either an imageFile.filepath or an imageUrl before a mask can be generated.`);
   }
 
   const normalizedPath = normalizePublicPath(sourcePath);
   if (!normalizedPath) {
-    throw badRequestError('Source image path is invalid.');
+    throw badRequestError(`Source image path "${sourcePath}" is invalid and could not be normalized to a public URL. Ensure the path starts with a leading slash and points to a valid studio asset.`);
   }
 
   if (/^https?:\/\//i.test(normalizedPath)) {
@@ -231,7 +231,7 @@ export async function postHandler(
   params: { slotId: string }
 ): Promise<Response> {
   const slotId = params.slotId?.trim() ?? '';
-  if (!slotId) throw badRequestError('Slot id is required');
+  if (!slotId) throw badRequestError('Slot id is required. Provide a non-empty slotId in the URL path.');
 
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = payloadSchema.safeParse(body);
@@ -240,20 +240,20 @@ export async function postHandler(
   }
 
   const sourceSlot = await getImageStudioSlotById(slotId);
-  if (!sourceSlot) throw notFoundError('Source slot not found');
+  if (!sourceSlot) throw notFoundError(`Source slot "${slotId}" not found. The slot may have been deleted or the id is incorrect.`);
   const mode = parsed.data.mode ?? 'client_data_url';
 
   if (mode === 'client_data_url') {
     const missingDataUrls = parsed.data.masks.some((mask) => !mask.dataUrl);
     if (missingDataUrls) {
-      throw badRequestError('Client mask mode requires dataUrl in all masks.');
+      throw badRequestError('Client mask mode requires a dataUrl on every mask entry. Ensure all masks in the request include a valid base64-encoded data URL.');
     }
   } else {
     const missingPolygons = parsed.data.masks.some(
       (mask) => !mask.polygons || mask.polygons.length === 0
     );
     if (missingPolygons) {
-      throw badRequestError('Server polygon mode requires polygons in all masks.');
+      throw badRequestError('Server polygon mode requires at least one polygon on every mask entry. Ensure all masks in the request include a non-empty polygons array.');
     }
   }
 

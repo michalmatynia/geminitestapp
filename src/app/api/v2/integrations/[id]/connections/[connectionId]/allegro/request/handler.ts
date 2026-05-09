@@ -34,7 +34,7 @@ export async function postHandler(
 ): Promise<Response> {
   const { id, connectionId } = params;
   if (!id || !connectionId) {
-    throw badRequestError('Integration id and connection id are required');
+    throw badRequestError('Integration id and connection id are required. Provide both id and connectionId in the URL path.');
   }
   const parsed = await parseJsonBody(_req, integrationAllegroApiPayloadSchema, {
     logPrefix: 'integrations.allegro.request.POST',
@@ -45,11 +45,11 @@ export async function postHandler(
   const data = parsed.data;
 
   if (data.path.includes('://')) {
-    throw badRequestError('Path must be relative to the Allegro API base URL.');
+    throw badRequestError(`Path must be relative to the Allegro API base URL, but received "${data.path}". Remove the protocol and host — provide only the path component starting with "/".`);
   }
 
   if (!data.path.startsWith('/')) {
-    throw badRequestError('Path must start with /');
+    throw badRequestError(`Path must start with "/", but received "${data.path}". Provide a path relative to the Allegro API base URL, e.g. "/sale/offers".`);
   }
 
   const repo = await getIntegrationRepository();
@@ -66,7 +66,7 @@ export async function postHandler(
   }
 
   if (!connection.allegroAccessToken) {
-    throw badRequestError('Allegro access token missing. Connect first.');
+    throw badRequestError(`Allegro access token missing for connection "${connectionId}". Reconnect the Allegro account in Admin > Integrations to obtain a fresh access token.`);
   }
 
   const clientId = connection.username?.trim();
@@ -100,7 +100,7 @@ export async function postHandler(
 
   const refreshAccessToken = async (): Promise<string> => {
     if (!refreshToken || !clientId || !clientSecret) {
-      throw configurationError('Missing refresh token or client credentials.');
+      throw configurationError(`Missing refresh token or client credentials for Allegro connection "${connectionId}". Reconnect the Allegro account in Admin > Integrations to restore the token and credentials.`);
     }
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const body = new URLSearchParams({

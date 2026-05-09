@@ -22,17 +22,17 @@ export async function getHandler(
   const filename = query.filename;
 
   if (!filename) {
-    throw badRequestError('filename is required.');
+    throw badRequestError('filename is required. Provide a filename query parameter to serve a social image add-on.');
   }
 
   const basename = path.basename(filename);
   if (basename !== filename || filename.includes('..') || filename.includes('/')) {
-    throw badRequestError('Invalid filename.');
+    throw badRequestError(`Invalid filename "${filename}": filenames must not contain path separators or ".." segments.`);
   }
 
   const diskPath = path.join(TEMP_ROOT, basename);
   if (!diskPath.startsWith(TEMP_ROOT + path.sep) && diskPath !== TEMP_ROOT) {
-    throw badRequestError('Invalid filename.');
+    throw badRequestError(`Invalid filename "${filename}": the resolved path escapes the allowed temp directory.`);
   }
 
   const nodeFs = getFsPromises();
@@ -49,7 +49,7 @@ export async function getHandler(
     });
   } catch (error) {
     if (error instanceof Error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
-      throw notFoundError('Image not found.');
+      throw notFoundError(`Image "${basename}" not found. The file may have expired from the temp directory.`);
     }
     throw error;
   }

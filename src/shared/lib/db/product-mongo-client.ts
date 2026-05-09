@@ -1,3 +1,17 @@
+/**
+ * Product MongoDB Client
+ * 
+ * Specialized MongoDB connection management for the Products/Ecommerce subsystem.
+ * This module provides a dedicated connection pool for product-related operations,
+ * supporting independent scaling and configuration from the primary app database.
+ * 
+ * Features:
+ * - Dedicated connection pooling for products.
+ * - Source-aware connection resolution (Local vs Cloud).
+ * - Test environment isolation (can optionally share app DB).
+ * - Command monitoring and observability.
+ */
+
 import 'server-only';
 
 import { createRequire } from 'module';
@@ -10,10 +24,16 @@ import { getMongoDb as getDefaultMongoDb } from '@/shared/lib/db/mongo-client';
 import { resolveProductsMongoSourceConfig } from '@/shared/lib/db/utils/mongo';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
+/** Default timeout for server selection. */
 const DEFAULT_MONGO_SERVER_SELECTION_TIMEOUT_MS = 5_000;
+
+/** Default timeout for initial connection. */
 const DEFAULT_MONGO_CONNECT_TIMEOUT_MS = 5_000;
 
+/** Constructor type for MongoClient. */
 type MongoClientCtor = new (uri: string, options?: MongoClientOptions) => MongoClient;
+
+/** Global state for caching product-specific MongoDB clients. */
 type ProductMongoGlobalState = {
   __productsMongoClientByKey?: Map<string, MongoClient>;
   __productsMongoClientPromiseByKey?: Map<string, Promise<MongoClient>>;
@@ -21,16 +41,25 @@ type ProductMongoGlobalState = {
 
 const globalForProductsMongo = globalThis as typeof globalThis & ProductMongoGlobalState;
 
+/**
+ * Resolves the MongoClient constructor.
+ */
 const getMongoClientCtor = (): { MongoClient: MongoClientCtor } => {
   const requireFn = createRequire(import.meta.url);
   return requireFn('mongodb') as { MongoClient: MongoClientCtor };
 };
 
+/**
+ * Parses a positive integer from environment with fallback.
+ */
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 };
 
+/**
+ * Heuristic for single-node local instances.
+ */
 const isSingleNodeLocalMongoUri = (uri: string): boolean => {
   try {
     const parsed = new URL(uri);
@@ -44,6 +73,10 @@ const isSingleNodeLocalMongoUri = (uri: string): boolean => {
   }
 };
 
+/**
+ * Builds MongoClientOptions for the products database.
+ * Supports specialized pool sizes and timeouts for product operations.
+ */
 const getProductsMongoClientOptions = (uri: string): MongoClientOptions => ({
   maxPoolSize: parsePositiveInt(process.env['PRODUCTS_MONGODB_MAX_POOL_SIZE'], 20),
   minPoolSize: parsePositiveInt(process.env['PRODUCTS_MONGODB_MIN_POOL_SIZE'], 1),
@@ -62,6 +95,7 @@ const getProductsMongoClientOptions = (uri: string): MongoClientOptions => ({
   monitorCommands: true,
 });
 
+/** Accesses the global client instance cache for products. */
 const getProductsMongoClientByKeyStore = (): Map<string, MongoClient> => {
   if (!globalForProductsMongo.__productsMongoClientByKey) {
     globalForProductsMongo.__productsMongoClientByKey = new Map<string, MongoClient>();
@@ -69,6 +103,7 @@ const getProductsMongoClientByKeyStore = (): Map<string, MongoClient> => {
   return globalForProductsMongo.__productsMongoClientByKey;
 };
 
+/** Accesses the global pending promise cache for products. */
 const getProductsMongoClientPromiseByKeyStore = (): Map<string, Promise<MongoClient>> => {
   if (!globalForProductsMongo.__productsMongoClientPromiseByKey) {
     globalForProductsMongo.__productsMongoClientPromiseByKey = new Map<
@@ -79,9 +114,13 @@ const getProductsMongoClientPromiseByKeyStore = (): Map<string, Promise<MongoCli
   return globalForProductsMongo.__productsMongoClientPromiseByKey;
 };
 
+/** Normalizes a raw source value. */
 const normalizeMongoSource = (value: unknown): MongoSource | null =>
   value === 'local' || value === 'cloud' ? value : null;
 
+/**
+ * Resolves the default or preferred source for product database operations.
+ */
 const resolveProductsMongoSource = (preferredSource?: MongoSource): MongoSource => {
   if (preferredSource) return preferredSource;
   return (
@@ -91,10 +130,16 @@ const resolveProductsMongoSource = (preferredSource?: MongoSource): MongoSource 
   );
 };
 
+/**
+ * Determines if product operations should share the default app DB in test environments.
+ */
 const shouldUseDefaultMongoDbInTests = (): boolean =>
   process.env['PRODUCTS_MONGODB_USE_DEDICATED_DB_IN_TESTS'] !== 'true' &&
   (process.env['NODE_ENV'] === 'test' || process.env['VITEST'] === 'true');
 
+/**
+ * Invalidates and closes all cached product-specific MongoDB clients.
+ */
 export async function invalidateProductsMongoClientCache(): Promise<void> {
   const clientByKey = getProductsMongoClientByKeyStore();
   const clientPromiseByKey = getProductsMongoClientPromiseByKeyStore();
@@ -114,6 +159,12 @@ export async function invalidateProductsMongoClientCache(): Promise<void> {
   });
 }
 
+/**
+ * Retrieves an established MongoClient instance for the Products subsystem.
+ * 
+ * @param preferredSource - Optional preferred source (local vs cloud).
+ * @returns Connected MongoClient instance.
+ */
 export async function getProductsMongoClient(preferredSource?: MongoSource): Promise<MongoClient> {
   const source = resolveProductsMongoSource(preferredSource);
   const config = resolveProductsMongoSourceConfig(source);
@@ -151,6 +202,12 @@ export async function getProductsMongoClient(preferredSource?: MongoSource): Pro
   }
 }
 
+/**
+ * Retrieves a MongoDB Db instance for the Products subsystem.
+ * 
+ * @param preferredSource - Optional preferred source (local vs cloud).
+ * @returns Established Db instance.
+ */
 export async function getProductsMongoDb(preferredSource?: MongoSource): Promise<Db> {
   if (shouldUseDefaultMongoDbInTests()) {
     return getDefaultMongoDb(preferredSource);

@@ -64,6 +64,7 @@ export async function resolveToolContext(input: {
   } = request.input;
 
   if (!runId) {
+    // Run ID is required to track tool execution and store results
     throw new Error('Missing runId for tool execution.');
   }
 
@@ -76,6 +77,7 @@ export async function resolveToolContext(input: {
       service: 'agent-tool',
       runId,
     });
+    // Database delegates for browser logs and snapshots are not initialized
     throw new Error('Agent browser storage is unavailable.');
   }
 

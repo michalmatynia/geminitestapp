@@ -26,7 +26,7 @@ export async function getHandler(
   const { sessionId } = params;
   const session = await chatbotSessionRepository.findById(sessionId);
   if (!session) {
-    throw notFoundError('Session not found.');
+    throw notFoundError(`Session "${sessionId}" not found. The session may have expired or the id is incorrect.`);
   }
   const messages = session.messages ?? [];
   if (DEBUG_CHATBOT) {
@@ -63,7 +63,7 @@ export async function postHandler(
   }
   const body = parsed.data;
   if (!body.role || !body.content?.trim()) {
-    throw badRequestError('Role and content are required.');
+    throw badRequestError('Role and content are required. Provide a non-empty "role" and "content" in the request body.');
   }
   if (DEBUG_CHATBOT) {
     await logSystemEvent({
@@ -81,7 +81,7 @@ export async function postHandler(
     content: body.content.trim(),
   });
   if (!updatedSession) {
-    throw notFoundError('Session not found.');
+    throw notFoundError(`Session "${sessionId}" not found after message add. The session may have expired concurrently.`);
   }
   const message = updatedSession.messages?.[updatedSession.messages.length - 1];
   if (!message) {

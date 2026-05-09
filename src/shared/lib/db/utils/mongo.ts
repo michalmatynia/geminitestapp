@@ -107,7 +107,7 @@ export const getMongoConnectionUrl = (): string => {
     'MONGODB_CLOUD_URI'
   );
   if (mongoUri.length === 0) {
-    throw configurationError('MONGODB_URI or MONGODB_LOCAL_URI is not set.');
+    throw configurationError('MONGODB_URI or MONGODB_LOCAL_URI is not set. Set one of these environment variables to enable MongoDB connectivity: MONGODB_URI, MONGODB_LOCAL_URI, or MONGODB_CLOUD_URI.');
   }
   return mongoUri;
 };
@@ -121,7 +121,7 @@ export const getMongoDatabaseName = (): string => {
     'MONGODB_CLOUD_DB'
   );
   if (dbName.length === 0) {
-    throw configurationError('MONGODB_DB or MONGODB_LOCAL_DB is not set.');
+    throw configurationError('MONGODB_DB or MONGODB_LOCAL_DB is not set. Set one of these environment variables to specify the database name: MONGODB_DB, MONGODB_LOCAL_DB, or MONGODB_CLOUD_DB.');
   }
   return dbName;
 };
@@ -500,7 +500,7 @@ export const execFileAsync = (
 
 export const assertValidBackupName = (backupName: string): void => {
   if (backupName.includes('\\') || path.isAbsolute(backupName)) {
-    throw badRequestError('Invalid backup name.');
+    throw badRequestError(`Invalid backup name "${backupName}": backup names must be relative paths and must not contain backslashes.`);
   }
 
   const segments = backupName.split('/');
@@ -509,22 +509,22 @@ export const assertValidBackupName = (backupName: string): void => {
     (segment) => segment.length === 0 || segment === '.' || segment === '..'
   );
   if (hasUnsafeSegment || segments.length > 2) {
-    throw badRequestError('Invalid backup name.');
+    throw badRequestError(`Invalid backup name "${backupName}": backup names must have at most one path separator and must not contain empty, ".", or ".." segments.`);
   }
 
   if (
     segments.length === 2 &&
     !MONGO_BACKUP_APPLICATIONS.includes(segments[0] as MongoBackupApplication)
   ) {
-    throw badRequestError('Invalid backup application folder.');
+    throw badRequestError(`Invalid backup application folder "${segments[0]}": allowed folders are ${MONGO_BACKUP_APPLICATIONS.join(', ')}.`);
   }
 
   if (path.basename(basename) !== basename) {
-    throw badRequestError('Invalid backup name.');
+    throw badRequestError(`Invalid backup name "${backupName}": the filename component "${basename}" contains path separators or is otherwise unsafe.`);
   }
 
   if (path.extname(basename) !== '.archive') {
-    throw badRequestError('Invalid backup file type.');
+    throw badRequestError(`Invalid backup file type for "${basename}": backup files must have the ".archive" extension.`);
   }
 };
 

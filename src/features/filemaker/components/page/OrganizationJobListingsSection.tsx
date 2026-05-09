@@ -1736,9 +1736,11 @@ function ApplicationPackageModal({
           }),
         ]);
         if (!personResponse.ok) {
+          // API request to load person profile returned an error status
           throw new Error(`Failed to load selected person profile (${personResponse.status}).`);
         }
         if (!cvsResponse.ok) {
+          // API request to load person CVs returned an error status
           throw new Error(`Failed to load selected person CV records (${cvsResponse.status}).`);
         }
         const personPayload = (await personResponse.json()) as Record<string, unknown>;
@@ -2305,7 +2307,10 @@ function ApplicationPackageModal({
         const response = await fetch(
           `/api/filemaker/job-applications/${encodeURIComponent(targetApplicationId)}/apply`
         );
-        if (!response.ok) throw new Error(`Failed to load apply run (${response.status}).`);
+        if (!response.ok) {
+          // API request to load job application apply run returned an error status
+          throw new Error(`Failed to load apply run (${response.status}).`);
+        }
         const payload = (await response.json()) as FilemakerJobApplicationApplyRunResponse;
         if (requestSeq === applyRunRequestSeqRef.current) {
           setApplyRun(payload.run ?? null);
@@ -2386,7 +2391,10 @@ function ApplicationPackageModal({
           }),
         }
       );
-      if (!response.ok) throw new Error(`Failed to start application apply run (${response.status}).`);
+      if (!response.ok) {
+        // API request to start job application apply run returned an error status
+        throw new Error(`Failed to start application apply run (${response.status}).`);
+      }
       const payload = (await response.json()) as FilemakerJobApplicationApplyRunResponse;
       if (requestSeq === applyRunRequestSeqRef.current) {
         setApplyRun(payload.run ?? null);
@@ -2409,7 +2417,10 @@ function ApplicationPackageModal({
       const response = await fetch(
         `/api/filemaker/cvs/${encodeURIComponent(visibleApplication.tailoredCvId ?? '')}`
       );
-      if (!response.ok) throw new Error(`Failed to load CV preview (${response.status}).`);
+      if (!response.ok) {
+        // API request to load CV for preview returned an error status
+        throw new Error(`Failed to load CV preview (${response.status}).`);
+      }
       const payload = (await response.json()) as { cv?: FilemakerCv };
       const cv = payload.cv;
       if (!cv) throw new Error('CV preview data was not returned.');

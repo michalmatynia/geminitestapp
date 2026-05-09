@@ -5,8 +5,8 @@ import {
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from '@/shared/contracts/ai-insights';
-import { Input, Textarea, CollapsibleSection } from '@/shared/ui/primitives.public';
-import { FormSection, FormField, ToggleRow, StatusToggle } from '@/shared/ui/forms-and-actions.public';
+import { Textarea, CollapsibleSection } from '@/shared/ui/primitives.public';
+import { FormSection, FormField, StatusToggle } from '@/shared/ui/forms-and-actions.public';
 import { SimpleSettingsList } from '@/shared/ui/templates.public';
 import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
@@ -48,89 +48,10 @@ export function ReportsTab(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <ReportSchedulesSection brain={brain} />
       <ReportPromptsSection brain={brain} />
       <DefaultPromptsSection />
       <FeatureOverridesSection brain={brain} />
     </div>
-  );
-}
-
-function ReportSchedulesSection({ brain }: { brain: ReturnType<typeof useBrain> }): React.JSX.Element {
-  return (
-    <FormSection title='Schedules' className='p-4'>
-      <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-3 md:grid-cols-3`}>
-        <div className='space-y-3'>
-          <ToggleRow
-            variant='switch'
-            label='Analytics insights schedule'
-            description='How often analytics reports run.'
-            checked={brain.analyticsScheduleEnabled}
-            onCheckedChange={brain.setAnalyticsScheduleEnabled}
-            className='border-none p-0 bg-transparent hover:bg-transparent'
-          />
-          <FormField label='Minutes'>
-            <Input
-              type='number'
-              min={5}
-              value={brain.analyticsScheduleMinutes}
-              onChange={(e) => brain.setAnalyticsScheduleMinutes(Number(e.target.value))}
-              aria-label='Minutes'
-              title='Minutes'
-            />
-          </FormField>
-        </div>
-
-        <div className='space-y-3'>
-          <ToggleRow
-            variant='switch'
-            label='Runtime analytics schedule'
-            description='How often runtime AI reports run.'
-            checked={brain.runtimeAnalyticsScheduleEnabled}
-            onCheckedChange={brain.setRuntimeAnalyticsScheduleEnabled}
-            className='border-none p-0 bg-transparent hover:bg-transparent'
-          />
-          <FormField label='Minutes'>
-            <Input
-              type='number'
-              min={5}
-              value={brain.runtimeAnalyticsScheduleMinutes}
-              onChange={(e) => brain.setRuntimeAnalyticsScheduleMinutes(Number(e.target.value))}
-              aria-label='Minutes'
-              title='Minutes'
-            />
-          </FormField>
-        </div>
-
-        <div className='space-y-3'>
-          <ToggleRow
-            variant='switch'
-            label='System log insights schedule'
-            description='How often log reports run.'
-            checked={brain.logsScheduleEnabled}
-            onCheckedChange={brain.setLogsScheduleEnabled}
-            className='border-none p-0 bg-transparent hover:bg-transparent'
-          />
-          <FormField label='Minutes'>
-            <Input
-              type='number'
-              min={5}
-              value={brain.logsScheduleMinutes}
-              onChange={(e) => brain.setLogsScheduleMinutes(Number(e.target.value))}
-              aria-label='Minutes'
-              title='Minutes'
-            />
-          </FormField>
-          <ToggleRow
-            variant='switch'
-            label='Auto-run on new errors'
-            checked={brain.logsAutoOnError}
-            onCheckedChange={brain.setLogsAutoOnError}
-            className='border-none p-0 bg-transparent hover:bg-transparent'
-          />
-        </div>
-      </div>
-    </FormSection>
   );
 }
 

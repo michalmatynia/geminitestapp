@@ -124,6 +124,7 @@ export async function runAgentTool(
   }
 
   if (!page) {
+    // Playwright failed to create a new page instance
     throw new Error('Failed to initialize Playwright page.');
   }
 
@@ -353,6 +354,7 @@ export async function runAgentTool(
     });
 
     if (parseExtractionRequest(prompt) && !extractionResult) {
+      // Extraction was requested but the LLM did not return any extracted data
       throw new Error('Extraction failed to produce a result.');
     }
 

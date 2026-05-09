@@ -1,13 +1,12 @@
 /**
  * Collection Provider Map
  * 
- * MongoDB collection routing and provider management.
- * Provides:
- * - Collection-to-provider mapping
- * - Database engine provider resolution
- * - Active MongoDB source environment application
- * - Server-only collection routing
- * - Provider configuration management
+ * Manages the routing of individual MongoDB collections to specific database providers.
+ * Features:
+ * - Dynamic collection-to-provider mapping (MongoDB or Redis)
+ * - Database Engine policy-aware provider resolution
+ * - Automated fallback to application-wide database provider
+ * - Server-only execution for security and performance
  */
 
 import 'server-only';
@@ -25,9 +24,14 @@ import { getDatabaseEnginePolicy } from './database-engine-policy';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 import { SafeDatabaseCache } from './utils/database-cache';
 
-
+/**
+ * Cache TTL for collection routing maps.
+ */
 const CACHE_TTL_MS = 30_000;
 
+/**
+ * Internal cache for the collection routing map.
+ */
 const collectionRouteMapCache = new SafeDatabaseCache<Record<string, DatabaseEngineProvider>>({
   ttlMs: CACHE_TTL_MS,
   source: 'db.collection-provider-map',
@@ -35,6 +39,12 @@ const collectionRouteMapCache = new SafeDatabaseCache<Record<string, DatabaseEng
   defaultValue: {},
 });
 
+/**
+ * Parses a raw value into a collection routing map.
+ * 
+ * @param raw - The raw value from database settings.
+ * @returns A validated Record of collection names to providers.
+ */
 const parseMap = (raw: unknown): Record<string, DatabaseEngineProvider> => {
   if (!raw) return {};
   const str = typeof raw === 'string' ? raw : JSON.stringify(raw);
@@ -56,6 +66,13 @@ const parseMap = (raw: unknown): Record<string, DatabaseEngineProvider> => {
   }
 };
 
+/**
+ * Finds an explicit route for a collection in the map, supporting case-insensitive matching.
+ * 
+ * @param map - The routing map.
+ * @param collectionName - The name of the collection to route.
+ * @returns The matched provider or undefined if no explicit route exists.
+ */
 const findCollectionRoute = (
   map: Record<string, DatabaseEngineProvider>,
   collectionName: string
@@ -68,6 +85,12 @@ const findCollectionRoute = (
   return matchedKey ? map[matchedKey] : undefined;
 };
 
+/**
+ * Reads a routing map from MongoDB settings.
+ * 
+ * @param key - The settings key.
+ * @returns The parsed routing map.
+ */
 const readMapFromMongo = async (key: string): Promise<Record<string, DatabaseEngineProvider>> => {
   await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return {};
@@ -89,18 +112,31 @@ const readMapFromMongo = async (key: string): Promise<Record<string, DatabaseEng
   }
 };
 
+/**
+ * Internal helper to read the collection route map from settings.
+ */
 const readCollectionRouteMap = async (): Promise<Record<string, DatabaseEngineProvider>> => {
   return readMapFromMongo(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY);
 };
 
-/** Returns the full per-collection routing map (supports mongodb/redis). */
+/**
+ * Returns the full per-collection routing map.
+ * This map includes all explicitly routed collections and their target providers (mongodb or redis).
+ * 
+ * @returns Full collection routing map.
+ */
 export async function getCollectionRouteMap(): Promise<Record<string, DatabaseEngineProvider>> {
   return collectionRouteMapCache.get(async () => {
     return readCollectionRouteMap();
   });
 }
 
-/** Returns the primary-provider map only (mongodb). */
+/**
+ * Returns a map of collections specifically routed to MongoDB.
+ * Useful for operations that only support primary application databases.
+ * 
+ * @returns Collection map for MongoDB providers.
+ */
 export async function getCollectionProviderMap(): Promise<Record<string, AppDbProvider>> {
   const routeMap = await getCollectionRouteMap();
   const primaryMap: Record<string, AppDbProvider> = {};
@@ -112,7 +148,21 @@ export async function getCollectionProviderMap(): Promise<Record<string, AppDbPr
   return primaryMap;
 }
 
-/** Returns the provider for a specific collection, falling back to the app-wide provider. */
+/**
+ * Resolves the database provider for a specific collection.
+ * 
+ * Logic flow:
+ * 1. Check for explicit route in Database Engine.
+ * 2. If routed to MongoDB, return 'mongodb'.
+ * 3. If routed to Redis, throw if MongoDB is required (this function currently assumes MongoDB context).
+ * 4. If no explicit route, check Database Engine policy:
+ *    - If policy requires explicit routing, throw.
+ *    - Otherwise, fallback to the app-wide provider.
+ * 
+ * @param collectionName - The name of the collection.
+ * @returns The resolved AppDbProvider for the collection.
+ * @throws {InternalError} If routing violates policy or targets an incompatible provider.
+ */
 export async function getCollectionProvider(collectionName: string): Promise<AppDbProvider> {
   const policy = await getDatabaseEnginePolicy();
   const map = await getCollectionRouteMap();
@@ -131,8 +181,18 @@ export async function getCollectionProvider(collectionName: string): Promise<App
   return getAppDbProvider();
 }
 
+/**
+ * Represents the requested provider selection for a database operation.
+ */
 export type CollectionProviderSelection = 'auto' | AppDbProvider | undefined;
 
+/**
+ * Resolves the final provider for a request based on a preferred selection and collection routing.
+ * 
+ * @param collectionName - The name of the collection being accessed.
+ * @param requestedProvider - The user/system requested provider override.
+ * @returns The resolved AppDbProvider.
+ */
 export async function resolveCollectionProviderForRequest(
   collectionName: string,
   requestedProvider: CollectionProviderSelection
@@ -143,6 +203,9 @@ export async function resolveCollectionProviderForRequest(
   return getCollectionProvider(collectionName);
 }
 
+/**
+ * Invalidates the cached collection provider routing map.
+ */
 export const invalidateCollectionProviderMapCache = (): void => {
   collectionRouteMapCache.invalidate();
 };

@@ -1,21 +1,12 @@
 /**
- * API Error Handler
- * 
- * Centralized error handling and response formatting for API routes.
- * Provides:
- * - Standardized error response formatting with consistent structure
- * - Error classification and HTTP status code mapping
- * - Request context extraction (headers, query params, method)
- * - Error tracking with unique IDs for correlation
- * - Service source resolution for distributed system debugging
- * - Observability integration with error reporting
- * - Security-conscious error details filtering
- * 
- * This handler ensures consistent error responses across all API endpoints
- * while maintaining security and providing comprehensive debugging information.
+ * @file handle-api-error.ts
+ * @description Centralized error handling and response formatting for API routes.
+ * Ensures consistent error responses, manages HTTP status code mapping, 
+ * and integrates with observability tools for error tracking and reporting.
  */
 
 import 'server-only';
+// ... (imports)
 
 import { randomUUID } from 'crypto';
 
@@ -27,18 +18,26 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { reportError } from '@/shared/utils/observability/report-error';
 
 /**
- * Configuration options for API error handling
+ * Configuration options for API error handling.
  */
 type ApiErrorOptions = {
+  /** The incoming request to extract metadata from */
   request?: Request | undefined;
+  /** The symbolic source of the error (e.g. "products.update") */
   source?: string | undefined;
+  /** The microservice or subsystem name */
   service?: string | undefined;
+  /** User-friendly message to show if the error doesn't provide one */
   fallbackMessage?: string | undefined;
+  /** Whether to include detailed error metadata in the public response */
   includeDetails?: boolean | undefined;
+  /** Extra key-value pairs to merge into the response JSON */
   extra?: Record<string, unknown> | undefined;
   /** Request ID for tracing (will be included in response headers) */
   requestId?: string | undefined;
+  /** Trace ID for distributed tracing */
   traceId?: string | undefined;
+  /** Correlation ID to link related operations across services */
   correlationId?: string | undefined;
 };
 
@@ -87,14 +86,17 @@ const extractRequestDiagnostics = (
 };
 
 /**
- * Creates a standardized error response with logging.
- *
- * Features:
- * - Resolves any error to a standardized format
- * - Logs to system log with appropriate level
- * - Includes retry information for retryable errors
- * - Sets appropriate headers (x-request-id, x-error-id, Retry-After)
- * - Differentiates between expected (user) and unexpected (server) errors
+ * Creates a standardized error response with logging and observability reporting.
+ * 
+ * This is the primary error handling utility for API routes. It:
+ * 1. Resolves the error into a standard format.
+ * 2. Reports the error to observability services (Sentry, Otel, etc.).
+ * 3. Formats a secure JSON response for the client.
+ * 4. Adds tracing headers to the response.
+ * 
+ * @param error The caught error (can be any type)
+ * @param options Configuration for handling and reporting
+ * @returns A NextResponse object with the formatted error and status code
  */
 export const createErrorResponse = async (
   error: unknown,
@@ -182,8 +184,12 @@ export const createErrorResponse = async (
 };
 
 /**
- * Creates a simple error response without logging.
- * Use sparingly - prefer createErrorResponse for proper tracing.
+ * Creates a simple error response without background logging or complex reporting.
+ * Use this for high-frequency low-value errors or when the observability system is unavailable.
+ * 
+ * @param message User-friendly error message
+ * @param status HTTP status code
+ * @param code machine-readable error code
  */
 export const createSimpleErrorResponse = (
   message: string,
@@ -204,7 +210,11 @@ export const createSimpleErrorResponse = (
 };
 
 /**
- * Creates a validation error response from field errors.
+ * Creates a validation error response specifically for field-level validation failures.
+ * This helper automatically wraps the field errors into a formal ValidationError.
+ * 
+ * @param fieldErrors Mapping of field names to arrays of error messages
+ * @param options Standard API error options
  */
 export const createValidationErrorResponse = async (
   fieldErrors: Record<string, string[]>,

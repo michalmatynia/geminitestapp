@@ -39,13 +39,13 @@ export const resolveBufferFromImagePath = async (
 ): Promise<{ buffer: Buffer; mime: string | null }> => {
   const normalized = filepath.trim();
   if (!normalized) {
-    throw badRequestError('Source product image path is empty.');
+    throw badRequestError('Source product image path is empty. The image record must have a non-empty filepath or data URL before it can be processed.');
   }
 
   if (normalized.startsWith('data:')) {
     const parsed = parseDataUrlToBuffer(normalized);
     if (!parsed) {
-      throw badRequestError('Invalid data URL in source product image.');
+      throw badRequestError('Invalid data URL in source product image. The value starts with "data:" but could not be parsed as a valid base64-encoded data URL.');
     }
     return parsed;
   }
@@ -117,7 +117,7 @@ export const buildUpscaledImage = async (
   const width = metadata.width ?? 0;
   const height = metadata.height ?? 0;
   if (!(width > 0 && height > 0)) {
-    throw badRequestError('Accepted variant has invalid dimensions for upscaling.');
+    throw badRequestError(`Accepted variant has invalid dimensions for upscaling (width=${width}, height=${height}). The image may be corrupt or not a supported format.`);
   }
 
   const scale = clampUpscaleScale(scaleInput);
@@ -160,7 +160,7 @@ export const importSourceProductImageToStudio = async (params: {
   const sourceImage = params.imageFile;
   const sourcePath = trimString(sourceImage.filepath);
   if (!sourcePath) {
-    throw badRequestError('Selected product image has no filepath.');
+    throw badRequestError('Selected product image has no filepath. The image record must have a valid filepath before it can be imported into Image Studio.');
   }
 
   const sourceFilename =

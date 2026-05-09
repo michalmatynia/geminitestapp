@@ -152,6 +152,7 @@ export const parseFilemakerLegacyContractRows = (
   });
   if (parsed.errors.length > 0) {
     const firstError = parsed.errors[0]?.message ?? 'parse error';
+    // CSV/TSV parsing failed due to malformed data
     throw new Error(`Invalid FileMaker ${input.tableName} export: ${firstError}`);
   }
   return rowsToLegacyContractRows(parsed.data, { ...input, format: 'CSV/TSV' });
@@ -172,10 +173,12 @@ export const parseFilemakerLegacyContractWorkbookRows = async (
   const workbook = XLSX.read(toArrayBuffer(input), { type: 'array', cellDates: false });
   const sheetName = workbook.SheetNames[0];
   if (sheetName === undefined) {
+    // XLSX file contains no worksheets
     throw new Error(`FileMaker ${options.tableName} XLSX export does not contain any worksheets.`);
   }
   const sheet = workbook.Sheets[sheetName];
   if (!sheet) {
+    // Expected worksheet is not present in the XLSX file
     throw new Error(`FileMaker ${options.tableName} XLSX export is missing worksheet "${sheetName}".`);
   }
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {

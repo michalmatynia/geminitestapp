@@ -505,6 +505,7 @@ const resolveRunResultBeforeProcessing = async (
     return reconciled.result;
   }
   if (isTerminalStatus(reconciled.status)) {
+    // Run has already completed or failed and cannot be reprocessed
     throw new Error(`Scrape profile run ${runId} is already ${reconciled.status}.`);
   }
   return null;

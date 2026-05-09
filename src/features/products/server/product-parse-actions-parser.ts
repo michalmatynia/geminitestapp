@@ -73,6 +73,7 @@ const loadTraderaParseActionPatterns = async (): Promise<ProductParseActionsTrad
   const patterns = await listValidationPatternsCached();
   const selected = selectTraderaParseActionValidationPatterns(patterns);
   if (selected === null) {
+    // Required validation patterns for Tradera parse actions are not configured
     throw new Error('Tradera Parse Actions validation patterns are missing.');
   }
   return selected;

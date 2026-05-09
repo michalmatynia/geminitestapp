@@ -1,6 +1,6 @@
 ---
 owner: 'Products / Platform Team'
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-05-09'
 status: 'active'
 doc_type: 'architecture'
 scope: 'feature:validator'

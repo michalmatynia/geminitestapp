@@ -17,6 +17,10 @@ export function LessonPagesPanel({ controller }: { controller: any }) {
         {pages.map((page: any, index: number) => {
           const isActive = page.id === activePage?.id;
           const pageReview = pageDraftReviews.get(page.id);
+          const hasIssues = pageReview?.issueCount > 0;
+          const narrationSummary = pageReview?.narrationCoverage.summaryLabel;
+          const narrationState = pageReview?.narrationCoverage.state;
+
           return (
             <button
               key={page.id}
@@ -27,6 +31,28 @@ export function LessonPagesPanel({ controller }: { controller: any }) {
               )}
             >
               <div className='text-sm font-semibold'>{page.title || `Page ${index + 1}`}</div>
+              <div className='mt-1 flex flex-wrap gap-1.5'>
+                {hasIssues && (
+                  <Badge variant='outline' className='h-4 border-rose-200 bg-rose-50 px-1 text-[9px] text-rose-600'>
+                    {pageReview.isEmpty ? 'Blank page' : 'Has issues'}
+                  </Badge>
+                )}
+                {narrationSummary && (
+                  <Badge
+                    variant='outline'
+                    className={cn(
+                      'h-4 px-1 text-[9px]',
+                      narrationState === 'ready'
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+                        : narrationState === 'needs-review'
+                        ? 'border-amber-200 bg-amber-50 text-amber-600'
+                        : 'border-slate-200 bg-slate-50 text-slate-500'
+                    )}
+                  >
+                    {narrationSummary}
+                  </Badge>
+                )}
+              </div>
             </button>
           );
         })}

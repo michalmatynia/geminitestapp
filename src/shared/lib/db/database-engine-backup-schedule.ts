@@ -1,13 +1,10 @@
 /**
  * Database Engine Backup Schedule
  * 
- * Backup scheduling configuration and management.
- * Provides:
- * - Backup schedule parsing and validation
- * - Cadence configuration (daily, weekly, etc.)
- * - Target schedule management
- * - Backup status tracking
- * - Default schedule settings
+ * Manages the normalization, validation, and parsing of database backup schedules.
+ * This module ensures that backup configurations (daily, weekly, interval-based) are
+ * correctly formatted and have sensible defaults. It handles both MongoDB-specific
+ * schedules and global scheduler settings.
  */
 
 import {
@@ -20,14 +17,28 @@ import {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
-
+/**
+ * Regex for validating 24-hour UTC time format (HH:mm).
+ */
 const VALID_TIME_UTC = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
+/**
+ * Ensures a value is a plain object Record.
+ * 
+ * @param value - The value to check.
+ * @returns The value as a Record or null.
+ */
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
 };
 
+/**
+ * Parses a raw value (string or object) into a Record.
+ * 
+ * @param raw - The raw input to parse.
+ * @returns The parsed Record or null.
+ */
 const parseRawObject = (raw: unknown): Record<string, unknown> | null => {
   if (typeof raw === 'string') {
     try {
@@ -45,9 +56,21 @@ const parseRawObject = (raw: unknown): Record<string, unknown> | null => {
   return asRecord(raw);
 };
 
+/**
+ * Type guard for backup cadence values.
+ * 
+ * @param value - The value to check.
+ * @returns True if the value is a valid DatabaseEngineBackupCadence.
+ */
 const isBackupCadence = (value: unknown): value is DatabaseEngineBackupCadence =>
   value === 'daily' || value === 'every_n_days' || value === 'weekly';
 
+/**
+ * Type guard for backup status values.
+ * 
+ * @param value - The value to check.
+ * @returns True if the value is a valid DatabaseEngineBackupStatus.
+ */
 const isBackupStatus = (value: unknown): value is DatabaseEngineBackupStatus =>
   value === 'idle' ||
   value === 'queued' ||
@@ -55,6 +78,15 @@ const isBackupStatus = (value: unknown): value is DatabaseEngineBackupStatus =>
   value === 'success' ||
   value === 'failed';
 
+/**
+ * Normalizes a value to a positive integer within a specified range.
+ * 
+ * @param value - The input value.
+ * @param fallback - Fallback if input is invalid.
+ * @param min - Minimum allowed value.
+ * @param max - Maximum allowed value.
+ * @returns The normalized integer.
+ */
 const normalizePositiveInt = (
   value: unknown,
   fallback: number,
@@ -65,6 +97,12 @@ const normalizePositiveInt = (
   return Math.min(max, Math.max(min, Math.floor(value)));
 };
 
+/**
+ * Normalizes a value to an ISO date string or null.
+ * 
+ * @param value - The input value.
+ * @returns ISO string or null.
+ */
 const normalizeIsoOrNull = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -73,14 +111,34 @@ const normalizeIsoOrNull = (value: unknown): string | null => {
   return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
 };
 
+/**
+ * Validates if a string is a valid UTC time in HH:mm format.
+ * 
+ * @param value - The string to validate.
+ * @returns True if valid.
+ */
 export const isValidDatabaseEngineBackupTimeUtc = (value: string): boolean =>
   VALID_TIME_UTC.test(value);
 
+/**
+ * Normalizes a UTC time string, falling back if invalid.
+ * 
+ * @param value - The input value.
+ * @param fallback - The fallback time.
+ * @returns Normalized HH:mm time.
+ */
 const normalizeTimeUtc = (value: unknown, fallback: string): string =>
   typeof value === 'string' && isValidDatabaseEngineBackupTimeUtc(value.trim())
     ? value.trim()
     : fallback;
 
+/**
+ * Normalizes a specific backup target schedule (e.g., for MongoDB).
+ * 
+ * @param input - The raw target settings.
+ * @param fallback - Fallback settings.
+ * @returns Normalized target schedule.
+ */
 const normalizeTarget = (
   input: Record<string, unknown> | null,
   fallback: DatabaseEngineBackupTargetSchedule
@@ -104,6 +162,12 @@ const normalizeTarget = (
   nextDueAt: normalizeIsoOrNull(input?.['nextDueAt']),
 });
 
+/**
+ * Normalizes a complete Database Engine backup schedule.
+ * 
+ * @param raw - The raw input (JSON string or object).
+ * @returns A fully normalized DatabaseEngineBackupSchedule object.
+ */
 export const normalizeDatabaseEngineBackupSchedule = (
   raw: unknown
 ): DatabaseEngineBackupSchedule => {
@@ -126,6 +190,9 @@ export const normalizeDatabaseEngineBackupSchedule = (
   };
 };
 
+/**
+ * Human-readable labels for weekdays used in backup scheduling.
+ */
 export const DATABASE_ENGINE_BACKUP_WEEKDAYS: Array<LabeledOptionDto<number>> = [
   { value: 0, label: 'Sunday' },
   { value: 1, label: 'Monday' },

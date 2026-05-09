@@ -216,7 +216,10 @@ function useMongoFilemakerOrganizations(input: {
     setState((current) => ({ ...current, error: null, isLoading: true }));
     fetch(`/api/filemaker/organizations?${params.toString()}`, { signal: controller.signal })
       .then(async (response: Response): Promise<MongoFilemakerOrganizationsResponse> => {
-        if (!response.ok) throw new Error(`Failed to load organisations (${response.status}).`);
+        if (!response.ok) {
+          // API request to load organizations list returned an error status
+          throw new Error(`Failed to load organisations (${response.status}).`);
+        }
         return (await response.json()) as MongoFilemakerOrganizationsResponse;
       })
       .then((response: MongoFilemakerOrganizationsResponse): void => {
@@ -287,7 +290,10 @@ const loadOrganizationIdsForSelection = async (input: {
   });
   params.set('idsOnly', 'true');
   const response = await fetch(`/api/filemaker/organizations?${params.toString()}`);
-  if (!response.ok) throw new Error(`Failed to load organisation IDs (${response.status}).`);
+  if (!response.ok) {
+    // API request to load organization IDs returned an error status
+    throw new Error(`Failed to load organisation IDs (${response.status}).`);
+  }
   const body = (await response.json()) as { ids?: unknown };
   if (!Array.isArray(body.ids)) return [];
   return body.ids.filter(

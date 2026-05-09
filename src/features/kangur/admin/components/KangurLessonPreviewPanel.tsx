@@ -29,7 +29,7 @@ export function KangurLessonPreviewPanel({
       : `Full lesson preview on ${previewDevice === 'mobile' ? 'mobile' : 'desktop'}`;
 
   return (
-    <div className='sticky top-4 hidden h-[calc(100vh-2rem)] flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/35 shadow-sm xl:flex'>
+    <div className='sticky top-4 flex h-[calc(100vh-2rem)] flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/35 shadow-sm'>
       <div className='flex items-center justify-between border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur-md'>
         <div>
           <div className='text-sm font-semibold text-foreground'>Preview</div>

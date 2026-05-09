@@ -108,6 +108,7 @@ async function prepareMemoryValidation(params: {
   const model = (params.model !== null && params.model !== undefined && params.model.trim() !== '') ? params.model.trim() : config.modelId;
   const prompt = params.prompt ?? '';
   if (model === null) {
+    // No validation model is configured in AI Brain settings
     throw new Error('AI Brain memory validation model is not configured.');
   }
   return { config, model, prompt };

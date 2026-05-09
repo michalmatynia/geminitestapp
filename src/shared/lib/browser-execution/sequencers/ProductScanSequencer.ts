@@ -222,7 +222,10 @@ export abstract class ProductScanSequencer {
   protected upsertScanStep(input: ScanStepUpsertInput): ProductScanStep {
     const key = this.normalizeText(input.key);
     const status = input.status;
-    if (!key || !status) throw new Error('upsertScanStep: key and status are required');
+    if (!key || !status) {
+      // Scan step key and status are required to track progress
+      throw new Error('upsertScanStep: key and status are required');
+    }
 
     const registryEntry = PRODUCT_SCAN_STEP_REGISTRY[key as ProductScanStepKey] ?? null;
     const label = this.normalizeText(input.label) ?? registryEntry?.label ?? key;

@@ -99,7 +99,7 @@ const resolveLinkedInConnection = async (preferredConnectionId?: string | null) 
   if (preferredId) {
     const preferred = connections.find((connection) => connection.id === preferredId) ?? null;
     if (!preferred) {
-      throw configurationError('Selected LinkedIn connection was not found.');
+      throw configurationError(`Selected LinkedIn connection "${preferredId}" was not found. Verify the connection id or select a different connection in Admin > Integrations.`);
     }
     if (!preferred.linkedinAccessToken?.trim()) {
       throw configurationError(
@@ -207,7 +207,7 @@ const registerLinkedInUpload = async (
   const asset = payload?.value?.asset ?? null;
 
   if (!uploadUrl || !asset) {
-    throw operationFailedError('LinkedIn image registration response is incomplete.');
+    throw operationFailedError('LinkedIn image registration response is incomplete. The upload URL or asset URN was missing from the LinkedIn API response. This may be a transient LinkedIn API issue — try again.');
   }
 
   return { asset, uploadUrl };
@@ -261,7 +261,7 @@ const resolveImageAsset = async (
     const inferredType = resolveContentType(typeof lookup === 'string' ? lookup : null);
     const contentType = headerType ?? inferredType;
     if (!contentType?.startsWith('image/')) {
-      throw configurationError('LinkedIn publish supports image files only.');
+      throw configurationError(`LinkedIn publish supports image files only, but the downloaded asset at "${source}" has content-type "${contentType ?? 'unknown'}". Ensure all post images are valid image files.`);
     }
     return { buffer: Buffer.from(arrayBuffer), contentType };
   }
@@ -273,7 +273,7 @@ const resolveImageAsset = async (
   const lookup = mime.lookup(diskPath);
   const inferredType = resolveContentType(typeof lookup === 'string' ? lookup : null);
   if (!inferredType?.startsWith('image/')) {
-    throw configurationError('LinkedIn publish supports image files only.');
+    throw configurationError(`LinkedIn publish supports image files only, but the file at "${diskPath}" has an unrecognised MIME type "${inferredType ?? 'unknown'}". Ensure all post images are valid image files.`);
   }
   return { buffer, contentType: inferredType };
 };
@@ -340,7 +340,7 @@ export async function publishLinkedInPersonalPost(
     );
 
     if (!text) {
-      throw configurationError('LinkedIn post content is empty.');
+      throw configurationError('LinkedIn post content is empty. Add body text to the post before publishing.');
     }
 
     const mediaAssets: string[] = [];

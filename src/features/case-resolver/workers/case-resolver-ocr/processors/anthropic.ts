@@ -64,6 +64,7 @@ export const runAnthropicOcrRequest = async (input: {
   );
   if (!response.ok) {
     const responseBody = await response.text();
+    // Anthropic API returned an error response
     throw new Error(responseBody.trim() || `Anthropic OCR request failed (${response.status}).`);
   }
   const payload = (await response.json()) as AnthropicMessageResponse;

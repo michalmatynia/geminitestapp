@@ -7,6 +7,7 @@ import { PLAYWRIGHT_ACTIONS_SETTINGS_KEY } from '@/shared/contracts/playwright-s
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { KANGUR_SLOT_ASSIGNMENTS_KEY, KANGUR_THEME_CATALOG_KEY } from '@/shared/contracts/kangur';
 import { AI_BRAIN_SETTINGS_KEY } from '@/shared/lib/ai-brain/settings';
+import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 
 const mocks = vi.hoisted(() => ({
   assertSettingsManageAccessMock: vi.fn(),
@@ -291,6 +292,40 @@ describe('settings handler', () => {
     await expect(response.json()).resolves.toEqual({
       key: OBSERVABILITY_LOGGING_KEYS.infoEnabled,
       value: 'true',
+    });
+  });
+
+  it('persists the Tradera listing price currency setting', async () => {
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode,
+        value: 'EUR',
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode,
+          value: 'EUR',
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateOneMock).toHaveBeenCalledWith(
+      { key: TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode },
+      expect.objectContaining({
+        $set: expect.objectContaining({ value: 'EUR' }),
+      }),
+      { upsert: true }
+    );
+    await expect(response.json()).resolves.toEqual({
+      key: TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode,
+      value: 'EUR',
     });
   });
 

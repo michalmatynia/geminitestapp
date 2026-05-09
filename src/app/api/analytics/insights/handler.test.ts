@@ -41,7 +41,7 @@ describe('analytics insights handler', () => {
     );
     const data = await response.json();
 
-    expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
+    expect(startAiInsightsQueueMock).not.toHaveBeenCalled();
     expect(listAiInsightsMock).toHaveBeenCalledWith('analytics', 5);
     expect(data).toEqual({
       insights: [{ id: 'insight-list-1', type: 'analytics' }],
@@ -78,7 +78,7 @@ describe('analytics insights handler', () => {
     const response = await postHandler(req, {} as never);
     const data = await response.json();
 
-    expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
+    expect(startAiInsightsQueueMock).not.toHaveBeenCalled();
     expect(resolveAiInsightsContextRegistryEnvelopeMock).toHaveBeenCalledWith({
       refs: [{ id: 'page:analytics', kind: 'static_node' }],
       engineVersion: 'page-context:v1',

@@ -1,8 +1,33 @@
+/**
+ * MongoDB Source Environment Utilities
+ * 
+ * Provides utility functions to check for the presence of MongoDB 
+ * connection strings in the environment. It supports multiple 
+ * source-specific URI keys (local, cloud) and the default URI key.
+ */
+
+/**
+ * Checks if a specific environment variable exists and has a non-empty trimmed value.
+ * 
+ * @param env - The environment object to check.
+ * @param key - The environment variable key.
+ * @returns True if the value exists and is not empty.
+ */
 const hasTrimmedEnvValue = (env: NodeJS.ProcessEnv, key: string): boolean => {
   const value = env[key];
   return typeof value === 'string' && value.trim().length > 0;
 };
 
+/**
+ * Determines if any valid MongoDB source configuration is present in the environment.
+ * Checks for:
+ * - MONGODB_URI (default)
+ * - MONGODB_LOCAL_URI
+ * - MONGODB_CLOUD_URI
+ * 
+ * @param env - Optional environment object to check (defaults to process.env).
+ * @returns True if at least one MongoDB URI is configured.
+ */
 export const hasConfiguredMongoSourceEnv = (env: NodeJS.ProcessEnv = process.env): boolean =>
   hasTrimmedEnvValue(env, 'MONGODB_URI') ||
   hasTrimmedEnvValue(env, 'MONGODB_LOCAL_URI') ||

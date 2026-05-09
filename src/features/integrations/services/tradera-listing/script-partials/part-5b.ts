@@ -268,6 +268,9 @@ export const PART_5B = String.raw`
         minimumQuietMs: 1_200,
         context: 'delivery-configuration',
       });
+      await acceptVisiblePaymentSolutionModalIfPresent({
+        context: 'post-delivery-configuration',
+      }).catch(() => false);
       updateStep('shipping_set', 'completed', {
         shippingCondition: configuredDeliveryOptionLabel || null,
         shippingPriceEur: configuredDeliveryPriceEur ?? null,
@@ -408,9 +411,25 @@ export const PART_5B = String.raw`
         publishButtonDisabled: false,
         externalListingId: extractListingId(normalizedInitialPublishUrl),
         listingUrl: null,
+        paymentSolutionTermsAccepted: false,
       };
+      let paymentSolutionAcceptedAt = null;
 
       while (Date.now() < deadline) {
+        const paymentSolutionAccepted = await acceptVisiblePaymentSolutionModalIfPresent({
+          context: 'publish-interaction-wait',
+        }).catch(() => false);
+        if (paymentSolutionAccepted) {
+          paymentSolutionAcceptedAt = Date.now();
+          lastObservation = {
+            ...lastObservation,
+            currentUrl: page.url(),
+            paymentSolutionTermsAccepted: true,
+          };
+          await wait(500);
+          continue;
+        }
+
         const currentUrl = page.url();
         const stillOnSellFlow = isTraderaSellingRoute(currentUrl);
         const activeListingsVisible = currentUrl.toLowerCase().includes('/my/listings');
@@ -434,6 +453,7 @@ export const PART_5B = String.raw`
           publishButtonDisabled,
           externalListingId: externalListingId || visibleListingLink?.listingId || null,
           listingUrl,
+          paymentSolutionTermsAccepted: lastObservation.paymentSolutionTermsAccepted === true,
         };
 
         if (externalListingId) {
@@ -456,6 +476,20 @@ export const PART_5B = String.raw`
           return {
             confirmed: true,
             reason: activeListingsVisible ? 'active-listings' : 'url-change',
+            ...lastObservation,
+          };
+        }
+
+        if (
+          paymentSolutionAcceptedAt !== null &&
+          Date.now() - paymentSolutionAcceptedAt >= 1_000 &&
+          stillOnSellFlow &&
+          publishButtonVisible === true &&
+          publishButtonDisabled === false
+        ) {
+          return {
+            confirmed: false,
+            reason: 'payment-terms-accepted-retry-needed',
             ...lastObservation,
           };
         }
@@ -718,6 +752,9 @@ export const PART_5B = String.raw`
       await dismissVisibleAutofillDialogIfPresent({
         context: 'pre-publish-finalize',
       }).catch(() => false);
+      await acceptVisiblePaymentSolutionModalIfPresent({
+        context: 'pre-publish-finalize',
+      }).catch(() => false);
 
       const listingConfirmationState = await acknowledgeListingConfirmationIfPresent();
       if (listingConfirmationState === 'checked') {
@@ -838,11 +875,56 @@ export const PART_5B = String.raw`
         );
       }
 
-      const publishInteraction = await waitForPublishInteractionEvidence(
+      let publishInteraction = await waitForPublishInteractionEvidence(
         publishButton,
         prePublishUrl
       );
       log?.('tradera.quicklist.publish.click_result', publishInteraction);
+
+      if (
+        !publishInteraction.confirmed &&
+        publishInteraction.paymentSolutionTermsAccepted === true &&
+        publishInteraction.stillOnSellFlow &&
+        publishInteraction.publishButtonVisible &&
+        publishInteraction.publishButtonDisabled === false
+      ) {
+        log?.('tradera.quicklist.publish.retry_after_payment_terms', {
+          currentUrl: publishInteraction.currentUrl,
+          reason: publishInteraction.reason,
+        });
+        await logClickTarget('publish:payment-terms-retry', publishButton).catch(
+          () => undefined
+        );
+        try {
+          await humanClick(publishButton, { pauseAfter: false });
+        } catch (error) {
+          const publishRetryClickError = error instanceof Error ? error.message : String(error);
+          await captureFailureArtifacts('publish-click-payment-terms-retry', {
+            currentUrl: page.url(),
+            prePublishUrl,
+            publishTarget: publishTargetMetadata,
+            publishRetryClickError,
+          }).catch(() => undefined);
+          throw new Error(
+            'FAIL_PUBLISH_CLICK: Tradera publish button retry after payment terms failed. ' +
+              publishRetryClickError
+          );
+        }
+
+        const retryPublishInteraction = await waitForPublishInteractionEvidence(
+          publishButton,
+          page.url(),
+          listingAction === 'relist' ? 12_000 : 8_000
+        );
+        publishInteraction = {
+          ...retryPublishInteraction,
+          paymentSolutionTermsAccepted: true,
+          retryAfterPaymentSolutionTerms: true,
+          initialPublishInteractionReason: publishInteraction.reason,
+        };
+        log?.('tradera.quicklist.publish.retry_after_payment_terms_result', publishInteraction);
+      }
+
       if (!publishInteraction.confirmed) {
         if (publishInteraction.stillOnSellFlow) {
           const validationMessages = await collectValidationMessages();
@@ -903,6 +985,11 @@ export const PART_5B = String.raw`
             categoryPath: selectedCategoryPath,
             categorySource: selectedCategorySource,
             categoryFallbackReason: selectedCategoryFallbackReason,
+            paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+            retryAfterPaymentSolutionTerms:
+              publishInteraction.retryAfterPaymentSolutionTerms === true,
+            initialPublishInteractionReason:
+              publishInteraction.initialPublishInteractionReason || null,
           };
           log?.('tradera.quicklist.publish.recovered_via_active_listings', {
             reason: publishInteraction.reason,
@@ -945,9 +1032,15 @@ export const PART_5B = String.raw`
 
       emitStage('publish_clicked', {
         publishInteractionReason: publishInteraction.reason,
+        paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+        retryAfterPaymentSolutionTerms: publishInteraction.retryAfterPaymentSolutionTerms === true,
       });
       updateStep('publish', 'completed', {
         publishInteractionReason: publishInteraction.reason,
+        paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+        retryAfterPaymentSolutionTerms: publishInteraction.retryAfterPaymentSolutionTerms === true,
+        initialPublishInteractionReason:
+          publishInteraction.initialPublishInteractionReason || null,
       });
 
       return {
@@ -1029,6 +1122,10 @@ export const PART_5B = String.raw`
           categorySource: selectedCategorySource,
           categoryFallbackReason: selectedCategoryFallbackReason,
           imageUploadSource: imageUploadResult?.uploadSource ?? null,
+          paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+          retryAfterPaymentSolutionTerms: publishInteraction.retryAfterPaymentSolutionTerms === true,
+          initialPublishInteractionReason:
+            publishInteraction.initialPublishInteractionReason || null,
         };
         log?.('tradera.quicklist.publish.verified_direct', {
           publishInteractionReason: publishInteraction.reason,
@@ -1038,16 +1135,22 @@ export const PART_5B = String.raw`
         updateStep('publish', 'completed', {
           externalListingId: effectiveExternalListingId,
           listingUrl: effectiveListingUrl,
+          paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+          retryAfterPaymentSolutionTerms: publishInteraction.retryAfterPaymentSolutionTerms === true,
         });
         updateStep('publish_verify', 'completed', {
           externalListingId: effectiveExternalListingId,
           listingUrl: effectiveListingUrl,
+          paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+          retryAfterPaymentSolutionTerms: publishInteraction.retryAfterPaymentSolutionTerms === true,
         });
         updateStep('browser_close', 'completed');
         emitStage('publish_verified', {
           publishInteractionReason: publishInteraction.reason,
           externalListingId: effectiveExternalListingId,
           listingUrl: effectiveListingUrl,
+          paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+          retryAfterPaymentSolutionTerms: publishInteraction.retryAfterPaymentSolutionTerms === true,
         });
         emit('result', directResult);
         return directResult;
@@ -1125,20 +1228,30 @@ export const PART_5B = String.raw`
         categorySource: selectedCategorySource,
         categoryFallbackReason: selectedCategoryFallbackReason,
         imageUploadSource: imageUploadResult?.uploadSource ?? null,
+        paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+        retryAfterPaymentSolutionTerms: publishInteraction.retryAfterPaymentSolutionTerms === true,
+        initialPublishInteractionReason:
+          publishInteraction.initialPublishInteractionReason || null,
       };
       updateStep('publish', 'completed', {
         externalListingId: effectiveExternalListingId,
         listingUrl: effectiveListingUrl,
+        paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+        retryAfterPaymentSolutionTerms: publishInteraction.retryAfterPaymentSolutionTerms === true,
       });
       updateStep('publish_verify', 'completed', {
         externalListingId: effectiveExternalListingId,
         listingUrl: effectiveListingUrl,
+        paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+        retryAfterPaymentSolutionTerms: publishInteraction.retryAfterPaymentSolutionTerms === true,
       });
       updateStep('browser_close', 'completed');
       emitStage('publish_verified', {
         publishInteractionReason: 'active-listings-verification',
         externalListingId: effectiveExternalListingId,
         listingUrl: effectiveListingUrl,
+        paymentSolutionTermsAccepted: publishInteraction.paymentSolutionTermsAccepted === true,
+        retryAfterPaymentSolutionTerms: publishInteraction.retryAfterPaymentSolutionTerms === true,
       });
       emit('result', result);
       return result;

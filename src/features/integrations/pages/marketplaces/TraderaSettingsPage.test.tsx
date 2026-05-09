@@ -113,6 +113,7 @@ describe('TraderaSettingsPage', () => {
         [TRADERA_SETTINGS_KEYS.allowSimulatedSuccess, 'false'],
         [TRADERA_SETTINGS_KEYS.listingFormUrl, 'https://www.tradera.com/list-item'],
         [TRADERA_SETTINGS_KEYS.selectorProfile, 'profile-market-a'],
+        [TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode, 'eur'],
       ]),
     });
     useTraderaSelectorRegistryMock.mockReturnValue({
@@ -148,6 +149,26 @@ describe('TraderaSettingsPage', () => {
       expect(toastMock).toHaveBeenCalledWith('Tradera settings saved successfully.', {
         variant: 'success',
       });
+    });
+  });
+
+  it('saves the configured listing price currency', async () => {
+    render(<TraderaSettingsPage />);
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Listing Price Currency' }), {
+      target: { value: 'sek' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Tradera Settings' }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            key: TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode,
+            value: 'SEK',
+          }),
+        ])
+      );
     });
   });
 });

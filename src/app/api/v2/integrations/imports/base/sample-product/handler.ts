@@ -96,14 +96,14 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
 
   if (!inventoryId) {
-    throw badRequestError('Inventory ID is required.');
+    throw badRequestError('Inventory ID is required. Provide a non-empty inventoryId in the request body.');
   }
 
   let productId = data.productId;
   if (!productId) {
     const normalizedConnectionId = data.connectionId?.trim() ?? '';
     if (!normalizedConnectionId) {
-      throw badRequestError('Base.com connection is required.');
+      throw badRequestError('Base.com connection is required. Provide a connectionId in the request body to identify which Base.com connection to use.');
     }
 
     const integrationRepo = await getIntegrationRepository();
@@ -112,14 +112,14 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
     );
     if (!baseIntegration) {
-      throw notFoundError('Base integration not found.');
+      throw notFoundError('Base integration not found. Ensure the Base.com integration is installed in Admin > Integrations.');
     }
     const connections = await integrationRepo.listConnections(baseIntegration.id);
     const connection = connections.find(
       (entry: (typeof connections)[number]) => entry.id === normalizedConnectionId
     );
     if (!connection) {
-      throw badRequestError('Selected Base.com connection was not found.');
+      throw badRequestError(`Selected Base.com connection "${normalizedConnectionId}" was not found. Verify the connection id or select a different connection.`);
     }
 
     const tokenResolution = resolveBaseConnectionToken({
@@ -139,7 +139,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     });
     productId = extractFirstProductId(payload) ?? undefined;
     if (!productId) {
-      throw notFoundError('No products found in inventory.');
+      throw notFoundError(`No products found in inventory "${inventoryId}". The inventory may be empty or the inventory id may be incorrect.`);
     }
   }
 

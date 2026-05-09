@@ -114,6 +114,7 @@ const parseUnsubscribeRequest = async (
 const persistUnsubscribeChanges = async (writes: Array<Promise<boolean>>): Promise<void> => {
   const persisted = await Promise.all(writes);
   if (persisted.some((entry) => !entry)) {
+    // One or more database write operations failed during unsubscribe
     throw new Error('Failed to persist the Filemaker unsubscribe request.');
   }
 };

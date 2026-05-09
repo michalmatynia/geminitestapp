@@ -23,7 +23,7 @@ export async function getHandler(
   const { jobId } = params;
   const job = await chatbotJobRepository.findById(jobId);
   if (!job) {
-    throw notFoundError('Job not found.');
+    throw notFoundError(`Job "${jobId}" not found. The job may have expired or the id is incorrect.`);
   }
   return NextResponse.json({ job });
 }
@@ -43,11 +43,11 @@ export async function postHandler(
 
   const { data } = result;
   if (data.action !== 'cancel') {
-    throw badRequestError('Unsupported action.');
+    throw badRequestError(`Unsupported action "${data.action}". The only supported action for chatbot jobs is "cancel".`);
   }
   const job = await chatbotJobRepository.findById(jobId);
   if (!job) {
-    throw notFoundError('Job not found.');
+    throw notFoundError(`Job "${jobId}" not found. The job may have expired or the id is incorrect.`);
   }
   if (['completed', 'failed', 'canceled'].includes(job.status)) {
     return NextResponse.json({ status: job.status });
@@ -73,7 +73,7 @@ export async function deleteHandler(
   const { jobId } = params;
   const job = await chatbotJobRepository.findById(jobId);
   if (!job) {
-    throw notFoundError('Job not found.');
+    throw notFoundError(`Job "${jobId}" not found. The job may have expired or the id is incorrect.`);
   }
   const query = chatbotJobDeleteQuerySchema.parse(ctx.query ?? {});
   const force = query.force === true;

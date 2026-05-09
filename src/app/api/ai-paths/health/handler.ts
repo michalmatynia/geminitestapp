@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { startAiPathRunQueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { getAiPathRunQueueStatus } from '@/features/ai/ai-paths/workers/ai-path-run-queue/status';
-import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import {
   getRuntimeAnalyticsSummary,
@@ -218,7 +217,6 @@ export async function getHealthHandler(
 ): Promise<Response> {
   await requireAiPathsAccess();
   startAiPathRunQueue();
-  startAiInsightsQueue();
 
   const errors: Record<string, string> = {};
   const [aiPaths, aiJobs, queueResult, runtimeResult] = await Promise.all([
@@ -278,5 +276,4 @@ export async function getHealthHandler(
     { status }
   );
 }
-
 

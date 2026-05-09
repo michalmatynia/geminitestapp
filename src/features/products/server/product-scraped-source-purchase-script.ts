@@ -101,6 +101,7 @@ export default async function run({ page, input, emit, log, helpers }) {
   const ensureLogin = async () => {
     if (!username || !password) {
       await record('login', 'missing_credentials');
+      // Username and password are required to authenticate with the source marketplace
       throw new Error('Scraped source purchase requires source account credentials.');
     }
 
@@ -180,7 +181,10 @@ export default async function run({ page, input, emit, log, helpers }) {
     await record('login', 'submitted');
   };
 
-  if (!sourceUrl) throw new Error('Scraped source purchase requires sourceUrl.');
+  if (!sourceUrl) {
+    // Source URL is required to navigate to the product page
+    throw new Error('Scraped source purchase requires sourceUrl.');
+  }
   await page.goto(sourceUrl, { waitUntil: 'domcontentloaded' });
   await record('source_open', 'completed', { sourceUrl });
   await maybeDismissConsent();
@@ -207,6 +211,7 @@ export default async function run({ page, input, emit, log, helpers }) {
     'add_to_cart'
   );
   if (!addToCartSelector) {
+    // No add-to-cart button was found using common selector patterns
     throw new Error('Could not find an add-to-cart control on the scraped source page.');
   }
 

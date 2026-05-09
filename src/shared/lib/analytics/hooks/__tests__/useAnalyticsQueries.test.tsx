@@ -7,16 +7,16 @@ const {
   apiPostMock,
   fetchAnalyticsSummaryMock,
   fetchAnalyticsEventsMock,
-  createSingleQueryV2Mock,
-  createCreateMutationV2Mock,
+  useSingleQueryV2Mock,
+  useCreateMutationV2Mock,
   useOptionalContextRegistryPageEnvelopeMock,
 } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
   apiPostMock: vi.fn(),
   fetchAnalyticsSummaryMock: vi.fn(),
   fetchAnalyticsEventsMock: vi.fn(),
-  createSingleQueryV2Mock: vi.fn((config: unknown) => config),
-  createCreateMutationV2Mock: vi.fn((config: unknown) => config),
+  useSingleQueryV2Mock: vi.fn((config: unknown) => config),
+  useCreateMutationV2Mock: vi.fn((config: unknown) => config),
   useOptionalContextRegistryPageEnvelopeMock: vi.fn(),
 }));
 
@@ -33,8 +33,8 @@ vi.mock('@/shared/lib/analytics/api', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createSingleQueryV2: createSingleQueryV2Mock,
-  createCreateMutationV2: createCreateMutationV2Mock,
+  useSingleQueryV2: useSingleQueryV2Mock,
+  useCreateMutationV2: useCreateMutationV2Mock,
 }));
 
 vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
@@ -77,7 +77,7 @@ describe('useAnalyticsQueries', () => {
   it('builds the analytics summary query with defaults and executes its fetcher', async () => {
     const { result } = renderHook(() => useAnalyticsSummary());
 
-    expect(createSingleQueryV2Mock).toHaveBeenCalledWith(
+    expect(useSingleQueryV2Mock).toHaveBeenCalledWith(
       expect.objectContaining({
         id: '24h-all',
         enabled: true,
@@ -110,7 +110,7 @@ describe('useAnalyticsQueries', () => {
       })
     );
 
-    expect(createSingleQueryV2Mock).toHaveBeenCalledWith(
+    expect(useSingleQueryV2Mock).toHaveBeenCalledWith(
       expect.objectContaining({
         enabled: false,
         meta: expect.objectContaining({
@@ -137,7 +137,7 @@ describe('useAnalyticsQueries', () => {
     const { result: insightsResult } = renderHook(() =>
       useAnalyticsInsights({ limit: 8, enabled: false })
     );
-    expect(createSingleQueryV2Mock).toHaveBeenCalledWith(
+    expect(useSingleQueryV2Mock).toHaveBeenCalledWith(
       expect.objectContaining({
         id: '8',
         enabled: false,

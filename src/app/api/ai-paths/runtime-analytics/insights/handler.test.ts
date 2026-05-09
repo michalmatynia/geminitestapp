@@ -65,7 +65,7 @@ describe('ai-paths runtime analytics insights handler', () => {
     const payload = (await response.json()) as { insights?: Array<{ id: string }> };
 
     expect(requireAiPathsAccessMock).toHaveBeenCalledTimes(1);
-    expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
+    expect(startAiInsightsQueueMock).not.toHaveBeenCalled();
     expect(listAiInsightsMock).toHaveBeenCalledWith('runtime_analytics', 5);
     expect(payload.insights).toEqual([{ id: 'insight-1', type: 'runtime_analytics' }]);
   });
@@ -83,7 +83,7 @@ describe('ai-paths runtime analytics insights handler', () => {
     const payload = (await response.json()) as { insight?: { id: string } };
 
     expect(requireAiPathsAccessMock).toHaveBeenCalledTimes(1);
-    expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
+    expect(startAiInsightsQueueMock).not.toHaveBeenCalled();
     expect(generateRuntimeAnalyticsInsightMock).toHaveBeenCalledWith({
       source: 'user_triggered',
       range: '7d',

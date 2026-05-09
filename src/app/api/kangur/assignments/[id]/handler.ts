@@ -44,6 +44,7 @@ export async function patchKangurAssignmentHandler(
     .catch(async (error) => {
       void ErrorSystem.captureException(error);
       if (!actor.legacyLearnerKey) {
+        // Assignment update failed and no legacy learner key is available for retry
         throw new Error('Assignment update failed.');
       }
       return repository.updateAssignment(actor.legacyLearnerKey, id, payload);

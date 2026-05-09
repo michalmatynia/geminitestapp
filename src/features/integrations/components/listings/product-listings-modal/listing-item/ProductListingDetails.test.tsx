@@ -116,6 +116,9 @@ describe('ProductListingDetails', () => {
                       actionDelayMax: 800,
                     },
                     publishVerified: false,
+                    paymentSolutionTermsAccepted: true,
+                    retryAfterPaymentSolutionTerms: true,
+                    initialPublishInteractionReason: 'payment-terms-accepted-retry-needed',
                     latestStage: 'fields_filled',
                     latestStageUrl: 'https://www.tradera.com/en/selling/draft/69cfa5c39050080001c3a2c9',
                     failureArtifacts: [
@@ -239,6 +242,12 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('220-800 ms')).toBeInTheDocument();
     expect(screen.getByText('Publish verified:')).toBeInTheDocument();
     expect(screen.getByText('No')).toBeInTheDocument();
+    expect(screen.getByText('Payment solution terms:')).toBeInTheDocument();
+    expect(screen.getByText('Accepted')).toBeInTheDocument();
+    expect(screen.getByText('Publish retried after terms:')).toBeInTheDocument();
+    expect(screen.getAllByText('Yes').length).toBeGreaterThan(0);
+    expect(screen.getByText('Initial publish result:')).toBeInTheDocument();
+    expect(screen.getByText('payment-terms-accepted-retry-needed')).toBeInTheDocument();
     expect(screen.getByText('Last stage:')).toBeInTheDocument();
     expect(screen.getByText('fields_filled')).toBeInTheDocument();
     expect(screen.getByText('Stage URL:')).toBeInTheDocument();

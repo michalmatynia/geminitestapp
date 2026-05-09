@@ -77,6 +77,26 @@ describe('useTraderaLiveExecution', () => {
     expect(fetchPlaywrightRunMock).not.toHaveBeenCalled();
   });
 
+  it.each(['Playwright run not found.', 'Request failed with status 404', 'Not found'])(
+    'ignores stale Tradera live execution run ids that no longer exist: %s',
+    async (errorMessage) => {
+      fetchPlaywrightRunMock.mockResolvedValue({
+        ok: false,
+        error: errorMessage,
+      });
+
+      const { result } = renderHook(
+        () => useTraderaLiveExecution({ runId: 'missing-run', action: 'list' }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(fetchPlaywrightRunMock).toHaveBeenCalledWith('missing-run');
+      });
+      expect(result.current).toBeNull();
+    }
+  );
+
   it('loads a recovery run directly by run id', async () => {
     fetchPlaywrightRunMock.mockResolvedValue({
       ok: true,

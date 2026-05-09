@@ -137,10 +137,10 @@ vi.mock('./shipping-group', () => ({
 }));
 
 vi.mock('./price', () => ({
-  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'SEK',
-  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'SEK') =>
+  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'EUR',
+  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'EUR') =>
     `FAIL_PRICE_RESOLUTION: Tradera export requires a ${currencyCode} listing price. Add a ${currencyCode} price group to the product catalog and retry.`,
-  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'SEK') => {
+  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'EUR') => {
     if (currencyCode === 'SEK') {
       return String(Math.max(1, Math.round(value)));
     }
@@ -163,8 +163,8 @@ import { TRADERA_CHECK_STATUS_SCRIPT } from './check-status-script';
 
 const EXPECTED_TRADERA_PRICING_METADATA = {
   listingPrice: 55,
-  listingCurrencyCode: 'SEK',
-  targetCurrencyCode: 'SEK',
+  listingCurrencyCode: 'EUR',
+  targetCurrencyCode: 'EUR',
   resolvedToTargetCurrency: true,
   basePrice: 123,
   baseCurrencyCode: 'PLN',
@@ -274,8 +274,8 @@ beforeEach(() => {
   });
   resolveTraderaListingPriceForProductMock.mockResolvedValue({
     listingPrice: 55,
-    listingCurrencyCode: 'SEK',
-    targetCurrencyCode: 'SEK',
+    listingCurrencyCode: 'EUR',
+    targetCurrencyCode: 'EUR',
     resolvedToTargetCurrency: true,
     basePrice: 123,
     baseCurrencyCode: 'PLN',
@@ -989,11 +989,11 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
     expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();
   });
 
-  it('fails before launching the scripted runner when Tradera listing price cannot be resolved to SEK', async () => {
+  it('fails before launching the scripted runner when Tradera listing price cannot be resolved to EUR', async () => {
     resolveTraderaListingPriceForProductMock.mockResolvedValue({
       listingPrice: 123,
       listingCurrencyCode: 'PLN',
-      targetCurrencyCode: 'SEK',
+      targetCurrencyCode: 'EUR',
       resolvedToTargetCurrency: false,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -1029,7 +1029,7 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
       })
     ).rejects.toMatchObject({
       message:
-        'FAIL_PRICE_RESOLUTION: Tradera export requires a SEK listing price. Add a SEK price group to the product catalog and retry.',
+        'FAIL_PRICE_RESOLUTION: Tradera export requires a EUR listing price. Add a EUR price group to the product catalog and retry.',
       meta: expect.objectContaining({
         mode: 'scripted',
         productId: 'product-1',
@@ -1037,7 +1037,7 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
         connectionId: 'connection-1',
         listingPrice: 123,
         listingCurrencyCode: 'PLN',
-        targetCurrencyCode: 'SEK',
+        targetCurrencyCode: 'EUR',
         resolvedToTargetCurrency: false,
         basePrice: 123,
         baseCurrencyCode: 'PLN',
@@ -1049,11 +1049,11 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
     expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();
   });
 
-  it('falls back to the stored SEK price when relisting and catalog price resolution fails', async () => {
+  it('falls back to the stored EUR price when relisting and catalog price resolution fails', async () => {
     resolveTraderaListingPriceForProductMock.mockResolvedValue({
       listingPrice: 123,
       listingCurrencyCode: 'PLN',
-      targetCurrencyCode: 'SEK',
+      targetCurrencyCode: 'EUR',
       resolvedToTargetCurrency: false,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -1077,7 +1077,7 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
         marketplaceData: {
           tradera: {
             lastExecution: {
-              metadata: { listingPrice: 299, listingCurrencyCode: 'SEK' },
+              metadata: { listingPrice: 299, listingCurrencyCode: 'EUR' },
             },
           },
         },
@@ -1101,7 +1101,7 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
         input: expect.objectContaining({
           traderaPricing: expect.objectContaining({
             listingPrice: 299,
-            listingCurrencyCode: 'SEK',
+            listingCurrencyCode: 'EUR',
             resolvedToTargetCurrency: true,
             priceSource: 'stored_relist_price',
             priceResolutionReason: 'stored_relist_price',
@@ -1111,11 +1111,11 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
     );
   });
 
-  it('still fails price resolution for relist when no stored SEK price is available', async () => {
+  it('still fails price resolution for relist when no stored EUR price is available', async () => {
     resolveTraderaListingPriceForProductMock.mockResolvedValue({
       listingPrice: 123,
       listingCurrencyCode: 'PLN',
-      targetCurrencyCode: 'SEK',
+      targetCurrencyCode: 'EUR',
       resolvedToTargetCurrency: false,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -1153,7 +1153,7 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
       })
     ).rejects.toMatchObject({
       message:
-        'FAIL_PRICE_RESOLUTION: Tradera export requires a SEK listing price. Add a SEK price group to the product catalog and retry.',
+        'FAIL_PRICE_RESOLUTION: Tradera export requires a EUR listing price. Add a EUR price group to the product catalog and retry.',
     });
 
     expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();

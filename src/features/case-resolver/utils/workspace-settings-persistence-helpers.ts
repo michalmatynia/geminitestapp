@@ -1,8 +1,18 @@
+import { z } from 'zod';
 import { type CaseResolverWorkspaceMetadata, type CaseResolverWorkspaceFetchAttemptProfile } from '@/shared/contracts/case-resolver';
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';
 export const CASE_RESOLVER_WORKSPACE_HISTORY_KEY = 'case_resolver_workspace_v2_history';
 export const CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY = 'case_resolver_workspace_v2_documents';
+
+/**
+ * Zod schema for validating workspace metadata.
+ */
+export const WorkspaceMetadataSchema = z.object({
+  revision: z.number().int().positive().default(0),
+  lastMutationId: z.string().trim().min(1).nullable().default(null),
+  exists: z.boolean().default(true),
+});
 
 export type SettingsRecordLike = {
   key?: unknown;
@@ -12,13 +22,6 @@ export type SettingsRecordLike = {
   currentRevision?: unknown;
 };
 
-export type WorkspaceMetadataLike = {
-  key?: unknown;
-  revision?: unknown;
-  lastMutationId?: unknown;
-  exists?: unknown;
-};
-
 export type WorkspaceSettingsPayloadLike = {
   settings?: unknown;
   key?: unknown;
@@ -26,24 +29,10 @@ export type WorkspaceSettingsPayloadLike = {
 };
 
 export const readWorkspaceMetadata = (
-  payload: WorkspaceMetadataLike | null
+  payload: unknown
 ): CaseResolverWorkspaceMetadata => {
-  const revisionRaw = payload?.revision;
-  const revision =
-    typeof revisionRaw === 'number' && Number.isFinite(revisionRaw) && revisionRaw > 0
-      ? Math.floor(revisionRaw)
-      : 0;
-  const lastMutationIdRaw = payload?.lastMutationId;
-  const lastMutationId =
-    typeof lastMutationIdRaw === 'string' && lastMutationIdRaw.trim().length > 0
-      ? lastMutationIdRaw
-      : null;
-  const exists = payload?.exists !== false;
-  return {
-    revision,
-    lastMutationId,
-    exists,
-  };
+  const result = WorkspaceMetadataSchema.safeParse(payload);
+  return result.success ? result.data : WorkspaceMetadataSchema.parse({});
 };
 
 export const readSettingsRecordsFromPayload = (payload: unknown): SettingsRecordLike[] => {
@@ -65,30 +54,62 @@ export const readSettingsRecordsFromPayload = (payload: unknown): SettingsRecord
   return [];
 };
 
+/**
+ * Zod schema for validating a single settings record.
+ */
+export const SettingsRecordSchema = z.object({
+  key: z.string().min(1),
+  value: z.string(),
+  conflict: z.unknown().optional(),
+  idempotent: z.unknown().optional(),
+  currentRevision: z.unknown().optional(),
+});
+
+export type SettingsRecord = z.infer<typeof SettingsRecordSchema>;
+
+/**
+ * Resolves a workspace record from the given settings payload.
+ */
 export const resolveWorkspaceRecordFromSettingsPayload = (
   payload: unknown
-): SettingsRecordLike | null => {
+): SettingsRecord | null => {
   const records = readSettingsRecordsFromPayload(payload);
-  return (
-    records.find(
-      (entry: SettingsRecordLike): boolean =>
-        entry?.key === CASE_RESOLVER_WORKSPACE_KEY && typeof entry?.value === 'string'
-    ) ?? null
+  const record = records.find(
+    (entry) => entry.key === CASE_RESOLVER_WORKSPACE_KEY && typeof entry.value === 'string'
   );
+
+  if (!record) return null;
+  const result = SettingsRecordSchema.safeParse(record);
+  return result.success ? result.data : null;
 };
 
+/**
+ * Resolves a specific setting record by key from the given settings payload.
+ */
 export const resolveSettingRecordFromSettingsPayload = (
   payload: unknown,
   key: string
-): SettingsRecordLike | null => {
+): SettingsRecord | null => {
   const records = readSettingsRecordsFromPayload(payload);
-  return (
-    records.find(
-      (entry: SettingsRecordLike): boolean => entry?.key === key && typeof entry?.value === 'string'
-    ) ?? null
-  );
+  const record = records.find((entry) => entry.key === key && typeof entry.value === 'string');
+
+  if (!record) return null;
+  const result = SettingsRecordSchema.safeParse(record);
+  return result.success ? result.data : null;
 };
 
+/**
+ * Helper to build a URL for a given settings scope, key, and freshness.
+ */
+const buildSettingsUrl = (scope: 'light' | 'heavy', key: string, fresh: boolean): string => {
+  const params = new URLSearchParams({ scope, key });
+  if (fresh) params.append('fresh', '1');
+  return `/api/settings?${params.toString()}`;
+};
+
+/**
+ * Builds fetch attempts for a single setting record.
+ */
 export const buildSettingRecordFetchAttempts = ({
   key,
   strategy,
@@ -98,30 +119,22 @@ export const buildSettingRecordFetchAttempts = ({
   strategy: 'light_then_heavy' | 'light_only' | 'heavy_only';
   fresh: boolean;
 }): Array<{ scope: 'light' | 'heavy'; key: string; url: string }> => {
-  const attemptScopes: Array<'light' | 'heavy'> =
-    strategy === 'heavy_only'
-      ? ['heavy']
-      : strategy === 'light_only'
-        ? ['light']
-        : ['light', 'heavy'];
-  const attempts: Array<{ scope: 'light' | 'heavy'; key: string; url: string }> = [];
-  attemptScopes.forEach((scope): void => {
+  const scopes: Array<'light' | 'heavy'> =
+    strategy === 'heavy_only' ? ['heavy'] : strategy === 'light_only' ? ['light'] : ['light', 'heavy'];
+
+  return scopes.flatMap((scope) => {
+    const attempts = [];
     if (fresh) {
-      attempts.push({
-        scope,
-        key: `${scope}_fresh_key`,
-        url: `/api/settings?scope=${scope}&fresh=1&key=${encodeURIComponent(key)}`,
-      });
+      attempts.push({ scope, key: `${scope}_fresh_key`, url: buildSettingsUrl(scope, key, true) });
     }
-    attempts.push({
-      scope,
-      key: `${scope}_cached_key`,
-      url: `/api/settings?scope=${scope}&key=${encodeURIComponent(key)}`,
-    });
+    attempts.push({ scope, key: `${scope}_cached_key`, url: buildSettingsUrl(scope, key, false) });
+    return attempts;
   });
-  return attempts;
 };
 
+/**
+ * Builds fetch attempts for the workspace record.
+ */
 export const buildWorkspaceRecordFetchAttempts = ({
   strategy,
   fresh,
@@ -131,59 +144,29 @@ export const buildWorkspaceRecordFetchAttempts = ({
   fresh: boolean;
   attemptProfile: CaseResolverWorkspaceFetchAttemptProfile;
 }): Array<{ key: string; url: string; scope: 'light' | 'heavy' }> => {
-  const attemptScopes: Array<'light' | 'heavy'> =
-    strategy === 'heavy_only'
-      ? ['heavy']
-      : strategy === 'light_only'
-        ? ['light']
-        : ['light', 'heavy'];
+  const scopes: Array<'light' | 'heavy'> =
+    strategy === 'heavy_only' ? ['heavy'] : strategy === 'light_only' ? ['light'] : ['light', 'heavy'];
+
   if (!fresh) {
-    return attemptScopes.map((scope) => ({
+    return scopes.map((scope) => ({
       key: `${scope}_cached_key`,
       scope,
-      url: `/api/settings?scope=${scope}&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      url: buildSettingsUrl(scope, CASE_RESOLVER_WORKSPACE_KEY, false),
     }));
   }
 
+  // Handle context_fast strategy override
   if (attemptProfile === 'context_fast' && strategy === 'light_then_heavy') {
     return [
-      {
-        key: 'light_fresh_key',
-        scope: 'light',
-        url: `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      },
-      {
-        key: 'heavy_fresh_key',
-        scope: 'heavy',
-        url: `/api/settings?scope=heavy&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      },
-      {
-        key: 'light_cached_key',
-        scope: 'light',
-        url: `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      },
-      {
-        key: 'heavy_cached_key',
-        scope: 'heavy',
-        url: `/api/settings?scope=heavy&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      },
+      { key: 'light_fresh_key', scope: 'light', url: buildSettingsUrl('light', CASE_RESOLVER_WORKSPACE_KEY, true) },
+      { key: 'heavy_fresh_key', scope: 'heavy', url: buildSettingsUrl('heavy', CASE_RESOLVER_WORKSPACE_KEY, true) },
+      { key: 'light_cached_key', scope: 'light', url: buildSettingsUrl('light', CASE_RESOLVER_WORKSPACE_KEY, false) },
+      { key: 'heavy_cached_key', scope: 'heavy', url: buildSettingsUrl('heavy', CASE_RESOLVER_WORKSPACE_KEY, false) },
     ];
   }
 
-  const attempts: Array<{ key: string; url: string; scope: 'light' | 'heavy' }> = [];
-  attemptScopes.forEach((scope): void => {
-    attempts.push(
-      {
-        key: `${scope}_fresh_key`,
-        scope,
-        url: `/api/settings?scope=${scope}&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      },
-      {
-        key: `${scope}_cached_key`,
-        scope,
-        url: `/api/settings?scope=${scope}&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      }
-    );
-  });
-  return attempts;
+  return scopes.flatMap((scope) => [
+    { key: `${scope}_fresh_key`, scope, url: buildSettingsUrl(scope, CASE_RESOLVER_WORKSPACE_KEY, true) },
+    { key: `${scope}_cached_key`, scope, url: buildSettingsUrl(scope, CASE_RESOLVER_WORKSPACE_KEY, false) },
+  ]);
 };

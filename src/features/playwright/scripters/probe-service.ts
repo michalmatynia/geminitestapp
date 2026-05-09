@@ -131,6 +131,7 @@ export const createProbeService = (options: ProbeServiceOptions = {}) => {
   return {
     async start(url: string): Promise<ProbeStartResult> {
       if (!/^https?:\/\//i.test(url)) {
+        // Only HTTP and HTTPS URLs are supported for probing
         throw new Error('Probe URL must use http(s)');
       }
       const handle = await launchPage(url, headless);
@@ -150,9 +151,13 @@ export const createProbeService = (options: ProbeServiceOptions = {}) => {
 
     async evaluate(sessionId: string, selector: string): Promise<ProbeEvaluateResult> {
       const record = store.get(sessionId);
-      if (!record) throw new Error('Probe session not found or expired');
+      if (!record) {
+        // Probe session ID is invalid or has expired
+        throw new Error('Probe session not found or expired');
+      }
       store.touch(sessionId);
       if (typeof selector !== 'string' || selector.trim().length === 0) {
+        // CSS selector is required to evaluate elements on the page
         throw new Error('Selector is required');
       }
       const trimmed = selector.trim();

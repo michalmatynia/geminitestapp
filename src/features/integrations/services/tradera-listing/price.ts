@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { TRADERA_DEFAULT_LISTING_PRICE_CURRENCY_CODE } from '@/features/integrations/constants/tradera';
 import type { PriceGroupForCalculation, ProductWithImages } from '@/shared/contracts/products/product';
 import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import type { MongoPriceGroupDoc } from '@/shared/lib/db/services/database-sync-types';
@@ -52,7 +53,7 @@ export type TraderaListingPriceResolution = {
   matchedTargetPriceGroupIds: string[];
 };
 
-export const TRADERA_LISTING_PRICE_CURRENCY_CODE = 'SEK';
+export const TRADERA_LISTING_PRICE_CURRENCY_CODE = TRADERA_DEFAULT_LISTING_PRICE_CURRENCY_CODE;
 
 export const formatTraderaListingPriceInputValue = (
   value: number,

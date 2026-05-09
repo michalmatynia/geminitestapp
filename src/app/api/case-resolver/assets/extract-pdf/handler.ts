@@ -51,25 +51,25 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const parsedRequest = caseResolverPdfExtractRequestSchema.safeParse(rawPayload);
   const filepath = normalizePublicFilepath(parsedRequest.success ? parsedRequest.data.filepath : null);
   if (!filepath) {
-    throw badRequestError('filepath is required');
+    throw badRequestError('filepath is required. Provide a non-empty filepath pointing to a case resolver uploaded PDF in the request body.');
   }
   if (!filepath.startsWith(CASE_RESOLVER_UPLOAD_PREFIX)) {
-    throw badRequestError('Only case resolver uploaded PDFs can be extracted');
+    throw badRequestError(`Only case resolver uploaded PDFs can be extracted. The filepath must start with "${CASE_RESOLVER_UPLOAD_PREFIX}", but received: "${filepath}".`);
   }
   if (!filepath.toLowerCase().endsWith('.pdf')) {
-    throw badRequestError('Only PDF files are supported');
+    throw badRequestError(`Only PDF files are supported for text extraction. The filepath must end with ".pdf", but received: "${filepath}".`);
   }
 
   const diskPath = getDiskPathFromPublicPath(filepath);
   if (!diskPath.startsWith(CASE_RESOLVER_UPLOAD_DISK_PREFIX)) {
-    throw badRequestError('Resolved path is outside case resolver uploads');
+    throw badRequestError(`Resolved disk path is outside the case resolver uploads directory. Expected a path under "${CASE_RESOLVER_UPLOAD_DISK_PREFIX}", but resolved: "${diskPath}".`);
   }
 
   const fileBuffer = await fs.readFile(diskPath);
   const pdfModule = await import('pdf-parse');
   const pdfParseCandidate = Reflect.get(pdfModule, 'default') ?? pdfModule;
   if (!isPdfParseFn(pdfParseCandidate)) {
-    throw badRequestError('PDF parser is unavailable');
+    throw badRequestError('PDF parser is unavailable. The pdf-parse module could not be loaded or does not export a callable parse function. Check that the pdf-parse package is installed.');
   }
   const pdfParse = pdfParseCandidate;
   const parsed = normalizePdfParseResult(await pdfParse(fileBuffer));

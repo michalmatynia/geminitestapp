@@ -75,20 +75,20 @@ export const handlers: Record<string, ActionHandler> = {
 
   distinct: async (ctx, normalizedFilter) => {
     const field = ctx.distinctField?.trim() ?? '';
-    if (field === '') throw badRequestError('distinctField is required');
+    if (field === '') throw badRequestError('distinctField is required. Provide a non-empty field name in the distinctField property of the request.');
     const values = await ctx.collectionRef.distinct(field, normalizedFilter);
     return withProviderPayload(ctx.provider, ctx.requestedProvider, { values, count: values.length });
   },
 
   aggregate: async (ctx) => {
-    if (ctx.pipeline === undefined || ctx.pipeline.length === 0) throw badRequestError('Aggregation pipeline is required');
+    if (ctx.pipeline === undefined || ctx.pipeline.length === 0) throw badRequestError('Aggregation pipeline is required. Provide a non-empty pipeline array in the request.');
     const items = await ctx.collectionRef.aggregate(ctx.pipeline).toArray();
     return withProviderPayload(ctx.provider, ctx.requestedProvider, { items, count: items.length });
   },
 
   insertOne: async (ctx) => {
     if (ctx.document === null || ctx.document === undefined || typeof ctx.document !== 'object' || Array.isArray(ctx.document)) {
-      throw badRequestError('Document is required');
+      throw badRequestError('Document is required. Provide a non-null, non-array object in the document property of the request.');
     }
     const result = await ctx.collectionRef.insertOne(ctx.document as Record<string, unknown>);
     return withProviderPayload(ctx.provider, ctx.requestedProvider, { insertedId: result.insertedId, insertedCount: 1 });
@@ -102,7 +102,7 @@ export const handlers: Record<string, ActionHandler> = {
       docs = ctx.document as Record<string, unknown>[];
     }
 
-    if (docs === null || docs.length === 0) throw badRequestError('Documents array is required');
+    if (docs === null || docs.length === 0) throw badRequestError('Documents array is required. Provide a non-empty array in the documents (or document) property of the request.');
     const result = await ctx.collectionRef.insertMany(docs);
     return withProviderPayload(ctx.provider, ctx.requestedProvider, { insertedIds: result.insertedIds, insertedCount: result.insertedCount });
   },
@@ -110,7 +110,7 @@ export const handlers: Record<string, ActionHandler> = {
   replaceOne: async (ctx, normalizedFilter) => {
     const flatUpdates = extractFlatUpdates(ctx.update);
     const replacement = normalizeReplaceDoc(ctx.update);
-    if (replacement === null || flatUpdates === null) throw badRequestError('Replacement document is required');
+    if (replacement === null || flatUpdates === null) throw badRequestError('Replacement document is required. Provide a valid replacement object in the update property of the request.');
     const now = new Date();
     const nextReplacement = shouldAutoStampUpdatedAt(ctx.resolvedCollection) ? applyUpdatedAtToReplacement(replacement, now) : replacement;
     const result = await ctx.collectionRef.replaceOne(normalizedFilter, nextReplacement, { upsert: Boolean(ctx.upsert) });
@@ -119,7 +119,7 @@ export const handlers: Record<string, ActionHandler> = {
 
   findOneAndUpdate: async (ctx, normalizedFilter) => {
     const updateDoc = normalizeUpdateDoc(ctx.update);
-    if (updateDoc === null) throw badRequestError('Update document is required');
+    if (updateDoc === null) throw badRequestError('Update document is required for findOneAndUpdate. Provide a valid update object in the update property of the request.');
     const now = new Date();
     const nextUpdateDoc = shouldAutoStampUpdatedAt(ctx.resolvedCollection) ? applyUpdatedAtToUpdateDoc(updateDoc, now) : updateDoc;
     const result = await ctx.collectionRef.findOneAndUpdate(normalizedFilter, nextUpdateDoc as Record<string, unknown>, { returnDocument: ctx.returnDocument, upsert: Boolean(ctx.upsert), includeResultMetadata: true });
@@ -128,7 +128,7 @@ export const handlers: Record<string, ActionHandler> = {
 
   updateOne: async (ctx, normalizedFilter) => {
     const updateDoc = normalizeUpdateDoc(ctx.update);
-    if (updateDoc === null) throw badRequestError('Update document is required');
+    if (updateDoc === null) throw badRequestError('Update document is required for updateOne. Provide a valid update object in the update property of the request.');
     const result = await ctx.collectionRef.updateOne(
       normalizedFilter,
       applyTimestamp(ctx, updateDoc) as Record<string, unknown>,
@@ -143,7 +143,7 @@ export const handlers: Record<string, ActionHandler> = {
 
   updateMany: async (ctx, normalizedFilter) => {
     const updateDoc = normalizeUpdateDoc(ctx.update);
-    if (updateDoc === null) throw badRequestError('Update document is required');
+    if (updateDoc === null) throw badRequestError('Update document is required for updateMany. Provide a valid update object in the update property of the request.');
     const result = await ctx.collectionRef.updateMany(
       normalizedFilter,
       applyTimestamp(ctx, updateDoc) as Record<string, unknown>,
@@ -192,7 +192,7 @@ export const runMongoAction = async (ctx: MongoActionContext, handler: ActionHan
 
   const where = coerceQuery(ctx.filter);
   if (REQUIRED_FILTER_ACTIONS.has(ctx.action) && Object.keys(where).length === 0) {
-    throw badRequestError('Filter is required for this action');
+    throw badRequestError(`Filter is required for the "${ctx.action}" action. Provide a non-empty filter object to prevent unintended bulk operations.`);
   }
 
   const normalizedFilter = expandFilter(normalizeObjectId(where, ctx.idType), ctx.resolvedCollection);

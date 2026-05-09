@@ -34,6 +34,7 @@ export class PixelationEffectImpl extends Effect {
   private get pixelSizeUniform(): Uniform {
     const uniform = this.uniforms.get('pixelSize');
     if (uniform === undefined) {
+      // Shader uniform for pixelSize was not properly initialized
       throw new Error('PixelationEffect pixelSize uniform is missing.');
     }
     return uniform;

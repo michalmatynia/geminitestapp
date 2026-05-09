@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/shared/lib/document-editor/public', () => ({
@@ -59,7 +59,7 @@ const arithmeticLesson: KangurLesson = {
   contentMode: 'document',
   subject: 'maths',
   ageGroup: 'ten_year_old',
-  title: 'Dodawanie',
+  title: 'Adding',
   description: 'Ćwicz dodawanie krok po kroku.',
   emoji: '➕',
   color: '#fff',
@@ -199,7 +199,7 @@ describe('KangurLessonDocumentEditor', () => {
 
     renderEditor({ version: 1, blocks: [] }, handleChange);
 
-    fireEvent.click(screen.getByRole('button', { name: /add svg image page/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add svg image gallery/i }));
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
       pages?: Array<{ blocks: Array<{ type: string }> }>;
@@ -282,7 +282,7 @@ describe('KangurLessonDocumentEditor', () => {
     );
 
     await screen.findByTestId('mock-wysiwyg-editor');
-    fireEvent.click(screen.getByRole('button', { name: /add svg image page/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add svg image gallery/i }));
 
     const nextDocument = handleChange.mock.calls.at(-1)?.[0] as {
       pages?: Array<{
@@ -349,7 +349,7 @@ describe('KangurLessonDocumentEditor', () => {
     ).toBeInTheDocument();
   });
 
-  it('switches preview from the current page to the full lesson', () => {
+  it('switches preview from the current page to the full lesson', async () => {
     const handleChange = vi.fn();
 
     render(
@@ -401,12 +401,13 @@ describe('KangurLessonDocumentEditor', () => {
       />
     );
 
-    expect(screen.getByText('Only first page')).toBeInTheDocument();
-    expect(screen.queryByText('Second page body')).not.toBeInTheDocument();
+    expect(screen.getByText(/Only first page/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Second page body/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /full lesson/i }));
 
-    expect(screen.getByText('Second page body')).toBeInTheDocument();
+    expect(await screen.findByText(/Intro page/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Second page/i)).toBeInTheDocument();
   });
 
   it('shows page health badges and previews the active page issue summary', () => {
@@ -448,7 +449,7 @@ describe('KangurLessonDocumentEditor', () => {
       />
     );
 
-    expect(screen.getAllByText('Ready').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Auto narration ready').length).toBeGreaterThan(0);
     expect(screen.getByText('Needs content')).toBeInTheDocument();
     expect(screen.getAllByText('Blank page').length).toBeGreaterThan(0);
 
@@ -597,10 +598,12 @@ describe('KangurLessonDocumentEditor', () => {
       }>;
     };
 
-    expect(nextDocument.blocks[0]?.type).toBe('grid');
-    expect(nextDocument.blocks[0]?.columns).toBe(2);
-    expect(nextDocument.blocks[0]?.items).toHaveLength(4);
-    expect(nextDocument.blocks[0]?.items?.every((item) => item.block.type === 'svg')).toBe(true);
+    expect(nextDocument.blocks).toHaveLength(2);
+    expect(nextDocument.blocks[0]?.type).toBe('text');
+    expect(nextDocument.blocks[1]?.type).toBe('grid');
+    expect(nextDocument.blocks[1]?.columns).toBe(2);
+    expect(nextDocument.blocks[1]?.items).toHaveLength(4);
+    expect(nextDocument.blocks[1]?.items?.every((item) => item.block.type === 'svg')).toBe(true);
   });
 
   it('adds an SVG mosaic layout preset', () => {
@@ -626,15 +629,17 @@ describe('KangurLessonDocumentEditor', () => {
       }>;
     };
 
-    expect(nextDocument.blocks[0]?.type).toBe('grid');
-    expect(nextDocument.blocks[0]?.columns).toBe(3);
-    expect(nextDocument.blocks[0]?.rowHeight).toBe(180);
-    expect(nextDocument.blocks[0]?.denseFill).toBe(true);
-    expect(nextDocument.blocks[0]?.items?.[0]?.colSpan).toBe(2);
-    expect(nextDocument.blocks[0]?.items?.[0]?.rowSpan).toBe(2);
-    expect(nextDocument.blocks[0]?.items?.[0]?.columnStart).toBe(1);
-    expect(nextDocument.blocks[0]?.items?.[0]?.rowStart).toBe(1);
-    expect(nextDocument.blocks[0]?.items?.every((item) => item.block.type === 'svg')).toBe(true);
+    expect(nextDocument.blocks).toHaveLength(2);
+    expect(nextDocument.blocks[0]?.type).toBe('text');
+    expect(nextDocument.blocks[1]?.type).toBe('grid');
+    expect(nextDocument.blocks[1]?.columns).toBe(3);
+    expect(nextDocument.blocks[1]?.rowHeight).toBe(180);
+    expect(nextDocument.blocks[1]?.denseFill).toBe(true);
+    expect(nextDocument.blocks[1]?.items?.[0]?.colSpan).toBe(2);
+    expect(nextDocument.blocks[1]?.items?.[0]?.rowSpan).toBe(2);
+    expect(nextDocument.blocks[1]?.items?.[0]?.columnStart).toBe(1);
+    expect(nextDocument.blocks[1]?.items?.[0]?.rowStart).toBe(1);
+    expect(nextDocument.blocks[1]?.items?.every((item) => item.block.type === 'svg')).toBe(true);
   });
 
   it('duplicates a root SVG block', () => {
@@ -659,7 +664,7 @@ describe('KangurLessonDocumentEditor', () => {
       handleChange
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /duplicate block 1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /duplicate block/i }));
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
       blocks: Array<{ id: string; type: string; title?: string }>;
@@ -784,19 +789,24 @@ describe('KangurLessonDocumentEditor', () => {
 
     render(<StatefulEditorHarness value={initialValue} onChange={handleChange} />);
 
-    fireEvent.change(screen.getByRole('textbox', { name: /column span/i }), { target: { value: '2' } });
-    fireEvent.change(screen.getByLabelText(/row start/i), { target: { value: '3' } });
-
+    fireEvent.change(screen.getByRole('spinbutton', { name: /column span/i }), { target: { value: '2' } });
     const firstUpdate = handleChange.mock.calls[0]?.[0] as {
+      blocks: Array<{ items?: Array<{ colSpan: number; columnStart: number | null }> }>;
+    };
+    expect(firstUpdate.blocks[0]?.items?.[0]?.colSpan).toBe(2);
+    expect(firstUpdate.blocks[0]?.items?.[0]?.columnStart).toBeNull();
+
+    fireEvent.change(screen.getByLabelText(/column start/i), { target: { value: '2' } });
+    const secondUpdate = handleChange.mock.calls[1]?.[0] as {
       blocks: Array<{ items?: Array<{ columnStart: number | null }> }>;
     };
-    const secondUpdate = handleChange.mock.calls[1]?.[0] as {
+    expect(secondUpdate.blocks[0]?.items?.[0]?.columnStart).toBe(2);
+
+    fireEvent.change(screen.getByLabelText(/row start/i), { target: { value: '3' } });
+    const thirdUpdate = handleChange.mock.calls[2]?.[0] as {
       blocks: Array<{ items?: Array<{ columnStart: number | null; rowStart: number | null }> }>;
     };
-
-    expect(firstUpdate.blocks[0]?.items?.[0]?.columnStart).toBe(2);
-    expect(secondUpdate.blocks[0]?.items?.[0]?.columnStart).toBe(2);
-    expect(secondUpdate.blocks[0]?.items?.[0]?.rowStart).toBe(3);
+    expect(thirdUpdate.blocks[0]?.items?.[0]?.rowStart).toBe(3);
   });
 
   it('re-clamps explicit column starts when the span grows', () => {
@@ -841,7 +851,7 @@ describe('KangurLessonDocumentEditor', () => {
       />
     );
 
-    fireEvent.change(screen.getByRole('textbox', { name: /column span/i }), { target: { value: '2' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: /column span/i }), { target: { value: '2' } });
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
       blocks: Array<{ items?: Array<{ colSpan: number; columnStart: number | null }> }>;
@@ -882,11 +892,11 @@ describe('KangurLessonDocumentEditor', () => {
       }>;
     };
 
-    expect(nextDocument.blocks).toHaveLength(2);
-    expect(nextDocument.blocks[0]?.type).toBe('text');
-    expect(nextDocument.blocks[1]?.type).toBe('grid');
-    expect(nextDocument.blocks[1]?.items).toHaveLength(4);
-    expect(nextDocument.blocks[1]?.items?.every((item) => item.block.type === 'svg')).toBe(true);
+    expect(nextDocument.blocks).toHaveLength(3);
+    expect(nextDocument.blocks[1]?.type).toBe('text');
+    expect(nextDocument.blocks[2]?.type).toBe('grid');
+    expect(nextDocument.blocks[2]?.items).toHaveLength(4);
+    expect(nextDocument.blocks[2]?.items?.every((item) => item.block.type === 'svg')).toBe(true);
   });
 
   it('replaces the document with the SVG mosaic page template', () => {
@@ -907,7 +917,7 @@ describe('KangurLessonDocumentEditor', () => {
       handleChange
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Add SVG gallery/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add SVG mosaic/i }));
 
     const nextDocument = handleChange.mock.calls[0]?.[0] as {
       blocks: Array<{
@@ -921,12 +931,12 @@ describe('KangurLessonDocumentEditor', () => {
       }>;
     };
 
-    expect(nextDocument.blocks).toHaveLength(2);
-    expect(nextDocument.blocks[0]?.type).toBe('text');
-    expect(nextDocument.blocks[1]?.type).toBe('grid');
-    expect(nextDocument.blocks[1]?.denseFill).toBe(true);
-    expect(nextDocument.blocks[1]?.items?.[0]?.columnStart).toBe(1);
-    expect(nextDocument.blocks[1]?.items?.[0]?.rowStart).toBe(1);
-    expect(nextDocument.blocks[1]?.items?.every((item) => item.block.type === 'svg')).toBe(true);
+    expect(nextDocument.blocks).toHaveLength(3);
+    expect(nextDocument.blocks[1]?.type).toBe('text');
+    expect(nextDocument.blocks[2]?.type).toBe('grid');
+    expect(nextDocument.blocks[2]?.denseFill).toBe(true);
+    expect(nextDocument.blocks[2]?.items?.[0]?.columnStart).toBe(1);
+    expect(nextDocument.blocks[2]?.items?.[0]?.rowStart).toBe(1);
+    expect(nextDocument.blocks[2]?.items?.every((item) => item.block.type === 'svg')).toBe(true);
   });
 });

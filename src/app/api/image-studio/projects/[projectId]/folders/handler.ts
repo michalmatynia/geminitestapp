@@ -53,7 +53,7 @@ export async function postHandler(
   params: { projectId: string }
 ): Promise<Response> {
   const projectId = sanitizeProjectId(params.projectId);
-  if (!projectId) throw badRequestError('Project id is required');
+  if (!projectId) throw badRequestError('Project id is required. Provide a non-empty projectId in the URL path to create a folder.');
 
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = createFolderSchema.safeParse(body);
@@ -63,7 +63,7 @@ export async function postHandler(
 
   const safeFolder = sanitizeFolderPath(parsed.data.folder);
   if (!safeFolder) {
-    throw badRequestError('Folder name is required');
+    throw badRequestError('Folder name is required. Provide a non-empty folder name in the request body.');
   }
 
   const folderPath = path.join(projectsRoot, projectId, safeFolder);
@@ -98,12 +98,12 @@ const validateProjectFolderDeleteRequest = (
   params: { projectId: string }
 ): { projectId: string; safeFolder: string } => {
   const projectId = sanitizeProjectId(params.projectId);
-  if (!projectId) throw badRequestError('Project id is required');
+  if (!projectId) throw badRequestError('Project id is required. Provide a non-empty projectId in the URL path to delete a folder.');
 
   const query = (ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
   const safeFolder = sanitizeFolderPath(query.folder ?? '');
   if (!safeFolder) {
-    throw badRequestError('Folder query param is required');
+    throw badRequestError('Folder query param is required. Provide a non-empty folder path in the "folder" query string parameter.');
   }
 
   return { projectId, safeFolder };

@@ -1,13 +1,16 @@
 import { readInsightSettingValue, parseBooleanSetting } from './settings-service';
 import { AI_INSIGHTS_SETTINGS_KEYS } from '../settings';
+import { isScheduledAiInsightsEnabled } from '../scheduling';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { 
-  generateAnalyticsInsight, 
-  generateLogsInsight, 
-  generateRuntimeAnalyticsInsight 
+import {
+  generateAnalyticsInsight,
+  generateLogsInsight,
+  generateRuntimeAnalyticsInsight,
 } from '../generator';
 
 export async function runInsightsAutoGeneration(): Promise<void> {
+  if (!isScheduledAiInsightsEnabled()) return;
+
   const settings = [
     { key: AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled, fn: generateAnalyticsInsight, label: 'analytics' },
     { key: AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled, fn: generateLogsInsight, label: 'logs' },

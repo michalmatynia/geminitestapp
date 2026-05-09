@@ -12,16 +12,16 @@ export async function getHandler(
 ): Promise<Response> {
   const productId = params.id.trim();
   if (!productId) {
-    throw badRequestError('Product id is required.');
+    throw badRequestError('Product id is required. Provide a non-empty id in the URL path.');
   }
 
   const imageSlotIndexRaw = req.nextUrl.searchParams.get('imageSlotIndex');
   if (!imageSlotIndexRaw) {
-    throw badRequestError('imageSlotIndex query param is required.');
+    throw badRequestError('imageSlotIndex query param is required. Provide an integer imageSlotIndex in the query string.');
   }
   const imageSlotIndex = Number.parseInt(imageSlotIndexRaw, 10);
   if (!Number.isFinite(imageSlotIndex)) {
-    throw badRequestError('imageSlotIndex must be a number.');
+    throw badRequestError(`imageSlotIndex must be a number, but received "${imageSlotIndexRaw}".`);
   }
 
   const projectId = req.nextUrl.searchParams.get('projectId');
@@ -30,7 +30,7 @@ export async function getHandler(
     sequenceGenerationModeRaw?.trim() ?? null
   );
   if (sequenceGenerationModeRaw && !sequenceGenerationModeParsed.success) {
-    throw badRequestError('Invalid sequenceGenerationMode query param.');
+    throw badRequestError(`Invalid sequenceGenerationMode query param "${sequenceGenerationModeRaw}". Check the allowed values for ProductStudioSequenceGenerationMode.`);
   }
   const sequenceGenerationMode = sequenceGenerationModeParsed.success
     ? sequenceGenerationModeParsed.data

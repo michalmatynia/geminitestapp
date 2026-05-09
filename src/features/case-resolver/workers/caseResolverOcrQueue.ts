@@ -260,6 +260,7 @@ export const enqueueCaseResolverOcrJob = async (
 ): Promise<'queued' | 'inline'> => {
   const brain = await getBrainAssignmentForFeature('case_resolver');
   if (!brain.enabled) {
+    // Case Resolver feature is disabled in AI Brain settings
     throw new Error('Case Resolver is disabled in Brain settings.');
   }
 

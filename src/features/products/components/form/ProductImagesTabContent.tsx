@@ -69,10 +69,15 @@ type FastCometUploadRuntimeState = FastCometUploadRuntimeCallbacks & {
 };
 
 const FASTCOMET_UPLOAD_RUNTIME_TTL_MS = 120_000;
-const FASTCOMET_NOT_ENABLED_PREFIX = 'FastComet storage is not enabled';
 
-const isFastCometNotEnabledError = (error: unknown): boolean =>
-  error instanceof Error && error.message.startsWith(FASTCOMET_NOT_ENABLED_PREFIX);
+const FASTCOMET_CONFIG_ERROR_PREFIXES = [
+  'FastComet storage is not configured',
+  'FastComet upload was rejected by the server',
+] as const;
+
+const isFastCometConfigError = (error: unknown): boolean =>
+  error instanceof Error &&
+  FASTCOMET_CONFIG_ERROR_PREFIXES.some((prefix) => error.message.startsWith(prefix));
 
 const resolveFastCometUploadSource = (
   event: Pick<ProductImageManagerFastCometUploadEvent, 'imageFileId' | 'imageSlotIndex'>
@@ -170,8 +175,8 @@ const useFastCometUploadRuntimeCallbacks = (): FastCometUploadRuntimeState => {
     (event: ProductImageManagerFastCometUploadErrorEvent): void => {
       const source = resolveFastCometUploadSource(event);
       if (source !== null) removeQueuedProductSource(event.productId, source);
-      if (isFastCometNotEnabledError(event.error)) {
-        setFastCometConfigError(FASTCOMET_NOT_ENABLED_PREFIX);
+      if (isFastCometConfigError(event.error)) {
+        setFastCometConfigError(resolveFastCometUploadErrorMessage(event.error));
         return;
       }
       toast(resolveFastCometUploadErrorMessage(event.error), {
@@ -349,11 +354,10 @@ function ProductImagesDefaultView({ model }: { model: ProductImagesTabModel }): 
     <div className='space-y-6'>
       {model.fastCometConfigError !== null && (
         <Alert variant='warning' onDismiss={model.clearFastCometConfigError}>
-          FastComet storage is not currently enabled as your file storage source.{' '}
+          {model.fastCometConfigError}{' '}
           <Link href='/admin/settings/storage' className='font-medium underline'>
             Go to Storage Settings
-          </Link>{' '}
-          to enable it.
+          </Link>
         </Alert>
       )}
       <ImageSourceSection model={model} />

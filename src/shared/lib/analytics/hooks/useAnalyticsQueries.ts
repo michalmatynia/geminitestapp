@@ -16,7 +16,7 @@ import {
   type AnalyticsRange,
 } from '@/shared/lib/analytics/api';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2, createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2, useCreateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { analyticsKeys } from '@/shared/lib/query-key-exports';
 
 export { analyticsKeys };
@@ -31,7 +31,7 @@ export function useAnalyticsSummary(input?: {
   const enabled = input?.enabled ?? true;
 
   const queryKey = analyticsKeys.summary(range, scope);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: `${range}-${scope}`,
     queryKey,
     queryFn: () => fetchAnalyticsSummary({ range, scope }),
@@ -48,7 +48,7 @@ export function useAnalyticsSummary(input?: {
   });
 }
 
-export function useAnalyticsEvents(input?: {
+type AnalyticsEventsQueryInput = {
   page?: number;
   pageSize?: number;
   range?: AnalyticsRange;
@@ -61,51 +61,37 @@ export function useAnalyticsEvents(input?: {
   device?: string;
   bot?: AnalyticsEventFilterBot;
   enabled?: boolean;
-}): SingleQuery<AnalyticsEventsResponse> {
-  const page = input?.page ?? 1;
-  const pageSize = input?.pageSize ?? 25;
-  const range = input?.range ?? '24h';
-  const scope = input?.scope ?? 'all';
-  const type = input?.type ?? 'all';
-  const search = input?.search ?? '';
-  const country = input?.country ?? '';
-  const referrerHost = input?.referrerHost ?? '';
-  const browser = input?.browser ?? '';
-  const device = input?.device ?? '';
-  const bot = input?.bot ?? 'all';
-  const enabled = input?.enabled ?? true;
+};
 
-  const queryKey = analyticsKeys.events({
-    page,
-    pageSize,
-    range,
-    scope,
-    type,
-    search,
-    country,
-    referrerHost,
-    browser,
-    device,
-    bot,
-  });
+const DEFAULT_ANALYTICS_EVENTS_QUERY_INPUT: Required<AnalyticsEventsQueryInput> = {
+  page: 1,
+  pageSize: 25,
+  range: '24h',
+  scope: 'all',
+  type: 'all',
+  search: '',
+  country: '',
+  referrerHost: '',
+  browser: '',
+  device: '',
+  bot: 'all',
+  enabled: true,
+};
 
-  return createSingleQueryV2({
-    id: `${range}-${scope}-${type}-${search}-${country}-${referrerHost}-${browser}-${device}-${bot}-${page}-${pageSize}`,
+export function useAnalyticsEvents(
+  input: AnalyticsEventsQueryInput = {}
+): SingleQuery<AnalyticsEventsResponse> {
+  const { enabled, ...filters } = {
+    ...DEFAULT_ANALYTICS_EVENTS_QUERY_INPUT,
+    ...input,
+  };
+
+  const queryKey = analyticsKeys.events(filters);
+
+  return useSingleQueryV2({
+    id: `${filters.range}-${filters.scope}-${filters.type}-${filters.search}-${filters.country}-${filters.referrerHost}-${filters.browser}-${filters.device}-${filters.bot}-${filters.page}-${filters.pageSize}`,
     queryKey,
-    queryFn: () =>
-      fetchAnalyticsEvents({
-        page,
-        pageSize,
-        range,
-        scope,
-        type,
-        search,
-        country,
-        referrerHost,
-        browser,
-        device,
-        bot,
-      }),
+    queryFn: () => fetchAnalyticsEvents(filters),
     enabled,
     meta: {
       source: 'analytics.hooks.useAnalyticsEvents',
@@ -126,7 +112,7 @@ export function useAnalyticsInsights(
   const enabled = options.enabled ?? true;
 
   const queryKey = analyticsKeys.insights(limit);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: String(limit),
     queryKey,
     queryFn: () =>
@@ -148,7 +134,7 @@ export function useAnalyticsInsights(
 export function useRunAnalyticsInsight(): MutationResult<AiInsightResponse, void> {
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
 
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: () =>
       api.post<AiInsightResponse>('/api/analytics/insights', {
         ...(contextRegistry ? { contextRegistry } : {}),
@@ -166,8 +152,8 @@ export function useRunAnalyticsInsight(): MutationResult<AiInsightResponse, void
 }
 
 export function useTrackEventMutation(): MutationResult<void, Record<string, unknown>> {
-  return createCreateMutationV2({
-    mutationFn: async (payload: Record<string, unknown>) => {
+  return useCreateMutationV2({
+    mutationFn: (payload: Record<string, unknown>) => {
       const body = JSON.stringify(payload);
 
       if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
@@ -185,6 +171,7 @@ export function useTrackEventMutation(): MutationResult<void, Record<string, unk
       }).catch(() => {
         // Keep analytics best-effort and never block mutation flow.
       });
+      return Promise.resolve();
     },
     mutationKey: analyticsKeys.all,
     meta: {

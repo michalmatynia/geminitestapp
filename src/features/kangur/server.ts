@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Kangur Feature Server Entrypoint
+ * @description Centralized server-side interface for the Kangur feature.
+ *
+ * @boundary WARNING: This module contains server-side logic and must only be imported
+ * into server-side code (Node.js runtime).
+ */
+
 /*
  * Kangur server entrypoint
  *
@@ -31,19 +39,33 @@ registerSettingsProvider({
 // Register Kangur-specific context provider to shared AI Context Registry without circular dependencies
 contextRegistryEngine.registerProvider(kangurRuntimeContextProvider);
 
+/** @export Progress services */
 export * from '@/features/kangur/services/kangur-progress-repository';
+/** @export Score services */
 export * from '@/features/kangur/services/kangur-score-repository';
+/** @export Subject focus services */
 export * from '@/features/kangur/services/kangur-subject-focus-repository';
+/** @export Assignment services */
 export * from '@/features/kangur/services/kangur-assignment-repository';
+/** @export Learner activity services */
 export * from '@/features/kangur/services/kangur-learner-activity-repository';
+/** @export Learner services */
 export * from '@/features/kangur/services/kangur-learner-repository';
+/** @export Lesson services */
 export * from '@/features/kangur/services/kangur-lesson-repository';
+/** @export Lesson document services */
 export * from '@/features/kangur/services/kangur-lesson-document-repository';
+/** @export Actor services */
 export * from '@/features/kangur/services/kangur-actor';
+/** @export Settings services */
 export * from '@/features/kangur/services/kangur-settings-repository';
+/** @export Server-side context registry */
 export * from '@/features/kangur/server/context-registry';
+/** @export Learner session management */
 export * from '@/features/kangur/server/kangur-learner-sessions';
+/** @export Learner interaction management */
 export * from '@/features/kangur/server/kangur-learner-interactions';
+/** @export AI tutor mood management */
 export * from '@/features/kangur/server/ai-tutor-mood';
 export {
   KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS,

@@ -146,7 +146,7 @@ const normalizeLiveScripterUrlCandidate = (value: string): string => {
   }
 
   if (trimmed.startsWith('/') || trimmed.startsWith('?') || trimmed.startsWith('#')) {
-    throw badRequestError('Live scripter URL is invalid.');
+    throw badRequestError(`Live scripter URL is invalid: "${trimmed}" is a relative path. Provide a full URL including the hostname.`);
   }
 
   return `https://${trimmed}`;
@@ -158,15 +158,15 @@ const sanitizeUrl = (value: string): string => {
   try {
     parsed = new URL(candidate);
   } catch {
-    throw badRequestError('Live scripter URL is invalid.');
+    throw badRequestError(`Live scripter URL is invalid: "${candidate}" could not be parsed as a URL. Provide a valid absolute URL.`);
   }
 
   if (parsed.hostname.trim().length === 0) {
-    throw badRequestError('Live scripter URL is invalid.');
+    throw badRequestError(`Live scripter URL is invalid: "${candidate}" has no hostname. Provide a full URL including the hostname.`);
   }
 
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    throw badRequestError('Live scripter only supports http:// and https:// URLs.');
+    throw badRequestError(`Live scripter only supports http:// and https:// URLs, but received protocol "${parsed.protocol}".`);
   }
 
   const hostname = parsed.hostname.trim().toLowerCase();
@@ -476,7 +476,7 @@ export const pickElementAt = async (
   );
 
   if (payload === null) {
-    throw notFoundError('No element was found at the requested point.');
+    throw notFoundError(`No element was found at the requested point (x=${x}, y=${y}). The coordinates may be outside the page or no interactive element exists at that position.`);
   }
 
   return payload;
@@ -1014,6 +1014,7 @@ export const probeLiveScripterDom = async (
     } else {
       const browser = page.context().browser();
       if (browser === null) {
+        // Browser instance is not available to create a new page for traversal
         throw new Error('Live scripter probe could not open a traversal page.');
       }
       targetPage = await browser.newPage({

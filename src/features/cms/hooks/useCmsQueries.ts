@@ -97,7 +97,10 @@ export function useCreatePage(): CreateMutation<Page, CmsPageCreateRequestDto> {
   return createCreateMutationV2({
     mutationFn: (input: CmsPageCreateRequestDto) =>
       createPage(input).then(({ ok, payload }) => {
-        if (!ok) throw new Error('Failed to create page');
+        if (!ok) {
+          // API request to create CMS page returned an error response
+          throw new Error('Failed to create page');
+        }
         return payload;
       }),
     mutationKey: cmsKeys.pages.lists(),
@@ -148,7 +151,10 @@ export function useDeletePage(): UpdateMutation<string, string> {
   return createDeleteMutationV2({
     mutationFn: (id: string) =>
       deletePage(id).then(({ ok }) => {
-        if (!ok) throw new Error('Failed to delete page');
+        if (!ok) {
+          // API request to delete CMS page returned an error response
+          throw new Error('Failed to delete page');
+        }
         return id;
       }),
     mutationKey: cmsKeys.pages.lists(),
@@ -239,7 +245,10 @@ export function useCreateSlug(): CreateMutation<Slug, { slug: string; domainId?:
   return createCreateMutationV2({
     mutationFn: (input: { slug: string; domainId?: string | null }) =>
       createSlug(input).then(({ ok, payload }) => {
-        if (!ok) throw new Error('Failed to create slug');
+        if (!ok) {
+          // API request to create CMS slug returned an error response
+          throw new Error('Failed to create slug');
+        }
         return payload;
       }),
     mutationKey: cmsKeys.slugs.lists(),
@@ -268,7 +277,10 @@ export function useUpdateSlug(): UpdateMutation<
       domainId,
     }: IdInputDto<Partial<Slug>> & { domainId?: string | null }) =>
       updateSlug(id, input, domainId).then(({ ok, payload }) => {
-        if (!ok) throw new Error('Failed to update slug');
+        if (!ok) {
+          // API request to update CMS slug returned an error response
+          throw new Error('Failed to update slug');
+        }
         return payload;
       }),
     mutationKey: cmsKeys.slugs.lists(),

@@ -113,11 +113,13 @@ export const resolvePlaywrightProgrammableImportSource = async ({
   const latestRun = latestRunResponse.runs[0] ?? null;
 
   if (latestRun === null) {
+    // No completed Playwright action run exists for this import action
     throw new Error(`No retained Playwright action run found for import action "${actionId}".`);
   }
 
   const detail = await getPlaywrightActionRunDetail(latestRun.runId);
   if (detail === null) {
+    // Run details could not be retrieved from the database
     throw new Error(`Retained Playwright action run "${latestRun.runId}" could not be loaded.`);
   }
 

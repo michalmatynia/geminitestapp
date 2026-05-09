@@ -4,6 +4,7 @@ export const fetchDuckDuckGoResults = async (
   const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
   const response = await fetch(searchUrl);
   if (!response.ok) {
+    // DuckDuckGo HTML endpoint returned an error response
     throw new Error(`Search fetch failed (${response.status}).`);
   }
   const html = await response.text();

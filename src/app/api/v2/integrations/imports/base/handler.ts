@@ -70,10 +70,10 @@ export async function postBaseImportsHandler(
   let token: string | null = null;
 
   if (!normalizedConnectionId) {
-    throw badRequestError('Base.com connection is required.');
+    throw badRequestError('Base.com connection is required. Provide a non-empty connectionId in the request body.');
   }
   if (!baseIntegrationId) {
-    throw badRequestError('Base.com integration is not configured.');
+    throw badRequestError('Base.com integration is not configured. Install the Base.com integration in Admin > Integrations.');
   }
 
   const resolvedBaseConnection = await integrationRepo.getConnectionByIdAndIntegration(
@@ -81,7 +81,7 @@ export async function postBaseImportsHandler(
     baseIntegrationId
   );
   if (!resolvedBaseConnection) {
-    throw badRequestError('Selected Base.com connection was not found.');
+    throw badRequestError(`Selected Base.com connection "${normalizedConnectionId}" was not found. Verify the connection id or select a different connection.`);
   }
 
   const tokenResolution = resolveBaseConnectionToken({

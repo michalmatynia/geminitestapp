@@ -49,7 +49,7 @@ describe('system logs insights handler', () => {
     );
 
     expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);
-    expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
+    expect(startAiInsightsQueueMock).not.toHaveBeenCalled();
     expect(listAiInsightsMock).toHaveBeenCalledWith('logs', 7);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
@@ -106,7 +106,7 @@ describe('system logs insights handler', () => {
     const data = await response.json();
 
     expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);
-    expect(startAiInsightsQueueMock).toHaveBeenCalledTimes(1);
+    expect(startAiInsightsQueueMock).not.toHaveBeenCalled();
     expect(resolveObservabilityContextRegistryEnvelopeMock).toHaveBeenCalledWith(
       {
         refs: [{ id: 'page:system-logs', kind: 'static_node' }],

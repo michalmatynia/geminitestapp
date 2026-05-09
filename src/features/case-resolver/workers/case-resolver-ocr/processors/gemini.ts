@@ -53,6 +53,7 @@ export const runGeminiOcrRequest = async (input: {
   );
   if (!response.ok) {
     const responseBody = await response.text();
+    // Gemini API returned an error response
     throw new Error(responseBody.trim() || `Gemini OCR request failed (${response.status}).`);
   }
   const payload = (await response.json()) as GeminiResponse;

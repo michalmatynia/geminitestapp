@@ -15,6 +15,7 @@ const defaultSleep = (ms: number): Promise<void> =>
 
 export const createRateLimiter = (options: RateLimiterOptions): RateLimiter => {
   if (!Number.isFinite(options.requestsPerMinute) || options.requestsPerMinute <= 0) {
+    // Rate limiter requires a positive number for requests per minute
     throw new Error('requestsPerMinute must be a positive number');
   }
   const intervalMs = 60_000 / options.requestsPerMinute;

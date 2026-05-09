@@ -227,34 +227,22 @@ describe('useBrainPersistence', () => {
       agent_teaching: false,
     });
 
-    const analyticsEnabledUpdater = params.setAnalyticsScheduleEnabled.mock.calls[0]?.[0] as (
-      prev: boolean
-    ) => boolean;
     const analyticsMinutesUpdater = params.setAnalyticsScheduleMinutes.mock.calls[0]?.[0] as (
       prev: number
     ) => number;
-    const runtimeEnabledUpdater = params.setRuntimeAnalyticsScheduleEnabled.mock.calls[0]?.[0] as (
-      prev: boolean
-    ) => boolean;
     const runtimeMinutesUpdater =
       params.setRuntimeAnalyticsScheduleMinutes.mock.calls[0]?.[0] as (prev: number) => number;
-    const logsEnabledUpdater = params.setLogsScheduleEnabled.mock.calls[0]?.[0] as (
-      prev: boolean
-    ) => boolean;
     const logsMinutesUpdater = params.setLogsScheduleMinutes.mock.calls[0]?.[0] as (
       prev: number
     ) => number;
-    const logsAutoOnErrorUpdater = params.setLogsAutoOnError.mock.calls[0]?.[0] as (
-      prev: boolean
-    ) => boolean;
 
-    expect(analyticsEnabledUpdater(false)).toBe(true);
+    expect(params.setAnalyticsScheduleEnabled).toHaveBeenCalledWith(false);
     expect(analyticsMinutesUpdater(30)).toBe(45);
-    expect(runtimeEnabledUpdater(true)).toBe(false);
+    expect(params.setRuntimeAnalyticsScheduleEnabled).toHaveBeenCalledWith(false);
     expect(runtimeMinutesUpdater(30)).toBe(55);
-    expect(logsEnabledUpdater(false)).toBe(true);
+    expect(params.setLogsScheduleEnabled).toHaveBeenCalledWith(false);
     expect(logsMinutesUpdater(15)).toBe(65);
-    expect(logsAutoOnErrorUpdater(true)).toBe(false);
+    expect(params.setLogsAutoOnError).toHaveBeenCalledWith(false);
   });
 
   it('hydrates when only Brain provider credentials are present', () => {
@@ -262,7 +250,7 @@ describe('useBrainPersistence', () => {
     expect(hasAnyBrainOrInsightsSetting(new Map([['unrelated', 'value']]))).toBe(false);
   });
 
-  it('blocks saves when a schedule interval is below five minutes', async () => {
+  it('does not block saves when legacy schedule interval values are below five minutes', async () => {
     const params = createParams({
       analyticsScheduleMinutes: 4,
     });
@@ -273,11 +261,11 @@ describe('useBrainPersistence', () => {
       await result.current.handleSave();
     });
 
-    expect(params.toast).toHaveBeenCalledWith('Schedule interval must be at least 5 minutes.', {
+    expect(params.toast).not.toHaveBeenCalledWith('Schedule interval must be at least 5 minutes.', {
       variant: 'error',
     });
-    expect(params.updateSettingMutateAsync).not.toHaveBeenCalled();
-    expect(params.updateSettingsBulkMutateAsync).not.toHaveBeenCalled();
+    expect(params.updateSettingMutateAsync).toHaveBeenCalled();
+    expect(params.updateSettingsBulkMutateAsync).toHaveBeenCalled();
   });
 
   it('persists sanitized settings, provider catalog, and insight runtime settings on save', async () => {
@@ -332,9 +320,12 @@ describe('useBrainPersistence', () => {
         { key: AI_INSIGHTS_SETTINGS_KEYS.analyticsModel, value: 'analytics-agent' },
         { key: AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsProvider, value: 'model' },
         { key: AI_INSIGHTS_SETTINGS_KEYS.logsProvider, value: 'model' },
+        { key: AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled, value: 'false' },
         { key: AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes, value: '15' },
         { key: AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled, value: 'false' },
+        { key: AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled, value: 'false' },
         { key: AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes, value: '20' },
+        { key: AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError, value: 'false' },
         { key: AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem, value: 'analytics prompt' },
         {
           key: AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem,

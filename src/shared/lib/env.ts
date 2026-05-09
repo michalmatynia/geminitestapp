@@ -14,7 +14,12 @@ import { z } from 'zod';
 import { logger } from '@/shared/utils/logger';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
-
+/**
+ * Captures an environment validation exception and reports it.
+ * 
+ * @param error - The error to report.
+ * @param context - Reporting context including source and criticality.
+ */
 const captureException = async (
   error: unknown,
   context: { source: string; context?: Record<string, unknown>; critical?: boolean }
@@ -37,6 +42,9 @@ const captureException = async (
 /**
  * Schema for all application environment variables.
  * Ensures critical configuration is present and valid at runtime.
+ * 
+ * We use .optional() for many vars to allow the app to boot even if some 
+ * features are not configured, but we enforce strictly in validateDatabaseConfig().
  */
 const envSchema = z.object({
   // Core
@@ -116,8 +124,9 @@ const envSchema = z.object({
 });
 
 /**
- * Validated environment variables.
- * In development, missing vars will throw a clear error.
+ * Parses and validates process.env against the schema.
+ * 
+ * @returns Type-safe environment variables.
  */
 function getEnv(): z.infer<typeof envSchema> {
   const result = envSchema.safeParse(process.env);
@@ -133,10 +142,12 @@ function getEnv(): z.infer<typeof envSchema> {
     });
 
     if (process.env['NODE_ENV'] === 'production') {
+      // Required environment variables are missing or invalid in production
       throw new Error(`Critical environment variables missing or invalid: ${missing}`);
     }
 
-    // In dev, we return partially valid env to allow starting
+    // In development, we return partially valid env to allow the developer to see 
+    // the app partially running while they fix their .env file.
     const fallbackEnv = envSchema.parse({});
     const partialEnv = envSchema.partial().parse(process.env);
     return {
@@ -148,10 +159,22 @@ function getEnv(): z.infer<typeof envSchema> {
   return result.data;
 }
 
+/**
+ * Validated and type-safe environment variables.
+ * Use this instead of process.env throughout the app.
+ */
 export const env = getEnv();
 
 /**
- * Validates that at least one primary database is configured.
+ * Validates that the database configuration is coherent and safe.
+ * 
+ * Rules:
+ * 1. Must have either MONGODB_URI or (MONGODB_LOCAL_URI/MONGODB_CLOUD_URI).
+ * 2. Cannot mix legacy MONGODB_URI with split local/cloud sources.
+ * 3. Split sources require MONGODB_ACTIVE_SOURCE_DEFAULT.
+ * 4. ACTIVE_SOURCE must point to a configured URI.
+ * 
+ * @throws Error if the configuration is invalid.
  */
 export function validateDatabaseConfig() {
   const hasLegacyMongoConfig = Boolean(env.MONGODB_URI);
@@ -163,6 +186,7 @@ export function validateDatabaseConfig() {
     );
   }
 
+  // Prevent ambiguity between legacy and modern split source config
   if (hasLegacyMongoConfig && hasSplitMongoConfig) {
     throw new Error(
       'Do not mix legacy MONGODB_URI with split MongoDB source envs. Use either MONGODB_URI alone or MONGODB_LOCAL_URI / MONGODB_CLOUD_URI with MONGODB_ACTIVE_SOURCE_DEFAULT.'

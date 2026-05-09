@@ -85,6 +85,7 @@ const parseApprovalGateResult = (
   } | null;
 
   if (parsed === null || typeof parsed.requiresApproval !== 'boolean') {
+    // LLM response is missing the required requiresApproval boolean field
     throw new Error('Approval gate model returned invalid JSON.');
   }
 

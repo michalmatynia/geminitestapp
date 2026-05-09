@@ -18,6 +18,7 @@ import {
   generateRuntimeAnalyticsInsight,
   getScheduleSettings,
 } from '@/features/ai/insights/server';
+import { isScheduledAiInsightsEnabled } from '@/features/ai/insights/scheduling';
 import { getAiInsightsMeta, setAiInsightsMeta } from '@/features/ai/insights/server';
 import { AI_INSIGHTS_SETTINGS_KEYS } from '@/features/ai/insights/server';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
@@ -261,6 +262,8 @@ const executeAllTickJobs = async (
 };
 
 export async function tick(): Promise<void> {
+  if (!isScheduledAiInsightsEnabled()) return;
+
   const schedule = await getScheduleSettings();
   const status = await resolveTickStatus(schedule);
   if (status === null) return;

@@ -54,6 +54,7 @@ export const traderaSystemSettingsSchema = z.object({
   allowSimulatedSuccess: z.boolean(),
   listingFormUrl: z.string(),
   selectorProfile: z.string(),
+  listingPriceCurrencyCode: z.string().optional(),
 });
 
 export type TraderaSystemSettings = z.infer<typeof traderaSystemSettingsSchema>;

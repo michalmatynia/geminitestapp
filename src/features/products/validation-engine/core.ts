@@ -626,6 +626,9 @@ const collectMatchesForPattern = ({
   return collectCompiledRegexMatches({ value, pattern, regex, maxMatches });
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.collectvalidationpatternregexmatches
+ */
 export const collectValidationPatternRegexMatches = ({
   value,
   patterns,

@@ -251,10 +251,10 @@ describe('ReportsTab', () => {
     } as unknown as ReturnType<typeof useBrain>);
   });
 
-  it('renders schedules, prompt steering, and feature overrides and wires interactions through the brain context', () => {
+  it('renders manual prompt steering and feature overrides and wires interactions through the brain context', () => {
     render(<ReportsTab />);
 
-    expect(screen.getByRole('heading', { name: 'Schedules' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Schedules' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Prompt steering' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Default prompts' })).toBeInTheDocument();
     expect(screen.getByText('Analytics Reports')).toBeInTheDocument();
@@ -262,17 +262,6 @@ describe('ReportsTab', () => {
     expect(screen.getAllByText('Using global defaults.').length).toBeGreaterThan(0);
     expect(screen.getAllByText('assignment-readonly').length).toBeGreaterThan(0);
     expect(screen.getAllByText('assignment-editable').length).toBeGreaterThan(0);
-
-    const toggleInputs = screen.getAllByRole('checkbox');
-    fireEvent.click(toggleInputs[0] as HTMLInputElement);
-    fireEvent.click(toggleInputs[1] as HTMLInputElement);
-    fireEvent.click(toggleInputs[2] as HTMLInputElement);
-    fireEvent.click(toggleInputs[3] as HTMLInputElement);
-
-    expect(setAnalyticsScheduleEnabled).toHaveBeenCalledWith(false);
-    expect(setRuntimeAnalyticsScheduleEnabled).toHaveBeenCalledWith(true);
-    expect(setLogsScheduleEnabled).toHaveBeenCalledWith(false);
-    expect(setLogsAutoOnError).toHaveBeenCalledWith(true);
 
     const analyticsSection = screen.getByText('Analytics Reports').parentElement;
     expect(analyticsSection).not.toBeNull();
@@ -283,15 +272,6 @@ describe('ReportsTab', () => {
 
     expect(setFeatureEnabled).toHaveBeenCalledWith('analytics', false);
     expect(toggleOverride).toHaveBeenCalledWith('analytics', true);
-
-    const minuteInputs = screen.getAllByRole('spinbutton');
-    fireEvent.change(minuteInputs[0] as HTMLInputElement, { target: { value: '20' } });
-    fireEvent.change(minuteInputs[1] as HTMLInputElement, { target: { value: '45' } });
-    fireEvent.change(minuteInputs[2] as HTMLInputElement, { target: { value: '90' } });
-
-    expect(setAnalyticsScheduleMinutes).toHaveBeenCalledWith(20);
-    expect(setRuntimeAnalyticsScheduleMinutes).toHaveBeenCalledWith(45);
-    expect(setLogsScheduleMinutes).toHaveBeenCalledWith(90);
 
     fireEvent.change(screen.getByLabelText('Analytics prompt'), {
       target: { value: 'new analytics prompt' },

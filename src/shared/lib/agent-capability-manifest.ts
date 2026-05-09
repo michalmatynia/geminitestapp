@@ -1,6 +1,19 @@
+/**
+ * Agent Capability Manifest
+ * 
+ * Machine-readable manifest for AI-first concurrent agentic coding.
+ * Defines the platform's execution model, resources, approval gates, and capabilities.
+ * This manifest acts as the source of truth for agents to discover how to interact
+ * with the system, claim leases, and handle concurrent mutations.
+ */
+
 import type { AgentCapabilityManifest } from '../contracts/agent-capabilities';
 import { AgentCapabilityManifestSchema } from '../contracts/agent-capabilities';
 
+/**
+ * The singleton instance of the AgentCapabilityManifest.
+ * Defines versioning, execution policies, available resources, and capabilities.
+ */
 export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
   version: '2026-03-09',
   generatedAt: '2026-03-09T00:00:00.000Z',

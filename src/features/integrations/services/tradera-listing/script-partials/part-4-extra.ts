@@ -787,6 +787,291 @@ export const PART_4_EXTRA = String.raw`
     return !(await dialog.isVisible().catch(() => false));
   };
 
+  const hasPaymentSolutionModalText = (value) => {
+    const normalized = normalizeWhitespace(value).toLowerCase();
+    if (!normalized) {
+      return false;
+    }
+
+    const matchedHints = PAYMENT_SOLUTION_MODAL_TEXT_HINTS.filter((label) =>
+      normalized.includes(normalizeWhitespace(label).toLowerCase())
+    );
+    return (
+      matchedHints.length >= 2 ||
+      (normalized.includes("tradera's payment solution") &&
+        normalized.includes('continue')) ||
+      (normalized.includes('payment solution') &&
+        normalized.includes('terms') &&
+        normalized.includes('continue')) ||
+      (normalized.includes('betalningslösning') && normalized.includes('villkor'))
+    );
+  };
+
+  const findVisiblePaymentSolutionDialog = async () => {
+    const dialogCollections = [
+      page.getByRole('dialog'),
+      page.locator(
+        '[aria-modal="true"], [data-testid*="modal"], [data-testid*="dialog"], [class*="modal" i], [class*="dialog" i], [class*="sheet" i], [class*="drawer" i], [class*="popover" i]'
+      ),
+    ];
+
+    for (const dialogs of dialogCollections) {
+      const count = await dialogs.count().catch(() => 0);
+
+      for (let index = 0; index < count; index += 1) {
+        const candidate = dialogs.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+
+        const textContent = await candidate.innerText().catch(() => '');
+        if (hasPaymentSolutionModalText(textContent)) {
+          return candidate;
+        }
+      }
+    }
+
+    const heading = page
+      .getByText(/Tradera'?s payment solution|Traderas betalningslösning|betalningslösning/i)
+      .first();
+    const headingVisible = await heading.isVisible().catch(() => false);
+    if (!headingVisible) {
+      return null;
+    }
+
+    const headingContainerCandidates = [
+      heading
+        .locator(
+          'xpath=ancestor-or-self::*[@role="dialog" or @aria-modal="true" or self::dialog][1]'
+        )
+        .first(),
+      heading
+        .locator(
+          'xpath=ancestor-or-self::*[(contains(normalize-space(.), "Continue") or contains(normalize-space(.), "Fortsätt"))][1]'
+        )
+        .first(),
+      heading
+        .locator(
+          'xpath=ancestor-or-self::*[contains(@class, "modal") or contains(@class, "Modal") or contains(@class, "dialog") or contains(@class, "Dialog") or contains(@class, "sheet") or contains(@class, "Sheet") or contains(@class, "drawer") or contains(@class, "Drawer") or contains(@class, "popover") or contains(@class, "Popover")][1]'
+        )
+        .first(),
+    ];
+
+    for (const candidate of headingContainerCandidates) {
+      const candidateVisible = await candidate.isVisible().catch(() => false);
+      if (!candidateVisible) continue;
+
+      const textContent = await candidate.innerText().catch(() => '');
+      if (hasPaymentSolutionModalText(textContent)) {
+        return candidate;
+      }
+    }
+
+    return heading;
+  };
+
+  const findPaymentSolutionContinueButton = async (paymentSolutionDialog) => {
+    const scopedButton = await findButtonByLabelsWithin(
+      paymentSolutionDialog,
+      PAYMENT_SOLUTION_MODAL_CONTINUE_LABELS
+    );
+    if (scopedButton) {
+      return scopedButton;
+    }
+
+    const heading = page
+      .getByText(/Tradera'?s payment solution|Traderas betalningslösning|betalningslösning/i)
+      .first();
+    const headingVisible = await heading.isVisible().catch(() => false);
+    if (!headingVisible) {
+      return null;
+    }
+
+    const headingFollowingButton = heading
+      .locator(
+        'xpath=following::*[self::button or self::a or @role="button" or @tabindex][normalize-space(.)="Continue" or contains(normalize-space(.), "Continue") or normalize-space(.)="Fortsätt" or contains(normalize-space(.), "Fortsätt")][1]'
+      )
+      .first();
+    const headingFollowingButtonVisible = await headingFollowingButton
+      .isVisible()
+      .catch(() => false);
+    if (headingFollowingButtonVisible) {
+      return headingFollowingButton;
+    }
+
+    return null;
+  };
+
+  const clickPaymentSolutionContinueButton = async (
+    continueButton,
+    paymentSolutionDialog,
+    context
+  ) => {
+    const clickStrategies = [
+      {
+        name: 'human-click',
+        run: async () => {
+          await humanClick(continueButton, { pauseAfter: false });
+        },
+      },
+      {
+        name: 'dom-click',
+        run: async () => {
+          await continueButton
+            .evaluate((element) => {
+              if (element instanceof HTMLElement) {
+                element.click();
+              }
+            })
+            .catch(() => undefined);
+        },
+      },
+      {
+        name: 'focus-enter',
+        run: async () => {
+          await continueButton.focus().catch(() => undefined);
+          await humanPress('Enter', { pauseBefore: false, pauseAfter: false }).catch(
+            () => undefined
+          );
+        },
+      },
+    ];
+
+    for (const strategy of clickStrategies) {
+      log?.('tradera.quicklist.payment_solution_modal.continue_attempt', {
+        context,
+        strategy: strategy.name,
+      });
+      await strategy.run().catch(() => undefined);
+      const dialogClosed = await waitForDialogToClose(paymentSolutionDialog, 1_500);
+      if (dialogClosed || !(await findVisiblePaymentSolutionDialog())) {
+        log?.('tradera.quicklist.payment_solution_modal.dismissed', {
+          context,
+          method: strategy.name,
+        });
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const acceptVisiblePaymentSolutionModalIfPresent = async ({
+    context = 'unknown',
+    required = false,
+  } = {}) => {
+    const bodyHasPaymentSolutionModal = await page
+      .evaluate(() => {
+        const text = String(document.body?.innerText || document.body?.textContent || '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase();
+        return (
+          (text.includes("tradera's payment solution") ||
+            text.includes('payment solution') ||
+            text.includes('betalningslösning')) &&
+          (text.includes('terms') || text.includes('villkor'))
+        );
+      })
+      .catch(() => false);
+    if (!bodyHasPaymentSolutionModal) {
+      return false;
+    }
+
+    const paymentSolutionDialog = await findVisiblePaymentSolutionDialog();
+    if (!paymentSolutionDialog) {
+      return false;
+    }
+
+    const dialogText = normalizeWhitespace(
+      await paymentSolutionDialog.innerText().catch(() => '')
+    );
+    log?.('tradera.quicklist.payment_solution_modal.detected', {
+      context,
+      text: dialogText.slice(0, 220),
+    });
+
+    const termsCheckbox = await findCheckboxByLabelsWithin(
+      paymentSolutionDialog,
+      PAYMENT_SOLUTION_TERMS_LABELS,
+      { fallbackToFirstVisible: dialogText.length <= 3000 }
+    );
+    if (!termsCheckbox) {
+      log?.('tradera.quicklist.payment_solution_modal.dismiss_failed', {
+        context,
+        reason: 'terms-checkbox-missing',
+        text: dialogText.slice(0, 220),
+      });
+      if (required) {
+        throw new Error(
+          'FAIL_PUBLISH_VALIDATION: Tradera payment solution terms checkbox was not found.'
+        );
+      }
+      return false;
+    }
+
+    const checked = await setCheckboxChecked(
+      termsCheckbox,
+      PAYMENT_SOLUTION_TERMS_LABELS,
+      true,
+      paymentSolutionDialog
+    );
+    if (!checked) {
+      log?.('tradera.quicklist.payment_solution_modal.dismiss_failed', {
+        context,
+        reason: 'terms-checkbox-not-checked',
+      });
+      if (required) {
+        throw new Error(
+          'FAIL_PUBLISH_VALIDATION: Tradera payment solution terms checkbox could not be acknowledged.'
+        );
+      }
+      return false;
+    }
+
+    log?.('tradera.quicklist.payment_solution_modal.checkbox_checked', {
+      context,
+    });
+
+    const continueButton = await findPaymentSolutionContinueButton(paymentSolutionDialog);
+    if (!continueButton) {
+      log?.('tradera.quicklist.payment_solution_modal.dismiss_failed', {
+        context,
+        reason: 'continue-button-missing',
+        text: dialogText.slice(0, 220),
+      });
+      if (required) {
+        throw new Error(
+          'FAIL_PUBLISH_VALIDATION: Tradera payment solution continue button was not found.'
+        );
+      }
+      return false;
+    }
+
+    const dismissed = await clickPaymentSolutionContinueButton(
+      continueButton,
+      paymentSolutionDialog,
+      context
+    );
+    if (dismissed) {
+      return true;
+    }
+
+    log?.('tradera.quicklist.payment_solution_modal.dismiss_failed', {
+      context,
+      reason: 'continue-click-did-not-close',
+      text: dialogText.slice(0, 220),
+    });
+    if (required) {
+      throw new Error(
+        'FAIL_MODAL_DISMISS: Tradera payment solution modal could not be dismissed (' +
+          context +
+          ').'
+      );
+    }
+
+    return false;
+  };
+
   const commitShippingDialogPriceInput = async (shippingPriceInput) => {
     if (!shippingPriceInput) {
       return;

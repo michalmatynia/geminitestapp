@@ -129,7 +129,7 @@ const resolveRecordKind = (ctx: ApiHandlerContext): LinkedRecordKind =>
 const loadPerson = async (ctx: ApiHandlerContext): Promise<MongoFilemakerPerson> => {
   const person = await getMongoFilemakerPersonById(resolveRouteParam(ctx, 'personId'));
   if (!person) {
-    throw notFoundError('Filemaker person was not found.');
+    throw notFoundError(`Filemaker person "${resolveRouteParam(ctx, 'personId')}" was not found. The person may have been deleted or the id is incorrect.`);
   }
   return person;
 };
@@ -186,7 +186,7 @@ export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Pr
   await requireFilemakerMailAdminSession();
   const kind = resolveRecordKind(ctx);
   const recordId = resolveRouteParam(ctx, 'recordId');
-  if (recordId.trim().length === 0) throw badRequestError('recordId is required.');
+  if (recordId.trim().length === 0) throw badRequestError('recordId is required. Provide a non-empty recordId in the URL path.');
   const person = await loadPerson(ctx);
   await assertRecordBelongsToPerson(kind, person, recordId);
   const parsedPatch = await parsePatch(req, kind);
@@ -201,7 +201,7 @@ export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Pr
     .collection(collectionByKind[kind])
     .updateOne(recordFilter(recordId), { $set: patch });
   if (result.matchedCount === 0) {
-    throw notFoundError('Linked FileMaker record was not found.');
+    throw notFoundError(`Linked FileMaker ${kind} record "${recordId}" was not found. The record may have been deleted or does not belong to this person.`);
   }
   return Response.json({ kind, patch, recordId });
 }
@@ -210,14 +210,14 @@ export async function deleteHandler(_req: NextRequest, ctx: ApiHandlerContext): 
   await requireFilemakerMailAdminSession();
   const kind = resolveRecordKind(ctx);
   const recordId = resolveRouteParam(ctx, 'recordId');
-  if (recordId.trim().length === 0) throw badRequestError('recordId is required.');
+  if (recordId.trim().length === 0) throw badRequestError('recordId is required. Provide a non-empty recordId in the URL path.');
   const person = await loadPerson(ctx);
   await assertRecordBelongsToPerson(kind, person, recordId);
 
   const db = await getMongoDb();
   const result = await db.collection(collectionByKind[kind]).deleteOne(recordFilter(recordId));
   if (result.deletedCount === 0) {
-    throw notFoundError('Linked FileMaker record was not found.');
+    throw notFoundError(`Linked FileMaker ${kind} record "${recordId}" was not found. The record may have already been deleted or does not belong to this person.`);
   }
   return Response.json({ deleted: true, kind, recordId });
 }

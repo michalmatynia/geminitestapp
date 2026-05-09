@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { logger } from '@/shared/utils/logger';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import { type IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import { type TraderaCategoryRecord } from '@/shared/contracts/integrations/tradera';
@@ -128,7 +129,7 @@ const buildCategorySequencerContext = (
   actionKey: 'tradera_fetch_categories',
   emit: () => undefined,
   log: (msg, ctx) => {
-    logSystemEvent({
+    void logSystemEvent({
       level: 'info',
       message: msg,
       source: 'tradera-fetch-categories',
@@ -147,7 +148,7 @@ const logCategoryFetchResult = (
 ): void => {
   const withParent = categories.filter(isChildCategory);
 
-  logSystemEvent({
+  void logSystemEvent({
     level: 'info',
     message: config.logLabel,
     source: 'tradera-fetch-categories',

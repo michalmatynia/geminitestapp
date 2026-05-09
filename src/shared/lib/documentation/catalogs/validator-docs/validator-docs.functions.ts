@@ -100,6 +100,23 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     example: 'sortValidatorPatterns(patterns)',
   },
   {
+    id: 'core.collectValidationPatternRegexMatches',
+    symbol: 'collectValidationPatternRegexMatches',
+    file: 'src/features/products/validation-engine/core.ts',
+    purpose: 'Collects regex matches for multiple validation patterns against a field value.',
+    params: [
+      'value: input string to search.',
+      'patterns: list of validation patterns to apply.',
+      'validationScope: optional active validator scope.',
+      'target: optional validation target.',
+      'maxMatchesPerPattern: optional match limit per pattern.',
+    ],
+    returns: 'Flattened list of all collected regex matches.',
+    errors: ['No throws.'],
+    edgeCases: ['Empty value or patterns returns empty array.'],
+    example: 'collectValidationPatternRegexMatches({ value, patterns })',
+  },
+  {
     id: 'core.resolveFieldTargetAndLocale',
     symbol: 'resolveFieldTargetAndLocale',
     file: 'src/features/products/validation-engine/core.ts',

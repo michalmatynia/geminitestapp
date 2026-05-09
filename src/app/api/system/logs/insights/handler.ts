@@ -3,7 +3,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { generateLogsInsight } from '@/features/ai/insights/server';
 import { listAiInsights } from '@/features/ai/insights/server';
-import { startAiInsightsQueue } from '@/features/jobs/server';
 import type { AiInsightResponse, AiInsightsResponse } from '@/shared/contracts/ai-insights';
 import {
   systemLogsInsightRequestSchema,
@@ -16,7 +15,6 @@ import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observ
 
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
-  startAiInsightsQueue();
   const url = new URL(req.url);
   const parsed = systemLogsInsightsListQuerySchema.parse(
     Object.fromEntries(url.searchParams.entries())
@@ -28,7 +26,6 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
 
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
-  startAiInsightsQueue();
   const parsed = await parseJsonBody(req, systemLogsInsightRequestSchema, {
     logPrefix: 'system.logs.insights.POST',
     allowEmpty: true,

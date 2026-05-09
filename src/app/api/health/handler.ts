@@ -1,3 +1,11 @@
+/**
+ * Health API Handler
+ * 
+ * Provides system health diagnostic information, including database connectivity 
+ * status, observability runtime states (OTEL, logging), and critical background 
+ * worker health.
+ */
+
 import { MongoClient } from 'mongodb';
 import { type NextRequest } from 'next/server';
 
@@ -43,6 +51,11 @@ const resolveProvider = async (): Promise<AppDbProvider | 'unknown'> => {
   }
 };
 
+/**
+ * Retrieves overall system health status. 
+ * Includes DB ping check and runtime observability metrics.
+ * Returns 200 if healthy, 503 if unhealthy.
+ */
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const startedAtMs = Date.now();
   const provider = await resolveProvider();

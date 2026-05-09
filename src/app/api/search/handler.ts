@@ -50,14 +50,14 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const provider = parsed.data.provider?.toLowerCase() || 'brave';
 
   if (!query) {
-    throw badRequestError('Query is required');
+    throw badRequestError('Query is required. Provide a non-empty query string in the request body.');
   }
 
   const settings = await getSearchProviderSettings();
 
   if (provider === 'brave') {
     if (!settings.brave.apiKey) {
-      throw configurationError('Brave search API key not configured');
+      throw configurationError('Brave search API key not configured. Set the Brave API key in the search provider settings (Admin → Search) or via the BRAVE_SEARCH_API_KEY environment variable.');
     }
     const url = new URL(settings.brave.apiUrl);
     url.searchParams.set('q', query);
@@ -98,10 +98,10 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   if (provider === 'google') {
     if (!settings.google.apiKey) {
-      throw configurationError('Google search API key not configured');
+      throw configurationError('Google search API key not configured. Set the Google API key in the search provider settings (Admin → Search) or via the GOOGLE_SEARCH_API_KEY environment variable.');
     }
     if (!settings.google.engineId) {
-      throw configurationError('Google search engine ID not configured');
+      throw configurationError('Google search engine ID not configured. Set the Custom Search Engine ID in the search provider settings (Admin → Search) or via the GOOGLE_SEARCH_ENGINE_ID environment variable.');
     }
     const url = new URL(settings.google.apiUrl);
     url.searchParams.set('key', settings.google.apiKey);
@@ -138,7 +138,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   if (provider === 'serpapi') {
     if (!settings.serpapi.apiKey) {
-      throw configurationError('SerpApi key not configured');
+      throw configurationError('SerpApi key not configured. Set the SerpApi key in the search provider settings (Admin → Search) or via the SERPAPI_API_KEY environment variable.');
     }
 
     const url = new URL(settings.serpapi.apiUrl);

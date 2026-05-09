@@ -66,7 +66,10 @@ const addQueryParam = (url: string, key: string, value: string): string => {
 };
 
 const checkAborted = (signal: AbortSignal | undefined): void => {
-  if (signal?.aborted) throw new Error('Scripter run aborted');
+  if (signal?.aborted) {
+    // Scripter execution was cancelled by the user or system
+    throw new Error('Scripter run aborted');
+  }
 };
 
 const hasReachedLimit = (
@@ -190,12 +193,18 @@ export const runScripter = async (
             if (hasReachedLimit(records, options.limit)) break;
             let advanced = false;
             if (step.strategy === 'nextLink') {
-              if (!step.nextSelector) throw new Error('paginate.nextLink requires nextSelector');
+              if (!step.nextSelector) {
+                // nextLink pagination strategy requires a selector to find the next page link
+                throw new Error('paginate.nextLink requires nextSelector');
+              }
               await gate();
               const clicked = await driver.tryClick([step.nextSelector]);
               advanced = clicked !== null;
             } else if (step.strategy === 'queryParam') {
-              if (!step.queryParam) throw new Error('paginate.queryParam requires queryParam');
+              if (!step.queryParam) {
+                // queryParam pagination strategy requires a parameter name to increment
+                throw new Error('paginate.queryParam requires queryParam');
+              }
               const currentUrl = await driver.currentUrl();
               const nextUrl = addQueryParam(currentUrl, step.queryParam, String(i + 1));
               if (nextUrl === currentUrl) {

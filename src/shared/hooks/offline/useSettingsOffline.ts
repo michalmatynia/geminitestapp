@@ -58,7 +58,10 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
         headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ key, value }),
       });
-      if (!res.ok) throw new Error('Failed to update setting');
+      if (!res.ok) {
+        // API request to update setting returned an error status
+        throw new Error('Failed to update setting');
+      }
       invalidateSettingsCache();
       return (await res.json()) as SettingRecord;
     },

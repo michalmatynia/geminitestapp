@@ -79,7 +79,7 @@ export async function postHandler(
   params: { projectId: string }
 ): Promise<Response> {
   const projectId = sanitizeProjectId(params.projectId);
-  if (!projectId) throw badRequestError('Project id is required');
+  if (!projectId) throw badRequestError('Project id is required. Provide a non-empty projectId in the URL path to move an asset.');
 
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = moveSchema.safeParse(body);
@@ -106,7 +106,7 @@ export async function postHandler(
     const repo = await getImageFileRepository();
     repoRecord = await repo.getImageFileById(assetId);
     if (!repoRecord) {
-      throw notFoundError('Asset not found');
+      throw notFoundError(`Asset "${assetId}" not found in the image file repository. The asset may have been deleted or the id is incorrect.`);
     }
     sourceFilepath = repoRecord.filepath;
   } else if (isDiskOnly && !sourceFilepath) {
@@ -115,19 +115,19 @@ export async function postHandler(
 
   const normalizedSource = normalizePublicPath(sourceFilepath);
   if (!normalizedSource) {
-    throw badRequestError('Source filepath is required');
+    throw badRequestError('Source filepath is required. Provide a non-empty filepath or asset id in the request body.');
   }
   if (!normalizedSource.startsWith(`/uploads/studio/${projectId}/`)) {
-    throw badRequestError('Source file must be inside the project uploads folder');
+    throw badRequestError(`Source file "${normalizedSource}" must be inside the project uploads folder "/uploads/studio/${projectId}/". Only assets belonging to this project can be moved.`);
   }
 
   const sourceDiskPath = resolveDiskPathFromPublicUploadPath(normalizedSource);
   if (!sourceDiskPath) {
-    throw notFoundError('Source file not found');
+    throw notFoundError(`Source file "${normalizedSource}" could not be resolved to a disk path. The asset may have been deleted.`);
   }
   const sourceStat = await nodeFs.stat(sourceDiskPath).catch(() => null);
   if (!sourceStat?.isFile()) {
-    throw notFoundError('Source file not found');
+    throw notFoundError(`Source file "${normalizedSource}" was not found on disk. The asset may have been deleted or moved.`);
   }
 
   await nodeFs.mkdir(targetDiskDir, { recursive: true });

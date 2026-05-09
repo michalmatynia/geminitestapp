@@ -1,35 +1,52 @@
+import { z } from 'zod';
 import { type CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 import {
   getCaseResolverWorkspaceRevision,
   safeParseJson,
 } from './utils/workspace-persistence-utils';
-import { type CaseResolverWorkspaceDetachedPayload } from './workspace-persistence-detached.types';
+import { type CaseResolverWorkspaceDetachedPayload } from '@/features/case-resolver/services/persistence/case-workspace-service';
 
-export const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2 =
-  'case_resolver_workspace_detached_documents_v2';
-const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA =
-  CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2;
-const CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS = 6_000;
-const CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_SCAN_SLOT_OCR_MAX_CHARS = 2_000;
-const CASE_RESOLVER_SCAN_SLOT_STATUSES = new Set(['pending', 'processing', 'completed', 'failed']);
+/**
+ * Zod schema for a single detached document file entry.
+ */
+/**
+ * Zod schema for a scan slot.
+ */
+export const ScanSlotSchema = z.object({
+  id: z.string().min(1),
+  fileId: z.string().min(1),
+  status: z.enum(['pending', 'processing', 'completed', 'failed']),
+  progress: z.number().nonnegative(),
+  ocrText: z.string().optional(),
+});
 
-type CaseResolverWorkspaceDetachedDocumentsFileEntry = {
-  id: string;
-  documentContent?: string;
-  documentContentHtml?: string;
-  documentContentMarkdown?: string;
-  documentContentPlainText?: string;
-  originalDocumentContent?: string;
-  explodedDocumentContent?: string;
-  ocrText?: string;
-  scanSlots?: CaseResolverWorkspace['files'][number]['scanSlots'];
-};
+export type CaseResolverScanSlot = z.infer<typeof ScanSlotSchema>;
 
-export type CaseResolverWorkspaceDetachedDocumentsPayload = CaseResolverWorkspaceDetachedPayload<
-  typeof CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA,
-  CaseResolverWorkspaceDetachedDocumentsFileEntry
->;
+// Update DetachedFileEntrySchema to use the ScanSlotSchema
+export const DetachedFileEntrySchema = z.object({
+  id: z.string().min(1),
+  documentContent: z.string().optional(),
+  documentContentHtml: z.string().optional(),
+  documentContentMarkdown: z.string().optional(),
+  documentContentPlainText: z.string().optional(),
+  originalDocumentContent: z.string().optional(),
+  explodedDocumentContent: z.string().optional(),
+  ocrText: z.string().optional(),
+  scanSlots: z.array(ScanSlotSchema).optional(),
+});
+
+export type CaseResolverWorkspaceDetachedDocumentsFileEntry = z.infer<typeof DetachedFileEntrySchema>;
+
+/**
+ * Zod schema for the entire detached documents payload.
+ */
+export const DetachedDocumentsPayloadSchema = z.object({
+  schema: z.string().min(1),
+  workspaceRevision: z.number().int().positive(),
+  lastMutationId: z.string().trim().min(1).nullable(),
+  files: z.array(DetachedFileEntrySchema),
+});
 
 const coerceDetachedWorkspaceFile = (
   value: unknown
@@ -90,28 +107,6 @@ const normalizeScanSlotsForLightweightSearch = (
     };
   });
 
-const isCaseResolverScanSlot = (
-  slot: unknown
-): slot is CaseResolverWorkspace['files'][number]['scanSlots'][number] => {
-  if (!slot || typeof slot !== 'object' || Array.isArray(slot)) return false;
-  const record = slot as Record<string, unknown>;
-
-  const id = record['id'];
-  const fileId = record['fileId'];
-  const status = record['status'];
-  const progress = record['progress'];
-
-  return (
-    typeof id === 'string' &&
-    id.trim().length > 0 &&
-    typeof fileId === 'string' &&
-    fileId.trim().length > 0 &&
-    typeof status === 'string' &&
-    CASE_RESOLVER_SCAN_SLOT_STATUSES.has(status) &&
-    typeof progress === 'number' &&
-    Number.isFinite(progress)
-  );
-};
 
 const resolveDetachedDocumentsEntry = (
   file: CaseResolverWorkspace['files'][number]
@@ -155,38 +150,19 @@ const normalizeDetachedFiles = (
 ): CaseResolverWorkspaceDetachedDocumentsPayload['files'] => {
   if (!Array.isArray(input)) return [];
   const seen = new Set<string>();
+  
   return input
     .map((entry: unknown): CaseResolverWorkspaceDetachedDocumentsFileEntry | null => {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
-      const record = entry as Record<string, unknown>;
-      const id = typeof record['id'] === 'string' ? record['id'].trim() : '';
-      if (!id || seen.has(id)) return null;
-      seen.add(id);
-      const normalizedEntry: CaseResolverWorkspaceDetachedDocumentsFileEntry = { id };
-      const copyString = (
-        key: Exclude<keyof CaseResolverWorkspaceDetachedDocumentsFileEntry, 'id' | 'scanSlots'>
-      ): void => {
-        const value = record[key];
-        if (typeof value !== 'string' || value.length === 0) return;
-        normalizedEntry[key] = value;
-      };
-      copyString('documentContent');
-      copyString('documentContentHtml');
-      copyString('documentContentMarkdown');
-      copyString('documentContentPlainText');
-      copyString('originalDocumentContent');
-      copyString('explodedDocumentContent');
-      copyString('ocrText');
-      if (Array.isArray(record['scanSlots'])) {
-        normalizedEntry.scanSlots = record['scanSlots'].filter(isCaseResolverScanSlot);
-      }
-      return normalizedEntry;
+      const result = DetachedFileEntrySchema.safeParse(entry);
+      if (!result.success) return null;
+      
+      const fileEntry = result.data;
+      if (seen.has(fileEntry.id)) return null;
+      seen.add(fileEntry.id);
+      
+      return fileEntry;
     })
-    .filter(
-      (
-        entry: CaseResolverWorkspaceDetachedDocumentsFileEntry | null
-      ): entry is CaseResolverWorkspaceDetachedDocumentsFileEntry => Boolean(entry)
-    );
+    .filter((entry): entry is CaseResolverWorkspaceDetachedDocumentsFileEntry => Boolean(entry));
 };
 
 export const buildCaseResolverWorkspaceDetachedDocumentsPayload = (
@@ -257,33 +233,10 @@ export const parseCaseResolverWorkspaceDetachedDocumentsPayload = (
 ): CaseResolverWorkspaceDetachedDocumentsPayload | null => {
   if (typeof raw !== 'string' || raw.trim().length === 0) return null;
   const parsed = safeParseJson<unknown>(raw);
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-  const record = parsed as Record<string, unknown>;
-  const schemaRaw = record['schema'];
-  if (
-    typeof schemaRaw !== 'string' ||
-    schemaRaw !== CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA
-  ) {
-    return null;
-  }
-  const workspaceRevisionRaw = record['workspaceRevision'];
-  const workspaceRevision =
-    typeof workspaceRevisionRaw === 'number' &&
-    Number.isFinite(workspaceRevisionRaw) &&
-    workspaceRevisionRaw > 0
-      ? Math.floor(workspaceRevisionRaw)
-      : 0;
-  const lastMutationIdRaw = record['lastMutationId'];
-  const lastMutationId =
-    typeof lastMutationIdRaw === 'string' && lastMutationIdRaw.trim().length > 0
-      ? lastMutationIdRaw.trim()
-      : null;
-  return {
-    schema: CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA,
-    workspaceRevision,
-    lastMutationId,
-    files: normalizeDetachedFiles(record['files']),
-  };
+  if (!parsed) return null;
+  
+  const result = DetachedDocumentsPayloadSchema.safeParse(parsed);
+  return result.success ? result.data : null;
 };
 
 export const applyCaseResolverWorkspaceDetachedDocumentsPayload = ({

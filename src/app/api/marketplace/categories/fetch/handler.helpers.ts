@@ -106,7 +106,7 @@ export const requireMarketplaceConnectionId = (
   body: Pick<MarketplaceConnectionRequest, 'connectionId'>
 ): string => {
   if (!body.connectionId) {
-    throw badRequestError('connectionId is required');
+    throw badRequestError('connectionId is required. Provide a non-empty connectionId in the request body to identify which marketplace connection to use.');
   }
   return body.connectionId;
 };
@@ -118,17 +118,17 @@ export const resolveMarketplaceCategoryFetchContext = async (
 ): Promise<MarketplaceCategoryFetchContext> => {
   const connection = await integrationRepo.getConnectionById(connectionId);
   if (!connection) {
-    throw notFoundError('Connection not found');
+    throw notFoundError(`Connection "${connectionId}" not found. Verify the connection id or select a different connection in Admin > Integrations.`);
   }
 
   const integration = await integrationRepo.getIntegrationById(connection.integrationId);
   if (!integration) {
-    throw notFoundError('Integration not found');
+    throw notFoundError(`Integration for connection "${connectionId}" not found. The integration may have been removed.`);
   }
 
   const integrationSlug = (integration.slug ?? '').toLowerCase();
   if (!integrationSlug) {
-    throw badRequestError('Integration slug is missing');
+    throw badRequestError(`Integration slug is missing for integration "${connection.integrationId}". The integration record may be corrupt.`);
   }
 
   if (BASE_MARKETPLACE_SLUGS.has(integrationSlug)) {

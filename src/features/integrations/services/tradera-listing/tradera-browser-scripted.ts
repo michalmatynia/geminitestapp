@@ -12,6 +12,7 @@
 
 import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
+  resolveTraderaListingPriceCurrencyCode,
   normalizeTraderaListingFormUrl,
   type TraderaSystemSettings,
 } from '@/features/integrations/constants/tradera';
@@ -82,7 +83,6 @@ import {
   resolveTraderaListingPriceForProduct,
   resolveTraderaStoredRelistPrice,
   type TraderaListingPriceResolution,
-  TRADERA_LISTING_PRICE_CURRENCY_CODE,
 } from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
 import { buildTraderaListingDescription } from './description';
@@ -348,26 +348,28 @@ const buildTraderaScriptInput = async ({
     ? []
     : imageUploadPlan.imageUrls.map((url) => toAbsoluteUrl(url, appBaseUrl));
   const localImagePaths = shouldSkipImages ? [] : imageUploadPlan.localImagePaths;
+  const targetListingCurrencyCode = resolveTraderaListingPriceCurrencyCode(systemSettings);
   const rawPriceResolution = await resolveTraderaListingPriceForProduct({
     product,
-    targetCurrencyCode: TRADERA_LISTING_PRICE_CURRENCY_CODE,
+    targetCurrencyCode: targetListingCurrencyCode,
   });
 
   const priceResolutionFailed =
     rawPriceResolution.listingPrice === null ||
     !rawPriceResolution.resolvedToTargetCurrency ||
     toTrimmedString(rawPriceResolution.listingCurrencyCode).toUpperCase() !==
-      TRADERA_LISTING_PRICE_CURRENCY_CODE;
+      targetListingCurrencyCode;
 
   let priceResolution: TraderaListingPriceResolution = rawPriceResolution;
 
   if (priceResolutionFailed && action === 'relist') {
-    const storedPrice = resolveTraderaStoredRelistPrice(listing, TRADERA_LISTING_PRICE_CURRENCY_CODE);
+    const storedPrice = resolveTraderaStoredRelistPrice(listing, targetListingCurrencyCode);
     if (storedPrice !== null) {
       priceResolution = {
         ...rawPriceResolution,
         listingPrice: storedPrice,
-        listingCurrencyCode: TRADERA_LISTING_PRICE_CURRENCY_CODE,
+        listingCurrencyCode: targetListingCurrencyCode,
+        targetCurrencyCode: targetListingCurrencyCode,
         resolvedToTargetCurrency: true,
         priceSource: 'stored_relist_price',
         reason: 'stored_relist_price',
@@ -381,10 +383,10 @@ const buildTraderaScriptInput = async ({
     priceResolution.listingPrice === null ||
     !priceResolution.resolvedToTargetCurrency ||
     toTrimmedString(priceResolution.listingCurrencyCode).toUpperCase() !==
-      TRADERA_LISTING_PRICE_CURRENCY_CODE
+      targetListingCurrencyCode
   ) {
     throw badRequestError(
-      buildTraderaListingPriceResolutionFailureMessage(TRADERA_LISTING_PRICE_CURRENCY_CODE),
+      buildTraderaListingPriceResolutionFailureMessage(targetListingCurrencyCode),
       {
         mode: 'scripted',
         productId: product.id,
@@ -598,6 +600,12 @@ const buildSuccessMetadata = ({
         toTrimmedString(scriptInput['existingListingUrl']) ||
         null
       : null;
+  const paymentSolutionTermsAccepted =
+    result.rawResult['paymentSolutionTermsAccepted'] === true;
+  const retryAfterPaymentSolutionTerms =
+    result.rawResult['retryAfterPaymentSolutionTerms'] === true;
+  const initialPublishInteractionReason =
+    toTrimmedString(result.rawResult['initialPublishInteractionReason']) || null;
 
   return buildPlaywrightScriptListingMetadata({
     result,
@@ -653,6 +661,9 @@ const buildSuccessMetadata = ({
         plannedImageCount !== null &&
         observedImagePreviewDelta !== null &&
         plannedImageCount !== observedImagePreviewDelta,
+      paymentSolutionTermsAccepted,
+      retryAfterPaymentSolutionTerms,
+      initialPublishInteractionReason,
       localImagePathCount: imageDiagnostics.localImagePathCount,
       imageUrlCount: imageDiagnostics.imageUrlCount,
       ...(action === 'sync'

@@ -101,6 +101,12 @@ export type {
   SaveMutationFactoryV2Config,
 };
 
+/**
+ * Hook for standard list queries.
+ * 
+ * @param config - Query configuration.
+ * @returns A standardized ListQuery object.
+ */
 export function useListQueryV2<TData, TQueryFnData = TData[]>(
   config: BaseQueryFactoryV2Config<TQueryFnData, Error, TQueryFnData>
 ): ListQuery<TData, TQueryFnData> {
@@ -110,6 +116,9 @@ export function useListQueryV2<TData, TQueryFnData = TData[]>(
   >;
 }
 
+/**
+ * Function-style wrapper for useListQueryV2.
+ */
 export function createListQueryV2<TData, TQueryFnData = TData[]>(
   config: BaseQueryFactoryV2Config<TQueryFnData, Error, TQueryFnData>
 ): ListQuery<TData, TQueryFnData> {
@@ -169,6 +178,10 @@ type SuspenseMultiQueryOptionTuple<
 const keepPreviousPlaceholderData = <TData,>(previous: TData | undefined): TData | undefined =>
   previous;
 
+/**
+ * Combines explicit 'enabled' flag with a check for a valid ID.
+ * Queries are often disabled if the required ID is missing.
+ */
 const combineEnabledWithRequiredId = <TData, TTransformedData, TQueryKey extends QueryKey>(
   enabled: SingleQueryConfigV2<TData, TTransformedData, TQueryKey>['enabled'],
   hasId: boolean
@@ -183,6 +196,13 @@ const combineEnabledWithRequiredId = <TData, TTransformedData, TQueryKey extends
   return Boolean(enabled);
 };
 
+/**
+ * Hook for fetching a single entity by ID.
+ * Automatically handles the 'enabled' state based on ID presence.
+ * 
+ * @param config - Configuration for the single query.
+ * @returns A standardized SingleQuery object.
+ */
 export function useSingleQueryV2<
   TData,
   TTransformedData = TData,
@@ -200,6 +220,9 @@ export function useSingleQueryV2<
   }) as SingleQuery<TTransformedData>;
 }
 
+/**
+ * Function-style wrapper for useSingleQueryV2.
+ */
 export function createSingleQueryV2<
   TData,
   TTransformedData = TData,
@@ -208,6 +231,9 @@ export function createSingleQueryV2<
   return useSingleQueryV2(config);
 }
 
+/**
+ * Factory for paginated list queries that keep previous data while loading.
+ */
 export function createPaginatedListQueryV2<TItem, TQueryKey extends QueryKey = QueryKey>(
   config: SingleQueryConfigV2<PaginatedResult<TItem>, PaginatedResult<TItem>, TQueryKey>
 ): SingleQuery<PaginatedResult<TItem>> {
@@ -216,11 +242,19 @@ export function createPaginatedListQueryV2<TItem, TQueryKey extends QueryKey = Q
   return createSingleQueryV2<PaginatedResult<TItem>, PaginatedResult<TItem>, TQueryKey>({
     ...rest,
     meta,
+    // By default, paginated queries keep the previous page data to avoid layout shifts.
     placeholderData:
       placeholderData ?? keepPreviousPlaceholderData<PaginatedResult<TItem>>,
   });
 }
 
+/**
+ * Factory for infinite (scrollable) queries.
+ * Integrates telemetry and runtime guards.
+ * 
+ * @param config - Infinite query configuration.
+ * @returns A UseInfiniteQueryResult object.
+ */
 export function createInfiniteQueryV2<
   TQueryFnData,
   TError = Error,
@@ -253,6 +287,12 @@ export function createInfiniteQueryV2<
   });
 }
 
+/**
+ * Hook for executing multiple queries in parallel.
+ * 
+ * @param config - Configuration containing the list of queries and an optional combine function.
+ * @returns The combined results of all queries.
+ */
 export function createMultiQueryV2<
   TQueries extends readonly QueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
   TCombine = MultiQueryResultsV2<TQueries>,
@@ -274,6 +314,9 @@ export function createMultiQueryV2<
   });
 }
 
+/**
+ * Factory for suspense-enabled single queries.
+ */
 export function createSuspenseQueryV2<
   TQueryFnData,
   TError = Error,
@@ -285,6 +328,9 @@ export function createSuspenseQueryV2<
   return useSuspenseQueryFactoryV2(config);
 }
 
+/**
+ * Factory for suspense-enabled infinite queries.
+ */
 export function createSuspenseInfiniteQueryV2<
   TQueryFnData,
   TError = Error,
@@ -317,6 +363,9 @@ export function createSuspenseInfiniteQueryV2<
   });
 }
 
+/**
+ * Hook for executing multiple suspense queries in parallel.
+ */
 export function createSuspenseMultiQueryV2<
   TQueries extends readonly SuspenseQueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
   TCombine = SuspenseMultiQueryResultsV2<TQueries>,
@@ -339,6 +388,10 @@ export function createSuspenseMultiQueryV2<
   });
 }
 
+/**
+ * Specialized factory for "Save" mutations that handle both creation and updates.
+ * Switches between createFn and updateFn based on whether variables.id is present.
+ */
 export function createSaveMutationV2<
   TData,
   TVariables extends { id?: string | null },
@@ -360,6 +413,18 @@ export function createSaveMutationV2<
   });
 }
 
+/**
+ * Core hook for mutations with automatic telemetry and invalidation support.
+ * 
+ * Features:
+ * - Automatic retry telemetry
+ * - Execution time tracking
+ * - Success-triggered query invalidation (via invalidateKeys)
+ * - Custom invalidation logic support
+ * 
+ * @param config - Mutation configuration.
+ * @returns A standardized MutationResult object.
+ */
 export function useMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
   config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
 ): MutationResult<TData, TVariables, TError> {
@@ -385,6 +450,7 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
     ...(normalizedMutationKey ? { mutationKey: normalizedMutationKey } : {}),
     meta: attachTanstackFactoryMeta(resolvedMeta),
     onSuccess: async (data, variables, context, mutationContext) => {
+      // Automatically invalidate queries based on keys provided in the config.
       if (invalidateKeys) {
         const keys =
           typeof invalidateKeys === 'function'
@@ -393,6 +459,7 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
         await Promise.all(keys.map((key) => queryClient.invalidateQueries({ queryKey: key })));
       }
 
+      // Execute custom invalidation logic if provided.
       if (invalidate) {
         await invalidate(queryClient, data, variables, context);
       }
@@ -404,6 +471,8 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
     mutationFn: async (variables: TVariables): Promise<TData> => {
       const attempt = attemptRef.current + 1;
       attemptRef.current = attempt;
+      
+      // Emit retry telemetry if this isn't the first attempt.
       if (attempt > 1) {
         emitFactoryTelemetry({
           entity: 'mutation',
@@ -430,6 +499,8 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
           throw new Error('Mutation function is required');
         }
         const data = await mutationFn(variables, { queryClient });
+        
+        // Success telemetry with duration tracking.
         emitFactoryTelemetry({
           entity: 'mutation',
           stage: 'success',
@@ -448,6 +519,8 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
           attempt,
         });
         const finalError = transformError ? transformError(error) : (error as Error);
+        
+        // Error telemetry including classified error stage.
         emitFactoryTelemetry({
           entity: 'mutation',
           stage: telemetryErrorStage(error),
@@ -464,12 +537,19 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
   });
 }
 
+/**
+ * Function-style wrapper for useMutationV2.
+ */
 export function createMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
   config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
 ): MutationResult<TData, TVariables, TError> {
   return useMutationV2<TData, TVariables, TContext, TError>(config);
 }
 
+/**
+ * Factory for mutations that perform optimistic UI updates.
+ * Automatically handles canceling queries, setting data, and reverting on error.
+ */
 export function createOptimisticMutationV2<TData, TVariables, TCacheData = TData>(
   config: OptimisticMutationFactoryV2Config<TData, TVariables, TCacheData>
 ): MutationResult<TData, TVariables> {
@@ -480,15 +560,20 @@ export function createOptimisticMutationV2<TData, TVariables, TCacheData = TData
     ...rest,
     meta,
     onMutate: async (variables, context) => {
+      // Step 1: Cancel any outgoing refetches to avoid overwriting our optimistic update.
       await queryClient.cancelQueries({ queryKey });
+      
+      // Step 2: Snapshot the current data for rollback.
       const previousData = queryClient.getQueryData<TCacheData>(queryKey);
 
+      // Step 3: Optimistically update the cache.
       queryClient.setQueryData<TCacheData>(queryKey, (old) => updateFn(old, variables));
 
       const customContext = onMutate ? await onMutate(variables, context) : undefined;
       return { ...customContext, previousData };
     },
     onError: (err, variables, context, mutationContext) => {
+      // Step 4: Revert to the snapshot if the mutation fails.
       if (revertOnError !== false && context?.previousData !== undefined) {
         queryClient.setQueryData(queryKey, context.previousData);
       }
@@ -498,6 +583,7 @@ export function createOptimisticMutationV2<TData, TVariables, TCacheData = TData
       return undefined;
     },
     onSettled: (data, error, variables, context, mutationContext) => {
+      // Step 5: Always invalidate to ensure we have the correct server state.
       void queryClient.invalidateQueries({ queryKey });
       if (onSettled) {
         return onSettled(data, error, variables, context, mutationContext);
@@ -507,6 +593,10 @@ export function createOptimisticMutationV2<TData, TVariables, TCacheData = TData
   });
 }
 
+/**
+ * Hook that returns a function to ensure query data is present in the cache.
+ * Uses pre-existing data if valid, otherwise fetches.
+ */
 export function useEnsureQueryDataV2<
   TQueryFnData,
   TError = Error,
@@ -517,6 +607,9 @@ export function useEnsureQueryDataV2<
   return ensureQueryDataV2(queryClient, config);
 }
 
+/**
+ * Hook that returns a function to prefetch a query.
+ */
 export function usePrefetchQueryV2<
   TQueryFnData,
   TError = Error,
@@ -526,6 +619,9 @@ export function usePrefetchQueryV2<
   return prefetchQueryV2(queryClient, config);
 }
 
+/**
+ * Hook that returns a function to fetch query data directly.
+ */
 export function useFetchQueryV2<
   TQueryFnData,
   TError = Error,
@@ -536,6 +632,9 @@ export function useFetchQueryV2<
   return fetchQueryV2(queryClient, config);
 }
 
+/**
+ * Ensures query data is present in the cache using the provided client.
+ */
 export function ensureQueryDataV2<
   TQueryFnData,
   TError = Error,
@@ -548,6 +647,9 @@ export function ensureQueryDataV2<
   return ensureQueryDataLogic(queryClient, config) as () => Promise<TData>;
 }
 
+/**
+ * Prefetches query data using the provided client.
+ */
 export function prefetchQueryV2<
   TQueryFnData,
   TError = Error,
@@ -559,6 +661,9 @@ export function prefetchQueryV2<
   return prefetchQueryLogic(queryClient, config);
 }
 
+/**
+ * Fetches query data directly using the provided client.
+ */
 export function fetchQueryV2<
   TQueryFnData,
   TError = Error,
@@ -577,36 +682,54 @@ export const queryFactoriesV2TestUtils = {
   sanitizeRefetchIntervalValue,
 };
 
+/**
+ * Hook-style wrapper for 'create' mutations.
+ */
 export function useCreateMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
   config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
 ): MutationResult<TData, TVariables, TError> {
   return useMutationV2<TData, TVariables, TContext, TError>(config);
 }
 
+/**
+ * Hook-style wrapper for 'update' mutations.
+ */
 export function useUpdateMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
   config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
 ): MutationResult<TData, TVariables, TError> {
   return useMutationV2<TData, TVariables, TContext, TError>(config);
 }
 
+/**
+ * Hook-style wrapper for 'delete' mutations.
+ */
 export function useDeleteMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
   config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
 ): MutationResult<TData, TVariables, TError> {
   return useMutationV2<TData, TVariables, TContext, TError>(config);
 }
 
+/**
+ * Factory-style wrapper for 'create' mutations.
+ */
 export function createCreateMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
   config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
 ): MutationResult<TData, TVariables, TError> {
   return useCreateMutationV2<TData, TVariables, TContext, TError>(config);
 }
 
+/**
+ * Factory-style wrapper for 'update' mutations.
+ */
 export function createUpdateMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
   config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
 ): MutationResult<TData, TVariables, TError> {
   return useUpdateMutationV2<TData, TVariables, TContext, TError>(config);
 }
 
+/**
+ * Factory-style wrapper for 'delete' mutations.
+ */
 export function createDeleteMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
   config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
 ): MutationResult<TData, TVariables, TError> {

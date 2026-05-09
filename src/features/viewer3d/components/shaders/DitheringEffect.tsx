@@ -61,6 +61,7 @@ export class DitheringEffectImpl extends Effect {
   private get intensityUniform(): Uniform {
     const uniform = this.uniforms.get('intensity');
     if (uniform === undefined) {
+      // Shader uniform for intensity was not properly initialized
       throw new Error('DitheringEffect intensity uniform is missing.');
     }
     return uniform;

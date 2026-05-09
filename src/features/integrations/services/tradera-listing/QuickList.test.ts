@@ -135,10 +135,10 @@ vi.mock('./shipping-group', () => ({
 }));
 
 vi.mock('./price', () => ({
-  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'SEK',
-  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'SEK') =>
+  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'EUR',
+  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'EUR') =>
     `FAIL_PRICE_RESOLUTION: Tradera export requires a ${currencyCode} listing price. Add a ${currencyCode} price group to the product catalog and retry.`,
-  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'SEK') => {
+  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'EUR') => {
     if (currencyCode === 'SEK') {
       return String(Math.max(1, Math.round(value)));
     }
@@ -159,8 +159,8 @@ import { TRADERA_CHECK_STATUS_SCRIPT } from './check-status-script';
 
 const EXPECTED_TRADERA_PRICING_METADATA = {
   listingPrice: 55,
-  listingCurrencyCode: 'SEK',
-  targetCurrencyCode: 'SEK',
+  listingCurrencyCode: 'EUR',
+  targetCurrencyCode: 'EUR',
   resolvedToTargetCurrency: true,
   basePrice: 123,
   baseCurrencyCode: 'PLN',
@@ -250,8 +250,64 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(modalDismissDuringPriceWaitIndex).toBeLessThan(priceEntryIndex);
   });
 
+  it('accepts the Tradera payment solution terms modal during publish', () => {
+    const helperIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      'const acceptVisiblePaymentSolutionModalIfPresent = async'
+    );
+    const postDeliveryIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      "context: 'post-delivery-configuration'"
+    );
+    const prePublishIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      "context: 'pre-publish-finalize'"
+    );
+    const publishWaitIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      "context: 'publish-interaction-wait'"
+    );
+    const waitForPublishEvidenceIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      'const waitForPublishInteractionEvidence = async'
+    );
+
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "const PAYMENT_SOLUTION_MODAL_TEXT_HINTS = ['Tradera\\'s payment solution'"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "I accept terms and conditions for Tradera\\'s payment solution"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "const PAYMENT_SOLUTION_MODAL_CONTINUE_LABELS = ['Continue', 'Fortsätt'];"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'tradera.quicklist.payment_solution_modal.detected'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'tradera.quicklist.payment_solution_modal.checkbox_checked'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'tradera.quicklist.payment_solution_modal.continue_attempt'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'tradera.quicklist.publish.retry_after_payment_terms'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'tradera.quicklist.publish.retry_after_payment_terms_result'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'publish:payment-terms-retry'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'payment-terms-accepted-retry-needed'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('paymentSolutionTermsAccepted');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('retryAfterPaymentSolutionTerms');
+    expect(helperIndex).toBeGreaterThan(-1);
+    expect(postDeliveryIndex).toBeGreaterThan(helperIndex);
+    expect(prePublishIndex).toBeGreaterThan(postDeliveryIndex);
+    expect(waitForPublishEvidenceIndex).toBeGreaterThan(-1);
+    expect(publishWaitIndex).toBeGreaterThan(waitForPublishEvidenceIndex);
+  });
+
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v154');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v158');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const hasExecutionStep = (id) => getExecutionStep(id) !== null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_ACTION_MANIFEST: Required Tradera quicklist step "');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const QUICKLIST_ACTION_EXECUTION_STEPS = {');

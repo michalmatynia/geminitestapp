@@ -3,7 +3,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { resolveAiInsightsContextRegistryEnvelope } from '@/features/ai/insights/context-registry/server';
 import { generateAnalyticsInsight } from '@/features/ai/insights/server';
 import { listAiInsights } from '@/features/ai/insights/server';
-import { startAiInsightsQueue } from '@/features/jobs/server';
 import {
   aiInsightsListQuerySchema,
   analyticsInsightRunRequestSchema,
@@ -16,7 +15,6 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 export { aiInsightsListQuerySchema as listSchema };
 
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  startAiInsightsQueue();
   const url = new URL(req.url);
   const parsed = aiInsightsListQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));
   const insights = await listAiInsights('analytics', parsed.limit ?? 10);
@@ -25,7 +23,6 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
 }
 
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  startAiInsightsQueue();
   const parsed = await parseJsonBody(req, analyticsInsightRunRequestSchema, {
     logPrefix: 'analytics.insights.POST',
     allowEmpty: true,

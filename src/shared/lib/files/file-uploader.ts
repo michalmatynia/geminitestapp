@@ -73,12 +73,14 @@ function isAllowedFilenameExtension(filename: string): boolean {
 export function getDiskPathFromPublicPath(publicPath: string): string {
   const normalized = getPublicPathFromStoredPath(publicPath);
   if (!normalized) {
+    // Path normalization failed, indicating an invalid or malformed path
     throw new Error('Security Error: Invalid file path.');
   }
   if (normalized.startsWith('/uploads/')) {
     const cleaned = normalized.replace(/^\/uploads\/+/, '');
     const resolved = path.resolve(uploadsRoot, cleaned);
     if (!resolved.startsWith(uploadsRoot + path.sep) && resolved !== uploadsRoot) {
+      // Resolved path escapes the uploads directory boundary
       throw new Error('Security Error: Invalid path traversal attempt detected.');
     }
     return resolved;
@@ -88,6 +90,7 @@ export function getDiskPathFromPublicPath(publicPath: string): string {
   const resolved = path.resolve(publicRoot, cleaned);
 
   if (!resolved.startsWith(publicRoot + path.sep) && resolved !== publicRoot) {
+    // Resolved path escapes the public directory boundary
     throw new Error('Security Error: Invalid path traversal attempt detected.');
   }
   return resolved;
@@ -181,6 +184,7 @@ function getUploadTarget({
 
   if (category === 'studio') {
     if (!projectId) {
+      // Studio uploads require a project ID to organize files by project
       throw new Error('projectId is required for studio uploads.');
     }
     const safeProject = sanitizeSegment(projectId);
@@ -246,6 +250,7 @@ export async function uploadFile(
   const maxAllowedBytes = isStudioUpload ? MAX_STUDIO_IMAGE_BYTES : MAX_IMAGE_BYTES;
 
   if (file.size > maxAllowedBytes) {
+    // File exceeds the maximum allowed size for this upload category
     throw new Error(`File too large. Max size allowed is ${maxAllowedBytes / 1024 / 1024}MB.`);
   }
   const normalizedType = typeof file.type === 'string' ? file.type.trim().toLowerCase() : '';

@@ -84,7 +84,7 @@ const upsertSettingByKey = async (
   value: string
 ): Promise<void> => {
   if (!process.env['MONGODB_URI']) {
-    throw operationFailedError('Mongo settings store is unavailable.');
+    throw operationFailedError('Mongo settings store is unavailable. Set the MONGODB_URI environment variable to enable persistent settings storage.');
   }
   const mongo = await getMongoDb();
   const now = new Date();
@@ -118,12 +118,12 @@ const migrateProjectScopedSettings = async (params: {
   const fromKeys = toProjectSettingsKeys(params.fromProjectIds);
   const targetKey = getImageStudioProjectSettingsKey(params.toProjectId);
   if (!targetKey) {
-    throw badRequestError('Invalid target project settings key.');
+    throw badRequestError(`Invalid target project settings key: the project id "${params.toProjectId}" could not be resolved to a settings key. Ensure the project id is a valid non-empty alphanumeric string.`);
   }
 
   const targetExisting = await readSettingByKey(targetKey);
   if (targetExisting && targetExisting.trim().length > 0) {
-    throw badRequestError('Target project settings key already exists.');
+    throw badRequestError(`Target project settings key "${targetKey}" already exists. Migration cannot overwrite an existing project settings entry — clear the target project settings first.`);
   }
 
   let sourceValue: string | null = null;
@@ -249,7 +249,7 @@ const upsertProjectSummary = async (
 }> => {
   const projectDir = resolveProjectDir(projectId);
   if (!projectDir) {
-    throw badRequestError('Invalid target project id.');
+    throw badRequestError(`Invalid target project id "${projectId}": could not resolve a project directory. Ensure the project id is a valid non-empty alphanumeric string.`);
   }
   const existing = await resolveProjectSummaryFromDirectory(projectId);
   const nowIso = new Date().toISOString();
@@ -436,7 +436,7 @@ async function ensureProjectDirectoryRename(
 ): Promise<{ movedDirectory: boolean; createdDirectory: boolean }> {
   const toDir = resolveProjectDir(toProjectId);
   if (!toDir) {
-    throw badRequestError('Invalid target project id.');
+    throw badRequestError(`Invalid target project id "${toProjectId}" for directory rename: could not resolve a project directory path. Ensure the project id is a valid non-empty alphanumeric string.`);
   }
 
   const sourceDirs = fromProjectIds
@@ -454,7 +454,7 @@ async function ensureProjectDirectoryRename(
 
   const targetExists = Boolean((await nodeFs.stat(toDir).catch(() => null))?.isDirectory());
   if (targetExists && existingSourceDirs.length > 0) {
-    throw badRequestError('Target project id already exists.');
+    throw badRequestError(`Target project id "${toProjectId}" already exists as a directory and source directories were also found. Cannot rename into an existing project directory.`);
   }
 
   if (existingSourceDirs.length > 0) {
@@ -491,7 +491,7 @@ export async function deleteImageStudioProjectHandler(
   params: { projectId: string }
 ): Promise<Response> {
   const rawProjectId = params.projectId?.trim() ?? '';
-  if (!rawProjectId) throw badRequestError('Project id is required');
+  if (!rawProjectId) throw badRequestError('Project id is required. Provide a non-empty projectId in the URL path to delete a project.');
   const candidates = toProjectIdCandidates(rawProjectId);
 
   const stats = {
@@ -538,10 +538,10 @@ export async function patchImageStudioProjectHandler(
   params: { projectId: string }
 ): Promise<Response> {
   const rawProjectId = params.projectId?.trim() ?? '';
-  if (!rawProjectId) throw badRequestError('Project id is required');
+  if (!rawProjectId) throw badRequestError('Project id is required. Provide a non-empty projectId in the URL path to patch a project.');
   const fromProjectIds = toProjectIdCandidates(rawProjectId);
   if (fromProjectIds.length === 0) {
-    throw badRequestError('Invalid source project id.');
+    throw badRequestError(`Invalid source project id "${rawProjectId}": could not derive any valid project id candidates. Ensure the project id is a valid non-empty alphanumeric string.`);
   }
 
   const body = (await req.json().catch(() => null)) as unknown;
@@ -609,7 +609,7 @@ export async function patchImageStudioProjectHandler(
 
   const toProjectId = sanitizeProjectId(parsed.data.projectId);
   if (!toProjectId) {
-    throw badRequestError('Target project id is required.');
+    throw badRequestError('Target project id is required. Provide a non-empty projectId in the request body to rename or merge the project.');
   }
 
   if (fromProjectIds.includes(toProjectId)) {
@@ -633,7 +633,7 @@ export async function patchImageStudioProjectHandler(
 
   const targetDir = resolveProjectDir(toProjectId);
   if (!targetDir) {
-    throw badRequestError('Invalid target project id.');
+    throw badRequestError(`Invalid target project id "${toProjectId}" for project merge: could not resolve a project directory path. Ensure the project id is a valid non-empty alphanumeric string.`);
   }
   const [targetDirExists, targetHasData] = await Promise.all([
     nodeFs

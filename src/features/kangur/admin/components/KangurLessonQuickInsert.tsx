@@ -6,20 +6,22 @@ import {
 import React, { useMemo, useState } from 'react';
 
 import { useQuickInsertActions } from '../hooks/useQuickInsertActions';
-import type { KangurLessonPage, KangurLessonRootBlock } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonPage, KangurLessonRootBlock, KangurLessonDocumentTemplateId } from '@/features/kangur/shared/contracts/kangur';
 import { Input } from '@/features/kangur/shared/ui';
 
 interface KangurLessonQuickInsertProps {
   activePage: KangurLessonPage | null;
   updateDocument: (nextBlocks: KangurLessonRootBlock[]) => void;
+  addPageFromTemplate: (templateId: KangurLessonDocumentTemplateId) => void;
 }
 
 export function KangurLessonQuickInsert({
   activePage,
   updateDocument,
+  addPageFromTemplate,
 }: KangurLessonQuickInsertProps): React.JSX.Element {
   const [insertQuery, setInsertQuery] = useState('');
-  const quickInsertActions = useQuickInsertActions(activePage, updateDocument);
+  const quickInsertActions = useQuickInsertActions(activePage, updateDocument, addPageFromTemplate);
 
   const filteredQuickInsertActions = useMemo(() => {
     const normalizedQuery = insertQuery.trim().toLowerCase();

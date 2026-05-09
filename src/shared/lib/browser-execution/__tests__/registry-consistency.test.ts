@@ -363,6 +363,13 @@ describe('TRADERA_SELECTOR_REGISTRY_RUNTIME', () => {
     expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain(
       'const SHIPPING_SMOOTHER_MODAL_DISMISS_LABELS ='
     );
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain(
+      'const PAYMENT_SOLUTION_MODAL_TEXT_HINTS ='
+    );
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain("Tradera\\'s payment solution");
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain(
+      'const PAYMENT_SOLUTION_TERMS_LABELS ='
+    );
   });
 
   it('emits selector role metadata and value-key lookup for role-aware listing actions', () => {
@@ -410,6 +417,14 @@ describe('TRADERA_SELECTOR_REGISTRY_RUNTIME', () => {
         }),
         expect.objectContaining({
           key: 'SHIPPING_SMOOTHER_MODAL_DISMISS_LABELS',
+          source: 'code',
+        }),
+        expect.objectContaining({
+          key: 'PAYMENT_SOLUTION_MODAL_TEXT_HINTS',
+          source: 'code',
+        }),
+        expect.objectContaining({
+          key: 'PAYMENT_SOLUTION_TERMS_LABELS',
           source: 'code',
         }),
       ])

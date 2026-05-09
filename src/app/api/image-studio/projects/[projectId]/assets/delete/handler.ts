@@ -216,7 +216,7 @@ export async function postHandler(
   params: { projectId: string }
 ): Promise<Response> {
   const projectId = sanitizeProjectId(params.projectId);
-  if (!projectId) throw badRequestError('Project id is required');
+  if (!projectId) throw badRequestError('Project id is required. Provide a non-empty projectId in the URL path to delete an asset.');
 
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = deleteSchema.safeParse(body);
@@ -251,12 +251,12 @@ export async function postHandler(
     const repo = await getImageFileRepository();
     const record = await repo.getImageFileById(assetId);
     if (!record) {
-      throw notFoundError('Asset not found');
+      throw notFoundError(`Asset "${assetId}" not found in the image file repository. The asset may have been deleted or the id is incorrect.`);
     }
     filepath = record.filepath;
     const normalized = normalizePublicPath(filepath);
     if (!normalized || !isProjectScopedStudioPath(normalized, projectId)) {
-      throw badRequestError('Asset not in this project');
+      throw badRequestError(`Asset "${assetId}" (filepath: "${filepath}") does not belong to project "${projectId}". Only assets in this project can be deleted.`);
     }
     const diskPath = resolveDiskPathFromPublicUploadPath(normalized);
     if (diskPath) {
@@ -290,11 +290,11 @@ export async function postHandler(
 
   const normalized = normalizePublicPath(filepath);
   if (!normalized || !isProjectScopedStudioPath(normalized, projectId)) {
-    throw notFoundError('Asset not found');
+    throw notFoundError(`Asset filepath "${filepath}" is not a valid project-scoped path for project "${projectId}". The asset may have been deleted or the filepath is incorrect.`);
   }
   const diskPath = resolveDiskPathFromPublicUploadPath(normalized);
   if (!diskPath) {
-    throw notFoundError('Asset not found');
+    throw notFoundError(`Asset "${normalized}" could not be resolved to a disk path. The asset may have been deleted.`);
   }
   await nodeFs.unlink(diskPath).catch((error: unknown) => {
     if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {

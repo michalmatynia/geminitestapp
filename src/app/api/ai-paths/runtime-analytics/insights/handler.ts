@@ -4,7 +4,6 @@ import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { resolveAiInsightsContextRegistryEnvelope } from '@/features/ai/insights/context-registry/server';
 import { generateRuntimeAnalyticsInsight } from '@/features/ai/insights/generator';
 import { listAiInsights } from '@/features/ai/insights/repository';
-import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 import {
   runtimeAnalyticsInsightsListQuerySchema,
   runtimeAnalyticsInsightRunRequestSchema,
@@ -28,7 +27,6 @@ const resolveRange = (rangeRaw: string | undefined): AiPathRuntimeAnalyticsRange
 
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
-  startAiInsightsQueue();
 
   const parsed = runtimeAnalyticsInsightsListQuerySchema.parse(
     Object.fromEntries(getQueryParams(req).entries())
@@ -40,7 +38,6 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
 
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
-  startAiInsightsQueue();
 
   const query = runtimeAnalyticsInsightsListQuerySchema.parse(
     Object.fromEntries(getQueryParams(req).entries())

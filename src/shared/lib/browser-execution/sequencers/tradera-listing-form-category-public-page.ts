@@ -131,6 +131,7 @@ const canFetchPublicCategoryChildrenForParent = (
 const fetchTraderaPublicHtml = async (url: string): Promise<string> => {
   const response = await fetch(url);
   if (!response.ok) {
+    // Tradera public category page request returned an error status
     throw new Error(`Tradera public category request failed with status ${String(response.status)}`);
   }
   return response.text();

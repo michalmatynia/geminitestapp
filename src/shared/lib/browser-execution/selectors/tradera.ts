@@ -92,6 +92,7 @@ const buildRuntimeMetadata = (
     entries.map((entry) => {
       const classification = classifySelectorRegistryRole(entry.role);
       if (!classification) {
+        // Selector registry entry has an unrecognized role type
         throw new Error(`Unsupported Tradera selector registry role "${entry.role}".`);
       }
 
@@ -218,6 +219,8 @@ const TRADERA_SELECTOR_REGISTRY_ROLE_OVERRIDES: Partial<Record<string, SelectorR
   SHIPPING_DIALOG_TITLE_LABELS: 'label',
   SHIPPING_DIALOG_SAVE_LABELS: 'submit',
   LISTING_CONFIRMATION_LABELS: 'option',
+  PAYMENT_SOLUTION_TERMS_LABELS: 'option',
+  PAYMENT_SOLUTION_MODAL_CONTINUE_LABELS: 'submit',
   DRAFT_SAVED_SELECTORS: 'ready_signal',
   ACTIVE_SEARCH_SELECTORS: 'input',
   ACTIVE_SEARCH_TRIGGER_LABELS: 'trigger',
@@ -966,6 +969,29 @@ export const LISTING_CONFIRMATION_LABELS = [
   'innehållet i annonsen är korrekt',
   'annonsen är korrekt',
 ] as const;
+export const PAYMENT_SOLUTION_MODAL_TEXT_HINTS = [
+  "Tradera's payment solution",
+  'payment solution',
+  'Security for payment is important at Tradera',
+  'approve the terms of the payment solution',
+  'Traderas betalningslösning',
+  'betalningslösning',
+  'säkerhet för betalning',
+  'godkänna villkoren',
+] as const;
+export const PAYMENT_SOLUTION_TERMS_LABELS = [
+  "I accept terms and conditions for Tradera's payment solution",
+  'I accept terms and conditions',
+  'certify that I am shopping on my own behalf',
+  'shopping on my own behalf',
+  'Jag accepterar villkoren för Traderas betalningslösning',
+  'Jag godkänner villkoren för Traderas betalningslösning',
+  'handlar för egen räkning',
+] as const;
+export const PAYMENT_SOLUTION_MODAL_CONTINUE_LABELS = [
+  'Continue',
+  'Fortsätt',
+] as const;
 export const WISHLIST_FAVORITES_DIALOG_TEXT_HINTS = [
   'Wishlist your favorites',
   'Wishlist your favourites',
@@ -1602,6 +1628,27 @@ export const TRADERA_SELECTOR_REGISTRY_DEFINITIONS: TraderaSelectorRegistryDefin
     kind: 'labels',
     description: 'Confirmation checkbox labels used before publish.',
     value: [...LISTING_CONFIRMATION_LABELS],
+  }),
+  defineRegistryEntry({
+    key: 'PAYMENT_SOLUTION_MODAL_TEXT_HINTS',
+    group: 'publishing',
+    kind: 'hints',
+    description: 'Text markers for the Tradera payment solution terms modal.',
+    value: [...PAYMENT_SOLUTION_MODAL_TEXT_HINTS],
+  }),
+  defineRegistryEntry({
+    key: 'PAYMENT_SOLUTION_TERMS_LABELS',
+    group: 'publishing',
+    kind: 'labels',
+    description: 'Terms checkbox labels for the Tradera payment solution modal.',
+    value: [...PAYMENT_SOLUTION_TERMS_LABELS],
+  }),
+  defineRegistryEntry({
+    key: 'PAYMENT_SOLUTION_MODAL_CONTINUE_LABELS',
+    group: 'publishing',
+    kind: 'labels',
+    description: 'Continue actions for the Tradera payment solution modal.',
+    value: [...PAYMENT_SOLUTION_MODAL_CONTINUE_LABELS],
   }),
   defineRegistryEntry({
     key: 'WISHLIST_FAVORITES_DIALOG_TEXT_HINTS',

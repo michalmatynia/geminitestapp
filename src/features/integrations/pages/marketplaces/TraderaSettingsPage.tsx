@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 
 import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
+  TRADERA_DEFAULT_LISTING_PRICE_CURRENCY_CODE,
+  normalizeTraderaListingPriceCurrencyCode,
   normalizeTraderaListingFormUrl,
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
@@ -42,6 +44,10 @@ export default function TraderaSettingsPage(): React.JSX.Element {
   );
   const [selectorProfile, setSelectorProfile] = useState<string>(
     DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile
+  );
+  const [listingPriceCurrencyCode, setListingPriceCurrencyCode] = useState<string>(
+    DEFAULT_TRADERA_SYSTEM_SETTINGS.listingPriceCurrencyCode ??
+      TRADERA_DEFAULT_LISTING_PRICE_CURRENCY_CODE
   );
 
   useEffect(() => {
@@ -125,6 +131,12 @@ export default function TraderaSettingsPage(): React.JSX.Element {
       map.get(TRADERA_SETTINGS_KEYS.selectorProfile)?.trim() ||
         DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile
     );
+    setListingPriceCurrencyCode(
+      normalizeTraderaListingPriceCurrencyCode(
+        map.get(TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode) ??
+          DEFAULT_TRADERA_SYSTEM_SETTINGS.listingPriceCurrencyCode
+      )
+    );
   }, [settingsQuery.data]);
 
   const handleSave = async (): Promise<void> => {
@@ -163,6 +175,10 @@ export default function TraderaSettingsPage(): React.JSX.Element {
         {
           key: TRADERA_SETTINGS_KEYS.selectorProfile,
           value: selectorProfile.trim() || DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile,
+        },
+        {
+          key: TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode,
+          value: normalizeTraderaListingPriceCurrencyCode(listingPriceCurrencyCode),
         },
       ]);
       toast('Tradera settings saved successfully.', { variant: 'success' });
@@ -267,7 +283,27 @@ export default function TraderaSettingsPage(): React.JSX.Element {
                 value={listingFormUrl}
                 onChange={(e) => setListingFormUrl(e.target.value)}
                 placeholder='https://www.tradera.com/...'
-               aria-label='https://www.tradera.com/...' title='https://www.tradera.com/...'/>
+                aria-label='https://www.tradera.com/...'
+                title='https://www.tradera.com/...'
+              />
+            </FormField>
+
+            <FormField
+              label='Listing Price Currency'
+              description='Currency used to choose the product catalog price group for Tradera listing prices.'
+            >
+              <Input
+                variant='subtle'
+                size='sm'
+                value={listingPriceCurrencyCode}
+                maxLength={3}
+                onChange={(event) =>
+                  setListingPriceCurrencyCode(event.target.value.toUpperCase().slice(0, 3))
+                }
+                placeholder='EUR'
+                aria-label='Listing Price Currency'
+                title='Listing Price Currency'
+              />
             </FormField>
 
             <FormField label='Selector Profile'>

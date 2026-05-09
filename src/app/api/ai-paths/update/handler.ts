@@ -86,11 +86,11 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const normalizedUpdates = updates && typeof updates === 'object' ? updates : {};
 
   if (Object.keys(normalizedUpdates).length === 0) {
-    throw badRequestError('No updates provided');
+    throw badRequestError('No updates provided. Supply at least one field in the updates object.');
   }
 
   if (entityType !== 'custom' && !entityId?.trim()) {
-    throw badRequestError('Entity id is required');
+    throw badRequestError(`Entity id is required for entityType "${entityType}". Provide a non-empty entityId in the request body.`);
   }
 
   if (entityType === 'custom') {
@@ -134,7 +134,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     }
     const updateData = removeUndefined(validated.data);
     if (Object.keys(updateData).length === 0) {
-      throw badRequestError('No valid product fields to update');
+      throw badRequestError('No valid product fields to update. All provided fields were either invalid or stripped during validation. Check the allowed product update fields.');
     }
     const updated = await productService.updateProduct(entityId as string, updateData);
     if (!updated) {
@@ -170,7 +170,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     }
     const updateData = removeUndefined(validated.data);
     if (Object.keys(updateData).length === 0) {
-      throw badRequestError('No valid note fields to update');
+      throw badRequestError('No valid note fields to update. All provided fields were either invalid or stripped during validation. Check the allowed note update fields.');
     }
     const updated = await noteService.update(entityId as string, updateData as NoteUpdateInput);
     if (!updated) {
@@ -184,5 +184,5 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     });
   }
 
-  throw badRequestError('Unsupported entity type');
+  throw badRequestError(`Unsupported entity type "${entityType}". Supported types are: product, note, custom.`);
 }

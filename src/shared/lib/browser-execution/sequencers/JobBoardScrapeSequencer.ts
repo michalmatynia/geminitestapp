@@ -397,9 +397,13 @@ export class JobBoardScrapeSequencer {
     this.startStep(key);
     try {
       const sourceUrl = normalizeUrl(this.input.sourceUrl);
-      if (sourceUrl === null) throw new Error('A supported job board URL is required.');
+      if (sourceUrl === null) {
+        // Source URL is required to identify the job board provider
+        throw new Error('A supported job board URL is required.');
+      }
       const provider = readProvider(sourceUrl, this.input.provider ?? 'auto');
       if (provider === null) {
+        // URL does not match any supported job board provider
         throw new Error('Supported job boards are pracuj.pl, justjoin.it, and nofluffjobs.com.');
       }
       const mode = this.input.mode === 'fetch_offer' ? 'fetch_offer' : 'collect_links';
@@ -1520,7 +1524,10 @@ export class JobBoardScrapeSequencer {
   }
 
   private requireProvider(): JobBoardProvider {
-    if (this.provider === null) throw new Error('Job board provider was not resolved.');
+    if (this.provider === null) {
+      // Provider must be resolved during initialization before scraping can proceed
+      throw new Error('Job board provider was not resolved.');
+    }
     return this.provider;
   }
 

@@ -1,3 +1,10 @@
+/**
+ * FileMaker Job Applications Handler
+ * 
+ * Manages the retrieval, normalization (legacy cleanup), and manual application 
+ * reporting for job applications within the FileMaker subsystem.
+ */
+
 import { type NextRequest } from 'next/server';
 import { z } from 'zod';
 
@@ -40,6 +47,10 @@ const readBooleanSearchParam = (url: URL, key: string): boolean => {
   return raw === '1' || raw === 'true' || raw === 'yes';
 };
 
+/**
+ * Lists job applications, optionally triggering a normalization pass 
+ * for legacy application records if 'normalizeLegacy' is set.
+ */
 export async function getHandler(req: NextRequest): Promise<Response> {
   await requireFilemakerMailAdminSession();
   const url = new URL(req.url);
@@ -51,6 +62,8 @@ export async function getHandler(req: NextRequest): Promise<Response> {
     throw badRequestError('organizationId, jobListingId, or personId is required.');
   }
 
+  // Normalization logic: identifies legacy items lacking artifact versions
+  // and attempts to collapse them into a cleaner record structure.
   if (readBooleanSearchParam(url, 'normalizeLegacy') && organizationId !== null) {
     if (jobListingId !== null) {
       await collapseLegacyMongoFilemakerJobApplicationsForListing({
@@ -101,6 +114,9 @@ export async function getHandler(req: NextRequest): Promise<Response> {
   return Response.json({ applications });
 }
 
+/**
+ * Creates or updates a manual job application record.
+ */
 export async function postHandler(req: NextRequest): Promise<Response> {
   await requireFilemakerMailAdminSession();
   const result: JsonParseResult<z.infer<typeof manualAppliedJobApplicationSchema>> =

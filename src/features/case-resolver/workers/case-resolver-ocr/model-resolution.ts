@@ -39,6 +39,7 @@ export const resolveCaseResolverOcrModel = (
   const runtimeModel = model.trim();
   const selectedModel = runtimeModel || fallbackModel.trim();
   if (!selectedModel) {
+    // No OCR model is configured in settings or provided at runtime
     throw new Error('OCR model is not configured.');
   }
   const explicitModel = parseProviderPrefixedModel(selectedModel);
@@ -62,6 +63,7 @@ export const resolveCaseResolverOcrModelCandidates = (
     runtimeCandidates.length > 0 ? runtimeCandidates : fallbackCandidate ? [fallbackCandidate] : [];
 
   if (candidateValues.length === 0) {
+    // No OCR models are configured in settings or provided at runtime
     throw new Error('OCR model is not configured.');
   }
 

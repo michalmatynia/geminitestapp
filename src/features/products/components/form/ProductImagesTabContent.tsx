@@ -1,15 +1,28 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useMemo } from 'react';
+import Link from 'next/link';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
+import {
+  buildQueuedProductFastCometUploadSource,
+  markQueuedProductSource,
+  removeQueuedProductSource,
+} from '@/features/products/state/queued-product-ops';
 import type { ImageFileSelection } from '@/shared/contracts/files';
+import type {
+  ProductImageManagerFastCometUploadErrorEvent,
+  ProductImageManagerFastCometUploadEvent,
+  ProductImageManagerFastCometUploadSuccessEvent,
+} from '@/shared/contracts/product-image-manager';
+import { Alert } from '@/shared/ui/primitives.public';
 import { Button } from '@/shared/ui/button';
 import { FormSection } from '@/shared/ui/form-section';
 import { ProductImageManager, ProductImageManagerControllerProvider } from '@/shared/ui/image-slot-manager';
 import type { ProductImageManagerController } from '@/shared/ui/image-slot-manager';
+import { useToast } from '@/shared/ui/toast';
 
 import {
   useOptionalProductImagesTabActionsContext,
@@ -28,6 +41,8 @@ type OnSelectFiles = NonNullable<ProductImagesTabActionsContextValue['onSelectFi
 interface ProductImagesTabModel {
   chooseButtonAriaLabel: string;
   chooseButtonLabel: string;
+  fastCometConfigError: string | null;
+  clearFastCometConfigError: () => void;
   imageExternalBaseUrl: string | null;
   imageManagerController: ProductImageManagerController;
   inlineFileManager: boolean;
@@ -43,6 +58,31 @@ type ProductImagesTabTextOptions = Pick<
   ProductImagesTabModel,
   'chooseButtonAriaLabel' | 'chooseButtonLabel' | 'sectionDescription' | 'sectionTitle'
 >;
+type FastCometUploadRuntimeCallbacks = Pick<
+  ProductImageManagerController,
+  'onFastCometUploadStart' | 'onFastCometUploadSuccess' | 'onFastCometUploadError'
+>;
+
+type FastCometUploadRuntimeState = FastCometUploadRuntimeCallbacks & {
+  fastCometConfigError: string | null;
+  clearFastCometConfigError: () => void;
+};
+
+const FASTCOMET_UPLOAD_RUNTIME_TTL_MS = 120_000;
+const FASTCOMET_NOT_ENABLED_PREFIX = 'FastComet storage is not enabled';
+
+const isFastCometNotEnabledError = (error: unknown): boolean =>
+  error instanceof Error && error.message.startsWith(FASTCOMET_NOT_ENABLED_PREFIX);
+
+const resolveFastCometUploadSource = (
+  event: Pick<ProductImageManagerFastCometUploadEvent, 'imageFileId' | 'imageSlotIndex'>
+): string | null =>
+  buildQueuedProductFastCometUploadSource(event.imageFileId, event.imageSlotIndex);
+
+const resolveFastCometUploadErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message.trim().length > 0) return error.message;
+  return 'FastComet upload failed.';
+};
 
 const resolveChooseButtonAriaLabel = (
   stateContext: ProductImagesTabStateContextValue | null
@@ -95,6 +135,76 @@ const resolveShowFileManager = (
   formImages: ProductFormImagesContextValue
 ): boolean => stateContext?.showFileManager ?? formImages.showFileManager;
 
+const useFastCometUploadRuntimeCallbacks = (): FastCometUploadRuntimeState => {
+  const { toast } = useToast();
+  const [fastCometConfigError, setFastCometConfigError] = useState<string | null>(null);
+
+  const clearFastCometConfigError = useCallback(() => setFastCometConfigError(null), []);
+
+  const onFastCometUploadStart = useCallback(
+    (event: ProductImageManagerFastCometUploadEvent): void => {
+      const source = resolveFastCometUploadSource(event);
+      if (source !== null) {
+        markQueuedProductSource(event.productId, source, FASTCOMET_UPLOAD_RUNTIME_TTL_MS);
+      }
+      toast('FastComet upload started.', { duration: 3000, variant: 'info' });
+    },
+    [toast]
+  );
+
+  const onFastCometUploadSuccess = useCallback(
+    (event: ProductImageManagerFastCometUploadSuccessEvent): void => {
+      const source = resolveFastCometUploadSource(event);
+      if (source !== null) removeQueuedProductSource(event.productId, source);
+      toast(
+        event.alreadyUploaded === true
+          ? 'Image is already on FastComet.'
+          : 'Image uploaded to FastComet.',
+        { variant: 'success' }
+      );
+    },
+    [toast]
+  );
+
+  const onFastCometUploadError = useCallback(
+    (event: ProductImageManagerFastCometUploadErrorEvent): void => {
+      const source = resolveFastCometUploadSource(event);
+      if (source !== null) removeQueuedProductSource(event.productId, source);
+      if (isFastCometNotEnabledError(event.error)) {
+        setFastCometConfigError(FASTCOMET_NOT_ENABLED_PREFIX);
+        return;
+      }
+      toast(resolveFastCometUploadErrorMessage(event.error), {
+        error: event.error,
+        variant: 'error',
+      });
+    },
+    [toast]
+  );
+
+  return useMemo(
+    () => ({
+      onFastCometUploadStart,
+      onFastCometUploadSuccess,
+      onFastCometUploadError,
+      fastCometConfigError,
+      clearFastCometConfigError,
+    }),
+    [onFastCometUploadStart, onFastCometUploadSuccess, onFastCometUploadError, fastCometConfigError, clearFastCometConfigError]
+  );
+};
+
+type FallbackControllerResult = {
+  controller: ProductImageManagerController;
+  fastCometConfigError: string | null;
+  clearFastCometConfigError: () => void;
+};
+
+type ControllerOnlyOptions = Omit<
+  ProductImagesTabModel,
+  keyof ProductImagesTabTextOptions | 'fastCometConfigError' | 'clearFastCometConfigError'
+>;
+
 const resolveControllerOptions = ({
   actionsContext,
   fallbackImageManagerController,
@@ -107,7 +217,7 @@ const resolveControllerOptions = ({
   formImages: ProductFormImagesContextValue;
   imageExternalBaseUrl: string | null;
   stateContext: ProductImagesTabStateContextValue | null;
-}): Omit<ProductImagesTabModel, keyof ProductImagesTabTextOptions> => ({
+}): ControllerOnlyOptions => ({
   imageExternalBaseUrl,
   imageManagerController: resolveImageManagerController(
     stateContext,
@@ -122,8 +232,14 @@ const resolveControllerOptions = ({
 
 const useFallbackImageManagerController = (
   formImages: ProductFormImagesContextValue
-): ProductImageManagerController =>
-  useMemo<ProductImageManagerController>(
+): FallbackControllerResult => {
+  const {
+    fastCometConfigError,
+    clearFastCometConfigError,
+    ...callbacks
+  } = useFastCometUploadRuntimeCallbacks();
+
+  const controller = useMemo<ProductImageManagerController>(
     () => ({
       imageSlots: formImages.imageSlots,
       imageLinks: formImages.imageLinks,
@@ -138,6 +254,7 @@ const useFallbackImageManagerController = (
       swapImageSlots: formImages.swapImageSlots,
       setImagesReordering: formImages.setImagesReordering,
       uploadError: formImages.uploadError,
+      ...callbacks,
     }),
     [
       formImages.imageSlots,
@@ -152,18 +269,31 @@ const useFallbackImageManagerController = (
       formImages.swapImageSlots,
       formImages.setImagesReordering,
       formImages.uploadError,
+      callbacks,
     ]
   );
+
+  return useMemo(
+    () => ({ controller, fastCometConfigError, clearFastCometConfigError }),
+    [controller, fastCometConfigError, clearFastCometConfigError]
+  );
+};
 
 function useProductImagesTabModel(): ProductImagesTabModel {
   const formImages = useProductFormImages();
   const { imageExternalBaseUrl } = useProductSettings();
   const imagesTabStateContext = useOptionalProductImagesTabStateContext();
   const imagesTabActionsContext = useOptionalProductImagesTabActionsContext();
-  const fallbackImageManagerController = useFallbackImageManagerController(formImages);
+  const {
+    controller: fallbackImageManagerController,
+    fastCometConfigError,
+    clearFastCometConfigError,
+  } = useFallbackImageManagerController(formImages);
 
   return {
     ...resolveTextOptions(imagesTabStateContext),
+    fastCometConfigError,
+    clearFastCometConfigError,
     ...resolveControllerOptions({
       actionsContext: imagesTabActionsContext,
       fallbackImageManagerController,
@@ -217,6 +347,15 @@ function ImageSourceSection({
 function ProductImagesDefaultView({ model }: { model: ProductImagesTabModel }): React.JSX.Element {
   return (
     <div className='space-y-6'>
+      {model.fastCometConfigError !== null && (
+        <Alert variant='warning' onDismiss={model.clearFastCometConfigError}>
+          FastComet storage is not currently enabled as your file storage source.{' '}
+          <Link href='/admin/settings/storage' className='font-medium underline'>
+            Go to Storage Settings
+          </Link>{' '}
+          to enable it.
+        </Alert>
+      )}
       <ImageSourceSection model={model} />
       <ProductImageManagerControllerProvider value={model.imageManagerController}>
         <ProductImageManager

@@ -15,7 +15,11 @@ const CANCELLABLE_RUN_STATUS_FILTER = ['queued', 'running'] as const;
 
 const cleanupRunQueueEntries = (runId: string): void => {
   void removePathRunQueueEntries([runId]).catch((error) => {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-service',
+      action: 'cleanupRunQueueEntries',
+      runId,
+    });
     void ErrorSystem.logWarning(`Non-critical queue cleanup failure for run ${runId}`, {
       service: 'ai-paths-service',
       action: 'cleanupRunQueueEntries',
@@ -35,7 +39,11 @@ const cleanupRunQueueEntriesBatch = (runIds: string[]): void => {
   );
   if (uniqueRunIds.length === 0) return;
   void removePathRunQueueEntries(uniqueRunIds).catch((error) => {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-service',
+      action: 'cleanupRunQueueEntriesBatch',
+      runCount: uniqueRunIds.length,
+    });
     void ErrorSystem.logWarning('Non-critical queue cleanup failure for bulk run deletion', {
       service: 'ai-paths-service',
       action: 'cleanupRunQueueEntriesBatch',
@@ -62,7 +70,6 @@ export const deletePathRunWithRepository = async (
     cleanupRunQueueEntries(runId);
     return await repo.deleteRun(runId);
   } catch (error) {
-    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',
       action: 'deletePathRun',
@@ -84,7 +91,6 @@ export const deletePathRunsWithRepository = async (
     cleanupRunQueueEntriesBatch(runIds);
     return await repo.deleteRuns(options);
   } catch (error) {
-    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',
       action: 'deletePathRuns',
@@ -155,7 +161,11 @@ export const cancelPathRunWithRepository = async (
         }),
       ]);
     } catch (auxError) {
-      void ErrorSystem.captureException(auxError);
+      void ErrorSystem.captureException(auxError, {
+        service: 'ai-paths-service',
+        action: 'cancelPathRun.auxLogging',
+        runId,
+      });
       void ErrorSystem.logWarning(`Non-critical cancellation logging failure for run ${runId}`, {
         service: 'ai-paths-service',
         error: auxError,
@@ -167,7 +177,6 @@ export const cancelPathRunWithRepository = async (
     cleanupRunQueueEntries(runId);
     return updated;
   } catch (error) {
-    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',
       action: 'cancelPathRun',

@@ -206,6 +206,7 @@ describe('AI Brain tree accessibility', () => {
           select={select}
           enabled={true}
           sourceLabel='Global defaults'
+          hasApiKeyOverride
         />
       </BrainRoutingCapabilityNodeItemRuntimeContext.Provider>
     );
@@ -215,6 +216,7 @@ describe('AI Brain tree accessibility', () => {
     const editButton = screen.getByRole('button', { name: `Edit ${definition.label}` });
 
     expect(within(selectButton).queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByText('Route key')).toBeInTheDocument();
     expect(toggleButton).toHaveAttribute('aria-pressed', 'true');
 
     fireEvent.click(toggleButton);

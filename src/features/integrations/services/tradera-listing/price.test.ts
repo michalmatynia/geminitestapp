@@ -20,11 +20,102 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   }),
 }));
 
-import { resolveTraderaListingPriceForProduct } from './price';
+import {
+  formatTraderaListingPriceInputValue,
+  resolveTraderaListingPriceForProduct,
+  resolveTraderaStoredRelistPrice,
+  TRADERA_LISTING_PRICE_CURRENCY_CODE,
+} from './price';
+
+describe('formatTraderaListingPriceInputValue', () => {
+  it('formats SEK listing prices as whole kronor', () => {
+    expect(TRADERA_LISTING_PRICE_CURRENCY_CODE).toBe('SEK');
+    expect(formatTraderaListingPriceInputValue(15.4, 'SEK')).toBe('15');
+    expect(formatTraderaListingPriceInputValue(15.5, 'SEK')).toBe('16');
+    expect(formatTraderaListingPriceInputValue(0.2, 'SEK')).toBe('1');
+  });
+
+  it('keeps decimal precision for non-SEK listing prices', () => {
+    expect(formatTraderaListingPriceInputValue(15.4, 'EUR')).toBe('15.40');
+    expect(formatTraderaListingPriceInputValue(15, 'EUR')).toBe('15');
+  });
+});
 
 describe('resolveTraderaListingPriceForProduct', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('defaults the Tradera listing price target to SEK', async () => {
+    getCatalogByIdMock.mockResolvedValue({
+      id: 'catalog-1',
+      defaultPriceGroupId: 'price-group-pln',
+      priceGroupIds: ['price-group-pln', 'price-group-sek'],
+    });
+
+    collectionMock.mockImplementation((name: string) => {
+      if (name === 'price_groups') {
+        return {
+          find: () => ({
+            toArray: async () => [
+              {
+                id: 'price-group-pln',
+                groupId: 'PLN',
+                currencyId: 'currency-pln',
+                type: 'standard',
+                isDefault: true,
+                sourceGroupId: null,
+                priceMultiplier: 1,
+                addToPrice: 0,
+              },
+              {
+                id: 'price-group-sek',
+                groupId: 'SEK',
+                currencyId: 'currency-sek',
+                type: 'dependent',
+                isDefault: false,
+                sourceGroupId: 'price-group-pln',
+                priceMultiplier: 2.4,
+                addToPrice: 0,
+              },
+            ],
+          }),
+        };
+      }
+
+      if (name === 'currencies') {
+        return {
+          find: () => ({
+            toArray: async () => [
+              { id: 'currency-pln', code: 'PLN' },
+              { id: 'currency-sek', code: 'SEK' },
+            ],
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected collection ${name}`);
+    });
+
+    const resolution = await resolveTraderaListingPriceForProduct({
+      product: {
+        id: 'product-1',
+        price: 100,
+        defaultPriceGroupId: null,
+        catalogId: 'catalog-1',
+        catalogs: [{ catalogId: 'catalog-1' }],
+      } as never,
+    });
+
+    expect(resolution).toMatchObject({
+      listingPrice: 240,
+      listingCurrencyCode: 'SEK',
+      targetCurrencyCode: 'SEK',
+      resolvedToTargetCurrency: true,
+      priceSource: 'price_group_target_currency',
+      reason: 'resolved_target_currency',
+      matchedTargetPriceGroupIds: ['price-group-sek'],
+    });
   });
 
   it('resolves the Tradera listing price from the catalog EUR price group', async () => {
@@ -418,5 +509,63 @@ describe('resolveTraderaListingPriceForProduct', () => {
       loadedPriceGroupIds: ['price-group-pln', 'price-group-eur'],
       matchedTargetPriceGroupIds: ['price-group-eur'],
     });
+  });
+});
+
+describe('resolveTraderaStoredRelistPrice', () => {
+  const listingWithStoredPrice = (price: unknown, currencyCode: unknown = 'SEK') =>
+    ({
+      id: 'listing-1',
+      productId: 'product-1',
+      integrationId: 'integration-1',
+      connectionId: 'connection-1',
+      externalListingId: null,
+      inventoryId: null,
+      status: 'active',
+      listedAt: null,
+      expiresAt: null,
+      nextRelistAt: null,
+      lastRelistedAt: null,
+      lastStatusCheckAt: null,
+      failureReason: null,
+      exportHistory: null,
+      marketplaceData: {
+        tradera: {
+          lastExecution: {
+            metadata: {
+              listingPrice: price,
+              listingCurrencyCode: currencyCode,
+            },
+          },
+        },
+      },
+    }) as never;
+
+  it('returns the stored SEK price from the last execution metadata', () => {
+    expect(resolveTraderaStoredRelistPrice(listingWithStoredPrice(299))).toBe(299);
+  });
+
+  it('returns null when the stored currency is not SEK', () => {
+    expect(resolveTraderaStoredRelistPrice(listingWithStoredPrice(299, 'EUR'))).toBeNull();
+  });
+
+  it('returns null when the stored price is zero or negative', () => {
+    expect(resolveTraderaStoredRelistPrice(listingWithStoredPrice(0))).toBeNull();
+    expect(resolveTraderaStoredRelistPrice(listingWithStoredPrice(-10))).toBeNull();
+  });
+
+  it('returns null when marketplaceData is missing', () => {
+    expect(
+      resolveTraderaStoredRelistPrice({ ...listingWithStoredPrice(299), marketplaceData: null } as never)
+    ).toBeNull();
+  });
+
+  it('returns null when lastExecution metadata is absent', () => {
+    expect(
+      resolveTraderaStoredRelistPrice({
+        ...listingWithStoredPrice(299),
+        marketplaceData: { tradera: {} },
+      } as never)
+    ).toBeNull();
   });
 });

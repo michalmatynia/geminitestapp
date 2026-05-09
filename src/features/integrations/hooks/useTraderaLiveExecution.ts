@@ -252,7 +252,8 @@ export const useTraderaLiveExecution = (
     queryFn: async (): Promise<PlaywrightNodeRunSnapshot | null> => {
       if (!pendingTarget) return null;
       const response = await fetchPlaywrightRun(pendingTarget.runId);
-      return response.ok ? response.data.run : null;
+      if (!response.ok) throw new Error(response.error ?? 'Playwright run not found.');
+      return response.data.run;
     },
     staleTime: 0,
     refetchOnMount: 'always',

@@ -175,6 +175,36 @@ describe('StudioVariantsGrid', () => {
     expect(setSelectedVariantSlotId).toHaveBeenCalledWith('variant-1');
   });
 
+  it('keeps generated and pending cards visible during background variant refreshes', () => {
+    useProductStudioContextMock.mockReturnValue({
+      variants: [
+        {
+          id: 'variant-1',
+          name: 'Variant One',
+          imageFile: {
+            id: 'file-1',
+            url: '/variant-1.png',
+          },
+        },
+      ],
+      variantsLoading: true,
+      selectedVariant: null,
+      setSelectedVariantSlotId,
+      deletingVariantId: null,
+      handleDeleteVariant,
+      pendingExpectedOutputs: 3,
+      pendingVariantPlaceholderCount: 1,
+      sending: false,
+      accepting: false,
+    });
+
+    render(<StudioVariantsGrid />);
+
+    expect(screen.queryByText('Loading variants...')).not.toBeInTheDocument();
+    expect(screen.getByTestId('grid-item-variant-1')).toBeInTheDocument();
+    expect(screen.getByText('2 of 3 generated')).toBeInTheDocument();
+  });
+
   it('deletes the selected slot through the context action', async () => {
     const user = userEvent.setup();
 

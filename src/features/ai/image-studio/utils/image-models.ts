@@ -1,4 +1,5 @@
 export const IMAGE_STUDIO_IMAGE_MODEL_FALLBACKS = [
+  'gpt-image-2',
   'gpt-image-1',
   'gpt-image-1-mini',
   'gpt-image-1.5',
@@ -12,8 +13,6 @@ const IMAGE_SIZE_OPTIONS_GPT = [
   '1024x1024',
   '1536x1024',
   '1024x1536',
-  '1792x1024',
-  '1024x1792',
 ] as const;
 
 const IMAGE_SIZE_OPTIONS_DALLE = ['1024x1024', '1792x1024', '1024x1792'] as const;
@@ -22,13 +21,14 @@ const IMAGE_QUALITY_OPTIONS_GPT = ['auto', 'low', 'medium', 'high'] as const;
 const IMAGE_QUALITY_OPTIONS_DALLE = ['standard', 'hd'] as const;
 
 const IMAGE_BACKGROUND_OPTIONS_GPT = ['auto', 'opaque', 'transparent'] as const;
+const IMAGE_BACKGROUND_OPTIONS_GPT_IMAGE_2 = ['auto', 'opaque'] as const;
 const IMAGE_BACKGROUND_OPTIONS_DALLE = ['white'] as const;
 
 const IMAGE_FORMAT_OPTIONS_GPT = ['png', 'jpeg', 'webp'] as const;
 const IMAGE_FORMAT_OPTIONS_DALLE = ['png'] as const;
 
 export type ImageModelCapabilities = {
-  family: 'gpt-5.2' | 'gpt-image' | 'dall-e' | 'generic';
+  family: 'gpt-5.2' | 'gpt-image' | 'gpt-image-2' | 'dall-e' | 'generic';
   supportsCount: boolean;
   supportsUser: boolean;
   supportsStream: boolean;
@@ -60,13 +60,17 @@ function isGptImageModel(modelId: string): boolean {
   return normalized.includes('gpt-image');
 }
 
+function isGptImage2Model(modelId: string): boolean {
+  return normalizeModelId(modelId).startsWith('gpt-image-2');
+}
+
 function isDalleImageModel(modelId: string): boolean {
   return normalizeModelId(modelId).startsWith('dall-e');
 }
 
 export function supportsImageSequenceGeneration(modelId: string): boolean {
   const normalized = normalizeModelId(modelId);
-  if (!normalized) return false;
+  if (normalized.length === 0) return false;
   if (isDalleImageModel(normalized)) return false;
   if (isGpt52ImageModel(normalized)) return true;
   if (isGptImageModel(normalized)) return true;
@@ -74,81 +78,109 @@ export function supportsImageSequenceGeneration(modelId: string): boolean {
   return normalized.includes('sequence');
 }
 
+const buildGptImage2Capabilities = (): ImageModelCapabilities => ({
+  family: 'gpt-image-2',
+  supportsCount: true,
+  supportsUser: true,
+  supportsStream: false,
+  supportsOutputFormat: true,
+  supportsResponseFormat: false,
+  supportsModeration: false,
+  supportsOutputCompression: true,
+  supportsPartialImages: false,
+  sizeOptions: IMAGE_SIZE_OPTIONS_GPT,
+  qualityOptions: IMAGE_QUALITY_OPTIONS_GPT,
+  backgroundOptions: IMAGE_BACKGROUND_OPTIONS_GPT_IMAGE_2,
+  formatOptions: IMAGE_FORMAT_OPTIONS_GPT,
+});
+
+const buildGpt52Capabilities = (): ImageModelCapabilities => ({
+  family: 'gpt-5.2',
+  supportsCount: true,
+  supportsUser: true,
+  supportsStream: false,
+  supportsOutputFormat: false,
+  supportsResponseFormat: false,
+  supportsModeration: false,
+  supportsOutputCompression: false,
+  supportsPartialImages: false,
+  sizeOptions: IMAGE_SIZE_OPTIONS_GPT,
+  qualityOptions: IMAGE_QUALITY_OPTIONS_GPT,
+  backgroundOptions: IMAGE_BACKGROUND_OPTIONS_GPT,
+  formatOptions: IMAGE_FORMAT_OPTIONS_GPT,
+});
+
+const buildGptImageCapabilities = (): ImageModelCapabilities => ({
+  family: 'gpt-image',
+  supportsCount: true,
+  supportsUser: true,
+  supportsStream: false,
+  supportsOutputFormat: true,
+  supportsResponseFormat: false,
+  supportsModeration: false,
+  supportsOutputCompression: false,
+  supportsPartialImages: false,
+  sizeOptions: IMAGE_SIZE_OPTIONS_GPT,
+  qualityOptions: IMAGE_QUALITY_OPTIONS_GPT,
+  backgroundOptions: IMAGE_BACKGROUND_OPTIONS_GPT,
+  formatOptions: IMAGE_FORMAT_OPTIONS_GPT,
+});
+
+const buildDalleCapabilities = (): ImageModelCapabilities => ({
+  family: 'dall-e',
+  supportsCount: true,
+  supportsUser: true,
+  supportsStream: false,
+  supportsOutputFormat: false,
+  supportsResponseFormat: true,
+  supportsModeration: false,
+  supportsOutputCompression: false,
+  supportsPartialImages: false,
+  sizeOptions: IMAGE_SIZE_OPTIONS_DALLE,
+  qualityOptions: IMAGE_QUALITY_OPTIONS_DALLE,
+  backgroundOptions: IMAGE_BACKGROUND_OPTIONS_DALLE,
+  formatOptions: IMAGE_FORMAT_OPTIONS_DALLE,
+});
+
+const buildGenericCapabilities = (): ImageModelCapabilities => ({
+  family: 'generic',
+  supportsCount: true,
+  supportsUser: true,
+  supportsStream: false,
+  supportsOutputFormat: false,
+  supportsResponseFormat: true,
+  supportsModeration: false,
+  supportsOutputCompression: false,
+  supportsPartialImages: false,
+  sizeOptions: IMAGE_SIZE_OPTIONS_GPT,
+  qualityOptions: IMAGE_QUALITY_OPTIONS_GPT,
+  backgroundOptions: IMAGE_BACKGROUND_OPTIONS_GPT,
+  formatOptions: IMAGE_FORMAT_OPTIONS_GPT,
+});
+
 export function getImageModelCapabilities(modelId: string): ImageModelCapabilities {
+  if (isGptImage2Model(modelId)) {
+    return buildGptImage2Capabilities();
+  }
+
   if (isGpt52ImageModel(modelId)) {
-    return {
-      family: 'gpt-5.2',
-      supportsCount: true,
-      supportsUser: true,
-      supportsStream: false,
-      supportsOutputFormat: false,
-      supportsResponseFormat: false,
-      supportsModeration: false,
-      supportsOutputCompression: false,
-      supportsPartialImages: false,
-      sizeOptions: IMAGE_SIZE_OPTIONS_GPT,
-      qualityOptions: IMAGE_QUALITY_OPTIONS_GPT,
-      backgroundOptions: IMAGE_BACKGROUND_OPTIONS_GPT,
-      formatOptions: IMAGE_FORMAT_OPTIONS_GPT,
-    };
+    return buildGpt52Capabilities();
   }
 
   if (isGptImageModel(modelId)) {
-    return {
-      family: 'gpt-image',
-      supportsCount: true,
-      supportsUser: true,
-      supportsStream: false,
-      supportsOutputFormat: true,
-      supportsResponseFormat: false,
-      supportsModeration: false,
-      supportsOutputCompression: false,
-      supportsPartialImages: false,
-      sizeOptions: IMAGE_SIZE_OPTIONS_GPT,
-      qualityOptions: IMAGE_QUALITY_OPTIONS_GPT,
-      backgroundOptions: IMAGE_BACKGROUND_OPTIONS_GPT,
-      formatOptions: IMAGE_FORMAT_OPTIONS_GPT,
-    };
+    return buildGptImageCapabilities();
   }
 
   if (isDalleImageModel(modelId)) {
-    return {
-      family: 'dall-e',
-      supportsCount: true,
-      supportsUser: true,
-      supportsStream: false,
-      supportsOutputFormat: false,
-      supportsResponseFormat: true,
-      supportsModeration: false,
-      supportsOutputCompression: false,
-      supportsPartialImages: false,
-      sizeOptions: IMAGE_SIZE_OPTIONS_DALLE,
-      qualityOptions: IMAGE_QUALITY_OPTIONS_DALLE,
-      backgroundOptions: IMAGE_BACKGROUND_OPTIONS_DALLE,
-      formatOptions: IMAGE_FORMAT_OPTIONS_DALLE,
-    };
+    return buildDalleCapabilities();
   }
 
-  return {
-    family: 'generic',
-    supportsCount: true,
-    supportsUser: true,
-    supportsStream: false,
-    supportsOutputFormat: false,
-    supportsResponseFormat: true,
-    supportsModeration: false,
-    supportsOutputCompression: false,
-    supportsPartialImages: false,
-    sizeOptions: IMAGE_SIZE_OPTIONS_GPT,
-    qualityOptions: IMAGE_QUALITY_OPTIONS_GPT,
-    backgroundOptions: IMAGE_BACKGROUND_OPTIONS_GPT,
-    formatOptions: IMAGE_FORMAT_OPTIONS_GPT,
-  };
+  return buildGenericCapabilities();
 }
 
 export function isLikelyImageOutputModelId(modelId: string): boolean {
   const normalized = normalizeModelId(modelId);
-  if (!normalized) return false;
+  if (normalized.length === 0) return false;
 
   if (KNOWN_IMAGE_MODEL_IDS.has(normalized)) return true;
   if (normalized.includes('gpt-image')) return true;

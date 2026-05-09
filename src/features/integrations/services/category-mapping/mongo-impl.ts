@@ -384,7 +384,7 @@ const dedupeMarketplaceMappings = (
   const byScope = new Map<string, CategoryMappingWithDetails>();
 
   for (const mapping of mappings) {
-    const key = `${mapping.catalogId}:${mapping.externalCategoryId}`;
+    const key = mapping.externalCategoryId;
     const current = byScope.get(key);
     if (
       current === undefined ||

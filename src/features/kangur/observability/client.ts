@@ -84,7 +84,7 @@ const getTimeZone = (): string | null => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'kangur.observability.client', action: 'getTimeZone' });
     logClientError(error);
     return null;
   }
@@ -183,7 +183,7 @@ export const withKangurClientError = async <T>(
       !isExpectedKangurClientError(error) &&
       (options?.shouldReport?.(error) ?? true);
     if (shouldReport) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, { service: 'kangur.observability.client', action: 'withKangurClientError', source: (typeof report === 'object' ? report.source : null) ?? null });
     }
     const resolvedReport = typeof report === 'function' ? report(error) : report;
     if (shouldReport) {
@@ -210,7 +210,7 @@ export const withKangurClientErrorSync = <T>(
       !isExpectedKangurClientError(error) &&
       (options?.shouldReport?.(error) ?? true);
     if (shouldReport) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, { service: 'kangur.observability.client', action: 'withKangurClientErrorSync', source: (typeof report === 'object' ? report.source : null) ?? null });
     }
     const resolvedReport = typeof report === 'function' ? report(error) : report;
     if (shouldReport) {
@@ -315,9 +315,8 @@ export const trackKangurClientEvent = (
       }
     }
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'kangur.observability.client', action: 'trackKangurClientEvent.sendBeacon', eventName: name });
     logClientError(error);
-  
     // Fall back to fetch when sendBeacon is unavailable or fails.
   }
 
@@ -328,7 +327,7 @@ export const trackKangurClientEvent = (
     credentials: 'include',
     keepalive: true,
   }).catch((error) => {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'kangur.observability.client', action: 'trackKangurClientEvent.fetch', eventName: name });
     // Keep analytics non-blocking for the learner experience.
   });
 };

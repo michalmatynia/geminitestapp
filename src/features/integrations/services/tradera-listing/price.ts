@@ -3,6 +3,7 @@ import 'server-only';
 import type { PriceGroupForCalculation, ProductWithImages } from '@/shared/contracts/products/product';
 import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 import type { MongoPriceGroupDoc } from '@/shared/lib/db/services/database-sync-types';
+import type { ProductListing } from '@/shared/contracts/integrations/listings';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 import { resolveProductPrimaryCatalogId } from '@/shared/lib/products/utils/effective-shipping-group';
 import {
@@ -23,14 +24,16 @@ export type TraderaListingPriceSource =
   | 'price_group_target_currency'
   | 'base_target_currency'
   | 'base_price_fallback'
-  | 'missing_price';
+  | 'missing_price'
+  | 'stored_relist_price';
 
 export type TraderaListingPriceResolutionReason =
   | 'resolved_target_currency'
   | 'base_price_already_in_target_currency'
   | 'target_currency_unresolved'
   | 'missing_price_groups'
-  | 'missing_base_price';
+  | 'missing_base_price'
+  | 'stored_relist_price';
 
 export type TraderaListingPriceResolution = {
   listingPrice: number | null;
@@ -47,6 +50,31 @@ export type TraderaListingPriceResolution = {
   catalogPriceGroupIds: string[];
   loadedPriceGroupIds: string[];
   matchedTargetPriceGroupIds: string[];
+};
+
+export const TRADERA_LISTING_PRICE_CURRENCY_CODE = 'SEK';
+
+export const formatTraderaListingPriceInputValue = (
+  value: number,
+  currencyCode = TRADERA_LISTING_PRICE_CURRENCY_CODE
+): string => {
+  const normalizedCurrencyCode = normalizeCurrencyCode(currencyCode);
+  if (normalizedCurrencyCode === 'SEK') {
+    return String(Math.max(1, Math.round(value)));
+  }
+
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+};
+
+export const buildTraderaListingPriceResolutionFailureMessage = (
+  targetCurrencyCode = TRADERA_LISTING_PRICE_CURRENCY_CODE
+): string => {
+  const normalizedTargetCurrencyCode =
+    normalizeCurrencyCode(targetCurrencyCode) || TRADERA_LISTING_PRICE_CURRENCY_CODE;
+  return (
+    `FAIL_PRICE_RESOLUTION: Tradera export requires a ${normalizedTargetCurrencyCode} listing price. ` +
+    `Add a ${normalizedTargetCurrencyCode} price group to the product catalog and retry.`
+  );
 };
 
 const toTrimmedString = (value: unknown): string =>
@@ -153,12 +181,13 @@ const resolvePriceResolutionReason = ({
 
 export const resolveTraderaListingPriceForProduct = async ({
   product,
-  targetCurrencyCode = 'EUR',
+  targetCurrencyCode = TRADERA_LISTING_PRICE_CURRENCY_CODE,
 }: {
   product: ProductWithImages;
   targetCurrencyCode?: string;
 }): Promise<TraderaListingPriceResolution> => {
-  const normalizedTargetCurrencyCode = normalizeCurrencyCode(targetCurrencyCode) || 'EUR';
+  const normalizedTargetCurrencyCode =
+    normalizeCurrencyCode(targetCurrencyCode) || TRADERA_LISTING_PRICE_CURRENCY_CODE;
   const basePrice = toFiniteNumber(product.price);
   const catalogId = resolveProductPrimaryCatalogId(product);
 
@@ -317,4 +346,23 @@ export const resolveTraderaListingPriceForProduct = async ({
     loadedPriceGroupIds,
     matchedTargetPriceGroupIds,
   };
+};
+
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+export const resolveTraderaStoredRelistPrice = (
+  listing: ProductListing,
+  targetCurrencyCode = TRADERA_LISTING_PRICE_CURRENCY_CODE
+): number | null => {
+  const normalizedTarget = normalizeCurrencyCode(targetCurrencyCode) || TRADERA_LISTING_PRICE_CURRENCY_CODE;
+  const traderaData = toRecord(toRecord(listing.marketplaceData)['tradera']);
+  const metadata = toRecord(toRecord(traderaData['lastExecution'])['metadata']);
+  const storedCurrencyCode = normalizeCurrencyCode(String(metadata['listingCurrencyCode'] ?? ''));
+  if (storedCurrencyCode !== normalizedTarget) return null;
+  const storedPrice = metadata['listingPrice'];
+  if (typeof storedPrice !== 'number' || !Number.isFinite(storedPrice) || storedPrice <= 0) return null;
+  return storedPrice;
 };

@@ -14,7 +14,7 @@ import type { DragEvent } from 'react';
 import type { DebugInfo } from '../products';
 import type { ProductImageManagerController } from '../product-image-manager';
 
-export type SlotViewMode = 'upload' | 'link' | 'base64';
+export type SlotViewMode = 'upload' | 'link' | 'base64' | 'fastcomet';
 
 export interface ProductImageManagerUIContextValue {
   slotViewModes: SlotViewMode[];

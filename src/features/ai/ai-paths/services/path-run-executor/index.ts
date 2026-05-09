@@ -72,7 +72,6 @@ export const executePathRun = async (
   try {
     repo = await getPathRunRepository();
   } catch (error) {
-    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-executor',
       action: 'getRepository',
@@ -118,7 +117,11 @@ export const executePathRun = async (
       }
       return Boolean(updated);
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, {
+        service: 'ai-paths-executor',
+        action: 'updateRunSnapshot',
+        runId: run.id,
+      });
       if (isMissingRunUpdateError(error)) {
         return false;
       }
@@ -212,7 +215,11 @@ export const executePathRun = async (
         runtimeState: await stateManager.buildCurrentRuntimeStateSnapshot(),
       });
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, {
+        service: 'ai-paths-executor',
+        action: 'saveIntermediateState',
+        runId: run.id,
+      });
       void ErrorSystem.logWarning('Failed to save intermediate state', {
         service: 'ai-paths-executor',
         error,
@@ -423,7 +430,14 @@ export const executePathRun = async (
             },
           });
         } catch (error) {
-          void ErrorSystem.captureException(error);
+          void ErrorSystem.captureException(error, {
+            service: 'ai-paths-executor',
+            action: 'onRuntimeValidation',
+            runId: run.id,
+            stage,
+            nodeId: node?.id ?? null,
+            decision,
+          });
           reportAiPathsError(error, {
             action: 'onRuntimeValidation',
             stage,
@@ -475,7 +489,12 @@ export const executePathRun = async (
       durationMs: computeDurationMs(runStartedAt, finishedAt) ?? undefined,
     }).catch(() => {});
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-executor',
+      action: 'executePathRun',
+      runId: run.id,
+      pathId: run.pathId,
+    });
     if (dbRunMissing) throw error;
     const finishedAt = new Date().toISOString();
     const isCancelled =

@@ -22,6 +22,7 @@ export const ECOMMERCE_EXPORT_INTEGRATION_SLUG = 'ecommerce-export';
 
 export const BASE_INTEGRATION_SLUGS = new Set<string>(BASE_INTEGRATION_SLUG_VALUES);
 export const TRADERA_BROWSER_INTEGRATION_SLUG = 'tradera';
+export const TRADERA_CATEGORY_MAPPING_CATALOG_ID = '__tradera_global__';
 export const TRADERA_INTEGRATION_SLUGS = new Set<string>(TRADERA_INTEGRATION_SLUG_VALUES);
 
 export const normalizeIntegrationSlug = (value: string | null | undefined): string =>

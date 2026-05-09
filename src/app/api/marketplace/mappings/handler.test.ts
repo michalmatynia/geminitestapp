@@ -128,7 +128,7 @@ describe('marketplace mappings handler', () => {
 
     const response = await getHandler(request, createContext());
 
-    expect(listByMarketplaceMock).toHaveBeenCalledWith('tradera', 'catalog-1');
+    expect(listByMarketplaceMock).toHaveBeenCalledWith('tradera');
     expect(listByConnectionMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual([
       {

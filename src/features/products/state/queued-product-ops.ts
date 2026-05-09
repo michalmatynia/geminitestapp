@@ -15,6 +15,7 @@ import {
 export {
   resetQueuedProductOpsState,
   buildQueuedProductAiRunSource,
+  buildQueuedProductFastCometUploadSource,
   buildQueuedProductOfflineMutationSource,
   getQueuedProductIds,
   getQueuedAiRunProductIds,

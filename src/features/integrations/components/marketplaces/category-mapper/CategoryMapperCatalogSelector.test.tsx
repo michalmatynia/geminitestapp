@@ -7,10 +7,12 @@ import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
 
 const mocks = vi.hoisted(() => ({
   setSelectedCatalogId: vi.fn<(value: string) => void>(),
+  useCategoryMapperConfig: vi.fn(),
   useCategoryMapperData: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/context/CategoryMapperContext', () => ({
+  useCategoryMapperConfig: mocks.useCategoryMapperConfig,
   useCategoryMapperData: mocks.useCategoryMapperData,
 }));
 
@@ -62,6 +64,9 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
 describe('CategoryMapperCatalogSelector', () => {
   beforeEach(() => {
     mocks.setSelectedCatalogId.mockReset();
+    mocks.useCategoryMapperConfig.mockReturnValue({
+      integrationSlug: 'base',
+    });
     mocks.useCategoryMapperData.mockReturnValue({
       selectedCatalogId: 'catalog-2',
       setSelectedCatalogId: mocks.setSelectedCatalogId,
@@ -89,5 +94,16 @@ describe('CategoryMapperCatalogSelector', () => {
     await user.selectOptions(screen.getByRole('combobox', { name: 'Target catalog' }), 'catalog-1');
 
     expect(mocks.setSelectedCatalogId).toHaveBeenCalledWith('catalog-1');
+  });
+
+  it('shows the global category scope for Tradera connections', () => {
+    mocks.useCategoryMapperConfig.mockReturnValue({
+      integrationSlug: 'tradera',
+    });
+
+    render(<CategoryMapperCatalogSelector />);
+
+    expect(screen.queryByRole('combobox', { name: 'Target catalog' })).not.toBeInTheDocument();
+    expect(screen.getByText('All internal categories')).toBeInTheDocument();
   });
 });

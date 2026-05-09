@@ -20,8 +20,19 @@ const PRODUCT_STUDIO_RUN_STATUSES: readonly ProductStudioRunStatus[] = [
   'completed',
   'failed',
   'cancelled',
+  'canceled',
 ];
 
 export const isProductStudioRunStatus = (value: unknown): value is ProductStudioRunStatus =>
   typeof value === 'string' &&
   PRODUCT_STUDIO_RUN_STATUSES.includes(value as ProductStudioRunStatus);
+
+export const isProductStudioRunInFlightStatus = (
+  value: ProductStudioRunStatus | null
+): value is Extract<ProductStudioRunStatus, 'queued' | 'running'> =>
+  value === 'queued' || value === 'running';
+
+export const isProductStudioRunTerminalStatus = (
+  value: ProductStudioRunStatus | null
+): boolean =>
+  value === 'completed' || value === 'failed' || value === 'cancelled' || value === 'canceled';

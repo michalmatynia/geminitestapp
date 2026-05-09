@@ -13,6 +13,7 @@ import type { CategoryMappingWithDetails, ExternalCategory } from '@/shared/cont
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { ApiError } from '@/shared/lib/api-client';
+import { TRADERA_CATEGORY_MAPPING_CATALOG_ID } from '@/shared/lib/integration-slugs';
 
 const mocks = vi.hoisted(() => ({
   catalogs: [] as unknown[],
@@ -588,6 +589,57 @@ describe('CategoryMapperProvider auto-match by name', () => {
     expect(mocks.toast).toHaveBeenCalledWith(
       'Tradera mappings must target the deepest category. "Collectibles > Pins & needles" still has child categories. Choose a leaf Tradera category and save again.',
       { variant: 'error' }
+    );
+  });
+
+  it('saves Tradera mappings under the global Tradera catalog scope', async () => {
+    const user = userEvent.setup();
+
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'ext-leaf',
+        externalId: 'market-nonleaf',
+        name: 'Other pins & needles',
+        path: 'Collectibles > Pins & needles > Other pins & needles',
+        isLeaf: true,
+      }),
+    ];
+    mocks.mappings = [];
+    mocks.saveMutateAsync.mockResolvedValue({
+      success: true,
+      upserted: 1,
+      message: 'Successfully saved 1 category mappings',
+    });
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationId='integration-tradera'
+        integrationSlug='tradera'
+      >
+        <Harness />
+      </CategoryMapperProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('selected-catalog')).toHaveTextContent('catalog-1')
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Set non-leaf mapping' }));
+    await user.click(screen.getByRole('button', { name: 'Save mappings' }));
+
+    await waitFor(() =>
+      expect(mocks.saveMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'conn-1',
+        catalogId: TRADERA_CATEGORY_MAPPING_CATALOG_ID,
+        mappings: [
+          {
+            externalCategoryId: 'market-nonleaf',
+            internalCategoryId: 'int-office',
+          },
+        ],
+      })
     );
   });
 });

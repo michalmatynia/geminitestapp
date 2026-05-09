@@ -27,6 +27,19 @@ export function buildQueuedProductAiRunSource(runId: string): string | null {
   return `ai-run:${normalizedRunId}`;
 }
 
+export function buildQueuedProductFastCometUploadSource(
+  imageFileId: string,
+  imageSlotIndex?: number
+): string | null {
+  const normalizedImageFileId = normalizeSource(imageFileId);
+  if (normalizedImageFileId === '') return null;
+  const normalizedSlot =
+    typeof imageSlotIndex === 'number' && Number.isInteger(imageSlotIndex) && imageSlotIndex >= 0
+      ? `:${imageSlotIndex}`
+      : '';
+  return `fastcomet-upload:${normalizedImageFileId}${normalizedSlot}`;
+}
+
 export function buildQueuedProductOfflineMutationSource(
   operation: 'update' | 'delete' | 'create'
 ): string {

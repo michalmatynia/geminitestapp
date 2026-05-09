@@ -516,7 +516,14 @@ export const resolveBaseParameterSyncValues = async (input: {
 
     return Array.from(nextByParameterId.values());
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'product-sync-processor',
+      action: 'resolveBaseParameterSyncValues',
+      catalogId,
+      connectionId: input.connectionId,
+      inventoryId: input.inventoryId,
+      productId: input.product.id,
+    });
     extracted.forEach((entry: ExtractedBaseParameter) => {
       const value = toParameterSyncValueFromExtracted(entry);
       if (value) nextByParameterId.set(value.parameterId, value);
@@ -936,7 +943,12 @@ export const loadWarehousePresentationMetadata = async (input: {
 
     return warehousesByIdentifier;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'product-sync-processor',
+      action: 'loadWarehousePresentationMetadata',
+      inventoryId: input.inventoryId,
+      identifierCount: input.identifiers.length,
+    });
     return new Map();
   }
 };
@@ -1017,7 +1029,11 @@ export const loadPriceGroupPresentationMetadata = async (
 
     return priceGroupsByIdentifier;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'product-sync-processor',
+      action: 'loadPriceGroupPresentationMetadata',
+      identifierCount: identifiers.length,
+    });
     return new Map();
   }
 };
@@ -1554,7 +1570,13 @@ export const processProductSyncRun = async (runId: string): Promise<ProductSyncR
   try {
     connectionContext = await resolveBaseConnectionContext(profile);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'product-sync-processor',
+      action: 'processProductSyncRun.resolveBaseConnectionContext',
+      runId,
+      profileId: profile.id,
+      connectionId: profile.connectionId,
+    });
     return updateProductSyncRunStatus(runId, 'failed', {
       errorMessage: error instanceof Error ? error.message : 'Connection resolution failed.',
       summaryMessage: 'Run failed during connection preflight.',
@@ -1682,7 +1704,14 @@ export const processProductSyncRun = async (runId: string): Promise<ProductSyncR
             await putProductSyncRunItem(item);
             await flushRunProgress();
           } catch (error) {
-            void ErrorSystem.captureException(error);
+            void ErrorSystem.captureException(error, {
+              service: 'product-sync-processor',
+              action: 'processProductSyncRun.syncSingleLinkedProduct',
+              runId,
+              profileId: profile.id,
+              productId: product.id,
+              baseProductId,
+            });
             stats.processed += 1;
             stats.failed += 1;
 
@@ -1734,9 +1763,8 @@ export const processProductSyncRun = async (runId: string): Promise<ProductSyncR
 
     return updatedRun;
   } catch (error) {
-    void ErrorSystem.captureException(error);
     await ErrorSystem.captureException(error, {
-      service: 'product-sync-service',
+      service: 'product-sync-processor',
       action: 'processProductSyncRun',
       runId,
       profileId: profile.id,

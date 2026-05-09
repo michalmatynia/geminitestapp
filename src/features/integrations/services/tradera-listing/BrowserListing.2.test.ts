@@ -17,6 +17,7 @@ const {
   listCategoriesMock,
   resolveTraderaShippingGroupResolutionForProductMock,
   resolveTraderaListingPriceForProductMock,
+  resolveTraderaStoredRelistPriceMock,
   resolveConnectionPlaywrightSettingsMock,
   listParametersMock,
 } = vi.hoisted(() => ({
@@ -43,6 +44,7 @@ const {
   listCategoriesMock: vi.fn(),
   resolveTraderaShippingGroupResolutionForProductMock: vi.fn(),
   resolveTraderaListingPriceForProductMock: vi.fn(),
+  resolveTraderaStoredRelistPriceMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
   listParametersMock: vi.fn(),
 }));
@@ -135,8 +137,19 @@ vi.mock('./shipping-group', () => ({
 }));
 
 vi.mock('./price', () => ({
+  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'SEK',
+  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'SEK') =>
+    `FAIL_PRICE_RESOLUTION: Tradera export requires a ${currencyCode} listing price. Add a ${currencyCode} price group to the product catalog and retry.`,
+  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'SEK') => {
+    if (currencyCode === 'SEK') {
+      return String(Math.max(1, Math.round(value)));
+    }
+    return Number.isInteger(value) ? String(value) : value.toFixed(2);
+  },
   resolveTraderaListingPriceForProduct: (...args: unknown[]) =>
     resolveTraderaListingPriceForProductMock(...args),
+  resolveTraderaStoredRelistPrice: (...args: unknown[]) =>
+    resolveTraderaStoredRelistPriceMock(...args),
 }));
 
 import { ensureLoggedIn, runTraderaBrowserCheckStatus, runTraderaBrowserListing } from './browser';
@@ -150,8 +163,8 @@ import { TRADERA_CHECK_STATUS_SCRIPT } from './check-status-script';
 
 const EXPECTED_TRADERA_PRICING_METADATA = {
   listingPrice: 55,
-  listingCurrencyCode: 'EUR',
-  targetCurrencyCode: 'EUR',
+  listingCurrencyCode: 'SEK',
+  targetCurrencyCode: 'SEK',
   resolvedToTargetCurrency: true,
   basePrice: 123,
   baseCurrencyCode: 'PLN',
@@ -261,8 +274,8 @@ beforeEach(() => {
   });
   resolveTraderaListingPriceForProductMock.mockResolvedValue({
     listingPrice: 55,
-    listingCurrencyCode: 'EUR',
-    targetCurrencyCode: 'EUR',
+    listingCurrencyCode: 'SEK',
+    targetCurrencyCode: 'SEK',
     resolvedToTargetCurrency: true,
     basePrice: 123,
     baseCurrencyCode: 'PLN',
@@ -976,11 +989,11 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
     expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();
   });
 
-  it('fails before launching the scripted runner when Tradera listing price cannot be resolved to EUR', async () => {
+  it('fails before launching the scripted runner when Tradera listing price cannot be resolved to SEK', async () => {
     resolveTraderaListingPriceForProductMock.mockResolvedValue({
       listingPrice: 123,
       listingCurrencyCode: 'PLN',
-      targetCurrencyCode: 'EUR',
+      targetCurrencyCode: 'SEK',
       resolvedToTargetCurrency: false,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -1015,7 +1028,8 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
         browserMode: 'headed',
       })
     ).rejects.toMatchObject({
-      message: 'FAIL_PRICE_RESOLUTION: Tradera listing price could not be resolved to EUR.',
+      message:
+        'FAIL_PRICE_RESOLUTION: Tradera export requires a SEK listing price. Add a SEK price group to the product catalog and retry.',
       meta: expect.objectContaining({
         mode: 'scripted',
         productId: 'product-1',
@@ -1023,13 +1037,123 @@ it('fails before launching the scripted runner when the Tradera title exceeds 80
         connectionId: 'connection-1',
         listingPrice: 123,
         listingCurrencyCode: 'PLN',
-        targetCurrencyCode: 'EUR',
+        targetCurrencyCode: 'SEK',
         resolvedToTargetCurrency: false,
         basePrice: 123,
         baseCurrencyCode: 'PLN',
         priceSource: 'base_price_fallback',
         priceResolutionReason: 'target_currency_unresolved',
       }),
+    });
+
+    expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the stored SEK price when relisting and catalog price resolution fails', async () => {
+    resolveTraderaListingPriceForProductMock.mockResolvedValue({
+      listingPrice: 123,
+      listingCurrencyCode: 'PLN',
+      targetCurrencyCode: 'SEK',
+      resolvedToTargetCurrency: false,
+      basePrice: 123,
+      baseCurrencyCode: 'PLN',
+      priceSource: 'base_price_fallback',
+      reason: 'target_currency_unresolved',
+      defaultPriceGroupId: 'price-group-pln',
+      catalogDefaultPriceGroupId: 'price-group-pln',
+      catalogId: 'catalog-1',
+      catalogPriceGroupIds: ['price-group-pln'],
+      loadedPriceGroupIds: ['price-group-pln'],
+      matchedTargetPriceGroupIds: [],
+    });
+    resolveTraderaStoredRelistPriceMock.mockReturnValue(299);
+
+    const result = await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+        marketplaceData: {
+          tradera: {
+            lastExecution: {
+              metadata: { listingPrice: 299, listingCurrencyCode: 'SEK' },
+            },
+          },
+        },
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'relist',
+      browserMode: 'headed',
+    });
+
+    expect(result.externalListingId).toBe('listing-stable');
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          traderaPricing: expect.objectContaining({
+            listingPrice: 299,
+            listingCurrencyCode: 'SEK',
+            resolvedToTargetCurrency: true,
+            priceSource: 'stored_relist_price',
+            priceResolutionReason: 'stored_relist_price',
+          }),
+        }),
+      })
+    );
+  });
+
+  it('still fails price resolution for relist when no stored SEK price is available', async () => {
+    resolveTraderaListingPriceForProductMock.mockResolvedValue({
+      listingPrice: 123,
+      listingCurrencyCode: 'PLN',
+      targetCurrencyCode: 'SEK',
+      resolvedToTargetCurrency: false,
+      basePrice: 123,
+      baseCurrencyCode: 'PLN',
+      priceSource: 'base_price_fallback',
+      reason: 'target_currency_unresolved',
+      defaultPriceGroupId: 'price-group-pln',
+      catalogDefaultPriceGroupId: 'price-group-pln',
+      catalogId: 'catalog-1',
+      catalogPriceGroupIds: ['price-group-pln'],
+      loadedPriceGroupIds: ['price-group-pln'],
+      matchedTargetPriceGroupIds: [],
+    });
+    resolveTraderaStoredRelistPriceMock.mockReturnValue(null);
+
+    await expect(
+      runTraderaBrowserListing({
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+          integrationId: 'integration-1',
+          connectionId: 'connection-1',
+          marketplaceData: null,
+        } as never,
+        connection: {
+          id: 'connection-1',
+          traderaBrowserMode: 'scripted',
+          playwrightListingScript: 'export default async function run() {}',
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'relist',
+        browserMode: 'headed',
+      })
+    ).rejects.toMatchObject({
+      message:
+        'FAIL_PRICE_RESOLUTION: Tradera export requires a SEK listing price. Add a SEK price group to the product catalog and retry.',
     });
 
     expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();

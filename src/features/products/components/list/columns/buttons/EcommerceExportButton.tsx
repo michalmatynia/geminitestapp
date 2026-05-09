@@ -20,6 +20,7 @@ const EcommerceManageModal = dynamic(
 type EcommerceExportButtonProps = {
   product: ProductWithImages;
   showEcommerceBadge?: boolean;
+  ecommerceStatus?: string;
 };
 
 const resolveSuccessMessage = (status: string): string => {
@@ -31,15 +32,18 @@ const resolveSuccessMessage = (status: string): string => {
 export function EcommerceExportButton({
   product,
   showEcommerceBadge = false,
+  ecommerceStatus,
 }: EcommerceExportButtonProps): React.JSX.Element {
   const { mutateAsync, isPending } = useExportProductToEcommerce();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
 
+  const isActive = showEcommerceBadge && ecommerceStatus === 'active';
+
   const handleClick = useCallback((): void => {
     if (isPending) return;
-    if (showEcommerceBadge) {
+    if (isActive) {
       setModalOpen(true);
       return;
     }
@@ -55,7 +59,9 @@ export function EcommerceExportButton({
           { variant: 'error' }
         );
       });
-  }, [isPending, showEcommerceBadge, mutateAsync, product.id, queryClient, toast]);
+  }, [isPending, isActive, mutateAsync, product.id, queryClient, toast]);
+
+  const ariaLabel = isActive ? 'Manage ecommerce product' : 'Export to ecommerce';
 
   return (
     <>
@@ -65,13 +71,13 @@ export function EcommerceExportButton({
         onClick={handleClick}
         variant='ghost'
         size='icon'
-        aria-label={showEcommerceBadge ? 'Manage ecommerce product' : 'Export to ecommerce'}
-        title={showEcommerceBadge ? 'Manage ecommerce product' : 'Export to ecommerce'}
+        aria-label={ariaLabel}
+        title={ariaLabel}
         className={cn(
           'size-8 rounded-full border p-0',
-          showEcommerceBadge
+          isActive
             ? 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25'
-            : 'border-violet-400/60 bg-transparent text-violet-200 hover:border-violet-300/70 hover:bg-violet-500/15 hover:text-violet-100',
+            : 'border-gray-500/60 bg-gray-500/10 text-gray-400 hover:border-gray-400/70 hover:bg-gray-500/20 hover:text-gray-300',
           isPending && 'cursor-not-allowed opacity-60'
         )}
       >

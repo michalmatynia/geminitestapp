@@ -49,6 +49,74 @@ export const PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED = process.env[
   'NEXT_PUBLIC_PRODUCT_IMAGE_MANAGER_DEBUG'
 ] === 'true';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const isFastCometImageFile = (imageFile: ImageFileSelection | null | undefined): boolean => {
+  if (imageFile?.storageProvider === 'fastcomet') return true;
+  const metadata = imageFile?.metadata;
+  return isRecord(metadata) && metadata['storageSource'] === 'fastcomet';
+};
+
+type ProductImageSlotValue = ProductImageManagerController['imageSlots'][number];
+
+type FastCometUploadResponse = {
+  status: 'ok';
+  imageFile: ImageFileSelection;
+  alreadyUploaded?: boolean | undefined;
+  publicPath?: string | undefined;
+  remoteUrl?: string | undefined;
+};
+
+const isBrowserFile = (value: unknown): value is File =>
+  typeof File !== 'undefined' && value instanceof File;
+
+const getExistingImageFileFromSlot = (
+  slot: ProductImageSlotValue | undefined
+): ImageFileSelection | null => {
+  if (slot?.type !== 'existing') return null;
+  return slot.data;
+};
+
+const resolveFastCometUploadEventFilename = (
+  slot: ProductImageSlotValue
+): string | null => {
+  if (slot?.type === 'existing') return slot.data.filename ?? null;
+  if (slot?.type === 'file' && isBrowserFile(slot.data)) return slot.data.name || null;
+  return null;
+};
+
+const resolveFastCometUploadEventImageFileId = (
+  slot: ProductImageSlotValue
+): string => {
+  if (slot?.type === 'existing') return slot.data.id;
+  return slot?.slotId ?? 'pending-file';
+};
+
+const postFastCometUploadRequest = async (input: {
+  index: number;
+  productId: string;
+  slot: NonNullable<ProductImageSlotValue>;
+}): Promise<FastCometUploadResponse> => {
+  const endpoint = `/api/v2/products/${encodeURIComponent(input.productId)}/images/upload-to-fastcomet`;
+  if (input.slot.type === 'existing') {
+    return await api.post<FastCometUploadResponse>(endpoint, {
+      imageFileId: input.slot.data.id,
+      imageSlotIndex: input.index,
+    });
+  }
+
+  if (!isBrowserFile(input.slot.data)) {
+    throw new Error('Image slot file is unavailable for FastComet upload.');
+  }
+
+  const formData = new FormData();
+  formData.append('file', input.slot.data);
+  formData.append('filename', input.slot.data.name);
+  formData.append('imageSlotIndex', String(input.index));
+  return await api.post<FastCometUploadResponse>(endpoint, formData, { timeout: 120_000 });
+};
+
 export function ProductImageManagerUIProvider({
   children,
   explicitController,
@@ -93,6 +161,9 @@ export function ProductImageManagerUIProvider({
   const setShowFileManagerForSlot = controller.setShowFileManagerForSlot;
   const isSlotImageLocked = controller.isSlotImageLocked;
   const slotImageLockedReason = controller.slotImageLockedReason || 'Image is locked.';
+  const onFastCometUploadStart = controller.onFastCometUploadStart;
+  const onFastCometUploadSuccess = controller.onFastCometUploadSuccess;
+  const onFastCometUploadError = controller.onFastCometUploadError;
 
   // UI State
   const [showDebug, setShowDebugState] = useState(PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED);
@@ -120,16 +191,19 @@ export function ProductImageManagerUIProvider({
         const hasUpload = Boolean(imageSlots[i]);
         const hasLink = Boolean(imageLinks[i]?.trim());
         const hasBase64 = Boolean(imageBase64s[i]?.trim());
+        const hasFastComet = isFastCometImageFile(getExistingImageFileFromSlot(imageSlots[i]));
         const current = prev[i];
 
         const currentValid =
           (current === 'upload' && hasUpload) ||
           (current === 'link' && hasLink) ||
-          (current === 'base64' && hasBase64);
+          (current === 'base64' && hasBase64) ||
+          (current === 'fastcomet' && hasFastComet);
 
-        if (hasUpload && (hasLink || hasBase64)) {
+        if (hasUpload && (hasLink || hasBase64 || hasFastComet)) {
           if (currentValid) next[i] = current;
           else if (hasBase64) next[i] = 'base64';
+          else if (hasFastComet) next[i] = 'fastcomet';
           else if (hasLink) next[i] = 'link';
           else next[i] = 'upload';
         } else if (hasBase64 && !hasUpload) {
@@ -307,23 +381,34 @@ export function ProductImageManagerUIProvider({
   const uploadSlotToFastComet = useCallback(
     async (index: number) => {
       const slot = imageSlots[index];
-      if (!productId || slot?.type !== 'existing' || !handleSlotFileSelect) return;
+      if (!productId || !slot || !handleSlotFileSelect) return;
+      const uploadEvent = {
+        productId,
+        imageFileId: resolveFastCometUploadEventImageFileId(slot),
+        imageSlotIndex: index,
+        filename: resolveFastCometUploadEventFilename(slot),
+      };
 
       try {
         setFastCometLoadingSlots((prev) => ({ ...prev, [index]: true }));
-        const result = await api.post<{ status: 'ok'; imageFile: ImageFileSelection }>(
-          `/api/v2/products/${encodeURIComponent(productId)}/images/upload-to-fastcomet`,
-          {
-            imageFileId: slot.data.id,
-            imageSlotIndex: index,
-          }
-        );
+        onFastCometUploadStart?.(uploadEvent);
+        const result = await postFastCometUploadRequest({ index, productId, slot });
         handleSlotFileSelect(result.imageFile, index);
-        setSlotViewMode(index, 'upload');
+        setImageLinkAt(index, '');
+        setImageBase64At(index, '');
+        setSlotViewMode(index, isFastCometImageFile(result.imageFile) ? 'fastcomet' : 'upload');
+        onFastCometUploadSuccess?.({
+          ...uploadEvent,
+          alreadyUploaded: result.alreadyUploaded,
+          imageFile: result.imageFile,
+          publicPath: result.publicPath,
+          remoteUrl: result.remoteUrl,
+        });
       } catch (error: unknown) {
         logClientError(error);
         const message = error instanceof Error ? error.message : String(error);
         pushDebug({ action: 'fastcomet-upload', message, slotIndex: index });
+        onFastCometUploadError?.({ ...uploadEvent, error });
       } finally {
         setFastCometLoadingSlots((prev) => {
           const next = { ...prev };
@@ -332,7 +417,18 @@ export function ProductImageManagerUIProvider({
         });
       }
     },
-    [imageSlots, productId, handleSlotFileSelect, setSlotViewMode, pushDebug]
+    [
+      imageSlots,
+      productId,
+      handleSlotFileSelect,
+      setImageLinkAt,
+      setImageBase64At,
+      setSlotViewMode,
+      pushDebug,
+      onFastCometUploadStart,
+      onFastCometUploadSuccess,
+      onFastCometUploadError,
+    ]
   );
 
   const clearVisibleImage = useCallback(

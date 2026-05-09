@@ -17,6 +17,7 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import {
   AI_INSIGHTS_SETTINGS_KEYS,
   ALL_BRAIN_FEATURE_KEYS,
+  buildBrainOverridesEnabled,
   DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_BRAIN_OVERRIDES_ENABLED,
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
@@ -190,22 +191,7 @@ export function useBrainPersistence({
 
       setSettings(parsedBrain);
       setProviderCatalog(mergedCatalog);
-      setOverridesEnabled({
-        ...DEFAULT_BRAIN_OVERRIDES_ENABLED,
-        cms_builder: Boolean(parsedBrain.assignments.cms_builder),
-        image_studio: Boolean(parsedBrain.assignments.image_studio),
-        prompt_engine: Boolean(parsedBrain.assignments.prompt_engine),
-        ai_paths: Boolean(parsedBrain.assignments.ai_paths),
-        chatbot: Boolean(parsedBrain.assignments.chatbot),
-        kangur_ai_tutor: Boolean(parsedBrain.assignments.kangur_ai_tutor),
-        social_publishing: Boolean(parsedBrain.assignments.social_publishing),
-        job_board: Boolean(parsedBrain.assignments.job_board),
-        products: Boolean(parsedBrain.assignments.products),
-        case_resolver: Boolean(parsedBrain.assignments.case_resolver),
-        agent_runtime: Boolean(parsedBrain.assignments.agent_runtime),
-        agent_teaching: Boolean(parsedBrain.assignments.agent_teaching),
-        playwright: Boolean(parsedBrain.assignments.playwright),
-      });
+      setOverridesEnabled(buildBrainOverridesEnabled(parsedBrain));
 
       setOpenaiApiKey(map.get('openai_api_key') ?? '');
       setAnthropicApiKey(map.get('anthropic_api_key') ?? '');

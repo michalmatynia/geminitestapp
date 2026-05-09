@@ -24,6 +24,7 @@ import {
 import { clampUpscaleScale } from './product-studio-service.io';
 
 type ProductStudioBrainModelResolution = {
+  apiKeyOverrideConfigured: boolean;
   modelId: string;
   warning: string | null;
 };
@@ -39,6 +40,9 @@ export const resolveProductStudioBrainModel = async (): Promise<ProductStudioBra
       runtimeKind: 'image_generation',
     });
     return {
+      apiKeyOverrideConfigured:
+        typeof generationConfig.assignment.apiKey === 'string' &&
+        generationConfig.assignment.apiKey.trim().length > 0,
       modelId: trimString(generationConfig.modelId) ?? '',
       warning: null,
     };
@@ -48,6 +52,7 @@ export const resolveProductStudioBrainModel = async (): Promise<ProductStudioBra
     }
 
     return {
+      apiKeyOverrideConfigured: false,
       modelId: '',
       warning: error.message,
     };

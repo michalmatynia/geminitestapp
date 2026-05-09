@@ -35,6 +35,18 @@ vi.mock('@/features/integrations/server', () => ({
 vi.mock('@/features/products/server', () => ({
   parseJsonBody: (...args: unknown[]) => mocks.parseJsonBodyMock(...args),
   getProductRepository: (...args: unknown[]) => mocks.getProductRepositoryMock(...args),
+  productService: {
+    cleanupOrphanedProductImages: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock('@/features/integrations/services/ecommerce-product-export', () => ({
+  deleteProductFromEcommerceExport: vi.fn().mockResolvedValue({
+    success: true,
+    productId: 'product-1',
+    ecommerceDeletedCount: 0,
+    listingDeletedCount: 0,
+  }),
 }));
 
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({

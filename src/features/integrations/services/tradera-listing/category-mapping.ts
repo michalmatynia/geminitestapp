@@ -2,7 +2,10 @@ import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations
 import type { ExternalCategoryRepository } from '@/shared/contracts/integrations/repositories';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { TRADERA_BROWSER_INTEGRATION_SLUG } from '@/shared/lib/integration-slugs';
+import {
+  TRADERA_BROWSER_INTEGRATION_SLUG,
+  TRADERA_CATEGORY_MAPPING_CATALOG_ID,
+} from '@/shared/lib/integration-slugs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getCategoryMappingRepository } from '../category-mapping-repository';
@@ -91,10 +94,19 @@ const tryResolveMappingForCategoryId = (
   const catalogMatchedMappings = validMappings.filter((mapping) =>
     productCatalogIdSet.has(toTrimmedString(mapping.catalogId))
   );
+  const globalMappings = validMappings.filter(
+    (mapping) => toTrimmedString(mapping.catalogId) === TRADERA_CATEGORY_MAPPING_CATALOG_ID
+  );
   const prioritizedMappings =
-    catalogMatchedMappings.length > 0 ? catalogMatchedMappings : validMappings;
+    globalMappings.length > 0
+      ? globalMappings
+      : catalogMatchedMappings.length > 0
+        ? catalogMatchedMappings
+        : validMappings;
   const matchScope: TraderaCategoryMappingMatchScope =
-    catalogMatchedMappings.length > 0 ? 'catalog_match' : 'cross_catalog';
+    globalMappings.length === 0 && catalogMatchedMappings.length > 0
+      ? 'catalog_match'
+      : 'cross_catalog';
 
   const distinctExternalCategoryIds = Array.from(
     new Set(

@@ -63,6 +63,7 @@ describe('ai-brain server helpers', () => {
     const findOne = vi
       .fn()
       .mockResolvedValueOnce({ value: 'stored-value' })
+      .mockResolvedValueOnce({ value: 'fresh-after-invalidate' })
       .mockResolvedValueOnce({ value: 'fresh-after-delete' });
     const updateOne = vi.fn().mockResolvedValue({});
     const deleteOne = vi.fn().mockResolvedValue({});
@@ -82,19 +83,25 @@ describe('ai-brain server helpers', () => {
     await expect(server.readStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe('stored-value');
     expect(findOne).toHaveBeenCalledTimes(1);
 
+    server.invalidateBrainSettingsCache();
+    await expect(server.readStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe(
+      'fresh-after-invalidate'
+    );
+    expect(findOne).toHaveBeenCalledTimes(2);
+
     await expect(server.upsertStoredSettingValue(AI_BRAIN_SETTINGS_KEY, 'updated-value')).resolves.toBe(
       true
     );
     await expect(server.readStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe('updated-value');
     expect(updateOne).toHaveBeenCalledTimes(1);
-    expect(findOne).toHaveBeenCalledTimes(1);
+    expect(findOne).toHaveBeenCalledTimes(2);
 
     await expect(server.deleteStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe(true);
     await expect(server.readStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe(
       'fresh-after-delete'
     );
     expect(deleteOne).toHaveBeenCalledTimes(1);
-    expect(findOne).toHaveBeenCalledTimes(2);
+    expect(findOne).toHaveBeenCalledTimes(3);
   });
 
   it('returns feature and capability assignments from stored brain settings', async () => {

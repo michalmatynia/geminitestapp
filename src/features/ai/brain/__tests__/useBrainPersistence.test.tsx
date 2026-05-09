@@ -9,6 +9,7 @@ import {
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_BRAIN_OVERRIDES_ENABLED,
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
+  hasAnyBrainOrInsightsSetting,
 } from '../context/brain-runtime-shared';
 import {
   AI_BRAIN_PROVIDER_CATALOG_KEY,
@@ -110,6 +111,12 @@ const createParams = (
           provider: 'agent',
           modelId: 'product-capability-agent',
         },
+        'image_studio.general': {
+          ...defaultBrainAssignment,
+          enabled: true,
+          provider: 'model',
+          modelId: 'gpt-image-2',
+        },
       },
     },
     settingsMap: undefined,
@@ -147,6 +154,10 @@ describe('useBrainPersistence', () => {
         products: {
           ...defaultBrainAssignment,
           modelId: 'hydrated-product',
+        },
+        integrations: {
+          ...defaultBrainAssignment,
+          modelId: 'hydrated-integrations',
         },
       },
     };
@@ -204,6 +215,7 @@ describe('useBrainPersistence', () => {
     expect(params.setOverridesEnabled).toHaveBeenCalledWith({
       ...DEFAULT_BRAIN_OVERRIDES_ENABLED,
       products: true,
+      integrations: true,
       cms_builder: false,
       image_studio: false,
       prompt_engine: false,
@@ -243,6 +255,11 @@ describe('useBrainPersistence', () => {
     expect(logsEnabledUpdater(false)).toBe(true);
     expect(logsMinutesUpdater(15)).toBe(65);
     expect(logsAutoOnErrorUpdater(true)).toBe(false);
+  });
+
+  it('hydrates when only Brain provider credentials are present', () => {
+    expect(hasAnyBrainOrInsightsSetting(new Map([['openai_api_key', 'sk-live']]))).toBe(true);
+    expect(hasAnyBrainOrInsightsSetting(new Map([['unrelated', 'value']]))).toBe(false);
   });
 
   it('blocks saves when a schedule interval is below five minutes', async () => {
@@ -288,6 +305,7 @@ describe('useBrainPersistence', () => {
     expect(savedSettings.assignments.analytics?.provider).toBe('model');
     expect(savedSettings.capabilities['cms.css_stream']?.provider).toBe('agent');
     expect(savedSettings.capabilities['product.description.generation']?.provider).toBe('model');
+    expect(savedSettings.capabilities['image_studio.general']?.modelId).toBe('gpt-image-2');
 
     const savedCatalogPayload = params.updateSettingMutateAsync.mock.calls[1]?.[0] as {
       key: string;

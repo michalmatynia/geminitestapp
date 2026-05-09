@@ -8,6 +8,7 @@ import {
   type AiBrainProviderCatalog,
   type AiBrainSettings,
 } from '@/shared/lib/ai-brain/settings';
+import { OPENAI_IMAGE_GENERATION_MODEL_IDS } from '@/shared/lib/ai-brain/image-generation-models';
 import {
   useBrainAnalyticsSummary,
   useBrainInsights,
@@ -24,6 +25,13 @@ vi.mock('../hooks/useBrainQueries', () => ({
   useBrainLogMetrics: vi.fn(),
   useBrainInsights: vi.fn(),
   useBrainRuntimeAnalytics: vi.fn(),
+}));
+
+const expectedOpenAiImageGenerationQuickPicks = OPENAI_IMAGE_GENERATION_MODEL_IDS.map((modelId) => ({
+  value: modelId,
+  label: modelId,
+  description: 'image generation',
+  group: 'OpenAI',
 }));
 
 describe('useBrainDerivedState', () => {
@@ -126,12 +134,28 @@ describe('useBrainDerivedState', () => {
       'runtime-model'
     );
     expect(result.current.modelQuickPicks).toEqual([
-      { value: 'preset-model', label: 'preset-model', description: 'model preset' },
-      { value: 'paid-model', label: 'paid-model', description: 'paid model' },
-      { value: 'catalog-ollama', label: 'catalog-ollama', description: 'ollama' },
-      { value: 'live-alpha', label: 'live-alpha', description: 'ollama (live)' },
-      { value: 'live-beta', label: 'live-beta', description: 'ollama (live)' },
+      {
+        value: 'preset-model',
+        label: 'preset-model',
+        description: 'preset',
+        group: 'Ollama / Local',
+      },
+      ...expectedOpenAiImageGenerationQuickPicks,
+      { value: 'paid-model', label: 'paid-model', description: 'paid', group: 'Ollama / Local' },
+      {
+        value: 'catalog-ollama',
+        label: 'catalog-ollama',
+        description: 'configured',
+        group: 'Ollama / Local',
+      },
+      { value: 'live-alpha', label: 'live-alpha', description: 'live', group: 'Ollama / Local' },
+      { value: 'live-beta', label: 'live-beta', description: 'live', group: 'Ollama / Local' },
     ]);
+    expect(result.current.modelDescriptors['gpt-image-2']).toMatchObject({
+      family: 'image_generation',
+      modality: 'image',
+      vendor: 'openai',
+    });
     expect(result.current.agentQuickPicks).toEqual([
       { value: 'agent-runner', label: 'agent-runner', description: 'agent' },
       { value: 'deep-thinker', label: 'deep-thinker', description: 'deepthinking' },
@@ -179,7 +203,7 @@ describe('useBrainDerivedState', () => {
     expect(useBrainRuntimeAnalytics).toHaveBeenLastCalledWith(false);
     expect(result.current.runtimeAnalyticsLiveEnabled).toBe(false);
     expect(result.current.liveOllamaModels).toEqual([]);
-    expect(result.current.modelQuickPicks).toEqual([]);
+    expect(result.current.modelQuickPicks).toEqual(expectedOpenAiImageGenerationQuickPicks);
     expect(result.current.agentQuickPicks).toEqual([]);
   });
 

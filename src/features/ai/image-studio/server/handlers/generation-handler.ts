@@ -14,7 +14,7 @@ import {
   configurationError,
   operationFailedError,
 } from '@/shared/errors/app-error';
-import { resolveBrainProviderCredential } from '@/shared/lib/ai-brain/provider-credentials';
+import { readBrainProviderCredentialForAssignment } from '@/shared/lib/ai-brain/provider-credentials';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 
 import {
@@ -33,6 +33,7 @@ import {
   toUploadableImageFile,
 } from '../run-executor-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { normalizeOpenAiBillingHardLimitError } from '../openai-billing-errors';
 
 
 const DEFAULT_OPENAI_TIMEOUT_MS = 180_000;
@@ -87,14 +88,6 @@ export async function executeGenerationOperation(params: {
   if (settings.targetAi.openai.api !== 'images') {
     throw badRequestError('Image Studio run currently supports the Images API only.');
   }
-
-  const apiKey = await resolveBrainProviderCredential('openai');
-
-  const client = new OpenAI({
-    apiKey,
-    timeout: OPENAI_TIMEOUT_MS,
-    maxRetries: OPENAI_MAX_RETRIES,
-  });
 
   const overrides =
     settings.targetAi.openai.advanced_overrides &&
@@ -153,6 +146,21 @@ export async function executeGenerationOperation(params: {
   if (!resolvedModel) {
     throw configurationError('Image Studio model is missing. Configure it in AI Brain.');
   }
+  const credentialResolution = await readBrainProviderCredentialForAssignment(
+    'openai',
+    generationConfig.assignment
+  );
+  const apiKey = credentialResolution.apiKey;
+  if (apiKey === null) {
+    throw configurationError(
+      'OpenAI API key is missing in this AI Brain route, provider settings, and environment.'
+    );
+  }
+  const client = new OpenAI({
+    apiKey,
+    timeout: OPENAI_TIMEOUT_MS,
+    maxRetries: OPENAI_MAX_RETRIES,
+  });
   const prompt = buildImageStudioGenerationPrompt(request.prompt, request.contextRegistry?.resolved);
   const modelName = (resolvedModel ?? '').toLowerCase();
   const modelCapabilities = getImageModelCapabilities(resolvedModel);
@@ -331,6 +339,10 @@ export async function executeGenerationOperation(params: {
       break;
     } catch (error) {
       void ErrorSystem.captureException(error);
+      const billingLimitError = normalizeOpenAiBillingHardLimitError(error, credentialResolution);
+      if (billingLimitError !== null) {
+        throw billingLimitError;
+      }
       const message = extractErrorMessage(error);
       const activeModel = String(payloadRecord['model'] ?? '').toLowerCase();
       if (

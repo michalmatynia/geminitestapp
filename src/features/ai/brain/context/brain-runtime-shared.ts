@@ -10,6 +10,7 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 import type {
   AiBrainFeature,
   AiBrainProvider,
+  AiBrainSettings,
 } from '../settings';
 
 export {
@@ -69,6 +70,12 @@ export const DEFAULT_BRAIN_OVERRIDES_ENABLED: Record<AiBrainFeature, boolean> = 
   playwright: false,
 };
 
+const AI_BRAIN_PROVIDER_SETTING_KEYS = new Set<string>([
+  'openai_api_key',
+  'anthropic_api_key',
+  'gemini_api_key',
+]);
+
 export const getAllowedProvidersForFeature = (
   feature: AiBrainFeature
 ): AiBrainProvider[] => (feature === 'cms_builder' ? ['model', 'agent'] : ['model']);
@@ -76,6 +83,7 @@ export const getAllowedProvidersForFeature = (
 export const hasAnyBrainOrInsightsSetting = (map: Map<string, string>): boolean => {
   for (const key of map.keys()) {
     if (
+      AI_BRAIN_PROVIDER_SETTING_KEYS.has(key) ||
       key.startsWith('ai_brain_') ||
       key.startsWith('ai_insights_') ||
       key.startsWith('ai_analytics_') ||
@@ -88,11 +96,21 @@ export const hasAnyBrainOrInsightsSetting = (map: Map<string, string>): boolean 
   return false;
 };
 
+export const buildBrainOverridesEnabled = (
+  settings: AiBrainSettings
+): Record<AiBrainFeature, boolean> =>
+  Object.fromEntries(
+    ALL_BRAIN_FEATURE_KEYS.map((feature: AiBrainFeature): [AiBrainFeature, boolean] => [
+      feature,
+      DEFAULT_BRAIN_OVERRIDES_ENABLED[feature] || settings.assignments[feature] !== undefined,
+    ])
+  ) as Record<AiBrainFeature, boolean>;
+
 export const parseBooleanSetting = (
   value: string | null | undefined,
   fallback: boolean
 ): boolean => {
-  if (value == null) {
+  if (value === null || value === undefined) {
     return fallback;
   }
   return value === 'true' || value === '1';
@@ -118,7 +136,7 @@ export const parsePlaywrightPersonaIds = (raw: string | null | undefined): strin
   const seen = new Set<string>();
   const ids: string[] = [];
   parsed.forEach((item: unknown) => {
-    if (!item || typeof item !== 'object') {
+    if (item === null || typeof item !== 'object') {
       return;
     }
     const id = (item as { id?: unknown }).id;
@@ -126,7 +144,7 @@ export const parsePlaywrightPersonaIds = (raw: string | null | undefined): strin
       return;
     }
     const trimmed = id.trim();
-    if (!trimmed || seen.has(trimmed)) {
+    if (trimmed.length === 0 || seen.has(trimmed)) {
       return;
     }
     seen.add(trimmed);

@@ -1,28 +1,19 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
-import { Checkbox, Label } from '@/shared/ui/primitives.public';
-import { FormModal } from '@/shared/ui/forms-and-actions.public';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { useBrain } from '../context/BrainContext';
+import type { AiBrainCapabilityKey } from '../settings';
+import { BrainRoutingEditForm } from './BrainRoutingEditForm';
 import {
-  getBrainCapabilityDefinition,
-  resolveBrainAssignment,
-  type AiBrainAssignment,
-  type AiBrainCapabilityKey,
-} from '../settings';
-import { AssignmentEditor } from './AssignmentEditor';
-import {
-  useOptionalBrainRoutingActionsContext,
-  useOptionalBrainRoutingStateContext,
-} from './BrainRoutingContext';
-
-type BrainRoutingEditModalState = {
-  overrideEnabled: boolean;
-  assignment: AiBrainAssignment;
-};
+  useCapabilityDefinition,
+  useModalIdentity,
+  useSyncedRouteState,
+} from './BrainRoutingEditModal.parts';
 
 export interface BrainRoutingEditModalProps {
   open?: boolean;
@@ -31,133 +22,44 @@ export interface BrainRoutingEditModalProps {
 }
 
 export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.JSX.Element | null {
-  const stateContext = useOptionalBrainRoutingStateContext();
-  const actionsContext = useOptionalBrainRoutingActionsContext();
-  const open = props.open ?? Boolean(stateContext?.editingCapability);
-  const capability = props.capability ?? stateContext?.editingCapability ?? null;
-  const onClose = props.onClose ?? actionsContext?.onCloseEdit;
-
-  const {
-    settings,
-    effectiveCapabilityAssignments,
-    handleCapabilityChange,
-    clearCapabilityOverride,
-  } = useBrain();
-  const [state, setState] = useState<BrainRoutingEditModalState | null>(null);
-  const overrideCheckboxId = React.useId().replace(/:/g, '');
-
-  const capabilityDefinition = useMemo(
-    () => (capability ? getBrainCapabilityDefinition(capability) : null),
-    [capability]
+  const { toast } = useToast();
+  const updateSetting = useUpdateSetting();
+  const { open, capability, onClose } = useModalIdentity(props);
+  const brain = useBrain();
+  const [state, setState] = useSyncedRouteState(
+    open,
+    capability,
+    brain.settings,
+    brain.effectiveCapabilityAssignments
   );
+  const overrideCheckboxId = React.useId().replace(/:/g, '');
+  const capabilityDefinition = useCapabilityDefinition(capability);
 
-  useEffect(() => {
-    if (!open || !capability) {
-      setState(null);
-      return;
-    }
-    const overrideEnabled = Boolean(settings.capabilities[capability]);
-    const assignment = overrideEnabled
-      ? (settings.capabilities[capability] ?? effectiveCapabilityAssignments[capability])
-      : effectiveCapabilityAssignments[capability];
-    setState({
-      overrideEnabled,
-      assignment,
-    });
-  }, [capability, effectiveCapabilityAssignments, open, settings.capabilities]);
-
-  if (!open || !capability || !capabilityDefinition || !state) return null;
-  if (!onClose) {
+  if (open !== true || capability === null || capabilityDefinition === null || state === null) {
+    return null;
+  }
+  if (onClose === undefined) {
     throw internalError(
       'BrainRoutingEditModal must be used within BrainRoutingProvider or receive explicit modal props'
     );
   }
 
-  const featureEnabled = resolveBrainAssignment(settings, capabilityDefinition.feature).enabled;
-  const sourceLabel = !featureEnabled
-    ? 'Feature disabled'
-    : settings.capabilities[capability]
-      ? 'Capability override'
-      : settings.assignments[capabilityDefinition.feature]
-        ? 'Feature fallback'
-        : 'Global defaults';
-
-  const allowedProviders =
-    capabilityDefinition.policy === 'agent-or-model'
-      ? (['model', 'agent'] as const)
-      : (['model'] as const);
-
-  const handleSave = (): void => {
-    if (state.overrideEnabled) {
-      handleCapabilityChange(capability, state.assignment);
-    } else {
-      clearCapabilityOverride(capability);
-    }
-    onClose();
-  };
-
   return (
-    <FormModal
-      open={open}
+    <BrainRoutingEditForm
+      capability={capability}
+      checkboxId={overrideCheckboxId}
+      clearCapabilityOverride={brain.clearCapabilityOverride}
+      definition={capabilityDefinition}
+      effectiveAssignments={brain.effectiveCapabilityAssignments}
+      handleCapabilityChange={brain.handleCapabilityChange}
+      isSaving={updateSetting.isPending}
       onClose={onClose}
-      title={`Edit Route: ${capabilityDefinition.label}`}
-      subtitle='Changes are staged locally. Use Save in the Brain header to persist.'
-      onSave={handleSave}
-      saveText='Apply'
-      size='lg'
-    >
-      <div className='space-y-4'>
-        <div className='rounded-md border border-border/60 bg-card/40 p-3 text-xs text-gray-300'>
-          <div className='font-semibold text-gray-100'>{capability}</div>
-          <div className='mt-1 text-gray-400'>
-            Source: <span className='text-gray-300'>{sourceLabel}</span>
-          </div>
-        </div>
-
-        <div className='flex items-center gap-2 text-xs text-gray-300'>
-          <Checkbox
-            id={overrideCheckboxId}
-            checked={state.overrideEnabled}
-            onCheckedChange={(checked: boolean | 'indeterminate') => {
-              const enabled = Boolean(checked);
-              setState((prev) => {
-                if (!prev) return prev;
-                if (enabled === prev.overrideEnabled) return prev;
-                return {
-                  overrideEnabled: enabled,
-                  assignment: enabled
-                    ? effectiveCapabilityAssignments[capability]
-                    : prev.assignment,
-                };
-              });
-            }}
-          />
-          <Label htmlFor={overrideCheckboxId} className='cursor-pointer text-xs text-gray-300'>
-            Use capability-specific override
-          </Label>
-        </div>
-
-        <AssignmentEditor
-          assignment={state.assignment}
-          onChange={(next: AiBrainAssignment) => {
-            setState((prev) => (prev ? { ...prev, assignment: next } : prev));
-          }}
-          readOnly={!state.overrideEnabled}
-          allowedProviders={[...allowedProviders]}
-          modelFamily={capabilityDefinition.modelFamily}
-        />
-        {!featureEnabled ? (
-          <div className='text-[11px] text-amber-300'>
-            This feature is currently off. Route settings are staged, but they will stay inactive
-            until the feature is turned back on.
-          </div>
-        ) : null}
-        {!state.overrideEnabled ? (
-          <div className='text-[11px] text-gray-500'>
-            Override is off. Saving will clear this route override and use fallback inheritance.
-          </div>
-        ) : null}
-      </div>
-    </FormModal>
+      open={open}
+      persistSetting={updateSetting.mutateAsync}
+      settings={brain.settings}
+      setState={setState}
+      state={state}
+      toast={toast}
+    />
   );
 }

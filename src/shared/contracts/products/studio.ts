@@ -201,6 +201,8 @@ export const productStudioActiveRunInfoSchema = z.object({
   pendingExpectedOutputs: z.number(),
   baselineVariantIds: z.array(z.string()),
   runStatus: productStudioRunStatusSchema,
+  dispatchedAt: z.string().nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
 });
 
 export type ProductStudioActiveRunInfo = z.infer<typeof productStudioActiveRunInfoSchema>;

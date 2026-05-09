@@ -102,7 +102,9 @@
       "Bash(sed -n '246,254p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/app/account/AccountPageClient.tsx\")",
       "Bash(sed -n '118,128p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/app/values/page.tsx\")",
       "Bash(sed -n '58,68p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/app/contact/ContactPageClient.tsx\")",
-      "Bash(jobs *)"
+      "Bash(jobs *)",
+      "Bash(node_modules/.bin/vitest run *)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx tsc --noEmit --skipLibCheck)"
     ]
   }
 }

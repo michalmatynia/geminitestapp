@@ -62,7 +62,9 @@ describe('mongoCategoryMappingImpl canonical external ids', () => {
       }),
     });
     const externalFindMock = vi.fn().mockReturnValue({
-      toArray: vi.fn().mockResolvedValue([createExternalCategoryDoc()]),
+      sort: vi.fn().mockReturnValue({
+        toArray: vi.fn().mockResolvedValue([createExternalCategoryDoc()]),
+      }),
     });
     const internalFindMock = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue([createInternalCategoryDoc()]),
@@ -198,7 +200,9 @@ describe('mongoCategoryMappingImpl canonical external ids', () => {
       toArray: vi.fn().mockResolvedValue([{ _id: 'conn-1' }]),
     });
     const externalFindMock = vi.fn().mockReturnValue({
-      toArray: vi.fn().mockResolvedValue([createExternalCategoryDoc()]),
+      sort: vi.fn().mockReturnValue({
+        toArray: vi.fn().mockResolvedValue([createExternalCategoryDoc()]),
+      }),
     });
     const internalFindMock = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue([createInternalCategoryDoc()]),

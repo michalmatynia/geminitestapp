@@ -152,13 +152,12 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinks = (
       );
     }
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'ai-paths.sinks-bootstrap', action: 'bootstrapPortablePathEnvelopeVerificationAuditSinks.register', profile });
     for (const unregister of [...unregisterCallbacks].reverse()) {
       try {
         unregister();
-      } catch (error) {
-        void ErrorSystem.captureException(error);
-      
+      } catch (rollbackError) {
+        void ErrorSystem.captureException(rollbackError, { service: 'ai-paths.sinks-bootstrap', action: 'bootstrapPortablePathEnvelopeVerificationAuditSinks.rollback', profile });
         // Best-effort rollback; surfacing original registration error.
       }
     }
@@ -218,7 +217,7 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinks = (
                 error: null,
               };
             } catch (error) {
-              void ErrorSystem.captureException(error);
+              void ErrorSystem.captureException(error, { service: 'ai-paths.sinks-bootstrap', action: 'runStartupHealthChecks', sinkId });
               return {
                 sinkId,
                 status: 'failed',
@@ -273,8 +272,7 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinks = (
         try {
           unregister();
         } catch (error) {
-          void ErrorSystem.captureException(error);
-        
+          void ErrorSystem.captureException(error, { service: 'ai-paths.sinks-bootstrap', action: 'unregisterAll', profile });
           // Best-effort unregister.
         }
       }
@@ -304,7 +302,7 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealt
       startupHealthSummary,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'ai-paths.sinks-bootstrap', action: 'bootstrapWithStartupHealthChecks' });
     bootstrap.unregisterAll();
     throw error;
   }

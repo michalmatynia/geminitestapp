@@ -324,11 +324,12 @@ const buildPayload = async (
     timings['assemble'] = performance.now() - assembleStart;
   }
 
-  // Inject ecommerce badges for products found in the cloud ecommerce DB that
-  // don't yet have a product_listings record (e.g. exported before this feature).
+  // Inject ecommerce badges for products found in the ecommerce DB. DB presence
+  // is the source of truth — always inject 'active', overriding any stale
+  // 'removed' listing record (e.g. product was re-exported after removal).
   for (const productId of ecommerceExistingIds) {
     const current = byProduct.get(productId);
-    if (current?.ecommerce === undefined) {
+    if (!current?.ecommerce || current.ecommerce === 'removed') {
       byProduct.set(productId, { ...(current ?? {}), ecommerce: 'active' });
     }
   }

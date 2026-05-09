@@ -1,7 +1,7 @@
 'use client';
 
 import { RotateCcw, RotateCw, ExternalLink, Monitor, Check } from 'lucide-react';
-import type { JSX } from 'react';
+import type { JSX, ReactNode } from 'react';
 
 import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 import type { ProductStudioContextValue } from '@/features/products/context/ProductStudioContext.types';
@@ -40,6 +40,49 @@ const createStudioActionClickHandler =
   };
 
 const hasAlertText = (value: string | null): value is string => value !== null && value !== '';
+
+const CONFIGURATION_LINK_LABELS: Readonly<Partial<Record<string, string>>> = {
+  '/admin/brain?tab=providers': 'AI Brain provider settings',
+  '/admin/brain?tab=routing': 'AI Brain routing settings',
+  'https://platform.openai.com/settings/organization/limits': 'OpenAI limits',
+  'https://platform.openai.com/settings/organization/billing/overview': 'OpenAI billing',
+};
+
+const CONFIGURATION_LINK_PATTERN =
+  /(?:\/admin\/brain\?tab=(?:providers|routing)|https:\/\/platform\.openai\.com\/settings\/organization\/(?:limits|billing\/overview))/g;
+
+const isExternalConfigurationLink = (href: string): boolean => href.startsWith('https://');
+
+const renderActionAlertMessage = (message: string): ReactNode[] => {
+  const segments: ReactNode[] = [];
+  let lastIndex = 0;
+
+  for (const match of message.matchAll(CONFIGURATION_LINK_PATTERN)) {
+    const href = match[0];
+    const index = match.index;
+    if (index > lastIndex) {
+      segments.push(message.slice(lastIndex, index));
+    }
+    segments.push(
+      <a
+        key={`${href}:${index}`}
+        href={href}
+        className='font-medium text-red-100 underline underline-offset-2 hover:text-white'
+        target={isExternalConfigurationLink(href) ? '_blank' : undefined}
+        rel={isExternalConfigurationLink(href) ? 'noreferrer' : undefined}
+      >
+        {CONFIGURATION_LINK_LABELS[href] ?? href}
+      </a>
+    );
+    lastIndex = index + href.length;
+  }
+
+  if (lastIndex < message.length) {
+    segments.push(message.slice(lastIndex));
+  }
+
+  return segments;
+};
 
 const isBaseActionDisabled = ({
   accepting,
@@ -202,7 +245,7 @@ function StudioActionAlerts({ context }: { context: StudioActionsContext }): JSX
     <>
       {hasAlertText(context.studioActionError) ? (
         <Alert variant='error' className='py-2 text-xs'>
-          {context.studioActionError}
+          {renderActionAlertMessage(context.studioActionError)}
         </Alert>
       ) : null}
       {hasAlertText(context.sequenceReadinessMessage) ? (

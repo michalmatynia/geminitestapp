@@ -4,7 +4,9 @@ import { PlusIcon, XIcon, GripVertical, MoreVertical, Eye } from 'lucide-react';
 import NextImage from 'next/image';
 
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
+import type { SlotViewMode } from '@/shared/contracts/ui/image-manager';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL } from '@/shared/lib/products/constants';
 import { Button, DropdownMenuItem, DropdownMenuSeparator, Input, Tooltip } from '@/shared/ui/primitives.public';
 import { ActionMenu, FileUploadTrigger } from '@/shared/ui/forms-and-actions.public';
 import { resolveProductImageFileUrl, resolveProductImageUrl } from '@/shared/utils/image-routing';
@@ -27,6 +29,51 @@ const isFastCometImageSlot = (slot: ProductImageSlotValue | undefined): boolean 
   const metadata = slot.data.metadata;
   return isRecord(metadata) && metadata['storageSource'] === 'fastcomet';
 };
+
+const readTrimmedText = (value: unknown): string | null => {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const readMetadataText = (
+  metadata: Record<string, unknown> | null,
+  key: string
+): string | null => (metadata ? readTrimmedText(metadata[key]) : null);
+
+const resolveFastCometImageSlotUrl = (slot: ProductImageSlotValue | undefined): string => {
+  if (!isFastCometImageSlot(slot) || slot?.type !== 'existing') return '';
+
+  const metadata = isRecord(slot.data.metadata) ? slot.data.metadata : null;
+  const candidates: unknown[] = [
+    slot.data.filepath,
+    slot.data.publicUrl,
+    slot.data.url,
+    readMetadataText(metadata, 'publicPath'),
+    readMetadataText(metadata, 'localPublicPath'),
+    slot.data.thumbnailUrl,
+  ];
+
+  for (const candidate of candidates) {
+    const value = readTrimmedText(candidate);
+    if (value === null) continue;
+    const resolved = resolveProductImageUrl(value, DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL);
+    if (resolved !== null) return resolved;
+  }
+
+  return '';
+};
+
+const slotViewModeLabels: Record<SlotViewMode, string> = {
+  upload: 'Upload',
+  link: 'Link',
+  base64: 'Base64',
+  fastcomet: 'FastComet',
+};
+
+const slotViewModeOptions: SlotViewMode[] = ['upload', 'link', 'base64', 'fastcomet'];
+
+const resolveSlotViewModeLabel = (mode: SlotViewMode | undefined): string =>
+  slotViewModeLabels[mode ?? 'upload'];
 
 interface ProductImageSlotProps {
   index: number;
@@ -74,6 +121,8 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
   const imageLocked = Boolean(controller.isSlotImageLocked?.(index));
   const linkValue = imageLinks[index] ?? '';
   const base64Value = imageBase64s[index] ?? '';
+  const fastCometUrl = resolveFastCometImageSlotUrl(slot);
+  const hasFastCometUrl = Boolean(fastCometUrl);
   const isFastCometUpload = isFastCometImageSlot(slot);
 
   const uploadUrl = slot
@@ -88,7 +137,8 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
     (!hasUpload && !linkValue.trim() && Boolean(base64Value.trim()));
   const showLink =
     (mode === 'link' && Boolean(linkValue.trim())) || (!hasUpload && Boolean(linkValue.trim()) && !showBase64);
-  const displayUrl = showBase64 ? base64Value : showLink ? linkValue : uploadUrl;
+  const showFastComet = mode === 'fastcomet' && hasFastCometUrl;
+  const displayUrl = showBase64 ? base64Value : showLink ? linkValue : showFastComet ? fastCometUrl : uploadUrl;
 
   const canReorder = !minimalUi && imageSlots.length > 1;
   const isSingleMinimalSlot = minimalUi && imageSlots.length === 1;
@@ -98,6 +148,39 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
   const slotLabel = controller.slotLabels?.[index] ?? `Slot ${index + 1}`;
 
   const isLocalPreviewUrl = (url: string) => url.startsWith('blob:') || url.startsWith('data:');
+  const isViewModeDisabled = (viewMode: SlotViewMode): boolean => {
+    if (viewMode === 'upload') return !hasUpload;
+    if (viewMode === 'link') return !linkValue.trim();
+    if (viewMode === 'base64') return !base64Value.trim();
+    return !hasFastCometUrl;
+  };
+
+  const slotSourceIndicators: Array<{
+    colorClass: string;
+    hasValue: boolean;
+    label: string;
+  }> = [
+    {
+      colorClass: 'border-emerald-400 text-emerald-300',
+      hasValue: hasUpload,
+      label: 'U',
+    },
+    {
+      colorClass: 'border-sky-400 text-sky-300',
+      hasValue: Boolean(linkValue.trim()),
+      label: 'L',
+    },
+    {
+      colorClass: 'border-purple-400 text-purple-300',
+      hasValue: Boolean(base64Value.trim()),
+      label: 'B',
+    },
+    {
+      colorClass: 'border-amber-400 text-amber-300',
+      hasValue: hasFastCometUrl,
+      label: 'F',
+    },
+  ];
 
   const actionsMenu = (
     <ActionMenu
@@ -135,7 +218,8 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
         <DropdownMenuItem
           disabled={
             !productId ||
-            slot?.type !== 'existing' ||
+            !slot ||
+            (slot.type !== 'existing' && slot.type !== 'file') ||
             imageLocked ||
             isFastCometUpload ||
             Boolean(fastCometLoadingSlots[index])
@@ -317,21 +401,17 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
         >
           {thumbnailFrame}
           <div className='flex w-[4.25rem] flex-col items-stretch gap-1'>
-            {(['upload', 'link', 'base64'] as const).map((m) => (
+            {slotViewModeOptions.map((m) => (
               <Button
                 key={m}
                 type='button'
                 variant={mode === m ? 'default' : 'outline'}
                 size='sm'
-                className='h-6 w-full px-2 text-[10px]'
-                disabled={
-                  (m === 'upload' && !hasUpload) ||
-                  (m === 'link' && !linkValue.trim()) ||
-                  (m === 'base64' && !base64Value.trim())
-                }
+                className='h-6 w-full px-1.5 text-[10px]'
+                disabled={isViewModeDisabled(m)}
                 onClick={() => setSlotViewMode(index, m)}
               >
-                {m.charAt(0).toUpperCase() + m.slice(1)}
+                {slotViewModeLabels[m]}
               </Button>
             ))}
             {actionsMenu}
@@ -341,21 +421,13 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
         <>
           <div className='flex w-full items-center justify-between gap-2'>
             <div className='flex items-center gap-1 text-[10px] text-gray-400'>
-              {(['U', 'L', 'B'] as const).map((label, i) => {
-                const hasVal =
-                  i === 0 ? hasUpload : i === 1 ? Boolean(linkValue.trim()) : Boolean(base64Value.trim());
-                const colorClass =
-                  i === 0
-                    ? 'border-emerald-400 text-emerald-300'
-                    : i === 1
-                      ? 'border-sky-400 text-sky-300'
-                      : 'border-purple-400 text-purple-300';
+              {slotSourceIndicators.map((indicator) => {
                 return (
                   <span
-                    key={label}
-                    className={`rounded-full border px-1 ${hasVal ? colorClass : 'border-gray-600 text-gray-500'}`}
+                    key={indicator.label}
+                    className={`rounded-full border px-1 ${indicator.hasValue ? indicator.colorClass : 'border-gray-600 text-gray-500'}`}
                   >
-                    {label}
+                    {indicator.label}
                   </span>
                 );
               })}
@@ -365,19 +437,15 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
                 variant='outline'
                 size='sm'
                 triggerClassName='h-6 px-2 text-[10px]'
-                trigger={`View: ${(mode ?? 'upload').charAt(0).toUpperCase() + (mode ?? 'upload').slice(1)}`}
+                trigger={`View: ${resolveSlotViewModeLabel(mode)}`}
               >
-                {(['upload', 'link', 'base64'] as const).map((m) => (
+                {slotViewModeOptions.map((m) => (
                   <DropdownMenuItem
                     key={m}
-                    disabled={
-                      (m === 'upload' && !hasUpload) ||
-                      (m === 'link' && !linkValue.trim()) ||
-                      (m === 'base64' && !base64Value.trim())
-                    }
+                    disabled={isViewModeDisabled(m)}
                     onClick={() => setSlotViewMode(index, m)}
                   >
-                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                    {slotViewModeLabels[m]}
                   </DropdownMenuItem>
                 ))}
               </ActionMenu>

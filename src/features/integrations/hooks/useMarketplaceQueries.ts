@@ -45,26 +45,36 @@ export function useCategoryMappings(
   marketplace?: ExternalCategoryMarketplaceScope
 ): ListQuery<CategoryMappingWithDetails> {
   const queryScope = marketplace ?? connectionId;
-  const queryKey = marketplaceKeys.mappings(queryScope, catalogId);
+  const isMarketplaceScoped = marketplace === 'tradera';
+  const scopedCatalogId = isMarketplaceScoped ? null : catalogId;
+  const queryKey = marketplaceKeys.mappings(queryScope, scopedCatalogId);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<CategoryMappingWithDetails[]> => {
-      if (catalogId === null || catalogId === undefined || catalogId.length === 0) return [];
+      if (
+        !isMarketplaceScoped &&
+        (catalogId === null || catalogId === undefined || catalogId.length === 0)
+      ) {
+        return [];
+      }
       const params = new URLSearchParams();
       if (connectionId.length > 0) params.set('connectionId', connectionId);
       if (marketplace !== null && marketplace !== undefined) {
         params.set('marketplace', marketplace);
       }
-      params.set('catalogId', catalogId);
+      if (!isMarketplaceScoped && catalogId !== null && catalogId !== undefined) {
+        params.set('catalogId', catalogId);
+      }
       return api.get<CategoryMappingWithDetails[]>(
         `/api/marketplace/mappings?${params.toString()}`
       );
     },
     enabled:
       (connectionId.length > 0 || (marketplace !== null && marketplace !== undefined)) &&
-      catalogId !== null &&
-      catalogId !== undefined &&
-      catalogId.length > 0,
+      (isMarketplaceScoped ||
+        (catalogId !== null &&
+          catalogId !== undefined &&
+          catalogId.length > 0)),
     meta: {
       source: 'integrations.hooks.useCategoryMappings',
       operation: 'list',

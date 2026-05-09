@@ -19,10 +19,14 @@ describe('resolveProductStudioBrainModel', () => {
 
   it('returns the trimmed Image Studio Brain model id', async () => {
     mocks.resolveBrainExecutionConfigForCapability.mockResolvedValue({
+      assignment: {
+        apiKey: ' route-openai-key ',
+      },
       modelId: ' gpt-image-1 ',
     });
 
     await expect(resolveProductStudioBrainModel()).resolves.toEqual({
+      apiKeyOverrideConfigured: true,
       modelId: 'gpt-image-1',
       warning: null,
     });
@@ -39,6 +43,7 @@ describe('resolveProductStudioBrainModel', () => {
     mocks.resolveBrainExecutionConfigForCapability.mockRejectedValue(error);
 
     await expect(resolveProductStudioBrainModel()).resolves.toEqual({
+      apiKeyOverrideConfigured: false,
       modelId: '',
       warning: error.message,
     });

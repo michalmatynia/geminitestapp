@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import {
   safeSetInterval,
@@ -9,10 +9,31 @@ import {
   safeClearTimeout,
 } from '@/shared/lib/timers';
 
+import { isProductStudioRunTerminalStatus } from './ProductStudioContext.constants';
+import {
+  clearActiveRunCacheForTarget,
+  countProducedVariantsForRun,
+  PRODUCT_STUDIO_RUN_TIMEOUT_MS,
+  resolveRestorableActiveRun,
+  resolveTerminalRunErrorMessage,
+  type ProductStudioActiveRunInfo,
+  type ProductStudioRunTarget,
+} from './ProductStudioContext.run-effects';
 import type { ProductStudioLoadedState, ProductStudioRunState } from './ProductStudioContext.types';
 
 const VARIANT_POLL_INTERVAL_MS = 4000;
-const RUN_TIMEOUT_MS = 5 * 60 * 1000;
+
+const resolveUnhandledTerminalActiveRun = (
+  variantsData: ProductStudioLoadedState['variantsState']['variantsData'],
+  currentHandledKey: string | null
+): { activeRun: ProductStudioActiveRunInfo; handledKey: string } | null => {
+  const activeRun = variantsData?.activeRun ?? null;
+  if (activeRun === null) return null;
+  if (!isProductStudioRunTerminalStatus(activeRun.runStatus)) return null;
+  const handledKey = `${activeRun.runId}:${activeRun.runStatus}:${activeRun.errorMessage ?? ''}`;
+  if (currentHandledKey === handledKey) return null;
+  return { activeRun, handledKey };
+};
 
 const useProductStudioAutoPollEffect = (
   loaded: ProductStudioLoadedState,
@@ -60,7 +81,8 @@ const useProductStudioStatusAdvanceEffect = (
 const useProductStudioCompletionEffect = (
   loaded: ProductStudioLoadedState,
   runState: ProductStudioRunState,
-  prevPlaceholderCountRef: React.MutableRefObject<number>
+  prevPlaceholderCountRef: React.MutableRefObject<number>,
+  target: ProductStudioRunTarget
 ): void => {
   const { pendingVariantPlaceholderCount } = loaded.derivedState;
   const { refreshAudit } = loaded.auditState;
@@ -81,6 +103,7 @@ const useProductStudioCompletionEffect = (
       setActiveRunId(null);
       setPendingExpectedOutputs(0);
       setActiveRunBaselineVariantIds([]);
+      clearActiveRunCacheForTarget(target);
       void refreshAudit();
     }
   }, [
@@ -91,13 +114,66 @@ const useProductStudioCompletionEffect = (
     setActiveRunId,
     setPendingExpectedOutputs,
     setRunStatus,
+    target,
     prevPlaceholderCountRef,
+  ]);
+};
+
+const useProductStudioTerminalActiveRunEffect = (
+  loaded: ProductStudioLoadedState,
+  runState: ProductStudioRunState,
+  target: ProductStudioRunTarget
+): void => {
+  const variantsData = loaded.variantsState.variantsData;
+  const { refreshAudit } = loaded.auditState;
+  const { setStudioActionError } = loaded.variantsState;
+  const handledTerminalRunRef = useRef<string | null>(null);
+  const {
+    setActiveRunBaselineVariantIds,
+    setActiveRunId,
+    setPendingExpectedOutputs,
+    setRunStatus,
+  } = runState;
+
+  useEffect(() => {
+    const terminalRun = resolveUnhandledTerminalActiveRun(
+      variantsData,
+      handledTerminalRunRef.current
+    );
+    if (terminalRun === null) return;
+    handledTerminalRunRef.current = terminalRun.handledKey;
+
+    setRunStatus(null);
+    setActiveRunId(null);
+    setPendingExpectedOutputs(0);
+    setActiveRunBaselineVariantIds([]);
+    clearActiveRunCacheForTarget(target);
+
+    const message = resolveTerminalRunErrorMessage(
+      terminalRun.activeRun,
+      variantsData?.variants ?? []
+    );
+    if (message !== null) {
+      setStudioActionError(message);
+    }
+    void refreshAudit();
+  }, [
+    handledTerminalRunRef,
+    refreshAudit,
+    setActiveRunBaselineVariantIds,
+    setActiveRunId,
+    setPendingExpectedOutputs,
+    setRunStatus,
+    setStudioActionError,
+    target,
+    variantsData,
   ]);
 };
 
 const useProductStudioRestorationEffect = (
   loaded: ProductStudioLoadedState,
-  runState: ProductStudioRunState
+  runState: ProductStudioRunState,
+  target: ProductStudioRunTarget
 ): void => {
   const {
     activeRunId,
@@ -108,12 +184,14 @@ const useProductStudioRestorationEffect = (
   } = runState;
 
   useEffect(() => {
-    const activeRun = loaded.variantsState.variantsData?.activeRun ?? null;
-    if (activeRun === null || activeRunId !== null) return;
-    const currentVariants = loaded.variantsState.variantsData?.variants ?? [];
-    const baselineSet = new Set(activeRun.baselineVariantIds);
-    const alreadyArrived = currentVariants.filter((v) => !baselineSet.has(v.id)).length;
+    const variantsData = loaded.variantsState.variantsData;
+    const currentVariants = variantsData?.variants ?? [];
+    const activeRun = resolveRestorableActiveRun({ activeRunId, target, variantsData });
+    if (activeRun === null) return;
+
+    const alreadyArrived = countProducedVariantsForRun(activeRun, currentVariants);
     if (alreadyArrived >= activeRun.pendingExpectedOutputs) return;
+
     setActiveRunId(activeRun.runId);
     setRunStatus(activeRun.runStatus);
     setPendingExpectedOutputs(activeRun.pendingExpectedOutputs);
@@ -125,14 +203,17 @@ const useProductStudioRestorationEffect = (
     setActiveRunId,
     setPendingExpectedOutputs,
     setRunStatus,
+    target,
   ]);
 };
 
 const useProductStudioTimeoutEffect = (
   loaded: ProductStudioLoadedState,
-  runState: ProductStudioRunState
+  runState: ProductStudioRunState,
+  target: ProductStudioRunTarget
 ): void => {
   const { pendingVariantPlaceholderCount } = loaded.derivedState;
+  const { setStudioActionError } = loaded.variantsState;
   const {
     setActiveRunBaselineVariantIds,
     setActiveRunId,
@@ -147,7 +228,9 @@ const useProductStudioTimeoutEffect = (
       setActiveRunId(null);
       setPendingExpectedOutputs(0);
       setActiveRunBaselineVariantIds([]);
-    }, RUN_TIMEOUT_MS);
+      clearActiveRunCacheForTarget(target);
+      setStudioActionError('Studio generation timed out while waiting for generated variants.');
+    }, PRODUCT_STUDIO_RUN_TIMEOUT_MS);
     return () => safeClearTimeout(id);
   }, [
     pendingVariantPlaceholderCount,
@@ -155,16 +238,24 @@ const useProductStudioTimeoutEffect = (
     setActiveRunId,
     setPendingExpectedOutputs,
     setRunStatus,
+    setStudioActionError,
+    target,
   ]);
 };
 
 export const useProductStudioRunEffects = (
   loaded: ProductStudioLoadedState,
-  runState: ProductStudioRunState
+  runState: ProductStudioRunState,
+  productId: string | null,
+  selectedImageIndex: number | null
 ): void => {
   const { pendingVariantPlaceholderCount } = loaded.derivedState;
   const { selectedVariantSlotId } = loaded.variantsState;
   const { activeRunBaselineVariantIds } = runState;
+  const target = useMemo(
+    () => ({ productId, selectedImageIndex }),
+    [productId, selectedImageIndex]
+  );
 
   // Stable refs so interval callbacks read current values without effect churn
   const baselineIdsRef = useRef(activeRunBaselineVariantIds);
@@ -175,7 +266,8 @@ export const useProductStudioRunEffects = (
 
   useProductStudioAutoPollEffect(loaded, runState, baselineIdsRef, selectedVariantSlotIdRef);
   useProductStudioStatusAdvanceEffect(loaded, runState);
-  useProductStudioCompletionEffect(loaded, runState, prevPlaceholderCountRef);
-  useProductStudioRestorationEffect(loaded, runState);
-  useProductStudioTimeoutEffect(loaded, runState);
+  useProductStudioCompletionEffect(loaded, runState, prevPlaceholderCountRef, target);
+  useProductStudioTerminalActiveRunEffect(loaded, runState, target);
+  useProductStudioRestorationEffect(loaded, runState, target);
+  useProductStudioTimeoutEffect(loaded, runState, target);
 };

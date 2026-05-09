@@ -28,6 +28,7 @@ import type {
 } from '@/shared/contracts/integrations/marketplace';
 import type { InternalCategoryOption, CategoryMapperData, CategoryMapperActions } from '@/shared/contracts/integrations/context';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import { TRADERA_CATEGORY_MAPPING_CATALOG_ID } from '@/shared/lib/integration-slugs';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { createStrictContext } from './createStrictContext';
@@ -128,7 +129,10 @@ export function CategoryMapperProvider({
     };
   }, [catalogs, selectedCatalogId]);
 
-  const internalCategoriesQuery = useIntegrationProductCategories(selectedCatalogId ?? undefined);
+  const internalCategoriesQuery = useIntegrationProductCategories(
+    isTraderaConnection ? null : selectedCatalogId,
+    { includeAllWhenCatalogMissing: isTraderaConnection }
+  );
   const internalCategories = internalCategoriesQuery.data ?? [];
   const internalCategoriesLoading = internalCategoriesQuery.isLoading;
   const internalCategoryOptions = useMemo(
@@ -167,7 +171,7 @@ export function CategoryMapperProvider({
 
   const mappingsQuery = useCategoryMappings(
     connectionId,
-    selectedCatalogId,
+    isTraderaConnection ? null : selectedCatalogId,
     isTraderaConnection ? 'tradera' : null
   );
   const mappings = useMemo(() => mappingsQuery.data ?? [], [mappingsQuery.data]);
@@ -311,7 +315,7 @@ export function CategoryMapperProvider({
   );
 
   const handleAutoMatchByName = useCallback((): void => {
-    if (!selectedCatalogId) {
+    if (!isTraderaConnection && !selectedCatalogId) {
       toast('Select a catalog before auto-matching categories.', { variant: 'info' });
       return;
     }
@@ -351,7 +355,11 @@ export function CategoryMapperProvider({
   ]);
 
   const handleSave = async (): Promise<void> => {
-    if (pendingMappings.size === 0 || !selectedCatalogId) {
+    const mappingCatalogId = isTraderaConnection
+      ? TRADERA_CATEGORY_MAPPING_CATALOG_ID
+      : selectedCatalogId;
+
+    if (pendingMappings.size === 0 || !mappingCatalogId) {
       toast('No changes to save', { variant: 'info' });
       return;
     }
@@ -386,7 +394,7 @@ export function CategoryMapperProvider({
 
       const result = await saveMutation.mutateAsync({
         connectionId,
-        catalogId: selectedCatalogId,
+        catalogId: mappingCatalogId,
         mappings: mappingsToSave,
       });
 
@@ -397,7 +405,7 @@ export function CategoryMapperProvider({
         source: 'CategoryMapper',
         action: 'saveMappings',
         connectionId,
-        catalogId: selectedCatalogId,
+        catalogId: mappingCatalogId,
       });
       const message = error instanceof Error ? error.message : 'Failed to save mappings';
       toast(message, { variant: 'error' });

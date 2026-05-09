@@ -815,8 +815,8 @@ export const PART_4_EXTRA = String.raw`
     });
   };
 
-  const buildShippingDialogPriceEntryVariants = (priceValue) => {
-    const numericPrice = Number(priceValue);
+  const buildPriceFieldEntryVariants = (priceValue, options = {}) => {
+    const numericPrice = Number(String(priceValue ?? '').replace(',', '.'));
     const variants = new Set();
     const addVariant = (value) => {
       const normalized = normalizeWhitespace(value);
@@ -825,11 +825,17 @@ export const PART_4_EXTRA = String.raw`
       }
     };
 
-    addVariant(priceValue);
     if (!Number.isFinite(numericPrice)) {
+      addVariant(priceValue);
       return Array.from(variants);
     }
 
+    if (options?.includeWhole === true) {
+      const roundedPrice = Math.max(1, Math.round(numericPrice));
+      addVariant(String(roundedPrice));
+    }
+
+    addVariant(priceValue);
     addVariant(String(numericPrice));
     addVariant(numericPrice.toFixed(1));
     addVariant(numericPrice.toFixed(2));
@@ -839,6 +845,9 @@ export const PART_4_EXTRA = String.raw`
 
     return Array.from(variants);
   };
+
+  const buildShippingDialogPriceEntryVariants = (priceValue) =>
+    buildPriceFieldEntryVariants(priceValue);
 
   const captureShippingDialogSaveState = async (shippingDialog) => {
     const shippingPriceInput = await firstVisibleWithin(

@@ -40,7 +40,11 @@ const shouldSkipRateLimitInTestEnv = (request: NextRequest): boolean => {
     const hostname = new URL(request.url).hostname;
     return hostname === 'localhost' || hostname === '127.0.0.1';
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'api.handler',
+      action: 'shouldSkipRateLimitInTestEnv',
+      url: request.url,
+    });
     return true;
   }
 };
@@ -103,7 +107,12 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
       await import('@/shared/lib/observability/system-logger');
     await realLogSystemEvent(params);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'api.handler',
+      action: 'logSystemEvent',
+      source: params.source,
+      level: params.level,
+    });
     logger.error('Failed to log system event via observability feature', error, {
       service: 'api.handler',
       context: params,
@@ -116,7 +125,10 @@ const getSessionUser = async (): Promise<{ id?: string | null } | null> => {
     const { getSessionUser: realGetSessionUser } = await import('./session-registry');
     return await realGetSessionUser();
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'api.handler',
+      action: 'getSessionUser',
+    });
     return null;
   }
 };
@@ -136,7 +148,11 @@ const shouldSkipCsrfInTestEnv = (request: NextRequest): boolean => {
     const hostname = new URL(request.url).hostname;
     return hostname === 'localhost' || hostname === '127.0.0.1';
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'api.handler',
+      action: 'shouldSkipCsrfInTestEnv',
+      url: request.url,
+    });
     return true;
   }
 };
@@ -176,7 +192,11 @@ const readCsrfCookieTokens = (request: NextRequest): string[] => {
         .filter((token: string | undefined): token is string => Boolean(token));
     }
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'api.handler',
+      action: 'readCsrfCookieTokens',
+      cookieName: CSRF_COOKIE_NAME,
+    });
   }
   return parseCookieHeaderTokens(request.headers.get('cookie'));
 };
@@ -389,6 +409,7 @@ const ensureMutableResponse = (response: Response): Response => {
     response.headers.delete('x-codex-mutable-probe');
     return response;
   } catch {
+    // Response headers are immutable (e.g. from a cached Response); clone to make them mutable.
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
@@ -761,7 +782,11 @@ const getQueryKeys = (request: NextRequest): string[] => {
   try {
     return Array.from(new URL(request.url).searchParams.keys()).slice(0, MAX_QUERY_KEYS);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'api.handler',
+      action: 'getQueryKeys',
+      url: request.url,
+    });
     return [];
   }
 };
@@ -803,7 +828,11 @@ async function createErrorResponseWithTiming(
     try {
       return new URL(request.url).pathname;
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, {
+        service: 'api.handler',
+        action: 'createErrorResponseWithTiming.parseRoutePath',
+        url: request.url,
+      });
       return null;
     }
   })();

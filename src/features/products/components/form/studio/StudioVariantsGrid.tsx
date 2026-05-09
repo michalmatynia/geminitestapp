@@ -227,7 +227,7 @@ export function StudioVariantsGrid(): React.JSX.Element {
   );
 
   let content: React.JSX.Element;
-  if (variantsLoading) {
+  if (variantsLoading && gridItems.length === 0) {
     content = <LoadingState message='Loading variants...' />;
   } else if (gridItems.length === 0) {
     content = <p className='text-sm text-gray-400'>No generations yet for the selected product image.</p>;

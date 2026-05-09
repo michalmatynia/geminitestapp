@@ -24,6 +24,7 @@ const isAutoMatchDisabled = ({
   isSavePending,
   mappingsLoading,
   selectedCatalogId,
+  isTraderaConnection,
 }: {
   externalCategoriesLength: number;
   externalCategoriesLoading: boolean;
@@ -33,6 +34,7 @@ const isAutoMatchDisabled = ({
   isSavePending: boolean;
   mappingsLoading: boolean;
   selectedCatalogId: string | null;
+  isTraderaConnection: boolean;
 }): boolean =>
   [
     isFetchPending,
@@ -40,7 +42,7 @@ const isAutoMatchDisabled = ({
     externalCategoriesLoading,
     mappingsLoading,
     internalCategoriesLoading,
-    isBlank(selectedCatalogId),
+    !isTraderaConnection && isBlank(selectedCatalogId),
     externalCategoriesLength === 0,
     internalCategoriesLength === 0,
   ].some((blocked) => blocked);
@@ -87,6 +89,7 @@ export function useCategoryMapperTableModel(): CategoryMapperTablePanelProps {
     isSavePending,
     mappingsLoading: data.mappingsLoading,
     selectedCatalogId: data.selectedCatalogId,
+    isTraderaConnection,
   });
 
   return {

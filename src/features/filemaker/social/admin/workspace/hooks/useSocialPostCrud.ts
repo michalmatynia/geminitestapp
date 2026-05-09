@@ -225,10 +225,8 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
       );
       return created;
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, { service: 'social-publishing.admin', action: 'createDraft' });
       logSocialPublishingClientError(error, {
-        source: 'AdminSocialPublishingPage',
-        action: 'createDraft',
         ...deps.buildSocialContext(),
       });
       trackSocialPublishingClientEvent(
@@ -310,10 +308,8 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         );
         return;
       }
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, { service: 'social-publishing.admin', action: 'deletePost', postId });
       logSocialPublishingClientError(error, {
-        source: 'AdminSocialPublishingPage',
-        action: 'deletePost',
         ...deps.buildSocialContext({ postId }),
       });
       const message = error instanceof Error ? error.message : 'Failed to delete draft.';
@@ -360,7 +356,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
       const shouldReportClientError =
         !savedPublishError && !isExpectedSocialPublishingClientError(error);
       if (shouldReportClientError) {
-        void ErrorSystem.captureException(error);
+        void ErrorSystem.captureException(error, { service: 'social-publishing.admin', action: 'quickPublish', postId, mode });
         logSocialPublishingClientError(error, {
           source: 'AdminSocialPublishingPage',
           action: 'quickPublish',
@@ -405,10 +401,8 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         toast('Post unpublished and removed.', { variant: 'success' });
       }
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, { service: 'social-publishing.admin', action: 'unpublishPost', postId, keepLocal });
       logSocialPublishingClientError(error, {
-        source: 'AdminSocialPublishingPage',
-        action: 'unpublishPost',
         ...deps.buildSocialContext({ postId }),
       });
       const message = error instanceof Error ? error.message : 'Failed to unpublish post.';
@@ -450,10 +444,8 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         deps.buildSocialContext({ nextStatus })
       );
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, { service: 'social-publishing.admin', action: 'savePost', postId: deps.activePost?.id ?? null, nextStatus });
       logSocialPublishingClientError(error, {
-        source: 'AdminSocialPublishingPage',
-        action: 'savePost',
         ...deps.buildSocialContext({ nextStatus }),
       });
       toast(error instanceof Error ? error.message : 'Failed to save draft.', {

@@ -67,7 +67,9 @@ export const parseMarketplaceMappingsQuery = (
   return {
     connectionId: hasConnectionId ? connectionId : null,
     marketplace: marketplaceScope,
-    ...(hasCatalogId ? { catalogId } : {}),
+    ...(hasCatalogId && marketplaceScope !== TRADERA_BROWSER_INTEGRATION_SLUG
+      ? { catalogId }
+      : {}),
   };
 };
 

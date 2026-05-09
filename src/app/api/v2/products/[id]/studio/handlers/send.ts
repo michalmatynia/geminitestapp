@@ -13,7 +13,7 @@ export async function postHandler(
   params: { id: string }
 ): Promise<Response> {
   const productId = params.id.trim();
-  if (!productId) {
+  if (productId.length === 0) {
     throw badRequestError('Product id is required.');
   }
 
@@ -29,6 +29,10 @@ export async function postHandler(
     projectId: parsed.data.projectId ?? null,
     rotateBeforeSendDeg: parsed.data.rotateBeforeSendDeg ?? null,
   } as const;
+  const { assertProductStudioGenerationConfigurationReady } = await import(
+    '@/features/ai/image-studio/product-studio/product-studio-service.generation-config'
+  );
+  await assertProductStudioGenerationConfigurationReady();
   const { resolveImageStudioContextRegistryEnvelope } = await import(
     '@/features/ai/image-studio/context-registry/server'
   );

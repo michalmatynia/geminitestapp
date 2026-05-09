@@ -15,7 +15,7 @@ export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v153
+  // tradera-quicklist-default:v154
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];
@@ -138,6 +138,11 @@ ${selectorRegistryRuntime}
   const description =
     referenceLines.length > 0 ? rawDescription + ' | ' + referenceLines.join(' | ') : rawDescription;
   const price = toNumber(input?.price) ?? 1;
+  const listingPriceCurrencyCode = (
+    toText(input?.traderaPricing?.listingCurrencyCode) ||
+    toText(input?.traderaPricing?.targetCurrencyCode) ||
+    ''
+  ).toUpperCase();
   const quantity = toNumber(input?.quantity) || toNumber(input?.stock) || 1;
   const ean = toText(input?.ean) || toText(input?.gtin);
   const brand = toText(input?.brand) || toText(input?.producer);

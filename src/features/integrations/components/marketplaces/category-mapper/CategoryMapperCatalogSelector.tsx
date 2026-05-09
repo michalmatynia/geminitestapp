@@ -2,13 +2,18 @@
 
 import React, { useMemo } from 'react';
 
-import { useCategoryMapperData } from '@/features/integrations/context/CategoryMapperContext';
+import {
+  useCategoryMapperConfig,
+  useCategoryMapperData,
+} from '@/features/integrations/context/CategoryMapperContext';
 import { Label } from '@/shared/ui/primitives.public';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 export function CategoryMapperCatalogSelector(): React.JSX.Element {
+  const config = useCategoryMapperConfig();
   const { selectedCatalogId, setSelectedCatalogId, catalogsLoading, catalogs, internalCategories } =
     useCategoryMapperData();
+  const isTraderaConnection = (config.integrationSlug ?? '').trim().toLowerCase() === 'tradera';
 
   const catalogOptions = useMemo(
     () =>
@@ -19,7 +24,11 @@ export function CategoryMapperCatalogSelector(): React.JSX.Element {
     [catalogs]
   );
 
-  return (
+  return isTraderaConnection ? (
+    <div className='flex min-h-8 items-center text-xs text-muted-foreground'>
+      All internal categories
+    </div>
+  ) : (
     <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3'>
       <Label className='text-sm font-medium text-foreground'>Target Catalog</Label>
       <div className='w-full sm:w-[260px]'>

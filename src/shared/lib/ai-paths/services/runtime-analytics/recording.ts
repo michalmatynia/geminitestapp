@@ -43,7 +43,7 @@ export const recordRuntimeRunQueued = async (input: {
     multi.hincrby(keyTotals(), 'runs_queued', 1);
     await multi.exec();
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'ai-paths-analytics', action: 'recordRuntimeRunQueued', runId: input.runId });
     void ErrorSystem.logWarning('Failed to record run queued analytics', {
       service: 'ai-paths-analytics',
       error,
@@ -71,7 +71,7 @@ export const recordRuntimeRunStarted = async (input: {
     multi.hincrby(keyTotals(), 'runs_started', 1);
     await multi.exec();
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'ai-paths-analytics', action: 'recordRuntimeRunStarted', runId: input.runId });
     void ErrorSystem.logWarning('Failed to record run started analytics', {
       service: 'ai-paths-analytics',
       error,

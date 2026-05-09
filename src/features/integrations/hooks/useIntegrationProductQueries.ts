@@ -52,7 +52,7 @@ const buildIntegrationProductFilterParams = (
   };
 };
 
-const normalizeCatalogId = (catalogId: string | undefined): string | null => {
+const normalizeCatalogId = (catalogId: string | null | undefined): string | null => {
   const normalized = catalogId?.trim();
   return normalized !== undefined && normalized.length > 0 ? normalized : null;
 };
@@ -74,19 +74,28 @@ export function useIntegrationCatalogs(): ListQuery<CatalogRecord> {
   });
 }
 
-export function useIntegrationProductCategories(catalogId?: string): ListQuery<ProductCategory> {
+export function useIntegrationProductCategories(
+  catalogId?: string | null,
+  options: { includeAllWhenCatalogMissing?: boolean } = {}
+): ListQuery<ProductCategory> {
   const normalizedCatalogId = normalizeCatalogId(catalogId);
-  const queryKey = productMetadataKeys.categories(normalizedCatalogId);
+  const shouldLoadAllCategories =
+    normalizedCatalogId === null && options.includeAllWhenCatalogMissing === true;
+  const queryKey = productMetadataKeys.categories(
+    shouldLoadAllCategories ? 'all' : normalizedCatalogId
+  );
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductCategory[]> => {
-      if (normalizedCatalogId === null) return [];
+      if (normalizedCatalogId === null && !shouldLoadAllCategories) return [];
       const tree = await api.get<ProductCategoryWithChildren[]>(
-        `/api/v2/products/categories/tree?catalogId=${encodeURIComponent(normalizedCatalogId)}`
+        normalizedCatalogId === null
+          ? '/api/v2/products/categories/tree'
+          : `/api/v2/products/categories/tree?catalogId=${encodeURIComponent(normalizedCatalogId)}`
       );
       return flattenCategoryTree(tree);
     },
-    enabled: normalizedCatalogId !== null,
+    enabled: normalizedCatalogId !== null || shouldLoadAllCategories,
     meta: {
       source: 'integrations.hooks.useIntegrationProductCategories',
       operation: 'list',

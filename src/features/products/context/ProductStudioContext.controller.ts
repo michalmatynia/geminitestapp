@@ -252,6 +252,6 @@ export const useProductStudioProviderController = (): ProductStudioProviderContr
   const loaded = useProductStudioLoadedState(base, runState);
   const actionArgs = useProductStudioActionArgs(base, loaded, runState);
   const handlers = useProductStudioActionHandlers(actionArgs);
-  useProductStudioRunEffects(loaded, runState);
+  useProductStudioRunEffects(loaded, runState, base.productId, base.selectedImageIndex);
   return useProductStudioContextValues(base, loaded, runState, handlers);
 };

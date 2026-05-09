@@ -112,7 +112,7 @@ export async function dedupePlanStepsWithLLM({
     }
     return dedupedSteps;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'agent-runtime.planning', action: 'dedupePlanStepsWithLLM', runId: runId ?? null });
     void ErrorSystem.logWarning('[chatbot][agent][engine] Plan dedupe failed', {
       ...(runId && { runId }),
       error,
@@ -196,7 +196,7 @@ export async function guardRepetitionWithLLM({
     }
     return guarded;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'agent-runtime.planning', action: 'guardRepetitionWithLLM', runId: runId ?? null });
     void ErrorSystem.logWarning('[chatbot][agent][engine] Repetition guard failed', {
       ...(runId && { runId }),
       error,
@@ -384,7 +384,7 @@ export async function optimizePlanWithLLM({
       optimizedSteps,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'agent-runtime.planning', action: 'optimizePlanWithLLM', runId: runId ?? null });
     void ErrorSystem.logWarning('[chatbot][agent][engine] Plan optimization failed', {
       ...(runId && { runId }),
       error,
@@ -457,7 +457,7 @@ export async function enrichPlanHierarchyWithLLM({
     }
     return enriched;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'agent-runtime.planning', action: 'enrichPlanHierarchyWithLLM', runId: runId ?? null });
     void ErrorSystem.logWarning('[chatbot][agent][engine] Hierarchy enrichment failed', {
       ...(runId && { runId }),
       error,
@@ -539,7 +539,7 @@ export async function expandHierarchyFromStepsWithLLM({
     }
     return expanded;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, { service: 'agent-runtime.planning', action: 'expandHierarchyFromStepsWithLLM', runId: runId ?? null });
     void ErrorSystem.logWarning('[chatbot][agent][engine] Plan hierarchy expansion failed', {
       runId,
       error,

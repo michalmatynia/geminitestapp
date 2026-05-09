@@ -65,6 +65,15 @@ vi.mock('@/shared/lib/products/services/product-repository', () => ({
 }));
 
 vi.mock('./price', () => ({
+  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'SEK',
+  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'SEK') =>
+    `FAIL_PRICE_RESOLUTION: Tradera export requires a ${currencyCode} listing price. Add a ${currencyCode} price group to the product catalog and retry.`,
+  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'SEK') => {
+    if (currencyCode === 'SEK') {
+      return String(Math.max(1, Math.round(value)));
+    }
+    return Number.isInteger(value) ? String(value) : value.toFixed(2);
+  },
   resolveTraderaListingPriceForProduct: (...args: unknown[]) =>
     resolveTraderaListingPriceForProductMock(...args),
 }));
@@ -128,8 +137,8 @@ describe('runTraderaBrowserListingStandard', () => {
     });
     resolveTraderaListingPriceForProductMock.mockResolvedValue({
       listingPrice: 55,
-      listingCurrencyCode: 'EUR',
-      targetCurrencyCode: 'EUR',
+      listingCurrencyCode: 'SEK',
+      targetCurrencyCode: 'SEK',
       resolvedToTargetCurrency: true,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -172,7 +181,7 @@ describe('runTraderaBrowserListingStandard', () => {
     });
   });
 
-  it('fills the standard Tradera form with the resolved EUR price and returns pricing metadata', async () => {
+  it('fills the standard Tradera form with the resolved SEK price and returns pricing metadata', async () => {
     let currentUrl = 'https://www.tradera.com/en/selling/new';
     const titleFillMock = vi.fn().mockResolvedValue(undefined);
     const descriptionFillMock = vi.fn().mockResolvedValue(undefined);
@@ -243,7 +252,7 @@ describe('runTraderaBrowserListingStandard', () => {
     });
     expect(resolveTraderaListingPriceForProductMock).toHaveBeenCalledWith({
       product: expect.objectContaining({ id: 'product-1' }),
-      targetCurrencyCode: 'EUR',
+      targetCurrencyCode: 'SEK',
     });
     expect(descriptionFillMock).toHaveBeenCalledWith(
       'Example description | Product ID: product-1 | SKU: KEYCHA1266'
@@ -279,8 +288,8 @@ describe('runTraderaBrowserListingStandard', () => {
           }),
         }),
         listingPrice: 55,
-        listingCurrencyCode: 'EUR',
-        targetCurrencyCode: 'EUR',
+        listingCurrencyCode: 'SEK',
+        targetCurrencyCode: 'SEK',
         resolvedToTargetCurrency: true,
         basePrice: 123,
         baseCurrencyCode: 'PLN',
@@ -353,8 +362,8 @@ describe('runTraderaBrowserListingStandard', () => {
     );
     resolveTraderaListingPriceForProductMock.mockResolvedValueOnce({
       listingPrice: 55,
-      listingCurrencyCode: 'EUR',
-      targetCurrencyCode: 'EUR',
+      listingCurrencyCode: 'SEK',
+      targetCurrencyCode: 'SEK',
       resolvedToTargetCurrency: true,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -397,7 +406,7 @@ describe('runTraderaBrowserListingStandard', () => {
     expect(browserCloseMock).toHaveBeenCalled();
   });
 
-  it('fails with persisted metadata when the standard path cannot resolve EUR pricing', async () => {
+  it('fails with persisted metadata when the standard path cannot resolve SEK pricing', async () => {
     const browserCloseMock = vi.fn().mockResolvedValue(undefined);
     const contextCloseMock = vi.fn().mockResolvedValue(undefined);
 
@@ -417,7 +426,7 @@ describe('runTraderaBrowserListingStandard', () => {
     resolveTraderaListingPriceForProductMock.mockResolvedValueOnce({
       listingPrice: 123,
       listingCurrencyCode: 'PLN',
-      targetCurrencyCode: 'EUR',
+      targetCurrencyCode: 'SEK',
       resolvedToTargetCurrency: false,
       basePrice: 123,
       baseCurrencyCode: 'PLN',
@@ -447,14 +456,15 @@ describe('runTraderaBrowserListingStandard', () => {
         action: 'list',
       })
     ).rejects.toMatchObject({
-      message: 'FAIL_PRICE_RESOLUTION: Tradera listing price could not be resolved to EUR.',
+      message:
+        'FAIL_PRICE_RESOLUTION: Tradera export requires a SEK listing price. Add a SEK price group to the product catalog and retry.',
       meta: expect.objectContaining({
         mode: 'standard',
         browserMode: 'headless',
         requestedBrowserMode: 'connection_default',
         listingFormUrl: 'https://www.tradera.com/en/selling/new?categoryId=292904',
         listingCurrencyCode: 'PLN',
-        targetCurrencyCode: 'EUR',
+        targetCurrencyCode: 'SEK',
         priceResolutionReason: 'target_currency_unresolved',
       }),
     });

@@ -6,6 +6,7 @@ import { OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { PLAYWRIGHT_ACTIONS_SETTINGS_KEY } from '@/shared/contracts/playwright-steps';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { KANGUR_SLOT_ASSIGNMENTS_KEY, KANGUR_THEME_CATALOG_KEY } from '@/shared/contracts/kangur';
+import { AI_BRAIN_SETTINGS_KEY } from '@/shared/lib/ai-brain/settings';
 
 const mocks = vi.hoisted(() => ({
   assertSettingsManageAccessMock: vi.fn(),
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   clearSettingsCacheMock: vi.fn(),
   resetServerLoggingControlsCacheMock: vi.fn(),
   clearLiteSettingsServerCacheMock: vi.fn(),
+  invalidateBrainSettingsCacheMock: vi.fn(),
   invalidateKangurStorefrontInitialStateCacheMock: vi.fn(),
   isKangurStorefrontInitialStateDependencyKeyMock: vi.fn(),
   getAppDbProviderMock: vi.fn(),
@@ -75,6 +77,10 @@ vi.mock('@/shared/lib/observability/logging-controls-server', () => ({
 
 vi.mock('@/shared/lib/settings-lite-server-cache', () => ({
   clearLiteSettingsServerCache: mocks.clearLiteSettingsServerCacheMock,
+}));
+
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  invalidateBrainSettingsCache: mocks.invalidateBrainSettingsCacheMock,
 }));
 
 vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
@@ -286,6 +292,30 @@ describe('settings handler', () => {
       key: OBSERVABILITY_LOGGING_KEYS.infoEnabled,
       value: 'true',
     });
+  });
+
+  it('invalidates the AI Brain runtime cache when AI Brain settings are saved', async () => {
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: AI_BRAIN_SETTINGS_KEY,
+        value: '{"defaults":{"enabled":true,"provider":"model","modelId":"","agentId":""}}',
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: AI_BRAIN_SETTINGS_KEY,
+          value: '{"defaults":{"enabled":true,"provider":"model","modelId":"","agentId":""}}',
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.invalidateBrainSettingsCacheMock).toHaveBeenCalledTimes(1);
   });
 
   it('canonicalizes the front page setting before saving it', async () => {

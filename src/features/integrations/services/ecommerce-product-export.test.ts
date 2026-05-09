@@ -6,19 +6,21 @@ const {
   ecommerceCollectionMock,
   ecommerceDeleteManyMock,
   ecommerceDbMock,
+  getAllEcommerceExportDbsForCleanupMock,
   getEcommerceExportDbMock,
   getProductsMongoDbMock,
   listingCollectionMock,
-  listingDeleteManyMock,
+  listingUpdateManyMock,
   productsDbMock,
 } = vi.hoisted(() => ({
   ecommerceDeleteManyMock: vi.fn(),
   ecommerceCollectionMock: vi.fn(),
   ecommerceDbMock: {},
+  getAllEcommerceExportDbsForCleanupMock: vi.fn(),
   getEcommerceExportDbMock: vi.fn(),
   getProductsMongoDbMock: vi.fn(),
   listingCollectionMock: vi.fn(),
-  listingDeleteManyMock: vi.fn(),
+  listingUpdateManyMock: vi.fn(),
   productsDbMock: {},
 }));
 
@@ -34,6 +36,7 @@ vi.mock('./ecommerce-product-export.config', () => ({
   ECOM_CATEGORIES_COLLECTION: 'product_categories',
   ECOM_PRODUCTS_COLLECTION: 'products',
   getEcommerceExportDb: getEcommerceExportDbMock,
+  getAllEcommerceExportDbsForCleanup: getAllEcommerceExportDbsForCleanupMock,
 }));
 
 import { buildEcommerceProductExportDocument } from './ecommerce-product-export.mapper';
@@ -162,15 +165,15 @@ describe('deleteProductFromEcommerceExport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     ecommerceCollectionMock.mockReturnValue({ deleteMany: ecommerceDeleteManyMock });
-    listingCollectionMock.mockReturnValue({ deleteMany: listingDeleteManyMock });
+    listingCollectionMock.mockReturnValue({ updateMany: listingUpdateManyMock });
     (ecommerceDbMock as { collection?: typeof ecommerceCollectionMock }).collection =
       ecommerceCollectionMock;
     (productsDbMock as { collection?: typeof listingCollectionMock }).collection =
       listingCollectionMock;
-    getEcommerceExportDbMock.mockResolvedValue(ecommerceDbMock);
+    getAllEcommerceExportDbsForCleanupMock.mockResolvedValue([ecommerceDbMock]);
     getProductsMongoDbMock.mockResolvedValue(productsDbMock);
     ecommerceDeleteManyMock.mockResolvedValue({ deletedCount: 1 });
-    listingDeleteManyMock.mockResolvedValue({ deletedCount: 1 });
+    listingUpdateManyMock.mockResolvedValue({ modifiedCount: 1 });
   });
 
   it('removes exported ecommerce products and their listing badge', async () => {
@@ -181,10 +184,10 @@ describe('deleteProductFromEcommerceExport', () => {
       $or: [{ _id: 'product-12345678' }, { sourceProductId: 'product-12345678' }],
     });
     expect(listingCollectionMock).toHaveBeenCalledWith('product_listings');
-    expect(listingDeleteManyMock).toHaveBeenCalledWith({
-      productId: 'product-12345678',
-      integrationId: 'ecommerce-export',
-    });
+    expect(listingUpdateManyMock).toHaveBeenCalledWith(
+      { productId: 'product-12345678', integrationId: 'ecommerce-export' },
+      expect.objectContaining({ $set: expect.objectContaining({ status: 'removed' }) })
+    );
     expect(result).toEqual({
       success: true,
       productId: 'product-12345678',

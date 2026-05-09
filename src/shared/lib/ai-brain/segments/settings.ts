@@ -1,5 +1,5 @@
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings } from '../settings';
+import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, type AiBrainSettings } from '../settings';
 import {
   deleteMongoSettingValue,
   readMongoSettingValue,
@@ -9,6 +9,16 @@ import {
 let cachedBrainSettingsValue: string | null = null;
 let lastBrainSettingsFetchAt = 0;
 const BRAIN_SETTINGS_TTL_MS = 30000; // 30 seconds
+
+export const invalidateBrainSettingsCache = (): void => {
+  cachedBrainSettingsValue = null;
+  lastBrainSettingsFetchAt = 0;
+};
+
+const updateBrainSettingsCache = (value: string | null, fetchedAt: number): void => {
+  cachedBrainSettingsValue = value;
+  lastBrainSettingsFetchAt = fetchedAt;
+};
 
 export const readStoredSettingValue = async (key: string): Promise<string | null> => {
   const now = Date.now();
@@ -20,7 +30,7 @@ export const readStoredSettingValue = async (key: string): Promise<string | null
     return cachedBrainSettingsValue;
   }
 
-  const tryMongo = async () => {
+  const tryMongo = async (): Promise<string | null> => {
     try {
       return await readMongoSettingValue(key);
     } catch (error) {
@@ -32,8 +42,7 @@ export const readStoredSettingValue = async (key: string): Promise<string | null
   const value = await tryMongo();
 
   if (key === AI_BRAIN_SETTINGS_KEY) {
-    cachedBrainSettingsValue = value;
-    lastBrainSettingsFetchAt = now;
+    updateBrainSettingsCache(value, now);
   }
 
   return value;
@@ -72,14 +81,13 @@ export const deleteStoredSettingValue = async (key: string): Promise<boolean> =>
   const deleted = await tryMongo();
 
   if (deleted && key === AI_BRAIN_SETTINGS_KEY) {
-    cachedBrainSettingsValue = null;
-    lastBrainSettingsFetchAt = 0;
+    invalidateBrainSettingsCache();
   }
 
   return deleted;
 };
 
-export const getBrainSettings = async () => {
+export const getBrainSettings = async (): Promise<AiBrainSettings> => {
   const raw = await readStoredSettingValue(AI_BRAIN_SETTINGS_KEY);
   return parseBrainSettings(raw);
 };

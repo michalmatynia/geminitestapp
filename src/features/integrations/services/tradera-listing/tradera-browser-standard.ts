@@ -12,7 +12,7 @@ import {
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { BrowserListingResultDto, ProductListing } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { internalError, notFoundError } from '@/shared/errors/app-error';
+import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { buildResolvedActionSteps } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import { TraderaSequencer } from '@/shared/lib/browser-execution/sequencers/TraderaSequencer';
 import { StepTracker } from '@/shared/lib/browser-execution/step-tracker';
@@ -37,7 +37,12 @@ import {
 } from './tradera-browser-auth';
 import { resolveTraderaCategoryMappingResolutionForProduct } from './category-mapping';
 import { assertTraderaCategoryMappingReady } from './preflight';
-import { resolveTraderaListingPriceForProduct } from './price';
+import {
+  buildTraderaListingPriceResolutionFailureMessage,
+  formatTraderaListingPriceInputValue,
+  resolveTraderaListingPriceForProduct,
+  TRADERA_LISTING_PRICE_CURRENCY_CODE,
+} from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
 import { buildTraderaListingDescription } from './description';
 
@@ -353,23 +358,23 @@ export const runTraderaBrowserListingStandard = async ({
 
             const priceResolution = await resolveTraderaListingPriceForProduct({
               product,
-              targetCurrencyCode: 'EUR',
+              targetCurrencyCode: TRADERA_LISTING_PRICE_CURRENCY_CODE,
             });
             pricingMetadata = buildTraderaPricingMetadata(priceResolution);
             if (
               priceResolution.listingPrice === null ||
               !priceResolution.resolvedToTargetCurrency ||
-              toTrimmedString(priceResolution.listingCurrencyCode).toUpperCase() !== 'EUR'
+              toTrimmedString(priceResolution.listingCurrencyCode).toUpperCase() !==
+                TRADERA_LISTING_PRICE_CURRENCY_CODE
             ) {
-              throw createPlaywrightNativeTaskInternalError(
-                'FAIL_PRICE_RESOLUTION: Tradera listing price could not be resolved to EUR.',
+              throw badRequestError(
+                buildTraderaListingPriceResolutionFailureMessage(
+                  TRADERA_LISTING_PRICE_CURRENCY_CODE
+                ),
                 {
-                  session,
-                  additional: {
-                    mode: 'standard',
-                    listingFormUrl: listingEditorUrl,
-                    ...pricingMetadata,
-                  },
+                  mode: 'standard',
+                  listingFormUrl: listingEditorUrl,
+                  ...pricingMetadata,
                 }
               );
             }
@@ -387,7 +392,10 @@ export const runTraderaBrowserListingStandard = async ({
                 baseProductId: product.baseProductId ?? product.id,
                 sku: product.sku,
               }),
-              priceValue: String(priceResolution.listingPrice),
+              priceValue: formatTraderaListingPriceInputValue(
+                priceResolution.listingPrice,
+                priceResolution.listingCurrencyCode
+              ),
             };
           },
           fillTitle: async () => {

@@ -159,14 +159,15 @@ export const deleteProductFromEcommerceExport = async (
     $or: [{ _id: normalizedProductId }, { sourceProductId: normalizedProductId }],
   };
 
+  const now = new Date();
   const [ecommerceResults, listingResult] = await Promise.all([
     Promise.allSettled(
       ecommerceDbs.map((db) => db.collection(ECOM_PRODUCTS_COLLECTION).deleteMany(deleteQuery))
     ),
-    productsDb.collection(PRODUCT_LISTINGS_COLLECTION).deleteMany({
-      productId: normalizedProductId,
-      integrationId: ECOMMERCE_EXPORT_INTEGRATION_SLUG,
-    }),
+    productsDb.collection(PRODUCT_LISTINGS_COLLECTION).updateMany(
+      { productId: normalizedProductId, integrationId: ECOMMERCE_EXPORT_INTEGRATION_SLUG },
+      { $set: { status: 'removed', updatedAt: now } }
+    ),
   ]);
 
   let ecommerceDeletedCount = 0;
@@ -186,7 +187,7 @@ export const deleteProductFromEcommerceExport = async (
     success: true,
     productId: normalizedProductId,
     ecommerceDeletedCount,
-    listingDeletedCount: listingResult.deletedCount,
+    listingDeletedCount: listingResult.modifiedCount,
   };
 };
 

@@ -14,6 +14,11 @@ describe('products route module', () => {
     expect(typeof POST).toBe('function');
   });
 
+  it('does not export route segment config incompatible with Cache Components', () => {
+    expect(catchAllRouteSource).not.toContain('export const runtime');
+    expect(catchAllRouteSource).not.toContain('export const dynamic');
+  });
+
   it('registers title-terms routes before the generic product id route', () => {
     const collectionIndex = catchAllRouteSource.indexOf('../title-terms/route-handler');
     const itemIndex = catchAllRouteSource.indexOf('../title-terms/[id]/route-handler');
@@ -58,6 +63,24 @@ describe('products route module', () => {
     expect(productIdIndex).toBeGreaterThan(-1);
     expect(parametersBatchIndex).toBeLessThan(parametersIdIndex);
     expect(parametersIndex).toBeLessThan(productIdIndex);
+  });
+
+  it('registers specific product image action routes before the generic image file route', () => {
+    const linkToFileIndex = catchAllRouteSource.indexOf(
+      '../[id]/images/link-to-file/route-handler'
+    );
+    const fastCometIndex = catchAllRouteSource.indexOf(
+      '../[id]/images/upload-to-fastcomet/route-handler'
+    );
+    const imageFileIndex = catchAllRouteSource.indexOf(
+      '../[id]/images/[imageFileId]/route-handler'
+    );
+
+    expect(linkToFileIndex).toBeGreaterThan(-1);
+    expect(fastCometIndex).toBeGreaterThan(-1);
+    expect(imageFileIndex).toBeGreaterThan(-1);
+    expect(linkToFileIndex).toBeLessThan(imageFileIndex);
+    expect(fastCometIndex).toBeLessThan(imageFileIndex);
   });
 
   it('registers marketplace copy debrand routes before the generic product id route', () => {

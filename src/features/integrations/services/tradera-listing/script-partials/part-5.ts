@@ -89,6 +89,7 @@ export const PART_5 = String.raw`
       imageManifestCount,
       localImagePathCount: localImagePaths.length,
       localImageCoverageCount,
+      listingPriceCurrencyCode: listingPriceCurrencyCode || null,
       mappedCategoryPath,
       categoryFallbackAllowed: mappedCategorySegments.length === 0,
       configuredDeliveryOptionLabel,
@@ -1247,25 +1248,64 @@ export const PART_5 = String.raw`
         return false;
       }
 
-      const expectedPriceValue = normalizePriceValue(String(price));
+      const priceValueCandidates = buildPriceFieldEntryVariants(String(price), {
+        includeWhole: listingPriceCurrencyCode === 'SEK',
+      });
+      const expectedPriceValues = priceValueCandidates.map((value) =>
+        normalizePriceValue(value)
+      );
       const currentPriceValue = normalizePriceValue(await readFieldValue(priceInput));
-      if (currentPriceValue === expectedPriceValue) {
+      if (expectedPriceValues.includes(currentPriceValue)) {
         log?.('tradera.quicklist.field.skipped', {
           field: 'price',
           reason: 'already-matched',
           context,
+          currency: listingPriceCurrencyCode || null,
         });
         return false;
       }
 
-      await setAndVerifyFieldValue({
-        locator: priceInput,
-        value: String(price),
-        fieldKey: 'price',
-        errorPrefix: 'FAIL_PRICE_SET',
-        normalize: normalizePriceValue,
-      });
-      return true;
+      const inputMethods = ['default', 'type', 'paste'];
+      let lastPriceError = null;
+      for (const inputMethod of inputMethods) {
+        for (const priceValueCandidate of priceValueCandidates) {
+          try {
+            await setAndVerifyFieldValue({
+              locator: priceInput,
+              value: priceValueCandidate,
+              fieldKey: 'price',
+              errorPrefix: 'FAIL_PRICE_SET',
+              normalize: normalizePriceValue,
+              inputMethod,
+            });
+            log?.('tradera.quicklist.price.applied', {
+              context,
+              inputMethod,
+              value: normalizePriceValue(priceValueCandidate),
+              currency: listingPriceCurrencyCode || null,
+            });
+            return true;
+          } catch (error) {
+            lastPriceError = error;
+            log?.('tradera.quicklist.price.variant_failed', {
+              context,
+              inputMethod,
+              value: normalizePriceValue(priceValueCandidate),
+              currency: listingPriceCurrencyCode || null,
+              message:
+                error && typeof error.message === 'string'
+                  ? error.message
+                  : String(error),
+            });
+          }
+        }
+      }
+
+      if (lastPriceError) {
+        throw lastPriceError;
+      }
+
+      throw new Error('FAIL_PRICE_SET: Unable to set Tradera price field.');
     };
 
     const fillQuantityField = async ({ required = false, context = 'unknown' } = {}) => {

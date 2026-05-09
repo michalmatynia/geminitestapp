@@ -41,7 +41,7 @@ import type {
 } from '@/shared/contracts/integrations/listings';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { internalError, notFoundError } from '@/shared/errors/app-error';
+import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { decryptSecret } from '@/shared/lib/security/encryption';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
@@ -76,7 +76,14 @@ import {
   readTraderaExecutionSteps,
   resolveTraderaCheckStatusExecutionStepsFromResult,
 } from '@/features/integrations/utils/tradera-execution-steps';
-import { resolveTraderaListingPriceForProduct } from './price';
+import {
+  buildTraderaListingPriceResolutionFailureMessage,
+  formatTraderaListingPriceInputValue,
+  resolveTraderaListingPriceForProduct,
+  resolveTraderaStoredRelistPrice,
+  type TraderaListingPriceResolution,
+  TRADERA_LISTING_PRICE_CURRENCY_CODE,
+} from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
 import { buildTraderaListingDescription } from './description';
 import { assertTraderaListingTitleWithinLimit } from './title-validation';
@@ -341,24 +348,51 @@ const buildTraderaScriptInput = async ({
     ? []
     : imageUploadPlan.imageUrls.map((url) => toAbsoluteUrl(url, appBaseUrl));
   const localImagePaths = shouldSkipImages ? [] : imageUploadPlan.localImagePaths;
-  const priceResolution = await resolveTraderaListingPriceForProduct({
+  const rawPriceResolution = await resolveTraderaListingPriceForProduct({
     product,
-    targetCurrencyCode: 'EUR',
+    targetCurrencyCode: TRADERA_LISTING_PRICE_CURRENCY_CODE,
   });
+
+  const priceResolutionFailed =
+    rawPriceResolution.listingPrice === null ||
+    !rawPriceResolution.resolvedToTargetCurrency ||
+    toTrimmedString(rawPriceResolution.listingCurrencyCode).toUpperCase() !==
+      TRADERA_LISTING_PRICE_CURRENCY_CODE;
+
+  let priceResolution: TraderaListingPriceResolution = rawPriceResolution;
+
+  if (priceResolutionFailed && action === 'relist') {
+    const storedPrice = resolveTraderaStoredRelistPrice(listing, TRADERA_LISTING_PRICE_CURRENCY_CODE);
+    if (storedPrice !== null) {
+      priceResolution = {
+        ...rawPriceResolution,
+        listingPrice: storedPrice,
+        listingCurrencyCode: TRADERA_LISTING_PRICE_CURRENCY_CODE,
+        resolvedToTargetCurrency: true,
+        priceSource: 'stored_relist_price',
+        reason: 'stored_relist_price',
+      };
+    }
+  }
+
   const pricingMetadata = buildTraderaPricingMetadata(priceResolution);
 
   if (
     priceResolution.listingPrice === null ||
     !priceResolution.resolvedToTargetCurrency ||
-    toTrimmedString(priceResolution.listingCurrencyCode).toUpperCase() !== 'EUR'
+    toTrimmedString(priceResolution.listingCurrencyCode).toUpperCase() !==
+      TRADERA_LISTING_PRICE_CURRENCY_CODE
   ) {
-    throw internalError('FAIL_PRICE_RESOLUTION: Tradera listing price could not be resolved to EUR.', {
-      mode: 'scripted',
-      productId: product.id,
-      listingId: listing.id,
-      connectionId: listing.connectionId,
-      ...pricingMetadata,
-    });
+    throw badRequestError(
+      buildTraderaListingPriceResolutionFailureMessage(TRADERA_LISTING_PRICE_CURRENCY_CODE),
+      {
+        mode: 'scripted',
+        productId: product.id,
+        listingId: listing.id,
+        connectionId: listing.connectionId,
+        ...pricingMetadata,
+      }
+    );
   }
 
   const { categoryMapping, shippingGroupResolution } =
@@ -406,7 +440,12 @@ const buildTraderaScriptInput = async ({
         : null,
     title,
     description,
-    price: priceResolution.listingPrice,
+    price: Number(
+      formatTraderaListingPriceInputValue(
+        priceResolution.listingPrice,
+        priceResolution.listingCurrencyCode
+      )
+    ),
     imageUrls,
     localImagePaths,
     traderaImageOrder: {

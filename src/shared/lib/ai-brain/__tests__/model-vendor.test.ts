@@ -5,6 +5,7 @@ import { inferBrainModelVendor, normalizeBrainModelId } from '../model-vendor';
 describe('ai-brain model vendor helpers', () => {
   it('infers vendors from known model families', () => {
     expect(inferBrainModelVendor('gpt-4o-mini')).toBe('openai');
+    expect(inferBrainModelVendor('dall-e-3')).toBe('openai');
     expect(inferBrainModelVendor('claude-3-5-sonnet-20241022')).toBe('anthropic');
     expect(inferBrainModelVendor('gemini-2.0-flash')).toBe('gemini');
     expect(inferBrainModelVendor('llama3.2')).toBe('ollama');

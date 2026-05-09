@@ -18,6 +18,9 @@ export const ALLOWED_MIME_EXACT = new Set(['application/pdf', 'application/octet
 
 export const FILE_STORAGE_SOURCE_SETTING_KEY = 'file_storage_source_v1';
 export const FASTCOMET_STORAGE_CONFIG_SETTING_KEY = 'fastcomet_storage_config_v1';
+export const DEFAULT_FASTCOMET_STORAGE_BASE_URL = 'https://sparksofsindri.com';
+export const DEFAULT_FASTCOMET_STORAGE_UPLOAD_PATH = '/api/uploads/index.php';
+export const DEFAULT_FASTCOMET_STORAGE_RESOLVE_IP = '209.42.31.54';
 
 export const fileStorageSourceValues = ['local', 'fastcomet'] as const;
 

@@ -27,7 +27,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui/toast';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   useAcceptVariantMutation,
@@ -35,10 +35,8 @@ import {
   useSendToStudioMutation,
 } from '../hooks/useProductStudioMutations';
 import { isProductStudioRunStatus } from './ProductStudioContext.constants';
-import type {
-  ProductStudioRunStatus,
-  ProductStudioVariantsResponse,
-} from './ProductStudioContext.types';
+import { writeInFlightActiveRunCache } from './ProductStudioContext.run-cache';
+import type { ProductStudioRunStatus, ProductStudioVariantsResponse } from './ProductStudioContext.types';
 
 type StudioActionTargetInput = {
   productId: string | null;
@@ -153,7 +151,7 @@ const useConvertLinkImageToFileHandler = (
       args.refreshImagesFromProduct(response.product);
       toast('Link image converted to a product file.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, { source: 'ProductStudioContext', action: 'convertLinkImageToFile', productId, imageSlotIndex: index });
       args.setStudioActionError(
         error instanceof Error ? error.message : 'Failed to convert link image.'
       );
@@ -185,15 +183,23 @@ const useSendToStudioHandler = (
         baselineVariantIds: baselineIds,
         ...(args.contextRegistry !== null ? { contextRegistry: args.contextRegistry } : {}),
       });
+      const resolvedRunStatus = isProductStudioRunStatus(result.runStatus) ? result.runStatus : null;
+      const resolvedExpectedOutputs = Math.max(0, Math.floor(result.expectedOutputs));
       args.setActiveRunId(result.runId);
       args.setActiveRunBaselineVariantIds(baselineIds);
-      args.setRunStatus(isProductStudioRunStatus(result.runStatus) ? result.runStatus : null);
-      args.setPendingExpectedOutputs(Math.max(0, Math.floor(result.expectedOutputs)));
+      args.setRunStatus(resolvedRunStatus);
+      args.setPendingExpectedOutputs(resolvedExpectedOutputs);
+      writeInFlightActiveRunCache(target.productId, target.selectedImageIndex, {
+        runId: result.runId,
+        runStatus: resolvedRunStatus,
+        pendingExpectedOutputs: resolvedExpectedOutputs,
+        baselineVariantIds: baselineIds,
+      });
       toast('Image sent to Studio.', { variant: 'success' });
       await args.refreshVariants();
       await args.refreshAudit();
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, { source: 'ProductStudioContext', action: 'sendToStudio', productId: target.productId });
       args.setStudioActionError(error instanceof Error ? error.message : 'Failed to send.');
     }
   }, [args, sendToStudioMutation, toast]);
@@ -226,7 +232,7 @@ const useOpenInImageStudioHandler = (
         router.push(`/admin/image-studio?projectId=${response.projectId}&slotId=${sourceSlotId}`);
       });
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, { source: 'ProductStudioContext', action: 'openInImageStudio', productId: target.productId });
       toast(error instanceof Error ? error.message : 'Failed to open.', { variant: 'error' });
     } finally {
       setOpeningInImageStudio(false);
@@ -258,7 +264,7 @@ const useAcceptVariantHandler = (
       await args.refreshVariants();
       await args.refreshAudit();
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, { source: 'ProductStudioContext', action: 'acceptVariant', productId: target.productId, variantSlotId: target.selectedVariantSlotId });
       toast(error instanceof Error ? error.message : 'Failed to accept.', { variant: 'error' });
     }
   }, [acceptVariantMutation, args, toast]);
@@ -285,7 +291,7 @@ const useDeleteVariantHandler = (
       toast('Variant deleted.', { variant: 'success' });
       await args.refreshVariants();
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, { source: 'ProductStudioContext', action: 'deleteVariant', studioProjectId: target.studioProjectId, slotId: target.slotId });
       toast(error instanceof Error ? error.message : 'Failed to delete.', { variant: 'error' });
     } finally {
       setDeletingVariantId(null);
@@ -318,7 +324,7 @@ const useRotateImageSlotHandler = (
       await args.refreshVariants();
       toast('Image rotated.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
+      logClientCatch(error, { source: 'ProductStudioContext', action: 'rotateImageSlot', productId: target.productId });
       toast(error instanceof Error ? error.message : 'Failed to rotate.', { variant: 'error' });
     }
   }, [args, rotateImageSlotMutation, toast]);

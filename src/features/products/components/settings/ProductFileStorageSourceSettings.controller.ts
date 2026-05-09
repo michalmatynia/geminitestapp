@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useLiteSettingsMap, useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
+  DEFAULT_FASTCOMET_STORAGE_BASE_URL,
+  DEFAULT_FASTCOMET_STORAGE_UPLOAD_PATH,
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
   type FastCometStorageConfig,
@@ -23,7 +25,7 @@ export type ProductFileStorageSourceController = {
   fastCometStatus: FastCometStorageStatus;
   handleReset: () => void;
   handleSave: () => Promise<void>;
-  isFastCometMissingEndpoint: boolean;
+  isFastCometMisconfigured: boolean;
   isSaving: boolean;
   saveDisabled: boolean;
   setSource: (source: FileStorageSource) => void;
@@ -40,7 +42,6 @@ type ProductFileStorageSettingsState = {
 export const normalizeSource = (value: string | null | undefined): FileStorageSource =>
   value === 'fastcomet' ? 'fastcomet' : 'local';
 
-const CURRENT_FASTCOMET_BASE_URL = 'https://sparksofsindri.com';
 const LEGACY_FASTCOMET_HOSTS = new Set(['qubrick.io', 'www.qubrick.io']);
 
 const normalizeString = (value: unknown): string =>
@@ -52,7 +53,7 @@ const normalizeFastCometUrl = (value: unknown): string => {
   try {
     const url = new URL(raw);
     if (LEGACY_FASTCOMET_HOSTS.has(url.hostname.toLowerCase())) {
-      const currentUrl = new URL(CURRENT_FASTCOMET_BASE_URL);
+      const currentUrl = new URL(DEFAULT_FASTCOMET_STORAGE_BASE_URL);
       url.protocol = currentUrl.protocol;
       url.hostname = currentUrl.hostname;
       url.port = currentUrl.port;
@@ -63,14 +64,31 @@ const normalizeFastCometUrl = (value: unknown): string => {
   }
 };
 
+const resolveDefaultUploadEndpoint = (baseUrl: string): string => {
+  if (baseUrl.trim().length === 0) return '';
+  try {
+    return new URL(DEFAULT_FASTCOMET_STORAGE_UPLOAD_PATH, `${baseUrl}/`)
+      .toString()
+      .replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+};
+
 const readFastCometStorageStatus = (
   raw: string | null | undefined
 ): FastCometStorageStatus => {
   const parsed = parseJsonSetting<Partial<FastCometStorageConfig> | null>(raw, null) ?? {};
+  const parsedBaseUrl = normalizeFastCometUrl(parsed.baseUrl);
+  const baseUrl =
+    parsedBaseUrl.length > 0 ? parsedBaseUrl : DEFAULT_FASTCOMET_STORAGE_BASE_URL;
+  const parsedUploadEndpoint = normalizeFastCometUrl(parsed.uploadEndpoint);
+  const uploadEndpoint =
+    parsedUploadEndpoint.length > 0 ? parsedUploadEndpoint : resolveDefaultUploadEndpoint(baseUrl);
 
   return {
-    baseUrl: normalizeFastCometUrl(parsed.baseUrl),
-    uploadEndpoint: normalizeFastCometUrl(parsed.uploadEndpoint),
+    baseUrl,
+    uploadEndpoint,
     keepLocalCopy: typeof parsed.keepLocalCopy === 'boolean' ? parsed.keepLocalCopy : true,
   };
 };
@@ -120,10 +138,10 @@ export function useProductFileStorageSourceController(): ProductFileStorageSourc
 
   const persistedSource = lastSavedSource ?? storedSource;
   const isDirty = source !== persistedSource;
-  const isFastCometMissingEndpoint =
-    source === 'fastcomet' && fastCometStatus.uploadEndpoint.length === 0;
+  const isFastCometMisconfigured =
+    source === 'fastcomet' && fastCometStatus.baseUrl.length === 0;
   const controlsDisabled = settingsLoading || updateSetting.isPending;
-  const saveDisabled = isDirty === false || controlsDisabled || isFastCometMissingEndpoint;
+  const saveDisabled = isDirty === false || controlsDisabled || isFastCometMisconfigured;
 
   const handleSave = async (): Promise<void> => {
     try {
@@ -156,7 +174,7 @@ export function useProductFileStorageSourceController(): ProductFileStorageSourc
     fastCometStatus,
     handleReset,
     handleSave,
-    isFastCometMissingEndpoint,
+    isFastCometMisconfigured,
     isSaving: updateSetting.isPending,
     saveDisabled,
     setSource,

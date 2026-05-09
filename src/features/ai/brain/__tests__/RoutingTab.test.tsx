@@ -1,20 +1,33 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useBrainRoutingActionsContext } from '../components/BrainRoutingContext';
 import { RoutingTab } from '../components/RoutingTab';
 import { useBrain } from '../context/BrainContext';
 import {
+  AI_BRAIN_SETTINGS_KEY,
   BRAIN_CAPABILITY_KEYS,
   BRAIN_FEATURE_KEYS,
   defaultBrainAssignment,
   defaultBrainSettings,
 } from '@/shared/lib/ai-brain/settings';
 
+const mocks = vi.hoisted(() => ({
+  toast: vi.fn(),
+  updateSettingMutateAsync: vi.fn(),
+}));
+
 vi.mock('../context/BrainContext', () => ({
   useBrain: vi.fn(),
+}));
+
+vi.mock('@/shared/hooks/use-settings', () => ({
+  useUpdateSetting: () => ({
+    isPending: false,
+    mutateAsync: mocks.updateSettingMutateAsync,
+  }),
 }));
 
 vi.mock('../components/BrainRoutingTree', () => ({
@@ -32,12 +45,16 @@ vi.mock('../components/BrainRoutingTree', () => ({
         <button type='button' onClick={() => onEdit('prompt_engine.prompt_exploder')}>
           Edit Route
         </button>
+        <button type='button' onClick={() => onEdit('image_studio.general')}>
+          Edit Image Studio Route
+        </button>
       </div>
     );
   },
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
+  Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CollapsibleSection: ({
     title,
@@ -81,6 +98,7 @@ vi.mock('@/shared/ui/primitives.public', () => ({
     </label>
   ),
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
+  useToast: () => ({ toast: mocks.toast }),
 }));
 
 vi.mock('@/shared/ui/data-display.public', () => ({
@@ -92,14 +110,17 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
     value,
     onValueChange,
     options,
+    ariaLabel,
     disabled,
   }: {
     value: string;
     onValueChange: (value: string) => void;
     options: Array<LabeledOptionDto<string>>;
+    ariaLabel?: string;
     disabled?: boolean;
   }) => (
     <select
+      aria-label={ariaLabel}
       value={value}
       disabled={disabled}
       onChange={(event) => onValueChange(event.target.value)}
@@ -148,13 +169,24 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   },
 }));
 
-const buildUseBrainMock = (overrides?: { capabilityOverride?: boolean }) => {
+const buildUseBrainMock = (overrides?: {
+  capabilityOverride?: boolean;
+  imageStudioRouteApiKey?: string;
+}) => {
   const effectiveAssignments = Object.fromEntries(
     BRAIN_FEATURE_KEYS.map((feature) => [feature, { ...defaultBrainAssignment }])
   );
+  const imageStudioCapabilityAssignment = {
+    ...defaultBrainAssignment,
+    modelId: 'gpt-image-2',
+    ...(overrides?.imageStudioRouteApiKey !== undefined
+      ? { apiKey: overrides.imageStudioRouteApiKey }
+      : {}),
+  };
   const effectiveCapabilityAssignments = Object.fromEntries(
     BRAIN_CAPABILITY_KEYS.map((capability) => [capability, { ...defaultBrainAssignment }])
   );
+  effectiveCapabilityAssignments['image_studio.general'] = imageStudioCapabilityAssignment;
 
   const handleDefaultChange = vi.fn();
   const handleOverrideChange = vi.fn();
@@ -183,6 +215,11 @@ const buildUseBrainMock = (overrides?: { capabilityOverride?: boolean }) => {
             },
           }
         : {}),
+      ...(overrides?.imageStudioRouteApiKey !== undefined
+        ? {
+            'image_studio.general': imageStudioCapabilityAssignment,
+          }
+        : {}),
     },
   };
 
@@ -192,7 +229,28 @@ const buildUseBrainMock = (overrides?: { capabilityOverride?: boolean }) => {
     overridesEnabled: Object.fromEntries(BRAIN_FEATURE_KEYS.map((feature) => [feature, false])),
     effectiveAssignments,
     effectiveCapabilityAssignments,
-    modelQuickPicks: [],
+    modelQuickPicks: [
+      { value: 'gpt-image-2', label: 'gpt-image-2', description: 'image generation' },
+      { value: 'gpt-4o-mini', label: 'gpt-4o-mini', description: 'preset' },
+    ],
+    modelDescriptors: {
+      'gpt-image-2': {
+        id: 'gpt-image-2',
+        family: 'image_generation',
+        modality: 'image',
+        vendor: 'openai',
+        supportsStreaming: false,
+        supportsJsonMode: false,
+      },
+      'gpt-4o-mini': {
+        id: 'gpt-4o-mini',
+        family: 'chat',
+        modality: 'text',
+        vendor: 'openai',
+        supportsStreaming: true,
+        supportsJsonMode: true,
+      },
+    },
     agentQuickPicks: [],
     handleDefaultChange,
     handleOverrideChange,
@@ -212,6 +270,12 @@ const buildUseBrainMock = (overrides?: { capabilityOverride?: boolean }) => {
 };
 
 describe('RoutingTab', () => {
+  beforeEach(() => {
+    mocks.toast.mockReset();
+    mocks.updateSettingMutateAsync.mockReset();
+    mocks.updateSettingMutateAsync.mockResolvedValue({});
+  });
+
   it('renders grouped routing tree labels', () => {
     buildUseBrainMock();
 
@@ -244,7 +308,7 @@ describe('RoutingTab', () => {
     expect(setCapabilityEnabled).toHaveBeenCalledWith('prompt_engine.prompt_exploder', false);
   });
 
-  it('applies modal edits through capability change handler', () => {
+  it('applies modal edits through capability change handler', async () => {
     const { handleCapabilityChange } = buildUseBrainMock();
 
     render(<RoutingTab />);
@@ -253,18 +317,92 @@ describe('RoutingTab', () => {
 
     const modal = screen.getByTestId('form-modal');
     fireEvent.click(within(modal).getByLabelText('Use capability-specific override'));
-    fireEvent.change(within(modal).getByPlaceholderText('gpt-4o-mini'), {
-      target: { value: 'modal-updated-model' },
+    expect(within(modal).queryByLabelText('Model ID')).not.toBeInTheDocument();
+    fireEvent.change(within(modal).getByLabelText('Model preset'), {
+      target: { value: 'gpt-4o-mini' },
     });
     fireEvent.click(within(modal).getByRole('button', { name: 'Apply' }));
 
-    expect(handleCapabilityChange).toHaveBeenCalledWith(
+    await waitFor(() => expect(handleCapabilityChange).toHaveBeenCalledWith(
       'prompt_engine.prompt_exploder',
-      expect.objectContaining({ modelId: 'modal-updated-model' })
+      expect.objectContaining({ modelId: 'gpt-4o-mini' })
+    ));
+    expect(mocks.updateSettingMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: AI_BRAIN_SETTINGS_KEY,
+      })
     );
   });
 
-  it('clears override when modal is saved with inheritance mode', () => {
+  it('retains Image Studio route API key overrides when modal edits are applied', async () => {
+    const { handleCapabilityChange } = buildUseBrainMock();
+
+    render(<RoutingTab />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Image Studio Route' }));
+
+    const modal = screen.getByTestId('form-modal');
+    fireEvent.click(within(modal).getByLabelText('Use capability-specific override'));
+    expect(within(modal).getByLabelText('Model preset')).toHaveValue('gpt-image-2');
+    fireEvent.change(within(modal).getByLabelText('API key override'), {
+      target: { value: 'route-openai-key' },
+    });
+    fireEvent.click(within(modal).getByRole('button', { name: 'Apply' }));
+
+    await waitFor(() => expect(handleCapabilityChange).toHaveBeenCalledWith(
+      'image_studio.general',
+      expect.objectContaining({
+        apiKey: 'route-openai-key',
+        modelId: 'gpt-image-2',
+      })
+    ));
+    const savedPayload = mocks.updateSettingMutateAsync.mock.calls[0]?.[0] as {
+      key: string;
+      value: string;
+    };
+    expect(savedPayload.key).toBe(AI_BRAIN_SETTINGS_KEY);
+    expect(JSON.parse(savedPayload.value).capabilities['image_studio.general']).toEqual(
+      expect.objectContaining({
+        apiKey: 'route-openai-key',
+        modelId: 'gpt-image-2',
+      })
+    );
+  });
+
+  it('clears stale Image Studio route API key overrides before saving', async () => {
+    const { handleCapabilityChange } = buildUseBrainMock({
+      imageStudioRouteApiKey: 'stale-route-key',
+    });
+
+    render(<RoutingTab />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Image Studio Route' }));
+
+    const modal = screen.getByTestId('form-modal');
+    expect(
+      within(modal).getByText(/Route API key override is active/)
+    ).toBeInTheDocument();
+    fireEvent.click(within(modal).getByRole('button', { name: 'Clear route API key override' }));
+    fireEvent.click(within(modal).getByRole('button', { name: 'Apply' }));
+
+    await waitFor(() => expect(handleCapabilityChange).toHaveBeenCalled());
+    const nextAssignment = handleCapabilityChange.mock.calls[0]?.[1];
+    expect(nextAssignment).toEqual(expect.objectContaining({ modelId: 'gpt-image-2' }));
+    expect(nextAssignment?.apiKey).toBeUndefined();
+
+    const savedPayload = mocks.updateSettingMutateAsync.mock.calls[0]?.[0] as {
+      key: string;
+      value: string;
+    };
+    const savedRoute = JSON.parse(savedPayload.value).capabilities['image_studio.general'] as {
+      apiKey?: string;
+      modelId?: string;
+    };
+    expect(savedRoute.modelId).toBe('gpt-image-2');
+    expect(savedRoute.apiKey).toBeUndefined();
+  });
+
+  it('clears override when modal is saved with inheritance mode', async () => {
     const { clearCapabilityOverride } = buildUseBrainMock({ capabilityOverride: true });
 
     render(<RoutingTab />);
@@ -278,6 +416,8 @@ describe('RoutingTab', () => {
     fireEvent.click(overrideCheckbox);
     fireEvent.click(within(modal).getByRole('button', { name: 'Apply' }));
 
-    expect(clearCapabilityOverride).toHaveBeenCalledWith('prompt_engine.prompt_exploder');
+    await waitFor(() =>
+      expect(clearCapabilityOverride).toHaveBeenCalledWith('prompt_engine.prompt_exploder')
+    );
   });
 });

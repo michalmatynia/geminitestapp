@@ -128,7 +128,13 @@ const fetchVectorKnowledgeGraphHits = async (input: {
       normalizeKnowledgeGraphHit
     );
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'kangur.knowledge-graph.retrieval',
+      action: 'fetchVectorKnowledgeGraphHits',
+      graphKey: input.graphKey,
+      embeddingLength: input.queryEmbedding?.length ?? 0,
+      limit: input.limit,
+    });
     return [];
   }
 };
@@ -270,25 +276,25 @@ const hydrateKnowledgeGraphHits = async (
   const [tutorContent, nativeGuideStore, pageContentStore, cmsPages] = await Promise.all([
     needsTutorContent
       ? getKangurAiTutorContent(locale).catch((error) => {
-          void ErrorSystem.captureException(error);
+          void ErrorSystem.captureException(error, { service: 'kangur.knowledge-graph.retrieval', action: 'getKangurAiTutorContent', locale });
           return null;
         })
       : Promise.resolve(null),
     needsNativeGuideStore
       ? getKangurAiTutorNativeGuideStore(locale).catch((error) => {
-          void ErrorSystem.captureException(error);
+          void ErrorSystem.captureException(error, { service: 'kangur.knowledge-graph.retrieval', action: 'getKangurAiTutorNativeGuideStore', locale });
           return null;
         })
       : Promise.resolve(null),
     needsPageContentStore
       ? getKangurPageContentStore(locale).catch((error) => {
-          void ErrorSystem.captureException(error);
+          void ErrorSystem.captureException(error, { service: 'kangur.knowledge-graph.retrieval', action: 'getKangurPageContentStore', locale });
           return null;
         })
       : Promise.resolve(null),
     needsCmsPages
       ? cmsService.getPages().catch((error) => {
-          void ErrorSystem.captureException(error);
+          void ErrorSystem.captureException(error, { service: 'kangur.knowledge-graph.retrieval', action: 'cmsService.getPages', locale });
           return [] as Page[];
         })
       : Promise.resolve([] as Page[]),

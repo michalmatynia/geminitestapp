@@ -29,7 +29,7 @@ export async function getHandler(
   const repo = getCategoryMappingRepository();
   const mappings =
     query.marketplace === TRADERA_BROWSER_INTEGRATION_SLUG
-      ? await repo.listByMarketplace(query.marketplace, query.catalogId)
+      ? await repo.listByMarketplace(query.marketplace)
       : await repo.listByConnection(query.connectionId ?? '', query.catalogId);
 
   return NextResponse.json(mappings);

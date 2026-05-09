@@ -136,6 +136,28 @@ describe('file-storage-service', () => {
         baseUrl: 'https://sparksofsindri.com',
         uploadEndpoint: 'https://sparksofsindri.com/api/uploads/index.php',
         deleteEndpoint: 'https://sparksofsindri.com/api/uploads/delete/index.php',
+        resolveIp: '209.42.31.54',
+      })
+    );
+  });
+
+  it('derives the default fastcomet upload endpoint and DNS override for the primary domain', async () => {
+    findOneMock
+      .mockResolvedValueOnce({ value: 'fastcomet' })
+      .mockResolvedValueOnce({
+        value: JSON.stringify({
+          baseUrl: 'https://sparksofsindri.com',
+          keepLocalCopy: true,
+        }),
+      });
+
+    const settings = await getFileStorageSettings();
+
+    expect(settings.fastComet).toEqual(
+      expect.objectContaining({
+        baseUrl: 'https://sparksofsindri.com',
+        uploadEndpoint: 'https://sparksofsindri.com/api/uploads/index.php',
+        resolveIp: '209.42.31.54',
       })
     );
   });

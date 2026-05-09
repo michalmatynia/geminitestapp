@@ -21,6 +21,7 @@ export interface BrainRoutingCapabilityNodeItemProps {
   select: () => void;
   enabled: boolean;
   sourceLabel: 'Capability override' | 'Feature fallback' | 'Global defaults' | 'Feature disabled';
+  hasApiKeyOverride?: boolean;
   toggleDisabled?: boolean;
 }
 
@@ -51,7 +52,18 @@ const sourceBadgeClassName: Record<BrainRoutingCapabilityNodeItemProps['sourceLa
 export function BrainRoutingCapabilityNodeItem(
   props: BrainRoutingCapabilityNodeItemProps
 ): React.JSX.Element {
-  const { node, capability, depth, isSelected, isDragging, select, enabled, sourceLabel, toggleDisabled } = props;
+  const {
+    capability,
+    depth,
+    enabled,
+    hasApiKeyOverride = false,
+    isDragging,
+    isSelected,
+    node,
+    select,
+    sourceLabel,
+    toggleDisabled,
+  } = props;
   const { onToggleEnabled, onEdit, isPending } = useBrainRoutingCapabilityNodeItemRuntime();
 
   return (
@@ -77,6 +89,7 @@ export function BrainRoutingCapabilityNodeItem(
         <div className='flex h-full w-full min-w-0 items-center gap-1.5 text-left'>
           <NodeNameButton node={node} select={select} />
           <SourceBadge label={sourceLabel} />
+          {hasApiKeyOverride ? <RouteKeyBadge /> : null}
           <StatusToggle
             enabled={enabled}
             disabled={isPending || toggleDisabled}
@@ -124,6 +137,17 @@ function SourceBadge({ label }: { label: BrainRoutingCapabilityNodeItemProps['so
       className={cn('h-4 shrink-0 px-1 text-[10px] border-gray-600/50', sourceBadgeClassName[label])}
     >
       {label}
+    </Badge>
+  );
+}
+
+function RouteKeyBadge(): React.JSX.Element {
+  return (
+    <Badge
+      variant='outline'
+      className='h-4 shrink-0 border-amber-400/50 px-1 text-[10px] text-amber-300'
+    >
+      Route key
     </Badge>
   );
 }

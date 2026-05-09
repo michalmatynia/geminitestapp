@@ -33,6 +33,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
 
 import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { TRADERA_CATEGORY_MAPPING_CATALOG_ID } from '@/shared/lib/integration-slugs';
 
 import {
   resolveProductCatalogIds,
@@ -172,6 +173,52 @@ describe('selectPreferredTraderaCategoryMapping', () => {
       validMappingCount: 2,
       catalogMatchedMappingCount: 1,
     });
+  });
+
+  it('prefers the global Tradera mapping scope over legacy catalog-specific mappings', () => {
+    const result = selectPreferredTraderaCategoryMappingResolution({
+      product: createProduct(),
+      mappings: [
+        createMapping({
+          id: 'mapping-legacy-catalog',
+          catalogId: 'catalog-primary',
+          externalCategoryId: '2001',
+          externalCategory: {
+            ...createMapping().externalCategory,
+            externalId: '2001',
+            path: 'Legacy > Catalog Match',
+            name: 'Catalog Match',
+          },
+        }),
+        createMapping({
+          id: 'mapping-global',
+          catalogId: TRADERA_CATEGORY_MAPPING_CATALOG_ID,
+          externalCategoryId: '3001',
+          updatedAt: '2026-04-02T01:00:00.000Z',
+          externalCategory: {
+            ...createMapping().externalCategory,
+            externalId: '3001',
+            path: 'Global > Preferred',
+            name: 'Preferred',
+          },
+        }),
+      ],
+    });
+
+    expect(result.mapping).toEqual({
+      externalCategoryId: '3001',
+      externalCategoryName: 'Preferred',
+      externalCategoryPath: 'Global > Preferred',
+      internalCategoryId: 'internal-category-1',
+      catalogId: TRADERA_CATEGORY_MAPPING_CATALOG_ID,
+      sourceConnectionId: 'connection-1',
+      pathSegments: ['Global', 'Preferred'],
+    });
+    expect(result.reason).toBe('mapped');
+    expect(result.matchScope).toBe('cross_catalog');
+    expect(result.matchingMappingCount).toBe(2);
+    expect(result.validMappingCount).toBe(2);
+    expect(result.catalogMatchedMappingCount).toBe(1);
   });
 
   it('returns null when multiple active mapped categories remain after prioritization', () => {

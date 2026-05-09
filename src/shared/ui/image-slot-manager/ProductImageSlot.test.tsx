@@ -121,4 +121,44 @@ describe('ProductImageSlot', () => {
     expect(screen.queryByRole('button', { name: 'Clear image from slot 1' })).not.toBeInTheDocument();
     expect(screen.getByText('Upload')).toBeInTheDocument();
   });
+
+  it('offers a FastComet view for uploaded FastComet image slots', async () => {
+    const user = userEvent.setup();
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const controller = buildController();
+    controller.imageSlots = [
+      {
+        type: 'existing',
+        data: {
+          id: 'image-file-1',
+          filepath: 'https://sparksofsindri.com/uploads/products/SKU/photo.webp',
+          filename: 'photo.webp',
+          metadata: { storageSource: 'fastcomet' },
+          storageProvider: 'fastcomet',
+        },
+        previewUrl: 'https://sparksofsindri.com/uploads/products/SKU/photo.webp',
+        slotId: 'image-file-1',
+      },
+    ];
+
+    render(
+      <ProductImageManagerUIProvider externalBaseUrl='http://localhost:3000' explicitController={controller}>
+        <ProductImageSlot index={0} />
+      </ProductImageManagerUIProvider>
+    );
+
+    await user.click(screen.getByText('View: Upload'));
+    await user.click(screen.getByRole('menuitem', { name: 'FastComet' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Open full preview for image slot 1 in new tab' })
+    );
+
+    expect(screen.getByText('View: FastComet')).toBeInTheDocument();
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://sparksofsindri.com/uploads/products/SKU/photo.webp',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    openSpy.mockRestore();
+  });
 });

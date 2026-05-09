@@ -54,12 +54,12 @@ export const createLiveRunStateCoordinator = (runId: string): LiveRunStateCoordi
           await updateRunState(runId, patchFactory());
         })
         .catch(async (error) => {
-          await ErrorSystem.captureException(error);
+          await ErrorSystem.captureException(error, { service: 'playwright-node-runner', action: 'liveStateWriteChain.queueUpdate', runId });
         });
     },
     flush: async (): Promise<void> => {
       await liveStateWriteChain.catch(async (error) => {
-        await ErrorSystem.captureException(error);
+        await ErrorSystem.captureException(error, { service: 'playwright-node-runner', action: 'liveStateWriteChain.flush', runId });
       });
     },
     finalize: (): void => {
@@ -176,7 +176,7 @@ const captureFailureScreenshot = async (page: Page, runArtifactsDir: string): Pr
       kind: 'screenshot',
     });
   } catch (error) {
-    await ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error, { service: 'playwright-node-runner', action: 'captureFailureScreenshot', runArtifactsDir });
     return null;
   }
 };
@@ -193,7 +193,7 @@ const captureFailureHtml = async (page: Page, runArtifactsDir: string): Promise<
       kind: 'html',
     });
   } catch (error) {
-    await ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error, { service: 'playwright-node-runner', action: 'captureFailureHtml', runArtifactsDir });
     return null;
   }
 };
@@ -233,7 +233,7 @@ const captureFailureState = async (params: {
       kind: 'json',
     });
   } catch (error) {
-    await ErrorSystem.captureException(error);
+    await ErrorSystem.captureException(error, { service: 'playwright-node-runner', action: 'captureFailureState', runArtifactsDir, errorMessage: params.errorMessage });
     return null;
   }
 };

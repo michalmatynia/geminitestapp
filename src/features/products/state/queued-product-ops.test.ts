@@ -36,6 +36,19 @@ describe('queued-product-ops', () => {
     expect(ops.getQueuedAiRunProductIds()).toEqual(new Set(['product-run']));
   });
 
+  it('builds source keys for FastComet image uploads', () => {
+    expect(ops.buildQueuedProductFastCometUploadSource(' image-file-1 ', 0)).toBe(
+      'fastcomet-upload:image-file-1:0'
+    );
+    expect(ops.buildQueuedProductFastCometUploadSource('image-file-1')).toBe(
+      'fastcomet-upload:image-file-1'
+    );
+    expect(ops.buildQueuedProductFastCometUploadSource('image-file-1', -1)).toBe(
+      'fastcomet-upload:image-file-1'
+    );
+    expect(ops.buildQueuedProductFastCometUploadSource('')).toBeNull();
+  });
+
   it('keeps a product queued while at least one source remains', () => {
     const updateSource = ops.buildQueuedProductOfflineMutationSource('update');
     const aiRunSource = ops.buildQueuedProductAiRunSource('run-1');

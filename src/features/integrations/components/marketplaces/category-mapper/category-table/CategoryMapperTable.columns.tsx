@@ -41,8 +41,8 @@ const isMappingSelectDisabled = ({
   selectedCatalogId: string | null;
 }): boolean =>
   internalCategoriesLoading ||
-  selectedCatalogId === null ||
-  selectedCatalogId.trim().length === 0 ||
+  (!isTraderaConnection &&
+    (selectedCatalogId === null || selectedCatalogId.trim().length === 0)) ||
   (isTraderaConnection && isLeaf === false && currentMapping === null);
 
 const resolveInternalCategoryOptions = ({

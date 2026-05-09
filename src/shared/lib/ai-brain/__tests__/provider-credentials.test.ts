@@ -8,11 +8,22 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
   readStoredSettingValue: readStoredSettingValueMock,
 }));
 
-import { readBrainProviderCredential, resolveBrainProviderCredential } from '../provider-credentials';
+import {
+  readBrainProviderCredential,
+  readBrainProviderCredentialForAssignment,
+  resolveBrainProviderCredential,
+} from '../provider-credentials';
 
 describe('Brain provider credentials', () => {
+  const originalOpenAiApiKey = process.env['OPENAI_API_KEY'];
+
   beforeEach(() => {
     vi.clearAllMocks();
+    if (originalOpenAiApiKey === undefined) {
+      delete process.env['OPENAI_API_KEY'];
+    } else {
+      process.env['OPENAI_API_KEY'] = originalOpenAiApiKey;
+    }
   });
 
   it('prefers the global Brain provider key', async () => {
@@ -31,6 +42,7 @@ describe('Brain provider credentials', () => {
 
   it('reports missing when no stored Brain key exists', async () => {
     readStoredSettingValueMock.mockResolvedValue(null);
+    delete process.env['OPENAI_API_KEY'];
 
     const resolved = await readBrainProviderCredential('openai');
 
@@ -41,11 +53,40 @@ describe('Brain provider credentials', () => {
     });
   });
 
+  it('falls back to the provider environment variable', async () => {
+    readStoredSettingValueMock.mockResolvedValue(null);
+    process.env['OPENAI_API_KEY'] = 'env-openai-key';
+
+    const resolved = await readBrainProviderCredential('openai');
+
+    expect(resolved).toEqual({
+      apiKey: 'env-openai-key',
+      source: 'env',
+      sourceKey: 'OPENAI_API_KEY',
+    });
+  });
+
+  it('prefers a route assignment API key override over global provider settings', async () => {
+    readStoredSettingValueMock.mockResolvedValue('brain-openai-key');
+
+    const resolved = await readBrainProviderCredentialForAssignment('openai', {
+      apiKey: ' route-openai-key ',
+    });
+
+    expect(resolved).toEqual({
+      apiKey: 'route-openai-key',
+      source: 'assignment',
+      sourceKey: 'assignment.apiKey',
+    });
+    expect(readStoredSettingValueMock).not.toHaveBeenCalled();
+  });
+
   it('throws a Brain-owned configuration error when a provider credential is missing', async () => {
     readStoredSettingValueMock.mockResolvedValue(null);
+    delete process.env['OPENAI_API_KEY'];
 
     await expect(resolveBrainProviderCredential('openai')).rejects.toMatchObject({
-      message: 'OpenAI API key is missing in AI Brain provider settings.',
+      message: 'OpenAI API key is missing in AI Brain provider settings and environment.',
       code: 'CONFIGURATION_ERROR',
     });
   });

@@ -135,6 +135,15 @@ vi.mock('./shipping-group', () => ({
 }));
 
 vi.mock('./price', () => ({
+  TRADERA_LISTING_PRICE_CURRENCY_CODE: 'SEK',
+  buildTraderaListingPriceResolutionFailureMessage: (currencyCode = 'SEK') =>
+    `FAIL_PRICE_RESOLUTION: Tradera export requires a ${currencyCode} listing price. Add a ${currencyCode} price group to the product catalog and retry.`,
+  formatTraderaListingPriceInputValue: (value: number, currencyCode = 'SEK') => {
+    if (currencyCode === 'SEK') {
+      return String(Math.max(1, Math.round(value)));
+    }
+    return Number.isInteger(value) ? String(value) : value.toFixed(2);
+  },
   resolveTraderaListingPriceForProduct: (...args: unknown[]) =>
     resolveTraderaListingPriceForProductMock(...args),
 }));
@@ -150,8 +159,8 @@ import { TRADERA_CHECK_STATUS_SCRIPT } from './check-status-script';
 
 const EXPECTED_TRADERA_PRICING_METADATA = {
   listingPrice: 55,
-  listingCurrencyCode: 'EUR',
-  targetCurrencyCode: 'EUR',
+  listingCurrencyCode: 'SEK',
+  targetCurrencyCode: 'SEK',
   resolvedToTargetCurrency: true,
   basePrice: 123,
   baseCurrencyCode: 'PLN',
@@ -242,7 +251,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v153');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v154');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const hasExecutionStep = (id) => getExecutionStep(id) !== null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_ACTION_MANIFEST: Required Tradera quicklist step "');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const QUICKLIST_ACTION_EXECUTION_STEPS = {');
@@ -629,7 +638,10 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
       'const commitShippingDialogPriceInput = async (shippingPriceInput) => {'
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
-      'const buildShippingDialogPriceEntryVariants = (priceValue) => {'
+      'const buildPriceFieldEntryVariants = (priceValue, options = {}) => {'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const buildShippingDialogPriceEntryVariants = (priceValue) =>'
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'const captureShippingDialogSaveState = async (shippingDialog) => {'

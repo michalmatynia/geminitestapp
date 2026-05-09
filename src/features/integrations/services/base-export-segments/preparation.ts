@@ -273,7 +273,12 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
           try {
             return await producerRepository.getProducerById(producerId);
           } catch (error) {
-            void ErrorSystem.captureException(error);
+            void ErrorSystem.captureException(error, {
+              service: 'base-export-preparation',
+              action: 'getProducerById',
+              productId,
+              producerId,
+            });
             return null;
           }
         })
@@ -286,7 +291,12 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
           try {
             return await producerRepository.findByName(producerName);
           } catch (error) {
-            void ErrorSystem.captureException(error);
+            void ErrorSystem.captureException(error, {
+              service: 'base-export-preparation',
+              action: 'findProducerByName',
+              productId,
+              producerName,
+            });
             return null;
           }
         })
@@ -315,7 +325,12 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ])
       );
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, {
+        service: 'base-export-preparation',
+        action: 'resolveProducerNames',
+        productId,
+        producerCount: productProducerIds.length + productProducerNames.length,
+      });
       await ErrorSystem.logWarning('[export-to-base] Failed to resolve producer names for export', {
         productId,
         producerCount: productProducerIds.length + productProducerNames.length,
@@ -354,7 +369,13 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, {
+        service: 'base-export-preparation',
+        action: 'resolveProducerMappings',
+        productId,
+        producerCount: producerLookupIds.length,
+        connectionId: data.connectionId,
+      });
       await ErrorSystem.logWarning(
         '[export-to-base] Failed to resolve producer mappings for export',
         {
@@ -374,7 +395,12 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
           try {
             return await tagRepository.getTagById(tagId);
           } catch (error) {
-            void ErrorSystem.captureException(error);
+            void ErrorSystem.captureException(error, {
+              service: 'base-export-preparation',
+              action: 'getTagById',
+              productId,
+              tagId,
+            });
             return null;
           }
         })
@@ -394,7 +420,12 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, {
+        service: 'base-export-preparation',
+        action: 'resolveTagNames',
+        productId,
+        tagCount: productTagIds.length,
+      });
       await ErrorSystem.logWarning('[export-to-base] Failed to resolve tag names for export', {
         productId,
         tagCount: productTagIds.length,
@@ -427,7 +458,13 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
-      void ErrorSystem.captureException(error);
+      void ErrorSystem.captureException(error, {
+        service: 'base-export-preparation',
+        action: 'resolveTagMappings',
+        productId,
+        tagCount: productTagIds.length,
+        connectionId: data.connectionId,
+      });
       await ErrorSystem.logWarning('[export-to-base] Failed to resolve tag mappings for export', {
         productId,
         tagCount: productTagIds.length,

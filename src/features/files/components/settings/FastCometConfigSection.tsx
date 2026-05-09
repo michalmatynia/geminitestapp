@@ -68,15 +68,15 @@ const FastCometConfigFields = ({
       label='Base URL'
       value={config.baseUrl}
       onChange={(val) => setConfig((p) => ({ ...p, baseUrl: val as string }))}
-      hint='Optional public base URL, e.g. https://files.your-domain.com.'
-      placeholder='https://files.example.com'
+      hint='Public file base URL. Default: https://sparksofsindri.com.'
+      placeholder='https://sparksofsindri.com'
     />
     <ConfigField
       label='Upload endpoint'
       value={config.uploadEndpoint}
       onChange={(val) => setConfig((p) => ({ ...p, uploadEndpoint: val as string }))}
-      hint='Server endpoint that receives multipart upload requests from this app.'
-      placeholder='https://files.example.com/api/uploads'
+      hint='Optional. When empty, this uses <Base URL>/api/uploads/index.php.'
+      placeholder='https://sparksofsindri.com/api/uploads/index.php'
     />
     <ConfigField
       label='Delete endpoint'
@@ -125,7 +125,7 @@ export const FastCometConfigSection = ({
 }): React.JSX.Element => (
   <FormSection
     title='FastComet Configuration'
-    description='Used when source is set to FastComet. Upload endpoint is required.'
+    description='Used when source is set to FastComet. The default upload endpoint is derived from the base URL.'
     className='p-6'
   >
     <FastCometConfigFields config={config} setConfig={setConfig} />

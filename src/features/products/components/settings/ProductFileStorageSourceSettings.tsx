@@ -182,9 +182,9 @@ export function ProductFileStorageSourceSettings(): React.JSX.Element {
         source={controller.source}
       />
 
-      {controller.isFastCometMissingEndpoint && (
+      {controller.isFastCometMisconfigured && (
         <Alert variant='warning'>
-          FastComet needs an upload endpoint before it can be selected for product uploads.
+          FastComet needs a public base URL before it can be selected for product uploads.
         </Alert>
       )}
 

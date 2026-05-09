@@ -1,11 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  assertProductStudioGenerationConfigurationReadyMock,
   resolveImageStudioContextRegistryEnvelopeMock,
   sendProductImageToStudioMock,
 } = vi.hoisted(() => ({
+  assertProductStudioGenerationConfigurationReadyMock: vi.fn(),
   resolveImageStudioContextRegistryEnvelopeMock: vi.fn(),
   sendProductImageToStudioMock: vi.fn(),
+}));
+
+vi.mock('@/features/ai/image-studio/product-studio/product-studio-service.generation-config', () => ({
+  assertProductStudioGenerationConfigurationReady: assertProductStudioGenerationConfigurationReadyMock,
 }));
 
 vi.mock('@/features/ai/image-studio/context-registry/server', () => ({
@@ -36,9 +42,11 @@ const createSlot = (id: string) => ({
 
 describe('products studio send handler', () => {
   beforeEach(() => {
+    assertProductStudioGenerationConfigurationReadyMock.mockReset();
     resolveImageStudioContextRegistryEnvelopeMock.mockReset();
     sendProductImageToStudioMock.mockReset();
 
+    assertProductStudioGenerationConfigurationReadyMock.mockResolvedValue(undefined);
     resolveImageStudioContextRegistryEnvelopeMock.mockResolvedValue({
       refs: [
         {
@@ -160,6 +168,7 @@ describe('products studio send handler', () => {
       ],
       engineVersion: 'page-context:v1',
     });
+    expect(assertProductStudioGenerationConfigurationReadyMock).toHaveBeenCalledTimes(1);
     expect(sendProductImageToStudioMock).toHaveBeenCalledWith(
       expect.objectContaining({
         productId: 'product-1',
@@ -182,5 +191,29 @@ describe('products studio send handler', () => {
       runStatus: 'queued',
       runKind: 'generation',
     });
+  });
+
+  it('stops before dispatch when Image Studio generation configuration is missing', async () => {
+    assertProductStudioGenerationConfigurationReadyMock.mockRejectedValue(
+      new Error('OpenAI API key is not configured. Add it in /admin/brain?tab=providers.')
+    );
+
+    await expect(
+      postHandler(
+        new Request('http://localhost/api/v2/products/product-1/studio/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageSlotIndex: 0,
+            projectId: 'studio-project-1',
+          }),
+        }) as Parameters<typeof postHandler>[0],
+        { requestId: 'req-products-studio-send' } as Parameters<typeof postHandler>[1],
+        { id: 'product-1' }
+      )
+    ).rejects.toThrow('/admin/brain?tab=providers');
+
+    expect(resolveImageStudioContextRegistryEnvelopeMock).not.toHaveBeenCalled();
+    expect(sendProductImageToStudioMock).not.toHaveBeenCalled();
   });
 });

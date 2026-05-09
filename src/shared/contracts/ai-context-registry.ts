@@ -62,6 +62,16 @@ export const contextExampleSchema = z.object({
 });
 export type ContextExample = z.infer<typeof contextExampleSchema>;
 
+const optionalContextNodeJsonSchemaSchema = z.preprocess(
+  (value) => (value === null ? undefined : value),
+  z.record(z.string(), z.unknown()).optional()
+);
+
+const optionalContextExamplesSchema = z.preprocess(
+  (value) => (value === null ? undefined : value),
+  z.array(contextExampleSchema).optional()
+);
+
 // ─── Source ───────────────────────────────────────────────────────────────────
 
 export const contextNodeSourceSchema = z.object({
@@ -80,8 +90,8 @@ export const contextNodeSchema = z.object({
   tags: z.array(z.string()),
   owner: z.string().optional(),
   relationships: z.array(contextRelationshipSchema).optional(),
-  jsonSchema2020: z.record(z.string(), z.unknown()).optional(),
-  examples: z.array(contextExampleSchema).optional(),
+  jsonSchema2020: optionalContextNodeJsonSchemaSchema,
+  examples: optionalContextExamplesSchema,
   permissions: contextNodePermissionsSchema,
   version: z.string(),
   updatedAtISO: z.string(),
@@ -94,11 +104,16 @@ export type ContextNode = z.infer<typeof contextNodeSchema>;
 export const contextRegistryRefKindSchema = z.enum(['static_node', 'runtime_document']);
 export type ContextRegistryRefKind = z.infer<typeof contextRegistryRefKindSchema>;
 
+const optionalContextRegistryRefMetadataSchema = z.preprocess(
+  (value) => (value === null ? undefined : value),
+  z.string().min(1).optional()
+);
+
 export const contextRegistryRefSchema = z.object({
   id: z.string().min(1),
   kind: contextRegistryRefKindSchema,
-  providerId: z.string().min(1).optional(),
-  entityType: z.string().min(1).optional(),
+  providerId: optionalContextRegistryRefMetadataSchema,
+  entityType: optionalContextRegistryRefMetadataSchema,
 });
 export type ContextRegistryRef = z.infer<typeof contextRegistryRefSchema>;
 

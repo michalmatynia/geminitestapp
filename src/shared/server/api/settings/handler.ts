@@ -126,6 +126,8 @@ import { isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
 import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { PLAYWRIGHT_ACTIONS_SETTINGS_KEY } from '@/shared/contracts/playwright-steps';
+import { AI_BRAIN_SETTINGS_KEY } from '@/shared/lib/ai-brain/settings';
+import { invalidateBrainSettingsCache } from '@/shared/lib/ai-brain/server';
 
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
@@ -167,7 +169,11 @@ const syncTraderaRelistSchedulerWorker = async (key: string): Promise<void> => {
       await import('@/features/integrations/server');
     startTraderaRelistSchedulerQueue();
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'api/settings',
+      action: 'syncTraderaRelistSchedulerWorker',
+      key,
+    });
     await ErrorSystem.logWarning('[settings] Failed to sync Tradera relist scheduler worker.', {
       service: 'api/settings',
       key,
@@ -187,6 +193,7 @@ const revalidateFrontPageSelectionRoutes = async (): Promise<void> => {
       service: 'api/settings',
       source: 'api/settings',
       action: 'revalidateFrontPageSelectionRoutes',
+      paths: FRONT_PAGE_REVALIDATION_PATHS,
     });
     await ErrorSystem.logWarning('[settings] Failed to revalidate front page selection routes.', {
       service: 'api/settings',
@@ -207,7 +214,11 @@ const ensureSettingsIndexes = async (): Promise<void> => {
           .collection(SETTINGS_COLLECTION)
           .createIndex({ key: 1 }, { name: 'settings_key' });
       } catch (error) {
-        void ErrorSystem.captureException(error);
+        void ErrorSystem.captureException(error, {
+          service: 'api/settings',
+          action: 'ensureSettingsIndexes',
+          collection: SETTINGS_COLLECTION,
+        });
         await ErrorSystem.logWarning('[settings] Failed to ensure settings indexes.', {
           service: 'api/settings',
           error,
@@ -288,7 +299,12 @@ const maybeFilterDetachedCaseResolverPayloadByFileId = ({
       files: filteredFiles,
     });
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'api/settings',
+      action: 'maybeFilterDetachedCaseResolverPayloadByFileId',
+      key,
+      fileId,
+    });
     return value;
   }
 };
@@ -525,7 +541,10 @@ const attachProviderHeader = async (response: Response): Promise<void> => {
     const provider = await getAppDbProvider();
     response.headers.set('X-App-Db-Provider', provider);
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'api/settings',
+      action: 'attachProviderHeader',
+    });
     await ErrorSystem.logWarning('[settings] Failed to resolve app DB provider.', {
       service: 'api/settings',
       error,
@@ -1001,6 +1020,9 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
   if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
     invalidateAppDbProviderCache();
+  }
+  if (setting.key === AI_BRAIN_SETTINGS_KEY) {
+    invalidateBrainSettingsCache();
   }
   if (setting.key === KANGUR_LAUNCH_ROUTE_SETTINGS_KEY) {
     primeKangurLaunchRouteRuntime(normalizedSetting.value);

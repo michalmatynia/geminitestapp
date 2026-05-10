@@ -151,6 +151,107 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
+body[data-cosmos-background='enabled'] {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(var(--gold-rgb),0.06) 0%, transparent 20rem),
+    radial-gradient(circle at 86% 18%, rgba(var(--blue-rgb),0.08) 0%, transparent 24rem),
+    linear-gradient(180deg, #020205 0%, #03040a 48%, #010104 100%);
+  background-attachment: fixed;
+}
+
+.site-content-root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+.cosmos-parallax-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  contain: paint;
+}
+
+.cosmos-parallax-layer {
+  position: absolute;
+  inset: -14vh -10vw;
+  background-repeat: repeat;
+  mix-blend-mode: screen;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+.cosmos-parallax-layer--far {
+  opacity: 0.34;
+  background-image:
+    radial-gradient(circle at center, rgba(var(--mint-rgb),0.56) 0 0.5px, transparent 0.95px),
+    radial-gradient(circle at center, rgba(var(--gold-rgb),0.35) 0 0.65px, transparent 1.05px);
+  background-position: 0 0, 44px 68px;
+  background-size: 132px 132px, 214px 214px;
+}
+
+.cosmos-parallax-layer--mid {
+  opacity: 0.44;
+  background-image:
+    radial-gradient(circle at center, rgba(var(--gold-rgb),0.7) 0 0.65px, transparent 1.1px),
+    radial-gradient(circle at center, rgba(var(--blue-rgb),0.46) 0 0.85px, transparent 1.25px),
+    radial-gradient(circle at center, rgba(var(--mint-rgb),0.42) 0 0.6px, transparent 1px);
+  background-position: 32px 16px, 80px 54px, 12px 92px;
+  background-size: 188px 188px, 118px 118px, 272px 272px;
+}
+
+.cosmos-parallax-layer--near {
+  opacity: 0.3;
+  background-image:
+    radial-gradient(circle at center, rgba(var(--mint-rgb),0.86) 0 0.8px, transparent 1.4px),
+    radial-gradient(circle at center, rgba(var(--gold-rgb),0.7) 0 0.95px, transparent 1.55px),
+    radial-gradient(circle at center, rgba(var(--coral-rgb),0.45) 0 0.7px, transparent 1.2px);
+  background-position: 22px 40px, 94px 108px, 146px 12px;
+  background-size: 296px 296px, 178px 178px, 238px 238px;
+}
+
+@supports (animation-timeline: scroll()) {
+  .cosmos-parallax-layer--far {
+    animation: cosmos-parallax-far linear both;
+    animation-timeline: scroll(root block);
+  }
+
+  .cosmos-parallax-layer--mid {
+    animation: cosmos-parallax-mid linear both;
+    animation-timeline: scroll(root block);
+  }
+
+  .cosmos-parallax-layer--near {
+    animation: cosmos-parallax-near linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+@keyframes cosmos-parallax-far {
+  from { transform: translate3d(0, -2vh, 0); }
+  to { transform: translate3d(0, 4vh, 0); }
+}
+
+@keyframes cosmos-parallax-mid {
+  from { transform: translate3d(0, -5vh, 0); }
+  to { transform: translate3d(0, 8vh, 0); }
+}
+
+@keyframes cosmos-parallax-near {
+  from { transform: translate3d(0, -8vh, 0); }
+  to { transform: translate3d(0, 12vh, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmos-parallax-layer {
+    animation: none;
+    transform: none;
+  }
+}
+
 /* ─── Dot grid background ──────────────────────────────────────── */
 .dot-grid {
   background-image: radial-gradient(var(--dot-grid-color) 1px, transparent 1px);

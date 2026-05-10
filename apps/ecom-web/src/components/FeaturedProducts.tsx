@@ -8,7 +8,7 @@ import type { Product } from '@/data/products';
 import { ProductImage } from '@/components/ProductImage';
 import { HOME_CONTENT_DEFAULTS, type HomeFeaturedContent } from '@/data/homeContent';
 import { formatPrice } from '@/lib/locales';
-import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
+import { gsap, useGSAP } from '@/lib/gsap';
 
 const FEATURED_SLUGS = [
   'amphora-vessel',
@@ -58,7 +58,7 @@ function ProductCard({ product, quickAddLabel, priority = false }: { product: Pr
           imageUrl={product.imageUrl}
           gradient={product.gradient}
           alt={product.shortName ?? product.name}
-          sizes="(max-width: 768px) 50vw, 25vw"
+          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 12.5vw"
           className="card-image absolute inset-0"
           fit="cover"
           position="center"
@@ -69,10 +69,14 @@ function ProductCard({ product, quickAddLabel, priority = false }: { product: Pr
           imageUrl={product.imageUrls?.[1] ?? product.imageUrl}
           gradient={product.gradientAlt ?? product.gradient}
           alt={product.shortName ?? product.name}
-          sizes="(max-width: 768px) 50vw, 25vw"
+          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 12.5vw"
           className="absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0 group-hover:opacity-100"
           fit="cover"
           position="center"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-2/3 bg-gradient-to-t from-black/65 via-black/20 to-transparent opacity-90 transition-opacity duration-500 group-hover:opacity-100"
         />
 
         {product.tag && (
@@ -180,15 +184,14 @@ export function FeaturedProducts({
         scrollTrigger: { trigger: '.feat-header', start: 'top 88%', toggleActions: 'play none none none' },
       });
 
-    /* Product cards stagger */
-    ScrollTrigger.batch('.feat-card', {
-      start: 'top 92%',
-      onEnter: (batch) => {
-        gsap.fromTo(batch,
-          { opacity: 0, y: 70, scale: 0.96 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: 'expo.out', stagger: 0.09 });
-      },
-    });
+    /* Product grid */
+    gsap.fromTo('.feat-grid',
+      { opacity: 0, y: 52, scale: 0.985 },
+      {
+        opacity: 1, y: 0, scale: 1, duration: 1.15, ease: 'power3.out', force3D: true,
+        clearProps: 'transform,opacity',
+        scrollTrigger: { trigger: '.feat-grid', start: 'top 92%', toggleActions: 'play none none none' },
+      });
 
     /* CTA button */
     gsap.fromTo('.feat-cta',
@@ -200,9 +203,14 @@ export function FeaturedProducts({
   }, { scope: sectionRef, dependencies: [] });
 
   return (
-    <section ref={sectionRef} className="px-6 md:px-10 pb-16 md:pb-20 max-w-screen-2xl mx-auto">
+    <section ref={sectionRef} className="relative isolate px-6 md:px-10 pb-16 md:pb-20 max-w-screen-2xl mx-auto">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-56 bg-gradient-to-t from-black/70 via-black/25 to-transparent"
+      />
+
       {/* Section header */}
-      <div className="feat-header flex items-end justify-between mb-12" style={{ opacity: 0 }}>
+      <div className="feat-header relative z-10 flex items-end justify-between mb-12" style={{ opacity: 0 }}>
         <div>
           <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
             {isLive ? content.liveEyebrow : content.fallbackEyebrow}
@@ -230,16 +238,16 @@ export function FeaturedProducts({
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="feat-grid relative z-10 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 md:gap-4" style={{ opacity: 0 }}>
         {featured.map((product, index) => (
-          <div key={product.id} className="feat-card" style={{ opacity: 0 }}>
-            <ProductCard product={product} quickAddLabel={content.quickAddLabel} priority={index < 4} />
+          <div key={product.id} className="feat-card">
+            <ProductCard product={product} quickAddLabel={content.quickAddLabel} priority={index < 8} />
           </div>
         ))}
       </div>
 
       {/* View all CTA */}
-      <div className="feat-cta flex justify-center mt-10" style={{ opacity: 0 }}>
+      <div className="feat-cta relative z-30 flex justify-center mt-10" style={{ opacity: 0 }}>
         <a href={localizedHref(content.ctaHref)} className="btn-primary px-16">
           {isLive ? content.ctaLiveLabel : content.ctaFallbackLabel}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

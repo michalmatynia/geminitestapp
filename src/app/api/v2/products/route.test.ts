@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+vi.mock('@/features/auth/server', () => ({}));
 
 import { GET, POST } from './[[...path]]/route';
 
@@ -17,6 +19,14 @@ describe('products route module', () => {
   it('does not export route segment config incompatible with Cache Components', () => {
     expect(catchAllRouteSource).not.toContain('export const runtime');
     expect(catchAllRouteSource).not.toContain('export const dynamic');
+  });
+
+  it('registers the auth session resolver before dispatching product API handlers', () => {
+    expect(catchAllRouteSource).toContain("import '@/features/auth/server';");
+  });
+
+  it('registers ecommerce pages editorial articles routes', () => {
+    expect(catchAllRouteSource).toContain('../pages/editorial-articles/route-handler');
   });
 
   it('registers title-terms routes before the generic product id route', () => {

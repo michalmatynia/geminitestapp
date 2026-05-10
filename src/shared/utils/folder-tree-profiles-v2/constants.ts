@@ -93,6 +93,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: universe_card',
     folderHint: 'Example: visible_group, hidden_group',
   },
+  ecommerce_editorial_articles: {
+    title: 'Ecommerce Editorial Articles',
+    description: 'Controls the Lore & Drops article browser tree in the Stargater Pages CMS.',
+    fileHint: 'Example: editorial_article',
+    folderHint: 'Example: visible_group, hidden_group',
+  },
   case_resolver: {
     title: 'Case Resolver',
     description: 'Controls folder/case nesting and placeholders in Case Resolver.',
@@ -286,6 +292,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Universe cards tree updated.',
+  },
+  ecommerce_editorial_articles: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Lore articles tree updated.',
   },
   case_resolver: {
     notifySuccess: true,

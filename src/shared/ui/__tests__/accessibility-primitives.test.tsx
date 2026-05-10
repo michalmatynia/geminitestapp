@@ -155,6 +155,14 @@ describe('shared accessibility primitives', () => {
         <div data-testid='auto-scroll-region' style={{ maxHeight: 10, overflowY: 'auto' }}>
           <div style={{ height: 20 }} />
         </div>
+        <textarea
+          aria-label='Scrollable textarea'
+          data-testid='scroll-textarea'
+          disabled
+          readOnly
+          style={{ maxHeight: 10, overflowY: 'auto' }}
+          value={Array.from({ length: 20 }, (_, index) => `Line ${index + 1}`).join('\n')}
+        />
         <div
           data-testid='ignored-scroll-region'
           data-scroll-focus-ignore='true'
@@ -173,6 +181,8 @@ describe('shared accessibility primitives', () => {
     });
 
     expect(screen.getByTestId('ignored-scroll-region')).not.toHaveAttribute('tabindex');
+    expect(screen.getByTestId('scroll-textarea')).not.toHaveAttribute('tabindex');
+    expect(screen.getByTestId('scroll-textarea')).not.toHaveAttribute('role', 'region');
     expect(screen.getByTestId('skip-target')).toHaveAttribute('tabindex', '-1');
   });
 

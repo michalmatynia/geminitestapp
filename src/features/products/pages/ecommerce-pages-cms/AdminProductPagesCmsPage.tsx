@@ -3,9 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ImageIcon } from 'lucide-react';
 
+import { BackgroundSettingsCard } from './BackgroundSettingsCard';
 import { CollectionCardsEditorCard } from './CollectionCardsEditorCard';
+import { EditorialArticlesEditorCard } from './EditorialArticlesEditorCard';
 import { LogoPreviewCard, LogoUploadCard, type LogoController } from './LogoCmsCards';
+import { ManifestoCmsCard } from './ManifestoCmsCard';
+import { useBackgroundSettingsController } from './background-cms.client';
 import { useCollectionCardsController } from './collection-cards-cms.client';
+import { useEditorialArticlesController } from './editorial-articles-cms.client';
+import { useManifestoController } from './manifesto-cms.client';
 import { api } from '@/shared/lib/api-client';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -123,7 +129,10 @@ const usePagesCmsLogoController = (): LogoController => {
 
 export function AdminProductPagesCmsPage(): React.JSX.Element {
   const logoController = usePagesCmsLogoController();
+  const backgroundController = useBackgroundSettingsController();
+  const manifestoController = useManifestoController();
   const collectionCardsController = useCollectionCardsController();
+  const editorialArticlesController = useEditorialArticlesController();
 
   return (
     <AdminProductsPageLayout
@@ -137,7 +146,10 @@ export function AdminProductPagesCmsPage(): React.JSX.Element {
           <LogoUploadCard controller={logoController} />
           <LogoPreviewCard controller={logoController} />
         </div>
+        <BackgroundSettingsCard controller={backgroundController} />
+        <ManifestoCmsCard controller={manifestoController} />
         <CollectionCardsEditorCard controller={collectionCardsController} />
+        <EditorialArticlesEditorCard controller={editorialArticlesController} />
       </div>
     </AdminProductsPageLayout>
   );

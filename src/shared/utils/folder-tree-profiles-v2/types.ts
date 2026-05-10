@@ -37,6 +37,7 @@ export const folderTreeInstanceValues = [
   'product_categories',
   'cms_page_builder',
   'ecommerce_universe_cards',
+  'ecommerce_editorial_articles',
   'case_resolver',
   'case_resolver_case_hierarchy',
   'case_resolver_document_relations',

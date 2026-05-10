@@ -11,6 +11,7 @@ import { CartDrawer } from '@/components/CartDrawer';
 import { BackToTop } from '@/components/BackToTop';
 import { QuickViewModal } from '@/components/QuickViewModal';
 import { CookieConsent } from '@/components/CookieConsent';
+import { CosmosParallaxBackground } from '@/components/CosmosParallaxBackground';
 import { SiteContentProvider } from '@/context/SiteContentContext';
 import { LocaleProvider } from '@/context/LocaleContext';
 import { getSiteContent } from '@/lib/cms';
@@ -56,10 +57,11 @@ const themeInitScript = `
 })();
 `;
 
+const productionSiteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 const siteUrl =
   process.env.NEXT_PUBLIC_ECOM_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  (typeof productionSiteUrl === 'string' && productionSiteUrl.length > 0
+    ? `https://${productionSiteUrl}`
     : 'http://localhost:3001');
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -103,40 +105,44 @@ export default async function RootLayout({ children }: { children: ReactNode }):
     getSiteContent(locale),
     getMentiosCatalogLocales(),
   ]);
+  const cosmosParallaxEnabled = siteContent.background.cosmosParallaxEnabled;
 
   return (
     <html
       lang={locale}
       suppressHydrationWarning
-      data-theme="nightly"
+      data-theme='nightly'
       className={`nightly dark ${exo2.variable} ${barlow.variable} ${ibmPlexMono.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body>
-        <LocaleProvider locale={locale} pathname={pathname} search={search} availableLocales={availableLocales}>
-          <SiteContentProvider content={siteContent}>
-            <ToastProvider>
-              <AuthProvider>
-              <WishlistProvider>
-                <RecentlyViewedProvider>
-                <QuickViewProvider>
-                <CartProvider>
-                  {children}
-                  <CartDrawer />
-                  <ToastContainer />
-                  <BackToTop />
-                  <QuickViewModal />
-                  <CookieConsent />
-                </CartProvider>
-                </QuickViewProvider>
-                </RecentlyViewedProvider>
-              </WishlistProvider>
-              </AuthProvider>
-            </ToastProvider>
-          </SiteContentProvider>
-        </LocaleProvider>
+      <body data-cosmos-background={cosmosParallaxEnabled ? 'enabled' : 'disabled'}>
+        <CosmosParallaxBackground enabled={cosmosParallaxEnabled} />
+        <div className='site-content-root'>
+          <LocaleProvider locale={locale} pathname={pathname} search={search} availableLocales={availableLocales}>
+            <SiteContentProvider content={siteContent}>
+              <ToastProvider>
+                <AuthProvider>
+                <WishlistProvider>
+                  <RecentlyViewedProvider>
+                  <QuickViewProvider>
+                  <CartProvider>
+                    {children}
+                    <CartDrawer />
+                    <ToastContainer />
+                    <BackToTop />
+                    <QuickViewModal />
+                    <CookieConsent />
+                  </CartProvider>
+                  </QuickViewProvider>
+                  </RecentlyViewedProvider>
+                </WishlistProvider>
+                </AuthProvider>
+              </ToastProvider>
+            </SiteContentProvider>
+          </LocaleProvider>
+        </div>
       </body>
     </html>
   );

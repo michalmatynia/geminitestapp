@@ -409,19 +409,47 @@ function getHomeCategoryCardTarget(card: HomeCategoryCardContent): string {
 
 function reportsToText(reports: HomeEditorialReportContent[]): string {
   return reports
-    .map((report) => `${report.tag} | ${report.title} | ${report.excerpt} | ${report.href}`)
+    .map((report) => {
+      const body = report.body.replace(/\n/g, '\\n');
+      return [
+        report.id,
+        report.tag,
+        report.title,
+        report.excerpt,
+        report.href,
+        report.visible ? 'visible' : 'hidden',
+        body,
+      ].join(' | ');
+    })
     .join('\n');
 }
 
 function textToReports(value: string): HomeEditorialReportContent[] {
   return splitLines(value)
     .map((line) => {
-      const [tag = '', title = '', excerpt = '', href = ''] = line.split('|');
+      const parts = line.split('|').map((part) => part.trim());
+      if (parts.length <= 4) {
+        const [tag = '', title = '', excerpt = '', href = ''] = parts;
+        return {
+          id: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+          tag,
+          title,
+          excerpt,
+          body: excerpt,
+          visible: true,
+          href,
+        };
+      }
+      const [id = '', tag = '', title = '', excerpt = '', href = '', visible = 'visible', body = ''] =
+        parts;
       return {
-        tag: tag.trim(),
-        title: title.trim(),
-        excerpt: excerpt.trim(),
-        href: href.trim(),
+        id,
+        tag,
+        title,
+        excerpt,
+        body: body.replace(/\\n/g, '\n') || excerpt,
+        visible: visible.toLowerCase() !== 'hidden',
+        href,
       };
     })
     .filter((report) => report.tag || report.title || report.excerpt);

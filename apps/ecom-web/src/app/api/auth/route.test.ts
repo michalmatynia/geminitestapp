@@ -167,11 +167,12 @@ describe('POST /api/auth/logout', () => {
 // ── /me ───────────────────────────────────────────────────────────────────
 
 describe('GET /api/auth/me', () => {
-  it('returns 401 when not signed in', async () => {
+  it('returns a null user when not signed in', async () => {
     mocks.getSession.mockResolvedValue(null);
-    // me route imports getSession from @/lib/auth — spy on the module
     const res = await me();
-    expect(res.status).toBe(401);
+    const body = await res.json() as { user: null };
+    expect(res.status).toBe(200);
+    expect(body.user).toBeNull();
   });
 });
 

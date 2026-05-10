@@ -23,6 +23,7 @@ export interface HomeHeroContent {
 
 export interface HomeManifestoContent {
   marqueeItems: string[];
+  backgroundImageUrl: string;
   eyebrow: string;
   quotePrefix: string;
   quoteEmphasis: string;
@@ -67,9 +68,12 @@ export interface HomeFeaturedContent {
 }
 
 export interface HomeEditorialReportContent {
+  id: string;
   tag: string;
   title: string;
   excerpt: string;
+  body: string;
+  visible: boolean;
   href: string;
 }
 
@@ -144,6 +148,7 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
       'Limited Drops',
       'Rare Finds',
     ],
+    backgroundImageUrl: '',
     eyebrow: "The Collector's Creed",
     quotePrefix: 'Every universe deserves',
     quoteEmphasis: 'a piece you can hold',
@@ -223,29 +228,41 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
     eyebrow: 'Universe Reports',
     title: 'Lore & Drops',
     ctaLabel: 'All reports',
-    ctaHref: '#',
+    ctaHref: '/lore-drops',
     readLabel: 'Read Report',
     reports: [
       {
+        id: 'attack-on-titan-final-collection',
         tag: 'Universe Report',
         title: 'Attack on Titan — The Final Collection',
         excerpt:
           'Survey Corps insignia, crystal-cast pins and wall-break keychains from the most iconic arc in modern anime.',
-        href: '#',
+        body:
+          'Survey Corps insignia, crystal-cast pins and wall-break keychains anchor this edit of Attack on Titan collectibles.\n\nThe collection focuses on objects that feel like field notes from the final arc: compact, symbolic, and easy to carry every day.',
+        visible: true,
+        href: '/lore-drops/attack-on-titan-final-collection',
       },
       {
+        id: 'elden-ring-talisman-series',
         tag: 'Gaming Drop',
         title: 'Elden Ring Talisman Series',
         excerpt:
           'Gilded pendants, smithing stone charms and Great Rune keychains — forged for Tarnished who survived the Lands Between.',
-        href: '#',
+        body:
+          'The Elden Ring talisman series leans into worn metal, rune geometry, and small relic silhouettes.\n\nIt is built for collectors who want a subtle object from the Lands Between without losing the atmosphere of the source material.',
+        visible: true,
+        href: '/lore-drops/elden-ring-talisman-series',
       },
       {
+        id: 'blade-runner-2049-off-world-edition',
         tag: 'Film Collectible',
         title: 'Blade Runner 2049 — Off-World Edition',
         excerpt:
           'Origami figures, spinner-craft pendants and neon-etched charms inspired by the rain-soaked skylines of New Los Angeles.',
-        href: '#',
+        body:
+          'The Off-World Edition pulls from rain, neon, glass, and the quiet iconography of Blade Runner 2049.\n\nEach piece is selected for its ability to read as a collectible first and a reference second.',
+        visible: true,
+        href: '/lore-drops/blade-runner-2049-off-world-edition',
       },
     ],
   },
@@ -261,6 +278,7 @@ const TEXT_LIMITS = {
   short: 120,
   medium: 240,
   long: 900,
+  extraLong: 12000,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -333,6 +351,15 @@ function readBoolean(
     return fallback;
   }
   return value;
+}
+
+function slugifyEditorialArticle(value: string): string {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+  return slug.length > 0 ? slug : 'article';
 }
 
 function readStringList(
@@ -540,28 +567,56 @@ function readEditorialReports(
       errors.push('editorial.reports items must be objects.');
       return fallback;
     }
+    const title = readString(
+      item,
+      'title',
+      fallbackReport.title,
+      TEXT_LIMITS.medium,
+      errors,
+      `editorial.reports.${index}.title`,
+    );
+    const id = slugifyEditorialArticle(readString(
+      item,
+      'id',
+      title.length > 0 ? title : fallbackReport.id,
+      TEXT_LIMITS.short,
+      errors,
+      `editorial.reports.${index}.id`,
+    ));
+    const href = readHref(item, 'href', fallbackReport.href, errors, `editorial.reports.${index}.href`);
+    const excerpt = readString(
+      item,
+      'excerpt',
+      fallbackReport.excerpt,
+      TEXT_LIMITS.long,
+      errors,
+      `editorial.reports.${index}.excerpt`,
+    );
 
     reports.push({
+      id,
       tag: readString(item, 'tag', fallbackReport.tag, TEXT_LIMITS.short, errors, `editorial.reports.${index}.tag`),
-      title: readString(item, 'title', fallbackReport.title, TEXT_LIMITS.medium, errors, `editorial.reports.${index}.title`),
-      excerpt: readString(
+      title,
+      excerpt,
+      body: readString(
         item,
-        'excerpt',
-        fallbackReport.excerpt,
-        TEXT_LIMITS.long,
+        'body',
+        fallbackReport.body.length > 0 ? fallbackReport.body : excerpt,
+        TEXT_LIMITS.extraLong,
         errors,
-        `editorial.reports.${index}.excerpt`,
+        `editorial.reports.${index}.body`,
       ),
-      href: readHref(item, 'href', fallbackReport.href, errors, `editorial.reports.${index}.href`),
+      visible: readBoolean(item, 'visible', fallbackReport.visible, errors, `editorial.reports.${index}.visible`),
+      href: href === '#' || href.length === 0 ? `/lore-drops/${id}` : href,
     });
   }
 
-  if (reports.length > 6) {
-    errors.push('editorial.reports can contain at most 6 items.');
+  if (reports.length > 12) {
+    errors.push('editorial.reports can contain at most 12 items.');
     return fallback;
   }
 
-  return reports.length > 0 ? reports : fallback;
+  return reports;
 }
 
 export function validateHomeContent(input: unknown): HomeContentValidationResult {
@@ -692,6 +747,13 @@ export function validateHomeContent(input: unknown): HomeContentValidationResult
         60,
         errors,
         'manifesto.marqueeItems',
+      ),
+      backgroundImageUrl: readHref(
+        manifesto,
+        'backgroundImageUrl',
+        HOME_CONTENT_DEFAULTS.manifesto.backgroundImageUrl,
+        errors,
+        'manifesto.backgroundImageUrl',
       ),
       eyebrow: readString(
         manifesto,

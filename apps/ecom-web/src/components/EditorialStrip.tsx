@@ -32,6 +32,7 @@ export function EditorialStrip({
 }): JSX.Element {
   const localizedHref = useLocalizedHref();
   const sectionRef = useRef<HTMLElement>(null);
+  const visibleReports = content.reports.filter((story) => story.visible !== false);
 
   useGSAP(() => {
     gsap.fromTo('.ed-header',
@@ -50,6 +51,8 @@ export function EditorialStrip({
       },
     });
   }, { scope: sectionRef, dependencies: [] });
+
+  if (visibleReports.length === 0) return <></>;
 
   return (
     <section ref={sectionRef} className="px-6 md:px-10 pt-16 pb-24 max-w-screen-2xl mx-auto">
@@ -75,7 +78,7 @@ export function EditorialStrip({
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
-        {content.reports.map((story, index) => {
+        {visibleReports.map((story, index) => {
           const visual = REPORT_VISUALS[index] ?? DEFAULT_VISUAL;
           return (
           <a

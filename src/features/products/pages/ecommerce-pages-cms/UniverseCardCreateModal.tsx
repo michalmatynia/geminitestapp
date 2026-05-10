@@ -28,7 +28,7 @@ const toCardId = (label: string): string => {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
-  return `collection-card-${base.length > 0 ? base : Date.now()}`;
+  return `collection-card-${base.length > 0 ? base : 'card'}-${Date.now()}`;
 };
 
 const normalizeCardDraft = (draft: CollectionCardState): CollectionCardState => {

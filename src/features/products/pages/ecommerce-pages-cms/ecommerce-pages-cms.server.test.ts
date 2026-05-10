@@ -68,11 +68,18 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
 }));
 
 import {
+  readEcommercePagesCmsBackground,
   readEcommercePagesCmsCollectionCards,
+  readEcommercePagesCmsEditorialArticles,
   readEcommercePagesCmsLogo,
+  readEcommercePagesCmsManifesto,
+  saveEcommercePagesCmsBackground,
   saveEcommercePagesCmsCollectionCards,
+  saveEcommercePagesCmsEditorialArticles,
+  saveEcommercePagesCmsManifesto,
   uploadEcommercePagesCmsCollectionCardImage,
   uploadEcommercePagesCmsLogo,
+  uploadEcommercePagesCmsManifestoBackground,
 } from './ecommerce-pages-cms.server';
 
 type CmsPageDoc = {
@@ -455,6 +462,297 @@ describe('ecommerce pages CMS server service', () => {
       cloudConfigured: true,
       updatedAt: '2026-05-10T12:30:00.000Z',
       updatedBy: 'admin-2',
+    });
+    expect(mocks.mongoClientCtor).not.toHaveBeenCalled();
+  });
+
+  it('saves Lore & Drops articles locally and mirrors them to ecommerce and runtime databases', async () => {
+    const articles = [
+      {
+        body: 'Long form report body.',
+        excerpt: 'Short form report.',
+        href: '/lore-drops/gaming-report',
+        id: 'gaming-report',
+        tag: 'Gaming Drop',
+        title: 'Gaming Report',
+        visible: true,
+      },
+    ];
+
+    const result = await saveEcommercePagesCmsEditorialArticles({
+      articles,
+      userId: 'admin-5',
+    });
+
+    expect(result.cloudMirrored).toBe(true);
+    expect(result.articles[0]).toMatchObject({
+      body: 'Long form report body.',
+      href: '/lore-drops/gaming-report',
+      visible: true,
+    });
+
+    [appLocalCollection, ecommerceLocalCollection, cloudCollection, appCloudCollection].forEach(
+      (collection) => {
+        expect(collection.docs[0]).toMatchObject({
+          content: {
+            editorial: {
+              reports: [
+                expect.objectContaining({
+                  id: 'gaming-report',
+                  tag: 'Gaming Drop',
+                  title: 'Gaming Report',
+                }),
+              ],
+            },
+          },
+          locale: 'en',
+          page: 'home',
+          updatedBy: 'admin-5',
+        });
+      }
+    );
+    expect(mocks.mongoClientClose).toHaveBeenCalledTimes(3);
+  });
+
+  it('reads saved Lore & Drops articles from the local home CMS page', async () => {
+    appLocalCollection = createFakeCollection([
+      {
+        content: {
+          editorial: {
+            reports: [
+              {
+                body: 'Existing long copy',
+                excerpt: 'Existing short copy',
+                href: '/lore-drops/existing-report',
+                id: 'existing-report',
+                tag: 'Universe Report',
+                title: 'Existing Report',
+                visible: false,
+              },
+            ],
+          },
+        },
+        locale: 'en',
+        page: 'home',
+        updatedAt: new Date('2026-05-10T15:30:00.000Z'),
+        updatedBy: 'admin-5',
+      },
+    ]);
+    mocks.getMongoDb.mockResolvedValue(createFakeDb(appLocalCollection));
+
+    const snapshot = await readEcommercePagesCmsEditorialArticles();
+
+    expect(snapshot).toEqual({
+      articles: [
+        expect.objectContaining({
+          body: 'Existing long copy',
+          href: '/lore-drops/existing-report',
+          id: 'existing-report',
+          visible: false,
+        }),
+      ],
+      cloudConfigured: true,
+      updatedAt: '2026-05-10T15:30:00.000Z',
+      updatedBy: 'admin-5',
+    });
+    expect(mocks.mongoClientCtor).not.toHaveBeenCalled();
+  });
+
+  it('repairs fragment-only Lore & Drops article hrefs to readable article paths', async () => {
+    appLocalCollection = createFakeCollection([
+      {
+        content: {
+          editorial: {
+            reports: [
+              {
+                body: 'Existing long copy',
+                excerpt: 'Existing short copy',
+                href: '#',
+                id: 'existing-report',
+                tag: 'Universe Report',
+                title: 'Existing Report',
+                visible: true,
+              },
+            ],
+          },
+        },
+        locale: 'en',
+        page: 'home',
+      },
+    ]);
+    mocks.getMongoDb.mockResolvedValue(createFakeDb(appLocalCollection));
+
+    const snapshot = await readEcommercePagesCmsEditorialArticles();
+
+    expect(snapshot.articles[0]).toMatchObject({
+      href: '/lore-drops/existing-report',
+      id: 'existing-report',
+    });
+  });
+
+  it('saves Collector Creed content locally and mirrors it to ecommerce and runtime databases', async () => {
+    const manifesto = {
+      backgroundImageUrl: 'https://sparksofsindri.com/uploads/cms/stargater/manifesto/creed.webp',
+      body: 'Curated anime, gaming, and film collectibles with a reason to exist.',
+      ctaHref: '/products?new=1',
+      ctaLabel: 'Explore The Cache',
+      eyebrow: "The Collector's Creed",
+      quoteEmphasis: 'a relic you can keep',
+      quotePrefix: 'Every universe deserves',
+      quoteSuffix: '.',
+    };
+
+    const result = await saveEcommercePagesCmsManifesto({
+      manifesto,
+      userId: 'admin-4',
+    });
+
+    expect(result).toMatchObject({
+      cloudConfigured: true,
+      cloudMirrored: true,
+      eyebrow: "The Collector's Creed",
+      quoteEmphasis: 'a relic you can keep',
+      updatedBy: 'admin-4',
+    });
+    [appLocalCollection, ecommerceLocalCollection, cloudCollection, appCloudCollection].forEach(
+      (collection) => {
+        expect(collection.docs[0]).toMatchObject({
+          content: { manifesto },
+          locale: 'en',
+          page: 'home',
+          updatedBy: 'admin-4',
+        });
+      }
+    );
+    expect(mocks.mongoClientClose).toHaveBeenCalledTimes(3);
+  });
+
+  it('reads saved Collector Creed content from the local home CMS page', async () => {
+    appLocalCollection = createFakeCollection([
+      {
+        content: {
+          manifesto: {
+            backgroundImageUrl:
+              'https://sparksofsindri.com/uploads/cms/stargater/manifesto/creed.webp',
+            body: 'Existing body',
+            ctaHref: '/products',
+            ctaLabel: 'Explore',
+            eyebrow: 'Existing Creed',
+            quoteEmphasis: 'something real',
+            quotePrefix: 'Every archive needs',
+            quoteSuffix: '.',
+          },
+        },
+        locale: 'en',
+        page: 'home',
+        updatedAt: new Date('2026-05-10T14:30:00.000Z'),
+        updatedBy: 'admin-4',
+      },
+    ]);
+    mocks.getMongoDb.mockResolvedValue(createFakeDb(appLocalCollection));
+
+    const snapshot = await readEcommercePagesCmsManifesto();
+
+    expect(snapshot).toEqual({
+      backgroundImageUrl:
+        'https://sparksofsindri.com/uploads/cms/stargater/manifesto/creed.webp',
+      body: 'Existing body',
+      cloudConfigured: true,
+      ctaHref: '/products',
+      ctaLabel: 'Explore',
+      eyebrow: 'Existing Creed',
+      quoteEmphasis: 'something real',
+      quotePrefix: 'Every archive needs',
+      quoteSuffix: '.',
+      updatedAt: '2026-05-10T14:30:00.000Z',
+      updatedBy: 'admin-4',
+    });
+    expect(mocks.mongoClientCtor).not.toHaveBeenCalled();
+  });
+
+  it('writes a Collector Creed background locally and uploads it to the FastComet manifesto folder', async () => {
+    mocks.uploadBufferToFastComet.mockResolvedValueOnce(
+      'https://sparksofsindri.com/uploads/cms/stargater/manifesto/creed.webp'
+    );
+    const file = new File([new Uint8Array([7, 8, 9])], 'Creed Background.webp', {
+      type: 'image/webp',
+    });
+
+    const result = await uploadEcommercePagesCmsManifestoBackground({ file });
+
+    expect(result.localPublicPath).toMatch(
+      /^\/uploads\/cms\/stargater\/manifesto\/.+-creed-background\.webp$/
+    );
+    expect(result.remoteUrl).toBe(
+      'https://sparksofsindri.com/uploads/cms/stargater/manifesto/creed.webp'
+    );
+    expect(mocks.fsMkdir).toHaveBeenCalledWith(
+      expect.stringMatching(/\/tmp\/geminitestapp\/uploads\/cms\/stargater\/manifesto$/),
+      { recursive: true }
+    );
+    expect(mocks.uploadBufferToFastComet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'cms',
+        folder: 'stargater/manifesto',
+        mimetype: 'image/webp',
+        publicPath: result.localPublicPath,
+      })
+    );
+  });
+
+  it('saves background settings locally and mirrors them to ecommerce and runtime databases', async () => {
+    const result = await saveEcommercePagesCmsBackground({
+      background: { cosmosParallaxEnabled: false },
+      userId: 'admin-3',
+    });
+
+    expect(result).toMatchObject({
+      cloudConfigured: true,
+      cloudMirrored: true,
+      cosmosParallaxEnabled: false,
+      updatedBy: 'admin-3',
+    });
+
+    [appLocalCollection, ecommerceLocalCollection, cloudCollection, appCloudCollection].forEach(
+      (collection) => {
+        expect(collection.docs[0]).toMatchObject({
+          content: {
+            background: {
+              cosmosParallaxEnabled: false,
+            },
+          },
+          locale: 'en',
+          page: 'site',
+          updatedBy: 'admin-3',
+        });
+      }
+    );
+    expect(mocks.mongoClientClose).toHaveBeenCalledTimes(3);
+  });
+
+  it('reads saved background settings from the local site CMS page', async () => {
+    appLocalCollection = createFakeCollection([
+      {
+        content: {
+          background: {
+            cosmosParallaxEnabled: false,
+          },
+        },
+        locale: 'en',
+        page: 'site',
+        updatedAt: new Date('2026-05-10T13:30:00.000Z'),
+        updatedBy: 'admin-3',
+      },
+    ]);
+    mocks.getMongoDb.mockResolvedValue(createFakeDb(appLocalCollection));
+
+    const snapshot = await readEcommercePagesCmsBackground();
+
+    expect(snapshot).toEqual({
+      cloudConfigured: true,
+      cosmosParallaxEnabled: false,
+      updatedAt: '2026-05-10T13:30:00.000Z',
+      updatedBy: 'admin-3',
     });
     expect(mocks.mongoClientCtor).not.toHaveBeenCalled();
   });

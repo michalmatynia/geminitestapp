@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { canNestTreeNodeV2 } from '@/shared/utils/folder-tree-profiles-v2';
+import {
+  canNestTreeNodeV2,
+  createDefaultFolderTreeProfilesV2,
+  defaultFolderTreeProfilesV2,
+  folderTreeInstanceValues,
+} from '@/shared/utils/folder-tree-profiles-v2';
 import {
   parseFolderTreeProfileV2Entry,
   parseFolderTreeUiStateV2Entry,
@@ -56,6 +61,15 @@ describe('folder tree v2 settings', () => {
         })
       ).placeholders.preset
     ).toBe('classic');
+  });
+
+  it('provides defaults for every registered folder tree instance', () => {
+    const profiles = createDefaultFolderTreeProfilesV2();
+
+    folderTreeInstanceValues.forEach((instance) => {
+      expect(defaultFolderTreeProfilesV2[instance]?.placeholders).toBeDefined();
+      expect(profiles[instance]?.placeholders).toBeDefined();
+    });
   });
 
   it('preserves required category nesting for persisted product category profiles', () => {

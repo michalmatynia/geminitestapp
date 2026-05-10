@@ -24,6 +24,10 @@ function QuoteWords({ text }: { text: string }) {
 
 export function ManifestoBanner({ content = HOME_CONTENT_DEFAULTS.manifesto, locale = DEFAULT_LOCALE }: ManifestoBannerProps): JSX.Element {
   const sectionRef = useRef<HTMLElement>(null);
+  const backgroundImageUrl = content.backgroundImageUrl.trim();
+  const backgroundImage = backgroundImageUrl.length > 0
+    ? `linear-gradient(180deg, rgba(2,2,5,0.7) 0%, rgba(2,2,5,0.82) 100%), url(${JSON.stringify(backgroundImageUrl)})`
+    : undefined;
 
   useGSAP(() => {
     /* Eyebrow */
@@ -125,7 +129,15 @@ export function ManifestoBanner({ content = HOME_CONTENT_DEFAULTS.manifesto, loc
       </div>
 
       {/* Manifesto block */}
-      <div className="relative grain overflow-hidden" style={{ background: 'var(--manifesto-bg)' }}>
+      <div
+        className="relative grain overflow-hidden"
+        style={{
+          background: 'var(--manifesto-bg)',
+          backgroundImage,
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+        }}
+      >
         {/* Grid bg */}
         <div className="absolute inset-0 dot-grid opacity-20 pointer-events-none" />
 

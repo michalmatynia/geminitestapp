@@ -415,7 +415,13 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
         ) : null}
 
         {rows.length > 0 ? (
-          <div ref={scrollRef} className='max-h-[60vh] overflow-auto'>
+          <div
+            ref={scrollRef}
+            className='max-h-[60vh] overflow-auto'
+            role='region'
+            aria-label='Folder tree items'
+            tabIndex={0}
+          >
             <div
               style={{
                 height: `${totalSize}px`,

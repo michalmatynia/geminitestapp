@@ -46,10 +46,12 @@ function isFocusable(el: Element): boolean {
 }
 
 function shouldSkipScrollableEnhancement(el: HTMLElement): boolean {
+  const tagName = el.tagName.toLowerCase();
   return (
     el.hasAttribute(SCROLL_FOCUS_IGNORE_ATTRIBUTE) ||
     el.hasAttribute('tabindex') ||
-    el.getAttribute('aria-hidden') === 'true'
+    el.getAttribute('aria-hidden') === 'true' ||
+    ['a', 'button', 'input', 'select', 'textarea'].includes(tagName)
   );
 }
 
@@ -91,16 +93,36 @@ export function AccessibilityProvider({
   useEffect((): (() => void) | undefined => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
 
-    setScrollablesFocusable();
-    if (typeof ResizeObserver === 'undefined') return undefined;
+    let disposed = false;
+    let frameId: number | null = null;
+    const scheduleScrollableEnhancement = (): void => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      frameId = window.requestAnimationFrame(() => {
+        frameId = window.requestAnimationFrame(() => {
+          frameId = null;
+          if (disposed) return;
+          setScrollablesFocusable();
+        });
+      });
+    };
 
-    const ro = new ResizeObserver(() => {
-      setScrollablesFocusable();
-    });
-    ro.observe(document.documentElement);
+    scheduleScrollableEnhancement();
+    const ro =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => {
+            scheduleScrollableEnhancement();
+          });
+    ro?.observe(document.documentElement);
 
     return (): void => {
-      ro.disconnect();
+      disposed = true;
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      ro?.disconnect();
     };
   }, []);
 

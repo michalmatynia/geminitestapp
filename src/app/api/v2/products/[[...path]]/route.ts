@@ -1,4 +1,6 @@
 
+import '@/features/auth/server';
+
 import type { NextRequest } from 'next/server';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
@@ -56,8 +58,12 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['images', 'base64', 'all'], loader: () => import('../images/base64/all/route-handler') },
   { pattern: ['images', 'upload'], loader: () => import('../images/upload/route-handler') },
   { pattern: ['pages', 'logo'], loader: () => import('../pages/logo/route-handler') },
+  { pattern: ['pages', 'background'], loader: () => import('../pages/background/route-handler') },
+  { pattern: ['pages', 'manifesto'], loader: () => import('../pages/manifesto/route-handler') },
+  { pattern: ['pages', 'manifesto', 'background'], loader: () => import('../pages/manifesto/background/route-handler') },
   { pattern: ['pages', 'collection-cards'], loader: () => import('../pages/collection-cards/route-handler') },
   { pattern: ['pages', 'collection-cards', 'image'], loader: () => import('../pages/collection-cards/image/route-handler') },
+  { pattern: ['pages', 'editorial-articles'], loader: () => import('../pages/editorial-articles/route-handler') },
   { pattern: ['archive', 'batch'], loader: () => import('../archive/batch/route-handler') },
   { pattern: ['batch-edit'], loader: () => import('../batch-edit/route-handler') },
   { pattern: ['marketplace-copy-debrand', 'batch'], loader: () => import('../marketplace-copy-debrand/batch/route-handler') },

@@ -17,6 +17,7 @@ import {
   type ResolvedFolderTreeSearchConfig,
   type FolderTreeInstance,
   type FolderTreePlaceholderClassSet,
+  type FolderTreePersistFeedback,
 } from '@/shared/utils/folder-tree-profiles-v2';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -31,6 +32,20 @@ import { useFolderTreeKeyboardNav } from '../hooks/useFolderTreeKeyboardNav';
 import type { ResolveFolderTreeIconInput } from './useFolderTreeAppearance';
 import type { MasterFolderTreeShellRuntime } from './useFolderTreeShellRuntime';
 import type { LucideIcon } from 'lucide-react';
+
+const DEFAULT_FOLDER_TREE_PERSIST_FEEDBACK: FolderTreePersistFeedback = {
+  notifySuccess: false,
+  notifyError: true,
+  successMessage: 'Folder tree updated.',
+};
+
+const resolveFolderTreePersistFeedback = (
+  instance: FolderTreeInstance
+): FolderTreePersistFeedback => {
+  const feedbackByInstance: Partial<Record<FolderTreeInstance, FolderTreePersistFeedback>> =
+    folderTreePersistFeedbackByInstance;
+  return feedbackByInstance[instance] ?? DEFAULT_FOLDER_TREE_PERSIST_FEEDBACK;
+};
 
 export type UseMasterFolderTreeShellOptions = Omit<
   UseFolderTreeInstanceV2Options,
@@ -188,7 +203,7 @@ export function useMasterFolderTreeShell({
   const previousApplyingRef = useRef<boolean>(false);
   const lastErrorAtRef = useRef<string | null>(null);
   useEffect(() => {
-    const feedback = folderTreePersistFeedbackByInstance[instance];
+    const feedback = resolveFolderTreePersistFeedback(instance);
     const shouldNotifySuccess = feedback.notifySuccess;
     const shouldNotifyError = feedback.notifyError;
     if (!shouldNotifySuccess && !shouldNotifyError) {
@@ -202,9 +217,12 @@ export function useMasterFolderTreeShell({
 
     if (shouldNotifyError && lastError && lastError.at !== lastErrorAtRef.current) {
       lastErrorAtRef.current = lastError.at;
-      toast(lastError.message || 'Failed to persist folder tree changes.', {
-        variant: 'error',
-      });
+      toast(
+        lastError.message.length > 0
+          ? lastError.message
+          : 'Failed to persist folder tree changes.',
+        { variant: 'error' }
+      );
     } else if (shouldNotifySuccess && wasApplying && !isApplying && !lastError) {
       toast(feedback.successMessage, {
         variant: 'success',

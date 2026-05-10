@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { JSX } from 'react';
 import { SiteNav } from '@/components/SiteNav';
 import { HeroSection } from '@/components/HeroSection';
 import { CategoriesGrid } from '@/components/CategoriesGrid';
@@ -13,7 +14,7 @@ import { getRequestLocale } from '@/lib/request-locale';
 import type { EcomLocale } from '@/lib/locales';
 
 export const revalidate = 120; // ISR — revalidate every 2 minutes
-const FEATURED_PRODUCT_COUNT = 12;
+const FEATURED_PRODUCT_COUNT = 24;
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
@@ -43,7 +44,7 @@ function formatStatValue(value: number, locale: EcomLocale): string {
   return value.toLocaleString(locale === 'pl' ? 'pl-PL' : 'en-US');
 }
 
-export default async function HomePage() {
+export default async function HomePage(): Promise<JSX.Element> {
   const locale = await getRequestLocale();
   // Both fetches run in parallel; either can fail gracefully.
   const [{ products: dbProducts }, collectionCounts, homeContent, homeStats] = await Promise.all([

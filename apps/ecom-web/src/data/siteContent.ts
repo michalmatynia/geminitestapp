@@ -11,6 +11,10 @@ export interface SiteAnnouncementContent {
   dismissKey: string;
 }
 
+export interface SiteBackgroundContent {
+  cosmosParallaxEnabled: boolean;
+}
+
 export interface SiteNavContent {
   brandName: string;
   brandSuffix: string;
@@ -160,6 +164,7 @@ export interface SiteNotFoundContent {
 }
 
 export interface SiteContent {
+  background: SiteBackgroundContent;
   nav: SiteNavContent;
   footer: SiteFooterContent;
   search: SiteSearchContent;
@@ -177,6 +182,9 @@ export interface SiteContentValidationResult {
 }
 
 export const SITE_CONTENT_DEFAULTS: SiteContent = {
+  background: {
+    cosmosParallaxEnabled: true,
+  },
   nav: {
     brandName: 'ARCANA',
     brandSuffix: 'NEXUS',
@@ -594,6 +602,7 @@ function readCollectionCards(input: unknown, fallback: SiteCollectionCardContent
 export function validateSiteContent(input: unknown): SiteContentValidationResult {
   const errors: string[] = [];
   const root = isRecord(input) ? input : {};
+  const background = isRecord(root['background']) ? root['background'] : {};
   const nav = isRecord(root['nav']) ? root['nav'] : {};
   const announcement = isRecord(nav['announcement']) ? nav['announcement'] : {};
   const footer = isRecord(root['footer']) ? root['footer'] : {};
@@ -616,6 +625,15 @@ export function validateSiteContent(input: unknown): SiteContentValidationResult
   );
 
   const content: SiteContent = {
+    background: {
+      cosmosParallaxEnabled: readBoolean(
+        background,
+        'cosmosParallaxEnabled',
+        SITE_CONTENT_DEFAULTS.background.cosmosParallaxEnabled,
+        errors,
+        'background.cosmosParallaxEnabled',
+      ),
+    },
     nav: {
       brandName,
       brandSuffix,
